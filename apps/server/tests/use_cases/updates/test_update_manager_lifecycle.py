@@ -7,12 +7,10 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from test_support.tracing import configured_trace_output, read_trace_output
 
 from vibesensor.shared.exceptions import UpdateCleanupError, UpdateError
 from vibesensor.use_cases.updates.manager import UpdateManager
 from vibesensor.use_cases.updates.models import (
-    UpdatePhase,
     UpdateRequest,
     UpdateState,
     UpdateTerminalState,
@@ -158,34 +156,6 @@ async def test_cleanup_error_propagates_explicitly_and_persists_failure(tmp_path
     assert status.finished_at is not None
     assert any(issue.message == "transport cleanup failed" for issue in status.issues)
     _assert_secret_not_persisted(state_store, request.password)
-
-
-@pytest.mark.asyncio
-async def test_start_exports_update_workflow_trace_span(tmp_path: Path) -> None:
-    manager, state_store, tracker, workflow_run = _build_manager(tmp_path)
-    request = _wifi_request()
-
-    async def successful_workflow(*, request: UpdateRequest) -> None:
-        assert request == _wifi_request()
-        tracker.transition(UpdatePhase.connecting_usb_internet)
-        tracker.transition(UpdatePhase.checking)
-        tracker.mark_success("Update completed")
-
-    workflow_run.side_effect = successful_workflow
-
-    with configured_trace_output(tmp_path) as trace_path:
-        manager.start(request.ssid, request.password, transport=request.transport)
-        task = manager.job_task
-        assert task is not None
-        await task
-
-    status = _load_status(state_store)
-    assert status.state == UpdateState.success
-    assert status.finished_at is not None
-    _assert_secret_not_persisted(state_store, request.password)
-    span = next(item for item in read_trace_output(trace_path) if item["name"] == "update.workflow")
-    assert span["attributes"]["vibesensor.transport"] == "wifi"
-    assert span["attributes"]["vibesensor.final_state"] == "success"
 
 
 @pytest.mark.asyncio

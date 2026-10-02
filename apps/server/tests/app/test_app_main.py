@@ -27,7 +27,6 @@ def _loaded_config(*, host: str, port: int) -> SimpleNamespace:
     return SimpleNamespace(
         server=SimpleNamespace(host=host, port=port),
         logging=SimpleNamespace(app_log_path=None),
-        tracing=SimpleNamespace(enabled=False, output_path=Path("/tmp/traces.jsonl")),
     )
 
 

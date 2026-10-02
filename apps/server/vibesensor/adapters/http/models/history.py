@@ -14,19 +14,13 @@ from typing import Annotated, Any, Literal, cast
 from pydantic import BaseModel, ConfigDict, Field
 
 from vibesensor.shared.types.analysis_views import (
-    AmpVsPhaseRow,
     FindingEvidenceMetrics,
-    FreqVsSpeedByFindingSeries,
     LocationHotspotPayload,
-    MatchedAmpVsSpeedSeries,
     MatchedPoint,
     PeakTableRow,
-    PhaseBoundary,
     PhaseEvidence,
-    PhaseSegmentOut,
     PhaseSpeedBreakdownRow,
     PlotDataResult,
-    SpectrogramResult,
     SpeedBreakdownRow,
 )
 from vibesensor.shared.types.data_quality_contracts import (
@@ -61,7 +55,6 @@ from .base import ApiPayloadObject, _StrictBase
 
 __all__ = [
     "AmplitudeMetric",
-    "AmpVsPhaseRow",
     "DataQualityAccelSanityResponse",
     "DataQualityOutliersResponse",
     "DataQualityRequiredMissingPctResponse",
@@ -69,24 +62,19 @@ __all__ = [
     "DataQualitySpeedCoverageResponse",
     "FindingEvidenceMetrics",
     "FindingPayload",
-    "FreqVsSpeedByFindingSeries",
     "LocationHotspotPayload",
     "LocationIntensitySummaryResponse",
-    "MatchedAmpVsSpeedSeries",
     "MatchedPoint",
     "OutlierSummaryResponse",
     "PeakTableRow",
-    "PhaseBoundary",
     "PhaseEvidence",
     "PhaseInfoResponse",
     "PhaseIntensityStatsResponse",
-    "PhaseSegmentOut",
     "PhaseSegmentSummaryResponse",
     "PhaseSpeedBreakdownRow",
     "PhaseTimelineEntryResponse",
     "PlotDataResult",
     "RunSuitabilityCheck",
-    "SpectrogramResult",
     "SpeedBreakdownRow",
     "SpeedStatsResponse",
     "StrengthBucketDistributionResponse",

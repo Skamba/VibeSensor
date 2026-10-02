@@ -21,7 +21,7 @@ from vibesensor.shared.boundaries.runs.projection import (
 from ._analysis_models import FindingsBundle, PreparedAnalysisContext
 from ._analysis_result import AnalysisResult
 from .metadata_projection import metadata_analysis_settings_items
-from .plots import _plot_data
+from .peaks.table import annotate_peak_rows_with_order_labels, top_peaks_table_rows
 from .run_analysis_projection import build_domain_driving_segments
 from .run_data_preparation import build_phase_summary
 from .speed_profile_helpers import _speed_stats
@@ -58,16 +58,12 @@ def build_analysis_result(
     summary_speed_stats = _speed_stats(context.prepared.speed_values)
     summary_phase_info = build_phase_summary(context.prepared.phase_segments)
     domain_test_plan = plan_test_actions(findings_bundle.domain_findings)
-    plot_data = _plot_data(
-        samples=list(context.samples),
-        speed_breakdown=context.prepared.speed_breakdown,
-        phase_speed_breakdown=context.prepared.phase_speed_breakdown,
-        findings=findings_bundle.domain_findings,
-        raw_sample_rate_hz=context.prepared.raw_sample_rate_hz,
-        steady_speed=context.prepared.is_steady_speed,
-        run_noise_baseline_g=context.prepared.run_noise_baseline_g,
-        per_sample_phases=context.prepared.per_sample_phases,
-        phase_segments=context.prepared.phase_segments,
+    peaks_table = annotate_peak_rows_with_order_labels(
+        top_peaks_table_rows(
+            list(context.samples),
+            run_noise_baseline_g=context.prepared.run_noise_baseline_g,
+        ),
+        findings_bundle.domain_findings,
     )
 
     test_run = TestRun(
@@ -118,7 +114,7 @@ def build_analysis_result(
         sensor_intensity_by_location=context.sensor_intensity_by_location,
         summary_speed_stats=summary_speed_stats,
         summary_phase_info=summary_phase_info,
-        plot_data=plot_data,
+        peaks_table=peaks_table,
         test_run=test_run,
         diagnostic_case=diagnostic_case,
     )

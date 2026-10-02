@@ -22,12 +22,12 @@ from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_
 from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
 from vibesensor.shared.boundaries.summary_serialization import (
     AccelStatisticsLike,
+    PeakTableRowLike,
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
-    PlotDataResultLike,
     SpeedBreakdownRowLike,
     build_analysis_summary,
-    serialize_plot_data,
+    serialize_peak_table,
 )
 from vibesensor.shared.run_context_warning import (
     RunContextWarningsInput,
@@ -111,7 +111,7 @@ def analysis_result_to_summary(result: AnalysisResultLike) -> AnalysisSummary:
     )
     report_date = metadata.get("end_time_utc")
     summary["report_date"] = report_date if isinstance(report_date, str) else utc_now_iso()
-    summary["plots"] = serialize_plot_data(result.plot_data)
+    summary["plots"] = {"peaks_table": serialize_peak_table(result.peaks_table)}
     if not result.include_samples:
         summary.pop("samples", None)
     return summary
@@ -202,7 +202,7 @@ class AnalysisResultLike(Protocol):
     def summary_phase_info(self) -> DrivingPhaseSummary: ...
 
     @property
-    def plot_data(self) -> PlotDataResultLike: ...
+    def peaks_table(self) -> Sequence[PeakTableRowLike]: ...
 
     @property
     def test_run(self) -> TestRun: ...

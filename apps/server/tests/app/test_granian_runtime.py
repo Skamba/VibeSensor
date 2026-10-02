@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import sys
 from argparse import Namespace
-from pathlib import Path
 from types import SimpleNamespace
 
 from granian.constants import Interfaces, Loops
@@ -16,7 +15,6 @@ def _loaded_config(*, host: str, port: int) -> SimpleNamespace:
     return SimpleNamespace(
         server=SimpleNamespace(host=host, port=port),
         logging=SimpleNamespace(app_log_path=None),
-        tracing=SimpleNamespace(enabled=False, output_path=Path("/tmp/traces.jsonl")),
     )
 
 

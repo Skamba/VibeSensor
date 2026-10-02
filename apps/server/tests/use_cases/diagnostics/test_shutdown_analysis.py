@@ -136,10 +136,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     cfg_path.write_text(
         yaml.safe_dump(
             {
-                "logging": {
-                    "history_db_path": str(tmp_path / "history.db"),
-                    "shutdown_analysis_timeout_s": 10,
-                },
+                "logging": {"history_db_path": str(tmp_path / "history.db")},
             },
         ),
         encoding="utf-8",
@@ -178,32 +175,3 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     assert events.index("analysis_wait_done") < events.index("db_close"), (
         f"Expected analysis to finish before DB close, got: {events}"
     )
-
-
-# ---------------------------------------------------------------------------
-# Config: shutdown_analysis_timeout_s
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("cfg_timeout", "expected"),
-    [
-        pytest.param(None, 30.0, id="default"),
-        pytest.param(60, 60.0, id="custom"),
-    ],
-)
-def test_config_shutdown_analysis_timeout(tmp_path: Path, cfg_timeout, expected) -> None:
-    """shutdown_analysis_timeout_s must default to 30 and accept overrides."""
-    from vibesensor.app.config_loader import load_config
-
-    logging_cfg: dict = {}
-    if cfg_timeout is not None:
-        logging_cfg["shutdown_analysis_timeout_s"] = cfg_timeout
-
-    cfg_path = tmp_path / "config.yaml"
-    cfg_path.write_text(
-        yaml.safe_dump({"logging": logging_cfg}),
-        encoding="utf-8",
-    )
-    config = load_config(cfg_path)
-    assert config.logging.shutdown_analysis_timeout_s == expected

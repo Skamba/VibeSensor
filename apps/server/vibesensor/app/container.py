@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from vibesensor.adapters.http.dependencies import RouterDeps
 from vibesensor.app.composition.history import build_history_deps, create_history_db
-from vibesensor.app.composition.live import build_live_runtime, resolve_accel_scale_g_per_lsb
+from vibesensor.app.composition.live import build_live_runtime
 from vibesensor.app.composition.settings import build_settings_service_bundle
 from vibesensor.app.composition.speed import build_speed_runtime
 from vibesensor.app.composition.updates import build_update_deps
@@ -25,7 +25,6 @@ class AppRuntime:
 
 def build_runtime(config: AppConfig) -> AppRuntime:
     """Construct all services and return the app runtime bundle."""
-    accel_scale_g_per_lsb = resolve_accel_scale_g_per_lsb(config)
     health_state = RuntimeHealthState()
 
     history = create_history_db(
@@ -44,7 +43,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
     live = build_live_runtime(
         config=config,
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         history=history,
         speed_runtime=speed_runtime,
         runtime_settings=runtime_settings,
@@ -55,10 +53,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         history_db_path=config.logging.history_db_path,
         udp_data_host=config.udp.data_host,
         udp_data_port=config.udp.data_port,
-        udp_data_queue_maxsize=config.udp.data_queue_maxsize,
-        gpsd_host=config.gps.gpsd_host,
-        gpsd_port=config.gps.gpsd_port,
-        shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
         registry=live.registry,
         processor=live.processor,
         ingest_diagnostics=live.ingest_diagnostics,

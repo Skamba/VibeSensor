@@ -12,6 +12,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from vibesensor.adapters.hotspot.constants import (
+    DIAGNOSTICS_LOOKBACK_MINUTES,
+    HOTSPOT_CON_NAME,
+    HOTSPOT_IFNAME,
+)
 from vibesensor.adapters.hotspot.health_probe import (
     HealthState,
     collect_health,
@@ -23,19 +28,11 @@ from vibesensor.adapters.hotspot.remediation import apply_heals
 LOGGER = logging.getLogger("vibesensor.adapters.hotspot.selfheal")
 
 
-class HotspotSelfHealConfig(Protocol):
-    diagnostics_lookback_minutes: int
-    min_restart_interval_seconds: int
-    state_file: Path
+class HotspotCredentials(Protocol):
+    """Operator-owned hotspot settings; everything else is in ``hotspot.constants``."""
 
-
-class HotspotApConfig(Protocol):
     ssid: str
     psk: str
-    ip: str
-    channel: int
-    ifname: str
-    con_name: str
 
 
 @dataclass(slots=True)
@@ -71,21 +68,16 @@ class CommandRunner:
             return CommandResult(returncode=124, stdout="", stderr=f"timeout: {' '.join(argv)}")
 
 
-def _emit_diagnostics(
-    ap: HotspotApConfig,
-    lookback_minutes: int,
-    runner: CommandRunner,
-    logger: logging.Logger,
-) -> None:
+def _emit_diagnostics(runner: CommandRunner, logger: logging.Logger) -> None:
     commands = [
         ["nmcli", "device", "status"],
         ["nmcli", "general", "status"],
-        ["nmcli", "connection", "show", ap.con_name],
+        ["nmcli", "connection", "show", HOTSPOT_CON_NAME],
         ["nmcli", "connection", "show", "--active"],
-        ["ip", "addr", "show", "dev", ap.ifname],
-        ["iw", "dev", ap.ifname, "info"],
+        ["ip", "addr", "show", "dev", HOTSPOT_IFNAME],
+        ["iw", "dev", HOTSPOT_IFNAME, "info"],
         ["rfkill", "list"],
-        journalctl_nm_args(lookback_minutes),
+        journalctl_nm_args(DIAGNOSTICS_LOOKBACK_MINUTES),
     ]
 
     logger.warning("hotspot diagnostics begin")
@@ -101,12 +93,12 @@ def _emit_diagnostics(
     logger.warning("hotspot diagnostics end")
 
 
-def _log_summary(status: str, ap: HotspotApConfig, health: HealthState) -> None:
+def _log_summary(status: str, health: HealthState) -> None:
     LOGGER.info(
         "hotspot health status=%s active=%s iface=%s ip_ok=%s channel=%s last_error=%s issues=%s",
         status,
         "yes" if health.ap_conn_active else "no",
-        ap.ifname,
+        HOTSPOT_IFNAME,
         "yes" if health.ip_ok else "no",
         health.channel or "unknown",
         health.last_error_category,
@@ -115,28 +107,27 @@ def _log_summary(status: str, ap: HotspotApConfig, health: HealthState) -> None:
 
 
 def run_self_heal_once(
-    ap: HotspotApConfig,
-    self_heal: HotspotSelfHealConfig,
+    ap: HotspotCredentials,
     runner: CommandRunner,
     state_store: HealStateStore,
     diagnostics_only: bool = False,
 ) -> int:
     """Run one self-heal cycle; return 0 when healthy/recovered, else 2."""
     if diagnostics_only:
-        _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+        _emit_diagnostics(runner, LOGGER)
         return 0
 
-    health = collect_health(ap, self_heal, runner)
+    health = collect_health(runner)
     if health.ok:
-        _log_summary("ok", ap, health)
+        _log_summary("ok", health)
         return 0
 
-    _log_summary("degraded", ap, health)
-    _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+    _log_summary("degraded", health)
+    _emit_diagnostics(runner, LOGGER)
 
-    actions = apply_heals(ap, self_heal, health, runner, state_store)
+    actions = apply_heals(ap, health, runner, state_store)
 
-    post_heal_health = collect_health(ap, self_heal, runner)
+    post_heal_health = collect_health(runner)
     status = "healed" if post_heal_health.ok else "failed"
 
     for action in actions:
@@ -149,19 +140,19 @@ def run_self_heal_once(
             "yes" if action.helped else "no",
         )
 
-    _log_summary(status, ap, post_heal_health)
+    _log_summary(status, post_heal_health)
     if not post_heal_health.ok:
-        _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+        _emit_diagnostics(runner, LOGGER)
         return 2
     return 0
 
 
 def run_self_heal(
-    ap: HotspotApConfig,
-    self_heal: HotspotSelfHealConfig,
+    ap: HotspotCredentials,
+    state_file: Path,
     diagnostics_only: bool = False,
 ) -> int:
-    """Run one self-heal cycle with the given configuration."""
+    """Run one self-heal cycle, persisting restart backoff state in *state_file*."""
     runner = CommandRunner()
-    store = HealStateStore(self_heal.state_file)
-    return run_self_heal_once(ap, self_heal, runner, store, diagnostics_only=diagnostics_only)
+    store = HealStateStore(state_file)
+    return run_self_heal_once(ap, runner, store, diagnostics_only=diagnostics_only)

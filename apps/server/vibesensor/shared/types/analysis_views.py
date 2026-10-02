@@ -7,24 +7,18 @@ the HTTP/OpenAPI response schema.
 
 from __future__ import annotations
 
-from typing import Any, Required, TypedDict
+from typing import Any, TypedDict
 
 from pydantic import ConfigDict
 
 __all__ = [
-    "AmpVsPhaseRow",
     "FindingEvidenceMetrics",
-    "FreqVsSpeedByFindingSeries",
     "LocationHotspotPayload",
-    "MatchedAmpVsSpeedSeries",
     "MatchedPoint",
     "PeakTableRow",
-    "PhaseBoundary",
     "PhaseEvidence",
-    "PhaseSegmentOut",
     "PhaseSpeedBreakdownRow",
     "PlotDataResult",
-    "SpectrogramResult",
     "SpeedBreakdownRow",
 ]
 
@@ -135,77 +129,14 @@ class PhaseSpeedBreakdownRow(TypedDict):
     max_vibration_strength_db: float | None
 
 
-class SpectrogramResult(TypedDict, total=False):
-    """Typed HTTP contract for a serialized spectrogram grid."""
-
-    x_axis: Required[str]
-    x_label_key: Required[str]
-    x_bins: Required[list[float]]
-    y_bins: Required[list[float]]
-    cells: Required[list[list[float]]]
-    max_amp: Required[float]
-    x_bin_width: float | None
-    y_bin_width: float | None
-
-
-class MatchedAmpVsSpeedSeries(TypedDict):
-    """Typed HTTP contract for one finding's amp-vs-speed series."""
-
-    label: str
-    points: list[tuple[float, float]]
-
-
-class FreqVsSpeedByFindingSeries(TypedDict):
-    """Typed HTTP contract for one finding's freq-vs-speed series."""
-
-    label: str
-    matched: list[tuple[float, float]]
-    predicted: list[tuple[float, float]]
-
-
-class AmpVsPhaseRow(TypedDict):
-    """Typed HTTP contract for one phase-grouped vibration aggregate row."""
-
-    phase: str
-    count: int
-    mean_vib_db: float
-    max_vib_db: float | None
-    mean_speed_kmh: float | None
-
-
-class PhaseSegmentOut(TypedDict):
-    """Typed HTTP contract for a serialized driving-phase segment."""
-
-    phase: str
-    start_t_s: float | None
-    end_t_s: float | None
-
-
-class PhaseBoundary(TypedDict):
-    """Typed HTTP contract for a phase-boundary marker."""
-
-    phase: str
-    t_s: float | None
-    end_t_s: float | None
-
-
 class PlotDataResult(TypedDict):
-    """Typed HTTP contract for serialized plot data attached to a run summary."""
+    """Typed HTTP contract for the ``plots`` section of a run summary.
 
-    vib_magnitude: list[tuple[float, float, str]]
-    dominant_freq: list[tuple[float, float]]
-    amp_vs_speed: list[tuple[float, float]]
-    amp_vs_phase: list[AmpVsPhaseRow]
-    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries]
-    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries]
-    steady_speed_distribution: dict[str, float] | None
-    fft_spectrum: list[tuple[float, float]]
-    fft_spectrum_raw: list[tuple[float, float]]
-    peaks_spectrogram: SpectrogramResult
-    peaks_spectrogram_raw: SpectrogramResult
+    Only the ranked peak table is produced. Runs persisted by older versions may
+    still carry additional plot series; they are ignored on validation.
+    """
+
     peaks_table: list[PeakTableRow]
-    phase_segments: list[PhaseSegmentOut]
-    phase_boundaries: list[PhaseBoundary]
 
 
 def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
@@ -217,13 +148,7 @@ _configure_pydantic_schema(MatchedPoint, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(PhaseEvidence, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(LocationHotspotPayload, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(FindingEvidenceMetrics, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(SpectrogramResult, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(PlotDataResult, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 
 _configure_pydantic_schema(SpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
 _configure_pydantic_schema(PhaseSpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(MatchedAmpVsSpeedSeries, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(FreqVsSpeedByFindingSeries, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(AmpVsPhaseRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PhaseSegmentOut, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PhaseBoundary, _IGNORE_EXTRA_TYPEDDICT_CONFIG)

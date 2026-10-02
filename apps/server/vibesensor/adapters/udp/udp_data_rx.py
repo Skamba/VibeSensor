@@ -13,7 +13,6 @@ import time
 from typing import Protocol, cast
 
 import numpy as np
-from opentelemetry.trace import SpanKind
 
 from vibesensor.adapters.udp.protocol import (
     MSG_DATA,
@@ -27,7 +26,6 @@ from vibesensor.infra.processing import SignalProcessor
 from vibesensor.infra.runtime.registry import ClientRegistry, DataUpdateResult
 from vibesensor.shared.exceptions import ProtocolError
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
-from vibesensor.shared.tracing import mark_span_error, start_span
 
 LOGGER = logging.getLogger(__name__)
 
@@ -157,34 +155,10 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         *,
         received_mono_s: float | None = None,
     ) -> None:
-        with start_span(
-            __name__,
-            "udp.data.dispatch",
-            kind=SpanKind.CONSUMER,
-            attributes={
-                "net.peer.ip": addr[0],
-                "net.peer.port": addr[1],
-            },
-        ) as span:
-            msg = self._parse_data_message(data, addr)
-            if msg is None:
-                span.set_attribute("vibesensor.datagram.accepted", False)
-                return
-            span.set_attribute("vibesensor.datagram.accepted", True)
-            span.set_attribute("vibesensor.client_id", msg.client_id.hex())
-            span.set_attribute("vibesensor.sample_count", len(msg.samples))
-            try:
-                result = self._dispatch_data_message(
-                    msg,
-                    addr,
-                    received_mono_s=received_mono_s,
-                )
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
-            span.set_attribute("vibesensor.is_duplicate", result.is_duplicate)
-            span.set_attribute("vibesensor.is_late", result.is_late)
-            span.set_attribute("vibesensor.reset_detected", result.reset_detected)
+        msg = self._parse_data_message(data, addr)
+        if msg is None:
+            return
+        self._dispatch_data_message(msg, addr, received_mono_s=received_mono_s)
 
     def _parse_data_message(self, data: bytes, addr: tuple[str, int]) -> DataMessage | None:
         try:

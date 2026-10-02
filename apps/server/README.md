@@ -201,18 +201,13 @@ analysis/reporting. Persisted sensor display metadata also lives in that shared
 settings snapshot, while `ClientRegistry` remains the owner of live
 transport/connection state only.
 
-For live sensor presence, `processing.client_live_ttl_seconds` controls how long
-`/api/clients` and `/ws` keep reporting `connected: true` after the last
-packet. `processing.client_ttl_seconds` is the longer retention/eviction window
-for keeping stale clients and their metadata available after they stop sending
-traffic.
+For live sensor presence, `ClientRegistry` keeps reporting `connected: true` on
+`/api/clients` and `/ws` for 10 s after the last packet, and keeps stale clients
+and their metadata for 120 s before evicting them (see
+`vibesensor/infra/runtime/registry.py`).
 
-For persisted run history on Pi-class devices, `logging.run_retention_days`
-controls how many days of terminal (`complete` / `error`) runs are kept before
-startup maintenance prunes them automatically. The default is `7`. If raw
-waveform sidecars should expire earlier than the compact run summaries, lower
-`logging.raw_capture_retention_days`; startup maintenance will prune raw capture
-first while leaving the summary row available in history.
+Startup maintenance prunes terminal (`complete` / `error`) runs older than 7 days
+(`RUN_RETENTION_DAYS` in `vibesensor/app/composition/history.py`).
 
 ## Environment variables
 

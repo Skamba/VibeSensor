@@ -32,9 +32,6 @@ def _make_runtime(started: list[str]) -> LifecycleRuntime:
         history_db_path=None,
         udp_data_host="0.0.0.0",
         udp_data_port=9000,
-        udp_data_queue_maxsize=64,
-        gpsd_host="127.0.0.1",
-        gpsd_port=2947,
         shutdown_analysis_timeout_s=5.0,
         registry=MagicMock(),
         processor=MagicMock(),
@@ -168,7 +165,6 @@ class TestUdpTransport:
                 registry=runtime.registry,
                 processor=runtime.processor,
                 raw_capture_sink=runtime.run_recorder,
-                queue_maxsize=64,
                 ingest_diagnostics=runtime.ingest_diagnostics,
             )
         finally:

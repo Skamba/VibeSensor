@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.adapters.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME, HOTSPOT_IP
 from vibesensor.adapters.hotspot.health_probe import HealthState, collect_health
 from vibesensor.adapters.hotspot.parsers import HealStateStore
 from vibesensor.adapters.hotspot.remediation import _ensure_ap_connection, apply_heals
@@ -54,7 +55,7 @@ def _nmcli_modify_cmd(ap: APConfig) -> tuple[str, ...]:
         "nmcli",
         "connection",
         "modify",
-        ap.con_name,
+        HOTSPOT_CON_NAME,
         "802-11-wireless.mode",
         "ap",
         "802-11-wireless.band",
@@ -64,7 +65,7 @@ def _nmcli_modify_cmd(ap: APConfig) -> tuple[str, ...]:
         "ipv4.method",
         "shared",
         "ipv4.addresses",
-        ap.ip,
+        HOTSPOT_IP,
         "ipv6.method",
         "ignore",
     ]
@@ -90,29 +91,14 @@ def _resolved_stub_write_cmd() -> tuple[str, ...]:
     )
 
 
-def _self_heal_cfg(
-    tmp_path: Path,
-) -> APSelfHealConfig:
-    return APSelfHealConfig(
-        enabled=True,
-        diagnostics_lookback_minutes=5,
-        min_restart_interval_seconds=0,
-        state_file=tmp_path / "hotspot-self-heal-state.json",
-    )
-
-
 def _ap_cfg(tmp_path: Path) -> APConfig:
-    self_heal = _self_heal_cfg(
-        tmp_path,
-    )
     return APConfig(
         ssid="VibeSensor",
         psk="",
-        ip="10.4.0.1/24",
-        channel=7,
-        ifname="wlan0",
-        con_name="VibeSensor-AP",
-        self_heal=self_heal,
+        self_heal=APSelfHealConfig(
+            enabled=True,
+            state_file=tmp_path / "hotspot-self-heal-state.json",
+        ),
     )
 
 
@@ -125,17 +111,17 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
         ("nmcli", "-t", "-f", "WIFI", "general", "status"): [_ok("enabled")],
         ("nmcli", "device", "status"): [_ok("DEVICE  TYPE  STATE  CONNECTION")],
         ("nmcli", "general", "status"): [_ok("STATE connected")],
-        ("nmcli", "connection", "show", ap.con_name): [_ok("connection.id:VibeSensor-AP")],
+        ("nmcli", "connection", "show", HOTSPOT_CON_NAME): [_ok("connection.id:VibeSensor-AP")],
         ("nmcli", "connection", "show", "--active"): [
-            _ok(f"NAME  DEVICE\n{ap.con_name}  {ap.ifname}"),
+            _ok(f"NAME  DEVICE\n{HOTSPOT_CON_NAME}  {HOTSPOT_IFNAME}"),
         ],
-        ("ip", "addr", "show", "dev", ap.ifname): [_ok("3: wlan0\n    inet 10.4.0.1/24")],
+        ("ip", "addr", "show", "dev", HOTSPOT_IFNAME): [_ok("3: wlan0\n    inet 10.4.0.1/24")],
         ("rfkill", "list"): [_ok("0: phy0: Wireless LAN\n\tSoft blocked: no\n\tHard blocked: no")],
-        ("ip", "link", "show", "dev", ap.ifname): [
+        ("ip", "link", "show", "dev", HOTSPOT_IFNAME): [
             _ok("2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP"),
         ],
-        ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok(f"{ap.con_name}\n")],
-        ("nmcli", "connection", "delete", ap.con_name): [_ok("")],
+        ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok(f"{HOTSPOT_CON_NAME}\n")],
+        ("nmcli", "connection", "delete", HOTSPOT_CON_NAME): [_ok("")],
         (
             "nmcli",
             "connection",
@@ -143,21 +129,21 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
             "type",
             "wifi",
             "ifname",
-            ap.ifname,
+            HOTSPOT_IFNAME,
             "con-name",
-            ap.con_name,
+            HOTSPOT_CON_NAME,
             "autoconnect",
             "yes",
             "ssid",
             ap.ssid,
         ): [_ok("")],
         ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [
-            _ok(f"{ap.con_name}:{ap.ifname}\n"),
+            _ok(f"{HOTSPOT_CON_NAME}:{HOTSPOT_IFNAME}\n"),
         ],
-        ("iw", "dev", ap.ifname, "info"): [
+        ("iw", "dev", HOTSPOT_IFNAME, "info"): [
             _ok("Interface wlan0\n\ttype AP\n\tchannel 7 (2442 MHz)"),
         ],
-        ("ip", "-4", "addr", "show", "dev", ap.ifname): [
+        ("ip", "-4", "addr", "show", "dev", HOTSPOT_IFNAME): [
             _ok("3: wlan0\n    inet 10.4.0.1/24 brd 10.4.0.255 scope global wlan0"),
         ],
         (
@@ -185,7 +171,7 @@ def _collect_health_for(
     if overrides:
         responses.update(overrides)
     runner = _FakeRunner(responses)
-    return collect_health(ap, ap.self_heal, runner)
+    return collect_health(runner)
 
 
 def _healthy_state() -> HealthState:
@@ -308,7 +294,6 @@ def test_run_self_heal_restarts_networkmanager_when_stopped(tmp_path: Path) -> N
 
     exit_code = run_self_heal_once(
         ap,
-        ap.self_heal,
         runner,
         HealStateStore(ap.self_heal.state_file),
         diagnostics_only=False,
@@ -327,7 +312,7 @@ def test_apply_heals_restarts_networkmanager_when_stopped(tmp_path: Path) -> Non
     health.last_error_category = "networkmanager_down"
     health.issues = ["networkmanager_down"]
 
-    actions = apply_heals(ap, ap.self_heal, health, runner, store)
+    actions = apply_heals(ap, health, runner, store)
 
     assert [action.name for action in actions] == ["restart_networkmanager"]
     assert actions[0].action == "systemctl restart NetworkManager"
@@ -338,8 +323,8 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
     ap = _ap_cfg(tmp_path)
     runner = _FakeRunner(
         {
-            ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok(f"{ap.con_name}\n")],
-            ("nmcli", "connection", "delete", ap.con_name): [_ok("")],
+            ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok(f"{HOTSPOT_CON_NAME}\n")],
+            ("nmcli", "connection", "delete", HOTSPOT_CON_NAME): [_ok("")],
             (
                 "nmcli",
                 "connection",
@@ -347,22 +332,22 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
                 "type",
                 "wifi",
                 "ifname",
-                ap.ifname,
+                HOTSPOT_IFNAME,
                 "con-name",
-                ap.con_name,
+                HOTSPOT_CON_NAME,
                 "autoconnect",
                 "yes",
                 "ssid",
                 ap.ssid,
             ): [_ok("")],
             _nmcli_modify_cmd(ap): [_ok("")],
-            ("nmcli", "--wait", "12", "connection", "up", ap.con_name): [_ok("")],
+            ("nmcli", "--wait", "12", "connection", "up", HOTSPOT_CON_NAME): [_ok("")],
         },
     )
 
     success = _ensure_ap_connection(ap, runner)
     assert success
-    assert ("nmcli", "connection", "delete", ap.con_name) in runner.commands
+    assert ("nmcli", "connection", "delete", HOTSPOT_CON_NAME) in runner.commands
     assert _nmcli_modify_cmd(ap) in runner.commands
     assert "802-11-wireless-security.key-mgmt" not in _nmcli_modify_cmd(ap)
 
@@ -382,12 +367,11 @@ def test_run_self_heal_port53_conflict_disables_resolved_stub(tmp_path: Path) ->
     responses[_resolved_stub_write_cmd()] = [_ok("")]
     responses[("systemctl", "restart", "NetworkManager")] = [_ok("")]
     responses[_nmcli_modify_cmd(ap)] = [_ok("")]
-    responses[("nmcli", "--wait", "12", "connection", "up", ap.con_name)] = [_ok(""), _ok("")]
+    responses[("nmcli", "--wait", "12", "connection", "up", HOTSPOT_CON_NAME)] = [_ok(""), _ok("")]
     runner = _FakeRunner(responses)
 
     exit_code = run_self_heal_once(
         ap,
-        ap.self_heal,
         runner,
         HealStateStore(ap.self_heal.state_file),
         diagnostics_only=False,

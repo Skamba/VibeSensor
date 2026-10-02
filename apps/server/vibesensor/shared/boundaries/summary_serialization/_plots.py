@@ -1,4 +1,4 @@
-"""Plot, spectrogram, and table serialization helpers."""
+"""Phase, speed-breakdown, and peak-table serialization helpers."""
 
 from __future__ import annotations
 
@@ -8,15 +8,8 @@ from typing import Protocol
 
 from vibesensor.domain import DrivingPhase
 from vibesensor.shared.types.analysis_views import (
-    AmpVsPhaseRow,
-    FreqVsSpeedByFindingSeries,
-    MatchedAmpVsSpeedSeries,
     PeakTableRow,
-    PhaseBoundary,
-    PhaseSegmentOut,
     PhaseSpeedBreakdownRow,
-    PlotDataResult,
-    SpectrogramResult,
     SpeedBreakdownRow,
 )
 from vibesensor.shared.types.history_analysis_contracts import (
@@ -85,103 +78,6 @@ class PeakTableRowLike(Protocol):
     def peak_classification(self) -> str: ...
     @property
     def typical_speed_band(self) -> str: ...
-
-
-class SpectrogramResultLike(Protocol):
-    @property
-    def x_axis(self) -> str: ...
-    @property
-    def x_label_key(self) -> str: ...
-    @property
-    def x_bins(self) -> Sequence[float]: ...
-    @property
-    def y_bins(self) -> Sequence[float]: ...
-    @property
-    def cells(self) -> Sequence[Sequence[float]]: ...
-    @property
-    def max_amp(self) -> float: ...
-    @property
-    def x_bin_width(self) -> float | None: ...
-    @property
-    def y_bin_width(self) -> float | None: ...
-
-
-class AmpVsPhaseRowLike(Protocol):
-    @property
-    def phase(self) -> str: ...
-    @property
-    def count(self) -> int: ...
-    @property
-    def mean_vib_db(self) -> float: ...
-    @property
-    def max_vib_db(self) -> float | None: ...
-    @property
-    def mean_speed_kmh(self) -> float | None: ...
-
-
-class MatchedAmpVsSpeedSeriesLike(Protocol):
-    @property
-    def label(self) -> str: ...
-    @property
-    def points(self) -> Sequence[tuple[float, float]]: ...
-
-
-class FreqVsSpeedByFindingSeriesLike(Protocol):
-    @property
-    def label(self) -> str: ...
-    @property
-    def matched(self) -> Sequence[tuple[float, float]]: ...
-    @property
-    def predicted(self) -> Sequence[tuple[float, float]]: ...
-
-
-class PhaseSegmentPlotLike(Protocol):
-    @property
-    def phase(self) -> str: ...
-    @property
-    def start_t_s(self) -> float | None: ...
-    @property
-    def end_t_s(self) -> float | None: ...
-
-
-class PhaseBoundaryLike(Protocol):
-    @property
-    def phase(self) -> str: ...
-    @property
-    def t_s(self) -> float | None: ...
-    @property
-    def end_t_s(self) -> float | None: ...
-
-
-class PlotDataResultLike(Protocol):
-    @property
-    def vib_magnitude(self) -> Sequence[tuple[float, float, str]]: ...
-    @property
-    def dominant_freq(self) -> Sequence[tuple[float, float]]: ...
-    @property
-    def amp_vs_speed(self) -> Sequence[tuple[float, float]]: ...
-    @property
-    def amp_vs_phase(self) -> Sequence[AmpVsPhaseRowLike]: ...
-    @property
-    def matched_amp_vs_speed(self) -> Sequence[MatchedAmpVsSpeedSeriesLike]: ...
-    @property
-    def freq_vs_speed_by_finding(self) -> Sequence[FreqVsSpeedByFindingSeriesLike]: ...
-    @property
-    def steady_speed_distribution(self) -> dict[str, float] | None: ...
-    @property
-    def fft_spectrum(self) -> Sequence[tuple[float, float]]: ...
-    @property
-    def fft_spectrum_raw(self) -> Sequence[tuple[float, float]]: ...
-    @property
-    def peaks_spectrogram(self) -> SpectrogramResultLike: ...
-    @property
-    def peaks_spectrogram_raw(self) -> SpectrogramResultLike: ...
-    @property
-    def peaks_table(self) -> Sequence[PeakTableRowLike]: ...
-    @property
-    def phase_segments(self) -> Sequence[PhaseSegmentPlotLike]: ...
-    @property
-    def phase_boundaries(self) -> Sequence[PhaseBoundaryLike]: ...
 
 
 class PhaseSegmentLike(Protocol):
@@ -289,86 +185,3 @@ def serialize_peak_table(
         }
         payload_rows.append(payload)
     return payload_rows
-
-
-def serialize_spectrogram(result: SpectrogramResultLike) -> SpectrogramResult:
-    """Project a spectrogram result into a JSON-safe persisted payload."""
-    payload: SpectrogramResult = {
-        "x_axis": result.x_axis,
-        "x_label_key": result.x_label_key,
-        "x_bins": list(result.x_bins),
-        "y_bins": list(result.y_bins),
-        "cells": [list(row) for row in result.cells],
-        "max_amp": result.max_amp,
-    }
-    if result.x_bin_width is not None:
-        payload["x_bin_width"] = result.x_bin_width
-    if result.y_bin_width is not None:
-        payload["y_bin_width"] = result.y_bin_width
-    return payload
-
-
-def serialize_plot_data(plot_data: PlotDataResultLike) -> PlotDataResult:
-    """Project composite plot data into the persisted summary payload shape."""
-    amp_vs_phase: list[AmpVsPhaseRow] = []
-    for phase_row in plot_data.amp_vs_phase:
-        phase_payload: AmpVsPhaseRow = {
-            "phase": phase_row.phase,
-            "count": phase_row.count,
-            "mean_vib_db": phase_row.mean_vib_db,
-            "max_vib_db": phase_row.max_vib_db,
-            "mean_speed_kmh": phase_row.mean_speed_kmh,
-        }
-        amp_vs_phase.append(phase_payload)
-
-    matched_amp_vs_speed: list[MatchedAmpVsSpeedSeries] = []
-    for matched_row in plot_data.matched_amp_vs_speed:
-        matched_payload: MatchedAmpVsSpeedSeries = {
-            "label": matched_row.label,
-            "points": list(matched_row.points),
-        }
-        matched_amp_vs_speed.append(matched_payload)
-
-    freq_vs_speed_by_finding: list[FreqVsSpeedByFindingSeries] = []
-    for freq_row in plot_data.freq_vs_speed_by_finding:
-        freq_payload: FreqVsSpeedByFindingSeries = {
-            "label": freq_row.label,
-            "matched": list(freq_row.matched),
-            "predicted": list(freq_row.predicted),
-        }
-        freq_vs_speed_by_finding.append(freq_payload)
-
-    phase_segments: list[PhaseSegmentOut] = []
-    for segment_row in plot_data.phase_segments:
-        segment_payload: PhaseSegmentOut = {
-            "phase": segment_row.phase,
-            "start_t_s": segment_row.start_t_s,
-            "end_t_s": segment_row.end_t_s,
-        }
-        phase_segments.append(segment_payload)
-
-    phase_boundaries: list[PhaseBoundary] = []
-    for boundary_row in plot_data.phase_boundaries:
-        boundary_payload: PhaseBoundary = {
-            "phase": boundary_row.phase,
-            "t_s": boundary_row.t_s,
-            "end_t_s": boundary_row.end_t_s,
-        }
-        phase_boundaries.append(boundary_payload)
-
-    return {
-        "vib_magnitude": list(plot_data.vib_magnitude),
-        "dominant_freq": list(plot_data.dominant_freq),
-        "amp_vs_speed": list(plot_data.amp_vs_speed),
-        "amp_vs_phase": amp_vs_phase,
-        "matched_amp_vs_speed": matched_amp_vs_speed,
-        "freq_vs_speed_by_finding": freq_vs_speed_by_finding,
-        "steady_speed_distribution": plot_data.steady_speed_distribution,
-        "fft_spectrum": list(plot_data.fft_spectrum),
-        "fft_spectrum_raw": list(plot_data.fft_spectrum_raw),
-        "peaks_spectrogram": serialize_spectrogram(plot_data.peaks_spectrogram),
-        "peaks_spectrogram_raw": serialize_spectrogram(plot_data.peaks_spectrogram_raw),
-        "peaks_table": serialize_peak_table(plot_data.peaks_table),
-        "phase_segments": phase_segments,
-        "phase_boundaries": phase_boundaries,
-    }

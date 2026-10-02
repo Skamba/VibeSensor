@@ -11,12 +11,10 @@ from typing import TypeGuard
 ROOT = Path(__file__).resolve().parents[2]
 SHARED_ROOT = ROOT / "apps" / "server" / "vibesensor" / "shared"
 DOMAIN_ROOT = ROOT / "apps" / "server" / "vibesensor" / "domain"
-APP_ROOT = ROOT / "apps" / "server" / "vibesensor" / "app"
 SERVER_ROOT = ROOT / "apps" / "server" / "vibesensor"
 LOCATIONS_PATH = SHARED_ROOT / "locations.py"
 ANALYSIS_SETTINGS_PATH = DOMAIN_ROOT / "analysis_settings.py"
 DSP_CONSTANTS_PATH = SHARED_ROOT / "constants" / "dsp.py"
-CONFIG_DEFAULTS_PATH = APP_ROOT / "config_defaults.py"
 VIBRATION_STRENGTH_PATH = SERVER_ROOT / "vibration_strength.py"
 
 
@@ -93,25 +91,6 @@ def _load_string_constant(module_path: Path, constant_name: str) -> str:
     return value
 
 
-def _load_processing_sample_rate_hz() -> int | float:
-    value = _load_literal_constant(CONFIG_DEFAULTS_PATH, "DEFAULT_CONFIG")
-    if not isinstance(value, dict):
-        msg = f"{CONFIG_DEFAULTS_PATH}::DEFAULT_CONFIG must be a dict literal"
-        raise ValueError(msg)
-    processing = value.get("processing")
-    if not isinstance(processing, dict):
-        msg = f"{CONFIG_DEFAULTS_PATH}::DEFAULT_CONFIG['processing'] must be a dict literal"
-        raise ValueError(msg)
-    sample_rate_hz = processing.get("sample_rate_hz")
-    if not isinstance(sample_rate_hz, (int, float)) or isinstance(sample_rate_hz, bool):
-        msg = (
-            f"{CONFIG_DEFAULTS_PATH}::DEFAULT_CONFIG['processing']['sample_rate_hz'] "
-            "must be numeric"
-        )
-        raise ValueError(msg)
-    return sample_rate_hz
-
-
 def _render_export(name: str, value: object) -> str:
     return f"export const {name} = {json.dumps(value, indent=2)} as const;\n"
 
@@ -122,7 +101,7 @@ def render_ui_shared_constants_module() -> str:
         ANALYSIS_SETTINGS_PATH, "ANALYSIS_SETTINGS_DEFAULTS"
     )
     live_analysis_config = {
-        "sampleRateHz": _load_processing_sample_rate_hz(),
+        "sampleRateHz": _load_number_constant(DSP_CONSTANTS_PATH, "SAMPLE_RATE_HZ"),
         "fftWindowSizeSamples": _load_number_constant(DSP_CONSTANTS_PATH, "FFT_N"),
         "spectrumMinHz": _load_number_constant(DSP_CONSTANTS_PATH, "SPECTRUM_MIN_HZ"),
         "spectrumMaxHz": _load_number_constant(DSP_CONSTANTS_PATH, "SPECTRUM_MAX_HZ"),

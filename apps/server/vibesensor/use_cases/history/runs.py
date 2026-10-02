@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Never, cast
-
-from opentelemetry.trace import Span, SpanKind
 
 from vibesensor.domain import RunStatus
 from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_array
 from vibesensor.use_cases.history.helpers import (
@@ -22,15 +17,6 @@ from vibesensor.use_cases.history.helpers import (
     resolve_run_language,
     strip_internal_fields,
 )
-
-
-@contextmanager
-def _mark_history_span_errors(span: Span) -> Iterator[None]:
-    try:
-        yield
-    except Exception as exc:
-        mark_span_error(span, exc)
-        raise
 
 
 class HistoryRunService:
@@ -42,23 +28,10 @@ class HistoryRunService:
         self._history_db = history_db
 
     async def list_runs(self) -> list[HistoryRunListEntry]:
-        with start_span(__name__, "history.runs.list", kind=SpanKind.INTERNAL) as span:
-            with _mark_history_span_errors(span):
-                runs = await asyncio.to_thread(self._history_db.list_runs)
-            span.set_attribute("vibesensor.run_count", len(runs))
-            return runs
+        return await asyncio.to_thread(self._history_db.list_runs)
 
     async def get_run(self, run_id: str) -> StoredHistoryRun:
-        with start_span(
-            __name__,
-            "history.run.get",
-            kind=SpanKind.INTERNAL,
-            attributes={"vibesensor.run_id": run_id},
-        ) as span:
-            with _mark_history_span_errors(span):
-                run = await async_require_run(self._history_db, run_id)
-            span.set_attribute("vibesensor.run_status", run.status.value)
-            return run
+        return await async_require_run(self._history_db, run_id)
 
     async def get_insights(
         self,
@@ -66,62 +39,36 @@ class HistoryRunService:
         requested_lang: str | None = None,
     ) -> JsonObject | None:
         """Return analysis insights for a run, or ``None`` if still analyzing."""
-        with start_span(
-            __name__,
-            "history.run.insights",
-            kind=SpanKind.INTERNAL,
-            attributes={
-                "vibesensor.run_id": run_id,
-                "vibesensor.requested_lang": requested_lang or "",
-            },
-        ) as span:
-            with _mark_history_span_errors(span):
-                run = await async_require_run(self._history_db, run_id)
-                if (
-                    run.lifecycle is not None
-                    and run.lifecycle.stage != "recording"
-                    and run.lifecycle.post_analysis in {"pending", "running"}
-                ):
-                    span.set_attribute("vibesensor.analysis_ready", False)
-                    return None
-                if run.status == RunStatus.ANALYZING:
-                    span.set_attribute("vibesensor.analysis_ready", False)
-                    return None
+        run = await async_require_run(self._history_db, run_id)
+        if (
+            run.lifecycle is not None
+            and run.lifecycle.stage != "recording"
+            and run.lifecycle.post_analysis in {"pending", "running"}
+        ):
+            return None
+        if run.status == RunStatus.ANALYZING:
+            return None
 
-                raw_analysis = require_analysis_ready(run)
-                analysis = strip_internal_fields(raw_analysis.payload)
-                response_lang = resolve_run_language(run, requested_lang)
-                raw_warnings = analysis.get("warnings")
-                analysis["warnings"] = cast(
-                    JsonValue,
-                    localize_warning_list(
-                        raw_warnings if is_json_array(raw_warnings) else None,
-                        lang=response_lang,
-                    ),
-                )
-                analysis["run_id"] = run.run_id or run_id
-                analysis["status"] = RunStatus.COMPLETE.value
-            span.set_attribute("vibesensor.analysis_ready", True)
-            span.set_attribute("vibesensor.response_lang", response_lang)
-            return analysis
+        raw_analysis = require_analysis_ready(run)
+        analysis = strip_internal_fields(raw_analysis.payload)
+        response_lang = resolve_run_language(run, requested_lang)
+        raw_warnings = analysis.get("warnings")
+        analysis["warnings"] = cast(
+            JsonValue,
+            localize_warning_list(
+                raw_warnings if is_json_array(raw_warnings) else None,
+                lang=response_lang,
+            ),
+        )
+        analysis["run_id"] = run.run_id or run_id
+        analysis["status"] = RunStatus.COMPLETE.value
+        return analysis
 
     async def delete_run(self, run_id: str) -> dict[str, str]:
-        with start_span(
-            __name__,
-            "history.run.delete",
-            kind=SpanKind.INTERNAL,
-            attributes={"vibesensor.run_id": run_id},
-        ) as span:
-            with _mark_history_span_errors(span):
-                deleted, reason = await asyncio.to_thread(
-                    self._history_db.delete_run_if_safe, run_id
-                )
-                if deleted:
-                    span.set_attribute("vibesensor.deleted", True)
-                    return {"run_id": run_id, "status": "deleted"}
-                span.set_attribute("vibesensor.deleted", False)
-                span.set_attribute("vibesensor.delete_reason", reason or "")
-                raise_delete_run_error(reason)
+        deleted, reason = await asyncio.to_thread(self._history_db.delete_run_if_safe, run_id)
+        if deleted:
+            return {"run_id": run_id, "status": "deleted"}
+        raise_delete_run_error(reason)
 
 
 def raise_delete_run_error(reason: str | None) -> Never:

@@ -5,6 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from vibesensor.adapters.hotspot.constants import (
+    DIAGNOSTICS_LOOKBACK_MINUTES,
+    HOTSPOT_CON_NAME,
+    HOTSPOT_IFNAME,
+    HOTSPOT_IP,
+)
 from vibesensor.adapters.hotspot.parsers import (
     expected_ip_match,
     nm_log_signals,
@@ -17,11 +23,7 @@ from vibesensor.adapters.hotspot.parsers import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.hotspot.self_heal import (
-        CommandRunner,
-        HotspotApConfig,
-        HotspotSelfHealConfig,
-    )
+    from vibesensor.adapters.hotspot.self_heal import CommandRunner
 
 __all__ = ["HealthState", "collect_health"]
 
@@ -87,11 +89,7 @@ def _find_port53_conflict(runner: CommandRunner) -> str | None:
     return parse_port53_conflict(ss.stdout)
 
 
-def collect_health(
-    ap: HotspotApConfig,
-    self_heal: HotspotSelfHealConfig,
-    runner: CommandRunner,
-) -> HealthState:
+def collect_health(runner: CommandRunner) -> HealthState:
     """Collect the current hotspot health state by running diagnostic commands."""
     issues: list[str] = []
 
@@ -112,7 +110,7 @@ def collect_health(
     if rfkill_blocked:
         issues.append("rfkill_blocked")
 
-    iface = runner.run(["ip", "link", "show", "dev", ap.ifname], timeout_s=5)
+    iface = runner.run(["ip", "link", "show", "dev", HOTSPOT_IFNAME], timeout_s=5)
     iface_exists = iface.returncode == 0
     iface_up = iface_exists and " state UP " in f" {iface.stdout} "
     if not iface_exists:
@@ -122,7 +120,7 @@ def collect_health(
 
     con_list = runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=5)
     con_names = parse_active_connection_names(con_list.stdout)
-    ap_conn_exists = ap.con_name in con_names
+    ap_conn_exists = HOTSPOT_CON_NAME in con_names
     if not ap_conn_exists:
         issues.append("ap_connection_missing")
 
@@ -130,13 +128,13 @@ def collect_health(
         ["nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"],
         timeout_s=5,
     )
-    ap_conn_active, active_device = parse_active_conn_device(ap.con_name, active.stdout)
+    ap_conn_active, active_device = parse_active_conn_device(HOTSPOT_CON_NAME, active.stdout)
     if not ap_conn_active:
         issues.append("ap_connection_inactive")
-    elif active_device and active_device != ap.ifname:
+    elif active_device and active_device != HOTSPOT_IFNAME:
         issues.append("ap_active_on_wrong_if")
 
-    iw_info = runner.run(["iw", "dev", ap.ifname, "info"], timeout_s=5)
+    iw_info = runner.run(["iw", "dev", HOTSPOT_IFNAME, "info"], timeout_s=5)
     ap_mode = False
     channel = None
     if iw_info.returncode == 0:
@@ -144,14 +142,14 @@ def collect_health(
     if ap_conn_active and not ap_mode:
         issues.append("iface_not_ap_mode")
 
-    ip_show = runner.run(["ip", "-4", "addr", "show", "dev", ap.ifname], timeout_s=5)
+    ip_show = runner.run(["ip", "-4", "addr", "show", "dev", HOTSPOT_IFNAME], timeout_s=5)
     actual_ip = parse_ip(ip_show.stdout) if ip_show.returncode == 0 else None
-    ip_ok = expected_ip_match(ap.ip, actual_ip)
+    ip_ok = expected_ip_match(HOTSPOT_IP, actual_ip)
     if not ip_ok:
         issues.append("ip_mismatch")
 
     nm_logs = runner.run(
-        journalctl_nm_args(self_heal.diagnostics_lookback_minutes),
+        journalctl_nm_args(DIAGNOSTICS_LOOKBACK_MINUTES),
         timeout_s=8,
     )
     dhcp_log_signal, _ = nm_log_signals(nm_logs.stdout)

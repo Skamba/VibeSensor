@@ -10,11 +10,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from opentelemetry.trace import SpanKind
-
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.use_cases.history.report_cache import HistoryReportPdfCache
 from vibesensor.use_cases.history.report_loader import HistoryReportRequestLoader
 
@@ -50,34 +47,12 @@ class HistoryReportService:
         self._pdf_renderer = pdf_renderer
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
-        with start_span(
-            __name__,
-            "history.report.build_pdf",
-            kind=SpanKind.INTERNAL,
-            attributes={
-                "vibesensor.run_id": run_id,
-                "vibesensor.requested_lang": requested_lang or "",
-            },
-        ) as span:
-            try:
-                request = await self._loader.load_report_request(run_id, requested_lang)
-                cached_pdf = self._pdf_cache.get(request.cache_key)
-                if cached_pdf is not None:
-                    stats = self._pdf_cache.stats()
-                    span.set_attribute("vibesensor.cache_hit", True)
-                    span.set_attribute("vibesensor.report_pdf_cache.entries", stats.entry_count)
-                    span.set_attribute("vibesensor.report_pdf_cache.bytes", stats.total_bytes)
-                    return HistoryReportPdf(content=cached_pdf, filename=request.filename)
-
-                pdf = await self._pdf_cache.get_or_build(
-                    request.cache_key,
-                    lambda: self._pdf_renderer(request.prepared),
-                )
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
-            stats = self._pdf_cache.stats()
-            span.set_attribute("vibesensor.cache_hit", False)
-            span.set_attribute("vibesensor.report_pdf_cache.entries", stats.entry_count)
-            span.set_attribute("vibesensor.report_pdf_cache.bytes", stats.total_bytes)
-            return HistoryReportPdf(content=pdf, filename=request.filename)
+        request = await self._loader.load_report_request(run_id, requested_lang)
+        cached_pdf = self._pdf_cache.get(request.cache_key)
+        if cached_pdf is not None:
+            return HistoryReportPdf(content=cached_pdf, filename=request.filename)
+        pdf = await self._pdf_cache.get_or_build(
+            request.cache_key,
+            lambda: self._pdf_renderer(request.prepared),
+        )
+        return HistoryReportPdf(content=pdf, filename=request.filename)

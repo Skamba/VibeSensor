@@ -26,7 +26,19 @@ Load order is:
 
 1. built-in defaults
 2. selected YAML override file
-3. typed validation/clamping from the config schema
+3. typed validation from the config schema
+
+Only settings that differ between deployments (dev, Docker, Pi, isolated test
+runtimes) or that the operator owns (hotspot SSID/PSK) are configurable. Fixed
+tuning values live as Python constants next to the code that uses them (for
+example the live sample rate in `vibesensor/shared/constants/dsp.py`, hotspot
+address/channel/interface in `vibesensor/adapters/hotspot/constants.py`, and
+run retention in `vibesensor/app/composition/history.py`).
+
+Keys that are not listed below are ignored with an
+`Ignoring unsupported config key <key>` warning, so device configs written by
+older releases (which accepted keys such as `processing.*`, `ap.channel`, or
+`logging.run_retention_days`) keep loading unchanged.
 
 For local development examples, see `apps/server/config.dev.yaml`,
 `apps/server/config.docker.yaml`, and `apps/server/config.pi.yaml`.
@@ -37,14 +49,12 @@ For local development examples, see `apps/server/config.dev.yaml`,
 |-----|---------|-------|
 | `ap.ssid` | `VibeSensor` | Hotspot SSID. Change this before real deployments. |
 | `ap.psk` | `""` | Empty string means an open AP. Set a PSK for non-prototype deployments. |
-| `ap.ip` | `10.4.0.1/24` | Hotspot subnet/address used by NetworkManager shared mode. |
-| `ap.channel` | `7` | 2.4 GHz Wi-Fi channel. The typed config accepts channels `1`-`14`. |
-| `ap.ifname` | `wlan0` | Preferred Wi-Fi interface name. The hotspot script falls back to a detected Wi-Fi device if this one is missing. |
-| `ap.con_name` | `VibeSensor-AP` | NetworkManager connection profile name for the hotspot. |
 | `ap.self_heal.enabled` | `true` | Enable the hotspot self-heal watchdog/timer. |
-| `ap.self_heal.diagnostics_lookback_minutes` | `5` | Positive integer window for hotspot diagnostics lookback. |
-| `ap.self_heal.min_restart_interval_seconds` | `120` | Minimum seconds between self-heal restarts. Non-negative integer. |
 | `ap.self_heal.state_file` | `data/hotspot-self-heal-state.json` | Writable state file used by the self-heal logic. Pi deployments override this into `/var/lib/vibesensor/`. |
+
+The hotspot address (`10.4.0.1/24`), channel (`7`, with 1/6/11 self-heal
+fallbacks), interface (`wlan0`, with a detected-device fallback), and
+NetworkManager profile name (`VibeSensor-AP`) are fixed.
 
 ## `server`
 
@@ -71,38 +81,22 @@ still set `ap.psk` and restrict who can join the local appliance network.
 | `udp.data_port` | `9000` | UDP port for sensor data. Must stay within `1`-`65535`. |
 | `udp.control_host` | `0.0.0.0` | Bind host for control/ACK traffic. |
 | `udp.control_port` | `9001` | UDP port for control traffic. Must stay within `1`-`65535`. |
-| `udp.data_queue_maxsize` | `1024` | Max async UDP queue depth before packets are dropped and counted. Must be `>= 1`. |
-
-## `processing`
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `processing.sample_rate_hz` | `800` | Expected live sample rate for metrics/FFT processing. Values below `1` clamp to `1`. |
-| `processing.waveform_seconds` | `8` | Ring-buffer window length per client. Values below `1` clamp to `1`, and very large values are clamped so `sample_rate_hz * waveform_seconds` stays within the per-client buffer limit. |
-| `processing.client_live_ttl_seconds` | `10` | How long clients remain `connected: true` after their last packet. |
-| `processing.client_ttl_seconds` | `120` | Longer metadata retention window after clients go stale. Clamped up to at least `client_live_ttl_seconds`. |
-| `processing.accel_scale_g_per_lsb` | `null` | Optional raw accelerometer scale factor. Leave unset when the sender already emits values in g. |
 
 ## `logging`
 
 | Key | Default | Notes |
 |-----|---------|-------|
 | `logging.history_db_path` | `data/history.db` | Persisted history/settings database path. Pi deployments override this to `/var/lib/vibesensor/history.db`. |
-| `logging.metrics_log_hz` | `4` | Live metrics logging cadence. Invalid values clamp up to at least `1`. |
-| `logging.no_data_timeout_s` | `15.0` | Auto-stop timeout when recording stops seeing new data. Invalid values clamp to `15.0`. |
-| `logging.persist_history_db` | `true` | Enable/disable writing run history to the DB. |
-| `logging.run_retention_days` | `7` | Startup maintenance retention window for terminal runs (`complete` / `error`). Full run deletion still removes samples plus raw/whole-run sidecars. Invalid values clamp up to at least `1`. |
-| `logging.raw_capture_retention_days` | `7` | Optional shorter retention window for raw waveform sidecars while keeping compact run summaries. Only applied when lower than `logging.run_retention_days`. Invalid values clamp up to at least `1`. |
-| `logging.shutdown_analysis_timeout_s` | `30` | How long shutdown waits for post-analysis cleanup before giving up. Invalid values clamp to `30.0`. |
 | `logging.app_log_path` | `data/app.log` | Structured JSON application-log output path. Set to `null` if file logging is not wanted. |
+
+Terminal runs older than 7 days are pruned at startup (see
+`docs/history_db_schema.md`).
 
 ## `gps`
 
 | Key | Default | Notes |
 |-----|---------|-------|
-| `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads. Disable this on dev benches or deployments without GPS hardware. |
-| `gps.gpsd_host` | `127.0.0.1` | gpsd host. |
-| `gps.gpsd_port` | `2947` | gpsd port. Must stay within `1`-`65535`. |
+| `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1:2947`). Disable this on dev benches or deployments without GPS hardware. |
 
 ## `update`
 
@@ -123,11 +117,6 @@ server:
   port: 8000
 gps:
   gps_enabled: false
-
-# retain run history longer on a device with more storage
-logging:
-  run_retention_days: 30
-  raw_capture_retention_days: 7
 ```
 
 Use `apps/server/config.pi.yaml` as the starting point for Pi installs and the

@@ -6,15 +6,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from hashlib import sha256
 
-from opentelemetry.trace import SpanKind
-
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
 from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.json_utils import json_text_dumps
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.tracing import mark_span_error, start_span
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.json_types import is_json_array
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
@@ -60,47 +57,32 @@ class HistoryReportRequestLoader:
         run_id: str,
         requested_lang: str | None,
     ) -> HistoryReportRequest:
-        with start_span(
-            __name__,
-            "history.report.load_request",
-            kind=SpanKind.INTERNAL,
-            attributes={
-                "vibesensor.run_id": run_id,
-                "vibesensor.requested_lang": requested_lang or "",
-            },
-        ) as span:
-            try:
-                run = await async_require_run(self._history_db, run_id)
-                analysis = require_analysis_ready(run)
-                analysis_for_report = self._analysis_with_report_metadata(
-                    analysis,
-                    run.metadata,
-                )
+        run = await async_require_run(self._history_db, run_id)
+        analysis = require_analysis_ready(run)
+        analysis_for_report = self._analysis_with_report_metadata(
+            analysis,
+            run.metadata,
+        )
 
-                requested_lang = self._analysis_language(run, requested_lang)
-                report_language = self._report_pdf_cache_lang(run, requested_lang)
-                raw_warnings = analysis.get("warnings")
-                warnings = raw_warnings if is_json_array(raw_warnings) else None
-                cache_key = self._report_pdf_cache_key(
-                    run,
-                    run_id,
-                    report_language,
-                )
-                filename = f"{safe_filename(run_id)}_report.pdf"
-                request = HistoryReportRequest(
-                    prepared=prepare_persisted_report_input(
-                        analysis_for_report,
-                        warnings=warnings,
-                        filename=filename,
-                        language=report_language,
-                        cache_key=cache_key,
-                    ),
-                )
-            except Exception as exc:
-                mark_span_error(span, exc)
-                raise
-            span.set_attribute("vibesensor.report_lang", report_language)
-            return request
+        requested_lang = self._analysis_language(run, requested_lang)
+        report_language = self._report_pdf_cache_lang(run, requested_lang)
+        raw_warnings = analysis.get("warnings")
+        warnings = raw_warnings if is_json_array(raw_warnings) else None
+        cache_key = self._report_pdf_cache_key(
+            run,
+            run_id,
+            report_language,
+        )
+        filename = f"{safe_filename(run_id)}_report.pdf"
+        return HistoryReportRequest(
+            prepared=prepare_persisted_report_input(
+                analysis_for_report,
+                warnings=warnings,
+                filename=filename,
+                language=report_language,
+                cache_key=cache_key,
+            ),
+        )
 
     @staticmethod
     def _metadata_cache_token(metadata: RunMetadata) -> str:
