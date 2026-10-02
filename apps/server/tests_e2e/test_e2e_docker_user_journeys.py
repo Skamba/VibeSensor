@@ -1,13 +1,12 @@
 """
-Covers E2E-1..E2E-8 user journeys in Docker full-suite CI.
+Covers E2E-1..E2E-8 user journeys against a process-backed server.
 
-Run locally via `make test-full-suite`.
+Run locally via `make test-e2e`.
 """
 
 from __future__ import annotations
 
 import math
-import os
 import re
 
 import pytest
@@ -34,6 +33,10 @@ LOCATION_CODES = (
 )
 
 
+# Journeys exercise full reports, so record several analysis windows per run.
+_SIM_DURATION_S = 8.0
+
+
 def _delete_resources(base_url: str, path_template: str, identifiers: list[str]) -> None:
     for identifier in identifiers:
         api_json(
@@ -53,12 +56,12 @@ def _circumference_m(width_mm: float, aspect_pct: float, rim_in: float) -> float
     "journey_group",
     ["clients_and_cars", "speed_export_delete", "language_pdf"],
 )
-def test_e2e_docker_user_journeys(journey_group: str) -> None:
-    base_url = os.environ["VIBESENSOR_BASE_URL"]
-    sim_host = os.environ["VIBESENSOR_SIM_SERVER_HOST"]
-    sim_data_port = os.environ["VIBESENSOR_SIM_DATA_PORT"]
-    sim_control_port = os.environ["VIBESENSOR_SIM_CONTROL_PORT"]
-    sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
+def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -> None:
+    base_url = e2e_env["base_url"]
+    sim_host = e2e_env["sim_host"]
+    sim_data_port = e2e_env["sim_data_port"]
+    sim_control_port = e2e_env["sim_control_port"]
+    sim_client_control_base = e2e_env["sim_client_control_base"]
 
     cars_before = api_json(base_url, "/api/settings/cars")
     original_active_raw = cars_before.get("active_car_id")
@@ -85,7 +88,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                duration_s=sim_duration,
+                client_control_base=sim_client_control_base,
+                duration_s=_SIM_DURATION_S,
                 count=4,
             )
             clients = api_json(base_url, "/api/clients")["clients"]
@@ -177,7 +181,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                duration_s=sim_duration,
+                client_control_base=sim_client_control_base,
+                duration_s=_SIM_DURATION_S,
                 count=4,
             )
             api_json(base_url, "/api/recording/stop", method="POST")
@@ -216,7 +221,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                duration_s=sim_duration,
+                client_control_base=sim_client_control_base,
+                duration_s=_SIM_DURATION_S,
                 count=4,
             )
             api_json(base_url, "/api/recording/stop", method="POST")
@@ -255,7 +261,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                duration_s=sim_duration,
+                client_control_base=sim_client_control_base,
+                duration_s=_SIM_DURATION_S,
                 count=4,
             )
             api_json(base_url, "/api/recording/stop", method="POST")

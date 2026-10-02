@@ -260,7 +260,7 @@ only place the default asyncio loop remains expected.
 When a PR check fails:
 
 1. Reproduce the failing job locally with the matching `make` target or focused pytest command.
-2. If the failure is e2e-only, inspect Docker logs and rerun the smallest failing scenario.
+2. If the failure is e2e-only, read the server/app log tails attached to the failing test report and rerun the smallest failing scenario with `pytest -q -n 0 apps/server/tests_e2e/<file>::<test>`.
 3. If the failure is workflow or packaging related, validate the built wheel or Docker image locally before changing application code.
 
 ## Documentation sync trigger

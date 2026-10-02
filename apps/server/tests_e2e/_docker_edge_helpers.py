@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from tests_e2e.e2e_helpers import (
+    ANALYZABLE_SIM_DURATION_S,
     api_json,
     run_simulator,
     wait_run_status,
@@ -12,14 +13,20 @@ FORBIDDEN_PLACEHOLDERS = (" null ", " none ", " nan ", " undefined ", "{{", "}}"
 
 
 def _simulate(
-    e: dict[str, str], *, duration: float | None = None, count: int = 4, names: str | None = None
+    e: dict[str, str],
+    *,
+    duration: float = ANALYZABLE_SIM_DURATION_S,
+    count: int = 4,
+    names: str | None = None,
 ) -> None:
+    """Run the simulator; the default duration is long enough for post-analysis."""
     run_simulator(
         base_url=e["base_url"],
         sim_host=e["sim_host"],
         sim_data_port=e["sim_data_port"],
         sim_control_port=e["sim_control_port"],
-        duration_s=duration if duration is not None else float(e["sim_duration"]),
+        client_control_base=e["sim_client_control_base"],
+        duration_s=duration,
         count=count,
         names=names or "front-left,front-right,rear-left,rear-right",
     )

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean pristine format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-golden-replay test-diagnostic-matrix ci test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke
+.PHONY: help doctor setup dev clean pristine format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-golden-replay test-diagnostic-matrix ci test-e2e test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -115,9 +115,15 @@ test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices exclud
 ci: ## Run the main local CI gates: lint, type checks, backend tests, and UI unit tests
 ci: lint typecheck test ui-test
 
-test-full-suite: ## Run the full end-to-end suite locally
+E2E_WORKERS ?= 6
+
+test-e2e: ## Run the fast process-backed e2e suite (one isolated server per xdist worker)
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" tools/tests/run_e2e_parallel.py --shards 1
+	"$$PYTHON" -m pytest -q -m "e2e and not long_sim" -n $(E2E_WORKERS) apps/server/tests_e2e
+
+test-full-suite: ## Run the full process-backed e2e suite, including long_sim cases
+	@$(RESOLVE_PYTHON) \
+	"$$PYTHON" -m pytest -q -m e2e -n $(E2E_WORKERS) apps/server/tests_e2e
 
 benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS / BACKEND_BENCHMARK_TARGETS as needed)
 	@$(RESOLVE_PYTHON) \

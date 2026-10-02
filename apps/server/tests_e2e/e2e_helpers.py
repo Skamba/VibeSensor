@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import io
 import json
-import os
 import re
 import subprocess
 import sys
@@ -17,8 +16,21 @@ from urllib.request import Request, urlopen
 
 from pypdf import PdfReader
 
+from vibesensor.app.config_defaults import DEFAULT_CONFIG
+from vibesensor.shared.constants.dsp import FFT_N
+
 ROOT = Path(__file__).resolve().parents[3]
 
+ANALYSIS_WINDOW_S = FFT_N / DEFAULT_CONFIG["processing"]["sample_rate_hz"]
+"""One server FFT analysis window (2048 samples at 800 Hz = 2.56 s)."""
+
+ANALYZABLE_SIM_DURATION_S = 2 * ANALYSIS_WINDOW_S
+"""Shortest simulator run that reliably yields a run post-analysis can complete.
+
+Strength metrics only exist once a sensor has streamed a full analysis window; a
+shorter capture ends in ``MissingStrengthMetricsError``. The second window covers
+simulator startup and client registration.
+"""
 
 @dataclass(frozen=True)
 class ApiResponse:
@@ -131,19 +143,14 @@ def run_simulator(
     sim_host: str,
     sim_data_port: str,
     sim_control_port: str,
+    client_control_base: str,
     duration_s: float,
     count: int = 4,
     names: str = "front-left,front-right,rear-left,rear-right",
     scenario: str = "one-wheel-mild",
     fault_wheel: str = "rear-left",
     speed_kmh: float = 0.0,
-    client_control_base: int | str | None = None,
 ) -> None:
-    control_base = (
-        client_control_base
-        if client_control_base is not None
-        else os.environ.get("VIBESENSOR_SIM_CLIENT_CONTROL_BASE", "9100")
-    )
     sim_cmd = [
         sys.executable,
         "-m",
@@ -169,7 +176,7 @@ def run_simulator(
         "--duration",
         str(duration_s),
         "--client-control-base",
-        str(control_base),
+        client_control_base,
         "--no-auto-server",
         "--no-interactive",
     ]
