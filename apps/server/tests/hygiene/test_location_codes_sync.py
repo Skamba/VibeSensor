@@ -10,10 +10,9 @@ import sys
 import pytest
 
 from tests._paths import REPO_ROOT
-from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.sensor import _LOCATION_CODES as DOMAIN_LOCATION_CODES
-from vibesensor.shared.constants.dsp import FFT_N, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.shared.locations import LOCATION_CODES
 from vibesensor.vibration_strength import (
     CALIBRATION_PROFILE_ID,
@@ -53,17 +52,11 @@ def generated_constants() -> str:
 
 def test_generated_ui_constants_encode_backend_sources(generated_constants: str) -> None:
     """Generated UI constants must be direct projections of backend owners."""
-    config = documented_default_config()
-    processing = config.get("processing")
-    assert isinstance(processing, dict)
-    sample_rate_hz = processing.get("sample_rate_hz")
-    assert isinstance(sample_rate_hz, (int, float))
-
     expected_exports = {
         "defaultLocationCodes": list(LOCATION_CODES.keys()),
         "defaultAnalysisSettings": AnalysisSettingsSnapshot.DEFAULTS,
         "defaultLiveAnalysisConfig": {
-            "sampleRateHz": sample_rate_hz,
+            "sampleRateHz": SAMPLE_RATE_HZ,
             "fftWindowSizeSamples": FFT_N,
             "spectrumMinHz": SPECTRUM_MIN_HZ,
             "spectrumMaxHz": SPECTRUM_MAX_HZ,

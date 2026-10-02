@@ -79,7 +79,6 @@ class StubProcessingConfig:
 class StubUDPConfig:
     data_host: str = "0.0.0.0"
     data_port: int = 5005
-    data_queue_maxsize: int = 100
     control_host: str = "0.0.0.0"
     control_port: int = 5006
 
@@ -88,16 +87,11 @@ class StubUDPConfig:
 class StubLoggingConfig:
     shutdown_analysis_timeout_s: float = 5.0
     history_db_path: str = ":memory:"
-    metrics_log_hz: int = 1
-    no_data_timeout_s: int = 10
-    persist_history_db: bool = False
 
 
 @dataclass(slots=True)
 class StubGpsConfig:
     gps_enabled: bool = True
-    gpsd_host: str = "127.0.0.1"
-    gpsd_port: int = 2947
 
 
 @dataclass(slots=True)
@@ -243,9 +237,6 @@ def build_runtime(**overrides: Any):
         history_db_path=config.logging.history_db_path,
         udp_data_host=config.udp.data_host,
         udp_data_port=config.udp.data_port,
-        udp_data_queue_maxsize=config.udp.data_queue_maxsize,
-        gpsd_host=config.gps.gpsd_host,
-        gpsd_port=config.gps.gpsd_port,
         shutdown_analysis_timeout_s=config.logging.shutdown_analysis_timeout_s,
         registry=registry,
         processor=processor,

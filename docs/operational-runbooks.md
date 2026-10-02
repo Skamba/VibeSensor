@@ -33,12 +33,10 @@ Use `subsystems` for machine-readable triage. Each subsystem reports
 `status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
 top-level `status` and `degradation_reasons` for compatibility with older tools.
 
-Run-history retention is enforced during startup maintenance. By default the Pi
-prunes `complete` and `error` runs older than `logging.run_retention_days: 7`.
-If raw waveform storage should expire earlier, set
-`logging.raw_capture_retention_days` lower than `logging.run_retention_days` so
-startup maintenance removes raw sidecars first while keeping the run summaries
-available in history.
+Run-history retention is enforced during startup maintenance: `complete` and
+`error` runs older than 7 days (`RUN_RETENTION_DAYS` in
+`apps/server/vibesensor/app/composition/history.py`) are pruned together with
+their raw/whole-run sidecars.
 
 Mutating local HTTP calls (`POST`, `PUT`, `PATCH`, `DELETE`) are protected by a
 same-origin guard. Browser requests with an `Origin` or `Referer` for a different

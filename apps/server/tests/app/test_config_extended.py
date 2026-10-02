@@ -154,21 +154,19 @@ def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True
-    assert result.ap.self_heal.diagnostics_lookback_minutes == 5
-    assert result.ap.self_heal.min_restart_interval_seconds == 120
     assert result.ap.self_heal.state_file == tmp_path / "data/hotspot-self-heal-state.json"
 
 
-def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
+def test_load_config_ap_overrides(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     _write_config(
         config_path,
         {
             "ap": {
+                "ssid": "Workshop",
+                "psk": "change-me-first",
                 "self_heal": {
-                    "enabled": True,
-                    "diagnostics_lookback_minutes": 7,
-                    "min_restart_interval_seconds": 240,
+                    "enabled": False,
                     "state_file": "/tmp/hotspot-heal-state.json",
                 },
             },
@@ -177,6 +175,7 @@ def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
 
     result = load_config(config_path)
 
-    assert result.ap.self_heal.diagnostics_lookback_minutes == 7
-    assert result.ap.self_heal.min_restart_interval_seconds == 240
+    assert result.ap.ssid == "Workshop"
+    assert result.ap.psk == "change-me-first"
+    assert result.ap.self_heal.enabled is False
     assert result.ap.self_heal.state_file == Path("/tmp/hotspot-heal-state.json")

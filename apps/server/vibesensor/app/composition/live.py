@@ -18,8 +18,10 @@ from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjecto
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
+    SAMPLE_RATE_HZ,
     SPECTRUM_MAX_HZ,
     SPECTRUM_MIN_HZ,
+    WAVEFORM_BUFFER_SECONDS,
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
@@ -69,33 +71,24 @@ class LiveRuntimeBundle:
         )
 
 
-def resolve_accel_scale_g_per_lsb(config: AppConfig) -> float:
-    return config.processing.accel_scale_g_per_lsb or ADXL345_SCALE_G_PER_LSB
-
-
 def build_live_runtime(
     *,
     config: AppConfig,
-    accel_scale_g_per_lsb: float,
     history: HistoryDB,
     speed_runtime: SpeedRuntimeBundle,
     runtime_settings: RuntimeSettingsDeps,
 ) -> LiveRuntimeBundle:
     """Build the grouped live processing, broadcast, and recording services."""
 
-    registry = ClientRegistry(
-        db=history,
-        live_ttl_seconds=config.processing.client_live_ttl_seconds,
-        retention_ttl_seconds=config.processing.client_ttl_seconds,
-    )
+    registry = ClientRegistry(db=history)
     processor = SignalProcessor(
-        sample_rate_hz=config.processing.sample_rate_hz,
-        waveform_seconds=config.processing.waveform_seconds,
+        sample_rate_hz=SAMPLE_RATE_HZ,
+        waveform_seconds=WAVEFORM_BUFFER_SECONDS,
         waveform_display_hz=WAVEFORM_DISPLAY_HZ,
         fft_n=FFT_N,
         spectrum_min_hz=SPECTRUM_MIN_HZ,
         spectrum_max_hz=SPECTRUM_MAX_HZ,
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        accel_scale_g_per_lsb=ADXL345_SCALE_G_PER_LSB,
     )
     control_plane = UDPControlPlane(
         registry=registry,
@@ -106,7 +99,7 @@ def build_live_runtime(
     processing_loop = ProcessingLoop(
         state=processing_loop_state,
         fft_update_hz=FFT_UPDATE_HZ,
-        sample_rate_hz=config.processing.sample_rate_hz,
+        sample_rate_hz=SAMPLE_RATE_HZ,
         fft_n=FFT_N,
         registry=registry,
         processor=processor,
@@ -130,13 +123,10 @@ def build_live_runtime(
     )
     run_recorder = RunRecorder(
         RunRecorderConfig(
-            metrics_log_hz=config.logging.metrics_log_hz,
-            no_data_timeout_s=config.logging.no_data_timeout_s,
             sensor_model=SENSOR_MODEL,
-            default_sample_rate_hz=config.processing.sample_rate_hz,
+            default_sample_rate_hz=SAMPLE_RATE_HZ,
             fft_window_size_samples=FFT_N,
-            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-            persist_history_db=config.logging.persist_history_db,
+            accel_scale_g_per_lsb=ADXL345_SCALE_G_PER_LSB,
         ),
         registry=registry,
         gps_monitor=speed_runtime.speed_services.observation,

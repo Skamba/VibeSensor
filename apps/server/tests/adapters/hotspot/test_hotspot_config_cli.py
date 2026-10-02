@@ -51,3 +51,28 @@ def test_hotspot_config_cli_warns_and_falls_back_on_invalid_config(
     assert str(broken_path) in broken_err
     assert expected_warning in broken_err
     assert "using defaults" in broken_err
+
+
+def test_hotspot_config_cli_exports_operator_credentials_and_fixed_network(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    config_path = tmp_path / "config.yaml"
+    # Legacy device configs may still carry removed keys such as ap.channel.
+    config_path.write_text(
+        "ap:\n  ssid: Workshop\n  psk: secret-psk\n  channel: 11\n",
+        encoding="utf-8",
+    )
+
+    out, err = _run_cli(config_path, monkeypatch=monkeypatch, capsys=capsys)
+
+    assert err == ""
+    assert out.splitlines() == [
+        "SSID='Workshop'",
+        "PSK='secret-psk'",
+        "IP='10.4.0.1/24'",
+        "CHANNEL=7",
+        "IFNAME='wlan0'",
+        "CON_NAME='VibeSensor-AP'",
+    ]

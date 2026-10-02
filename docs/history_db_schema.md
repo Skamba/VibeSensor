@@ -171,17 +171,11 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 
 ## Startup retention policy
 
-On startup, the container opens `HistoryDB`,
-first recovers stale `recording` rows into `error`, then applies retention in
-two stages:
+On startup, the container opens `HistoryDB`, first recovers stale `recording`
+rows into `error`, then deletes `complete` and `error` runs older than
+`RUN_RETENTION_DAYS` (7 days, in `apps/server/vibesensor/app/composition/history.py`).
 
-1. If `logging.raw_capture_retention_days` is lower than
-   `logging.run_retention_days`, raw waveform sidecars older than the raw-capture
-   cutoff are pruned first while the run summary row stays in the DB.
-2. `complete` and `error` runs older than `logging.run_retention_days` (default
-   `7`) are deleted entirely.
-
-Both cutoffs use the run's terminal timestamp (`analysis_completed_at`, then
+The cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
 `end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are
 never deleted by the automatic policy. Full run deletion still removes sample
 rows through the existing `ON DELETE CASCADE` foreign key on `samples_v2`, plus

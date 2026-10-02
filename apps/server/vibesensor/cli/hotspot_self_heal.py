@@ -34,4 +34,6 @@ def main() -> None:
 
     cfg = load_config(args.config)
     diagnostics_only = args.mode == "diagnostics"
-    raise SystemExit(run_self_heal(cfg.ap, cfg.ap.self_heal, diagnostics_only=diagnostics_only))
+    raise SystemExit(
+        run_self_heal(cfg.ap, cfg.ap.self_heal.state_file, diagnostics_only=diagnostics_only)
+    )

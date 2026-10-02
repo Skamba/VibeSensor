@@ -87,7 +87,7 @@ class LifecycleRunRecorder(Protocol):
 
 
 class LifecycleGpsMonitor(Protocol):
-    async def run(self, *, host: str, port: int) -> object: ...
+    async def run(self) -> object: ...
 
 
 class LifecycleObdRunner(Protocol):
@@ -125,10 +125,6 @@ class LifecycleRuntime:
     history_db_path: str | Path | None
     udp_data_host: str
     udp_data_port: int
-    udp_data_queue_maxsize: int
-    gpsd_host: str
-    gpsd_port: int
-    shutdown_analysis_timeout_s: float
     registry: ClientRegistry
     processor: SignalProcessor
     ingest_diagnostics: IngestDiagnosticsCollector
@@ -141,6 +137,8 @@ class LifecycleRuntime:
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
     history_db: LifecycleHistoryDb
+    shutdown_analysis_timeout_s: float = 30.0
+    """How long shutdown waits for queued post-analysis before giving up."""
 
 
 LOGGER = logging.getLogger(__name__)
@@ -287,7 +285,7 @@ class LifecycleManager:
             (
                 "gps-speed",
                 lambda: self._start_supervised(
-                    lambda: r.gps_monitor.run(host=r.gpsd_host, port=r.gpsd_port),
+                    lambda: r.gps_monitor.run(),
                     "gps-speed",
                 ),
             ),
@@ -306,7 +304,6 @@ class LifecycleManager:
             registry=r.registry,
             processor=r.processor,
             raw_capture_sink=r.run_recorder,
-            queue_maxsize=r.udp_data_queue_maxsize,
             ingest_diagnostics=r.ingest_diagnostics,
         )
         if consumer is not None:
