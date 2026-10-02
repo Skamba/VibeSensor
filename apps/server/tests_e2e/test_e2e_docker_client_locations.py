@@ -4,26 +4,29 @@ from __future__ import annotations
 
 import pytest
 
-from tests_e2e._docker_edge_helpers import (
-    _cleanup_clients,
-    _simulate,
-)
+from tests_e2e._docker_edge_helpers import _simulate
 from tests_e2e.e2e_helpers import (
     api_json,
+    registered_client_ids,
+    remove_all_clients,
+    sim_client_ids,
 )
 
 pytestmark = pytest.mark.e2e
 
 
+def _register_two_sim_clients(e2e_env: dict[str, str]) -> tuple[str, str]:
+    base = e2e_env["base_url"]
+    remove_all_clients(base)
+    _simulate(e2e_env, duration=2.0, count=2, names="front-left,front-right")
+    c1, c2 = sim_client_ids(2)
+    assert registered_client_ids(base) >= {c1, c2}
+    return c1, c2
+
+
 def test_client_location_invalid_input_matrix(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    _cleanup_clients(base)
-    _simulate(e2e_env, duration=2.0, count=2, names="front-left,front-right")
-    clients = sorted(api_json(base, "/api/clients")["clients"], key=lambda c: str(c["id"]))
-    assert len(clients) >= 2
-
-    c1 = str(clients[0]["id"])
-    c2 = str(clients[1]["id"])
+    c1, c2 = _register_two_sim_clients(e2e_env)
     try:
         api_json(
             base,
@@ -67,16 +70,12 @@ def test_client_location_invalid_input_matrix(e2e_env: dict[str, str]) -> None:
             expected_status=409,
         )
     finally:
-        _cleanup_clients(base)
+        remove_all_clients(base)
 
 
 def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    _cleanup_clients(base)
-    _simulate(e2e_env, duration=2.0, count=2, names="front-left,front-right")
-    clients = sorted(api_json(base, "/api/clients")["clients"], key=lambda c: str(c["id"]))
-    c1 = str(clients[0]["id"])
-    c2 = str(clients[1]["id"])
+    c1, c2 = _register_two_sim_clients(e2e_env)
     try:
         api_json(
             base,
@@ -111,4 +110,4 @@ def test_location_reassignment_releases_previous_slot(e2e_env: dict[str, str]) -
         assert clients_after_move[c1] == "rear_left_wheel"
         assert clients_after_move[c2] == "front_left_wheel"
     finally:
-        _cleanup_clients(base)
+        remove_all_clients(base)

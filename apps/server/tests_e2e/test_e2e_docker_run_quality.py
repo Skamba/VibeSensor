@@ -6,7 +6,6 @@ import pytest
 
 from tests_e2e._docker_edge_helpers import (
     _assert_no_placeholders,
-    _cleanup_clients,
     _cleanup_run,
     _run_status_context,
     _simulate,
@@ -18,6 +17,7 @@ from tests_e2e.e2e_helpers import (
     parse_export_zip,
     pdf_text,
     recording_status,
+    remove_all_clients,
     wait_export_ready,
     wait_for_stable,
     wait_report_pdf_ready,
@@ -28,7 +28,7 @@ pytestmark = pytest.mark.e2e
 
 def test_no_data_stop_does_not_create_history_run_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
-    _cleanup_clients(base)
+    remove_all_clients(base)
 
     def _quiescence_state() -> dict[str, object]:
         status = recording_status(base)

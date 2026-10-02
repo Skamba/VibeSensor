@@ -16,7 +16,9 @@ from tests_e2e.e2e_helpers import (
     api_json,
     parse_export_zip,
     pdf_text,
+    remove_all_clients,
     run_simulator,
+    sim_client_ids,
     wait_export_ready,
     wait_report_pdf_ready,
     wait_run_status,
@@ -73,13 +75,10 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
 
     created_car_id: str | None = None
     created_run_ids: list[str] = []
-    seen_client_ids: list[str] = []
 
     try:
         # Ensure deterministic client count for E2E-1 assertions.
-        existing_clients = api_json(base_url, "/api/clients")["clients"]
-        for client in existing_clients:
-            api_json(base_url, f"/api/clients/{client['id']}", method="DELETE")
+        remove_all_clients(base_url)
 
         if journey_group == "clients_and_cars":
             # E2E-1: Sensors appear as clients.
@@ -99,6 +98,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 mac = str(client.get("mac_address") or "")
                 assert MAC_RE.match(mac)
             seen_client_ids = sorted(str(client["id"]) for client in clients)
+            assert seen_client_ids == sorted(sim_client_ids(4))
 
             # E2E-2: Assign locations and enforce uniqueness.
             locations = api_json(base_url, "/api/client-locations")["locations"]
@@ -293,7 +293,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
 
     finally:
         _delete_resources(base_url, "/api/history/{identifier}", list(created_run_ids))
-        _delete_resources(base_url, "/api/clients/{identifier}", seen_client_ids)
+        remove_all_clients(base_url)
         api_json(
             base_url,
             "/api/settings/speed-source",
