@@ -13,7 +13,7 @@ server over HTTP (REST) and WebSocket (live data).
 - **Vite** — build tool and dev server
 - **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
-- **Playwright** — browser, visual regression, and smoke testing
+- **Playwright** — browser smoke testing
 - **CSS custom properties** — Material Design 3 inspired theming
 
 ## Setup
@@ -180,30 +180,6 @@ Do **not** use MSW when the test is already below the network seam:
   instead of layering on MSW; controllers do not take injectable transport ports
 - WebSocket behavior is separate; keep using the existing fake WebSocket helpers
   for live-session flows instead of trying to route WS traffic through MSW
-
-## Optional browser MSW mock mode
-
-Use the explicit mock-mode dev server when you want to exercise the UI without a
-live backend HTTP stack:
-
-```bash
-cd apps/ui
-npm run dev:mock
-```
-
-- `npm run dev` remains the normal backend-backed path. `npm run dev:mock` is
-  the opt-in browser-worker mode and is easy to disable by switching back to the
-  normal dev command.
-- Browser mock mode starts the app with `msw/browser` before `startUiApp()`,
-  serves a checked-in `mockServiceWorker.js`, and bypasses any HTTP requests
-  that do not have an explicit mock handler.
-- Browser mock mode should reuse the same shared handler owners under
-  `tests/msw/handlers/` rather than growing a second browser-only mock universe.
-- The mode currently reuses the shared history and settings MSW handler owners
-  plus lightweight startup/update defaults so local settings and history flows
-  can load without the backend.
-- WebSocket mocking is still out of scope for this mode. Local smoke tests that
-  need stable live-session behavior can still stub WebSocket separately.
 
 ## Bundle analysis
 
@@ -406,12 +382,10 @@ under test.
 |-------|--------|----------------|---------|
 | **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
 | **Smoke** | Playwright (Chromium) | Critical boot/happy-path flows against a real Vite dev server; explicit file pattern `tests/smoke.critical.spec.ts` | `npm run test:smoke` |
-| **Browser regression** | Playwright (Chromium) | Broader browser state, error-path, layout, and liveness regressions moved out of smoke; file pattern `tests/regression*.spec.ts` | `npm run test:regression` |
-| **Visual / snapshot** | Playwright (Chromium) | Rendered-state regression baselines in `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
 
 Vitest is the canonical fast test layer; reach for it whenever the test does not
-need a real browser. Keep Playwright for the narrow slice that exercises a live
-browser, navigation, or visual snapshots.
+need a real browser. Keep Playwright for the narrow slice of critical journeys
+that need a live browser.
 
 ```bash
 npm run test:unit            # run the Vitest unit suite once
@@ -420,42 +394,10 @@ make ui-test                 # same unit suite from the repo root
 ```
 
 Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
-`smoke*.spec.ts`, `regression*.spec.ts`, `visual.spec.ts`, and
-`msw-browser.smoke.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts).
-New logic-level tests should land as `tests/<feature>_*.spec.ts`; new browser
-regressions should land as `tests/regression.<feature>.spec.ts`. Add to
+`smoke.*.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts). New
+logic-level tests should land as `tests/<feature>_*.spec.ts`. Add to
 `tests/smoke.critical.spec.ts` only when a flow is required for boot or a core
-happy path. The hygiene suite guards that every committed `tests/*.spec.ts` file
-matches exactly one runner ownership pattern.
-
-## Visual Tests
-
-Playwright snapshot tests default to one intentional regression target:
-
-| Viewport | Theme | Command |
-|----------|-------|---------|
-| Laptop (1280x800) | Light | `npm run test:visual` |
-
-Use the broader visual audit sweep only on purpose:
-
-| Viewport | Theme | Command |
-|----------|-------|---------|
-| Laptop (1280x800) | Light | `npm run test:visual:audit` |
-| Laptop (1280x800) | Dark | `npm run test:visual:audit` |
-| Tablet (768x1024) | Light | `npm run test:visual:audit` |
-| Tablet (768x1024) | Dark | `npm run test:visual:audit` |
-
-```bash
-npx playwright install chromium   # first time only
-npm run test:visual               # compare against baselines
-npm run test:visual:update        # regenerate after intentional changes
-npm run test:visual:audit         # run wider multi-viewport audit on purpose
-```
-
-Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
-payloads. The default lane stays on `laptop-light`; the audit command keeps the
-older multi-viewport sweep available when broader visual review is worth the
-cost. Both visual commands only run `tests/visual.spec.ts`.
+happy path (`npx playwright install chromium` once, then `npm run test:smoke`).
 
 ## Signal-driven island tests
 

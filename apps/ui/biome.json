@@ -10,8 +10,7 @@
       "!package-lock.json",
       "!test-results",
       "!tests/test-results",
-      "!!dist",
-      "!!tests/snapshots"
+      "!!dist"
     ]
   },
   "linter": {
@@ -19,16 +18,9 @@
     "includes": [
       "src/**/*.ts",
       "tests/**/*.ts",
-      "playwright.config.ts",
-      "playwright.regression.config.ts",
       "playwright.smoke.config.ts",
-      "playwright.smoke.msw.config.ts",
-      "playwright.visual-audit.config.ts",
       "vite.config.ts",
-      "vitest.config.ts",
-      "playwright-preview-helpers.mjs",
-      "take-screenshot.mjs",
-      "update-snapshots.mjs"
+      "vitest.config.ts"
     ],
     "rules": {
       "preset": "recommended"
@@ -42,16 +34,9 @@
       "src/i18n/catalogs/*.json",
       "tests/**/*.ts",
       "index.html",
-      "playwright.config.ts",
-      "playwright.regression.config.ts",
       "playwright.smoke.config.ts",
-      "playwright.smoke.msw.config.ts",
-      "playwright.visual-audit.config.ts",
       "vite.config.ts",
       "vitest.config.ts",
-      "playwright-preview-helpers.mjs",
-      "take-screenshot.mjs",
-      "update-snapshots.mjs",
       "tsconfig.json",
       "package.json",
       "biome.json"

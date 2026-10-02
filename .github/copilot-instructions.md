@@ -31,7 +31,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Docs or instruction-only changes need no local gate.
 - Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`; broad synthetic matrices use `make test-diagnostic-matrix`.
 - Backend API/contracts/shared UI constants: add `make sync-contracts` and `make ui-typecheck`.
-- Frontend logic/contracts/composition: `make ui-typecheck`; add `cd apps/ui && npm run build`, `npm run test:unit`, or `npm run test:visual` when the changed seam requires it.
+- Frontend logic/contracts/composition: `make ui-typecheck`; add `cd apps/ui && npm run build`, `npm run test:unit`, or `npm run test:smoke` when the changed seam requires it.
 - Firmware: `cd firmware/esp && pio run`; for protocol/native parity add `python tools/firmware/generate_protocol_contract_fixtures.py --check` and `cd firmware/esp && pio test -e native`.
 - Pi image: use the narrow path, `BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh` or `BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh`; use `./infra/pi-image/pi-gen/validate-image.sh [artifact]` to validate an existing artifact.
 - Do not use ACT for `.github/workflows/manual-pi-image-arm.yml` or `.github/workflows/weekly-pi-image.yml`; they require GitHub's `ubuntu-24.04-arm` runner label, which is intentionally not mapped in `.actrc`.

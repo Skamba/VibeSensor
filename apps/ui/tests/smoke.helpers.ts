@@ -1,4 +1,4 @@
-import { expect, type Page, type Route } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import type { LoggingStatusPayload } from "../src/api/types";
 import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
@@ -174,57 +174,6 @@ async function installLiveSensorPayload(
   });
 }
 
-export async function waitForFakeWebSocketSettled(
-  page: Page,
-  trackerKey: string,
-  minimumDeliveredCount: number,
-): Promise<void> {
-  await expect
-    .poll(async () => {
-      const tracker = await page.evaluate((key) => {
-        const tracker = (
-          window as Window & typeof globalThis & Record<string, unknown>
-        )[key];
-        if (
-          typeof tracker !== "object" ||
-          tracker === null ||
-          !("deliveredCount" in tracker) ||
-          !("repeatTimerActive" in tracker) ||
-          typeof tracker.deliveredCount !== "number" ||
-          typeof tracker.repeatTimerActive !== "boolean"
-        ) {
-          throw new Error(`Missing fake WebSocket tracker: ${key}`);
-        }
-        return {
-          deliveredCount: tracker.deliveredCount,
-          repeatTimerActive: tracker.repeatTimerActive,
-        };
-      }, trackerKey);
-      return (
-        tracker.repeatTimerActive === false &&
-        tracker.deliveredCount >= minimumDeliveredCount
-      );
-    })
-    .toBe(true);
-}
-
-export async function confirmPrompt(page: Page): Promise<void> {
-  const dialog = page.locator(".confirmation-dialog");
-  await expect(dialog).toBeVisible();
-  const confirmButton = dialog.locator(".btn--danger");
-  await expect(confirmButton).toBeFocused();
-  await confirmButton.click();
-  await expect(dialog).toHaveCount(0);
-}
-
-export async function cancelPrompt(page: Page): Promise<void> {
-  const dialog = page.locator(".confirmation-dialog");
-  await expect(dialog).toBeVisible();
-  await expect(dialog.locator(".btn--danger")).toBeFocused();
-  await dialog.locator("button:not(.btn--danger)").click();
-  await expect(dialog).toHaveCount(0);
-}
-
 export type CommonRouteOptions = {
   runs?: Array<Record<string, unknown>>;
   locations?: Array<Record<string, unknown>>;
@@ -239,14 +188,6 @@ export type BootLiveDashboardOptions = CommonRouteOptions & {
   liveSensorPayload?: LiveSensorPayloadOptions;
 };
 
-export type SettingsRouteValue =
-  | unknown
-  | ((
-      route: Route,
-      path: string,
-      method: string,
-    ) => Promise<unknown | undefined>);
-
 function jsonOk(body: unknown) {
   return {
     status: 200,
@@ -255,7 +196,7 @@ function jsonOk(body: unknown) {
   };
 }
 
-export function normalizePathname(pathname: string): string {
+function normalizePathname(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
@@ -272,15 +213,6 @@ function defaultSettingsPayload(path: string): Record<string, unknown> {
     return { cars: [], active_car_id: null };
   }
   return {};
-}
-
-export async function activateWizardCloseButton(page: Page): Promise<void> {
-  await page.locator("#wizardCloseBtn").evaluate((button) => {
-    if (!(button instanceof HTMLButtonElement)) {
-      throw new Error("wizardCloseBtn must be a button");
-    }
-    button.click();
-  });
 }
 
 type CaptureReadinessState = "pass" | "warn" | "fail";
@@ -438,7 +370,7 @@ export async function bootLiveDashboard(
   await page.goto("/");
 }
 
-export async function openSettingsTab(
+async function openSettingsTab(
   page: Page,
   settingsTabId?: string,
 ): Promise<void> {
@@ -452,16 +384,8 @@ export async function openCarsTab(page: Page): Promise<void> {
   await openSettingsTab(page, "carTab");
 }
 
-export async function openSpeedSourceTab(page: Page): Promise<void> {
-  await openSettingsTab(page, "speedSourceTab");
-}
-
 export async function openAnalysisTab(page: Page): Promise<void> {
   await openSettingsTab(page, "analysisTab");
-}
-
-export async function openSensorsTab(page: Page): Promise<void> {
-  await openSettingsTab(page, "sensorsTab");
 }
 
 export async function openInternetTab(page: Page): Promise<void> {
@@ -474,138 +398,4 @@ export async function openUpdateTab(page: Page): Promise<void> {
 
 export async function openHistoryTab(page: Page): Promise<void> {
   await page.locator("#tab-history").click();
-}
-
-export function createSettingsHandlerFromMap(
-  settingsMap: Record<string, SettingsRouteValue>,
-) {
-  return async (route: Route): Promise<void> => {
-    const path = requestPath(route);
-    const method = route.request().method();
-    const key = `${method} ${path}`;
-    const value = settingsMap[key] ?? settingsMap[path];
-    if (typeof value === "function") {
-      const result = await value(route, path, method);
-      if (typeof result !== "undefined") {
-        await fulfillJson(route, result);
-      }
-      return;
-    }
-    if (typeof value !== "undefined") {
-      await fulfillJson(route, value);
-      return;
-    }
-    await fulfillJson(route, defaultSettingsPayload(path));
-  };
-}
-
-export function gpsStatus(overrides: Partial<Record<string, unknown>>) {
-  return {
-    gps_enabled: true,
-    connection_state: "connected",
-    device: "gps0",
-    last_update_age_s: 0.1,
-    raw_speed_kmh: 18,
-    effective_speed_kmh: 18,
-    last_error: null,
-    reconnect_delay_s: 1,
-    fallback_active: false,
-    speed_source: "gps",
-    stale_timeout_s: 5,
-
-    ...overrides,
-  };
-}
-
-function baseSettingsRouteMap(
-  overrides: Record<string, SettingsRouteValue> = {},
-): Record<string, SettingsRouteValue> {
-  return {
-    "/api/settings/language": { language: "en" },
-    "/api/settings/speed-unit": { speed_unit: "kmh" },
-    "/api/settings/speed-source/status": gpsStatus({}),
-    ...overrides,
-  };
-}
-
-export async function installSettingsRoutes(
-  page: Page,
-  settingsMap: Record<string, SettingsRouteValue> = {},
-  options: Omit<CommonRouteOptions, "settingsHandler"> = {},
-): Promise<void> {
-  await installCommonRoutes(page, {
-    ...options,
-    settingsHandler: createSettingsHandlerFromMap(
-      baseSettingsRouteMap(settingsMap),
-    ),
-  });
-}
-
-export function obdStatus(overrides: Partial<Record<string, unknown>> = {}) {
-  return {
-    configured_device_mac: null,
-    configured_device_name: null,
-    paired: false,
-    trusted: false,
-    connected: false,
-    rfcomm_channel: null,
-    last_rpm: null,
-    rpm_sample_age_s: null,
-    rpm_target_interval_ms: 50,
-    rpm_effective_hz: null,
-    request_rtt_ms: null,
-    timeout_count: 0,
-    error_count: 0,
-    poll_mode: null,
-    backoff_active: false,
-    last_raw_response: null,
-    debug_hint: null,
-    ...overrides,
-  };
-}
-
-export function speedSourceSettings(
-  overrides: Partial<Record<string, unknown>> = {},
-) {
-  return {
-    speed_source: "gps",
-    manual_speed_kph: null,
-    stale_timeout_s: 5,
-    ...overrides,
-  };
-}
-
-const completeCarAspects = {
-  current_gear_ratio: 0.82,
-  final_drive_ratio: 3.91,
-  rim_in: 18,
-  tire_aspect_pct: 40,
-  tire_width_mm: 245,
-} as const;
-
-export function settingsCarsResponse(
-  cars: readonly Record<string, unknown>[],
-  activeCarId: string | null,
-): Record<string, unknown> {
-  return {
-    active_car_id: activeCarId,
-    cars,
-  };
-}
-
-export function selectedCarSettings(
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return settingsCarsResponse(
-    [
-      {
-        aspects: completeCarAspects,
-        id: "car-1",
-        name: "Selected",
-        type: "sedan",
-        ...overrides,
-      },
-    ],
-    "car-1",
-  );
 }
