@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Sequence
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -200,8 +201,6 @@ def run_server_smoke(
     require_packaged_static: bool = True,
     extra_env: dict[str, str] | None = None,
 ) -> None:
-    from tenacity import Retrying, retry_if_exception_type, stop_after_delay, wait_fixed
-
     from vibesensor.use_cases.isolated_server_runtime import (
         build_isolated_server_env,
         start_server_subprocess,
@@ -226,67 +225,57 @@ def run_server_smoke(
         try:
             health_url = f"http://{host}:{port}/api/health"
             index_url = f"http://{host}:{port}/index.html"
-            last_error = ""
 
             def _probe_readiness() -> None:
-                nonlocal last_error
                 if process.poll() is not None:
                     output = process.stdout.read() if process.stdout is not None else ""
                     raise RuntimeError(
                         f"Release smoke server exited before becoming healthy.\nOutput:\n{output}",
                     )
-                try:
-                    status, content_type, body = _read_http(health_url)
-                    if status != 200:
-                        raise _RetryableReleaseSmokeReadinessError(
-                            f"Health endpoint returned HTTP {status}",
-                        )
-                    payload = json.loads(body)
-                    if not isinstance(payload, dict):
-                        raise RuntimeError(f"Unexpected health payload: {payload}")
-                    if payload.get("status") not in {"ok", "degraded"}:
-                        raise RuntimeError(f"Unexpected health payload: {payload}")
-                    if payload.get("startup_state") != "ready":
-                        raise _RetryableReleaseSmokeReadinessError(
-                            f"Server not ready yet: {payload}",
-                        )
-                    if payload.get("background_task_failures"):
-                        raise RuntimeError(f"Managed startup task failed: {payload}")
-                    index_status, index_type, index_body = _read_http(index_url)
-                    if index_status != 200:
-                        raise _RetryableReleaseSmokeReadinessError(
-                            f"Static index returned HTTP {index_status}",
-                        )
-                    if "text/html" not in index_type:
-                        raise RuntimeError(
-                            f"Static index content type mismatch: {index_type}",
-                        )
-                    if "VibeSensor" not in index_body:
-                        raise RuntimeError(
-                            "Static index content did not include application title",
-                        )
-                except (OSError, _RetryableReleaseSmokeReadinessError) as exc:
-                    last_error = str(exc)
-                    raise
+                status, content_type, body = _read_http(health_url)
+                if status != 200:
+                    raise _RetryableReleaseSmokeReadinessError(
+                        f"Health endpoint returned HTTP {status}",
+                    )
+                payload = json.loads(body)
+                if not isinstance(payload, dict):
+                    raise RuntimeError(f"Unexpected health payload: {payload}")
+                if payload.get("status") not in {"ok", "degraded"}:
+                    raise RuntimeError(f"Unexpected health payload: {payload}")
+                if payload.get("startup_state") != "ready":
+                    raise _RetryableReleaseSmokeReadinessError(
+                        f"Server not ready yet: {payload}",
+                    )
+                if payload.get("background_task_failures"):
+                    raise RuntimeError(f"Managed startup task failed: {payload}")
+                index_status, index_type, index_body = _read_http(index_url)
+                if index_status != 200:
+                    raise _RetryableReleaseSmokeReadinessError(
+                        f"Static index returned HTTP {index_status}",
+                    )
+                if "text/html" not in index_type:
+                    raise RuntimeError(
+                        f"Static index content type mismatch: {index_type}",
+                    )
+                if "VibeSensor" not in index_body:
+                    raise RuntimeError(
+                        "Static index content did not include application title",
+                    )
 
-            try:
-                for attempt in Retrying(
-                    stop=stop_after_delay(startup_timeout_s),
-                    wait=wait_fixed(_RELEASE_SMOKE_RETRY_WAIT_S),
-                    retry=retry_if_exception_type(
-                        (OSError, _RetryableReleaseSmokeReadinessError),
-                    ),
-                    reraise=True,
-                ):
-                    with attempt:
-                        _probe_readiness()
-            except (OSError, _RetryableReleaseSmokeReadinessError) as exc:
-                output = process.stdout.read() if process.stdout is not None else ""
-                raise RuntimeError(
-                    "Release smoke validation timed out waiting for server readiness.\n"
-                    f"Last error: {last_error or exc}\n"
-                    f"Output:\n{output}",
-                ) from exc
+            started = time.monotonic()
+            while True:
+                try:
+                    _probe_readiness()
+                    return
+                except (OSError, _RetryableReleaseSmokeReadinessError) as exc:
+                    if time.monotonic() - started >= startup_timeout_s:
+                        output = process.stdout.read() if process.stdout is not None else ""
+                        raise RuntimeError(
+                            "Release smoke validation timed out waiting for server readiness.\n"
+                            f"Last error: {exc}\n"
+                            f"Output:\n{output}",
+                        ) from exc
+                time.sleep(_RELEASE_SMOKE_RETRY_WAIT_S)
         finally:
             terminate_subprocess(process)
 

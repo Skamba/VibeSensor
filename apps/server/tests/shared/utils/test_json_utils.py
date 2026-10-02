@@ -268,6 +268,16 @@ class TestJsonTextDumps:
         assert result.splitlines()[1].strip() == '"a": {'
         assert json.loads(result) == {"a": {"z": 1}, "b": 2}
 
+    def test_compact_utf8_text_with_non_finite_as_null(self) -> None:
+        result = json_text_dumps({"b": [1.5, float("nan"), float("inf")], "a": "Ünï"})
+
+        assert result == '{"b":[1.5,null,null],"a":"Ünï"}'
+
+    def test_indented_text_layout(self) -> None:
+        result = json_text_dumps({"b": [], "a": {"z": 1}}, sort_keys=True, indent=2)
+
+        assert result == '{\n  "a": {\n    "z": 1\n  },\n  "b": []\n}'
+
     def test_rejects_unsupported_indent(self) -> None:
         with pytest.raises(ValueError, match="indent=None or indent=2"):
             json_text_dumps({"a": 1}, indent=4)

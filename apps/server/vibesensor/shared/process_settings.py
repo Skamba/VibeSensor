@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
-
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from vibesensor.shared.constants.github import GITHUB_REPO
 
@@ -46,87 +44,113 @@ DEFAULT_UPDATE_REPO_PATH = Path("/opt/VibeSensor")
 DEFAULT_UPDATE_ROLLBACK_DIR = Path("/var/lib/vibesensor/rollback")
 DEFAULT_UPDATE_STATE_PATH = Path("/var/lib/vibesensor/update/update_status.json")
 DEFAULT_FIRMWARE_CACHE_DIR = Path("/var/lib/vibesensor/firmware")
-DEFAULT_FIRMWARE_CHANNEL: Literal["stable", "prerelease"] = "stable"
+FirmwareChannel = Literal["stable", "prerelease"]
+DEFAULT_FIRMWARE_CHANNEL: FirmwareChannel = "stable"
+
+_TRUE_VALUES = frozenset({"1", "on", "t", "true", "y", "yes"})
+_FALSE_VALUES = frozenset({"0", "off", "f", "false", "n", "no"})
 
 
-class _EnvSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        extra="ignore",
-        env_ignore_empty=True,
-        str_strip_whitespace=True,
-    )
+def _env_raw(name: str) -> str | None:
+    """Return the env value, treating unset and empty values as absent."""
+
+    value = os.environ.get(name)
+    return value or None
 
 
-class BootstrapEnvSettings(_EnvSettings):
+def _env_str(name: str, default: str) -> str:
+    raw = _env_raw(name)
+    return default if raw is None else raw.strip()
+
+
+def _env_path(name: str, default: Path) -> Path:
+    raw = _env_raw(name)
+    return default if raw is None else Path(raw.strip()).expanduser()
+
+
+def _env_optional_path(name: str) -> Path | None:
+    raw = _env_raw(name)
+    return None if raw is None else Path(raw.strip()).expanduser()
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = _env_raw(name)
+    if raw is None:
+        return default
+    lowered = raw.lower()
+    if lowered in _TRUE_VALUES:
+        return True
+    if lowered in _FALSE_VALUES:
+        return False
+    raise ValueError(f"{name}: expected a boolean (1/0, true/false, yes/no, on/off), got {raw!r}")
+
+
+def _env_firmware_channel(name: str) -> FirmwareChannel:
+    raw = _env_raw(name)
+    if raw is None:
+        return DEFAULT_FIRMWARE_CHANNEL
+    if raw == "stable":
+        return "stable"
+    if raw == "prerelease":
+        return "prerelease"
+    raise ValueError(f"{name}: expected 'stable' or 'prerelease', got {raw!r}")
+
+
+@dataclass(frozen=True, slots=True)
+class BootstrapEnvSettings:
     """Typed startup env settings used by bootstrap and reload wiring."""
 
-    config_path: Path | None = Field(default=None, validation_alias=CONFIG_PATH_ENV)
-    serve_static: bool = Field(default=True, validation_alias=SERVE_STATIC_ENV)
-
-    @field_validator("config_path", mode="after")
-    @classmethod
-    def _expand_config_path(cls, value: Path | None) -> Path | None:
-        return value.expanduser() if value is not None else None
+    config_path: Path | None = None
+    serve_static: bool = True
 
 
-class WebSocketEnvSettings(_EnvSettings):
+@dataclass(frozen=True, slots=True)
+class WebSocketEnvSettings:
     """Typed runtime env settings for the WebSocket debug flag."""
 
-    ws_debug: bool = Field(default=False, validation_alias=WS_DEBUG_ENV)
+    ws_debug: bool = False
 
 
-class UpdateEnvSettings(_EnvSettings):
+@dataclass(frozen=True, slots=True)
+class UpdateEnvSettings:
     """Typed env settings for updater/release runtime overrides."""
 
-    repo_path: Path = Field(default=DEFAULT_UPDATE_REPO_PATH, validation_alias=UPDATE_REPO_PATH_ENV)
-    rollback_dir: Path = Field(
-        default=DEFAULT_UPDATE_ROLLBACK_DIR,
-        validation_alias=UPDATE_ROLLBACK_DIR_ENV,
-    )
-    update_state_path: Path = Field(
-        default=DEFAULT_UPDATE_STATE_PATH,
-        validation_alias=UPDATE_STATE_PATH_ENV,
-    )
-    update_sudo_wrapper: Path | None = Field(
-        default=None,
-        validation_alias=UPDATE_SUDO_WRAPPER_ENV,
-    )
-    firmware_cache_dir: Path = Field(
-        default=DEFAULT_FIRMWARE_CACHE_DIR,
-        validation_alias=FIRMWARE_CACHE_DIR_ENV,
-    )
-    firmware_repo: str = Field(default=GITHUB_REPO, validation_alias=FIRMWARE_REPO_ENV)
-    firmware_channel: Literal["stable", "prerelease"] = Field(
-        default=DEFAULT_FIRMWARE_CHANNEL,
-        validation_alias=FIRMWARE_CHANNEL_ENV,
-    )
-    firmware_pinned_tag: str = Field(default="", validation_alias=FIRMWARE_PINNED_TAG_ENV)
-    server_repo: str = Field(default=GITHUB_REPO, validation_alias=SERVER_REPO_ENV)
-    github_token: str = Field(default="", validation_alias=GITHUB_TOKEN_ENV)
-
-    @field_validator(
-        "repo_path",
-        "rollback_dir",
-        "update_state_path",
-        "update_sudo_wrapper",
-        "firmware_cache_dir",
-        mode="after",
-    )
-    @classmethod
-    def _expand_paths(cls, value: Path | None) -> Path | None:
-        return value.expanduser() if value is not None else None
+    repo_path: Path = DEFAULT_UPDATE_REPO_PATH
+    rollback_dir: Path = DEFAULT_UPDATE_ROLLBACK_DIR
+    update_state_path: Path = DEFAULT_UPDATE_STATE_PATH
+    update_sudo_wrapper: Path | None = None
+    firmware_cache_dir: Path = DEFAULT_FIRMWARE_CACHE_DIR
+    firmware_repo: str = GITHUB_REPO
+    firmware_channel: FirmwareChannel = DEFAULT_FIRMWARE_CHANNEL
+    firmware_pinned_tag: str = ""
+    server_repo: str = GITHUB_REPO
+    github_token: str = ""
 
 
 def load_bootstrap_env_settings() -> BootstrapEnvSettings:
-    return BootstrapEnvSettings()
+    return BootstrapEnvSettings(
+        config_path=_env_optional_path(CONFIG_PATH_ENV),
+        serve_static=_env_bool(SERVE_STATIC_ENV, True),
+    )
 
 
 def load_websocket_env_settings() -> WebSocketEnvSettings:
-    return WebSocketEnvSettings()
+    return WebSocketEnvSettings(ws_debug=_env_bool(WS_DEBUG_ENV, False))
 
 
 def load_update_env_settings() -> UpdateEnvSettings:
-    return UpdateEnvSettings()
+    return UpdateEnvSettings(
+        repo_path=_env_path(UPDATE_REPO_PATH_ENV, DEFAULT_UPDATE_REPO_PATH),
+        rollback_dir=_env_path(UPDATE_ROLLBACK_DIR_ENV, DEFAULT_UPDATE_ROLLBACK_DIR),
+        update_state_path=_env_path(UPDATE_STATE_PATH_ENV, DEFAULT_UPDATE_STATE_PATH),
+        update_sudo_wrapper=_env_optional_path(UPDATE_SUDO_WRAPPER_ENV),
+        firmware_cache_dir=_env_path(FIRMWARE_CACHE_DIR_ENV, DEFAULT_FIRMWARE_CACHE_DIR),
+        firmware_repo=_env_str(FIRMWARE_REPO_ENV, GITHUB_REPO),
+        firmware_channel=_env_firmware_channel(FIRMWARE_CHANNEL_ENV),
+        firmware_pinned_tag=_env_str(FIRMWARE_PINNED_TAG_ENV, ""),
+        server_repo=_env_str(SERVER_REPO_ENV, GITHUB_REPO),
+        github_token=_env_str(GITHUB_TOKEN_ENV, ""),
+    )
 
 
 def export_config_path_env(config_path: Path | None) -> None:

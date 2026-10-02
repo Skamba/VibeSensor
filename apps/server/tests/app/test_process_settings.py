@@ -5,16 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from vibesensor.shared.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
     DEFAULT_UPDATE_REPO_PATH,
     DEFAULT_UPDATE_ROLLBACK_DIR,
     DEFAULT_UPDATE_STATE_PATH,
-    BootstrapEnvSettings,
-    UpdateEnvSettings,
-    WebSocketEnvSettings,
+    load_bootstrap_env_settings,
+    load_update_env_settings,
+    load_websocket_env_settings,
     summarize_process_settings,
 )
 
@@ -41,7 +40,7 @@ def _clear_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_bootstrap_env_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     _clear_backend_env(monkeypatch)
 
-    settings = BootstrapEnvSettings()
+    settings = load_bootstrap_env_settings()
 
     assert settings.config_path is None
     assert settings.serve_static is True
@@ -56,7 +55,7 @@ def test_bootstrap_env_settings_accept_env_overrides(
     monkeypatch.setenv("VIBESENSOR_CONFIG_PATH", str(config_path))
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
 
-    settings = BootstrapEnvSettings()
+    settings = load_bootstrap_env_settings()
 
     assert settings.config_path == config_path
     assert settings.serve_static is False
@@ -66,14 +65,55 @@ def test_websocket_env_settings_reject_invalid_bool(monkeypatch: pytest.MonkeyPa
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_WS_DEBUG", "definitely")
 
-    with pytest.raises(ValidationError, match="VIBESENSOR_WS_DEBUG"):
-        WebSocketEnvSettings()
+    with pytest.raises(ValueError, match="VIBESENSOR_WS_DEBUG"):
+        load_websocket_env_settings()
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("1", True),
+        ("TRUE", True),
+        ("Yes", True),
+        ("on", True),
+        ("t", True),
+        ("y", True),
+        ("0", False),
+        ("False", False),
+        ("NO", False),
+        ("off", False),
+        ("f", False),
+        ("n", False),
+        ("", False),
+    ],
+)
+def test_websocket_env_settings_parse_bool_tokens(
+    monkeypatch: pytest.MonkeyPatch,
+    raw: str,
+    expected: bool,
+) -> None:
+    _clear_backend_env(monkeypatch)
+    monkeypatch.setenv("VIBESENSOR_WS_DEBUG", raw)
+
+    assert load_websocket_env_settings().ws_debug is expected
+
+
+def test_update_env_settings_strip_and_expand_values(monkeypatch: pytest.MonkeyPatch) -> None:
+    _clear_backend_env(monkeypatch)
+    monkeypatch.setenv("HOME", "/home/tester")
+    monkeypatch.setenv("VIBESENSOR_REPO_PATH", "  ~/repo  ")
+    monkeypatch.setenv("VIBESENSOR_FIRMWARE_REPO", "  example/fw  ")
+
+    settings = load_update_env_settings()
+
+    assert settings.repo_path == Path("/home/tester/repo")
+    assert settings.firmware_repo == "example/fw"
 
 
 def test_update_env_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     _clear_backend_env(monkeypatch)
 
-    settings = UpdateEnvSettings()
+    settings = load_update_env_settings()
 
     assert settings.repo_path == DEFAULT_UPDATE_REPO_PATH
     assert settings.rollback_dir == DEFAULT_UPDATE_ROLLBACK_DIR
@@ -103,7 +143,7 @@ def test_update_env_settings_accept_env_overrides(
     monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "example/server")
     monkeypatch.setenv("GITHUB_TOKEN", "ghp_test123")
 
-    settings = UpdateEnvSettings()
+    settings = load_update_env_settings()
 
     assert settings.repo_path == tmp_path / "repo"
     assert settings.rollback_dir == tmp_path / "rollback"
@@ -124,7 +164,7 @@ def test_update_env_settings_ignore_empty_env_values(monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("VIBESENSOR_SERVER_REPO", "")
     monkeypatch.setenv("GITHUB_TOKEN", "")
 
-    settings = UpdateEnvSettings()
+    settings = load_update_env_settings()
 
     assert settings.repo_path == DEFAULT_UPDATE_REPO_PATH
     assert settings.firmware_repo == "Skamba/VibeSensor"
@@ -136,8 +176,8 @@ def test_update_env_settings_reject_invalid_channel(monkeypatch: pytest.MonkeyPa
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_CHANNEL", "beta")
 
-    with pytest.raises(ValidationError, match="VIBESENSOR_FIRMWARE_CHANNEL"):
-        UpdateEnvSettings()
+    with pytest.raises(ValueError, match="VIBESENSOR_FIRMWARE_CHANNEL"):
+        load_update_env_settings()
 
 
 def test_process_settings_summary_redacts_github_token(
