@@ -20,8 +20,7 @@
     "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
     "test:smoke": "npx playwright test --config=playwright.smoke.config.ts --project=laptop-light",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
-    "analyze": "vite build --mode analyze"
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@preact/signals": "^2.11.0",
@@ -38,7 +37,6 @@
     "knip": "^6.38.0",
     "msw": "^2.15.0",
     "openapi-typescript": "^7.13.0",
-    "rollup-plugin-visualizer": "^7.1.1",
     "typescript": "^5.9.3",
     "vite": "^8.3.1",
     "vitest": "^4.1.11"
