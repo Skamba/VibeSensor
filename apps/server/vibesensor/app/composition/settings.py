@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.settings.car_settings import CarSettingsService
@@ -13,29 +14,25 @@ from vibesensor.settings.speed_source_runtime import (
 )
 from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
 from vibesensor.settings.ui_preferences import UiPreferencesService
-from vibesensor.shared.ports import (
-    LanguageReader,
-    SensorMetadataReader,
-    SettingsReader,
-    SettingsSnapshotPersistence,
-    SpeedSourceSettingsReader,
-    SpeedSourceSync,
-)
 from vibesensor.web.dependencies import (
     ObdAdminServiceProtocol,
     SettingsDeps,
     SettingsSpeedServiceProtocol,
 )
 
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
+    from vibesensor.speed.source_coordinator import SpeedSourceControlService
+
 
 @dataclass(frozen=True, slots=True)
 class RuntimeSettingsDeps:
     """Focused settings readers needed by long-lived runtime collaborators."""
 
-    settings_reader: SettingsReader
-    speed_source_reader: SpeedSourceSettingsReader
-    sensor_metadata_reader: SensorMetadataReader
-    language_reader: LanguageReader
+    settings_reader: SettingsDerivationService
+    speed_source_reader: PersistedSpeedSourceSettingsService
+    sensor_metadata_reader: SensorSettingsService
+    language_reader: UiPreferencesService
 
 
 @dataclass(slots=True)
@@ -81,8 +78,8 @@ class SettingsServiceBundle:
 
 def build_settings_service_bundle(
     *,
-    snapshot_repository: SettingsSnapshotPersistence | None,
-    speed_control: SpeedSourceSync | None,
+    snapshot_repository: HistoryDB | None,
+    speed_control: SpeedSourceControlService | None,
 ) -> SettingsServiceBundle:
     """Build the explicit settings bundle used by runtime and HTTP assembly."""
 

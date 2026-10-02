@@ -23,10 +23,10 @@ import anyio
 from vibesensor.common.exceptions import ProcessingError
 from vibesensor.common.failure_utils import bounded_failure_message
 from vibesensor.live.runtime_failures import ProcessingLoopFailure
-from vibesensor.shared.ports import ClockSyncBroadcaster
 
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.ingest.udp_control_tx import UDPControlPlane
     from vibesensor.live.processor import SignalProcessor
 
 LOGGER = logging.getLogger(__name__)
@@ -271,7 +271,7 @@ class ProcessingTickRunner:
         fft_n: int,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        control_plane: ClockSyncBroadcaster | None = None,
+        control_plane: UDPControlPlane | None = None,
     ) -> None:
         self._state = state
         self._sample_rate_hz = sample_rate_hz
@@ -404,7 +404,7 @@ class ProcessingLoop:
         fft_n: int,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        control_plane: ClockSyncBroadcaster | None = None,
+        control_plane: UDPControlPlane | None = None,
         failure_policy: ProcessingFailurePolicy | None = None,
     ) -> None:
         self.state = state

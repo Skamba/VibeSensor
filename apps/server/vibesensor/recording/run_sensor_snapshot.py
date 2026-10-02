@@ -11,7 +11,10 @@ from vibesensor.settings.sensor_config import SensorConfigPayload
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
 if TYPE_CHECKING:
-    from vibesensor.shared.ports import ClientTracker, SensorMetadataReader
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+
+    pass
 
 
 def build_run_sensor_snapshot(
@@ -48,8 +51,8 @@ def build_run_sensor_snapshot(
 def capture_run_sensor_snapshots(
     *,
     client_ids: Iterable[str],
-    registry: ClientTracker,
-    sensor_metadata_reader: SensorMetadataReader | None,
+    registry: ClientRegistry,
+    sensor_metadata_reader: SensorSettingsService | None,
 ) -> dict[str, RunSensorMetadata]:
     """Capture deterministic run-start snapshots for the supplied client ids."""
 

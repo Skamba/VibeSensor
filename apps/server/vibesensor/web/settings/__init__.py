@@ -20,11 +20,11 @@ from vibesensor.web.settings.preferences import create_ui_preferences_routes
 from vibesensor.web.settings.speed_source import create_speed_source_routes
 
 if TYPE_CHECKING:
-    from vibesensor.shared.ports import (
-        AnalysisSettingsStore,
-        CarSettingsStore,
-        UiPreferencesStore,
-    )
+    from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
+    from vibesensor.settings.car_settings import CarSettingsService
+    from vibesensor.settings.ui_preferences import UiPreferencesService
+
+    pass
     from vibesensor.web.dependencies import (
         ObdAdminServiceProtocol,
         SettingsSpeedServiceProtocol,
@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 
 
 def create_settings_routes(
-    car_settings: CarSettingsStore,
-    analysis_settings: AnalysisSettingsStore,
-    ui_preferences: UiPreferencesStore,
+    car_settings: CarSettingsService,
+    analysis_settings: ActiveCarAnalysisSettingsService,
+    ui_preferences: UiPreferencesService,
     speed_source_service: SpeedSourceSettingsServiceProtocol,
     speed_status_service: SettingsSpeedServiceProtocol,
     obd_admin_service: ObdAdminServiceProtocol,

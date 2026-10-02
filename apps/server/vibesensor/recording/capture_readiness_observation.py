@@ -5,12 +5,15 @@ from __future__ import annotations
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.settings.sensor_config import SensorConfigPayload
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, TrackedClient
+
+if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRecord, ClientRegistry
+    from vibesensor.settings.sensor_settings import SensorSettingsService
 
 __all__ = [
     "CaptureReadinessObservation",
@@ -88,10 +91,10 @@ class CaptureReadinessObservation:
 
 def observe_capture_readiness(
     *,
-    registry: ClientTracker,
+    registry: ClientRegistry,
     run_context: RunContextSnapshot,
     speed_provider: object,
-    sensor_metadata_reader: SensorMetadataReader | None = None,
+    sensor_metadata_reader: SensorSettingsService | None = None,
     now_mono: float | None = None,
 ) -> CaptureReadinessObservation:
     observed_at_mono_s = time.monotonic() if now_mono is None else now_mono
@@ -107,7 +110,7 @@ def observe_capture_readiness(
 
 
 def _active_sensors(
-    registry: ClientTracker,
+    registry: ClientRegistry,
     *,
     sensors_by_mac: Mapping[str, SensorConfigPayload],
 ) -> tuple[CaptureReadinessSensorObservation, ...]:
@@ -120,7 +123,7 @@ def _active_sensors(
 
 
 def _sensor_observation(
-    client: TrackedClient,
+    client: ClientRecord,
     *,
     sensors_by_mac: Mapping[str, SensorConfigPayload],
 ) -> CaptureReadinessSensorObservation:

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.live.payload_types import ClientApiRow, ClientMetrics
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.ports import SensorMetadataReader
+
+if TYPE_CHECKING:
+    from vibesensor.settings.sensor_settings import SensorSettingsService
 
 __all__ = [
     "ClientSnapshotLike",
@@ -53,7 +55,7 @@ def build_client_api_row(
     snapshot: ClientSnapshotLike,
     *,
     include_metrics: bool = True,
-    sensor_metadata_reader: SensorMetadataReader | None = None,
+    sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> ClientApiRow:
     """Build a single client row for HTTP and WebSocket payloads."""
 
@@ -95,7 +97,7 @@ def build_client_api_rows(
     snapshots: Iterable[ClientSnapshotLike],
     *,
     include_metrics: bool = True,
-    sensor_metadata_reader: SensorMetadataReader | None = None,
+    sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> list[ClientApiRow]:
     """Project runtime snapshots into the existing API/WS payload rows."""
 
@@ -116,7 +118,7 @@ def snapshot_for_api(
     now_mono: float | None = None,
     metrics_by_client: dict[str, ClientMetrics] | None = None,
     include_metrics: bool = True,
-    sensor_metadata_reader: SensorMetadataReader | None = None,
+    sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> list[ClientApiRow]:
     """Convenience presenter from client snapshots to API rows."""
 

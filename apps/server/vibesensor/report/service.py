@@ -9,11 +9,14 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.report.cache import HistoryReportPdfCache
 from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.loader import HistoryReportRequestLoader
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 #: Callable that turns a prepared canonical report input into PDF bytes.
 PdfRendererFn = Callable[[PreparedReportInput], bytes]
@@ -38,7 +41,7 @@ class HistoryReportService:
 
     def __init__(
         self,
-        history_db: RunPersistence,
+        history_db: HistoryDB,
         *,
         pdf_renderer: PdfRendererFn,
     ) -> None:

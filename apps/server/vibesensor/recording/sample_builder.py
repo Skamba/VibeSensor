@@ -22,12 +22,12 @@ from vibesensor.settings.order_reference_settings import order_reference_spec_fr
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
 if TYPE_CHECKING:
-    from vibesensor.shared.ports import (
-        ClientTracker,
-        SensorMetadataReader,
-        SignalSource,
-        SpeedProvider,
-    )
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processor import SignalProcessor
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
+
+    pass
 
 
 _LIVE_SAMPLE_WINDOW_S = 2.0
@@ -38,13 +38,13 @@ def build_sample_records(
     run_id: str,
     t_s: float,
     timestamp_utc: str,
-    registry: ClientTracker,
-    processor: SignalSource,
+    registry: ClientRegistry,
+    processor: SignalProcessor,
     speed_context: SpeedContext,
-    speed_provider: SpeedProvider | None = None,
+    speed_provider: SpeedSourceObservationService | None = None,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     default_sample_rate_hz: int,
-    sensor_metadata_reader: SensorMetadataReader | None = None,
+    sensor_metadata_reader: SensorSettingsService | None = None,
     run_sensor_presentation_resolver: Callable[..., tuple[str, str]] | None = None,
     live_sample_window_s: float | None = _LIVE_SAMPLE_WINDOW_S,
     run_start_mono_s: float | None = None,
@@ -186,7 +186,7 @@ def build_sample_records(
 
 def _analysis_window_fields(
     *,
-    processor: SignalSource,
+    processor: SignalProcessor,
     client_id: str,
     run_start_mono_s: float | None,
 ) -> tuple[int | None, int | None, bool | None, AnalysisTimeRange | None]:
@@ -206,7 +206,7 @@ def _analysis_window_fields(
 def _speed_context_for_record(
     *,
     fallback_speed_context: SpeedContext,
-    speed_provider: SpeedProvider | None,
+    speed_provider: SpeedSourceObservationService | None,
     analysis_settings_snapshot: AnalysisSettingsSnapshot,
     analysis_time_range: AnalysisTimeRange | None,
     run_start_mono_s: float | None,

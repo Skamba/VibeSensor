@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from hashlib import sha256
+from typing import TYPE_CHECKING
 
 from vibesensor.common.filenames import safe_filename
 from vibesensor.common.json_types import is_json_array
@@ -20,8 +21,10 @@ from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.cache_key import ReportPdfCacheKey
 from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.preparation import prepare_persisted_report_input
-from vibesensor.shared.ports import RunPersistence
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 _PERSISTED_REPORT_MODE_TOKEN = "none"
 
@@ -49,7 +52,7 @@ class HistoryReportRequestLoader:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: RunPersistence) -> None:
+    def __init__(self, history_db: HistoryDB) -> None:
         self._history_db = history_db
 
     async def load_report_request(

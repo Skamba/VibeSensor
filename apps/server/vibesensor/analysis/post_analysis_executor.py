@@ -28,7 +28,7 @@ import time
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from vibesensor.analysis._validation import MissingStrengthMetricsError
 from vibesensor.analysis.orders.whole_run_family_summaries import (
@@ -103,9 +103,11 @@ from vibesensor.analysis.whole_run_spectra import (
 from vibesensor.common.json_types import JsonObject, JsonValue
 from vibesensor.common.structured_logging import log_extra
 from vibesensor.recording.raw_capture import RawCaptureManifest, RawCaptureSensorRange
-from vibesensor.shared.ports import RunPersistence
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -127,7 +129,7 @@ class PostAnalysisLoader(Protocol):
         self,
         *,
         run_id: str,
-        db: RunPersistence,
+        db: HistoryDB,
     ) -> PostAnalysisLoadResult: ...
 
 
@@ -168,7 +170,7 @@ class StoredWholeRunArtifactBundle:
 def execute_post_analysis(
     *,
     run_id: str,
-    db: RunPersistence,
+    db: HistoryDB,
     config: PostAnalysisExecutionConfig,
 ) -> PostAnalysisAttemptResult:
     analysis_start = time.monotonic()
@@ -308,7 +310,7 @@ def _warning_codes(warnings: tuple[object, ...]) -> list[JsonValue]:
 
 def build_whole_run_artifacts(
     *,
-    db: RunPersistence,
+    db: HistoryDB,
     loaded: LoadedPostAnalysisRun,
     run_input: PostAnalysisRunInput,
 ) -> WholeRunArtifacts:
@@ -430,7 +432,7 @@ def build_whole_run_artifacts(
 
 def _build_spectra(
     *,
-    db: RunPersistence,
+    db: HistoryDB,
     loaded: LoadedPostAnalysisRun,
     policy: WholeRunRawCapturePolicy,
 ) -> WholeRunSpectralBuildResult | None:
@@ -459,7 +461,7 @@ def _build_spectra(
         return result
 
 
-def _raw_range_reader(db: RunPersistence, loaded: LoadedPostAnalysisRun) -> RawCaptureRangeReader:
+def _raw_range_reader(db: HistoryDB, loaded: LoadedPostAnalysisRun) -> RawCaptureRangeReader:
     """Read raw waveform ranges for *loaded* through the persistence port."""
 
     def read_range(
@@ -684,7 +686,7 @@ def build_report_facts(
 
 def _store_load_error(
     *,
-    db: RunPersistence,
+    db: HistoryDB,
     run_id: str,
     completed_error: str,
     kind: str,
@@ -749,7 +751,7 @@ def _persistence_failure_result(
     run_id: str,
     analysis_start: float,
     exc: BaseException,
-    db: RunPersistence,
+    db: HistoryDB,
 ) -> PostAnalysisExecutionResult:
     duration_s = time.monotonic() - analysis_start
     callback_error = f"post-analysis failed for run {run_id}: {exc}"

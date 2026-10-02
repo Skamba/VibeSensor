@@ -5,11 +5,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from math import ceil, isfinite
+from typing import TYPE_CHECKING
 
 from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _EVENT_PRESERVING_SAMPLING_METHOD = "event_preserving"
@@ -68,7 +71,7 @@ def _sample_stride(total_sample_count: int) -> int:
 def load_post_analysis_run(
     *,
     run_id: str,
-    db: RunPersistence,
+    db: HistoryDB,
 ) -> PostAnalysisLoadResult:
     stored_run = db.get_run(run_id)
     if stored_run is None:

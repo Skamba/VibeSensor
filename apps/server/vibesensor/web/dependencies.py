@@ -13,19 +13,17 @@ from vibesensor.live.processing_loop import ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.report.service import HistoryReportService
-from vibesensor.shared.ports import (
-    AnalysisSettingsStore,
-    CarSettingsStore,
-    SensorMetadataStore,
-    TrackedClient,
-    UiPreferencesStore,
-)
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.web.health_state import RuntimeHealthState
 
 if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRecord
     from vibesensor.live.broadcaster import LiveBroadcaster
+    from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
+    from vibesensor.settings.car_settings import CarSettingsService
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.settings.ui_preferences import UiPreferencesService
     from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.speed.speed_source_config import (
         SpeedSourcePayload,
@@ -66,7 +64,7 @@ class SpeedSourceSettingsServiceProtocol(Protocol):
 
 
 class ClientRegistryProtocol(ClientSnapshotSource, Protocol):
-    def get(self, client_id: str) -> TrackedClient | None: ...
+    def get(self, client_id: str) -> ClientRecord | None: ...
 
     def active_client_ids(
         self,
@@ -75,11 +73,11 @@ class ClientRegistryProtocol(ClientSnapshotSource, Protocol):
         now_mono: float | None = None,
     ) -> list[str]: ...
 
-    def set_location(self, client_id: str, location_code: str) -> TrackedClient | None: ...
+    def set_location(self, client_id: str, location_code: str) -> ClientRecord | None: ...
 
-    def set_name(self, client_id: str, name: str) -> TrackedClient | None: ...
+    def set_name(self, client_id: str, name: str) -> ClientRecord | None: ...
 
-    def clear_name(self, client_id: str) -> TrackedClient | None: ...
+    def clear_name(self, client_id: str) -> ClientRecord | None: ...
 
     def remove_client(self, client_id: str) -> bool: ...
 
@@ -106,7 +104,7 @@ class HealthDeps:
 class LiveDeps:
     registry: ClientRegistryProtocol
     control_plane: ClientControlPlaneProtocol
-    sensor_metadata_store: SensorMetadataStore
+    sensor_metadata_store: SensorSettingsService
     processor: SignalProcessor
     run_recorder: RunRecorder
     ws_broadcaster: LiveBroadcaster
@@ -114,9 +112,9 @@ class LiveDeps:
 
 @dataclass(slots=True)
 class SettingsDeps:
-    car_settings: CarSettingsStore
-    analysis_settings: AnalysisSettingsStore
-    ui_preferences: UiPreferencesStore
+    car_settings: CarSettingsService
+    analysis_settings: ActiveCarAnalysisSettingsService
+    ui_preferences: UiPreferencesService
     speed_source_service: SpeedSourceSettingsServiceProtocol
     speed_status_service: SettingsSpeedServiceProtocol
     obd_admin_service: ObdAdminServiceProtocol

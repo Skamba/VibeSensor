@@ -6,12 +6,14 @@ import logging
 import sqlite3
 import time
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from vibesensor.analysis.post_analysis import PostAnalysisWorker
 from vibesensor.domain.capture_readiness import CaptureReadiness
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 __all__ = [
     "RunRecorderHealthSnapshot",
@@ -82,7 +84,7 @@ def build_run_recorder_status(
 
 def build_run_recorder_health_snapshot(
     *,
-    history_db: RunPersistence | None,
+    history_db: HistoryDB | None,
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
     logger: logging.Logger,

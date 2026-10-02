@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.history.exports import HistoryExportService
@@ -10,12 +11,14 @@ from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.service import HistoryReportService
-from vibesensor.shared.ports import SettingsReader
 from vibesensor.web.dependencies import HistoryDeps
 from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,7 +81,7 @@ def create_history_db(
 def build_history_deps(
     *,
     history: HistoryDB,
-    current_car_reader: SettingsReader,
+    current_car_reader: SettingsDerivationService,
 ) -> HistoryDeps:
     """Build the history/reporting HTTP services over shared persistence."""
 

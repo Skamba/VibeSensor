@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Never, cast
+from typing import TYPE_CHECKING, Never, cast
 
 from vibesensor.common.exceptions import AnalysisNotReadyError, RunNotFoundError
 from vibesensor.common.json_types import JsonObject, JsonValue, is_json_array
@@ -15,8 +15,10 @@ from vibesensor.history.helpers import (
     strip_internal_fields,
 )
 from vibesensor.history.records import HistoryRunListEntry, StoredHistoryRun
-from vibesensor.shared.ports import RunPersistence
 from vibesensor.summary.warning_fields import localize_warning_list
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 
 class HistoryRunService:
@@ -24,7 +26,7 @@ class HistoryRunService:
 
     __slots__ = ("_history_db",)
 
-    def __init__(self, history_db: RunPersistence) -> None:
+    def __init__(self, history_db: HistoryDB) -> None:
         self._history_db = history_db
 
     async def list_runs(self) -> list[HistoryRunListEntry]:

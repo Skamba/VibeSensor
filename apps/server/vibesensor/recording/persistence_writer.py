@@ -2,7 +2,7 @@
 
 ``RunPersistenceWriter`` owns history-run creation, sample appends,
 finalization, retry/backoff handling, and persistence health counters above
-the injected ``RunPersistence`` boundary.
+the injected ``HistoryDB`` boundary.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from threading import RLock
+from typing import TYPE_CHECKING
 
 from vibesensor.recording.run_schema import (
     RunFinalizationStageResult,
@@ -19,7 +20,9 @@ from vibesensor.recording.run_schema import (
     RunRawCaptureFinalize,
 )
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 __all__ = [
     "AppendRowsResult",
@@ -66,7 +69,7 @@ class RunPersistenceWriter:
         self,
         *,
         lock: RLock,
-        history_db: RunPersistence | None,
+        history_db: HistoryDB | None,
         persist_history_db_enabled: bool,
         run_id_matches: RunIdMatcher,
         metadata_builder: MetadataBuilder,

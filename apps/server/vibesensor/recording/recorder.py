@@ -42,19 +42,17 @@ from vibesensor.recording.status_reporting import (
     build_run_recorder_health_snapshot,
     build_run_recorder_status,
 )
-from vibesensor.shared.ports import (
-    ClientTracker,
-    LanguageReader,
-    RunPersistence,
-    SensorMetadataReader,
-    SettingsReader,
-    SignalSource,
-    SpeedProvider,
-)
 
 if TYPE_CHECKING:
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+    from vibesensor.history.history_db import HistoryDB
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processor import SignalProcessor
     from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
+    from vibesensor.settings.ui_preferences import UiPreferencesService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 
 LOGGER = logging.getLogger(__name__)
 _RAW_CAPTURE_MAX_SYNC_AGE_US = 15_000_000
@@ -75,13 +73,13 @@ class RunRecorder:
     def __init__(
         self,
         config: _recorder_types.RunRecorderConfig,
-        registry: ClientTracker,
-        gps_monitor: SpeedProvider,
-        processor: SignalSource,
-        history_db: RunPersistence | None = None,
-        settings_reader: SettingsReader | None = None,
-        sensor_metadata_reader: SensorMetadataReader | None = None,
-        language_reader: LanguageReader | None = None,
+        registry: ClientRegistry,
+        gps_monitor: SpeedSourceObservationService,
+        processor: SignalProcessor,
+        history_db: HistoryDB | None = None,
+        settings_reader: SettingsDerivationService | None = None,
+        sensor_metadata_reader: SensorSettingsService | None = None,
+        language_reader: UiPreferencesService | None = None,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
@@ -427,7 +425,7 @@ class RunRecorder:
 
 
 def _snapshot_raw_capture_sensor_sync(
-    registry: ClientTracker,
+    registry: ClientRegistry,
     client_ids: tuple[str, ...],
 ) -> dict[str, RawCaptureSensorClockSync]:
     observed_monotonic_us = int(round(time.monotonic() * 1_000_000.0))

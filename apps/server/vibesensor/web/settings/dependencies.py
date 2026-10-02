@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from vibesensor.shared.ports import (
-    AnalysisSettingsStore,
-    CarSettingsStore,
-    UiPreferencesStore,
-)
 from vibesensor.web.dependencies import (
     ObdAdminServiceProtocol,
     SettingsSpeedServiceProtocol,
     SpeedSourceSettingsServiceProtocol,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
+    from vibesensor.settings.car_settings import CarSettingsService
+    from vibesensor.settings.ui_preferences import UiPreferencesService
 
 __all__ = [
     "AnalysisSettingsRouteDeps",
@@ -26,7 +27,7 @@ __all__ = [
 
 @dataclass(frozen=True, slots=True)
 class CarSettingsRouteDeps:
-    car_settings: CarSettingsStore
+    car_settings: CarSettingsService
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,9 +45,9 @@ class ObdAdminRouteDeps:
 
 @dataclass(frozen=True, slots=True)
 class UiPreferencesRouteDeps:
-    ui_preferences: UiPreferencesStore
+    ui_preferences: UiPreferencesService
 
 
 @dataclass(frozen=True, slots=True)
 class AnalysisSettingsRouteDeps:
-    analysis_settings: AnalysisSettingsStore
+    analysis_settings: ActiveCarAnalysisSettingsService

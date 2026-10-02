@@ -12,16 +12,14 @@ from vibesensor.live.rotational_speeds import (
     build_rotational_speeds_payload,
     rotational_basis_speed_source,
 )
-from vibesensor.shared.ports import (
-    SensorMetadataReader,
-    SettingsReader,
-    SpeedProvider,
-    SpeedSourceSettingsReader,
-)
 
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
+    from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 
 
 class LiveWsPayloadProjector:
@@ -42,11 +40,11 @@ class LiveWsPayloadProjector:
         *,
         registry: ClientRegistry,
         processor: SignalProcessor,
-        gps_monitor: SpeedProvider,
+        gps_monitor: SpeedSourceObservationService,
         gps_enabled: bool,
-        settings_reader: SettingsReader,
-        speed_source_reader: SpeedSourceSettingsReader,
-        sensor_metadata_reader: SensorMetadataReader | None = None,
+        settings_reader: SettingsDerivationService,
+        speed_source_reader: PersistedSpeedSourceSettingsService,
+        sensor_metadata_reader: SensorSettingsService | None = None,
     ) -> None:
         self._gps_enabled = gps_enabled
         self._registry = registry

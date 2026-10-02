@@ -6,7 +6,7 @@ import asyncio
 import shutil
 import tempfile
 import zipfile
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from pydantic import TypeAdapter
 
@@ -25,7 +25,6 @@ from vibesensor.history.projection import (
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.recording.run_context import add_current_context_warnings
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
-from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.summary.warning_fields import localize_warning_list
 from vibesensor.web.models.history import (
     DeleteHistoryRunResponse,
@@ -33,6 +32,9 @@ from vibesensor.web.models.history import (
     HistoryListEntryResponse,
     HistoryRunResponse,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 
@@ -47,7 +49,7 @@ class ProjectedHistoryRunService:
     def __init__(
         self,
         service: HistoryRunService,
-        current_car_reader: ActiveCarReader | None = None,
+        current_car_reader: SettingsDerivationService | None = None,
     ) -> None:
         self._service = service
         self._current_car_reader = current_car_reader

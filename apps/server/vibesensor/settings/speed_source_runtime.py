@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.ports import SpeedSourceSettingsStore, SpeedSourceSync
+from typing import TYPE_CHECKING
+
 from vibesensor.speed.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
 )
+
+if TYPE_CHECKING:
+    from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceControlService
 
 __all__ = [
     "SpeedSourceRuntimeApplier",
@@ -20,7 +25,7 @@ class SpeedSourceRuntimeApplier:
 
     __slots__ = ("_speed_control",)
 
-    def __init__(self, *, speed_control: SpeedSourceSync | None) -> None:
+    def __init__(self, *, speed_control: SpeedSourceControlService | None) -> None:
         self._speed_control = speed_control
 
     def apply(self, config: SpeedSourceConfig) -> None:
@@ -44,7 +49,7 @@ class SpeedSourceSettingsService:
     def __init__(
         self,
         *,
-        settings_store: SpeedSourceSettingsStore,
+        settings_store: PersistedSpeedSourceSettingsService,
         runtime_applier: SpeedSourceRuntimeApplier,
     ) -> None:
         self._settings_store = settings_store

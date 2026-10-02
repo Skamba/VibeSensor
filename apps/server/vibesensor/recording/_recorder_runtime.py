@@ -13,10 +13,11 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.ports import ClientTracker, SettingsReader
 
 if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.recording.recorder import RunRecorder
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 __all__ = [
     "active_frames_total",
@@ -36,7 +37,7 @@ def normalize_accel_scale_g_per_lsb(value: object) -> float | None:
 
 
 def analysis_settings_snapshot(
-    settings_reader: SettingsReader | None,
+    settings_reader: SettingsDerivationService | None,
 ) -> AnalysisSettingsSnapshot:
     """Load the current analysis settings snapshot or repo defaults."""
     if settings_reader is not None:
@@ -44,7 +45,7 @@ def analysis_settings_snapshot(
     return analysis_settings_snapshot_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)
 
 
-def active_frames_total(registry: ClientTracker) -> int:
+def active_frames_total(registry: ClientRegistry) -> int:
     """Return the total active frame count across all connected clients."""
     _get = registry.get
     return sum(

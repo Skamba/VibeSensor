@@ -8,6 +8,7 @@ import threading
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -19,7 +20,9 @@ from vibesensor.recording.raw_capture import (
     RawCaptureSensorClockSync,
 )
 from vibesensor.recording.run_schema import RawCaptureFinalizeStatus
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 __all__ = ["RawCaptureFinalizeResult", "RunRawCaptureWriter"]
 
@@ -132,7 +135,7 @@ class RunRawCaptureWriter:
     def __init__(
         self,
         *,
-        history_db: RunPersistence | None,
+        history_db: HistoryDB | None,
         logger: logging.Logger,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         sensor_sync_snapshotter: (

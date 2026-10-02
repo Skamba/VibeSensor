@@ -15,7 +15,7 @@ import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.ingest.client_metadata import ClientMetadataManager
@@ -24,12 +24,10 @@ from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
-from vibesensor.shared.ports import (
-    ClientNamePersistence,
-    RegistryAckMessage,
-    RegistryDataMessage,
-    RegistryHelloMessage,
-)
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
+    from vibesensor.ingest.protocol_messages import AckMessage, DataMessage, HelloMessage
 
 LOGGER = logging.getLogger(__name__)
 _LOCATION_VALIDATOR = LocationAssignmentValidator()
@@ -405,7 +403,7 @@ class ClientRegistry:
 
     def __init__(
         self,
-        db: ClientNamePersistence | None = None,
+        db: HistoryDB | None = None,
         live_ttl_seconds: float = 10.0,
         retention_ttl_seconds: float = 120.0,
     ):
@@ -438,7 +436,7 @@ class ClientRegistry:
 
     def update_from_hello(
         self,
-        hello: RegistryHelloMessage,
+        hello: HelloMessage,
         addr: tuple[str, int],
         now: float | None = None,
         *,
@@ -465,7 +463,7 @@ class ClientRegistry:
 
     def update_from_data(
         self,
-        data_msg: RegistryDataMessage,
+        data_msg: DataMessage,
         addr: tuple[str, int],
         now: float | None = None,
         *,
@@ -494,7 +492,7 @@ class ClientRegistry:
 
     def update_from_ack(
         self,
-        ack: RegistryAckMessage,
+        ack: AckMessage,
         now: float | None = None,
         *,
         now_mono: float | None = None,

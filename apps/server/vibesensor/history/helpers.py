@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from vibesensor.common.exceptions import (
     AnalysisNotReadyError,
@@ -18,8 +18,10 @@ from vibesensor.common.exceptions import (
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.records import StoredHistoryRun
-from vibesensor.shared.ports import RunPersistence
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 
 def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:
@@ -32,7 +34,7 @@ def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:
     return run.metadata.language or "en"
 
 
-async def async_require_run(history_db: RunPersistence, run_id: str) -> StoredHistoryRun:
+async def async_require_run(history_db: HistoryDB, run_id: str) -> StoredHistoryRun:
     """Fetch a history run or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)
     if run is None:

@@ -15,6 +15,7 @@ import logging
 import time
 from collections.abc import Callable
 from threading import Event, RLock, Thread
+from typing import TYPE_CHECKING
 
 from vibesensor.analysis.post_analysis_executor import (
     PostAnalysisAttemptResult,
@@ -36,7 +37,9 @@ from vibesensor.analysis.post_analysis_state import (
     PostAnalysisState,
 )
 from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,7 +74,7 @@ class PostAnalysisWorker:
 
     def __init__(
         self,
-        history_db: RunPersistence | None,
+        history_db: HistoryDB | None,
         error_callback: Callable[[str], None] | None = None,
         clear_error_callback: Callable[[], None] | None = None,
         analysis_runner: PostAnalysisRunner = build_post_analysis_summary,

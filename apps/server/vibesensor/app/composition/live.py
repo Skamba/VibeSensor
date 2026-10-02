@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
 from vibesensor.app.composition.speed import SpeedRuntimeBundle
@@ -27,9 +28,11 @@ from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
-from vibesensor.shared.ports import SensorMetadataStore
 from vibesensor.web.dependencies import HealthDeps, LiveDeps
 from vibesensor.web.health_state import RuntimeHealthState
+
+if TYPE_CHECKING:
+    from vibesensor.settings.sensor_settings import SensorSettingsService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ class LiveRuntimeBundle:
             ingest_diagnostics=self.ingest_diagnostics,
         )
 
-    def http_live_deps(self, *, sensor_metadata_store: SensorMetadataStore) -> LiveDeps:
+    def http_live_deps(self, *, sensor_metadata_store: SensorSettingsService) -> LiveDeps:
         """Return the focused HTTP live-runtime dependency group."""
 
         return LiveDeps(

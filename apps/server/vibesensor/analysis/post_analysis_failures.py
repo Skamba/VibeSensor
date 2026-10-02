@@ -6,9 +6,12 @@ import logging
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from vibesensor.common.failure_utils import bounded_failure_message
-from vibesensor.shared.ports import RunPersistence
+
+if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +34,7 @@ class UnexpectedPostAnalysisBugRecorder:
     def __init__(
         self,
         *,
-        history_db: RunPersistence | None,
+        history_db: HistoryDB | None,
         error_callback: Callable[[str], None],
     ) -> None:
         self._history_db = history_db

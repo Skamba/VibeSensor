@@ -148,14 +148,13 @@ layers = [
   "vibesensor.cli | vibesensor.simulator",
   "vibesensor.app",
   "vibesensor.web",
-  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.shared : vibesensor.speed : vibesensor.summary : vibesensor.updates",
+  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.speed : vibesensor.summary : vibesensor.updates",
   "vibesensor.domain : vibesensor.common",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Live telemetry path stays off post-run analysis, history and reporting"
 type = "forbidden"
-allow_indirect_imports = true
 source_modules = ["vibesensor.ingest", "vibesensor.live", "vibesensor.dsp"]
 forbidden_modules = [
   "vibesensor.analysis",

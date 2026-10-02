@@ -10,7 +10,6 @@ from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
 from vibesensor.settings.analysis_settings_schema import sanitize_analysis_settings
-from vibesensor.shared.ports import SettingsReader
 
 __all__ = [
     "SettingsDerivationService",
@@ -28,7 +27,7 @@ def analysis_settings_snapshot_from_aspects(
     return analysis_settings_snapshot_from_mapping(values)
 
 
-class SettingsDerivationService(SettingsReader):
+class SettingsDerivationService:
     """Read-only current-settings view for recorder/history/runtime consumers."""
 
     __slots__ = ("_active_car_aspects", "_active_car_snapshot")

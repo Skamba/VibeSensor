@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
@@ -13,7 +14,12 @@ from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.recording.sample_builder import _LIVE_SAMPLE_WINDOW_S, build_sample_records
 from vibesensor.recording.sample_speed_context import resolve_speed_context
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.shared.ports import ClientTracker, SensorMetadataReader, SignalSource, SpeedProvider
+
+if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processor import SignalProcessor
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 
 AnalysisSettingsProvider = Callable[[], AnalysisSettingsSnapshot]
 CurrentTotalProvider = Callable[[], int]
@@ -30,12 +36,12 @@ class SampleFlushOrchestrator:
     def __init__(
         self,
         *,
-        registry: ClientTracker,
-        gps_monitor: SpeedProvider,
-        processor: SignalSource,
+        registry: ClientRegistry,
+        gps_monitor: SpeedSourceObservationService,
+        processor: SignalProcessor,
         analysis_settings_snapshot: AnalysisSettingsProvider,
         default_sample_rate_hz: int,
-        sensor_metadata_reader: SensorMetadataReader | None = None,
+        sensor_metadata_reader: SensorSettingsService | None = None,
         run_sensor_presentation_resolver: Callable[..., tuple[str, str]] | None = None,
         lifecycle: RunLifecycleState,
         persistence: RunPersistenceWriter,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from threading import RLock
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from vibesensor.common.time_utils import utc_now_iso
@@ -20,12 +21,12 @@ from vibesensor.recording.run_sensor_snapshot import (
     capture_run_sensor_snapshots,
 )
 from vibesensor.settings.sensor_config import SensorConfigPayload
-from vibesensor.shared.ports import (
-    ClientTracker,
-    SensorMetadataReader,
-    SettingsReader,
-    SignalSource,
-)
+
+if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processor import SignalProcessor
+    from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 __all__ = ["RunRecordingSessionService", "snapshot_server_queue_drops"]
 
@@ -37,10 +38,10 @@ class RunRecordingSessionService:
         self,
         *,
         lock: RLock,
-        registry: ClientTracker,
-        processor: SignalSource,
-        settings_reader: SettingsReader | None,
-        sensor_metadata_reader: SensorMetadataReader | None,
+        registry: ClientRegistry,
+        processor: SignalProcessor,
+        settings_reader: SettingsDerivationService | None,
+        sensor_metadata_reader: SensorSettingsService | None,
         lifecycle: RunLifecycleState,
         persistence: RunPersistenceWriter,
         raw_capture: RunRawCaptureWriter,
@@ -173,7 +174,7 @@ class RunRecordingSessionService:
         self._run_ingest_drop_baseline = None
 
 
-def snapshot_server_queue_drops(registry: ClientTracker) -> dict[str, int]:
+def snapshot_server_queue_drops(registry: ClientRegistry) -> dict[str, int]:
     client_ids: set[str] = set()
     client_snapshots = getattr(registry, "client_snapshots", None)
     if callable(client_snapshots):
@@ -193,7 +194,7 @@ def snapshot_server_queue_drops(registry: ClientTracker) -> dict[str, int]:
 
 
 def udp_ingest_drop_sensor_losses(
-    registry: ClientTracker,
+    registry: ClientRegistry,
     *,
     baseline: dict[str, int] | None,
 ) -> dict[str, RawCaptureLossStats] | None:

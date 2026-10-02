@@ -14,7 +14,6 @@ from vibesensor.settings.settings_derivation import SettingsDerivationService
 from vibesensor.settings.settings_persistence import SettingsPersistenceCoordinator
 from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
 from vibesensor.settings.ui_preferences import UiPreferencesService
-from vibesensor.shared.ports import SettingsSnapshotPersistence
 
 __all__ = ["PersistedSettingsServices", "build_settings_services", "write_raw_settings_snapshot"]
 
@@ -31,7 +30,7 @@ class PersistedSettingsServices:
 
 
 def build_settings_services(
-    db: SettingsSnapshotPersistence | None = None,
+    db: HistoryDB | None = None,
 ) -> PersistedSettingsServices:
     """Build the focused persisted settings services used by production wiring."""
 

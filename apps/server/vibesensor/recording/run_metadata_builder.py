@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from vibesensor.common.time_utils import coerce_utc_offset_seconds
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
@@ -18,10 +20,13 @@ from vibesensor.recording.run_schema import (
     RunRawCaptureFinalize,
     RunSensorMetadata,
 )
-from vibesensor.shared.ports import ClientTracker, LanguageReader
+
+if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.settings.ui_preferences import UiPreferencesService
 
 
-def firmware_version_for_run(registry: ClientTracker) -> str | None:
+def firmware_version_for_run(registry: ClientRegistry) -> str | None:
     """Collect firmware version string(s) from active clients."""
     versions: set[str] = set()
     for client_id in registry.active_client_ids():
@@ -97,7 +102,7 @@ def build_run_metadata(
     active_car_snapshot: CarSnapshot | None = None,
     raw_capture_manifest: RawCaptureManifest | None = None,
     raw_capture_finalize: RunRawCaptureFinalize | None = None,
-    language_reader: LanguageReader | None = None,
+    language_reader: UiPreferencesService | None = None,
     recorded_utc_offset_seconds: int | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
 ) -> RunMetadata:
