@@ -13,7 +13,7 @@ from vibesensor.report.presentation import (
     order_label_human,
     peak_classification_text,
 )
-from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.summary.analysis_views import PeakTableRow
 
 __all__ = [
     "build_peak_rows",

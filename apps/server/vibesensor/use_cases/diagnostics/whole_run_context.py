@@ -12,7 +12,7 @@ from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactManifest,
     WholeRunContextCoverage,

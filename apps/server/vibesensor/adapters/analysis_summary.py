@@ -9,9 +9,9 @@ from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.shared.boundaries.analysis_payloads.summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
 from vibesensor.use_cases.diagnostics._run_loader import _load_run as load_run
 from vibesensor.use_cases.diagnostics.run_analysis import (

@@ -19,24 +19,24 @@ from vibesensor.live.processing_profile import (
     processing_profile_row,
 )
 from vibesensor.shared.boundaries.analysis_payloads.summary import analysis_result_to_summary
-from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )
-from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+from vibesensor.summary.contracts import RunSuitabilityCheck
+from vibesensor.summary.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     derive_report_fallback_reasons,
 )
-from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
-from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
+from vibesensor.summary.location_intensity_payload import (
     serialize_location_intensity_rows,
 )
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
-from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.warning_fields import summary_warning_payloads
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 

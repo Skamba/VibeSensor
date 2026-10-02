@@ -14,7 +14,7 @@ from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+from vibesensor.summary.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )
 

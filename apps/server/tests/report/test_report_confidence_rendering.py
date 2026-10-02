@@ -7,7 +7,7 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.pdf.pdf_engine import build_report_pdf
 from vibesensor.report.preparation import prepare_persisted_report_input
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def test_pdf_renders_confidence_row_and_explicit_caveats() -> None:

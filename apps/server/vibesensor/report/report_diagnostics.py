@@ -9,7 +9,7 @@ from typing import cast
 from vibesensor.common.json_types import JsonObject, is_json_array, is_json_object
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.report.i18n import is_i18n_ref, resolve_i18n
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.run_context_warning import (
     RunContextWarning,
     RunContextWarningsInput,
     WarningSeverity,

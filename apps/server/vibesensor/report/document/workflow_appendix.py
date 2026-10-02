@@ -30,10 +30,10 @@ from vibesensor.report.presentation import (
 )
 from vibesensor.report.projection import PrimaryReportFacts
 from vibesensor.report.report_diagnostics import check_state, has_warning_code, nonpass_detail_lines
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "build_appendix_a_data",

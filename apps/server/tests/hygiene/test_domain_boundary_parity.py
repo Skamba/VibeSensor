@@ -16,12 +16,12 @@ from vibesensor.shared.boundaries.runs.suitability import (
     run_suitability_from_payload,
     run_suitability_payload,
 )
-from vibesensor.shared.boundaries.summary_fields.finding import (
+from vibesensor.summary.contracts import RunSuitabilityCheck
+from vibesensor.summary.finding_fields import (
     finding_from_payload,
     finding_payload_from_domain,
 )
-from vibesensor.shared.types.finding_payload_parts import FindingPayload
-from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
+from vibesensor.summary.finding_payload_parts import FindingPayload
 
 
 def test_finding_payload_round_trips_domain_summary_boundary() -> None:

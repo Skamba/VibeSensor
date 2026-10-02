@@ -8,38 +8,38 @@ from typing import cast
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
-    test_run_from_persisted_analysis,
-    test_run_from_summary,
-)
-from vibesensor.shared.boundaries.reporting.analysis_metadata import (
-    report_analysis_metadata_from_mapping,
-)
-from vibesensor.shared.boundaries.reporting.fallback_reasons import (
-    REPORT_FALLBACK_REASONS_METADATA_KEY,
-    dedupe_report_fallback_reasons,
-    derive_report_fallback_reasons,
-    finalization_stage_fallback_reasons,
-)
-from vibesensor.shared.boundaries.reporting.summary import (
-    has_projectable_report_payload,
-    report_summary_from_mapping,
-)
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
 from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
-from vibesensor.shared.boundaries.summary_fields.finding import finding_payload_from_domain
-from vibesensor.shared.boundaries.summary_fields.origin import origin_payload_from_finding
-from vibesensor.shared.boundaries.summary_fields.test_plan import (
+from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
+from vibesensor.shared.types.history_records import StoredHistoryRun
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.summary.analysis_metadata import (
+    report_analysis_metadata_from_mapping,
+)
+from vibesensor.summary.decoding import (
+    has_projectable_report_payload,
+    report_summary_from_mapping,
+)
+from vibesensor.summary.fallback_reasons import (
+    REPORT_FALLBACK_REASONS_METADATA_KEY,
+    dedupe_report_fallback_reasons,
+    derive_report_fallback_reasons,
+    finalization_stage_fallback_reasons,
+)
+from vibesensor.summary.finding_fields import finding_payload_from_domain
+from vibesensor.summary.origin_fields import origin_payload_from_finding
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
+from vibesensor.summary.test_plan_fields import (
     _has_structured_step_content,
     step_payloads_from_plan,
 )
-from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
-from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.exports import serialize_run_details_json
 from vibesensor.use_cases.history.helpers import strip_internal_fields
 

@@ -13,7 +13,7 @@ from test_support.history_db_sql import execute_statements as _execute_statement
 from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import (
     HistoryWholeRunArtifactStore,
 )
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactFile,
     WholeRunArtifactManifest,

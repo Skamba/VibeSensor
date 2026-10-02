@@ -9,7 +9,7 @@ from vibesensor.domain.test_run import TestRun
 from vibesensor.report.facts import PreparedReportFacts
 from vibesensor.report.i18n import is_composite_location
 from vibesensor.report.presentation import display_location
-from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
+from vibesensor.summary.phases import PHASE_I18N_KEYS
 
 __all__ = [
     "_finding_phase_index",

@@ -16,7 +16,7 @@ from vibesensor.domain.diagnosis_assessment import (
 from vibesensor.report.decision_facts import ReportDecisionFacts
 from vibesensor.report.evidence_facts import ReportEvidenceFacts
 from vibesensor.report.projection import PrimaryReportFacts
-from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+from vibesensor.summary.whole_run_diagnosis_contracts import (
     DiagnosisFactor,
     WholeRunDiagnosisSummary,
     diagnosis_factor_from_assessment,

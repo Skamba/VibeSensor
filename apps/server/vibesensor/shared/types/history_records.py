@@ -8,11 +8,11 @@ from typing import Literal
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_lifecycle import RunArtifactLifecycle
 from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "ArtifactAvailabilityState",

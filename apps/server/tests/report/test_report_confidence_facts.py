@@ -7,7 +7,7 @@ from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report import i18n as report_i18n
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_persisted_report_input
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def _tr(key: str, **kwargs: object) -> str:

@@ -7,11 +7,11 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.facts import prepare_report_facts
 from vibesensor.report.preparation import prepare_report_input
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+from vibesensor.summary.decoding import report_summary_from_mapping
+from vibesensor.summary.reconstruction import (
     test_run_from_summary as build_test_run_from_summary,
 )
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 
 def _summary() -> dict[str, object]:

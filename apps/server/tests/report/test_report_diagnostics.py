@@ -4,7 +4,7 @@ import pytest
 
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.report.report_diagnostics import report_suitability_checks, report_warnings
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 
 def test_report_warnings_prefers_explicit_override() -> None:

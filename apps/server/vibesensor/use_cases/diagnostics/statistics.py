@@ -14,9 +14,9 @@ from datetime import datetime, timedelta
 
 from vibesensor.common.time_utils import parse_iso8601
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
+from vibesensor.dsp.statistics_utils import _mean_variance
 from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT, SPEED_MIN_POINTS
-from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._counters import counter_delta
 from vibesensor.use_cases.diagnostics._sample_metrics import (

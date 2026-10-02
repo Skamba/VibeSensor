@@ -23,7 +23,7 @@ from vibesensor.report.presentation import (
 from vibesensor.report.projection import PrimaryReportFacts
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = ["build_appendix_b_data"]
 

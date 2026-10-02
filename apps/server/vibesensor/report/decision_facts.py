@@ -18,7 +18,7 @@ from vibesensor.report.sensor_facts import (
     ReportCoverageSummary,
     primary_location_has_coverage_gap,
 )
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 if TYPE_CHECKING:
     from vibesensor.domain.run_suitability import SuitabilityCheck
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from vibesensor.domain.test_run import TestRun
     from vibesensor.report.facts import ReportContextFacts
     from vibesensor.report.sensor_facts import ReportSensorFacts
-    from vibesensor.shared.run_context_warning import RunContextWarning, RunContextWarningsInput
+    from vibesensor.summary.run_context_warning import RunContextWarning, RunContextWarningsInput
 
 __all__ = [
     "ActionStatusKey",

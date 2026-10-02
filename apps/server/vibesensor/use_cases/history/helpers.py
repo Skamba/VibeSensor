@@ -19,7 +19,7 @@ from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:

@@ -23,8 +23,8 @@ from vibesensor.adapters.http.models.history import (
 )
 from vibesensor.common.json_types import JsonValue, is_json_array, is_json_object
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.summary_fields.warnings import localize_warning_list
 from vibesensor.shared.ports import ActiveCarReader
+from vibesensor.summary.warning_fields import localize_warning_list
 from vibesensor.use_cases.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,

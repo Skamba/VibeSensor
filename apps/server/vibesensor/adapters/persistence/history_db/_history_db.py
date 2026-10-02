@@ -45,9 +45,6 @@ from vibesensor.settings.snapshot_codec import (
     settings_snapshot_from_json,
     settings_snapshot_to_json,
 )
-from vibesensor.shared.boundaries.analysis_payloads.persisted import (
-    persisted_analysis_to_storage_json_object,
-)
 from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.types.history_records import (
@@ -55,7 +52,6 @@ from vibesensor.shared.types.history_records import (
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
@@ -66,7 +62,11 @@ from vibesensor.shared.types.raw_capture import (
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_codec import (
+    persisted_analysis_to_storage_json_object,
+)
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
 

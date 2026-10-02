@@ -7,10 +7,6 @@ import pytest
 
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.run_context_warning import (
-    WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
-    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
-)
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,
@@ -18,6 +14,10 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorData,
     RawCaptureSensorManifest,
     RawRunCapture,
+)
+from vibesensor.summary.run_context_warning import (
+    WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
 )
 from vibesensor.use_cases.run import raw_capture_replay
 from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input

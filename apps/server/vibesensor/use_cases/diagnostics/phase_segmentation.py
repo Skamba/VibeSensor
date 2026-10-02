@@ -21,7 +21,7 @@ from dataclasses import dataclass, replace
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseSegment
 from vibesensor.domain.finding import speed_band_sort_key
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunContextInterval,
     WholeRunContextLoadState,
     WholeRunContextWindowLabel,

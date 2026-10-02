@@ -3,7 +3,7 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,

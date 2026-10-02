@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunWindowPolicy,

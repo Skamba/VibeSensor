@@ -11,10 +11,10 @@ from vibesensor.domain.location_hotspot import (
     StrengthBucketDistribution,
 )
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.summary_fields.finding import (
+from vibesensor.summary.finding_fields import (
     order_match_observation_from_mapping,
 )
-from vibesensor.shared.boundaries.summary_fields.hotspot import (
+from vibesensor.summary.hotspot_fields import (
     location_intensity_summary_from_mapping,
 )
 

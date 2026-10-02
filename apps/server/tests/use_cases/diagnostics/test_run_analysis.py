@@ -19,8 +19,8 @@ from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frames_from_mappings,
 )
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.use_cases.diagnostics._run_input import (
     build_diagnostics_run_input,
     normalize_run_metadata,

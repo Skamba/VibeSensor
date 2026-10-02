@@ -23,7 +23,6 @@ from vibesensor.shared.types.history_records import (
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
@@ -34,7 +33,6 @@ from vibesensor.shared.types.raw_capture import (
 )
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.speed_source_config import (
     ResolvedSpeedSource,
@@ -42,6 +40,8 @@ from vibesensor.speed.speed_source_config import (
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
 )
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "ActiveCarReader",

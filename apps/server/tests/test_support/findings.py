@@ -10,7 +10,7 @@ from dataclasses import replace
 
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
-from vibesensor.shared.types.finding_payload_parts import FindingPayload
+from vibesensor.summary.finding_payload_parts import FindingPayload
 
 
 def make_finding(

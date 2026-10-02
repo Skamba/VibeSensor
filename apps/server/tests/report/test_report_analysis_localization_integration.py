@@ -8,7 +8,7 @@ from vibesensor.adapters.analysis_summary import build_findings_for_samples
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.summary.finding_fields import finding_from_payload
 from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,
     summarize_order_match_locations,

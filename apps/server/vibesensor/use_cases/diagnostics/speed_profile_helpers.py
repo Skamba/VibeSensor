@@ -9,12 +9,12 @@ from math import sqrt
 from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
+from vibesensor.dsp.statistics_utils import _mean_variance
 from vibesensor.shared.constants.analysis import (
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,
     STEADY_SPEED_STDDEV_KMH,
 )
-from vibesensor.shared.statistics_utils import _mean_variance
 from vibesensor.use_cases.diagnostics._types import PhaseLabel, Sample
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 

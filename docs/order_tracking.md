@@ -172,7 +172,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/pipeline.py` | Coordinate the full order-analysis pass. |
-| `apps/server/vibesensor/shared/types/order_trace_contracts.py` | Dense whole-run order-trace points plus compact summary/support contracts for later full-run work. |
+| `apps/server/vibesensor/summary/order_trace_contracts.py` | Dense whole-run order-trace points plus compact summary/support contracts for later full-run work. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_traces.py` | Build deterministic dense whole-run order traces from spectral summaries plus context labels. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense whole-run traces into deterministic lock/stability summaries for later persistence. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_family_summaries.py` | Collapse scored harmonic traces into family-level support intervals and phase summaries. |

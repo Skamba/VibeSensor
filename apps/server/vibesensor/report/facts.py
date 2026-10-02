@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.common.scalars import text_or_none
 from vibesensor.domain.diagnosis_assessment import DIAGNOSIS_AMBIGUOUS_SCORE_GAP
-from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+from vibesensor.summary.analysis_metadata import (
     ReportAnalysisMetadata,
     report_analysis_metadata_from_payload,
 )
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_CONTEXT_INCOMPLETE,
     WARNING_CODE_WHOLE_RUN_CONTEXT_LEGACY_FALLBACK,
     RunContextWarning,
@@ -26,14 +26,14 @@ if TYPE_CHECKING:
     from vibesensor.report.decision_facts import ReportDecisionFacts
     from vibesensor.report.evidence_facts import ReportEvidenceFacts
     from vibesensor.report.sensor_facts import ReportSensorFacts
-    from vibesensor.shared.boundaries.reporting.summary import (
+    from vibesensor.summary.analysis_views import PeakTableRow
+    from vibesensor.summary.decoding import (
         NormalizedReportSummary,
         ReportTimelineInterval,
     )
-    from vibesensor.shared.types.analysis_views import PeakTableRow
-    from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
-    from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    from vibesensor.summary.order_trace_contracts import OrderTraceSummary
+    from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
+    from vibesensor.summary.whole_run_diagnosis_contracts import (
         DiagnosisFactor,
         WholeRunDiagnosisSummary,
     )
@@ -59,14 +59,14 @@ from vibesensor.report.sensor_facts import (
     build_report_sensor_facts,
     enrich_location_proof_sensor_facts,
 )
-from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+from vibesensor.summary.decoding import report_diagnosis_summaries
+from vibesensor.summary.fallback_reasons import (
     ReportFallbackReason,
     dedupe_report_fallback_reasons,
     derive_report_fallback_reasons,
     finalization_stage_fallback_reasons,
 )
-from vibesensor.shared.boundaries.reporting.summary import report_diagnosis_summaries
-from vibesensor.shared.run_context_warning import RunContextWarningsInput
+from vibesensor.summary.run_context_warning import RunContextWarningsInput
 
 __all__ = [
     "ActionStatusKey",

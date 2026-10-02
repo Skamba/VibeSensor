@@ -3,7 +3,7 @@ from __future__ import annotations
 from test_support.findings import make_finding
 
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.summary.finding_fields import finding_from_payload
 from vibesensor.use_cases.diagnostics.findings import (
     collect_order_frequencies,
     finalize_findings,

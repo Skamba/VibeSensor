@@ -15,7 +15,7 @@ from vibesensor.report.model.appendices import (
 from vibesensor.report.model.document import ReportDocument
 from vibesensor.report.model.panels import NextStep
 from vibesensor.report.model.sections import VerdictPageData
-from vibesensor.shared.types.analysis_views import PeakTableRow
+from vibesensor.summary.analysis_views import PeakTableRow
 
 __all__ = [
     "AppendixAPageRenderPlan",

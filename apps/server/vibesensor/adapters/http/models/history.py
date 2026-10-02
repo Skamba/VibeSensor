@@ -1,7 +1,7 @@
 """History HTTP API models.
 
 The persisted analysis summary and its nested rows are defined once in
-``vibesensor.shared.types.history_analysis_contracts`` (``AnalysisSummary``) and
+``vibesensor.summary.contracts`` (``AnalysisSummary``) and
 used directly as the ``HistoryRunResponse.analysis`` schema; this module only
 defines endpoint-specific wrappers.
 """
@@ -13,7 +13,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, with_config
 
 from vibesensor.adapters.http.models.base import ApiPayloadObject, _StrictBase
-from vibesensor.shared.types.history_analysis_contracts import (
+from vibesensor.summary.contracts import (
     AnalysisSummary,
     AnalysisSummaryCoreResponse,
 )

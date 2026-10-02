@@ -17,8 +17,8 @@ from vibesensor.report.presentation import (
     human_source,
     order_label_human,
 )
-from vibesensor.shared.boundaries.summary_fields.origin import build_origin_explanation
-from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+from vibesensor.summary.origin_fields import build_origin_explanation
+from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "build_pattern_evidence",

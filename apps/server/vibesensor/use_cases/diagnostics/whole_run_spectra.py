@@ -31,7 +31,7 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WHOLE_RUN_ALGORITHM_VERSIONS,
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,
     WholeRunArtifactFile,

@@ -15,7 +15,7 @@ from vibesensor.report.i18n import (
 from vibesensor.report.model.panels import DataTrustItem, NextStep
 from vibesensor.report.presentation import display_location
 from vibesensor.report.report_diagnostics import localized_diagnostics
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 __all__ = [
     "build_data_trust",

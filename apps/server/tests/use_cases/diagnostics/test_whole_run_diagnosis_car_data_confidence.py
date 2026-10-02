@@ -12,17 +12,17 @@ from vibesensor.report.confidence_facts import (
 )
 from vibesensor.report.confidence_presentation import confidence_caveat_text
 from vibesensor.report.i18n import tr as report_tr
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-from vibesensor.shared.types.order_trace_contracts import (
+from vibesensor.summary.decoding import report_summary_from_mapping
+from vibesensor.summary.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,
 )
-from vibesensor.shared.types.spatial_evidence_contracts import (
+from vibesensor.summary.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialLocationSummary,
 )
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
+from vibesensor.summary.whole_run_diagnosis_contracts import (
     WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (

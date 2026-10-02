@@ -18,23 +18,23 @@ from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_to_json_objects
-from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
-from vibesensor.shared.boundaries.summary_fields.warnings import summary_warning_payloads
-from vibesensor.shared.boundaries.summary_serialization._data_quality import AccelStatisticsLike
-from vibesensor.shared.boundaries.summary_serialization._plots import (
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.summary.builder import build_analysis_summary
+from vibesensor.summary.contracts import AnalysisSummary
+from vibesensor.summary.data_quality_payload import AccelStatisticsLike
+from vibesensor.summary.plots_payload import (
     PeakTableRowLike,
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
     SpeedBreakdownRowLike,
     serialize_peak_table,
 )
-from vibesensor.shared.boundaries.summary_serialization._summary import build_analysis_summary
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.run_context_warning import (
     RunContextWarningsInput,
     build_summary_warnings,
 )
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.summary.test_plan_fields import step_payloads_from_plan
+from vibesensor.summary.warning_fields import summary_warning_payloads
 
 __all__ = ["analysis_result_to_summary", "analysis_summary_with_warnings"]
 

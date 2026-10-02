@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.types.order_trace_contracts import (
+from vibesensor.summary.order_trace_contracts import (
     OrderTraceFamily,
     OrderTracePoint,
 )
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,

@@ -7,14 +7,14 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_persisted_report_input
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
     WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
 )
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 
 
 def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -> None:

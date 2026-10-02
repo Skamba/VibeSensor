@@ -7,11 +7,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from vibesensor.common.time_utils import utc_now_iso
-from vibesensor.shared.types.order_trace_contracts import (
+from vibesensor.summary.order_trace_contracts import (
     OrderTracePoint,
     OrderTraceSummary,
 )
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
 )

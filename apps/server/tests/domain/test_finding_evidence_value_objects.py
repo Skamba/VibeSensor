@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain.finding_evidence import FindingEvidence
-from vibesensor.shared.boundaries.summary_fields.finding import finding_evidence_from_mapping
+from vibesensor.summary.finding_fields import finding_evidence_from_mapping
 
 
 class TestFindingEvidence:

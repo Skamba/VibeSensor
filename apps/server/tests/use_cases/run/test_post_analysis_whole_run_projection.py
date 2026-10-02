@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.shared.run_context_warning import RunContextWarning
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.run_context_warning import RunContextWarning
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunWindowPolicy,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vibesensor.report.loader import HistoryReportRequestLoader
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def test_report_loader_enriches_analysis_with_finalization_stage_metadata() -> None:

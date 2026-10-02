@@ -8,7 +8,7 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+from vibesensor.summary.reconstruction import (
     test_run_from_summary as reconstruct_test_run_from_summary,
 )
 

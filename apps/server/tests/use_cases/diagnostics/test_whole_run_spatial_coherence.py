@@ -3,11 +3,11 @@ from __future__ import annotations
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.types.order_trace_contracts import OrderTracePoint
-from vibesensor.shared.types.spatial_evidence_contracts import (
+from vibesensor.summary.order_trace_contracts import OrderTracePoint
+from vibesensor.summary.spatial_evidence_contracts import (
     SpatialEvidenceWindow,
 )
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,

@@ -13,7 +13,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorRange,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunWindowPolicy,

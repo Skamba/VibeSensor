@@ -25,7 +25,10 @@ from vibesensor.shared.raw_capture_timeline import (
     raw_timeline_is_legacy,
     resolve_raw_window_end_time,
 )
-from vibesensor.shared.run_context_warning import (
+from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS,
@@ -35,9 +38,6 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_TIMING_FALLBACK,
     RunContextWarning,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics.whole_run_spectra import build_fft_computer
 
 __all__ = [

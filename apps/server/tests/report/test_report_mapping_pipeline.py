@@ -12,7 +12,7 @@ from vibesensor.report.preparation import (
     prepare_report_input,
 )
 from vibesensor.report.projection import PrimaryReportFacts
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def _prepared_report_input() -> PreparedReportInput:

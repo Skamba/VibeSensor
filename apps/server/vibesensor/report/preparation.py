@@ -10,17 +10,17 @@ from vibesensor.report.cache_key import ReportPdfCacheKey
 from vibesensor.report.facts import prepare_report_facts
 from vibesensor.report.i18n import normalize_lang
 from vibesensor.report.input import PreparedReportInput
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
-    test_run_from_persisted_analysis,
-    test_run_from_summary,
-)
-from vibesensor.shared.boundaries.reporting.summary import (
+from vibesensor.summary.contracts import AnalysisSummary
+from vibesensor.summary.decoding import (
     report_summary_from_mapping,
     require_projectable_report_payload,
 )
-from vibesensor.shared.run_context_warning import RunContextWarningsInput
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.reconstruction import (
+    test_run_from_persisted_analysis,
+    test_run_from_summary,
+)
+from vibesensor.summary.run_context_warning import RunContextWarningsInput
 
 if TYPE_CHECKING:
     from vibesensor.domain.test_run import TestRun

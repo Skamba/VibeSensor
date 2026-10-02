@@ -6,14 +6,14 @@ import pytest
 from test_support.findings import make_finding, make_finding_payload
 
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.summary_fields.finding import (
-    finding_from_payload,
-    finding_payload_from_domain,
-)
 from vibesensor.shared.constants.analysis import (
     CONFIDENCE_CEILING,
     CONFIDENCE_FLOOR,
     NEGLIGIBLE_STRENGTH_MAX_DB,
+)
+from vibesensor.summary.finding_fields import (
+    finding_from_payload,
+    finding_payload_from_domain,
 )
 
 # These ranking helpers are intentionally kept as direct unit seams because the

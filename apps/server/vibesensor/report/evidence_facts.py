@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 from vibesensor.report.decision_facts import ReportDecisionFacts
 from vibesensor.report.projection import PrimaryReportFacts
-from vibesensor.shared.boundaries.reporting.analysis_metadata import ReportAnalysisMetadata
-from vibesensor.shared.boundaries.reporting.summary import NormalizedReportSummary
+from vibesensor.summary.analysis_metadata import ReportAnalysisMetadata
+from vibesensor.summary.decoding import NormalizedReportSummary
 
 __all__ = [
     "ReportEvidenceFacts",

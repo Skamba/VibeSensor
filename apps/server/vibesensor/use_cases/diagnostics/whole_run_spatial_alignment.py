@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from vibesensor.dsp.vibration_strength import StrengthPeak
 from vibesensor.dsp.window_quality_types import WindowQuality, clean_window_quality
 from vibesensor.shared.types.raw_capture import RawCaptureCoverageState
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,
 )

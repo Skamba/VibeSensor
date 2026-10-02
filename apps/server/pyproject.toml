@@ -207,7 +207,7 @@ source_modules = [
 ]
 forbidden_modules = [
   "vibesensor.use_cases",
-  "vibesensor.shared.boundaries.reporting",
+  "vibesensor.summary",
   "vibesensor.report",
 ]
 

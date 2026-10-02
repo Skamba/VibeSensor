@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from test_support.report_helpers import minimal_summary
-from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
-from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+from vibesensor.summary.order_trace_contracts import OrderTraceSummary
+from vibesensor.summary.spatial_evidence_contracts import SpatialEvidenceSummary
+from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
+from vibesensor.summary.whole_run_diagnosis_contracts import (
     WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.whole_run_diagnosis_ranking import (

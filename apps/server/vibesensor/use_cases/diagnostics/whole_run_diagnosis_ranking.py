@@ -12,10 +12,10 @@ from vibesensor.domain.diagnosis_assessment import (
     DiagnosisAssessmentInputs,
     score_diagnosis_assessment_inputs,
 )
-from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
-from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+from vibesensor.summary.order_trace_contracts import OrderTraceSummary
+from vibesensor.summary.spatial_evidence_contracts import SpatialEvidenceSummary
+from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
+from vibesensor.summary.whole_run_diagnosis_contracts import (
     DiagnosisDataQualityLimitation,
     DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,

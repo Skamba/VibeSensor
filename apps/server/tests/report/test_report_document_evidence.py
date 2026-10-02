@@ -14,7 +14,7 @@ from vibesensor.report.preparation import (
     prepare_persisted_report_input,
     prepare_report_input,
 )
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def _tr(key: str, **kwargs: object) -> str:

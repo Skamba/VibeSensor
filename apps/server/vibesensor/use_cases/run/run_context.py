@@ -9,13 +9,13 @@ from vibesensor.settings.order_reference_settings import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
 )
-from vibesensor.shared.run_context_warning import (
+from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.summary.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     RunContextWarning,
     RunContextWarningsInput,
     normalize_run_context_warnings,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 
 
 def build_run_context_snapshot(

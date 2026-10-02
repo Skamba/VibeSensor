@@ -12,11 +12,11 @@ from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report.preparation import prepare_report_input
 from vibesensor.report.projection import resolve_report_origin
-from vibesensor.shared.boundaries.analysis_payloads.reconstruction import (
+from vibesensor.summary.origin_fields import origin_payload_from_finding
+from vibesensor.summary.reconstruction import (
     test_run_from_summary as _test_run_from_summary,
 )
-from vibesensor.shared.boundaries.summary_fields.origin import origin_payload_from_finding
-from vibesensor.shared.boundaries.summary_fields.test_plan import step_payloads_from_plan
+from vibesensor.summary.test_plan_fields import step_payloads_from_plan
 
 
 def _minimal_summary(**overrides: object) -> dict[str, object]:

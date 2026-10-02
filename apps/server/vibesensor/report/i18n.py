@@ -11,7 +11,7 @@ from functools import lru_cache
 
 from vibesensor.common.data_files import resolve_static_data_file
 from vibesensor.common.json_types import JsonValue
-from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
+from vibesensor.summary.phases import PHASE_I18N_KEYS
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")
 type _LocationLabels = tuple[str, str, str, str]

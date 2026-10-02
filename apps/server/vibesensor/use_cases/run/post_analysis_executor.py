@@ -33,9 +33,9 @@ from typing import Protocol
 from vibesensor.common.json_types import JsonObject, JsonValue
 from vibesensor.common.structured_logging import log_extra
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawCaptureSensorRange
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics._validation import MissingStrengthMetricsError
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (
     WholeRunOrderFamilySummaryArtifactBundle,

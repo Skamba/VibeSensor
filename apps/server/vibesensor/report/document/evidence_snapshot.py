@@ -17,7 +17,7 @@ from vibesensor.report.presentation import (
 __all__ = ["build_evidence_snapshot_rows"]
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 
 def build_evidence_snapshot_rows(

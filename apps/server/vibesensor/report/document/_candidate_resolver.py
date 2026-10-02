@@ -19,7 +19,7 @@ from vibesensor.report.presentation import (
 
 if TYPE_CHECKING:
     from vibesensor.report.projection import PrimaryReportFacts
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "PrimaryCandidateContext",

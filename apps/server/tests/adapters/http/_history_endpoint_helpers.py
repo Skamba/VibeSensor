@@ -38,16 +38,16 @@ from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.history_records import (
     HistoryArtifactAvailability,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.summary.contracts import AnalysisSummary
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 

@@ -92,12 +92,12 @@ below.
 ### Persisted analysis and reporting
 
 - `AnalysisSummary` in
-  `apps/server/vibesensor/shared/types/history_analysis_contracts.py` is the one
+  `apps/server/vibesensor/summary/contracts.py` is the one
   definition of the persisted analysis payload and of the history HTTP/OpenAPI
   analysis schema; its whole-run rows reuse the `JsonContract` dataclasses.
-- `apps/server/vibesensor/shared/types/persisted_analysis.py` wraps that JSON as
+- `apps/server/vibesensor/summary/persisted_analysis.py` wraps that JSON as
   `PersistedAnalysis`.
-- Report preparation in `apps/server/vibesensor/shared/boundaries/reporting/`
+- Report preparation in `apps/server/vibesensor/report/`
   does not re-run diagnostics; it interprets persisted analysis only.
 - `apps/server/vibesensor/report/document/` composes the final
   `ReportDocument`, and `adapters/pdf` only renders it.
@@ -321,7 +321,7 @@ The report path can still project compact location proof from these summaries,
 but the source artifact should be candidate-aware and whole-run aware.
 
 The current contract owner is
-`apps/server/vibesensor/shared/types/spatial_evidence_contracts.py`.
+`apps/server/vibesensor/summary/spatial_evidence_contracts.py`.
 It now settles:
 
 - dense `SpatialEvidenceWindow` rows keyed by
@@ -362,9 +362,9 @@ derived from supporting-window evidence.
 Support and counterevidence now use one shared persisted vocabulary instead of
 renderer-only prose. The canonical owner is the combination of:
 
-- `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`
+- `apps/server/vibesensor/summary/whole_run_diagnosis_contracts.py`
   for compact persisted diagnosis rows
-- `AnalysisSummary` in `apps/server/vibesensor/shared/types/history_analysis_contracts.py`,
+- `AnalysisSummary` in `apps/server/vibesensor/summary/contracts.py`,
   which embeds those rows in the outward history/report/schema contract
 - `apps/server/vibesensor/report/confidence_facts.py` for
   the projection from the existing report-confidence thresholds and score deltas
@@ -401,7 +401,7 @@ typed details payload so later fusion/report work can explain why a diagnosis
 ranked where it did without reparsing report prose.
 
 The contract owner for the fused output should now live in
-`apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py`.
+`apps/server/vibesensor/summary/whole_run_diagnosis_contracts.py`.
 That layer should settle:
 
 - compact `WholeRunDiagnosisSummary` rows persisted as
@@ -430,15 +430,15 @@ scoring path instead of creating a second threshold table.
 
 | Contract | Suggested owner | Notes |
 |---|---|---|
-| `WholeRunWindowPolicy` / `WholeRunWindowDescriptor` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` | Canonical sample-space policy and deterministic window identity for every later whole-run stage |
+| `WholeRunWindowPolicy` / `WholeRunWindowDescriptor` | `apps/server/vibesensor/summary/whole_run_analysis.py` | Canonical sample-space policy and deterministic window identity for every later whole-run stage |
 | `WholeRunWindowPlan` / `plan_whole_run_windows(...)` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_windows.py` | Deterministic window grid planner with explicit trailing-window policy |
 | `WholeRunWindowSpectralSummary` | `use_cases/diagnostics/` with compact persisted projection | Per-window FFT/strength/top-peak outputs |
-| `WholeRunArtifactManifest` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
-| `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/shared/types/whole_run_analysis.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
-| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/shared/types/order_trace_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Dense trace vs compact report/history summary split |
-| `SpatialEvidenceSummary` | `apps/server/vibesensor/shared/types/spatial_evidence_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
+| `WholeRunArtifactManifest` | `apps/server/vibesensor/summary/whole_run_analysis.py` + `apps/server/vibesensor/adapters/persistence/history_db/_whole_run_artifact_store.py` | Sidecar manifest for dense whole-run artifacts; mirror the raw-capture pattern |
+| `WholeRunContextInterval` / `WholeRunContextWindowLabel` | `apps/server/vibesensor/summary/whole_run_analysis.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Whole-run segments and per-window labels keyed to the canonical `window_index` grid |
+| `OrderTracePoint` / `OrderTraceSummary` | `apps/server/vibesensor/summary/order_trace_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Dense trace vs compact report/history summary split |
+| `SpatialEvidenceSummary` | `apps/server/vibesensor/summary/spatial_evidence_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Candidate-level coherence, location separation, ambiguity flags, and proof basis |
 | `WholeRunSpatialAlignmentMatrix` / `AlignedSpatialWindow` | `apps/server/vibesensor/use_cases/diagnostics/whole_run_spatial_alignment.py` | Deterministic per-window sensor joins with explicit coverage-state semantics for later spatial scoring |
-| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/shared/types/whole_run_diagnosis_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
+| `DiagnosisExemplarReference` / `WholeRunDiagnosisSummary` | `apps/server/vibesensor/summary/whole_run_diagnosis_contracts.py` embedded as-is in `AnalysisSummary` (`shared/types/history_analysis_contracts.py`) | Fused diagnosis shell, exemplar links to compact order/spatial/context summaries, and explicit ambiguity/fallback markers for later ranking/report wiring |
 
 For the context track:
 

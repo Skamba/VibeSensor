@@ -15,16 +15,16 @@ from vibesensor.shared.raw_capture_timeline import (
     raw_timeline_has_unverified_sync,
     raw_timeline_is_legacy,
 )
-from vibesensor.shared.run_context_warning import (
-    WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
-    RunContextWarning,
-)
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureManifest,
     RawCaptureSensorManifest,
 )
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.run_context_warning import (
+    WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
+    RunContextWarning,
+)
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,

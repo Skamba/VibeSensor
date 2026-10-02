@@ -32,16 +32,16 @@ from test_support.post_analysis_artifacts import (
 )
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.types.order_trace_contracts import (
+from vibesensor.summary.order_trace_contracts import (
     OrderTracePoint,
     OrderTraceSummary,
     OrderTraceSupportInterval,
 )
-from vibesensor.shared.types.spatial_evidence_contracts import (
+from vibesensor.summary.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialLocationSummary,
 )
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunContextInterval,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (

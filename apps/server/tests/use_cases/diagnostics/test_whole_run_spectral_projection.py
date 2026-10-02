@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunWindowPolicy,

@@ -7,11 +7,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
-from vibesensor.shared.types.order_trace_contracts import (
+from vibesensor.summary.order_trace_contracts import (
     OrderTracePhaseSupport,
     OrderTraceSupportInterval,
 )
-from vibesensor.shared.types.whole_run_analysis import WholeRunContextWindowLabel
+from vibesensor.summary.whole_run_analysis import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics._ranking_utils import dominant_weighted_value
 from vibesensor.use_cases.diagnostics.math_utils import (
     _mean_or_none as _mean,

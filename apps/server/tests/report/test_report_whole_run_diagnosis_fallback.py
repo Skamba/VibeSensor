@@ -5,7 +5,7 @@ from test_support.report_helpers import minimal_summary
 
 from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report.preparation import prepare_persisted_report_input
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def _primary_finding() -> dict[str, object]:

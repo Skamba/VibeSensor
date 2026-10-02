@@ -11,7 +11,7 @@ from vibesensor.common.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.dsp.window_quality_scoring import score_window_quality
 from vibesensor.dsp.window_quality_types import WindowQuality
-from vibesensor.shared.types.whole_run_analysis import (
+from vibesensor.summary.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,
     WholeRunContextWindowLabel,

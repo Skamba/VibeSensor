@@ -6,23 +6,23 @@ from collections.abc import Mapping
 
 from vibesensor.common.json_types import JsonObject, JsonValue, is_json_object
 from vibesensor.domain.car import CarOrderReferenceStatus
-from vibesensor.shared.boundaries.reporting.analysis_metadata import (
+from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )
-from vibesensor.shared.boundaries.reporting.fallback_reasons import (
+from vibesensor.summary.decoding import report_summary_from_mapping
+from vibesensor.summary.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     derive_report_fallback_reasons,
 )
-from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-from vibesensor.shared.run_context_warning import (
+from vibesensor.summary.order_trace_contracts import OrderTraceSummary
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.run_context_warning import (
     RunContextWarningsInput,
     normalize_run_context_warnings,
 )
-from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+from vibesensor.summary.spatial_evidence_contracts import SpatialEvidenceSummary
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.whole_run_diagnosis_contracts import (
     WholeRunDiagnosisSummary,
 )
 from vibesensor.use_cases.diagnostics.orders.whole_run_family_summaries import (

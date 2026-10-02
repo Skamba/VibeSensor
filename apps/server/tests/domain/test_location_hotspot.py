@@ -10,11 +10,11 @@ from vibesensor.domain.location_hotspot import (
     LocationIntensitySummary,
     StrengthBucketDistribution,
 )
-from vibesensor.shared.boundaries.summary_fields.hotspot import (
+from vibesensor.summary.hotspot_fields import (
     location_intensity_summary_from_mapping,
     phase_intensity_summary_from_mapping,
 )
-from vibesensor.shared.boundaries.summary_fields.origin import location_hotspot_from_payload
+from vibesensor.summary.origin_fields import location_hotspot_from_payload
 
 
 def _confidence(inputs: tuple[float, int, int]) -> float:

@@ -20,7 +20,7 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http.router import create_router
-from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
+from vibesensor.summary.contracts import AnalysisSummary
 
 
 def _pdf_text(body: bytes) -> str:

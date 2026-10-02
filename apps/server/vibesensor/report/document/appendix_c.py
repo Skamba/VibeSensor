@@ -34,7 +34,7 @@ from vibesensor.report.presentation import (
     human_source,
     order_label_human,
 )
-from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
+from vibesensor.summary.order_trace_contracts import OrderTraceSummary
 
 __all__ = ["build_appendix_c_data"]
 

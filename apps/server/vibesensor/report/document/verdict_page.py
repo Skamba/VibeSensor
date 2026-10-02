@@ -29,11 +29,11 @@ from vibesensor.report.presentation import (
     presented_location_confidence_key,
 )
 from vibesensor.report.report_diagnostics import first_nonpass_detail
-from vibesensor.shared.run_context_warning import RunContextWarning
+from vibesensor.summary.run_context_warning import RunContextWarning
 
 if TYPE_CHECKING:
     from vibesensor.report.document.document_context import ReportDocumentContext
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = ["build_observed_signature", "build_verdict_page", "build_verdict_page_data"]
 

@@ -10,7 +10,7 @@ from test_support.core import FINAL_DRIVE, GEAR_RATIO
 from vibesensor.shared.types.raw_capture import RawRunCapture
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 GoldenUnavailableReason = Literal["missing_speed", "missing_rpm"]
 GoldenScenarioGroup = Literal[
