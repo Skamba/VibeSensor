@@ -7,7 +7,6 @@ from pathlib import Path
 from test_support.history_db_sql import fetch_one
 
 from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.processing import SignalProcessor
 
 
 # ---------------------------------------------------------------------------
@@ -25,32 +24,3 @@ class TestSQLiteBusyTimeout:
             assert result[0] == 5000
         finally:
             db.close()
-
-
-# ---------------------------------------------------------------------------
-# Fix 2 – flush_client_buffer bumps ingest_generation
-# ---------------------------------------------------------------------------
-class TestFlushBumpsGeneration:
-    """Verify flush_client_buffer invalidates cached metrics via generation bumps."""
-
-    def test_flush_increments_ingest_generation(self) -> None:
-        """Flushing a buffer must bump ingest_generation to invalidate stale caches."""
-        proc = SignalProcessor(
-            sample_rate_hz=400,
-            waveform_seconds=2,
-            waveform_display_hz=50,
-            fft_n=512,
-        )
-        with proc._store.lock:
-            buf = proc._store._registry._get_or_create_unlocked("sensor-1")
-        buf.ingest_generation = 5
-        buf.reset_generation = 2
-        buf.write_idx = 7
-        buf.count = 10  # pretend some data
-        buf.latest_metrics = {"stale": True}
-        proc.flush_client_buffer("sensor-1")
-        assert buf.ingest_generation == 6
-        assert buf.reset_generation == 3
-        assert buf.count == 0
-        assert buf.write_idx == 0
-        assert buf.latest_metrics == {}

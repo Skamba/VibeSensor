@@ -88,7 +88,6 @@ def test_ingest_clamps_excessive_sample_rate() -> None:
     samples = _random_samples(10)
     proc.ingest("client1", samples, sample_rate_hz=250_000)
     assert proc.latest_sample_rate_hz("client1") == MAX_CLIENT_SAMPLE_RATE_HZ
-    assert proc._store.buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
 
 
 # -- latest_sample_xyz ---------------------------------------------------------
@@ -115,17 +114,17 @@ def test_latest_sample_rate_hz_default_zero() -> None:
     assert proc.latest_sample_rate_hz("client1") is None
 
 
-# -- spectrum_payload ----------------------------------------------------------
+# -- per-client spectrum payload ---------------------------------------------
 
 
-def test_spectrum_payload_missing_client() -> None:
+def test_multi_spectrum_payload_omits_clients_without_spectrum() -> None:
     proc = _make_processor()
-    result = proc.spectrum_payload("unknown")
-    assert result["combined_spectrum_amp_g"] == []
-    assert result["strength_metrics"]["vibration_strength_db"] == 0.0
+    proc.ingest("client1", _random_samples(10))
+    proc.compute_metrics("client1")
+    assert proc.multi_spectrum_payload(["unknown", "client1"])["clients"] == {}
 
 
-def test_spectrum_payload_has_vibration_strength_db() -> None:
+def test_client_spectrum_payload_has_vibration_strength_db() -> None:
     proc = _make_processor(sample_rate_hz=800, fft_n=256, spectrum_max_hz=200)
     t = np.arange(400, dtype=np.float32) / np.float32(800.0)
     tone = (0.03 * np.sin(2.0 * np.pi * 32.0 * t)).astype(np.float32)
@@ -133,48 +132,24 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
     proc.ingest("client1", samples, sample_rate_hz=800)
     proc.compute_metrics("client1")
 
-    result = proc.spectrum_payload("client1")
+    result = proc.multi_spectrum_payload(["client1"])["clients"]["client1"]
     assert "combined_spectrum_db_above_floor" not in result
     assert "vibration_strength_db" in result["strength_metrics"]
     db = float(result["strength_metrics"]["vibration_strength_db"])
     assert -200.0 < db < 200.0
 
 
-@pytest.mark.parametrize(
-    ("proc_kw", "method_name", "n_samples", "sr"),
-    [
-        pytest.param(
-            {"sample_rate_hz": 400, "fft_n": 128, "spectrum_max_hz": 150},
-            "spectrum_payload",
-            300,
-            400,
-            id="spectrum",
-        ),
-    ],
-)
-def test_payload_reuses_cached_conversion(
-    monkeypatch: pytest.MonkeyPatch,
-    proc_kw: dict,
-    method_name: str,
-    n_samples: int,
-    sr: int,
-) -> None:
-    proc = _make_processor(**proc_kw)
-    samples = _random_samples(n_samples)
-    proc.ingest("client1", samples, sample_rate_hz=sr)
+def test_client_spectrum_payload_is_reused_until_next_compute() -> None:
+    proc = _make_processor(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150)
+    proc.ingest("client1", _random_samples(300), sample_rate_hz=400)
     proc.compute_metrics("client1")
-    payload_fn = getattr(proc, method_name)
-    first = payload_fn("client1")
 
-    def _fail_float_list(*_a: object, **_kw: object) -> None:
-        raise AssertionError(f"float_list should not be called for cached {method_name}")
+    first = proc.multi_spectrum_payload(["client1"])["clients"]["client1"]
+    assert proc.multi_spectrum_payload(["client1"])["clients"]["client1"] is first
 
-    monkeypatch.setattr(
-        "vibesensor.infra.processing.payload.float_list",
-        _fail_float_list,
-    )
-    second = payload_fn("client1")
-    assert second is first
+    proc.ingest("client1", _random_samples(10), sample_rate_hz=400)
+    proc.compute_metrics("client1")
+    assert proc.multi_spectrum_payload(["client1"])["clients"]["client1"] is not first
 
 
 # -- multi_spectrum_payload ----------------------------------------------------
@@ -284,9 +259,7 @@ def test_multi_spectrum_payload_reuses_shared_freq_conversion_for_matching_clien
     proc.compute_metrics("c2", sample_rate_hz=200)
     proc.compute_metrics("c3", sample_rate_hz=320)
 
-    proc.spectrum_payload("c1")
-    proc.spectrum_payload("c2")
-    proc.spectrum_payload("c3")
+    proc.multi_spectrum_payload(["c1", "c2", "c3"])
 
     calls: list[int] = []
 

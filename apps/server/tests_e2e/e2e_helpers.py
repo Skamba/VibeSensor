@@ -32,6 +32,7 @@ shorter capture ends in ``MissingStrengthMetricsError``. The second window cover
 simulator startup and client registration.
 """
 
+
 @dataclass(frozen=True)
 class ApiResponse:
     status: int

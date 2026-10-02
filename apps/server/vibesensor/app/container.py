@@ -64,14 +64,12 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ingest_diagnostics=live.ingest_diagnostics,
         control_plane=live.control_plane,
         processing_loop=live.processing_loop,
-        ws_hub=live.ws_hub,
-        ws_broadcast=live.ws_broadcast,
+        ws_broadcaster=live.ws_broadcaster,
         run_recorder=live.run_recorder,
         gps_monitor=speed_runtime.gps_monitor,
         obd_runner=speed_runtime.obd,
         update_manager=updates.update_manager,
         esp_flash_manager=updates.esp_flash_manager,
-        worker_pool=live.worker_pool,
         history_db=history,
     )
     router = RouterDeps(

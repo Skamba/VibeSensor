@@ -6,8 +6,8 @@ from io import BytesIO
 import pytest
 from _history_endpoint_helpers import (
     FakeHistoryDB,
+    FakeLiveWs,
     FakeState,
-    FakeWsHub,
     _real_pdf_renderer,
     make_app_and_state,
     make_metadata,
@@ -83,7 +83,7 @@ def test_report_pdf_lang_override_when_template_data_persisted() -> None:
         return real_renderer(prepared)
 
     db = FakeHistoryDB(metadata, samples, analysis)
-    state = FakeState(db, FakeWsHub(), pdf_renderer=counting_renderer)
+    state = FakeState(db, FakeLiveWs(), pdf_renderer=counting_renderer)
     app = create_router(state)
     from fastapi import FastAPI
 
@@ -167,7 +167,9 @@ def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> No
         return b"%PDF-versioned"
 
     state = FakeState(
-        TimestampFlipDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=fake_renderer
+        TimestampFlipDB(metadata, samples, analysis),
+        FakeLiveWs(),
+        pdf_renderer=fake_renderer,
     )
     from fastapi import FastAPI
 
@@ -215,7 +217,7 @@ def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
             first_analysis,
             analyses=[first_analysis, second_analysis],
         ),
-        FakeWsHub(),
+        FakeLiveWs(),
         pdf_renderer=fake_renderer,
     )
     from fastapi import FastAPI

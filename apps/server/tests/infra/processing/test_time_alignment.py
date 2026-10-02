@@ -17,6 +17,8 @@ import numpy as np
 import pytest
 
 from vibesensor.infra.processing import SignalProcessor
+from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
+from vibesensor.shared.types.payload_types import AlignmentInfoPayload
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -57,44 +59,52 @@ def _fill_sensor(
         proc.ingest(client_id, samples, sample_rate_hz=sample_rate_hz, t0_us=t0_us)
 
 
+def _time_range(proc: SignalProcessor, client_id: str) -> AnalysisTimeRange | None:
+    """Compute metrics and return the analysis window they cover."""
+    proc.compute_metrics(client_id)
+    return proc.latest_analysis_time_range(client_id)
+
+
+def _alignment(proc: SignalProcessor, client_ids: list[str]) -> AlignmentInfoPayload:
+    """Compute metrics for *client_ids* and return the live spectra alignment block."""
+    for client_id in client_ids:
+        proc.compute_metrics(client_id)
+    return proc.multi_spectrum_payload(client_ids)["alignment"]
+
+
 # ---------------------------------------------------------------------------
-# _analysis_time_range
+# per-sensor analysis time range
 # ---------------------------------------------------------------------------
 
 
 class TestAnalysisTimeRange:
     """Cover per-sensor time-window derivation before overlap is computed."""
 
-    def test_empty_buffer_returns_none(self) -> None:
+    def test_unknown_sensor_has_no_range(self) -> None:
         proc = _make_processor()
-        info = proc.time_alignment_info(["no_such_sensor"])
-        assert info["sensors_excluded"] == ["no_such_sensor"]
+        assert _time_range(proc, "no_such_sensor") is None
 
     def test_single_sensor_returns_range(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, sample_rate_hz=200, mono_time=100.0)
-        info = proc.time_alignment_info(["s1"])
-        ps = info["per_sensor"]["s1"]
-        assert ps["end_s"] == pytest.approx(100.0)
-        assert ps["duration_s"] == pytest.approx(2.0)
-        assert ps["start_s"] == pytest.approx(98.0)
-        assert ps["synced"] is False  # no t0_us provided
+        time_range = _time_range(proc, "s1")
+        assert time_range == AnalysisTimeRange(start_s=98.0, end_s=100.0, synced=False)
 
     def test_range_limited_by_available_samples(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         # Only 100 samples = 0.5 s of data (less than waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=100, sample_rate_hz=200, mono_time=50.0)
-        info = proc.time_alignment_info(["s1"])
-        ps = info["per_sensor"]["s1"]
-        assert ps["duration_s"] == pytest.approx(0.5)
+        time_range = _time_range(proc, "s1")
+        assert time_range is not None
+        assert time_range.end_s - time_range.start_s == pytest.approx(0.5)
 
 
 # ---------------------------------------------------------------------------
-# time_alignment_info – aligned sensors
+# multi-sensor alignment
 # ---------------------------------------------------------------------------
 
 
-class TestTimeAlignmentInfo:
+class TestSensorAlignment:
     """Multi-sensor windows are aligned only when their overlap stays sufficient."""
 
     @pytest.mark.parametrize(
@@ -117,35 +127,32 @@ class TestTimeAlignmentInfo:
         _fill_sensor(proc, "s1", mono_time=100.0)
         _fill_sensor(proc, "s2", mono_time=s2_mono_time)
 
-        info = proc.time_alignment_info(["s1", "s2"])
+        alignment = _alignment(proc, ["s1", "s2"])
 
-        assert info["aligned"] is aligned
-        assert overlap_range[0] <= info["overlap_ratio"] <= overlap_range[1]
+        assert alignment["aligned"] is aligned
+        assert overlap_range[0] <= alignment["overlap_ratio"] <= overlap_range[1]
         if shared_duration_range is None:
-            assert info["shared_window"] is None
+            assert alignment["shared_window_s"] == 0.0
         else:
             low, high = shared_duration_range
-            assert low <= info["shared_window"]["duration_s"] <= high
+            assert low <= alignment["shared_window_s"] <= high
 
     def test_three_sensors_aligned(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", mono_time=100.0)
         _fill_sensor(proc, "s2", mono_time=100.1)
         _fill_sensor(proc, "s3", mono_time=100.2)
-        info = proc.time_alignment_info(["s1", "s2", "s3"])
-        assert info["aligned"] is True
-        assert len(info["sensors_included"]) == 3
-        assert len(info["sensors_excluded"]) == 0
+        alignment = _alignment(proc, ["s1", "s2", "s3"])
+        assert alignment["aligned"] is True
+        assert alignment["sensor_count"] == 3
 
-    def test_one_sensor_no_data(self) -> None:
+    def test_sensor_without_data_is_excluded(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", mono_time=100.0)
-        # "s2" has no data
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert "s2" in info["sensors_excluded"]
-        assert "s1" in info["sensors_included"]
-        # single sensor → trivially aligned
-        assert info["aligned"] is True
+        _fill_sensor(proc, "s2", mono_time=100.0)
+        alignment = _alignment(proc, ["s1", "s2", "s3"])
+        assert alignment["sensor_count"] == 2
+        assert alignment["aligned"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -201,8 +208,7 @@ class TestDriftSimulation:
             _fill_sensor(proc, "s1", n_samples=40, mono_time=base_time + i * 0.2)
             # s2 drifts by 5 ms per tick
             _fill_sensor(proc, "s2", n_samples=40, mono_time=base_time + i * 0.2 + i * 0.005)
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is True
+        assert _alignment(proc, ["s1", "s2"])["aligned"] is True
 
     def test_sensor_restart_detectable(self) -> None:
         """A sensor that restarts mid-session resets its first_ingest timestamp."""
@@ -210,9 +216,9 @@ class TestDriftSimulation:
         _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0)
         proc.flush_client_buffer("s1")
         _fill_sensor(proc, "s1", n_samples=400, mono_time=200.0)
-        info = proc.time_alignment_info(["s1"])
-        ps = info["per_sensor"]["s1"]
-        assert ps["end_s"] == pytest.approx(200.0)
+        time_range = _time_range(proc, "s1")
+        assert time_range is not None
+        assert time_range.end_s == pytest.approx(200.0)
 
 
 # ---------------------------------------------------------------------------
@@ -283,9 +289,9 @@ class TestSyncedClockAlignment:
     def test_synced_flag(self, t0_us: int | None, expected: bool) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=t0_us)
-        info = proc.time_alignment_info(["s1"])
-        assert info["per_sensor"]["s1"]["synced"] is expected
-        assert info["clock_synced"] is expected
+        time_range = _time_range(proc, "s1")
+        assert time_range is not None
+        assert time_range.synced is expected
 
     @pytest.mark.parametrize(
         ("s1_t0", "s2_mono", "s2_t0", "expected_aligned"),
@@ -305,33 +311,33 @@ class TestSyncedClockAlignment:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=s1_t0)
         _fill_sensor(proc, "s2", n_samples=400, mono_time=s2_mono, t0_us=s2_t0)
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is expected_aligned
-        assert info["clock_synced"] is True
+        alignment = _alignment(proc, ["s1", "s2"])
+        assert alignment["aligned"] is expected_aligned
+        assert alignment["clock_synced"] is True
         if expected_aligned:
-            assert info["overlap_ratio"] > 0.9
+            assert alignment["overlap_ratio"] > 0.9
 
     def test_mixed_synced_unsynced_not_clock_synced(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=50_000_000)
         _fill_sensor(proc, "s2", n_samples=400, mono_time=100.0)  # no t0_us
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["clock_synced"] is False
+        assert _alignment(proc, ["s1", "s2"])["clock_synced"] is False
 
-    def test_t0_us_stored_in_buffer(self) -> None:
+    def test_range_ends_at_newest_sensor_sample(self) -> None:
         proc = _make_processor()
         _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0, t0_us=99_000_000)
-        buf = proc._store.buffers["s1"]
-        assert buf.last_t0_us == 99_000_000
-        assert buf.samples_since_t0 == 100
+        time_range = _time_range(proc, "s1")
+        assert time_range == AnalysisTimeRange(start_s=99.0, end_s=99.5, synced=True)
 
     def test_t0_us_reset_on_flush(self) -> None:
         proc = _make_processor()
         _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0, t0_us=99_000_000)
         proc.flush_client_buffer("s1")
-        buf = proc._store.buffers["s1"]
-        assert buf.last_t0_us == 0
-        assert buf.samples_since_t0 == 0
+        assert _time_range(proc, "s1") is None
+        _fill_sensor(proc, "s1", n_samples=100, mono_time=43.0)
+        time_range = _time_range(proc, "s1")
+        assert time_range is not None
+        assert time_range.synced is False
 
     def test_multi_spectrum_payload_reports_clock_synced(self) -> None:
         proc = _make_processor(sample_rate_hz=200, fft_n=128, waveform_seconds=2)
@@ -350,9 +356,9 @@ class TestSyncedClockAlignment:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.0, t0_us=50_000_000)
         _fill_sensor(proc, "s1", n_samples=100, mono_time=100.5)  # no t0_us
-        buf = proc._store.buffers["s1"]
-        assert buf.last_t0_us == 50_000_000
-        assert buf.samples_since_t0 == 200  # 100 + 100
+        time_range = _time_range(proc, "s1")
+        assert time_range is not None
+        assert time_range.end_s == pytest.approx(51.0)  # 50 s + 200 samples at 200 Hz
 
 
 # ---------------------------------------------------------------------------

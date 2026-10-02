@@ -12,7 +12,7 @@ from vibesensor.adapters.http.ws_message_router import route_ws_message
 from vibesensor.domain import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.websocket.hub import WebSocketHub
+    from vibesensor.adapters.websocket import LiveBroadcaster
 
 __all__ = ["create_websocket_routes"]
 
@@ -25,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
 
 
-def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
+def create_websocket_routes(broadcaster: LiveBroadcaster) -> APIRouter:
     """Create and return the WebSocket streaming routes."""
     router = APIRouter()
 
@@ -38,7 +38,7 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
             except ValueError:
                 selected = None
         await ws.accept()
-        await ws_hub.add(ws, selected)
+        broadcaster.add(ws, selected)
         try:
             while True:
                 try:
@@ -53,10 +53,10 @@ def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
                     )
                     await ws.close()
                     return
-                await route_ws_message(ws_hub, ws, message)
+                route_ws_message(broadcaster, ws, message)
         except WebSocketDisconnect:
             LOGGER.debug("WebSocket client disconnected")
         finally:
-            await ws_hub.remove(ws)
+            broadcaster.remove(ws)
 
     return router

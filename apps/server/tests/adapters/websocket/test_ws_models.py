@@ -47,7 +47,7 @@ class TestMultiSpectrumFreqDedup:
                 "vibration_strength_db": 5.0,
             }
             buf.spectrum_generation = 1
-            proc._store.buffers[cid] = buf
+            proc._buffers[cid] = buf
         return proc
 
     def test_shared_freq_no_per_client_freq(self) -> None:

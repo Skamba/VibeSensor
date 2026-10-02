@@ -14,6 +14,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 from unittest.mock import AsyncMock
 
 import numpy as np
@@ -24,7 +25,7 @@ from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.adapters.websocket.hub import WebSocketHub
+from vibesensor.adapters.websocket import LiveBroadcaster
 from vibesensor.domain import TireSpec
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.processing import SignalProcessor
@@ -34,6 +35,7 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.shared.types.payload_types import LiveWsPayload
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
 
 _FRAME_N = 256
@@ -63,7 +65,7 @@ class _IngestSmokeContext:
     gps_monitor: GPSSpeedMonitor
     recorder: RunRecorder
     proto: DataDatagramProtocol
-    ws_hub: WebSocketHub
+    ws_broadcaster: LiveBroadcaster
 
 
 class _FakeTransport:
@@ -145,6 +147,17 @@ def _ready_health_state() -> RuntimeHealthState:
     return health_state
 
 
+class _IntakePayloadSource:
+    """Minimal live payload exposing ingest progress to the broadcaster."""
+
+    def __init__(self, processor: SignalProcessor) -> None:
+        self._processor = processor
+
+    def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
+        total = self._processor.intake_stats()["total_ingested_samples"]
+        return cast(LiveWsPayload, {"clients": [], "total_ingested_samples": total})
+
+
 def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
     sensor_count = 3
     sensors = _sensor_specs(sensor_count)
@@ -191,7 +204,12 @@ def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
         gps_monitor=gps_monitor,
         recorder=recorder,
         proto=proto,
-        ws_hub=WebSocketHub(),
+        ws_broadcaster=LiveBroadcaster(
+            payload_source=_IntakePayloadSource(processor),
+            ingest_diagnostics=ingest_diagnostics,
+            push_hz=60,
+            heavy_push_hz=60,
+        ),
     )
 
 
@@ -400,7 +418,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
     ctx = _build_smoke_context(history_db)
     websocket = AsyncMock()
     websocket.send_text = AsyncMock()
-    await ctx.ws_hub.add(websocket, None)
+    ctx.ws_broadcaster.add(websocket, None)
 
     tire = TireSpec.from_aspects(
         AnalysisSettingsSnapshot.DEFAULTS,
@@ -410,20 +428,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
     tire_circumference_m = tire.circumference_m
 
     consumer_task = asyncio.create_task(ctx.proto.process_queue())
-    ws_task = asyncio.create_task(
-        ctx.ws_hub.run(
-            hz=60,
-            payload_builder=lambda _selected_client: {
-                "total_ingested_samples": ctx.processor.intake_stats()["total_ingested_samples"],
-            },
-            metrics_recorder=lambda connection_count, duration_s: (
-                ctx.ingest_diagnostics.note_ws_publish(
-                    connection_count=connection_count,
-                    duration_s=duration_s,
-                )
-            ),
-        )
-    )
+    ws_task = asyncio.create_task(ctx.ws_broadcaster.run())
     try:
         started = ctx.recorder.start_recording()
         run_id = started.run_id

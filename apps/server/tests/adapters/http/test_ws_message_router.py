@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from vibesensor.adapters.http.ws_message_router import route_ws_message
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "message",
     [
@@ -28,30 +27,28 @@ from vibesensor.adapters.http.ws_message_router import route_ws_message
         "wrong-client-id-type",
     ],
 )
-async def test_route_ws_message_ignores_invalid_messages(message: str) -> None:
-    hub = AsyncMock()
-    ws = AsyncMock()
+def test_route_ws_message_ignores_invalid_messages(message: str) -> None:
+    broadcaster = MagicMock()
+    ws = MagicMock()
 
-    await route_ws_message(hub, ws, message)
+    route_ws_message(broadcaster, ws, message)
 
-    hub.update_selected_client.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_route_ws_message_applies_valid_selection() -> None:
-    hub = AsyncMock()
-    ws = AsyncMock()
-
-    await route_ws_message(hub, ws, json.dumps({"client_id": "AA:BB:CC:DD:EE:FF"}))
-
-    hub.update_selected_client.assert_awaited_once_with(ws, "aabbccddeeff")
+    broadcaster.select.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_route_ws_message_clears_selection_when_client_id_is_null() -> None:
-    hub = AsyncMock()
-    ws = AsyncMock()
+def test_route_ws_message_applies_valid_selection() -> None:
+    broadcaster = MagicMock()
+    ws = MagicMock()
 
-    await route_ws_message(hub, ws, json.dumps({"client_id": None}))
+    route_ws_message(broadcaster, ws, json.dumps({"client_id": "AA:BB:CC:DD:EE:FF"}))
 
-    hub.update_selected_client.assert_awaited_once_with(ws, None)
+    broadcaster.select.assert_called_once_with(ws, "aabbccddeeff")
+
+
+def test_route_ws_message_clears_selection_when_client_id_is_null() -> None:
+    broadcaster = MagicMock()
+    ws = MagicMock()
+
+    route_ws_message(broadcaster, ws, json.dumps({"client_id": None}))
+
+    broadcaster.select.assert_called_once_with(ws, None)

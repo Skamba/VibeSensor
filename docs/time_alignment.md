@@ -43,7 +43,7 @@ sensors.
 
 | Field | Purpose |
 |-------|---------|
-| `first_ingest_mono_s` | When the buffer first received data (reset on flush). |
+| `last_ingest_mono_s` | Server monotonic time of the most recent ingest. |
 | `last_t0_us` | Sensor-clock timestamp (µs) of the most recently ingested frame. After `CMD_SYNC_CLOCK` this is server-relative. |
 | `samples_since_t0` | Samples ingested since `last_t0_us` was recorded. |
 
@@ -52,7 +52,10 @@ receiver passes `msg.t0_us` through.
 
 ### 3. Analysis Time-Range Computation
 
-`_analysis_time_range(buf)` returns `(start_s, end_s, synced)`:
+`ClientBuffer.analysis_time_range()` returns an `AnalysisTimeRange`
+(`start_s`, `end_s`, `synced`). Each metrics snapshot records it, so
+`SignalProcessor.latest_analysis_time_range()` reports the window the latest
+metrics cover (used to place recorded samples on the timeline):
 
 - **Synced path** (preferred): When `last_t0_us > 0`, the window end is
   computed from the sensor timestamp plus the frame duration.  The
@@ -60,23 +63,13 @@ receiver passes `msg.t0_us` through.
 - **Fallback path**: Uses `last_ingest_mono_s` (server arrival time)
   and the buffer sample count to estimate the window.
 
-### 4. Alignment Computation
+### 4. Multi-Spectrum Payload
 
-`time_alignment_info(client_ids)` computes:
-
-| Field | Description |
-|-------|-------------|
-| `per_sensor` | Per-client `{start_s, end_s, duration_s, synced}`. |
-| `shared_window` | Intersection of all sensor windows, or `None`. |
-| `overlap_ratio` | Fraction of the union covered by the intersection (0–1). |
-| `aligned` | `True` when `overlap_ratio ≥ 0.5`. |
-| `clock_synced` | `True` when all included sensors use synced timestamps. |
-| `sensors_included` / `sensors_excluded` | Partition of inputs. |
-
-### 5. Multi-Spectrum Payload
-
-`multi_spectrum_payload()` now includes an `alignment` block when two
-or more sensors are present:
+`multi_spectrum_payload()` includes an `alignment` block when two or more
+sensors with a computed spectrum are present. `overlap_ratio` is the fraction
+of the union covered by the intersection of all sensor windows, `aligned` is
+`True` when `overlap_ratio ≥ 0.5`, and `clock_synced` is `True` when every
+sensor uses synced timestamps:
 
 ```json
 {
@@ -90,14 +83,7 @@ or more sensors are present:
 }
 ```
 
-### 6. Live Diagnostics
-
-The existing `_multi_sync_window_ms = 800 ms` recency check in
-`_process_combined_groups()` already enforces a tight temporal
-alignment for real-time multi-sensor events.  No change was needed
-here.
-
-### 7. Persisted Raw Replay
+### 5. Persisted Raw Replay
 
 Post-stop raw replay now uses the persisted raw chunk timeline instead
 of assuming that summary-sample `t_s` starts at raw sample index zero.
@@ -118,7 +104,7 @@ persisted summary sample instead of guessing raw alignment. Gaps,
 overlaps, dropped chunks, and other incomplete raw coverage still fall
 back per window and emit deterministic warnings.
 
-### 8. Simulator Parity
+### 6. Simulator Parity
 
 `vibesensor-sim` follows the same contract as the firmware: it streams
 only after `HELLO_ACK`, answers `CMD_SYNC_CLOCK` with the sync-clock ACK
@@ -142,7 +128,7 @@ clock step per sensor.
 ## How to Run the Tests
 
 ```bash
-# Focused alignment tests (29 tests, <1 s):
+# Focused alignment tests:
 python -m pytest apps/server/tests/infra/processing/test_time_alignment.py -v
 
 # Full backend suite:

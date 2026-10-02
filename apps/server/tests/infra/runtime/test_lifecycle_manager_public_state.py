@@ -42,8 +42,8 @@ async def test_start_marks_runtime_ready_and_tracks_running_tasks() -> None:
 
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
-    ws_hub = MagicMock()
-    ws_hub.run = AsyncMock(side_effect=_park_forever)
+    ws_broadcaster = MagicMock()
+    ws_broadcaster.run = AsyncMock(side_effect=_park_forever)
     run_recorder = MagicMock()
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     gps_monitor = MagicMock()
@@ -57,7 +57,7 @@ async def test_start_marks_runtime_ready_and_tracks_running_tasks() -> None:
     runtime_state, lifecycle = _build_lifecycle(
         start_udp_receiver=_fake_udp,
         control_plane=control_plane,
-        ws_hub=ws_hub,
+        ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
@@ -92,8 +92,8 @@ async def test_start_records_background_task_failure_in_health_state() -> None:
     async def _failing_ws(*args, **kwargs):
         raise RuntimeError("ws boom")
 
-    ws_hub = MagicMock()
-    ws_hub.run = AsyncMock(side_effect=_failing_ws)
+    ws_broadcaster = MagicMock()
+    ws_broadcaster.run = AsyncMock(side_effect=_failing_ws)
     run_recorder = MagicMock()
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     gps_monitor = MagicMock()
@@ -107,7 +107,7 @@ async def test_start_records_background_task_failure_in_health_state() -> None:
     runtime_state, lifecycle = _build_lifecycle(
         start_udp_receiver=_fake_udp,
         control_plane=control_plane,
-        ws_hub=ws_hub,
+        ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
@@ -135,7 +135,7 @@ async def test_start_clears_restartable_failure_after_successful_retry(
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
     restart_started = asyncio.Event()
-    ws_hub = MagicMock()
+    ws_broadcaster = MagicMock()
     ws_run_calls = {"count": 0}
     original_sleep = asyncio.sleep
 
@@ -152,7 +152,7 @@ async def test_start_clears_restartable_failure_after_successful_retry(
     async def _fast_sleep(delay: float) -> None:
         await original_sleep(0)
 
-    ws_hub.run = _ws_run
+    ws_broadcaster.run = _ws_run
     run_recorder = MagicMock()
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     gps_monitor = MagicMock()
@@ -166,7 +166,7 @@ async def test_start_clears_restartable_failure_after_successful_retry(
     runtime_state, lifecycle = _build_lifecycle(
         start_udp_receiver=_fake_udp,
         control_plane=control_plane,
-        ws_hub=ws_hub,
+        ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
@@ -203,12 +203,11 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     run_recorder.shutdown_report = MagicMock(return_value=shutdown_report)
     history_db = MagicMock()
-    worker_pool = MagicMock()
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
     control_plane.close = MagicMock()
-    ws_hub = MagicMock()
-    ws_hub.run = AsyncMock(side_effect=_park_forever)
+    ws_broadcaster = MagicMock()
+    ws_broadcaster.run = AsyncMock(side_effect=_park_forever)
     gps_monitor = MagicMock()
     gps_monitor.run = AsyncMock(side_effect=_park_forever)
     obd_runner = MagicMock()
@@ -222,14 +221,13 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
     _runtime_state, lifecycle = _build_lifecycle(
         start_udp_receiver=_fake_udp,
         control_plane=control_plane,
-        ws_hub=ws_hub,
+        ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         history_db=history_db,
-        worker_pool=worker_pool,
     )
 
     await lifecycle.start()
@@ -240,6 +238,5 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
 
     assert lifecycle.tasks == []
     run_recorder.shutdown_report.assert_called_once_with(5.0)
-    worker_pool.shutdown.assert_called_once_with(True)
     history_db.close.assert_called_once()
     transport.close.assert_called_once()

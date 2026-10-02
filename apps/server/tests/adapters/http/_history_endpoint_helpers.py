@@ -238,16 +238,16 @@ class FakeHistoryDB:
 
 
 @dataclass
-class FakeWsHub:
+class FakeLiveWs:
     selected_updates: list[str | None] = field(default_factory=list)
 
-    async def add(self, websocket, selected_client_id: str | None) -> None:
+    def add(self, websocket, selected_client_id: str | None) -> None:
         self.selected_updates.append(selected_client_id)
 
-    async def remove(self, websocket) -> None:
+    def remove(self, websocket) -> None:
         return None
 
-    async def update_selected_client(self, websocket, client_id: str | None) -> None:
+    def select(self, websocket, client_id: str | None) -> None:
         self.selected_updates.append(client_id)
 
 
@@ -255,12 +255,12 @@ class FakeState:
     def __init__(
         self,
         history_db: FakeHistoryDB,
-        ws_hub: FakeWsHub,
+        ws_broadcaster: FakeLiveWs,
         *,
         pdf_renderer: PdfRendererFn = _real_pdf_renderer,
     ) -> None:
         self.history_db = history_db
-        self.ws_hub = ws_hub
+        self.ws_broadcaster = ws_broadcaster
         self.settings_store = type(
             "S",
             (),
@@ -402,7 +402,7 @@ class FakeState:
             sensor_metadata_store=self.settings_store,
             processor=self.processor,
             run_recorder=self.run_recorder,
-            ws_hub=self.ws_hub,
+            ws_broadcaster=self.ws_broadcaster,
         )
 
     @property
@@ -466,7 +466,7 @@ def _build_app_router_and_state(
         include_samples=False,
     )
     state = FakeState(
-        FakeHistoryDB(metadata, samples, analysis), FakeWsHub(), pdf_renderer=pdf_renderer
+        FakeHistoryDB(metadata, samples, analysis), FakeLiveWs(), pdf_renderer=pdf_renderer
     )
     app = FastAPI()
     router = create_router(state)
@@ -540,7 +540,7 @@ def make_status_app(
     samples = [sample(0)]
     db = StatusDB(metadata, samples, {}, run_status=status, run_analysis=analysis)
     app = FastAPI()
-    app.include_router(create_router(FakeState(db, FakeWsHub())))
+    app.include_router(create_router(FakeState(db, FakeLiveWs())))
     return app
 
 

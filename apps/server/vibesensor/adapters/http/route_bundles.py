@@ -74,7 +74,7 @@ def create_live_route_bundle(services: LiveDeps) -> APIRouter:
         ),
     )
     router.include_router(create_recording_routes(services.run_recorder))
-    router.include_router(create_websocket_routes(services.ws_hub))
+    router.include_router(create_websocket_routes(services.ws_broadcaster))
     return router
 
 

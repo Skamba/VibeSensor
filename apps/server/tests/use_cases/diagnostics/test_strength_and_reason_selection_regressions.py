@@ -3,8 +3,7 @@
 Covers:
   1. strength_labels.strength_label — NaN guard returns "unknown"
   2. ConfidenceAssessment.assess — NaN confidence clamped to 0.0
-  3. ws_hub.run() — tick-rate drift compensation (source verification)
-  4. Tests for previously-untested helpers
+  3. Tests for previously-untested helpers
 """
 
 from __future__ import annotations

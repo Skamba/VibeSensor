@@ -11,6 +11,5 @@ Submodules
 - ``processing_loop``: ProcessingLoop plus its state, tick runner, and failure policy
 - ``registry``: ClientRegistry (per-client bookkeeping, dedup, liveness, snapshots)
 - ``rotational_speeds``: stateless rotational speed payload helpers
-- ``ws_broadcast``: WsBroadcastService (broadcast tick/cache + selected-client assembly)
-- ``ws_payload_projection``: LiveWsPayloadProjector (live broadcast payload projection)
+- ``ws_payload_projection``: LiveWsPayloadProjector (builds the live WebSocket payload)
 """

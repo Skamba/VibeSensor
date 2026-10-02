@@ -50,10 +50,10 @@ state. Current `main` is intentionally split more narrowly:
 - `AppConfig` in `vibesensor.app.config_schema` owns YAML-backed deployment
   configuration loaded at startup, such as network bindings, retention windows,
   processing budgets, and update paths.
-- `BootstrapEnvSettings`, `WebSocketEnvSettings`, and `UpdateEnvSettings` in
+- `BootstrapEnvSettings` and `UpdateEnvSettings` in
   `vibesensor.shared.process_settings` own process-level env overrides and
-  feature flags such as config-path selection, static-asset mounting, WS debug
-  logging, and updater/release path/repo defaults.
+  feature flags such as config-path selection, static-asset mounting, and
+  updater/release path/repo defaults.
 - Focused persisted settings services own user-facing runtime settings: car
   profiles (`CarSettingsService`), active-car analysis settings
   (`ActiveCarAnalysisSettingsService`), speed-source preferences
@@ -234,7 +234,6 @@ and debug workflows:
   the hotspot/systemd launch path.
 - `VIBESENSOR_SERVE_STATIC=0`: disable mounting bundled UI static files for
   API-only runs, backend tests, or release validation helpers.
-- `VIBESENSOR_WS_DEBUG=1`: enable dev-only WebSocket payload-size debug logs.
 
 Importing `vibesensor.app` or `vibesensor.app.bootstrap` is now side-effect
 free. Config loading, runtime construction, SQLite opening, and static-asset

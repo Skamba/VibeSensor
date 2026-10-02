@@ -18,17 +18,14 @@ __all__ = [
     "DEFAULT_UPDATE_STATE_PATH",
     "BootstrapEnvSettings",
     "UpdateEnvSettings",
-    "WebSocketEnvSettings",
     "export_config_path_env",
     "load_bootstrap_env_settings",
     "load_update_env_settings",
-    "load_websocket_env_settings",
     "summarize_process_settings",
 ]
 
 CONFIG_PATH_ENV = "VIBESENSOR_CONFIG_PATH"
 SERVE_STATIC_ENV = "VIBESENSOR_SERVE_STATIC"
-WS_DEBUG_ENV = "VIBESENSOR_WS_DEBUG"
 UPDATE_REPO_PATH_ENV = "VIBESENSOR_REPO_PATH"
 UPDATE_ROLLBACK_DIR_ENV = "VIBESENSOR_ROLLBACK_DIR"
 UPDATE_STATE_PATH_ENV = "VIBESENSOR_UPDATE_STATE_PATH"
@@ -105,13 +102,6 @@ class BootstrapEnvSettings:
 
 
 @dataclass(frozen=True, slots=True)
-class WebSocketEnvSettings:
-    """Typed runtime env settings for the WebSocket debug flag."""
-
-    ws_debug: bool = False
-
-
-@dataclass(frozen=True, slots=True)
 class UpdateEnvSettings:
     """Typed env settings for updater/release runtime overrides."""
 
@@ -132,10 +122,6 @@ def load_bootstrap_env_settings() -> BootstrapEnvSettings:
         config_path=_env_optional_path(CONFIG_PATH_ENV),
         serve_static=_env_bool(SERVE_STATIC_ENV, True),
     )
-
-
-def load_websocket_env_settings() -> WebSocketEnvSettings:
-    return WebSocketEnvSettings(ws_debug=_env_bool(WS_DEBUG_ENV, False))
 
 
 def load_update_env_settings() -> UpdateEnvSettings:
@@ -166,12 +152,10 @@ def summarize_process_settings() -> dict[str, object]:
     """Return a safe summary of env/process settings for preflight output."""
 
     bootstrap = load_bootstrap_env_settings()
-    websocket = load_websocket_env_settings()
     update = load_update_env_settings()
     return {
         "config_path_override": str(bootstrap.config_path) if bootstrap.config_path else None,
         "serve_static": bootstrap.serve_static,
-        "ws_debug": websocket.ws_debug,
         "repo_path": str(update.repo_path),
         "rollback_dir": str(update.rollback_dir),
         "update_state_path": str(update.update_state_path),
