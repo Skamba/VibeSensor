@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Protocol, cast
+from typing import Protocol
 
 import numpy as np
 
@@ -21,7 +19,6 @@ from vibesensor.shared.raw_capture_timeline import (
     raw_anchor_reason,
     resolve_raw_window_end_time,
 )
-from vibesensor.shared.structured_logging import log_extra
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import (
     RawCaptureCoverageState,
@@ -53,9 +50,6 @@ from vibesensor.use_cases.diagnostics.whole_run_spectral_projection import (
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
 from vibesensor.vibration_strength import StrengthPeak
 
-LOGGER = logging.getLogger(__name__)
-
-DEFAULT_WHOLE_RUN_MAX_WORKERS = 1
 _DEFAULT_CHUNK_WINDOW_COUNT = 32
 
 __all__ = [
@@ -132,7 +126,6 @@ def build_whole_run_spectral_artifact_bundle(
     run_id: str,
     metadata: RunMetadata,
     raw_capture: RawRunCapture,
-    max_workers: int = DEFAULT_WHOLE_RUN_MAX_WORKERS,
     chunk_window_count: int = _DEFAULT_CHUNK_WINDOW_COUNT,
     created_at: str | None = None,
 ) -> WholeRunSpectralBuildResult:
@@ -159,7 +152,6 @@ def build_whole_run_spectral_artifact_bundle(
         raw_capture_manifest=raw_capture.manifest,
         sensors=spectral_sensors,
         raw_range_reader=raw_capture_range_reader_from_capture(raw_capture),
-        max_workers=max_workers,
         chunk_window_count=chunk_window_count,
         created_at=created_at,
     )
@@ -171,7 +163,6 @@ def build_whole_run_spectral_artifact_bundle_from_ranges(
     metadata: RunMetadata,
     raw_capture_manifest: RawCaptureManifest,
     raw_range_reader: RawCaptureRangeReader,
-    max_workers: int = DEFAULT_WHOLE_RUN_MAX_WORKERS,
     chunk_window_count: int = _DEFAULT_CHUNK_WINDOW_COUNT,
     created_at: str | None = None,
 ) -> WholeRunSpectralBuildResult:
@@ -194,7 +185,6 @@ def build_whole_run_spectral_artifact_bundle_from_ranges(
         raw_capture_manifest=raw_capture_manifest,
         sensors=sensors,
         raw_range_reader=raw_range_reader,
-        max_workers=max_workers,
         chunk_window_count=chunk_window_count,
         created_at=created_at,
     )
@@ -207,7 +197,6 @@ def _build_whole_run_spectral_artifact_bundle_with_ranges(
     raw_capture_manifest: RawCaptureManifest,
     sensors: Sequence[_SpectralSensor],
     raw_range_reader: RawCaptureRangeReader,
-    max_workers: int,
     chunk_window_count: int,
     created_at: str | None,
 ) -> WholeRunSpectralBuildResult:
@@ -236,11 +225,7 @@ def _build_whole_run_spectral_artifact_bundle_with_ranges(
         plan=plan,
         chunk_window_count=chunk_window_count,
     )
-    chunk_results = _execute_chunks(
-        chunks=chunks,
-        metadata=metadata,
-        max_workers=max_workers,
-    )
+    chunk_results = tuple(_process_chunk(chunk=chunk, metadata=metadata) for chunk in chunks)
     summaries_by_sensor = {
         sensor_id: tuple(summary for result in sensor_results for summary in result.summaries)
         for sensor_id, sensor_results in _chunk_results_by_sensor(chunk_results).items()
@@ -552,113 +537,6 @@ def _build_chunks(
                 )
             )
     return tuple(chunks)
-
-
-def _execute_chunks(
-    *,
-    chunks: Sequence[_SpectralChunk],
-    metadata: RunMetadata,
-    max_workers: int,
-) -> tuple[_SpectralChunkResult, ...]:
-    if not chunks:
-        return ()
-    if max_workers <= 1 or len(chunks) <= 1:
-        return tuple(
-            _process_chunk(
-                chunk=chunk,
-                metadata=metadata,
-            )
-            for chunk in chunks
-        )
-    total_chunks = len(chunks)
-    max_pending_chunks = min(total_chunks, max(1, int(max_workers)))
-    ordered_results: list[_SpectralChunkResult | None] = [None] * total_chunks
-    pending: dict[Future[_SpectralChunkResult], int] = {}
-    next_chunk_position = 0
-    completed_chunks = 0
-    shutdown_wait = True
-    LOGGER.info(
-        "Starting whole-run spectral chunk executor for run %s with %s chunks",
-        metadata.run_id,
-        total_chunks,
-        extra=log_extra(
-            event="whole_run_spectral_chunk_executor_started",
-            run_id=metadata.run_id,
-            total_chunks=total_chunks,
-            max_workers=max_pending_chunks,
-        ),
-    )
-    pool = ThreadPoolExecutor(
-        max_workers=max_workers,
-        thread_name_prefix="vibesensor-whole-run",
-    )
-    try:
-        while pending or next_chunk_position < total_chunks:
-            while next_chunk_position < total_chunks and len(pending) < max_pending_chunks:
-                pending[
-                    pool.submit(
-                        _process_chunk,
-                        chunk=chunks[next_chunk_position],
-                        metadata=metadata,
-                    )
-                ] = next_chunk_position
-                next_chunk_position += 1
-            if not pending:
-                continue
-            done, _ = wait(tuple(pending), return_when=FIRST_COMPLETED)
-            batch_completed = 0
-            for future in done:
-                chunk_position = pending.pop(future)
-                chunk = chunks[chunk_position]
-                try:
-                    ordered_results[chunk_position] = future.result()
-                except Exception:
-                    for pending_future in pending:
-                        pending_future.cancel()
-                    LOGGER.warning(
-                        "Whole-run spectral chunk failed for run %s",
-                        metadata.run_id,
-                        extra=log_extra(
-                            event="whole_run_spectral_chunk_failed",
-                            run_id=metadata.run_id,
-                            sensor_id=chunk.sensor.manifest.client_id,
-                            chunk_index=chunk.chunk_index,
-                            chunk_position=chunk_position,
-                            completed_chunks=completed_chunks,
-                            total_chunks=total_chunks,
-                        ),
-                        exc_info=True,
-                    )
-                    shutdown_wait = False
-                    pool.shutdown(wait=False, cancel_futures=True)
-                    raise
-                batch_completed += 1
-            completed_chunks += batch_completed
-            LOGGER.info(
-                "Whole-run spectral chunk progress for run %s: %s/%s chunks complete",
-                metadata.run_id,
-                completed_chunks,
-                total_chunks,
-                extra=log_extra(
-                    event="whole_run_spectral_chunk_progress",
-                    run_id=metadata.run_id,
-                    completed_chunks=completed_chunks,
-                    batch_completed=batch_completed,
-                    total_chunks=total_chunks,
-                    active_chunks=len(pending),
-                    queued_chunks=(total_chunks - next_chunk_position),
-                ),
-            )
-        missing_results = [index for index, result in enumerate(ordered_results) if result is None]
-        if missing_results:
-            raise RuntimeError(
-                "whole-run spectral executor completed without results for "
-                f"chunk positions {missing_results}"
-            )
-        return tuple(cast(_SpectralChunkResult, result) for result in ordered_results)
-    finally:
-        if shutdown_wait:
-            pool.shutdown(wait=True)
 
 
 def _process_chunk(

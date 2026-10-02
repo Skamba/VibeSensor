@@ -50,7 +50,6 @@ def _make_lifecycle(*, update_job_task: asyncio.Task[None] | None = None) -> Lif
         obd_runner=MagicMock(),
         update_manager=MagicMock(job_task=update_job_task),
         esp_flash_manager=MagicMock(job_task=None),
-        worker_pool=MagicMock(),
         history_db=MagicMock(),
     )
     return LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())

@@ -12,7 +12,6 @@ metrics logging while delegating to focused collaborators:
 from __future__ import annotations
 
 import logging
-import math
 import time
 from typing import TYPE_CHECKING
 
@@ -32,13 +31,11 @@ from vibesensor.infra.processing.models import (
 from vibesensor.infra.processing.payload import (
     SpectrumSeriesPayload,
     _empty_spectrum_payload,
-    build_intake_stats_payload,
     build_multi_spectrum_payload,
     build_spectrum_payload,
     build_time_alignment_payload,
 )
 from vibesensor.infra.processing.time_align import analysis_time_range
-from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 
 if TYPE_CHECKING:
@@ -50,7 +47,6 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = _MAX_CLIENT_SAMPLE_RATE_HZ
-_MIN_PARALLEL_COMPUTE_WORK_UNITS = 4096
 
 
 class SignalProcessor:
@@ -65,7 +61,6 @@ class SignalProcessor:
         spectrum_min_hz: float = 0.0,
         spectrum_max_hz: float = 200.0,
         accel_scale_g_per_lsb: float | None = None,
-        worker_pool: WorkerPool | None = None,
     ) -> None:
         self._config = ProcessorConfig(
             sample_rate_hz=sample_rate_hz,
@@ -91,7 +86,6 @@ class SignalProcessor:
 
         self._store = SignalBufferStore(self._config)
         self._metrics = SignalMetricsComputer(self._config)
-        self._worker_pool = worker_pool
 
     def flush_client_buffer(
         self,
@@ -132,29 +126,17 @@ class SignalProcessor:
     ) -> dict[str, ClientMetrics]:
         rates = sample_rates_hz or {}
         t0 = time.monotonic()
-
-        if not self._should_parallelize_compute_all(client_ids):
-            result = self._compute_all_serial(client_ids, rates)
-            self._store.record_compute_all_duration(time.monotonic() - t0)
-            return result
-
-        pool = self._worker_pool
-        assert pool is not None
-        try:
-            result = self._compute_all_parallel_chunked(client_ids, rates, pool)
-        except (RuntimeError, OSError):
-            LOGGER.warning(
-                "compute_all: worker pool raised; falling back to serial execution.",
-                exc_info=True,
-            )
-            result = self._compute_all_serial(client_ids, rates, serial_fallback=True)
+        result: dict[str, ClientMetrics] = {}
+        for client_id in client_ids:
+            try:
+                result[client_id] = self.compute_metrics(
+                    client_id,
+                    sample_rate_hz=rates.get(client_id),
+                )
+            except (ValueError, ArithmeticError, np.exceptions.DTypePromotionError):
+                LOGGER.warning("compute_metrics failed for %s; skipping.", client_id, exc_info=True)
         self._store.record_compute_all_duration(time.monotonic() - t0)
         return result
-
-    def _should_parallelize_compute_all(self, client_ids: list[str]) -> bool:
-        if len(client_ids) <= 1 or self._worker_pool is None:
-            return False
-        return (len(client_ids) * self._config.fft_n) >= _MIN_PARALLEL_COMPUTE_WORK_UNITS
 
     def spectrum_payload(self, client_id: str) -> SpectrumSeriesPayload:
         with self._store.locked_client_buffer(client_id) as buf:
@@ -199,8 +181,7 @@ class SignalProcessor:
         self._store.evict_clients(keep_client_ids)
 
     def intake_stats(self) -> IntakeStatsPayload:
-        worker_pool_stats = self._worker_pool.stats() if self._worker_pool is not None else None
-        return build_intake_stats_payload(self._store.intake_stats(), worker_pool_stats)
+        return self._store.intake_stats()
 
     def buffer_overflow_drops(self) -> int:
         return self._store.buffer_overflow_drops()
@@ -234,54 +215,3 @@ class SignalProcessor:
             last_t0_us=buf.last_t0_us,
             samples_since_t0=buf.samples_since_t0,
         )
-
-    def _compute_all_serial(
-        self,
-        client_ids: list[str],
-        rates: dict[str, int],
-        *,
-        serial_fallback: bool = False,
-    ) -> dict[str, ClientMetrics]:
-        result: dict[str, ClientMetrics] = {}
-        for client_id in client_ids:
-            try:
-                result[client_id] = self.compute_metrics(
-                    client_id,
-                    sample_rate_hz=rates.get(client_id),
-                )
-            except (ValueError, ArithmeticError, np.exceptions.DTypePromotionError):
-                if serial_fallback:
-                    LOGGER.warning(
-                        "compute_metrics failed for %s (serial fallback); skipping.",
-                        client_id,
-                        exc_info=True,
-                    )
-                else:
-                    LOGGER.warning(
-                        "compute_metrics failed for %s; skipping.",
-                        client_id,
-                        exc_info=True,
-                    )
-        return result
-
-    def _compute_all_parallel_chunked(
-        self,
-        client_ids: list[str],
-        rates: dict[str, int],
-        pool: WorkerPool,
-    ) -> dict[str, ClientMetrics]:
-        chunk_count = min(pool.max_workers, len(client_ids))
-        chunk_size = max(1, math.ceil(len(client_ids) / chunk_count))
-        chunks = [
-            tuple(client_ids[start : start + chunk_size])
-            for start in range(0, len(client_ids), chunk_size)
-        ]
-
-        chunk_results = pool.map_unordered(
-            lambda chunk: self._compute_all_serial(list(chunk), rates, serial_fallback=True),
-            chunks,
-        )
-        result: dict[str, ClientMetrics] = {}
-        for chunk in chunks:
-            result.update(chunk_results.get(chunk, {}))
-        return result

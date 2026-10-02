@@ -503,10 +503,12 @@ Whole-run execution should guarantee:
 
 ### Parallelization guidance
 
-Use existing bounded concurrency infrastructure from
-`apps/server/vibesensor/infra/workers/worker_pool.py` where it fits.
+Whole-run stages run serially today: on the target workloads, thread pools
+added GIL contention instead of speedup (see
+`docs/multithreading_performance.md`). Only introduce parallelism with a
+benchmark that shows a real win on Pi-sized datasets.
 
-Safe parallel boundaries:
+Boundaries that would be safe to parallelize:
 
 - per-sensor raw range reads
 - per-chunk spectral computation after window planning is fixed
@@ -545,7 +547,6 @@ Keep these sequential:
 
 Reuse the existing explicit benchmark style:
 
-- `apps/server/tests/infra/workers/benchmark_compute_all.py`
 - `apps/server/tests/infra/processing/benchmark_rfft_backend.py`
 - `apps/server/tests/use_cases/diagnostics/benchmark_whole_run_spectra.py`
 
@@ -553,7 +554,6 @@ Add opt-in benchmarks for:
 
 - raw range-reader throughput
 - whole-run spectral executor throughput by sensor count and run length
-- worker-pool scaling vs sequential execution on Pi-sized datasets
 - order-trace evaluation cost by candidate family count
 - spatial/coherence cost by sensor count
 - end-to-end whole-run analysis memory peak on long runs

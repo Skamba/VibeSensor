@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from vibesensor.infra.runtime.processing_loop import ProcessingLoop
     from vibesensor.infra.runtime.registry import ClientRegistry
     from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
-    from vibesensor.infra.workers.worker_pool import WorkerPool
 
 __all__ = [
     "LifecycleManager",
@@ -151,7 +150,6 @@ class LifecycleRuntime:
     obd_runner: LifecycleObdRunner
     update_manager: LifecycleUpdateManager
     esp_flash_manager: LifecycleManagedJobs
-    worker_pool: WorkerPool
     history_db: LifecycleHistoryDb
 
 
@@ -379,10 +377,6 @@ class LifecycleManager:
             timeout_s=_MANAGED_JOB_CANCEL_TIMEOUT_S,
         )
         await self._drain_analysis()
-        try:
-            await anyio.to_thread.run_sync(r.worker_pool.shutdown, True)
-        except (OSError, RuntimeError) as exc:
-            issues.append(("Error shutting down worker pool", exc))
         try:
             await anyio.to_thread.run_sync(r.history_db.close)
         except (sqlite3.Error, OSError) as exc:

@@ -186,19 +186,10 @@ def test_whole_run_raw_range_reader_benchmark(
 
 
 @pytest.mark.benchmark(group="whole-run-spectral-executor")
-@pytest.mark.parametrize(
-    ("max_workers", "chunk_window_count"),
-    [
-        pytest.param(1, 32, id="sequential-32"),
-        pytest.param(4, 16, id="parallel-16"),
-        pytest.param(4, 32, id="parallel-32"),
-        pytest.param(4, 64, id="parallel-64"),
-    ],
-)
+@pytest.mark.parametrize("chunk_window_count", [16, 32, 64])
 def test_whole_run_spectral_executor_benchmark(
     benchmark,
     whole_run_fixture: _WholeRunBenchmarkFixture,
-    max_workers: int,
     chunk_window_count: int,
 ) -> None:
     def _build_bundle():
@@ -206,7 +197,6 @@ def test_whole_run_spectral_executor_benchmark(
             run_id=whole_run_fixture.run_id,
             metadata=whole_run_fixture.metadata,
             raw_capture=whole_run_fixture.raw_capture,
-            max_workers=max_workers,
             chunk_window_count=chunk_window_count,
             created_at="2026-01-01T00:00:00Z",
         )
@@ -214,7 +204,6 @@ def test_whole_run_spectral_executor_benchmark(
     benchmark.extra_info["duration_s"] = _DURATION_S
     benchmark.extra_info["sensor_count"] = _SENSOR_COUNT
     benchmark.extra_info["window_count"] = whole_run_fixture.plan.total_window_count
-    benchmark.extra_info["max_workers"] = max_workers
     benchmark.extra_info["chunk_window_count"] = chunk_window_count
     bundle = benchmark.pedantic(
         _build_bundle,

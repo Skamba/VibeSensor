@@ -5,7 +5,7 @@
 Sensor data flows through three decoupled stages:
 
 ```
-UDP datagram → async queue → per-client ring buffer → processing loop → worker threads
+UDP datagram → async queue → per-client ring buffer → processing loop → processing thread
 ```
 
 ### 1. Packet reception (`udp_data_rx.py`)
@@ -40,9 +40,9 @@ event loop never performs FFT work directly.
 - `apps/server/vibesensor/infra/processing/compute.py`: FFT cache ownership plus metric computation from snapshots
 - `apps/server/vibesensor/infra/processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
 
-Inside `SignalProcessor.compute_all()`, per-client FFT work is dispatched through
-the shared `WorkerPool` when multiple clients are active. `compute_metrics()` now
-reads top-to-bottom as “snapshot → compute → commit”, and still uses snapshot-based
+Inside `SignalProcessor.compute_all()`, clients are computed serially in the
+processing thread (see `docs/multithreading_performance.md` for measurements).
+`compute_metrics()` reads top-to-bottom as “snapshot → compute → commit”, and still uses snapshot-based
 locking:
 
 - **Phase 1 (lock):** copy the ring buffer data (~20–100 μs).
@@ -132,7 +132,6 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
 |-------|--------|----------|--------------------|
 | UDP queue | `asyncio.Queue` | `data_queue_maxsize` (default 1024 packets) | Oldest arriving packet is dropped; warning logged (rate-limited to 1/10 s); `note_server_queue_drop` counter incremented on client record. |
 | Ring buffer | numpy array per client | `sample_rate_hz × waveform_seconds` (default 6400 samples) | Circular overwrite — oldest samples are silently replaced. |
-| Worker pool | `WorkerPool` outstanding task cap | `max_workers + max_queue_size` | Submission blocks once the pool is saturated; no unbounded executor backlog is allowed. |
 | Processing loop | One async tick loop | 1 | The runtime loop computes on the current set of fresh clients, then sleeps until the next tick. |
 
 ## Observability

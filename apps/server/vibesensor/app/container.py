@@ -71,7 +71,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         obd_runner=speed_runtime.obd,
         update_manager=updates.update_manager,
         esp_flash_manager=updates.esp_flash_manager,
-        worker_pool=live.worker_pool,
         history_db=history,
     )
     router = RouterDeps(

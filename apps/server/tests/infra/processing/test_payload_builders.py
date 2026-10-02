@@ -6,11 +6,7 @@ from typing import cast
 
 from vibesensor.infra.processing.buffers import ClientBuffer
 from vibesensor.infra.processing.models import ProcessorConfig
-from vibesensor.infra.processing.payload import (
-    build_intake_stats_payload,
-    build_time_alignment_payload,
-)
-from vibesensor.shared.types.payload_types import IntakeStatsPayload, WorkerPoolStats
+from vibesensor.infra.processing.payload import build_time_alignment_payload
 
 
 def _config(fft_n: int = 256) -> ProcessorConfig:
@@ -23,38 +19,6 @@ def _config(fft_n: int = 256) -> ProcessorConfig:
         spectrum_max_hz=100.0,
         accel_scale_g_per_lsb=None,
     )
-
-
-def test_build_intake_stats_payload_adds_worker_pool_stats() -> None:
-    base_stats: IntakeStatsPayload = {
-        "total_ingested_samples": 10,
-        "total_compute_calls": 2,
-        "last_compute_duration_s": 0.1,
-        "last_compute_all_duration_s": 0.2,
-        "last_ingest_duration_s": 0.05,
-    }
-    worker_pool_stats: WorkerPoolStats = {
-        "max_workers": 2,
-        "max_queue_size": 2,
-        "max_pending_tasks": 4,
-        "total_tasks": 7,
-        "pending_tasks": 1,
-        "queued_tasks": 0,
-        "running_tasks": 1,
-        "rejected_tasks": 0,
-        "total_run_s": 1.5,
-        "avg_run_s": 0.75,
-        "total_submit_wait_s": 0.2,
-        "avg_submit_wait_s": 0.1,
-        "default_submit_timeout_s": None,
-        "alive": True,
-    }
-
-    payload = build_intake_stats_payload(base_stats, worker_pool_stats)
-
-    assert payload["total_ingested_samples"] == 10
-    assert payload["worker_pool"] == worker_pool_stats
-    assert "worker_pool" not in base_stats
 
 
 def test_build_time_alignment_payload_handles_overlap_and_exclusions() -> None:

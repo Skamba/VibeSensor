@@ -48,5 +48,4 @@ def test_build_runtime_projects_config_into_lifecycle_runtime(tmp_path: Path) ->
         assert runtime.router.updates.update_manager is lifecycle.update_manager
         assert runtime.router.updates.esp_flash_manager is lifecycle.esp_flash_manager
     finally:
-        lifecycle.worker_pool.shutdown(wait=True)
         lifecycle.history_db.close()

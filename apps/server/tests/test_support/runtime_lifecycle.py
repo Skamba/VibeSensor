@@ -250,7 +250,6 @@ def build_runtime(**overrides: Any):
     registry = overrides.pop("registry", StubRegistry())
     processor = overrides.pop("processor", StubProcessor())
     control_plane = overrides.pop("control_plane", MagicMock())
-    worker_pool = overrides.pop("worker_pool", MagicMock())
     gps_monitor = overrides.pop("gps_monitor", MagicMock())
     obd_runner = overrides.pop("obd_runner", MagicMock())
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
@@ -296,7 +295,6 @@ def build_runtime(**overrides: Any):
         obd_runner=obd_runner,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
-        worker_pool=worker_pool,
         history_db=history_db,
     )
     lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())

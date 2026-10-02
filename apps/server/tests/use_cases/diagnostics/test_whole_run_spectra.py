@@ -180,7 +180,7 @@ def _range_reader(raw_capture: RawRunCapture, read_sizes: list[int]):
     return read_range
 
 
-def test_whole_run_spectra_are_deterministic_across_serial_and_parallel_execution() -> None:
+def test_whole_run_spectra_are_deterministic_across_chunk_sizes() -> None:
     raw_capture = _raw_capture(
         _make_sensor(
             client_id="sensor-a",
@@ -196,30 +196,33 @@ def test_whole_run_spectra_are_deterministic_across_serial_and_parallel_executio
         ),
     )
 
-    serial_result = build_whole_run_spectral_artifact_bundle(
+    single_window_chunks = build_whole_run_spectral_artifact_bundle(
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
-        chunk_window_count=2,
+        chunk_window_count=1,
         created_at="2025-01-01T00:00:00Z",
     )
-    parallel_result = build_whole_run_spectral_artifact_bundle(
+    multi_window_chunks = build_whole_run_spectral_artifact_bundle(
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=2,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
 
-    assert serial_result.bundle is not None
-    assert parallel_result.bundle is not None
-    assert serial_result.bundle.manifest == parallel_result.bundle.manifest
-    assert serial_result.bundle.artifact_contents == parallel_result.bundle.artifact_contents
-    assert serial_result.coverage_summary == parallel_result.coverage_summary
-    assert serial_result.bundle.manifest.total_window_count == 3
-    assert [artifact.artifact_key for artifact in serial_result.bundle.manifest.artifacts] == [
+    assert single_window_chunks.bundle is not None
+    assert multi_window_chunks.bundle is not None
+    assert single_window_chunks.bundle.manifest == multi_window_chunks.bundle.manifest
+    assert (
+        single_window_chunks.bundle.artifact_contents
+        == multi_window_chunks.bundle.artifact_contents
+    )
+    assert single_window_chunks.coverage_summary == multi_window_chunks.coverage_summary
+    assert single_window_chunks.bundle.manifest.total_window_count == 3
+    assert [
+        artifact.artifact_key for artifact in single_window_chunks.bundle.manifest.artifacts
+    ] == [
         "spectral-grid:sensor-a",
         "spectral-matrix:sensor-a",
         "spectral-summary:sensor-a",
@@ -247,7 +250,6 @@ def test_whole_run_spectra_range_reader_matches_full_capture_without_full_range_
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -256,7 +258,6 @@ def test_whole_run_spectra_range_reader_matches_full_capture_without_full_range_
         metadata=_metadata(),
         raw_capture_manifest=raw_capture.manifest,
         raw_range_reader=_range_reader(raw_capture, read_sizes),
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -289,7 +290,6 @@ def test_whole_run_spectra_align_sensor_windows_by_measurement_time() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -329,7 +329,6 @@ def test_whole_run_spectra_mark_gap_windows_partial() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=4,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -369,7 +368,6 @@ def test_whole_run_spectra_quality_marks_late_packets_and_queue_drops() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -401,7 +399,6 @@ def test_whole_run_spectra_quality_marks_overlap_windows_as_reset_timing_loss() 
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=4,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -429,7 +426,6 @@ def test_whole_run_spectra_keep_contiguous_chunk_boundaries_full() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=4,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -457,7 +453,6 @@ def test_whole_run_spectra_missing_chunk_metadata_falls_back_to_warning() -> Non
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -492,7 +487,6 @@ def test_whole_run_spectra_allow_mixed_observed_sample_rates() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )
@@ -521,7 +515,6 @@ def test_whole_run_spectra_warn_when_sample_rate_is_unverified() -> None:
         run_id="run-spectra",
         metadata=_metadata(),
         raw_capture=raw_capture,
-        max_workers=1,
         chunk_window_count=2,
         created_at="2025-01-01T00:00:00Z",
     )

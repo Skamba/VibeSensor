@@ -16,7 +16,6 @@ from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingL
 from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.infra.runtime.ws_broadcast import WsBroadcastService
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
-from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.constants.dsp import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -38,7 +37,6 @@ class LiveRuntimeBundle:
     """Live signal-processing and operator-facing runtime services."""
 
     registry: ClientRegistry
-    worker_pool: WorkerPool
     processor: SignalProcessor
     control_plane: UDPControlPlane
     processing_loop_state: ProcessingLoopState
@@ -92,7 +90,6 @@ def build_live_runtime(
         live_ttl_seconds=config.processing.client_live_ttl_seconds,
         retention_ttl_seconds=config.processing.client_ttl_seconds,
     )
-    worker_pool = WorkerPool(max_workers=4, thread_name_prefix="vibesensor-fft")
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
@@ -101,7 +98,6 @@ def build_live_runtime(
         spectrum_min_hz=SPECTRUM_MIN_HZ,
         spectrum_max_hz=SPECTRUM_MAX_HZ,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
-        worker_pool=worker_pool,
     )
     control_plane = UDPControlPlane(
         registry=registry,
@@ -163,7 +159,6 @@ def build_live_runtime(
 
     return LiveRuntimeBundle(
         registry=registry,
-        worker_pool=worker_pool,
         processor=processor,
         control_plane=control_plane,
         processing_loop_state=processing_loop_state,

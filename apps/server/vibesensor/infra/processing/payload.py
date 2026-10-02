@@ -19,13 +19,11 @@ from vibesensor.shared.fft_analysis import float_list
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
-    IntakeStatsPayload,
     SharedWindowPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
     TimeAlignmentPayload,
     TimeAlignmentSensorPayload,
-    WorkerPoolStats,
 )
 from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
@@ -86,23 +84,6 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     }
     buf.cached_spectrum_payload = payload
     buf.cached_spectrum_payload_generation = buf.spectrum_generation
-    return payload
-
-
-def build_intake_stats_payload(
-    base_stats: IntakeStatsPayload,
-    worker_pool_stats: WorkerPoolStats | None,
-) -> IntakeStatsPayload:
-    """Build the health/debug intake stats payload."""
-    payload: IntakeStatsPayload = {
-        "total_ingested_samples": base_stats["total_ingested_samples"],
-        "total_compute_calls": base_stats["total_compute_calls"],
-        "last_compute_duration_s": base_stats["last_compute_duration_s"],
-        "last_compute_all_duration_s": base_stats["last_compute_all_duration_s"],
-        "last_ingest_duration_s": base_stats["last_ingest_duration_s"],
-    }
-    if worker_pool_stats is not None:
-        payload["worker_pool"] = worker_pool_stats
     return payload
 
 

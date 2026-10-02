@@ -235,7 +235,6 @@ class FakeState:
     registry: ClientRegistry = field(default_factory=_registry_mock)
     processor: SignalProcessor = field(default_factory=_processor_mock)
     control_plane: UDPControlPlane = field(default_factory=_control_plane_mock)
-    worker_pool: object = field(default_factory=MagicMock)
     ws_hub: WebSocketHub = field(default_factory=_ws_hub_mock)
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
