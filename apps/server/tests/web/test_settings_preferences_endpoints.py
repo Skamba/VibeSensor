@@ -9,15 +9,10 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def _preferences_client(fake_state):
-    from vibesensor.web.settings.dependencies import UiPreferencesRouteDeps
     from vibesensor.web.settings.preferences import create_ui_preferences_routes
 
     app = FastAPI()
-    app.include_router(
-        create_ui_preferences_routes(
-            UiPreferencesRouteDeps(ui_preferences=fake_state.settings_store),
-        )
-    )
+    app.include_router(create_ui_preferences_routes(ui_preferences=fake_state.settings_store))
     with TestClient(app) as client:
         yield client, fake_state
 

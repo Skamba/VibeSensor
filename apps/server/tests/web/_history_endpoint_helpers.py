@@ -36,14 +36,6 @@ from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.report.service import HistoryReportService, PdfRendererFn
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.web.dependencies import (
-    HealthDeps,
-    HistoryDeps,
-    LiveDeps,
-    RouterDeps,
-    SettingsDeps,
-    UpdateDeps,
-)
 from vibesensor.web.health_state import RuntimeHealthState
 from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
@@ -386,63 +378,34 @@ class FakeState:
             )
         )
 
+    # Route-service names (see ``vibesensor.web.router.WebServices``).
     @property
-    def health(self) -> HealthDeps:
-        return HealthDeps(
-            processing_loop_state=self.processing_loop_state,
-            health_state=self.health_state,
-            processor=self.processor,
-            registry=self.registry,
-            run_recorder=self.run_recorder,
-            ingest_diagnostics=self.ingest_diagnostics,
-        )
+    def sensor_metadata_store(self) -> MagicMock:
+        return self.settings_store
 
     @property
-    def live(self) -> LiveDeps:
-        return LiveDeps(
-            registry=self.registry,
-            control_plane=self.control_plane,
-            sensor_metadata_store=self.settings_store,
-            processor=self.processor,
-            run_recorder=self.run_recorder,
-            ws_broadcaster=self.ws_broadcaster,
-        )
+    def car_settings(self) -> MagicMock:
+        return self.settings_store
 
     @property
-    def settings(self) -> SettingsDeps:
-        return SettingsDeps(
-            car_settings=self.settings_store,
-            analysis_settings=self.settings_store,
-            ui_preferences=self.settings_store,
-            speed_source_service=self.settings_store,
-            speed_status_service=self.gps_monitor,
-            obd_admin_service=self.gps_monitor,
-        )
+    def analysis_settings(self) -> MagicMock:
+        return self.settings_store
 
     @property
-    def history(self) -> HistoryDeps:
-        return HistoryDeps(
-            run_service=self.run_service,
-            report_service=self.report_service,
-            export_service=self.export_service,
-        )
+    def ui_preferences(self) -> MagicMock:
+        return self.settings_store
 
     @property
-    def updates(self) -> UpdateDeps:
-        return UpdateDeps(
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
-        )
+    def speed_source_service(self) -> MagicMock:
+        return self.settings_store
 
     @property
-    def router(self) -> RouterDeps:
-        return RouterDeps(
-            health=self.health,
-            settings=self.settings,
-            live=self.live,
-            history=self.history,
-            updates=self.updates,
-        )
+    def speed_status_service(self) -> object:
+        return self.gps_monitor
+
+    @property
+    def obd_admin_service(self) -> object:
+        return self.gps_monitor
 
 
 def make_app_from_state(state: FakeState) -> FastAPI:

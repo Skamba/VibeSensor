@@ -11,8 +11,7 @@ from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicMock]:
-    from vibesensor.web.dependencies import ObdAdminServiceProtocol
-    from vibesensor.web.settings.dependencies import ObdAdminRouteDeps
+    from vibesensor.speed.obd.service import ObdService
     from vibesensor.web.settings.obd import create_obd_admin_routes
 
     settings_store = MagicMock()
@@ -37,17 +36,13 @@ def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicM
         speed_source="gps",
         stale_timeout_s=8.0,
     )
-    # Spec'd to the admin seam: a route reaching for anything outside it (for
-    # example ObdService.mark_connected) fails with AttributeError.
-    obd_admin_service = MagicMock(spec=ObdAdminServiceProtocol)
+    obd_admin_service = MagicMock(spec=ObdService)
     app = FastAPI()
     app.include_router(
         create_obd_admin_routes(
-            ObdAdminRouteDeps(
-                speed_source_service=speed_source_service,
-                speed_status_service=speed_status_service,
-                obd_admin_service=obd_admin_service,
-            ),
+            speed_source_service=speed_source_service,
+            speed_status_service=speed_status_service,
+            obd_admin_service=obd_admin_service,
         )
     )
     return (

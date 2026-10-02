@@ -6,10 +6,11 @@ import logging
 from pathlib import Path
 
 import pytest
-from test_support.settings_services import build_settings_services, write_raw_settings_snapshot
+from test_support.settings_services import write_raw_settings_snapshot
 
 from vibesensor.common.exceptions import PersistenceError
 from vibesensor.history.history_db import HistoryDB
+from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
 
 

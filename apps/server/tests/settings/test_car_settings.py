@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from test_support.settings_services import build_settings_services
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
+from vibesensor.settings.services import build_settings_services
 
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
 

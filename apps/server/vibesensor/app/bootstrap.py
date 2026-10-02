@@ -1,6 +1,6 @@
 """FastAPI application factory and CLI entry point.
 
-Service construction lives in ``container.py``. This module creates the
+Service construction lives in ``composition.py``. This module creates the
 FastAPI app, wires the lifespan, and serves static assets.
 """
 
@@ -21,8 +21,8 @@ from granian import Granian
 from granian.constants import Interfaces, Loops
 from granian.log import LogLevels
 
+from vibesensor.app.composition import build_runtime
 from vibesensor.app.config_loader import load_config
-from vibesensor.app.container import build_runtime
 from vibesensor.app.lifecycle import LifecycleManager
 from vibesensor.common.process_settings import (
     CONFIG_PATH_ENV,
@@ -94,7 +94,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     install_http_exception_handlers(app)
     install_local_mutation_safety_middleware(app)
     install_request_logging_middleware(app)
-    app.include_router(create_router(runtime.router))
+    app.include_router(create_router(runtime.web))
     if bootstrap_settings.serve_static:
         static_dir = _PACKAGE_DIR / "static"
         if not (static_dir / "index.html").exists():

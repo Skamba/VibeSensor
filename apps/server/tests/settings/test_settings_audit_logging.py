@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 
 import pytest
-from test_support.settings_services import build_settings_services
+
+from vibesensor.settings.services import build_settings_services
 
 
 def test_set_language_logs_audit_record(caplog: pytest.LogCaptureFixture) -> None:

@@ -32,14 +32,6 @@ from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateJobStatus, UsbInternetStatus
-from vibesensor.web.dependencies import (
-    HealthDeps,
-    HistoryDeps,
-    LiveDeps,
-    RouterDeps,
-    SettingsDeps,
-    UpdateDeps,
-)
 from vibesensor.web.health_state import RuntimeHealthState
 from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
@@ -223,8 +215,8 @@ def _speed_source_service_mock() -> MagicMock:
 class FakeState:
     """Minimal stand-in for router assembly tests.
 
-    Keeps the convenient flat fields used throughout tests while exposing the
-    grouped dependency attributes consumed by ``create_router``.
+    Its attribute names match ``vibesensor.web.router.WebServices`` so it can be
+    passed straight to ``create_router``.
     """
 
     config: object = field(default_factory=MagicMock)
@@ -288,62 +280,12 @@ class FakeState:
             )
 
     @property
-    def health(self) -> HealthDeps:
-        return HealthDeps(
-            processing_loop_state=self.processing_loop_state,
-            health_state=self.health_state,
-            processor=self.processor,
-            registry=self.registry,
-            run_recorder=self.run_recorder,
-            ingest_diagnostics=self.ingest_diagnostics,
-        )
+    def speed_status_service(self) -> GPSSpeedMonitor:
+        return self.gps_monitor
 
     @property
-    def live(self) -> LiveDeps:
-        return LiveDeps(
-            registry=self.registry,
-            control_plane=self.control_plane,
-            sensor_metadata_store=self.sensor_metadata_store,
-            processor=self.processor,
-            run_recorder=self.run_recorder,
-            ws_broadcaster=self.ws_broadcaster,
-        )
-
-    @property
-    def settings(self) -> SettingsDeps:
-        return SettingsDeps(
-            car_settings=self.car_settings,
-            analysis_settings=self.analysis_settings,
-            ui_preferences=self.ui_preferences,
-            speed_source_service=self.speed_source_service,
-            speed_status_service=self.gps_monitor,
-            obd_admin_service=self.gps_monitor,
-        )
-
-    @property
-    def history(self) -> HistoryDeps:
-        return HistoryDeps(
-            run_service=self.run_service,
-            report_service=self.report_service,
-            export_service=self.export_service,
-        )
-
-    @property
-    def updates(self) -> UpdateDeps:
-        return UpdateDeps(
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
-        )
-
-    @property
-    def router(self) -> RouterDeps:
-        return RouterDeps(
-            health=self.health,
-            settings=self.settings,
-            live=self.live,
-            history=self.history,
-            updates=self.updates,
-        )
+    def obd_admin_service(self) -> GPSSpeedMonitor:
+        return self.gps_monitor
 
 
 @pytest.fixture

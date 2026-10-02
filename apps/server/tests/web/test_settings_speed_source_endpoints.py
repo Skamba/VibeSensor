@@ -33,16 +33,13 @@ def _make_speed_source_status_snapshot() -> SpeedSourceStatusSnapshot:
 
 @pytest.fixture
 def _speed_source_client(fake_state):
-    from vibesensor.web.settings.dependencies import SpeedSourceRouteDeps
     from vibesensor.web.settings.speed_source import create_speed_source_routes
 
     app = FastAPI()
     app.include_router(
         create_speed_source_routes(
-            SpeedSourceRouteDeps(
-                speed_source_service=fake_state.speed_source_service,
-                speed_status_service=fake_state.gps_monitor,
-            ),
+            speed_source_service=fake_state.speed_source_service,
+            speed_status_service=fake_state.gps_monitor,
         )
     )
     with TestClient(app) as client:

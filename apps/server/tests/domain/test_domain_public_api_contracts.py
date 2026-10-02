@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from test_support.settings_services import build_settings_services
 
 from vibesensor.domain.car import Car
 from vibesensor.domain.driving_segment import DrivingPhase
@@ -14,6 +13,7 @@ from vibesensor.domain.run_status import RunStatus, transition_run
 from vibesensor.domain.run_suitability import SuitabilityCheck
 from vibesensor.domain.sensor import Sensor, SensorPlacement
 from vibesensor.domain.speed_source import SpeedSource
+from vibesensor.settings.services import build_settings_services
 
 
 def test_public_domain_imports_support_run_ready_configuration() -> None:

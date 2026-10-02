@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from test_support.settings_services import build_settings_services
 
+from vibesensor.settings.services import build_settings_services
 from vibesensor.speed.speed_source_config import _parse_manual_speed
 
 _MANUAL_80 = {"speedSource": "manual", "manualSpeedKph": 80}

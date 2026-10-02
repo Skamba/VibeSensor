@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -16,15 +17,22 @@ from vibesensor.web.models.settings import (
     SpeedSourceResponse,
     SpeedSourceStatusResponse,
 )
-from vibesensor.web.settings.dependencies import SpeedSourceRouteDeps
 from vibesensor.web.settings.presentation import speed_source_status_response
+
+if TYPE_CHECKING:
+    from vibesensor.settings.speed_source_runtime import SpeedSourceSettingsService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
+
 
 _UPDATE_SPEED_SOURCE_RESPONSES: OpenAPIResponses = {
     400: {"description": "The requested speed-source configuration is invalid."},
 }
 
 
-def create_speed_source_routes(deps: SpeedSourceRouteDeps) -> APIRouter:
+def create_speed_source_routes(
+    speed_source_service: SpeedSourceSettingsService,
+    speed_status_service: SpeedSourceObservationService,
+) -> APIRouter:
     """Create routes for persisted speed-source settings and status."""
 
     router = APIRouter(tags=["settings"])
@@ -34,7 +42,7 @@ def create_speed_source_routes(deps: SpeedSourceRouteDeps) -> APIRouter:
         """Return the persisted speed-source configuration used for order tracking."""
 
         return SpeedSourceResponse.model_validate(
-            speed_source_response_payload(deps.speed_source_service.get_speed_source())
+            speed_source_response_payload(speed_source_service.get_speed_source())
         )
 
     @router.put(
@@ -48,7 +56,7 @@ def create_speed_source_routes(deps: SpeedSourceRouteDeps) -> APIRouter:
         payload = speed_source_update_payload_from_mapping(req.model_dump(exclude_none=True))
         try:
             result = await asyncio.to_thread(
-                deps.speed_source_service.update_speed_source,
+                speed_source_service.update_speed_source,
                 payload,
             )
         except ValueError as exc:
@@ -59,7 +67,7 @@ def create_speed_source_routes(deps: SpeedSourceRouteDeps) -> APIRouter:
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
         """Return the live selected-speed-source connection state and effective speed status."""
 
-        return speed_source_status_response(deps.speed_status_service.status_snapshot())
+        return speed_source_status_response(speed_status_service.status_snapshot())
 
     return router
 

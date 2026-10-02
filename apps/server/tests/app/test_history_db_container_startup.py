@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from vibesensor.app.composition import history as history_composition
+from vibesensor.app import composition as history_composition
 
 
 class _RecordingHistoryDB:

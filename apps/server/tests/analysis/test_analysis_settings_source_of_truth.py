@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 from test_support.routes import iter_api_routes
-from test_support.settings_services import build_settings_services
 
 from tests.conftest import FakeState
+from vibesensor.settings.services import build_settings_services
 from vibesensor.web.models.settings import (
     ActiveCarRequest,
     AnalysisSettingsRequest,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -20,19 +21,28 @@ from vibesensor.web.models.settings import (
     ObdScanResponse,
     ObdStatusResponse,
 )
-from vibesensor.web.settings.dependencies import ObdAdminRouteDeps
 from vibesensor.web.settings.presentation import (
     obd_pair_response,
     obd_scan_response,
     obd_status_response,
 )
 
+if TYPE_CHECKING:
+    from vibesensor.settings.speed_source_runtime import SpeedSourceSettingsService
+    from vibesensor.speed.obd.service import ObdService
+    from vibesensor.speed.source_coordinator import SpeedSourceObservationService
+
+
 _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
     503: {"description": "Bluetooth OBD helper unavailable or the requested action failed."},
 }
 
 
-def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
+def create_obd_admin_routes(
+    speed_source_service: SpeedSourceSettingsService,
+    speed_status_service: SpeedSourceObservationService,
+    obd_admin_service: ObdService,
+) -> APIRouter:
     """Create routes for Bluetooth OBD scanning, pairing, and status."""
 
     router = APIRouter(tags=["settings"])
@@ -46,7 +56,7 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
         """Scan nearby Bluetooth OBD adapters using the privileged helper."""
 
         with route_errors_to_http():
-            devices = await asyncio.to_thread(deps.obd_admin_service.scan_obd_devices)
+            devices = await asyncio.to_thread(obd_admin_service.scan_obd_devices)
         return obd_scan_response(devices)
 
     @router.post(
@@ -60,12 +70,12 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
         normalized_mac = normalize_mac_or_400(req.mac_address)
         with route_errors_to_http():
             device = await asyncio.to_thread(
-                deps.obd_admin_service.pair_obd_device,
+                obd_admin_service.pair_obd_device,
                 normalized_mac,
             )
         try:
             persisted = await asyncio.to_thread(
-                deps.speed_source_service.update_speed_source,
+                speed_source_service.update_speed_source,
                 {
                     "obdDeviceMac": device.mac_address,
                     "obdDeviceName": device.name,
@@ -88,8 +98,8 @@ def create_obd_admin_routes(deps: ObdAdminRouteDeps) -> APIRouter:
         """Return detailed Bluetooth OBD runtime/admin status for diagnostics."""
 
         with route_errors_to_http():
-            await asyncio.to_thread(deps.obd_admin_service.refresh_obd_status)
-            snapshot = await asyncio.to_thread(deps.speed_status_service.obd_status)
+            await asyncio.to_thread(obd_admin_service.refresh_obd_status)
+            snapshot = await asyncio.to_thread(speed_status_service.obd_status)
         return obd_status_response(snapshot)
 
     return router

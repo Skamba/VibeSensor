@@ -131,9 +131,8 @@ def test_sanitize_converts_to_float() -> None:
 
 
 def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)
@@ -144,9 +143,8 @@ def test_snapshot_returns_copy_of_defaults(tmp_path) -> None:
 
 
 def test_update_merges_valid_values(tmp_path) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)
@@ -159,9 +157,8 @@ def test_update_merges_valid_values(tmp_path) -> None:
 
 
 def test_update_rejects_invalid_and_keeps_old(tmp_path) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "test.db")
     services = build_settings_services(db=db)

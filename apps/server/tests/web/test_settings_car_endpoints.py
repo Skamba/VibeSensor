@@ -34,15 +34,10 @@ def _make_cars_snapshot(
 @pytest.fixture
 def _car_client(fake_state):
     from vibesensor.web.settings.cars import create_car_settings_routes
-    from vibesensor.web.settings.dependencies import CarSettingsRouteDeps
 
     fake_state.settings_store.get_cars.return_value = _make_cars_snapshot()
     app = FastAPI()
-    app.include_router(
-        create_car_settings_routes(
-            CarSettingsRouteDeps(car_settings=fake_state.settings_store),
-        )
-    )
+    app.include_router(create_car_settings_routes(car_settings=fake_state.settings_store))
     with TestClient(app) as client:
         yield client, fake_state
 

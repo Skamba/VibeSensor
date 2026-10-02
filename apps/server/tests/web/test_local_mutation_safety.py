@@ -93,7 +93,7 @@ def test_local_mutation_safety_allows_cross_origin_read_only_requests() -> None:
 
 
 def test_all_mutating_http_routes_are_classified_by_method(fake_state) -> None:
-    router = create_router(fake_state.router)
+    router = create_router(fake_state)
     unsafe_routes = {
         (
             next(method for method in sorted(route.methods) if method in _UNSAFE_METHODS),

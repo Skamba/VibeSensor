@@ -13,7 +13,7 @@ from vibesensor.common.operational_errors import ServiceUnavailableError
 from vibesensor.common.structured_logging import REQUEST_ID_HEADER, log_extra
 from vibesensor.web.error_boundary import install_http_exception_handlers
 from vibesensor.web.middleware import install_request_logging_middleware
-from vibesensor.web.settings import create_settings_routes
+from vibesensor.web.settings.preferences import create_ui_preferences_routes
 
 
 def _log_record(caplog: pytest.LogCaptureFixture, message: str):
@@ -67,16 +67,7 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
 def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixture) -> None:
     app = FastAPI()
     install_request_logging_middleware(app)
-    app.include_router(
-        create_settings_routes(
-            MagicMock(),
-            MagicMock(),
-            _audited_ui_preferences(),
-            MagicMock(),
-            MagicMock(),
-            MagicMock(),
-        )
-    )
+    app.include_router(create_ui_preferences_routes(_audited_ui_preferences()))
 
     with caplog.at_level(logging.INFO):
         with TestClient(app) as client:

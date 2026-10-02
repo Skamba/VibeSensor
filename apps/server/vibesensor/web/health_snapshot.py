@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
@@ -12,6 +12,11 @@ from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
 from vibesensor.web.health_state import RuntimeHealthState
+
+if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processor import SignalProcessor
+    from vibesensor.recording.recorder import RunRecorder
 
 __all__ = ["HealthSnapshotData", "build_system_health_snapshot"]
 
@@ -100,47 +105,12 @@ class HealthSnapshotData(TypedDict):
     db_max_write_duration_s: float | None
 
 
-class IntakeStatsProvider(Protocol):
-    """Collaborator that exposes runtime intake statistics."""
-
-    def intake_stats(self) -> IntakeStatsPayload: ...
-
-    def buffer_overflow_drops(self) -> int: ...
-
-
-class DataLossSnapshotProvider(Protocol):
-    """Collaborator that exposes data-loss counters."""
-
-    def data_loss_snapshot(self) -> dict[str, int]: ...
-
-    def active_client_ids(
-        self,
-        now: float | None = None,
-        *,
-        now_mono: float | None = None,
-    ) -> list[str]: ...
-
-    def get(self, client_id: str) -> object | None: ...
-
-
-class RecorderHealthProvider(Protocol):
-    """Collaborator that exposes recorder health data and timing stats."""
-
-    @property
-    def last_write_duration_s(self) -> float | None: ...
-
-    @property
-    def max_write_duration_s(self) -> float | None: ...
-
-    def health_snapshot(self) -> RunRecorderHealthSnapshot: ...
-
-
 def build_system_health_snapshot(
     loop_state: ProcessingLoopState,
     health_state: RuntimeHealthState,
-    processor: IntakeStatsProvider,
-    registry: DataLossSnapshotProvider,
-    run_recorder: RecorderHealthProvider,
+    processor: SignalProcessor,
+    registry: ClientRegistry,
+    run_recorder: RunRecorder,
     ingest_diagnostics: IngestDiagnosticsCollector,
 ) -> HealthSnapshotData:
     """Build the app-level health snapshot from runtime collaborators."""

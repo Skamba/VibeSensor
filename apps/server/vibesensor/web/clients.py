@@ -16,11 +16,6 @@ from vibesensor.web._helpers import (
     OpenAPIResponses,
     normalize_client_id_or_400,
 )
-from vibesensor.web.dependencies import (
-    ClientControlPlaneProtocol,
-    ClientProcessorProtocol,
-    ClientRegistryProtocol,
-)
 from vibesensor.web.error_boundary import http_exception_for_value_error
 from vibesensor.web.models.clients import (
     ClientLocationsResponse,
@@ -34,6 +29,9 @@ from vibesensor.web.models.clients import (
 )
 
 if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.ingest.udp_control_tx import UDPControlPlane
+    from vibesensor.live.processor import SignalProcessor
     from vibesensor.settings.sensor_settings import SensorSettingsService
 
 _IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {
@@ -55,10 +53,10 @@ _REMOVE_CLIENT_RESPONSES: OpenAPIResponses = {
 
 
 def create_client_routes(
-    registry: ClientRegistryProtocol,
-    control_plane: ClientControlPlaneProtocol,
+    registry: ClientRegistry,
+    control_plane: UDPControlPlane,
     sensor_settings_store: SensorSettingsService,
-    processor: ClientProcessorProtocol,
+    processor: SignalProcessor,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
     router = APIRouter(tags=["clients"])

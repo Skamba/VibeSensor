@@ -231,11 +231,10 @@ def test_set_client_location_persists_canonical_name_and_location() -> None:
 def test_set_client_location_works_with_real_persistence_in_async_route(
     tmp_path: Path,
 ) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.protocol import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -310,11 +309,10 @@ def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) ->
 
 
 def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.protocol import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "history.db")
     try:
@@ -412,11 +410,10 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from test_support.settings_services import build_settings_services
-
     from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.protocol import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.settings.services import build_settings_services
 
     db = HistoryDB(tmp_path / "history.db")
     try:

@@ -5,11 +5,11 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-from test_support.settings_services import PersistedSettingsServices, build_settings_services
 
 from vibesensor.analysis._counters import counter_delta
 from vibesensor.common.exceptions import PersistenceError
 from vibesensor.domain.sensor import normalize_sensor_id
+from vibesensor.settings.services import SettingsServices, build_settings_services
 
 # ---------------------------------------------------------------------------
 # counter_delta shared helper
@@ -52,13 +52,13 @@ class TestSettingsStoreRollbackDbFailure:
     """Verify all mutating methods roll back in-memory state on PersistenceError."""
 
     @pytest.fixture
-    def store(self) -> PersistedSettingsServices:
+    def store(self) -> SettingsServices:
         services = build_settings_services()
         cars = services.car_settings.add_car({"name": "Test Car", "type": "sedan"})
         services.car_settings.set_active_car(cars.cars[0]["id"])
         return services
 
-    def test_update_active_car_aspects_rollback(self, store: PersistedSettingsServices) -> None:
+    def test_update_active_car_aspects_rollback(self, store: SettingsServices) -> None:
         cars = store.car_settings.get_cars()
         original_aspects = dict(cars.cars[0].get("aspects", {}))
         store.coordinator._db = MagicMock()
@@ -71,7 +71,7 @@ class TestSettingsStoreRollbackDbFailure:
         current = store.car_settings.get_cars()
         assert current.cars[0].get("aspects", {}) == original_aspects
 
-    def test_update_speed_source_rollback(self, store: PersistedSettingsServices) -> None:
+    def test_update_speed_source_rollback(self, store: SettingsServices) -> None:
         original = store.speed_source_settings.get_speed_source()
         store.coordinator._db = MagicMock()
         store.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
@@ -82,7 +82,7 @@ class TestSettingsStoreRollbackDbFailure:
         # Speed source should be rolled back
         assert store.speed_source_settings.get_speed_source() == original
 
-    def test_set_language_rollback(self, store: PersistedSettingsServices) -> None:
+    def test_set_language_rollback(self, store: SettingsServices) -> None:
         original = store.ui_preferences.language
         store.coordinator._db = MagicMock()
         store.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
@@ -93,7 +93,7 @@ class TestSettingsStoreRollbackDbFailure:
 
         assert store.ui_preferences.language == original
 
-    def test_set_speed_unit_rollback(self, store: PersistedSettingsServices) -> None:
+    def test_set_speed_unit_rollback(self, store: SettingsServices) -> None:
         original = store.ui_preferences.speed_unit
         store.coordinator._db = MagicMock()
         store.coordinator._db.set_settings_snapshot.side_effect = OSError("disk full")
@@ -106,7 +106,7 @@ class TestSettingsStoreRollbackDbFailure:
 
     def test_assign_sensor_location_rollback_new_sensor(
         self,
-        store: PersistedSettingsServices,
+        store: SettingsServices,
     ) -> None:
         mac = "AA:BB:CC:DD:EE:FF"
         store.coordinator._db = MagicMock()
@@ -122,7 +122,7 @@ class TestSettingsStoreRollbackDbFailure:
 
     def test_assign_sensor_location_rollback_existing_sensor(
         self,
-        store: PersistedSettingsServices,
+        store: SettingsServices,
     ) -> None:
         mac = "11:22:33:44:55:66"
         store.sensor_settings.assign_sensor_location(mac, "rear_left_wheel")

@@ -5,9 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from test_support.settings_services import build_settings_services, write_raw_settings_snapshot
+from test_support.settings_services import write_raw_settings_snapshot
 
 from vibesensor.history.history_db import HistoryDB
+from vibesensor.settings.services import build_settings_services
 
 
 def test_ui_preferences_language_roundtrip() -> None:

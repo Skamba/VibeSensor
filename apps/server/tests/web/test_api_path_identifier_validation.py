@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 
 from vibesensor.cli.http_api_schema_export import export_schema
 from vibesensor.settings.car_config import CarsSnapshot
-from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:
@@ -38,10 +37,9 @@ def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]
 
 
 def _settings_test_client() -> tuple[TestClient, MagicMock]:
-    from vibesensor.web.settings import create_settings_routes
+    from vibesensor.web.settings.cars import create_car_settings_routes
 
     settings_store = MagicMock()
-    speed_source_service = MagicMock()
     settings_store.get_cars.return_value = CarsSnapshot(
         cars=[
             {
@@ -53,38 +51,9 @@ def _settings_test_client() -> tuple[TestClient, MagicMock]:
         ],
         active_car_id="car-1",
     )
-    speed_status_service = MagicMock()
-    speed_status_service.status_snapshot.return_value = SpeedSourceStatusSnapshot(
-        gps_enabled=True,
-        connection_state="connected",
-        device="/dev/ttyUSB0",
-        fix_mode=3,
-        fix_dimension="3d",
-        speed_confidence="high",
-        epx_m=1.0,
-        epy_m=1.0,
-        epv_m=1.0,
-        last_update_age_s=0.5,
-        raw_speed_kmh=48.0,
-        effective_speed_kmh=48.0,
-        last_error=None,
-        reconnect_delay_s=None,
-        fallback_active=False,
-        speed_source="gps",
-        stale_timeout_s=8.0,
-    )
 
     app = FastAPI()
-    app.include_router(
-        create_settings_routes(
-            settings_store,
-            settings_store,
-            settings_store,
-            speed_source_service,
-            speed_status_service,
-            MagicMock(),
-        )
-    )
+    app.include_router(create_car_settings_routes(settings_store))
     return TestClient(app), settings_store
 
 

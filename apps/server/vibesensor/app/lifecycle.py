@@ -8,8 +8,6 @@ Owns:
 - Graceful shutdown sequencing (ingress stop → task cancellation →
   managed-job cancellation → metrics/analysis drain → resource cleanup)
 
-The protocols below describe collaborators implemented in outer layers
-(adapters / use cases) that infra may not import directly.
 """
 
 from __future__ import annotations
@@ -21,7 +19,7 @@ import sqlite3
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 import anyio
 
@@ -32,13 +30,22 @@ from vibesensor.app.background_tasks import (
     task_failure_message,
 )
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
 from vibesensor.web.health_state import RuntimeHealthState
 
 if TYPE_CHECKING:
+    from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.ingest.udp_control_tx import UDPControlPlane
+    from vibesensor.live.broadcaster import LiveBroadcaster
     from vibesensor.live.processing_loop import ProcessingLoop
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.recording.recorder import RunRecorder
+    from vibesensor.speed.gps_speed import GPSSpeedMonitor
+    from vibesensor.speed.obd.service import ObdService
+    from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+    from vibesensor.updates.manager import UpdateManager
 
 __all__ = [
     "LifecycleManager",
@@ -48,79 +55,15 @@ __all__ = [
 ]
 
 
-class LifecycleControlPlane(Protocol):
-    async def start(self) -> None: ...
-
-    def close(self) -> None: ...
-
-
-class LifecycleWsBroadcaster(Protocol):
-    async def run(self) -> None: ...
-
-
-class LifecycleShutdownReport(Protocol):
-    @property
-    def completed(self) -> bool: ...
-
-    @property
-    def analysis_queue_depth(self) -> int: ...
-
-    @property
-    def analysis_active_run_id(self) -> str | None: ...
-
-    @property
-    def analysis_queue_oldest_age_s(self) -> float | None: ...
-
-    @property
-    def active_run_id_before_stop(self) -> str | None: ...
-
-    @property
-    def write_error(self) -> str | None: ...
-
-
-class LifecycleRunRecorder(Protocol):
-    @property
-    def raw_capture(self) -> object: ...
-
-    async def run(self) -> object: ...
-
-    def shutdown_report(self, timeout_s: float = ...) -> LifecycleShutdownReport: ...
-
-
-class LifecycleGpsMonitor(Protocol):
-    async def run(self) -> object: ...
-
-
-class LifecycleObdRunner(Protocol):
-    async def run(self) -> object: ...
-
-
-class LifecycleManagedJobs(Protocol):
-    @property
-    def job_task(self) -> asyncio.Task[None] | None: ...
-
-
-class LifecycleUpdateManager(LifecycleManagedJobs, Protocol):
-    async def startup_recover(self) -> object: ...
-
-
-class LifecycleHistoryDb(Protocol):
-    def close(self) -> None: ...
-
-
-class UdpQueueConsumer(Protocol):
-    async def process_queue(self) -> None: ...
-
-
 StartUdpReceiver = Callable[
     ...,
-    Awaitable[tuple[asyncio.DatagramTransport | None, UdpQueueConsumer | None]],
+    Awaitable[tuple[asyncio.DatagramTransport | None, DataDatagramProtocol | None]],
 ]
 
 
 @dataclass(slots=True)
 class LifecycleRuntime:
-    """Lifecycle-owned dependency bundle consumed by LifecycleManager."""
+    """The runtime services ``LifecycleManager`` starts and stops (built by ``app.composition``)."""
 
     health_state: RuntimeHealthState
     history_db_path: str | Path | None
@@ -129,15 +72,15 @@ class LifecycleRuntime:
     registry: ClientRegistry
     processor: SignalProcessor
     ingest_diagnostics: IngestDiagnosticsCollector
-    control_plane: LifecycleControlPlane
+    control_plane: UDPControlPlane
     processing_loop: ProcessingLoop
-    ws_broadcaster: LifecycleWsBroadcaster
-    run_recorder: LifecycleRunRecorder
-    gps_monitor: LifecycleGpsMonitor
-    obd_runner: LifecycleObdRunner
-    update_manager: LifecycleUpdateManager
-    esp_flash_manager: LifecycleManagedJobs
-    history_db: LifecycleHistoryDb
+    ws_broadcaster: LiveBroadcaster
+    run_recorder: RunRecorder
+    gps_monitor: GPSSpeedMonitor
+    obd_runner: ObdService
+    update_manager: UpdateManager
+    esp_flash_manager: EspFlashManager
+    history_db: HistoryDB
     shutdown_analysis_timeout_s: float = 30.0
     """How long shutdown waits for queued post-analysis before giving up."""
 
@@ -149,7 +92,7 @@ _MANAGED_JOB_CANCEL_TIMEOUT_S = 10.0
 
 
 async def cancel_managed_jobs(
-    sources: Sequence[LifecycleManagedJobs],
+    sources: Sequence[UpdateManager | EspFlashManager],
     *,
     timeout_s: float,
 ) -> list[asyncio.Task[None]]:

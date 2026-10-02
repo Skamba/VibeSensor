@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from fastapi import APIRouter, HTTPException
 
@@ -14,7 +14,9 @@ from vibesensor.web._helpers import (
 )
 from vibesensor.web.error_boundary import http_exception_for_value_error
 from vibesensor.web.models.settings import ActiveCarRequest
-from vibesensor.web.settings.dependencies import CarSettingsRouteDeps
+
+if TYPE_CHECKING:
+    from vibesensor.settings.car_settings import CarSettingsService
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid car identifier."},
@@ -32,7 +34,7 @@ _DELETE_CAR_RESPONSES: OpenAPIResponses = {
 }
 
 
-def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
+def create_car_settings_routes(car_settings: CarSettingsService) -> APIRouter:
     """Create routes for car-profile settings."""
 
     router = APIRouter(tags=["settings"])
@@ -41,13 +43,13 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
     async def get_cars() -> CarsSnapshot:
         """List all saved car profiles together with the currently active car ID."""
 
-        return deps.car_settings.get_cars()
+        return car_settings.get_cars()
 
     @router.post("/api/settings/cars", response_model=CarsSnapshot)
     async def add_car(req: CarConfigUpdatePayload) -> CarsSnapshot:
         """Create a new car profile from the provided partial settings payload."""
 
-        return await asyncio.to_thread(deps.car_settings.add_car, _provided_fields(req))
+        return await asyncio.to_thread(car_settings.add_car, _provided_fields(req))
 
     @router.put(
         "/api/settings/cars/active",
@@ -59,7 +61,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
 
         car_id = normalize_car_id_or_400(req.car_id)
         try:
-            return await asyncio.to_thread(deps.car_settings.set_active_car, car_id)
+            return await asyncio.to_thread(car_settings.set_active_car, car_id)
         except ValueError as exc:
             raise http_exception_for_value_error(exc, status_code=404) from exc
 
@@ -74,7 +76,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
         normalized_car_id = normalize_car_id_or_400(car_id)
         try:
             return await asyncio.to_thread(
-                deps.car_settings.update_car,
+                car_settings.update_car,
                 normalized_car_id,
                 _provided_fields(req),
             )
@@ -90,7 +92,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
         """Delete a saved car profile when that removal keeps settings state valid."""
 
         normalized_car_id = normalize_car_id_or_400(car_id)
-        cars_snapshot = await asyncio.to_thread(deps.car_settings.get_cars)
+        cars_snapshot = await asyncio.to_thread(car_settings.get_cars)
         if not any(car["id"] == normalized_car_id for car in cars_snapshot.cars):
             raise HTTPException(
                 status_code=404,
@@ -98,7 +100,7 @@ def create_car_settings_routes(deps: CarSettingsRouteDeps) -> APIRouter:
             )
         try:
             return await asyncio.to_thread(
-                deps.car_settings.delete_car,
+                car_settings.delete_car,
                 normalized_car_id,
             )
         except ValueError as exc:

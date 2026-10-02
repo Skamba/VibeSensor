@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from test_support.settings_services import build_settings_services
-
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 

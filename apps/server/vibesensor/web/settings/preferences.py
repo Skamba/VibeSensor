@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -15,7 +16,9 @@ from vibesensor.web.models.settings import (
     SpeedUnitRequest,
     SpeedUnitResponse,
 )
-from vibesensor.web.settings.dependencies import UiPreferencesRouteDeps
+
+if TYPE_CHECKING:
+    from vibesensor.settings.ui_preferences import UiPreferencesService
 
 _SET_LANGUAGE_RESPONSES: OpenAPIResponses = {
     400: {"description": "Unsupported language code."},
@@ -26,7 +29,7 @@ _SET_SPEED_UNIT_RESPONSES: OpenAPIResponses = {
 }
 
 
-def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
+def create_ui_preferences_routes(ui_preferences: UiPreferencesService) -> APIRouter:
     """Create routes for UI language and speed-unit preferences."""
 
     router = APIRouter(tags=["settings"])
@@ -35,9 +38,7 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
     async def get_language() -> LanguageResponse:
         """Return the currently selected dashboard language code."""
 
-        return LanguageResponse.model_validate(
-            language_response_payload(deps.ui_preferences.language)
-        )
+        return LanguageResponse.model_validate(language_response_payload(ui_preferences.language))
 
     @router.put(
         "/api/settings/language",
@@ -49,7 +50,7 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
 
         try:
             language = await asyncio.to_thread(
-                deps.ui_preferences.set_language,
+                ui_preferences.set_language,
                 req.language,
             )
         except ValueError as exc:
@@ -61,7 +62,7 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
         """Return the speed unit currently used for UI display and input."""
 
         return SpeedUnitResponse.model_validate(
-            speed_unit_response_payload(deps.ui_preferences.speed_unit)
+            speed_unit_response_payload(ui_preferences.speed_unit)
         )
 
     @router.put(
@@ -74,7 +75,7 @@ def create_ui_preferences_routes(deps: UiPreferencesRouteDeps) -> APIRouter:
 
         try:
             unit = await asyncio.to_thread(
-                deps.ui_preferences.set_speed_unit,
+                ui_preferences.set_speed_unit,
                 req.speed_unit,
             )
         except ValueError as exc:

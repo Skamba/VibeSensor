@@ -16,15 +16,10 @@ def _make_default_snapshot() -> AnalysisSettingsSnapshot:
 @pytest.fixture
 def _analysis_client(fake_state):
     from vibesensor.web.settings.analysis import create_analysis_settings_routes
-    from vibesensor.web.settings.dependencies import AnalysisSettingsRouteDeps
 
     fake_state.settings_store.analysis_settings_snapshot.return_value = _make_default_snapshot()
     app = FastAPI()
-    app.include_router(
-        create_analysis_settings_routes(
-            AnalysisSettingsRouteDeps(analysis_settings=fake_state.settings_store),
-        )
-    )
+    app.include_router(create_analysis_settings_routes(analysis_settings=fake_state.settings_store))
     with TestClient(app) as client:
         yield client, fake_state
 

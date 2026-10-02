@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
@@ -17,14 +18,18 @@ from vibesensor.web.models.settings import (
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
 )
-from vibesensor.web.settings.dependencies import AnalysisSettingsRouteDeps
+
+if TYPE_CHECKING:
+    from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
 
 _SET_ANALYSIS_SETTINGS_RESPONSES: OpenAPIResponses = {
     400: {"description": "Analysis settings are invalid or no active car is configured."},
 }
 
 
-def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRouter:
+def create_analysis_settings_routes(
+    analysis_settings: ActiveCarAnalysisSettingsService,
+) -> APIRouter:
     """Create routes for active-car analysis settings."""
 
     router = APIRouter(tags=["settings"])
@@ -33,7 +38,7 @@ def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRoute
     async def get_analysis_settings() -> AnalysisSettingsResponse:
         """Return the validated analysis settings derived from the active car profile."""
 
-        return _analysis_settings_response(deps.analysis_settings.analysis_settings_snapshot())
+        return _analysis_settings_response(analysis_settings.analysis_settings_snapshot())
 
     @router.put(
         "/api/settings/analysis",
@@ -49,12 +54,12 @@ def create_analysis_settings_routes(deps: AnalysisSettingsRouteDeps) -> APIRoute
         if changes:
             try:
                 await asyncio.to_thread(
-                    deps.analysis_settings.update_active_car_aspects,
+                    analysis_settings.update_active_car_aspects,
                     changes,
                 )
             except ValueError as exc:
                 raise http_exception_for_value_error(exc, status_code=400) from exc
-        return _analysis_settings_response(deps.analysis_settings.analysis_settings_snapshot())
+        return _analysis_settings_response(analysis_settings.analysis_settings_snapshot())
 
     return router
 
