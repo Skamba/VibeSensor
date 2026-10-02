@@ -3,7 +3,8 @@
 Usage:
     python -m vibesensor.cli.ws_schema_export [--out PATH]
 
-Default output: apps/ui/src/contracts/ws_payload_schema.json
+Prints to stdout unless ``--out`` is given. ``make sync-contracts`` feeds this to the
+UI TypeScript codegen; the schema itself is not committed.
 """
 
 from __future__ import annotations
@@ -12,15 +13,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-
-_DEFAULT_OUT = (
-    Path(__file__).resolve().parents[4]
-    / "apps"
-    / "ui"
-    / "src"
-    / "contracts"
-    / "ws_payload_schema.json"
-)
 
 
 def export_schema(out_path: Path | None = None) -> str:
@@ -38,29 +30,13 @@ def export_schema(out_path: Path | None = None) -> str:
 
 
 def main() -> None:
-    """Entry point for the ``vibesensor-ws-schema-export`` CLI tool."""
+    """CLI entry point, run as ``python -m vibesensor.cli.ws_schema_export``."""
     parser = argparse.ArgumentParser(description="Export WS payload JSON Schema")
-    parser.add_argument("--out", type=Path, default=_DEFAULT_OUT, help="Output file path")
-    parser.add_argument("--check", action="store_true", help="Fail if committed schema differs")
+    parser.add_argument("--out", type=Path, default=None, help="Output file path")
     args = parser.parse_args()
-
-    generated = export_schema()
-    if args.check:
-        if not args.out.exists():
-            print(f"FAIL: {args.out} does not exist. Run without --check first.", file=sys.stderr)
-            raise SystemExit(1)
-        committed = args.out.read_text(encoding="utf-8")
-        if committed != generated:
-            print(
-                f"FAIL: {args.out} is out of date.\n"
-                "Run `make sync-contracts` and commit the results.",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
-        print(f"OK: {args.out} is up to date.")
-    else:
-        export_schema(args.out)
-        print(f"Schema written to {args.out}")
+    text = export_schema(args.out)
+    if args.out is None:
+        sys.stdout.write(text)
 
 
 if __name__ == "__main__":

@@ -125,7 +125,7 @@ def test_ui_smoke_command_and_config_alignment() -> None:
     workers_env_var, workers_default = _smoke_workers_env_contract()
     smoke_specs = _resolved_smoke_specs()
 
-    assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
+    assert "pretest:smoke" not in scripts
     assert smoke_tokens[:3] == ["npx", "playwright", "test"]
     assert "--config=playwright.smoke.config.ts" in smoke_tokens
     assert "--project=laptop-light" in smoke_tokens

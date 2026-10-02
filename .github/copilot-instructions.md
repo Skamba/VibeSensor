@@ -26,7 +26,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Backend layer DAG, enforced by the import-linter contracts in `apps/server/pyproject.toml`: `domain` imports no project layers; `shared` may import `domain`; `use_cases` may import `domain, shared`; `infra` may import `domain, shared`; `adapters` may import `domain, shared, infra, use_cases`; `app` may import all. `shared -> domain` and `infra -> domain` are allowed; inward leakage such as `use_cases -> adapters` is not.
 
 ## Validation router
-- Cleanup: `make clean` removes fast regenerated build/test/generated outputs; `make pristine` removes ignored generated/cache/runtime outputs and then requires `make setup` for native dev.
+- Cleanup: `make clean` removes fast regenerated build/test outputs; `make pristine` removes ignored generated/cache/runtime outputs and then requires `make setup` for native dev.
 - Run `make ci` before pushing (lint, type checks, backend tests, UI unit tests). Use ACT only when GitHub workflow or Docker parity is needed.
 - Docs or instruction-only changes need no local gate.
 - Backend source: `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`; broad synthetic matrices use `make test-diagnostic-matrix`.

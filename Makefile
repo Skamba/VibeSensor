@@ -12,11 +12,6 @@ PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
 BACKEND_BENCHMARK_TARGETS ?= tests/infra/workers/benchmark_compute_all.py tests/use_cases/diagnostics/benchmark_whole_run_spectra.py tests/use_cases/updates/benchmark_update_status_codec.py
-UI_GENERATED_DERIVATIVES := \
-	$(UI_DIR)/src/constants.ts \
-	$(UI_DIR)/src/generated/http_api_contracts.ts \
-	$(UI_DIR)/src/contracts/ws_payload_schema.generated.ts \
-	$(UI_DIR)/src/contracts/ws_payload_types.ts
 CLEAN_PATHS := \
 	$(SERVER_DIR)/build \
 	$(SERVER_DIR)/dist \
@@ -35,8 +30,7 @@ CLEAN_PATHS := \
 	.coverage \
 	htmlcov \
 	infra/pi-image/pi-gen/.cache \
-	tools/dev/.ruff_cache \
-	$(UI_GENERATED_DERIVATIVES)
+	tools/dev/.ruff_cache
 
 # Prefer the repo venv after setup, but still allow bootstrap targets to run
 # against the pinned host interpreter before `.venv` exists.
@@ -89,7 +83,7 @@ shell-lint: ## Run ShellCheck over deployment, hook, and Pi-image shell scripts
 	@$(RESOLVE_PYTHON) \
 	shellcheck --severity=warning -x -s bash $$("$$PYTHON" tools/dev/shellcheck_targets.py)
 
-lint: ## Run Ruff, ShellCheck, dependency/import-layer checks, config preflight, and contract drift checks
+lint: ## Run Ruff, ShellCheck, dependency/import-layer checks, and config preflight
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
@@ -97,8 +91,7 @@ lint: ## Run Ruff, ShellCheck, dependency/import-layer checks, config preflight,
 	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
-	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml && \
-	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts -- --check
+	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml
 
 typecheck-backend: ## Run backend mypy checks
 	@$(RESOLVE_PYTHON) \
@@ -139,9 +132,9 @@ benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/ser
 	BENCHMARK_CLI="$$(dirname "$$PYTHON")/py.test-benchmark"; \
 	cd $(SERVER_DIR) && "$$BENCHMARK_CLI" compare .benchmarks
 
-sync-contracts: ## Regenerate or check the authoritative contract sync pipeline
+sync-contracts: ## Regenerate committed UI contract types/constants and docs/protocol.md from backend sources
 	@$(RESOLVE_PYTHON) \
-	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:contracts $(if $(CHECK),-- --check,)
+	"$$PYTHON" tools/config/sync_contracts.py
 
 coverage: ## Run backend coverage with optional COV_OPTS overrides
 	@$(RESOLVE_PYTHON) \
@@ -155,10 +148,8 @@ smoke: ## Run simulator and websocket smoke checks against a local server
 ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint
 
-ui-typecheck: ## Materialize UI-derived contracts, then run format, lint, and TypeScript checks
-	@$(RESOLVE_PYTHON) \
-	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run sync:generated-contracts && npm run format:check && npm run lint && npm run lint:deps && npm run lint:unused && PYTHON="$$PYTHON" npm run typecheck && npm run typecheck:tests
+ui-typecheck: ## Run UI format, lint, and TypeScript checks
+	cd $(UI_DIR) && npm run format:check && npm run lint && npm run lint:deps && npm run lint:unused && npm run typecheck && npm run typecheck:tests
 
 ui-test: ## Run UI unit tests
-	@$(RESOLVE_PYTHON) \
-	cd $(UI_DIR) && PYTHON="$$PYTHON" npm run test:unit
+	cd $(UI_DIR) && npm run test:unit

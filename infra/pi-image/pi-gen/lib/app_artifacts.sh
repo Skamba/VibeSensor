@@ -1,10 +1,7 @@
 compute_ui_hash() {
   (
     cd "${REPO_ROOT}" || exit
-    git ls-files \
-      apps/ui \
-      tools/config/sync_shared_contracts_to_ui.mjs \
-      tools/config/python_runtime.mjs \
+    git ls-files apps/ui \
       | LC_ALL=C sort \
       | xargs sha256sum \
       | sha256sum \
@@ -50,10 +47,8 @@ build_ui_bundle() {
   fi
 
   if [ "${should_build}" = "1" ]; then
-    echo "Syncing generated UI contracts"
-    (cd "${ui_dir}" && PYTHON="${VS_PYTHON_BIN}" npm run sync:generated-contracts)
     echo "Building UI bundle"
-    (cd "${ui_dir}" && PYTHON="${VS_PYTHON_BIN}" npm run build)
+    (cd "${ui_dir}" && npm run build)
     if [ -z "${current_hash}" ]; then
       current_hash="$(compute_ui_hash || true)"
     fi

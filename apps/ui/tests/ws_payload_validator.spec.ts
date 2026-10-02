@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { wsPayloadSchema } from "../src/contracts/ws_payload_schema.generated";
 import type { LiveWsPayload } from "../src/contracts/ws_payload_types";
 import { validateLiveWsPayload } from "../src/ws_payload_validator";
 
@@ -89,7 +88,6 @@ type RepresentativePayload = ReturnType<typeof makeRepresentativePayload>;
 type RequiredFieldCase = {
   label: string;
   pathPrefix: string;
-  schemaRequired: readonly string[] | undefined;
   field: string;
   getTarget: (payload: RepresentativePayload) => Record<string, unknown>;
 };
@@ -105,14 +103,12 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "live payload",
     pathPrefix: "",
-    schemaRequired: wsPayloadSchema.required,
     field: "schema_version",
     getTarget: (payload) => payload as unknown as Record<string, unknown>,
   },
   {
     label: "client row",
     pathPrefix: "/clients/0",
-    schemaRequired: wsPayloadSchema.$defs.ClientApiRow.required,
     field: "frame_samples",
     getTarget: (payload) =>
       payload.clients[0] as unknown as Record<string, unknown>,
@@ -120,7 +116,6 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "rotational speed value",
     pathPrefix: "/rotational_speeds/wheel",
-    schemaRequired: wsPayloadSchema.$defs.RotationalSpeedValuePayload.required,
     field: "rpm",
     getTarget: (payload) =>
       requireRecord(payload.rotational_speeds?.wheel, "rotational speed value"),
@@ -128,7 +123,6 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "alignment",
     pathPrefix: "/spectra/alignment",
-    schemaRequired: wsPayloadSchema.$defs.AlignmentInfoPayload.required,
     field: "clock_synced",
     getTarget: (payload) =>
       requireRecord(payload.spectra?.alignment, "alignment"),
@@ -136,7 +130,6 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "strength metrics",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics",
-    schemaRequired: wsPayloadSchema.$defs.VibrationStrengthMetrics.required,
     field: "vibration_strength_db",
     getTarget: (payload) =>
       requireRecord(
@@ -147,7 +140,6 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
   {
     label: "strength peak",
     pathPrefix: "/spectra/clients/sensor-1/strength_metrics/top_peaks/0",
-    schemaRequired: wsPayloadSchema.$defs.StrengthPeak.required,
     field: "amp",
     getTarget: (payload) =>
       requireRecord(
@@ -286,8 +278,7 @@ describe("validateLiveWsPayload", () => {
 
   test.each(requiredFieldCases)(
     "rejects representative missing required $field in $label",
-    ({ field, getTarget, pathPrefix, schemaRequired }) => {
-      expect(schemaRequired).toContain(field);
+    ({ field, getTarget, pathPrefix }) => {
       const payload = structuredClone(makeRepresentativePayload());
       delete getTarget(payload)[field];
       expect(() => validateLiveWsPayload(payload)).toThrow(

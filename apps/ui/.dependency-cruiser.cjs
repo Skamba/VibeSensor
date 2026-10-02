@@ -60,13 +60,6 @@ module.exports = {
       },
       to: { path: "^src/contracts/ws_payload_types\\.ts$" },
     },
-    {
-      name: "generated-ws-schema-behind-validator",
-      comment: "Only ws_payload_validator.ts may import the generated WS schema.",
-      severity: "error",
-      from: { pathNot: "^src/ws_payload_validator\\.ts$" },
-      to: { path: "^src/contracts/ws_payload_schema\\.generated\\.ts$" },
-    },
   ],
   options: {
     // Track `import type` edges so the generated-contract rules see type-only imports.

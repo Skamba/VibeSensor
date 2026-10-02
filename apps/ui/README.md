@@ -25,14 +25,13 @@ running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nv
 ```bash
 cd apps/ui
 npm ci
-npm run setup:generated-contracts  # One-time clean-checkout setup for missing UI contract derivatives
 npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run lint:deps    # dependency-cruiser boundary checks over src/
 npm run lint:unused  # knip dead-file/dependency/export checks
 npm run format:check # Biome formatter drift check
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
-npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
+npm run dev:docker   # Docker-oriented wrapper: guarded npm ci + Vite
 npm run build        # Production build to dist/
 npm run analyze      # Production build + bundle analysis report at dist/bundle-analysis.html
 npm run typecheck    # Type check without emitting
@@ -46,8 +45,7 @@ dependencies so the resulting `package-lock.json` change is deliberate.
 
 The source-mounted Docker dev stack calls `npm run dev:docker` inside the UI
 container. It re-runs `npm ci` only when `node_modules` is missing or the
-checked-in `package-lock.json` changes, and it fails fast if the generated UI
-contract files are stale.
+checked-in `package-lock.json` changes.
 
 The Vite dev server proxies `/api`, `/ws`, and `/static` to
 `http://127.0.0.1:8000` by default so you can use HMR without manually swapping
@@ -60,30 +58,21 @@ in one step.
 
 ## Contract sync
 
-Use `make sync-contracts` from the repo root as the authoritative contract sync entrypoint. If your backend dev environment is already bootstrapped, `npm run sync:contracts` in `apps/ui/` is a thin alias to the same full pipeline.
+The UI's backend contracts are generated TypeScript, committed to the repo:
 
-That authoritative sync updates the checked-in contract inputs first:
+- `src/generated/http_api_contracts.ts` (from the FastAPI OpenAPI schema)
+- `src/contracts/ws_payload_types.ts` (from the `LiveWsPayload` JSON Schema)
+- `src/constants.ts` (from backend-owned shared constants)
 
-- `src/contracts/http_api_schema.json`
-- `src/contracts/ws_payload_schema.json`
-- `../../docs/protocol.md`
+`make sync-contracts` (repo root) is the only regeneration entrypoint. It
+exports the OpenAPI/JSON Schema documents to a temp dir, runs
+`openapi-typescript` from `node_modules`, and rewrites the files above plus
+`docs/protocol.md`. It needs the backend venv and UI `node_modules`
+(`make setup`). Run it after changing backend API payloads, WS payloads, or
+shared constants, and commit the result. CI's `backend-contract-drift` job
+reruns it and fails on `git diff --exit-code`.
 
-It then regenerates the UI-only derivative artifacts:
-
-- `src/generated/http_api_contracts.ts`
-- `src/contracts/ws_payload_types.ts`
-- `src/contracts/ws_payload_schema.generated.ts`
-- `src/constants.ts`
-
-Those derivative outputs are materialized locally from the tracked inputs and are no longer a committed source-of-truth surface. Explicit owner flows such as `test:smoke`, `dev:docker`, `make ui-typecheck`, and release/UI-build helpers call `npm run sync:generated-contracts` when they need the files on disk.
-
-Fresh checkouts can materialize only the missing derivative files with `npm run setup:generated-contracts`. That setup command is safe to rerun, reuses the shared UI bootstrap helper, and intentionally leaves the authoritative `make sync-contracts` / `npm run sync:generated-contracts` refresh flow unchanged for stale-derivative updates.
-
-`make clean` and `make pristine` may remove the derivative files because they are local generated outputs. Restore them with `make setup`, `make ui-typecheck`, `make sync-contracts`, or `npm run setup:generated-contracts` depending on the workflow you are about to run.
-
-`npm run build` and `npm run typecheck` no longer regenerate those files automatically. They run `npm run check:contracts` first and fail fast with guidance to `make sync-contracts` if the local derivative copy is missing or stale. CI contract drift and human-facing regeneration should still use `make sync-contracts`.
-
-The release-smoke artifact helper is the intentional narrow exception: after the same commit already passed `backend-contract-drift` and `frontend-typecheck`, `tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts` still regenerates the UI-only derivatives for that fresh checkout but switches to `npm run build:prevalidated-contracts` so the late packaged smoke path does not repeat `check:contracts`.
+UI typecheck, tests, and builds use the committed files and need only Node.
 
 ## Code Quality
 
@@ -372,9 +361,8 @@ instead of controller-side variant class interpolation.
 
 ## WebSocket contract boundary
 
-- `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.
-- `src/contracts/ws_payload_types.ts` is generated from that schema by the
-  [contract sync flow](#contract-sync).
+- `src/contracts/ws_payload_types.ts` is generated from the backend
+  `LiveWsPayload` JSON Schema by the [contract sync flow](#contract-sync).
 - `src/ws_payload_validator.ts` validates raw live payloads with Valibot schemas, while the large spectrum-number arrays stay on a custom finite-number-array guard so the live chart path avoids per-element schema object churn.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 

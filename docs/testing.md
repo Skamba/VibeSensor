@@ -87,7 +87,7 @@ cd apps/ui && npm run test:visual:audit
 | Browser regression | `npm run test:regression` | broader Playwright UI regressions moved out of smoke |
 | Visual/snapshot | `npm run test:visual` | rendered-state regression baselines |
 
-- `make ui-typecheck` materializes generated UI contracts, then runs format/lint/type gates.
+- `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`).
 - Use `npm run test:visual:update` only for intentional baseline changes.
 - Use shared MSW helpers under `apps/ui/tests/msw/` for frontend tests that intentionally cross the real HTTP boundary. They normalize relative `/api/...` requests and fail unhandled requests loudly.
 - Do not add MSW to tests that inject transport ports or stay inside presenter/view/state seams. Keep WebSocket mocking on the dedicated fake WebSocket helpers.

@@ -1,10 +1,9 @@
-"""Generate or check the checked-in contract reference markdown from backend sources."""
+"""Render the checked-in contract reference markdown (docs/protocol.md) from backend sources.
+
+Written by ``tools/config/sync_contracts.py`` (``make sync-contracts``).
+"""
 
 from __future__ import annotations
-
-import argparse
-import sys
-from pathlib import Path
 
 from vibesensor.adapters.udp.protocol import (
     ACK_BYTES,
@@ -28,9 +27,6 @@ from vibesensor.adapters.udp.protocol import (
 )
 from vibesensor.app.config_defaults import DEFAULT_CONFIG
 from vibesensor.shared.types.json_types import JsonObject
-
-ROOT = Path(__file__).resolve().parents[2]
-OUTPUT_PATH = ROOT / "docs" / "protocol.md"
 
 
 def render_contract_reference_markdown() -> str:
@@ -116,41 +112,3 @@ This document is generated from code and shared contract files.
 
 {report_fields}
 """
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate or check the checked-in contract reference markdown."
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Fail if docs/protocol.md differs from the generated contract reference.",
-    )
-    args = parser.parse_args()
-
-    generated = render_contract_reference_markdown()
-    if args.check:
-        if not OUTPUT_PATH.exists():
-            print(
-                f"FAIL: {OUTPUT_PATH.relative_to(ROOT)} does not exist. Run `make sync-contracts` first.",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
-        committed = OUTPUT_PATH.read_text(encoding="utf-8")
-        if committed != generated:
-            print(
-                "FAIL: docs/protocol.md is out of date.\n"
-                "Run `make sync-contracts` and commit the result.",
-                file=sys.stderr,
-            )
-            raise SystemExit(1)
-        print(f"OK: {OUTPUT_PATH.relative_to(ROOT)} is up to date.")
-        return
-
-    OUTPUT_PATH.write_text(generated, encoding="utf-8")
-    print(f"Wrote {OUTPUT_PATH.relative_to(ROOT)}")
-
-
-if __name__ == "__main__":
-    main()

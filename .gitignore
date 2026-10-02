@@ -114,10 +114,6 @@ artifacts/**
 *.swo
 .DS_Store
 .coverage
-apps/ui/src/constants.ts
-apps/ui/src/generated/http_api_contracts.ts
-apps/ui/src/contracts/ws_payload_schema.generated.ts
-apps/ui/src/contracts/ws_payload_types.ts
 
 # Copilot working docs
 .copilot-work/
