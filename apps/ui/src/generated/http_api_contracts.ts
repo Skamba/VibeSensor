@@ -1059,6 +1059,36 @@ export interface components {
             snr_ratio?: number;
         };
         /**
+         * CarConfigPayload
+         * @description One car profile as persisted in the settings snapshot and served over HTTP.
+         */
+        CarConfigPayload: {
+            aspects: components["schemas"]["AnalysisSettingsPayload"];
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
+            /** Type */
+            type: string;
+            /** Variant */
+            variant?: string | null;
+        };
+        /**
+         * CarConfigUpdatePayload
+         * @description Create/update request body for one car profile; omitted or null fields stay unchanged.
+         */
+        CarConfigUpdatePayload: {
+            aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
+            /** Name */
+            name?: string | null;
+            order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
+            /** Type */
+            type?: string | null;
+            /** Variant */
+            variant?: string | null;
+        };
+        /**
          * CarLibraryBrandsResponse
          * @description Response body listing available car manufacturer brands.
          */
@@ -1200,10 +1230,13 @@ export interface components {
             tire_width_mm?: number | null;
         };
         /**
-         * CarOrderReferenceStatus
-         * @description Confidence metadata for saved drivetrain order-reference values.
+         * CarOrderReferenceStatusPayload
+         * @description Persisted/HTTP confidence metadata for selected drivetrain order-reference values.
+         *
+         *     Confidence values stay plain strings at this boundary;
+         *     ``car_order_reference_status_from_mapping`` keeps only the known vocabulary.
          */
-        CarOrderReferenceStatus: {
+        CarOrderReferenceStatusPayload: {
             /** Current Gear Ratio Confidence */
             current_gear_ratio_confidence?: string | null;
             /** Final Drive Ratio Confidence */
@@ -1223,44 +1256,14 @@ export interface components {
             transmission_name?: string | null;
         };
         /**
-         * CarResponse
-         * @description Response body representing a single car profile.
+         * CarsSnapshot
+         * @description Car profiles plus the active selection, as held in memory and served over HTTP.
          */
-        CarResponse: {
-            aspects: components["schemas"]["AnalysisSettingsPayload"];
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            order_reference_status?: components["schemas"]["CarOrderReferenceStatus"] | null;
-            /** Type */
-            type: string;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarUpsertRequest
-         * @description Request body for creating or updating a car profile.
-         */
-        CarUpsertRequest: {
-            aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
-            /** Name */
-            name?: string | null;
-            order_reference_status?: components["schemas"]["CarOrderReferenceStatus"] | null;
-            /** Type */
-            type?: string | null;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarsResponse
-         * @description Response body for the list of all car profiles with the active car ID.
-         */
-        CarsResponse: {
+        CarsSnapshot: {
             /** Active Car Id */
             active_car_id: string | null;
             /** Cars */
-            cars: components["schemas"]["CarResponse"][];
+            cars: components["schemas"]["CarConfigPayload"][];
         };
         /** ClientApiRow */
         ClientApiRow: {
@@ -4566,7 +4569,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
         };
@@ -4580,7 +4583,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
+                "application/json": components["schemas"]["CarConfigUpdatePayload"];
             };
         };
         responses: {
@@ -4590,7 +4593,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Validation Error */
@@ -4623,7 +4626,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier. */
@@ -4662,7 +4665,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
+                "application/json": components["schemas"]["CarConfigUpdatePayload"];
             };
         };
         responses: {
@@ -4672,7 +4675,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier. */
@@ -4717,7 +4720,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier or the requested deletion violates current settings constraints. */

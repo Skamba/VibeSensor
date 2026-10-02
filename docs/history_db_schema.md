@@ -106,6 +106,12 @@ Single-row table for persistent application settings.
 | `value_json` | TEXT | JSON-encoded settings snapshot |
 | `updated_at` | TEXT | Last update timestamp |
 
+`value_json` is decoded by `SettingsSnapshotRecord` in
+`shared/boundaries/settings.py` (msgspec, defaults for missing top-level keys).
+Each entry in `cars` is a `CarConfigPayload` (`shared/types/car_config.py`): the
+same shape is served by `GET /api/settings/cars`, and it carries the car's
+`aspects` (`AnalysisSettingsPayload`) and optional `order_reference_status`.
+
 ### `client_names`
 
 Legacy compatibility table for sensor client display names.

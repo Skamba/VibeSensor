@@ -162,7 +162,7 @@ def test_export_schema_uses_snake_case_settings_contract_fields(
     schema_dict: dict[str, Any],
 ) -> None:
     active_car_request = schema_dict["components"]["schemas"]["ActiveCarRequest"]
-    cars_response = schema_dict["components"]["schemas"]["CarsResponse"]
+    cars_response = schema_dict["components"]["schemas"]["CarsSnapshot"]
     speed_source_request = schema_dict["components"]["schemas"]["SpeedSourceRequest"]
     speed_source_response = schema_dict["components"]["schemas"]["SpeedSourceResponse"]
     speed_unit_request = schema_dict["components"]["schemas"]["SpeedUnitRequest"]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 
 from vibesensor.domain.tire_spec import TireSpeedAxle
 
@@ -43,53 +43,19 @@ class AnalysisSettingsPayload(TypedDict, total=False):
 def analysis_settings_payload_from_mapping(
     values: Mapping[str, object],
 ) -> AnalysisSettingsPayload:
-    """Project a trusted flat mapping into the named-field settings payload."""
-    payload: AnalysisSettingsPayload = {}
-    if (tire_width := _finite_float_or_none(values.get("tire_width_mm"))) is not None:
-        payload["tire_width_mm"] = tire_width
-    if (tire_aspect := _finite_float_or_none(values.get("tire_aspect_pct"))) is not None:
-        payload["tire_aspect_pct"] = tire_aspect
-    if (rim := _finite_float_or_none(values.get("rim_in"))) is not None:
-        payload["rim_in"] = rim
-    if (front_width := _finite_float_or_none(values.get("front_tire_width_mm"))) is not None:
-        payload["front_tire_width_mm"] = front_width
-    if (front_aspect := _finite_float_or_none(values.get("front_tire_aspect_pct"))) is not None:
-        payload["front_tire_aspect_pct"] = front_aspect
-    if (front_rim := _finite_float_or_none(values.get("front_rim_in"))) is not None:
-        payload["front_rim_in"] = front_rim
-    if (rear_width := _finite_float_or_none(values.get("rear_tire_width_mm"))) is not None:
-        payload["rear_tire_width_mm"] = rear_width
-    if (rear_aspect := _finite_float_or_none(values.get("rear_tire_aspect_pct"))) is not None:
-        payload["rear_tire_aspect_pct"] = rear_aspect
-    if (rear_rim := _finite_float_or_none(values.get("rear_rim_in"))) is not None:
-        payload["rear_rim_in"] = rear_rim
-    if (
-        default_axle := analysis_settings_axle_from_mapping(values.get("default_axle_for_speed"))
-    ) is not None:
-        payload["default_axle_for_speed"] = default_axle
-    if (final_drive := _finite_float_or_none(values.get("final_drive_ratio"))) is not None:
-        payload["final_drive_ratio"] = final_drive
-    if (current_gear := _finite_float_or_none(values.get("current_gear_ratio"))) is not None:
-        payload["current_gear_ratio"] = current_gear
-    if (
-        speed_uncertainty := _finite_float_or_none(values.get("speed_uncertainty_pct"))
-    ) is not None:
-        payload["speed_uncertainty_pct"] = speed_uncertainty
-    if (
-        tire_diameter_uncertainty := _finite_float_or_none(
-            values.get("tire_diameter_uncertainty_pct")
-        )
-    ) is not None:
-        payload["tire_diameter_uncertainty_pct"] = tire_diameter_uncertainty
-    if (
-        final_drive_uncertainty := _finite_float_or_none(values.get("final_drive_uncertainty_pct"))
-    ) is not None:
-        payload["final_drive_uncertainty_pct"] = final_drive_uncertainty
-    if (gear_uncertainty := _finite_float_or_none(values.get("gear_uncertainty_pct"))) is not None:
-        payload["gear_uncertainty_pct"] = gear_uncertainty
-    if (deflection := _finite_float_or_none(values.get("tire_deflection_factor"))) is not None:
-        payload["tire_deflection_factor"] = deflection
-    return payload
+    """Keep the finite numeric settings and a valid speed axle from *values*.
+
+    Keys follow the ``AnalysisSettingsPayload`` field order; anything else is dropped.
+    """
+    payload: dict[str, float | str] = {}
+    for key in AnalysisSettingsPayload.__annotations__:
+        value = values.get(key)
+        if key == "default_axle_for_speed":
+            if (axle := analysis_settings_axle_from_mapping(value)) is not None:
+                payload[key] = axle
+        elif (number := _finite_float_or_none(value)) is not None:
+            payload[key] = number
+    return cast(AnalysisSettingsPayload, payload)
 
 
 def analysis_settings_axle_from_mapping(value: object) -> TireSpeedAxle | None:
