@@ -141,7 +141,7 @@ def build_live_runtime(
     stale_analyzing = history.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
-        run_recorder.schedule_post_analysis(stale_run_id)
+        run_recorder.post_analysis.schedule(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 

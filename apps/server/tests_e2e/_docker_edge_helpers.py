@@ -36,20 +36,6 @@ def _cleanup_run(base_url: str, run_id: str) -> None:
     api_json(base_url, f"/api/history/{run_id}", method="DELETE", expected_status=(200, 404, 409))
 
 
-def _cleanup_clients(base_url: str) -> None:
-    for client in api_json(base_url, "/api/clients").get("clients", []):
-        api_json(
-            base_url,
-            f"/api/clients/{client['id']}/location",
-            method="POST",
-            body={"location_code": ""},
-            expected_status=(200, 404),
-        )
-        api_json(
-            base_url, f"/api/clients/{client['id']}", method="DELETE", expected_status=(200, 404)
-        )
-
-
 def _wait_complete(base_url: str, run_id: str) -> dict:
     return wait_run_status(base_url, run_id, statuses=("complete",), timeout_s=120.0)
 

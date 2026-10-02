@@ -52,7 +52,9 @@ def _build_run_metadata_record(
     run_id: str,
     start_time_utc: str,
 ) -> RunMetadata:
-    run_context = recorder._run_context_snapshot(run_id)
+    session = recorder._recording_session
+    finalize_registry = recorder._raw_capture_finalize_registry
+    run_context = session.run_context_snapshot(run_id)
     return build_run_metadata(
         run_id=run_id,
         start_time_utc=start_time_utc,
@@ -64,11 +66,11 @@ def _build_run_metadata_record(
         fft_window_size_samples=recorder.fft_window_size_samples,
         accel_scale_g_per_lsb=recorder.accel_scale_g_per_lsb,
         active_car_snapshot=run_context.car,
-        raw_capture_manifest=recorder._raw_capture_manifest_for_run(run_id),
-        raw_capture_finalize=recorder._raw_capture_finalize_for_run(run_id),
+        raw_capture_manifest=finalize_registry.manifest_for_run(run_id),
+        raw_capture_finalize=finalize_registry.finalize_for_run(run_id),
         language_reader=recorder._language_reader,
         recorded_utc_offset_seconds=current_utc_offset_seconds(),
-        sensor_snapshots=recorder._run_sensor_snapshots_for_run(run_id),
+        sensor_snapshots=session.run_sensor_snapshots_for_run(run_id),
     )
 
 
@@ -78,11 +80,11 @@ def _shutdown_report(recorder: RunRecorder, timeout_s: float) -> RecorderShutdow
     recorder._lifecycle.shutdown_requested = True
     try:
         final_status = recorder.stop_recording(reason="shutdown")
-        analysis_completed = recorder.wait_for_post_analysis(timeout_s)
+        analysis_completed = recorder.post_analysis.wait(timeout_s)
         health = recorder.health_snapshot()
         if not analysis_completed:
-            recorder.shutdown_post_analysis(timeout_s=1.0)
-        recorder.shutdown_raw_capture(timeout_s=1.0)
+            recorder.post_analysis.shutdown(timeout_s=1.0)
+        recorder.raw_capture.shutdown(timeout_s=1.0)
         return RecorderShutdownReport(
             completed=analysis_completed,
             active_run_id_before_stop=active_run_id_before_stop,

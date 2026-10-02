@@ -285,14 +285,14 @@ def test_stop_recording_logs_finalize_stage_results(
     started = recorder.start_recording()
     assert started.run_id is not None
 
-    snapshot = recorder._session_snapshot()
+    snapshot = recorder._lifecycle.snapshot()
     assert snapshot is not None
     recorder._sample_flush.append_records(
         snapshot.run_id,
         snapshot.start_time_utc,
         snapshot.start_mono_s,
     )
-    recorder._raw_capture = SimpleNamespace(
+    recorder.raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
             error="raw capture finalize timed out",
@@ -300,7 +300,7 @@ def test_stop_recording_logs_finalize_stage_results(
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(recorder, "schedule_post_analysis", lambda run_id: None)
+    monkeypatch.setattr(recorder.post_analysis, "schedule", lambda run_id: None)
 
     with caplog.at_level(logging.WARNING):
         stopped = recorder.stop_recording()

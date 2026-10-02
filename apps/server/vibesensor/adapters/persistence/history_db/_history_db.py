@@ -510,43 +510,11 @@ class HistoryDB:
             self._delete_run_artifacts(run_id)
         return len(run_ids)
 
-    def prune_raw_capture_artifacts_older_than_days(self, retention_days: int) -> int:
-        candidate_run_ids = self._terminal_run_ids_older_than(
-            _retention_cutoff_utc(retention_days),
-            require_raw_capture_manifest=True,
-        )
-        run_ids = [
-            run_id
-            for run_id in candidate_run_ids
-            if self._raw_capture_store.has_run_artifacts(run_id)
-        ]
-        if not run_ids:
-            return 0
-        LOGGER.warning(
-            "Pruning raw capture artifacts for %d terminal run(s) older than %d day(s) "
-            "while keeping run summaries",
-            len(run_ids),
-            retention_days,
-        )
-        for run_id in run_ids:
-            self._raw_capture_store.delete_run_artifacts(run_id)
-        return len(run_ids)
-
-    def _terminal_run_ids_older_than(
-        self,
-        cutoff_utc: str,
-        *,
-        require_raw_capture_manifest: bool = False,
-    ) -> list[str]:
-        where_clauses = [
-            "status IN ('complete', 'error')",
-            "COALESCE(analysis_completed_at, end_time_utc, created_at) < ?",
-        ]
-        if require_raw_capture_manifest:
-            where_clauses.append("raw_capture_manifest_json IS NOT NULL")
+    def _terminal_run_ids_older_than(self, cutoff_utc: str) -> list[str]:
         with self._read() as cur:
             cur.execute(
-                f"SELECT run_id FROM runs WHERE {' AND '.join(where_clauses)}",
+                "SELECT run_id FROM runs WHERE status IN ('complete', 'error') "
+                "AND COALESCE(analysis_completed_at, end_time_utc, created_at) < ?",
                 (cutoff_utc,),
             )
             return [str(row[0]) for row in cur.fetchall()]

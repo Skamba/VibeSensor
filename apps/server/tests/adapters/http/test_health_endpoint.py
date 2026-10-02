@@ -37,8 +37,6 @@ def test_health_endpoint_response_shape(_health_client):
     assert result["startup_error"] is None
     assert result["background_task_failures"] == {}
     assert result["db_corruption_detected"] is False
-    assert result["db_engine_unhealthy"] is False
-    assert result["db_engine_unhealthy_reason"] is None
     assert result["processing_state"] == "ok"
     assert result["processing_failures"] == 0
     assert result["processing_failure_categories"] == {}

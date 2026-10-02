@@ -41,7 +41,7 @@ def test_start_append_stop_produces_complete_run_in_db(
     logger = make_logger(history_db=history_db)
 
     logger.start_recording()
-    snapshot = logger._session_snapshot()
+    snapshot = logger._lifecycle.snapshot()
     assert snapshot is not None
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
@@ -70,12 +70,12 @@ def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     with caplog.at_level(logging.INFO, logger="vibesensor.use_cases.run.logger"):
         started = logger.start_recording()
         assert started.run_id is not None
-        snapshot = logger._session_snapshot()
+        snapshot = logger._lifecycle.snapshot()
         assert snapshot is not None
         logger._sample_flush.append_records(
             snapshot.run_id,
@@ -109,10 +109,10 @@ def test_restart_recording_emits_stop_then_start_lifecycle_events(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     logger = make_logger(history_db=fake_history_db)
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
     first_status = logger.start_recording()
     assert first_status.run_id is not None
-    first_snapshot = logger._session_snapshot()
+    first_snapshot = logger._lifecycle.snapshot()
     assert first_snapshot is not None
     logger._sample_flush.append_records(
         first_snapshot.run_id,
@@ -126,7 +126,7 @@ def test_restart_recording_emits_stop_then_start_lifecycle_events(
 
     assert second_status.run_id is not None
     assert second_status.run_id != first_snapshot.run_id
-    second_snapshot = logger._session_snapshot()
+    second_snapshot = logger._lifecycle.snapshot()
     assert second_snapshot is not None
     lifecycle_records = [rec for rec in caplog.records if rec.message == "run_lifecycle"]
     assert [rec.run_action for rec in lifecycle_records] == ["stopped", "started"]
@@ -141,31 +141,6 @@ def test_restart_recording_emits_stop_then_start_lifecycle_events(
     assert start_record.event == "run_lifecycle"
     assert start_record.run_id == second_status.run_id
     assert start_record.start_time_utc == second_snapshot.start_time_utc
-
-
-class _SpyLock:
-    def __init__(self) -> None:
-        self.enter_count = 0
-
-    def __enter__(self) -> None:
-        self.enter_count += 1
-        return None
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        return None
-
-
-def test_session_snapshot_uses_recorder_lock(make_logger) -> None:
-    logger = make_logger()
-    logger.start_recording()
-
-    spy = _SpyLock()
-    logger._lock = spy
-
-    snapshot = logger._session_snapshot()
-
-    assert snapshot is not None
-    assert spy.enter_count == 1
 
 
 def test_start_recording_holds_lock_during_flush_and_finalize(make_logger) -> None:
@@ -297,7 +272,7 @@ def test_stop_recording_refreshes_recent_metrics_before_final_flush(
 
     monkeypatch.setattr(logger.processor, "compute_metrics", fake_compute_metrics)
     monkeypatch.setattr(logger._persistence, "append_rows", capture_append_rows)
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda _run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     logger.stop_recording()
 

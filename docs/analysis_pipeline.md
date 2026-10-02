@@ -101,7 +101,7 @@ trustworthy vibration strength.
 
 ```
 RunRecorder.stop_recording()            # use_cases/run/logger.py
-  └─ schedule_post_analysis(run_id)
+  └─ RunRecorder.post_analysis
        └─ PostAnalysisWorker.schedule() # use_cases/run/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -176,39 +177,26 @@ def test_delete_run_removes_raw_capture_artifacts(tmp_path: Path, db: HistoryDB)
     assert not raw_dir.exists()
 
 
-def test_prune_raw_capture_retention_removes_raw_files_but_keeps_run_summary(
+def test_missing_raw_capture_files_keep_run_summary_and_report_missing(
     tmp_path: Path,
     db: HistoryDB,
 ) -> None:
-    create_completed_run(db, "run-prune-raw")
+    create_completed_run(db, "run-raw-gone")
     samples = np.asarray([[11, 12, 13]], dtype=np.int16)
 
-    _append_chunk(db, run_id="run-prune-raw", client_id="sensor-a", t0_us=1000, samples=samples)
-    manifest = db.finalize_raw_capture("run-prune-raw")
+    _append_chunk(db, run_id="run-raw-gone", client_id="sensor-a", t0_us=1000, samples=samples)
+    manifest = db.finalize_raw_capture("run-raw-gone")
 
     assert manifest is not None
-    raw_dir = tmp_path / "raw-runs" / "run-prune-raw"
-    assert raw_dir.exists()
+    raw_dir = tmp_path / "raw-runs" / "run-raw-gone"
+    shutil.rmtree(raw_dir)
 
-    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-    _execute_statements(
-        db,
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-prune-raw"),
-        ),
-    )
-
-    pruned = db.prune_raw_capture_artifacts_older_than_days(7)
-
-    assert pruned == 1
-    assert not raw_dir.exists()
-    stored = db.get_run("run-prune-raw")
+    stored = db.get_run("run-raw-gone")
     assert stored is not None
     assert stored.raw_capture_manifest is not None
     assert stored.artifact_availability is not None
     assert stored.artifact_availability.raw_capture == "missing"
-    assert db.load_raw_capture("run-prune-raw") is None
+    assert db.load_raw_capture("run-raw-gone") is None
 
 
 def test_raw_capture_range_read_spans_chunk_boundaries_without_loading_full_capture(

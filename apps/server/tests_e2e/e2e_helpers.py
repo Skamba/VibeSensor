@@ -16,6 +16,7 @@ from urllib.request import Request, urlopen
 
 from pypdf import PdfReader
 
+from vibesensor.adapters.simulator.sim_client import make_client_id
 from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -181,6 +182,38 @@ def run_simulator(
         "--no-interactive",
     ]
     subprocess.run(sim_cmd, cwd=str(ROOT), check=True)
+
+
+def sim_client_ids(count: int) -> list[str]:
+    """API ids of the sensors a ``run_simulator(count=count)`` run registers.
+
+    The simulator derives each sensor id from its index, so every run with the
+    same count registers the same ids.
+    """
+    return [make_client_id(index + 1).hex() for index in range(count)]
+
+
+def registered_client_ids(base_url: str) -> set[str]:
+    return {str(client["id"]) for client in api_json(base_url, "/api/clients")["clients"]}
+
+
+def remove_all_clients(base_url: str) -> None:
+    """Release every registered client's location, then remove it from the registry.
+
+    Location assignments persist in sensor settings by sensor id and can only be
+    released through the API while that sensor is registered. A test that assigns
+    locations must call this before its clients age out of the registry, or later
+    tests on the same server get 409 conflicts for those locations.
+    """
+    for client_id in registered_client_ids(base_url):
+        api_json(
+            base_url,
+            f"/api/clients/{client_id}/location",
+            method="POST",
+            body={"location_code": ""},
+            expected_status=(200, 404),
+        )
+        api_json(base_url, f"/api/clients/{client_id}", method="DELETE", expected_status=(200, 404))
 
 
 def wait_for(

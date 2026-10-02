@@ -1932,15 +1932,6 @@ export interface components {
              */
             db_corruption_detected: boolean;
             /**
-             * Db Engine Unhealthy
-             * @default false
-             */
-            db_engine_unhealthy: boolean;
-            /** Db Engine Unhealthy Details */
-            db_engine_unhealthy_details?: string | null;
-            /** Db Engine Unhealthy Reason */
-            db_engine_unhealthy_reason?: string | null;
-            /**
              * Db Last Write Duration S
              * @default 0
              */

@@ -93,7 +93,7 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
         asyncio.run(logger.run())
 
     logger.stop_recording()
-    assert logger.wait_for_post_analysis(timeout_s=3.0)
+    assert logger.post_analysis.wait(timeout_s=3.0)
 
     stored_run = history_db.get_run(run_id)
     assert stored_run is not None

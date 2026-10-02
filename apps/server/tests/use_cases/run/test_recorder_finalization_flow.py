@@ -23,7 +23,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection is the narrow private seam needed to prove
     # recorder finalization behavior for degraded/late capture outcomes.
-    logger._raw_capture = SimpleNamespace(
+    logger.raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
             error="raw capture finalize timed out",
@@ -31,7 +31,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+    monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.logger"):
         status = logger.stop_recording()
@@ -135,7 +135,7 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db_factory(history_db))
     snapshot = _started_snapshot_with_sample(logger)
-    logger._raw_capture = SimpleNamespace(
+    logger.raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status=raw_capture_status,
             error=("raw capture finalize timed out" if raw_capture_status == "timeout" else None),
@@ -143,7 +143,7 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", lambda run_id: None)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda run_id: None)
 
     logger.stop_recording()
 
@@ -175,14 +175,14 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection keeps the test on recorder finalization
     # behavior without running the asynchronous raw writer.
-    logger._raw_capture = SimpleNamespace(
+    logger.raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="timeout",
             error="raw capture finalize timed out",
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+    monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
     logger.stop_recording()
     logger._handle_late_raw_capture_finalize_result(
@@ -209,7 +209,7 @@ def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection keeps the test focused on degraded metadata
     # and scheduling behavior instead of raw writer internals.
-    logger._raw_capture = SimpleNamespace(
+    logger.raw_capture = SimpleNamespace(
         finalize_run=lambda run_id, *, sensor_losses=None: RawCaptureFinalizeResult(
             status="failed",
             error="raw capture finalize failed",
@@ -217,7 +217,7 @@ def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata
         ),
         shutdown=lambda timeout_s=5.0: True,
     )
-    monkeypatch.setattr(logger, "schedule_post_analysis", scheduled.append)
+    monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
     logger.stop_recording()
 

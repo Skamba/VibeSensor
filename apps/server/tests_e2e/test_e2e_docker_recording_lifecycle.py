@@ -12,6 +12,8 @@ from tests_e2e._docker_edge_helpers import (
 from tests_e2e.e2e_helpers import (
     api_json,
     history_run_ids,
+    registered_client_ids,
+    sim_client_ids,
     wait_for,
 )
 
@@ -27,7 +29,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
         run_ids.append(run_1)
         _simulate(e2e_env, duration=8.0)
         wait_for(
-            lambda: api_json(base, "/api/clients").get("clients") or None,
+            lambda: registered_client_ids(base) >= set(sim_client_ids(4)) or None,
             timeout_s=15.0,
             message="rollover test did not observe live clients before second start",
         )
@@ -83,7 +85,7 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
         run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
         _simulate(e2e_env, duration=5.0)
         wait_for(
-            lambda: api_json(base, "/api/clients").get("clients") or None,
+            lambda: registered_client_ids(base) >= set(sim_client_ids(4)) or None,
             timeout_s=15.0,
             message="active-run delete test did not observe live clients",
         )

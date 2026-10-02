@@ -547,7 +547,7 @@ class TestHealthSnapshotEnrichment:
         logger = make_logger(history_db=db)
 
         logger.start_recording()
-        snapshot = logger._session_snapshot()
+        snapshot = logger._lifecycle.snapshot()
         assert snapshot is not None
 
         logger._sample_flush.append_records(
