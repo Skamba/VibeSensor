@@ -56,15 +56,13 @@ run `make dev`.
 
 ## Cleanup workflow
 
-- `make clean` removes fast-regenerated build outputs, test caches, static UI
-  output, and generated UI contract derivatives. It keeps dependency installs
-  and local runtime data.
+- `make clean` removes fast-regenerated build outputs, test caches, and static
+  UI output. It keeps dependency installs and local runtime data.
 - `make pristine` runs `make clean`, then removes ignored generated/cache/runtime
   outputs including `.venv`, UI `node_modules`, Pi image output/cache dirs,
   artifacts, and tmp dirs. It intentionally keeps local secret files such as
   `.secrets.act` and server Wi-Fi secret env files.
-- After `make pristine`, run `make setup` to recreate the native dev checkout
-  and materialize missing generated UI contract derivatives.
+- After `make pristine`, run `make setup` to recreate the native dev checkout.
 
 ## Hooks and local safeguards
 
@@ -182,9 +180,8 @@ full key-by-key runtime config reference.
 
 The contract-sync flow lives in
 [apps/ui/README.md#contract-sync](apps/ui/README.md#contract-sync). Use that
-section for what `make sync-contracts` regenerates (including
-the locally generated derivative UI artifacts) and what to do when CI reports
-contract drift.
+section for what `make sync-contracts` regenerates and what to do when CI
+reports contract drift.
 
 For frontend runtime validation policy, treat generated HTTP/WS TypeScript types
 as compile-time contracts only. At owned server-controlled runtime boundaries,

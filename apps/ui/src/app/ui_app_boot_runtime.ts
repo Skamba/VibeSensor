@@ -11,7 +11,6 @@ import {
   DEFAULT_SHELL_VIEW_ID,
   UiShellController,
 } from "./runtime/ui_shell_controller";
-import { createWorkerSpectrumFramePreparer } from "./runtime/spectrum_frame_preparer_worker_client";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { UiStartupCoordinator } from "./runtime/ui_startup_coordinator";
 import { type Signal } from "./ui_signals";
@@ -47,7 +46,6 @@ export function createUiAppBootRuntime(deps: {
     state: deps.state,
     panel: deps.lazyPanels.panels.dashboard.spectrum,
     t: (key, vars) => shell.t(key, vars),
-    framePreparer: createWorkerSpectrumFramePreparer(),
   });
   const transport = new UiLiveTransportController({
     state: deps.state,

@@ -76,22 +76,17 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 make ui-typecheck
 cd apps/ui && npm run test:unit
 cd apps/ui && npm run build
-cd apps/ui && npm run test:visual
-cd apps/ui && npm run test:visual:audit
+cd apps/ui && npm run test:smoke
 ```
 
 | Layer | Runner | Use for |
 |---|---|---|
 | Unit/integration | `npm run test:unit` | logic below browser boundary, payload decoders, runtime helpers, feature workflows, pure view helpers |
 | Smoke | `npm run test:smoke` | critical boot/happy-path flows against a real Vite dev server |
-| Browser regression | `npm run test:regression` | broader Playwright UI regressions moved out of smoke |
-| Visual/snapshot | `npm run test:visual` | rendered-state regression baselines |
 
-- `make ui-typecheck` materializes generated UI contracts, then runs format/lint/type gates.
-- Use `npm run test:visual:update` only for intentional baseline changes.
+- `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`).
 - Use shared MSW helpers under `apps/ui/tests/msw/` for frontend tests that intentionally cross the real HTTP boundary. They normalize relative `/api/...` requests and fail unhandled requests loudly.
 - Do not add MSW to tests that inject transport ports or stay inside presenter/view/state seams. Keep WebSocket mocking on the dedicated fake WebSocket helpers.
-- Optional browser-worker MSW mode: `cd apps/ui && npm run dev:mock`; smoke entrypoint `cd apps/ui && npm run test:smoke:mock`.
 
 ## Firmware and Pi image validation
 

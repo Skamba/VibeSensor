@@ -294,6 +294,78 @@ test("critical journey: History empty state returns users to Live", async ({
   );
 });
 
+test("critical journey: History run expands into dB diagnosis", async ({
+  page,
+}) => {
+  await bootLiveDashboard(page, {
+    settingsHandler: activeCarSettingsHandler,
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (
+        !pathname.startsWith("/api/history") ||
+        pathname.includes("/insights")
+      ) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, {
+        runs: [
+          {
+            run_id: "run-001",
+            status: "complete",
+            start_time_utc: "2026-01-01T00:00:00Z",
+            end_time_utc: "2026-01-01T00:00:12Z",
+            created_at: "2026-01-01T00:00:00Z",
+            sample_count: 42,
+            car_name: "Test Hatch",
+            error_message: null,
+          },
+        ],
+      });
+    },
+  });
+  await page.route("**/api/history/**/insights**", async (route) => {
+    await fulfillJson(route, {
+      run_id: "run-001",
+      status: "complete",
+      start_time_utc: "2026-01-01T00:00:00Z",
+      duration_s: 12.3,
+      sensor_count_used: 1,
+      sensor_intensity_by_location: [
+        {
+          location: "Front Left Wheel",
+          p50_intensity_db: 10,
+          p95_intensity_db: 20,
+          max_intensity_db: 30,
+          dropped_frames_delta: 0,
+          queue_overflow_drops_delta: 0,
+          sample_count: 15,
+        },
+      ],
+    });
+  });
+
+  await openHistoryTab(page);
+  const toggle = page.locator(
+    '[data-run-toggle="details"][data-run="run-001"]',
+  );
+  await expect(
+    page.locator(
+      '[data-run-row="1"][data-run="run-001"] .history-row__diagnosis',
+    ),
+  ).toContainText("Duration: 12.3 s");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".history-details-header")).toContainText(
+    "Diagnostic panel",
+  );
+  const frontLeftZone = page.locator(
+    '.history-heatmap__zone[data-location-key="front-left wheel"]',
+  );
+  await expect(frontLeftZone).toContainText("Front Left Wheel");
+  await expect(frontLeftZone).toContainText("20.0 dB");
+});
+
 test("critical journey: updater becomes startable after Wi-Fi setup", async ({
   page,
 }) => {

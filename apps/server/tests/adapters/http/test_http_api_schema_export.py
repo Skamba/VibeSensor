@@ -6,7 +6,6 @@ import json
 from typing import Any
 
 import pytest
-from _paths import REPO_ROOT
 
 from vibesensor.cli.http_api_schema_export import export_schema
 
@@ -36,19 +35,6 @@ def test_export_schema_writes_to_file(tmp_path) -> None:
     text = export_schema(out_path=out)
     assert out.exists()
     assert out.read_text(encoding="utf-8") == text
-
-
-def test_export_schema_matches_committed_schema(schema_text: str) -> None:
-    committed_path = REPO_ROOT / "apps" / "ui" / "src" / "contracts" / "http_api_schema.json"
-    assert committed_path.exists(), (
-        f"Committed UI contract file is missing: {committed_path}. "
-        "Normal repo test runs require checked-in UI contract artifacts."
-    )
-    committed = committed_path.read_text(encoding="utf-8")
-    assert committed == schema_text, (
-        "Committed http_api_schema.json is out of sync with generated schema. "
-        "Run `make sync-contracts` and commit the results."
-    )
 
 
 def test_export_schema_exposes_history_endpoints_with_typed_responses(

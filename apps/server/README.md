@@ -336,11 +336,11 @@ messages.
 
 The API surface is implemented in `apps/server/vibesensor/adapters/http/`, with the top-level composition root in `adapters/http/router.py` and domain bundle registration in `adapters/http/route_bundles.py`.
 
-Start here for the human-facing API overview, then use the generated schema artifacts for endpoint-level contracts:
+Start here for the human-facing API overview, then use the generated contracts for endpoint-level detail:
 
-- `make sync-contracts` is the authoritative end-to-end contract sync entrypoint. It refreshes the committed HTTP OpenAPI schema at `apps/ui/src/contracts/http_api_schema.json`, the committed WebSocket schema at `apps/ui/src/contracts/ws_payload_schema.json`, `docs/protocol.md`, and the locally materialized derivative UI TypeScript/constants generated from those checked-in inputs.
-- The committed HTTP schema remains the endpoint-by-endpoint reference for request/response shapes, route descriptions, and documented HTTP error responses.
-- Pair the committed WebSocket schema with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
+- `make sync-contracts` regenerates the committed UI contract TypeScript (`apps/ui/src/generated/http_api_contracts.ts`, `apps/ui/src/contracts/ws_payload_types.ts`), `apps/ui/src/constants.ts`, and `docs/protocol.md` from backend sources. See `apps/ui/README.md` § "Contract sync".
+- For the full OpenAPI document (request/response shapes, route descriptions, documented HTTP error responses), run `python -m vibesensor.cli.http_api_schema_export` or open `/docs` on a running server. `python -m vibesensor.cli.ws_schema_export` prints the WebSocket payload JSON Schema.
+- Pair the generated WS types with `apps/ui/README.md` § "WebSocket contract boundary" for the human-readable field guide.
 - `docs/operational-runbooks.md` covers `/api/health` interpretation and stale-live-update debugging steps.
 
 Current route groups:
@@ -356,12 +356,8 @@ Current route groups:
 
 ### HTTP API schema export and versioning stance
 
-- Refresh all committed contract artifacts with `make sync-contracts`.
-- The checked-in schema artifact lives at
-  `apps/ui/src/contracts/http_api_schema.json`, while the committed WebSocket
-  payload schema lives at `apps/ui/src/contracts/ws_payload_schema.json`; both,
-  along with `docs/protocol.md`, are kept in sync by the authoritative
-  contract-drift checks.
+- Refresh all committed contract artifacts with `make sync-contracts`; CI's
+  `backend-contract-drift` job reruns it and fails on any diff.
 - The current HTTP API intentionally remains a single unversioned `/api/*`
   surface because the backend and bundled UI ship atomically.
 - If independent or third-party clients become a real compatibility concern,

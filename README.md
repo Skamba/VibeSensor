@@ -34,7 +34,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 **Developer Experience**
 - Hardware simulator for full-stack testing without physical sensors
 - Extensive pytest suite with CI integration
-- Playwright visual regression tests across 4 viewports
+- Vitest unit suite plus Playwright smoke tests for the critical UI journeys
 - Ruff lint + Ruff format for backend/tooling Python, plus UI linting and TypeScript type checking enforced in CI
 - Custom binary UDP protocol with sequence-based loss detection
 
@@ -106,7 +106,7 @@ supported repo commands. Use `make format` as the only supported Python
 formatter for backend and tooling files.
 
 Cleanup levels are explicit: `make clean` removes fast regenerated build, test
-cache, static UI, and generated derivative outputs; `make pristine` also removes
+cache, and static UI outputs; `make pristine` also removes
 ignored local generated/cache/runtime outputs such as `.venv`, UI
 `node_modules`, Pi image outputs, artifacts, and tmp dirs while preserving local
 secret files. Run `make setup` after `make pristine` to restore the native dev
@@ -309,21 +309,6 @@ first bootstrap if you want a quick prerequisite check.
 Tests are organized in feature-based subdirectories under `apps/server/tests/`
 mirroring source modules. See [docs/testing.md](docs/testing.md) for the full
 layout, mapping rules, and how to add new tests.
-
-### Visual snapshot tests
-
-```bash
-cd apps/ui
-npx playwright install chromium   # first time only
-npm run test:visual               # compare against baselines
-npm run test:visual:update        # regenerate after intentional changes
-npm run test:visual:audit         # run broader visual audit on purpose
-```
-
-Default snapshot coverage uses one intentional viewport (`laptop-light`) with a
-deterministic demo mode (`?demo=1`). When you want broader visual coverage, run
-the opt-in audit sweep for the full laptop/tablet light/dark matrix.
-Baselines live in `apps/ui/tests/snapshots/`.
 
 ## Reports
 
