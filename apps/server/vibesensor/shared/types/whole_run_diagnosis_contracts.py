@@ -8,9 +8,10 @@ support/counterevidence factor vocabulary.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Literal
 
+from vibesensor.domain import DiagnosisAssessmentFactor
 from vibesensor.shared.types.json_contract import (
     JsonContract,
     require_non_empty_text,
@@ -30,6 +31,7 @@ __all__ = [
     "DiagnosisFactorSeverity",
     "WholeRunDiagnosisDataBasis",
     "WholeRunDiagnosisSummary",
+    "diagnosis_factor_from_assessment",
 ]
 
 type DiagnosisExemplarKind = Literal[
@@ -150,6 +152,11 @@ class DiagnosisFactor(JsonContract):
 
     def __post_init__(self) -> None:
         require_non_negative(self, "weight")
+
+
+def diagnosis_factor_from_assessment(factor: DiagnosisAssessmentFactor) -> DiagnosisFactor:
+    """Project one domain assessment factor onto the persisted factor contract."""
+    return DiagnosisFactor.from_mapping(asdict(factor))
 
 
 @dataclass(frozen=True, slots=True)

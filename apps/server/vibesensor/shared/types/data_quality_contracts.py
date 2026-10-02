@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from pydantic import ConfigDict, with_config
+
 __all__ = [
     "DataQualityAccelSanityResponse",
     "DataQualityOutliersResponse",
@@ -17,7 +19,10 @@ __all__ = [
     "OutlierSummaryResponse",
 ]
 
+_IGNORE_EXTRA = ConfigDict(extra="ignore")
 
+
+@with_config(_IGNORE_EXTRA)
 class OutlierSummaryResponse(TypedDict):
     """Response body for an outlier-summary bucket."""
 
@@ -28,6 +33,7 @@ class OutlierSummaryResponse(TypedDict):
     upper_bound: float | None
 
 
+@with_config(_IGNORE_EXTRA)
 class DataQualityRequiredMissingPctResponse(TypedDict):
     """Response body for required-field missing percentages."""
 
@@ -38,6 +44,7 @@ class DataQualityRequiredMissingPctResponse(TypedDict):
     accel_z: float
 
 
+@with_config(_IGNORE_EXTRA)
 class DataQualitySpeedCoverageResponse(TypedDict):
     """Response body for summarized speed-coverage statistics."""
 
@@ -49,6 +56,7 @@ class DataQualitySpeedCoverageResponse(TypedDict):
     count_non_null: int
 
 
+@with_config(_IGNORE_EXTRA)
 class DataQualityAccelSanityResponse(TypedDict):
     """Response body for acceleration sanity diagnostics."""
 
@@ -62,6 +70,7 @@ class DataQualityAccelSanityResponse(TypedDict):
     saturation_count: int | None
 
 
+@with_config(_IGNORE_EXTRA)
 class DataQualityOutliersResponse(TypedDict):
     """Response body for grouped outlier summaries."""
 
@@ -69,6 +78,7 @@ class DataQualityOutliersResponse(TypedDict):
     amplitude_metric: OutlierSummaryResponse
 
 
+@with_config(_IGNORE_EXTRA)
 class DataQualityResponse(TypedDict):
     """Response body for run-level data-quality diagnostics."""
 

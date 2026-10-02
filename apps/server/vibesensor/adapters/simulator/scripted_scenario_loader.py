@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict, cast
+from typing import NotRequired, TypedDict
 
 import yaml
-from pydantic import ConfigDict, TypeAdapter, ValidationError
+from pydantic import ConfigDict, TypeAdapter, ValidationError, with_config
 
 from vibesensor.adapters.simulator.scripted_scenario_models import (
     PhaseOverride,
@@ -21,10 +21,12 @@ _INDEX_FILE_NAME = "index.yaml"
 _STRICT_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class ScriptedScenarioIndexPayload(TypedDict):
     scenarios: list[str]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class PhaseOverridePayload(TypedDict):
     target: str
     profile_name: str
@@ -35,12 +37,14 @@ class PhaseOverridePayload(TypedDict):
     common_event_gain: float
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class PhasePulsePayload(TypedDict):
     at_s: float
     target: str
     strength: float
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class ScenarioPhasePayload(TypedDict):
     name: str
     duration_s: float
@@ -50,20 +54,12 @@ class ScenarioPhasePayload(TypedDict):
     pulses: NotRequired[list[PhasePulsePayload]]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class ScriptedScenarioPayload(TypedDict):
     name: str
     description: str
     phases: list[ScenarioPhasePayload]
 
-
-for _typed_dict in (
-    ScriptedScenarioIndexPayload,
-    PhaseOverridePayload,
-    PhasePulsePayload,
-    ScenarioPhasePayload,
-    ScriptedScenarioPayload,
-):
-    cast(Any, _typed_dict).__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
 
 _INDEX_ADAPTER = TypeAdapter(ScriptedScenarioIndexPayload)
 _SCENARIO_ADAPTER = TypeAdapter(ScriptedScenarioPayload)

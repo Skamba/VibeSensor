@@ -2,12 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.types.history_analysis_contracts import (
-    OrderHarmonicEvidenceSummaryResponse,
-    OrderTracePhaseSupportResponse,
-    OrderTraceSummaryResponse,
-    OrderTraceSupportIntervalResponse,
-)
 from vibesensor.shared.types.order_trace_contracts import (
     OrderHarmonicEvidenceSummary,
     OrderTracePhaseSupport,
@@ -238,78 +232,3 @@ def test_order_trace_summary_rejects_non_mapping_nested_rows() -> None:
 
     with pytest.raises(ValueError, match="support_intervals.1"):
         OrderTraceSummary.from_mapping(payload)
-
-
-def test_history_order_trace_response_contracts_expose_named_summary_fields() -> None:
-    assert set(OrderTraceSupportIntervalResponse.__annotations__) == {
-        "interval_index",
-        "start_window_index",
-        "end_window_index",
-        "matched_window_count",
-        "support_ratio",
-        "start_t_s",
-        "end_t_s",
-        "phase",
-        "load_state",
-        "speed_band",
-        "mean_relative_error",
-    }
-    assert set(OrderTracePhaseSupportResponse.__annotations__) == {
-        "phase",
-        "eligible_window_count",
-        "matched_window_count",
-        "support_ratio",
-    }
-    assert set(OrderHarmonicEvidenceSummaryResponse.__annotations__) == {
-        "harmonic",
-        "order_label",
-        "eligible_window_count",
-        "matched_window_count",
-        "support_ratio",
-        "reference_coverage_ratio",
-        "contiguous_support_ratio",
-        "lock_score",
-        "mean_relative_error",
-        "relative_error_stddev",
-        "drift_score",
-        "peak_intensity_db",
-        "mean_vibration_strength_db",
-    }
-    assert set(OrderTraceSummaryResponse.__annotations__) == {
-        "hypothesis_key",
-        "suspected_source",
-        "order_family",
-        "order_label",
-        "total_window_count",
-        "eligible_window_count",
-        "matched_window_count",
-        "support_ratio",
-        "reference_coverage_ratio",
-        "longest_contiguous_support_window_count",
-        "contiguous_support_ratio",
-        "usable_window_count",
-        "limited_window_count",
-        "excluded_window_count",
-        "shock_transient_window_count",
-        "sensor_clipping_window_count",
-        "sensor_mounting_artifact_window_count",
-        "sensor_timing_integrity_window_count",
-        "speed_context_limited_window_count",
-        "mean_quality_score",
-        "support_intervals",
-        "phase_support",
-        "harmonic_summaries",
-        "stable_frequency_min_hz",
-        "stable_frequency_max_hz",
-        "exemplar_interval_index",
-        "dominant_phase",
-        "dominant_speed_band",
-        "strongest_location",
-        "mean_relative_error",
-        "relative_error_stddev",
-        "drift_score",
-        "lock_score",
-        "peak_intensity_db",
-        "mean_vibration_strength_db",
-        "ref_sources",
-    }

@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.types.history_analysis_contracts import (
-    SpatialEvidenceSummaryResponse,
-    SpatialLocationSummaryResponse,
-)
 from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialEvidenceWindow,
@@ -136,33 +132,3 @@ def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
 
     with pytest.raises(ValueError, match="proof_basis"):
         SpatialEvidenceSummary.from_mapping(payload)
-
-
-def test_history_spatial_response_contracts_expose_named_summary_fields() -> None:
-    assert set(SpatialLocationSummaryResponse.__annotations__) == {
-        "location",
-        "sensor_ids",
-        "supporting_window_count",
-        "support_ratio",
-        "coherent_window_count",
-        "coherence_ratio",
-        "peak_intensity_db",
-        "mean_vibration_strength_db",
-    }
-    assert set(SpatialEvidenceSummaryResponse.__annotations__) == {
-        "candidate_key",
-        "suspected_source",
-        "proof_basis",
-        "total_window_count",
-        "supporting_window_count",
-        "supporting_sensor_count",
-        "coherent_window_count",
-        "coherence_ratio",
-        "dominant_location",
-        "runner_up_location",
-        "location_separation_db",
-        "dominance_ratio",
-        "ambiguous_location",
-        "weak_spatial_separation",
-        "location_summaries",
-    }

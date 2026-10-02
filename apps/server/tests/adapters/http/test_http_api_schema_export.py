@@ -81,11 +81,11 @@ def test_export_schema_keeps_history_analysis_payloads_typed(
     schema_dict: dict[str, Any],
 ) -> None:
     history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
-    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummary"]
     finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
 
     assert history_run["properties"]["analysis"]["anyOf"] == [
-        {"$ref": "#/components/schemas/AnalysisSummaryResponse"},
+        {"$ref": "#/components/schemas/AnalysisSummary"},
         {"type": "null"},
     ]
     assert history_run["additionalProperties"] is False
@@ -123,7 +123,7 @@ def test_export_schema_avoids_unknown_contract_shapes_for_history_payloads(
     schema_dict: dict[str, Any],
 ) -> None:
     history_run = schema_dict["components"]["schemas"]["HistoryRunResponse"]
-    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummaryResponse"]
+    analysis_summary = schema_dict["components"]["schemas"]["AnalysisSummary"]
     amplitude_metric = schema_dict["components"]["schemas"]["AmplitudeMetric"]
     finding_payload = schema_dict["components"]["schemas"]["FindingPayload"]
     run_suitability = schema_dict["components"]["schemas"]["RunSuitabilityCheck"]

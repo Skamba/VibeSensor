@@ -203,9 +203,10 @@ Whole-run order work keeps one order model and changes only the sampling grid:
   into a ranked persisted `whole_run_order_summaries` payload so history/report
   reload paths can consume compact whole-run order evidence without reading the
   dense sidecars back in
-- compact persisted/report-facing projections use the summary shapes in
-  `shared/types/history_analysis_contracts.py` and the report-side normalizer in
-  `shared/boundaries/reporting/summary.py`
+- the same `OrderTraceSummary` dataclass is the persisted row shape and the
+  HTTP/OpenAPI schema (via `AnalysisSummary` in
+  `shared/types/history_analysis_contracts.py`); report reloads use the tolerant
+  normalizer in `shared/boundaries/reporting/summary.py`
 - the compact summary contract carries support intervals, phase support, and
   harmonic evidence rows, while the dense point contract keeps per-window
   predicted/matched frequency evidence

@@ -7,9 +7,9 @@ the HTTP/OpenAPI response schema.
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import TypedDict
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, with_config
 
 __all__ = [
     "FindingEvidenceMetrics",
@@ -22,9 +22,10 @@ __all__ = [
     "SpeedBreakdownRow",
 ]
 
-_IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")
+_IGNORE_EXTRA = ConfigDict(extra="ignore")
 
 
+@with_config(_IGNORE_EXTRA)
 class PeakTableRow(TypedDict):
     """Typed HTTP contract for one ranked peak table row."""
 
@@ -47,6 +48,7 @@ class PeakTableRow(TypedDict):
     typical_speed_band: str
 
 
+@with_config(_IGNORE_EXTRA)
 class MatchedPoint(TypedDict, total=False):
     """HTTP contract for one serialized finding matched-point observation."""
 
@@ -60,6 +62,7 @@ class MatchedPoint(TypedDict, total=False):
     phase: str | None
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseEvidence(TypedDict, total=False):
     """HTTP contract for optional driving-phase evidence attached to a finding."""
 
@@ -67,6 +70,7 @@ class PhaseEvidence(TypedDict, total=False):
     phases_detected: list[str]
 
 
+@with_config(_IGNORE_EXTRA)
 class LocationHotspotPayload(TypedDict, total=False):
     """HTTP contract for serialized location-hotspot evidence."""
 
@@ -79,6 +83,7 @@ class LocationHotspotPayload(TypedDict, total=False):
     weak_spatial_separation: bool | None
 
 
+@with_config(_IGNORE_EXTRA)
 class FindingEvidenceMetrics(TypedDict, total=False):
     """HTTP contract for serialized evidence metrics attached to a finding."""
 
@@ -109,6 +114,7 @@ class FindingEvidenceMetrics(TypedDict, total=False):
     speed_uniformity: float | None
 
 
+@with_config(_IGNORE_EXTRA)
 class SpeedBreakdownRow(TypedDict):
     """Typed HTTP contract for one speed-band aggregate row."""
 
@@ -118,6 +124,7 @@ class SpeedBreakdownRow(TypedDict):
     max_vibration_strength_db: float | None
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseSpeedBreakdownRow(TypedDict):
     """Typed HTTP contract for one phase-aware speed aggregate row."""
 
@@ -129,6 +136,7 @@ class PhaseSpeedBreakdownRow(TypedDict):
     max_vibration_strength_db: float | None
 
 
+@with_config(_IGNORE_EXTRA)
 class PlotDataResult(TypedDict):
     """Typed HTTP contract for the ``plots`` section of a run summary.
 
@@ -137,18 +145,3 @@ class PlotDataResult(TypedDict):
     """
 
     peaks_table: list[PeakTableRow]
-
-
-def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
-    typed_dict.__pydantic_config__ = config
-
-
-_configure_pydantic_schema(PeakTableRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(MatchedPoint, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PhaseEvidence, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(LocationHotspotPayload, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(FindingEvidenceMetrics, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PlotDataResult, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-
-_configure_pydantic_schema(SpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-_configure_pydantic_schema(PhaseSpeedBreakdownRow, _IGNORE_EXTRA_TYPEDDICT_CONFIG)

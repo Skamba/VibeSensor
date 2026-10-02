@@ -1,87 +1,23 @@
-"""History and finding-oriented HTTP API models.
+"""History HTTP API models.
 
-Stable exact analysis/history view shapes live in
-``vibesensor.shared.types.analysis_views``. Canonical shared summary wrappers
-live in ``vibesensor.shared.types.history_analysis_contracts`` and are imported
-privately here so this module only exports adapter-local wrappers and
-localized response models.
+The persisted analysis summary and its nested rows are defined once in
+``vibesensor.shared.types.history_analysis_contracts`` (``AnalysisSummary``) and
+used directly as the ``HistoryRunResponse.analysis`` schema; this module only
+defines endpoint-specific wrappers.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal, cast
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, with_config
 
-from vibesensor.shared.types.analysis_views import (
-    FindingEvidenceMetrics,
-    LocationHotspotPayload,
-    MatchedPoint,
-    PeakTableRow,
-    PhaseEvidence,
-    PhaseSpeedBreakdownRow,
-    PlotDataResult,
-    SpeedBreakdownRow,
-)
-from vibesensor.shared.types.data_quality_contracts import (
-    DataQualityAccelSanityResponse,
-    DataQualityOutliersResponse,
-    DataQualityRequiredMissingPctResponse,
-    DataQualityResponse,
-    DataQualitySpeedCoverageResponse,
-    OutlierSummaryResponse,
-)
 from vibesensor.shared.types.history_analysis_contracts import (
-    AmplitudeMetric,
+    AnalysisSummary,
     AnalysisSummaryCoreResponse,
-    FindingPayload,
-    LocationIntensitySummaryResponse,
-    PhaseInfoResponse,
-    PhaseIntensityStatsResponse,
-    PhaseSegmentSummaryResponse,
-    PhaseTimelineEntryResponse,
-    RunSuitabilityCheck,
-    SpeedStatsResponse,
-    StrengthBucketDistributionResponse,
-    SummaryWarningResponse,
-    SuspectedVibrationOriginPayload,
-    TestPlanStepResponse,
-)
-from vibesensor.shared.types.history_analysis_contracts import (
-    AnalysisSummaryResponse as _SharedAnalysisSummaryResponse,
 )
 
 from .base import ApiPayloadObject, _StrictBase
-
-__all__ = [
-    "AmplitudeMetric",
-    "DataQualityAccelSanityResponse",
-    "DataQualityOutliersResponse",
-    "DataQualityRequiredMissingPctResponse",
-    "DataQualityResponse",
-    "DataQualitySpeedCoverageResponse",
-    "FindingEvidenceMetrics",
-    "FindingPayload",
-    "LocationHotspotPayload",
-    "LocationIntensitySummaryResponse",
-    "MatchedPoint",
-    "OutlierSummaryResponse",
-    "PeakTableRow",
-    "PhaseEvidence",
-    "PhaseInfoResponse",
-    "PhaseIntensityStatsResponse",
-    "PhaseSegmentSummaryResponse",
-    "PhaseSpeedBreakdownRow",
-    "PhaseTimelineEntryResponse",
-    "PlotDataResult",
-    "RunSuitabilityCheck",
-    "SpeedBreakdownRow",
-    "SpeedStatsResponse",
-    "StrengthBucketDistributionResponse",
-    "SummaryWarningResponse",
-    "SuspectedVibrationOriginPayload",
-    "TestPlanStepResponse",
-]
 
 
 class HistoryArtifactAvailabilityResponse(BaseModel):
@@ -165,12 +101,6 @@ class HistoryListResponse(BaseModel):
     runs: list[HistoryListEntryResponse]
 
 
-# Keep plain assignment so ``HistoryRunResponse.analysis`` can name a local HTTP
-# alias while preserving the shared ``AnalysisSummaryResponse`` runtime/schema
-# identity for OpenAPI generation.
-_HistoryRunAnalysisResponse = _SharedAnalysisSummaryResponse
-
-
 class HistoryRunResponse(_StrictBase):
     """Response body for a single history run with metadata and optional analysis."""
 
@@ -179,7 +109,7 @@ class HistoryRunResponse(_StrictBase):
     sample_count: int
     error_message: str | None = None
     metadata: ApiPayloadObject = Field(default_factory=dict)
-    analysis: _HistoryRunAnalysisResponse | None = None
+    analysis: AnalysisSummary | None = None
     lifecycle: HistoryRunLifecycleResponse | None = None
     artifact_availability: HistoryArtifactAvailabilityResponse | None = None
     raw_capture_finalize: HistoryRawCaptureFinalizeResponse | None = None
@@ -205,14 +135,12 @@ class HistoryInsightsAnalyzingResponse(BaseModel):
     status: Literal["analyzing"]
 
 
+@with_config(ConfigDict(extra="forbid"))
 class HistoryInsightsResponse(AnalysisSummaryCoreResponse, total=False):
     """Response body for the localized history insights endpoint payload."""
 
     status: Annotated[Literal["complete"], Field(default="complete")]
     warnings: list[HistoryInsightWarningResponse]
-
-
-cast(Any, HistoryInsightsResponse).__pydantic_config__ = ConfigDict(extra="forbid")
 
 
 class DeleteHistoryRunResponse(BaseModel):
