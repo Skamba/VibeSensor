@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.recording.run_schema import RunRawCaptureFinalize
 from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
-from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
 
 
 def test_derive_run_artifact_lifecycle_marks_recording_run_pending() -> None:

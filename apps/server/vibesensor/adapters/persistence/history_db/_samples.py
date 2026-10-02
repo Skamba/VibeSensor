@@ -1,7 +1,7 @@
 """Sample serialisation helpers for the ``samples_v2`` table.
 
 Pure functions and schema constants that convert between canonical
-:class:`~vibesensor.shared.types.sensor_frame.SensorFrame` objects and flat
+:class:`~vibesensor.recording.sensor_frame.SensorFrame` objects and flat
 SQLite row tuples. Extracted from :mod:`vibesensor.adapters.persistence.history_db`
 to keep the schema-specific column definitions and conversion logic in one place.
 """
@@ -11,12 +11,12 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 
-from vibesensor.shared.boundaries.sensor_frames.fields import (
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_fields import (
     SENSOR_FRAME_FIELD_NAMES,
     sensor_frame_from_row_payload,
     sensor_frame_to_row_payload,
 )
-from vibesensor.shared.types.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 

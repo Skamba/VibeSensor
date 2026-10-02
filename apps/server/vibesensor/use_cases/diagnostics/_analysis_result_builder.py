@@ -9,8 +9,8 @@ from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_run_metadata
-from vibesensor.shared.boundaries.runs.projection import (
+from vibesensor.recording.run_capture_codec import configuration_snapshot_from_run_metadata
+from vibesensor.recording.run_projection import (
     car_from_run_metadata,
     symptom_from_run_metadata,
 )

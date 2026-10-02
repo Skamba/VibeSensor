@@ -22,11 +22,11 @@ below.
   `apps/server/vibesensor/dsp/constants.py`.
 - Live feature cadence is derived from `feature_interval_s`, which is currently
   written as `1 / metrics_log_hz` by
-  `apps/server/vibesensor/use_cases/run/run_metadata_builder.py`.
+  `apps/server/vibesensor/recording/run_metadata_builder.py`.
 
 ### Run persistence and post-stop analysis
 
-- `apps/server/vibesensor/use_cases/run/logger.py` finalizes a run and schedules
+- `apps/server/vibesensor/recording/recorder.py` finalizes a run and schedules
    `PostAnalysisWorker`.
 - `apps/server/vibesensor/use_cases/run/post_analysis_loader.py` loads persisted
    samples for a run, caps compact analysis input at `_MAX_POST_ANALYSIS_SAMPLES =
@@ -51,7 +51,7 @@ below.
 
 - Raw artifacts are already stored separately from `samples_v2`.
 - The canonical storage contract is
-  `apps/server/vibesensor/shared/types/raw_capture.py`:
+  `apps/server/vibesensor/recording/raw_capture.py`:
   - `RawCaptureManifest`
   - `RawCaptureSensorManifest`
   - `RawCaptureChunkIndex`

@@ -21,8 +21,8 @@ from test_support.history_db_lifecycle import run_samples
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import (
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )

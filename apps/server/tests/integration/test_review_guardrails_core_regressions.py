@@ -117,7 +117,7 @@ class TestModuleAllExports:
                 {"CarConfigPayload", "car_to_persistence_dict", "new_car_id"},
             ),
             (
-                "vibesensor.shared.types.run_schema",
+                "vibesensor.recording.run_schema",
                 {"RUN_SCHEMA_VERSION", "RunMetadata", "RunFinalizationStageResult"},
             ),
             (

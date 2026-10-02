@@ -22,7 +22,7 @@ from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.dsp.vibration_strength import compute_db
-from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
+from vibesensor.recording.run_suitability_codec import run_suitability_payload
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.summary.contracts import (
     AnalysisSummary,

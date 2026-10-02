@@ -13,7 +13,7 @@ from test_support.history_db_lifecycle import (
 from test_support.history_db_sql import execute_statements as _execute_statements
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureSensorClockSync,

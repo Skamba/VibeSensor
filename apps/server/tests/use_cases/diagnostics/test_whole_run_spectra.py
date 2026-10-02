@@ -7,8 +7,7 @@ from math import pi
 
 import numpy as np
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureLossStats,
     RawCaptureManifest,
@@ -19,7 +18,8 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorRange,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
     build_whole_run_spectral_artifact_bundle,

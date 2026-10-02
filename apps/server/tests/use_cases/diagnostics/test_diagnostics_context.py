@@ -5,11 +5,11 @@ from dataclasses import replace
 from test_support.sample_scenarios import make_analysis_sample
 
 from vibesensor.domain.diagnostic_case import Symptom
-from vibesensor.shared.boundaries.runs.metadata import (
+from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
 from vibesensor.use_cases.diagnostics.metadata_projection import metadata_analysis_settings_items
 from vibesensor.use_cases.diagnostics.prepared_analysis_context import (

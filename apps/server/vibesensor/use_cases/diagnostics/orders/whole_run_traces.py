@@ -9,8 +9,8 @@ from typing import cast
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.dsp.window_quality_scoring import window_quality_with_context
 from vibesensor.dsp.window_quality_types import WindowQuality
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.summary.order_trace_contracts import (
     OrderTraceFamily,
     OrderTracePoint,

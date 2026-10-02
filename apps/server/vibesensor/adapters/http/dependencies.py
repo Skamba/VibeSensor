@@ -12,6 +12,7 @@ from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.live.processing_loop import ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.ports import (
     AnalysisSettingsStore,
@@ -22,7 +23,6 @@ from vibesensor.shared.ports import (
 )
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.manager import UpdateManager
-from vibesensor.use_cases.run.logger import RunRecorder
 
 if TYPE_CHECKING:
     from vibesensor.adapters.history.services import (

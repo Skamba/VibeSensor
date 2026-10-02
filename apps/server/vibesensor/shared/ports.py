@@ -10,6 +10,16 @@ from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.live.analysis_time_range import AnalysisTimeRange
 from vibesensor.live.payload_types import ClientMetrics
+from vibesensor.recording.raw_capture import (
+    RawCaptureChunk,
+    RawCaptureLossStats,
+    RawCaptureManifest,
+    RawCaptureSensorClockSync,
+    RawCaptureSensorRange,
+    RawRunCapture,
+)
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.settings.sensor_config import SensorsByMacPayload
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
@@ -23,16 +33,6 @@ from vibesensor.shared.types.history_records import (
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.raw_capture import (
-    RawCaptureChunk,
-    RawCaptureLossStats,
-    RawCaptureManifest,
-    RawCaptureSensorClockSync,
-    RawCaptureSensorRange,
-    RawRunCapture,
-)
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.speed_source_config import (
     ResolvedSpeedSource,

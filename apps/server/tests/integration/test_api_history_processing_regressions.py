@@ -12,8 +12,8 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.adapters.http._helpers import safe_filename as _safe_filename
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.live.processor import SignalProcessor
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
 
 _SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 

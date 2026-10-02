@@ -7,8 +7,8 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture
 from vibesensor.domain.sensor import Sensor, SensorPlacement
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_metadata
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.recording.run_capture_codec import configuration_snapshot_from_metadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
 
 
 def _metadata(**overrides: object) -> dict[str, object]:

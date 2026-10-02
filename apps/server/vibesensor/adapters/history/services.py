@@ -22,7 +22,8 @@ from vibesensor.adapters.http.models.history import (
     HistoryRunResponse,
 )
 from vibesensor.common.json_types import JsonValue, is_json_array, is_json_object
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.recording.run_context import add_current_context_warnings
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.shared.ports import ActiveCarReader
 from vibesensor.summary.warning_fields import localize_warning_list
 from vibesensor.use_cases.history.exports import (
@@ -32,7 +33,6 @@ from vibesensor.use_cases.history.exports import (
     HistoryExportService,
 )
 from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.use_cases.run.run_context import add_current_context_warnings
 
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 

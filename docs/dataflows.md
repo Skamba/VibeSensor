@@ -31,7 +31,7 @@ Deep dive: `docs/intake_buffering.md`
 | Field | Value |
 |------|-------------|
 | Source | The same UDP stream while a run is active |
-| Main path | registry + `apps/server/vibesensor/live/` -> `apps/server/vibesensor/use_cases/run/sample_flush.py` -> `apps/server/vibesensor/use_cases/run/persistence_writer.py` -> history DB |
+| Main path | registry + `apps/server/vibesensor/live/` -> `apps/server/vibesensor/recording/sample_flush.py` -> `apps/server/vibesensor/recording/persistence_writer.py` -> history DB |
 | Boundary | `SampleFlushOrchestrator` owns row building/flush timing; `RunPersistenceWriter` owns the history DB boundary |
 | Final consumer | Persisted run samples, run metadata, and post-stop queueing |
 | Data shape | Persisted summary/sample rows, not replayable raw sensor capture |

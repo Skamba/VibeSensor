@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.statistics import (
     compute_accel_statistics as _compute_accel_statistics,
 )

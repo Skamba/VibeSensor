@@ -7,7 +7,7 @@ from typing import Literal
 
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
+from vibesensor.recording.run_schema import RunRawCaptureFinalize
 
 __all__ = [
     "ArtifactLifecycleState",

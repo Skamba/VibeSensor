@@ -14,8 +14,8 @@ from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.common.json_utils import sanitize_value
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.summary.contracts import AnalysisSummary
 
 

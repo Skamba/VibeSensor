@@ -16,9 +16,9 @@ from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_to_json_objects
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_to_json_object
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_to_json_objects
 from vibesensor.summary.builder import build_analysis_summary
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.data_quality_payload import AccelStatisticsLike

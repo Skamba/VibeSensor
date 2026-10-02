@@ -302,7 +302,7 @@ def _processing_profile_metadata(run: PostAnalysisRunInput) -> JsonObject:
 def _raw_capture_finalize_warning(
     finalize: object,
 ) -> RunContextWarning | None:
-    from vibesensor.shared.types.run_schema import RunRawCaptureFinalize
+    from vibesensor.recording.run_schema import RunRawCaptureFinalize
 
     if not isinstance(finalize, RunRawCaptureFinalize) or not finalize.degraded:
         return None

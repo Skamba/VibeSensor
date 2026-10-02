@@ -32,14 +32,14 @@ from test_support.history_db_lifecycle import (
 )
 
 from vibesensor.dsp.constants import FFT_N
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureManifest,
     RawCaptureSensorClockSync,
     RawCaptureSensorRange,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     build_whole_run_spectral_artifact_bundle,
 )

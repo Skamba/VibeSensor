@@ -7,12 +7,12 @@ from dataclasses import dataclass, replace
 
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.shared.constants.analysis import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import (
     _order_reference_spec_from_context,
 )

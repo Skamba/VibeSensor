@@ -30,8 +30,8 @@ from vibesensor.common.scalars import (
     text_or_none,
 )
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.summary.analysis_views import PeakTableRow
 from vibesensor.summary.hotspot_fields import (
     location_intensity_summaries_from_rows,

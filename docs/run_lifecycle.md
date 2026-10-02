@@ -225,13 +225,13 @@ task/timeout helpers:
 
 | File | Responsibility |
 |------|----------------|
-| `apps/server/vibesensor/use_cases/run/lifecycle_state.py` | In-memory active-run gate and timeout fields. |
-| `apps/server/vibesensor/use_cases/run/sample_flush.py` | Flush decisions, live metric refresh, and sample-row building. |
-| `apps/server/vibesensor/use_cases/run/persistence_writer.py` | History-run creation, append retries, counters, and finalize flow. |
-| `apps/server/vibesensor/use_cases/run/raw_capture_writer.py` | Recorder-side raw chunk queue and raw manifest finalization. |
-| `apps/server/vibesensor/use_cases/run/recording_session.py` | Active run context/sensor snapshots, run-start side effects, and ingest-drop baselines. |
-| `apps/server/vibesensor/use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
-| `apps/server/vibesensor/use_cases/run/logger.py` | Public recording start/stop entrypoint. |
+| `apps/server/vibesensor/recording/lifecycle_state.py` | In-memory active-run gate and timeout fields. |
+| `apps/server/vibesensor/recording/sample_flush.py` | Flush decisions, live metric refresh, and sample-row building. |
+| `apps/server/vibesensor/recording/persistence_writer.py` | History-run creation, append retries, counters, and finalize flow. |
+| `apps/server/vibesensor/recording/raw_capture_writer.py` | Recorder-side raw chunk queue and raw manifest finalization. |
+| `apps/server/vibesensor/recording/recording_session.py` | Active run context/sensor snapshots, run-start side effects, and ingest-drop baselines. |
+| `apps/server/vibesensor/recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
+| `apps/server/vibesensor/recording/recorder.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
 | `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as straight-line steps (one `post_analysis_step` log line each) that call the whole-run diagnostics builders directly. |
 | `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |

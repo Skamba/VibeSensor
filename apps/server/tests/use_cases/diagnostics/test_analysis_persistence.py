@@ -17,10 +17,10 @@ from test_support.routes import iter_api_routes
 from tests.conftest import FakeState
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.summary.contracts import AnalysisSummary
 
 # -- Schema v4 tests ----------------------------------------------------------
@@ -259,9 +259,9 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     """Integration: stop_recording → post-analysis → analysis persisted in DB."""
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.recording._recorder_types import RunRecorderConfig
+    from vibesensor.recording.recorder import RunRecorder
     from vibesensor.speed.gps_speed import GPSSpeedMonitor
-    from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
-    from vibesensor.use_cases.run.logger import RunRecorder
 
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)

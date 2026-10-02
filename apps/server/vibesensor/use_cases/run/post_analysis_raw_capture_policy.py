@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.shared.raw_capture_quality import (
+from vibesensor.recording.raw_capture import RawCaptureManifest
+from vibesensor.recording.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
     assess_raw_capture_loss_policy,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 
 

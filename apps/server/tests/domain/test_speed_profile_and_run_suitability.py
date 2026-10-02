@@ -8,7 +8,7 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_payload
+from vibesensor.recording.run_suitability_codec import run_suitability_from_payload
 from vibesensor.summary.speed_phase_codecs import driving_phase_summary_from_mapping
 
 

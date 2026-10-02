@@ -11,11 +11,11 @@ from dataclasses import dataclass
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.shared.constants.analysis import (
     RIGID_ORDER_PATH_COMPLIANCE,
     WHEEL_ORDER_PATH_COMPLIANCE,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import (
     _effective_engine_rpm,
     _order_reference_spec_from_context,

@@ -14,8 +14,8 @@ from vibesensor.dsp.vibration_strength import (
     percentile,
 )
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.report.presentation import strength_label
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )

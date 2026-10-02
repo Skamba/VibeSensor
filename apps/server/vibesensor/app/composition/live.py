@@ -27,9 +27,9 @@ from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.shared.ports import SensorMetadataStore
-from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
-from vibesensor.use_cases.run.logger import RunRecorder
 
 LOGGER = logging.getLogger(__name__)
 

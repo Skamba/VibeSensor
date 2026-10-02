@@ -12,8 +12,8 @@ from test_support.golden_replay_types import (
     GoldenReplayFixture,
     GoldenReplayResult,
 )
+from vibesensor.recording.raw_capture import RawCaptureSensorRange, RawRunCapture
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.raw_capture import RawCaptureSensorRange, RawRunCapture
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.use_cases.diagnostics.whole_run_spectra import (

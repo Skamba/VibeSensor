@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.report.loader import HistoryReportRequestLoader
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 

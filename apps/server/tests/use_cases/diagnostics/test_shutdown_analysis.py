@@ -10,8 +10,8 @@ import pytest
 import yaml
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
-from vibesensor.use_cases.run.logger import RunRecorder
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 
 # ---------------------------------------------------------------------------

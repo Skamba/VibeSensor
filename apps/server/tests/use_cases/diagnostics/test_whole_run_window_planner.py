@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics.whole_run_windows import (
     plan_whole_run_window_range,
     plan_whole_run_windows,

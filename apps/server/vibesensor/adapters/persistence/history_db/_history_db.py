@@ -40,19 +40,7 @@ from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import
 from vibesensor.common.json_utils import safe_json_dumps
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
-from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.settings.snapshot_codec import (
-    settings_snapshot_from_json,
-    settings_snapshot_to_json,
-)
-from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.types.history_records import (
-    AnalyzingRunHealth,
-    HistoryRunListEntry,
-    StoredHistoryRun,
-)
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureManifest,
@@ -60,8 +48,20 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorRange,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.run_metadata import run_metadata_to_json_object
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_values import SensorFrameDecodeError
+from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.settings.snapshot_codec import (
+    settings_snapshot_from_json,
+    settings_snapshot_to_json,
+)
+from vibesensor.shared.types.history_records import (
+    AnalyzingRunHealth,
+    HistoryRunListEntry,
+    StoredHistoryRun,
+)
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.persisted_codec import (
     persisted_analysis_to_storage_json_object,

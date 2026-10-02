@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vibesensor.shared.boundaries.runs.log import read_jsonl_run
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.run_log import read_jsonl_run
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 
 
 def _load_run(path: Path) -> tuple[RunMetadata, list[SensorFrame], list[str]]:

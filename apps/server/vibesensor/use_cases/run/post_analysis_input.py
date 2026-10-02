@@ -6,8 +6,8 @@ from dataclasses import dataclass, field, replace
 
 from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.raw_capture import RawCaptureManifest
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._run_input import (
     DiagnosticsRunInput,
     build_diagnostics_run_input,

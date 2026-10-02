@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.dsp.strength_bands import bucket_for_strength
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 

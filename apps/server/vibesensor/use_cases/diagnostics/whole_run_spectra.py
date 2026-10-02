@@ -15,14 +15,7 @@ from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer, float_list
 from vibesensor.dsp.vibration_strength import StrengthPeak
 from vibesensor.dsp.window_quality_scoring import score_window_quality
-from vibesensor.shared.raw_capture_timeline import (
-    RawSensorTimeline,
-    RawTimelineChunk,
-    build_raw_sensor_timeline,
-    raw_anchor_reason,
-    resolve_raw_window_end_time,
-)
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureCoverageState,
     RawCaptureLossStats,
     RawCaptureManifest,
@@ -30,7 +23,14 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorRange,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.raw_capture_timeline import (
+    RawSensorTimeline,
+    RawTimelineChunk,
+    build_raw_sensor_timeline,
+    raw_anchor_reason,
+    resolve_raw_window_end_time,
+)
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.summary.whole_run_analysis import (
     WHOLE_RUN_ALGORITHM_VERSIONS,
     WHOLE_RUN_ARTIFACT_STORAGE_DIR_NAME,

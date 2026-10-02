@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.live.processing_loop import ProcessingLoopState
     from vibesensor.live.processor import SignalProcessor
-    from vibesensor.use_cases.run.logger import RunRecorder
+    from vibesensor.recording.recorder import RunRecorder
 
 
 def create_health_routes(

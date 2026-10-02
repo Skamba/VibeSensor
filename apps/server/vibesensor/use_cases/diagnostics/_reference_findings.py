@@ -6,8 +6,8 @@ from collections.abc import Sequence
 
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import FindingKind, VibrationSource
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
 from vibesensor.use_cases.diagnostics._types import Sample
 

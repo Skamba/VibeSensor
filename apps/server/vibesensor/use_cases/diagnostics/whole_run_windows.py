@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.summary.whole_run_analysis import (
     WholeRunWindowDescriptor,
     WholeRunWindowPolicy,

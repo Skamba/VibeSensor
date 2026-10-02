@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.run_context_warning import WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED
 from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input
 from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun

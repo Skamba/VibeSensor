@@ -14,8 +14,8 @@ from vibesensor.adapters.http.models.recording import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.use_cases.run.logger import RunRecorder
-    from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
+    from vibesensor.recording.recorder import RunRecorder
+    from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 
 __all__ = ["create_recording_routes"]
 

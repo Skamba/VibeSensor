@@ -20,8 +20,8 @@ from test_support.settings_services import build_settings_services
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.live.processor import SignalProcessor
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 
 # -- shared helpers ----------------------------------------------------------
 

@@ -30,7 +30,7 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.run_schema import RunMetadata
+    from vibesensor.recording.run_schema import RunMetadata
 
 
 def _counter_delta(counter_values: Sequence[tuple[float | None, float]]) -> int:

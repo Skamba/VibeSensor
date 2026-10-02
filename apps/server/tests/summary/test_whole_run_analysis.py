@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.summary.whole_run_analysis import (
     WHOLE_RUN_ARTIFACT_SCHEMA_VERSION,
     WholeRunArtifactFile,

@@ -28,24 +28,24 @@ from vibesensor.adapters.http.router import create_router
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
-from vibesensor.report.service import HistoryReportService, PdfRendererFn
-from vibesensor.shared.boundaries.runs.metadata import (
+from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.sensor_frames.mapping import (
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
+from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
+from vibesensor.report.service import HistoryReportService, PdfRendererFn
 from vibesensor.shared.types.history_records import (
     HistoryArtifactAvailability,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
 from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.use_cases.history.exports import HistoryExportService

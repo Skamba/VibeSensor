@@ -17,11 +17,11 @@ from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.runs.capture import (
+from vibesensor.recording.run_capture_codec import (
     configuration_snapshot_from_run_metadata,
 )
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.runs.suitability import run_suitability_from_payload
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_suitability_codec import run_suitability_from_payload
 from vibesensor.summary.finding_fields import finding_from_payload
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.speed_phase_codecs import (

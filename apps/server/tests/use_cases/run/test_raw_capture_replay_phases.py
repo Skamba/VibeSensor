@@ -4,9 +4,7 @@ import math
 
 import numpy as np
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,
     RawCaptureSensorClockSync,
@@ -14,6 +12,8 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorManifest,
     RawRunCapture,
 )
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.run import raw_capture_replay
 
 _SAMPLE_RATE_HZ = 800

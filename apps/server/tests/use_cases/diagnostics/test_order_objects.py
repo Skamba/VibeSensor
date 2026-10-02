@@ -8,7 +8,7 @@ from test_support.report_helpers import diagnostics_context
 import vibesensor.use_cases.diagnostics.orders.finding_builder as order_finding_builder_module
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.orders.matching import (
     OrderMatchAccumulator,
 )

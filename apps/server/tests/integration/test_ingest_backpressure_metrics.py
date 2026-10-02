@@ -35,9 +35,9 @@ from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.live.payload_types import LiveWsPayload
 from vibesensor.live.processing_loop import ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
-from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
-from vibesensor.use_cases.run.logger import RunRecorder
 
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800

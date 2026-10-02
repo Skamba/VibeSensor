@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.i18n import normalize_lang
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.diagnostics._analysis_result import AnalysisResult
 from vibesensor.use_cases.diagnostics._analysis_result_builder import build_analysis_result
 from vibesensor.use_cases.diagnostics._run_input import (

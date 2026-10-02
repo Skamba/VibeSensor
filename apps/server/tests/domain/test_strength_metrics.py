@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.codecs.strength_metrics import (
+from vibesensor.recording.strength_metrics_codec import (
     strength_metrics_from_mapping,
     strength_peak_from_mapping,
     strength_peak_payloads,

@@ -11,7 +11,7 @@ from test_support.sample_scenarios import (
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,

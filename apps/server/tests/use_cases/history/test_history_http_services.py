@@ -19,12 +19,12 @@ from vibesensor.adapters.history.services import (
 from vibesensor.common.exceptions import AnalysisNotReadyError
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.report.cache import HistoryReportPdfCache
 from vibesensor.report.loader import HistoryReportRequestLoader
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.history_records import HistoryRunListEntry, StoredHistoryRun
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,

@@ -11,13 +11,13 @@ from test_support.report_helpers import report_sample
 
 from vibesensor.adapters.history.services import ProjectedHistoryRunService
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorRange,
     RawRunCapture,
 )
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,

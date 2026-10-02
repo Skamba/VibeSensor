@@ -7,8 +7,8 @@ from test_support import build_speed_sweep_fault_samples, standard_metadata
 
 from vibesensor.adapters.analysis_summary import summarize_sensor_frames
 from vibesensor.domain.speed_profile import SpeedProfile
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.reconstruction import (
     test_run_from_summary as _reconstruct,
 )

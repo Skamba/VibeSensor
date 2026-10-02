@@ -39,7 +39,7 @@ from test_support.report_record_builders import (
     write_test_log as write_test_log,
 )
 from vibesensor.domain.location_hotspot import LocationHotspot
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
 from vibesensor.use_cases.diagnostics.orders import (
     pipeline as order_findings_module,

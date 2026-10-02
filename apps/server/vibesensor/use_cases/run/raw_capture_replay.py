@@ -11,12 +11,12 @@ import numpy as np
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.shared.boundaries.codecs.strength_metrics import strength_metrics_from_mapping
-from vibesensor.shared.raw_capture_quality import (
+from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
+from vibesensor.recording.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
     assess_raw_capture_loss_policy,
 )
-from vibesensor.shared.raw_capture_timeline import (
+from vibesensor.recording.raw_capture_timeline import (
     RawSensorTimeline,
     RawWindowSegment,
     assemble_raw_window_samples,
@@ -25,9 +25,9 @@ from vibesensor.shared.raw_capture_timeline import (
     raw_timeline_is_legacy,
     resolve_raw_window_end_time,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureSensorData, RawRunCapture
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,

@@ -5,9 +5,9 @@ import sqlite3
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.use_cases.diagnostics._validation import MissingStrengthMetricsError
 from vibesensor.use_cases.run.post_analysis_executor import (
     PostAnalysisExecutionConfig,

@@ -10,7 +10,7 @@ from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._types import AccelStatistics, PhaseLabels, Sample
 from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData
 

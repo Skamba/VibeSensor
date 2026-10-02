@@ -5,9 +5,9 @@ from types import SimpleNamespace
 import pytest
 from test_post_analysis_summary import _full_raw_capture
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureSensorClockSync
+from vibesensor.recording.raw_capture import RawCaptureSensorClockSync
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED,

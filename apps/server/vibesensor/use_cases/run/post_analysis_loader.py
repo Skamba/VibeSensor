@@ -6,10 +6,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from math import ceil, isfinite
 
+from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
-from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_frame import SensorFrame
 
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _EVENT_PRESERVING_SAMPLING_METHOD = "event_preserving"

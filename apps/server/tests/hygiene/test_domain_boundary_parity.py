@@ -12,7 +12,7 @@ from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.boundaries.runs.suitability import (
+from vibesensor.recording.run_suitability_codec import (
     run_suitability_from_payload,
     run_suitability_payload,
 )

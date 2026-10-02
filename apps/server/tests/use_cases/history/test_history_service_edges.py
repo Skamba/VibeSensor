@@ -16,17 +16,17 @@ from test_support.persisted_analysis import make_persisted_analysis
 from vibesensor.adapters.history.projection import project_history_run_record
 from vibesensor.common.exceptions import AnalysisNotReadyError
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.report.cache import (
     REPORT_PDF_CACHE_MAX_BYTES,
     REPORT_PDF_CACHE_MAX_ENTRIES,
     HistoryReportPdfCache,
 )
 from vibesensor.report.loader import HistoryReportRequestLoader
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
 from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.shared.types.run_lifecycle import RunArtifactLifecycle
-from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
 
 

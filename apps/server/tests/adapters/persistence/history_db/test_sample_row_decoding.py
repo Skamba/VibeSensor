@@ -10,9 +10,9 @@ from vibesensor.adapters.persistence.history_db._samples import (
     sample_to_v2_row,
     v2_row_to_sensor_frame,
 )
-from vibesensor.shared.boundaries.codecs.sensor_frame_values import SensorFrameDecodeError
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
+from vibesensor.recording.sensor_frame_values import SensorFrameDecodeError
 
 
 def _frame() -> SensorFrame:

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.shared.constants.analysis import (
     MIN_ANALYSIS_FREQ_HZ,
     ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S,
@@ -20,7 +21,6 @@ from vibesensor.shared.constants.analysis import (
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _estimate_strength_floor_amp_g,
 )

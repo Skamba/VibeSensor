@@ -33,6 +33,8 @@ from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.live.processing_loop import ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 from vibesensor.report.service import HistoryReportService
 from vibesensor.settings.car_config import CarsSnapshot
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
@@ -43,8 +45,6 @@ from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateJobStatus, UsbInternetStatus
 from vibesensor.use_cases.history.exports import HistoryExportService
 from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.use_cases.run.logger import RunRecorder
-from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers

@@ -3,10 +3,10 @@ from __future__ import annotations
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.common.json_utils import i18n_ref
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import RawCaptureManifest, RawRunCapture
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
     RunContextWarning,

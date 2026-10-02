@@ -17,7 +17,7 @@ import dataclasses
 
 from vibesensor.adapters.persistence.history_db._samples import _V2_COLUMNS
 from vibesensor.adapters.persistence.history_db._schema import SCHEMA_SQL
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
 
 # Known source-specific columns that are intentionally absent from other sources.

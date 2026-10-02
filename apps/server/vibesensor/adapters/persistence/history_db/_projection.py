@@ -15,19 +15,19 @@ from vibesensor.adapters.persistence.history_db._whole_run_artifact_store import
 from vibesensor.common.json_types import is_json_object
 from vibesensor.common.json_utils import safe_json_loads
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.recording.raw_capture import RawCaptureManifest
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.shared.types.history_records import (
     ArtifactAvailabilityState,
     HistoryArtifactAvailability,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.raw_capture import RawCaptureManifest
 from vibesensor.shared.types.run_lifecycle import (
     RunArtifactLifecycle,
     derive_run_artifact_lifecycle,
 )
-from vibesensor.shared.types.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.persisted_codec import (
     persisted_analysis_from_storage_json_object,

@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from vibesensor.dsp.strength_bands import bucket_for_strength
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
 def make_sample(

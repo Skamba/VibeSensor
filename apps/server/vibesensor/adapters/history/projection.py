@@ -8,14 +8,14 @@ from typing import cast
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.runs.metadata import (
+from vibesensor.recording.raw_capture_quality import assess_raw_capture_loss_policy
+from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
-from vibesensor.shared.raw_capture_quality import assess_raw_capture_loss_policy
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.run_suitability_codec import run_suitability_payload
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )

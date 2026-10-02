@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.settings.analysis_settings_codec import (
     ScalarSettings,
     analysis_settings_snapshot_items,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
 
 __all__ = [
     "metadata_analysis_settings_items",

@@ -19,7 +19,7 @@ from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, Ph
 from vibesensor.use_cases.diagnostics.signal_aggregation import _sensor_intensity_by_location
 
 if TYPE_CHECKING:
-    from vibesensor.shared.types.run_schema import RunMetadata
+    from vibesensor.recording.run_schema import RunMetadata
 
 
 def build_phase_timeline(

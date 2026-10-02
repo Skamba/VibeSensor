@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.domain.capture_readiness import CaptureReadiness, CaptureReadinessCheck
-from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
+from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 
 
 def _make_recording_status_snapshot(

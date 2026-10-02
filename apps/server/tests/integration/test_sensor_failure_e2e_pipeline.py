@@ -26,12 +26,12 @@ from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processing_loop import ProcessingLoopState, ProcessingTickRunner
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.pdf.pdf_engine import build_report_pdf
 from vibesensor.report.preparation import prepare_report_input
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
-from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
-from vibesensor.use_cases.run.logger import RunRecorder
 
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800

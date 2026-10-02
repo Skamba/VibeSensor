@@ -4,8 +4,8 @@ import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.whole_run_analysis import WholeRunContextWindowLabel
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_whole_run_context,

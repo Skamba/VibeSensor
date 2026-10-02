@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from test_support.findings import make_finding_payload, make_info_finding, make_ref_finding
 
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.finding_fields import finding_from_payload
 from vibesensor.use_cases.diagnostics.findings import PeakFindingAnalyzer, finalize_findings
 

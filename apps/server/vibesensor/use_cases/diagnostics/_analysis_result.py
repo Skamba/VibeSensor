@@ -12,7 +12,7 @@ from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
 from vibesensor.use_cases.diagnostics._view_types import PeakTableRowData
 from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData
