@@ -53,7 +53,6 @@ assert_wheel_static_data_contract() {
   local venv_site_packages_glob="${root_mnt}/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/data"
   local venv_data_dir=""
   local first_vehicle_shard=""
-  local first_car_source=""
   local candidate=""
 
   for candidate in ${venv_site_packages_glob}; do
