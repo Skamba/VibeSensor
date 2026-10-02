@@ -119,7 +119,7 @@ export interface paths {
         post?: never;
         /**
          * Remove Client
-         * @description Remove a disconnected sensor from the runtime registry.
+         * @description Remove a disconnected sensor and release its assigned location.
          */
         delete: operations["remove_client_api_clients__client_id__delete"];
         options?: never;

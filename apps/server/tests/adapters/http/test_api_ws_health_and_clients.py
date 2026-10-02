@@ -309,6 +309,54 @@ def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) ->
         asyncio.run(_close_history_db(db))
 
 
+def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) -> None:
+    from test_support.settings_services import build_settings_services
+
+    from vibesensor.adapters.persistence.history_db import HistoryDB
+    from vibesensor.adapters.udp.protocol import HelloMessage
+    from vibesensor.infra.runtime.registry import ClientRegistry
+
+    db = HistoryDB(tmp_path / "history.db")
+    try:
+        settings_store = build_settings_services(db=db).sensor_settings
+        registry = ClientRegistry(db=db)
+        for client_hex in ("001122334455", "001122334466"):
+            registry.update_from_hello(
+                HelloMessage(
+                    client_id=bytes.fromhex(client_hex),
+                    control_port=9010,
+                    sample_rate_hz=800,
+                    name="advertised-name",
+                    firmware_version="fw",
+                ),
+                ("10.4.0.2", 9010),
+                1.0,
+                now_mono=1.0,
+            )
+
+        app = _client_routes_app(registry, MagicMock(), settings_store, MagicMock())
+
+        with TestClient(app) as client:
+            assigned = client.post(
+                "/api/clients/00:11:22:33:44:55/location",
+                json={"location_code": "front_left_wheel"},
+            )
+            removed = client.delete("/api/clients/00:11:22:33:44:55")
+            replacement = client.post(
+                "/api/clients/00:11:22:33:44:66/location",
+                json={"location_code": "front_left_wheel"},
+            )
+
+        assert assigned.status_code == 200
+        assert removed.status_code == 200
+        assert replacement.status_code == 200
+        sensors = settings_store.get_sensors()
+        assert sensors["001122334455"]["location_code"] == ""
+        assert sensors["001122334466"]["location_code"] == "front_left_wheel"
+    finally:
+        asyncio.run(_close_history_db(db))
+
+
 def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
