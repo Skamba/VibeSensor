@@ -10,7 +10,7 @@ from statistics import mean as _mean
 from typing import TYPE_CHECKING
 
 from vibesensor.domain import LocationHotspotRow, LocationIntensitySummary, TestRun
-from vibesensor.shared.types.history_analysis_contracts import LocationProofBasis
+from vibesensor.shared.types.spatial_evidence_contracts import LocationProofBasis
 from vibesensor.vibration_strength import compute_db, percentile
 
 if TYPE_CHECKING:

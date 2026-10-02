@@ -138,6 +138,44 @@ def test_whole_run_artifact_manifest_round_trips_with_window_policy() -> None:
     assert restored.artifact("window_spectra_sensor-a") == manifest.artifacts[1]
 
 
+def test_whole_run_artifact_manifest_decodes_legacy_payload_with_derived_paths() -> None:
+    """Manifests persisted with the retired derived ``generated_artifact_paths`` still load."""
+
+    legacy_payload = {
+        "schema_version": 1,
+        "storage_type": "run-directory-v1",
+        "run_id": "run-1",
+        "relative_dir": "whole-run-artifacts/run-1",
+        "window_policy": {
+            "sample_rate_hz": 800,
+            "window_size_samples": 2048,
+            "stride_samples": 200,
+            "overlap_samples": 1848,
+            "feature_interval_s": 0.25,
+        },
+        "total_window_count": 3,
+        "artifacts": [
+            {
+                "artifact_key": "window_context",
+                "relative_path": "window-context.jsonl",
+                "file_format": "jsonl",
+                "record_count": 3,
+            }
+        ],
+        "generated_artifact_paths": {"window_context": "window-context.jsonl"},
+        "created_at": "2025-01-01T00:00:10Z",
+        "algorithm_versions": {"whole_run_context": 1},
+        "configuration": {"frequency_bins": [1.0, 2.0], "nested": {"enabled": True}},
+        "source_raw_manifests": [],
+    }
+
+    restored = WholeRunArtifactManifest.from_mapping(legacy_payload)
+
+    assert restored.generated_artifact_paths == {"window_context": "window-context.jsonl"}
+    assert restored.configuration == {"frequency_bins": [1.0, 2.0], "nested": {"enabled": True}}
+    assert "generated_artifact_paths" not in restored.to_json_object()
+
+
 def test_context_window_label_round_trips_with_explicit_quality_states() -> None:
     label = WholeRunContextWindowLabel(
         window_index=12,
@@ -162,7 +200,7 @@ def test_context_window_label_round_trips_with_explicit_quality_states() -> None
 
 
 def test_context_window_label_rejects_negative_indices() -> None:
-    with pytest.raises(ValueError, match="window_index >= 0"):
+    with pytest.raises(ValueError, match="window_index must be >= 0"):
         WholeRunContextWindowLabel(
             window_index=-1,
             segment_index=None,
@@ -197,48 +235,38 @@ def test_context_interval_round_trips_with_window_range_summary() -> None:
     assert restored.window_count == 7
 
 
-def test_context_interval_from_mapping_defaults_invalid_numeric_fields() -> None:
-    interval = WholeRunContextInterval.from_mapping(
-        {
-            "segment_index": "2",
-            "phase": "acceleration",
-            "load_state": "transient",
-            "start_window_index": "8",
-            "end_window_index": "14",
-            "start_t_s": "bad",
-            "end_t_s": "5.5",
-            "full_context_window_count": "bad",
-            "partial_context_window_count": 2,
-            "missing_context_window_count": None,
-        }
-    )
+def test_context_interval_from_mapping_rejects_invalid_numeric_fields() -> None:
+    payload: dict[str, object] = {
+        "segment_index": 2,
+        "phase": "acceleration",
+        "load_state": "transient",
+        "start_window_index": 8,
+        "end_window_index": 14,
+        "end_t_s": 5.5,
+        "partial_context_window_count": 2,
+    }
+    interval = WholeRunContextInterval.from_mapping(payload)
 
-    assert interval.segment_index == 2
-    assert interval.start_window_index == 8
-    assert interval.end_window_index == 14
     assert interval.start_t_s is None
     assert interval.end_t_s == pytest.approx(5.5)
     assert interval.full_context_window_count == 0
     assert interval.partial_context_window_count == 2
-    assert interval.missing_context_window_count == 0
+    with pytest.raises(ValueError, match="full_context_window_count"):
+        WholeRunContextInterval.from_mapping({**payload, "full_context_window_count": "bad"})
 
 
-def test_context_window_label_from_mapping_defaults_invalid_literal_states() -> None:
-    label = WholeRunContextWindowLabel.from_mapping(
-        {
-            "window_index": 3,
-            "phase": "cruise",
-            "context_coverage": "bad",
-            "speed_validity": "sensor_fusion",
-            "rpm_validity": "derived",
-            "load_state": "pulling",
-        }
-    )
-
-    assert label.context_coverage == "missing"
-    assert label.speed_validity == "missing"
-    assert label.rpm_validity == "missing"
-    assert label.load_state == "unknown"
+def test_context_window_label_from_mapping_rejects_unknown_literal_states() -> None:
+    payload: dict[str, object] = {
+        "window_index": 3,
+        "phase": "cruise",
+        "context_coverage": "full",
+        "speed_validity": "measured",
+        "rpm_validity": "missing",
+        "load_state": "steady",
+    }
+    assert WholeRunContextWindowLabel.from_mapping(payload).segment_index is None
+    with pytest.raises(ValueError, match="load_state"):
+        WholeRunContextWindowLabel.from_mapping({**payload, "load_state": "pulling"})
 
 
 def test_context_interval_rejects_inverted_window_ranges() -> None:

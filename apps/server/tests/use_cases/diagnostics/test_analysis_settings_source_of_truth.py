@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
-from test_support import response_payload
 from test_support.routes import iter_api_routes
 from test_support.settings_services import build_settings_services
 
@@ -13,7 +12,6 @@ from vibesensor.adapters.http import create_router
 from vibesensor.adapters.http.models.settings import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
-    CarUpsertRequest,
 )
 
 
@@ -62,11 +60,9 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) ->
     assert settings.car_settings.active_car_aspects()["tire_width_mm"] == 255.0
     assert settings.analysis_settings.analysis_settings_snapshot().tire_width_mm == 255.0
 
-    cars = response_payload(
-        await add_car(CarUpsertRequest(name="Second", aspects={"tire_width_mm": 225.0})),
-    )
-    second_id = cars["cars"][1]["id"]
+    cars = await add_car({"name": "Second", "aspects": {"tire_width_mm": 225.0}})
+    second_id = cars.cars[1]["id"]
     await set_active(ActiveCarRequest(car_id=second_id))
     assert settings.analysis_settings.analysis_settings_snapshot().tire_width_mm == 225.0
-    current = response_payload(await get_cars())
-    assert current["active_car_id"] == second_id
+    current = await get_cars()
+    assert current.active_car_id == second_id

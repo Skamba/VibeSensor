@@ -7,8 +7,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import cast
 
+from vibesensor.shared.types.history_analysis_contracts import AnalysisSummary
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.persisted_analysis_contracts import PersistedAnalysisPayload
 
 __all__ = [
     "PERSISTED_ANALYSIS_SCHEMA_VERSION",
@@ -24,7 +24,7 @@ STORAGE_SCHEMA_VERSION_KEY = "_schema_version"
 class PersistedAnalysis(Mapping[str, object]):
     """Internal persisted-analysis value object without transport/storage codecs."""
 
-    payload: PersistedAnalysisPayload
+    payload: AnalysisSummary
 
     def __getitem__(self, key: str) -> object:
         return cast(Mapping[str, object], self.payload)[key]
@@ -40,7 +40,7 @@ class PersistedAnalysis(Mapping[str, object]):
         """Create a persisted-analysis value object from an in-memory JSON mapping."""
 
         return cls(
-            payload=deepcopy(cast(PersistedAnalysisPayload, dict(payload))),
+            payload=deepcopy(cast(AnalysisSummary, dict(payload))),
         )
 
     def to_json_object(self) -> JsonObject:

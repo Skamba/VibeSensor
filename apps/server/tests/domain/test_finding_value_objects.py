@@ -386,6 +386,6 @@ class TestFindingEnrichments:
 
 def test_finding_payload_is_distinct_from_domain_finding() -> None:
     from vibesensor.domain import Finding as DomainFinding
-    from vibesensor.shared.types.history_analysis_contracts import FindingPayload
+    from vibesensor.shared.types.finding_payload_parts import FindingPayload
 
     assert DomainFinding is not FindingPayload

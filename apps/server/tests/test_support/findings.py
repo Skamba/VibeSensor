@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from vibesensor.domain import Finding, VibrationSource
-from vibesensor.shared.types.history_analysis_contracts import FindingPayload
+from vibesensor.shared.types.finding_payload_parts import FindingPayload
 
 
 def make_finding(

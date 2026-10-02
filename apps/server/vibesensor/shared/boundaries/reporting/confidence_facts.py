@@ -16,20 +16,14 @@ from vibesensor.domain import (
 from vibesensor.shared.boundaries.reporting.decision_facts import ReportDecisionFacts
 from vibesensor.shared.boundaries.reporting.evidence_facts import ReportEvidenceFacts
 from vibesensor.shared.boundaries.reporting.projection import PrimaryReportFacts
-from vibesensor.shared.types.history_analysis_contracts import (
-    DiagnosisFactorDetailsResponse,
-    DiagnosisFactorKey,
-    DiagnosisFactorPolarity,
-    DiagnosisFactorResponse,
-    DiagnosisFactorSeverity,
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    DiagnosisFactor,
+    WholeRunDiagnosisSummary,
+    diagnosis_factor_from_assessment,
 )
 
 if TYPE_CHECKING:
     from vibesensor.shared.boundaries.reporting.facts import ReportContextFacts
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import (
-        DiagnosisFactor,
-        WholeRunDiagnosisSummary,
-    )
 
 __all__ = [
     "ReportConfidenceFacts",
@@ -171,11 +165,16 @@ def apply_report_confidence_fallback(
 
 def project_whole_run_diagnosis_factors(
     confidence_facts: ReportConfidenceFacts,
-) -> tuple[tuple[DiagnosisFactorResponse, ...], tuple[DiagnosisFactorResponse, ...]]:
+) -> tuple[tuple[DiagnosisFactor, ...], tuple[DiagnosisFactor, ...]]:
     """Project stable support and counterevidence rows from canonical confidence facts."""
 
-    support = tuple(_factor_payload(factor) for factor in confidence_facts.support_factors)
-    counter = tuple(_factor_payload(factor) for factor in confidence_facts.counterevidence_factors)
+    support = tuple(
+        diagnosis_factor_from_assessment(factor) for factor in confidence_facts.support_factors
+    )
+    counter = tuple(
+        diagnosis_factor_from_assessment(factor)
+        for factor in confidence_facts.counterevidence_factors
+    )
     return (support, counter)
 
 
@@ -281,57 +280,6 @@ def _support_location_summary(
         top_location,
         top_count / total,
     )
-
-
-def _factor_payload(factor: DiagnosisAssessmentFactor) -> DiagnosisFactorResponse:
-    return {
-        "factor_key": cast(DiagnosisFactorKey, factor.factor_key),
-        "polarity": cast(DiagnosisFactorPolarity, factor.polarity),
-        "severity": cast(DiagnosisFactorSeverity, factor.severity),
-        "weight": factor.weight,
-        "details": _factor_details_payload(factor.details),
-    }
-
-
-def _factor_details_payload(
-    details: DiagnosisAssessmentFactorDetails,
-) -> DiagnosisFactorDetailsResponse:
-    payload: DiagnosisFactorDetailsResponse = {}
-    if details.raw_backed_sample_count is not None:
-        payload["raw_backed_sample_count"] = details.raw_backed_sample_count
-    if details.supporting_window_count is not None:
-        payload["supporting_window_count"] = details.supporting_window_count
-    if details.supporting_duration_s is not None:
-        payload["supporting_duration_s"] = details.supporting_duration_s
-    if details.stable_frequency_min_hz is not None:
-        payload["stable_frequency_min_hz"] = details.stable_frequency_min_hz
-    if details.stable_frequency_max_hz is not None:
-        payload["stable_frequency_max_hz"] = details.stable_frequency_max_hz
-    if details.frequency_span_hz is not None:
-        payload["frequency_span_hz"] = details.frequency_span_hz
-    if details.supporting_location_count is not None:
-        payload["supporting_location_count"] = details.supporting_location_count
-    if details.top_support_location is not None:
-        payload["top_support_location"] = details.top_support_location
-    if details.top_support_share is not None:
-        payload["top_support_share"] = details.top_support_share
-    if details.mean_relative_error is not None:
-        payload["mean_relative_error"] = details.mean_relative_error
-    if details.snr_db is not None:
-        payload["snr_db"] = details.snr_db
-    if details.alternative_source is not None:
-        payload["alternative_source"] = details.alternative_source
-    if details.speed_gap_window_count is not None:
-        payload["speed_gap_window_count"] = details.speed_gap_window_count
-    if details.rpm_gap_window_count is not None:
-        payload["rpm_gap_window_count"] = details.rpm_gap_window_count
-    if details.fallback_reason is not None:
-        payload["fallback_reason"] = details.fallback_reason
-    if details.car_data_reference_scope is not None:
-        payload["car_data_reference_scope"] = details.car_data_reference_scope
-    if details.car_data_confidence is not None:
-        payload["car_data_confidence"] = details.car_data_confidence
-    return payload
 
 
 def _assessment_factor_from_summary_factor(

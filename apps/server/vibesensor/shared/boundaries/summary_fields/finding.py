@@ -32,7 +32,7 @@ from vibesensor.shared.types.analysis_views import (
     MatchedPoint,
     PhaseEvidence,
 )
-from vibesensor.shared.types.history_analysis_contracts import AmplitudeMetric, FindingPayload
+from vibesensor.shared.types.finding_payload_parts import AmplitudeMetric, FindingPayload
 
 __all__ = [
     "finding_from_payload",

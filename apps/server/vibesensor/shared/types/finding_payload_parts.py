@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Required, TypedDict
 
+from pydantic import ConfigDict, with_config
+
 from vibesensor.shared.types.analysis_views import (
     FindingEvidenceMetrics,
     LocationHotspotPayload,
@@ -20,6 +22,7 @@ __all__ = [
 ]
 
 
+@with_config(ConfigDict(extra="forbid"))
 class AmplitudeMetric(TypedDict, total=False):
     """HTTP contract for finding amplitude/strength metadata."""
 
@@ -67,6 +70,7 @@ class FindingPresentationPayload(TypedDict, total=False):
     confidence_pct: str | None
 
 
+@with_config(ConfigDict(extra="forbid"))
 class FindingPayload(FindingCorePayload, FindingPresentationPayload, total=False):
     """Canonical shared contract for one serialized finding payload.
 

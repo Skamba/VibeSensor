@@ -9,20 +9,18 @@ from vibesensor.domain import (
     DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP,
     CarOrderReferenceStatus,
     DiagnosisAssessment,
-    DiagnosisAssessmentFactor,
     DiagnosisAssessmentInputs,
     score_diagnosis_assessment_inputs,
 )
-from vibesensor.shared.types.history_analysis_contracts import DiagnosisDataQualityLimitation
 from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
 from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
 from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
 from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    DiagnosisDataQualityLimitation,
     DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,
-    DiagnosisFactor,
-    DiagnosisFactorDetails,
     WholeRunDiagnosisSummary,
+    diagnosis_factor_from_assessment,
 )
 
 __all__ = ["build_whole_run_diagnosis_summaries"]
@@ -155,11 +153,11 @@ def build_whole_run_diagnosis_summaries(
                 data_quality_summary=_data_quality_summary(candidate),
                 exemplar_references=_exemplar_references(candidate, context_intervals),
                 support_factors=tuple(
-                    _diagnosis_factor_from_assessment_factor(factor)
+                    diagnosis_factor_from_assessment(factor)
                     for factor in candidate.assessment.support_factors
                 ),
                 counterevidence_factors=tuple(
-                    _diagnosis_factor_from_assessment_factor(factor)
+                    diagnosis_factor_from_assessment(factor)
                     for factor in candidate.assessment.counterevidence_factors
                 ),
             )
@@ -423,34 +421,6 @@ def _top_support_share(spatial_summary: SpatialEvidenceSummary | None) -> float 
     if total <= 0:
         return None
     return spatial_summary.location_summaries[0].supporting_window_count / total
-
-
-def _diagnosis_factor_from_assessment_factor(factor: DiagnosisAssessmentFactor) -> DiagnosisFactor:
-    return DiagnosisFactor(
-        factor_key=factor.factor_key,  # type: ignore[arg-type]
-        polarity=factor.polarity,  # type: ignore[arg-type]
-        severity=factor.severity,  # type: ignore[arg-type]
-        weight=factor.weight,
-        details=DiagnosisFactorDetails(
-            raw_backed_sample_count=factor.details.raw_backed_sample_count,
-            supporting_window_count=factor.details.supporting_window_count,
-            supporting_duration_s=factor.details.supporting_duration_s,
-            stable_frequency_min_hz=factor.details.stable_frequency_min_hz,
-            stable_frequency_max_hz=factor.details.stable_frequency_max_hz,
-            frequency_span_hz=factor.details.frequency_span_hz,
-            supporting_location_count=factor.details.supporting_location_count,
-            top_support_location=factor.details.top_support_location,
-            top_support_share=factor.details.top_support_share,
-            mean_relative_error=factor.details.mean_relative_error,
-            snr_db=factor.details.snr_db,
-            alternative_source=factor.details.alternative_source,
-            speed_gap_window_count=factor.details.speed_gap_window_count,
-            rpm_gap_window_count=factor.details.rpm_gap_window_count,
-            fallback_reason=factor.details.fallback_reason,
-            car_data_reference_scope=factor.details.car_data_reference_scope,
-            car_data_confidence=factor.details.car_data_confidence,
-        ),
-    )
 
 
 def _exemplar_references(

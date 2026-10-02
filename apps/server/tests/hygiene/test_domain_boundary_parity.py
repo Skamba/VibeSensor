@@ -24,10 +24,8 @@ from vibesensor.shared.boundaries.summary_fields.finding import (
     finding_from_payload,
     finding_payload_from_domain,
 )
-from vibesensor.shared.types.history_analysis_contracts import (
-    FindingPayload,
-    RunSuitabilityCheck,
-)
+from vibesensor.shared.types.finding_payload_parts import FindingPayload
+from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 
 
 def test_finding_payload_round_trips_domain_summary_boundary() -> None:

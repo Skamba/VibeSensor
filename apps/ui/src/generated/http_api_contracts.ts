@@ -944,10 +944,10 @@ export interface components {
             tire_width_mm: number;
         };
         /**
-         * AnalysisSummaryResponse
-         * @description Canonical shared owner for the persisted analysis summary wrapper.
+         * AnalysisSummary
+         * @description Persisted analysis summary (``runs.analysis_json``) and its HTTP response schema.
          */
-        AnalysisSummaryResponse: {
+        AnalysisSummary: {
             /** Accel Scale G Per Lsb */
             accel_scale_g_per_lsb: number | null;
             analysis_metadata?: components["schemas"]["PayloadObject"];
@@ -1029,13 +1029,13 @@ export interface components {
             /** Warnings */
             warnings: components["schemas"]["SummaryWarningResponse"][];
             /** Whole Run Context Intervals */
-            whole_run_context_intervals?: components["schemas"]["WholeRunContextIntervalResponse"][];
+            whole_run_context_intervals?: components["schemas"]["WholeRunContextInterval"][];
             /** Whole Run Diagnosis Summaries */
-            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummaryResponse"][];
+            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummary"][];
             /** Whole Run Order Summaries */
-            whole_run_order_summaries?: components["schemas"]["OrderTraceSummaryResponse"][];
+            whole_run_order_summaries?: components["schemas"]["OrderTraceSummary"][];
             /** Whole Run Spatial Summaries */
-            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummaryResponse"][];
+            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummary"][];
         };
         ApiPayloadObject: {
             [key: string]: components["schemas"]["JsonSchemaValue"];
@@ -1057,6 +1057,36 @@ export interface components {
             hz?: number;
             /** Snr Ratio */
             snr_ratio?: number;
+        };
+        /**
+         * CarConfigPayload
+         * @description One car profile as persisted in the settings snapshot and served over HTTP.
+         */
+        CarConfigPayload: {
+            aspects: components["schemas"]["AnalysisSettingsPayload"];
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
+            /** Type */
+            type: string;
+            /** Variant */
+            variant?: string | null;
+        };
+        /**
+         * CarConfigUpdatePayload
+         * @description Create/update request body for one car profile; omitted or null fields stay unchanged.
+         */
+        CarConfigUpdatePayload: {
+            aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
+            /** Name */
+            name?: string | null;
+            order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
+            /** Type */
+            type?: string | null;
+            /** Variant */
+            variant?: string | null;
         };
         /**
          * CarLibraryBrandsResponse
@@ -1200,10 +1230,13 @@ export interface components {
             tire_width_mm?: number | null;
         };
         /**
-         * CarOrderReferenceStatus
-         * @description Confidence metadata for saved drivetrain order-reference values.
+         * CarOrderReferenceStatusPayload
+         * @description Persisted/HTTP confidence metadata for selected drivetrain order-reference values.
+         *
+         *     Confidence values stay plain strings at this boundary;
+         *     ``car_order_reference_status_from_mapping`` keeps only the known vocabulary.
          */
-        CarOrderReferenceStatus: {
+        CarOrderReferenceStatusPayload: {
             /** Current Gear Ratio Confidence */
             current_gear_ratio_confidence?: string | null;
             /** Final Drive Ratio Confidence */
@@ -1223,44 +1256,14 @@ export interface components {
             transmission_name?: string | null;
         };
         /**
-         * CarResponse
-         * @description Response body representing a single car profile.
+         * CarsSnapshot
+         * @description Car profiles plus the active selection, as held in memory and served over HTTP.
          */
-        CarResponse: {
-            aspects: components["schemas"]["AnalysisSettingsPayload"];
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            order_reference_status?: components["schemas"]["CarOrderReferenceStatus"] | null;
-            /** Type */
-            type: string;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarUpsertRequest
-         * @description Request body for creating or updating a car profile.
-         */
-        CarUpsertRequest: {
-            aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
-            /** Name */
-            name?: string | null;
-            order_reference_status?: components["schemas"]["CarOrderReferenceStatus"] | null;
-            /** Type */
-            type?: string | null;
-            /** Variant */
-            variant?: string | null;
-        };
-        /**
-         * CarsResponse
-         * @description Response body for the list of all car profiles with the active car ID.
-         */
-        CarsResponse: {
+        CarsSnapshot: {
             /** Active Car Id */
             active_car_id: string | null;
             /** Cars */
-            cars: components["schemas"]["CarResponse"][];
+            cars: components["schemas"]["CarConfigPayload"][];
         };
         /** ClientApiRow */
         ClientApiRow: {
@@ -1416,10 +1419,10 @@ export interface components {
         /** @enum {string} */
         DiagnosisDataQualityLimitation: "reference_gap" | "speed_context" | "sensor_timing" | "sensor_mounting" | "sensor_clipping" | "road_shock" | "weak_spatial" | "ambiguous_location" | "summary_fallback" | "window_quality";
         /**
-         * DiagnosisDataQualitySummaryResponse
-         * @description Compact report-facing data-quality summary for one diagnosis/finding.
+         * DiagnosisDataQualitySummary
+         * @description Compact persisted data-quality rollup for one fused diagnosis.
          */
-        DiagnosisDataQualitySummaryResponse: {
+        DiagnosisDataQualitySummary: {
             /** Excluded Window Count */
             excluded_window_count?: number | null;
             /** Limitation Keys */
@@ -1444,10 +1447,10 @@ export interface components {
         /** @enum {string} */
         DiagnosisExemplarKind: "order_support_interval" | "whole_run_context_interval" | "spatial_location";
         /**
-         * DiagnosisExemplarReferenceResponse
-         * @description Compact reference to one persisted exemplar used by a fused diagnosis.
+         * DiagnosisExemplarReference
+         * @description Compact reference to one persisted exemplar for a fused diagnosis.
          */
-        DiagnosisExemplarReferenceResponse: {
+        DiagnosisExemplarReference: {
             /** Context Segment Index */
             context_segment_index?: number | null;
             kind: components["schemas"]["DiagnosisExemplarKind"];
@@ -1465,10 +1468,22 @@ export interface components {
             support_interval_index?: number | null;
         };
         /**
-         * DiagnosisFactorDetailsResponse
+         * DiagnosisFactor
+         * @description One stable support or counterevidence factor for a fused diagnosis.
+         */
+        DiagnosisFactor: {
+            details: components["schemas"]["DiagnosisFactorDetails"];
+            factor_key: components["schemas"]["DiagnosisFactorKey"];
+            polarity: components["schemas"]["DiagnosisFactorPolarity"];
+            severity: components["schemas"]["DiagnosisFactorSeverity"];
+            /** Weight */
+            weight: number;
+        };
+        /**
+         * DiagnosisFactorDetails
          * @description Structured details carried by one persisted diagnosis factor row.
          */
-        DiagnosisFactorDetailsResponse: {
+        DiagnosisFactorDetails: {
             /** Alternative Source */
             alternative_source?: string | null;
             /** Car Data Confidence */
@@ -1508,20 +1523,14 @@ export interface components {
         DiagnosisFactorKey: "raw_backed" | "repeated_support" | "sustained_support" | "stable_frequency" | "tight_order_lock" | "localized_support" | "clean_signal" | "user_confirmed_vehicle_data" | "summary_only" | "raw_replay_incomplete" | "legacy_context" | "speed_context_gaps" | "rpm_context_gaps" | "sparse_support" | "brief_support" | "drifting_frequency" | "loose_order_lock" | "mixed_support_locations" | "noisy_signal" | "weak_spatial" | "close_alternative" | "incomplete_reference" | "secondary_vehicle_data" | "approximate_vehicle_data" | "unverified_vehicle_data";
         /** @enum {string} */
         DiagnosisFactorPolarity: "support" | "counterevidence";
-        /**
-         * DiagnosisFactorResponse
-         * @description One stable support or counterevidence factor for a fused diagnosis.
-         */
-        DiagnosisFactorResponse: {
-            details: components["schemas"]["DiagnosisFactorDetailsResponse"];
-            factor_key: components["schemas"]["DiagnosisFactorKey"];
-            polarity: components["schemas"]["DiagnosisFactorPolarity"];
-            severity: components["schemas"]["DiagnosisFactorSeverity"];
-            /** Weight */
-            weight: number;
-        };
         /** @enum {string} */
         DiagnosisFactorSeverity: "low" | "medium" | "high";
+        /**
+         * DrivingPhase
+         * @description Canonical driving-phase labels.
+         * @enum {string}
+         */
+        DrivingPhase: "idle" | "acceleration" | "cruise" | "deceleration" | "coast_down" | "speed_unknown";
         /**
          * EspFlashCancelResponse
          * @description Response body confirming whether an ESP32 flash job was cancelled.
@@ -2204,13 +2213,13 @@ export interface components {
             /** Warnings */
             warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
             /** Whole Run Context Intervals */
-            whole_run_context_intervals?: components["schemas"]["WholeRunContextIntervalResponse"][];
+            whole_run_context_intervals?: components["schemas"]["WholeRunContextInterval"][];
             /** Whole Run Diagnosis Summaries */
-            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummaryResponse"][];
+            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummary"][];
             /** Whole Run Order Summaries */
-            whole_run_order_summaries?: components["schemas"]["OrderTraceSummaryResponse"][];
+            whole_run_order_summaries?: components["schemas"]["OrderTraceSummary"][];
             /** Whole Run Spatial Summaries */
-            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummaryResponse"][];
+            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummary"][];
         };
         /**
          * HistoryListEntryResponse
@@ -2353,7 +2362,7 @@ export interface components {
          * @description Response body for a single history run with metadata and optional analysis.
          */
         HistoryRunResponse: {
-            analysis?: components["schemas"]["AnalysisSummaryResponse"] | null;
+            analysis?: components["schemas"]["AnalysisSummary"] | null;
             artifact_availability?: components["schemas"]["HistoryArtifactAvailabilityResponse"] | null;
             /** Error Message */
             error_message?: string | null;
@@ -2619,10 +2628,10 @@ export interface components {
             trusted: boolean;
         };
         /**
-         * OrderHarmonicEvidenceSummaryResponse
-         * @description Compact harmonic-specific evidence row for a whole-run order-trace summary.
+         * OrderHarmonicEvidenceSummary
+         * @description Compact harmonic-specific evidence row for one order-trace summary.
          */
-        OrderHarmonicEvidenceSummaryResponse: {
+        OrderHarmonicEvidenceSummary: {
             /** Contiguous Support Ratio */
             contiguous_support_ratio: number;
             /** Drift Score */
@@ -2650,11 +2659,13 @@ export interface components {
             /** Support Ratio */
             support_ratio: number;
         };
+        /** @enum {string} */
+        OrderTraceFamily: "wheel" | "driveshaft" | "engine";
         /**
-         * OrderTracePhaseSupportResponse
-         * @description Phase-aware support row for a compact whole-run order-trace summary.
+         * OrderTracePhaseSupport
+         * @description Compact phase-aware support row for one order-trace summary.
          */
-        OrderTracePhaseSupportResponse: {
+        OrderTracePhaseSupport: {
             /** Eligible Window Count */
             eligible_window_count: number;
             /** Matched Window Count */
@@ -2665,10 +2676,10 @@ export interface components {
             support_ratio: number;
         };
         /**
-         * OrderTraceSummaryResponse
-         * @description Future persisted/report-facing summary shape for whole-run order traces.
+         * OrderTraceSummary
+         * @description Compact persisted/report-facing summary derived from dense whole-run order traces.
          */
-        OrderTraceSummaryResponse: {
+        OrderTraceSummary: {
             /** Contiguous Support Ratio */
             contiguous_support_ratio: number;
             /** Dominant Phase */
@@ -2684,7 +2695,7 @@ export interface components {
             /** Exemplar Interval Index */
             exemplar_interval_index?: number | null;
             /** Harmonic Summaries */
-            harmonic_summaries: components["schemas"]["OrderHarmonicEvidenceSummaryResponse"][];
+            harmonic_summaries: components["schemas"]["OrderHarmonicEvidenceSummary"][];
             /** Hypothesis Key */
             hypothesis_key: string;
             /** Limited Window Count */
@@ -2701,14 +2712,13 @@ export interface components {
             mean_relative_error?: number | null;
             /** Mean Vibration Strength Db */
             mean_vibration_strength_db?: number | null;
-            /** Order Family */
-            order_family: string;
+            order_family: components["schemas"]["OrderTraceFamily"];
             /** Order Label */
             order_label: string;
             /** Peak Intensity Db */
             peak_intensity_db?: number | null;
             /** Phase Support */
-            phase_support: components["schemas"]["OrderTracePhaseSupportResponse"][];
+            phase_support: components["schemas"]["OrderTracePhaseSupport"][];
             /** Ref Sources */
             ref_sources: string[];
             /** Reference Coverage Ratio */
@@ -2732,7 +2742,7 @@ export interface components {
             /** Strongest Location */
             strongest_location?: string | null;
             /** Support Intervals */
-            support_intervals: components["schemas"]["OrderTraceSupportIntervalResponse"][];
+            support_intervals: components["schemas"]["OrderTraceSupportInterval"][];
             /** Support Ratio */
             support_ratio: number;
             /** Suspected Source */
@@ -2743,10 +2753,10 @@ export interface components {
             usable_window_count: number;
         };
         /**
-         * OrderTraceSupportIntervalResponse
-         * @description Compact persisted support interval derived from dense whole-run order traces.
+         * OrderTraceSupportInterval
+         * @description Compact contiguous support interval derived from dense whole-run trace points.
          */
-        OrderTraceSupportIntervalResponse: {
+        OrderTraceSupportInterval: {
             /** End T S */
             end_t_s?: number | null;
             /** End Window Index */
@@ -3059,10 +3069,10 @@ export interface components {
             location_code: string;
         };
         /**
-         * SpatialEvidenceSummaryResponse
-         * @description Future persisted/report-facing summary shape for whole-run spatial evidence.
+         * SpatialEvidenceSummary
+         * @description Compact persisted/report-facing whole-run spatial evidence summary.
          */
-        SpatialEvidenceSummaryResponse: {
+        SpatialEvidenceSummary: {
             /** Ambiguous Location */
             ambiguous_location: boolean;
             /** Candidate Key */
@@ -3078,7 +3088,7 @@ export interface components {
             /** Location Separation Db */
             location_separation_db?: number | null;
             /** Location Summaries */
-            location_summaries: components["schemas"]["SpatialLocationSummaryResponse"][];
+            location_summaries: components["schemas"]["SpatialLocationSummary"][];
             proof_basis: components["schemas"]["LocationProofBasis"];
             /** Runner Up Location */
             runner_up_location?: string | null;
@@ -3094,10 +3104,10 @@ export interface components {
             weak_spatial_separation: boolean;
         };
         /**
-         * SpatialLocationSummaryResponse
+         * SpatialLocationSummary
          * @description Compact per-location support row for persisted spatial evidence.
          */
-        SpatialLocationSummaryResponse: {
+        SpatialLocationSummary: {
             /** Coherence Ratio */
             coherence_ratio?: number | null;
             /** Coherent Window Count */
@@ -3500,24 +3510,22 @@ export interface components {
             vibration_strength_db: number;
         };
         /**
-         * WholeRunContextIntervalResponse
-         * @description Persisted whole-run context segment keyed to the canonical window grid.
+         * WholeRunContextInterval
+         * @description Compact segment summary aligned to a contiguous range of whole-run windows.
          */
-        WholeRunContextIntervalResponse: {
+        WholeRunContextInterval: {
             /** End T S */
             end_t_s?: number | null;
             /** End Window Index */
             end_window_index: number;
             /** Full Context Window Count */
             full_context_window_count: number;
-            /** Load State */
-            load_state: string;
+            load_state: components["schemas"]["WholeRunContextLoadState"];
             /** Missing Context Window Count */
             missing_context_window_count: number;
             /** Partial Context Window Count */
             partial_context_window_count: number;
-            /** Phase */
-            phase: string;
+            phase: components["schemas"]["DrivingPhase"];
             /** Segment Index */
             segment_index: number;
             /** Speed Band */
@@ -3532,12 +3540,14 @@ export interface components {
             start_window_index: number;
         };
         /** @enum {string} */
+        WholeRunContextLoadState: "idle" | "steady" | "transient" | "unknown";
+        /** @enum {string} */
         WholeRunDiagnosisDataBasis: "raw_backed" | "partial_raw_backed" | "summary_only";
         /**
-         * WholeRunDiagnosisSummaryResponse
-         * @description Future persisted/report-facing summary shape for fused whole-run diagnoses.
+         * WholeRunDiagnosisSummary
+         * @description Compact persisted/report-facing summary for one fused whole-run diagnosis.
          */
-        WholeRunDiagnosisSummaryResponse: {
+        WholeRunDiagnosisSummary: {
             /** Alternative Source */
             alternative_source?: string | null;
             /** Ambiguous Diagnosis */
@@ -3547,11 +3557,11 @@ export interface components {
             /** Confidence Gap To Alternative */
             confidence_gap_to_alternative?: number | null;
             /** Counterevidence Factors */
-            counterevidence_factors: components["schemas"]["DiagnosisFactorResponse"][];
+            counterevidence_factors: components["schemas"]["DiagnosisFactor"][];
             /** Counterevidence Score */
             counterevidence_score?: number | null;
             data_basis: components["schemas"]["WholeRunDiagnosisDataBasis"];
-            data_quality_summary: components["schemas"]["DiagnosisDataQualitySummaryResponse"];
+            data_quality_summary: components["schemas"]["DiagnosisDataQualitySummary"];
             /** Diagnosis Key */
             diagnosis_key: string;
             /** Dominance Ratio */
@@ -3563,7 +3573,7 @@ export interface components {
             /** Dominant Speed Band */
             dominant_speed_band?: string | null;
             /** Exemplar References */
-            exemplar_references: components["schemas"]["DiagnosisExemplarReferenceResponse"][];
+            exemplar_references: components["schemas"]["DiagnosisExemplarReference"][];
             /** Fallback Reason */
             fallback_reason?: string | null;
             /** Has Reference Gap */
@@ -3584,7 +3594,7 @@ export interface components {
             /** Stable Frequency Min Hz */
             stable_frequency_min_hz?: number | null;
             /** Support Factors */
-            support_factors: components["schemas"]["DiagnosisFactorResponse"][];
+            support_factors: components["schemas"]["DiagnosisFactor"][];
             /** Support Score */
             support_score?: number | null;
             /** Supporting Duration S */
@@ -4559,7 +4569,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
         };
@@ -4573,7 +4583,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
+                "application/json": components["schemas"]["CarConfigUpdatePayload"];
             };
         };
         responses: {
@@ -4583,7 +4593,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Validation Error */
@@ -4616,7 +4626,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier. */
@@ -4655,7 +4665,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CarUpsertRequest"];
+                "application/json": components["schemas"]["CarConfigUpdatePayload"];
             };
         };
         responses: {
@@ -4665,7 +4675,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier. */
@@ -4710,7 +4720,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CarsResponse"];
+                    "application/json": components["schemas"]["CarsSnapshot"];
                 };
             };
             /** @description Invalid car identifier or the requested deletion violates current settings constraints. */

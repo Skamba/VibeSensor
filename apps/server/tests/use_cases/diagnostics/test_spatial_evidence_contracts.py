@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.types.history_analysis_contracts import (
-    SpatialEvidenceSummaryResponse,
-    SpatialLocationSummaryResponse,
-)
 from vibesensor.shared.types.spatial_evidence_contracts import (
     SpatialEvidenceSummary,
     SpatialEvidenceWindow,
@@ -75,16 +71,15 @@ def test_spatial_evidence_summary_round_trips_nested_compact_contracts() -> None
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("dominant_location", 7, "optional text field must be a string or null"),
-        ("coherence_ratio", "bad", "optional numeric field must be a number or null"),
+        ("dominant_location", 7),
+        ("coherence_ratio", "bad"),
     ],
 )
 def test_spatial_evidence_summary_rejects_invalid_optional_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = SpatialEvidenceSummary(
         candidate_key="wheel",
@@ -96,11 +91,11 @@ def test_spatial_evidence_summary_rejects_invalid_optional_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         SpatialEvidenceSummary.from_mapping(payload)
 
 
-def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
+def test_spatial_evidence_summary_rejects_non_mapping_location_rows() -> None:
     payload = SpatialEvidenceSummary(
         candidate_key="wheel",
         suspected_source="wheel/tire",
@@ -120,9 +115,8 @@ def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
         "skip-me",
     ]
 
-    restored = SpatialEvidenceSummary.from_mapping(payload)
-
-    assert [summary.location for summary in restored.location_summaries] == ["Front Left"]
+    with pytest.raises(ValueError, match="location_summaries.1"):
+        SpatialEvidenceSummary.from_mapping(payload)
 
 
 def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
@@ -136,35 +130,5 @@ def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
     ).to_json_object()
     payload["proof_basis"] = "sensor_vote"
 
-    with pytest.raises(ValueError, match="supported location proof basis"):
+    with pytest.raises(ValueError, match="proof_basis"):
         SpatialEvidenceSummary.from_mapping(payload)
-
-
-def test_history_spatial_response_contracts_expose_named_summary_fields() -> None:
-    assert set(SpatialLocationSummaryResponse.__annotations__) == {
-        "location",
-        "sensor_ids",
-        "supporting_window_count",
-        "support_ratio",
-        "coherent_window_count",
-        "coherence_ratio",
-        "peak_intensity_db",
-        "mean_vibration_strength_db",
-    }
-    assert set(SpatialEvidenceSummaryResponse.__annotations__) == {
-        "candidate_key",
-        "suspected_source",
-        "proof_basis",
-        "total_window_count",
-        "supporting_window_count",
-        "supporting_sensor_count",
-        "coherent_window_count",
-        "coherence_ratio",
-        "dominant_location",
-        "runner_up_location",
-        "location_separation_db",
-        "dominance_ratio",
-        "ambiguous_location",
-        "weak_spatial_separation",
-        "location_summaries",
-    }

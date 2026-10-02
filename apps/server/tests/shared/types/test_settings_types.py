@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import get_type_hints
 
-from vibesensor.adapters.http.models.settings import CarResponse, CarUpsertRequest
 from vibesensor.domain import AnalysisSettingsSnapshot
 from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.infra.config.car_settings import CarSettingsService
 from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
+from vibesensor.shared.types.car_config import CarConfigPayload, CarConfigUpdatePayload
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -34,8 +34,8 @@ def test_analysis_settings_payload_projection_keeps_only_supported_keys() -> Non
 
 
 def test_http_and_store_annotations_use_analysis_settings_payload() -> None:
-    assert get_type_hints(CarUpsertRequest)["aspects"] == AnalysisSettingsPayload | None
-    assert get_type_hints(CarResponse)["aspects"] is AnalysisSettingsPayload
+    assert get_type_hints(CarConfigUpdatePayload)["aspects"] == AnalysisSettingsPayload | None
+    assert get_type_hints(CarConfigPayload)["aspects"] is AnalysisSettingsPayload
     assert get_type_hints(CarSettingsService.active_car_aspects)["return"] == (
         AnalysisSettingsPayload | None
     )

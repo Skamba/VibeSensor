@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, NotRequired, TypedDict
-
-from pydantic import ConfigDict
+from typing import Literal, NotRequired, TypedDict
 
 from vibesensor.shared.types.processing_profile import ProcessingFilterId, ProcessingProfile
 from vibesensor.vibration_strength import StrengthPeak, VibrationStrengthMetrics
@@ -123,13 +121,6 @@ class WsErrorPayload(TypedDict):
 
 class WsClientSelectionPayload(TypedDict, total=False):
     client_id: str | None
-
-
-def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
-    typed_dict.__pydantic_config__ = config
-
-
-_configure_pydantic_schema(WsClientSelectionPayload, ConfigDict(extra="ignore"))
 
 
 class RotationalSpeedValuePayload(TypedDict):

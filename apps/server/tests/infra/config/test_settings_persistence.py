@@ -85,6 +85,48 @@ def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
     assert snapshot["speedUnit"] == "mps"
 
 
+def test_settings_snapshot_reload_keeps_order_reference_status_and_axle_tires(
+    tmp_path: Path,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+    created = services.car_settings.add_car(
+        {
+            "name": "Library Car",
+            "aspects": {"tire_width_mm": 205.0, "tire_aspect_pct": 55.0, "rim_in": 16.0},
+            "order_reference_status": {
+                "selection_source_status": "exact_row",
+                "requires_manual_confirmation": False,
+                "tire_dimensions_confidence": "official_exact",
+            },
+        }
+    )
+    car_id = created.cars[0]["id"]
+    services.car_settings.update_car(
+        car_id,
+        {
+            "aspects": {
+                "front_tire_width_mm": 225.0,
+                "front_tire_aspect_pct": 45.0,
+                "front_rim_in": 17.0,
+                "rear_tire_width_mm": 245.0,
+                "rear_tire_aspect_pct": 40.0,
+                "rear_rim_in": 17.0,
+                "default_axle_for_speed": "front",
+            }
+        },
+    )
+
+    reloaded = build_settings_services(db=db).coordinator.snapshot()["cars"][0]
+
+    assert reloaded["aspects"]["default_axle_for_speed"] == "front"
+    assert reloaded["aspects"]["front_tire_width_mm"] == 225.0
+    status = reloaded.get("order_reference_status")
+    assert status is not None
+    assert status["selection_source_status"] == "exact_row"
+    assert status.get("tire_dimensions_confidence") == "official_exact"
+
+
 def test_settings_snapshot_persists_with_protocol_shaped_store() -> None:
     snapshot_store = FakeSettingsSnapshotStore()
     services = build_settings_services(db=snapshot_store)

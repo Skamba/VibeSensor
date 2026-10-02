@@ -68,7 +68,7 @@ def test_raw_capture_manifest_roundtrip_preserves_nested_state() -> None:
     assert RawCaptureManifest.from_mapping(manifest.to_json_object()) == manifest
 
 
-def test_raw_capture_manifest_omits_empty_optional_payload_blocks() -> None:
+def test_raw_capture_manifest_omits_unset_optional_fields() -> None:
     manifest = RawCaptureManifest(
         run_id="run-123",
         relative_dir="raw/run-123",
@@ -91,8 +91,46 @@ def test_raw_capture_manifest_omits_empty_optional_payload_blocks() -> None:
     payload = manifest.to_json_object()
 
     assert "run_start_monotonic_us" not in payload
-    assert "sensor_losses" not in payload
-    assert "losses" not in payload
+    assert "clock_sync" not in payload["sensors"][0]
+    assert payload["sensor_losses"] == []
+
+
+def test_raw_capture_manifest_decodes_schema_v1_payload() -> None:
+    """Manifests persisted by the first raw-capture release still decode."""
+
+    v1_payload = {
+        "schema_version": 1,
+        "storage_type": "run-directory-v1",
+        "capture_mode": "full_run",
+        "run_id": "run-1",
+        "relative_dir": "run-1",
+        "total_samples": 4_000,
+        "total_bytes": 32_000,
+        "created_at": "2025-01-01T00:00:00Z",
+        "sensors": [
+            {
+                "client_id": "sensor-a",
+                "sample_rate_hz": 800,
+                "data_file": "sensor-a.raw",
+                "index_file": "sensor-a.idx.jsonl",
+                "sample_count": 4_000,
+                "chunk_count": 16,
+                "bytes_written": 32_000,
+                "first_t0_us": 10,
+                "last_t0_us": 4_010,
+            }
+        ],
+    }
+
+    manifest = RawCaptureManifest.from_mapping(v1_payload)
+
+    assert manifest.schema_version == 1
+    assert manifest.losses == RawCaptureLossStats()
+    assert manifest.sensor_losses == ()
+    sensor = manifest.sensors[0]
+    assert sensor.clock_sync is None
+    assert sensor.declared_sample_rate_hz == 800
+    assert sensor.sample_rate_proof_state == "declared_only"
 
 
 def test_raw_capture_sensor_manifest_defaults_declared_sample_rate_to_sample_rate() -> None:

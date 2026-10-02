@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, NotRequired, TypedDict, cast
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, NotRequired, TypedDict, cast
+
+from pydantic import StringConstraints
 
 from vibesensor.domain import (
     CarOrderReferenceSourceStatus,
@@ -16,7 +18,6 @@ from vibesensor.shared.analysis_settings_schema import (
     ANALYSIS_SETTINGS_DEFAULTS,
     sanitize_analysis_settings,
 )
-from vibesensor.shared.types.json_types import JsonObject
 from vibesensor.shared.types.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
@@ -31,7 +32,6 @@ __all__ = [
     "CarOrderReferenceStatusPayload",
     "CarsSnapshot",
     "car_from_persistence_dict",
-    "car_order_reference_status_json_object_from_domain",
     "car_order_reference_status_payload_from_domain",
     "car_order_reference_status_from_mapping",
     "car_to_persistence_dict",
@@ -39,46 +39,52 @@ __all__ = [
 ]
 
 
-class CarConfigUpdatePayload(TypedDict, total=False):
-    """Partial update payload for mutating one stored car configuration."""
-
-    id: str
-    name: str
-    type: str
-    aspects: AnalysisSettingsPayload
-    variant: str
-    order_reference_status: CarOrderReferenceStatusPayload
+_CarText = Annotated[str, StringConstraints(min_length=1, max_length=64)]
 
 
-class CarOrderReferenceStatusPayload(TypedDict, total=False):
-    """Persisted confidence metadata for selected drivetrain order-reference values."""
+class CarOrderReferenceStatusPayload(TypedDict):
+    """Persisted/HTTP confidence metadata for selected drivetrain order-reference values.
+
+    Confidence values stay plain strings at this boundary;
+    ``car_order_reference_status_from_mapping`` keeps only the known vocabulary.
+    """
 
     selection_source_status: CarOrderReferenceSourceStatus
-    tire_dimensions_confidence: VehicleFieldConfidence
-    final_drive_ratio_confidence: VehicleFieldConfidence
-    current_gear_ratio_confidence: VehicleFieldConfidence
-    transmission_name: str
-    transmission_confidence: VehicleFieldConfidence
     requires_manual_confirmation: bool
+    tire_dimensions_confidence: NotRequired[str | None]
+    final_drive_ratio_confidence: NotRequired[str | None]
+    current_gear_ratio_confidence: NotRequired[str | None]
+    transmission_name: NotRequired[str | None]
+    transmission_confidence: NotRequired[str | None]
 
 
 class CarConfigPayload(TypedDict):
-    """Canonical persisted/shared payload for one car configuration profile."""
+    """One car profile as persisted in the settings snapshot and served over HTTP."""
 
     id: str
     name: str
     type: str
     aspects: AnalysisSettingsPayload
-    variant: NotRequired[str]
-    order_reference_status: NotRequired[CarOrderReferenceStatusPayload]
+    variant: NotRequired[str | None]
+    order_reference_status: NotRequired[CarOrderReferenceStatusPayload | None]
+
+
+class CarConfigUpdatePayload(TypedDict, total=False):
+    """Create/update request body for one car profile; omitted or null fields stay unchanged."""
+
+    name: _CarText | None
+    type: _CarText | None
+    aspects: AnalysisSettingsPayload | None
+    variant: _CarText | None
+    order_reference_status: CarOrderReferenceStatusPayload | None
 
 
 @dataclass(slots=True)
 class CarsSnapshot:
-    """Typed internal snapshot of car profiles plus active selection."""
+    """Car profiles plus the active selection, as held in memory and served over HTTP."""
 
-    cars: list[CarConfigPayload] = field(default_factory=list)
-    active_car_id: str | None = None
+    cars: list[CarConfigPayload]
+    active_car_id: str | None
 
 
 def new_car_id() -> str:
@@ -167,27 +173,6 @@ def car_order_reference_status_payload_from_domain(
     if status.transmission_confidence is not None:
         payload["transmission_confidence"] = status.transmission_confidence
     return payload
-
-
-def car_order_reference_status_json_object_from_domain(
-    status: CarOrderReferenceStatus,
-) -> JsonObject:
-    payload = car_order_reference_status_payload_from_domain(status)
-    json_payload: JsonObject = {
-        "selection_source_status": payload["selection_source_status"],
-        "requires_manual_confirmation": payload["requires_manual_confirmation"],
-    }
-    if "tire_dimensions_confidence" in payload:
-        json_payload["tire_dimensions_confidence"] = payload["tire_dimensions_confidence"]
-    if "final_drive_ratio_confidence" in payload:
-        json_payload["final_drive_ratio_confidence"] = payload["final_drive_ratio_confidence"]
-    if "current_gear_ratio_confidence" in payload:
-        json_payload["current_gear_ratio_confidence"] = payload["current_gear_ratio_confidence"]
-    if "transmission_name" in payload:
-        json_payload["transmission_name"] = payload["transmission_name"]
-    if "transmission_confidence" in payload:
-        json_payload["transmission_confidence"] = payload["transmission_confidence"]
-    return json_payload
 
 
 def _text_or_default(value: object, *, default: str, max_length: int) -> str:
