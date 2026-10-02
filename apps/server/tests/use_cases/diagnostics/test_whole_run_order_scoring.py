@@ -243,9 +243,6 @@ def test_build_whole_run_order_trace_summary_artifact_bundle_preserves_manifest_
             }
         ],
         "created_at": "2025-01-01T00:00:00Z",
-        "generated_artifact_paths": {
-            WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY: "orders/trace-summaries.jsonl",
-        },
         "algorithm_versions": {},
         "configuration": {},
         "source_raw_manifests": [],

@@ -35,7 +35,10 @@ if TYPE_CHECKING:
     from vibesensor.shared.types.analysis_views import PeakTableRow
     from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
     from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
-    from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
+    from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+        DiagnosisFactor,
+        WholeRunDiagnosisSummary,
+    )
 
 from vibesensor.shared.boundaries.reporting.confidence_facts import (
     apply_report_confidence_fallback,
@@ -66,7 +69,6 @@ from vibesensor.shared.boundaries.reporting.sensor_facts import (
 )
 from vibesensor.shared.boundaries.reporting.summary import report_diagnosis_summaries
 from vibesensor.shared.run_context_warning import RunContextWarningsInput
-from vibesensor.shared.types.history_analysis_contracts import DiagnosisFactorResponse
 
 __all__ = [
     "ActionStatusKey",
@@ -486,8 +488,8 @@ def _report_whole_run_diagnosis_summaries(
         "uses_summary_fallback": fallback_confidence.uses_summary_fallback,
         "fallback_reason": fallback_confidence.fallback_reason,
         "exemplar_references": [],
-        "support_factors": list(support_factors),
-        "counterevidence_factors": list(counterevidence_factors),
+        "support_factors": [factor.to_json_object() for factor in support_factors],
+        "counterevidence_factors": [factor.to_json_object() for factor in counterevidence_factors],
     }
     if context_facts.source == "whole_run" and context_facts.intervals:
         first_interval = context_facts.intervals[0]
@@ -602,10 +604,8 @@ def _report_surface_diagnosis_summaries(
     return ()
 
 
-def _factor_weight_sum(rows: tuple[DiagnosisFactorResponse, ...]) -> float:
-    return sum(
-        float(weight) for row in rows if isinstance((weight := row.get("weight")), int | float)
-    )
+def _factor_weight_sum(rows: tuple[DiagnosisFactor, ...]) -> float:
+    return sum(row.weight for row in rows)
 
 
 def _proof_location(sensor_facts: ReportSensorFacts, *, index: int) -> str | None:
@@ -634,14 +634,10 @@ def _fallback_diagnosis_key(primary_candidate: PrimaryReportFacts) -> str:
 
 def _fallback_diagnosis_is_suspicious(
     *,
-    counterevidence_factors: tuple[DiagnosisFactorResponse, ...],
+    counterevidence_factors: tuple[DiagnosisFactor, ...],
     weak_spatial: bool,
 ) -> bool:
-    counter_keys = {
-        str(factor_key)
-        for row in counterevidence_factors
-        if (factor_key := row.get("factor_key")) is not None
-    }
+    counter_keys = {row.factor_key for row in counterevidence_factors}
     return bool(
         weak_spatial
         or "close_alternative" in counter_keys

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from typing import cast
 
 import msgspec
 
@@ -40,7 +41,7 @@ from vibesensor.shared.boundaries.runs._metadata_sections import (
 )
 from vibesensor.shared.types.car_config import (
     car_order_reference_status_from_mapping,
-    car_order_reference_status_json_object_from_domain,
+    car_order_reference_status_payload_from_domain,
 )
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_schema import (
@@ -364,7 +365,8 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
         "variant": run_car.variant,
     }
     if run_car.order_reference_status is not None:
-        payload["order_reference_status"] = car_order_reference_status_json_object_from_domain(
-            run_car.order_reference_status
+        payload["order_reference_status"] = cast(
+            JsonObject,
+            car_order_reference_status_payload_from_domain(run_car.order_reference_status),
         )
     return payload

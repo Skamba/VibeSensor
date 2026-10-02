@@ -46,7 +46,7 @@ One row per recording session.
 | `car_name` | TEXT | Denormalized active car name used by the history list path |
 | `raw_capture_manifest_json` | TEXT | Raw waveform sidecar manifest; may remain after raw files are pruned so history can report missing raw capture explicitly |
 | `whole_run_artifact_manifest_json` | TEXT | Whole-run sidecar manifest for dense post-analysis artifacts |
-| `analysis_json` | TEXT | Post-run analysis summary |
+| `analysis_json` | TEXT | Post-run analysis summary (`AnalysisSummary` in `shared/types/history_analysis_contracts.py`) |
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
 | `created_at` | TEXT | Row creation timestamp |
@@ -105,6 +105,12 @@ Single-row table for persistent application settings.
 | `id` | INTEGER PK | Always 1 (CHECK constraint) |
 | `value_json` | TEXT | JSON-encoded settings snapshot |
 | `updated_at` | TEXT | Last update timestamp |
+
+`value_json` is decoded by `SettingsSnapshotRecord` in
+`shared/boundaries/settings.py` (msgspec, defaults for missing top-level keys).
+Each entry in `cars` is a `CarConfigPayload` (`shared/types/car_config.py`): the
+same shape is served by `GET /api/settings/cars`, and it carries the car's
+`aspects` (`AnalysisSettingsPayload`) and optional `order_reference_status`.
 
 ### `client_names`
 

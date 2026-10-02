@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Literal, Protocol, cast
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
+from pydantic import model_validator
 
-from vibesensor.shared.types.json_types import JsonObject, JsonValue, is_json_object
+from vibesensor.shared.types.json_contract import JsonContract
 
 __all__ = [
     "RawCaptureChunk",
@@ -47,154 +47,6 @@ _RAW_CAPTURE_SCHEMA_VERSION = 7
 _RAW_CAPTURE_STORAGE_TYPE = "run-directory-v1"
 _RAW_CAPTURE_MODE = "full_run"
 
-type _JsonFieldDecoder = Callable[[JsonObject], object]
-type _JsonFieldEncoder = Callable[[object], object]
-type _IncludePredicate = Callable[[object], bool]
-type _JsonConstructor[T] = Callable[..., T]
-
-
-class _JsonObjectEncodable(Protocol):
-    def to_json_object(self) -> JsonObject: ...
-
-
-@dataclass(frozen=True, slots=True)
-class _JsonFieldSpec:
-    payload_key: str
-    attr_name: str
-    decode: _JsonFieldDecoder
-    encode: _JsonFieldEncoder
-    include: _IncludePredicate
-
-
-def _field(
-    payload_key: str,
-    *,
-    attr_name: str | None = None,
-    decode: _JsonFieldDecoder,
-    encode: _JsonFieldEncoder | None = None,
-    include: _IncludePredicate | None = None,
-) -> _JsonFieldSpec:
-    return _JsonFieldSpec(
-        payload_key=payload_key,
-        attr_name=attr_name or payload_key,
-        decode=decode,
-        encode=encode or _identity_json_value,
-        include=include or _always_include,
-    )
-
-
-def _always_include(_value: object) -> bool:
-    return True
-
-
-def _include_if_not_none(value: object) -> bool:
-    return value is not None
-
-
-def _include_if_nonempty(value: object) -> bool:
-    return bool(value)
-
-
-def _include_if_loss_events(value: object) -> bool:
-    return cast(RawCaptureLossStats, value).total_loss_event_count > 0
-
-
-def _identity_json_value(value: object) -> object:
-    return value
-
-
-def _encode_json_object(value: object) -> object:
-    return cast(_JsonObjectEncodable, value).to_json_object()
-
-
-def _encode_json_object_list(value: object) -> object:
-    return [item.to_json_object() for item in cast(tuple[_JsonObjectEncodable, ...], value)]
-
-
-def _int_decoder(payload_key: str, default: int = 0) -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        return _int_from_json(data.get(payload_key), default)
-
-    return decode
-
-
-def _int_or_none_decoder(payload_key: str) -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        return _int_or_none(data.get(payload_key))
-
-    return decode
-
-
-def _str_decoder(payload_key: str, default: str = "") -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        return _str_from_json(data.get(payload_key), default)
-
-    return decode
-
-
-def _nested_object_decoder(
-    payload_key: str,
-    constructor: Callable[[JsonObject], object],
-    *,
-    default_factory: Callable[[], object],
-) -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        raw = data.get(payload_key)
-        return constructor(raw) if is_json_object(raw) else default_factory()
-
-    return decode
-
-
-def _optional_object_decoder(
-    payload_key: str,
-    constructor: Callable[[JsonObject], object],
-) -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        raw = data.get(payload_key)
-        return constructor(raw) if is_json_object(raw) else None
-
-    return decode
-
-
-def _tuple_decoder(
-    payload_key: str,
-    constructor: Callable[[JsonObject], object],
-) -> _JsonFieldDecoder:
-    def decode(data: JsonObject) -> object:
-        raw = data.get(payload_key)
-        if not isinstance(raw, list):
-            return ()
-        return tuple(constructor(item) for item in raw if is_json_object(item))
-
-    return decode
-
-
-def _json_object_kwargs(
-    data: JsonObject,
-    specs: tuple[_JsonFieldSpec, ...],
-) -> dict[str, object]:
-    return {spec.attr_name: spec.decode(data) for spec in specs}
-
-
-def _build_from_json_object[T](
-    data: JsonObject,
-    specs: tuple[_JsonFieldSpec, ...],
-    constructor: _JsonConstructor[T],
-    **overrides: object,
-) -> T:
-    kwargs = _json_object_kwargs(data, specs)
-    kwargs.update(overrides)
-    return constructor(**kwargs)
-
-
-def _project_json_object(source: object, specs: tuple[_JsonFieldSpec, ...]) -> JsonObject:
-    payload: dict[str, object] = {}
-    for spec in specs:
-        value = getattr(source, spec.attr_name)
-        if spec.include(value):
-            payload[spec.payload_key] = spec.encode(value)
-    return cast(JsonObject, payload)
-
 
 @dataclass(frozen=True, slots=True)
 class RawCaptureChunk:
@@ -208,7 +60,7 @@ class RawCaptureChunk:
 
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureChunkIndex:
+class RawCaptureChunkIndex(JsonContract):
     """Persistent index row locating one raw chunk inside a sensor stream file."""
 
     sample_start: int
@@ -216,16 +68,9 @@ class RawCaptureChunkIndex:
     t0_us: int
     byte_offset: int
 
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS)
-
-    @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureChunkIndex:
-        return _build_from_json_object(data, _RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS, cls)
-
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureLossStats:
+class RawCaptureLossStats(JsonContract):
     """Structured counts for raw chunk issues persisted alongside the run."""
 
     udp_ingest_queue_drop_count: int = 0
@@ -247,13 +92,6 @@ class RawCaptureLossStats:
     def total_loss_event_count(self) -> int:
         return self.total_dropped_chunk_count + max(0, self.late_packet_chunk_count)
 
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_LOSS_STATS_JSON_FIELDS)
-
-    @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureLossStats:
-        return _build_from_json_object(data, _RAW_CAPTURE_LOSS_STATS_JSON_FIELDS, cls)
-
     def merged(self, other: RawCaptureLossStats) -> RawCaptureLossStats:
         return RawCaptureLossStats(
             udp_ingest_queue_drop_count=(
@@ -269,7 +107,7 @@ class RawCaptureLossStats:
 
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureSensorLossStats:
+class RawCaptureSensorLossStats(JsonContract):
     """Per-sensor raw chunk loss counts persisted alongside the manifest."""
 
     client_id: str
@@ -287,16 +125,9 @@ class RawCaptureSensorLossStats:
     def late_packet_chunk_count(self) -> int:
         return max(0, self.losses.late_packet_chunk_count)
 
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS)
-
-    @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureSensorLossStats:
-        return _build_from_json_object(data, _RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS, cls)
-
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureSensorClockSync:
+class RawCaptureSensorClockSync(JsonContract):
     """Persisted proof about whether one sensor's ``t0_us`` uses server monotonic time."""
 
     clock_domain: RawCaptureClockDomain = "unverified"
@@ -312,16 +143,9 @@ class RawCaptureSensorClockSync:
     def verified(self) -> bool:
         return self.clock_domain == "server_monotonic" and self.proof_state == "verified"
 
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS)
-
-    @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureSensorClockSync:
-        return _build_from_json_object(data, _RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS, cls)
-
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureSensorManifest:
+class RawCaptureSensorManifest(JsonContract):
     """One sensor stream persisted inside a raw run-artifact bundle."""
 
     client_id: str
@@ -351,25 +175,17 @@ class RawCaptureSensorManifest:
             and self.sample_rate_hz != declared
         )
 
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS)
-
+    @model_validator(mode="before")
     @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureSensorManifest:
-        kwargs = _json_object_kwargs(data, _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS)
-        sample_rate_hz = cast(int, kwargs["sample_rate_hz"])
-        return _build_from_json_object(
-            data,
-            _RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS,
-            cls,
-            declared_sample_rate_hz=(
-                cast(int | None, kwargs["declared_sample_rate_hz"]) or sample_rate_hz or None
-            ),
-        )
+    def _default_declared_sample_rate(cls, data: object) -> object:
+        # Manifests before schema v6 carry no declared rate; the stored rate was it.
+        if isinstance(data, dict) and not data.get("declared_sample_rate_hz"):
+            return {**data, "declared_sample_rate_hz": data.get("sample_rate_hz") or None}
+        return data
 
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureManifest:
+class RawCaptureManifest(JsonContract):
     """Compact manifest persisted on a run record for one raw artifact bundle."""
 
     run_id: str
@@ -384,13 +200,6 @@ class RawCaptureManifest:
     schema_version: int = _RAW_CAPTURE_SCHEMA_VERSION
     storage_type: str = _RAW_CAPTURE_STORAGE_TYPE
     capture_mode: str = _RAW_CAPTURE_MODE
-
-    def to_json_object(self) -> JsonObject:
-        return _project_json_object(self, _RAW_CAPTURE_MANIFEST_JSON_FIELDS)
-
-    @classmethod
-    def from_mapping(cls, data: JsonObject) -> RawCaptureManifest:
-        return _build_from_json_object(data, _RAW_CAPTURE_MANIFEST_JSON_FIELDS, cls)
 
     def sensor_manifest(self, client_id: str) -> RawCaptureSensorManifest | None:
         for sensor in self.sensors:
@@ -487,175 +296,6 @@ class RawRunCapture:
             if sensor.manifest.client_id == client_id:
                 return sensor
         return None
-
-
-_RAW_CAPTURE_CHUNK_INDEX_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field("sample_start", decode=_int_decoder("sample_start")),
-    _field("sample_count", decode=_int_decoder("sample_count")),
-    _field("t0_us", decode=_int_decoder("t0_us")),
-    _field("byte_offset", decode=_int_decoder("byte_offset")),
-)
-_RAW_CAPTURE_LOSS_STATS_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field(
-        "udp_ingest_queue_drop_count",
-        decode=_int_decoder("udp_ingest_queue_drop_count"),
-    ),
-    _field("late_packet_chunk_count", decode=_int_decoder("late_packet_chunk_count")),
-    _field(
-        "queue_overflow_chunk_count",
-        decode=_int_decoder("queue_overflow_chunk_count"),
-    ),
-    _field("invalid_chunk_count", decode=_int_decoder("invalid_chunk_count")),
-    _field("write_error_chunk_count", decode=_int_decoder("write_error_chunk_count")),
-)
-_RAW_CAPTURE_SENSOR_LOSS_STATS_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field("client_id", decode=_str_decoder("client_id")),
-    _field(
-        "losses",
-        decode=_nested_object_decoder(
-            "losses",
-            RawCaptureLossStats.from_mapping,
-            default_factory=RawCaptureLossStats,
-        ),
-        encode=_encode_json_object,
-    ),
-)
-_RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field("clock_domain", decode=_str_decoder("clock_domain", "unverified")),
-    _field("proof_state", decode=_str_decoder("proof_state", "missing_sync")),
-    _field(
-        "observed_monotonic_us",
-        decode=_int_or_none_decoder("observed_monotonic_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "last_sync_monotonic_us",
-        decode=_int_or_none_decoder("last_sync_monotonic_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "sync_offset_us",
-        decode=_int_or_none_decoder("sync_offset_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "sync_rtt_us",
-        decode=_int_or_none_decoder("sync_rtt_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "max_sync_age_us",
-        decode=_int_or_none_decoder("max_sync_age_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "max_sync_rtt_us",
-        decode=_int_or_none_decoder("max_sync_rtt_us"),
-        include=_include_if_not_none,
-    ),
-)
-_RAW_CAPTURE_SENSOR_MANIFEST_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field("client_id", decode=_str_decoder("client_id")),
-    _field("sample_rate_hz", decode=_int_decoder("sample_rate_hz")),
-    _field("data_file", decode=_str_decoder("data_file")),
-    _field("index_file", decode=_str_decoder("index_file")),
-    _field("sample_count", decode=_int_decoder("sample_count")),
-    _field("chunk_count", decode=_int_decoder("chunk_count")),
-    _field("bytes_written", decode=_int_decoder("bytes_written")),
-    _field(
-        "first_t0_us",
-        decode=_int_or_none_decoder("first_t0_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "last_t0_us",
-        decode=_int_or_none_decoder("last_t0_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "clock_sync",
-        decode=_optional_object_decoder(
-            "clock_sync",
-            RawCaptureSensorClockSync.from_mapping,
-        ),
-        encode=_encode_json_object,
-        include=_include_if_not_none,
-    ),
-    _field(
-        "declared_sample_rate_hz",
-        decode=_int_or_none_decoder("declared_sample_rate_hz"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "sample_rate_proof_state",
-        decode=_str_decoder("sample_rate_proof_state", "declared_only"),
-    ),
-)
-_RAW_CAPTURE_MANIFEST_JSON_FIELDS: tuple[_JsonFieldSpec, ...] = (
-    _field(
-        "schema_version",
-        decode=_int_decoder("schema_version", _RAW_CAPTURE_SCHEMA_VERSION),
-    ),
-    _field(
-        "storage_type",
-        decode=_str_decoder("storage_type", _RAW_CAPTURE_STORAGE_TYPE),
-    ),
-    _field(
-        "capture_mode",
-        decode=_str_decoder("capture_mode", _RAW_CAPTURE_MODE),
-    ),
-    _field("run_id", decode=_str_decoder("run_id")),
-    _field("relative_dir", decode=_str_decoder("relative_dir")),
-    _field(
-        "sensors",
-        decode=_tuple_decoder("sensors", RawCaptureSensorManifest.from_mapping),
-        encode=_encode_json_object_list,
-    ),
-    _field("total_samples", decode=_int_decoder("total_samples")),
-    _field("total_bytes", decode=_int_decoder("total_bytes")),
-    _field("created_at", decode=_str_decoder("created_at")),
-    _field(
-        "run_start_monotonic_us",
-        decode=_int_or_none_decoder("run_start_monotonic_us"),
-        include=_include_if_not_none,
-    ),
-    _field(
-        "sensor_losses",
-        decode=_tuple_decoder("sensor_losses", RawCaptureSensorLossStats.from_mapping),
-        encode=_encode_json_object_list,
-        include=_include_if_nonempty,
-    ),
-    _field(
-        "losses",
-        decode=_nested_object_decoder(
-            "losses",
-            RawCaptureLossStats.from_mapping,
-            default_factory=RawCaptureLossStats,
-        ),
-        encode=_encode_json_object,
-        include=_include_if_loss_events,
-    ),
-)
-
-
-def _int_or_none(value: JsonValue | object) -> int | None:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float, str)):
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
-    return None
-
-
-def _int_from_json(value: JsonValue | object, default: int = 0) -> int:
-    parsed = _int_or_none(value)
-    return parsed if parsed is not None else default
-
-
-def _str_from_json(value: JsonValue | object, default: str = "") -> str:
-    return value if isinstance(value, str) else default
 
 
 def _empty_i16_samples() -> Int16Array:

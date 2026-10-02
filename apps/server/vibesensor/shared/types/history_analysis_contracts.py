@@ -1,79 +1,37 @@
-"""Shared analysis/history summary contracts reused by boundary and HTTP layers.
+"""Shared analysis-summary contract: the persisted summary JSON and its HTTP schema.
 
-These TypedDicts are the canonical outward owners for analysis/history summary
-wrapper and composite contracts used by summary-boundary serializers and the
-HTTP/OpenAPI response schema. ``AnalysisSummary``,
-``AnalysisSummaryCoreResponse``, and ``AnalysisSummaryResponse`` are defined
-here, while ``FindingPayload`` remains the canonical shared outward finding
-wrapper re-exported from ``finding_payload_parts`` so its internal core versus
-presentation split can evolve without broadening this module's direct field
-ownership. Endpoint-specific HTTP wrappers remain local to
-``shared.types.api_models.history``. Persisted storage payloads should use the
-separate contracts in ``persisted_analysis_contracts``.
+``AnalysisSummary`` is the one definition of the persisted analysis summary
+(``runs.analysis_json``) and of the ``HistoryRunResponse.analysis`` OpenAPI
+schema. Its whole-run rows reuse the frozen dataclass contracts (``JsonContract``)
+that the post-analysis pipeline produces, so each row shape is defined once.
+``FindingPayload`` lives in ``finding_payload_parts``; endpoint-specific HTTP
+wrappers stay in ``adapters.http.models.history``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Literal, Required, TypedDict
+from typing import Annotated, Literal, Required, TypedDict
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, with_config
 
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
     PlotDataResult,
     SpeedBreakdownRow,
 )
-from vibesensor.shared.types.data_quality_contracts import (
-    DataQualityAccelSanityResponse,
-    DataQualityOutliersResponse,
-    DataQualityRequiredMissingPctResponse,
-    DataQualityResponse,
-    DataQualitySpeedCoverageResponse,
-    OutlierSummaryResponse,
-)
-from vibesensor.shared.types.finding_payload_parts import AmplitudeMetric, FindingPayload
-from vibesensor.shared.types.json_types import (
-    JsonSchemaObject,
-    JsonSchemaValue,
-)
+from vibesensor.shared.types.data_quality_contracts import DataQualityResponse
+from vibesensor.shared.types.finding_payload_parts import FindingPayload
+from vibesensor.shared.types.json_contract import AsJsonObject
+from vibesensor.shared.types.json_types import JsonSchemaObject, JsonSchemaValue
+from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
+from vibesensor.shared.types.spatial_evidence_contracts import SpatialEvidenceSummary
+from vibesensor.shared.types.whole_run_analysis import WholeRunContextInterval
+from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
-    "AmplitudeMetric",
     "AnalysisSummary",
     "AnalysisSummaryCoreResponse",
-    "AnalysisSummaryResponse",
-    "DataQualityAccelSanityResponse",
-    "DataQualityOutliersResponse",
-    "DataQualityRequiredMissingPctResponse",
-    "DataQualityResponse",
-    "DataQualitySpeedCoverageResponse",
-    "DiagnosisDataQualityLimitation",
-    "DiagnosisDataQualitySummaryResponse",
-    "DIAGNOSIS_EXEMPLAR_KIND_VALUES",
-    "DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES",
-    "DIAGNOSIS_FACTOR_KEY_VALUES",
-    "DIAGNOSIS_FACTOR_POLARITY_VALUES",
-    "DIAGNOSIS_FACTOR_SEVERITY_VALUES",
-    "DiagnosisFactorDetailsResponse",
-    "DiagnosisFactorKey",
-    "DiagnosisFactorPolarity",
-    "DiagnosisFactorResponse",
-    "DiagnosisFactorSeverity",
-    "FindingPayload",
-    "DiagnosisExemplarKind",
-    "DiagnosisExemplarReferenceResponse",
-    "LOCATION_PROOF_BASIS_VALUES",
     "LocationIntensitySummaryResponse",
-    "LocationProofBasis",
-    "WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES",
-    "WholeRunDiagnosisDataBasis",
-    "WholeRunDiagnosisSummaryResponse",
-    "OutlierSummaryResponse",
-    "OrderHarmonicEvidenceSummaryResponse",
-    "OrderTracePhaseSupportResponse",
-    "OrderTraceSummaryResponse",
-    "OrderTraceSupportIntervalResponse",
     "PayloadObject",
     "PayloadValue",
     "PhaseInfoResponse",
@@ -85,135 +43,19 @@ __all__ = [
     "StrengthBucketDistributionResponse",
     "SummaryWarningResponse",
     "SuspectedVibrationOriginPayload",
-    "SpatialEvidenceSummaryResponse",
-    "SpatialLocationSummaryResponse",
     "TestPlanStepResponse",
-    "WholeRunContextIntervalResponse",
 ]
+
+_FORBID_EXTRA = ConfigDict(extra="forbid")
+# Nested rows ignore unknown keys so older persisted summaries keep validating;
+# without their own config they would inherit the parent's ``forbid``.
+_IGNORE_EXTRA = ConfigDict(extra="ignore")
 
 type PayloadObject = JsonSchemaObject
 type PayloadValue = JsonSchemaValue
-type DiagnosisExemplarKind = Literal[
-    "order_support_interval",
-    "whole_run_context_interval",
-    "spatial_location",
-]
-type DiagnosisFactorKey = Literal[
-    "raw_backed",
-    "repeated_support",
-    "sustained_support",
-    "stable_frequency",
-    "tight_order_lock",
-    "localized_support",
-    "clean_signal",
-    "user_confirmed_vehicle_data",
-    "summary_only",
-    "raw_replay_incomplete",
-    "legacy_context",
-    "speed_context_gaps",
-    "rpm_context_gaps",
-    "sparse_support",
-    "brief_support",
-    "drifting_frequency",
-    "loose_order_lock",
-    "mixed_support_locations",
-    "noisy_signal",
-    "weak_spatial",
-    "close_alternative",
-    "incomplete_reference",
-    "secondary_vehicle_data",
-    "approximate_vehicle_data",
-    "unverified_vehicle_data",
-]
-type DiagnosisDataQualityLimitation = Literal[
-    "reference_gap",
-    "speed_context",
-    "sensor_timing",
-    "sensor_mounting",
-    "sensor_clipping",
-    "road_shock",
-    "weak_spatial",
-    "ambiguous_location",
-    "summary_fallback",
-    "window_quality",
-]
-DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES: frozenset[DiagnosisDataQualityLimitation] = frozenset(
-    {
-        "reference_gap",
-        "speed_context",
-        "sensor_timing",
-        "sensor_mounting",
-        "sensor_clipping",
-        "road_shock",
-        "weak_spatial",
-        "ambiguous_location",
-        "summary_fallback",
-        "window_quality",
-    }
-)
-type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
-type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
-type WholeRunDiagnosisDataBasis = Literal["raw_backed", "partial_raw_backed", "summary_only"]
-type LocationProofBasis = Literal[
-    "whole_run_summary",
-    "supporting_windows_raw_backed",
-    "supporting_windows_summary_only",
-]
-
-DIAGNOSIS_EXEMPLAR_KIND_VALUES: frozenset[DiagnosisExemplarKind] = frozenset(
-    {"order_support_interval", "whole_run_context_interval", "spatial_location"}
-)
-DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
-    {
-        "raw_backed",
-        "repeated_support",
-        "sustained_support",
-        "stable_frequency",
-        "tight_order_lock",
-        "localized_support",
-        "clean_signal",
-        "user_confirmed_vehicle_data",
-        "summary_only",
-        "raw_replay_incomplete",
-        LEGACY_CONTEXT_CAVEAT_KEY,
-        "speed_context_gaps",
-        "rpm_context_gaps",
-        "sparse_support",
-        "brief_support",
-        "drifting_frequency",
-        "loose_order_lock",
-        "mixed_support_locations",
-        "noisy_signal",
-        "weak_spatial",
-        "close_alternative",
-        "incomplete_reference",
-        "secondary_vehicle_data",
-        "approximate_vehicle_data",
-        "unverified_vehicle_data",
-    }
-)
-DIAGNOSIS_FACTOR_POLARITY_VALUES: frozenset[DiagnosisFactorPolarity] = frozenset(
-    {"support", "counterevidence"}
-)
-DIAGNOSIS_FACTOR_SEVERITY_VALUES: frozenset[DiagnosisFactorSeverity] = frozenset(
-    {"low", "medium", "high"}
-)
-WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES: frozenset[WholeRunDiagnosisDataBasis] = frozenset(
-    {"raw_backed", "partial_raw_backed", "summary_only"}
-)
-LOCATION_PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
-    {
-        "whole_run_summary",
-        "supporting_windows_raw_backed",
-        "supporting_windows_summary_only",
-    }
-)
 
 
-_FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
-_IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")
-
-
+@with_config(_FORBID_EXTRA)
 class RunSuitabilityCheck(TypedDict, total=False):
     """Typed HTTP contract for one run-suitability diagnostic check."""
 
@@ -222,6 +64,7 @@ class RunSuitabilityCheck(TypedDict, total=False):
     explanation: PayloadValue
 
 
+@with_config(_IGNORE_EXTRA)
 class SummaryWarningResponse(TypedDict, total=False):
     """Response body for a persisted summary warning before localization."""
 
@@ -232,6 +75,7 @@ class SummaryWarningResponse(TypedDict, total=False):
     detail: PayloadValue
 
 
+@with_config(_IGNORE_EXTRA)
 class TestPlanStepResponse(TypedDict):
     """Response body for one recommended next-step action."""
 
@@ -243,6 +87,7 @@ class TestPlanStepResponse(TypedDict):
     eta: str | None
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseTimelineEntryResponse(TypedDict):
     """Response body for one summarized phase-timeline interval."""
 
@@ -254,6 +99,7 @@ class PhaseTimelineEntryResponse(TypedDict):
     has_fault_evidence: bool
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseSegmentSummaryResponse(TypedDict):
     """Typed HTTP contract for a summarized driving-phase segment."""
 
@@ -267,240 +113,7 @@ class PhaseSegmentSummaryResponse(TypedDict):
     sample_count: int
 
 
-class WholeRunContextIntervalResponse(TypedDict, total=False):
-    """Persisted whole-run context segment keyed to the canonical window grid."""
-
-    segment_index: Required[int]
-    phase: Required[str]
-    load_state: Required[str]
-    start_window_index: Required[int]
-    end_window_index: Required[int]
-    start_t_s: float | None
-    end_t_s: float | None
-    speed_min_kmh: float | None
-    speed_max_kmh: float | None
-    speed_band: str | None
-    full_context_window_count: Required[int]
-    partial_context_window_count: Required[int]
-    missing_context_window_count: Required[int]
-
-
-class OrderTraceSupportIntervalResponse(TypedDict, total=False):
-    """Compact persisted support interval derived from dense whole-run order traces."""
-
-    interval_index: Required[int]
-    start_window_index: Required[int]
-    end_window_index: Required[int]
-    matched_window_count: Required[int]
-    support_ratio: Required[float]
-    start_t_s: float | None
-    end_t_s: float | None
-    phase: str | None
-    load_state: str | None
-    speed_band: str | None
-    mean_relative_error: float | None
-
-
-class OrderTracePhaseSupportResponse(TypedDict, total=False):
-    """Phase-aware support row for a compact whole-run order-trace summary."""
-
-    phase: Required[str]
-    eligible_window_count: Required[int]
-    matched_window_count: Required[int]
-    support_ratio: Required[float]
-
-
-class OrderHarmonicEvidenceSummaryResponse(TypedDict, total=False):
-    """Compact harmonic-specific evidence row for a whole-run order-trace summary."""
-
-    harmonic: Required[int]
-    order_label: Required[str]
-    eligible_window_count: Required[int]
-    matched_window_count: Required[int]
-    support_ratio: Required[float]
-    reference_coverage_ratio: Required[float]
-    contiguous_support_ratio: Required[float]
-    lock_score: Required[float]
-    mean_relative_error: float | None
-    relative_error_stddev: float | None
-    drift_score: Required[float]
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-
-
-class OrderTraceSummaryResponse(TypedDict, total=False):
-    """Future persisted/report-facing summary shape for whole-run order traces."""
-
-    hypothesis_key: Required[str]
-    suspected_source: Required[str]
-    order_family: Required[str]
-    order_label: Required[str]
-    total_window_count: Required[int]
-    eligible_window_count: Required[int]
-    matched_window_count: Required[int]
-    support_ratio: Required[float]
-    reference_coverage_ratio: Required[float]
-    longest_contiguous_support_window_count: Required[int]
-    contiguous_support_ratio: Required[float]
-    usable_window_count: Required[int]
-    limited_window_count: Required[int]
-    excluded_window_count: Required[int]
-    shock_transient_window_count: Required[int]
-    sensor_clipping_window_count: Required[int]
-    sensor_mounting_artifact_window_count: Required[int]
-    sensor_timing_integrity_window_count: Required[int]
-    speed_context_limited_window_count: Required[int]
-    mean_quality_score: float | None
-    support_intervals: Required[list[OrderTraceSupportIntervalResponse]]
-    phase_support: Required[list[OrderTracePhaseSupportResponse]]
-    harmonic_summaries: Required[list[OrderHarmonicEvidenceSummaryResponse]]
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    exemplar_interval_index: int | None
-    dominant_phase: str | None
-    dominant_speed_band: str | None
-    strongest_location: str | None
-    mean_relative_error: float | None
-    relative_error_stddev: float | None
-    drift_score: Required[float]
-    lock_score: Required[float]
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-    ref_sources: Required[list[str]]
-
-
-class SpatialLocationSummaryResponse(TypedDict, total=False):
-    """Compact per-location support row for persisted spatial evidence."""
-
-    location: Required[str]
-    sensor_ids: Required[list[str]]
-    supporting_window_count: Required[int]
-    support_ratio: Required[float]
-    coherent_window_count: Required[int]
-    coherence_ratio: float | None
-    peak_intensity_db: float | None
-    mean_vibration_strength_db: float | None
-
-
-class SpatialEvidenceSummaryResponse(TypedDict, total=False):
-    """Future persisted/report-facing summary shape for whole-run spatial evidence."""
-
-    candidate_key: Required[str]
-    suspected_source: Required[str]
-    proof_basis: Required[LocationProofBasis]
-    total_window_count: Required[int]
-    supporting_window_count: Required[int]
-    supporting_sensor_count: Required[int]
-    coherent_window_count: Required[int]
-    coherence_ratio: float | None
-    dominant_location: str | None
-    runner_up_location: str | None
-    location_separation_db: float | None
-    dominance_ratio: float | None
-    ambiguous_location: Required[bool]
-    weak_spatial_separation: Required[bool]
-    location_summaries: Required[list[SpatialLocationSummaryResponse]]
-
-
-class DiagnosisExemplarReferenceResponse(TypedDict, total=False):
-    """Compact reference to one persisted exemplar used by a fused diagnosis."""
-
-    kind: Required[DiagnosisExemplarKind]
-    order_hypothesis_key: str | None
-    support_interval_index: int | None
-    spatial_candidate_key: str | None
-    context_segment_index: int | None
-    location: str | None
-    phase: str | None
-    speed_band: str | None
-
-
-class DiagnosisFactorDetailsResponse(TypedDict, total=False):
-    """Structured details carried by one persisted diagnosis factor row."""
-
-    raw_backed_sample_count: int | None
-    supporting_window_count: int | None
-    supporting_duration_s: float | None
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    frequency_span_hz: float | None
-    supporting_location_count: int | None
-    top_support_location: str | None
-    top_support_share: float | None
-    mean_relative_error: float | None
-    snr_db: float | None
-    alternative_source: str | None
-    speed_gap_window_count: int | None
-    rpm_gap_window_count: int | None
-    fallback_reason: str | None
-    car_data_reference_scope: str | None
-    car_data_confidence: str | None
-
-
-class DiagnosisFactorResponse(TypedDict, total=False):
-    """One stable support or counterevidence factor for a fused diagnosis."""
-
-    factor_key: Required[DiagnosisFactorKey]
-    polarity: Required[DiagnosisFactorPolarity]
-    severity: Required[DiagnosisFactorSeverity]
-    weight: Required[float]
-    details: Required[DiagnosisFactorDetailsResponse]
-
-
-class DiagnosisDataQualitySummaryResponse(TypedDict, total=False):
-    """Compact report-facing data-quality summary for one diagnosis/finding."""
-
-    usable_window_count: int | None
-    limited_window_count: int | None
-    excluded_window_count: int | None
-    mean_quality_score: float | None
-    speed_context_limited_window_count: Required[int]
-    sensor_timing_integrity_window_count: Required[int]
-    sensor_mounting_artifact_window_count: Required[int]
-    sensor_clipping_window_count: Required[int]
-    shock_transient_window_count: Required[int]
-    limitation_keys: Required[list[DiagnosisDataQualityLimitation]]
-
-
-class WholeRunDiagnosisSummaryResponse(TypedDict, total=False):
-    """Future persisted/report-facing summary shape for fused whole-run diagnoses."""
-
-    diagnosis_key: Required[str]
-    suspected_source: Required[str]
-    rank: Required[int]
-    data_basis: Required[WholeRunDiagnosisDataBasis]
-    support_score: float | None
-    counterevidence_score: float | None
-    total_score: float | None
-    order_hypothesis_key: str | None
-    spatial_candidate_key: str | None
-    location_proof_basis: LocationProofBasis | None
-    supporting_window_count: int | None
-    supporting_duration_s: float | None
-    supporting_sensor_count: int | None
-    stable_frequency_min_hz: float | None
-    stable_frequency_max_hz: float | None
-    dominant_location: str | None
-    runner_up_location: str | None
-    dominant_phase: str | None
-    dominant_speed_band: str | None
-    location_separation_db: float | None
-    dominance_ratio: float | None
-    alternative_source: str | None
-    confidence_gap_to_alternative: float | None
-    ambiguous_diagnosis: Required[bool]
-    ambiguous_location: Required[bool]
-    suspicious: Required[bool]
-    weak_spatial_separation: Required[bool]
-    has_reference_gap: Required[bool]
-    uses_summary_fallback: Required[bool]
-    fallback_reason: str | None
-    data_quality_summary: Required[DiagnosisDataQualitySummaryResponse]
-    exemplar_references: Required[list[DiagnosisExemplarReferenceResponse]]
-    support_factors: Required[list[DiagnosisFactorResponse]]
-    counterevidence_factors: Required[list[DiagnosisFactorResponse]]
-
-
+@with_config(_IGNORE_EXTRA)
 class SpeedStatsResponse(TypedDict):
     """Response body for one summarized speed-profile snapshot."""
 
@@ -513,6 +126,7 @@ class SpeedStatsResponse(TypedDict):
     sample_count: int
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseInfoResponse(TypedDict):
     """Response body for aggregate driving-phase coverage metrics."""
 
@@ -527,6 +141,7 @@ class PhaseInfoResponse(TypedDict):
     speed_unknown_pct: float
 
 
+@with_config(_IGNORE_EXTRA)
 class StrengthBucketDistributionResponse(TypedDict):
     """Response body for per-location strength-bucket coverage."""
 
@@ -540,6 +155,7 @@ class StrengthBucketDistributionResponse(TypedDict):
     percent_time_l5: float
 
 
+@with_config(_IGNORE_EXTRA)
 class PhaseIntensityStatsResponse(TypedDict):
     """Response body for per-phase intensity aggregates at one location."""
 
@@ -548,6 +164,7 @@ class PhaseIntensityStatsResponse(TypedDict):
     max_intensity_db: float | None
 
 
+@with_config(_IGNORE_EXTRA)
 class LocationIntensitySummaryResponse(TypedDict, total=False):
     """Response body for one sensor-location intensity summary row."""
 
@@ -569,6 +186,7 @@ class LocationIntensitySummaryResponse(TypedDict, total=False):
     phase_intensity: dict[str, PhaseIntensityStatsResponse] | None
 
 
+@with_config(_FORBID_EXTRA)
 class SuspectedVibrationOriginPayload(TypedDict, total=False):
     """Typed HTTP contract for the serialized likely-origin payload."""
 
@@ -582,6 +200,7 @@ class SuspectedVibrationOriginPayload(TypedDict, total=False):
     explanation: PayloadValue
 
 
+@with_config(_FORBID_EXTRA)
 class AnalysisSummaryCoreResponse(TypedDict, total=False):
     """Canonical outward owner for summary core fields."""
 
@@ -615,10 +234,10 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
-    whole_run_context_intervals: list[WholeRunContextIntervalResponse]
-    whole_run_order_summaries: list[OrderTraceSummaryResponse]
-    whole_run_spatial_summaries: list[SpatialEvidenceSummaryResponse]
-    whole_run_diagnosis_summaries: list[WholeRunDiagnosisSummaryResponse]
+    whole_run_context_intervals: list[Annotated[WholeRunContextInterval, AsJsonObject]]
+    whole_run_order_summaries: list[Annotated[OrderTraceSummary, AsJsonObject]]
+    whole_run_spatial_summaries: list[Annotated[SpatialEvidenceSummary, AsJsonObject]]
+    whole_run_diagnosis_summaries: list[Annotated[WholeRunDiagnosisSummary, AsJsonObject]]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]
@@ -633,59 +252,8 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     analysis_metadata: PayloadObject
 
 
-class AnalysisSummaryResponse(AnalysisSummaryCoreResponse):
-    """Canonical shared owner for the persisted analysis summary wrapper."""
+@with_config(_FORBID_EXTRA)
+class AnalysisSummary(AnalysisSummaryCoreResponse):
+    """Persisted analysis summary (``runs.analysis_json``) and its HTTP response schema."""
 
     warnings: Required[list[SummaryWarningResponse]]
-
-
-# Plain assignment (not ``type`` statement) so ``AnalysisSummary is
-# AnalysisSummaryResponse`` stays True at runtime — the hygiene parity
-# suite relies on this identity.
-AnalysisSummary = AnalysisSummaryResponse
-
-
-def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
-    typed_dict.__pydantic_config__ = config
-
-
-for _typed_dict in (
-    SummaryWarningResponse,
-    TestPlanStepResponse,
-    PhaseTimelineEntryResponse,
-    PhaseSegmentSummaryResponse,
-    WholeRunContextIntervalResponse,
-    OrderTraceSupportIntervalResponse,
-    OrderTracePhaseSupportResponse,
-    OrderHarmonicEvidenceSummaryResponse,
-    OrderTraceSummaryResponse,
-    SpatialLocationSummaryResponse,
-    SpatialEvidenceSummaryResponse,
-    DiagnosisExemplarReferenceResponse,
-    DiagnosisFactorDetailsResponse,
-    DiagnosisFactorResponse,
-    WholeRunDiagnosisSummaryResponse,
-    SpeedStatsResponse,
-    PhaseInfoResponse,
-    OutlierSummaryResponse,
-    DataQualityRequiredMissingPctResponse,
-    DataQualitySpeedCoverageResponse,
-    DataQualityAccelSanityResponse,
-    DataQualityOutliersResponse,
-    DataQualityResponse,
-    StrengthBucketDistributionResponse,
-    PhaseIntensityStatsResponse,
-    LocationIntensitySummaryResponse,
-):
-    _configure_pydantic_schema(_typed_dict, _IGNORE_EXTRA_TYPEDDICT_CONFIG)
-
-
-for _strict_typed_dict in (
-    AmplitudeMetric,
-    RunSuitabilityCheck,
-    FindingPayload,
-    SuspectedVibrationOriginPayload,
-    AnalysisSummaryCoreResponse,
-    AnalysisSummaryResponse,
-):
-    _configure_pydantic_schema(_strict_typed_dict, _FORBID_EXTRA_TYPEDDICT_CONFIG)

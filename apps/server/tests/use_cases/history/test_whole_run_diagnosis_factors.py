@@ -38,7 +38,7 @@ def test_project_whole_run_diagnosis_factors_maps_support_signals_to_stable_rows
     )
 
     assert counter_factors == ()
-    assert [factor["factor_key"] for factor in support_factors] == [
+    assert [factor.factor_key for factor in support_factors] == [
         "raw_backed",
         "repeated_support",
         "sustained_support",
@@ -47,10 +47,10 @@ def test_project_whole_run_diagnosis_factors_maps_support_signals_to_stable_rows
         "localized_support",
         "clean_signal",
     ]
-    assert support_factors[0]["weight"] == 0.10
-    assert support_factors[0]["details"]["raw_backed_sample_count"] == 48
-    assert support_factors[3]["details"]["frequency_span_hz"] == pytest.approx(0.3)
-    assert support_factors[5]["details"]["top_support_location"] == "front-left"
+    assert support_factors[0].weight == 0.10
+    assert support_factors[0].details.raw_backed_sample_count == 48
+    assert support_factors[3].details.frequency_span_hz == pytest.approx(0.3)
+    assert support_factors[5].details.top_support_location == "front-left"
 
 
 def test_project_whole_run_diagnosis_factors_maps_counterevidence_signals_to_stable_rows() -> None:
@@ -84,7 +84,7 @@ def test_project_whole_run_diagnosis_factors_maps_counterevidence_signals_to_sta
     )
 
     assert support_factors == ()
-    assert [factor["factor_key"] for factor in counter_factors] == [
+    assert [factor.factor_key for factor in counter_factors] == [
         "summary_only",
         "speed_context_gaps",
         "rpm_context_gaps",
@@ -98,7 +98,7 @@ def test_project_whole_run_diagnosis_factors_maps_counterevidence_signals_to_sta
         "close_alternative",
         "incomplete_reference",
     ]
-    assert counter_factors[0]["details"]["fallback_reason"] == "legacy_summary_only"
-    assert counter_factors[1]["details"]["speed_gap_window_count"] == 3
-    assert counter_factors[5]["details"]["frequency_span_hz"] == pytest.approx(2.2)
-    assert counter_factors[10]["details"]["alternative_source"] == "driveshaft"
+    assert counter_factors[0].details.fallback_reason == "legacy_summary_only"
+    assert counter_factors[1].details.speed_gap_window_count == 3
+    assert counter_factors[5].details.frequency_span_hz == pytest.approx(2.2)
+    assert counter_factors[10].details.alternative_source == "driveshaft"

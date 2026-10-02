@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from vibesensor.domain import SpeedSourceKind
-from vibesensor.shared.types.settings_types import (
-    AnalysisSettingsPayload,
-    LanguageCode,
-    SpeedUnitCode,
-)
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
 
 from .base import _FrozenBase
@@ -51,28 +47,6 @@ class SpeedUnitRequest(_FrozenBase):
     speed_unit: SpeedUnitCode
 
 
-class CarUpsertRequest(_FrozenBase):
-    """Request body for creating or updating a car profile."""
-
-    name: Annotated[str, Field(min_length=1, max_length=64)] | None = None
-    type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
-    aspects: AnalysisSettingsPayload | None = None
-    variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
-    order_reference_status: CarOrderReferenceStatus | None = None
-
-
-class CarOrderReferenceStatus(BaseModel):
-    """Confidence metadata for saved drivetrain order-reference values."""
-
-    selection_source_status: Literal["exact_row", "manual_entry"]
-    tire_dimensions_confidence: str | None = None
-    final_drive_ratio_confidence: str | None = None
-    current_gear_ratio_confidence: str | None = None
-    transmission_name: str | None = None
-    transmission_confidence: str | None = None
-    requires_manual_confirmation: bool
-
-
 class ActiveCarRequest(_FrozenBase):
     """Request body for selecting the active car profile."""
 
@@ -87,24 +61,6 @@ class SpeedSourceRequest(_FrozenBase):
     stale_timeout_s: float | None = Field(default=None, ge=3, le=120)
     obd_device_mac: str | None = Field(default=None, min_length=1, max_length=64)
     obd_device_name: str | None = Field(default=None, min_length=1, max_length=128)
-
-
-class CarResponse(BaseModel):
-    """Response body representing a single car profile."""
-
-    id: str
-    name: str
-    type: str
-    aspects: AnalysisSettingsPayload
-    variant: str | None = None
-    order_reference_status: CarOrderReferenceStatus | None = None
-
-
-class CarsResponse(BaseModel):
-    """Response body for the list of all car profiles with the active car ID."""
-
-    cars: list[CarResponse]
-    active_car_id: str | None
 
 
 class SpeedSourceResponse(BaseModel):

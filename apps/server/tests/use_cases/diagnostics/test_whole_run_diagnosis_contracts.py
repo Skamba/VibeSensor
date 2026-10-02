@@ -2,13 +2,6 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.types.history_analysis_contracts import (
-    DiagnosisDataQualitySummaryResponse,
-    DiagnosisExemplarReferenceResponse,
-    DiagnosisFactorDetailsResponse,
-    DiagnosisFactorResponse,
-    WholeRunDiagnosisSummaryResponse,
-)
 from vibesensor.shared.types.whole_run_diagnosis_contracts import (
     DiagnosisDataQualitySummary,
     DiagnosisExemplarReference,
@@ -113,17 +106,16 @@ def test_whole_run_diagnosis_summary_round_trips_nested_compact_contracts() -> N
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("support_score", "bad", "optional numeric field must be a number or null"),
-        ("supporting_window_count", 1.5, "optional int field must be an int or null"),
-        ("dominant_location", 7, "optional text field must be a string or null"),
+        ("support_score", "bad"),
+        ("supporting_window_count", 1.5),
+        ("dominant_location", 7),
     ],
 )
 def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
@@ -133,11 +125,11 @@ def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         WholeRunDiagnosisSummary.from_mapping(payload)
 
 
-def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
+def test_whole_run_diagnosis_summary_rejects_non_mapping_nested_rows() -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
         suspected_source="wheel/tire",
@@ -167,15 +159,8 @@ def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
         None,
     ]
 
-    restored = WholeRunDiagnosisSummary.from_mapping(payload)
-
-    assert [reference.kind for reference in restored.exemplar_references] == [
-        "whole_run_context_interval"
-    ]
-    assert [factor.factor_key for factor in restored.support_factors] == ["raw_backed"]
-    assert [factor.factor_key for factor in restored.counterevidence_factors] == [
-        "incomplete_reference"
-    ]
+    with pytest.raises(ValueError, match="exemplar_references.1"):
+        WholeRunDiagnosisSummary.from_mapping(payload)
 
 
 def test_whole_run_diagnosis_summary_defaults_missing_quality_summary() -> None:
@@ -193,22 +178,21 @@ def test_whole_run_diagnosis_summary_defaults_missing_quality_summary() -> None:
 
 
 def test_diagnosis_exemplar_reference_rejects_unsupported_kind() -> None:
-    with pytest.raises(ValueError, match="supported diagnosis exemplar kind"):
+    with pytest.raises(ValueError, match="kind"):
         DiagnosisExemplarReference.from_mapping({"kind": "bad-kind"})
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("factor_key", "bad-factor", "supported diagnosis factor key"),
-        ("polarity", "neutral", "supported diagnosis factor polarity"),
-        ("severity", "urgent", "supported diagnosis factor severity"),
+        ("factor_key", "bad-factor"),
+        ("polarity", "neutral"),
+        ("severity", "urgent"),
     ],
 )
 def test_diagnosis_factor_rejects_unsupported_literal_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = DiagnosisFactor(
         factor_key="raw_backed",
@@ -218,21 +202,20 @@ def test_diagnosis_factor_rejects_unsupported_literal_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         DiagnosisFactor.from_mapping(payload)
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("data_basis", "derived_only", "supported whole-run diagnosis data basis"),
-        ("location_proof_basis", "sensor_vote", "supported location proof basis"),
+        ("data_basis", "derived_only"),
+        ("location_proof_basis", "sensor_vote"),
     ],
 )
 def test_whole_run_diagnosis_summary_rejects_unsupported_literal_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
@@ -242,92 +225,5 @@ def test_whole_run_diagnosis_summary_rejects_unsupported_literal_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         WholeRunDiagnosisSummary.from_mapping(payload)
-
-
-def test_history_diagnosis_response_contracts_expose_named_summary_fields() -> None:
-    assert set(DiagnosisExemplarReferenceResponse.__annotations__) == {
-        "kind",
-        "order_hypothesis_key",
-        "support_interval_index",
-        "spatial_candidate_key",
-        "context_segment_index",
-        "location",
-        "phase",
-        "speed_band",
-    }
-    assert set(DiagnosisFactorDetailsResponse.__annotations__) == {
-        "raw_backed_sample_count",
-        "supporting_window_count",
-        "supporting_duration_s",
-        "stable_frequency_min_hz",
-        "stable_frequency_max_hz",
-        "frequency_span_hz",
-        "supporting_location_count",
-        "top_support_location",
-        "top_support_share",
-        "mean_relative_error",
-        "snr_db",
-        "alternative_source",
-        "speed_gap_window_count",
-        "rpm_gap_window_count",
-        "fallback_reason",
-        "car_data_reference_scope",
-        "car_data_confidence",
-    }
-    assert set(DiagnosisFactorResponse.__annotations__) == {
-        "factor_key",
-        "polarity",
-        "severity",
-        "weight",
-        "details",
-    }
-    assert set(DiagnosisDataQualitySummaryResponse.__annotations__) == {
-        "usable_window_count",
-        "limited_window_count",
-        "excluded_window_count",
-        "mean_quality_score",
-        "speed_context_limited_window_count",
-        "sensor_timing_integrity_window_count",
-        "sensor_mounting_artifact_window_count",
-        "sensor_clipping_window_count",
-        "shock_transient_window_count",
-        "limitation_keys",
-    }
-    assert set(WholeRunDiagnosisSummaryResponse.__annotations__) == {
-        "diagnosis_key",
-        "suspected_source",
-        "rank",
-        "data_basis",
-        "support_score",
-        "counterevidence_score",
-        "total_score",
-        "order_hypothesis_key",
-        "spatial_candidate_key",
-        "location_proof_basis",
-        "supporting_window_count",
-        "supporting_duration_s",
-        "supporting_sensor_count",
-        "stable_frequency_min_hz",
-        "stable_frequency_max_hz",
-        "dominant_location",
-        "runner_up_location",
-        "dominant_phase",
-        "dominant_speed_band",
-        "location_separation_db",
-        "dominance_ratio",
-        "alternative_source",
-        "confidence_gap_to_alternative",
-        "ambiguous_diagnosis",
-        "ambiguous_location",
-        "suspicious",
-        "weak_spatial_separation",
-        "has_reference_gap",
-        "uses_summary_fallback",
-        "fallback_reason",
-        "data_quality_summary",
-        "exemplar_references",
-        "support_factors",
-        "counterevidence_factors",
-    }

@@ -9,14 +9,9 @@ import msgspec
 from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.types.car_config import CarConfigPayload
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.settings_types import (
-    LanguageCode,
-    SpeedUnitCode,
-    analysis_settings_payload_from_mapping,
-)
+from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
 
 __all__ = [
-    "CarConfigRecord",
     "SettingsSnapshotRecord",
     "settings_snapshot_from_json",
     "settings_snapshot_to_json",
@@ -32,16 +27,8 @@ class SensorConfigRecord(msgspec.Struct, kw_only=True, frozen=True):
     location_code: str = ""
 
 
-class CarConfigRecord(msgspec.Struct, kw_only=True, frozen=True):
-    id: str = ""
-    name: str = ""
-    type: str = "sedan"
-    aspects: dict[str, float] = msgspec.field(default_factory=dict)
-    variant: str | None = None
-
-
 class SettingsSnapshotRecord(msgspec.Struct, kw_only=True, frozen=True):
-    cars: list[CarConfigRecord] = msgspec.field(default_factory=list)
+    cars: list[CarConfigPayload] = msgspec.field(default_factory=list)
     activeCarId: str | None = None
     speedSource: SpeedSourceKind = SpeedSourceKind.GPS
     manualSpeedKph: float | None = None
@@ -101,20 +88,8 @@ def settings_snapshot_from_json(raw: str | bytes | None) -> SettingsSnapshotPayl
 def _settings_snapshot_payload_from_record(
     record: SettingsSnapshotRecord,
 ) -> SettingsSnapshotPayload:
-    cars: list[CarConfigPayload] = []
-    for car in record.cars:
-        car_payload: CarConfigPayload = {
-            "id": car.id,
-            "name": car.name,
-            "type": car.type,
-            "aspects": analysis_settings_payload_from_mapping(car.aspects),
-        }
-        if car.variant:
-            car_payload["variant"] = car.variant
-        cars.append(car_payload)
-
     snapshot_payload: SettingsSnapshotPayload = {
-        "cars": cars,
+        "cars": record.cars,
         "activeCarId": record.activeCarId,
         "speedSource": record.speedSource,
         "manualSpeedKph": record.manualSpeedKph,

@@ -131,7 +131,16 @@ def coerce_raw_capture_manifest(
                 type(parsed).__name__,
             )
         return None
-    return RawCaptureManifest.from_mapping(parsed)
+    try:
+        return RawCaptureManifest.from_mapping(parsed)
+    except ValueError:
+        LOGGER.warning(
+            "%s: run %s raw_capture_manifest_json is corrupt or unsupported",
+            source,
+            run_id,
+            exc_info=True,
+        )
+        return None
 
 
 def _coerce_whole_run_artifact_manifest(

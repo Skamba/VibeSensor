@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, NotRequired, TypedDict, cast
+from typing import Literal, NotRequired, TypedDict
 
-from pydantic import ConfigDict, TypeAdapter
+from pydantic import ConfigDict, TypeAdapter, with_config
 
 from vibesensor.domain import (
     AxleTireSetup,
@@ -26,6 +26,7 @@ from vibesensor.domain import (
 _STRICT_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleFieldMetadataRow(TypedDict):
     confidence: VehicleFieldConfidence
     evidence_refs: NotRequired[list[str]]
@@ -33,44 +34,53 @@ class VehicleFieldMetadataRow(TypedDict):
     notes: NotRequired[str]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleDrivetrainRow(VehicleFieldMetadataRow):
     value: VehicleDrivetrain
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleTransmissionRow(VehicleFieldMetadataRow):
     name: str
     code: NotRequired[str]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleNumericFieldRow(VehicleFieldMetadataRow):
     value: float
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleNumericSequenceFieldRow(VehicleFieldMetadataRow):
     value: list[float]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleTireDimensionsRow(TypedDict):
     width_mm: float
     aspect_pct: float
     rim_in: float
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleTireSetupRow(VehicleFieldMetadataRow):
     front: VehicleTireDimensionsRow
     rear: NotRequired[VehicleTireDimensionsRow]
     default_axle_for_speed: NotRequired[Literal["front", "rear", "average"]]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleTireOptionRow(VehicleTireSetupRow):
     name: str
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleTiresRow(TypedDict):
     default: VehicleTireSetupRow
     options: NotRequired[list[VehicleTireOptionRow]]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleRatiosRow(TypedDict):
     top_gear_ratio: VehicleNumericFieldRow
     gear_ratios: NotRequired[VehicleNumericSequenceFieldRow]
@@ -79,17 +89,20 @@ class VehicleRatiosRow(TypedDict):
     transfer_case_ratio: NotRequired[VehicleNumericFieldRow]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleConfigurationNoteRow(TypedDict):
     note: str
     evidence_refs: NotRequired[list[str]]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleConfigurationIssueRow(TypedDict):
     item: str
     reason: str
     evidence_refs: NotRequired[list[str]]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleOrderAnalysisPolicyOverrideRow(TypedDict):
     reason: str
     usable_for_engine_order: NotRequired[bool]
@@ -98,6 +111,7 @@ class VehicleOrderAnalysisPolicyOverrideRow(TypedDict):
     requires_manual_confirmation: NotRequired[bool]
 
 
+@with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleConfigurationRow(TypedDict):
     id: str
     brand: str
@@ -121,24 +135,6 @@ class VehicleConfigurationRow(TypedDict):
     unresolved: NotRequired[list[VehicleConfigurationIssueRow]]
     order_analysis_policy_override: NotRequired[VehicleOrderAnalysisPolicyOverrideRow]
 
-
-for _typed_dict in (
-    VehicleConfigurationIssueRow,
-    VehicleConfigurationNoteRow,
-    VehicleConfigurationRow,
-    VehicleDrivetrainRow,
-    VehicleFieldMetadataRow,
-    VehicleNumericFieldRow,
-    VehicleNumericSequenceFieldRow,
-    VehicleOrderAnalysisPolicyOverrideRow,
-    VehicleRatiosRow,
-    VehicleTireDimensionsRow,
-    VehicleTireOptionRow,
-    VehicleTireSetupRow,
-    VehicleTiresRow,
-    VehicleTransmissionRow,
-):
-    cast(Any, _typed_dict).__pydantic_config__ = _STRICT_TYPEDDICT_CONFIG
 
 _VEHICLE_CONFIGURATION_ADAPTER = TypeAdapter(list[VehicleConfigurationRow])
 
