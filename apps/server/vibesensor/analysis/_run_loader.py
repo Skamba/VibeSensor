@@ -1,4 +1,4 @@
-"""Run-loading helpers for diagnostics adapters."""
+"""Run-loading helpers for post-run analysis."""
 
 from __future__ import annotations
 

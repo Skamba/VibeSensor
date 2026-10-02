@@ -28,7 +28,7 @@ def make_stored_run(
     sample_count: int = 0,
     raw_capture_manifest: RawCaptureManifest | None = None,
 ) -> StoredHistoryRun:
-    """An ``analyzing`` stored run for fake ``RunPersistence.get_run`` implementations."""
+    """An ``analyzing`` stored run for fake ``HistoryDB.get_run`` implementations."""
     return StoredHistoryRun(
         run_id=metadata.run_id,
         status=RunStatus.ANALYZING,

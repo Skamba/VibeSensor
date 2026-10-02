@@ -48,8 +48,8 @@ Deep dive: `docs/run_lifecycle.md`
 | Field | Value |
 |------|-------------|
 | Source | Optional per-run raw capture written alongside an active recording |
-| Main path | `use_cases/run/raw_capture_writer.py` -> raw capture manifest/store -> `use_cases/run/post_analysis_loader.py` -> `use_cases/run/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_executor.py` (whole-run stages) |
-| Boundary | Raw capture is read through `RunPersistence`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
+| Main path | `recording/raw_capture_writer.py` -> raw capture manifest/store -> `analysis/post_analysis_loader.py` -> `analysis/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_executor.py` (whole-run stages) |
+| Boundary | Raw capture is read through `HistoryDB`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
 | Final consumer | Offline post-stop analysis: raw replay compatibility plus whole-run sidecar builders |
 | Data shape | Persisted and replayable raw artifacts, dense sidecar artifacts, and compact persisted summaries |
 
@@ -64,7 +64,7 @@ summaries, and spatial coherence through the whole-run stage functions in
 metadata are appended to `analysis_json`.
 
 The whole-run spectral executor is
-`use_cases/diagnostics/whole_run_spectra.py`. Degraded or missing raw/whole-run
+`analysis/whole_run_spectra.py`. Degraded or missing raw/whole-run
 state must propagate forward as
 lifecycle/artifact status and report context instead of triggering a second ad
 hoc recovery path in history or PDF code.
@@ -76,7 +76,7 @@ Deep dives: `docs/run_lifecycle.md`, `docs/analysis_pipeline.md`
 | Field | Value |
 |------|-------------|
 | Source | Persisted run metadata, persisted analysis outputs, and already-derived report facts |
-| Main path | history DB -> `use_cases/history/report_loader.py` -> shared report boundaries/fact builders -> `app/composition/history.py::_build_prepared_pdf_bytes` -> PDF/UI consumers |
+| Main path | history DB -> `report/loader.py` -> `report/` fact builders -> `app/composition.py::_build_prepared_pdf_bytes` -> PDF/UI consumers |
 | Boundary | History/report loading reads persisted truth only; it does not rerun live processing or raw replay directly |
 | Final consumer | History detail UI, quick report readiness, and generated PDFs |
 | Data shape | Persisted, replay-free report state |
@@ -91,5 +91,6 @@ Deep dives: `docs/analysis_pipeline.md`, `docs/report_pipeline.md`, `docs/run_li
 ## Guard mapping
 
 Import direction between these flows is enforced by the import-linter contracts
-in `apps/server/pyproject.toml`: live processing and WebSocket projection stay
-off post-run diagnosis/report modules, and the PDF adapter stays off diagnostics.
+in `apps/server/pyproject.toml`: the live path (`ingest`, `live`, `dsp`) never
+imports `analysis`, `history`, `recording`, `report`, or `summary`, and `report`
+never imports `analysis`.

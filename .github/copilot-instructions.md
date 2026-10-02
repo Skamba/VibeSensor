@@ -14,16 +14,17 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Raw ingest/sample acceleration may use g; post-stop analysis outputs must expose vibration strength/intensity in dB only.
 - Canonical dB math: `apps/server/vibesensor/dsp/vibration_strength.py::vibration_strength_db_scalar()`.
 - Static config that does not change between deployments belongs in Python constants, not runtime file loaders.
-- Internal shared logic stays in the server package. Generated UI constants come from backend sources under `vibesensor.shared.*`.
-- `vibesensor.shared` is for stable contracts, ports, codecs, constants, and pure helpers. Runtime bootstrap/subprocess orchestration belongs in `apps/server/vibesensor/app/` or the owning `use_cases/**` module.
+- Internal shared logic stays in the server package. Generated UI constants come from backend sources (`vibesensor.domain`, `vibesensor.dsp`).
+- Backend code lives in per-feature packages under `apps/server/vibesensor/`; `common/` holds only small cross-cutting helpers (JSON, time, logging, errors, units, process env settings). Runtime bootstrap/subprocess orchestration belongs in `app/` or the owning feature package.
 - Pi hotspot provisioning is offline-first; required packages are baked into the image. Pi image outputs must be deterministic and self-validated.
 
 ## Backend/domain boundaries
-- Domain objects own classification, ranking, lifecycle, and computation. Boundary adapters translate; they do not duplicate domain logic.
+- Domain objects own classification, ranking, lifecycle, and computation. Code at persistence, transport, PDF, and HTTP edges translates; it does not duplicate domain logic.
 - Import every name from the module that defines it; package `__init__.py` files stay empty or docstring-only (no re-export facades).
-- Boundary decoders/serializers live under `apps/server/vibesensor/shared/boundaries/`; do not rebuild payload-driven business logic in report/history/runtime consumers.
-- Factories for already-typed internal metadata, snapshots, or computed state belong on domain objects or the owning use case, not boundary decoders.
-- Backend layer DAG, enforced by the import-linter contracts in `apps/server/pyproject.toml`: `domain` imports no project layers; `shared` may import `domain`; `use_cases` may import `domain, shared`; `infra` may import `domain, shared`; `adapters` may import `domain, shared, infra, use_cases`; `app` may import all. `shared -> domain` and `infra -> domain` are allowed; inward leakage such as `use_cases -> adapters` is not.
+- Annotate collaborators with their concrete class (use `if TYPE_CHECKING:` imports to avoid runtime cycles). Add a `Protocol` only for two or more real implementations or a seam the real class cannot serve cheaply in tests (hardware, subprocess, network).
+- Wire services with plain constructor calls in `apps/server/vibesensor/app/composition.py`; do not add `*Deps`/`*Bundle` wiring layers.
+- Summary/run/settings codecs live with the feature that owns the data (`summary/`, `recording/`, `settings/`); do not rebuild payload-driven business logic in report/history/web consumers.
+- Package dependencies are enforced by the three import-linter contracts in `apps/server/pyproject.toml`: entrypoints sit on top (`cli`/`simulator` > `app` > `web` > feature packages > `domain`/`common`); the live path (`ingest`, `live`, `dsp`) never imports `analysis`, `history`, `recording`, `report`, or `summary`; `report` never imports `analysis`. Annotation-only imports are exempt.
 
 ## Validation router
 - Cleanup: `make clean` removes fast regenerated build/test outputs; `make pristine` removes ignored generated/cache/runtime outputs and then requires `make setup` for native dev.

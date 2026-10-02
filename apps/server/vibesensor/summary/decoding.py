@@ -1,7 +1,7 @@
 """Canonical reporting summary boundary for history and PDF preparation.
 
 Persisted whole-run summaries are decoded straight into their canonical
-``shared.types`` dataclasses. Report/history reload stays tolerant of legacy or
+``summary`` dataclasses. Report/history reload stays tolerant of legacy or
 partial payloads: :func:`lenient_row` coerces each field from the dataclass
 type hints and drops rows that lack required identity fields or fail the
 dataclass validation.

@@ -1,4 +1,4 @@
-"""Shared operational failure types used across runtime and adapters."""
+"""Failure types raised by the live processing and broadcast loops."""
 
 from __future__ import annotations
 

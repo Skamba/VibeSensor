@@ -27,16 +27,16 @@ one big state-machine class:
 
 | Component | File | Responsibility |
 |-----------|------|----------------|
-| `RunLifecycleState` | `use_cases/run/lifecycle_state.py` | Active run identity, start timing, frame-progress tracking, and auto-stop gating. |
-| `SampleFlushOrchestrator` | `use_cases/run/sample_flush.py` | Build `SensorFrame` rows, refresh recent metrics, and decide when to flush or auto-stop. |
-| `RunPersistenceWriter` | `use_cases/run/persistence_writer.py` | Create the persisted run, append sample rows with retries, and finalize the run metadata. |
-| `RunRawCaptureWriter` | `use_cases/run/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
-| `RunRecordingSessionService` | `use_cases/run/recording_session.py` | Active run context/sensor snapshots, start-run side effects, and ingest-drop baseline accounting. |
-| `RawCaptureFinalizeRegistry` | `use_cases/run/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
-| `CaptureReadinessTracker` | `use_cases/run/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
-| `RunRecorder` | `use_cases/run/logger.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
-| `PostAnalysisWorker` | `use_cases/run/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
-| `execute_post_analysis()` | `use_cases/run/post_analysis_executor.py` | Load metadata/samples/raw manifests, build dense whole-run sidecars and compact persisted analysis, and store success or failure. |
+| `RunLifecycleState` | `recording/lifecycle_state.py` | Active run identity, start timing, frame-progress tracking, and auto-stop gating. |
+| `SampleFlushOrchestrator` | `recording/sample_flush.py` | Build `SensorFrame` rows, refresh recent metrics, and decide when to flush or auto-stop. |
+| `RunPersistenceWriter` | `recording/persistence_writer.py` | Create the persisted run, append sample rows with retries, and finalize the run metadata. |
+| `RunRawCaptureWriter` | `recording/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
+| `RunRecordingSessionService` | `recording/recording_session.py` | Active run context/sensor snapshots, start-run side effects, and ingest-drop baseline accounting. |
+| `RawCaptureFinalizeRegistry` | `recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
+| `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
+| `RunRecorder` | `recording/recorder.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
+| `PostAnalysisWorker` | `analysis/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
+| `execute_post_analysis()` | `analysis/post_analysis_executor.py` | Load metadata/samples/raw manifests, build dense whole-run sidecars and compact persisted analysis, and store success or failure. |
 
 ## Lifecycle phases
 
@@ -168,7 +168,7 @@ because there is nothing persistent to close.
   analysis output or an analysis error record
 - the loaded post-stop input includes persisted summary rows and raw manifests;
   compact raw replay may load a full raw-capture bundle, while whole-run spectra
-  read bounded ranges through `RunPersistence.load_raw_capture_sensor_range()`
+  read bounded ranges through `HistoryDB.load_raw_capture_sensor_range()`
 - the current whole-run sidecar stages are spectra, context labels, order trace
   points, order trace summaries, order family summaries, spatial coherence, and
   artifact persistence; dense artifacts stay under `whole-run-artifacts/`, while

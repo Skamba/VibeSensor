@@ -43,7 +43,7 @@ class HistoryArtifactAvailability:
 
 @dataclass(frozen=True, slots=True)
 class HistoryRunListEntry:
-    """Typed summary row returned by ``RunPersistence.list_runs()``."""
+    """Typed summary row returned by ``HistoryDB.list_runs()``."""
 
     run_id: str
     status: RunStatus
@@ -82,7 +82,7 @@ class HistoryRunListEntry:
 
 @dataclass(frozen=True, slots=True)
 class StoredHistoryRun:
-    """Typed full run record returned by ``RunPersistence.get_run()``."""
+    """Typed full run record returned by ``HistoryDB.get_run()``."""
 
     run_id: str
     status: RunStatus
@@ -143,7 +143,7 @@ class StoredHistoryRun:
 
 @dataclass(frozen=True, slots=True)
 class AnalyzingRunHealth:
-    """Typed analyzer-health snapshot returned by ``RunPersistence``."""
+    """Typed analyzer-health snapshot returned by ``HistoryDB``."""
 
     analyzing_run_count: int
     analyzing_oldest_age_s: float | None

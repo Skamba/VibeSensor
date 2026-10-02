@@ -42,7 +42,7 @@ GET /api/history/{run_id}/report.pdf [vibesensor.web.history]
   → HistoryReportService.build_pdf() [vibesensor.report.service]
     → HistoryReportRequestLoader.load_report_request() [vibesensor.report.loader]
     → prepare_report_input() [vibesensor.report.preparation]
-    → _build_prepared_pdf_bytes() [vibesensor.app.composition.history]
+    → _build_prepared_pdf_bytes() [vibesensor.app.composition]
       → build_prepared_report_pdf(prepared_input) [vibesensor.report.pdf.pdf_engine]
         → build_report_document(prepared_input) [vibesensor.report.document]
         → build_report_pdf(data) [vibesensor.report.pdf.pdf_engine]
@@ -96,7 +96,7 @@ into the renderer-facing `ReportDocument`. Report-specific interpretation and
 fact preparation live under `vibesensor/report/` (for
 example `facts.py`, `evidence_facts.py`, `confidence_facts.py`, `findings.py`,
 `sensor_facts.py`, `decision_facts.py`, `projection.py`, and
-`preparation.py`) rather than in `adapters.pdf` modules.
+`preparation.py`) rather than in `report/pdf/` modules.
 
 ### ReportDocument schema
 

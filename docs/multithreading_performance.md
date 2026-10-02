@@ -35,7 +35,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 ## Whole-run post-analysis spectra
 
-`use_cases/diagnostics/whole_run_spectra.py` processes chunks serially inside the
+`analysis/whole_run_spectra.py` processes chunks serially inside the
 background post-analysis job. Measured on the same host for a 4-sensor, 800 Hz,
 5-minute run (298 windows per sensor): serial ~1.3–1.5 s vs ~6.9–8.4 s with a
 4-thread executor.

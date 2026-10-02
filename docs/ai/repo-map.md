@@ -4,8 +4,8 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 
 ## Primary entry points
 
-- Backend app/runtime: `apps/server/vibesensor/app/bootstrap.py`, `apps/server/vibesensor/app/container.py`
-- Backend HTTP assembly: `apps/server/vibesensor/web/router.py`, `apps/server/vibesensor/web/route_bundles.py`
+- Backend app/runtime: `apps/server/vibesensor/app/bootstrap.py`, `apps/server/vibesensor/app/composition.py`
+- Backend HTTP assembly: `apps/server/vibesensor/web/router.py`
 - Backend CLIs: `apps/server/vibesensor/cli/`
 - UI app/runtime: `apps/ui/src/main.ts`, `apps/ui/src/app/ui_app_runtime.ts`, `apps/ui/src/app/runtime/`
 - Simulator: `apps/server/vibesensor/simulator/`
@@ -24,30 +24,37 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 
 ## Backend package ownership
 
-- `vibesensor/app/`: startup, dependency wiring, runtime state, config loading.
-- `vibesensor/domain/`: domain behavior; see `docs/domain-model.md`.
-- `vibesensor/shared/`: stable contracts, ports, codecs, constants, JSON helpers, and boundary serializers.
-- `vibesensor/use_cases/`: application workflows (`diagnostics`, `history`, `run`, `updates`).
-- `vibesensor/infra/`: runtime lifecycle/health, signal processing, config storage.
-- `vibesensor/web/`: route groups, HTTP dependencies, Pydantic models.
-- `vibesensor/adapters/{persistence,pdf,udp,gps,simulator,hotspot,websocket}/`: persistence, rendering, device, simulator, and transport adapters.
+One package per feature under `apps/server/vibesensor/`; each owns its types, logic, and persistence glue.
+
+- `app/`: FastAPI/Granian bootstrap, config loading, the composition root (`composition.py`), and the runtime lifecycle.
+- `web/`: HTTP/WebSocket routes, Pydantic request/response models, middleware, health snapshot, `WebServices` + `create_router()`.
+- `ingest/`: UDP wire protocol, data receiver/control plane, client registry, ingest diagnostics.
+- `live/`: signal processor, processing loop, live WebSocket payload and broadcaster.
+- `dsp/`: FFT, window quality, order bands, canonical dB strength math, DSP constants.
+- `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness.
+- `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`, whole-run) and the post-analysis worker.
+- `summary/`: the persisted analysis-summary contract and its (de)serialization; read by history, report, and web.
+- `report/`: report facts, document model (`model/`), document assembly (`document/`), PDF rendering (`pdf/`), i18n.
+- `history/`: `HistoryDB` (SQLite), history queries/projections, exports.
+- `settings/`: persisted car/sensor/speed-source/analysis/UI settings and the car library.
+- `speed/`: GPS (gpsd), Bluetooth OBD (`obd/`), selected-speed-source coordination.
+- `updates/`: wheel/firmware updater, releases, Wi-Fi uplink, hotspot self-heal.
+- `simulator/`: sensor simulator and WebSocket smoke client.
+- `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
+- `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings).
+- `cli/`: console entry points.
 - Report flow details: `docs/report_pipeline.md`.
 - Analysis/run/live ingest details: `docs/analysis_pipeline.md`, `docs/run_lifecycle.md`, `docs/intake_buffering.md`, `docs/order_tracking.md`.
 
-## Backend layer DAG
+## Backend package rules
 
-Enforced by the import-linter contracts in `apps/server/pyproject.toml`.
+Enforced by the import-linter contracts in `apps/server/pyproject.toml` (annotation-only `TYPE_CHECKING` imports are exempt):
 
-| Layer | May import |
+| Rule | Meaning |
 |---|---|
-| `domain` | no project layers |
-| `shared` | `domain` |
-| `use_cases` | `domain`, `shared` |
-| `infra` | `domain`, `shared` |
-| `adapters` | `domain`, `shared`, `infra`, `use_cases` |
-| `app` | all backend layers |
-
-`shared -> domain` and `infra -> domain` are intentional. Fix inward leakage such as `use_cases -> adapters` or `domain -> outer layers`.
+| Layers: `cli`/`simulator` > `app` > `web` > feature packages > `domain`/`common` | Feature packages never import `web`, `app`, or `cli`; `domain` and `common` import no feature package. |
+| Live path stays light | `ingest`, `live`, and `dsp` never import `analysis`, `history`, `recording`, `report`, or `summary`. |
+| Reports never run analysis | `report` never imports `analysis`; it renders stored summaries. |
 
 ## UI ownership
 
@@ -66,7 +73,7 @@ Enforced by the import-linter contracts in `apps/server/pyproject.toml`.
 
 ## Tests and validation
 
-- Backend tests mirror package ownership under `apps/server/tests/{adapters,app,domain,infra,shared,use_cases}/`.
+- Backend tests mirror the package layout under `apps/server/tests/<package>/` (for example `tests/recording/`, `tests/report/`).
 - Cross-cutting regressions go in `apps/server/tests/integration/`; guards go in `apps/server/tests/hygiene/`.
 - Shared backend test helpers live in `apps/server/tests/test_support/`.
 - Full test placement and command router: `docs/testing.md`.

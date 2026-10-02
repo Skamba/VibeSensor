@@ -33,7 +33,7 @@ runtimes) or that the operator owns (hotspot SSID/PSK) are configurable. Fixed
 tuning values live as Python constants next to the code that uses them (for
 example the live sample rate in `vibesensor/dsp/constants.py`, hotspot
 address/channel/interface in `vibesensor/updates/hotspot/constants.py`, and
-run retention in `vibesensor/app/composition/history.py`).
+run retention in `vibesensor/app/composition.py`).
 
 Keys that are not listed below are ignored with an
 `Ignoring unsupported config key <key>` warning, so device configs written by

@@ -118,7 +118,7 @@ through the report-document and PDF adapter modules under
 `apps/server/vibesensor/report/pdf/`.
 
 ### i18n
-All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.
+All user-visible strings go through `tr(lang, KEY)` in `report/i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.
 
 ## Accessibility Notes
 - Keep focus rings visible (`:focus-visible`).

@@ -10,12 +10,12 @@ prepared report input).
 ## Data flow
 
 ```
-adapters.analysis_summary.summarize_run_data(meta, samples)
+analysis.summarize.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
-    → shared.boundaries.reporting.prepare_report_input(summary)
-      → use_cases.history.report_document.build_report_document(prepared_input)
+    → report.preparation.prepare_report_input(summary)
+      → report.document.builder.build_report_document(prepared_input)
         → ReportDocument (rebuilt on demand)
-          → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportDocument)
+          → report.service.HistoryReportService + report.pdf.pdf_engine.build_report_pdf(ReportDocument)
           → PDF bytes
 ```
 

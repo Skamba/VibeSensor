@@ -5,7 +5,7 @@
 schema. Its whole-run rows reuse the frozen dataclass contracts (``JsonContract``)
 that the post-analysis pipeline produces, so each row shape is defined once.
 ``FindingPayload`` lives in ``finding_payload_parts``; endpoint-specific HTTP
-wrappers stay in ``adapters.http.models.history``.
+wrappers stay in ``web.models.history``.
 """
 
 from __future__ import annotations

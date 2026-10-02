@@ -12,35 +12,33 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ## Current architecture
 
 ```text
-ESP32 nodes -> apps/server/vibesensor/ingest/
-             -> live-processing layer + apps/server/vibesensor/analysis/
-             -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/web/ + apps/server/vibesensor/live/ -> apps/ui
-             -> apps/server/vibesensor/analysis/ -> apps/server/vibesensor/history/ -> apps/server/vibesensor/report/pdf/
+ESP32 nodes -> ingest/ -> live/ (+ dsp/) -> web/ (HTTP + /ws) -> apps/ui
+                       -> recording/ -> history/ (SQLite)
+completed run -> analysis/ -> summary/ -> history/ -> report/ (+ report/pdf/) -> web/
 ```
 
-Backend ownership boundaries:
-See [docs/ai/repo-map.md#backend-package-layout](../../docs/ai/repo-map.md#backend-package-layout)
-for the detailed backend ownership map. This README stays focused on
+All paths above are under `apps/server/vibesensor/`; `app/` wires them together
+and `settings/`, `speed/`, `updates/`, and `simulator/` sit beside them. See
+[docs/ai/repo-map.md#backend-package-ownership](../../docs/ai/repo-map.md#backend-package-ownership)
+for the per-package ownership map. This README stays focused on
 backend-specific setup, configuration, routes, updates, and testing.
-Backend dependency direction is declared in `apps/server/pyproject.toml` under
-`[tool.importlinter]`: the package layer order, plus narrower seams such as live
-telemetry staying off post-run diagnosis/report modules and the PDF adapter
-staying off diagnostics. When a contract fails, move the dependency behind the
-documented shared port or report boundary seam instead of widening the outer
-import.
 
-## Shared layer ownership
+## Package rules
 
-`vibesensor.shared` is for stable cross-layer boundary language: ports and
-protocols, typed contracts, boundary codecs/projection helpers, shared
-constants/units, and pure helpers that multiple inner layers can reuse without
-pulling in runtime orchestration. Cross-cutting runtime helpers that are still
-owned by backend coordination, such as isolated server subprocess orchestration,
-belong in a focused `use_cases/**` module instead of the shared layer, while
-feature-local orchestration belongs in the owning `use_cases/**` package. The
-backend static guards keep `vibesensor.updates.isolated_server_runtime` as
-the owner of that runtime helper and keep `shared/subprocess_server.py`
-removed.
+Backend code is organised as one package per feature; each package owns its
+types, logic, and persistence glue. `domain/` holds the core value objects and
+`common/` only small cross-cutting helpers. Import names from the module that
+defines them (no package-level re-exports), annotate collaborators with their
+concrete classes, and wire services with plain constructor calls in
+`app/composition.py`.
+
+`apps/server/pyproject.toml` (`[tool.importlinter]`) enforces three contracts:
+the layer order `cli`/`simulator` > `app` > `web` > feature packages >
+`domain`/`common`; the live telemetry path (`ingest`, `live`, `dsp`) never
+importing `analysis`, `history`, `recording`, `report`, or `summary`; and
+`report` never importing `analysis`. Annotation-only (`TYPE_CHECKING`) imports
+are exempt. When a contract fails, move the code to the package that owns it
+instead of widening the import.
 
 ## State and configuration scopes
 
@@ -61,22 +59,20 @@ state. Current `main` is intentionally split more narrowly:
   (`UiPreferencesService`), and canonical sensor metadata
   (`SensorSettingsService`). A shared settings snapshot coordinator owns only
   the single stored snapshot's load/save/rollback mechanics.
-  `build_settings_service_bundle()` in `vibesensor.app.composition.settings` groups those
-  focused services into explicit runtime and HTTP dependency bundles.
+  `build_settings_services()` in `vibesensor.settings.services` builds those
+  focused services around one coordinator.
   `SettingsDerivationService` projects the persisted car settings into the
   current analysis/run context, while `SpeedSourceRuntimeApplier` pushes the
   current speed-source selection into live runtime collaborators. Client-facing
   sensor location assignment also delegates through `SensorSettingsService`.
-  HTTP adapters and runtime collaborators should consume the focused settings
-  ports they need rather than importing persistence internals directly.
-  Route-facing HTTP modules should stay on shared ports or adapter-local
-  protocol seams, while `clients.py` remains the only HTTP surface allowed to
-  delegate location writes through `assign_sensor_location()`.
-- `vibesensor.app.container.build_runtime()` is the composition root. It calls
-  the per-subsystem builders in `vibesensor.app.composition` (history, speed,
-  settings, live runtime, updates) and assembles their outputs directly into
-  one `AppRuntime`: the infra-owned `LifecycleRuntime` consumed by
-  `LifecycleManager` plus the `RouterDeps` consumed by the HTTP router.
+  Routes and runtime collaborators take the focused settings service they
+  need rather than reaching into persistence internals; `web/clients.py`
+  remains the only HTTP surface allowed to delegate location writes through
+  `assign_sensor_location()`.
+- `vibesensor.app.composition.build_runtime()` is the composition root. It
+  constructs every service with plain constructor calls and returns one
+  `AppRuntime`: the `LifecycleRuntime` started/stopped by `LifecycleManager`
+  plus the `WebServices` that `web.router.create_router()` turns into routes.
 - Run lifecycle helpers (`RunLifecycleState`, `RunRecorder`,
   `PostAnalysisWorker`) own live per-process coordination and per-run state.
 - History persistence now uses a shared SQLite lifecycle engine plus narrow
@@ -207,7 +203,7 @@ and their metadata for 120 s before evicting them (see
 `vibesensor/ingest/registry.py`).
 
 Startup maintenance prunes terminal (`complete` / `error`) runs older than 7 days
-(`RUN_RETENTION_DAYS` in `vibesensor/app/composition/history.py`).
+(`RUN_RETENTION_DAYS` in `vibesensor/app/composition.py`).
 
 ## Environment variables
 
@@ -328,7 +324,7 @@ messages.
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/web/`, with the top-level composition root in `adapters/http/router.py` and domain bundle registration in `adapters/http/route_bundles.py`.
+The API surface is implemented in `apps/server/vibesensor/web/`; `web/router.py` assembles every route group from `WebServices`.
 
 Start here for the human-facing API overview, then use the generated contracts for endpoint-level detail:
 
@@ -382,7 +378,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/report/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with appendix renderers grouped under `adapters/pdf/pdf_appendices/`.
+The public PDF entrypoint is `apps/server/vibesensor/report/pdf/pdf_engine.py`. Page composition lives in focused modules under `report/pdf/`, with appendix renderers grouped under `report/pdf/appendices/`.
 
 ## Updates
 

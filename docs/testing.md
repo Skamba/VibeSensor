@@ -56,22 +56,16 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 ## Backend test placement
 
-`apps/server/tests/` mirrors backend package ownership:
-
-| Production change | Test start |
-|---|---|
-| `vibesensor/web/*` | `apps/server/tests/web/` |
-| `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | matching `apps/server/tests/adapters/.../` |
-| `vibesensor/app/*` | `apps/server/tests/app/` |
-| `vibesensor/domain/*` | `apps/server/tests/domain/` |
-| `vibesensor/infra/{config,processing,runtime,workers}/*` | matching `apps/server/tests/infra/.../` |
-| `vibesensor/shared/*` | `apps/server/tests/shared/` or `domain/` when testing domain-owned contracts |
-| `vibesensor/use_cases/{diagnostics,history,run,updates}/*` | matching `apps/server/tests/use_cases/.../` |
+`apps/server/tests/` mirrors the backend package layout: a change to
+`vibesensor/<package>/...` starts in `apps/server/tests/<package>/` (for example
+`vibesensor/recording/recorder.py` -> `apps/server/tests/recording/`,
+`vibesensor/report/pdf/` -> `apps/server/tests/report/`,
+`vibesensor/speed/obd/` -> `apps/server/tests/speed/obd/`).
 
 - Cross-cutting regressions go in `apps/server/tests/integration/`.
 - Repo/tooling tests go in `apps/server/tests/hygiene/`. Import-direction rules belong in the `[tool.importlinter]` contracts in `apps/server/pyproject.toml`, not in tests.
 - Shared helpers live in `apps/server/tests/test_support/`.
-- Do not create old flat roots such as `analysis/`, `api/`, `config/`, `gps/`, `history/`, `hotspot/`, `metrics_log/`, `processing/`, `protocol/`, `report/`, `update/`, or `websocket/`.
+- Do not create test roots that do not match a backend package (for example `api/`, `config/`, `gps/`, `metrics_log/`, `processing/`, `protocol/`, `update/`, or `websocket/`).
 - Contract bridge tests live in `apps/server/tests/integration/` and validate subsystem handoffs such as analysis -> report and persistence -> analysis.
 
 ## Backend test rules
@@ -159,4 +153,4 @@ cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing
 python3 -m vibesensor.cli.characterize_aliasing
 ```
 
-Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`diagnostics`, `infra/processing`, persistence history DB, updates) should stay above the repo baseline when practical.
+Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`analysis`, `live` processing, the `history` DB, `updates`) should stay above the repo baseline when practical.

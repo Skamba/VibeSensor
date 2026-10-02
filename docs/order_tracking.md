@@ -19,13 +19,13 @@ lives in `apps/server/vibesensor/analysis/orders/`.
 | Concept | Owner | Purpose |
 |---------|-------|---------|
 | `OrderReferenceSpec` | `domain/order_reference.py` | Tire geometry, final-drive ratio, gear ratio, and uncertainty settings for order analysis. |
-| `vehicle_orders_hz()` | `shared/order_bands.py` | Resolve wheel / driveshaft / engine reference frequencies for one speed sample. |
-| `build_order_bands()` | `shared/order_bands.py` | Precompute live order-band payloads so the frontend does not duplicate tolerance math. |
-| `build_whole_run_order_trace_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_traces.py` | Build dense whole-run order trace points from spectral summaries plus context labels. |
-| `build_whole_run_order_trace_summary_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense trace points into compact lock/stability summaries. |
-| `build_whole_run_order_family_summary_artifact_bundle()` | `use_cases/diagnostics/orders/whole_run_family_summaries.py` | Roll harmonic summaries up to family-level support intervals and phase summaries. |
-| `OrderHypothesis` | `use_cases/diagnostics/orders/physics.py` | One named order candidate such as `wheel_1x` or `engine_2x`. |
-| `OrderAnalysisSession` | `use_cases/diagnostics/orders/pipeline.py` | Legacy/compatibility compact sample-peak order pass used by the summary analysis path. |
+| `vehicle_orders_hz()` | `dsp/order_bands.py` | Resolve wheel / driveshaft / engine reference frequencies for one speed sample. |
+| `build_order_bands()` | `dsp/order_bands.py` | Precompute live order-band payloads so the frontend does not duplicate tolerance math. |
+| `build_whole_run_order_trace_artifact_bundle()` | `analysis/orders/whole_run_traces.py` | Build dense whole-run order trace points from spectral summaries plus context labels. |
+| `build_whole_run_order_trace_summary_artifact_bundle()` | `analysis/orders/whole_run_scoring.py` | Collapse dense trace points into compact lock/stability summaries. |
+| `build_whole_run_order_family_summary_artifact_bundle()` | `analysis/orders/whole_run_family_summaries.py` | Roll harmonic summaries up to family-level support intervals and phase summaries. |
+| `OrderHypothesis` | `analysis/orders/physics.py` | One named order candidate such as `wheel_1x` or `engine_2x`. |
+| `OrderAnalysisSession` | `analysis/orders/pipeline.py` | Legacy/compatibility compact sample-peak order pass used by the summary analysis path. |
 
 ## From speed to reference frequencies
 
@@ -79,7 +79,7 @@ without loading dense sidecar artifacts during normal report generation.
 
 Order matching is not based on a single exact frequency bin. Post-run
 diagnostics and the live spectrum use one tolerance model,
-`order_peak_tolerance_hz()` in `shared/order_bands.py`, so a peak drawn inside a
+`order_peak_tolerance_hz()` in `dsp/order_bands.py`, so a peak drawn inside a
 live band is a peak the report counts as an order match:
 
 ```text
@@ -158,8 +158,8 @@ same canonical live-processing FFT/strength pipeline
 `apps/server/vibesensor/dsp/vibration_strength.py`), so order analysis does not
 maintain a second independent DSP stack.
 
-That shared ownership is why `shared/order_bands.py` exists outside
-`use_cases/diagnostics/`.
+That shared ownership is why `dsp/order_bands.py` exists outside
+`analysis/`.
 
 ## File map
 
@@ -183,30 +183,30 @@ That shared ownership is why `shared/order_bands.py` exists outside
 Whole-run order work keeps one order model and changes only the sampling grid:
 
 - dense sidecars use `OrderTracePoint` in
-  `shared/types/order_trace_contracts.py`, keyed by
+  `summary/order_trace_contracts.py`, keyed by
   `(hypothesis_key, harmonic, window_index)` so later execution can join
   directly against the canonical whole-run window grid
-- `use_cases/diagnostics/orders/whole_run_traces.py` now builds those dense
+- `analysis/orders/whole_run_traces.py` now builds those dense
   points from `spectral-summary:*` sidecars plus `context-window-labels`, using
   the same `OrderHypothesis.predicted_hz(...)` math and `best_order_peak_match()`
   tolerance logic as the live sample-matching path
-- `use_cases/diagnostics/orders/whole_run_scoring.py` now scores those dense
+- `analysis/orders/whole_run_scoring.py` now scores those dense
   traces into compact `OrderTraceSummary` rows plus harmonic evidence rows,
   explicitly carrying `reference_coverage_ratio`, `contiguous_support_ratio`,
   `drift_score`, and `lock_score` so partial context/RPM coverage degrades the
   result instead of silently inflating it
-- `use_cases/diagnostics/orders/whole_run_family_summaries.py` now rolls those
+- `analysis/orders/whole_run_family_summaries.py` now rolls those
   per-candidate summaries up into source-family summaries with deterministic
   `support_intervals`, `phase_support`, `stable_frequency_*_hz`, and
   `exemplar_interval_index` fields while keeping the dense traces sidecar-only
-- `use_cases/run/post_analysis_executor.py` now projects those family summaries
+- `analysis/post_analysis_executor.py` now projects those family summaries
   into a ranked persisted `whole_run_order_summaries` payload so history/report
   reload paths can consume compact whole-run order evidence without reading the
   dense sidecars back in
 - the same `OrderTraceSummary` dataclass is the persisted row shape and the
   HTTP/OpenAPI schema (via `AnalysisSummary` in
-  `shared/types/history_analysis_contracts.py`); report reloads use the tolerant
-  normalizer in `shared/boundaries/reporting/summary.py`
+  `summary/contracts.py`); report reloads use the tolerant
+  normalizer in `summary/decoding.py`
 - the compact summary contract carries support intervals, phase support, and
   harmonic evidence rows, while the dense point contract keeps per-window
   predicted/matched frequency evidence
