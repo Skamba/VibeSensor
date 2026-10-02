@@ -52,7 +52,7 @@ def test_order_trace_point_rejects_unsupported_order_family() -> None:
     ).to_json_object()
     payload["order_family"] = "axle"
 
-    with pytest.raises(ValueError, match="Unsupported order_family"):
+    with pytest.raises(ValueError, match="order_family"):
         OrderTracePoint.from_mapping(payload)
 
 
@@ -127,6 +127,39 @@ def test_order_trace_summary_round_trips_nested_compact_contracts() -> None:
     assert OrderTraceSummary.from_mapping(summary.to_json_object()) == summary
 
 
+def test_order_trace_summary_decodes_legacy_payload_without_quality_counts() -> None:
+    """Sidecars written before window-quality accounting still decode with zero counts."""
+
+    legacy_payload = {
+        "hypothesis_key": "wheel_1x",
+        "suspected_source": "wheel/tire",
+        "order_family": "wheel",
+        "order_label": "1x wheel",
+        "total_window_count": 20,
+        "eligible_window_count": 16,
+        "matched_window_count": 12,
+        "support_ratio": 0.75,
+        "reference_coverage_ratio": 0.8,
+        "longest_contiguous_support_window_count": 9,
+        "contiguous_support_ratio": 0.5625,
+        "support_intervals": [],
+        "phase_support": [],
+        "harmonic_summaries": [],
+        "drift_score": 0.1,
+        "lock_score": 0.8,
+        "ref_sources": ["speed+tire"],
+        "retired_field": "ignored",
+    }
+
+    restored = OrderTraceSummary.from_mapping(legacy_payload)
+
+    assert restored.usable_window_count == 0
+    assert restored.speed_context_limited_window_count == 0
+    assert restored.mean_quality_score is None
+    assert restored.ref_sources == ("speed+tire",)
+    assert "retired_field" not in restored.to_json_object()
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -135,7 +168,7 @@ def test_order_trace_summary_round_trips_nested_compact_contracts() -> None:
         ("mean_relative_error", "bad"),
     ],
 )
-def test_order_trace_summary_drops_invalid_optional_values(field: str, value: object) -> None:
+def test_order_trace_summary_rejects_invalid_optional_values(field: str, value: object) -> None:
     payload = OrderTraceSummary(
         hypothesis_key="engine_2x",
         suspected_source="engine",
@@ -151,12 +184,11 @@ def test_order_trace_summary_drops_invalid_optional_values(field: str, value: ob
     ).to_json_object()
     payload[field] = value
 
-    restored = OrderTraceSummary.from_mapping(payload)
+    with pytest.raises(ValueError, match=field):
+        OrderTraceSummary.from_mapping(payload)
 
-    assert getattr(restored, field) is None
 
-
-def test_order_trace_summary_skips_non_mapping_nested_rows() -> None:
+def test_order_trace_summary_rejects_non_mapping_nested_rows() -> None:
     payload = OrderTraceSummary(
         hypothesis_key="engine_2x",
         suspected_source="engine",
@@ -204,11 +236,8 @@ def test_order_trace_summary_skips_non_mapping_nested_rows() -> None:
         [],
     ]
 
-    restored = OrderTraceSummary.from_mapping(payload)
-
-    assert [interval.interval_index for interval in restored.support_intervals] == [0]
-    assert [row.phase for row in restored.phase_support] == ["cruise"]
-    assert [summary.harmonic for summary in restored.harmonic_summaries] == [2]
+    with pytest.raises(ValueError, match="support_intervals.1"):
+        OrderTraceSummary.from_mapping(payload)
 
 
 def test_history_order_trace_response_contracts_expose_named_summary_fields() -> None:

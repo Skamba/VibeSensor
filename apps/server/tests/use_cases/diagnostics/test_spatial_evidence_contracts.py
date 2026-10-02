@@ -75,16 +75,15 @@ def test_spatial_evidence_summary_round_trips_nested_compact_contracts() -> None
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("dominant_location", 7, "optional text field must be a string or null"),
-        ("coherence_ratio", "bad", "optional numeric field must be a number or null"),
+        ("dominant_location", 7),
+        ("coherence_ratio", "bad"),
     ],
 )
 def test_spatial_evidence_summary_rejects_invalid_optional_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = SpatialEvidenceSummary(
         candidate_key="wheel",
@@ -96,11 +95,11 @@ def test_spatial_evidence_summary_rejects_invalid_optional_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         SpatialEvidenceSummary.from_mapping(payload)
 
 
-def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
+def test_spatial_evidence_summary_rejects_non_mapping_location_rows() -> None:
     payload = SpatialEvidenceSummary(
         candidate_key="wheel",
         suspected_source="wheel/tire",
@@ -120,9 +119,8 @@ def test_spatial_evidence_summary_skips_non_mapping_location_rows() -> None:
         "skip-me",
     ]
 
-    restored = SpatialEvidenceSummary.from_mapping(payload)
-
-    assert [summary.location for summary in restored.location_summaries] == ["Front Left"]
+    with pytest.raises(ValueError, match="location_summaries.1"):
+        SpatialEvidenceSummary.from_mapping(payload)
 
 
 def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
@@ -136,7 +134,7 @@ def test_spatial_evidence_summary_rejects_unsupported_proof_basis() -> None:
     ).to_json_object()
     payload["proof_basis"] = "sensor_vote"
 
-    with pytest.raises(ValueError, match="supported location proof basis"):
+    with pytest.raises(ValueError, match="proof_basis"):
         SpatialEvidenceSummary.from_mapping(payload)
 
 

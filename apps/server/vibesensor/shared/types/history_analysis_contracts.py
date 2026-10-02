@@ -18,7 +18,6 @@ from typing import Any, Literal, Required, TypedDict
 
 from pydantic import ConfigDict
 
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.shared.types.analysis_views import (
     PhaseSpeedBreakdownRow,
     PlotDataResult,
@@ -37,6 +36,15 @@ from vibesensor.shared.types.json_types import (
     JsonSchemaObject,
     JsonSchemaValue,
 )
+from vibesensor.shared.types.spatial_evidence_contracts import LocationProofBasis
+from vibesensor.shared.types.whole_run_diagnosis_contracts import (
+    DiagnosisDataQualityLimitation,
+    DiagnosisExemplarKind,
+    DiagnosisFactorKey,
+    DiagnosisFactorPolarity,
+    DiagnosisFactorSeverity,
+    WholeRunDiagnosisDataBasis,
+)
 
 __all__ = [
     "AmplitudeMetric",
@@ -50,11 +58,6 @@ __all__ = [
     "DataQualitySpeedCoverageResponse",
     "DiagnosisDataQualityLimitation",
     "DiagnosisDataQualitySummaryResponse",
-    "DIAGNOSIS_EXEMPLAR_KIND_VALUES",
-    "DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES",
-    "DIAGNOSIS_FACTOR_KEY_VALUES",
-    "DIAGNOSIS_FACTOR_POLARITY_VALUES",
-    "DIAGNOSIS_FACTOR_SEVERITY_VALUES",
     "DiagnosisFactorDetailsResponse",
     "DiagnosisFactorKey",
     "DiagnosisFactorPolarity",
@@ -63,10 +66,8 @@ __all__ = [
     "FindingPayload",
     "DiagnosisExemplarKind",
     "DiagnosisExemplarReferenceResponse",
-    "LOCATION_PROOF_BASIS_VALUES",
     "LocationIntensitySummaryResponse",
     "LocationProofBasis",
-    "WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES",
     "WholeRunDiagnosisDataBasis",
     "WholeRunDiagnosisSummaryResponse",
     "OutlierSummaryResponse",
@@ -93,123 +94,6 @@ __all__ = [
 
 type PayloadObject = JsonSchemaObject
 type PayloadValue = JsonSchemaValue
-type DiagnosisExemplarKind = Literal[
-    "order_support_interval",
-    "whole_run_context_interval",
-    "spatial_location",
-]
-type DiagnosisFactorKey = Literal[
-    "raw_backed",
-    "repeated_support",
-    "sustained_support",
-    "stable_frequency",
-    "tight_order_lock",
-    "localized_support",
-    "clean_signal",
-    "user_confirmed_vehicle_data",
-    "summary_only",
-    "raw_replay_incomplete",
-    "legacy_context",
-    "speed_context_gaps",
-    "rpm_context_gaps",
-    "sparse_support",
-    "brief_support",
-    "drifting_frequency",
-    "loose_order_lock",
-    "mixed_support_locations",
-    "noisy_signal",
-    "weak_spatial",
-    "close_alternative",
-    "incomplete_reference",
-    "secondary_vehicle_data",
-    "approximate_vehicle_data",
-    "unverified_vehicle_data",
-]
-type DiagnosisDataQualityLimitation = Literal[
-    "reference_gap",
-    "speed_context",
-    "sensor_timing",
-    "sensor_mounting",
-    "sensor_clipping",
-    "road_shock",
-    "weak_spatial",
-    "ambiguous_location",
-    "summary_fallback",
-    "window_quality",
-]
-DIAGNOSIS_DATA_QUALITY_LIMITATION_VALUES: frozenset[DiagnosisDataQualityLimitation] = frozenset(
-    {
-        "reference_gap",
-        "speed_context",
-        "sensor_timing",
-        "sensor_mounting",
-        "sensor_clipping",
-        "road_shock",
-        "weak_spatial",
-        "ambiguous_location",
-        "summary_fallback",
-        "window_quality",
-    }
-)
-type DiagnosisFactorPolarity = Literal["support", "counterevidence"]
-type DiagnosisFactorSeverity = Literal["low", "medium", "high"]
-type WholeRunDiagnosisDataBasis = Literal["raw_backed", "partial_raw_backed", "summary_only"]
-type LocationProofBasis = Literal[
-    "whole_run_summary",
-    "supporting_windows_raw_backed",
-    "supporting_windows_summary_only",
-]
-
-DIAGNOSIS_EXEMPLAR_KIND_VALUES: frozenset[DiagnosisExemplarKind] = frozenset(
-    {"order_support_interval", "whole_run_context_interval", "spatial_location"}
-)
-DIAGNOSIS_FACTOR_KEY_VALUES: frozenset[DiagnosisFactorKey] = frozenset(
-    {
-        "raw_backed",
-        "repeated_support",
-        "sustained_support",
-        "stable_frequency",
-        "tight_order_lock",
-        "localized_support",
-        "clean_signal",
-        "user_confirmed_vehicle_data",
-        "summary_only",
-        "raw_replay_incomplete",
-        LEGACY_CONTEXT_CAVEAT_KEY,
-        "speed_context_gaps",
-        "rpm_context_gaps",
-        "sparse_support",
-        "brief_support",
-        "drifting_frequency",
-        "loose_order_lock",
-        "mixed_support_locations",
-        "noisy_signal",
-        "weak_spatial",
-        "close_alternative",
-        "incomplete_reference",
-        "secondary_vehicle_data",
-        "approximate_vehicle_data",
-        "unverified_vehicle_data",
-    }
-)
-DIAGNOSIS_FACTOR_POLARITY_VALUES: frozenset[DiagnosisFactorPolarity] = frozenset(
-    {"support", "counterevidence"}
-)
-DIAGNOSIS_FACTOR_SEVERITY_VALUES: frozenset[DiagnosisFactorSeverity] = frozenset(
-    {"low", "medium", "high"}
-)
-WHOLE_RUN_DIAGNOSIS_DATA_BASIS_VALUES: frozenset[WholeRunDiagnosisDataBasis] = frozenset(
-    {"raw_backed", "partial_raw_backed", "summary_only"}
-)
-LOCATION_PROOF_BASIS_VALUES: frozenset[LocationProofBasis] = frozenset(
-    {
-        "whole_run_summary",
-        "supporting_windows_raw_backed",
-        "supporting_windows_summary_only",
-    }
-)
-
-
 _FORBID_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="forbid")
 _IGNORE_EXTRA_TYPEDDICT_CONFIG = ConfigDict(extra="ignore")
 

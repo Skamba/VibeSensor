@@ -113,17 +113,16 @@ def test_whole_run_diagnosis_summary_round_trips_nested_compact_contracts() -> N
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("support_score", "bad", "optional numeric field must be a number or null"),
-        ("supporting_window_count", 1.5, "optional int field must be an int or null"),
-        ("dominant_location", 7, "optional text field must be a string or null"),
+        ("support_score", "bad"),
+        ("supporting_window_count", 1.5),
+        ("dominant_location", 7),
     ],
 )
 def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
@@ -133,11 +132,11 @@ def test_whole_run_diagnosis_summary_rejects_invalid_optional_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         WholeRunDiagnosisSummary.from_mapping(payload)
 
 
-def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
+def test_whole_run_diagnosis_summary_rejects_non_mapping_nested_rows() -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
         suspected_source="wheel/tire",
@@ -167,15 +166,8 @@ def test_whole_run_diagnosis_summary_skips_non_mapping_nested_rows() -> None:
         None,
     ]
 
-    restored = WholeRunDiagnosisSummary.from_mapping(payload)
-
-    assert [reference.kind for reference in restored.exemplar_references] == [
-        "whole_run_context_interval"
-    ]
-    assert [factor.factor_key for factor in restored.support_factors] == ["raw_backed"]
-    assert [factor.factor_key for factor in restored.counterevidence_factors] == [
-        "incomplete_reference"
-    ]
+    with pytest.raises(ValueError, match="exemplar_references.1"):
+        WholeRunDiagnosisSummary.from_mapping(payload)
 
 
 def test_whole_run_diagnosis_summary_defaults_missing_quality_summary() -> None:
@@ -193,22 +185,21 @@ def test_whole_run_diagnosis_summary_defaults_missing_quality_summary() -> None:
 
 
 def test_diagnosis_exemplar_reference_rejects_unsupported_kind() -> None:
-    with pytest.raises(ValueError, match="supported diagnosis exemplar kind"):
+    with pytest.raises(ValueError, match="kind"):
         DiagnosisExemplarReference.from_mapping({"kind": "bad-kind"})
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("factor_key", "bad-factor", "supported diagnosis factor key"),
-        ("polarity", "neutral", "supported diagnosis factor polarity"),
-        ("severity", "urgent", "supported diagnosis factor severity"),
+        ("factor_key", "bad-factor"),
+        ("polarity", "neutral"),
+        ("severity", "urgent"),
     ],
 )
 def test_diagnosis_factor_rejects_unsupported_literal_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = DiagnosisFactor(
         factor_key="raw_backed",
@@ -218,21 +209,20 @@ def test_diagnosis_factor_rejects_unsupported_literal_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         DiagnosisFactor.from_mapping(payload)
 
 
 @pytest.mark.parametrize(
-    ("field", "value", "message"),
+    ("field", "value"),
     [
-        ("data_basis", "derived_only", "supported whole-run diagnosis data basis"),
-        ("location_proof_basis", "sensor_vote", "supported location proof basis"),
+        ("data_basis", "derived_only"),
+        ("location_proof_basis", "sensor_vote"),
     ],
 )
 def test_whole_run_diagnosis_summary_rejects_unsupported_literal_values(
     field: str,
     value: object,
-    message: str,
 ) -> None:
     payload = WholeRunDiagnosisSummary(
         diagnosis_key="wheel_1x",
@@ -242,7 +232,7 @@ def test_whole_run_diagnosis_summary_rejects_unsupported_literal_values(
     ).to_json_object()
     payload[field] = value
 
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises(ValueError, match=field):
         WholeRunDiagnosisSummary.from_mapping(payload)
 
 

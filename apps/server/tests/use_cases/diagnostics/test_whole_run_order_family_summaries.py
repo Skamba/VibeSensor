@@ -262,9 +262,6 @@ def test_build_whole_run_order_family_summary_artifact_bundle_preserves_manifest
             }
         ],
         "created_at": "2025-01-01T00:00:00Z",
-        "generated_artifact_paths": {
-            WHOLE_RUN_ORDER_FAMILY_SUMMARY_ARTIFACT_KEY: "orders/family-summaries.jsonl",
-        },
         "algorithm_versions": {},
         "configuration": {},
         "source_raw_manifests": [],

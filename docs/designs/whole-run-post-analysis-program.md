@@ -56,6 +56,13 @@ below.
   - `RawCaptureSensorManifest`
   - `RawCaptureChunkIndex`
   - `RawRunCapture`
+- Persisted raw-capture and whole-run contracts (manifests, sidecar rows,
+  order/spatial/context/diagnosis summaries) are frozen dataclasses inheriting
+  `JsonContract` from `apps/server/vibesensor/shared/types/json_contract.py`:
+  pydantic derives each contract's JSON decoder, `None`-omitting encoder, and
+  JSON schema from the field types, so contracts carry no hand-written
+  per-field codecs. Missing fields fall back to dataclass defaults, unknown
+  keys are ignored, and `__post_init__` invariants still run on decode.
 - Persistence uses `data/raw-runs/{run_id}/` with per-sensor
    `.raw.i16le` and `.index.jsonl` files via
    `apps/server/vibesensor/adapters/persistence/history_db/_raw_capture_store.py`.
