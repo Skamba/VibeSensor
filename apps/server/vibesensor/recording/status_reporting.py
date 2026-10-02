@@ -7,11 +7,11 @@ import sqlite3
 import time
 from dataclasses import dataclass
 
+from vibesensor.analysis.post_analysis import PostAnalysisWorker
 from vibesensor.domain.capture_readiness import CaptureReadiness
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
-from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
 
 __all__ = [
     "RunRecorderStatusSnapshot",

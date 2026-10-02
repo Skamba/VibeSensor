@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
+from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.common.json_types import JsonObject, JsonValue
 from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.common.json_utils import (
@@ -23,7 +24,6 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.dsp.vibration_strength import compute_db
 from vibesensor.recording.run_suitability_codec import run_suitability_payload
-from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.summary.contracts import (
     AnalysisSummary,
     PayloadObject,

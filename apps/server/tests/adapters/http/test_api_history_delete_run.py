@@ -13,7 +13,7 @@ from _history_endpoint_helpers import (
 )
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 
 
 def test_delete_run_returns_deleted_status_for_safe_run() -> None:

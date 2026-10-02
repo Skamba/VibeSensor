@@ -217,17 +217,18 @@ type = "forbidden"
 # Indirect imports are forbidden too: rendering must never pull in diagnostics,
 # not even transitively through shared or history modules.
 source_modules = ["vibesensor.report.pdf"]
-forbidden_modules = ["vibesensor.use_cases.diagnostics"]
+forbidden_modules = ["vibesensor.analysis"]
 
 [[tool.importlinter.contracts]]
 name = "Diagnostics stays free of report localisation"
 type = "forbidden"
 allow_indirect_imports = true
-source_modules = ["vibesensor.use_cases.diagnostics"]
+source_modules = ["vibesensor.analysis"]
 forbidden_modules = ["vibesensor.report.i18n"]
 ignore_imports = [
   # Only the language-code normaliser is allowed, not localised strings.
-  "vibesensor.use_cases.diagnostics.run_analysis -> vibesensor.report.i18n",
+  "vibesensor.analysis.run_analysis -> vibesensor.report.i18n",
+  "vibesensor.analysis.post_analysis_summary -> vibesensor.report.i18n",
 ]
 
 [[tool.importlinter.contracts]]

@@ -15,21 +15,21 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
+from vibesensor.analysis._view_types import PeakTableRowData
+from vibesensor.analysis.peaks.table import (
+    annotate_peak_rows_with_order_labels,
+)
+from vibesensor.analysis.peaks.table import (
+    top_peaks_table_rows as _top_peaks_table_rows,
+)
+from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.analysis.summarize import build_findings_for_samples
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.recording.sensor_frame_mapping import (
     sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
 )
-from vibesensor.use_cases.diagnostics._view_types import PeakTableRowData
-from vibesensor.use_cases.diagnostics.peaks.table import (
-    annotate_peak_rows_with_order_labels,
-)
-from vibesensor.use_cases.diagnostics.peaks.table import (
-    top_peaks_table_rows as _top_peaks_table_rows,
-)
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 
 
 class TestBuildPersistentPeakFindings:

@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.dsp.vibration_strength import percentile
-from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.use_cases.diagnostics._sample_metrics import (
+from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
     _run_noise_baseline_g,
 )
-from vibesensor.use_cases.diagnostics.peaks.table import (
+from vibesensor.analysis.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
+from vibesensor.dsp.vibration_strength import percentile
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
 def _sample(

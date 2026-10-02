@@ -11,7 +11,7 @@ PYTHON_MAJOR_MINOR := $(PYTHON_MAJOR).$(PYTHON_MINOR)
 PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
-BACKEND_BENCHMARK_TARGETS ?= tests/use_cases/diagnostics/benchmark_whole_run_spectra.py tests/updates/benchmark_update_status_codec.py
+BACKEND_BENCHMARK_TARGETS ?= tests/analysis/benchmark_whole_run_spectra.py tests/updates/benchmark_update_status_codec.py
 CLEAN_PATHS := \
 	$(SERVER_DIR)/build \
 	$(SERVER_DIR)/dist \
@@ -106,7 +106,7 @@ test: ## Run the backend pytest suite (excludes opt-in diagnostic matrices)
 
 test-golden-replay: ## Run fast generated dense post-run golden replay tests
 	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m pytest -q apps/server/tests/use_cases/run/test_post_analysis_golden_replay.py
+	"$$PYTHON" -m pytest -q apps/server/tests/analysis/test_post_analysis_golden_replay.py
 
 test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices excluded from default backend CI
 	@$(RESOLVE_PYTHON) \
@@ -131,7 +131,7 @@ benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS /
 
 benchmark-golden-replay: ## Run the opt-in 30-minute dense golden replay benchmark
 	@$(RESOLVE_PYTHON) \
-	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' tests/use_cases/run/benchmark_post_analysis_golden_replay.py $(BENCHMARK_OPTS)
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' tests/analysis/benchmark_post_analysis_golden_replay.py $(BENCHMARK_OPTS)
 
 benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/server/.benchmarks
 	@$(RESOLVE_PYTHON) \

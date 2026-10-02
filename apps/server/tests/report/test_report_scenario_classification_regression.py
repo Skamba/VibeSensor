@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.analysis._sensor_locations import _location_label
+from vibesensor.analysis.peaks.classification import classify_peak_type
 from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
-from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
 
 
 class TestStrengthBandsAlignment:

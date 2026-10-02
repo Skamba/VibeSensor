@@ -14,8 +14,8 @@ from tests.recording.test_metrics_log_helpers import (
     _started_snapshot_with_sample,
 )
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.analysis.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
-from vibesensor.use_cases.run.post_analysis import PostAnalysisHealthSnapshot
 
 
 class _NullDB:
@@ -230,7 +230,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s -> <1 s).
     cap = 200
     monkeypatch.setattr(
-        "vibesensor.use_cases.run.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES",
+        "vibesensor.analysis.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES",
         cap,
     )
 

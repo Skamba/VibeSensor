@@ -1,15 +1,15 @@
-"""Tests for vibesensor.shared.constants and OrderReferenceSpec vehicle dynamics."""
+"""Tests for vibesensor.common constants and OrderReferenceSpec vehicle dynamics."""
 
 from __future__ import annotations
 
 import pytest
 
+from vibesensor.analysis.constants import SILENCE_DB
 from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_mapping
-from vibesensor.shared.constants.analysis import SILENCE_DB
 
 # ---------------------------------------------------------------------------
 # Constants

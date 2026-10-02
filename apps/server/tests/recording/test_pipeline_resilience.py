@@ -20,6 +20,7 @@ from unittest.mock import patch
 import pytest
 from test_support.history_db_lifecycle import make_stored_run
 
+from vibesensor.analysis.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 from vibesensor.domain.run import Run
 from vibesensor.recording.recorder import (
     _MAX_HISTORY_CREATE_RETRIES,
@@ -30,7 +31,6 @@ from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
-from vibesensor.use_cases.run.post_analysis import _WARN_QUEUE_DEPTH, PostAnalysisWorker
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -467,7 +467,7 @@ class TestQueueDepthWarning:
         started.wait(timeout=2.0)
 
         # Fill queue past threshold
-        with caplog.at_level(logging.WARNING, logger="vibesensor.use_cases.run.post_analysis"):
+        with caplog.at_level(logging.WARNING, logger="vibesensor.analysis.post_analysis"):
             for i in range(1, _WARN_QUEUE_DEPTH + 1):
                 worker.schedule(f"run-{i}")
 

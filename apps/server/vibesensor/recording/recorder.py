@@ -7,6 +7,8 @@ import time
 from threading import RLock
 from typing import TYPE_CHECKING
 
+from vibesensor.analysis.post_analysis import PostAnalysisWorker
+from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
 from vibesensor.common.structured_logging import log_extra
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.recording import _recorder_runtime, _recorder_types
@@ -49,8 +51,6 @@ from vibesensor.shared.ports import (
     SignalSource,
     SpeedProvider,
 )
-from vibesensor.use_cases.run.post_analysis import PostAnalysisWorker
-from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 if TYPE_CHECKING:
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot

@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 from pypdf import PdfReader
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.http.router import create_router
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.summary.contracts import AnalysisSummary
 
 

@@ -11,7 +11,6 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
 from vibesensor.adapters.history.services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
@@ -25,6 +24,7 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.adapters.http.router import create_router
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector

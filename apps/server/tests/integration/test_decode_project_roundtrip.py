@@ -18,16 +18,16 @@ from test_support import (
 )
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.analysis_summary import analysis_result_to_summary
 from vibesensor.adapters.history.projection import project_analysis_summary
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.analysis._run_input import build_diagnostics_run_input
+from vibesensor.analysis.run_analysis import AnalysisResult, RunAnalysis
+from vibesensor.analysis.summarize import analysis_result_to_summary
 from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.domain.test_run import TestRun
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.shared.types.history_records import StoredHistoryRun
-from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
-from vibesensor.use_cases.diagnostics.run_analysis import AnalysisResult, RunAnalysis
 
 # -- helpers ---------------------------------------------------------------
 

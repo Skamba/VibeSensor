@@ -232,9 +232,9 @@ task/timeout helpers:
 | `apps/server/vibesensor/recording/recording_session.py` | Active run context/sensor snapshots, run-start side effects, and ingest-drop baselines. |
 | `apps/server/vibesensor/recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `apps/server/vibesensor/recording/recorder.py` | Public recording start/stop entrypoint. |
-| `apps/server/vibesensor/use_cases/run/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
-| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as straight-line steps (one `post_analysis_step` log line each) that call the whole-run diagnostics builders directly. |
-| `apps/server/vibesensor/use_cases/run/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |
-| `apps/server/vibesensor/use_cases/diagnostics/whole_run_spectra.py` | Current whole-run spectral sidecar builder over bounded raw range reads. |
-| `apps/server/vibesensor/use_cases/diagnostics/whole_run_context.py` | Current whole-run context labels and compact intervals. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_*.py` | Current whole-run order trace, scoring, and family-summary sidecar/summarization stages. |
+| `apps/server/vibesensor/analysis/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
+| `apps/server/vibesensor/analysis/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as straight-line steps (one `post_analysis_step` log line each) that call the whole-run diagnostics builders directly. |
+| `apps/server/vibesensor/analysis/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |
+| `apps/server/vibesensor/analysis/whole_run_spectra.py` | Current whole-run spectral sidecar builder over bounded raw range reads. |
+| `apps/server/vibesensor/analysis/whole_run_context.py` | Current whole-run context labels and compact intervals. |
+| `apps/server/vibesensor/analysis/orders/whole_run_*.py` | Current whole-run order trace, scoring, and family-summary sidecar/summarization stages. |

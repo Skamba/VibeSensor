@@ -14,7 +14,7 @@ import random
 
 import pytest
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.i18n import is_i18n_ref, tr
 from vibesensor.report.i18n import resolve_i18n as resolve_i18n_impl

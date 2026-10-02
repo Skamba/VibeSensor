@@ -6,6 +6,25 @@ from typing import Any
 import pytest
 
 from test_support.persisted_analysis import make_persisted_analysis
+from vibesensor.analysis import post_analysis_executor
+from vibesensor.analysis.orders.whole_run_traces import (
+    WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
+    WholeRunOrderTraceArtifactBundle,
+)
+from vibesensor.analysis.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    execute_post_analysis,
+)
+from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.analysis.post_analysis_outcomes import PostAnalysisExecutionSuccess
+from vibesensor.analysis.whole_run_context import (
+    WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
+    WholeRunContextArtifactBundle,
+)
+from vibesensor.analysis.whole_run_spectra import (
+    WholeRunSpectralBuildResult,
+    WholeRunSpectralCoverageSummary,
+)
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
@@ -19,25 +38,6 @@ from vibesensor.summary.whole_run_analysis import (
     WholeRunContextWindowLabel,
     WholeRunWindowPolicy,
 )
-from vibesensor.use_cases.diagnostics.orders.whole_run_traces import (
-    WHOLE_RUN_ORDER_TRACE_ARTIFACT_KEY,
-    WholeRunOrderTraceArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.whole_run_context import (
-    WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY,
-    WholeRunContextArtifactBundle,
-)
-from vibesensor.use_cases.diagnostics.whole_run_spectra import (
-    WholeRunSpectralBuildResult,
-    WholeRunSpectralCoverageSummary,
-)
-from vibesensor.use_cases.run import post_analysis_executor
-from vibesensor.use_cases.run.post_analysis_executor import (
-    PostAnalysisExecutionConfig,
-    execute_post_analysis,
-)
-from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
-from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
 
 
 def run_metadata(run_id: str) -> RunMetadata:

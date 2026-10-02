@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.recording.raw_capture import (
     RawCaptureLossStats,
     RawCaptureManifest,

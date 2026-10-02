@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support import build_speed_sweep_fault_samples, standard_metadata
 
-from vibesensor.adapters.analysis_summary import summarize_sensor_frames
+from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings

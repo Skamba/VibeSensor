@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.analysis.top_cause_selection import select_top_causes
 from vibesensor.domain.finding import Finding
 from vibesensor.summary.finding_fields import finding_from_payload
-from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
 
 def _to_domain(*payloads: dict[str, object]) -> tuple[Finding, ...]:

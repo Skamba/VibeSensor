@@ -5,10 +5,10 @@ from __future__ import annotations
 from test_support.core import standard_metadata
 from test_support.sample_scenarios import make_sample
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_report_input
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 
 _VALID_PHASES = frozenset(phase.value for phase in DrivingPhase)
 

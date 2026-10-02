@@ -15,7 +15,7 @@ from test_support.sample_scenarios import (
     make_road_phase_samples,
     make_speed_jitter_samples,
 )
-from vibesensor.adapters.analysis_summary import summarize_sensor_frames
+from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 

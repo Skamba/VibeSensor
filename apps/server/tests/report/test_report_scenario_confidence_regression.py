@@ -11,10 +11,10 @@ from test_support.sample_scenarios import (
     max_order_source_conf,
 )
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.finding import Finding
-from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 
 
 class TestConfidenceCalibration:

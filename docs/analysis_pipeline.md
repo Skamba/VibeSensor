@@ -1,27 +1,27 @@
 # Analysis Pipeline
 
 Scope: architecture and data flow for the post-stop diagnostics pipeline in
-`apps/server/vibesensor/use_cases/diagnostics/`.
+`apps/server/vibesensor/analysis/`.
 
 ## Architectural Rules
 
 1. **Analysis runs only once** — after a recording is stopped.
    Report rendering and API endpoints use persisted results.
 2. **Diagnostics-first package** — diagnostic orchestration, ranking, and
-   post-stop reasoning live in `apps/server/vibesensor/use_cases/diagnostics/`.
+   post-stop reasoning live in `apps/server/vibesensor/analysis/`.
    The shared vehicle-order frequency math used by both diagnostics and live
    telemetry lives in `apps/server/vibesensor/dsp/order_bands.py`.
 3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
    diagnostics pipeline entrypoint. Boundary helpers such as
    `summarize_run_data()` / `summarize_log()` live in
-   `apps/server/vibesensor/adapters/analysis_summary.py` and call the
+   `apps/server/vibesensor/analysis/summarize.py` and call the
    diagnostics entrypoint explicitly.
 4. **Public API** — external app/domain code imports from
-   `vibesensor.use_cases.diagnostics`: `RunAnalysis`, `AnalysisResult`,
+   `vibesensor.analysis`: `RunAnalysis`, `AnalysisResult`,
    `build_findings_for_samples()`, `build_order_bands()`, `vehicle_orders_hz()`.
    Serialized `AnalysisSummary` helpers live outside the diagnostics package.
 5. **Renderer-only report package** — `vibesensor.report.pdf` must not
-   import from `vibesensor.use_cases.diagnostics` (enforced by tests).
+   import from `vibesensor.analysis` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
    (`apps/server/vibesensor/live/`) must not import from
    `use_cases/diagnostics/`.

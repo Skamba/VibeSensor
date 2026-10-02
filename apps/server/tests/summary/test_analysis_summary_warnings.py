@@ -6,7 +6,7 @@ from typing import cast
 
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.analysis_payloads.summary import analysis_summary_with_warnings
+from vibesensor.analysis.summary_payload import analysis_summary_with_warnings
 from vibesensor.summary.contracts import (
     AnalysisSummary,
     SummaryWarningResponse,

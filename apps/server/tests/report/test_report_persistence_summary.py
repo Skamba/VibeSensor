@@ -10,12 +10,12 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
+from vibesensor.analysis.peaks.table import (
+    top_peaks_table_rows as _top_peaks_table_rows,
+)
+from vibesensor.analysis.summarize import build_findings_for_samples
 from vibesensor.recording.sensor_frame_mapping import (
     sensor_frames_to_json_objects,
-)
-from vibesensor.use_cases.diagnostics.peaks.table import (
-    top_peaks_table_rows as _top_peaks_table_rows,
 )
 
 

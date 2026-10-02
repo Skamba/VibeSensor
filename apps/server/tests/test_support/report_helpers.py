@@ -38,22 +38,18 @@ from test_support.report_record_builders import (
 from test_support.report_record_builders import (
     write_test_log as write_test_log,
 )
-from vibesensor.domain.location_hotspot import LocationHotspot
-from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-from vibesensor.use_cases.diagnostics.orders import (
-    pipeline as order_findings_module,
-)
-from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
-from vibesensor.use_cases.diagnostics.orders import (
-    statistics as _order_statistics_module,
-)
-from vibesensor.use_cases.diagnostics.orders.pipeline import (
+from vibesensor.analysis.location_analysis import LocationAnalysisResult
+from vibesensor.analysis.orders import pipeline as order_findings_module
+from vibesensor.analysis.orders import scoring as _order_scoring_module
+from vibesensor.analysis.orders import statistics as _order_statistics_module
+from vibesensor.analysis.orders.pipeline import (
     OrderAnalysisRequest,
 )
-from vibesensor.use_cases.diagnostics.orders.pipeline import (
+from vibesensor.analysis.orders.pipeline import (
     _build_order_findings as _findings_build_order_findings,
 )
+from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
 def suitability_by_key(summary: dict) -> dict[str, dict]:

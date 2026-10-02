@@ -13,12 +13,12 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis._analysis_models import FindingsBuildRequest
+from vibesensor.analysis.findings import _build_findings as _findings_build_findings
+from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
-from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
-from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases
 
 
 @pytest.mark.parametrize(
@@ -154,7 +154,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         return segment_run_phases(sequence)
 
     with patch(
-        "vibesensor.use_cases.diagnostics.peaks.findings.segment_run_phases",
+        "vibesensor.analysis.peaks.findings.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
         _findings_build_findings(
@@ -195,7 +195,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
         recompute_calls.append(1)
         return segment_run_phases(sequence)
 
-    patch_target = "vibesensor.use_cases.diagnostics.peaks.findings.segment_run_phases"
+    patch_target = "vibesensor.analysis.peaks.findings.segment_run_phases"
     with patch(patch_target, side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)
 

@@ -42,7 +42,7 @@ background post-analysis job. Measured on the same host for a 4-sensor, 800 Hz,
 
 ## Post-analysis and UDP ingest
 
-- `PostAnalysisWorker` in `apps/server/vibesensor/use_cases/run/post_analysis.py`
+- `PostAnalysisWorker` in `apps/server/vibesensor/analysis/post_analysis.py`
   owns a single daemon thread for completed-run post-analysis. Report requests
   read persisted analysis and render on demand.
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer

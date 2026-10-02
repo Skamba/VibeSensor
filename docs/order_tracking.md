@@ -12,7 +12,7 @@ VibeSensor uses the same vehicle-order reference model in two places:
 
 The shared physics lives in `apps/server/vibesensor/domain/order_reference.py`
 and `apps/server/vibesensor/dsp/order_bands.py`. The post-stop finding flow
-lives in `apps/server/vibesensor/use_cases/diagnostics/orders/`.
+lives in `apps/server/vibesensor/analysis/orders/`.
 
 ## Core concepts
 
@@ -50,7 +50,7 @@ reference instead of inventing one.
 ## Active whole-run order sidecar flow
 
 The current connected dense order path is wired in
-`apps/server/vibesensor/use_cases/run/post_analysis_executor.py` after
+`apps/server/vibesensor/analysis/post_analysis_executor.py` after
 whole-run spectra and context sidecars are built:
 
 1. `whole_run_spectra.py` writes per-sensor `spectral-summary:*` sidecars with
@@ -167,16 +167,16 @@ That shared ownership is why `shared/order_bands.py` exists outside
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/pipeline.py` | Coordinate the full order-analysis pass. |
+| `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
+| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks. |
+| `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
+| `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
+| `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |
 | `apps/server/vibesensor/summary/order_trace_contracts.py` | Dense whole-run order-trace points plus compact summary/support contracts for later full-run work. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_traces.py` | Build deterministic dense whole-run order traces from spectral summaries plus context labels. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_scoring.py` | Collapse dense whole-run traces into deterministic lock/stability summaries for later persistence. |
-| `apps/server/vibesensor/use_cases/diagnostics/orders/whole_run_family_summaries.py` | Collapse scored harmonic traces into family-level support intervals and phase summaries. |
-| `apps/server/vibesensor/use_cases/run/post_analysis_executor.py` | Persist ranked compact whole-run order summaries into `analysis_json` while keeping dense traces sidecar-only. |
+| `apps/server/vibesensor/analysis/orders/whole_run_traces.py` | Build deterministic dense whole-run order traces from spectral summaries plus context labels. |
+| `apps/server/vibesensor/analysis/orders/whole_run_scoring.py` | Collapse dense whole-run traces into deterministic lock/stability summaries for later persistence. |
+| `apps/server/vibesensor/analysis/orders/whole_run_family_summaries.py` | Collapse scored harmonic traces into family-level support intervals and phase summaries. |
+| `apps/server/vibesensor/analysis/post_analysis_executor.py` | Persist ranked compact whole-run order summaries into `analysis_json` while keeping dense traces sidecar-only. |
 
 ## Whole-run order trace contract split
 

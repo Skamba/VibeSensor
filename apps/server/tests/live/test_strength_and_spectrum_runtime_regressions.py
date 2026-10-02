@@ -10,9 +10,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from vibesensor.analysis.constants import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 from vibesensor.dsp.fft_analysis import noise_floor
 from vibesensor.dsp.strength_bands import bucket_for_strength
-from vibesensor.shared.constants.analysis import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
 
 
 class TestBucketForStrengthNegativeDB:

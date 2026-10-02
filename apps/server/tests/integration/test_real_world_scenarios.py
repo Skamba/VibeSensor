@@ -29,7 +29,7 @@ from test_support.core import (
     standard_metadata,
 )
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.common.units import KMH_TO_MPS
 
 # ---------------------------------------------------------------------------

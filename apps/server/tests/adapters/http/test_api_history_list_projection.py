@@ -3,7 +3,7 @@ from __future__ import annotations
 from _history_endpoint_helpers import make_app_and_state, make_metadata, sample
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 
 
 def test_history_list_includes_recorded_car_name() -> None:

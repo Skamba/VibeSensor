@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from vibesensor.adapters.analysis_summary import summarize_log
+from vibesensor.analysis.summarize import summarize_log
 from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.report.preparation import prepare_report_input
 

@@ -9,6 +9,9 @@ from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
 
+from vibesensor.analysis.post_analysis_input import build_post_analysis_input
+from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
 from vibesensor.ingest.protocol import HelloMessage, pack_data
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
@@ -22,9 +25,6 @@ from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.gps_speed import SpeedResolution
 from vibesensor.summary.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
-from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input
-from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
-from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
 
 _CLIENT_ID = bytes.fromhex("010203040506")
 _CLIENT_ID_HEX = _CLIENT_ID.hex()
@@ -172,11 +172,11 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
                 )
 
         monkeypatch.setattr(
-            "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
+            "vibesensor.analysis.run_analysis.RunAnalysis",
             FakeRunAnalysis,
         )
         monkeypatch.setattr(
-            "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+            "vibesensor.analysis.post_analysis_summary.analysis_result_to_summary",
             lambda _result: minimal_summary(
                 run_id=run_id,
                 lang="en",

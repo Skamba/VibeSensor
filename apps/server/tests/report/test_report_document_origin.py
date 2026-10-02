@@ -8,15 +8,15 @@ from test_support.report_helpers import (
     minimal_summary,
 )
 
+from vibesensor.analysis.run_analysis import (
+    summarize_origin,
+)
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_report_input
 from vibesensor.summary.finding_fields import finding_from_payload
 from vibesensor.summary.origin_fields import (
     build_origin_explanation,
-)
-from vibesensor.use_cases.diagnostics.run_analysis import (
-    summarize_origin,
 )
 
 

@@ -15,7 +15,7 @@ from test_support.report_helpers import (
     report_run_metadata as run_metadata,
 )
 
-from vibesensor.adapters.analysis_summary import summarize_log
+from vibesensor.analysis.summarize import summarize_log
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.pdf.pdf_engine import build_report_pdf

@@ -10,19 +10,19 @@ from test_support.report_helpers import (
     wheel_metadata,
 )
 
-from vibesensor.adapters.analysis_summary import build_findings_for_samples
+from vibesensor.analysis import findings as findings_builder_module
+from vibesensor.analysis._analysis_models import FindingsBuildRequest
+from vibesensor.analysis.findings import _build_findings as _findings_build_findings
+from vibesensor.analysis.location_analysis import LocationAnalysisResult
+from vibesensor.analysis.peaks.table import (
+    top_peaks_table_rows as _top_peaks_table_rows,
+)
+from vibesensor.analysis.signal_aggregation import _speed_breakdown
+from vibesensor.analysis.summarize import build_findings_for_samples
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.use_cases.diagnostics import findings as findings_builder_module
-from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
-from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
-from vibesensor.use_cases.diagnostics.location_analysis import LocationAnalysisResult
-from vibesensor.use_cases.diagnostics.peaks.table import (
-    top_peaks_table_rows as _top_peaks_table_rows,
-)
-from vibesensor.use_cases.diagnostics.signal_aggregation import _speed_breakdown
 
 
 def test_speed_breakdown_basic() -> None:
@@ -355,7 +355,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             ),
         )
 
-    from vibesensor.use_cases.diagnostics.orders import scoring as _order_scoring_module
+    from vibesensor.analysis.orders import scoring as _order_scoring_module
 
     monkeypatch.setattr(
         _order_scoring_module,

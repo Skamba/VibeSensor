@@ -16,7 +16,7 @@ from test_support.scenario_ground_truth import (
     road_noise_phase,
 )
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 
 
 class _FakeSimClient:

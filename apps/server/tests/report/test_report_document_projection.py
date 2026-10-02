@@ -13,7 +13,7 @@ from test_support.report_helpers import (
 from test_support.report_helpers import report_run_metadata as _run_metadata
 from test_support.report_helpers import report_sample as _base_sample
 
-from vibesensor.adapters.analysis_summary import summarize_log
+from vibesensor.analysis.summarize import summarize_log
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.model.document import ReportDocument
 from vibesensor.report.preparation import prepare_report_input

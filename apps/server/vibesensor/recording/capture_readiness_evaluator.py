@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+from vibesensor.analysis.constants import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.domain.capture_readiness import (
     CaptureReadiness,
     CaptureReadinessCheck,
@@ -20,7 +21,6 @@ from vibesensor.recording.capture_readiness_state import (
     _is_finite_number,
 )
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
-from vibesensor.shared.constants.analysis import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 
 __all__ = ["evaluate_capture_readiness"]
 

@@ -16,7 +16,9 @@ from test_support import (
     standard_metadata,
 )
 
-from vibesensor.adapters.analysis_summary import (
+from vibesensor.analysis._run_input import build_diagnostics_run_input
+from vibesensor.analysis.run_analysis import RunAnalysis
+from vibesensor.analysis.summarize import (
     analysis_result_to_summary,
     summarize_run_data,
 )
@@ -28,8 +30,6 @@ from vibesensor.report.document._candidate_resolver import (
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.model.document import ReportDocument
 from vibesensor.report.preparation import prepare_report_input
-from vibesensor.use_cases.diagnostics._run_input import build_diagnostics_run_input
-from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
 pytestmark = pytest.mark.smoke
 

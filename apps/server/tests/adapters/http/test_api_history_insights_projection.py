@@ -4,7 +4,7 @@ import pytest
 from _history_endpoint_helpers import make_app_and_state, make_metadata, make_status_app, sample
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.car import CarSnapshot
 
 

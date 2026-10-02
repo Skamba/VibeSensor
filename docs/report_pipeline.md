@@ -4,8 +4,8 @@
 
 The report generation pipeline has two distinct phases:
 
-1. **Post-stop analysis** (`vibesensor.use_cases.run.post_analysis_executor` +
-   `vibesensor.use_cases.diagnostics`) — runs once when a recording ends. It
+1. **Post-stop analysis** (`vibesensor.analysis.post_analysis_executor` +
+   `vibesensor.analysis`) — runs once when a recording ends. It
    builds dense whole-run sidecar artifacts when raw capture is available, builds
    the compact diagnostics summary, appends compact whole-run report-facing
    summaries, and persists the resulting `PersistedAnalysis`.
@@ -24,17 +24,17 @@ The report generation pipeline has two distinct phases:
 
 ```text
 Recording stops
-  → _run_post_analysis() [vibesensor.use_cases.run.post_analysis]
-    → execute_post_analysis() [vibesensor.use_cases.run.post_analysis_executor]
-      → load_post_analysis_run() [vibesensor.use_cases.run.post_analysis_loader]
-      → build_whole_run_artifacts() [vibesensor.use_cases.run.post_analysis_executor]
+  → _run_post_analysis() [vibesensor.analysis.post_analysis]
+    → execute_post_analysis() [vibesensor.analysis.post_analysis_executor]
+      → load_post_analysis_run() [vibesensor.analysis.post_analysis_loader]
+      → build_whole_run_artifacts() [vibesensor.analysis.post_analysis_executor]
         → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
         → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
       → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]
-      → build_post_analysis_summary() [vibesensor.use_cases.run.post_analysis_summary]
-        → RunAnalysis(...).summarize() [vibesensor.use_cases.diagnostics.run_analysis]
+      → build_post_analysis_summary() [vibesensor.analysis.post_analysis_summary]
+        → RunAnalysis(...).summarize() [vibesensor.analysis.run_analysis]
         → run_analysis.py + run_data_preparation.py + findings_bundle.py + _analysis_result_builder.py
-        → analysis_result_to_summary() [vibesensor.shared.boundaries.analysis_payloads.summary]
+        → analysis_result_to_summary() [vibesensor.analysis.summary_payload]
       → append compact whole-run report-facing summaries
       → store_analysis() [vibesensor.adapters.persistence.history_db]
 
@@ -71,7 +71,7 @@ The `vibesensor.report.pdf` package contains **only** rendering code:
 | `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
 | `report_types.py` | Adapter-local render plans derived from `ReportDocument` |
 
-**Rule:** Report modules must not import from `vibesensor.use_cases.diagnostics` at
+**Rule:** Report modules must not import from `vibesensor.analysis` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)
 enforces this.
 
@@ -133,9 +133,9 @@ needs:
 ## Adding new report sections
 
 1. Add any new diagnostics output to `RunAnalysis` / `AnalysisResult` in
-   `vibesensor.use_cases.diagnostics`, then project it in
-   `vibesensor.shared.boundaries.analysis_payloads.analysis_result_to_summary()`
-   (or the adapter wrappers in `vibesensor.adapters.analysis_summary` if the
+   `vibesensor.analysis`, then project it in
+   `vibesensor.analysis.summary_payload.analysis_result_to_summary()`
+   (or the adapter wrappers in `vibesensor.analysis.summarize` if the
    change only affects the serialized edge helper).
 2. Add a corresponding field to `ReportDocument` in
    `vibesensor.report.model`.
