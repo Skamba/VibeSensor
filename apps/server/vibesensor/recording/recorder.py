@@ -54,7 +54,7 @@ from vibesensor.shared.ports import (
 
 if TYPE_CHECKING:
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-    from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
+    from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
 
 LOGGER = logging.getLogger(__name__)
 _RAW_CAPTURE_MAX_SYNC_AGE_US = 15_000_000

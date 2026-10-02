@@ -2,11 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.adapters.http.dependencies import (
-    ObdAdminServiceProtocol,
-    SettingsDeps,
-    SettingsSpeedServiceProtocol,
-)
 from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.settings.car_settings import CarSettingsService
 from vibesensor.settings.sensor_settings import SensorSettingsService
@@ -25,6 +20,11 @@ from vibesensor.shared.ports import (
     SettingsSnapshotPersistence,
     SpeedSourceSettingsReader,
     SpeedSourceSync,
+)
+from vibesensor.web.dependencies import (
+    ObdAdminServiceProtocol,
+    SettingsDeps,
+    SettingsSpeedServiceProtocol,
 )
 
 

@@ -27,7 +27,7 @@ def _get_endpoint(router, path: str):
 @pytest.fixture
 def car_library_router(fake_state):
     """Return the car-library APIRouter for direct endpoint tests."""
-    from vibesensor.adapters.http.car_library import create_car_library_routes
+    from vibesensor.web.car_library import create_car_library_routes
 
     return create_car_library_routes()
 

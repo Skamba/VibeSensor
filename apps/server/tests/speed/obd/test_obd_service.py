@@ -14,13 +14,13 @@ from test_support.obd_runtime import (
     build_obd_runtime_parts as _build_runtime_parts,
 )
 
-from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.speed.obd.connection_executor import ObdConnectionLoopState
 from vibesensor.speed.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.speed.obd.elm327 import ObdTransportError
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 from vibesensor.speed.obd.polling import ObdPidFailureKind, ObdPidPollResult, ObdPollResult
+from vibesensor.web.obd_status_presentation import obd_debug_hint
 
 
 @pytest.mark.asyncio

@@ -4,16 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from math import isfinite
+from typing import Final
 
-from vibesensor.analysis.constants import (
-    FREQUENCY_EPSILON_HZ,
-    HARMONIC_2X,
-    MIN_OVERLAP_TOLERANCE,
-    ORDER_TOLERANCE_MIN_HZ,
-    ORDER_TOLERANCE_REL,
-    RIGID_ORDER_PATH_COMPLIANCE,
-    WHEEL_ORDER_PATH_COMPLIANCE,
-)
 from vibesensor.common.json_utils import as_float_or_none
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.live.payload_types import OrderBandPayload
@@ -21,6 +13,31 @@ from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
+
+HARMONIC_2X: Final[float] = 2.0
+"""Multiplier for the second harmonic of a fundamental frequency."""
+
+MIN_OVERLAP_TOLERANCE: Final[float] = 0.025
+"""Minimum relative tolerance used when checking whether two rotational
+orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
+
+FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
+"""Tiny guard value to prevent division-by-zero in frequency ratios."""
+
+ORDER_TOLERANCE_REL: Final[float] = 0.08
+"""Relative frequency tolerance for matching observed peaks to predicted
+rotational-order frequencies."""
+
+ORDER_TOLERANCE_MIN_HZ: Final[float] = 0.5
+"""Minimum absolute frequency tolerance (Hz) for order matching, preventing
+overly tight matches at low frequencies."""
+
+WHEEL_ORDER_PATH_COMPLIANCE: Final[float] = 1.5
+"""Path compliance for wheel orders: tire, hub and suspension bushings broaden
+the peak, so wheel-order tolerance is widened by ``sqrt(1.5)``."""
+
+RIGID_ORDER_PATH_COMPLIANCE: Final[float] = 1.0
+"""Path compliance for stiffly coupled driveshaft and engine orders."""
 
 __all__ = [
     "as_float_or_none",

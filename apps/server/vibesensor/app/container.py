@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.adapters.http.dependencies import RouterDeps
 from vibesensor.app.composition.history import build_history_deps, create_history_db
 from vibesensor.app.composition.live import build_live_runtime
 from vibesensor.app.composition.settings import build_settings_service_bundle
 from vibesensor.app.composition.speed import build_speed_runtime
 from vibesensor.app.composition.updates import build_update_deps
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.lifecycle import LifecycleRuntime
+from vibesensor.app.lifecycle import LifecycleRuntime
+from vibesensor.web.dependencies import RouterDeps
+from vibesensor.web.health_state import RuntimeHealthState
 
 
 @dataclass(slots=True)

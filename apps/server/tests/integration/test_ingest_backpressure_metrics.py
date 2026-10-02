@@ -25,8 +25,6 @@ from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.ingest.registry import ClientRegistry
@@ -38,6 +36,8 @@ from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.web.health_snapshot import build_system_health_snapshot
+from vibesensor.web.health_state import RuntimeHealthState
 
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800

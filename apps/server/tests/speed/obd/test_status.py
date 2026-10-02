@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 from vibesensor.speed.obd.polling import (
     ObdPidPollResult,
@@ -9,6 +8,7 @@ from vibesensor.speed.obd.polling import (
     ObdPollResult,
 )
 from vibesensor.speed.obd.runtime_state import ObdRuntimeState
+from vibesensor.web.obd_status_presentation import obd_debug_hint
 
 
 def _polling_snapshot(*, backoff_active: bool = True) -> ObdPollingSnapshot:

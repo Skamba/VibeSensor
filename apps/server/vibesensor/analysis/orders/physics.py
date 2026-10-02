@@ -13,13 +13,13 @@ from vibesensor.analysis._reference_resolution import (
     _order_reference_spec_from_context,
 )
 from vibesensor.analysis._types import Sample
-from vibesensor.analysis.constants import (
-    RIGID_ORDER_PATH_COMPLIANCE,
-    WHEEL_ORDER_PATH_COMPLIANCE,
-)
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
+from vibesensor.dsp.order_bands import (
+    RIGID_ORDER_PATH_COMPLIANCE,
+    WHEEL_ORDER_PATH_COMPLIANCE,
+)
 from vibesensor.recording.run_schema import RunMetadata
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -11,7 +11,6 @@ from test_support import response_payload
 from test_support.firmware_bundles import write_firmware_bundle
 from test_support.routes import iter_api_routes
 
-from vibesensor.adapters.http.updates import create_update_routes
 from vibesensor.common.exceptions import ConfigurationError, UpdateError
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.firmware.esp_flash_types import (
@@ -21,6 +20,7 @@ from vibesensor.updates.firmware.esp_flash_types import (
 )
 from vibesensor.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.updates.firmware.firmware_types import FirmwareCacheConfig
+from vibesensor.web.updates import create_update_routes
 
 # ── Constants ──
 
@@ -448,7 +448,7 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
     """EspFlashStartRequest must reject auto_detect=False with no port."""
     from pydantic import ValidationError
 
-    from vibesensor.adapters.http.models.updates import EspFlashStartRequest
+    from vibesensor.web.models.updates import EspFlashStartRequest
 
     with pytest.raises(ValidationError):
         EspFlashStartRequest(port=None, auto_detect=False)
@@ -470,7 +470,7 @@ async def test_esp_flash_start_returns_400_on_configuration_error() -> None:
     """start_esp_flash must map ConfigurationError from esp_flash_manager.start → 400."""
     from unittest.mock import MagicMock
 
-    from vibesensor.adapters.http.updates import create_update_routes
+    from vibesensor.web.updates import create_update_routes
 
     class _ValErrFlashManager:
         async def list_ports(self):

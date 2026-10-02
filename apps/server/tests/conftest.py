@@ -13,22 +13,9 @@ from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 
-from vibesensor.adapters.http.dependencies import (
-    HealthDeps,
-    HistoryDeps,
-    LiveDeps,
-    RouterDeps,
-    SettingsDeps,
-    UpdateDeps,
-)
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.history.exports import HistoryExportService
-from vibesensor.history.projected_services import (
-    ProjectedHistoryExportService,
-    ProjectedHistoryRunService,
-)
 from vibesensor.history.runs import HistoryRunService
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import UDPControlPlane
@@ -45,6 +32,19 @@ from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateJobStatus, UsbInternetStatus
+from vibesensor.web.dependencies import (
+    HealthDeps,
+    HistoryDeps,
+    LiveDeps,
+    RouterDeps,
+    SettingsDeps,
+    UpdateDeps,
+)
+from vibesensor.web.health_state import RuntimeHealthState
+from vibesensor.web.history_services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+)
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers

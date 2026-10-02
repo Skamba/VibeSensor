@@ -38,7 +38,7 @@ Recording stops
       → append compact whole-run report-facing summaries
       → store_analysis() [vibesensor.history.history_db]
 
-GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
+GET /api/history/{run_id}/report.pdf [vibesensor.web.history]
   → HistoryReportService.build_pdf() [vibesensor.report.service]
     → HistoryReportRequestLoader.load_report_request() [vibesensor.report.loader]
     → prepare_report_input() [vibesensor.report.preparation]

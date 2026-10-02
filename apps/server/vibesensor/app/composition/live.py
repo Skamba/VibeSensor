@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from vibesensor.adapters.http.dependencies import HealthDeps, LiveDeps
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
 from vibesensor.app.composition.speed import SpeedRuntimeBundle
 from vibesensor.app.config_schema import AppConfig
@@ -17,7 +16,6 @@ from vibesensor.dsp.constants import (
     WAVEFORM_DISPLAY_HZ,
 )
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
@@ -30,6 +28,8 @@ from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.shared.ports import SensorMetadataStore
+from vibesensor.web.dependencies import HealthDeps, LiveDeps
+from vibesensor.web.health_state import RuntimeHealthState
 
 LOGGER = logging.getLogger(__name__)
 

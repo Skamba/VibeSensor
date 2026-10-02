@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from vibesensor.adapters.http.dependencies import UpdateDeps
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME
 from vibesensor.updates.runtime import build_update_manager
+from vibesensor.web.dependencies import UpdateDeps
 
 
 def build_update_deps(config: AppConfig) -> UpdateDeps:

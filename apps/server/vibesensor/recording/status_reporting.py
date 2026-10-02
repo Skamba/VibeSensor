@@ -6,18 +6,38 @@ import logging
 import sqlite3
 import time
 from dataclasses import dataclass
+from typing import TypedDict
 
 from vibesensor.analysis.post_analysis import PostAnalysisWorker
 from vibesensor.domain.capture_readiness import CaptureReadiness
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
 
 __all__ = [
+    "RunRecorderHealthSnapshot",
     "RunRecorderStatusSnapshot",
     "build_run_recorder_health_snapshot",
     "build_run_recorder_status",
 ]
+
+
+class RunRecorderHealthSnapshot(TypedDict):
+    """Health snapshot dict returned by ``RunRecorder.health_snapshot()``."""
+
+    write_error: str | None
+    analysis_in_progress: bool
+    analysis_queue_depth: int
+    analysis_queue_max_depth: int
+    analysis_active_run_id: str | None
+    analysis_started_at: float | None
+    analysis_elapsed_s: float | None
+    analysis_queue_oldest_age_s: float | None
+    analyzing_run_count: int
+    analyzing_oldest_age_s: float | None
+    samples_written: int
+    samples_dropped: int
+    last_completed_run_id: str | None
+    last_completed_run_error: str | None
 
 
 @dataclass(frozen=True, slots=True)

@@ -60,7 +60,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 | Production change | Test start |
 |---|---|
-| `vibesensor/adapters/http/*` | `apps/server/tests/adapters/http/` |
+| `vibesensor/web/*` | `apps/server/tests/web/` |
 | `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | matching `apps/server/tests/adapters/.../` |
 | `vibesensor/app/*` | `apps/server/tests/app/` |
 | `vibesensor/domain/*` | `apps/server/tests/domain/` |

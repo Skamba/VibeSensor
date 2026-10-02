@@ -8,7 +8,7 @@ from vibesensor.updates.models import UpdateTransport
 
 class TestUpdateApiEndpoints:
     def test_start_request_model_validation(self) -> None:
-        from vibesensor.adapters.http.models.updates import UpdateStartRequest
+        from vibesensor.web.models.updates import UpdateStartRequest
 
         req = UpdateStartRequest(ssid="TestNet", password="pass123")
         assert req.ssid == "TestNet"

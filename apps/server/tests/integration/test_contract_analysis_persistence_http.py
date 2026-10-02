@@ -10,7 +10,6 @@ from test_support.analysis import run_analysis
 from test_support.report_helpers import report_sample
 
 from vibesensor.domain.run_status import RunStatus
-from vibesensor.history.projected_services import ProjectedHistoryRunService
 from vibesensor.history.records import StoredHistoryRun
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.recording.raw_capture import (
@@ -28,6 +27,7 @@ from vibesensor.summary.persisted_codec import (
     persisted_analysis_from_storage_json_object,
     persisted_analysis_to_storage_json_object,
 )
+from vibesensor.web.history_services import ProjectedHistoryRunService
 
 pytestmark = pytest.mark.smoke
 

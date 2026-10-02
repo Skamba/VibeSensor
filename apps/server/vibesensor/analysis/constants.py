@@ -26,16 +26,6 @@ for drivetrain diagnostics and dilutes findings. Protects the report pipeline
 against old recorded runs that lack the FFT-level ``spectrum_min_hz`` filter.
 """
 
-HARMONIC_2X: Final[float] = 2.0
-"""Multiplier for the second harmonic of a fundamental frequency."""
-
-MIN_OVERLAP_TOLERANCE: Final[float] = 0.025
-"""Minimum relative tolerance used when checking whether two rotational
-orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
-
-FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
-"""Tiny guard value to prevent division-by-zero in frequency ratios."""
-
 CONFIDENCE_FLOOR: Final[float] = 0.08
 """Clamp lower bound for computed confidence so no finding is ever
 completely dismissed."""
@@ -83,21 +73,6 @@ STEADY_SPEED_RANGE_KMH: Final[float] = 8.0
 CONSTANT_SPEED_STDDEV_KMH: Final[float] = 0.5
 """Standard deviation threshold (km/h) below which speed is considered constant
 (stricter than steady-speed)."""
-
-ORDER_TOLERANCE_REL: Final[float] = 0.08
-"""Relative frequency tolerance for matching observed peaks to predicted
-rotational-order frequencies."""
-
-ORDER_TOLERANCE_MIN_HZ: Final[float] = 0.5
-"""Minimum absolute frequency tolerance (Hz) for order matching, preventing
-overly tight matches at low frequencies."""
-
-WHEEL_ORDER_PATH_COMPLIANCE: Final[float] = 1.5
-"""Path compliance for wheel orders: tire, hub and suspension bushings broaden
-the peak, so wheel-order tolerance is widened by ``sqrt(1.5)``."""
-
-RIGID_ORDER_PATH_COMPLIANCE: Final[float] = 1.0
-"""Path compliance for stiffly coupled driveshaft and engine orders."""
 
 ORDER_MIN_MATCH_POINTS: Final[int] = 4
 """Minimum number of matched sample points for an order finding to be emitted."""

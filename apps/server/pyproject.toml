@@ -135,94 +135,41 @@ strict_equality = true
 show_error_codes = true
 
 [tool.importlinter]
-# Backend dependency direction, enforced by `lint-imports` in `make lint` and CI.
+# Package dependency rules, enforced by `lint-imports` in `make lint` and CI.
 root_package = "vibesensor"
+# Annotation-only imports (under `if TYPE_CHECKING:`) never load a module at
+# runtime, so they do not count against these contracts.
+exclude_type_checking_imports = true
 
 [[tool.importlinter.contracts]]
-name = "Domain stays isolated from outer layers"
-type = "forbidden"
-source_modules = ["vibesensor.domain"]
-forbidden_modules = [
-  "vibesensor.shared",
-  "vibesensor.infra",
-  "vibesensor.adapters",
+name = "Entrypoints sit on top: features never import web, app, or the CLIs"
+type = "layers"
+layers = [
+  "vibesensor.cli | vibesensor.simulator",
   "vibesensor.app",
-  "vibesensor.cli",
+  "vibesensor.web",
+  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.shared : vibesensor.speed : vibesensor.summary : vibesensor.updates",
+  "vibesensor.domain : vibesensor.common",
 ]
 
 [[tool.importlinter.contracts]]
-name = "Shared stays below service and adapter layers"
-type = "forbidden"
-source_modules = ["vibesensor.shared"]
-forbidden_modules = [
-  "vibesensor.infra",
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
-]
-
-[[tool.importlinter.contracts]]
-name = "Infra stays below adapters and app entrypoints"
-type = "forbidden"
-source_modules = ["vibesensor.infra"]
-forbidden_modules = [
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
-]
-
-[[tool.importlinter.contracts]]
-name = "Adapters stay below app entrypoints"
-type = "forbidden"
-source_modules = ["vibesensor.adapters"]
-forbidden_modules = ["vibesensor.app", "vibesensor.cli"]
-
-[[tool.importlinter.contracts]]
-name = "Live telemetry stays off post-run diagnosis and reporting"
+name = "Live telemetry path stays off post-run analysis, history and reporting"
 type = "forbidden"
 allow_indirect_imports = true
-source_modules = [
-  "vibesensor.live",
-  "vibesensor.ingest.udp_data_rx",
-]
+source_modules = ["vibesensor.ingest", "vibesensor.live", "vibesensor.dsp"]
 forbidden_modules = [
   "vibesensor.analysis",
   "vibesensor.history",
-  "vibesensor.summary",
+  "vibesensor.recording",
   "vibesensor.report",
+  "vibesensor.summary",
 ]
 
 [[tool.importlinter.contracts]]
-name = "PDF adapter renders report documents, not diagnostics"
+name = "Reports render stored summaries; they never run analysis"
 type = "forbidden"
-# Indirect imports are forbidden too: rendering must never pull in diagnostics,
-# not even transitively through shared or history modules.
-source_modules = ["vibesensor.report.pdf"]
+source_modules = ["vibesensor.report"]
 forbidden_modules = ["vibesensor.analysis"]
-
-[[tool.importlinter.contracts]]
-name = "Diagnostics stays free of report localisation"
-type = "forbidden"
-allow_indirect_imports = true
-source_modules = ["vibesensor.analysis"]
-forbidden_modules = ["vibesensor.report.i18n"]
-ignore_imports = [
-  # Only the language-code normaliser is allowed, not localised strings.
-  "vibesensor.analysis.run_analysis -> vibesensor.report.i18n",
-  "vibesensor.analysis.post_analysis_summary -> vibesensor.report.i18n",
-]
-
-[[tool.importlinter.contracts]]
-name = "Route-facing HTTP modules depend on ports, not infra"
-type = "forbidden"
-allow_indirect_imports = true
-source_modules = [
-  "vibesensor.adapters.http.clients",
-  "vibesensor.adapters.http.router",
-  "vibesensor.adapters.http.route_bundles",
-  "vibesensor.adapters.http.settings",
-]
-forbidden_modules = ["vibesensor.infra"]
 
 [tool.deptry]
 known_first_party = ["test_support"]

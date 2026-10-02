@@ -14,7 +14,7 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ```text
 ESP32 nodes -> apps/server/vibesensor/ingest/
              -> live-processing layer + apps/server/vibesensor/analysis/
-             -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/adapters/http/ + apps/server/vibesensor/live/ -> apps/ui
+             -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/web/ + apps/server/vibesensor/live/ -> apps/ui
              -> apps/server/vibesensor/analysis/ -> apps/server/vibesensor/history/ -> apps/server/vibesensor/report/pdf/
 ```
 
@@ -99,8 +99,8 @@ Backend startup is explicit rather than ambient:
    order.
 3. The runtime is only marked ready after those startup phases succeed.
 
-See `apps/server/vibesensor/infra/runtime/lifecycle.py` and
-`apps/server/tests/infra/runtime/test_lifecycle.py` for the executable phase
+See `apps/server/vibesensor/app/lifecycle.py` and
+`apps/server/tests/app/test_lifecycle.py` for the executable phase
 contract.
 
 ## Important directories
@@ -328,7 +328,7 @@ messages.
 
 ## HTTP and WebSocket surface
 
-The API surface is implemented in `apps/server/vibesensor/adapters/http/`, with the top-level composition root in `adapters/http/router.py` and domain bundle registration in `adapters/http/route_bundles.py`.
+The API surface is implemented in `apps/server/vibesensor/web/`, with the top-level composition root in `adapters/http/router.py` and domain bundle registration in `adapters/http/route_bundles.py`.
 
 Start here for the human-facing API overview, then use the generated contracts for endpoint-level detail:
 

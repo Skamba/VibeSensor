@@ -131,7 +131,7 @@ final-drive values that the single `final_drive_front`/`final_drive_rear`
 fields cannot encode faithfully; see the row's `unresolved` items). A variant
 or model built only from such rows is served with `gearboxes: []`, and the UI
 falls back to manual gearbox entry. Do not invent a final drive to fill the
-list. `apps/server/tests/adapters/http/test_car_library_bundled_contract.py`
+list. `apps/server/tests/web/test_car_library_bundled_contract.py`
 checks that every bundled brand/type/model passes the HTTP response models.
 
 ## Confidence vocabulary

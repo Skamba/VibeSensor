@@ -16,10 +16,6 @@ from vibesensor.common.exceptions import AnalysisNotReadyError
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.exports import HistoryExportService
-from vibesensor.history.projected_services import (
-    ProjectedHistoryExportService,
-    ProjectedHistoryRunService,
-)
 from vibesensor.history.records import HistoryRunListEntry, StoredHistoryRun
 from vibesensor.history.runs import HistoryRunService, raise_delete_run_error
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
@@ -31,6 +27,10 @@ from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
     WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
+)
+from vibesensor.web.history_services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
 )
 
 
