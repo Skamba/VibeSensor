@@ -67,7 +67,7 @@ exports the OpenAPI/JSON Schema documents to a temp dir, runs
 `openapi-typescript` from `node_modules`, and rewrites the files above plus
 `docs/protocol.md`. It needs the backend venv and UI `node_modules`
 (`make setup`). Run it after changing backend API payloads, WS payloads, or
-shared constants, and commit the result. CI's `backend-contract-drift` job
+shared constants, and commit the result. CI's `integration` job
 reruns it and fails on `git diff --exit-code`.
 
 UI typecheck, tests, and builds use the committed files and need only Node.

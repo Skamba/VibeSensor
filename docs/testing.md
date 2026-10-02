@@ -118,8 +118,8 @@ BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
 
 - Use `pio run -t upload` and `pio device monitor` only when hardware-backed firmware behavior needs confirmation.
 - Use `BUILD_MODE=app` for packaged app artifacts, `BUILD_MODE=image` for image-stage logic, and `validate-image.sh` for existing artifacts. `BUILD_MODE=all` is only for changes spanning both layers.
-- Do not use ACT for `.github/workflows/manual-pi-image-arm.yml` or `.github/workflows/weekly-pi-image.yml`; those require GitHub's `ubuntu-24.04-arm` runner label, intentionally not mapped in `.actrc`.
-- `release-smoke` validates packaged server/UI artifacts; it complements, not replaces, Pi-image validation.
+- Do not use ACT for `.github/workflows/weekly-pi-image.yml`; it requires GitHub's `ubuntu-24.04-arm` runner label, intentionally not mapped in `.actrc`. Run it manually with `publish` off to get an image as a workflow artifact only.
+- Release smoke (`tools/tests/run_release_smoke.py`) validates packaged server/UI artifacts; it complements, not replaces, Pi-image validation.
 
 ## Local CI with ACT
 
@@ -128,21 +128,27 @@ Use [act](https://github.com/nektos/act) only when you need GitHub workflow or D
 ```bash
 act -l -W .github/workflows/ci.yml
 act pull_request -W .github/workflows/ci.yml
-act -j backend-tests -W .github/workflows/ci.yml
+act -j backend -W .github/workflows/ci.yml
 ```
 
 - No ACT secrets are currently required. If needed later, copy `.secrets.act.example` to `.secrets.act`; never commit it.
 
 ## CI job reference
 
-Blocking jobs live in `.github/workflows/ci.yml`. The `changes` job uses `dorny/paths-filter` to decide which groups run:
+Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make targets:
 
-- `backend` (`apps/server/`, `tools/`, `infra/pi-image/`, workflow files): backend lint, preflight, type check, tests, contract drift, release smoke, and e2e;
-- `frontend` (`apps/ui/`, `tools/ui/`, `tools/config/`): frontend quality/type check, UI unit/smoke, contract drift, release smoke, and e2e;
-- `firmware` (`firmware/`, `tools/firmware/`, the UDP protocol modules): firmware native tests;
-- `shell` (shell scripts, hooks, `infra/pi-image/`): ShellCheck.
+| Job | Runs when | Local equivalent |
+|---|---|---|
+| `secret-scan` | always | gitleaks |
+| `backend` | backend paths | `pip check`, `make lint` (Ruff, ShellCheck, deptry, import layers, config preflight), `make typecheck-backend`, `make test` |
+| `frontend` | frontend paths | `make ui-typecheck`, `make ui-test` |
+| `ui-smoke` | frontend paths | `cd apps/ui && npm run test:smoke` |
+| `integration` | backend or frontend paths | `make sync-contracts && git diff --exit-code`, `make test-e2e`, `python tools/tests/run_release_smoke.py` |
+| `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native` |
 
-Docs-only changes run only the secret scan. Changes under `.github/` run everything.
+The `changes` job uses `dorny/paths-filter`: backend paths are `apps/server/`, `tools/`, `infra/pi-image/`, shell scripts/hooks, `docs/protocol.md`, and `.github/actions/`; frontend paths are `apps/ui/`, `tools/ui/`, `tools/config/`; firmware paths are `firmware/`, `tools/firmware/`, and the UDP protocol modules. Docs-only changes run only the secret scan; editing `ci.yml` runs everything.
+
+Other workflows: `codeql.yml` (Python + JS/TS analysis), `main-release.yml` (wheel/firmware release after green CI on `main`), and `weekly-pi-image.yml` (scheduled Pi image release; manual runs build an artifact and publish only when the `publish` input is set).
 
 ## Coverage and characterization
 

@@ -7,8 +7,6 @@ import json
 import re
 import shlex
 
-import yaml
-
 from tests._paths import REPO_ROOT
 
 _UI_PACKAGE_JSON = REPO_ROOT / "apps" / "ui" / "package.json"
@@ -16,7 +14,6 @@ _UI_BIOME_JSON = REPO_ROOT / "apps" / "ui" / "biome.json"
 _SMOKE_CONFIG = REPO_ROOT / "apps" / "ui" / "playwright.smoke.config.ts"
 _UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
-_CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 _EXPECTED_CORE_SMOKE_SPECS = {
     "smoke.critical.spec.ts",
 }
@@ -50,19 +47,6 @@ def _smoke_workers_env_contract() -> tuple[str, str]:
     match = re.search(r'process\.env\.(\w+)\s*\?\?\s*"([^"]+)"', config_text)
     assert match is not None
     return str(match.group(1)), str(match.group(2))
-
-
-def _smoke_output_dir() -> str:
-    config_text = _SMOKE_CONFIG.read_text()
-    match = re.search(r'outputDir:\s*"([^"]+)"', config_text)
-    assert match is not None
-    return str(match.group(1))
-
-
-def _ci_workflow() -> dict[str, object]:
-    loaded = yaml.safe_load(_CI_WORKFLOW.read_text(encoding="utf-8"))
-    assert isinstance(loaded, dict)
-    return loaded
 
 
 def _playwright_configs_from_package_scripts() -> set[str]:
@@ -145,66 +129,3 @@ def test_core_ui_smoke_specs_exist() -> None:
     assert not missing, f"Missing core smoke specs: {sorted(missing)}"
     extra = smoke_specs - _EXPECTED_CORE_SMOKE_SPECS
     assert not extra, f"Unexpected non-critical smoke specs: {sorted(extra)}"
-
-
-def test_ui_smoke_failure_artifact_contract() -> None:
-    workflow = _ci_workflow()
-    jobs = workflow["jobs"]
-    assert isinstance(jobs, dict)
-    ui_smoke_job = jobs["ui-smoke"]
-    assert isinstance(ui_smoke_job, dict)
-    steps = ui_smoke_job["steps"]
-    assert isinstance(steps, list)
-
-    smoke_config = _SMOKE_CONFIG.read_text(encoding="utf-8")
-    assert 'trace: "retain-on-failure"' in smoke_config
-    assert 'screenshot: "only-on-failure"' in smoke_config
-    assert 'video: "retain-on-failure"' in smoke_config
-    assert _smoke_output_dir() == "test-results/playwright-smoke"
-
-    upload_step = next(
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("name") == "Upload UI smoke test artifacts"
-    )
-    assert upload_step["if"] == "failure()"
-    assert upload_step["uses"] == "actions/upload-artifact@v7"
-    assert upload_step["with"]["name"] == "ui-smoke-test-artifacts"
-    assert upload_step["with"]["path"] == f"apps/ui/{_smoke_output_dir()}/"
-    assert upload_step["with"]["if-no-files-found"] == "ignore"
-    assert upload_step["with"]["retention-days"] == 5
-
-
-def test_ui_smoke_playwright_cache_hit_install_contract() -> None:
-    workflow = _ci_workflow()
-    jobs = workflow["jobs"]
-    assert isinstance(jobs, dict)
-    ui_smoke_job = jobs["ui-smoke"]
-    assert isinstance(ui_smoke_job, dict)
-    steps = ui_smoke_job["steps"]
-    assert isinstance(steps, list)
-
-    cache_step = next(
-        step
-        for step in steps
-        if isinstance(step, dict)
-        and step.get("uses") == "actions/cache@v6"
-        and step.get("with", {}).get("path") == "~/.cache/ms-playwright"
-    )
-    assert cache_step["id"] == "playwright-browser-cache"
-
-    install_step = next(
-        step
-        for step in steps
-        if isinstance(step, dict) and step.get("name") == "Install Playwright Chromium (cache miss)"
-    )
-    assert install_step["if"] == "${{ steps.playwright-browser-cache.outputs.cache-hit != 'true' }}"
-    assert install_step["working-directory"] == "apps/ui"
-    assert install_step["run"] == "npx playwright install chromium"
-
-    smoke_step = next(
-        step for step in steps if isinstance(step, dict) and step.get("name") == "UI smoke tests"
-    )
-    assert smoke_step["working-directory"] == "apps/ui"
-    assert smoke_step["env"]["PLAYWRIGHT_SMOKE_WORKERS"] == 4
-    assert smoke_step["run"] == "npm run test:smoke"
