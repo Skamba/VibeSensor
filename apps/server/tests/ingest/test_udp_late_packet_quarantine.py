@@ -7,7 +7,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from vibesensor.ingest.protocol import HelloMessage, pack_data, parse_data_ack
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_data
+from vibesensor.ingest.protocol_parsing import parse_data_ack
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processor import SignalProcessor

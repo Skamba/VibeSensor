@@ -11,7 +11,7 @@ from test_support.runtime_lifecycle import make_hello_message as _make_hello_mes
 
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.client_payloads import snapshot_for_api
-from vibesensor.ingest.protocol import DataMessage, HelloMessage
+from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
 
 

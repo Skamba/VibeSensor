@@ -14,14 +14,11 @@ from typing import TYPE_CHECKING, cast
 
 from vibesensor.common.exceptions import ProtocolError
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.ingest.protocol import (
-    MSG_DATA,
-    DataMessage,
-    extract_client_id_hex,
-    pack_data_ack,
-    parse_data,
-)
+from vibesensor.ingest.protocol_messages import DataMessage, extract_client_id_hex
+from vibesensor.ingest.protocol_packing import pack_data_ack
+from vibesensor.ingest.protocol_parsing import parse_data
 from vibesensor.ingest.protocol_validator import ProtocolVersionMismatch
+from vibesensor.ingest.protocol_wire import MSG_DATA
 from vibesensor.ingest.registry import ClientRegistry, DataUpdateResult
 from vibesensor.live.processor import SignalProcessor
 

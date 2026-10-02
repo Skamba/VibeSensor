@@ -7,19 +7,15 @@ from typing import cast
 from urllib.error import URLError
 
 from vibesensor.common.exceptions import ProtocolError
-from vibesensor.ingest.protocol import (
+from vibesensor.ingest.protocol_packing import pack_ack, pack_ack_sync_clock, pack_data, pack_hello
+from vibesensor.ingest.protocol_parsing import parse_cmd, parse_hello_ack
+from vibesensor.ingest.protocol_wire import (
     CMD_IDENTIFY,
     CMD_SYNC_CLOCK,
     CMD_SYNC_CLOCK_STRUCT,
     HELLO_CAP_EXPLICIT_ACK,
     MSG_CMD,
     MSG_HELLO_ACK,
-    pack_ack,
-    pack_ack_sync_clock,
-    pack_data,
-    pack_hello,
-    parse_cmd,
-    parse_hello_ack,
 )
 from vibesensor.simulator.commands import apply_command
 from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LIBRARY

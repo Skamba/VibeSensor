@@ -21,8 +21,8 @@ OUTPUT = (
     / "generated_protocol_contract_fixtures.h"
 )
 
-from vibesensor.ingest.protocol import (  # noqa: E402
-    HELLO_CAP_EXPLICIT_ACK,
+from vibesensor.ingest.protocol_wire import HELLO_CAP_EXPLICIT_ACK  # noqa: E402
+from vibesensor.ingest.protocol_packing import (  # noqa: E402
     pack_ack,
     pack_ack_sync_clock,
     pack_cmd_identify,

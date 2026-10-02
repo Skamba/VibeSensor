@@ -7,15 +7,8 @@ import struct
 import numpy as np
 import pytest
 
-from vibesensor.ingest.protocol import (
-    CMD_IDENTIFY,
-    CMD_SYNC_CLOCK,
-    HELLO_CAP_EXPLICIT_ACK,
-    MSG_DATA,
-    MSG_DATA_ACK,
-    MSG_HELLO,
-    MSG_HELLO_ACK,
-    client_id_mac,
+from vibesensor.ingest.protocol_messages import client_id_mac, parse_client_id
+from vibesensor.ingest.protocol_packing import (
     pack_ack,
     pack_ack_sync_clock,
     pack_cmd_identify,
@@ -24,13 +17,23 @@ from vibesensor.ingest.protocol import (
     pack_data_ack,
     pack_hello,
     pack_hello_ack,
+)
+from vibesensor.ingest.protocol_parsing import (
     parse_ack,
-    parse_client_id,
     parse_cmd,
     parse_data,
     parse_data_ack,
     parse_hello,
     parse_hello_ack,
+)
+from vibesensor.ingest.protocol_wire import (
+    CMD_IDENTIFY,
+    CMD_SYNC_CLOCK,
+    HELLO_CAP_EXPLICIT_ACK,
+    MSG_DATA,
+    MSG_DATA_ACK,
+    MSG_HELLO,
+    MSG_HELLO_ACK,
 )
 
 

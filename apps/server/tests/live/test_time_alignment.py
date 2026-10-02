@@ -230,12 +230,9 @@ class TestCmdSyncClockProtocol:
     """Verify the sync-clock UDP command round-trip and struct sizing stay consistent."""
 
     def test_pack_and_parse_sync_clock(self) -> None:
-        from vibesensor.ingest.protocol import (
-            CMD_SYNC_CLOCK,
-            CMD_SYNC_CLOCK_BYTES,
-            pack_cmd_sync_clock,
-            parse_cmd,
-        )
+        from vibesensor.ingest.protocol_packing import pack_cmd_sync_clock
+        from vibesensor.ingest.protocol_parsing import parse_cmd
+        from vibesensor.ingest.protocol_wire import CMD_SYNC_CLOCK, CMD_SYNC_CLOCK_BYTES
 
         client_id = b"\x01\x02\x03\x04\x05\x06"
         cmd_seq = 42
@@ -264,7 +261,7 @@ class TestCmdSyncClockProtocol:
         assert parsed_round_trip_us == round_trip_us
 
     def test_pack_sync_clock_struct_size(self) -> None:
-        from vibesensor.ingest.protocol import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
+        from vibesensor.ingest.protocol_wire import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
 
         assert CMD_SYNC_CLOCK_STRUCT.size == CMD_SYNC_CLOCK_BYTES
 

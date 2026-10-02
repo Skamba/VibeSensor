@@ -10,7 +10,8 @@ import numpy as np
 import pytest
 
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.ingest.protocol import DataMessage, HelloMessage, pack_data
+from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
+from vibesensor.ingest.protocol_packing import pack_data
 from vibesensor.ingest.registry import ClientRegistry, DataUpdateResult
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processor import SignalProcessor

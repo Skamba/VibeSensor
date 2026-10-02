@@ -8,12 +8,9 @@ from typing import cast
 
 import pytest
 
-from vibesensor.ingest.protocol import (
-    HelloMessage,
-    pack_hello_ack,
-    parse_ack,
-    parse_data,
-)
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_hello_ack
+from vibesensor.ingest.protocol_parsing import parse_ack, parse_data
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.simulator.sim_client import SimClient, make_client_id

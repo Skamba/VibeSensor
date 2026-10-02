@@ -8,13 +8,15 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from vibesensor.ingest.protocol import (
+from vibesensor.ingest.protocol_packing import (
     pack_ack,
     pack_cmd_identify,
     pack_data,
     pack_data_ack,
     pack_hello,
     pack_hello_ack,
+)
+from vibesensor.ingest.protocol_parsing import (
     parse_ack,
     parse_cmd,
     parse_data,

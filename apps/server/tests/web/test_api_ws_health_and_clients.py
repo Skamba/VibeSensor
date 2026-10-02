@@ -232,7 +232,7 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
     tmp_path: Path,
 ) -> None:
     from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.protocol_messages import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.settings.services import build_settings_services
 
@@ -276,7 +276,7 @@ def test_set_client_location_works_with_real_persistence_in_async_route(
 
 def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
     from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.protocol_messages import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
@@ -310,7 +310,7 @@ def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) ->
 
 def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) -> None:
     from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.protocol_messages import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.settings.services import build_settings_services
 
@@ -360,7 +360,7 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     monkeypatch,
 ) -> None:
     from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.protocol_messages import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
 
     db = HistoryDB(tmp_path / "history.db")
@@ -411,7 +411,7 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     monkeypatch,
 ) -> None:
     from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol import HelloMessage
+    from vibesensor.ingest.protocol_messages import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.settings.services import build_settings_services
 

@@ -15,19 +15,15 @@ import time
 from typing import cast
 
 from vibesensor.common.exceptions import ProtocolError
-from vibesensor.ingest.protocol import (
-    MSG_ACK,
-    MSG_DATA_ACK,
-    MSG_HELLO,
-    extract_client_id_hex,
+from vibesensor.ingest.protocol_messages import extract_client_id_hex, parse_client_id
+from vibesensor.ingest.protocol_packing import (
     pack_cmd_identify,
     pack_cmd_sync_clock,
     pack_hello_ack,
-    parse_ack,
-    parse_client_id,
-    parse_hello,
 )
+from vibesensor.ingest.protocol_parsing import parse_ack, parse_hello
 from vibesensor.ingest.protocol_validator import ProtocolVersionMismatch
+from vibesensor.ingest.protocol_wire import MSG_ACK, MSG_DATA_ACK, MSG_HELLO
 from vibesensor.ingest.registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)

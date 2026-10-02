@@ -10,8 +10,10 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from vibesensor.ingest.protocol import DATA_HEADER_BYTES, pack_data, parse_data_ack
+from vibesensor.ingest.protocol_packing import pack_data
+from vibesensor.ingest.protocol_parsing import parse_data_ack
 from vibesensor.ingest.protocol_validator import MAX_SAMPLE_COUNT
+from vibesensor.ingest.protocol_wire import DATA_HEADER_BYTES
 from vibesensor.ingest.registry import DataUpdateResult
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 

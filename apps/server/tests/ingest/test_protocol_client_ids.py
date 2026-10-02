@@ -5,14 +5,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.ingest.protocol import (
+from vibesensor.ingest.protocol_messages import (
     client_id_hex,
     client_id_mac,
     extract_client_id_hex,
-    pack_data,
-    pack_hello,
     parse_client_id,
 )
+from vibesensor.ingest.protocol_packing import pack_data, pack_hello
 
 
 def test_parse_client_id_accepts_colon_separated_uppercase_hex() -> None:

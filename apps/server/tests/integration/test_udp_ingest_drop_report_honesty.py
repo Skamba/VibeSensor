@@ -12,7 +12,8 @@ from test_support.report_helpers import minimal_summary
 from vibesensor.analysis.post_analysis_input import build_post_analysis_input
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
-from vibesensor.ingest.protocol import HelloMessage, pack_data
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_data
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processor import SignalProcessor

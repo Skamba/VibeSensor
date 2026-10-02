@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.ingest.protocol import HelloMessage
+from vibesensor.ingest.protocol_messages import HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
 
 

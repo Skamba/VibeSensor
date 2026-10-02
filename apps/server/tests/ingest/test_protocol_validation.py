@@ -10,7 +10,22 @@ import numpy as np
 import pytest
 
 from vibesensor.common.exceptions import ProtocolError
-from vibesensor.ingest.protocol import (
+from vibesensor.ingest.protocol_packing import (
+    pack_ack,
+    pack_cmd_identify,
+    pack_cmd_sync_clock,
+    pack_data,
+    pack_hello,
+)
+from vibesensor.ingest.protocol_parsing import (
+    parse_ack,
+    parse_cmd,
+    parse_data,
+    parse_data_ack,
+    parse_hello,
+    parse_hello_ack,
+)
+from vibesensor.ingest.protocol_wire import (
     ACK_STRUCT,
     CMD_HEADER_BYTES,
     DATA_ACK_STRUCT,
@@ -20,17 +35,6 @@ from vibesensor.ingest.protocol import (
     HELLO_CAP_EXPLICIT_ACK,
     HELLO_FIXED_BYTES,
     MSG_HELLO,
-    pack_ack,
-    pack_cmd_identify,
-    pack_cmd_sync_clock,
-    pack_data,
-    pack_hello,
-    parse_ack,
-    parse_cmd,
-    parse_data,
-    parse_data_ack,
-    parse_hello,
-    parse_hello_ack,
 )
 
 

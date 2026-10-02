@@ -9,15 +9,10 @@ from pathlib import Path
 import pytest
 
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.ingest.protocol import (
-    HELLO_CAP_EXPLICIT_ACK,
-    MSG_HELLO_ACK,
-    HelloMessage,
-    pack_ack,
-    pack_ack_sync_clock,
-    pack_hello,
-    parse_cmd,
-)
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_ack, pack_ack_sync_clock, pack_hello
+from vibesensor.ingest.protocol_parsing import parse_cmd
+from vibesensor.ingest.protocol_wire import HELLO_CAP_EXPLICIT_ACK, MSG_HELLO_ACK
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import ControlDatagramProtocol, UDPControlPlane
 

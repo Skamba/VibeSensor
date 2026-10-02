@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.ingest.protocol import pack_data
+from vibesensor.ingest.protocol_packing import pack_data
 from vibesensor.ingest.registry import DataUpdateResult
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 

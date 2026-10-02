@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from vibesensor.ingest.protocol import client_id_mac
+from vibesensor.ingest.protocol_messages import client_id_mac
 from vibesensor.simulator.profiles import (
     DEFAULT_ORDER_HZ,
     DEFAULT_SPEED_KMH,

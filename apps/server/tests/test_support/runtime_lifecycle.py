@@ -13,7 +13,7 @@ import numpy as np
 from vibesensor.app.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.ingest.protocol import DataMessage, HelloMessage
+from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.web.health_state import RuntimeHealthState

@@ -5,7 +5,7 @@ Written by ``tools/config/sync_contracts.py`` (``make sync-contracts``).
 
 from __future__ import annotations
 
-from vibesensor.ingest.protocol import (
+from vibesensor.ingest.protocol_wire import (
     ACK_BYTES,
     ACK_SYNC_CLOCK_BYTES,
     CMD_HEADER_BYTES,
@@ -63,7 +63,7 @@ This document is generated from code and shared contract files.
 
 - Regenerate with: `make sync-contracts`
 - Source of truth:
-  - `apps/server/vibesensor/ingest/protocol.py`
+  - `apps/server/vibesensor/ingest/protocol_wire.py`
   - `apps/server/vibesensor/app/config_defaults.py`
   - `tools/config/generate_contract_reference_doc.py`
 
