@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.report_i18n import normalize_lang
+from vibesensor.report.i18n import normalize_lang
 
 _SERVER_ROOT = Path(__file__).resolve().parents[2]
 _PYPROJECT = _SERVER_ROOT / "pyproject.toml"

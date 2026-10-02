@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import (
-    ConfidenceAssessment,
-)
-from vibesensor.domain import (
-    RecommendedAction as DomainRecommendedAction,
-)
-from vibesensor.domain import (
-    TestPlan as DomainTestPlan,
-)
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.test_plan import RecommendedAction as DomainRecommendedAction
+from vibesensor.domain.test_plan import TestPlan as DomainTestPlan
 
 
 class TestConfidenceAssessment:

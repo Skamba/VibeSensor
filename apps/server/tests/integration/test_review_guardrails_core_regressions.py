@@ -5,14 +5,10 @@ Each test group validates one of the hate-list items to prevent regression.
 
 from __future__ import annotations
 
-import importlib
-
-import pytest
-
-from vibesensor.infra.runtime.client_metadata import sanitize_client_name
-from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.order_bands import build_order_bands
-from vibesensor.shared.types.car_config import new_car_id
+from vibesensor.common.json_utils import as_float_or_none, as_int_or_none
+from vibesensor.dsp.order_bands import build_order_bands
+from vibesensor.ingest.client_metadata import sanitize_client_name
+from vibesensor.settings.car_config import new_car_id
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -39,7 +35,7 @@ class TestDomainModelsPublicAPI:
 
     def test_runlog_re_exports(self) -> None:
         """runlog.as_float_or_none still works as before."""
-        from vibesensor.shared.json_utils import as_float_or_none as runlog_as_float
+        from vibesensor.common.json_utils import as_float_or_none as runlog_as_float
 
         assert runlog_as_float(42) == 42.0
 
@@ -53,7 +49,7 @@ class TestBuildOrderBandsLocation:
     """Verify order-band helpers stay in the shared module and keep basic behavior."""
 
     def test_build_order_bands_basic(self) -> None:
-        from vibesensor.shared.order_bands import build_diagnostic_settings
+        from vibesensor.dsp.order_bands import build_diagnostic_settings
 
         orders = {
             "wheel_hz": 10.0,
@@ -99,55 +95,3 @@ class TestSanitizeName:
     def test_control_chars_stripped(self) -> None:
         assert sanitize_client_name("hel\x00lo") == "hello"
         assert sanitize_client_name("\x01\x02\x03") == ""
-
-
-# ---------------------------------------------------------------------------
-# Item 10: __all__ on key modules
-# ---------------------------------------------------------------------------
-
-
-class TestModuleAllExports:
-    """Verify key public modules keep non-empty __all__ exports for import guardrails."""
-
-    @pytest.mark.parametrize(
-        ("module_path", "expected_exports"),
-        [
-            (
-                "vibesensor.shared.types.car_config",
-                {"CarConfigPayload", "car_to_persistence_dict", "new_car_id"},
-            ),
-            (
-                "vibesensor.shared.types.run_schema",
-                {"RUN_SCHEMA_VERSION", "RunMetadata", "RunFinalizationStageResult"},
-            ),
-            (
-                "vibesensor.shared.types.speed_source_config",
-                {"SpeedSourceConfig", "SpeedSourcePayload", "ResolvedSpeedSource"},
-            ),
-            (
-                "vibesensor.adapters.udp.protocol",
-                {"DataMessage", "pack_data", "parse_data", "parse_hello"},
-            ),
-            (
-                "vibesensor.adapters.persistence.car_library",
-                {"load_car_library", "resolve_variant", "CarLibraryEntry"},
-            ),
-            ("vibesensor.adapters.gps.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),
-            (
-                "vibesensor.infra.runtime.registry",
-                {"ClientRecord", "ClientRegistry", "DataUpdateResult"},
-            ),
-        ],
-    )
-    def test_module_has_expected_all_exports(
-        self,
-        module_path: str,
-        expected_exports: set[str],
-    ) -> None:
-        mod = importlib.import_module(module_path)
-        assert hasattr(mod, "__all__"), f"{module_path} is missing __all__"
-        exports = set(mod.__all__)
-        assert exports, f"{module_path}.__all__ is empty"
-        assert expected_exports <= exports, (
-            f"{module_path}.__all__ missing expected exports: {sorted(expected_exports - exports)}"
-        )

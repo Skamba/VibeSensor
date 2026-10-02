@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import (
-    ConfigurationSnapshot,
-    RunSetup,
-    Sensor,
-    SpeedSource,
-    SpeedSourceKind,
-)
+from vibesensor.domain.run_capture import ConfigurationSnapshot, RunSetup
+from vibesensor.domain.sensor import Sensor
+from vibesensor.domain.speed_source import SpeedSource, SpeedSourceKind
 
 
 class TestRunSetupConstruction:

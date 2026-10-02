@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.core import standard_metadata
-from vibesensor.adapters.analysis_summary import summarize_sensor_frames
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
+from vibesensor.analysis.summarize import summarize_sensor_frames
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
 def run_analysis(

@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Any
 
 from test_support.core import canonicalize_run_context_metadata
-from vibesensor.shared.boundaries.runs.metadata import (
+from vibesensor.analysis._run_input import normalize_run_metadata
+from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
-from vibesensor.use_cases.diagnostics._run_input import normalize_run_metadata
-from vibesensor.use_cases.run.run_metadata_builder import create_run_metadata
+from vibesensor.recording.run_metadata_builder import create_run_metadata
 
 RUN_END = {"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"}
 

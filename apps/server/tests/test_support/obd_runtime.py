@@ -4,9 +4,9 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, replace
 from unittest.mock import MagicMock
 
-from vibesensor.adapters.obd.connection_executor import ObdConnectionExecutor
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-from vibesensor.adapters.obd.service import ObdService
+from vibesensor.speed.obd.connection_executor import ObdConnectionExecutor
+from vibesensor.speed.obd.models import ObdDeviceSnapshot
+from vibesensor.speed.obd.service import ObdService
 
 
 class FakeClock:

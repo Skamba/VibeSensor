@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from test_support.sample_builders import make_sample
-from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.common.units import KMH_TO_MPS
 
 _ORDER_SOURCES: set[str] = {"wheel/tire", "driveline", "engine"}
 

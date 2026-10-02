@@ -1,7 +1,7 @@
 # Legacy Run Schema v2 (`.jsonl`)
 
 This document describes the legacy/CLI JSONL run boundary used by
-`shared/types/run_schema.py` constants and tools such as `vibesensor-report`.
+`recording/run_schema.py` constants and tools such as `vibesensor-report`.
 The current server runtime persists run history in SQLite (`history.db`) plus
 raw-capture and whole-run sidecar directories; see `docs/history_db_schema.md`
 and `docs/analysis_pipeline.md` for the active storage model.

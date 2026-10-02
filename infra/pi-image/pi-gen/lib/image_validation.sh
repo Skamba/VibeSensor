@@ -398,7 +398,7 @@ print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micr
   VALIDATED_IMAGE_PYTHON_FLOOR="${ACTUAL_SUPPORTED_PYTHON_FLOOR}"
 
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
-import vibesensor.use_cases.updates.firmware.firmware_cache
+import vibesensor.updates.firmware.firmware_cache
 print("FIRMWARE_CACHE_MODULE_OK")
 '; then
     echo "Validation failed: firmware_cache module not importable in target rootfs"
@@ -415,7 +415,7 @@ mods = [
     "fastapi",
     "granian",
     "vibesensor",
-    "vibesensor.vibration_strength",
+    "vibesensor.dsp.vibration_strength",
 ]
 for mod in mods:
     importlib.import_module(mod)

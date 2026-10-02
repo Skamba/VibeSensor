@@ -16,12 +16,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
-from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.processing import SignalProcessor
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_from_mapping
-from vibesensor.shared.types.sensor_frame import SensorFrame
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
+from vibesensor.settings.services import build_settings_services
 
 # -- shared helpers ----------------------------------------------------------
 

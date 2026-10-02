@@ -16,8 +16,8 @@ from urllib.request import Request, urlopen
 
 from pypdf import PdfReader
 
-from vibesensor.adapters.simulator.sim_client import make_client_id
-from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.simulator.sim_client import make_client_id
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -155,7 +155,7 @@ def run_simulator(
     sim_cmd = [
         sys.executable,
         "-m",
-        "vibesensor.adapters.simulator.sim_sender",
+        "vibesensor.simulator.sim_sender",
         "--server-host",
         sim_host,
         "--server-data-port",

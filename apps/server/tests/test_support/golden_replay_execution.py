@@ -5,28 +5,30 @@ from __future__ import annotations
 import tracemalloc
 from collections.abc import Mapping
 from time import perf_counter
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from test_support.golden_replay_types import (
     GoldenReplayBenchmarkResult,
     GoldenReplayFixture,
     GoldenReplayResult,
 )
-from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.raw_capture import RawCaptureSensorRange, RawRunCapture
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
-from vibesensor.use_cases.diagnostics.whole_run_spectra import (
-    raw_capture_range_reader_from_capture,
-)
-from vibesensor.use_cases.run.post_analysis_executor import (
+from vibesensor.analysis.post_analysis_executor import (
     PostAnalysisExecutionConfig,
     execute_post_analysis,
 )
-from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
-from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
-from vibesensor.use_cases.run.post_analysis_outcomes import PostAnalysisExecutionSuccess
-from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
+from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
+from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.analysis.post_analysis_outcomes import PostAnalysisExecutionSuccess
+from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
+from vibesensor.analysis.whole_run_spectra import (
+    raw_capture_range_reader_from_capture,
+)
+from vibesensor.recording.raw_capture import RawCaptureSensorRange, RawRunCapture
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
+
+if TYPE_CHECKING:
+    pass
 
 
 class GoldenReplayRecorder:
@@ -87,7 +89,7 @@ def execute_golden_replay_fixture(
     recorder = GoldenReplayRecorder(run.raw_capture)
     result = execute_post_analysis(
         run_id=run.run_id,
-        db=cast(RunPersistence, recorder),
+        db=recorder,
         config=PostAnalysisExecutionConfig(
             load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
                 run_id=run_id,

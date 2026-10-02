@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.domain import VehicleConfiguration, VehicleFieldMetadata
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration, VehicleFieldMetadata
 
 __all__ = [
     "CarSourceDocument",

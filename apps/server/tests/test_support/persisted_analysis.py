@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
 def make_persisted_analysis(payload: dict[str, object] | PersistedAnalysis) -> PersistedAnalysis:

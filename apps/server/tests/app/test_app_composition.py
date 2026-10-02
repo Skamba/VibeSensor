@@ -26,10 +26,10 @@ def _write_config(tmp_path: Path) -> Path:
     return cfg_path
 
 
-def _fake_app_runtime(router_deps: object) -> SimpleNamespace:
+def _fake_app_runtime(web_services: object) -> SimpleNamespace:
     return SimpleNamespace(
         lifecycle=SimpleNamespace(),
-        router=router_deps,
+        web=web_services,
     )
 
 
@@ -76,7 +76,7 @@ def test_create_app_serves_composed_routes_with_fake_runtime(
     monkeypatch.setattr(
         app_module,
         "build_runtime",
-        lambda _config: _fake_app_runtime(fake_state.router),
+        lambda _config: _fake_app_runtime(fake_state),
     )
     monkeypatch.setattr(app_module, "LifecycleManager", _FakeLifecycleManager)
 
@@ -129,7 +129,7 @@ def test_create_app_reports_missing_static_build_clearly(
     monkeypatch.setattr(
         app_module,
         "build_runtime",
-        lambda _config: _fake_app_runtime(fake_state.router),
+        lambda _config: _fake_app_runtime(fake_state),
     )
     monkeypatch.setattr(app_module, "LifecycleManager", _FakeLifecycleManager)
     monkeypatch.setattr(app_module, "_PACKAGE_DIR", package_dir)

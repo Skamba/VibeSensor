@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config_paths import REPO_DIR
+from vibesensor.app.config_paths import REPO_DIR
 
 __all__ = [
     "APConfig",
@@ -32,7 +32,7 @@ class APConfig:
     """Operator-owned Wi-Fi access-point settings (SSID and PSK).
 
     Interface, connection name, address, and channel are fixed in
-    ``vibesensor.adapters.hotspot.constants``.
+    ``vibesensor.updates.hotspot.constants``.
     """
 
     ssid: str
@@ -78,7 +78,7 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class GPSConfig:
-    """GPS enable flag; gpsd address is fixed in ``vibesensor.adapters.gps.gps_speed``."""
+    """GPS enable flag; gpsd address is fixed in ``vibesensor.speed.gps_speed``."""
 
     gps_enabled: bool
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from .driving_segment import DrivingPhaseSegment
+from vibesensor.domain.driving_segment import DrivingPhaseSegment
 
 __all__ = ["DrivingPhaseSummary"]
 

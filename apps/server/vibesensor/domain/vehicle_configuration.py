@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from .tire_spec import AxleTireSetup, TireSpec
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
 __all__ = [
     "VehicleConfiguration",

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Car, Finding, Sensor, SensorPlacement, SpeedSource
+from vibesensor.domain.car import Car
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.sensor import Sensor, SensorPlacement
+from vibesensor.domain.speed_source import SpeedSource
 
 
 @pytest.mark.parametrize(

@@ -35,7 +35,7 @@ top-level `status` and `degradation_reasons` for compatibility with older tools.
 
 Run-history retention is enforced during startup maintenance: `complete` and
 `error` runs older than 7 days (`RUN_RETENTION_DAYS` in
-`apps/server/vibesensor/app/composition/history.py`) are pruned together with
+`apps/server/vibesensor/app/composition.py`) are pruned together with
 their raw/whole-run sidecars.
 
 Mutating local HTTP calls (`POST`, `PUT`, `PATCH`, `DELETE`) are protected by a

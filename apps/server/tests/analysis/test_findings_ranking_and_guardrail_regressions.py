@@ -1,0 +1,84 @@
+"""Findings ranking and analysis guardrail regressions:
+- ranking_score synced after engine alias suppression
+- negligible confidence cap aligned with ConfidenceAssessment tier thresholds
+- steady_speed uses AND (not OR) for stddev and range
+- _suppress_engine_aliases cap raised to 5
+"""
+
+from __future__ import annotations
+
+import pytest
+from test_support.findings import make_finding
+
+from vibesensor.analysis.orders.heuristics import (
+    suppress_engine_aliases as _suppress_engine_aliases,
+)
+from vibesensor.analysis.speed_profile_helpers import _speed_stats
+
+
+class TestRankingScoreSyncAfterSuppression:
+    """Regression: _suppress_engine_aliases must update ranking_score
+    in the finding dict when suppressing confidence.
+    """
+
+    def test_ranking_score_updated(self) -> None:
+        findings = [
+            (
+                0.8,
+                make_finding(
+                    suspected_source="wheel/tire",
+                    confidence=0.6,
+                    ranking_score=0.8,
+                    finding_key="wheel_1",
+                ),
+            ),
+            (
+                0.7,
+                make_finding(
+                    suspected_source="engine",
+                    confidence=0.5,
+                    ranking_score=0.7,
+                    finding_key="engine_2",
+                ),
+            ),
+        ]
+        result = _suppress_engine_aliases(findings)
+        engine_findings = [f for f in result if str(f.suspected_source) == "engine"]
+        for f in engine_findings:
+            assert f.ranking_score == pytest.approx(0.7 * 0.60, abs=1e-9), (
+                "ranking_score must be updated after suppression"
+            )
+
+
+class TestSteadySpeedUsesAND:
+    """Regression: steady_speed must require BOTH low stddev AND low range."""
+
+    def test_high_stddev_low_range_not_steady(self) -> None:
+        speeds = [50.0 + (i % 2) * 7.9 for i in range(50)]
+        assert not _speed_stats(speeds).steady_speed, (
+            "High stddev should not be steady even with low range"
+        )
+
+    def test_both_low_is_steady(self) -> None:
+        speeds = [60.0 + 0.1 * (i % 3) for i in range(50)]
+        assert _speed_stats(speeds).steady_speed, "Both low stddev and range → steady"
+
+
+class TestSuppressEngineAliasesCapRaised:
+    """Regression: _suppress_engine_aliases cap should allow more than 3."""
+
+    def test_cap_allows_4_findings(self) -> None:
+        findings = [
+            (
+                0.9 - i * 0.1,
+                make_finding(
+                    suspected_source="wheel/tire",
+                    confidence=0.8 - i * 0.1,
+                    ranking_score=0.9 - i * 0.1,
+                    finding_key=f"wheel_{i}",
+                ),
+            )
+            for i in range(4)
+        ]
+        result = _suppress_engine_aliases(findings)
+        assert len(result) == 4, f"Expected 4 findings (was capped at 3), got {len(result)}"

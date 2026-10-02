@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from vibesensor.domain import Finding, LocationHotspot, VibrationOrigin, VibrationSource
-from vibesensor.shared.boundaries.summary_fields.origin import (
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.summary.origin_fields import (
     SuspectedVibrationOrigin,
     origin_payload_from_finding,
     vibration_origin_from_payload,

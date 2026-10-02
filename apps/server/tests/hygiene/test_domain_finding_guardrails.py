@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import ConfidenceAssessment, Finding, RunCapture, TestRun
-from vibesensor.use_cases.diagnostics.findings import finalize_findings
-from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
+from vibesensor.analysis.findings import finalize_findings
+from vibesensor.analysis.top_cause_selection import select_top_causes
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.run_capture import RunCapture
+from vibesensor.domain.test_run import TestRun
 
 
 def test_finalize_findings_returns_domain_findings() -> None:

@@ -1,0 +1,42 @@
+"""Canonical updater transport lifecycle and prepared-transport boundaries."""
+
+from __future__ import annotations
+
+from typing import Protocol
+
+from vibesensor.updates.models import UpdateJobStatus, UpdateRequest, UpdateTransport
+
+__all__ = [
+    "PreparedUpdateTransport",
+    "UpdateTransportLifecycle",
+]
+
+
+class PreparedUpdateTransport(Protocol):
+    """Post-prepare transport handle used by the main update workflow."""
+
+    transport: UpdateTransport
+
+    async def complete_success(self) -> None:
+        """Finalize a successful update for this transport before status reporting."""
+        ...
+
+    async def cleanup_after_update(self) -> None:
+        """Run post-workflow cleanup for this prepared transport."""
+        ...
+
+
+class UpdateTransportLifecycle(PreparedUpdateTransport, Protocol):
+    """Per-transport lifecycle surface for preparation, cleanup, and recovery."""
+
+    async def prepare(self, request: UpdateRequest) -> PreparedUpdateTransport:
+        """Prepare this transport before release work starts and return its handle."""
+        ...
+
+    async def abort_preparation(self) -> None:
+        """Rollback any partial transport setup after prepare-time failure."""
+        ...
+
+    async def recover_interrupted_update(self, status: UpdateJobStatus) -> None:
+        """Recover transport-owned state after an interrupted update job."""
+        ...

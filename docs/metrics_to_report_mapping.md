@@ -2,20 +2,20 @@
 
 This document describes how every report field and visual element maps back
 to a specific persisted analysis metric/value.  The report renderer
-(`vibesensor.adapters.pdf`, entered through `vibesensor.adapters.pdf.pdf_engine`) must **never** recompute or infer analysis
+(`vibesensor.report.pdf`, entered through `vibesensor.report.pdf.pdf_engine`) must **never** recompute or infer analysis
 values; it reads exclusively from `ReportDocument` (built by
-`vibesensor.use_cases.history.report_document.build_report_document()` from a
+`vibesensor.report.document.build_report_document()` from a
 prepared report input).
 
 ## Data flow
 
 ```
-adapters.analysis_summary.summarize_run_data(meta, samples)
+analysis.summarize.summarize_run_data(meta, samples)
   → summary dict (persisted in history_db as a versioned analysis envelope)
-    → shared.boundaries.reporting.prepare_report_input(summary)
-      → use_cases.history.report_document.build_report_document(prepared_input)
+    → report.preparation.prepare_report_input(summary)
+      → report.document.builder.build_report_document(prepared_input)
         → ReportDocument (rebuilt on demand)
-          → history_services.reports.HistoryReportService + report.pdf_engine.build_report_pdf(ReportDocument)
+          → report.service.HistoryReportService + report.pdf.pdf_engine.build_report_pdf(ReportDocument)
           → PDF bytes
 ```
 

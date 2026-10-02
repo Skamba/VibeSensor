@@ -14,11 +14,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
-from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.exceptions import PersistenceError
+from vibesensor.common.exceptions import PersistenceError
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.settings.services import build_settings_services
 
 # ── HistoryDB — sqlite3.Error caught, bugs propagate ─────────────────────
 

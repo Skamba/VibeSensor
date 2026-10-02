@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from vibesensor.domain import (
-    ConfigurationSnapshot,
-    DiagnosticCase,
-    Finding,
-    RunCapture,
-    Sensor,
-    SensorPlacement,
-    TestRun,
-)
-from vibesensor.shared.boundaries.runs.capture import configuration_snapshot_from_metadata
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
+from vibesensor.domain.diagnostic_case import DiagnosticCase
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture
+from vibesensor.domain.sensor import Sensor, SensorPlacement
+from vibesensor.domain.test_run import TestRun
+from vibesensor.recording.run_capture_codec import configuration_snapshot_from_metadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
 
 
 def _metadata(**overrides: object) -> dict[str, object]:
@@ -95,7 +91,7 @@ class TestConfigurationSnapshot:
             run_metadata_from_mapping(_metadata(sensor_model="BMI270"))
         )
 
-        from vibesensor.domain import RunSetup
+        from vibesensor.domain.run_capture import RunSetup
 
         finding = Finding(suspected_source="wheel/tire", confidence=0.8)
         case = DiagnosticCase(case_id="case-snap")

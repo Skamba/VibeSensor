@@ -9,13 +9,12 @@ from pathlib import Path
 from typing import TypeGuard
 
 ROOT = Path(__file__).resolve().parents[2]
-SHARED_ROOT = ROOT / "apps" / "server" / "vibesensor" / "shared"
 DOMAIN_ROOT = ROOT / "apps" / "server" / "vibesensor" / "domain"
 SERVER_ROOT = ROOT / "apps" / "server" / "vibesensor"
-LOCATIONS_PATH = SHARED_ROOT / "locations.py"
+LOCATIONS_PATH = DOMAIN_ROOT / "locations.py"
 ANALYSIS_SETTINGS_PATH = DOMAIN_ROOT / "analysis_settings.py"
-DSP_CONSTANTS_PATH = SHARED_ROOT / "constants" / "dsp.py"
-VIBRATION_STRENGTH_PATH = SERVER_ROOT / "vibration_strength.py"
+DSP_CONSTANTS_PATH = SERVER_ROOT / "dsp" / "constants.py"
+VIBRATION_STRENGTH_PATH = SERVER_ROOT / "dsp" / "vibration_strength.py"
 
 
 def _is_string_dict(value: object) -> TypeGuard[dict[str, str]]:

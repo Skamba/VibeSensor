@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.runs.projection import (
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_projection import (
     car_from_run_metadata,
     symptom_from_run_metadata,
 )

@@ -1,25 +1,24 @@
 """Plausibility validation for the bundled vehicle library data.
 
 The app does not run these rules at startup; the test suite runs them against
-the packaged JSON (see ``tests/adapters/persistence/test_car_library_validation.py``).
+the packaged JSON (see ``tests/settings/test_car_library_validation.py``).
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from vibesensor.domain import VehicleConfiguration
-
-from ._allowlist import (
+from test_support.car_library_validation._allowlist import (
     filter_allowlisted_issues,
     load_car_library_validation_allowlist,
 )
-from ._common import CarLibraryValidationIssue
-from ._exact import (
+from test_support.car_library_validation._common import CarLibraryValidationIssue
+from test_support.car_library_validation._exact import (
     validate_vehicle_configuration,
     validate_vehicle_configuration_duplicates,
 )
-from ._legacy import validate_legacy_entry
+from test_support.car_library_validation._legacy import validate_legacy_entry
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
 __all__ = [
     "CarLibraryValidationIssue",

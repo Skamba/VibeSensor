@@ -8,43 +8,51 @@ when sub-directory ``conftest.py`` files exist (which shadow this module in
 
 from __future__ import annotations
 
+import os
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-from vibesensor.adapters.history import (
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.history.exports import HistoryExportService
+from vibesensor.history.runs import HistoryRunService
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.live.broadcaster import LiveBroadcaster
+from vibesensor.live.processing_loop import ProcessingLoopState
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
+from vibesensor.report.service import HistoryReportService
+from vibesensor.settings.car_config import CarsSnapshot
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.updates.firmware.esp_flash_types import EspFlashStatus
+from vibesensor.updates.manager import UpdateManager
+from vibesensor.updates.models import UpdateJobStatus, UsbInternetStatus
+from vibesensor.web.health_state import RuntimeHealthState
+from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
-from vibesensor.adapters.http.dependencies import (
-    HealthDeps,
-    HistoryDeps,
-    LiveDeps,
-    RouterDeps,
-    SettingsDeps,
-    UpdateDeps,
-)
-from vibesensor.adapters.udp.udp_control_tx import UDPControlPlane
-from vibesensor.adapters.websocket import LiveBroadcaster
-from vibesensor.domain import AnalysisSettingsSnapshot
-from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
-from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
-from vibesensor.shared.types.car_config import CarsSnapshot
-from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService
-from vibesensor.use_cases.history.runs import HistoryRunService
-from vibesensor.use_cases.run import RunRecorder
-from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot
-from vibesensor.use_cases.updates.firmware.esp_flash_manager import EspFlashManager
-from vibesensor.use_cases.updates.firmware.esp_flash_types import EspFlashStatus
-from vibesensor.use_cases.updates.manager import UpdateManager
-from vibesensor.use_cases.updates.models import UpdateJobStatus, UsbInternetStatus
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _isolate_git_environment() -> Iterator[None]:
+    """Drop inherited ``GIT_*`` variables so tests that run git use their own repos.
+
+    Under a git hook or ``git rebase -x``, variables such as ``GIT_DIR`` point at the
+    developer's repository, and a test's ``git -C <tmp>`` would modify it instead.
+    """
+    with pytest.MonkeyPatch.context() as mp:
+        for name in [key for key in os.environ if key.startswith("GIT_")]:
+            mp.delenv(name)
+        yield
+
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers
@@ -223,8 +231,8 @@ def _speed_source_service_mock() -> MagicMock:
 class FakeState:
     """Minimal stand-in for router assembly tests.
 
-    Keeps the convenient flat fields used throughout tests while exposing the
-    grouped dependency attributes consumed by ``create_router``.
+    Its attribute names match ``vibesensor.web.router.WebServices`` so it can be
+    passed straight to ``create_router``.
     """
 
     config: object = field(default_factory=MagicMock)
@@ -288,62 +296,12 @@ class FakeState:
             )
 
     @property
-    def health(self) -> HealthDeps:
-        return HealthDeps(
-            processing_loop_state=self.processing_loop_state,
-            health_state=self.health_state,
-            processor=self.processor,
-            registry=self.registry,
-            run_recorder=self.run_recorder,
-            ingest_diagnostics=self.ingest_diagnostics,
-        )
+    def speed_status_service(self) -> GPSSpeedMonitor:
+        return self.gps_monitor
 
     @property
-    def live(self) -> LiveDeps:
-        return LiveDeps(
-            registry=self.registry,
-            control_plane=self.control_plane,
-            sensor_metadata_store=self.sensor_metadata_store,
-            processor=self.processor,
-            run_recorder=self.run_recorder,
-            ws_broadcaster=self.ws_broadcaster,
-        )
-
-    @property
-    def settings(self) -> SettingsDeps:
-        return SettingsDeps(
-            car_settings=self.car_settings,
-            analysis_settings=self.analysis_settings,
-            ui_preferences=self.ui_preferences,
-            speed_source_service=self.speed_source_service,
-            speed_status_service=self.gps_monitor,
-            obd_admin_service=self.gps_monitor,
-        )
-
-    @property
-    def history(self) -> HistoryDeps:
-        return HistoryDeps(
-            run_service=self.run_service,
-            report_service=self.report_service,
-            export_service=self.export_service,
-        )
-
-    @property
-    def updates(self) -> UpdateDeps:
-        return UpdateDeps(
-            update_manager=self.update_manager,
-            esp_flash_manager=self.esp_flash_manager,
-        )
-
-    @property
-    def router(self) -> RouterDeps:
-        return RouterDeps(
-            health=self.health,
-            settings=self.settings,
-            live=self.live,
-            history=self.history,
-            updates=self.updates,
-        )
+    def obd_admin_service(self) -> GPSSpeedMonitor:
+        return self.gps_monitor
 
 
 @pytest.fixture

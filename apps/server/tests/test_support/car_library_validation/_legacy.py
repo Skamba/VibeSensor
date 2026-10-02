@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from ._common import (
+from test_support.car_library_validation._common import (
     CarLibraryValidationIssue,
     model_entity,
     text,
     variant_entity,
 )
-from ._powertrain import (
+from test_support.car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_gearboxes,
     validate_manual_or_automatic_claims,
     validate_powertrain_gearbox_consistency,
 )
-from ._tires import validate_default_tire, validate_tire_options
+from test_support.car_library_validation._tires import validate_default_tire, validate_tire_options
 
 
 def validate_legacy_entry(

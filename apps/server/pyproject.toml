@@ -54,12 +54,12 @@ vibesensor-server = "vibesensor.cli.server:main"
 vibesensor-report = "vibesensor.cli.report:main"
 vibesensor-hotspot-self-heal = "vibesensor.cli.hotspot_self_heal:main"
 vibesensor-hotspot-config = "vibesensor.cli.hotspot_config:main"
-vibesensor-sim = "vibesensor.adapters.simulator.sim_sender:main"
-vibesensor-ws-smoke = "vibesensor.adapters.simulator.ws_smoke:main"
+vibesensor-sim = "vibesensor.simulator.sim_sender:main"
+vibesensor-ws-smoke = "vibesensor.simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor.cli.preflight:main"
-vibesensor-fw-refresh = "vibesensor.use_cases.updates.firmware.firmware_cache:refresh_cache_cli"
-vibesensor-fw-info = "vibesensor.use_cases.updates.firmware.firmware_cache:cache_info_cli"
-vibesensor-release-fetch = "vibesensor.use_cases.updates.releases.cli:fetch_latest_wheel_cli"
+vibesensor-fw-refresh = "vibesensor.updates.firmware.firmware_cache:refresh_cache_cli"
+vibesensor-fw-info = "vibesensor.updates.firmware.firmware_cache:cache_info_cli"
+vibesensor-release-fetch = "vibesensor.updates.releases.cli:fetch_latest_wheel_cli"
 
 [tool.setuptools.dynamic]
 version = {attr = "vibesensor._version.__version__"}
@@ -103,7 +103,11 @@ line-length = 100
 target-version = "py313"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "TID251"]
+select = ["E", "F", "I", "UP", "B", "TID251", "TID252"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Absolute imports only, so module moves are a plain dotted-path rewrite.
+ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 # Tests assert observable behaviour, not production source text.
@@ -114,7 +118,7 @@ select = ["E", "F", "I", "UP", "B", "TID251"]
 
 [tool.ruff.lint.per-file-ignores]
 "vibesensor/**/*.py" = ["TID251"]
-"vibesensor/adapters/pdf/*.py" = ["E501"]
+"vibesensor/report/pdf/*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -131,112 +135,40 @@ strict_equality = true
 show_error_codes = true
 
 [tool.importlinter]
-# Backend dependency direction, enforced by `lint-imports` in `make lint` and CI.
+# Package dependency rules, enforced by `lint-imports` in `make lint` and CI.
 root_package = "vibesensor"
+# Annotation-only imports (under `if TYPE_CHECKING:`) never load a module at
+# runtime, so they do not count against these contracts.
+exclude_type_checking_imports = true
 
 [[tool.importlinter.contracts]]
-name = "Domain stays isolated from outer layers"
-type = "forbidden"
-source_modules = ["vibesensor.domain"]
-forbidden_modules = [
-  "vibesensor.shared",
-  "vibesensor.use_cases",
-  "vibesensor.infra",
-  "vibesensor.adapters",
+name = "Entrypoints sit on top: features never import web, app, or the CLIs"
+type = "layers"
+layers = [
+  "vibesensor.cli | vibesensor.simulator",
   "vibesensor.app",
-  "vibesensor.cli",
+  "vibesensor.web",
+  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.speed : vibesensor.summary : vibesensor.updates",
+  "vibesensor.domain : vibesensor.common",
 ]
 
 [[tool.importlinter.contracts]]
-name = "Shared stays below service and adapter layers"
+name = "Live telemetry path stays off post-run analysis, history and reporting"
 type = "forbidden"
-source_modules = ["vibesensor.shared"]
+source_modules = ["vibesensor.ingest", "vibesensor.live", "vibesensor.dsp"]
 forbidden_modules = [
-  "vibesensor.use_cases",
-  "vibesensor.infra",
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
+  "vibesensor.analysis",
+  "vibesensor.history",
+  "vibesensor.recording",
+  "vibesensor.report",
+  "vibesensor.summary",
 ]
 
 [[tool.importlinter.contracts]]
-name = "Use cases and infra stay independent"
-type = "independence"
-modules = ["vibesensor.use_cases", "vibesensor.infra"]
-
-[[tool.importlinter.contracts]]
-name = "Use cases stay below adapters and app entrypoints"
+name = "Reports render stored summaries; they never run analysis"
 type = "forbidden"
-source_modules = ["vibesensor.use_cases"]
-forbidden_modules = [
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
-]
-
-[[tool.importlinter.contracts]]
-name = "Infra stays below adapters and app entrypoints"
-type = "forbidden"
-source_modules = ["vibesensor.infra"]
-forbidden_modules = [
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
-]
-
-[[tool.importlinter.contracts]]
-name = "Adapters stay below app entrypoints"
-type = "forbidden"
-source_modules = ["vibesensor.adapters"]
-forbidden_modules = ["vibesensor.app", "vibesensor.cli"]
-
-[[tool.importlinter.contracts]]
-name = "Live telemetry stays off post-run diagnosis and reporting"
-type = "forbidden"
-allow_indirect_imports = true
-source_modules = [
-  "vibesensor.infra.processing",
-  "vibesensor.infra.runtime.processing_loop",
-  "vibesensor.adapters.websocket",
-  "vibesensor.infra.runtime.ws_payload_projection",
-  "vibesensor.adapters.udp.udp_data_rx",
-]
-forbidden_modules = [
-  "vibesensor.use_cases",
-  "vibesensor.shared.boundaries.reporting",
-  "vibesensor.adapters.pdf",
-]
-
-[[tool.importlinter.contracts]]
-name = "PDF adapter renders report documents, not diagnostics"
-type = "forbidden"
-# Indirect imports are forbidden too: rendering must never pull in diagnostics,
-# not even transitively through shared or history modules.
-source_modules = ["vibesensor.adapters.pdf"]
-forbidden_modules = ["vibesensor.use_cases.diagnostics"]
-
-[[tool.importlinter.contracts]]
-name = "Diagnostics stays free of report localisation"
-type = "forbidden"
-allow_indirect_imports = true
-source_modules = ["vibesensor.use_cases.diagnostics"]
-forbidden_modules = ["vibesensor.report_i18n"]
-ignore_imports = [
-  # Only the language-code normaliser is allowed, not localised strings.
-  "vibesensor.use_cases.diagnostics.run_analysis -> vibesensor.report_i18n",
-]
-
-[[tool.importlinter.contracts]]
-name = "Route-facing HTTP modules depend on ports, not infra"
-type = "forbidden"
-allow_indirect_imports = true
-source_modules = [
-  "vibesensor.adapters.http.clients",
-  "vibesensor.adapters.http.router",
-  "vibesensor.adapters.http.route_bundles",
-  "vibesensor.adapters.http.settings",
-]
-forbidden_modules = ["vibesensor.infra"]
+source_modules = ["vibesensor.report"]
+forbidden_modules = ["vibesensor.analysis"]
 
 [tool.deptry]
 known_first_party = ["test_support"]

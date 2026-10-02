@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import RunCapture, RunSetup
+from vibesensor.domain.run_capture import RunCapture, RunSetup
 
 
 class TestRunCaptureConstruction:

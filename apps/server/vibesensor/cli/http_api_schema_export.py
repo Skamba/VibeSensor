@@ -12,60 +12,18 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import fields
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
 
-from vibesensor.adapters.http import create_router
-from vibesensor.adapters.http.dependencies import (
-    HealthDeps,
-    HistoryDeps,
-    LiveDeps,
-    RouterDeps,
-    SettingsDeps,
-    UpdateDeps,
-)
+from vibesensor.web.router import WebServices, create_router
 
 
 def _build_openapi_app() -> FastAPI:
     placeholder: Any = object()
-    settings = SettingsDeps(
-        car_settings=placeholder,
-        analysis_settings=placeholder,
-        ui_preferences=placeholder,
-        speed_source_service=placeholder,
-        speed_status_service=placeholder,
-        obd_admin_service=placeholder,
-    )
-    services = RouterDeps(
-        health=HealthDeps(
-            processing_loop_state=placeholder,
-            health_state=placeholder,
-            processor=placeholder,
-            registry=placeholder,
-            run_recorder=placeholder,
-            ingest_diagnostics=placeholder,
-        ),
-        settings=settings,
-        live=LiveDeps(
-            registry=placeholder,
-            control_plane=placeholder,
-            sensor_metadata_store=placeholder,
-            processor=placeholder,
-            run_recorder=placeholder,
-            ws_broadcaster=placeholder,
-        ),
-        history=HistoryDeps(
-            run_service=placeholder,
-            report_service=placeholder,
-            export_service=placeholder,
-        ),
-        updates=UpdateDeps(
-            update_manager=placeholder,
-            esp_flash_manager=placeholder,
-        ),
-    )
+    services = WebServices(**{field.name: placeholder for field in fields(WebServices)})
     app = FastAPI(title="VibeSensor HTTP API")
     app.include_router(create_router(services))
     return app

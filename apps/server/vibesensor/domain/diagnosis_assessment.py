@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass, field, replace
 from typing import Final, Literal
 
-from .finding import Finding
+from vibesensor.domain.finding import Finding
 
 __all__ = [
     "DIAGNOSIS_AMBIGUOUS_SCORE_GAP",

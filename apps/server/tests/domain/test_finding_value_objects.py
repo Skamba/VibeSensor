@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import ConfidenceAssessment, Finding, FindingEvidence, LocationHotspot
-from vibesensor.shared.boundaries.summary_fields.finding import finding_from_payload
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.summary.finding_fields import finding_from_payload
 
 
 class TestFindingDomainObject:
@@ -385,7 +388,7 @@ class TestFindingEnrichments:
 
 
 def test_finding_payload_is_distinct_from_domain_finding() -> None:
-    from vibesensor.domain import Finding as DomainFinding
-    from vibesensor.shared.types.finding_payload_parts import FindingPayload
+    from vibesensor.domain.finding import Finding as DomainFinding
+    from vibesensor.summary.finding_payload_parts import FindingPayload
 
     assert DomainFinding is not FindingPayload
