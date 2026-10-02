@@ -10,7 +10,7 @@ speedup.
 
 ## Live processing tick
 
-- The async processing loop (`apps/server/vibesensor/infra/runtime/processing_loop.py`)
+- The async processing loop (`apps/server/vibesensor/live/processing_loop.py`)
   filters to active clients with fresh data and calls
   `SignalProcessor.compute_all()` via `anyio.to_thread.run_sync()`, so the event
   loop never performs FFT work directly.
@@ -35,14 +35,14 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 ## Whole-run post-analysis spectra
 
-`use_cases/diagnostics/whole_run_spectra.py` processes chunks serially inside the
+`analysis/whole_run_spectra.py` processes chunks serially inside the
 background post-analysis job. Measured on the same host for a 4-sensor, 800 Hz,
 5-minute run (298 windows per sensor): serial ~1.3–1.5 s vs ~6.9–8.4 s with a
 4-thread executor.
 
 ## Post-analysis and UDP ingest
 
-- `PostAnalysisWorker` in `apps/server/vibesensor/use_cases/run/post_analysis.py`
+- `PostAnalysisWorker` in `apps/server/vibesensor/analysis/post_analysis.py`
   owns a single daemon thread for completed-run post-analysis. Report requests
   read persisted analysis and render on demand.
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer

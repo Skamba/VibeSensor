@@ -1,0 +1,354 @@
+from __future__ import annotations
+
+import sqlite3
+
+import pytest
+from test_support.persisted_analysis import make_persisted_analysis
+
+from vibesensor.analysis._validation import MissingStrengthMetricsError
+from vibesensor.analysis.post_analysis_executor import (
+    PostAnalysisExecutionConfig,
+    execute_post_analysis,
+)
+from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
+from vibesensor.analysis.post_analysis_loader import (
+    EmptyPostAnalysisSamples,
+    LoadedPostAnalysisRun,
+    MissingPostAnalysisMetadata,
+)
+from vibesensor.analysis.post_analysis_outcomes import (
+    PostAnalysisExecutionMissingMetadata,
+    PostAnalysisExecutionNoSamples,
+    PostAnalysisExecutionPersistenceFailure,
+    PostAnalysisExecutionRetryableFailure,
+    PostAnalysisExecutionSuccess,
+)
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
+
+
+def _run_metadata(run_id: str, *, language: str = "en") -> RunMetadata:
+    return run_metadata_from_mapping(
+        {
+            "run_id": run_id,
+            "start_time_utc": "2025-01-01T00:00:00Z",
+            "sensor_model": "fixture-sensor",
+            "raw_sample_rate_hz": 800,
+            "sample_rate_hz": 800,
+            "feature_interval_s": 1.0,
+            "language": language,
+        }
+    )
+
+
+def _samples() -> list:
+    return sensor_frames_from_mappings([{"t_s": 1.0, "vibration_strength_db": 10.0}])
+
+
+def _config(
+    *,
+    analysis_runner,
+    load_run,
+    defer_retryable_error_storage=False,
+):
+    return PostAnalysisExecutionConfig(
+        analysis_runner=analysis_runner,
+        load_run=load_run,
+        defer_retryable_error_storage=defer_retryable_error_storage,
+    )
+
+
+def test_execute_post_analysis_success_stores_summary() -> None:
+    stored: dict[str, object] = {}
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            stored["run_id"] = run_id
+            stored["analysis"] = analysis
+
+        def store_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    result = execute_post_analysis(
+        run_id="run-ok",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id, language="nl"),
+                language="nl",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=lambda run: make_persisted_analysis(
+                {
+                    "lang": run.language,
+                    "row_count": len(run.samples),
+                    "analysis_metadata": {
+                        "analyzed_sample_count": len(run.samples),
+                        "total_sample_count": run.total_summary_row_count,
+                        "sampling_method": "full",
+                    },
+                    "run_suitability": [],
+                }
+            ),
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionSuccess)
+    assert stored["run_id"] == "run-ok"
+    assert stored["analysis"]["lang"] == "nl"
+
+
+def test_execute_post_analysis_handles_missing_metadata() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-missing",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: MissingPostAnalysisMetadata(
+                run_id=run_id,
+                error_message="Metadata not found or corrupt; cannot analyse",
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({}),
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionMissingMetadata)
+    assert result.completed_error == "Metadata not found or corrupt; cannot analyse"
+    assert stored_errors == [("run-missing", "Metadata not found or corrupt; cannot analyse")]
+
+
+def test_execute_post_analysis_handles_no_samples() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-empty",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: EmptyPostAnalysisSamples(
+                run_id=run_id,
+                error_message="No samples collected during run",
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({}),
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionNoSamples)
+    assert result.completed_error == "No samples collected during run"
+    assert stored_errors == [("run-empty", "No samples collected during run")]
+
+
+def test_execute_post_analysis_propagates_unexpected_analysis_failure() -> None:
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        execute_post_analysis(
+            run_id="run-fail",
+            db=FakeDB(),
+            config=_config(
+                load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                    run_id=run_id,
+                    metadata=_run_metadata(run_id),
+                    language="en",
+                    samples=_samples(),
+                    total_summary_row_count=1,
+                    stride=1,
+                ),
+                analysis_runner=lambda _run: (_ for _ in ()).throw(RuntimeError("boom")),
+            ),
+        )
+
+
+def test_execute_post_analysis_fails_run_without_strength_metrics_instead_of_raising() -> None:
+    """A recording shorter than one analysis window is a run failure, not a worker bug."""
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    def _too_short(_run: PostAnalysisRunInput):
+        raise MissingStrengthMetricsError(
+            "Missing required precomputed strength metrics in sample index 0: vibration_strength_db"
+        )
+
+    result = execute_post_analysis(
+        run_id="run-too-short",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=_too_short,
+        ),
+    )
+
+    assert not isinstance(result, PostAnalysisExecutionSuccess)
+    assert result.completed_error is not None
+    assert "strength metrics" in result.completed_error
+    assert [run_id for run_id, _ in stored_errors] == ["run-too-short"]
+
+
+def test_execute_post_analysis_reports_persistence_failure() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise sqlite3.Error("db write failed")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-store-fail",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionPersistenceFailure)
+    assert result.completed_error == "db write failed"
+    assert result.callback_errors == (
+        "post-analysis failed for run run-store-fail: db write failed",
+    )
+    assert stored_errors == [("run-store-fail", "db write failed")]
+
+
+def test_execute_post_analysis_defers_retryable_persistence_failure() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise sqlite3.OperationalError("db locked")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-retry",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id),
+                language="en",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({"run_suitability": []}),
+            defer_retryable_error_storage=True,
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionRetryableFailure)
+    assert result.error_message == "db locked"
+    assert result.callback_errors == ("post-analysis failed for run run-retry: db locked",)
+    assert stored_errors == []
+
+
+def test_execute_post_analysis_defers_retryable_load_failure() -> None:
+    stored_errors: list[tuple[str, str]] = []
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            raise AssertionError(f"unexpected store_analysis({run_id}, {analysis})")
+
+        def store_analysis_error(self, run_id, error):
+            stored_errors.append((run_id, error))
+
+    result = execute_post_analysis(
+        run_id="run-load-retry",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: (_ for _ in ()).throw(
+                sqlite3.OperationalError("db busy")
+            ),
+            analysis_runner=lambda _run: make_persisted_analysis({}),
+            defer_retryable_error_storage=True,
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionRetryableFailure)
+    assert result.error_message == "db busy"
+    assert stored_errors == []
+
+
+def test_execute_post_analysis_passes_canonical_typed_input_to_runner() -> None:
+    captured: dict[str, object] = {}
+
+    class FakeDB:
+        def store_analysis(self, run_id, analysis):
+            captured["stored_run_id"] = run_id
+            captured["stored_analysis"] = analysis
+
+        def store_analysis_error(self, run_id, error):
+            raise AssertionError(f"unexpected store_analysis_error({run_id}, {error})")
+
+    result = execute_post_analysis(
+        run_id="run-input",
+        db=FakeDB(),
+        config=_config(
+            load_run=lambda *, run_id, db: LoadedPostAnalysisRun(
+                run_id=run_id,
+                metadata=_run_metadata(run_id, language="nl"),
+                language="nl",
+                samples=_samples(),
+                total_summary_row_count=1,
+                stride=1,
+            ),
+            analysis_runner=lambda run: _capture_run_input(captured, run),
+        ),
+    )
+
+    assert isinstance(result, PostAnalysisExecutionSuccess)
+    assert captured["run_input_type"] is PostAnalysisRunInput
+    assert captured["context_run_id"] == "run-input"
+    assert captured["sample_type"] == "SensorFrame"
+
+
+def _capture_run_input(captured: dict[str, object], run: PostAnalysisRunInput):
+    captured["run_input_type"] = type(run)
+    captured["context_run_id"] = run.context.run_id
+    captured["sample_type"] = type(run.samples[0]).__name__
+    return make_persisted_analysis({"run_suitability": []})

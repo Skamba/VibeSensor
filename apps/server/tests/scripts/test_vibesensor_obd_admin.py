@@ -45,7 +45,7 @@ def test_ensure_repo_venv_python_reexecs_when_sys_prefix_is_not_the_repo_venv(
     assert execv_calls == [
         (
             str(target_python),
-            [str(target_python), "-m", "vibesensor.adapters.obd.admin_helper", "scan"],
+            [str(target_python), "-m", "vibesensor.speed.obd.admin_helper", "scan"],
         )
     ]
 

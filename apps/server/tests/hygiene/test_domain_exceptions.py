@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.exceptions import (
+from vibesensor.common.exceptions import (
     AnalysisNotReadyError,
     ConfigurationError,
     DataCorruptError,

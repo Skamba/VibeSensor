@@ -10,9 +10,9 @@ from pathlib import Path
 from vibesensor.app.config_defaults import documented_default_config
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.shared.constants.dsp import SAMPLE_RATE_HZ
-from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
-from vibesensor.shared.process_settings import load_update_env_settings, summarize_process_settings
+from vibesensor.common.process_settings import load_update_env_settings, summarize_process_settings
+from vibesensor.dsp.constants import SAMPLE_RATE_HZ
+from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 
 _DIR_WRITE_ACCESS = os.W_OK | os.X_OK
 

@@ -24,9 +24,9 @@ make test-diagnostic-matrix
 make test-e2e
 make test-full-suite
 
-pytest -q apps/server/tests/adapters/pdf/
-pytest -q apps/server/tests/use_cases/history/
-pytest -q apps/server/tests/use_cases/updates/
+pytest -q apps/server/tests/report/
+pytest -q apps/server/tests/history/
+pytest -q apps/server/tests/updates/
 pytest -q apps/server/tests/integration/
 ```
 
@@ -38,7 +38,7 @@ pytest -q apps/server/tests/integration/
 ```
 
 - `apps/server/tests_e2e/conftest.py` starts one real server subprocess per pytest-xdist worker (session-scoped `e2e_server` fixture): a runtime dir under pytest's tmp dir with `config.docker.yaml` cloned and paths rewritten, seed data copied, and free loopback HTTP/UDP ports. The server is terminated at session end and also dies with its worker.
-- Tests drive it over HTTP and run `vibesensor.adapters.simulator.sim_sender` against it via the `e2e_env` fixture. Tests on one worker share that server sequentially, so each test restores the settings, clients, and runs it touches. Simulator sensor ids are deterministic per index (`sim_client_ids`), and sensor location assignments persist by sensor id, so tests that assign locations call `remove_all_clients` in their cleanup (removing a sensor releases its location).
+- Tests drive it over HTTP and run `vibesensor.simulator.sim_sender` against it via the `e2e_env` fixture. Tests on one worker share that server sequentially, so each test restores the settings, clients, and runs it touches. Simulator sensor ids are deterministic per index (`sim_client_ids`), and sensor location assignments persist by sensor id, so tests that assign locations call `remove_all_clients` in their cleanup (removing a sensor releases its location).
 - Failing e2e tests append the server and app log tails to the pytest report.
 - Simulated captures that must finish post-analysis need at least `ANALYZABLE_SIM_DURATION_S` (two FFT analysis windows); `_simulate()` defaults to it.
 - `long_sim` marks longer simulated runs; the fast selection excludes them. Override the worker count with `make test-e2e E2E_WORKERS=<n>`.
@@ -56,22 +56,16 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 ## Backend test placement
 
-`apps/server/tests/` mirrors backend package ownership:
-
-| Production change | Test start |
-|---|---|
-| `vibesensor/adapters/http/*` | `apps/server/tests/adapters/http/` |
-| `vibesensor/adapters/{hotspot,pdf,persistence,simulator,udp,websocket}/*` | matching `apps/server/tests/adapters/.../` |
-| `vibesensor/app/*` | `apps/server/tests/app/` |
-| `vibesensor/domain/*` | `apps/server/tests/domain/` |
-| `vibesensor/infra/{config,processing,runtime,workers}/*` | matching `apps/server/tests/infra/.../` |
-| `vibesensor/shared/*` | `apps/server/tests/shared/` or `domain/` when testing domain-owned contracts |
-| `vibesensor/use_cases/{diagnostics,history,run,updates}/*` | matching `apps/server/tests/use_cases/.../` |
+`apps/server/tests/` mirrors the backend package layout: a change to
+`vibesensor/<package>/...` starts in `apps/server/tests/<package>/` (for example
+`vibesensor/recording/recorder.py` -> `apps/server/tests/recording/`,
+`vibesensor/report/pdf/` -> `apps/server/tests/report/`,
+`vibesensor/speed/obd/` -> `apps/server/tests/speed/obd/`).
 
 - Cross-cutting regressions go in `apps/server/tests/integration/`.
 - Repo/tooling tests go in `apps/server/tests/hygiene/`. Import-direction rules belong in the `[tool.importlinter]` contracts in `apps/server/pyproject.toml`, not in tests.
 - Shared helpers live in `apps/server/tests/test_support/`.
-- Do not create old flat roots such as `analysis/`, `api/`, `config/`, `gps/`, `history/`, `hotspot/`, `metrics_log/`, `processing/`, `protocol/`, `report/`, `update/`, or `websocket/`.
+- Do not create test roots that do not match a backend package (for example `api/`, `config/`, `gps/`, `metrics_log/`, `processing/`, `protocol/`, `update/`, or `websocket/`).
 - Contract bridge tests live in `apps/server/tests/integration/` and validate subsystem handoffs such as analysis -> report and persistence -> analysis.
 
 ## Backend test rules
@@ -159,4 +153,4 @@ cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing
 python3 -m vibesensor.cli.characterize_aliasing
 ```
 
-Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`diagnostics`, `infra/processing`, persistence history DB, updates) should stay above the repo baseline when practical.
+Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`analysis`, `live` processing, the `history` DB, `updates`) should stay above the repo baseline when practical.

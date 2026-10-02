@@ -112,9 +112,9 @@ those source packs.
 ## Runtime model
 
 Runtime code loads canonical rows through
-`vibesensor.adapters.persistence.vehicle_configurations.load_vehicle_configurations()`.
+`vibesensor.settings.vehicle_configurations.load_vehicle_configurations()`.
 Grouped picker payloads are derived at runtime in
-`vibesensor.adapters.persistence.car_library` by grouping exact configurations by
+`vibesensor.settings.car_library` by grouping exact configurations by
 brand, type, model, and variant.
 
 That means:
@@ -131,7 +131,7 @@ final-drive values that the single `final_drive_front`/`final_drive_rear`
 fields cannot encode faithfully; see the row's `unresolved` items). A variant
 or model built only from such rows is served with `gearboxes: []`, and the UI
 falls back to manual gearbox entry. Do not invent a final drive to fill the
-list. `apps/server/tests/adapters/http/test_car_library_bundled_contract.py`
+list. `apps/server/tests/web/test_car_library_bundled_contract.py`
 checks that every bundled brand/type/model passes the HTTP response models.
 
 ## Confidence vocabulary
@@ -176,7 +176,7 @@ math inputs are evidence-backed.
 
 ## Validation
 
-At runtime the loader (`vibesensor.adapters.persistence.vehicle_configurations`)
+At runtime the loader (`vibesensor.settings.vehicle_configurations`)
 only schema-checks rows and resolves shard refs. The cross-field plausibility
 and source-evidence rules gate the bundled data in the test suite instead of
 running at app startup:
@@ -187,7 +187,7 @@ running at app startup:
 - `apps/server/tests/test_support/car_library_validation/source_evidence.py`
   resolves `evidence_refs` against `data/car_sources/*.json`.
 - `test_bundled_vehicle_library_passes_validation` in
-  `apps/server/tests/adapters/persistence/test_car_library_validation.py`
+  `apps/server/tests/settings/test_car_library_validation.py`
   runs both against the packaged shards, so bad data fails CI rather than
   silently emptying the library on the device.
 
@@ -204,12 +204,12 @@ the raw on-disk shape, including the `definitions` / `defaults` /
 `evidence_refs_ref`, `default_ref`, `setup_ref`).
 
 The schema is an editor aid and is not enforced in CI; the enforced contract
-is the backend loader. `apps/server/tests/adapters/persistence/test_vehicle_configurations.py`
+is the backend loader. `apps/server/tests/settings/test_vehicle_configurations.py`
 loads every committed shard through it and checks representative invalid
 cases. Run it with the rest of the persistence suite:
 
 ```bash
-pytest -q apps/server/tests/adapters/persistence/test_vehicle_configurations.py
+pytest -q apps/server/tests/settings/test_vehicle_configurations.py
 ```
 
 To get inline validation while editing shards, point your editor at the

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.common.json_types import JsonObject
 
 DEFAULT_CONFIG: JsonObject = {
     "ap": {

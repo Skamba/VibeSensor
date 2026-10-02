@@ -272,6 +272,13 @@ Boundary shapes are projections of domain or internal typed meaning, never the
 owners of that meaning. The raw sample / DSP layer is a deliberate internal
 performance boundary, not the owner of stable diagnostic interpretation.
 
+In code these are concepts, not import layers: domain truth and the typed
+diagnostics support objects live in `apps/server/vibesensor/domain/`; the raw
+sample / DSP support lives in `dsp/`, `live/`, and `recording/`; boundary
+shapes live with the feature that owns them (`summary/` for the persisted
+analysis summary, `history/`, `report/`, `web/`). Package import rules are
+listed in `docs/ai/repo-map.md` and enforced by import-linter.
+
 ## Strong OOP rules for this repo
 
 Stable internal concepts with meaning, repeated interpretation, repeated

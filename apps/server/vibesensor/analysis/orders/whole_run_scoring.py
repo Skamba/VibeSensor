@@ -1,0 +1,461 @@
+"""Whole-run harmonic stability and order-lock scoring over dense order traces."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
+
+from vibesensor.analysis._artifact_bundles import (
+    build_single_artifact_bundle_parts,
+)
+from vibesensor.analysis._jsonl_sidecars import (
+    jsonl_bytes_from_objects,
+    jsonl_objects_from_bytes,
+)
+from vibesensor.analysis._ranking_utils import dominant_weighted_value
+from vibesensor.analysis.math_utils import (
+    _max_or_none,
+    _min_or_none,
+)
+from vibesensor.analysis.math_utils import (
+    _mean_or_none as _mean,
+)
+from vibesensor.analysis.math_utils import (
+    _ratio_or_zero as _ratio,
+)
+from vibesensor.analysis.math_utils import (
+    _stddev_or_none as _stddev,
+)
+from vibesensor.analysis.orders._hypothesis_catalog import (
+    order_hypotheses_by_key,
+    ordered_order_hypothesis_keys,
+)
+from vibesensor.analysis.orders.physics import OrderHypothesis
+from vibesensor.analysis.orders.whole_run_traces import (
+    WholeRunOrderTraceArtifactBundle,
+)
+from vibesensor.analysis.whole_run_support_summary import (
+    build_phase_support,
+    build_support_intervals,
+    dominant_context_value,
+    has_speed_context_quality_reason,
+    has_timing_quality_reason,
+    mean_window_quality_score,
+    unique_quality_reason_window_count,
+    window_quality_state_counts,
+)
+from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.summary.order_trace_contracts import (
+    OrderHarmonicEvidenceSummary,
+    OrderTracePoint,
+    OrderTraceSummary,
+)
+from vibesensor.summary.whole_run_analysis import (
+    WholeRunArtifactManifest,
+    WholeRunContextWindowLabel,
+)
+
+WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY = "order-trace-summaries"
+_WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_PATH = "orders/trace-summaries.jsonl"
+_LOCK_SCORE_SUPPORT_WEIGHT = 0.35
+_LOCK_SCORE_REFERENCE_WEIGHT = 0.20
+_LOCK_SCORE_CONTIGUOUS_WEIGHT = 0.20
+_LOCK_SCORE_ERROR_WEIGHT = 0.15
+_LOCK_SCORE_DRIFT_WEIGHT = 0.10
+_RELATIVE_ERROR_DENOMINATOR = 0.25
+_RELATIVE_ERROR_DRIFT_TOLERANCE = 0.08
+__all__ = [
+    "WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY",
+    "WholeRunOrderTraceSummaryArtifactBundle",
+    "build_whole_run_order_trace_summary_artifact_bundle",
+    "summarize_whole_run_order_traces",
+    "whole_run_order_trace_summaries_from_jsonl_bytes",
+    "whole_run_order_trace_summaries_to_jsonl_bytes",
+]
+
+
+@dataclass(frozen=True, slots=True)
+class WholeRunOrderTraceSummaryArtifactBundle:
+    """Compact whole-run order-trace summaries plus the summary sidecar bytes."""
+
+    manifest: WholeRunArtifactManifest
+    artifact_contents: dict[str, bytes]
+    summaries: tuple[OrderTraceSummary, ...]
+
+
+def build_whole_run_order_trace_summary_artifact_bundle(
+    *,
+    order_trace_bundle: WholeRunOrderTraceArtifactBundle,
+    context_labels: Sequence[WholeRunContextWindowLabel],
+    created_at: str | None = None,
+) -> WholeRunOrderTraceSummaryArtifactBundle:
+    """Collapse dense whole-run order traces into deterministic scored summaries."""
+
+    ordered_labels = tuple(sorted(context_labels, key=lambda label: label.window_index))
+    manifest = order_trace_bundle.manifest
+    if len(ordered_labels) != manifest.total_window_count:
+        raise ValueError("whole-run order scoring requires context labels for every window")
+    if any(label.window_index != index for index, label in enumerate(ordered_labels)):
+        raise ValueError("whole-run order scoring requires contiguous ordered context labels")
+    summaries = summarize_whole_run_order_traces(
+        points=order_trace_bundle.points,
+        context_labels=ordered_labels,
+    )
+    parts = build_single_artifact_bundle_parts(
+        artifact_key=WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_KEY,
+        relative_path=_WHOLE_RUN_ORDER_TRACE_SUMMARY_ARTIFACT_PATH,
+        file_format="jsonl",
+        record_count=len(summaries),
+        source_manifest=manifest,
+        created_at=created_at or manifest.created_at or utc_now_iso(),
+        content_bytes=whole_run_order_trace_summaries_to_jsonl_bytes(summaries),
+    )
+    return WholeRunOrderTraceSummaryArtifactBundle(
+        manifest=parts.manifest,
+        artifact_contents=parts.artifact_contents,
+        summaries=summaries,
+    )
+
+
+def summarize_whole_run_order_traces(
+    *,
+    points: Sequence[OrderTracePoint],
+    context_labels: Sequence[WholeRunContextWindowLabel],
+) -> tuple[OrderTraceSummary, ...]:
+    """Score whole-run order traces into compact summary rows."""
+
+    if not points:
+        return ()
+    context_by_window = {label.window_index: label for label in context_labels}
+    points_by_hypothesis: dict[str, list[OrderTracePoint]] = defaultdict(list)
+    for point in points:
+        points_by_hypothesis[point.hypothesis_key].append(point)
+
+    hypothesis_catalog = order_hypotheses_by_key()
+    summaries: list[OrderTraceSummary] = []
+    for hypothesis_key in ordered_order_hypothesis_keys(points_by_hypothesis):
+        hypothesis_points = tuple(
+            sorted(points_by_hypothesis[hypothesis_key], key=lambda point: point.window_index)
+        )
+        summaries.append(
+            _summarize_hypothesis_trace(
+                points=hypothesis_points,
+                hypothesis=hypothesis_catalog.get(hypothesis_key),
+                context_by_window=context_by_window,
+            )
+        )
+    return tuple(summaries)
+
+
+def whole_run_order_trace_summaries_to_jsonl_bytes(
+    summaries: Sequence[OrderTraceSummary],
+) -> bytes:
+    """Serialize compact whole-run order-trace summaries into sidecar JSONL bytes."""
+
+    return jsonl_bytes_from_objects(summaries)
+
+
+def whole_run_order_trace_summaries_from_jsonl_bytes(
+    payload: bytes,
+) -> tuple[OrderTraceSummary, ...]:
+    """Reconstruct compact whole-run order-trace summaries from persisted JSONL bytes."""
+
+    return jsonl_objects_from_bytes(
+        payload,
+        context="whole-run order trace summaries",
+        line_description="whole-run order trace summary line",
+        from_mapping=OrderTraceSummary.from_mapping,
+    )
+
+
+def _summarize_hypothesis_trace(
+    *,
+    points: Sequence[OrderTracePoint],
+    hypothesis: OrderHypothesis | None,
+    context_by_window: Mapping[int, WholeRunContextWindowLabel],
+) -> OrderTraceSummary:
+    first_point = points[0]
+    total_window_count = len(points)
+    eligible_points = [point for point in points if point.eligible]
+    matched_points = [point for point in points if point.matched]
+    eligible_window_count = len(eligible_points)
+    matched_window_count = len(matched_points)
+    support_ratio = _ratio(matched_window_count, eligible_window_count)
+    reference_coverage_ratio = _ratio(eligible_window_count, total_window_count)
+    longest_contiguous_support_window_count = _longest_contiguous_match_run(matched_points)
+    contiguous_support_ratio = _ratio(
+        longest_contiguous_support_window_count,
+        eligible_window_count,
+    )
+    relative_errors = [
+        point.relative_error for point in matched_points if point.relative_error is not None
+    ]
+    mean_relative_error = _mean(relative_errors)
+    relative_error_stddev = _stddev(relative_errors)
+    mean_quality_score = mean_window_quality_score(points)
+    quality_state_counts = window_quality_state_counts(points)
+    usable_window_count = quality_state_counts.usable_window_count
+    limited_window_count = quality_state_counts.limited_window_count
+    excluded_window_count = quality_state_counts.excluded_window_count
+    shock_transient_window_count = unique_quality_reason_window_count(points, "shock_transient")
+    sensor_clipping_window_count = unique_quality_reason_window_count(points, "sensor_clipping")
+    sensor_mounting_artifact_window_count = unique_quality_reason_window_count(
+        points,
+        "mounting_artifact",
+    )
+    matched_mounting_artifact_window_count = sum(
+        1 for point in matched_points if "mounting_artifact" in point.window_quality_reasons
+    )
+    sensor_timing_integrity_window_count = sum(
+        1 for point in points if has_timing_quality_reason(point)
+    )
+    matched_timing_integrity_window_count = sum(
+        1 for point in matched_points if has_timing_quality_reason(point)
+    )
+    speed_context_limited_window_count = sum(
+        1 for point in points if has_speed_context_quality_reason(point)
+    )
+    matched_speed_context_limited_window_count = sum(
+        1 for point in matched_points if has_speed_context_quality_reason(point)
+    )
+    support_interval_summary = build_support_intervals(
+        eligible_windows=tuple(point.window_index for point in matched_points),
+        matched_points_by_window={point.window_index: point for point in matched_points},
+        context_by_window=context_by_window,
+        context_rank_mode="count",
+    )
+    support_intervals = support_interval_summary.intervals
+    phase_support = build_phase_support(
+        eligible_windows=tuple(point.window_index for point in eligible_points),
+        matched_windows=(point.window_index for point in matched_points),
+        context_by_window=context_by_window,
+    )
+    drift_score = _drift_score(
+        relative_error_stddev=relative_error_stddev,
+        path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
+    )
+    lock_score = _lock_score(
+        support_ratio=support_ratio,
+        reference_coverage_ratio=reference_coverage_ratio,
+        contiguous_support_ratio=contiguous_support_ratio,
+        mean_relative_error=mean_relative_error,
+        drift_score=drift_score,
+        path_compliance=hypothesis.path_compliance if hypothesis is not None else 1.0,
+        mean_quality_score=mean_quality_score,
+    )
+    lock_score = _mounting_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_mounting_artifact_window_count=matched_mounting_artifact_window_count,
+    )
+    lock_score = _timing_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_timing_integrity_window_count=matched_timing_integrity_window_count,
+    )
+    lock_score = _speed_context_adjusted_lock_score(
+        lock_score,
+        matched_window_count=matched_window_count,
+        matched_speed_context_limited_window_count=matched_speed_context_limited_window_count,
+    )
+    peak_intensity_db = _max_or_none(
+        point.peak_intensity_db for point in matched_points if point.peak_intensity_db is not None
+    )
+    stable_frequency_min_hz = _min_or_none(
+        point.matched_hz for point in matched_points if point.matched_hz is not None
+    )
+    stable_frequency_max_hz = _max_or_none(
+        point.matched_hz for point in matched_points if point.matched_hz is not None
+    )
+    mean_vibration_strength_db = _mean(
+        point.vibration_strength_db
+        for point in matched_points
+        if point.vibration_strength_db is not None
+    )
+    strongest_location = _dominant_value(
+        values=(
+            (
+                point.strongest_location,
+                point.peak_intensity_db if point.peak_intensity_db is not None else 0.0,
+            )
+            for point in matched_points
+            if point.strongest_location
+        )
+    )
+    dominant_phase = dominant_context_value(
+        points=matched_points,
+        context_by_window=context_by_window,
+        attribute_name="phase",
+    )
+    dominant_speed_band = dominant_context_value(
+        points=matched_points,
+        context_by_window=context_by_window,
+        attribute_name="speed_band",
+    )
+    ref_sources = tuple(
+        sorted({point.ref_source for point in eligible_points if point.ref_source is not None})
+    )
+    harmonic_summary = OrderHarmonicEvidenceSummary(
+        harmonic=first_point.harmonic,
+        order_label=first_point.order_label,
+        eligible_window_count=eligible_window_count,
+        matched_window_count=matched_window_count,
+        support_ratio=support_ratio,
+        reference_coverage_ratio=reference_coverage_ratio,
+        contiguous_support_ratio=contiguous_support_ratio,
+        lock_score=lock_score,
+        mean_relative_error=mean_relative_error,
+        relative_error_stddev=relative_error_stddev,
+        drift_score=drift_score,
+        peak_intensity_db=peak_intensity_db,
+        mean_vibration_strength_db=mean_vibration_strength_db,
+    )
+    return OrderTraceSummary(
+        hypothesis_key=first_point.hypothesis_key,
+        suspected_source=first_point.suspected_source,
+        order_family=first_point.order_family,
+        order_label=first_point.order_label,
+        total_window_count=total_window_count,
+        eligible_window_count=eligible_window_count,
+        matched_window_count=matched_window_count,
+        support_ratio=support_ratio,
+        reference_coverage_ratio=reference_coverage_ratio,
+        longest_contiguous_support_window_count=longest_contiguous_support_window_count,
+        contiguous_support_ratio=contiguous_support_ratio,
+        usable_window_count=usable_window_count,
+        limited_window_count=limited_window_count,
+        excluded_window_count=excluded_window_count,
+        shock_transient_window_count=shock_transient_window_count,
+        sensor_clipping_window_count=sensor_clipping_window_count,
+        sensor_mounting_artifact_window_count=sensor_mounting_artifact_window_count,
+        sensor_timing_integrity_window_count=sensor_timing_integrity_window_count,
+        speed_context_limited_window_count=speed_context_limited_window_count,
+        mean_quality_score=mean_quality_score,
+        support_intervals=support_intervals,
+        phase_support=phase_support,
+        harmonic_summaries=(harmonic_summary,),
+        stable_frequency_min_hz=stable_frequency_min_hz,
+        stable_frequency_max_hz=stable_frequency_max_hz,
+        exemplar_interval_index=support_interval_summary.exemplar_interval_index,
+        dominant_phase=dominant_phase,
+        dominant_speed_band=dominant_speed_band,
+        strongest_location=strongest_location,
+        mean_relative_error=mean_relative_error,
+        relative_error_stddev=relative_error_stddev,
+        drift_score=drift_score,
+        lock_score=lock_score,
+        peak_intensity_db=peak_intensity_db,
+        mean_vibration_strength_db=mean_vibration_strength_db,
+        ref_sources=ref_sources,
+    )
+
+
+def _lock_score(
+    *,
+    support_ratio: float,
+    reference_coverage_ratio: float,
+    contiguous_support_ratio: float,
+    mean_relative_error: float | None,
+    drift_score: float,
+    path_compliance: float,
+    mean_quality_score: float | None,
+) -> float:
+    error_score = _relative_error_score(
+        mean_relative_error=mean_relative_error,
+        path_compliance=path_compliance,
+    )
+    base_score = max(
+        0.0,
+        min(
+            1.0,
+            (_LOCK_SCORE_SUPPORT_WEIGHT * support_ratio)
+            + (_LOCK_SCORE_REFERENCE_WEIGHT * reference_coverage_ratio)
+            + (_LOCK_SCORE_CONTIGUOUS_WEIGHT * contiguous_support_ratio)
+            + (_LOCK_SCORE_ERROR_WEIGHT * error_score)
+            + (_LOCK_SCORE_DRIFT_WEIGHT * drift_score),
+        ),
+    )
+    if support_ratio < 0.5:
+        base_score = min(base_score, support_ratio)
+    if mean_quality_score is None:
+        return base_score
+    quality_factor = 0.85 + (0.15 * max(0.0, min(1.0, mean_quality_score)))
+    return max(0.0, min(1.0, base_score * quality_factor))
+
+
+def _mounting_adjusted_lock_score(
+    lock_score: float,
+    *,
+    matched_window_count: int,
+    matched_mounting_artifact_window_count: int,
+) -> float:
+    if matched_window_count <= 0 or matched_mounting_artifact_window_count <= 0:
+        return lock_score
+    if matched_mounting_artifact_window_count >= matched_window_count:
+        return min(lock_score, 0.45)
+    if matched_mounting_artifact_window_count / matched_window_count >= 0.5:
+        return min(lock_score, 0.60)
+    return lock_score
+
+
+def _timing_adjusted_lock_score(
+    lock_score: float,
+    *,
+    matched_window_count: int,
+    matched_timing_integrity_window_count: int,
+) -> float:
+    if matched_window_count <= 0 or matched_timing_integrity_window_count <= 0:
+        return lock_score
+    if matched_timing_integrity_window_count >= matched_window_count:
+        return min(lock_score, 0.50)
+    if matched_timing_integrity_window_count / matched_window_count >= 0.5:
+        return min(lock_score, 0.65)
+    return lock_score
+
+
+def _speed_context_adjusted_lock_score(
+    lock_score: float,
+    *,
+    matched_window_count: int,
+    matched_speed_context_limited_window_count: int,
+) -> float:
+    if matched_window_count <= 0 or matched_speed_context_limited_window_count <= 0:
+        return lock_score
+    if matched_speed_context_limited_window_count >= matched_window_count:
+        return min(lock_score, 0.45)
+    if matched_speed_context_limited_window_count / matched_window_count >= 0.5:
+        return min(lock_score, 0.60)
+    return min(lock_score, 0.75)
+
+
+def _relative_error_score(*, mean_relative_error: float | None, path_compliance: float) -> float:
+    if mean_relative_error is None:
+        return 0.0
+    denominator = max(1e-9, _RELATIVE_ERROR_DENOMINATOR * path_compliance)
+    return max(0.0, 1.0 - min(1.0, mean_relative_error / denominator))
+
+
+def _drift_score(*, relative_error_stddev: float | None, path_compliance: float) -> float:
+    if relative_error_stddev is None:
+        return 0.0
+    denominator = max(1e-9, _RELATIVE_ERROR_DRIFT_TOLERANCE * path_compliance)
+    return max(0.0, 1.0 - min(1.0, relative_error_stddev / denominator))
+
+
+def _longest_contiguous_match_run(points: Sequence[OrderTracePoint]) -> int:
+    longest = 0
+    current = 0
+    previous_window_index: int | None = None
+    for point in points:
+        if previous_window_index is None or point.window_index == previous_window_index + 1:
+            current += 1
+        else:
+            current = 1
+        previous_window_index = point.window_index
+        longest = max(longest, current)
+    return longest
+
+
+def _dominant_value(*, values: Iterable[tuple[str, float]]) -> str | None:
+    return dominant_weighted_value(values=values)

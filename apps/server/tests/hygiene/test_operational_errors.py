@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.exceptions import VibeSensorError
-from vibesensor.shared.operational_errors import (
+from vibesensor.common.exceptions import VibeSensorError
+from vibesensor.common.operational_errors import (
     ExternalCommandError,
     OperationalError,
     ServiceUnavailableError,

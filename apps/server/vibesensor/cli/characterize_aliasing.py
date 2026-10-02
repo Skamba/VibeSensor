@@ -6,9 +6,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from vibesensor.infra.processing.compute import SignalMetricsComputer
-from vibesensor.infra.processing.models import ProcessorConfig
-from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.live.compute import SignalMetricsComputer
+from vibesensor.live.models import ProcessorConfig
 
 DEFAULT_MAX_INPUT_HZ = 2400.0
 DEFAULT_INTERVAL_STEP_HZ = 1.0

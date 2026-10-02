@@ -14,7 +14,7 @@ application settings and client names in a single SQLite file located at
 
 ## Module organization
 
-`adapters/persistence/history_db/` is one synchronous repository over stdlib `sqlite3`:
+`history/` (`history_db.py` and its `*_store.py` helpers) is one synchronous repository over stdlib `sqlite3`:
 
 - `_history_db.py`: `HistoryDB`. Constructing it opens a writer connection and a
   `query_only` reader connection (WAL lets reads proceed during writes), each guarded by a
@@ -46,7 +46,7 @@ One row per recording session.
 | `car_name` | TEXT | Denormalized active car name used by the history list path |
 | `raw_capture_manifest_json` | TEXT | Raw waveform sidecar manifest; may remain after raw files are pruned so history can report missing raw capture explicitly |
 | `whole_run_artifact_manifest_json` | TEXT | Whole-run sidecar manifest for dense post-analysis artifacts |
-| `analysis_json` | TEXT | Post-run analysis summary (`AnalysisSummary` in `shared/types/history_analysis_contracts.py`) |
+| `analysis_json` | TEXT | Post-run analysis summary (`AnalysisSummary` in `summary/contracts.py`) |
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
 | `created_at` | TEXT | Row creation timestamp |
@@ -107,8 +107,8 @@ Single-row table for persistent application settings.
 | `updated_at` | TEXT | Last update timestamp |
 
 `value_json` is decoded by `SettingsSnapshotRecord` in
-`shared/boundaries/settings.py` (msgspec, defaults for missing top-level keys).
-Each entry in `cars` is a `CarConfigPayload` (`shared/types/car_config.py`): the
+`settings/snapshot_codec.py` (msgspec, defaults for missing top-level keys).
+Each entry in `cars` is a `CarConfigPayload` (`settings/car_config.py`): the
 same shape is served by `GET /api/settings/cars`, and it carries the car's
 `aspects` (`AnalysisSettingsPayload`) and optional `order_reference_status`.
 
@@ -179,7 +179,7 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 
 On startup, the container opens `HistoryDB`, first recovers stale `recording`
 rows into `error`, then deletes `complete` and `error` runs older than
-`RUN_RETENTION_DAYS` (7 days, in `apps/server/vibesensor/app/composition/history.py`).
+`RUN_RETENTION_DAYS` (7 days, in `apps/server/vibesensor/app/composition.py`).
 
 The cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
 `end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from vibesensor.domain import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
+from vibesensor.domain.capture_readiness import (
+    CaptureReadiness,
+    CaptureReadinessCheck,
+    CaptureReadinessPolicy,
+)
 
 
 def test_capture_readiness_check_properties_and_details_dict() -> None:

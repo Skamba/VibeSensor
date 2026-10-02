@@ -1,53 +1,11 @@
-"""Shared builders for focused persisted settings service bundles in tests."""
+"""Raw settings-snapshot writer for settings load-path tests."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.history.history_db import HistoryDB
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.app.composition.settings import build_settings_service_bundle
-from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
-from vibesensor.infra.config.car_settings import CarSettingsService
-from vibesensor.infra.config.sensor_settings import SensorSettingsService
-from vibesensor.infra.config.settings_derivation import SettingsDerivationService
-from vibesensor.infra.config.settings_persistence import SettingsPersistenceCoordinator
-from vibesensor.infra.config.speed_source_settings import PersistedSpeedSourceSettingsService
-from vibesensor.infra.config.ui_preferences import UiPreferencesService
-from vibesensor.shared.ports import SettingsSnapshotPersistence
-from vibesensor.shared.time_utils import utc_now_iso
-
-__all__ = ["PersistedSettingsServices", "build_settings_services", "write_raw_settings_snapshot"]
-
-
-@dataclass(slots=True)
-class PersistedSettingsServices:
-    coordinator: SettingsPersistenceCoordinator
-    car_settings: CarSettingsService
-    analysis_settings: ActiveCarAnalysisSettingsService
-    sensor_settings: SensorSettingsService
-    speed_source_settings: PersistedSpeedSourceSettingsService
-    ui_preferences: UiPreferencesService
-    settings_reader: SettingsDerivationService
-
-
-def build_settings_services(
-    db: SettingsSnapshotPersistence | None = None,
-) -> PersistedSettingsServices:
-    """Build the focused persisted settings services used by production wiring."""
-
-    services = build_settings_service_bundle(
-        snapshot_repository=db,
-        speed_control=None,
-    )
-    return PersistedSettingsServices(
-        coordinator=services.coordinator,
-        car_settings=services.car_settings,
-        analysis_settings=services.analysis_settings,
-        sensor_settings=services.sensor_metadata_store,
-        speed_source_settings=services.speed_source_settings,
-        ui_preferences=services.ui_preferences,
-        settings_reader=services.settings_reader,
-    )
+__all__ = ["write_raw_settings_snapshot"]
 
 
 def write_raw_settings_snapshot(db: HistoryDB, value_json: str) -> None:

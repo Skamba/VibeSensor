@@ -10,9 +10,7 @@ import numpy as np
 from test_support.core import ALL_SENSORS, standard_metadata
 from test_support.golden_replay_types import GoldenReplayFixture, GoldenReplayRun
 from test_support.sample_scenarios import make_sample
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.raw_capture import (
+from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureManifest,
     RawCaptureSensorClockSync,
@@ -20,7 +18,9 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureSensorManifest,
     RawRunCapture,
 )
-from vibesensor.shared.types.run_schema import RunMetadata
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 _RUN_START_US = 1_000_000
 _RAW_ACCEL_SCALE_G_PER_LSB = 0.001

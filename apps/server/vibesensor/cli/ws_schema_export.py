@@ -19,7 +19,7 @@ def export_schema(out_path: Path | None = None) -> str:
     """Return the JSON Schema string and optionally write it to *out_path*."""
     from pydantic import TypeAdapter
 
-    from vibesensor.shared.types.payload_types import LiveWsPayload
+    from vibesensor.live.payload_types import LiveWsPayload
 
     schema = TypeAdapter(LiveWsPayload).json_schema()
     text = json.dumps(schema, indent=2, sort_keys=True) + "\n"

@@ -1,34 +1,34 @@
 # Analysis Pipeline
 
 Scope: architecture and data flow for the post-stop diagnostics pipeline in
-`apps/server/vibesensor/use_cases/diagnostics/`.
+`apps/server/vibesensor/analysis/`.
 
 ## Architectural Rules
 
 1. **Analysis runs only once** — after a recording is stopped.
    Report rendering and API endpoints use persisted results.
 2. **Diagnostics-first package** — diagnostic orchestration, ranking, and
-   post-stop reasoning live in `apps/server/vibesensor/use_cases/diagnostics/`.
+   post-stop reasoning live in `apps/server/vibesensor/analysis/`.
    The shared vehicle-order frequency math used by both diagnostics and live
-   telemetry lives in `apps/server/vibesensor/shared/order_bands.py`.
+   telemetry lives in `apps/server/vibesensor/dsp/order_bands.py`.
 3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
    diagnostics pipeline entrypoint. Boundary helpers such as
    `summarize_run_data()` / `summarize_log()` live in
-   `apps/server/vibesensor/adapters/analysis_summary.py` and call the
+   `apps/server/vibesensor/analysis/summarize.py` and call the
    diagnostics entrypoint explicitly.
 4. **Public API** — external app/domain code imports from
-   `vibesensor.use_cases.diagnostics`: `RunAnalysis`, `AnalysisResult`,
+   `vibesensor.analysis`: `RunAnalysis`, `AnalysisResult`,
    `build_findings_for_samples()`, `build_order_bands()`, `vehicle_orders_hz()`.
    Serialized `AnalysisSummary` helpers live outside the diagnostics package.
-5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
-   import from `vibesensor.use_cases.diagnostics` (enforced by tests).
+5. **Renderer-only report package** — `vibesensor.report.pdf` must not
+   import from `vibesensor.analysis` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
-   (`apps/server/vibesensor/infra/processing/`) must not import from
-   `use_cases/diagnostics/`.
+   (`apps/server/vibesensor/live/`) must not import from
+   `analysis/`.
 
 ## Live Processing vs Post-Stop Analysis
 
-| | Live Processing (`apps/server/vibesensor/infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
+| | Live Processing (`apps/server/vibesensor/live/`) | Post-Stop Analysis (`analysis/`) |
 |-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB, plus optional raw-capture artifacts for replay |
@@ -38,10 +38,10 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 
 Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `noise_floor_amp_p20_g`) live in
-`apps/server/vibesensor/vibration_strength.py`; canonical windowing,
+`apps/server/vibesensor/dsp/vibration_strength.py`; canonical windowing,
 frequency-bin, and peak-detection steps live in
-`apps/server/vibesensor/shared/fft_analysis.py`; and live snapshot/metric
-coordination stays under `apps/server/vibesensor/infra/processing/`. Live
+`apps/server/vibesensor/dsp/fft_analysis.py`; and live snapshot/metric
+coordination stays under `apps/server/vibesensor/live/`. Live
 metrics use the `live_display` processing profile and a three-sample median
 filter for operator-friendly display. Post-stop raw replay and dense whole-run
 spectra use `diagnostic_raw` when raw capture is available; summary-only
@@ -50,36 +50,36 @@ the active profile, filter chains, and whether raw diagnostic evidence was
 preserved.
 
 The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
-`build_whole_run_artifacts()` in `use_cases/run/post_analysis_executor.py`,
+`build_whole_run_artifacts()` in `analysis/post_analysis_executor.py`,
 which call the diagnostics builders directly. Whole-run spectra now use
-`RawCaptureManifest` plus `RunPersistence.load_raw_capture_sensor_range(...)`
+`RawCaptureManifest` plus `HistoryDB.load_raw_capture_sensor_range(...)`
 instead of receiving a full `RawRunCapture`; compact summary-row replay may still
 load full raw capture before compact report-facing summaries are persisted.
 
 Current whole-run sidecar stages:
 
-1. `use_cases/diagnostics/whole_run_spectra.py` computes deterministic
+1. `analysis/whole_run_spectra.py` computes deterministic
    raw-window spectra from bounded raw range reads and emits `spectral-grid:*`,
    `spectral-matrix:*`, and `spectral-summary:*` sidecars. The summaries carry
    window timing, coverage/quality, top peaks, and dB strength facts without
    forcing reports to read the dense matrices.
-2. `use_cases/diagnostics/whole_run_context.py` projects speed/RPM/reference
+2. `analysis/whole_run_context.py` projects speed/RPM/reference
    context onto the same window grid and emits dense `context-window-labels`
    plus compact `whole_run_context_intervals` for `analysis_json`.
-3. `use_cases/diagnostics/orders/whole_run_traces.py` joins spectral summaries
+3. `analysis/orders/whole_run_traces.py` joins spectral summaries
    with context labels and scores wheel/driveshaft/engine hypotheses per window,
    writing dense `order-trace-points` sidecars.
-4. `use_cases/diagnostics/orders/whole_run_scoring.py` collapses trace points
+4. `analysis/orders/whole_run_scoring.py` collapses trace points
    into compact lock/stability summaries with reference coverage, contiguous
    support, drift/error, and lock score.
-5. `use_cases/diagnostics/orders/whole_run_family_summaries.py` rolls harmonic
+5. `analysis/orders/whole_run_family_summaries.py` rolls harmonic
    summaries up to family-level support intervals and phase summaries.
-6. `use_cases/diagnostics/whole_run_spatial_coherence.py` builds candidate-level
+6. `analysis/whole_run_spatial_coherence.py` builds candidate-level
    multi-sensor spatial evidence windows and compact spatial summaries.
 7. `post_analysis_executor.py` persists dense artifacts through
-   `RunPersistence.store_whole_run_artifacts(...)`, appends compact whole-run
+   `HistoryDB.store_whole_run_artifacts(...)`, appends compact whole-run
    metadata/summaries into `PersistedAnalysis`, and then stores the report-facing
-   summary through `RunPersistence.store_analysis(...)`.
+   summary through `HistoryDB.store_analysis(...)`.
 
 The sidecar pipeline is the `whole_run_*` implementation above. Shared quality scoring still marks clipped,
 suspect-mounted, or timing-compromised windows as limited/excluded evidence
@@ -100,12 +100,12 @@ trustworthy vibration strength.
 ## Trigger Flow
 
 ```
-RunRecorder.stop_recording()            # use_cases/run/logger.py
+RunRecorder.stop_recording()            # recording/recorder.py
   └─ RunRecorder.post_analysis
-       └─ PostAnalysisWorker.schedule() # use_cases/run/post_analysis.py
+       └─ PostAnalysisWorker.schedule() # analysis/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata + persisted summary rows via injected RunPersistence
+                      ├─ load metadata + persisted summary rows via the injected HistoryDB
                       ├─ load raw manifest; compact replay may load full RawRunCapture
                       ├─ build_post_analysis_input(...)
                       │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
@@ -116,7 +116,7 @@ RunRecorder.stop_recording()            # use_cases/run/logger.py
                       ├─ append compact whole-run summaries/metadata to PersistedAnalysis
                       ├─ history_db.astore_whole_run_artifacts()
                       └─ history_db.store_analysis()
-                            ← persist sidecars and report-facing summary via injected RunPersistence
+                            ← persist sidecars and report-facing summary via the injected HistoryDB
 ```
 
 `PostAnalysisWorker` receives persistence access, the post-stop analysis
@@ -147,7 +147,7 @@ summaries to the persisted analysis.
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
-| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_payloads/summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
+| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `analysis/summary_payload.py`, `analysis/summarize.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Data Flow
 
@@ -230,9 +230,9 @@ analysis summary only; any comparison against current mutable car settings is an
 explicit advisory overlay at the history delivery boundary, not a hidden input
 to the persisted projection or the default report cache path. Report endpoints
 rebuild a `ReportDocument` from the persisted summary on demand via
-`shared/boundaries/reporting/preparation.py:prepare_report_input()`, which
+`report/preparation.py:prepare_report_input()`, which
 reconstructs the domain aggregate and assembles the prepared report handoff,
-and `use_cases/history/report_document/builder.py:build_report_document()`,
+and `report/document/builder.py:build_report_document()`,
 which performs the final document assembly before adapter-local PDF render
 planning.
 
@@ -242,14 +242,13 @@ Raw ingest/sample acceleration fields may still be expressed in g.
 ## Adding a New Analysis Step
 
 1. Implement the step as a function in the appropriate module
-   (or create a new one under `use_cases/diagnostics/`).
+   (or create a new one under `analysis/`).
 2. Call it from `RunAnalysis.summarize()` at the correct point in the
    pipeline.
-3. If the new output is needed by the renderer, add any report-facing shaping
-   in `shared/boundaries/reporting/` or
-   `use_cases/history/report_document/`, then update
+3. If the new output is needed by the renderer, persist it through the
+   `summary/` contract, add any report-facing shaping in `report/` or
+   `report/document/`, then update
    `build_report_document()` and `ReportDocument`. Keep semantic
    interpretation on the reporting-boundary side rather than in
-   `adapters/pdf/*`.
-4. Export any new public symbol from `use_cases/diagnostics/__init__.py`.
-5. Run `pytest apps/server/tests/` to verify tests still pass.
+   `report/pdf/*`.
+4. Run `pytest apps/server/tests/` to verify tests still pass.

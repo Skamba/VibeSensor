@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import cast
 
-from vibesensor.shared._data_files import resolve_static_data_file
+from vibesensor.common.data_files import resolve_static_data_file
 
 _CANONICAL_VEHICLE_CONFIGURATION_DATA_DIR = resolve_static_data_file("vehicle_configurations")
 

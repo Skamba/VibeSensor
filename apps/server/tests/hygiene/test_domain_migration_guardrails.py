@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Finding
-from vibesensor.use_cases.diagnostics.findings import finalize_findings
+from vibesensor.analysis.findings import finalize_findings
+from vibesensor.domain.finding import Finding
 
 
 def test_f_order_finding_id_normalization_preserves_order_and_reference_ids() -> None:
@@ -54,7 +54,7 @@ def test_no_compat_dual_base_exceptions() -> None:
     This prevents accidental dual-base compatibility shims that let callers
     catch stdlib types and bypass the domain exception hierarchy.
     """
-    from vibesensor.shared.exceptions import VibeSensorError
+    from vibesensor.common.exceptions import VibeSensorError
 
     # stdlib exception types that should never appear as co-parents
     stdlib_bases = (

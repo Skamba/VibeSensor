@@ -9,21 +9,23 @@ from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.adapters.gps.gps_speed import SpeedResolution
-from vibesensor.adapters.udp.protocol import HelloMessage, pack_data
-from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
-from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
-from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
-from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
-from vibesensor.use_cases.history.report_document import build_report_document
-from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
-from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input
-from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
-from vibesensor.use_cases.run.post_analysis_summary import build_post_analysis_summary
+from vibesensor.analysis.post_analysis_input import build_post_analysis_input
+from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_data
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.recording.run_metadata import run_metadata_to_json_object
+from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.preparation import prepare_persisted_report_input
+from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
+from vibesensor.speed.gps_speed import SpeedResolution
+from vibesensor.summary.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
 
 _CLIENT_ID = bytes.fromhex("010203040506")
 _CLIENT_ID_HEX = _CLIENT_ID.hex()
@@ -39,6 +41,17 @@ class _FakeSpeedProvider:
     gps_speed_mps: float | None = None
     engine_rpm: float | None = None
     engine_rpm_source: str | None = None
+
+    def status_snapshot(self) -> SimpleNamespace:
+        return SimpleNamespace(
+            speed_source="none",
+            effective_speed_kmh=None,
+            last_update_age_s=None,
+            fallback_active=False,
+        )
+
+    def obd_status(self) -> SimpleNamespace:
+        return SimpleNamespace(last_rpm=None, rpm_sample_age_s=None)
 
     def resolve_speed(self) -> SpeedResolution:
         return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
@@ -174,11 +187,11 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
                 )
 
         monkeypatch.setattr(
-            "vibesensor.use_cases.diagnostics.run_analysis.RunAnalysis",
+            "vibesensor.analysis.run_analysis.RunAnalysis",
             FakeRunAnalysis,
         )
         monkeypatch.setattr(
-            "vibesensor.use_cases.run.post_analysis_summary.analysis_result_to_summary",
+            "vibesensor.analysis.post_analysis_summary.analysis_result_to_summary",
             lambda _result: minimal_summary(
                 run_id=run_id,
                 lang="en",

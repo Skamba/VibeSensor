@@ -131,7 +131,7 @@ vibesensor-sim --count 5 --server-host 127.0.0.1
 
 Open http://localhost:8000.
 
-Backend logs use stdlib `logging` formatters (`vibesensor/shared/structured_logging.py`):
+Backend logs use stdlib `logging` formatters (`vibesensor/common/structured_logging.py`):
 `docker compose logs` shows human-readable lines with `key=value` fields, and the
 optional `logging.app_log_path` file captures the same events as JSON for
 request/run correlation.

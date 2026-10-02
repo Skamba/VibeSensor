@@ -6,7 +6,7 @@ import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from ._common import CarLibraryValidationIssue
+from test_support.car_library_validation._common import CarLibraryValidationIssue
 
 _ALLOWLIST_FILE = Path(__file__).resolve().parent / "data" / "allowlist.json"
 

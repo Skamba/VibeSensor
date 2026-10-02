@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain import Finding
+from vibesensor.domain.finding import Finding
 
 
 @pytest.mark.parametrize(

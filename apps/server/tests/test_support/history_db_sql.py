@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.persistence.history_db import HistoryDB
+from vibesensor.history.history_db import HistoryDB
 
 
 def execute_statements(

@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+from vibesensor.settings.analysis_settings_codec import (
+    analysis_settings_snapshot_from_mapping,
+)
+from vibesensor.simulator.profiles import calc_order_hz
+from vibesensor.updates.http_client import read_json_response, read_text_response
+
+LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
+
+
+def _normalize_http_host(host: str) -> str:
+    return "127.0.0.1" if host == "0.0.0.0" else host
+
+
+def server_health_url(host: str, port: int) -> str:
+    return f"http://{_normalize_http_host(host)}:{port}/api/clients"
+
+
+def _speed_source_url(host: str, port: int) -> str:
+    return f"http://{_normalize_http_host(host)}:{port}/api/settings/speed-source"
+
+
+def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
+    url = server_health_url(host, port)
+    try:
+        status, _content_type, _body = read_text_response(
+            url,
+            timeout_s=timeout_s,
+            context="simulator health check",
+        )
+        return status == 200
+    except OSError:
+        return False
+
+
+def _analysis_settings_url(host: str, port: int) -> str:
+    return f"http://{_normalize_http_host(host)}:{port}/api/settings/analysis"
+
+
+def fetch_active_car_order_hz(host: str, port: int, timeout_s: float) -> dict[str, float] | None:
+    """Return order frequencies (at the profile reference speed) for the active car."""
+    parsed = read_json_response(
+        _analysis_settings_url(host, port),
+        timeout_s=timeout_s,
+        context="simulator active-car settings",
+    )
+    if not isinstance(parsed, dict):
+        return None
+    return calc_order_hz(analysis_settings_snapshot_from_mapping(parsed))
+
+
+def set_server_speed_override_kmh(
+    host: str, port: int, speed_kmh: float, timeout_s: float
+) -> float | None:
+    payload = json.dumps({"speed_source": "manual", "manual_speed_kph": float(speed_kmh)}).encode(
+        "utf-8"
+    )
+    parsed = read_json_response(
+        _speed_source_url(host, port),
+        method="PUT",
+        headers={"Content-Type": "application/json"},
+        content=payload,
+        timeout_s=timeout_s,
+        context="simulator speed override",
+    )
+    value = parsed.get("manual_speed_kph") if isinstance(parsed, dict) else None
+    return float(value) if isinstance(value, (int, float)) else None
+
+
+def _start_local_server(config_path: Path, repo_root: Path) -> subprocess.Popen[str]:
+    cmd = [sys.executable, "-m", "vibesensor.app", "--config", str(config_path)]
+    return subprocess.Popen(cmd, cwd=str(repo_root / "apps" / "server"), text=True)
+
+
+def maybe_start_server(args: argparse.Namespace, repo_root: Path) -> subprocess.Popen[str] | None:
+    host = args.server_host.strip().lower()
+    if host not in LOCAL_SERVER_HOSTS:
+        print(
+            f"Auto-start skipped: server host {args.server_host!r} is not local. "
+            "Start the server manually on that host."
+        )
+        return None
+
+    srv_host = args.server_host
+    srv_port = args.server_http_port
+    check_timeout = args.server_check_timeout
+    health_url = server_health_url(srv_host, srv_port)
+
+    for _ in range(5):
+        if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+            print(f"Server already running at {health_url}")
+            return None
+        time.sleep(0.2)
+
+    if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+        print(f"Server already running at {health_url}")
+        return None
+
+    config_path = Path(args.server_config)
+    if not config_path.is_absolute():
+        config_path = repo_root / config_path
+    print(f"Server not reachable. Starting local app with config: {config_path}")
+    proc = _start_local_server(config_path, repo_root)
+    deadline = time.monotonic() + args.server_start_timeout
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+                print(f"Detected existing healthy server after auto-start race at {health_url}")
+                return None
+            raise RuntimeError(f"Auto-started server exited early with code {proc.returncode}")
+        if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+            print(f"Server is now reachable at {health_url}")
+            return proc
+        time.sleep(0.3)
+    proc.terminate()
+    raise RuntimeError("Auto-started server did not become ready before timeout")

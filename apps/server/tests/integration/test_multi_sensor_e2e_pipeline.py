@@ -11,20 +11,23 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 from pypdf import PdfReader
+from test_support.speed import observed_speed
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.adapters.persistence.history_db import HistoryDB
-from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
-from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
-from vibesensor.domain import TireSpec
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.infra.processing import SignalProcessor
-from vibesensor.infra.runtime.registry import ClientRegistry
-from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.shared.constants.units import KMH_TO_MPS
-from vibesensor.use_cases.history.report_document import build_report_document
-from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
+from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.ingest.protocol_packing import pack_data, pack_hello
+from vibesensor.ingest.protocol_parsing import parse_hello
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording._recorder_types import RunRecorderConfig
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.pdf.pdf_engine import build_report_pdf
+from vibesensor.report.preparation import prepare_report_input
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
 
 _FRAME_N = 256
 _SAMPLE_RATE_HZ = 800
@@ -116,7 +119,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
             persist_history_db=True,
         ),
         registry=registry,
-        gps_monitor=gps_monitor,
+        gps_monitor=observed_speed(gps_monitor),
         processor=processor,
         history_db=history_db,
         language_reader=SimpleNamespace(language="en"),

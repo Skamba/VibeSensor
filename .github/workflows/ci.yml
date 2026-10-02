@@ -51,7 +51,7 @@ jobs:
             firmware:
               - 'firmware/**'
               - 'tools/firmware/**'
-              - 'apps/server/vibesensor/adapters/udp/protocol*.py'
+              - 'apps/server/vibesensor/ingest/protocol*.py'
               - '.github/actions/**'
               - '.github/workflows/ci.yml'
 

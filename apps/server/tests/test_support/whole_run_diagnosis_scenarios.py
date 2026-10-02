@@ -13,7 +13,7 @@ from test_support.whole_run_diagnosis_builder_primitives import (
     spatial_summary as _spatial_summary,
 )
 from test_support.whole_run_diagnosis_scenario_types import WholeRunDiagnosisScenario
-from vibesensor.domain import DrivingPhase
+from vibesensor.domain.driving_segment import DrivingPhase
 
 
 def whole_run_diagnosis_scenarios() -> tuple[WholeRunDiagnosisScenario, ...]:

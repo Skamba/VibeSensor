@@ -7,15 +7,11 @@ from datetime import UTC, datetime
 
 import pytest
 
-from vibesensor.domain import (
-    Measurement,
-    Run,
-    RunStatus,
-    VibrationReading,
-    transition_run,
-)
-from vibesensor.strength_bands import BANDS, bucket_for_strength
-from vibesensor.vibration_strength import (
+from vibesensor.domain.run import Run
+from vibesensor.domain.run_capture import Measurement, VibrationReading
+from vibesensor.domain.run_status import RunStatus, transition_run
+from vibesensor.dsp.strength_bands import BANDS, bucket_for_strength
+from vibesensor.dsp.vibration_strength import (
     compute_db,
     compute_db_or_none,
     vibration_strength_db_scalar,

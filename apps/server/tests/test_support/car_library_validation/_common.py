@@ -5,7 +5,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from vibesensor.domain import TireSpec, VehicleConfiguration
+from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
 AWD_BADGE_TOKENS = ("xdrive", "quattro", "4matic")
 RWD_BADGE_TOKENS = ("edrive",)
