@@ -261,8 +261,8 @@ Common runtime files under `apps/server/data/` include:
 - `clients.json`: persisted client metadata.
 
 Bundled static data ships under `apps/server/vibesensor/data/`, including
-`report_i18n.json`, `vehicle_configurations/**/*.json`, `car_sources/*.json`, and the
-scripted scenario resources.
+`report_i18n.json`, `vehicle_configurations/**/*.json`, and the scripted scenario
+resources.
 
 ## Pi deployment & service operations
 
@@ -412,13 +412,13 @@ Firmware update code lives under
 code lives under `apps/server/vibesensor/use_cases/updates/wifi/` and
 `apps/server/vibesensor/use_cases/updates/transport/`.
 
-- The updater now centralizes its real retry and polling loops on `tenacity`:
-  `wifi/wifi_uplink_setup.py` handles retryable SSID scan lag,
-  `wifi/wifi_hotspot_recovery.py` handles hotspot restore retries,
-  `transport/uplink_readiness.py` handles DNS readiness polling, and
-  `releases/release_validation.py` handles packaged smoke-server startup
-  polling. Backend restart scheduling in `job.py` stays custom because it is
-  a two-command fallback path, not a timed retry policy.
+- The updater's retry and polling loops are plain fixed-interval loops owned
+  by each step: `wifi/wifi_uplink_setup.py` retries SSID scan lag,
+  `wifi/wifi_hotspot_recovery.py` retries hotspot restore,
+  `transport/uplink_readiness.py` polls DNS readiness, and
+  `releases/release_validation.py` polls packaged smoke-server startup.
+  Backend restart scheduling in `job.py` is a two-command fallback path, not a
+  timed retry policy.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.

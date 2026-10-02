@@ -104,9 +104,6 @@ apps/ui/playwright-report/
 artifacts/**
 !artifacts/.gitkeep
 !artifacts/ai/.gitkeep
-!artifacts/fuzz/
-artifacts/fuzz/*
-!artifacts/fuzz/*.json
 
 # IDE / editor files
 .idea/

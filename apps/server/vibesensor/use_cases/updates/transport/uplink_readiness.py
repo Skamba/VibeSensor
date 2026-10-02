@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import TYPE_CHECKING
-
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_delay, wait_fixed
 
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
@@ -14,14 +13,6 @@ if TYPE_CHECKING:
     from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 __all__ = ["UpdateUplinkReadiness"]
-
-
-class _RetryableDnsNotReadyError(Exception):
-    __slots__ = ("detail",)
-
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
-        self.detail = detail
 
 
 class UpdateUplinkReadiness:
@@ -53,7 +44,6 @@ class UpdateUplinkReadiness:
             f"Validating {readiness_subject} internet/DNS readiness for at least "
             f"{int(self._config.dns_ready_min_wait_s)}s...",
         )
-        last_error = ""
         probe_cmd = [
             "python3",
             "-c",
@@ -63,34 +53,25 @@ class UpdateUplinkReadiness:
                 f"'{self._config.dns_probe_host}', 443, proto=socket.IPPROTO_TCP)"
             ),
         ]
-        try:
-            async for attempt in AsyncRetrying(
-                stop=stop_after_delay(self._config.dns_ready_min_wait_s),
-                wait=wait_fixed(self._config.dns_retry_interval_s),
-                retry=retry_if_exception_type(_RetryableDnsNotReadyError),
-                sleep=asyncio.sleep,
-                reraise=True,
-            ):
-                with attempt:
-                    probe_result = await self._commands.run(
-                        probe_cmd,
-                        phase=str(phase),
-                        timeout=5,
-                        sudo=False,
-                    )
-                    if probe_result.returncode == 0:
-                        self._status.log(
-                            f"DNS probe succeeded on attempt {attempt.retry_state.attempt_number}",
-                        )
-                        return
-                    last_error = (
-                        probe_result.stderr
-                        or probe_result.stdout
-                        or f"exit {probe_result.returncode}"
-                    ).strip()
-                    raise _RetryableDnsNotReadyError(last_error)
-        except _RetryableDnsNotReadyError as exc:
-            last_error = exc.detail
+        started = time.monotonic()
+        attempt_number = 0
+        while True:
+            attempt_number += 1
+            probe_result = await self._commands.run(
+                probe_cmd,
+                phase=str(phase),
+                timeout=5,
+                sudo=False,
+            )
+            if probe_result.returncode == 0:
+                self._status.log(f"DNS probe succeeded on attempt {attempt_number}")
+                return
+            last_error = (
+                probe_result.stderr or probe_result.stdout or f"exit {probe_result.returncode}"
+            ).strip()
+            if time.monotonic() - started >= self._config.dns_ready_min_wait_s:
+                break
+            await asyncio.sleep(self._config.dns_retry_interval_s)
         raise UpdateTransportStepError(
             phase=phase,
             message=failure_message,

@@ -23,7 +23,7 @@ from vibesensor.use_cases.updates.releases.release_validation import (
     validate_release_wheel_metadata,
 )
 
-_BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS = ("httpx", "msgspec", "pydantic", "tenacity")
+_BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS = ("httpx", "msgspec", "pydantic")
 
 
 def _firmware_manifest(

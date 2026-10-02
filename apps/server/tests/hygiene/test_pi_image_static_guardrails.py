@@ -97,10 +97,8 @@ def test_image_validation_accepts_wheel_static_data_and_rejects_source_tree(
         rootfs / "opt/VibeSensor/apps/server/.venv/lib/python3.13/site-packages/vibesensor/data"
     )
     (data_dir / "vehicle_configurations").mkdir(parents=True)
-    (data_dir / "car_sources").mkdir()
     (data_dir / "report_i18n.json").write_text("{}", encoding="utf-8")
     (data_dir / "vehicle_configurations/example.json").write_text("{}", encoding="utf-8")
-    (data_dir / "car_sources/example.json").write_text("{}", encoding="utf-8")
 
     result = _run_image_validation_script(f'assert_wheel_static_data_contract "{rootfs}"')
     assert result.returncode == 0

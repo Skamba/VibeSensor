@@ -14,7 +14,6 @@ from vibesensor.shared.boundaries.runs.log import (
 )
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.time_utils import (
     coerce_utc_offset_seconds,
     format_timestamp_in_recorded_timezone,
@@ -366,24 +365,6 @@ def test_create_run_metadata_basic_fields() -> None:
 def test_create_run_metadata_includes_firmware_version_when_provided() -> None:
     meta = _make_run_metadata(firmware_version="esp-fw-1.2.3")
     assert meta["firmware_version"] == "esp-fw-1.2.3"
-
-
-def test_bounded_sample_zero_max_items_raises() -> None:
-    """max_items=0 must raise ValueError (not ZeroDivisionError)."""
-    with pytest.raises(ValueError, match="max_items"):
-        bounded_sample(iter([{"x": 1}]), max_items=0)
-
-
-def test_bounded_sample_negative_max_items_raises() -> None:
-    """Negative max_items must raise ValueError."""
-    with pytest.raises(ValueError, match="max_items"):
-        bounded_sample(iter([{"x": 1}]), max_items=-5)
-
-
-def test_bounded_sample_zero_max_items_with_hint_raises() -> None:
-    """max_items=0 with a total_hint must raise before the ZeroDivisionError."""
-    with pytest.raises(ValueError, match="max_items"):
-        bounded_sample(iter([{"x": 1}]), max_items=0, total_hint=100)
 
 
 # ---------------------------------------------------------------------------

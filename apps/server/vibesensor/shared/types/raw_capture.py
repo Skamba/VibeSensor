@@ -312,12 +312,6 @@ class RawCaptureSensorClockSync:
     def verified(self) -> bool:
         return self.clock_domain == "server_monotonic" and self.proof_state == "verified"
 
-    @property
-    def sync_age_us(self) -> int | None:
-        if self.observed_monotonic_us is None or self.last_sync_monotonic_us is None:
-            return None
-        return max(0, self.observed_monotonic_us - self.last_sync_monotonic_us)
-
     def to_json_object(self) -> JsonObject:
         return _project_json_object(self, _RAW_CAPTURE_SENSOR_CLOCK_SYNC_JSON_FIELDS)
 
@@ -342,10 +336,6 @@ class RawCaptureSensorManifest:
     clock_sync: RawCaptureSensorClockSync | None = None
     declared_sample_rate_hz: int | None = None
     sample_rate_proof_state: RawCaptureSampleRateProofState = "declared_only"
-
-    @property
-    def sample_rate_observed(self) -> bool:
-        return self.sample_rate_proof_state == "observed_consistent"
 
     @property
     def sample_rate_unverified(self) -> bool:
@@ -483,20 +473,6 @@ class RawCaptureSensorRange:
         if self.samples_i16.ndim <= 0:
             return 0
         return int(self.samples_i16.shape[0])
-
-    @property
-    def requested_sample_end(self) -> int:
-        return self.requested_sample_start + self.requested_sample_count
-
-    @property
-    def returned_sample_end(self) -> int | None:
-        if self.returned_sample_start is None:
-            return None
-        return self.returned_sample_start + self.returned_sample_count
-
-    @property
-    def has_full_coverage(self) -> bool:
-        return self.coverage_state == "full"
 
 
 @dataclass(frozen=True, slots=True)

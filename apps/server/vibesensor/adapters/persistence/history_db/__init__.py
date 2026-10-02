@@ -34,7 +34,6 @@ __all__ = [
     "SQLiteHistoryEngine",
     "SettingsSnapshotRepository",
     "create_history_persistence_adapters",
-    "create_history_persistence_adapters_async",
 ]
 
 LOGGER = logging.getLogger(__name__)
@@ -107,19 +106,4 @@ def create_history_persistence_adapters(
         engine_failure_reporter=engine_failure_reporter,
     )
     history.lifecycle.open()
-    return history
-
-
-async def create_history_persistence_adapters_async(
-    db_path: Path,
-    *,
-    corruption_reporter: Callable[[str], None] | None = None,
-    engine_failure_reporter: Callable[[str, str], None] | None = None,
-) -> HistoryPersistenceAdapters:
-    history = _build_history_persistence_adapters(
-        db_path,
-        corruption_reporter=corruption_reporter,
-        engine_failure_reporter=engine_failure_reporter,
-    )
-    await history.aopen()
     return history

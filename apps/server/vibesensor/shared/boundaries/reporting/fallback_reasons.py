@@ -15,7 +15,6 @@ __all__ = [
     "dedupe_report_fallback_reasons",
     "derive_report_fallback_reasons",
     "finalization_stage_fallback_reasons",
-    "normalize_report_fallback_reasons",
 ]
 
 REPORT_FALLBACK_REASONS_METADATA_KEY = "fallback_reasons"
@@ -53,16 +52,6 @@ REPORT_FALLBACK_REASON_VALUES: frozenset[ReportFallbackReason] = frozenset(
         "whole_run_evidence_incomplete",
     }
 )
-
-
-def normalize_report_fallback_reasons(raw_reasons: object) -> tuple[ReportFallbackReason, ...]:
-    if not isinstance(raw_reasons, list | tuple):
-        return ()
-    return dedupe_report_fallback_reasons(
-        reason
-        for raw_reason in raw_reasons
-        if (reason := text_or_none(raw_reason)) in REPORT_FALLBACK_REASON_VALUES
-    )
 
 
 def dedupe_report_fallback_reasons(

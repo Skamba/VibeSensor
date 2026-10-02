@@ -38,8 +38,7 @@
     "test:visual:audit:update": "npx playwright test --config=playwright.visual-audit.config.ts --update-snapshots",
     "screenshot": "node take-screenshot.mjs",
     "snapshot:update": "node update-snapshots.mjs",
-    "analyze": "vite build --mode analyze",
-    "wiki:screenshots": "node update-wiki-screenshots.mjs"
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@preact/signals": "^2.11.0",

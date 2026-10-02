@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.adapters.pdf.pdf_drawing import _strength_with_peak
 from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
 from vibesensor.shared.report_presentation import strength_text
 from vibesensor.use_cases.history.report_document import build_report_document
@@ -29,17 +28,6 @@ def test_strength_text_value_with_peak_amp() -> None:
     assert "Moderate" in txt
     assert "22.0 dB" in txt
     assert " g" not in txt
-
-
-def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
-    # Label already contains "dB" → peak suffix should NOT be appended (avoids duplication)
-    assert _strength_with_peak("Moderate (22.0 dB)", 0.032, fallback="N/A") == "Moderate (22.0 dB)"
-    assert (
-        _strength_with_peak("Moderate (22.0 dB · 0.0 dB peak)", 0.032, fallback="N/A")
-        == "Moderate (22.0 dB · 0.0 dB peak)"
-    )
-    # Label without "dB" → peak suffix should be appended
-    assert _strength_with_peak("Moderate", 15.3, fallback="N/A") == "Moderate · 15.3 dB peak"
 
 
 @pytest.mark.parametrize(

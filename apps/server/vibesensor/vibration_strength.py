@@ -426,18 +426,6 @@ def _peak_band_index_ranges_aligned(
     return left_bounds, right_bounds
 
 
-def _peak_band_rms_amp_g_from_bounds(
-    *,
-    combined_spectrum_amp_g: npt.NDArray[np.float64],
-    start_idx: int,
-    stop_idx: int,
-) -> float:
-    band = combined_spectrum_amp_g[start_idx:stop_idx]
-    if band.size == 0:
-        return 0.0
-    return float(np.sqrt(np.mean(np.square(band, dtype=np.float64))))
-
-
 def _peak_band_rms_amp_g_from_ranges(
     *,
     combined_spectrum_amp_g: npt.NDArray[np.float64],

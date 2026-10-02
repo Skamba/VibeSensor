@@ -30,7 +30,6 @@ __all__ = [
     "PersistenceError",
     "ProcessingError",
     "ProtocolError",
-    "UpdateCancelledError",
     "UpdateCleanupError",
     "UpdatePreparationError",
     "UpdateReleaseError",
@@ -94,18 +93,6 @@ class UpdateTransportError(UpdateError):
 
 class UpdateReleaseError(UpdateError):
     """Release discovery, staging, or installation failed."""
-
-
-class UpdateCancelledError(UpdateError):
-    """Update execution was cancelled intentionally."""
-
-    def __init__(self, message: str = "Update was cancelled") -> None:
-        super().__init__(
-            message,
-            status="cancelled",
-            phase="cancelled",
-            log_message="Update cancelled",
-        )
 
 
 class RunNotFoundError(VibeSensorError):

@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 import re
 
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_fixed
-
 from vibesensor.use_cases.updates.models import UpdatePhase
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
@@ -12,22 +10,6 @@ from vibesensor.use_cases.updates.transport.failures import UpdateTransportStepE
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
-
-
-class _RetryableSsidNotFoundError(Exception):
-    __slots__ = ("detail",)
-
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
-        self.detail = detail
-
-
-class _NonRetryableUplinkConnectError(Exception):
-    __slots__ = ("detail",)
-
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
-        self.detail = detail
 
 
 def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
@@ -84,46 +66,35 @@ class UpdateUplinkProvisioner:
         """Bring the prepared uplink connection up, retrying on scan lag."""
 
         detail = ""
-        try:
-            async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(self._config.uplink_connect_retries),
-                wait=wait_fixed(self._config.uplink_rescan_delay_s),
-                retry=retry_if_exception_type(_RetryableSsidNotFoundError),
-                sleep=asyncio.sleep,
-                reraise=True,
-            ):
-                with attempt:
-                    connect_result = await self._commands.run(
-                        [
-                            "nmcli",
-                            "--wait",
-                            str(self._config.uplink_connect_wait_s),
-                            "connection",
-                            "up",
-                            self._config.uplink_connection_name,
-                        ],
-                        phase="connecting_wifi",
-                        timeout=float(self._config.uplink_connect_wait_s + 10),
-                        sudo=True,
-                    )
-                    if connect_result.returncode == 0:
-                        return
-                    detail = connect_result.stderr or ""
-                    attempt_number = attempt.retry_state.attempt_number
-                    if "No network with SSID" not in detail:
-                        raise _NonRetryableUplinkConnectError(detail)
-                    if attempt_number < self._config.uplink_connect_retries:
-                        self._status.log(
-                            "SSID "
-                            f"'{ssid}' not found on connect attempt {attempt_number}; "
-                            "rescanning and retrying",
-                        )
-                        await self._rescan_wifi_networks()
-                    raise _RetryableSsidNotFoundError(detail)
-        except _RetryableSsidNotFoundError as exc:
-            detail = exc.detail
-        except _NonRetryableUplinkConnectError as exc:
-            detail = exc.detail
+        max_attempts = max(1, self._config.uplink_connect_retries)
+        for attempt_number in range(1, max_attempts + 1):
+            if attempt_number > 1:
+                await asyncio.sleep(self._config.uplink_rescan_delay_s)
+            connect_result = await self._commands.run(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(self._config.uplink_connect_wait_s),
+                    "connection",
+                    "up",
+                    self._config.uplink_connection_name,
+                ],
+                phase="connecting_wifi",
+                timeout=float(self._config.uplink_connect_wait_s + 10),
+                sudo=True,
+            )
+            if connect_result.returncode == 0:
+                return
+            detail = connect_result.stderr or ""
+            if "No network with SSID" not in detail:
+                break
+            if attempt_number < max_attempts:
+                self._status.log(
+                    "SSID "
+                    f"'{ssid}' not found on connect attempt {attempt_number}; "
+                    "rescanning and retrying",
+                )
+                await self._rescan_wifi_networks()
         raise UpdateTransportStepError(
             phase=UpdatePhase.connecting_wifi,
             message=f"Failed to connect to Wi-Fi '{ssid}'",

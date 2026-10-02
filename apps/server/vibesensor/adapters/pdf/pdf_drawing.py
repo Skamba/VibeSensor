@@ -38,22 +38,6 @@ def _safe(v: str | None, fallback: str = "\u2014") -> str:
     return fallback
 
 
-def _strength_with_peak(
-    strength_label: str | None,
-    peak_db: float | None,
-    *,
-    fallback: str,
-    peak_suffix: str = "peak",
-) -> str:
-    """Format a strength label with an optional peak dB suffix."""
-    base = _safe(strength_label, fallback)
-    if peak_db is None:
-        return base
-    if "db" in base.casefold():
-        return base
-    return f"{base} \u00b7 {peak_db:.1f} dB {peak_suffix}"
-
-
 def _draw_panel(
     c: Canvas,
     x: float,
@@ -74,16 +58,6 @@ def _draw_panel(
         c.drawString(x + 4 * mm, y + h - 5.5 * mm, title)
 
 
-def _cert_display(label: str | None, pct: str | None, fallback: str) -> str:
-    """Format a certainty label with optional percentage."""
-    if not label or not label.strip():
-        return fallback
-    value = label.strip()
-    if pct:
-        value = f"{value} ({pct})"
-    return value
-
-
 def _draw_footer(c: Canvas, page_num: int, total: int, footer_title: str | None) -> None:
     """Draw the report footer with production-facing title and page counter."""
     y = MARGIN - 4 * mm
@@ -92,8 +66,3 @@ def _draw_footer(c: Canvas, page_num: int, total: int, footer_title: str | None)
     if footer_title:
         c.drawString(MARGIN, y, footer_title)
     c.drawRightString(PAGE_W - MARGIN, y, f"{page_num} / {total}")
-
-
-def _norm(v: object) -> str:
-    """Normalise *v* to a lowercase stripped string."""
-    return str(v or "").strip().lower()

@@ -136,73 +136,18 @@ summaries to the persisted analysis.
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
 | 1 | Validation | `_validate_required_strength_metrics` | `run_analysis.py` | Validate samples contain required strength metrics |
-| 2 | Context decode | `build_diagnostics_context` | `_context_decode.py`, `_context.py` | Decode raw metadata once into the canonical typed `DiagnosticsContext` |
+| 2 | Context preparation | `prepare_analysis_context` | `prepared_analysis_context.py` | Assemble the canonical typed `PreparedAnalysisContext` (sensor analysis, run suitability) from run metadata and prepared run data |
 | 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, `_sample_metrics.py` | Extract timing, speed stats, phase segmentation, and speed context |
 | 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
 | 5 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
-| 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `_summary_steps`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
+| 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `findings_bundle.py`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
 | 7 | Origin & test plan | `summarize_origin`, `build_phase_timeline` | `run_analysis.py`, run_data_preparation | Determine most likely vibration source, generate timeline |
 | 8 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
-| 9 | Run suitability | `build_run_suitability_bundle`, `compute_reference_completeness` | `_summary_steps`, statistics | Check reference completeness plus data-quality and run-condition checks |
+| 9 | Run suitability | `RunSuitability.evaluate` | `prepared_analysis_context.py`, `domain/run_suitability.py` | Check reference completeness plus data-quality and run-condition checks |
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 11 | App-result construction | `build_analysis_result` | `_summary_result` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
-| 12 | Plot generation | `_plot_data`, `top_peaks_table_rows` | `_summary_result`, plots, `peaks/table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
+| 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
+| 12 | Plot generation | `_plot_data`, `top_peaks_table_rows` | plots, `peaks/table.py` | Build time/speed series, FFT aggregation, spectrograms, and peak table rows as diagnostics-local value objects |
 | 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `shared/boundaries/analysis_payloads/summary.py`, `adapters/analysis_summary.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
-
-## Module Responsibilities
-
-| Module | LOC | Responsibility |
-|--------|-----|---------------|
-| `__init__.py` | ~5 | Package marker only; callers import canonical diagnostics owners directly |
-| `_context.py` | ~150 | `DiagnosticsContext`: typed run context container with effective reference helpers |
-| `_context_decode.py` | ~120 | Raw metadata → `DiagnosticsContext` decoding via `build_diagnostics_context()` |
-| `_context_projection.py` | ~80 | Projection helpers that rehydrate metadata, car, symptom, and configuration snapshots from `DiagnosticsContext` |
-| `_analysis_models.py` | ~80 | Typed request and bundle dataclasses shared across findings and result assembly |
-| `_types.py` | ~150 | Diagnostics-local aliases and value objects (`AccelStatistics`, speed/phase breakdown rows, plot bundles, peak rows, spectrogram data) |
-| `run_analysis.py` | ~130 | Public typed entrypoint: `RunAnalysis` (context → findings bundle → result), raw-boundary findings helper, and language normalization |
-| `_summary_steps.py` | ~150 | Findings, sensor, and suitability step builders consumed by `RunAnalysis` |
-| `_summary_result.py` | ~200 | `AnalysisResult` plus final `TestRun` / `DiagnosticCase` / diagnostics-local artifact assembly |
-| `run_data_preparation.py` | ~200 | Shared run timing/speed/phase/sensor preparation: `PreparedRunData`, `prepare_run_data`, phase timeline helpers |
-| `findings.py` | ~150 | Top-level finding orchestration and finalization around order + persistent-peak helpers |
-| `_validation.py` | ~30 | Diagnostics input validation for required strength metrics |
-| `_sample_metrics.py` | ~80 | Shared run/sample strength helpers, baseline-floor policy, and sensor-limit helpers |
-| `_reference_resolution.py` | ~80 | Engine/tire/reference resolution helpers reused by order analysis |
-| `_sensor_locations.py` | ~80 | Stable sensor-location labels and connected-throughout-run detection |
-| `_run_loader.py` | ~20 | JSONL run loader used by analysis/report adapters |
-| `whole_run_spectra.py` | ~900 | Active sidecar spectral executor over bounded raw range reads; emits dense spectra and compact spectral summaries |
-| `whole_run_context.py` | ~400 | Active sidecar context timeline and compact context intervals on the whole-run window grid |
-| `whole_run_spatial_coherence.py` | ~450 | Active candidate-level spatial evidence sidecars and compact spatial summaries |
-| `_counters.py` | ~20 | Shared `counter_delta()` helper used by diagnostics/runtime tests |
-| `_reference_findings.py` | ~100 | Reference-gap checks and engine/wheel/sample-rate sufficiency helpers |
-| `orders/pipeline.py` | ~250 | Order-finding orchestration: `OrderAnalysisSession`, `OrderAnalysisRequest`, multi-location split, and `_build_order_findings()` |
-| `orders/matching.py` | ~200 | Order-tracking hypothesis/sample matching plus the stable `OrderMatchAccumulator` contract |
-| `orders/match_rate.py` | ~50 | Focused speed-band and per-location match-rate rescue policy |
-| `orders/scoring.py` | ~200 | Confidence/ranking assembly plus location-summary coordination for matched order hypotheses |
-| `orders/finding_builder.py` | ~120 | Final `DomainFinding` construction and evidence projection for scored order findings |
-| `orders/statistics.py` | ~260 | Order evidence aggregation plus typed confidence calibration settings |
-| `orders/heuristics.py` | ~150 | Diffuse-excitation, localization-override, and engine-alias heuristics |
-| `orders/settings.py` | ~80 | Typed frozen tuning collections used by order scoring and heuristics |
-| `orders/whole_run_traces.py` | ~350 | Active dense order-trace sidecar generation from spectral summaries plus context labels |
-| `orders/whole_run_scoring.py` | ~600 | Active compact lock/stability scoring over dense order traces |
-| `orders/whole_run_family_summaries.py` | ~600 | Active family-level support intervals and phase summaries from scored order traces |
-| `peaks/findings.py` | ~200 | Persistent-peak support: `PeakFindingAnalyzer`, phase filtering, and duplicate suppression |
-| `peaks/accumulation.py` | ~100 | Raw peak-bin accumulation across samples |
-| `peaks/classification.py` | ~60 | Peak classification policy backed by typed settings |
-| `peaks/scoring.py` | ~180 | Peak-bin scoring, confidence, and ranking state |
-| `peaks/finding_builder.py` | ~60 | Final `DomainFinding` projection for scored peak bins |
-| `peaks/statistics.py` | ~90 | Shared peak distribution, uniformity, and persistence-score statistics |
-| `peaks/settings.py` | ~80 | Typed frozen tuning collections for peak classification and confidence |
-| `signal_aggregation.py` | ~250 | Speed/location aggregation helpers |
-| `phase_segmentation.py` | ~300 | Driving-phase classification (IDLE → COAST_DOWN) |
-| `location_analysis.py` | ~300 | Per-sensor-location vibration intensity and spatial analysis |
-| `top_cause_selection.py` | ~80 | Phase-adjusted finding ranking and grouping |
-| `shared/order_bands.py` | ~150 | Shared tire/driveline order-frequency band computation for diagnostics and live telemetry |
-| `math_utils.py` | ~100 | Generic statistics and correlation helpers reused across diagnostics modules |
-| `speed_profile_helpers.py` | ~150 | Speed-profile construction and phase/speed summary helpers |
-| `plots.py` | ~300 | Chart data shaping orchestration over diagnostics-local value objects: time-series extraction plus FFT/spectrogram assembly |
-| `adapters/analysis_summary.py` | ~60 | Edge-facing wrappers (`summarize_run_data()`, `summarize_log()`) that call diagnostics and then serialize the result |
-| `shared/boundaries/analysis_payloads/summary.py` | ~120 | Pure boundary serializer from app-level `AnalysisResult` to persisted `AnalysisSummary` |
-| `shared/boundaries/summary_serialization/` | ~350 | Low-level serialization seam package from domain/app diagnostics value objects to persisted `AnalysisSummary` payload fragments (`_contracts.py`, `_findings.py`, `_plots.py`, `_summary.py`) |
 
 ## Data Flow
 
@@ -233,15 +178,15 @@ Compact-analysis/report summary flow:
 ```text
 Input: PostAnalysisRunInput + optional whole-run stage output
   │
-  ├─ _context_decode.build_diagnostics_context() → typed diagnostics context
-  │
-  ├─ _types.normalize_analysis_samples() → raw rows + typed AnalysisSample objects
+  ├─ _run_input.build_diagnostics_run_input() → typed metadata + samples
   │
   ├─ run_data_preparation.prepare_run_data() → PreparedRunData
   │    ├─ timing, speed stats, noise baseline
   │    └─ phase_segmentation → phases + phase summaries
   │
-  ├─ _summary_steps.build_findings_bundle()
+  ├─ prepared_analysis_context.prepare_analysis_context() → PreparedAnalysisContext
+  │
+  ├─ findings_bundle.build_findings_bundle()
   │    ├─ FindingsBuildRequest / FindingsBundle → typed orchestration contracts
   │    ├─ peaks.findings.PeakFindingAnalyzer → peak-based findings
   │    ├─ orders.pipeline.OrderAnalysisSession → order-matched findings
@@ -249,9 +194,9 @@ Input: PostAnalysisRunInput + optional whole-run stage output
   │    ├─ finalize_findings() → enriched domain Finding objects
   │    └─ select_top_causes() → ranked top causes
   │
-  ├─ _summary_result.build_analysis_result() → AnalysisResult/TestRun/DiagnosticCase
+  ├─ _analysis_result_builder.build_analysis_result() → AnalysisResult/TestRun/DiagnosticCase
   │
-  ├─ _summary_result._plot_data() → diagnostics-local PlotDataResultData
+  ├─ plots._plot_data() → diagnostics-local PlotDataResultData
   │    └─ serialize_plot_data() → persisted chart payload + labeled peak table
   │
   ├─ post_analysis_executor.append_whole_run_*() → compact persisted summaries

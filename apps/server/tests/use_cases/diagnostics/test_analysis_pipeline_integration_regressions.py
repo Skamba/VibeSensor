@@ -21,7 +21,6 @@ from vibesensor.shared.boundaries.reporting.preparation import prepare_report_in
 from vibesensor.shared.boundaries.runs.log import normalize_sample_record
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_to_json_object
-from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.history.report_document import build_report_document
 from vibesensor.use_cases.run import RunRecorder, RunRecorderConfig
@@ -90,41 +89,6 @@ def _summarize(**overrides: Any) -> dict[str, Any]:
     meta = kw.pop("metadata", _simple_metadata())
     samples = kw.pop("samples", _simple_samples())
     return summarize_run_data(meta, samples, **kw)
-
-
-# ---------------------------------------------------------------------------
-# Fix 1: bounded_sample extracted to runlog.py
-# ---------------------------------------------------------------------------
-
-
-class TestBoundedSample:
-    """Fix 1: The canonical bounded_sample lives in runlog, not duplicated."""
-
-    @pytest.mark.parametrize(
-        ("n", "max_items", "total_hint", "expect_total", "expect_max_len"),
-        [
-            pytest.param(100, 20, None, 100, 20, id="downsampling"),
-            pytest.param(5, 100, None, 5, 5, id="below-limit"),
-            pytest.param(1000, 50, 1000, 1000, 50, id="total-hint"),
-            pytest.param(0, 10, None, 0, 0, id="empty"),
-        ],
-    )
-    def test_bounded_sample(
-        self,
-        n: int,
-        max_items: int,
-        total_hint: int | None,
-        expect_total: int,
-        expect_max_len: int,
-    ) -> None:
-        items = [{"i": i} for i in range(n)]
-        kwargs: dict[str, Any] = {"max_items": max_items}
-        if total_hint is not None:
-            kwargs["total_hint"] = total_hint
-        kept, total, stride = bounded_sample(iter(items), **kwargs)
-        assert total == expect_total
-        assert len(kept) <= expect_max_len
-        assert stride >= 1
 
 
 # ---------------------------------------------------------------------------

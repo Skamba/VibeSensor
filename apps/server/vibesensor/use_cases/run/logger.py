@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Mapping
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -65,7 +64,6 @@ if TYPE_CHECKING:
     from vibesensor.shared.types.health_snapshot import RunRecorderHealthSnapshot
     from vibesensor.shared.types.raw_capture import RawCaptureManifest
     from vibesensor.shared.types.run_schema import RunSensorMetadata
-    from vibesensor.shared.types.sensor_config import SensorConfigPayload
     from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot
 
 LOGGER = logging.getLogger(__name__)
@@ -224,30 +222,8 @@ class RunRecorder:
     def _run_context_snapshot(self, run_id: str | None = None) -> RunContextSnapshot:
         return self._recording_session.run_context_snapshot(run_id)
 
-    def _recording_analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
-        return self._recording_session.recording_analysis_settings_snapshot()
-
     def _run_sensor_snapshots_for_run(self, run_id: str) -> tuple[RunSensorMetadata, ...]:
         return self._recording_session.run_sensor_snapshots_for_run(run_id)
-
-    def _resolve_run_sensor_presentation(
-        self,
-        *,
-        client_id: str,
-        fallback_name: str,
-        fallback_location_code: str,
-        sample_rate_hz: int | None,
-        firmware_version: str | None,
-        sensors_by_mac: Mapping[str, SensorConfigPayload],
-    ) -> tuple[str, str]:
-        return self._recording_session.resolve_run_sensor_presentation(
-            client_id=client_id,
-            fallback_name=fallback_name,
-            fallback_location_code=fallback_location_code,
-            sample_rate_hz=sample_rate_hz,
-            firmware_version=firmware_version,
-            sensors_by_mac=sensors_by_mac,
-        )
 
     def _session_snapshot(self) -> ActiveRunSnapshot | None:
         with self._lock:

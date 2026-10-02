@@ -108,23 +108,6 @@ class TestBucketVsLabelInconsistency:
         assert label_key == "negligible", f"strength_label({db_value}) returns {label_key}"
 
 
-class TestBoundedSampleNoHint:
-    """Demonstrate the reactive doubling behavior without total_hint."""
-
-    def test_reactive_doubling_wastes_work(self):
-        from vibesensor.shared.sampling import bounded_sample
-
-        items = [{"v": i} for i in range(200)]
-        # Without total_hint: starts with stride=1, collects all until overflow
-        kept_no_hint, total, stride = bounded_sample(iter(items), max_items=50)
-        # With total_hint: computes stride upfront
-        kept_with_hint, total2, stride2 = bounded_sample(iter(items), max_items=50, total_hint=200)
-        # Without hint, stride grows reactively via doubling
-        assert stride >= 2, "Reactive doubling should have kicked in"
-        # With hint, stride is computed upfront (200//50 = 4)
-        assert stride2 == 4, "Upfront stride should be 4"
-
-
 class TestCombinedSpectrumInheritsZeroedBin:
     """Combined spectrum inherits the zeroed bin from amp_for_peaks."""
 
