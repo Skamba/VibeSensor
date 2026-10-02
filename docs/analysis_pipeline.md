@@ -20,7 +20,7 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
    `vibesensor.use_cases.diagnostics`: `RunAnalysis`, `AnalysisResult`,
    `build_findings_for_samples()`, `build_order_bands()`, `vehicle_orders_hz()`.
    Serialized `AnalysisSummary` helpers live outside the diagnostics package.
-5. **Renderer-only report package** — `vibesensor.adapters.pdf` must not
+5. **Renderer-only report package** — `vibesensor.report.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
    (`apps/server/vibesensor/infra/processing/`) must not import from

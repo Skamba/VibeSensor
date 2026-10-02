@@ -99,7 +99,7 @@ below.
   `PersistedAnalysis`.
 - Report preparation in `apps/server/vibesensor/shared/boundaries/reporting/`
   does not re-run diagnostics; it interprets persisted analysis only.
-- `apps/server/vibesensor/use_cases/history/report_document/` composes the final
+- `apps/server/vibesensor/report/document/` composes the final
   `ReportDocument`, and `adapters/pdf` only renders it.
 
 ## Remaining debt
@@ -366,7 +366,7 @@ renderer-only prose. The canonical owner is the combination of:
   for compact persisted diagnosis rows
 - `AnalysisSummary` in `apps/server/vibesensor/shared/types/history_analysis_contracts.py`,
   which embeds those rows in the outward history/report/schema contract
-- `apps/server/vibesensor/shared/boundaries/reporting/confidence_facts.py` for
+- `apps/server/vibesensor/report/confidence_facts.py` for
   the projection from the existing report-confidence thresholds and score deltas
   into stable factor rows
 
@@ -422,7 +422,7 @@ Its first job is to join persisted `OrderTraceSummary`,
 `SpatialEvidenceSummary`, and `WholeRunContextInterval` rows by candidate key
 and segment context, then feed normalized signal inputs through the shared
 non-fallback scorer in
-`apps/server/vibesensor/shared/boundaries/reporting/confidence_facts.py`. That
+`apps/server/vibesensor/report/confidence_facts.py`. That
 keeps whole-run ranking and the current report-confidence caveat language on one
 scoring path instead of creating a second threshold table.
 
@@ -539,7 +539,7 @@ Keep these sequential:
 - `apps/server/tests/use_cases/run/test_post_analysis_loader.py`
 - `apps/server/tests/use_cases/diagnostics/test_phase_segmentation.py`
 - `apps/server/tests/use_cases/diagnostics/test_analysis_pipeline_integration_regressions.py`
-- `apps/server/tests/use_cases/history/test_report_confidence_facts.py`
+- `apps/server/tests/report/test_report_confidence_facts.py`
 - report separation guardrails in the PDF/history test suites
 
 ### Add new coverage
@@ -580,7 +580,7 @@ Add opt-in benchmarks for:
   boundary should synthesize exactly one fallback diagnosis row from the current
   summary-era primary candidate plus report confidence/evidence facts instead of
   pretending full whole-run fusion ran. The owner for that synthesis should stay
-  in `apps/server/vibesensor/shared/boundaries/reporting/facts.py`, reusing
+  in `apps/server/vibesensor/report/facts.py`, reusing
   `confidence_facts.py` and carrying an explicit `fallback_reason` that
   distinguishes summary-only legacy replay from raw-backed partial-artifact
   replay.

@@ -4,7 +4,8 @@ from test_support.findings import make_finding_payload
 from test_support.raw_capture_assertions import warning_codes
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.shared.boundaries.reporting.preparation import prepare_persisted_report_input
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
@@ -14,7 +15,6 @@ from vibesensor.shared.run_context_warning import (
     WARNING_CODE_WHOLE_RUN_ALIGNMENT_INCOMPLETE,
 )
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.report_document.builder import build_report_document
 
 
 def test_prepare_persisted_report_input_surfaces_partial_raw_replay_honestly() -> None:

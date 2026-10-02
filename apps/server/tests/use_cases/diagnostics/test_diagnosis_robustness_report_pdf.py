@@ -13,8 +13,8 @@ from test_support import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document.builder import build_report_document
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.preparation import prepare_report_input
 
 
 class TestPdfContentForDiagnosedScenario:
@@ -40,7 +40,7 @@ class TestPdfContentForDiagnosedScenario:
                     ),
                 )
 
-        from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+        from vibesensor.report.pdf.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="en"),
@@ -80,7 +80,7 @@ class TestPdfContentForDiagnosedScenario:
                     ),
                 )
 
-        from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
+        from vibesensor.report.pdf.pdf_engine import build_report_pdf
 
         summary = summarize_run_data(
             standard_metadata(language="nl"),

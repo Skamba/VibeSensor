@@ -40,7 +40,7 @@ def _report_summary(
 def test_prepared_report_input_has_domain_aggregate() -> None:
     """Prepared report inputs must carry the reconstructed domain aggregate."""
     from vibesensor.domain.test_run import TestRun
-    from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
+    from vibesensor.report.preparation import prepare_report_input
 
     summary = _report_summary(run_id="test-context")
     prepared = prepare_report_input(summary)
@@ -55,11 +55,11 @@ def test_build_system_cards_uses_domain_findings() -> None:
     from vibesensor.domain.finding import Finding
     from vibesensor.domain.run_capture import RunCapture
     from vibesensor.domain.test_run import TestRun
-    from vibesensor.report_i18n import tr
-    from vibesensor.use_cases.history.report_document._candidate_resolver import (
+    from vibesensor.report.document._candidate_resolver import (
         PrimaryCandidateContext,
     )
-    from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+    from vibesensor.report.document._card_builder import build_system_cards
+    from vibesensor.report.i18n import tr
 
     lang = "en"
     domain_f = Finding(
@@ -100,8 +100,8 @@ def test_build_system_cards_uses_domain_findings() -> None:
 
 def test_build_report_document_produces_report_with_domain_findings() -> None:
     """build_report_document must produce report data using domain-first pipeline."""
-    from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-    from vibesensor.use_cases.history.report_document.builder import build_report_document
+    from vibesensor.report.document.builder import build_report_document
+    from vibesensor.report.preparation import prepare_report_input
 
     summary = _report_summary(
         run_id="test-map",
@@ -120,11 +120,11 @@ def test_build_report_document_produces_report_with_domain_findings() -> None:
 def test_report_mapping_business_functions_use_domain_objects() -> None:
     """Primary-candidate resolution must derive values from the domain aggregate."""
     from vibesensor.domain.finding_types import VibrationSource
-    from vibesensor.report_i18n import tr
-    from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-    from vibesensor.use_cases.history.report_document._candidate_resolver import (
+    from vibesensor.report.document._candidate_resolver import (
         resolve_primary_report_candidate,
     )
+    from vibesensor.report.i18n import tr
+    from vibesensor.report.preparation import prepare_report_input
 
     lang = "en"
     finding = make_finding_payload(
@@ -152,7 +152,7 @@ def test_report_mapping_business_functions_use_domain_objects() -> None:
 
 def test_prepared_report_input_exposes_canonical_summary_boundary() -> None:
     """Prepared report inputs must expose explicit typed fields instead of raw dict state."""
-    from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
+    from vibesensor.report.preparation import prepare_report_input
 
     prepared = prepare_report_input(_report_summary(run_id="guardrails"), filename="guard.pdf")
 
@@ -166,7 +166,7 @@ def test_next_steps_consume_prepared_actions() -> None:
     """``build_next_steps`` must accept prepared actions, not summary dicts."""
     from inspect import signature
 
-    from vibesensor.use_cases.history.report_document.report_sections import build_next_steps
+    from vibesensor.report.document.report_sections import build_next_steps
 
     params = signature(build_next_steps).parameters
     assert "recommended_actions" in params
@@ -175,7 +175,7 @@ def test_next_steps_consume_prepared_actions() -> None:
 
 
 def test_reporting_document_boundary_exposes_document_models_only() -> None:
-    from vibesensor.shared.boundaries.reporting import document as document_boundary
+    from vibesensor.report import model as document_boundary
 
     assert not hasattr(document_boundary, "build_report_from_summary")
 
@@ -183,9 +183,9 @@ def test_reporting_document_boundary_exposes_document_models_only() -> None:
 def test_report_facts_hold_canonical_document_sections_without_builder_shims() -> None:
     from dataclasses import fields
 
-    from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
-    from vibesensor.shared.boundaries.reporting.facts import PreparedReportFacts
-    from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+    from vibesensor.report.facts import PreparedReportFacts
+    from vibesensor.report.input import PreparedReportInput
+    from vibesensor.report.model.document import ReportDocument
 
     fact_fields = {field.name for field in fields(PreparedReportFacts)}
     assert "verdict_page" not in fact_fields

@@ -6,8 +6,8 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.test_run import TestRun
-from vibesensor.shared.boundaries.reporting.projection import resolve_primary_report_facts
-from vibesensor.shared.boundaries.reporting.sensor_facts import sensor_fallback_strength_db
+from vibesensor.report.projection import resolve_primary_report_facts
+from vibesensor.report.sensor_facts import sensor_fallback_strength_db
 
 
 def _make_test_run(

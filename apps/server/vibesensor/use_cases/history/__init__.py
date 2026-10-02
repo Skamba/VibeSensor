@@ -3,9 +3,9 @@
 Sub-modules
 -----------
 - :mod:`~vibesensor.use_cases.history.runs` — run query and delete services.
-- :mod:`~vibesensor.use_cases.history.report_loader` — persisted report loading and shaping.
-- :mod:`~vibesensor.use_cases.history.report_cache` — in-memory PDF cache coordination.
-- :mod:`~vibesensor.use_cases.history.report_document` — canonical report document assembly.
-- :mod:`~vibesensor.use_cases.history.reports` — thin PDF report coordinator service.
+- :mod:`~vibesensor.report.loader` — persisted report loading and shaping.
+- :mod:`~vibesensor.report.cache` — in-memory PDF cache coordination.
+- :mod:`~vibesensor.report.document` — canonical report document assembly.
+- :mod:`~vibesensor.report.service` — thin PDF report coordinator service.
 - :mod:`~vibesensor.use_cases.history.exports` — CSV/ZIP export service.
 """

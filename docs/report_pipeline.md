@@ -12,7 +12,7 @@ The report generation pipeline has two distinct phases:
 2. **History request loading + reporting-boundary preparation + rendering**
       (`vibesensor.use_cases.history` →
       `vibesensor.shared.boundaries.reporting` →
-      `vibesensor.adapters.pdf`) — loads the persisted analysis object, shapes
+      `vibesensor.report.pdf`) — loads the persisted analysis object, shapes
       runtime warnings and cache metadata, prepares one explicit
      `PreparedReportInput` with an authoritative reconstructed domain aggregate
      plus precomputed semantic report facts, builds one canonical
@@ -39,13 +39,13 @@ Recording stops
       → store_analysis() [vibesensor.adapters.persistence.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
-  → HistoryReportService.build_pdf() [vibesensor.use_cases.history.reports]
-    → HistoryReportRequestLoader.load_report_request() [vibesensor.use_cases.history.report_loader]
-    → prepare_report_input() [vibesensor.shared.boundaries.reporting.preparation]
+  → HistoryReportService.build_pdf() [vibesensor.report.service]
+    → HistoryReportRequestLoader.load_report_request() [vibesensor.report.loader]
+    → prepare_report_input() [vibesensor.report.preparation]
     → _build_prepared_pdf_bytes() [vibesensor.app.composition.history]
-      → build_prepared_report_pdf(prepared_input) [vibesensor.adapters.pdf.pdf_engine]
-        → build_report_document(prepared_input) [vibesensor.use_cases.history.report_document]
-        → build_report_pdf(data) [vibesensor.adapters.pdf.pdf_engine]
+      → build_prepared_report_pdf(prepared_input) [vibesensor.report.pdf.pdf_engine]
+        → build_report_document(prepared_input) [vibesensor.report.document]
+        → build_report_pdf(data) [vibesensor.report.pdf.pdf_engine]
 ```
 
 ## Key Architectural Rules
@@ -59,7 +59,7 @@ analysis.
 
 ### Renderer-only report package
 
-The `vibesensor.adapters.pdf` package contains **only** rendering code:
+The `vibesensor.report.pdf` package contains **only** rendering code:
 
 | File | Purpose |
 |---|---|
@@ -91,7 +91,7 @@ normalization, and grouped semantic fact assembly:
 - `projection.py` owns primary-candidate/origin projection only
 
 Canonical report-document assembly lives in
-`vibesensor.use_cases.history.report_document`, which maps `PreparedReportInput`
+`vibesensor.report.document`, which maps `PreparedReportInput`
 into the renderer-facing `ReportDocument`. Report-specific interpretation and
 fact preparation live under `vibesensor.shared.boundaries.reporting/` (for
 example `facts.py`, `evidence_facts.py`, `confidence_facts.py`, `findings.py`,
@@ -101,7 +101,7 @@ example `facts.py`, `evidence_facts.py`, `confidence_facts.py`, `findings.py`,
 ### ReportDocument schema
 
 `ReportDocument` (defined in
-`vibesensor.shared.boundaries.reporting.document`) is the canonical rendering
+`vibesensor.report.model`) is the canonical rendering
 artifact. It contains everything the PDF renderer
 needs:
 
@@ -138,18 +138,18 @@ needs:
    (or the adapter wrappers in `vibesensor.adapters.analysis_summary` if the
    change only affects the serialized edge helper).
 2. Add a corresponding field to `ReportDocument` in
-   `vibesensor.shared.boundaries.reporting.document`.
+   `vibesensor.report.model`.
 3. If the new section needs report-specific shaping, add it under
    `vibesensor.shared.boundaries.reporting` (`facts.py`, `sensor_facts.py`,
    `decision_facts.py`, `projection.py`, `findings.py`, `evidence_facts.py`, or
    `preparation.py` as appropriate), then populate the final renderer field in
    `build_report_document()` in
-   `vibesensor.use_cases.history.report_document`.
+   `vibesensor.report.document`.
    Keep the default report-request/cache path driven only by persisted run data
    and persisted analysis. If a feature needs to compare a historical run
    against current mutable settings, model that as an explicit advisory overlay
    instead of threading live settings into the base report request.
-4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.adapters.pdf`.
+4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.report.pdf`.
 5. Never add history/report semantic interpretation logic to the renderer
    package — always pre-compute it in
    `vibesensor.shared.boundaries.reporting` before PDF rendering.

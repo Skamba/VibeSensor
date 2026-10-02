@@ -25,9 +25,10 @@ from vibesensor.adapters.http.dependencies import (
     UpdateDeps,
 )
 from vibesensor.adapters.http.router import create_router
-from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
+from vibesensor.report.service import HistoryReportService, PdfRendererFn
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
@@ -48,13 +49,12 @@ from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService, PdfRendererFn
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 
 def _real_pdf_renderer(prepared: object) -> bytes:
     """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+    from vibesensor.report.input import PreparedReportInput
 
     assert isinstance(prepared, PreparedReportInput)
     return build_prepared_report_pdf(prepared)

@@ -7,12 +7,12 @@ import pytest
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
-from vibesensor.report_i18n import tr as report_tr
-from vibesensor.shared.boundaries.reporting.confidence_facts import (
+from vibesensor.report.confidence_facts import (
     report_confidence_from_diagnosis_summary,
 )
+from vibesensor.report.confidence_presentation import confidence_caveat_text
+from vibesensor.report.i18n import tr as report_tr
 from vibesensor.shared.boundaries.reporting.summary import report_summary_from_mapping
-from vibesensor.shared.report_confidence_presentation import confidence_caveat_text
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceSummary,
     OrderTraceSupportInterval,

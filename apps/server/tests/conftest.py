@@ -34,6 +34,7 @@ from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.car_config import CarsSnapshot
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
@@ -41,7 +42,6 @@ from vibesensor.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateJobStatus, UsbInternetStatus
 from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run.logger import RunRecorder
 from vibesensor.use_cases.run.status_reporting import RunRecorderStatusSnapshot

@@ -11,10 +11,10 @@ from vibesensor.adapters.history.services import (
 from vibesensor.adapters.http.dependencies import HistoryDeps
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
+from vibesensor.report.input import PreparedReportInput
+from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.ports import SettingsReader
 from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.history.runs import HistoryRunService
 
 LOGGER = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ RUN_RETENTION_DAYS = 7
 
 def _build_prepared_pdf_bytes(prepared: PreparedReportInput) -> bytes:
     """Render a prepared report input through the PDF adapter boundary."""
-    from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
+    from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
 
     return build_prepared_report_pdf(prepared)
 

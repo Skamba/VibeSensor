@@ -13,14 +13,14 @@ from test_support.history_db_lifecycle import run_samples
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples, summarize_run_data
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.pdf.pdf_engine import build_report_pdf
+from vibesensor.report.preparation import prepare_report_input
 from vibesensor.shared.boundaries.runs.log import normalize_sample_record
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_to_json_object
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.use_cases.history.report_document.builder import build_report_document
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder
 

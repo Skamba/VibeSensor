@@ -2,7 +2,7 @@
 
 This repo uses a **minimal, flat design system** with a purple accent for both:
 - `apps/ui/` (web application) — auto light/dark via `prefers-color-scheme`
-- `apps/server/vibesensor/adapters/pdf/` (generated PDF reports) — light/print-friendly
+- `apps/server/vibesensor/report/pdf/` (generated PDF reports) — light/print-friendly
 
 ## Goals
 - One visual system across live UI and exported reports.
@@ -27,7 +27,7 @@ Web tokens are defined in:
 - `apps/ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
 Report tokens are defined in:
-- `apps/server/vibesensor/adapters/pdf/pdf_style.py`
+- `apps/server/vibesensor/report/pdf/pdf_style.py`
 
 ## Theme
 - **Auto theme**: default follows system preference (`prefers-color-scheme`).
@@ -99,11 +99,11 @@ The generated PDF uses A4 portrait and starts with a **one-glance verdict page**
 ### Primitives
 | Primitive | File | Purpose |
 |-----------|------|---------|
-| `parts_for_pattern(system, order)` | `apps/server/vibesensor/use_cases/history/report_document/pattern_parts.py` | Centralized pattern-to-parts mapping |
-| `strength_text(db_value, lang)` | `apps/server/vibesensor/shared/report_presentation.py` | Natural-language strength label with dB |
+| `parts_for_pattern(system, order)` | `apps/server/vibesensor/report/document/pattern_parts.py` | Centralized pattern-to-parts mapping |
+| `strength_text(db_value, lang)` | `apps/server/vibesensor/report/presentation.py` | Natural-language strength label with dB |
 | `ConfidenceAssessment.tier` | `apps/server/vibesensor/domain/confidence_assessment.py` | Report layout tier (A/B/C) for section visibility |
 
-### Card tone tokens (`apps/server/vibesensor/adapters/pdf/pdf_style.py`)
+### Card tone tokens (`apps/server/vibesensor/report/pdf/pdf_style.py`)
 - `brand_surface_soft` — low-emphasis metadata strip background
 - `card_neutral_bg / _border` — informational
 - `card_success_bg / _border` — good / ok status
@@ -112,10 +112,10 @@ The generated PDF uses A4 portrait and starts with a **one-glance verdict page**
 
 ### Heat-map gradient
 The car hotspot diagram uses a severity gradient defined in
-`apps/server/vibesensor/adapters/pdf/pdf_style.py` and is planned/rendered
+`apps/server/vibesensor/report/pdf/pdf_style.py` and is planned/rendered
 through the report-document and PDF adapter modules under
-`apps/server/vibesensor/use_cases/history/report_document/` and
-`apps/server/vibesensor/adapters/pdf/`.
+`apps/server/vibesensor/report/document/` and
+`apps/server/vibesensor/report/pdf/`.
 
 ### i18n
 All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.

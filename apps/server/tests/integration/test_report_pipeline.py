@@ -40,9 +40,9 @@ from test_support import (
     top_confidence,
 )
 
-from vibesensor.adapters.pdf.pdf_engine import build_report_pdf
-from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
-from vibesensor.use_cases.history.report_document.builder import build_report_document
+from vibesensor.report.document.builder import build_report_document
+from vibesensor.report.pdf.pdf_engine import build_report_pdf
+from vibesensor.report.preparation import prepare_report_input
 
 # ---------------------------------------------------------------------------
 # Helpers

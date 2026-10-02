@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.boundaries.reporting.confidence_facts import (
+from vibesensor.report.confidence_facts import (
     ReportConfidenceScoringInputs,
     apply_report_confidence_fallback,
     project_whole_run_diagnosis_factors,

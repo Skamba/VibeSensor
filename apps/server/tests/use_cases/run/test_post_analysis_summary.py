@@ -382,7 +382,7 @@ def test_build_post_analysis_summary_adds_stride_warning(
         lambda _result: {},
     )
     monkeypatch.setattr(
-        "vibesensor.report_i18n.tr",
+        "vibesensor.report.i18n.tr",
         lambda _language, _key, *, stride: f"stride={stride}",
     )
 

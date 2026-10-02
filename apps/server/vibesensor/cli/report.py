@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 
 from vibesensor.adapters.analysis_summary import summarize_log
-from vibesensor.adapters.pdf.pdf_engine import build_prepared_report_pdf
-from vibesensor.shared.boundaries.reporting.preparation import prepare_report_input
+from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
+from vibesensor.report.preparation import prepare_report_input
 
 
 def parse_args() -> argparse.Namespace:

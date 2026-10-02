@@ -10,8 +10,8 @@ from fastapi.testclient import TestClient
 from vibesensor.adapters.http.error_boundary import install_http_exception_handlers
 from vibesensor.adapters.http.history import create_history_routes
 from vibesensor.adapters.http.middleware import install_request_logging_middleware
-from vibesensor.shared.filenames import safe_filename
-from vibesensor.use_cases.history.reports import HistoryReportPdf
+from vibesensor.common.filenames import safe_filename
+from vibesensor.report.service import HistoryReportPdf
 
 
 @dataclass

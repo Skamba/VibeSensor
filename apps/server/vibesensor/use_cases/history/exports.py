@@ -10,8 +10,8 @@ import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass
 
+from vibesensor.common.filenames import safe_filename
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_to_json_object
-from vibesensor.shared.filenames import safe_filename
 from vibesensor.shared.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.shared.ports import RunPersistence
 from vibesensor.shared.types.history_records import StoredHistoryRun

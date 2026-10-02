@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import partial
 
-from vibesensor.report_i18n import tr as _tr
+from vibesensor.report.i18n import tr as _tr
 from vibesensor.shared.json_utils import payload_value_from_json
 from vibesensor.shared.run_context_warning import (
     RunContextWarning,
@@ -64,6 +64,6 @@ def _resolve_optional_i18n(lang: str, value: object) -> str | None:
 
 
 def _resolve_i18n(lang: str, value: object) -> str:
-    from vibesensor.report_i18n import resolve_i18n
+    from vibesensor.report.i18n import resolve_i18n
 
     return resolve_i18n(lang, value, tr=partial(_tr, lang))

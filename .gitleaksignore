@@ -1,5 +1,5 @@
 # Historical false positives (i18n label keys, storage key names, a WebSocket handshake header).
-6ce176eae15be241879d87f07d634caed7cb4a4f:apps/server/tests/adapters/pdf/test_report_dense_evidence.py:generic-api-key:34
+6ce176eae15be241879d87f07d634caed7cb4a4f:apps/server/tests/report/test_report_dense_evidence.py:generic-api-key:34
 5f457eca888173fb2f0f5d904b9f94a4aec0186a:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:47
 5f457eca888173fb2f0f5d904b9f94a4aec0186a:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:48
 d7660e718853141dccc89f76266c263634a74aa5:apps/ui/src/app/runtime/spectrum_canvas_renderer.ts:generic-api-key:12

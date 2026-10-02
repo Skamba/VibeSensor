@@ -9,6 +9,7 @@ from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.infra.runtime.registry import ClientRegistry
+from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.boundaries.clients import ClientSnapshotSource
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.ports import (
@@ -21,7 +22,6 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.manager import UpdateManager
-from vibesensor.use_cases.history.reports import HistoryReportService
 from vibesensor.use_cases.run.logger import RunRecorder
 
 if TYPE_CHECKING:

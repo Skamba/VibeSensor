@@ -131,7 +131,7 @@ def _install_fake_summary(monkeypatch: pytest.MonkeyPatch, *, case_id: str) -> N
         lambda _result: {},
     )
     monkeypatch.setattr(
-        "vibesensor.report_i18n.tr",
+        "vibesensor.report.i18n.tr",
         lambda _language, key, **_kwargs: key,
     )
 

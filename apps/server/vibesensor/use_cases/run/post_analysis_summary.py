@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     """Run diagnostics analysis and return the internal persisted-analysis object."""
     from vibesensor.domain.run_suitability import SuitabilityCheck
-    from vibesensor.report_i18n import tr
+    from vibesensor.report.i18n import tr
     from vibesensor.use_cases.diagnostics.run_analysis import RunAnalysis
 
     result = RunAnalysis(

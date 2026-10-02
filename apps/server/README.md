@@ -15,7 +15,7 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ESP32 nodes -> apps/server/vibesensor/adapters/udp/
              -> live-processing layer + apps/server/vibesensor/use_cases/diagnostics/
              -> apps/server/vibesensor/infra/runtime/ -> apps/server/vibesensor/adapters/http/ + apps/server/vibesensor/adapters/websocket/ -> apps/ui
-             -> apps/server/vibesensor/use_cases/run/ + apps/server/vibesensor/adapters/persistence/history_db/ -> apps/server/vibesensor/use_cases/history/ -> apps/server/vibesensor/adapters/pdf/
+             -> apps/server/vibesensor/use_cases/run/ + apps/server/vibesensor/adapters/persistence/history_db/ -> apps/server/vibesensor/use_cases/history/ -> apps/server/vibesensor/report/pdf/
 ```
 
 Backend ownership boundaries:
@@ -382,7 +382,7 @@ Generate a PDF from a saved run:
 vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/adapters/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with appendix renderers grouped under `adapters/pdf/pdf_appendices/`.
+The public PDF entrypoint is `apps/server/vibesensor/report/pdf/pdf_engine.py`. Page composition lives in focused modules under `adapters/pdf/`, with appendix renderers grouped under `adapters/pdf/pdf_appendices/`.
 
 ## Updates
 

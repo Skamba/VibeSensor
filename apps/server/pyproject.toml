@@ -118,7 +118,7 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 "vibesensor/**/*.py" = ["TID251"]
-"vibesensor/adapters/pdf/*.py" = ["E501"]
+"vibesensor/report/pdf/*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -208,7 +208,7 @@ source_modules = [
 forbidden_modules = [
   "vibesensor.use_cases",
   "vibesensor.shared.boundaries.reporting",
-  "vibesensor.adapters.pdf",
+  "vibesensor.report",
 ]
 
 [[tool.importlinter.contracts]]
@@ -216,7 +216,7 @@ name = "PDF adapter renders report documents, not diagnostics"
 type = "forbidden"
 # Indirect imports are forbidden too: rendering must never pull in diagnostics,
 # not even transitively through shared or history modules.
-source_modules = ["vibesensor.adapters.pdf"]
+source_modules = ["vibesensor.report.pdf"]
 forbidden_modules = ["vibesensor.use_cases.diagnostics"]
 
 [[tool.importlinter.contracts]]
@@ -224,10 +224,10 @@ name = "Diagnostics stays free of report localisation"
 type = "forbidden"
 allow_indirect_imports = true
 source_modules = ["vibesensor.use_cases.diagnostics"]
-forbidden_modules = ["vibesensor.report_i18n"]
+forbidden_modules = ["vibesensor.report.i18n"]
 ignore_imports = [
   # Only the language-code normaliser is allowed, not localised strings.
-  "vibesensor.use_cases.diagnostics.run_analysis -> vibesensor.report_i18n",
+  "vibesensor.use_cases.diagnostics.run_analysis -> vibesensor.report.i18n",
 ]
 
 [[tool.importlinter.contracts]]

@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
-    from vibesensor.use_cases.history.reports import HistoryReportService
+    from vibesensor.report.service import HistoryReportService
 
 _RUN_NOT_FOUND_RESPONSE: OpenAPIResponses = {
     404: {"description": "Requested run was not found."},
