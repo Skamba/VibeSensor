@@ -29,7 +29,7 @@ from vibesensor.report.pdf.pdf_engine import build_report_pdf
 #     import-linter contract forbids direct and indirect diagnostics imports.)
 # ---------------------------------------------------------------------------
 
-_REPORT_DIR = SERVER_ROOT / "vibesensor" / "adapters" / "pdf"
+_REPORT_DIR = SERVER_ROOT / "vibesensor" / "report" / "pdf"
 _REPORT_MODULES = [
     p for p in _REPORT_DIR.glob("*.py") if p.name not in ("__init__.py", "mapping.py")
 ]

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 
-from vibesensor.shared.locations import label_for_code as _label_for_code
+from vibesensor.domain.locations import label_for_code as _label_for_code
 from vibesensor.shared.types.run_schema import RunMetadata, RunSensorMetadata
 from vibesensor.use_cases.diagnostics._sample_metrics import _primary_vibration_strength_db
 from vibesensor.use_cases.diagnostics._types import Sample

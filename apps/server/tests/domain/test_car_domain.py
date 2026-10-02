@@ -8,7 +8,7 @@ import pytest
 
 from vibesensor.domain.car import Car, CarSnapshot
 from vibesensor.domain.tire_spec import AxleTireSetup
-from vibesensor.shared.order_reference_settings import (
+from vibesensor.settings.order_reference_settings import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
 )

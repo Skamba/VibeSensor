@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
+from vibesensor.settings.sensor_config import SensorConfigPayload
 from vibesensor.shared.ports import (
     ClientTracker,
     SensorMetadataReader,
@@ -17,7 +18,6 @@ from vibesensor.shared.ports import (
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.raw_capture import RawCaptureLossStats
 from vibesensor.shared.types.run_schema import RunSensorMetadata
-from vibesensor.shared.types.sensor_config import SensorConfigPayload
 from vibesensor.use_cases.run.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.use_cases.run.persistence_writer import RunPersistenceWriter
 from vibesensor.use_cases.run.raw_capture_writer import RunRawCaptureWriter

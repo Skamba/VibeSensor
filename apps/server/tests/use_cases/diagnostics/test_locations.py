@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.shared.locations import (
+from vibesensor.domain.locations import (
     LOCATION_OPTIONS,
     WHEEL_LOCATION_CODES,
     all_locations,

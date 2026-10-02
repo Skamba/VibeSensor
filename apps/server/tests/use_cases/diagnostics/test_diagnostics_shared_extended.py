@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.shared.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
+from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
 from vibesensor.shared.json_utils import as_float_or_none
 from vibesensor.shared.order_bands import (
     build_diagnostic_settings,

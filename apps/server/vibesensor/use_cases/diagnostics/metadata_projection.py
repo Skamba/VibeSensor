@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     ScalarSettings,
     analysis_settings_snapshot_items,
 )

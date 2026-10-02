@@ -9,9 +9,13 @@ from typing import cast
 
 import msgspec
 
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
     analysis_settings_snapshot_to_metadata,
+)
+from vibesensor.settings.car_config import (
+    car_order_reference_status_from_mapping,
+    car_order_reference_status_payload_from_domain,
 )
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
 from vibesensor.shared.boundaries.runs._metadata_codecs import (
@@ -38,10 +42,6 @@ from vibesensor.shared.boundaries.runs._metadata_sections import (
     run_sensor_snapshots_from_payload,
     symptom_from_payload,
     symptom_to_json_object,
-)
-from vibesensor.shared.types.car_config import (
-    car_order_reference_status_from_mapping,
-    car_order_reference_status_payload_from_domain,
 )
 from vibesensor.shared.types.json_types import JsonObject, is_json_object
 from vibesensor.shared.types.run_schema import (

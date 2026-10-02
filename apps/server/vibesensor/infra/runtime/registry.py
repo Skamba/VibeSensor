@@ -18,11 +18,11 @@ from threading import RLock
 from typing import Literal
 
 from vibesensor.domain.sensor import normalize_sensor_id
-from vibesensor.infra.location_assignment_validator import (
+from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
+from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
 )
-from vibesensor.infra.runtime.client_metadata import ClientMetadataManager
 from vibesensor.shared.ports import (
     ClientNamePersistence,
     RegistryAckMessage,

@@ -1,7 +1,7 @@
 """Plausibility validation for the bundled vehicle library data.
 
 The app does not run these rules at startup; the test suite runs them against
-the packaged JSON (see ``tests/adapters/persistence/test_car_library_validation.py``).
+the packaged JSON (see ``tests/settings/test_car_library_validation.py``).
 """
 
 from __future__ import annotations

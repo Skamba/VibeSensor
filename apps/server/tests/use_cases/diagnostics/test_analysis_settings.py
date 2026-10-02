@@ -8,8 +8,8 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import Car as _Car
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
-from vibesensor.shared.analysis_settings_schema import sanitize_analysis_settings
-from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
+from vibesensor.settings.analysis_settings_schema import sanitize_analysis_settings
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_mapping
 
 DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 sanitize_settings = sanitize_analysis_settings

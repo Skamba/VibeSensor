@@ -19,7 +19,7 @@ _CAR_LIBRARY_NOT_FOUND_RESPONSES: OpenAPIResponses = {
 
 def create_car_library_routes() -> APIRouter:
     """Create and return the car-library API routes."""
-    from vibesensor.adapters.persistence.car_library import (
+    from vibesensor.settings.car_library import (
         get_brands,
         get_models_for_brand_type,
         get_types_for_brand,

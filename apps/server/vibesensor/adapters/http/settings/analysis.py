@@ -14,10 +14,10 @@ from vibesensor.adapters.http.models.settings import (
 )
 from vibesensor.adapters.http.settings.dependencies import AnalysisSettingsRouteDeps
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_to_metadata,
 )
-from vibesensor.shared.types.settings_types import analysis_settings_payload_from_mapping
+from vibesensor.settings.settings_types import analysis_settings_payload_from_mapping
 
 _SET_ANALYSIS_SETTINGS_RESPONSES: OpenAPIResponses = {
     400: {"description": "Analysis settings are invalid or no active car is configured."},

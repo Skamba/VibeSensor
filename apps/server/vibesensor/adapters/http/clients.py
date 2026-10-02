@@ -27,11 +27,11 @@ from vibesensor.adapters.http.models.clients import (
     SetLocationRequest,
 )
 from vibesensor.adapters.udp.protocol import client_id_mac
+from vibesensor.domain.locations import all_locations
+from vibesensor.settings.sensor_config import SensorConfigPayload
+from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.boundaries.clients import snapshot_for_api
-from vibesensor.shared.locations import all_locations
 from vibesensor.shared.ports import SensorMetadataStore
-from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
-from vibesensor.shared.types.sensor_config import SensorConfigPayload
 
 _IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid sensor identifier."},

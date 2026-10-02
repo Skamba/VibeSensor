@@ -6,9 +6,9 @@ from dataclasses import replace
 
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.locations import is_wheel_location
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.shared.constants.analysis import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
-from vibesensor.shared.locations import is_wheel_location
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.orders.settings import ORDER_HEURISTIC_SETTINGS
 

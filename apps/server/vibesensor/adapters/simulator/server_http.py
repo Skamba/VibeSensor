@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 
 from vibesensor.adapters.simulator.profiles import calc_order_hz
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
 from vibesensor.updates.http_client import read_json_response, read_text_response

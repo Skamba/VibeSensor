@@ -6,9 +6,10 @@ from collections.abc import Mapping
 from math import isfinite
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.constants.analysis import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
@@ -19,7 +20,6 @@ from vibesensor.shared.constants.analysis import (
     WHEEL_ORDER_PATH_COMPLIANCE,
 )
 from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.types.payload_types import OrderBandPayload
 
 __all__ = [

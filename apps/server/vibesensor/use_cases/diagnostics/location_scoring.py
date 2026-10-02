@@ -9,8 +9,8 @@ from math import ceil, floor, log1p
 
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.domain.locations import has_any_wheel_location, is_wheel_location
 from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.shared.locations import has_any_wheel_location, is_wheel_location
 from vibesensor.use_cases.diagnostics.math_utils import _weighted_percentile
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15

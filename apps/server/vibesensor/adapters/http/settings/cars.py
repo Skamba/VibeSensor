@@ -14,7 +14,7 @@ from vibesensor.adapters.http._helpers import (
 from vibesensor.adapters.http.error_boundary import http_exception_for_value_error
 from vibesensor.adapters.http.models.settings import ActiveCarRequest
 from vibesensor.adapters.http.settings.dependencies import CarSettingsRouteDeps
-from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
+from vibesensor.settings.car_config import CarConfigUpdatePayload, CarsSnapshot
 
 _CAR_NOT_FOUND_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid car identifier."},

@@ -6,8 +6,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
-from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
+from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength

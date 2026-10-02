@@ -10,9 +10,9 @@ import importlib
 import pytest
 
 from vibesensor.infra.runtime.client_metadata import sanitize_client_name
+from vibesensor.settings.car_config import new_car_id
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
-from vibesensor.shared.types.car_config import new_car_id
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -113,7 +113,7 @@ class TestModuleAllExports:
         ("module_path", "expected_exports"),
         [
             (
-                "vibesensor.shared.types.car_config",
+                "vibesensor.settings.car_config",
                 {"CarConfigPayload", "car_to_persistence_dict", "new_car_id"},
             ),
             (
@@ -129,7 +129,7 @@ class TestModuleAllExports:
                 {"DataMessage", "pack_data", "parse_data", "parse_hello"},
             ),
             (
-                "vibesensor.adapters.persistence.car_library",
+                "vibesensor.settings.car_library",
                 {"load_car_library", "resolve_variant", "CarLibraryEntry"},
             ),
             ("vibesensor.speed.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),

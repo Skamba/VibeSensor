@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.cli.http_api_schema_export import export_schema
-from vibesensor.shared.types.car_config import CarsSnapshot
+from vibesensor.settings.car_config import CarsSnapshot
 from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 

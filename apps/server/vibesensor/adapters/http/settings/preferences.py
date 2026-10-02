@@ -15,7 +15,7 @@ from vibesensor.adapters.http.models.settings import (
     SpeedUnitResponse,
 )
 from vibesensor.adapters.http.settings.dependencies import UiPreferencesRouteDeps
-from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
+from vibesensor.settings.settings_types import LanguageCode, SpeedUnitCode
 
 _SET_LANGUAGE_RESPONSES: OpenAPIResponses = {
     400: {"description": "Unsupported language code."},

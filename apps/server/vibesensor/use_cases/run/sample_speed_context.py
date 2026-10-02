@@ -7,7 +7,7 @@ from typing import NamedTuple
 from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.common.units import MPS_TO_KMH
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 
 __all__ = ["SpeedContext", "resolve_speed_context", "resolve_speed_context_snapshot"]

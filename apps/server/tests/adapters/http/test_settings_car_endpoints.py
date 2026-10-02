@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.shared.types.car_config import CarConfigPayload, CarsSnapshot
+from vibesensor.settings.car_config import CarConfigPayload, CarsSnapshot
 
 
 def _make_car_payload(

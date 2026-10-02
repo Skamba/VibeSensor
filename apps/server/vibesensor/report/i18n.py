@@ -9,7 +9,7 @@ import json
 from collections.abc import Callable
 from functools import lru_cache
 
-from vibesensor.shared._data_files import resolve_static_data_file
+from vibesensor.common.data_files import resolve_static_data_file
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
 from vibesensor.shared.types.json_types import JsonValue
 

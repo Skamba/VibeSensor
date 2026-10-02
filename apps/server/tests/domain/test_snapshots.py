@@ -11,14 +11,14 @@ import pytest
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
-from vibesensor.shared.boundaries.codecs.analysis_settings import (
+from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.shared.boundaries.codecs.summaries import (
     driving_phase_summary_from_mapping,
     speed_profile_summary_from_mapping,
 )
-from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
 
 
 @pytest.mark.parametrize(

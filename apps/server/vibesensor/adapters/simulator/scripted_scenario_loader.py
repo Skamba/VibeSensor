@@ -12,7 +12,7 @@ from vibesensor.adapters.simulator.scripted_scenario_models import (
     ScenarioPhase,
     ScriptedScenario,
 )
-from vibesensor.shared._data_files import resolve_static_data_file
+from vibesensor.common.data_files import resolve_static_data_file
 
 __all__ = ["ScriptedScenarioDataError", "load_scripted_scenarios"]
 

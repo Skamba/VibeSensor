@@ -7,17 +7,17 @@ from vibesensor.adapters.http.dependencies import (
     SettingsDeps,
     SettingsSpeedServiceProtocol,
 )
-from vibesensor.infra.config.analysis_settings import ActiveCarAnalysisSettingsService
-from vibesensor.infra.config.car_settings import CarSettingsService
-from vibesensor.infra.config.sensor_settings import SensorSettingsService
-from vibesensor.infra.config.settings_derivation import SettingsDerivationService
-from vibesensor.infra.config.settings_persistence import SettingsPersistenceCoordinator
-from vibesensor.infra.config.speed_source_runtime import (
+from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
+from vibesensor.settings.car_settings import CarSettingsService
+from vibesensor.settings.sensor_settings import SensorSettingsService
+from vibesensor.settings.settings_derivation import SettingsDerivationService
+from vibesensor.settings.settings_persistence import SettingsPersistenceCoordinator
+from vibesensor.settings.speed_source_runtime import (
     SpeedSourceRuntimeApplier,
     SpeedSourceSettingsService,
 )
-from vibesensor.infra.config.speed_source_settings import PersistedSpeedSourceSettingsService
-from vibesensor.infra.config.ui_preferences import UiPreferencesService
+from vibesensor.settings.speed_source_settings import PersistedSpeedSourceSettingsService
+from vibesensor.settings.ui_preferences import UiPreferencesService
 from vibesensor.shared.ports import (
     LanguageReader,
     SensorMetadataReader,

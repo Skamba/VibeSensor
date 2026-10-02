@@ -6,9 +6,9 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.sensor import normalize_sensor_id
-from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
+from vibesensor.settings.sensor_config import SensorConfigPayload
+from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.run_schema import RunSensorMetadata
-from vibesensor.shared.types.sensor_config import SensorConfigPayload
 
 if TYPE_CHECKING:
     from vibesensor.shared.ports import ClientTracker, SensorMetadataReader

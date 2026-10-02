@@ -7,6 +7,8 @@ from typing import Any
 import pytest
 
 from vibesensor.domain.strength_metrics import StrengthPeak
+from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
+from vibesensor.settings.sensor_config import SensorConfig
 from vibesensor.shared.boundaries.runs.metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
@@ -16,9 +18,7 @@ from vibesensor.shared.boundaries.sensor_frames.mapping import (
     sensor_frame_to_json_object,
 )
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_config import SensorConfig
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 

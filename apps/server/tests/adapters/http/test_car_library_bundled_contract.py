@@ -20,7 +20,7 @@ from vibesensor.adapters.http.models.car_library import (
     CarLibraryModelsResponse,
     CarLibraryTypesResponse,
 )
-from vibesensor.adapters.persistence.car_library import (
+from vibesensor.settings.car_library import (
     get_brands,
     get_exact_configurations_for_variant,
     get_types_for_brand,

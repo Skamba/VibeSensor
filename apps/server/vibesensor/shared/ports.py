@@ -8,8 +8,15 @@ from typing import Protocol
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind
+from vibesensor.settings.car_config import CarConfigUpdatePayload, CarsSnapshot
+from vibesensor.settings.sensor_config import SensorsByMacPayload
+from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
+from vibesensor.settings.settings_types import (
+    AnalysisSettingsPayload,
+    LanguageCode,
+    SpeedUnitCode,
+)
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
-from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
@@ -26,14 +33,7 @@ from vibesensor.shared.types.raw_capture import (
     RawRunCapture,
 )
 from vibesensor.shared.types.run_schema import RunMetadata
-from vibesensor.shared.types.sensor_config import SensorsByMacPayload
 from vibesensor.shared.types.sensor_frame import SensorFrame
-from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.settings_types import (
-    AnalysisSettingsPayload,
-    LanguageCode,
-    SpeedUnitCode,
-)
 from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.speed_source_config import (
