@@ -38,26 +38,23 @@ def test_flush_client_buffer_resets_count_and_write_idx() -> None:
     samples = rng.standard_normal((500, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
 
-    buf = proc._store.buffers["c1"]
-    assert buf.count == 500
-    assert buf.write_idx == 500
+    proc.compute_metrics("c1", sample_rate_hz=800)
+    assert proc.latest_metrics("c1")
 
     proc.flush_client_buffer("c1")
 
-    assert buf.count == 0
-    assert buf.write_idx == 0
-    assert buf.latest_metrics == {}
-    assert buf.latest_spectrum == {}
-    assert buf.latest_strength_metrics["vibration_strength_db"] == 0.0
-    # Data array should be zeroed
-    assert np.all(buf.data == 0.0)
+    assert proc.latest_sample_xyz("c1") is None
+    assert proc.latest_metrics("c1") == {}
+    assert proc.latest_analysis_time_range("c1") is None
+    assert proc.compute_metrics("c1") == {}
+    assert proc.multi_spectrum_payload(["c1"])["clients"] == {}
 
 
 def test_flush_unknown_client_is_safe() -> None:
     proc = _make_processor()
     # Should not raise
     proc.flush_client_buffer("nonexistent")
-    assert "nonexistent" not in proc._store.buffers  # no buffer created for unknown client
+    assert proc.latest_sample_rate_hz("nonexistent") is None
 
 
 def test_fft_waits_for_new_samples_after_flush() -> None:
@@ -79,11 +76,10 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     # Ingest fewer than fft_n samples
     partial = np.random.default_rng(43).standard_normal((fft_n // 2, 3)).astype(np.float32)
     proc.ingest("c1", partial, sample_rate_hz=800)
-    proc.compute_metrics("c1", sample_rate_hz=800)
-    buf = proc._store.buffers["c1"]
-    assert buf.count == fft_n // 2
-    # Should NOT have spectrum peaks because count < fft_n
-    assert buf.latest_spectrum == {}
+    metrics = proc.compute_metrics("c1", sample_rate_hz=800)
+    # Should NOT have spectrum data because count < fft_n
+    assert "strength_metrics" not in metrics["combined"]
+    assert proc.multi_spectrum_payload(["c1"])["clients"] == {}
 
 
 def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:

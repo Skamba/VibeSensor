@@ -1,41 +1,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, TypedDict
 
-import numpy as np
-import numpy.typing as npt
-
+from vibesensor.shared.fft_analysis import FloatArray, SpectrumAxisData, SpectrumByAxis
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
-from vibesensor.shared.types.payload_types import AxisPeak, ClientMetrics
+from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.vibration_strength import VibrationStrengthMetrics
 
-type FloatArray = npt.NDArray[np.float32]
-type IntIndexArray = npt.NDArray[np.intp]
-type BoolArray = npt.NDArray[np.bool_]
-
-Axis = Literal["x", "y", "z"]
-
-
-class SpectrumAxisData(TypedDict):
-    freq: FloatArray
-    amp: FloatArray
-
-
-type SpectrumByAxis = dict[str, SpectrumAxisData]
-
-
-class FftSpectrumResult(TypedDict):
-    freq_slice: FloatArray
-    spectrum_by_axis: SpectrumByAxis
-    combined_amp: FloatArray
-    strength_metrics: VibrationStrengthMetrics
-    axis_peaks: dict[Axis, list[AxisPeak]]
+__all__ = [
+    "ClientMetrics",
+    "FloatArray",
+    "MetricsComputationResult",
+    "MetricsSnapshot",
+    "ProcessorConfig",
+    "ProcessorStats",
+    "SpectrumAxisData",
+    "SpectrumByAxis",
+]
 
 
 @dataclass(frozen=True, slots=True)
 class ProcessorConfig:
-    """Immutable processing configuration shared across subsystems."""
+    """Immutable live-processing configuration."""
 
     sample_rate_hz: int
     waveform_seconds: int
@@ -52,7 +38,7 @@ class ProcessorConfig:
 
 @dataclass(slots=True)
 class ProcessorStats:
-    """Mutable observability counters owned by the buffer store."""
+    """Mutable observability counters owned by the signal processor."""
 
     total_ingested_samples: int = 0
     buffer_overflow_drops: int = 0
@@ -60,13 +46,6 @@ class ProcessorStats:
     last_compute_duration_s: float = 0.0
     last_compute_all_duration_s: float = 0.0
     last_ingest_duration_s: float = 0.0
-
-
-@dataclass(frozen=True, slots=True)
-class CachedMetricsHit:
-    """Fast-path result when the latest metrics already match current input."""
-
-    metrics: ClientMetrics
 
 
 @dataclass(frozen=True, slots=True)

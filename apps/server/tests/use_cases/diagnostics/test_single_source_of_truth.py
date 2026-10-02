@@ -48,11 +48,10 @@ def _assert_no_combined_alias(payload: dict) -> None:
 def test_spectrum_payload_has_no_combined_alias() -> None:
     """Spectrum payload must not contain the dead 'combined' alias field."""
     proc = _make_signal_processor()
-    # Empty client
-    _assert_no_combined_alias(proc.spectrum_payload("nonexistent"))
-    # Client with data
     _ingest_noise(proc, seed=42)
-    _assert_no_combined_alias(proc.spectrum_payload("test_client"))
+    _assert_no_combined_alias(
+        proc.multi_spectrum_payload(["test_client"])["clients"]["test_client"]
+    )
 
 
 def test_as_float_single_source_of_truth() -> None:

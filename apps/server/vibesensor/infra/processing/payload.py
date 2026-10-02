@@ -1,8 +1,8 @@
-"""Payload formatting for processing-facing spectrum and alignment views.
+"""Live spectrum payload formatting.
 
-Pure functions that assemble API and WebSocket payload dicts from
-processing state. Called by :class:`~vibesensor.infra.processing.processor.SignalProcessor`
-wrapper methods that handle locking and buffer lookup.
+Pure functions that assemble the WebSocket ``spectra`` payload from client
+buffers. :class:`~vibesensor.infra.processing.processor.SignalProcessor` calls
+them while holding its buffer lock.
 """
 
 from __future__ import annotations
@@ -19,27 +19,14 @@ from vibesensor.shared.fft_analysis import float_list
 from vibesensor.shared.types.payload_types import (
     AlignmentInfoPayload,
     FrequencyWarningPayload,
-    SharedWindowPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
-    TimeAlignmentPayload,
-    TimeAlignmentSensorPayload,
 )
-from vibesensor.vibration_strength import empty_vibration_strength_metrics
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from vibesensor.infra.processing.buffers import ClientBuffer
 
 _EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
-
-
-def _empty_spectrum_payload() -> SpectrumSeriesPayload:
-    return {
-        "combined_spectrum_amp_g": [],
-        "strength_metrics": empty_vibration_strength_metrics(),
-    }
 
 
 def _axis_data_or_empty(
@@ -65,13 +52,11 @@ def _build_spectrum_frame_fingerprint(
 
 
 def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
-    """Build a per-client spectrum payload from the buffer's cached spectrum.
+    """Build a per-client spectrum payload from the buffer's latest spectrum.
 
     Manages the ``cached_spectrum_payload`` / ``cached_spectrum_payload_generation``
     fields on *buf* for fast subsequent lookups.
     """
-    if not buf.latest_spectrum:
-        return _empty_spectrum_payload()
     if (
         buf.cached_spectrum_payload is not None
         and buf.cached_spectrum_payload_generation == buf.spectrum_generation
@@ -87,89 +72,17 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     return payload
 
 
-def build_time_alignment_payload(
-    buffers: dict[str, ClientBuffer],
-    client_ids: list[str],
-    analysis_time_range_fn: Callable[[ClientBuffer], tuple[float, float, bool] | None],
-) -> TimeAlignmentPayload:
-    """Build time-alignment info for the requested sensors from locked buffer state."""
-    per_sensor: dict[str, TimeAlignmentSensorPayload] = {}
-    ranges: list[tuple[float, float]] = []
-    included: list[str] = []
-    excluded: list[str] = []
-    all_synced = True
-
-    for client_id in client_ids:
-        buf = buffers.get(client_id)
-        if buf is None:
-            excluded.append(client_id)
-            continue
-        time_range = analysis_time_range_fn(buf)
-        if time_range is None:
-            excluded.append(client_id)
-            continue
-        start, end, synced = time_range
-        if not synced:
-            all_synced = False
-        per_sensor[client_id] = {
-            "start_s": start,
-            "end_s": end,
-            "duration_s": end - start,
-            "synced": synced,
-        }
-        ranges.append((start, end))
-        included.append(client_id)
-
-    if len(ranges) < 2:
-        return {
-            "per_sensor": per_sensor,
-            "shared_window": None,
-            "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
-            "aligned": True,
-            "clock_synced": all_synced and bool(included),
-            "sensors_included": included,
-            "sensors_excluded": excluded,
-        }
-
-    overlap = compute_overlap([start for start, _ in ranges], [end for _, end in ranges])
-    shared: SharedWindowPayload | None = None
-    if overlap.overlap_s > 0:
-        shared = {
-            "start_s": overlap.shared_start,
-            "end_s": overlap.shared_end,
-            "duration_s": overlap.overlap_s,
-        }
-
-    return {
-        "per_sensor": per_sensor,
-        "shared_window": shared,
-        "overlap_ratio": round(overlap.overlap_ratio, 4),
-        "aligned": overlap.aligned,
-        "clock_synced": all_synced,
-        "sensors_included": included,
-        "sensors_excluded": excluded,
-    }
-
-
 def build_multi_spectrum_payload(
     buffers: dict[str, ClientBuffer],
     client_ids: list[str],
-    spectrum_fn: Callable[[str], SpectrumSeriesPayload],
-    analysis_time_range_fn: Callable[[ClientBuffer], tuple[float, float, bool] | None],
+    *,
+    default_sample_rate_hz: int,
+    waveform_seconds: int,
 ) -> SpectraPayload:
-    """Build a combined multi-client spectrum payload with alignment metadata.
+    """Build the combined multi-client spectrum payload with alignment metadata.
 
-    Parameters
-    ----------
-    buffers:
-        Mapping of client ID → ClientBuffer (already under lock).
-    client_ids:
-        Client IDs to include.
-    spectrum_fn:
-        Callable to produce per-client spectrum (already under the same lock).
-    analysis_time_range_fn:
-        Callable to derive (start_s, end_s, synced) for a buffer.
-
+    *buffers* must already be locked by the caller. When all clients share the
+    same frequency axis, a single top-level ``freq`` is emitted.
     """
     shared_freq: np.ndarray | None = None
     clients: dict[str, SpectrumSeriesPayload] = {}
@@ -199,12 +112,15 @@ def build_multi_spectrum_payload(
         ):
             mismatch_ids.append(client_id)
         per_client_freq[client_id] = client_freq
-        clients[client_id] = spectrum_fn(client_id)
+        clients[client_id] = build_spectrum_payload(buf)
 
-        tr = analysis_time_range_fn(buf)
-        if tr is not None:
-            ranges.append((client_id, tr[0], tr[1]))
-            if tr[2]:
+        time_range = buf.analysis_time_range(
+            default_sample_rate_hz=default_sample_rate_hz,
+            waveform_seconds=waveform_seconds,
+        )
+        if time_range is not None:
+            ranges.append((client_id, time_range.start_s, time_range.end_s))
+            if time_range.synced:
                 any_synced = True
             else:
                 all_synced = False

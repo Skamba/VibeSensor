@@ -132,29 +132,6 @@ def _configure_pydantic_schema(typed_dict: Any, config: ConfigDict) -> None:
 _configure_pydantic_schema(WsClientSelectionPayload, ConfigDict(extra="ignore"))
 
 
-class TimeAlignmentSensorPayload(TypedDict):
-    start_s: float
-    end_s: float
-    duration_s: float
-    synced: bool
-
-
-class SharedWindowPayload(TypedDict):
-    start_s: float
-    end_s: float
-    duration_s: float
-
-
-class TimeAlignmentPayload(TypedDict):
-    per_sensor: dict[str, TimeAlignmentSensorPayload]
-    shared_window: SharedWindowPayload | None
-    overlap_ratio: float
-    aligned: bool
-    clock_synced: bool
-    sensors_included: list[str]
-    sensors_excluded: list[str]
-
-
 class RotationalSpeedValuePayload(TypedDict):
     rpm: float | None
     mode: str | None

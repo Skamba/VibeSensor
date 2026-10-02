@@ -32,13 +32,12 @@ The async processing loop runs on a timer, filters to active clients with fresh
 data, and calls `SignalProcessor.compute_all()` via `asyncio.to_thread()` so the
 event loop never performs FFT work directly.
 
-`SignalProcessor` is now a facade over three explicit subsystems:
+Live processing modules:
 
-- `apps/server/vibesensor/infra/processing/buffer_store.py`: coordinator over ingest, snapshot capture, stats, and shared buffer queries
-- `apps/server/vibesensor/infra/processing/buffer_registry.py`: per-client buffers, epochs, eviction, and lock ordering
-- `apps/server/vibesensor/infra/processing/buffer_mutations.py` + `apps/server/vibesensor/infra/processing/ingest_preparation.py`: buffer mutation policy plus chunk normalization/overflow trimming
+- `apps/server/vibesensor/infra/processing/processor.py`: `SignalProcessor` owns all client buffers behind one lock, ingest (chunk normalization, overflow trimming), snapshot → compute → commit, stats, and read views
+- `apps/server/vibesensor/infra/processing/buffers.py`: `ClientBuffer` ring buffer with its in-place mutations (append, resize, reset, sample-rate clamp, metric commit)
 - `apps/server/vibesensor/infra/processing/compute.py`: FFT cache ownership plus metric computation from snapshots
-- `apps/server/vibesensor/infra/processing/processor.py`: facade class with payload shaping, debug output, and time-alignment views
+- `apps/server/vibesensor/infra/processing/payload.py`: the live `spectra` payload builder
 
 Inside `SignalProcessor.compute_all()`, clients are computed serially in the
 processing thread (see `docs/multithreading_performance.md` for measurements).
@@ -60,13 +59,14 @@ background compute work is running.
 `SignalProcessor.compute_metrics()` keeps the live path in a strict
 snapshot -> compute -> store shape:
 
-1. `buffer_store.snapshot_for_compute()` captures immutable arrays from the
-   per-client ring buffer under a short lock and skips work when there is no
-   fresh data or not enough samples for FFT.
+1. Under the processor lock, `compute_metrics()` returns the cached metrics
+   when no new samples arrived (and the sample rate is unchanged), otherwise it
+   copies an immutable `MetricsSnapshot` from the client ring buffer.
 2. `SignalMetricsComputer.compute()` runs the heavy CPU work without holding the
    buffer lock.
-3. `buffer_store.store_metrics_result()` commits the new metrics/spectrum back
-   onto the client buffer and invalidates cached payload views.
+3. `ClientBuffer.commit_metrics()` stores the new metrics/spectrum under the
+   lock unless the buffer was flushed, evicted/recreated, or already holds newer
+   metrics, and invalidates cached payload views.
 
 The snapshot contains two overlapping views from the same immutable capture:
 
