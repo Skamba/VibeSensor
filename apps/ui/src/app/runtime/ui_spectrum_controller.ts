@@ -6,7 +6,7 @@ import {
   type SpectrumPreparedRenderData,
 } from "./spectrum_canvas_renderer";
 import {
-  createInlineSpectrumFramePreparer,
+  createSpectrumFramePreparer,
   type SpectrumFramePreparer,
   type SpectrumFramePreparationInput,
 } from "./spectrum_frame_preparer";
@@ -37,16 +37,10 @@ export class UiSpectrumController {
 
   private disposed = false;
 
-  private framePreparationRunning = false;
-
-  private requestedSpectrumVersion = 0;
-
-  private processedSpectrumVersion = 0;
-
   constructor(private readonly deps: UiSpectrumControllerDeps) {
     this.panel = this.deps.panel;
     this.framePreparer =
-      this.deps.framePreparer ?? createInlineSpectrumFramePreparer();
+      this.deps.framePreparer ?? createSpectrumFramePreparer();
     this.canvas = createSpectrumCanvasRenderer({
       state: this.state,
       dom: this.panel.chartDom,
@@ -126,12 +120,21 @@ export class UiSpectrumController {
 
   renderSpectrum(): void {
     this.renderSpectrumHeader();
-    this.requestedSpectrumVersion += 1;
-    if (this.framePreparationRunning) {
+    if (this.disposed) {
       return;
     }
-    this.framePreparationRunning = true;
-    void this.preparePendingSpectrumFrames();
+    this.state.spectrum.framePrepareErrorDetail.value = null;
+    try {
+      const frameData = this.framePreparer.prepare(
+        this.buildFramePreparationInput(),
+      );
+      const prepared = this.canvas.composePreparedFrame(frameData);
+      this.applyPreparedSpectrum(prepared, "data");
+    } catch (error: unknown) {
+      this.state.spectrum.framePrepareErrorDetail.value =
+        getFramePrepareErrorDetail(error);
+      this.updateSpectrumOverlay();
+    }
   }
 
   refreshSpectrumDecorations(): void {
@@ -238,52 +241,6 @@ export class UiSpectrumController {
       })),
       spectraByClient: this.state.spectrum.spectra.value.clients,
     };
-  }
-
-  private async preparePendingSpectrumFrames(): Promise<void> {
-    try {
-      while (
-        !this.disposed &&
-        this.processedSpectrumVersion < this.requestedSpectrumVersion
-      ) {
-        const version = this.requestedSpectrumVersion;
-        this.state.spectrum.framePrepareErrorDetail.value = null;
-        try {
-          const frameData = await this.framePreparer.prepare(
-            this.buildFramePreparationInput(),
-          );
-          if (this.disposed) {
-            return;
-          }
-          if (version !== this.requestedSpectrumVersion) {
-            continue;
-          }
-          this.processedSpectrumVersion = version;
-          const prepared = this.canvas.composePreparedFrame(frameData);
-          this.applyPreparedSpectrum(prepared, "data");
-        } catch (error: unknown) {
-          if (this.disposed) {
-            return;
-          }
-          if (version !== this.requestedSpectrumVersion) {
-            continue;
-          }
-          this.processedSpectrumVersion = version;
-          this.state.spectrum.framePrepareErrorDetail.value =
-            getFramePrepareErrorDetail(error);
-          this.updateSpectrumOverlay();
-        }
-      }
-    } finally {
-      this.framePreparationRunning = false;
-      if (
-        !this.disposed &&
-        this.processedSpectrumVersion < this.requestedSpectrumVersion
-      ) {
-        this.framePreparationRunning = true;
-        void this.preparePendingSpectrumFrames();
-      }
-    }
   }
 }
 

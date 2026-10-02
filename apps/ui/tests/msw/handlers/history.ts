@@ -128,7 +128,7 @@ async function resolveBinaryResult(
   });
 }
 
-export function makeHistoryListRun(
+function makeHistoryListRun(
   runId: string,
   overrides: Partial<HistoryEntry> = {},
 ): HistoryEntry {

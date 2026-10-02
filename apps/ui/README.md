@@ -9,11 +9,10 @@ server over HTTP (REST) and WebSocket (live data).
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
 - **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
-- **comlink** — typed Web Worker bridge for off-main-thread spectrum frame preparation
 - **Vite** — build tool and dev server
 - **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
-- **Playwright** — browser, visual regression, and smoke testing
+- **Playwright** — browser smoke testing
 - **CSS custom properties** — Material Design 3 inspired theming
 
 ## Setup
@@ -25,16 +24,14 @@ running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nv
 ```bash
 cd apps/ui
 npm ci
-npm run setup:generated-contracts  # One-time clean-checkout setup for missing UI contract derivatives
 npm run lint         # Biome lint over the hand-written UI/config/test files
 npm run lint:deps    # dependency-cruiser boundary checks over src/
 npm run lint:unused  # knip dead-file/dependency/export checks
 npm run format:check # Biome formatter drift check
 npm run dev          # Dev server on http://localhost:5173
 npm run dev:open     # Same dev server, but opens the browser on local desktops
-npm run dev:docker   # Docker-oriented wrapper: contract check + guarded npm ci + Vite
+npm run dev:docker   # Docker-oriented wrapper: guarded npm ci + Vite
 npm run build        # Production build to dist/
-npm run analyze      # Production build + bundle analysis report at dist/bundle-analysis.html
 npm run typecheck    # Type check without emitting
 ```
 
@@ -46,8 +43,7 @@ dependencies so the resulting `package-lock.json` change is deliberate.
 
 The source-mounted Docker dev stack calls `npm run dev:docker` inside the UI
 container. It re-runs `npm ci` only when `node_modules` is missing or the
-checked-in `package-lock.json` changes, and it fails fast if the generated UI
-contract files are stale.
+checked-in `package-lock.json` changes.
 
 The Vite dev server proxies `/api`, `/ws`, and `/static` to
 `http://127.0.0.1:8000` by default so you can use HMR without manually swapping
@@ -60,30 +56,21 @@ in one step.
 
 ## Contract sync
 
-Use `make sync-contracts` from the repo root as the authoritative contract sync entrypoint. If your backend dev environment is already bootstrapped, `npm run sync:contracts` in `apps/ui/` is a thin alias to the same full pipeline.
+The UI's backend contracts are generated TypeScript, committed to the repo:
 
-That authoritative sync updates the checked-in contract inputs first:
+- `src/generated/http_api_contracts.ts` (from the FastAPI OpenAPI schema)
+- `src/contracts/ws_payload_types.ts` (from the `LiveWsPayload` JSON Schema)
+- `src/constants.ts` (from backend-owned shared constants)
 
-- `src/contracts/http_api_schema.json`
-- `src/contracts/ws_payload_schema.json`
-- `../../docs/protocol.md`
+`make sync-contracts` (repo root) is the only regeneration entrypoint. It
+exports the OpenAPI/JSON Schema documents to a temp dir, runs
+`openapi-typescript` from `node_modules`, and rewrites the files above plus
+`docs/protocol.md`. It needs the backend venv and UI `node_modules`
+(`make setup`). Run it after changing backend API payloads, WS payloads, or
+shared constants, and commit the result. CI's `backend-contract-drift` job
+reruns it and fails on `git diff --exit-code`.
 
-It then regenerates the UI-only derivative artifacts:
-
-- `src/generated/http_api_contracts.ts`
-- `src/contracts/ws_payload_types.ts`
-- `src/contracts/ws_payload_schema.generated.ts`
-- `src/constants.ts`
-
-Those derivative outputs are materialized locally from the tracked inputs and are no longer a committed source-of-truth surface. Explicit owner flows such as `test:smoke`, `dev:docker`, `make ui-typecheck`, and release/UI-build helpers call `npm run sync:generated-contracts` when they need the files on disk.
-
-Fresh checkouts can materialize only the missing derivative files with `npm run setup:generated-contracts`. That setup command is safe to rerun, reuses the shared UI bootstrap helper, and intentionally leaves the authoritative `make sync-contracts` / `npm run sync:generated-contracts` refresh flow unchanged for stale-derivative updates.
-
-`make clean` and `make pristine` may remove the derivative files because they are local generated outputs. Restore them with `make setup`, `make ui-typecheck`, `make sync-contracts`, or `npm run setup:generated-contracts` depending on the workflow you are about to run.
-
-`npm run build` and `npm run typecheck` no longer regenerate those files automatically. They run `npm run check:contracts` first and fail fast with guidance to `make sync-contracts` if the local derivative copy is missing or stale. CI contract drift and human-facing regeneration should still use `make sync-contracts`.
-
-The release-smoke artifact helper is the intentional narrow exception: after the same commit already passed `backend-contract-drift` and `frontend-typecheck`, `tools/build_ui_static.py --skip-typecheck --assume-prevalidated-contracts` still regenerates the UI-only derivatives for that fresh checkout but switches to `npm run build:prevalidated-contracts` so the late packaged smoke path does not repeat `check:contracts`.
+UI typecheck, tests, and builds use the committed files and need only Node.
 
 ## Code Quality
 
@@ -132,25 +119,19 @@ Frontend live transport ingress is signal-native end to end.
   spectrum or DOM performance. Do not reintroduce callback-style payload fan-out
   from `ws.ts` into app/runtime consumers.
 
-## Worker-owned spectrum frame preparation
+## Spectrum frame preparation
 
-Live spectrum payload adaptation stays on the main thread, but heavy spectrum
-frame preparation does not.
+Spectrum frames are prepared synchronously on the main thread (a handful of
+sensors at a few frames per second is cheap).
 
-- `src/app/runtime/ui_spectrum_controller.ts` owns worker startup, stale-result
-  suppression, surfaced worker failure state, and teardown.
-- `src/app/runtime/spectrum_frame_preparer_worker.ts` exposes the canonical
-  Comlink worker API. Do not add a second production owner for spectrum frame
-  preparation.
-- `src/app/runtime/spectrum_frame_preparer.ts` owns the shared typed frame-prep
-  contract plus the pure preparation core reused by the worker and focused
-  tests.
-- `src/app/runtime/spectrum_canvas_renderer.ts` no longer prepares frames from
+- `src/app/runtime/ui_spectrum_controller.ts` prepares a frame on every spectra
+  update, surfaces preparation failures in the overlay, and owns teardown.
+- `src/app/runtime/spectrum_frame_preparer.ts` owns the typed frame-prep
+  contract and the pure, cached preparation logic. Do not add a second owner
+  for spectrum frame preparation.
+- `src/app/runtime/spectrum_canvas_renderer.ts` does not prepare frames from
   raw AppState. It only composes chart-band metadata, owns the canvas chart
   lifecycle, and renders already prepared frames.
-- Worker responses may return transferable typed arrays (`Float64Array`) for the
-  prepared frequency/series payloads. Treat those series as read-only numeric
-  buffers.
 
 ## HTTP boundary tests with MSW
 
@@ -191,49 +172,6 @@ Do **not** use MSW when the test is already below the network seam:
   instead of layering on MSW; controllers do not take injectable transport ports
 - WebSocket behavior is separate; keep using the existing fake WebSocket helpers
   for live-session flows instead of trying to route WS traffic through MSW
-
-## Optional browser MSW mock mode
-
-Use the explicit mock-mode dev server when you want to exercise the UI without a
-live backend HTTP stack:
-
-```bash
-cd apps/ui
-npm run dev:mock
-```
-
-- `npm run dev` remains the normal backend-backed path. `npm run dev:mock` is
-  the opt-in browser-worker mode and is easy to disable by switching back to the
-  normal dev command.
-- Browser mock mode starts the app with `msw/browser` before `startUiApp()`,
-  serves a checked-in `mockServiceWorker.js`, and bypasses any HTTP requests
-  that do not have an explicit mock handler.
-- Browser mock mode should reuse the same shared handler owners under
-  `tests/msw/handlers/` rather than growing a second browser-only mock universe.
-- The mode currently reuses the shared history and settings MSW handler owners
-  plus lightweight startup/update defaults so local settings and history flows
-  can load without the backend.
-- WebSocket mocking is still out of scope for this mode. Local smoke tests that
-  need stable live-session behavior can still stub WebSocket separately.
-
-## Bundle analysis
-
-Run `npm run analyze` to build the production bundle and emit
-`dist/bundle-analysis.html`. The report auto-opens when the build is running in
-a desktop session; on headless or CI hosts, open the generated HTML file
-manually after the build finishes.
-
-Treat these gzip budgets as review thresholds for the named build artifacts:
-
-| Asset | Budget |
-|------|--------|
-| `vendor.js` | `< 40 KB` |
-| `chart.js` | `< 20 KB` |
-| `index.js` | `< 60 KB` |
-| Total CSS | `< 15 KB` |
-
-These budgets are guidance, not hard CI gates. If a change pushes a chunk over
-budget, attach the analyzer output to the PR review and explain the growth.
 
 ## Features
 
@@ -372,9 +310,8 @@ instead of controller-side variant class interpolation.
 
 ## WebSocket contract boundary
 
-- `src/contracts/ws_payload_schema.json` defines the JSON Schema for live WS payloads.
-- `src/contracts/ws_payload_types.ts` is generated from that schema by the
-  [contract sync flow](#contract-sync).
+- `src/contracts/ws_payload_types.ts` is generated from the backend
+  `LiveWsPayload` JSON Schema by the [contract sync flow](#contract-sync).
 - `src/ws_payload_validator.ts` validates raw live payloads with Valibot schemas, while the large spectrum-number arrays stay on a custom finite-number-array guard so the live chart path avoids per-element schema object churn.
 - `src/server_payload.ts` then adapts the validated `LiveWsPayload` with schema-version warnings, shared-`freq` fallback, and malformed/misaligned spectrum rejection.
 
@@ -418,12 +355,10 @@ under test.
 |-------|--------|----------------|---------|
 | **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
 | **Smoke** | Playwright (Chromium) | Critical boot/happy-path flows against a real Vite dev server; explicit file pattern `tests/smoke.critical.spec.ts` | `npm run test:smoke` |
-| **Browser regression** | Playwright (Chromium) | Broader browser state, error-path, layout, and liveness regressions moved out of smoke; file pattern `tests/regression*.spec.ts` | `npm run test:regression` |
-| **Visual / snapshot** | Playwright (Chromium) | Rendered-state regression baselines in `tests/snapshots/`; file pattern `tests/visual.spec.ts` | `npm run test:visual` |
 
 Vitest is the canonical fast test layer; reach for it whenever the test does not
-need a real browser. Keep Playwright for the narrow slice that exercises a live
-browser, navigation, or visual snapshots.
+need a real browser. Keep Playwright for the narrow slice of critical journeys
+that need a live browser.
 
 ```bash
 npm run test:unit            # run the Vitest unit suite once
@@ -432,47 +367,15 @@ make ui-test                 # same unit suite from the repo root
 ```
 
 Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
-`smoke*.spec.ts`, `regression*.spec.ts`, `visual.spec.ts`, and
-`msw-browser.smoke.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts).
-New logic-level tests should land as `tests/<feature>_*.spec.ts`; new browser
-regressions should land as `tests/regression.<feature>.spec.ts`. Add to
+`smoke.*.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts). New
+logic-level tests should land as `tests/<feature>_*.spec.ts`. Add to
 `tests/smoke.critical.spec.ts` only when a flow is required for boot or a core
-happy path. The hygiene suite guards that every committed `tests/*.spec.ts` file
-matches exactly one runner ownership pattern.
-
-## Visual Tests
-
-Playwright snapshot tests default to one intentional regression target:
-
-| Viewport | Theme | Command |
-|----------|-------|---------|
-| Laptop (1280x800) | Light | `npm run test:visual` |
-
-Use the broader visual audit sweep only on purpose:
-
-| Viewport | Theme | Command |
-|----------|-------|---------|
-| Laptop (1280x800) | Light | `npm run test:visual:audit` |
-| Laptop (1280x800) | Dark | `npm run test:visual:audit` |
-| Tablet (768x1024) | Light | `npm run test:visual:audit` |
-| Tablet (768x1024) | Dark | `npm run test:visual:audit` |
-
-```bash
-npx playwright install chromium   # first time only
-npm run test:visual               # compare against baselines
-npm run test:visual:update        # regenerate after intentional changes
-npm run test:visual:audit         # run wider multi-viewport audit on purpose
-```
-
-Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic
-payloads. The default lane stays on `laptop-light`; the audit command keeps the
-older multi-viewport sweep available when broader visual review is worth the
-cost. Both visual commands only run `tests/visual.spec.ts`.
+happy path (`npx playwright install chromium` once, then `npm run test:smoke`).
 
 ## Signal-driven island tests
 
 - Prefer `tests/dom_render_test_support.ts::mountSignalView()` for isolated
-  island tests. It installs an isolated DOM, mounts the Preact view once, and
+  island tests. It resets the happy-dom body, mounts the Preact view once, and
   returns a typed bridge plus deterministic cleanup.
 - Drive island state with `signal()` and `computed()` inputs instead of
   rebuilding the old `render(model)` fixture pattern.

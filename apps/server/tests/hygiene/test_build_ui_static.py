@@ -61,7 +61,6 @@ def _install_fake_subprocess(
     def _fake_run(
         command: list[str],
         cwd: str | Path | None = None,
-        env: dict[str, str] | None = None,
         check: bool = False,
         capture_output: bool = False,
         text: bool = False,
@@ -69,15 +68,9 @@ def _install_fake_subprocess(
         del cwd, check, capture_output, text
         command_list = [str(part) for part in command]
         commands.append(command_list)
-        if command_list[:2] == ["npm", "run"]:
-            assert env is not None
-            assert env["PYTHON"] == sys.executable
         if command_list[:2] == ["git", "-C"]:
             return subprocess.CompletedProcess(command_list, 0, stdout=f"{git_head}\n", stderr="")
-        if command_list[:2] == ["npm", "run"] and command_list[2] in {
-            "build",
-            "build:prevalidated-contracts",
-        }:
+        if command_list[:3] == ["npm", "run", "build"]:
             (dist_dir / "index.html").write_text(
                 f"<!doctype html>\n<!-- {command_list[2]} -->\n",
                 encoding="utf-8",
@@ -105,7 +98,7 @@ def test_build_ui_static_builds_and_syncs_static_assets(
 
     assert commands[0][0] == "node"
     assert Path(commands[0][1]).name == "ensure_ui_bootstrap.mjs"
-    assert _npm_run_labels(commands) == ["sync:generated-contracts", "typecheck", "build"]
+    assert _npm_run_labels(commands) == ["typecheck", "build"]
     assert any(
         command[0] == "node" and Path(command[1]).name == "ensure_ui_bootstrap.mjs"
         for command in commands
@@ -133,7 +126,7 @@ def test_build_ui_static_still_skips_typecheck_when_requested(
 
     module.main(["--skip-typecheck"])
 
-    assert _npm_run_labels(commands) == ["sync:generated-contracts", "build"]
+    assert _npm_run_labels(commands) == ["build"]
     assert (static_dir / "index.html").read_text(
         encoding="utf-8"
     ) == "<!doctype html>\n<!-- build -->\n"
@@ -150,35 +143,7 @@ def test_build_ui_static_passes_skip_npm_ci_to_shared_bootstrap(
 
     bootstrap_command = next(command for command in commands if command[0] == "node")
     assert "--skip-npm-ci" in bootstrap_command
-    assert _npm_run_labels(commands) == ["sync:generated-contracts", "build"]
-
-
-def test_build_ui_static_can_use_prevalidated_contract_build_path(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    module, _repo, ui_dir, static_dir = _load_temp_build_ui_static(tmp_path)
-    commands = _install_fake_subprocess(monkeypatch, module, ui_dir)
-
-    module.main(["--skip-typecheck", "--assume-prevalidated-contracts"])
-
-    assert _npm_run_labels(commands) == ["sync:generated-contracts", "build:prevalidated-contracts"]
-    assert (static_dir / "index.html").read_text(encoding="utf-8") == (
-        "<!doctype html>\n<!-- build:prevalidated-contracts -->\n"
-    )
-
-
-def test_build_ui_static_rejects_prevalidated_contracts_without_skip_typecheck(
-    tmp_path: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    module, _repo, _ui_dir, _static_dir = _load_temp_build_ui_static(tmp_path)
-
-    with pytest.raises(SystemExit) as exc_info:
-        module.main(["--assume-prevalidated-contracts"])
-
-    assert exc_info.value.code == 2
-    assert "--assume-prevalidated-contracts requires --skip-typecheck" in capsys.readouterr().err
+    assert _npm_run_labels(commands) == ["build"]
 
 
 def test_build_ui_static_stays_importable_without_msgspec(

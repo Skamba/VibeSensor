@@ -17,7 +17,6 @@ _REQUIRED_LF_PATTERNS = (
     "*.py",
     "*.ts",
     "*.tsx",
-    "*.js",
     "*.mjs",
     "*.cjs",
     "*.json",

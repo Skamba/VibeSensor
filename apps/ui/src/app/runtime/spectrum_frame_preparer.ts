@@ -28,13 +28,6 @@ export interface SpectrumPreparedFrameData {
   hasData: boolean;
 }
 
-export interface SpectrumFramePreparer {
-  dispose(): void;
-  prepare(
-    input: SpectrumFramePreparationInput,
-  ): Promise<SpectrumPreparedFrameData>;
-}
-
 interface PreparedSpectrumCacheEntry {
   sourceCombined: readonly number[];
   sourceFreq: readonly number[];
@@ -43,24 +36,12 @@ interface PreparedSpectrumCacheEntry {
   values: number[];
 }
 
-interface SpectrumFramePreparerCore {
+export interface SpectrumFramePreparer {
   dispose(): void;
   prepare(input: SpectrumFramePreparationInput): SpectrumPreparedFrameData;
 }
 
-export function createInlineSpectrumFramePreparer(): SpectrumFramePreparer {
-  const core = createSpectrumFramePreparerCore();
-  return {
-    dispose(): void {
-      core.dispose();
-    },
-    async prepare(input): Promise<SpectrumPreparedFrameData> {
-      return core.prepare(input);
-    },
-  };
-}
-
-export function createSpectrumFramePreparerCore(): SpectrumFramePreparerCore {
+export function createSpectrumFramePreparer(): SpectrumFramePreparer {
   const preparedSpectrumCache = new Map<string, PreparedSpectrumCacheEntry>();
 
   function dispose(): void {

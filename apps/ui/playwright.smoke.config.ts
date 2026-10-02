@@ -7,7 +7,7 @@ const configuredSmokeWorkers = Number.parseInt(
 
 export default defineConfig({
   testDir: "tests",
-  // Keep smoke explicit. Broader browser regressions live in playwright.regression.config.ts.
+  // Keep smoke explicit: only the critical journeys run in CI.
   testMatch: ["smoke.critical.spec.ts"],
   outputDir: "test-results/playwright-smoke",
   timeout: 15_000,

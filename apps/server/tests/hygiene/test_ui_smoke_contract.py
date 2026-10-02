@@ -102,13 +102,7 @@ def test_ui_tooling_covers_playwright_configs_and_ignores_generated_results() ->
     formatter_includes = set(biome["formatter"]["includes"])
     output_dirs = _output_dirs_from_playwright_configs(playwright_configs)
 
-    assert playwright_configs == {
-        "playwright.config.ts",
-        "playwright.regression.config.ts",
-        "playwright.smoke.config.ts",
-        "playwright.smoke.msw.config.ts",
-        "playwright.visual-audit.config.ts",
-    }
+    assert playwright_configs == {"playwright.smoke.config.ts"}
     assert playwright_configs <= linter_includes
     assert playwright_configs <= formatter_includes
     assert "!!test-results" not in files_includes
@@ -125,7 +119,7 @@ def test_ui_smoke_command_and_config_alignment() -> None:
     workers_env_var, workers_default = _smoke_workers_env_contract()
     smoke_specs = _resolved_smoke_specs()
 
-    assert scripts["pretest:smoke"] == "npm run sync:generated-contracts"
+    assert "pretest:smoke" not in scripts
     assert smoke_tokens[:3] == ["npx", "playwright", "test"]
     assert "--config=playwright.smoke.config.ts" in smoke_tokens
     assert "--project=laptop-light" in smoke_tokens
@@ -142,7 +136,6 @@ def test_ui_smoke_command_and_config_alignment() -> None:
     assert _smoke_test_match_patterns() == ["smoke.critical.spec.ts"]
     assert smoke_specs
     assert all(name.startswith("smoke") for name in smoke_specs)
-    assert "visual.spec.ts" not in smoke_specs
 
 
 def test_core_ui_smoke_specs_exist() -> None:
