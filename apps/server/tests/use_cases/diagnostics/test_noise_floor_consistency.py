@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.shared.fft_analysis import noise_floor
-from vibesensor.vibration_strength import percentile
+from vibesensor.dsp.fft_analysis import noise_floor
+from vibesensor.dsp.vibration_strength import percentile
 
 # ---------------------------------------------------------------------------
 # Helpers

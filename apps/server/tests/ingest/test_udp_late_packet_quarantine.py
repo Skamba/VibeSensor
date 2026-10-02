@@ -7,10 +7,10 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.ingest.protocol import HelloMessage, pack_data, parse_data_ack
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
+from vibesensor.live.processor import SignalProcessor
 
 _CLIENT_ID = bytes.fromhex("aabbccddeeff")
 _ADDR = ("127.0.0.1", 12345)

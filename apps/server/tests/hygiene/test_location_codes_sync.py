@@ -13,8 +13,8 @@ from tests._paths import REPO_ROOT
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.locations import LOCATION_CODES
 from vibesensor.domain.sensor import _LOCATION_CODES as DOMAIN_LOCATION_CODES
-from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.vibration_strength import (
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.dsp.vibration_strength import (
     CALIBRATION_PROFILE_ID,
     PEAK_BANDWIDTH_HZ,
     PEAK_DETECTOR_VERSION,

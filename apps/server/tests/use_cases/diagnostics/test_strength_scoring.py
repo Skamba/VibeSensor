@@ -5,8 +5,8 @@ from math import sqrt
 import numpy as np
 import pytest
 
-import vibesensor.vibration_strength as vibration_strength_module
-from vibesensor.vibration_strength import (
+import vibesensor.dsp.vibration_strength as vibration_strength_module
+from vibesensor.dsp.vibration_strength import (
     compute_vibration_strength_db,
     peak_band_rms_amp_g,
     strength_floor_amp_g,

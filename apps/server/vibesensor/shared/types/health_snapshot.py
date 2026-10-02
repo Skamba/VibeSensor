@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, TypedDict
 
-from vibesensor.shared.types.payload_types import IntakeStatsPayload
+from vibesensor.live.payload_types import IntakeStatsPayload
 
 
 class RunRecorderHealthSnapshot(TypedDict):

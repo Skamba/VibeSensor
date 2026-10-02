@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import inf, nan
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.order_bands import (
+from vibesensor.dsp.order_bands import (
     build_diagnostic_settings,
     build_order_bands,
     order_peak_tolerance_hz,

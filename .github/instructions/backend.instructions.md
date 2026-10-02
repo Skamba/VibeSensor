@@ -14,5 +14,5 @@ Backend rules. Use `docs/ai/repo-map.md` only for ownership lookup and `docs/dom
 - Validate report-facing output: rendered/API/PDF text and ordering, not only helper internals. User-facing report text changes require `apps/server/vibesensor/data/report_i18n.json`.
 - Prefer the shared `msgspec`-backed helpers (`json_text_dumps`, `safe_json_dumps`) for backend-owned persistence/history/export JSON text. CLI/debug/log sinks may use stdlib `json` for formatting, ASCII escaping, or script portability.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject`) over `Any`. Use `object` for untrusted inputs, `ParamSpec` for callable wrappers, and focused contracts for nested state.
-- For live processing/WebSocket payloads, reuse `apps/server/vibesensor/shared/types/payload_types.py` and `vibesensor.vibration_strength` instead of ad-hoc `dict[str, Any]` bags.
+- For live processing/WebSocket payloads, reuse `apps/server/vibesensor/live/payload_types.py` and `vibesensor.dsp.vibration_strength` instead of ad-hoc `dict[str, Any]` bags.
 - Backend validation: for backend source run `make lint`, `make typecheck-backend`, and targeted `pytest -q apps/server/tests/<module>/`. Add `make sync-contracts` and `make ui-typecheck` when API payloads, generated contracts, or shared backend/frontend constants change.

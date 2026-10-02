@@ -362,7 +362,7 @@ class FakeState:
                 "buffer_overflow_drops": lambda self: 0,
             },
         )()
-        from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
+        from vibesensor.live.processing_loop import ProcessingLoopState
 
         self.processing_loop_state = ProcessingLoopState()
         self.health_state = RuntimeHealthState()

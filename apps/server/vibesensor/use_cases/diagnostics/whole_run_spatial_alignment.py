@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
-from vibesensor.shared._window_quality_types import WindowQuality, clean_window_quality
+from vibesensor.dsp.vibration_strength import StrengthPeak
+from vibesensor.dsp.window_quality_types import WindowQuality, clean_window_quality
 from vibesensor.shared.types.raw_capture import RawCaptureCoverageState
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactManifest,
@@ -20,7 +21,6 @@ from vibesensor.use_cases.diagnostics.whole_run_spectra import (
     WholeRunWindowSpectralSummary,
     whole_run_spectral_summaries_by_sensor,
 )
-from vibesensor.vibration_strength import StrengthPeak
 
 __all__ = [
     "AlignedSpatialSensorWindow",

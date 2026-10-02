@@ -12,7 +12,7 @@ from vibesensor.adapters.http.ws_message_router import route_ws_message
 from vibesensor.domain.sensor import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
+    from vibesensor.live.broadcaster import LiveBroadcaster
 
 __all__ = ["create_websocket_routes"]
 

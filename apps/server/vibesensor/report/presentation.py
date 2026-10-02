@@ -10,10 +10,10 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.test_run import TestRun
+from vibesensor.dsp.strength_bands import BANDS
 from vibesensor.report.i18n import human_location, location_candidates
 from vibesensor.report.projection import PrimaryReportFacts
 from vibesensor.shared.constants.phases import PHASE_I18N_KEYS
-from vibesensor.strength_bands import BANDS
 
 __all__ = [
     "action_status_text",

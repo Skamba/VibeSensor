@@ -6,7 +6,7 @@ import pytest
 
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.order_bands import (
+from vibesensor.dsp.order_bands import (
     build_diagnostic_settings,
     vehicle_orders_hz,
 )

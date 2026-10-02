@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from vibesensor.dsp.vibration_strength import percentile
 from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.vibration_strength import percentile
 
 
 def _percent_missing(samples: list[JsonObject], key: str) -> float:

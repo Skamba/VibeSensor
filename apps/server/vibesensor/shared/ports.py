@@ -8,6 +8,8 @@ from typing import Protocol
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind
+from vibesensor.live.analysis_time_range import AnalysisTimeRange
+from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.settings.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.settings.sensor_config import SensorsByMacPayload
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
@@ -16,13 +18,11 @@ from vibesensor.settings.settings_types import (
     LanguageCode,
     SpeedUnitCode,
 )
-from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.history_records import (
     AnalyzingRunHealth,
     HistoryRunListEntry,
     StoredHistoryRun,
 )
-from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,

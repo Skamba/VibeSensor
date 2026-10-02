@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain.location_hotspot import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.domain.test_run import TestRun
+from vibesensor.dsp.vibration_strength import compute_db, percentile
 from vibesensor.shared.types.spatial_evidence_contracts import LocationProofBasis
-from vibesensor.vibration_strength import compute_db, percentile
 
 if TYPE_CHECKING:
     from vibesensor.report.projection import PrimaryReportFacts

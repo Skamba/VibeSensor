@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from vibesensor.adapters.http.models.base import _FrozenBase
-from vibesensor.shared.types.payload_types import ClientApiRow
+from vibesensor.live.payload_types import ClientApiRow
 
 
 class IdentifyRequest(_FrozenBase):

@@ -415,7 +415,7 @@ mods = [
     "fastapi",
     "granian",
     "vibesensor",
-    "vibesensor.vibration_strength",
+    "vibesensor.dsp.vibration_strength",
 ]
 for mod in mods:
     importlib.import_module(mod)

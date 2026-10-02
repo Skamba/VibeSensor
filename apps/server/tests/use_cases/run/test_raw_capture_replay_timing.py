@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 from test_support.raw_capture_assertions import warning_codes
 
+from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_from_mapping
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.run_context_warning import (
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK,

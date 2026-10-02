@@ -33,12 +33,12 @@ from vibesensor.infra.runtime.background_tasks import (
 )
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing.processor import SignalProcessor
-    from vibesensor.infra.runtime.processing_loop import ProcessingLoop
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processing_loop import ProcessingLoop
+    from vibesensor.live.processor import SignalProcessor
 
 __all__ = [
     "LifecycleManager",

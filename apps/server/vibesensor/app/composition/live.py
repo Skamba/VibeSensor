@@ -5,19 +5,10 @@ from dataclasses import dataclass
 
 from vibesensor.adapters.http.dependencies import HealthDeps, LiveDeps
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 from vibesensor.app.composition.settings import RuntimeSettingsDeps
 from vibesensor.app.composition.speed import SpeedRuntimeBundle
 from vibesensor.app.config_schema import AppConfig
-from vibesensor.infra.processing.processor import SignalProcessor
-from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
-from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
-from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
-from vibesensor.ingest.registry import ClientRegistry
-from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
-from vibesensor.ingest.udp_control_tx import UDPControlPlane
-from vibesensor.shared.constants.dsp import (
+from vibesensor.dsp.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
     SAMPLE_RATE_HZ,
@@ -26,7 +17,16 @@ from vibesensor.shared.constants.dsp import (
     WAVEFORM_BUFFER_SECONDS,
     WAVEFORM_DISPLAY_HZ,
 )
-from vibesensor.shared.constants.ui import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.infra.runtime.health_state import RuntimeHealthState
+from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.live.broadcaster import LiveBroadcaster
+from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
+from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.shared.ports import SensorMetadataStore
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder

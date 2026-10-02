@@ -11,7 +11,7 @@ from test_support.runtime_lifecycle import (
 )
 
 from vibesensor.infra.runtime.lifecycle import LifecycleManager
-from vibesensor.shared.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
 
 
 async def _park_forever(*args, **kwargs) -> None:

@@ -13,10 +13,10 @@ import numpy as np
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
-from vibesensor.infra.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol import DataMessage, HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
 
 
 @dataclass(slots=True)

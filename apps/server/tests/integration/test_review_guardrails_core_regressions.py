@@ -9,10 +9,10 @@ import importlib
 
 import pytest
 
+from vibesensor.dsp.order_bands import build_order_bands
 from vibesensor.ingest.client_metadata import sanitize_client_name
 from vibesensor.settings.car_config import new_car_id
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
-from vibesensor.shared.order_bands import build_order_bands
 
 # ---------------------------------------------------------------------------
 # Item 1 + 2: Public API naming in domain_models
@@ -53,7 +53,7 @@ class TestBuildOrderBandsLocation:
     """Verify order-band helpers stay in the shared module and keep basic behavior."""
 
     def test_build_order_bands_basic(self) -> None:
-        from vibesensor.shared.order_bands import build_diagnostic_settings
+        from vibesensor.dsp.order_bands import build_diagnostic_settings
 
         orders = {
             "wheel_hz": 10.0,

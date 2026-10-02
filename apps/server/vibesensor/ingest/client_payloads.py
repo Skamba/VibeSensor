@@ -6,9 +6,9 @@ from collections.abc import Iterable, Sequence
 from typing import Protocol
 
 from vibesensor.domain.sensor import normalize_sensor_id
+from vibesensor.live.payload_types import ClientApiRow, ClientMetrics
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.ports import SensorMetadataReader
-from vibesensor.shared.types.payload_types import ClientApiRow, ClientMetrics
 
 __all__ = [
     "ClientSnapshotLike",

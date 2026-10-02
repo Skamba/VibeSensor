@@ -25,8 +25,8 @@ event loop but each call is lightweight (microseconds per packet).
 
 Owner files:
 
-- `apps/server/vibesensor/infra/runtime/processing_loop.py`
-- `apps/server/vibesensor/infra/processing/processor.py`
+- `apps/server/vibesensor/live/processing_loop.py`
+- `apps/server/vibesensor/live/processor.py`
 
 The async processing loop runs on a timer, filters to active clients with fresh
 data, and calls `SignalProcessor.compute_all()` via `asyncio.to_thread()` so the
@@ -34,10 +34,10 @@ event loop never performs FFT work directly.
 
 Live processing modules:
 
-- `apps/server/vibesensor/infra/processing/processor.py`: `SignalProcessor` owns all client buffers behind one lock, ingest (chunk normalization, overflow trimming), snapshot → compute → commit, stats, and read views
-- `apps/server/vibesensor/infra/processing/buffers.py`: `ClientBuffer` ring buffer with its in-place mutations (append, resize, reset, sample-rate clamp, metric commit)
-- `apps/server/vibesensor/infra/processing/compute.py`: FFT cache ownership plus metric computation from snapshots
-- `apps/server/vibesensor/infra/processing/payload.py`: the live `spectra` payload builder
+- `apps/server/vibesensor/live/processor.py`: `SignalProcessor` owns all client buffers behind one lock, ingest (chunk normalization, overflow trimming), snapshot → compute → commit, stats, and read views
+- `apps/server/vibesensor/live/buffers.py`: `ClientBuffer` ring buffer with its in-place mutations (append, resize, reset, sample-rate clamp, metric commit)
+- `apps/server/vibesensor/live/compute.py`: FFT cache ownership plus metric computation from snapshots
+- `apps/server/vibesensor/live/payload.py`: the live `spectra` payload builder
 
 Inside `SignalProcessor.compute_all()`, clients are computed serially in the
 processing thread (see `docs/multithreading_performance.md` for measurements).
@@ -79,9 +79,9 @@ then analyzes that one block.
 
 ### FFT pipeline
 
-`apps/server/vibesensor/infra/processing/compute.py` owns the live cached FFT
+`apps/server/vibesensor/live/compute.py` owns the live cached FFT
 setup through `SignalMetricsComputer`, which extends the shared
-`apps/server/vibesensor/shared/fft_analysis.py` spectral-analysis primitive:
+`apps/server/vibesensor/dsp/fft_analysis.py` spectral-analysis primitive:
 
 - `SignalMetricsComputer` precomputes a Hann window with
   `scipy.signal.windows.hann(config.fft_n)`.
@@ -90,7 +90,7 @@ setup through `SignalMetricsComputer`, which extends the shared
 - `fft_params(sample_rate_hz)` caches the frequency slice and valid FFT indices
   per sample rate so repeated ticks do not rebuild them.
 
-`apps/server/vibesensor/infra/processing/compute.py` coordinates live snapshot
+`apps/server/vibesensor/live/compute.py` coordinates live snapshot
 handling and metric commits, while the pure DSP steps stay in shared helpers:
 
 1. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
@@ -98,11 +98,11 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
    content.
 2. `SignalMetricsComputer.compute()` detrends the captured windows by removing
    the per-axis mean before RMS/P2P and FFT computation.
-3. `apps/server/vibesensor/shared/fft_analysis.py` applies the SciPy-backed
+3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
    Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
    the configured frequency range via SciPy FFT frequency bins, and produces
    both per-axis spectra and a combined amplitude curve.
-4. `apps/server/vibesensor/vibration_strength.py` uses SciPy peak finding to
+4. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
    select dominant candidate bins, estimates a P20/median noise floor, and
    converts the dominant peak band into the
    shared dB metric used by both live telemetry and post-stop analysis:
@@ -120,7 +120,7 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
   the compute side can reuse the cached metrics/spectrum instead of rebuilding
   them.
 - The combined vibration-strength formula lives in
-  `apps/server/vibesensor/vibration_strength.py`; the live path does not carry a
+  `apps/server/vibesensor/dsp/vibration_strength.py`; the live path does not carry a
   second dB implementation.
 - Payload serialization stays downstream of computation. The processing layer
   stores structured metrics and spectrum arrays first, and only later surfaces

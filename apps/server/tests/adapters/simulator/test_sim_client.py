@@ -8,8 +8,8 @@ import pytest
 from vibesensor.adapters.simulator.commands import apply_one_wheel_mild_scenario
 from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
-from vibesensor.infra.processing.compute import SignalMetricsComputer
-from vibesensor.infra.processing.models import ProcessorConfig
+from vibesensor.live.compute import SignalMetricsComputer
+from vibesensor.live.models import ProcessorConfig
 
 _TEST_PROCESSOR_CONFIG = ProcessorConfig(
     sample_rate_hz=800,

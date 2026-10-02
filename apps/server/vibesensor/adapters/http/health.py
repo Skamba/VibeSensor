@@ -12,10 +12,10 @@ from vibesensor.infra.runtime.health_snapshot import build_system_health_snapsho
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 
 if TYPE_CHECKING:
-    from vibesensor.infra.processing.processor import SignalProcessor
     from vibesensor.infra.runtime.health_state import RuntimeHealthState
-    from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.live.processing_loop import ProcessingLoopState
+    from vibesensor.live.processor import SignalProcessor
     from vibesensor.use_cases.run.logger import RunRecorder
 
 

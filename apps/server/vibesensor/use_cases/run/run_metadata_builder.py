@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
+from vibesensor.dsp.vibration_strength import (
+    CALIBRATION_PROFILE_ID,
+    PEAK_DETECTOR_VERSION,
+    STRENGTH_ALGORITHM_VERSION,
+)
 from vibesensor.shared.ports import ClientTracker, LanguageReader
 from vibesensor.shared.time_utils import coerce_utc_offset_seconds
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
@@ -14,11 +19,6 @@ from vibesensor.shared.types.run_schema import (
     RunSensorMetadata,
 )
 from vibesensor.use_cases.run.run_context import order_reference_context_complete
-from vibesensor.vibration_strength import (
-    CALIBRATION_PROFILE_ID,
-    PEAK_DETECTOR_VERSION,
-    STRENGTH_ALGORITHM_VERSION,
-)
 
 
 def firmware_version_for_run(registry: ClientTracker) -> str | None:

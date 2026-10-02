@@ -9,7 +9,7 @@ who consumes it?" Then follow the linked deep dives for step-by-step details.
 | Field | Value |
 |------|-------------|
 | Source | UDP sensor datagrams from the ESP32 fleet |
-| Main path | `apps/server/vibesensor/ingest/udp_data_rx.py` -> registry + `apps/server/vibesensor/infra/processing/` -> `apps/server/vibesensor/infra/runtime/ws_payload_projection.py` -> `apps/server/vibesensor/adapters/websocket/broadcaster.py` |
+| Main path | `apps/server/vibesensor/ingest/udp_data_rx.py` -> registry + `apps/server/vibesensor/live/` -> `apps/server/vibesensor/live/ws_payload_projection.py` -> `apps/server/vibesensor/live/broadcaster.py` |
 | Boundary | Live WebSocket payload projection only; no history DB or post-stop analysis in this path |
 | Final consumer | Dashboard live UI |
 | Data shape | Live and transient, not replayable |
@@ -31,7 +31,7 @@ Deep dive: `docs/intake_buffering.md`
 | Field | Value |
 |------|-------------|
 | Source | The same UDP stream while a run is active |
-| Main path | registry + `apps/server/vibesensor/infra/processing/` -> `apps/server/vibesensor/use_cases/run/sample_flush.py` -> `apps/server/vibesensor/use_cases/run/persistence_writer.py` -> history DB |
+| Main path | registry + `apps/server/vibesensor/live/` -> `apps/server/vibesensor/use_cases/run/sample_flush.py` -> `apps/server/vibesensor/use_cases/run/persistence_writer.py` -> history DB |
 | Boundary | `SampleFlushOrchestrator` owns row building/flush timing; `RunPersistenceWriter` owns the history DB boundary |
 | Final consumer | Persisted run samples, run metadata, and post-stop queueing |
 | Data shape | Persisted summary/sample rows, not replayable raw sensor capture |

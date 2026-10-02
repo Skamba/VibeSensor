@@ -9,8 +9,8 @@ from typing import Literal
 import numpy as np
 
 from vibesensor.domain.strength_metrics import StrengthMetrics
+from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.boundaries.codecs.strength_metrics import strength_metrics_from_mapping
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,

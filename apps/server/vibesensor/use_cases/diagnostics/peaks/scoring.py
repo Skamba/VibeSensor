@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from math import log1p
 
+from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.shared.constants.analysis import NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
 from vibesensor.use_cases.diagnostics._sample_metrics import _effective_baseline_floor
 from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
@@ -15,7 +16,6 @@ from vibesensor.use_cases.diagnostics.peaks.statistics import (
     compute_peak_spatial_uniformity,
     compute_peak_speed_uniformity,
 )
-from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 def _presence_ratio_with_location_rescue(

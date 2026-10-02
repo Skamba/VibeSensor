@@ -199,10 +199,10 @@ name = "Live telemetry stays off post-run diagnosis and reporting"
 type = "forbidden"
 allow_indirect_imports = true
 source_modules = [
-  "vibesensor.infra.processing",
-  "vibesensor.infra.runtime.processing_loop",
-  "vibesensor.adapters.websocket",
-  "vibesensor.infra.runtime.ws_payload_projection",
+  "vibesensor.live",
+  "vibesensor.live.processing_loop",
+  "vibesensor.live",
+  "vibesensor.live.ws_payload_projection",
   "vibesensor.ingest.udp_data_rx",
 ]
 forbidden_modules = [

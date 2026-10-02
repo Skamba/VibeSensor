@@ -10,9 +10,10 @@ from typing import Protocol
 
 import numpy as np
 
-from vibesensor.shared._window_quality_scoring import score_window_quality
-from vibesensor.shared.constants.dsp import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
-from vibesensor.shared.fft_analysis import SpectralAnalysisComputer, float_list
+from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer, float_list
+from vibesensor.dsp.vibration_strength import StrengthPeak
+from vibesensor.dsp.window_quality_scoring import score_window_quality
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
     RawTimelineChunk,
@@ -48,7 +49,6 @@ from vibesensor.use_cases.diagnostics.whole_run_spectral_projection import (
     whole_run_window_spectral_summaries_to_jsonl_bytes,
 )
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
-from vibesensor.vibration_strength import StrengthPeak
 
 _DEFAULT_CHUNK_WINDOW_COUNT = 32
 

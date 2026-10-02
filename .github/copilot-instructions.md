@@ -12,7 +12,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 ## Repo invariants
 - VibeSensor contains a Python backend (`apps/server/`), TypeScript/Vite UI (`apps/ui/`), ESP32 firmware (`firmware/esp/`), and Raspberry Pi image build (`infra/pi-image/`).
 - Raw ingest/sample acceleration may use g; post-stop analysis outputs must expose vibration strength/intensity in dB only.
-- Canonical dB math: `apps/server/vibesensor/vibration_strength.py::vibration_strength_db_scalar()`.
+- Canonical dB math: `apps/server/vibesensor/dsp/vibration_strength.py::vibration_strength_db_scalar()`.
 - Static config that does not change between deployments belongs in Python constants, not runtime file loaders.
 - Internal shared logic stays in the server package. Generated UI constants come from backend sources under `vibesensor.shared.*`.
 - `vibesensor.shared` is for stable contracts, ports, codecs, constants, and pure helpers. Runtime bootstrap/subprocess orchestration belongs in `apps/server/vibesensor/app/` or the owning `use_cases/**` module.

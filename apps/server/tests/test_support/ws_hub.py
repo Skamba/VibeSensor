@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock, MagicMock
 
-from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster, LivePayloadSource
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.live.broadcaster import LiveBroadcaster, LivePayloadSource
 
 
 def make_websocket() -> AsyncMock:

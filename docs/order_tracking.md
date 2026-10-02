@@ -11,7 +11,7 @@ VibeSensor uses the same vehicle-order reference model in two places:
   unavailable
 
 The shared physics lives in `apps/server/vibesensor/domain/order_reference.py`
-and `apps/server/vibesensor/shared/order_bands.py`. The post-stop finding flow
+and `apps/server/vibesensor/dsp/order_bands.py`. The post-stop finding flow
 lives in `apps/server/vibesensor/use_cases/diagnostics/orders/`.
 
 ## Core concepts
@@ -153,9 +153,9 @@ The same reference math serves both runtime and diagnostics:
 
 The saved per-sample peak/floor inputs consumed by order matching come from the
 same canonical live-processing FFT/strength pipeline
-(`apps/server/vibesensor/infra/processing/compute.py`,
-`apps/server/vibesensor/shared/fft_analysis.py`, and
-`apps/server/vibesensor/vibration_strength.py`), so order analysis does not
+(`apps/server/vibesensor/live/compute.py`,
+`apps/server/vibesensor/dsp/fft_analysis.py`, and
+`apps/server/vibesensor/dsp/vibration_strength.py`), so order analysis does not
 maintain a second independent DSP stack.
 
 That shared ownership is why `shared/order_bands.py` exists outside
@@ -166,7 +166,7 @@ That shared ownership is why `shared/order_bands.py` exists outside
 | File | Responsibility |
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
-| `apps/server/vibesensor/shared/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
+| `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/matching.py` | Match predicted order bands against stored sample peaks. |
 | `apps/server/vibesensor/use_cases/diagnostics/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |

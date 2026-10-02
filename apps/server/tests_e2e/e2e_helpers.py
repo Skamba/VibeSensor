@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 from pypdf import PdfReader
 
 from vibesensor.adapters.simulator.sim_client import make_client_id
-from vibesensor.shared.constants.dsp import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 
 ROOT = Path(__file__).resolve().parents[3]
 

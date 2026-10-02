@@ -15,10 +15,10 @@ from vibesensor.adapters.simulator.server_http import fetch_active_car_order_hz
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS
+from vibesensor.dsp.order_bands import vehicle_orders_hz
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.order_bands import vehicle_orders_hz
 
 _BMW_F30_320I = {
     **ANALYSIS_SETTINGS_DEFAULTS,

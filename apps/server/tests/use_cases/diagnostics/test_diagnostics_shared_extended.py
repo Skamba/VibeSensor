@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
-from vibesensor.shared.json_utils import as_float_or_none
-from vibesensor.shared.order_bands import (
+from vibesensor.dsp.order_bands import (
     build_diagnostic_settings,
     vehicle_orders_hz,
 )
+from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
+from vibesensor.shared.json_utils import as_float_or_none
 
 # -- _as_float NaN/edge cases -------------------------------------------------
 
@@ -100,7 +100,7 @@ def test_vehicle_orders_projects_boundary_settings_into_order_reference_spec(
         return _FakeSpec()
 
     monkeypatch.setattr(
-        "vibesensor.shared.order_bands.order_reference_spec_from_snapshot",
+        "vibesensor.dsp.order_bands.order_reference_spec_from_snapshot",
         lambda snapshot: _fake_from_settings(
             {key: getattr(snapshot, key) for key in ANALYSIS_SETTINGS_FIELDS}
         ),

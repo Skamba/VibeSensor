@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.shared._window_quality_scoring import window_quality_with_context
-from vibesensor.shared._window_quality_types import WindowQuality
+from vibesensor.dsp.window_quality_scoring import window_quality_with_context
+from vibesensor.dsp.window_quality_types import WindowQuality
 from vibesensor.shared.time_utils import utc_now_iso
 from vibesensor.shared.types.order_trace_contracts import (
     OrderTraceFamily,

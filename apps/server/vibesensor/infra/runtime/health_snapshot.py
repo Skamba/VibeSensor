@@ -5,18 +5,18 @@ from __future__ import annotations
 from typing import Literal, Protocol
 
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
     RawCaptureRuntimeSnapshot,
 )
+from vibesensor.live.payload_types import IntakeStatsPayload
+from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.shared.types.health_snapshot import (
     HealthSnapshotData,
     IngestClientHealthSnapshot,
     RunRecorderHealthSnapshot,
     SubsystemHealthSnapshot,
 )
-from vibesensor.shared.types.payload_types import IntakeStatsPayload
 
 __all__ = ["build_system_health_snapshot"]
 

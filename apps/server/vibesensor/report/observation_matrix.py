@@ -7,6 +7,7 @@ from math import isfinite
 
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.test_run import TestRun
+from vibesensor.dsp.vibration_strength import percentile, relative_level_db_scalar
 from vibesensor.report.model.appendices import (
     SensorObservationCell,
     SensorObservationMatrixRow,
@@ -16,7 +17,6 @@ from vibesensor.report.presentation import (
     display_location,
     human_source,
 )
-from vibesensor.vibration_strength import percentile, relative_level_db_scalar
 
 __all__ = ["build_sensor_observation_matrix_rows"]
 

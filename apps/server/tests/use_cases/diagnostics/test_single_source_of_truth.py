@@ -19,7 +19,7 @@ DEFAULT_ANALYSIS_SETTINGS = AnalysisSettingsSnapshot.DEFAULTS
 
 def _make_signal_processor():
     """Create a SignalProcessor with standard test parameters."""
-    from vibesensor.infra.processing.processor import SignalProcessor
+    from vibesensor.live.processor import SignalProcessor
 
     return SignalProcessor(
         sample_rate_hz=800,
@@ -58,8 +58,8 @@ def test_as_float_single_source_of_truth() -> None:
     """order_bands.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition.
     """
+    from vibesensor.dsp.order_bands import as_float_or_none as ob_as_float
     from vibesensor.shared.json_utils import as_float_or_none
-    from vibesensor.shared.order_bands import as_float_or_none as ob_as_float
 
     assert ob_as_float is as_float_or_none, (
         "order_bands.as_float_or_none must be imported from runlog.as_float_or_none"
@@ -68,7 +68,7 @@ def test_as_float_single_source_of_truth() -> None:
 
 def test_strength_metrics_no_dead_aliases() -> None:
     """compute_vibration_strength_db output must not contain dead alias fields."""
-    from vibesensor.vibration_strength import compute_vibration_strength_db
+    from vibesensor.dsp.vibration_strength import compute_vibration_strength_db
 
     result = compute_vibration_strength_db(
         freq_hz=[1.0, 2.0, 3.0],
@@ -93,9 +93,9 @@ def test_analysis_constants_single_source_of_truth() -> None:
     import inspect
 
     from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
+    from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+    from vibesensor.dsp.vibration_strength import compute_vibration_strength_db
     from vibesensor.shared.constants.analysis import SILENCE_DB
-    from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
-    from vibesensor.vibration_strength import compute_vibration_strength_db
 
     assert MPS_TO_KMH == 3.6
     assert abs(KMH_TO_MPS - 1.0 / 3.6) < 1e-15

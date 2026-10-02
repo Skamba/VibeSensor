@@ -5,8 +5,8 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.live.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frame_to_json_object
-from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run.sample_builder import build_sample_records
 from vibesensor.use_cases.run.sample_speed_context import SpeedContext

@@ -16,8 +16,8 @@ import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
+from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.shared.types.history_records import AnalyzingRunHealth
-from vibesensor.shared.types.payload_types import ClientMetrics
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig

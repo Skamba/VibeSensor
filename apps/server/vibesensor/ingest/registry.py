@@ -19,6 +19,7 @@ from typing import Literal
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.ingest.client_metadata import ClientMetadataManager
+from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
@@ -29,7 +30,6 @@ from vibesensor.shared.ports import (
     RegistryDataMessage,
     RegistryHelloMessage,
 )
-from vibesensor.shared.types.payload_types import ClientMetrics
 
 LOGGER = logging.getLogger(__name__)
 _LOCATION_VALIDATOR = LocationAssignmentValidator()

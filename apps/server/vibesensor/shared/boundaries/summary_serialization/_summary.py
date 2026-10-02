@@ -12,6 +12,7 @@ from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.dsp.vibration_strength import compute_db
 from vibesensor.shared.boundaries.runs.suitability import run_suitability_payload
 from vibesensor.shared.boundaries.summary_fields.origin import (
     SuspectedVibrationOrigin,
@@ -60,7 +61,6 @@ from vibesensor.shared.types.history_analysis_contracts import (
     TestPlanStepResponse as TestPlanStepPayload,
 )
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
-from vibesensor.vibration_strength import compute_db
 
 
 @dataclass(frozen=True, slots=True)

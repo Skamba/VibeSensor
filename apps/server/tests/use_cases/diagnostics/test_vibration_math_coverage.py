@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from vibesensor.strength_bands import bucket_for_strength
-from vibesensor.vibration_strength import (
+from vibesensor.dsp.strength_bands import bucket_for_strength
+from vibesensor.dsp.vibration_strength import (
     STRENGTH_EPSILON_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
     combined_spectrum_amp_g,

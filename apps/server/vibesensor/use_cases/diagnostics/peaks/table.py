@@ -10,6 +10,7 @@ from statistics import median as _median
 
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding import speed_bin_label
+from vibesensor.dsp.vibration_strength import compute_db, compute_db_or_none
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.use_cases.diagnostics._sample_metrics import (
     _effective_baseline_floor,
@@ -30,7 +31,6 @@ from vibesensor.use_cases.diagnostics.peaks.statistics import (
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import (
     _amplitude_weighted_speed_window,
 )
-from vibesensor.vibration_strength import compute_db, compute_db_or_none
 
 
 @dataclass(frozen=True, slots=True)

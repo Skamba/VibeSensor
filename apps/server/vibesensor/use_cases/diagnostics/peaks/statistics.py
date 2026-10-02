@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import sqrt
 
-from vibesensor.vibration_strength import percentile
+from vibesensor.dsp.vibration_strength import percentile
 
 
 def _safe_percentile(sorted_vals: Sequence[float], q: float, *, default: float = 0.0) -> float:

@@ -14,7 +14,6 @@ from typing import Protocol, cast
 
 import numpy as np
 
-from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol import (
     MSG_DATA,
@@ -25,6 +24,7 @@ from vibesensor.ingest.protocol import (
 )
 from vibesensor.ingest.protocol_validator import ProtocolVersionMismatch
 from vibesensor.ingest.registry import ClientRegistry, DataUpdateResult
+from vibesensor.live.processor import SignalProcessor
 from vibesensor.shared.exceptions import ProtocolError
 
 LOGGER = logging.getLogger(__name__)

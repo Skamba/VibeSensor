@@ -18,10 +18,10 @@ from vibesensor.domain.strength_metrics import (
 from vibesensor.domain.strength_metrics import (
     StrengthPeak as StrengthPeakDC,
 )
-from vibesensor.vibration_strength import (
+from vibesensor.dsp.vibration_strength import (
     StrengthPeak as StrengthPeakTD,
 )
-from vibesensor.vibration_strength import (
+from vibesensor.dsp.vibration_strength import (
     VibrationStrengthMetrics as VibrationStrengthMetricsTD,
 )
 

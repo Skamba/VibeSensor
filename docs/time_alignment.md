@@ -129,7 +129,7 @@ clock step per sensor.
 
 ```bash
 # Focused alignment tests:
-python -m pytest apps/server/tests/infra/processing/test_time_alignment.py -v
+python -m pytest apps/server/tests/live/test_time_alignment.py -v
 
 # Full backend suite:
 pytest -q apps/server/tests

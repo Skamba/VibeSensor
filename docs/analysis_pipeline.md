@@ -10,7 +10,7 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 2. **Diagnostics-first package** — diagnostic orchestration, ranking, and
    post-stop reasoning live in `apps/server/vibesensor/use_cases/diagnostics/`.
    The shared vehicle-order frequency math used by both diagnostics and live
-   telemetry lives in `apps/server/vibesensor/shared/order_bands.py`.
+   telemetry lives in `apps/server/vibesensor/dsp/order_bands.py`.
 3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
    diagnostics pipeline entrypoint. Boundary helpers such as
    `summarize_run_data()` / `summarize_log()` live in
@@ -23,12 +23,12 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 5. **Renderer-only report package** — `vibesensor.report.pdf` must not
    import from `vibesensor.use_cases.diagnostics` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
-   (`apps/server/vibesensor/infra/processing/`) must not import from
+   (`apps/server/vibesensor/live/`) must not import from
    `use_cases/diagnostics/`.
 
 ## Live Processing vs Post-Stop Analysis
 
-| | Live Processing (`apps/server/vibesensor/infra/processing/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
+| | Live Processing (`apps/server/vibesensor/live/`) | Post-Stop Analysis (`use_cases/diagnostics/`) |
 |-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB, plus optional raw-capture artifacts for replay |
@@ -38,10 +38,10 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 
 Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `noise_floor_amp_p20_g`) live in
-`apps/server/vibesensor/vibration_strength.py`; canonical windowing,
+`apps/server/vibesensor/dsp/vibration_strength.py`; canonical windowing,
 frequency-bin, and peak-detection steps live in
-`apps/server/vibesensor/shared/fft_analysis.py`; and live snapshot/metric
-coordination stays under `apps/server/vibesensor/infra/processing/`. Live
+`apps/server/vibesensor/dsp/fft_analysis.py`; and live snapshot/metric
+coordination stays under `apps/server/vibesensor/live/`. Live
 metrics use the `live_display` processing profile and a three-sample median
 filter for operator-friendly display. Post-stop raw replay and dense whole-run
 spectra use `diagnostic_raw` when raw capture is available; summary-only

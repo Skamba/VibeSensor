@@ -6,6 +6,16 @@ from collections.abc import Callable
 from math import ceil
 from typing import TYPE_CHECKING
 
+from vibesensor.live.processing_profile import (
+    MEDIAN_FILTER_WINDOW_SAMPLES,
+    PROCESSING_FILTER_MEDIAN_3_SAMPLE,
+    PROCESSING_PROFILE_DIAGNOSTIC_FILTERED,
+    PROCESSING_PROFILE_DIAGNOSTIC_RAW,
+    PROCESSING_PROFILE_LIVE_DISPLAY,
+    PROCESSING_PROFILE_VERSION,
+    ProcessingFilterId,
+    processing_profile_row,
+)
 from vibesensor.shared.boundaries.analysis_payloads.summary import analysis_result_to_summary
 from vibesensor.shared.boundaries.reporting.analysis_metadata import (
     report_analysis_metadata_from_mapping,
@@ -27,16 +37,6 @@ from vibesensor.shared.run_context_warning import (
 from vibesensor.shared.types.history_analysis_contracts import RunSuitabilityCheck
 from vibesensor.shared.types.json_types import JsonArray, JsonObject
 from vibesensor.shared.types.persisted_analysis import PersistedAnalysis
-from vibesensor.shared.types.processing_profile import (
-    MEDIAN_FILTER_WINDOW_SAMPLES,
-    PROCESSING_FILTER_MEDIAN_3_SAMPLE,
-    PROCESSING_PROFILE_DIAGNOSTIC_FILTERED,
-    PROCESSING_PROFILE_DIAGNOSTIC_RAW,
-    PROCESSING_PROFILE_LIVE_DISPLAY,
-    PROCESSING_PROFILE_VERSION,
-    ProcessingFilterId,
-    processing_profile_row,
-)
 from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
 from vibesensor.use_cases.run.post_analysis_input import PostAnalysisRunInput
 

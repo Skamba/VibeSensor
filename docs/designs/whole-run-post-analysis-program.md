@@ -16,10 +16,10 @@ below.
 
 - Raw UDP samples enter through `apps/server/vibesensor/ingest/udp_data_rx.py`.
 - Live FFT/strength coordination lives in
-  `apps/server/vibesensor/infra/processing/compute.py`.
+  `apps/server/vibesensor/live/compute.py`.
 - The canonical spectrum window is `FFT_N = 2048`; shared spectral primitives
-  live in `apps/server/vibesensor/shared/fft_analysis.py` with DSP constants in
-  `apps/server/vibesensor/shared/constants/dsp.py`.
+  live in `apps/server/vibesensor/dsp/fft_analysis.py` with DSP constants in
+  `apps/server/vibesensor/dsp/constants.py`.
 - Live feature cadence is derived from `feature_interval_s`, which is currently
   written as `1 / metrics_log_hz` by
   `apps/server/vibesensor/use_cases/run/run_metadata_builder.py`.
@@ -147,7 +147,7 @@ raw capture manifest/files (#3065)
 |---|---|---|
 | Raw artifact access | `adapters/persistence/history_db/`, `shared/types/raw_capture.py` | Range reads and manifest-aware raw loading without changing the hot write path |
 | Window planning | `use_cases/diagnostics/` | Derive a deterministic whole-run window grid from run metadata; `whole_run_spectra.py` resolves each window to bounded raw range reads |
-| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/shared/fft_analysis.py`, `apps/server/vibesensor/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
+| Whole-run spectra/features | `apps/server/vibesensor/use_cases/diagnostics/`, `apps/server/vibesensor/dsp/fft_analysis.py`, `apps/server/vibesensor/dsp/vibration_strength.py` | Reuse canonical shared FFT/strength primitives to compute per-window spectral outputs without `use_cases -> infra` coupling |
 | Context timeline | `use_cases/diagnostics/`, `shared/types/` | Normalize speed/RPM/context into per-window labels and segments |
 | Order traces | `use_cases/diagnostics/orders/` | Track candidate orders across the full run and summarize harmonic stability |
 | Spatial evidence | `use_cases/diagnostics/` | Measure cross-sensor agreement, coherence, and location separation |
@@ -556,7 +556,7 @@ Keep these sequential:
 
 Reuse the existing explicit benchmark style:
 
-- `apps/server/tests/infra/processing/benchmark_rfft_backend.py`
+- `apps/server/tests/live/benchmark_rfft_backend.py`
 - `apps/server/tests/use_cases/diagnostics/benchmark_whole_run_spectra.py`
 
 Add opt-in benchmarks for:

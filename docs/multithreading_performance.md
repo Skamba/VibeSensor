@@ -10,7 +10,7 @@ speedup.
 
 ## Live processing tick
 
-- The async processing loop (`apps/server/vibesensor/infra/runtime/processing_loop.py`)
+- The async processing loop (`apps/server/vibesensor/live/processing_loop.py`)
   filters to active clients with fresh data and calls
   `SignalProcessor.compute_all()` via `anyio.to_thread.run_sync()`, so the event
   loop never performs FFT work directly.

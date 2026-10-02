@@ -6,7 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
-from vibesensor.shared._window_quality_types import WindowQuality, clean_window_quality
+from vibesensor.dsp.vibration_strength import StrengthPeak
+from vibesensor.dsp.window_quality_types import WindowQuality, clean_window_quality
 from vibesensor.shared.json_utils import i18n_ref
 from vibesensor.shared.raw_capture_timeline import (
     RawSensorTimeline,
@@ -29,7 +30,6 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_objects_from_bytes,
 )
 from vibesensor.use_cases.diagnostics.whole_run_windows import WholeRunWindowPlan
-from vibesensor.vibration_strength import StrengthPeak
 
 type WholeRunCoverageConfidence = Literal["full", "partial", "unavailable"]
 

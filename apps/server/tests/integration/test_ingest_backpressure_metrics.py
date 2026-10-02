@@ -22,19 +22,19 @@ import pytest
 from test_support.polling import async_wait_until
 
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
-from vibesensor.infra.processing.processor import SignalProcessor
 from vibesensor.infra.runtime.health_snapshot import build_system_health_snapshot
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
-from vibesensor.infra.runtime.processing_loop import ProcessingLoopState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
-from vibesensor.shared.types.payload_types import LiveWsPayload
+from vibesensor.live.broadcaster import LiveBroadcaster
+from vibesensor.live.payload_types import LiveWsPayload
+from vibesensor.live.processing_loop import ProcessingLoopState
+from vibesensor.live.processor import SignalProcessor
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder

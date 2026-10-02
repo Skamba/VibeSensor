@@ -31,7 +31,7 @@ from test_support.history_db_lifecycle import (
     make_run_metadata,
 )
 
-from vibesensor.shared.constants.dsp import FFT_N
+from vibesensor.dsp.constants import FFT_N
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureManifest,

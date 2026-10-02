@@ -13,6 +13,7 @@ from vibesensor.domain.location_hotspot import (
     PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
+from vibesensor.dsp.vibration_strength import percentile
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.use_cases.diagnostics._counters import counter_delta
 from vibesensor.use_cases.diagnostics._sample_metrics import _primary_vibration_strength_db
@@ -27,7 +28,6 @@ from vibesensor.use_cases.diagnostics._view_types import (
 from vibesensor.use_cases.diagnostics.math_utils import _mean
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
-from vibesensor.vibration_strength import percentile
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.run_schema import RunMetadata

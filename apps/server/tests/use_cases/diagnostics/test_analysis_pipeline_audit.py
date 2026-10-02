@@ -7,19 +7,19 @@ from typing import Any
 import numpy as np
 import pytest
 
-from vibesensor.infra.processing.processor import SignalProcessor
+from vibesensor.dsp.fft_analysis import noise_floor
+from vibesensor.dsp.strength_bands import bucket_for_strength
+from vibesensor.dsp.vibration_strength import (
+    compute_vibration_strength_db,
+    percentile,
+)
+from vibesensor.live.processor import SignalProcessor
 from vibesensor.report.presentation import strength_label
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.fft_analysis import noise_floor
-from vibesensor.strength_bands import bucket_for_strength
 from vibesensor.use_cases.diagnostics.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
-from vibesensor.vibration_strength import (
-    compute_vibration_strength_db,
-    percentile,
-)
 
 
 def _make_signal_processor(

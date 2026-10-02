@@ -7,6 +7,7 @@ from math import log1p
 
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G, SNR_LOG_DIVISOR
 from vibesensor.use_cases.diagnostics.location_analysis import (
     LocationAnalysisResult,
@@ -23,7 +24,6 @@ from vibesensor.use_cases.diagnostics.orders.statistics import (
     compute_order_confidence,
     compute_phase_stats,
 )
-from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 @dataclass(frozen=True)

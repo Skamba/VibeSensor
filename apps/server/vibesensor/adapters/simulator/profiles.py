@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS, AnalysisSettingsSnapshot
+from vibesensor.dsp.order_bands import vehicle_orders_hz
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.order_bands import vehicle_orders_hz
 
 DEFAULT_SPEED_KMH = 100.0
 
