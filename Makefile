@@ -127,7 +127,7 @@ test-full-suite: ## Run the full process-backed e2e suite, including long_sim ca
 
 benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS / BACKEND_BENCHMARK_TARGETS as needed)
 	@$(RESOLVE_PYTHON) \
-	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only $(BACKEND_BENCHMARK_TARGETS) $(BENCHMARK_OPTS)
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' $(BACKEND_BENCHMARK_TARGETS) $(BENCHMARK_OPTS)
 
 benchmark-golden-replay: ## Run the opt-in 30-minute dense golden replay benchmark
 	@$(RESOLVE_PYTHON) \

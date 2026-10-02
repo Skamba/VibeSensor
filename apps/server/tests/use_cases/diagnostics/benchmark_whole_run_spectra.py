@@ -35,6 +35,7 @@ from vibesensor.shared.constants.dsp import FFT_N
 from vibesensor.shared.types.raw_capture import (
     RawCaptureChunk,
     RawCaptureManifest,
+    RawCaptureSensorClockSync,
     RawCaptureSensorRange,
     RawRunCapture,
 )
@@ -55,6 +56,19 @@ _SENSOR_COUNT = 4
 _RAW_CHUNK_SAMPLES = 1024
 _CLIENT_IDS = tuple(f"sensor-{idx:02d}" for idx in range(_SENSOR_COUNT))
 _BASE_FREQS_HZ = (23.0, 37.0, 51.0, 67.0)
+_RUN_START_US = 1_000_000
+# Whole-run spectra only build time-aligned windows for sensors whose raw
+# timeline is anchored to the server clock by a verified sync proof.
+_VERIFIED_SYNC = RawCaptureSensorClockSync(
+    clock_domain="server_monotonic",
+    proof_state="verified",
+    observed_monotonic_us=_RUN_START_US + 10_000,
+    last_sync_monotonic_us=_RUN_START_US,
+    sync_offset_us=0,
+    sync_rtt_us=2_000,
+    max_sync_age_us=15_000_000,
+    max_sync_rtt_us=50_000,
+)
 
 
 def _sensor_samples(*, total_samples: int, freq_hz: float, phase_rad: float) -> np.ndarray:
@@ -75,7 +89,7 @@ def _append_chunk(
     sample_start: int,
     samples: np.ndarray,
 ) -> None:
-    t0_us = int(sample_start * (1_000_000 / _SAMPLE_RATE_HZ))
+    t0_us = _RUN_START_US + int(sample_start * (1_000_000 / _SAMPLE_RATE_HZ))
     chunk = RawCaptureChunk(
         client_id=client_id,
         sample_rate_hz=_SAMPLE_RATE_HZ,
@@ -137,7 +151,11 @@ def whole_run_fixture(tmp_path_factory: pytest.TempPathFactory) -> _WholeRunBenc
                 sample_start=sample_start,
                 samples=chunk,
             )
-    raw_capture_manifest = db.finalize_raw_capture(run_id)
+    raw_capture_manifest = db.finalize_raw_capture(
+        run_id,
+        run_start_monotonic_us=_RUN_START_US,
+        sensor_clock_sync=dict.fromkeys(_CLIENT_IDS, _VERIFIED_SYNC),
+    )
     assert raw_capture_manifest is not None
     raw_capture = db.load_raw_capture(run_id)
     assert raw_capture is not None
