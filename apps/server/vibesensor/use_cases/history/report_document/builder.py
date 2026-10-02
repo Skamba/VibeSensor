@@ -8,8 +8,7 @@ from vibesensor.shared.boundaries.reporting.input import (
     PreparedReportInput,
     validate_prepared_report_input,
 )
-
-from .composition import compose_report_document
+from vibesensor.use_cases.history.report_document.composition import compose_report_document
 
 __all__ = ["build_report_document"]
 

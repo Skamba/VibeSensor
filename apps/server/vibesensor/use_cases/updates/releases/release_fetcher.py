@@ -8,10 +8,16 @@ from pathlib import Path
 from typing import cast
 
 from vibesensor.use_cases.updates.asset_download import download_release_asset
-
-from .github_api import DOWNLOAD_CHUNK_BYTES, GitHubApiClient, GitHubApiReleaseRecord
-from .models import ReleaseFetcherConfig, ReleaseInfo
-from .release_discovery import decode_server_releases, find_latest_server_release
+from vibesensor.use_cases.updates.releases.github_api import (
+    DOWNLOAD_CHUNK_BYTES,
+    GitHubApiClient,
+    GitHubApiReleaseRecord,
+)
+from vibesensor.use_cases.updates.releases.models import ReleaseFetcherConfig, ReleaseInfo
+from vibesensor.use_cases.updates.releases.release_discovery import (
+    decode_server_releases,
+    find_latest_server_release,
+)
 
 LOGGER = logging.getLogger(__name__)
 

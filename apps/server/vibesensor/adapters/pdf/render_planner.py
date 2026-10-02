@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
-
-from .pdf_appendices.action_matrix import worksheet_step_pages
-from .report_types import (
+from vibesensor.adapters.pdf.pdf_appendices.action_matrix import worksheet_step_pages
+from vibesensor.adapters.pdf.report_types import (
     AppendixAPageRenderPlan,
     AppendixBRenderPlan,
     ReportPdfRenderPlan,
@@ -13,6 +11,7 @@ from .report_types import (
     build_appendix_c_render_plan,
     build_page1_render_plan,
 )
+from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 
 __all__ = ["build_report_render_plan"]
 

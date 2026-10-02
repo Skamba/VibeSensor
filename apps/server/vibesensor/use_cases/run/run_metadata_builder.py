@@ -13,13 +13,12 @@ from vibesensor.shared.types.run_schema import (
     RunRawCaptureFinalize,
     RunSensorMetadata,
 )
+from vibesensor.use_cases.run.run_context import order_reference_context_complete
 from vibesensor.vibration_strength import (
     CALIBRATION_PROFILE_ID,
     PEAK_DETECTOR_VERSION,
     STRENGTH_ALGORITHM_VERSION,
 )
-
-from .run_context import order_reference_context_complete
 
 
 def firmware_version_for_run(registry: ClientTracker) -> str | None:

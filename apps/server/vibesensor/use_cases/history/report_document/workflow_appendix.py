@@ -25,8 +25,10 @@ from vibesensor.shared.report_presentation import (
     uses_shared_overlap_wording,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
-
-from .section_context import AppendixAContext, RecaptureAssessment
+from vibesensor.use_cases.history.report_document.section_context import (
+    AppendixAContext,
+    RecaptureAssessment,
+)
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from ._types import Sample
+from vibesensor.use_cases.diagnostics._types import Sample
 
 
 class MissingStrengthMetricsError(ValueError):

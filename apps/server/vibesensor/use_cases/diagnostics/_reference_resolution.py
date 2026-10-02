@@ -6,8 +6,7 @@ from vibesensor.domain import OrderReferenceSpec
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.types.run_schema import RunMetadata
-
-from ._types import Sample
+from vibesensor.use_cases.diagnostics._types import Sample
 
 
 def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, str | None]:

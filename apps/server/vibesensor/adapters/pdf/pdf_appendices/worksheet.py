@@ -8,6 +8,18 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor.adapters.pdf.diagram_layout import canonical_location
+from vibesensor.adapters.pdf.pdf_appendices.action_matrix import (
+    draw_action_steps_continuation_page,
+    draw_action_steps_panel,
+)
+from vibesensor.adapters.pdf.pdf_appendices.guidance_page import draw_capture_guidance_page
+from vibesensor.adapters.pdf.pdf_appendices.layout import (
+    _estimate_action_steps_panel_height,
+    _estimate_worksheet_ranked_stack_height,
+    _estimate_worksheet_top_panel_height,
+)
+from vibesensor.adapters.pdf.pdf_appendices.tables import _draw_table
+from vibesensor.adapters.pdf.pdf_appendices.title_bar import draw_appendix_title_bar
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel
 from vibesensor.adapters.pdf.pdf_style import (
     FS_SMALL,
@@ -26,16 +38,6 @@ from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
 from vibesensor.shared.boundaries.reporting.document.panels import NextStep
-
-from .action_matrix import draw_action_steps_continuation_page, draw_action_steps_panel
-from .guidance_page import draw_capture_guidance_page
-from .layout import (
-    _estimate_action_steps_panel_height,
-    _estimate_worksheet_ranked_stack_height,
-    _estimate_worksheet_top_panel_height,
-)
-from .tables import _draw_table
-from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_a_page"]
 

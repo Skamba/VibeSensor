@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-
-from .admin_bluetooth import BluetoothAdminSession, HelperFailure
-from .admin_device_parsing import (
+from vibesensor.adapters.obd.admin_bluetooth import BluetoothAdminSession, HelperFailure
+from vibesensor.adapters.obd.admin_device_parsing import (
     _has_human_readable_bluetooth_name,
     _looks_like_mac_alias,
     _preferred_bluetooth_name,
     parse_bluetooth_devices,
     parse_bluetooth_scan_events,
 )
-from .admin_inspection import BluetoothObdDeviceInspector
+from vibesensor.adapters.obd.admin_inspection import BluetoothObdDeviceInspector
+from vibesensor.adapters.obd.models import ObdDeviceSnapshot
 
 __all__ = ["BluetoothObdScanner"]
 

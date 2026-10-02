@@ -10,6 +10,11 @@ from typing import cast
 
 from pydantic import TypeAdapter
 
+from vibesensor.adapters.history.projection import (
+    build_projected_run_details_json,
+    project_history_insights,
+    project_history_run_record,
+)
 from vibesensor.adapters.http.models.history import (
     DeleteHistoryRunResponse,
     HistoryInsightsResponse,
@@ -28,12 +33,6 @@ from vibesensor.use_cases.history.exports import (
 )
 from vibesensor.use_cases.history.runs import HistoryRunService
 from vibesensor.use_cases.run.run_context import add_current_context_warnings
-
-from .projection import (
-    build_projected_run_details_json,
-    project_history_insights,
-    project_history_run_record,
-)
 
 _HISTORY_INSIGHTS_ADAPTER = TypeAdapter(HistoryInsightsResponse)
 

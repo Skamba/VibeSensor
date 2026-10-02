@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from vibesensor.domain import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from .registry import ClientRecord
+    from vibesensor.infra.runtime.registry import ClientRecord
 
 LOGGER = logging.getLogger(__name__)
 

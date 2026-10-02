@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from vibesensor.domain import VehicleConfiguration
-
-from ._common import (
+from test_support.car_library_validation._common import (
     AWD_BADGE_TOKENS,
     FINAL_DRIVE_RANGE,
     GEAR_RATIO_RANGE,
@@ -19,6 +17,7 @@ from ._common import (
     is_single_speed_gearbox,
     text,
 )
+from vibesensor.domain import VehicleConfiguration
 
 
 def validate_gearboxes(

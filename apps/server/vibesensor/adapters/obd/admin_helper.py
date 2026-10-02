@@ -8,12 +8,15 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from typing import Any
 
+from vibesensor.adapters.obd.admin_bluetooth import (
+    BluetoothAdminSession,
+    CommandRunner,
+    HelperFailure,
+)
+from vibesensor.adapters.obd.admin_inspection import BluetoothObdDeviceInspector
+from vibesensor.adapters.obd.admin_pairing import BluetoothObdPairer
+from vibesensor.adapters.obd.admin_scan import BluetoothObdScanner
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-
-from .admin_bluetooth import BluetoothAdminSession, CommandRunner, HelperFailure
-from .admin_inspection import BluetoothObdDeviceInspector
-from .admin_pairing import BluetoothObdPairer
-from .admin_scan import BluetoothObdScanner
 
 __all__ = ["BluetoothObdAdminHelper", "main"]
 

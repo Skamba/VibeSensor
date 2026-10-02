@@ -22,17 +22,17 @@ from vibesensor.shared.report_presentation import (
     presented_location_confidence_key,
 )
 from vibesensor.shared.run_context_warning import RunContextWarning
-
-from ._candidate_resolver import PrimaryCandidateContext
-from .evidence_snapshot import build_evidence_snapshot_rows
-from .narrative_summaries import _proof_summary_text
-from .section_context import VerdictPageContext
-from .timeline_graph import build_timeline_graph_data
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.use_cases.history.report_document.evidence_snapshot import (
+    build_evidence_snapshot_rows,
+)
+from vibesensor.use_cases.history.report_document.narrative_summaries import _proof_summary_text
+from vibesensor.use_cases.history.report_document.section_context import VerdictPageContext
+from vibesensor.use_cases.history.report_document.timeline_graph import build_timeline_graph_data
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
-
-    from .document_context import ReportDocumentContext
+    from vibesensor.use_cases.history.report_document.document_context import ReportDocumentContext
 
 __all__ = ["build_observed_signature", "build_verdict_page", "build_verdict_page_data"]
 

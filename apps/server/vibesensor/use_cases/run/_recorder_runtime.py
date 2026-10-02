@@ -16,7 +16,7 @@ from vibesensor.shared.ports import ClientTracker, SettingsReader
 from vibesensor.shared.time_utils import utc_now_iso
 
 if TYPE_CHECKING:
-    from .logger import RunRecorder
+    from vibesensor.use_cases.run.logger import RunRecorder
 
 __all__ = [
     "active_frames_total",

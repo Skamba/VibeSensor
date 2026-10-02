@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.time_utils import format_utc_timestamp
-
-from .document_context import ReportDocumentContext
-from .document_sections import ReportDocumentSections
-from .verdict_page import build_observed_signature
+from vibesensor.use_cases.history.report_document.document_context import ReportDocumentContext
+from vibesensor.use_cases.history.report_document.document_sections import ReportDocumentSections
+from vibesensor.use_cases.history.report_document.verdict_page import build_observed_signature
 
 __all__ = ["assemble_report_document"]
 

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from vibesensor.adapters.obd.admin_bluetooth import BluetoothAdminSession, HelperFailure
+from vibesensor.adapters.obd.admin_inspection import BluetoothObdDeviceInspector
 from vibesensor.adapters.obd.common import bluetooth_mac_address, normalize_obd_mac
 from vibesensor.adapters.obd.models import ObdDeviceSnapshot
-
-from .admin_bluetooth import BluetoothAdminSession, HelperFailure
-from .admin_inspection import BluetoothObdDeviceInspector
 
 __all__ = ["BluetoothObdPairer"]
 

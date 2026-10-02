@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from .github_api import GitHubApiReleaseRecord
-from .models import GitHubRelease, GitHubReleaseAsset, ReleaseInfo
+from vibesensor.use_cases.updates.releases.github_api import GitHubApiReleaseRecord
+from vibesensor.use_cases.updates.releases.models import (
+    GitHubRelease,
+    GitHubReleaseAsset,
+    ReleaseInfo,
+)
 
 __all__ = [
     "decode_server_releases",

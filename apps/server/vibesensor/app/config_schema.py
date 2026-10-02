@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config_paths import REPO_DIR
+from vibesensor.app.config_paths import REPO_DIR
 
 __all__ = [
     "APConfig",

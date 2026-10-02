@@ -1,8 +1,11 @@
 """Stable public API for summary payload serialization helpers."""
 
-from ._data_quality import AccelStatisticsLike, build_data_quality_dict
-from ._findings import serialize_findings
-from ._plots import (
+from vibesensor.shared.boundaries.summary_serialization._data_quality import (
+    AccelStatisticsLike,
+    build_data_quality_dict,
+)
+from vibesensor.shared.boundaries.summary_serialization._findings import serialize_findings
+from vibesensor.shared.boundaries.summary_serialization._plots import (
     PeakTableRowLike,
     PhaseSegmentLike,
     PhaseSpeedBreakdownRowLike,
@@ -12,7 +15,11 @@ from ._plots import (
     serialize_phase_speed_breakdown,
     serialize_speed_breakdown,
 )
-from ._summary import build_analysis_summary, noise_baseline_db, serialize_origin_summary
+from vibesensor.shared.boundaries.summary_serialization._summary import (
+    build_analysis_summary,
+    noise_baseline_db,
+    serialize_origin_summary,
+)
 
 __all__ = [
     "AccelStatisticsLike",

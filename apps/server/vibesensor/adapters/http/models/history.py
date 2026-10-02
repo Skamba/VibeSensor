@@ -12,12 +12,11 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, with_config
 
+from vibesensor.adapters.http.models.base import ApiPayloadObject, _StrictBase
 from vibesensor.shared.types.history_analysis_contracts import (
     AnalysisSummary,
     AnalysisSummaryCoreResponse,
 )
-
-from .base import ApiPayloadObject, _StrictBase
 
 
 class HistoryArtifactAvailabilityResponse(BaseModel):

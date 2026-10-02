@@ -8,10 +8,9 @@ from vibesensor.domain import (
     FindingKind,
     VibrationSource,
 )
-
-from ..phase_segmentation import DrivingPhase
-from ..speed_profile_helpers import _speed_profile_from_points
-from .scoring import PeakBin
+from vibesensor.use_cases.diagnostics.peaks.scoring import PeakBin
+from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_profile_from_points
 
 _CRUISE_PHASE_VAL: str = DrivingPhase.CRUISE.value
 

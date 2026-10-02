@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
-
-from . import _reference_findings
-from ._analysis_models import FindingsBuildRequest
-from ._reference_resolution import _tire_reference_from_context
-from ._sensor_locations import _locations_connected_throughout_run
-from .orders.pipeline import OrderAnalysisRequest, _build_order_findings
-from .peaks.findings import (
+from vibesensor.use_cases.diagnostics import _reference_findings
+from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
+from vibesensor.use_cases.diagnostics._reference_resolution import _tire_reference_from_context
+from vibesensor.use_cases.diagnostics._sensor_locations import _locations_connected_throughout_run
+from vibesensor.use_cases.diagnostics.orders.pipeline import (
+    OrderAnalysisRequest,
+    _build_order_findings,
+)
+from vibesensor.use_cases.diagnostics.peaks.findings import (
     PeakFindingAnalyzer,
     _build_persistent_peak_findings,
     collect_order_frequencies,

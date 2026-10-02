@@ -11,9 +11,11 @@ from vibesensor.shared.sensor_metadata import resolve_sensor_presentation
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.sensor_frame import SensorFrame
 from vibesensor.strength_bands import bucket_for_strength
-
-from .sample_speed_context import SpeedContext, resolve_speed_context_snapshot
-from .sample_strength_metrics import (
+from vibesensor.use_cases.run.sample_speed_context import (
+    SpeedContext,
+    resolve_speed_context_snapshot,
+)
+from vibesensor.use_cases.run.sample_strength_metrics import (
     dominant_axis_from_metrics,
     dominant_hz_from_strength,
     extract_strength_data,

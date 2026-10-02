@@ -7,12 +7,9 @@ from pathlib import Path
 
 import yaml
 
-from vibesensor.shared.json_utils import deep_merge
-from vibesensor.shared.types.json_types import JsonObject, is_json_object
-
-from .config_defaults import DEFAULT_CONFIG
-from .config_paths import SERVER_DIR
-from .config_schema import (
+from vibesensor.app.config_defaults import DEFAULT_CONFIG
+from vibesensor.app.config_paths import SERVER_DIR
+from vibesensor.app.config_schema import (
     APConfig,
     AppConfig,
     APSelfHealConfig,
@@ -22,6 +19,8 @@ from .config_schema import (
     UDPConfig,
     UpdateConfig,
 )
+from vibesensor.shared.json_utils import deep_merge
+from vibesensor.shared.types.json_types import JsonObject, is_json_object
 
 __all__ = ["load_config"]
 

@@ -17,14 +17,19 @@ from vibesensor.shared.boundaries.runs.projection import (
     car_from_run_metadata,
     symptom_from_run_metadata,
 )
-
-from ._analysis_models import FindingsBundle, PreparedAnalysisContext
-from ._analysis_result import AnalysisResult
-from .metadata_projection import metadata_analysis_settings_items
-from .peaks.table import annotate_peak_rows_with_order_labels, top_peaks_table_rows
-from .run_analysis_projection import build_domain_driving_segments
-from .run_data_preparation import build_phase_summary
-from .speed_profile_helpers import _speed_stats
+from vibesensor.use_cases.diagnostics._analysis_models import (
+    FindingsBundle,
+    PreparedAnalysisContext,
+)
+from vibesensor.use_cases.diagnostics._analysis_result import AnalysisResult
+from vibesensor.use_cases.diagnostics.metadata_projection import metadata_analysis_settings_items
+from vibesensor.use_cases.diagnostics.peaks.table import (
+    annotate_peak_rows_with_order_labels,
+    top_peaks_table_rows,
+)
+from vibesensor.use_cases.diagnostics.run_analysis_projection import build_domain_driving_segments
+from vibesensor.use_cases.diagnostics.run_data_preparation import build_phase_summary
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _speed_stats
 
 __all__ = ["AnalysisResult", "build_analysis_result", "_final_top_causes"]
 

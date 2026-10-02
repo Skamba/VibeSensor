@@ -7,16 +7,7 @@ from dataclasses import dataclass
 
 from vibesensor.domain import Symptom
 from vibesensor.shared.boundaries.codecs.scalars import text_or_none
-from vibesensor.shared.types.json_types import JsonObject
-from vibesensor.shared.types.run_schema import (
-    RawCaptureFinalizeStatus,
-    RunFinalizationStageResult,
-    RunFinalizationStageStatus,
-    RunRawCaptureFinalize,
-    RunSensorMetadata,
-)
-
-from ._metadata_codecs import (
+from vibesensor.shared.boundaries.runs._metadata_codecs import (
     PayloadDecoder,
     PayloadFieldSpec,
     decoded_values,
@@ -31,6 +22,14 @@ from ._metadata_codecs import (
     raw_capture_finalize_status_decoder,
     required_text_decoder,
     tuple_text_decoder,
+)
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.run_schema import (
+    RawCaptureFinalizeStatus,
+    RunFinalizationStageResult,
+    RunFinalizationStageStatus,
+    RunRawCaptureFinalize,
+    RunSensorMetadata,
 )
 
 

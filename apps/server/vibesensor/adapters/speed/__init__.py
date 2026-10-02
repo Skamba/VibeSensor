@@ -1,6 +1,6 @@
 """Speed-source observation and control adapters."""
 
-from .source_coordinator import (
+from vibesensor.adapters.speed.source_coordinator import (
     SpeedSourceControlService,
     SpeedSourceObservationService,
     SpeedSourceServices,

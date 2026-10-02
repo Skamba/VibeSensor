@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from vibesensor.domain.vibration_origin import VibrationOrigin
-
-from ._analysis_models import FindingsBundle, PreparedAnalysisContext
-from .findings import _build_findings
-from .run_analysis_projection import build_phase_timeline
-from .top_cause_selection import select_top_causes
+from vibesensor.use_cases.diagnostics._analysis_models import (
+    FindingsBundle,
+    PreparedAnalysisContext,
+)
+from vibesensor.use_cases.diagnostics.findings import _build_findings
+from vibesensor.use_cases.diagnostics.run_analysis_projection import build_phase_timeline
+from vibesensor.use_cases.diagnostics.top_cause_selection import select_top_causes
 
 __all__ = ["build_findings_bundle"]
 

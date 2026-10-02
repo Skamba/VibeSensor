@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .appendices import ReportLabelValueRow
+from vibesensor.shared.boundaries.reporting.document.appendices import ReportLabelValueRow
 
 __all__ = [
     "PeakRow",

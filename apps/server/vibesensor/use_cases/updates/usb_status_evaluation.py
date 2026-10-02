@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.use_cases.updates.models import UsbInternetStatus
-
-from .usb_status_inspection import UsbCandidateObservation
+from vibesensor.use_cases.updates.usb_status_inspection import UsbCandidateObservation
 
 _USB_ACTIVATION_STATES = frozenset({"disconnected", "unavailable", "unknown"})
 

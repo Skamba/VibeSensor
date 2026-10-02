@@ -10,9 +10,9 @@ Sub-modules
 - :mod:`~vibesensor.use_cases.history.exports` — CSV/ZIP export service.
 """
 
-from .exports import HistoryExportService
-from .reports import HistoryReportService
-from .runs import HistoryRunService
+from vibesensor.use_cases.history.exports import HistoryExportService
+from vibesensor.use_cases.history.reports import HistoryReportService
+from vibesensor.use_cases.history.runs import HistoryRunService
 
 __all__ = [
     "HistoryExportService",

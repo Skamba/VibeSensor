@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from vibesensor.adapters.pdf.pdf_appendices.tables import _draw_table, _fmt_db, _fmt_relative_db
+from vibesensor.adapters.pdf.pdf_appendices.title_bar import draw_appendix_title_bar
 from vibesensor.adapters.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
@@ -23,9 +25,6 @@ from vibesensor.adapters.pdf.pdf_text import _draw_section_block, _draw_text
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixBData
-
-from .tables import _draw_table, _fmt_db, _fmt_relative_db
-from .title_bar import draw_appendix_title_bar
 
 __all__ = [
     "_appendix_b_page",

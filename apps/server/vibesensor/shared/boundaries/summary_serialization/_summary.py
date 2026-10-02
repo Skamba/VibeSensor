@@ -17,6 +17,22 @@ from vibesensor.shared.boundaries.summary_fields.origin import (
     SuspectedVibrationOrigin,
     build_origin_explanation,
 )
+from vibesensor.shared.boundaries.summary_serialization._data_quality import (
+    AccelStatisticsLike,
+    build_data_quality_dict,
+)
+from vibesensor.shared.boundaries.summary_serialization._findings import serialize_findings
+from vibesensor.shared.boundaries.summary_serialization._location_intensity import (
+    serialize_location_intensity_rows,
+)
+from vibesensor.shared.boundaries.summary_serialization._plots import (
+    PhaseSegmentLike,
+    PhaseSpeedBreakdownRowLike,
+    SpeedBreakdownRowLike,
+    serialize_phase_segments,
+    serialize_phase_speed_breakdown,
+    serialize_speed_breakdown,
+)
 from vibesensor.shared.constants.analysis import MEMS_NOISE_FLOOR_G
 from vibesensor.shared.json_utils import as_float_or_none as _as_float
 from vibesensor.shared.json_utils import (
@@ -45,18 +61,6 @@ from vibesensor.shared.types.history_analysis_contracts import (
 )
 from vibesensor.shared.types.json_types import JsonObject, JsonValue
 from vibesensor.vibration_strength import compute_db
-
-from ._data_quality import AccelStatisticsLike, build_data_quality_dict
-from ._findings import serialize_findings
-from ._location_intensity import serialize_location_intensity_rows
-from ._plots import (
-    PhaseSegmentLike,
-    PhaseSpeedBreakdownRowLike,
-    SpeedBreakdownRowLike,
-    serialize_phase_segments,
-    serialize_phase_speed_breakdown,
-    serialize_speed_breakdown,
-)
 
 
 @dataclass(frozen=True, slots=True)

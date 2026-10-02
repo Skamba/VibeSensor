@@ -6,17 +6,16 @@ from collections.abc import Mapping, Sequence
 from math import log1p
 
 from vibesensor.shared.constants.analysis import NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
-from vibesensor.vibration_strength import vibration_strength_db_scalar
-
-from .._sample_metrics import _effective_baseline_floor
-from .classification import classify_peak_type
-from .settings import PEAK_CONFIDENCE_SETTINGS
-from .statistics import (
+from vibesensor.use_cases.diagnostics._sample_metrics import _effective_baseline_floor
+from vibesensor.use_cases.diagnostics.peaks.classification import classify_peak_type
+from vibesensor.use_cases.diagnostics.peaks.settings import PEAK_CONFIDENCE_SETTINGS
+from vibesensor.use_cases.diagnostics.peaks.statistics import (
     compute_peak_distribution_stats,
     compute_peak_persistence_score,
     compute_peak_spatial_uniformity,
     compute_peak_speed_uniformity,
 )
+from vibesensor.vibration_strength import vibration_strength_db_scalar
 
 
 def _presence_ratio_with_location_rescue(

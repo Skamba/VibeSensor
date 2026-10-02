@@ -8,9 +8,8 @@ from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain import FindingKind, VibrationSource
 from vibesensor.shared.constants.analysis import SPEED_COVERAGE_MIN_PCT
 from vibesensor.shared.types.run_schema import RunMetadata
-
-from ._reference_resolution import _effective_engine_rpm
-from ._types import Sample
+from vibesensor.use_cases.diagnostics._reference_resolution import _effective_engine_rpm
+from vibesensor.use_cases.diagnostics._types import Sample
 
 __all__ = [
     "_reference_missing_finding",

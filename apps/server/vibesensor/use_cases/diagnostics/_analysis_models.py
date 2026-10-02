@@ -9,9 +9,8 @@ from vibesensor.domain import DrivingPhaseInterval, LocationIntensitySummary, Ru
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.types.run_schema import RunMetadata
-
-from ._types import AccelStatistics, PhaseLabels, Sample
-from .run_data_preparation import PreparedRunData
+from vibesensor.use_cases.diagnostics._types import AccelStatistics, PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData
 
 
 @dataclass(frozen=True, slots=True)

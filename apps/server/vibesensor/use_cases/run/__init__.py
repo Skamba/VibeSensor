@@ -28,8 +28,8 @@
   focused helpers above.
 """
 
-from ._recorder_types import RecorderShutdownReport, RunRecorderConfig
-from .logger import RunRecorder
+from vibesensor.use_cases.run._recorder_types import RecorderShutdownReport, RunRecorderConfig
+from vibesensor.use_cases.run.logger import RunRecorder
 
 __all__ = [
     "RunRecorder",

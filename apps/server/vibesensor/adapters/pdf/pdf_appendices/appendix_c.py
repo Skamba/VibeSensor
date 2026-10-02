@@ -14,6 +14,18 @@ from vibesensor.adapters.pdf.layout_primitives import (
     draw_section_block_if_room,
     draw_text_block,
 )
+from vibesensor.adapters.pdf.pdf_appendices.layout import (
+    _estimate_appendix_c_context_panel_height,
+    _estimate_appendix_c_suitability_panel_height,
+    _estimate_appendix_c_trace_panel_height,
+)
+from vibesensor.adapters.pdf.pdf_appendices.tables import (
+    _draw_table,
+    _draw_traceability_row,
+    _fmt_db,
+    _fmt_hz,
+)
+from vibesensor.adapters.pdf.pdf_appendices.title_bar import draw_appendix_title_bar
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
     FONT_B,
@@ -31,14 +43,6 @@ from vibesensor.adapters.pdf.pdf_text import (
 )
 from vibesensor.report_i18n import human_location
 from vibesensor.report_i18n import tr as _tr
-
-from .layout import (
-    _estimate_appendix_c_context_panel_height,
-    _estimate_appendix_c_suitability_panel_height,
-    _estimate_appendix_c_trace_panel_height,
-)
-from .tables import _draw_table, _draw_traceability_row, _fmt_db, _fmt_hz
-from .title_bar import draw_appendix_title_bar
 
 __all__ = ["_appendix_c_page"]
 

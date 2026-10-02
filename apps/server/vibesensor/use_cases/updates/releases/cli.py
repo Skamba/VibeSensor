@@ -6,8 +6,8 @@ import argparse
 import logging
 import sys
 
-from .models import resolve_release_fetcher_config
-from .release_fetcher import ServerReleaseFetcher
+from vibesensor.use_cases.updates.releases.models import resolve_release_fetcher_config
+from vibesensor.use_cases.updates.releases.release_fetcher import ServerReleaseFetcher
 
 __all__ = ["fetch_latest_wheel_cli"]
 

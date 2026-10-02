@@ -17,19 +17,18 @@ from vibesensor.shared.boundaries.reporting.document.panels import (
     SystemFindingCard,
 )
 from vibesensor.shared.boundaries.reporting.document.sections import PeakRow, VerdictPageData
-
-from ._card_builder import build_system_cards
-from .appendix_c import build_appendix_c_data
-from .document_context import ReportDocumentContext
-from .location_appendix import build_appendix_b_data
-from .measurements import _measurement_rows
-from .next_steps import build_document_next_steps
-from .pattern_evidence import build_pattern_evidence
-from .peak_table import build_peak_rows
-from .report_sections import build_data_trust
-from .traceability import build_traceability_rows
-from .verdict_page import build_verdict_page
-from .workflow_appendix import build_appendix_a_data
+from vibesensor.use_cases.history.report_document._card_builder import build_system_cards
+from vibesensor.use_cases.history.report_document.appendix_c import build_appendix_c_data
+from vibesensor.use_cases.history.report_document.document_context import ReportDocumentContext
+from vibesensor.use_cases.history.report_document.location_appendix import build_appendix_b_data
+from vibesensor.use_cases.history.report_document.measurements import _measurement_rows
+from vibesensor.use_cases.history.report_document.next_steps import build_document_next_steps
+from vibesensor.use_cases.history.report_document.pattern_evidence import build_pattern_evidence
+from vibesensor.use_cases.history.report_document.peak_table import build_peak_rows
+from vibesensor.use_cases.history.report_document.report_sections import build_data_trust
+from vibesensor.use_cases.history.report_document.traceability import build_traceability_rows
+from vibesensor.use_cases.history.report_document.verdict_page import build_verdict_page
+from vibesensor.use_cases.history.report_document.workflow_appendix import build_appendix_a_data
 
 __all__ = ["ReportDocumentSections", "build_report_document_sections"]
 

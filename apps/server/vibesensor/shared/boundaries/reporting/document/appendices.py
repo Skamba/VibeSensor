@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .panels import DataTrustItem
+from vibesensor.shared.boundaries.reporting.document.panels import DataTrustItem
 
 __all__ = [
     "AppendixAData",

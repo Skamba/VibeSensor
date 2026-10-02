@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
 from vibesensor.shared.boundaries.reporting.document.panels import NextStep
-
-from .document_context import ReportDocumentContext
-from .report_sections import build_next_steps
+from vibesensor.use_cases.history.report_document.document_context import ReportDocumentContext
+from vibesensor.use_cases.history.report_document.report_sections import build_next_steps
 
 __all__ = ["build_document_next_steps"]
 

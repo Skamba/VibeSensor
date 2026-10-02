@@ -34,10 +34,14 @@ RunSuitability
     Whether a run is trustworthy enough for diagnosis.
 """
 
-from ._numeric import coerce_float, coerce_int
-from .analysis_settings import AnalysisSettingsSnapshot
-from .capture_readiness import CaptureReadiness, CaptureReadinessCheck, CaptureReadinessPolicy
-from .car import (
+from vibesensor.domain._numeric import coerce_float, coerce_int
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.capture_readiness import (
+    CaptureReadiness,
+    CaptureReadinessCheck,
+    CaptureReadinessPolicy,
+)
+from vibesensor.domain.car import (
     Car,
     CarOrderReferenceSourceStatus,
     CarOrderReferenceStatus,
@@ -45,8 +49,8 @@ from .car import (
     OrderAnalysisCarDataConfidence,
     OrderAnalysisCarDataScope,
 )
-from .confidence_assessment import ConfidenceAssessment
-from .diagnosis_assessment import (
+from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+from vibesensor.domain.diagnosis_assessment import (
     DIAGNOSIS_AMBIGUOUS_SCORE_GAP,
     DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP,
     DiagnosisAssessment,
@@ -57,35 +61,51 @@ from .diagnosis_assessment import (
     diagnosis_assessment_from_components,
     score_diagnosis_assessment_inputs,
 )
-from .diagnostic_case import DiagnosticCase, Symptom
-from .driving_phase_summary import DrivingPhaseSummary
-from .driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingPhaseSegment, DrivingSegment
-from .finding import Finding, speed_band_sort_key, speed_bin_label
-from .finding_evidence import FindingEvidence, Signature
-from .finding_types import FindingKind, VibrationSource
-from .location_hotspot import (
+from vibesensor.domain.diagnostic_case import DiagnosticCase, Symptom
+from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
+from vibesensor.domain.driving_segment import (
+    DrivingPhase,
+    DrivingPhaseInterval,
+    DrivingPhaseSegment,
+    DrivingSegment,
+)
+from vibesensor.domain.finding import Finding, speed_band_sort_key, speed_bin_label
+from vibesensor.domain.finding_evidence import FindingEvidence, Signature
+from vibesensor.domain.finding_types import FindingKind, VibrationSource
+from vibesensor.domain.location_hotspot import (
     LocationHotspot,
     LocationHotspotRow,
     LocationIntensitySummary,
     PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
-from .order_match import OrderMatchObservation
-from .order_reference import OrderReferenceSpec
-from .run import Run
-from .run_capture import ConfigurationSnapshot, Measurement, RunCapture, RunSetup, VibrationReading
-from .run_context import RunContextSnapshot
-from .run_status import RUN_TRANSITIONS, RunStatus, is_run_deletable, transition_run
-from .run_suitability import RunSuitability, SuitabilityCheck
-from .sensor import Sensor, SensorPlacement, normalize_sensor_id
-from .speed_profile import SpeedProfile
-from .speed_profile_summary import SpeedProfileSummary
-from .speed_source import SpeedSource, SpeedSourceKind
-from .strength_metrics import StrengthMetrics, StrengthPeak
-from .test_plan import RecommendedAction, TestPlan, plan_test_actions
-from .test_run import TestRun
-from .tire_spec import AxleTireSetup, TireSpec, TireSpeedAxle
-from .vehicle_configuration import (
+from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.domain.order_reference import OrderReferenceSpec
+from vibesensor.domain.run import Run
+from vibesensor.domain.run_capture import (
+    ConfigurationSnapshot,
+    Measurement,
+    RunCapture,
+    RunSetup,
+    VibrationReading,
+)
+from vibesensor.domain.run_context import RunContextSnapshot
+from vibesensor.domain.run_status import (
+    RUN_TRANSITIONS,
+    RunStatus,
+    is_run_deletable,
+    transition_run,
+)
+from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
+from vibesensor.domain.sensor import Sensor, SensorPlacement, normalize_sensor_id
+from vibesensor.domain.speed_profile import SpeedProfile
+from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
+from vibesensor.domain.speed_source import SpeedSource, SpeedSourceKind
+from vibesensor.domain.strength_metrics import StrengthMetrics, StrengthPeak
+from vibesensor.domain.test_plan import RecommendedAction, TestPlan, plan_test_actions
+from vibesensor.domain.test_run import TestRun
+from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec, TireSpeedAxle
+from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
     VehicleConfigurationConfidence,
     VehicleConfigurationField,
@@ -104,7 +124,7 @@ from .vehicle_configuration import (
     apply_order_analysis_policy_override,
     derive_order_analysis_policy,
 )
-from .vibration_origin import VibrationOrigin
+from vibesensor.domain.vibration_origin import VibrationOrigin
 
 __all__ = [
     # Aggregates and entities

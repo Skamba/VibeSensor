@@ -16,11 +16,10 @@ from vibesensor.shared.report_presentation import (
     location_confidence_text,
     presented_location_confidence_key,
 )
+from vibesensor.use_cases.history.report_document.section_context import AppendixBContext
 from vibesensor.use_cases.history.report_observation_matrix import (
     build_sensor_observation_matrix_rows,
 )
-
-from .section_context import AppendixBContext
 
 if TYPE_CHECKING:
     from vibesensor.shared.types.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary

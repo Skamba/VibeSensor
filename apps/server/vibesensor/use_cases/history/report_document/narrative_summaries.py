@@ -15,8 +15,7 @@ from vibesensor.shared.report_presentation import (
     uses_shared_overlap_wording,
 )
 from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
-
-from .phase_analysis import (
+from vibesensor.use_cases.history.report_document.phase_analysis import (
     _finding_phase_label,
     _same_source_temporal_pair,
 )

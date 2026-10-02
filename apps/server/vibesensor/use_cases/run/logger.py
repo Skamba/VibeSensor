@@ -22,6 +22,7 @@ from vibesensor.shared.types.raw_capture import (
     RawCaptureClockProofState,
     RawCaptureSensorClockSync,
 )
+from vibesensor.use_cases.run import _recorder_runtime, _recorder_types
 from vibesensor.use_cases.run.capture_readiness import CaptureReadinessTracker
 from vibesensor.use_cases.run.capture_readiness_observation import observe_capture_readiness
 from vibesensor.use_cases.run.finalize_stages import (
@@ -50,8 +51,6 @@ from vibesensor.use_cases.run.status_reporting import (
     build_run_recorder_health_snapshot,
     build_run_recorder_status,
 )
-
-from . import _recorder_runtime, _recorder_types
 
 if TYPE_CHECKING:
     from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot

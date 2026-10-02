@@ -12,9 +12,8 @@ from vibesensor.domain import (
     Symptom,
 )
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_snapshot
-
-from .json_types import JsonObject
-from .sensor_frame import SensorFrame
+from vibesensor.shared.types.json_types import JsonObject
+from vibesensor.shared.types.sensor_frame import SensorFrame
 
 __all__ = [
     "FFT_WINDOW_TYPE",

@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .base import _StrictBase
+from vibesensor.adapters.http.models.base import _StrictBase
 
 
 class CarLibraryBrandsResponse(BaseModel):

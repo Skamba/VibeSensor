@@ -22,8 +22,7 @@ from vibesensor.use_cases.updates.models import (
     UpdateTerminalState,
 )
 from vibesensor.use_cases.updates.runner import sanitize_log_line
-
-from .payload_codec import UpdateStateStore
+from vibesensor.use_cases.updates.status.payload_codec import UpdateStateStore
 
 __all__ = ["UpdatePhaseTransitionError", "UpdateStatusTracker"]
 

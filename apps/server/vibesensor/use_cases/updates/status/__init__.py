@@ -1,6 +1,6 @@
 """Update status boundary: the status tracker plus its persistence/payload codec."""
 
-from .payload_codec import (
+from vibesensor.use_cases.updates.status.payload_codec import (
     DEFAULT_STATE_PATH,
     UpdateStateStore,
     update_status_from_builtins,
@@ -9,8 +9,11 @@ from .payload_codec import (
     update_status_to_json,
     update_status_to_payload,
 )
-from .runtime_details import collect_runtime_details, hash_tree
-from .tracker import UpdatePhaseTransitionError, UpdateStatusTracker
+from vibesensor.use_cases.updates.status.runtime_details import collect_runtime_details, hash_tree
+from vibesensor.use_cases.updates.status.tracker import (
+    UpdatePhaseTransitionError,
+    UpdateStatusTracker,
+)
 
 __all__ = [
     "DEFAULT_STATE_PATH",

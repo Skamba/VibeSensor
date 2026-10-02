@@ -23,15 +23,20 @@ from vibesensor.shared.time_utils import (
     utc_now_iso,
 )
 from vibesensor.shared.types.json_types import JsonValue
-
-from ._candidate_resolver import PrimaryCandidateContext, resolve_primary_report_candidate
-from .section_context import (
+from vibesensor.use_cases.history.report_document._candidate_resolver import (
+    PrimaryCandidateContext,
+    resolve_primary_report_candidate,
+)
+from vibesensor.use_cases.history.report_document.section_context import (
     AppendixAContext,
     AppendixBContext,
     AppendixCContext,
     VerdictPageContext,
 )
-from .workflow_appendix import build_ranked_candidates, build_recapture_assessment
+from vibesensor.use_cases.history.report_document.workflow_appendix import (
+    build_ranked_candidates,
+    build_recapture_assessment,
+)
 
 if TYPE_CHECKING:
     from vibesensor.domain import Finding, TestRun

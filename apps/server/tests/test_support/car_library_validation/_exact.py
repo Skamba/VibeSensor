@@ -4,21 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from vibesensor.domain import VehicleConfiguration, VehicleConfigurationField
-
-from ._common import (
+from test_support.car_library_validation._common import (
     CarLibraryValidationIssue,
     variant_entity,
     vehicle_configuration_fuzzy_label_key,
     vehicle_configuration_identity_key,
 )
-from ._powertrain import (
+from test_support.car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_final_drive_layout,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
 )
-from ._tires import validate_tire_setup, validate_tire_spec
+from test_support.car_library_validation._tires import validate_tire_setup, validate_tire_spec
+from vibesensor.domain import VehicleConfiguration, VehicleConfigurationField
 
 
 def validate_vehicle_configuration(

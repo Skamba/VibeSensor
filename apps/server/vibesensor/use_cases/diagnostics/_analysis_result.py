@@ -15,10 +15,9 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.shared.types.run_schema import RunMetadata
-
-from ._types import AccelStatistics, Sample
-from ._view_types import PeakTableRowData
-from .run_data_preparation import PreparedRunData
+from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
+from vibesensor.use_cases.diagnostics._view_types import PeakTableRowData
+from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData
 
 __all__ = ["AnalysisResult"]
 

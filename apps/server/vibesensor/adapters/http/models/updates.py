@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, model_validator
 
+from vibesensor.adapters.http.models.base import _FrozenBase
 from vibesensor.use_cases.updates.models import UpdateTransport
-
-from .base import _FrozenBase
 
 
 class UpdateStartRequest(_FrozenBase):

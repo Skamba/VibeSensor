@@ -9,6 +9,12 @@ from vibesensor.adapters.pdf.action_cards import (
     draw_detailed_action_card,
     estimate_detailed_action_card_height,
 )
+from vibesensor.adapters.pdf.pdf_appendices.layout import (
+    _estimate_action_steps_panel_height,
+    _fit_action_steps,
+    _worksheet_continuation_panel_height,
+    _worksheet_first_actions_panel_height,
+)
 from vibesensor.adapters.pdf.pdf_drawing import _draw_panel, _hex
 from vibesensor.adapters.pdf.pdf_style import (
     FONT,
@@ -25,13 +31,6 @@ from vibesensor.adapters.pdf.pdf_text import _draw_text
 from vibesensor.report_i18n import tr as _tr
 from vibesensor.shared.boundaries.reporting.document.appendices import AppendixAData
 from vibesensor.shared.boundaries.reporting.document.panels import NextStep
-
-from .layout import (
-    _estimate_action_steps_panel_height,
-    _fit_action_steps,
-    _worksheet_continuation_panel_height,
-    _worksheet_first_actions_panel_height,
-)
 
 __all__ = [
     "draw_action_steps_continuation_page",

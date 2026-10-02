@@ -7,11 +7,13 @@ from collections.abc import Sequence
 from math import floor as _math_floor
 
 from vibesensor.domain import speed_bin_label
-
-from .._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
-from .._sensor_locations import _location_label
-from .._types import PhaseLabels, Sample
-from ..speed_profile_helpers import _phase_to_str
+from vibesensor.use_cases.diagnostics._sample_metrics import (
+    _estimate_strength_floor_amp_g,
+    _sample_top_peaks,
+)
+from vibesensor.use_cases.diagnostics._sensor_locations import _location_label
+from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics.speed_profile_helpers import _phase_to_str
 
 
 def _make_nested_int_defaultdict() -> defaultdict:

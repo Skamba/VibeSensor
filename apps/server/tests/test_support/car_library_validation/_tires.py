@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from vibesensor.domain import AxleTireSetup, TireSpec
-
-from ._common import (
+from test_support.car_library_validation._common import (
     RIM_SUFFIX_RE,
     TIRE_DIAMETER_RANGE_MM,
     CarLibraryValidationIssue,
@@ -15,6 +13,7 @@ from ._common import (
     in_range,
     text,
 )
+from vibesensor.domain import AxleTireSetup, TireSpec
 
 
 @dataclass(frozen=True, slots=True)

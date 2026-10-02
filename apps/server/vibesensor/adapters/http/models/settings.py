@@ -6,11 +6,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from vibesensor.adapters.http.models.base import _FrozenBase
 from vibesensor.domain import SpeedSourceKind
 from vibesensor.shared.types.settings_types import LanguageCode, SpeedUnitCode
 from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
-
-from .base import _FrozenBase
 
 
 class AnalysisSettingsRequest(_FrozenBase):

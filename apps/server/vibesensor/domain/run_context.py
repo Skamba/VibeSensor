@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .analysis_settings import AnalysisSettingsSnapshot
-from .car import CarSnapshot
+from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
 
 __all__ = ["RunContextSnapshot"]
 

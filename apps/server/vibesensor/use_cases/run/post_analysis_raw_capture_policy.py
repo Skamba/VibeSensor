@@ -9,8 +9,7 @@ from vibesensor.shared.raw_capture_quality import (
     assess_raw_capture_loss_policy,
 )
 from vibesensor.shared.types.raw_capture import RawCaptureManifest
-
-from .post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.use_cases.run.post_analysis_loader import LoadedPostAnalysisRun
 
 
 @dataclass(frozen=True, slots=True)

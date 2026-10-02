@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from vibesensor.shared.boundaries.reporting.document.document import ReportDocument
 from vibesensor.shared.boundaries.reporting.input import PreparedReportInput
-
-from .document_context import build_report_document_context
-from .document_output import assemble_report_document
-from .document_sections import build_report_document_sections
+from vibesensor.use_cases.history.report_document.document_context import (
+    build_report_document_context,
+)
+from vibesensor.use_cases.history.report_document.document_output import assemble_report_document
+from vibesensor.use_cases.history.report_document.document_sections import (
+    build_report_document_sections,
+)
 
 __all__ = ["compose_report_document"]
 

@@ -21,18 +21,19 @@ from vibesensor.shared.report_presentation import (
     order_label_human,
 )
 from vibesensor.shared.types.order_trace_contracts import OrderTraceSummary
-
-from ._candidate_resolver import PrimaryCandidateContext
-from .evidence_snapshot import build_evidence_snapshot_rows
-from .measurements import _evidence_chain_rows
-from .narrative_summaries import (
+from vibesensor.use_cases.history.report_document._candidate_resolver import PrimaryCandidateContext
+from vibesensor.use_cases.history.report_document.evidence_snapshot import (
+    build_evidence_snapshot_rows,
+)
+from vibesensor.use_cases.history.report_document.measurements import _evidence_chain_rows
+from vibesensor.use_cases.history.report_document.narrative_summaries import (
     _context_summary_text,
     _evidence_summary_text,
     _observation_texts,
     _phase_summary_text,
     _run_limits_summary_text,
 )
-from .section_context import AppendixCContext
+from vibesensor.use_cases.history.report_document.section_context import AppendixCContext
 
 __all__ = ["build_appendix_c_data"]
 

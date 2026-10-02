@@ -10,17 +10,22 @@ from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.shared.types.sensor_frame import SensorFrame
-
-from ._analysis_result import AnalysisResult
-from ._analysis_result_builder import build_analysis_result
-from ._run_input import DiagnosticsRunInput, build_diagnostics_run_input
-from ._types import AccelStatistics
-from ._validation import _validate_required_strength_metrics
-from .findings import _build_findings
-from .findings_bundle import build_findings_bundle
-from .prepared_analysis_context import build_findings_request, prepare_analysis_context
-from .run_data_preparation import PreparedRunData, prepare_run_data
-from .statistics import compute_accel_statistics
+from vibesensor.use_cases.diagnostics._analysis_result import AnalysisResult
+from vibesensor.use_cases.diagnostics._analysis_result_builder import build_analysis_result
+from vibesensor.use_cases.diagnostics._run_input import (
+    DiagnosticsRunInput,
+    build_diagnostics_run_input,
+)
+from vibesensor.use_cases.diagnostics._types import AccelStatistics
+from vibesensor.use_cases.diagnostics._validation import _validate_required_strength_metrics
+from vibesensor.use_cases.diagnostics.findings import _build_findings
+from vibesensor.use_cases.diagnostics.findings_bundle import build_findings_bundle
+from vibesensor.use_cases.diagnostics.prepared_analysis_context import (
+    build_findings_request,
+    prepare_analysis_context,
+)
+from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData, prepare_run_data
+from vibesensor.use_cases.diagnostics.statistics import compute_accel_statistics
 
 if TYPE_CHECKING:
     from vibesensor.domain import TestRun

@@ -30,11 +30,16 @@ from vibesensor.use_cases.diagnostics._jsonl_sidecars import (
     jsonl_bytes_from_objects,
     jsonl_objects_from_bytes,
 )
-
-from ._reference_resolution import _effective_engine_rpm, _tire_reference_from_context
-from ._types import Sample
-from .phase_segmentation import segment_whole_run_context
-from .whole_run_windows import WholeRunWindowPlan, plan_whole_run_windows
+from vibesensor.use_cases.diagnostics._reference_resolution import (
+    _effective_engine_rpm,
+    _tire_reference_from_context,
+)
+from vibesensor.use_cases.diagnostics._types import Sample
+from vibesensor.use_cases.diagnostics.phase_segmentation import segment_whole_run_context
+from vibesensor.use_cases.diagnostics.whole_run_windows import (
+    WholeRunWindowPlan,
+    plan_whole_run_windows,
+)
 
 __all__ = [
     "WHOLE_RUN_CONTEXT_LABEL_ARTIFACT_KEY",

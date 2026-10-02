@@ -6,7 +6,7 @@ import logging
 
 from packaging.version import Version
 
-from .models import ReleaseInfo
+from vibesensor.use_cases.updates.releases.models import ReleaseInfo
 
 LOGGER = logging.getLogger(__name__)
 

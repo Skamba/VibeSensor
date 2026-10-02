@@ -9,9 +9,11 @@ from math import pow
 from vibesensor.domain import OrderMatchObservation
 from vibesensor.shared.constants.analysis import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.shared.json_utils import i18n_ref
-
-from .location_grouping import group_matches_by_speed_bin, location_speed_weight_pairs
-from .location_scoring import (
+from vibesensor.use_cases.diagnostics.location_grouping import (
+    group_matches_by_speed_bin,
+    location_speed_weight_pairs,
+)
+from vibesensor.use_cases.diagnostics.location_scoring import (
     LocationAnalysisResult,
     score_locations_in_bin,
     select_best_location_result,

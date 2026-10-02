@@ -7,12 +7,17 @@ from statistics import median as _median
 
 from vibesensor.domain import RunSuitability
 from vibesensor.shared.types.run_schema import RunMetadata
-
-from ._analysis_models import FindingsBuildRequest, PreparedAnalysisContext
-from ._types import AccelStatistics, Sample
-from .run_analysis_projection import build_sensor_analysis
-from .run_data_preparation import PreparedRunData
-from .statistics import _strength_band_key, compute_frame_integrity_counts
+from vibesensor.use_cases.diagnostics._analysis_models import (
+    FindingsBuildRequest,
+    PreparedAnalysisContext,
+)
+from vibesensor.use_cases.diagnostics._types import AccelStatistics, Sample
+from vibesensor.use_cases.diagnostics.run_analysis_projection import build_sensor_analysis
+from vibesensor.use_cases.diagnostics.run_data_preparation import PreparedRunData
+from vibesensor.use_cases.diagnostics.statistics import (
+    _strength_band_key,
+    compute_frame_integrity_counts,
+)
 
 __all__ = ["build_findings_request", "prepare_analysis_context"]
 

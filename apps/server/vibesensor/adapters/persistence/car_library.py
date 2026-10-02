@@ -5,9 +5,8 @@ from __future__ import annotations
 import copy
 from typing import Literal, NotRequired, TypedDict, cast
 
+from vibesensor.adapters.persistence.vehicle_configurations import load_vehicle_configurations
 from vibesensor.domain import AxleTireSetup, VehicleConfiguration
-
-from .vehicle_configurations import load_vehicle_configurations
 
 __all__ = [
     "CarLibraryEntry",

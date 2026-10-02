@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .settings import PEAK_CLASSIFICATION_SETTINGS
+from vibesensor.use_cases.diagnostics.peaks.settings import PEAK_CLASSIFICATION_SETTINGS
 
 
 def classify_peak_type(

@@ -6,13 +6,19 @@ from collections.abc import Sequence
 
 from vibesensor.domain import Finding as DomainFinding
 from vibesensor.shared.constants.analysis import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
-
-from .._sample_metrics import _run_noise_baseline_g
-from .._types import PhaseLabels, Sample
-from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
-from .accumulation import PeakBinStats, accumulate_peak_bin_stats
-from .finding_builder import assemble_peak_finding
-from .scoring import PeakBin
+from vibesensor.use_cases.diagnostics._sample_metrics import _run_noise_baseline_g
+from vibesensor.use_cases.diagnostics._types import PhaseLabels, Sample
+from vibesensor.use_cases.diagnostics.peaks.accumulation import (
+    PeakBinStats,
+    accumulate_peak_bin_stats,
+)
+from vibesensor.use_cases.diagnostics.peaks.finding_builder import assemble_peak_finding
+from vibesensor.use_cases.diagnostics.peaks.scoring import PeakBin
+from vibesensor.use_cases.diagnostics.phase_segmentation import (
+    DrivingPhase,
+    diagnostic_sample_mask,
+    segment_run_phases,
+)
 
 PERSISTENT_PEAK_MAX_FINDINGS = 3
 
