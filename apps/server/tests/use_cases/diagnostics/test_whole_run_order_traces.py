@@ -7,10 +7,10 @@ import pytest
 from test_support.report_helpers import diagnostics_context, wheel_metadata
 from test_support.sample_scenarios import make_analysis_sample
 
+from vibesensor.common.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.shared._window_quality_scoring import score_window_quality
 from vibesensor.shared._window_quality_types import WindowQuality
-from vibesensor.shared.constants.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.shared.types.whole_run_analysis import (
     WholeRunArtifactFile,
     WholeRunArtifactManifest,

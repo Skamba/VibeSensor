@@ -8,7 +8,7 @@ from threading import RLock
 
 from vibesensor.infra.config.car_settings import _UpdateWithRollback
 from vibesensor.infra.config.settings_transaction import log_settings_change
-from vibesensor.shared.types.speed_source_config import (
+from vibesensor.speed.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,

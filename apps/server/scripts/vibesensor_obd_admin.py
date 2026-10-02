@@ -43,13 +43,13 @@ def _ensure_repo_venv_python() -> None:
         return
     os.execv(
         str(target_python),
-        [str(target_python), "-m", "vibesensor.adapters.obd.admin_helper", *sys.argv[1:]],
+        [str(target_python), "-m", "vibesensor.speed.obd.admin_helper", *sys.argv[1:]],
     )
 
 
 def main() -> int:
     _ensure_repo_venv_python()
-    from vibesensor.adapters.obd.admin_helper import main as helper_main
+    from vibesensor.speed.obd.admin_helper import main as helper_main
 
     return helper_main()
 

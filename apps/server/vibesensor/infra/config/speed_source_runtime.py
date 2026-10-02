@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from vibesensor.shared.ports import SpeedSourceSettingsStore, SpeedSourceSync
-from vibesensor.shared.types.speed_source_config import (
+from vibesensor.speed.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,

@@ -17,7 +17,7 @@ from vibesensor.adapters.http.models.settings import (
 from vibesensor.adapters.http.settings.dependencies import SpeedSourceRouteDeps
 from vibesensor.adapters.http.settings.presentation import speed_source_status_response
 from vibesensor.domain.speed_source import SpeedSourceKind
-from vibesensor.shared.types.speed_source_config import SpeedSourcePayload, SpeedSourceUpdatePayload
+from vibesensor.speed.speed_source_config import SpeedSourcePayload, SpeedSourceUpdatePayload
 
 _UPDATE_SPEED_SOURCE_RESPONSES: OpenAPIResponses = {
     400: {"description": "The requested speed-source configuration is invalid."},

@@ -8,7 +8,6 @@ from typing import Protocol
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.speed_source import SpeedSourceKind
-from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.shared.types.analysis_time_range import AnalysisTimeRange
 from vibesensor.shared.types.car_config import CarConfigUpdatePayload, CarsSnapshot
 from vibesensor.shared.types.history_records import (
@@ -35,13 +34,14 @@ from vibesensor.shared.types.settings_types import (
     LanguageCode,
     SpeedUnitCode,
 )
-from vibesensor.shared.types.speed_source_config import (
+from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
+from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
+from vibesensor.speed.speed_source_config import (
     ResolvedSpeedSource,
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,
 )
-from vibesensor.shared.types.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "ActiveCarReader",

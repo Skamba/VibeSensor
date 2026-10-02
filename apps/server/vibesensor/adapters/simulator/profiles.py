@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS, AnalysisSettingsSnapshot
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.order_bands import vehicle_orders_hz
 
 DEFAULT_SPEED_KMH = 100.0

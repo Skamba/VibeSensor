@@ -14,10 +14,10 @@ import numpy as np
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
 from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.adapters.udp.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.infra.processing.processor import SignalProcessor
@@ -28,8 +28,8 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.pdf.pdf_engine import build_report_pdf
 from vibesensor.report.preparation import prepare_report_input
-from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder
 

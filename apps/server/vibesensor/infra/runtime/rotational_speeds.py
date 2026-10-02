@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+from vibesensor.common.type_checks import NUMERIC_TYPES
+from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
-from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.shared.types.payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,
 )
-from vibesensor.shared.types.speed_source_config import ResolvedSpeedSource
+from vibesensor.speed.speed_source_config import ResolvedSpeedSource
 
 
 def rotational_basis_speed_source(

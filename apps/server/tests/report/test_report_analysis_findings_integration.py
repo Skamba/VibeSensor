@@ -11,10 +11,10 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import build_findings_for_samples
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics import findings as findings_builder_module
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings

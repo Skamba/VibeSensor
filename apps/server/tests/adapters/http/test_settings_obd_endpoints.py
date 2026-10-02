@@ -5,9 +5,9 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
 from vibesensor.shared.operational_errors import ExternalCommandError
+from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def _build_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock, MagicMock]:

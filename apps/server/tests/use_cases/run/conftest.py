@@ -141,7 +141,7 @@ class _FakeGPSMonitor:
         return self.raw_gps_speed_mps if isinstance(self.raw_gps_speed_mps, (int, float)) else None
 
     def resolve_speed(self):
-        from vibesensor.adapters.gps.gps_speed import SpeedResolution
+        from vibesensor.speed.gps_speed import SpeedResolution
 
         if isinstance(self.override_speed_mps, (int, float)):
             return SpeedResolution(
@@ -158,7 +158,7 @@ class _FakeGPSMonitor:
         return SpeedResolution(speed_mps=None, fallback_active=self.fallback_active, source="none")
 
     def resolve_speed_context_at(self, target_mono_s, *, tolerance_s=None):
-        from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
+        from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 
         if callable(self.context_override):
             return self.context_override(target_mono_s, tolerance_s=tolerance_s)
@@ -182,7 +182,7 @@ class _FakeGPSMonitor:
         )
 
     def status_snapshot(self):
-        from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+        from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
         if self.speed_status_override is not None:
             return self.speed_status_override
@@ -212,7 +212,7 @@ class _FakeGPSMonitor:
         )
 
     def obd_status(self):
-        from vibesensor.adapters.obd.models import ObdStatusSnapshot
+        from vibesensor.speed.obd.models import ObdStatusSnapshot
 
         if self.obd_status_override is not None:
             return self.obd_status_override

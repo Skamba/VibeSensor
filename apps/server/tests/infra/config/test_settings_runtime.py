@@ -8,7 +8,7 @@ from vibesensor.infra.config.speed_source_runtime import (
     SpeedSourceRuntimeApplier,
     SpeedSourceSettingsService,
 )
-from vibesensor.shared.types.speed_source_config import (
+from vibesensor.speed.speed_source_config import (
     SpeedSourceConfig,
     SpeedSourcePayload,
     SpeedSourceUpdatePayload,

@@ -78,7 +78,7 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class GPSConfig:
-    """GPS enable flag; gpsd address is fixed in ``vibesensor.adapters.gps.gps_speed``."""
+    """GPS enable flag; gpsd address is fixed in ``vibesensor.speed.gps_speed``."""
 
     gps_enabled: bool
 

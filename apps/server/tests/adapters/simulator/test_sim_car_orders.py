@@ -13,11 +13,11 @@ from vibesensor.adapters.simulator import sim_runtime
 from vibesensor.adapters.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
 from vibesensor.adapters.simulator.server_http import fetch_active_car_order_hz
 from vibesensor.adapters.simulator.sim_client import SimClient, make_client_id
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.shared.order_bands import vehicle_orders_hz
 
 _BMW_F30_320I = {

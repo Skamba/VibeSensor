@@ -18,7 +18,7 @@ from vibesensor.shared.ports import SettingsSnapshotPersistence
 from vibesensor.shared.types.car_config import car_from_persistence_dict, car_to_persistence_dict
 from vibesensor.shared.types.sensor_config import SensorConfig
 from vibesensor.shared.types.settings_snapshot import SettingsSnapshotPayload
-from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
+from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
 __all__ = ["SettingsPersistenceCoordinator"]
 

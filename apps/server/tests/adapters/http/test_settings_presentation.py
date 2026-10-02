@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.http.settings.presentation import (
     obd_pair_response,
     obd_scan_response,
     obd_status_response,
     speed_source_status_response,
 )
-from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def test_speed_source_status_response_projects_snapshot() -> None:

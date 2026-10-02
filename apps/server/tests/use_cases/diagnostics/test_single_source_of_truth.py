@@ -92,9 +92,9 @@ def test_analysis_constants_single_source_of_truth() -> None:
     """Core analysis constants must expose the expected canonical values."""
     import inspect
 
+    from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
     from vibesensor.shared.constants.analysis import SILENCE_DB
     from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
-    from vibesensor.shared.constants.units import KMH_TO_MPS, MPS_TO_KMH
     from vibesensor.vibration_strength import compute_vibration_strength_db
 
     assert MPS_TO_KMH == 3.6

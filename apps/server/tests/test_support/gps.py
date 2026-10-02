@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
 
 
 def set_gps_snapshot_age(

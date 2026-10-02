@@ -22,13 +22,13 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_log
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.model.appendices import AppendixAData
 from vibesensor.report.model.document import ReportDocument
 from vibesensor.report.pdf.pdf_diagram_render import car_location_diagram
 from vibesensor.report.pdf.pdf_engine import build_report_pdf
 from vibesensor.report.preparation import prepare_report_input
-from vibesensor.shared.constants.units import KMH_TO_MPS
 
 
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:

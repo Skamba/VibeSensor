@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.obd.models import ObdStatusSnapshot
+from vibesensor.speed.obd.models import ObdStatusSnapshot
 
 __all__ = ["obd_debug_hint"]
 

@@ -6,8 +6,8 @@ import math
 from collections import deque
 from dataclasses import dataclass
 
+from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.domain.capture_readiness import CaptureReadinessPolicy
-from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.use_cases.run.capture_readiness_observation import (
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,

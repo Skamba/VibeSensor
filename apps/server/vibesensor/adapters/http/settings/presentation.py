@@ -15,8 +15,8 @@ from vibesensor.adapters.http.models.settings import (
 from vibesensor.adapters.http.obd_status_presentation import obd_debug_hint
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
-    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+    from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+    from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def speed_source_status_response(

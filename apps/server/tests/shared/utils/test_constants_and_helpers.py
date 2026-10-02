@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.shared.constants.analysis import SILENCE_DB
 from vibesensor.shared.constants.dsp import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
-from vibesensor.shared.constants.units import KMH_TO_MPS, MPS_TO_KMH
 from vibesensor.shared.order_reference_settings import order_reference_spec_from_mapping
 
 # ---------------------------------------------------------------------------

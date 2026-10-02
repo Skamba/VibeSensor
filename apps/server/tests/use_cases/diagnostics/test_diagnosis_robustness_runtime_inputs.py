@@ -280,7 +280,7 @@ class TestGpsSpeedValidation:
     def test_invalid_speed_rejected_by_product_code(self, bad_speed: object, label: str) -> None:
         import asyncio
 
-        from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
+        from vibesensor.speed.gps_speed import GPSSpeedMonitor
 
         monitor = GPSSpeedMonitor(gps_enabled=True)
 

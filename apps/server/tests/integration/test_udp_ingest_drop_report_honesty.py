@@ -9,7 +9,6 @@ from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.adapters.gps.gps_speed import SpeedResolution
 from vibesensor.adapters.udp.protocol import HelloMessage, pack_data
 from vibesensor.adapters.udp.udp_data_rx import DataDatagramProtocol
 from vibesensor.infra.processing.processor import SignalProcessor
@@ -19,7 +18,8 @@ from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.shared.boundaries.runs.metadata import run_metadata_to_json_object
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
 from vibesensor.shared.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
-from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
+from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
+from vibesensor.speed.gps_speed import SpeedResolution
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder
 from vibesensor.use_cases.run.post_analysis_input import build_post_analysis_input

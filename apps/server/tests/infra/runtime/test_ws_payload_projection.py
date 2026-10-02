@@ -4,7 +4,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.infra.runtime.processing_loop import STALE_DATA_AGE_S
 from vibesensor.infra.runtime.registry import ClientSnapshot
 from vibesensor.infra.runtime.ws_payload_projection import LiveWsPayloadProjector
-from vibesensor.shared.types.speed_source_config import SpeedSourceConfig
+from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
 
 class _SpeedResolution:

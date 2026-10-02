@@ -7,11 +7,11 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
+from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.shared.boundaries.codecs.analysis_settings import (
     analysis_settings_snapshot_from_mapping,
 )
-from vibesensor.shared.constants.type_checks import NUMERIC_TYPES
 from vibesensor.shared.ports import ClientTracker, SettingsReader
 from vibesensor.shared.time_utils import utc_now_iso
 

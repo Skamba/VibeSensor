@@ -7,9 +7,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.cli.http_api_schema_export import export_schema
 from vibesensor.shared.types.car_config import CarsSnapshot
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:

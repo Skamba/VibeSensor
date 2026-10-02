@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
-from vibesensor.shared.constants.units import SECONDS_PER_MINUTE
 from vibesensor.shared.types.run_schema import RunMetadata
 from vibesensor.use_cases.diagnostics._types import Sample
 

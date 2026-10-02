@@ -13,8 +13,6 @@ from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.adapters.history.services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
@@ -37,6 +35,8 @@ from vibesensor.infra.runtime.registry import ClientRegistry
 from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.ingest_diagnostics import IngestDiagnosticsCollector
 from vibesensor.shared.types.car_config import CarsSnapshot
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.firmware.esp_flash_types import EspFlashStatus
 from vibesensor.updates.manager import UpdateManager

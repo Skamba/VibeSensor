@@ -25,17 +25,17 @@ from vibesensor.updates.manager import UpdateManager
 from vibesensor.use_cases.run.logger import RunRecorder
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
     from vibesensor.adapters.history.services import (
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )
-    from vibesensor.adapters.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
     from vibesensor.adapters.websocket.broadcaster import LiveBroadcaster
-    from vibesensor.shared.types.speed_source_config import (
+    from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
+    from vibesensor.speed.speed_source_config import (
         SpeedSourcePayload,
         SpeedSourceUpdatePayload,
     )
+    from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 class SettingsSpeedServiceProtocol(Protocol):

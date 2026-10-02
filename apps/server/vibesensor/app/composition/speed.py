@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.adapters.gps.gps_speed import GPSSpeedMonitor
-from vibesensor.adapters.obd.service import ObdService
-from vibesensor.adapters.speed.source_coordinator import (
+from vibesensor.app.config_schema import AppConfig
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.obd.service import ObdService
+from vibesensor.speed.source_coordinator import (
     SpeedSourceServices,
     build_speed_source_services,
 )
-from vibesensor.app.config_schema import AppConfig
 
 
 @dataclass(frozen=True, slots=True)

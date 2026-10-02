@@ -30,7 +30,7 @@ from test_support.core import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
-from vibesensor.shared.constants.units import KMH_TO_MPS
+from vibesensor.common.units import KMH_TO_MPS
 
 # ---------------------------------------------------------------------------
 # Shared helpers

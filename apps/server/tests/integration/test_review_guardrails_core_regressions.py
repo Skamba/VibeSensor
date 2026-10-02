@@ -121,7 +121,7 @@ class TestModuleAllExports:
                 {"RUN_SCHEMA_VERSION", "RunMetadata", "RunFinalizationStageResult"},
             ),
             (
-                "vibesensor.shared.types.speed_source_config",
+                "vibesensor.speed.speed_source_config",
                 {"SpeedSourceConfig", "SpeedSourcePayload", "ResolvedSpeedSource"},
             ),
             (
@@ -132,7 +132,7 @@ class TestModuleAllExports:
                 "vibesensor.adapters.persistence.car_library",
                 {"load_car_library", "resolve_variant", "CarLibraryEntry"},
             ),
-            ("vibesensor.adapters.gps.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),
+            ("vibesensor.speed.gps_speed", {"GPSSpeedMonitor", "SpeedResolution"}),
             (
                 "vibesensor.infra.runtime.registry",
                 {"ClientRecord", "ClientRegistry", "DataUpdateResult"},

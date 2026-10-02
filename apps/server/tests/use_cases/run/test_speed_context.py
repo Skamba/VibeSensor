@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.shared.types.aligned_speed_context import AlignedSpeedContextSnapshot
+from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.use_cases.run._recorder_types import RunRecorderConfig
 from vibesensor.use_cases.run.logger import RunRecorder
 from vibesensor.use_cases.run.sample_speed_context import (

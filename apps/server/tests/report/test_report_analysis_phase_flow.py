@@ -14,8 +14,8 @@ from test_support.report_helpers import (
 )
 
 from vibesensor.adapters.analysis_summary import summarize_run_data
+from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.shared.boundaries.sensor_frames.mapping import sensor_frames_from_mappings
-from vibesensor.shared.constants.units import KMH_TO_MPS
 from vibesensor.use_cases.diagnostics._analysis_models import FindingsBuildRequest
 from vibesensor.use_cases.diagnostics.findings import _build_findings as _findings_build_findings
 from vibesensor.use_cases.diagnostics.phase_segmentation import DrivingPhase, segment_run_phases

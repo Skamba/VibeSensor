@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.adapters.gps.speed_status import SpeedSourceStatusSnapshot
+from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
 def _make_speed_source_status_snapshot() -> SpeedSourceStatusSnapshot:
