@@ -300,9 +300,6 @@ class _HistoryDBRunLifecycleMixin(Protocol):
             )
             return bool(int(cur.rowcount) > 0)
 
-    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
-        return self._run_sync(self.adelete_run_if_safe(run_id))
-
     async def adelete_run_if_safe(
         self,
         run_id: str,

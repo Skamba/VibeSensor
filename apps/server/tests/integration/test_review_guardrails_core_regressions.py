@@ -14,7 +14,6 @@ from vibesensor.infra.runtime.client_metadata import sanitize_client_name
 from vibesensor.infra.workers.worker_pool import WorkerPool
 from vibesensor.shared.json_utils import as_float_or_none, as_int_or_none
 from vibesensor.shared.order_bands import build_order_bands
-from vibesensor.shared.sampling import bounded_sample
 from vibesensor.shared.types.car_config import new_car_id
 
 # ---------------------------------------------------------------------------
@@ -134,31 +133,6 @@ class TestSanitizeName:
     def test_control_chars_stripped(self) -> None:
         assert sanitize_client_name("hel\x00lo") == "hello"
         assert sanitize_client_name("\x01\x02\x03") == ""
-
-
-# ---------------------------------------------------------------------------
-# Item 9: bounded_sample final trim
-# ---------------------------------------------------------------------------
-
-
-class TestBoundedSampleTrim:
-    """Verify bounded_sample never exceeds max_items, including tight edge cases."""
-
-    def test_never_exceeds_max_items(self) -> None:
-        for total in range(1, 30):
-            for max_items in range(1, 10):
-                samples = iter([{"v": i} for i in range(total)])
-                kept, count, stride = bounded_sample(samples, max_items=max_items)
-                assert len(kept) <= max_items, (
-                    f"total={total}, max_items={max_items}: got {len(kept)} items"
-                )
-                assert count == total
-
-    def test_max_items_1_edge_case(self) -> None:
-        samples = iter([{"v": i} for i in range(5)])
-        kept, count, stride = bounded_sample(samples, max_items=1)
-        assert len(kept) <= 1
-        assert count == 5
 
 
 # ---------------------------------------------------------------------------

@@ -23,7 +23,6 @@ from vibesensor.adapters.gps.speed_status import (
     GPSSpeedStatusState,
     SpeedSourceStatusSnapshot,
     build_status_snapshot,
-    speed_confidence,
 )
 from vibesensor.shared.timed_observation import (
     DEFAULT_ALIGNMENT_TOLERANCE_S,
@@ -245,26 +244,6 @@ class GPSSpeedMonitor:
             measured_engine_rpm_aligned=False,
         )
 
-    def _effective_connection_state(self) -> str:
-        transport_snapshot, policy_snapshot = self._captured_snapshots()
-        return self._policy.effective_connection_state(
-            gps_enabled=transport_snapshot.gps_enabled,
-            actual_connection_state=transport_snapshot.connection_state,
-            speed_snapshot=transport_snapshot.speed_snapshot,
-            snapshot=policy_snapshot,
-        )
-
-    def _is_gps_stale(self) -> bool:
-        transport_snapshot, policy_snapshot = self._captured_snapshots()
-        return self._policy.is_gps_stale(
-            transport_snapshot.speed_snapshot,
-            snapshot=policy_snapshot,
-        )
-
-    def _fallback_speed_value(self) -> float | None:
-        _, policy_snapshot = self._captured_snapshots()
-        return self._policy.fallback_speed_value(snapshot=policy_snapshot)
-
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
         return self._policy.set_speed_override_kmh(speed_kmh)
 
@@ -299,9 +278,6 @@ class GPSSpeedMonitor:
     @staticmethod
     def _tpv_mode(payload: JsonObject) -> int | None:
         return read_tpv_mode(payload)
-
-    def _speed_confidence(self) -> Literal["low", "medium", "high"]:
-        return speed_confidence(self.last_fix_mode, self.last_epx_m, self.last_epy_m)
 
     def _accept_speed_sample(self, speed_mps: float) -> bool:
         return self._transport._accept_speed_sample(speed_mps)

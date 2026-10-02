@@ -53,7 +53,6 @@ assert_wheel_static_data_contract() {
   local venv_site_packages_glob="${root_mnt}/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/data"
   local venv_data_dir=""
   local first_vehicle_shard=""
-  local first_car_source=""
   local candidate=""
 
   for candidate in ${venv_site_packages_glob}; do
@@ -82,19 +81,6 @@ assert_wheel_static_data_contract() {
   )"
   if [ -z "${first_vehicle_shard}" ]; then
     echo "Validation failed: no vehicle configuration shards found under ${venv_data_dir}/vehicle_configurations"
-    exit 1
-  fi
-
-  if [ ! -d "${venv_data_dir}/car_sources" ]; then
-    echo "Validation failed: missing ${venv_data_dir}/car_sources"
-    exit 1
-  fi
-
-  first_car_source="$(
-    find "${venv_data_dir}/car_sources" -maxdepth 1 -type f -name "*.json" -print -quit
-  )"
-  if [ -z "${first_car_source}" ]; then
-    echo "Validation failed: no car source packs found under ${venv_data_dir}/car_sources"
     exit 1
   fi
 

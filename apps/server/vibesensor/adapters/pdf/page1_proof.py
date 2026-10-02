@@ -18,20 +18,18 @@ from vibesensor.adapters.pdf.pdf_style import (
     FS_BODY,
     FS_H2,
     FS_SMALL,
-    PANEL_HEADER_H,
     REPORT_COLORS,
     SUB_CLR,
     TEXT_CLR,
 )
 from vibesensor.adapters.pdf.pdf_text import _draw_text, _truncate_single_line
-from vibesensor.adapters.pdf.pdf_timeline_render import run_timeline_graph
 from vibesensor.domain import VibrationSource
 from vibesensor.shared.report_presentation import human_source
 
 if TYPE_CHECKING:
     from vibesensor.adapters.pdf.report_types import Page1RenderPlan
 
-__all__ = ["draw_proof_block", "draw_timeline_block"]
+__all__ = ["draw_proof_block"]
 
 PROOF_PANEL_TITLE_SIZE = 12.5
 PROOF_SUMMARY_LABEL_SIZE = 6.4
@@ -418,31 +416,3 @@ def _page1_snapshot_value(*, label: str, value: str) -> str:
     if label.casefold() == "support" and " across " in value:
         return value.split(" across ", 1)[0].strip()
     return value
-
-
-def draw_timeline_block(
-    c: Canvas,
-    plan: Page1RenderPlan,
-    *,
-    tr: Callable[..., str],
-    x: float,
-    y: float,
-    w: float,
-    h: float,
-) -> None:
-    timeline_graph = plan.verdict_page.timeline_graph
-    if timeline_graph is None:
-        return
-
-    _draw_panel(c, x, y, w, h, tr("REPORT_TIMELINE_TITLE"))
-    graph_x = x + 4 * mm
-    graph_y = y + 4 * mm
-    graph_w = w - 8 * mm
-    graph_h = h - PANEL_HEADER_H - 6 * mm
-    run_timeline_graph(
-        timeline_graph,
-        tr=tr,
-        graph_width=graph_w,
-        graph_height=graph_h,
-        show_title=False,
-    ).drawOn(c, graph_x, graph_y)

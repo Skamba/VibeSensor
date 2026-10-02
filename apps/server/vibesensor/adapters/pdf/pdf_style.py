@@ -55,7 +55,6 @@ FS_TITLE = 13
 FS_H2 = 10
 FS_BODY = 7
 FS_SMALL = 6
-FS_CARD_TITLE = 9.0
 
 R_CARD = 8
 GAP = 4 * mm

@@ -98,11 +98,6 @@ class ClientMetadataManager:
         with self._lock:
             return self._user_names.get(normalized, self._default_name(normalized))
 
-    def has_user_name(self, client_id: str) -> bool:
-        normalized = normalize_sensor_id(client_id)
-        with self._lock:
-            return normalized in self._user_names
-
     def apply_advertised_name(self, record: ClientRecord, advertised_name: str) -> None:
         with self._lock:
             if record.client_id in self._user_names:

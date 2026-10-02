@@ -105,8 +105,8 @@ order-analysis fields inline with their own metadata:
   `reason` and only the differing flags. Rows that match the derivation omit
   the block entirely.
 
-`apps/server/vibesensor/data/car_sources/*.json` now contains only reusable
-source-document metadata. `evidence_refs` inside canonical rows resolve through
+`apps/server/tests/test_support/car_library_validation/data/car_sources/*.json` contains only reusable
+source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through
 those source packs.
 
 ## Runtime model
@@ -185,7 +185,7 @@ running at app startup:
   facade. Its submodules split allowlists, legacy grouped rows, exact-row
   checks, powertrain rules, tire rules, and duplicate detection.
 - `apps/server/tests/test_support/car_library_validation/source_evidence.py`
-  resolves `evidence_refs` against `car_sources/*.json`.
+  resolves `evidence_refs` against `data/car_sources/*.json`.
 - `test_bundled_vehicle_library_passes_validation` in
   `apps/server/tests/adapters/persistence/test_car_library_validation.py`
   runs both against the packaged shards, so bad data fails CI rather than
@@ -196,16 +196,17 @@ remain the single source of truth.
 
 ## Shard JSON Schema
 
-`apps/server/vibesensor/data/schema/vehicle_configuration_shard.schema.json`
+`apps/server/tests/test_support/car_library_validation/data/vehicle_configuration_shard.schema.json`
 is the canonical JSON Schema (Draft 2020-12) for shard files under
 `apps/server/vibesensor/data/vehicle_configurations/**/*.json`. It validates
 the raw on-disk shape, including the `definitions` / `defaults` /
 `configurations` blocks and the supported ref forms (`notes_ref`, `note_ref`,
 `evidence_refs_ref`, `default_ref`, `setup_ref`).
 
-`apps/server/tests/adapters/persistence/test_vehicle_configurations.py`
-runs the schema against every committed shard and checks representative
-invalid cases. Run it with the rest of the persistence suite:
+The schema is an editor aid and is not enforced in CI; the enforced contract
+is the backend loader. `apps/server/tests/adapters/persistence/test_vehicle_configurations.py`
+loads every committed shard through it and checks representative invalid
+cases. Run it with the rest of the persistence suite:
 
 ```bash
 pytest -q apps/server/tests/adapters/persistence/test_vehicle_configurations.py
@@ -221,7 +222,7 @@ schema file. Example VS Code setting:
       "fileMatch": [
         "apps/server/vibesensor/data/vehicle_configurations/**/*.json"
       ],
-      "url": "./apps/server/vibesensor/data/schema/vehicle_configuration_shard.schema.json"
+      "url": "./apps/server/tests/test_support/car_library_validation/data/vehicle_configuration_shard.schema.json"
     }
   ]
 }
@@ -245,6 +246,6 @@ and near-duplicate exact rows after the per-row checks:
   IDs of the colliding peers are listed in the message.
 
 Both rules go through the existing
-`apps/server/vibesensor/data/car_library_validation_allowlist.json`. To
+`apps/server/tests/test_support/car_library_validation/data/allowlist.json`. To
 keep an intentional duplicate or label collision, add an entry with the
 rule name, the offending row `id`, and a `reason`.

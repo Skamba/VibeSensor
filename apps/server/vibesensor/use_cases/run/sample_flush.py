@@ -124,21 +124,6 @@ class SampleFlushOrchestrator:
             run_start_mono_s=run_start_mono_s,
         )
 
-    def build_live_sample_records(
-        self,
-        *,
-        run_id: str,
-        live_start_mono_s: float,
-        timestamp_utc: str,
-    ) -> list[SensorFrame]:
-        live_t_s = max(0.0, self._monotonic() - live_start_mono_s)
-        return self.build_sample_records(
-            run_id=run_id,
-            t_s=live_t_s,
-            timestamp_utc=timestamp_utc,
-            run_start_mono_s=live_start_mono_s,
-        )
-
     def pending_flush_snapshot(self) -> ActiveRunSnapshot | None:
         return self._lifecycle.pending_flush_snapshot(
             current_total=self._active_frames_total(),

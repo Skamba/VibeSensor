@@ -90,7 +90,7 @@ def export_schema(out_path: Path | None = None) -> str:
 
 
 def main() -> None:
-    """Entry point for the ``vibesensor-http-api-schema-export`` CLI tool."""
+    """CLI entry point, run as ``python -m vibesensor.cli.http_api_schema_export``."""
     parser = argparse.ArgumentParser(description="Export HTTP API OpenAPI schema")
     parser.add_argument("--out", type=Path, default=_DEFAULT_OUT, help="Output file path")
     parser.add_argument("--check", action="store_true", help="Fail if committed schema differs")

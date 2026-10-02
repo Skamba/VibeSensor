@@ -2,19 +2,9 @@ from __future__ import annotations
 
 import asyncio
 
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_fixed
-
 from vibesensor.use_cases.updates.runner import UpdateCommandExecutor
 from vibesensor.use_cases.updates.status import UpdateStatusTracker
 from vibesensor.use_cases.updates.wifi.wifi_config import UpdateWifiConfig
-
-
-class _RetryableHotspotRestoreError(Exception):
-    __slots__ = ("returncode",)
-
-    def __init__(self, returncode: int) -> None:
-        super().__init__(str(returncode))
-        self.returncode = returncode
 
 
 class _TransientUplinkCleanupError(Exception):
@@ -94,33 +84,22 @@ class UpdateHotspotRecovery:
                 "Transient uplink cleanup failed before hotspot restore; "
                 f"attempting AP recovery anyway ({exc})",
             )
-        try:
-            async for attempt in AsyncRetrying(
-                stop=stop_after_attempt(self._config.hotspot_restore_retries),
-                wait=wait_fixed(self._config.hotspot_restore_delay_s),
-                retry=retry_if_exception_type(_RetryableHotspotRestoreError),
-                sleep=asyncio.sleep,
-                reraise=True,
-            ):
-                with attempt:
-                    result = await self._commands.run(
-                        ["nmcli", "connection", "up", self._config.ap_con_name],
-                        phase="restore",
-                        timeout=self._config.nmcli_timeout_s,
-                        sudo=True,
-                    )
-                    if result.returncode == 0:
-                        self._status.log(
-                            f"Hotspot restored on attempt {attempt.retry_state.attempt_number}",
-                        )
-                        return True
-                    attempt_number = attempt.retry_state.attempt_number
-                    self._status.log(
-                        f"Hotspot restore attempt {attempt_number} failed (rc={result.returncode})",
-                    )
-                    raise _RetryableHotspotRestoreError(result.returncode)
-        except _RetryableHotspotRestoreError:
-            pass
+        max_attempts = max(1, self._config.hotspot_restore_retries)
+        for attempt_number in range(1, max_attempts + 1):
+            if attempt_number > 1:
+                await asyncio.sleep(self._config.hotspot_restore_delay_s)
+            result = await self._commands.run(
+                ["nmcli", "connection", "up", self._config.ap_con_name],
+                phase="restore",
+                timeout=self._config.nmcli_timeout_s,
+                sudo=True,
+            )
+            if result.returncode == 0:
+                self._status.log(f"Hotspot restored on attempt {attempt_number}")
+                return True
+            self._status.log(
+                f"Hotspot restore attempt {attempt_number} failed (rc={result.returncode})",
+            )
         self._status.add_issue(
             "restoring_hotspot",
             "Failed to restore hotspot after retries",

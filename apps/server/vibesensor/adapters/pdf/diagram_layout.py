@@ -57,49 +57,6 @@ def estimate_text_width(text: str, *, font_size: float) -> float:
     return max(10.0, float(len(text)) * font_size * 0.52)
 
 
-def label_bbox(
-    *,
-    x: float,
-    y: float,
-    text: str,
-    anchor: str,
-    font_size: float,
-) -> tuple[float, float, float, float]:
-    """Return the bounding box ``(x0, y0, x1, y1)`` for a text label."""
-    width = estimate_text_width(text, font_size=font_size)
-    if anchor == "end":
-        x0 = x - width
-    elif anchor == "middle":
-        x0 = x - (width / 2.0)
-    else:
-        x0 = x
-    y0 = y - 1.0
-    return (x0, y0, x0 + width, y0 + font_size + 2.0)
-
-
-def boxes_overlap(
-    a: tuple[float, float, float, float],
-    b: tuple[float, float, float, float],
-) -> bool:
-    """Return ``True`` when two axis-aligned bounding boxes overlap."""
-    return min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
-
-
-def bounds_overflow(
-    box: tuple[float, float, float, float],
-    *,
-    width: float,
-    height: float,
-    margin: float = 2.0,
-) -> float:
-    """Total overflow of *box* outside the (0, 0, width, height) region."""
-    left = max(0.0, margin - box[0])
-    right = max(0.0, box[2] - (width - margin))
-    bottom = max(0.0, margin - box[1])
-    top = max(0.0, box[3] - (height - margin))
-    return left + right + bottom + top
-
-
 def _clamp_unit(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 

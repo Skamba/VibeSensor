@@ -38,8 +38,7 @@ Scope: global workflow, validation, docs, PR/CI, safety, and simplification rule
 
 ## PR and CI
 - After opening/updating a PR intended to land, run `gh pr checks <PR_NUMBER> --watch` and merge with `gh pr merge --squash` once green.
-- Treat watcher `RESULT=NON_GREEN`, `RESULT=MERGE_ISSUES`, or `RESULT=MERGE_FAILED` as actionable: inspect annotations and concise log tails, fix branch-caused failures, push, and restart the watcher.
-- `RESULT=MERGED` is success for merge-on-green; `RESULT=ALL_GREEN` is success only for watch-only.
+- Treat failing checks or a failed merge as actionable: inspect annotations and concise log tails, fix branch-caused failures, push, and restart the watch.
 - Do not merge on red required checks. Document unrelated or flaky blockers.
 - Prefer squash merge unless the repo convention or user says otherwise.
 - Avoid full CI log dumps; use failing annotations, test names, and short tails first.

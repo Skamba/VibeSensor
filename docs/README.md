@@ -42,7 +42,6 @@ links onward to the scoped instruction files and repo map below.
 |------|--------|-------------|
 | `docs/designs/final-report-redesign.md` | Active | Report/PDF design guidance for the verdict page and appendices. |
 | `docs/designs/whole-run-post-analysis-program.md` | Active | Whole-run post-analysis architecture guidance. |
-| `docs/designs/whole-run-post-analysis-history.md` | Historical | Whole-run post-analysis issue plan, branch notes, and benchmark snapshots. |
 
 ## Infrastructure & Operations
 
@@ -79,7 +78,6 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | `README.md` | Project overview and quickstart. |
 | `docs/README.md` | This documentation inventory. |
 | `CONTRIBUTING.md` | Development workflow and setup paths. |
-| `CHANGELOG.md` | Release history. |
 | `apps/server/README.md` | Backend setup, deployment, and CLI usage. |
 | `apps/ui/README.md` | Frontend setup and build workflow. |
 | `firmware/esp/README.md` | ESP32 firmware setup and flashing. |
@@ -92,4 +90,4 @@ HTTP/WebSocket error semantics. Pair it with `apps/ui/README.md` §
 | File | Description |
 |------|-------------|
 | `apps/server/vibesensor/data/vehicle_configurations/**/*.json` | Canonical exact vehicle-configuration shard arrays with inline ratio/tire confidence and evidence metadata. |
-| `apps/server/vibesensor/data/car_sources/*.json` | Reusable source-document metadata referenced from canonical vehicle configurations. |
+| `apps/server/tests/test_support/car_library_validation/data/car_sources/*.json` | Test-only source-document metadata that vehicle-configuration `evidence_refs` resolve against. |
