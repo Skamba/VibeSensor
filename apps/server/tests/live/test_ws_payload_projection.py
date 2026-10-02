@@ -140,7 +140,7 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
     tmp_path,
     monkeypatch,
 ) -> None:
-    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+    from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.protocol import HelloMessage
     from vibesensor.ingest.registry import ClientRegistry
 

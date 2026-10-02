@@ -10,7 +10,7 @@ The report generation pipeline has two distinct phases:
    the compact diagnostics summary, appends compact whole-run report-facing
    summaries, and persists the resulting `PersistedAnalysis`.
 2. **History request loading + reporting-boundary preparation + rendering**
-      (`vibesensor.use_cases.history` →
+      (`vibesensor.history` →
       `vibesensor.report` →
       `vibesensor.report.pdf`) — loads the persisted analysis object, shapes
       runtime warnings and cache metadata, prepares one explicit
@@ -30,13 +30,13 @@ Recording stops
       → build_whole_run_artifacts() [vibesensor.analysis.post_analysis_executor]
         → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
         → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
-      → astore_whole_run_artifacts() [vibesensor.adapters.persistence.history_db]
+      → astore_whole_run_artifacts() [vibesensor.history.history_db]
       → build_post_analysis_summary() [vibesensor.analysis.post_analysis_summary]
         → RunAnalysis(...).summarize() [vibesensor.analysis.run_analysis]
         → run_analysis.py + run_data_preparation.py + findings_bundle.py + _analysis_result_builder.py
         → analysis_result_to_summary() [vibesensor.analysis.summary_payload]
       → append compact whole-run report-facing summaries
-      → store_analysis() [vibesensor.adapters.persistence.history_db]
+      → store_analysis() [vibesensor.history.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.adapters.http.history]
   → HistoryReportService.build_pdf() [vibesensor.report.service]

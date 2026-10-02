@@ -14,7 +14,7 @@ application settings and client names in a single SQLite file located at
 
 ## Module organization
 
-`adapters/persistence/history_db/` is one synchronous repository over stdlib `sqlite3`:
+`history/` (`history_db.py` and its `*_store.py` helpers) is one synchronous repository over stdlib `sqlite3`:
 
 - `_history_db.py`: `HistoryDB`. Constructing it opens a writer connection and a
   `query_only` reader connection (WAL lets reads proceed during writes), each guarded by a

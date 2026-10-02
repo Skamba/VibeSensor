@@ -11,10 +11,6 @@ from unittest.mock import MagicMock
 from fastapi import FastAPI
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.history.services import (
-    ProjectedHistoryExportService,
-    ProjectedHistoryRunService,
-)
 from vibesensor.adapters.http.dependencies import (
     HealthDeps,
     HistoryDeps,
@@ -26,6 +22,18 @@ from vibesensor.adapters.http.dependencies import (
 from vibesensor.adapters.http.router import create_router
 from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.history.exports import HistoryExportService
+from vibesensor.history.projected_services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+)
+from vibesensor.history.records import (
+    HistoryArtifactAvailability,
+    HistoryRunListEntry,
+    StoredHistoryRun,
+)
+from vibesensor.history.run_lifecycle import derive_run_artifact_lifecycle
+from vibesensor.history.runs import HistoryRunService
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.recording.run_metadata import (
@@ -40,16 +48,8 @@ from vibesensor.recording.sensor_frame_mapping import (
 )
 from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
 from vibesensor.report.service import HistoryReportService, PdfRendererFn
-from vibesensor.shared.types.history_records import (
-    HistoryArtifactAvailability,
-    HistoryRunListEntry,
-    StoredHistoryRun,
-)
-from vibesensor.shared.types.run_lifecycle import derive_run_artifact_lifecycle
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.runs import HistoryRunService
 
 
 def _real_pdf_renderer(prepared: object) -> bytes:

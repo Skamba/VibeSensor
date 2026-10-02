@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.app.composition.settings import build_settings_service_bundle
 from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
 from vibesensor.settings.car_settings import CarSettingsService
 from vibesensor.settings.sensor_settings import SensorSettingsService

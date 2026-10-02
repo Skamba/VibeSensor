@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from tests.recording.test_metrics_log_helpers import _started_snapshot_with_sample
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.history.history_db import HistoryDB
 
 
 def test_stop_recording_continues_when_raw_capture_finalize_degrades(

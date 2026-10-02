@@ -8,8 +8,8 @@ from threading import RLock
 import pytest
 from test_support.settings_services import build_settings_services
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.common.exceptions import PersistenceError
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.settings.sensor_settings import (
     SensorSettingsService,
     SensorSettingsState,

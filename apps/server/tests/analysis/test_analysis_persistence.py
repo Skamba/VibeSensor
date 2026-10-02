@@ -15,12 +15,12 @@ from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
 from tests.conftest import FakeState
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
-from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.summary.contracts import AnalysisSummary
 
 # -- Schema v4 tests ----------------------------------------------------------

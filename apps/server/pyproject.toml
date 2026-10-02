@@ -144,7 +144,6 @@ type = "forbidden"
 source_modules = ["vibesensor.domain"]
 forbidden_modules = [
   "vibesensor.shared",
-  "vibesensor.use_cases",
   "vibesensor.infra",
   "vibesensor.adapters",
   "vibesensor.app",
@@ -156,23 +155,7 @@ name = "Shared stays below service and adapter layers"
 type = "forbidden"
 source_modules = ["vibesensor.shared"]
 forbidden_modules = [
-  "vibesensor.use_cases",
   "vibesensor.infra",
-  "vibesensor.adapters",
-  "vibesensor.app",
-  "vibesensor.cli",
-]
-
-[[tool.importlinter.contracts]]
-name = "Use cases and infra stay independent"
-type = "independence"
-modules = ["vibesensor.use_cases", "vibesensor.infra"]
-
-[[tool.importlinter.contracts]]
-name = "Use cases stay below adapters and app entrypoints"
-type = "forbidden"
-source_modules = ["vibesensor.use_cases"]
-forbidden_modules = [
   "vibesensor.adapters",
   "vibesensor.app",
   "vibesensor.cli",
@@ -200,13 +183,11 @@ type = "forbidden"
 allow_indirect_imports = true
 source_modules = [
   "vibesensor.live",
-  "vibesensor.live.processing_loop",
-  "vibesensor.live",
-  "vibesensor.live.ws_payload_projection",
   "vibesensor.ingest.udp_data_rx",
 ]
 forbidden_modules = [
-  "vibesensor.use_cases",
+  "vibesensor.analysis",
+  "vibesensor.history",
   "vibesensor.summary",
   "vibesensor.report",
 ]

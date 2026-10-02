@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from threading import RLock
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.domain.sensor import normalize_sensor_id
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.client_metadata import ClientMetadataManager
 from vibesensor.ingest.registry import ClientRecord
 

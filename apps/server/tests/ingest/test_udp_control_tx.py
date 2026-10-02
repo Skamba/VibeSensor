@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.protocol import (
     HELLO_CAP_EXPLICIT_ACK,
     MSG_HELLO_ACK,

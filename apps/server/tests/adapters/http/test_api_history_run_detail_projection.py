@@ -18,13 +18,13 @@ from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
 from vibesensor.analysis.summarize import summarize_run_data
+from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.raw_capture import (
     RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
 )
-from vibesensor.shared.types.history_records import StoredHistoryRun
 
 
 def test_history_run_includes_sample_count() -> None:

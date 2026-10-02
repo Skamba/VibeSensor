@@ -12,8 +12,8 @@ import pytest
 from test_support.history_db_lifecycle import run_samples
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.analysis.summarize import build_findings_for_samples, summarize_run_data
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_log import normalize_sample_record

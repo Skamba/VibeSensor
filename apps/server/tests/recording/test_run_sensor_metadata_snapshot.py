@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from test_support.history_db_lifecycle import run_samples
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording import _recorder_runtime
 
 

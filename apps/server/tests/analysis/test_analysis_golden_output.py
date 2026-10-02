@@ -13,8 +13,6 @@ from test_support import (
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.scenario_ground_truth import ALL_SENSORS, fault_phase
 
-from vibesensor.adapters.history.projection import project_analysis_summary
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.analysis._run_input import build_diagnostics_run_input
 from vibesensor.analysis.run_analysis import RunAnalysis
 from vibesensor.analysis.summarize import (
@@ -22,9 +20,11 @@ from vibesensor.analysis.summarize import (
     summarize_run_data,
 )
 from vibesensor.common.units import KMH_TO_MPS
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.history.projection import project_analysis_summary
+from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.shared.types.history_records import StoredHistoryRun
 
 
 def _run_suitability_state(summary: dict[str, Any], check_key: str) -> str | None:

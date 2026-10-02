@@ -22,7 +22,7 @@ from vibesensor.adapters.http.models.history import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.history.services import (
+    from vibesensor.history.projected_services import (
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )

@@ -25,7 +25,7 @@ from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 from vibesensor.updates.manager import UpdateManager
 
 if TYPE_CHECKING:
-    from vibesensor.adapters.history.services import (
+    from vibesensor.history.projected_services import (
         ProjectedHistoryExportService,
         ProjectedHistoryRunService,
     )

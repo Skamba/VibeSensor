@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from vibesensor.adapters.history.projection import project_analysis_summary
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.run_capture import RunCapture
@@ -10,6 +9,7 @@ from vibesensor.domain.test_plan import RecommendedAction
 from vibesensor.domain.test_plan import TestPlan as DomainTestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
+from vibesensor.history.projection import project_analysis_summary
 from vibesensor.report.preparation import prepare_report_input
 from vibesensor.report.projection import resolve_report_origin
 from vibesensor.summary.origin_fields import origin_payload_from_finding

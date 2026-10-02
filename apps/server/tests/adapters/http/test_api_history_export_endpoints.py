@@ -79,7 +79,7 @@ def test_history_export_uses_streaming_response() -> None:
 
 
 def test_history_export_csv_has_fixed_columns() -> None:
-    from vibesensor.use_cases.history.exports import EXPORT_CSV_COLUMNS
+    from vibesensor.history.exports import EXPORT_CSV_COLUMNS
 
     app, _ = make_app_and_state(language="en", sample_count=5)
     with TestClient(app) as client:

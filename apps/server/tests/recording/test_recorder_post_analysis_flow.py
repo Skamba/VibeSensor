@@ -13,9 +13,9 @@ from tests.recording.test_metrics_log_helpers import (
     _started_snapshot,
     _started_snapshot_with_sample,
 )
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.analysis.post_analysis import PostAnalysisHealthSnapshot
-from vibesensor.shared.types.history_records import AnalyzingRunHealth
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.history.records import AnalyzingRunHealth
 
 
 class _NullDB:

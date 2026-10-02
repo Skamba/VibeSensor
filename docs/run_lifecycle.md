@@ -104,7 +104,7 @@ storing the later analysis result or analysis error explicitly.
 History/report/UI read paths do not infer readiness from ad hoc combinations of
 `run.status`, `analysis_started_at`, nullable analysis payloads, manifest
 presence, and raw-capture finalize metadata anymore. The one read-side owner is
-`RunArtifactLifecycle` in `apps/server/vibesensor/shared/types/run_lifecycle.py`.
+`RunArtifactLifecycle` in `apps/server/vibesensor/history/run_lifecycle.py`.
 
 That model is **derived**, not stored in a separate table or column. It projects
 five fields:

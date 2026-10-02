@@ -9,19 +9,19 @@ from hashlib import sha256
 from vibesensor.common.filenames import safe_filename
 from vibesensor.common.json_types import is_json_array
 from vibesensor.common.json_utils import json_text_dumps
+from vibesensor.history.helpers import (
+    async_require_run,
+    require_analysis_ready,
+    resolve_run_language,
+)
+from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.cache_key import ReportPdfCacheKey
 from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.shared.ports import RunPersistence
-from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.use_cases.history.helpers import (
-    async_require_run,
-    require_analysis_ready,
-    resolve_run_language,
-)
 
 _PERSISTED_REPORT_MODE_TOKEN = "none"
 

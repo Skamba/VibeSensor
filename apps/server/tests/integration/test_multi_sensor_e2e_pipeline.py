@@ -12,10 +12,10 @@ import numpy as np
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.common.units import KMH_TO_MPS
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol

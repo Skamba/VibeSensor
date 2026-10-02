@@ -9,15 +9,16 @@ import pytest
 from test_support.analysis import run_analysis
 from test_support.report_helpers import report_sample
 
-from vibesensor.adapters.history.services import ProjectedHistoryRunService
 from vibesensor.domain.run_status import RunStatus
+from vibesensor.history.projected_services import ProjectedHistoryRunService
+from vibesensor.history.records import StoredHistoryRun
+from vibesensor.history.runs import HistoryRunService
 from vibesensor.recording.raw_capture import (
     RawCaptureManifest,
     RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
-from vibesensor.shared.types.history_records import StoredHistoryRun
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import (
     PERSISTED_ANALYSIS_SCHEMA_VERSION,
@@ -27,7 +28,6 @@ from vibesensor.summary.persisted_codec import (
     persisted_analysis_from_storage_json_object,
     persisted_analysis_to_storage_json_object,
 )
-from vibesensor.use_cases.history.runs import HistoryRunService
 
 pytestmark = pytest.mark.smoke
 

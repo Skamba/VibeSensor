@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
 from vibesensor.analysis.post_analysis import PostAnalysisWorker
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 

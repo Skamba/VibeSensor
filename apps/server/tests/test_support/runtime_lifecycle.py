@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.infra.runtime.health_state import RuntimeHealthState
 from vibesensor.infra.runtime.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector

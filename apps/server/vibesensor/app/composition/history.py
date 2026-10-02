@@ -4,18 +4,18 @@ import logging
 import sqlite3
 from collections.abc import Callable
 
-from vibesensor.adapters.history.services import (
+from vibesensor.adapters.http.dependencies import HistoryDeps
+from vibesensor.app.config_schema import AppConfig
+from vibesensor.history.exports import HistoryExportService
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.history.projected_services import (
     ProjectedHistoryExportService,
     ProjectedHistoryRunService,
 )
-from vibesensor.adapters.http.dependencies import HistoryDeps
-from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
-from vibesensor.app.config_schema import AppConfig
+from vibesensor.history.runs import HistoryRunService
 from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.service import HistoryReportService
 from vibesensor.shared.ports import SettingsReader
-from vibesensor.use_cases.history.exports import HistoryExportService
-from vibesensor.use_cases.history.runs import HistoryRunService
 
 LOGGER = logging.getLogger(__name__)
 

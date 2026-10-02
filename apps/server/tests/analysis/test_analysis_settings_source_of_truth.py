@@ -29,7 +29,7 @@ def _route(router, path: str, method: str = "GET"):
 @pytest.fixture
 def _wiring(tmp_path: Path):
     """Provide a wired (state, router) pair with one active car named 'Primary'."""
-    from vibesensor.adapters.persistence.history_db._history_db import HistoryDB
+    from vibesensor.history.history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
     settings = build_settings_services(db=db)

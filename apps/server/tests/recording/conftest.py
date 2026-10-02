@@ -16,12 +16,12 @@ import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
+from vibesensor.history.records import AnalyzingRunHealth
 from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.shared.types.history_records import AnalyzingRunHealth
 
 # ---------------------------------------------------------------------------
 # Fake collaborators

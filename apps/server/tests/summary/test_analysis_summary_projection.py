@@ -6,12 +6,12 @@ from dataclasses import replace
 
 from test_support.findings import make_finding_payload
 
-from vibesensor.adapters.history.projection import (
+from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.history.projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.domain.finding import Finding
-from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.summary.finding_fields import finding_payload_from_domain
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
