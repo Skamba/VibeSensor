@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Replace the weekly-pi-image GitHub Release (main only). Off = workflow artifact only.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -13,101 +18,113 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 180
+    env:
+      PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
 
     steps:
-      - name: Validate manual release source
-        if: ${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' }}
-        shell: bash
+      - name: Require main for published releases
+        if: ${{ env.PUBLISH == 'true' && github.ref != 'refs/heads/main' }}
         run: |
-          echo "Manual release workflow runs must use the main branch; got ${GITHUB_REF}." >&2
+          echo "Publishing Pi image releases requires the main branch; got ${GITHUB_REF}." >&2
           exit 1
 
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Compute weekly source SHA
-        id: source
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
 
-      - name: Compute weekly image metadata
-        id: metadata
-        shell: bash
+      - id: setup-python
+        uses: ./.github/actions/setup-python
+
+      - name: Install Pi image build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user qemu-user-static rsync xz-utils
+
+      - name: Build Pi image
+        env:
+          VS_PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}
+        run: ./infra/pi-image/pi-gen/build.sh
+
+      - name: Collect image assets
+        id: assets
         run: |
           set -euo pipefail
-          build_label="$(date -u +%y-%m-%d)"
+          out_dir="infra/pi-image/pi-gen/out"
+          label="$(date -u +%y-%m-%d)"
+          name="VibeSensor-${label}.img.zip"
+          release_dir="${RUNNER_TEMP}/pi-image"
+          mkdir -p "${release_dir}"
+
+          artifact="$(find "${out_dir}" -maxdepth 1 -type f -name "image_*-vibesensor-lite*.zip" | sort | tail -n 1)"
+          if [ -z "${artifact}" ]; then
+            echo "No Pi image artifact found in ${out_dir}" >&2
+            exit 1
+          fi
+          cp "${artifact}" "${release_dir}/${name}"
+          (cd "${release_dir}" && sha256sum "${name}" > "${name}.sha256")
+
+          version_info="${release_dir}/${name}.version.txt"
+          if [ -f "${artifact}.version.txt" ]; then
+            cp "${artifact}.version.txt" "${version_info}"
+          else
+            printf 'git_sha=%s\ngit_ref=%s\n' "$(git rev-parse HEAD)" "${GITHUB_REF}" > "${version_info}"
+          fi
+          echo "source_artifact=$(basename "${artifact}")" >> "${version_info}"
+          echo "run_id=${GITHUB_RUN_ID}" >> "${version_info}"
+
           {
-            echo "build_label=${build_label}"
-            echo "tag=weekly-pi-image"
-            echo "release_name=Weekly Pi Image ${build_label}"
+            echo "label=${label}"
+            echo "name=${name}"
+            echo "dir=${release_dir}"
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Build weekly Pi image workflow artifact
-        id: build-image
-        uses: ./.github/actions/build-pi-image
+      - uses: actions/upload-artifact@v7
         with:
-          release-dir-name: weekly-pi-image
-          release-artifact-name: VibeSensor-${{ steps.metadata.outputs.build_label }}.img.zip
-          workflow-artifact-name: weekly-pi-image-${{ steps.metadata.outputs.build_label }}
-          include-published-artifact: "true"
+          name: pi-image-${{ steps.assets.outputs.label }}
+          path: ${{ steps.assets.outputs.dir }}/*
+          if-no-files-found: error
+          retention-days: 21
 
-      - name: Delete previous weekly Pi image releases
+      - name: Replace weekly Pi image release
+        if: ${{ env.PUBLISH == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
+          LABEL: ${{ steps.assets.outputs.label }}
+          ASSET_NAME: ${{ steps.assets.outputs.name }}
+          ASSET_DIR: ${{ steps.assets.outputs.dir }}
         run: |
           set -euo pipefail
           gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
             --jq '.[] | select(.tag_name == "weekly-pi-image" or (.tag_name | startswith("pi-image-v"))) | .tag_name' \
             | while IFS= read -r tag; do
-                if [ -n "${tag}" ]; then
-                  gh release delete "${tag}" --yes --cleanup-tag
-                fi
+                gh release delete "${tag}" --yes --cleanup-tag
               done
 
-      - name: Publish weekly Pi image release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
           notes_file="$(mktemp)"
-          cat > "${notes_file}" <<EOF
+          cat > "${notes_file}" <<EOF_NOTES
           Automated weekly Raspberry Pi image snapshot from \`main\`.
 
-          - Commit: \`${{ steps.source.outputs.sha }}\`
-          - Build label: \`${{ steps.metadata.outputs.build_label }}\`
-          - Asset: \`${{ steps.build-image.outputs.release-artifact-name }}\`
+          - Commit: \`${sha}\`
+          - Build label: \`${LABEL}\`
+          - Asset: \`${ASSET_NAME}\`
           - Flash the image with Raspberry Pi Imager after downloading the release asset.
 
-          This workflow reuses \`infra/pi-image/pi-gen/build.sh\` so the weekly image follows the same supported image-build path as local builds.
-          Before publishing, it deletes the previous weekly Pi image release so the Releases overview only shows the latest Pi image snapshot.
-          EOF
+          Built with \`infra/pi-image/pi-gen/build.sh\`, the same path as local image builds.
+          Each run replaces the previous weekly Pi image release.
+          EOF_NOTES
 
-          mapfile -t release_files < <(find "${{ steps.build-image.outputs.release-dir }}" -maxdepth 1 -type f | sort)
-          if [ "${#release_files[@]}" -eq 0 ]; then
-            echo "No weekly release assets found under ${{ steps.build-image.outputs.release-dir }}" >&2
-            exit 1
-          fi
-
-          release_args=()
-          for release_file in "${release_files[@]}"; do
-            release_args+=(--asset "${release_file}")
-          done
-
-          python_bin="${{ steps.build-image.outputs.python-path }}"
-          "${python_bin}" tools/publish_github_release.py \
-            --repo "${GITHUB_REPOSITORY}" \
-            --tag "${{ steps.metadata.outputs.tag }}" \
-            --target "${{ steps.source.outputs.sha }}" \
-            --title "${{ steps.metadata.outputs.release_name }}" \
+          gh release create weekly-pi-image "${ASSET_DIR}"/* \
+            --target "${sha}" \
+            --title "Weekly Pi Image ${LABEL}" \
             --notes-file "${notes_file}" \
-            --make-latest false \
-            --upload-timeout 5400 \
-            "${release_args[@]}"
+            --latest=false

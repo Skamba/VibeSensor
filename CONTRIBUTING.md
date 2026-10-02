@@ -114,15 +114,12 @@ The blocking jobs live in
 "Commands" plus [docs/testing.md](docs/testing.md) when you need the matching
 local reproduction flow.
 
-Backend checks are split by concern. `backend-lint` covers Ruff formatting and
-linting plus the import-linter layer contracts, `backend-preflight` covers
-dependency and config preflight, and `backend-contract-drift` covers generated
-contract sync. Use those workflow job names when matching a CI failure to a
-local reproduction command.
-
-Use `release-smoke` when you need confidence in the packaged wheel and bundled
-static assets. Use `e2e` when you need confidence in the Docker/runtime path.
-They cover different delivery contracts and neither replaces the other.
+Each CI job (`backend`, `frontend`, `ui-smoke`, `integration`, `firmware`)
+runs the same make targets you run locally; the mapping is in the "CI job
+reference" section of [docs/testing.md](docs/testing.md). The `integration` job
+covers contract drift, the process-backed e2e suite, and release smoke (packaged
+wheel plus bundled static UI); those cover different delivery contracts and
+neither replaces the other.
 
 When a CI job fails, run the corresponding focused suite locally first instead of rerunning everything.
 

@@ -20,7 +20,6 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       firmware: ${{ steps.filter.outputs.firmware }}
-      shell: ${{ steps.filter.outputs.shell }}
 
     steps:
       - uses: actions/checkout@v7
@@ -34,28 +33,27 @@ jobs:
               - 'tools/**'
               - 'infra/pi-image/**'
               - 'docs/protocol.md'
-              - '.github/**'
+              - '**/*.sh'
+              - '**/*.sh.template'
+              - '.githooks/**'
               - 'Makefile'
               - '.python-version'
               - 'docker-compose*.yml'
+              - '.github/actions/**'
+              - '.github/workflows/ci.yml'
             frontend:
               - 'apps/ui/**'
               - 'tools/ui/**'
               - 'tools/config/**'
-              - '.github/**'
               - 'Makefile'
               - '.nvmrc'
+              - '.github/workflows/ci.yml'
             firmware:
               - 'firmware/**'
               - 'tools/firmware/**'
               - 'apps/server/vibesensor/adapters/udp/protocol*.py'
-              - '.github/**'
-            shell:
-              - '**/*.sh'
-              - '**/*.sh.template'
-              - '.githooks/**'
-              - 'infra/pi-image/**'
-              - '.github/**'
+              - '.github/actions/**'
+              - '.github/workflows/ci.yml'
 
   secret-scan:
     name: Secret scan
@@ -71,242 +69,37 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  backend-lint:
-    name: Backend lint
-    needs:
-      - changes
+  backend:
+    name: Backend
+    needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-backend
-
-      - name: Ruff check
-        run: python -m ruff check apps/server/vibesensor apps/server/tests tools
-
-      - name: Ruff format check
-        run: python -m ruff format --check apps/server/vibesensor apps/server/tests tools
-
-      - name: Import layer contracts
-        working-directory: apps/server
-        run: lint-imports --config pyproject.toml
-
-  shell-lint:
-    name: Shell lint
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.shell == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ./.github/actions/setup-python
 
       - name: Install ShellCheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
+        run: command -v shellcheck || { sudo apt-get update && sudo apt-get install -y shellcheck; }
 
-      - name: ShellCheck deployment scripts
-        run: make shell-lint
-
-  backend-preflight:
-    name: Backend preflight
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ./.github/actions/setup-backend
-
-      - name: Validate dependency consistency
+      - name: Dependency consistency
         run: python -m pip check
 
-      - name: Validate declared Python dependencies
-        working-directory: apps/server
-        run: deptry . tests --config pyproject.toml
+      - name: Lint (Ruff, ShellCheck, deptry, import layers, config preflight)
+        run: make lint
 
-      - name: Config preflight (dev)
-        run: python -m vibesensor.cli.preflight apps/server/config.dev.yaml
+      - name: Type check
+        run: make typecheck-backend
 
-      - name: Config preflight (docker)
-        run: python -m vibesensor.cli.preflight apps/server/config.docker.yaml
+      - name: Tests
+        run: make test
 
-      - name: Config preflight (pi)
-        run: python -m vibesensor.cli.preflight apps/server/config.pi.yaml
-
-  backend-contract-drift:
-    name: Backend contract drift
-    needs:
-      - changes
-    if: ${{ (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: apps/ui/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: apps/ui
-        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
-
-      - name: Regenerate contracts and fail on drift
-        run: |
-          make sync-contracts
-          git diff --exit-code
-
-  backend-typecheck:
-    name: Backend type check
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ./.github/actions/setup-backend
-
-      - name: Mypy backend enforced coverage
-        working-directory: apps/server
-        env:
-          MYPYPATH: .
-        run: python -m mypy --config-file pyproject.toml
-
-  frontend-quality:
-    name: Frontend quality
-    needs:
-      - changes
+  frontend:
+    name: Frontend
+    needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: apps/ui/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: apps/ui
-        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
-
-      - name: UI lint
-        working-directory: apps/ui
-        run: npm run lint
-
-      - name: UI format check
-        working-directory: apps/ui
-        run: npm run format:check
-
-      - name: UI dependency boundary checks
-        working-directory: apps/ui
-        run: npm run lint:deps
-
-      - name: UI dead code checks
-        working-directory: apps/ui
-        run: npm run lint:unused
-
-  frontend-typecheck:
-    name: Frontend type check
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: apps/ui/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: apps/ui
-        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
-
-      - name: UI typecheck
-        working-directory: apps/ui
-        run: npm run typecheck
-
-      - name: UI test typecheck
-        working-directory: apps/ui
-        run: npm run typecheck:tests
-
-  ui-unit:
-    name: UI unit tests
-    needs:
-      - changes
-      - frontend-typecheck
-    if: >-
-      ${{
-        needs.changes.outputs.frontend == 'true' &&
-        needs.frontend-typecheck.result == 'success'
-      }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-          cache-dependency-path: apps/ui/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: apps/ui
-        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
-
-      - name: UI Vitest unit suite
-        working-directory: apps/ui
-        run: npm run test:unit
-
-      - name: Upload UI unit test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ui-unit-test-artifacts
-          path: apps/ui/test-results/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  ui-smoke:
-    name: UI smoke tests
-    needs:
-      - changes
-      - frontend-typecheck
-    if: >-
-      ${{
-        needs.changes.outputs.frontend == 'true' &&
-        needs.frontend-typecheck.result == 'success'
-      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -319,51 +112,22 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
-      - id: playwright-browser-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('apps/ui/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-ms-playwright-
-
       - name: Install UI dependencies
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
-      - name: Install Playwright Chromium (cache miss)
-        if: ${{ steps.playwright-browser-cache.outputs.cache-hit != 'true' }}
-        working-directory: apps/ui
-        run: npx playwright install chromium
+      - name: Format, lint, dead code, dependency boundaries, type check
+        run: make ui-typecheck
 
-      - name: UI smoke tests
-        working-directory: apps/ui
-        env:
-          PLAYWRIGHT_SMOKE_WORKERS: 4
-        run: npm run test:smoke
+      - name: Unit tests
+        run: make ui-test
 
-      - name: Upload UI smoke test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ui-smoke-test-artifacts
-          path: apps/ui/test-results/playwright-smoke/
-          if-no-files-found: ignore
-          retention-days: 5
-
-  ui-build-artifact:
-    name: UI build artifact
-    needs:
-      - changes
-      - frontend-typecheck
-    if: >-
-      ${{
-        always() &&
-        (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
-        needs.frontend-typecheck.result == 'success'
-      }}
+  ui-smoke:
+    name: UI smoke
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v7
@@ -374,93 +138,73 @@ jobs:
           cache: "npm"
           cache-dependency-path: apps/ui/package-lock.json
 
-      - name: Set up configured Python runtime
-        id: setup-python
-        uses: ./.github/actions/setup-python
+      - id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-ms-playwright-${{ hashFiles('apps/ui/package-lock.json') }}
 
-      - name: Build release-smoke UI static artifact
-        run: >-
-          "${{ steps.setup-python.outputs.python-path }}"
-          tools/build_ui_static.py --skip-typecheck
+      - name: Install UI dependencies
+        working-directory: apps/ui
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
-      - name: Package release-smoke UI static artifact
-        run: |
-          mkdir -p artifacts/release-smoke
-          tar -C apps/server/vibesensor/static -czf artifacts/release-smoke/ui-static.tar.gz .
+      - name: Install Playwright Chromium
+        if: ${{ steps.playwright-cache.outputs.cache-hit != 'true' }}
+        working-directory: apps/ui
+        run: npx playwright install chromium
 
-      - name: Upload release-smoke UI static artifact
+      - name: Playwright smoke tests
+        working-directory: apps/ui
+        env:
+          PLAYWRIGHT_SMOKE_WORKERS: 4
+        run: npm run test:smoke
+
+      - name: Upload smoke failure artifacts
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: release-smoke-ui-static
-          path: artifacts/release-smoke/ui-static.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+          name: ui-smoke-test-artifacts
+          path: apps/ui/test-results/playwright-smoke/
+          if-no-files-found: ignore
+          retention-days: 5
 
-  release-smoke:
-    name: Release smoke
-    needs:
-      - changes
-      - backend-lint
-      - backend-preflight
-      - backend-contract-drift
-      - backend-typecheck
-      - frontend-quality
-      - frontend-typecheck
-      - ui-build-artifact
-    if: >-
-      ${{
-        always() &&
-        (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') &&
-        needs.backend-lint.result != 'failure' &&
-        needs.backend-preflight.result != 'failure' &&
-        needs.backend-contract-drift.result != 'failure' &&
-        needs.backend-typecheck.result != 'failure' &&
-        needs.frontend-quality.result != 'failure' &&
-        needs.frontend-typecheck.result != 'failure' &&
-        needs.ui-build-artifact.result == 'success'
-      }}
+  integration:
+    name: Integration (contracts, e2e, release smoke)
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up configured Python runtime
-        id: setup-python
-        uses: ./.github/actions/setup-python
+      - uses: ./.github/actions/setup-backend
 
-      - name: Download release-smoke UI static artifact
-        uses: actions/download-artifact@v8
+      - uses: actions/setup-node@v7
         with:
-          name: release-smoke-ui-static
-          path: artifacts/release-smoke
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          cache-dependency-path: apps/ui/package-lock.json
 
-      - name: Restore release-smoke UI static artifact
+      - name: Install UI dependencies
+        working-directory: apps/ui
+        run: node ../../tools/ui/ensure_ui_bootstrap.mjs
+
+      - name: Contract drift
         run: |
-          rm -rf apps/server/vibesensor/static
-          mkdir -p apps/server/vibesensor/static
-          tar -xzf artifacts/release-smoke/ui-static.tar.gz -C apps/server/vibesensor/static
+          make sync-contracts
+          git diff --exit-code
 
-      - name: Release smoke validation
-        run: >-
-          "${{ steps.setup-python.outputs.python-path }}"
-          tools/tests/run_release_smoke.py --skip-ui-build
+      - name: Process-backed e2e suite
+        run: make test-e2e
 
-  firmware-native-tests:
-    name: Firmware native tests
-    needs:
-      - changes
-      - backend-lint
-      - backend-preflight
-      - backend-contract-drift
-    if: >-
-      ${{
-        always() &&
-        needs.changes.outputs.firmware == 'true' &&
-        needs.backend-lint.result != 'failure' &&
-        needs.backend-preflight.result != 'failure' &&
-        needs.backend-contract-drift.result != 'failure'
-      }}
+      - name: Release smoke (UI build + packaged wheel)
+        run: python tools/tests/run_release_smoke.py
+
+  firmware:
+    name: Firmware
+    needs: changes
+    if: ${{ needs.changes.outputs.firmware == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -471,56 +215,14 @@ jobs:
         with:
           include-platformio: "true"
 
+      - uses: actions/cache@v6
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-platformio-${{ hashFiles('firmware/esp/platformio.ini') }}
+
       - name: Verify firmware protocol fixtures
         run: python tools/firmware/generate_protocol_contract_fixtures.py --check
 
-      - name: Firmware native tests
+      - name: Native tests
         working-directory: firmware/esp
         run: pio test -e native
-
-  backend-tests:
-    name: Backend tests
-    needs:
-      - changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: ./.github/actions/setup-backend
-
-      - name: Backend tests
-        run: >-
-          python -m pytest -q -m "not diagnostic_matrix" apps/server/tests
-          --junitxml artifacts/ai/logs/ci/backend-tests.xml
-
-      - name: Upload backend test artifacts
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-test-artifacts
-          path: artifacts/ai/logs/ci/
-          if-no-files-found: ignore
-          retention-days: 7
-
-  e2e:
-    name: E2E
-    needs:
-      - changes
-    if: ${{ (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up configured backend Python runtime
-        id: setup-backend
-        uses: ./.github/actions/setup-backend
-
-      - name: Process-backed e2e suite (skip already-owned checks)
-        run: >-
-          "${{ steps.setup-backend.outputs.python-path }}"
-          -m pytest -q -m "e2e and not long_sim" -n 6 apps/server/tests_e2e
