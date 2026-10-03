@@ -98,6 +98,12 @@ Terminal runs older than 7 days are pruned at startup (see
 |-----|---------|-------|
 | `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1:2947`). Disable this on dev benches or deployments without GPS hardware. |
 
+## `recording`
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `recording.max_duration_s` | `1800` | A recording auto-stops (reason `max_duration`) after this many seconds, which keeps post-analysis within the Pi's memory budget. Only isolated test runtimes shorten it, to exercise the auto-stop. |
+
 ## Common operator overrides
 
 ```yaml

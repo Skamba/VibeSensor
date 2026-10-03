@@ -14,6 +14,7 @@ from vibesensor.app.config_schema import (
     AppConfig,
     GPSConfig,
     LoggingConfig,
+    RecordingConfig,
     ServerConfig,
     UDPConfig,
 )
@@ -49,6 +50,12 @@ def _coerce_port(value: object, field_name: str) -> int:
     if not 1 <= port <= 65535:
         raise ValueError(f"{field_name} must be 1-65535, got {port}")
     return port
+
+
+def _coerce_positive_float(value: object, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float) or not value > 0:
+        raise ValueError(f"{field_name} must be a positive number, got {value!r}")
+    return float(value)
 
 
 def _read_config_file(path: Path) -> JsonObject:
@@ -99,6 +106,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     udp_cfg = _require_config_section(merged.get("udp", {}), "udp")
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
+    recording_cfg = _require_config_section(merged.get("recording", {}), "recording")
 
     app_log_path_raw = logging_cfg.get("app_log_path")
     app_config = AppConfig(
@@ -122,6 +130,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         gps=GPSConfig(gps_enabled=bool(gps_cfg["gps_enabled"])),
+        recording=RecordingConfig(
+            max_duration_s=_coerce_positive_float(
+                recording_cfg["max_duration_s"], "recording.max_duration_s"
+            ),
+        ),
         config_path=path,
     )
     LOGGER.info(

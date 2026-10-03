@@ -181,6 +181,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             default_sample_rate_hz=SAMPLE_RATE_HZ,
             fft_window_size_samples=FFT_N,
             accel_scale_g_per_lsb=ADXL345_SCALE_G_PER_LSB,
+            max_recording_duration_s=config.recording.max_duration_s,
         ),
         registry=registry,
         gps_monitor=speed_services.observation,

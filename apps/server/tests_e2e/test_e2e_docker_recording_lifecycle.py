@@ -10,6 +10,7 @@ from tests_e2e._docker_edge_helpers import (
     _wait_complete,
 )
 from tests_e2e.e2e_helpers import (
+    CAPPED_RECORDING_S,
     api_json,
     history_run_ids,
     registered_client_ids,
@@ -108,3 +109,28 @@ def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
         if run_id:
             _wait_complete(base, run_id)
             _cleanup_run(base, run_id)
+
+
+def test_recording_auto_stops_at_the_configured_cap_e2e(capped_e2e_env: dict[str, str]) -> None:
+    """The recording cap (30 min on a car) stops the run and still yields a full analysis."""
+    base = capped_e2e_env["base_url"]
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
+    try:
+        # Keep streaming well past the cap, as a driver who forgot to stop would.
+        _simulate(capped_e2e_env, duration=CAPPED_RECORDING_S + 6.0)
+        status = api_json(base, "/api/recording/status")
+        assert status["enabled"] is False, status
+        assert status["last_stop_reason"] == "max_duration", status
+
+        run = _wait_complete(base, run_id)
+        assert run["status"] == "complete", run
+        # Data streamed after the cap never reaches the run.
+        assert history_run_ids(base) == {run_id}
+        analysis = api_json(base, f"/api/history/{run_id}")["analysis"]
+        assert CAPPED_RECORDING_S - 1.0 <= analysis["duration_s"] <= CAPPED_RECORDING_S + 1.5
+        metadata = analysis["analysis_metadata"]
+        assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}
+        assert metadata["raw_backed_sample_count"] > 0
+        assert analysis["diagnosis"]["verdict"] in {"fault", "weak_evidence", "no_fault"}
+    finally:
+        _cleanup_run(base, run_id)

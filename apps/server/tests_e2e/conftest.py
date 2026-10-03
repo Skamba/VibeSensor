@@ -15,14 +15,16 @@ import socket
 import subprocess
 import time
 from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 import pytest
+import yaml
 
-from tests_e2e.e2e_helpers import ROOT
+from tests_e2e.e2e_helpers import CAPPED_RECORDING_S, ROOT
 from vibesensor.updates.isolated_server_runtime import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
@@ -118,20 +120,26 @@ def _tail(path: Path, lines: int = 80) -> str:
     return "\n".join(path.read_text(encoding="utf-8", errors="replace").splitlines()[-lines:])
 
 
-@pytest.fixture(scope="session")
-def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2EServer]:
+@contextmanager
+def _running_server(
+    runtime_root: Path, *, config_overrides: dict[str, object] | None = None
+) -> Iterator[E2EServer]:
     http_port = _free_port(socket.SOCK_STREAM)
     sim_data_port = _free_port(socket.SOCK_DGRAM)
     sim_control_port = _free_port(socket.SOCK_DGRAM)
     runtime = build_isolated_server_config(
         _BASE_CONFIG,
-        tmp_path_factory.mktemp("e2e-server"),
+        runtime_root,
         host=_HOST,
         port=http_port,
         udp_data_port=sim_data_port,
         udp_control_port=sim_control_port,
         data_seed_dir=_DATA_SEED_DIR,
     )
+    if config_overrides:
+        config = yaml.safe_load(runtime.config_path.read_text(encoding="utf-8"))
+        config.update(config_overrides)
+        runtime.config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
     env = build_isolated_server_env(
         runtime.root, repo_root=ROOT, extra_env={"VIBESENSOR_SERVE_STATIC": "0"}
     )
@@ -161,15 +169,40 @@ def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2EServer]:
         terminate_subprocess(process)
 
 
+def _env_for(server: E2EServer) -> dict[str, str]:
+    return {
+        "base_url": server.base_url,
+        "sim_host": _HOST,
+        "sim_data_port": str(server.sim_data_port),
+        "sim_control_port": str(server.sim_control_port),
+        "sim_client_control_base": str(server.sim_client_control_base),
+    }
+
+
+@pytest.fixture(scope="session")
+def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2EServer]:
+    with _running_server(tmp_path_factory.mktemp("e2e-server")) as server:
+        yield server
+
+
 @pytest.fixture
 def e2e_env(e2e_server: E2EServer) -> dict[str, str]:
-    return {
-        "base_url": e2e_server.base_url,
-        "sim_host": _HOST,
-        "sim_data_port": str(e2e_server.sim_data_port),
-        "sim_control_port": str(e2e_server.sim_control_port),
-        "sim_client_control_base": str(e2e_server.sim_client_control_base),
-    }
+    return _env_for(e2e_server)
+
+
+@pytest.fixture
+def capped_e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2EServer]:
+    """A dedicated server whose recordings auto-stop after ``CAPPED_RECORDING_S``."""
+    with _running_server(
+        tmp_path_factory.mktemp("e2e-capped-server"),
+        config_overrides={"recording": {"max_duration_s": CAPPED_RECORDING_S}},
+    ) as server:
+        yield server
+
+
+@pytest.fixture
+def capped_e2e_env(capped_e2e_server: E2EServer) -> dict[str, str]:
+    return _env_for(capped_e2e_server)
 
 
 @pytest.hookimpl(wrapper=True)
@@ -177,8 +210,12 @@ def pytest_runtest_makereport(
     item: pytest.Item, call: pytest.CallInfo[None]
 ) -> Generator[None, pytest.TestReport, pytest.TestReport]:
     report = yield
-    server = getattr(item, "funcargs", {}).get("e2e_server")
-    if report.failed and isinstance(server, E2EServer):
-        report.sections.append(("e2e server log tail", _tail(server.log_path)))
-        report.sections.append(("e2e app log tail", _tail(server.runtime.data_dir / "app.log")))
+    funcargs = getattr(item, "funcargs", {})
+    for name in ("e2e_server", "capped_e2e_server"):
+        server = funcargs.get(name)
+        if report.failed and isinstance(server, E2EServer):
+            report.sections.append((f"{name} log tail", _tail(server.log_path)))
+            report.sections.append(
+                (f"{name} app log tail", _tail(server.runtime.data_dir / "app.log"))
+            )
     return report

@@ -12,6 +12,7 @@ __all__ = [
     "AppConfig",
     "GPSConfig",
     "LoggingConfig",
+    "RecordingConfig",
     "ServerConfig",
     "UDPConfig",
 ]
@@ -73,6 +74,13 @@ class GPSConfig:
 
 
 @dataclass(slots=True)
+class RecordingConfig:
+    """Recording auto-stop cap (30 minutes outside isolated test runtimes)."""
+
+    max_duration_s: float
+
+
+@dataclass(slots=True)
 class AppConfig:
     """Full application configuration assembled from the YAML config file."""
 
@@ -81,5 +89,6 @@ class AppConfig:
     udp: UDPConfig
     logging: LoggingConfig
     gps: GPSConfig
+    recording: RecordingConfig
     config_path: Path
     repo_dir: Path = REPO_DIR

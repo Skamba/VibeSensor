@@ -32,6 +32,9 @@ shorter capture ends in ``MissingStrengthMetricsError``. The second window cover
 simulator startup and client registration.
 """
 
+CAPPED_RECORDING_S = 10.0
+"""Recording cap of the ``capped_e2e_server``: two analysis windows plus margin."""
+
 
 @dataclass(frozen=True)
 class ApiResponse:

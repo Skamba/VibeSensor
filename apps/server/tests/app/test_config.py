@@ -9,7 +9,7 @@ import yaml
 
 from vibesensor.app.config_loader import load_config
 from vibesensor.app.config_paths import SERVER_DIR
-from vibesensor.app.config_schema import AppConfig
+from vibesensor.app.config_schema import AppConfig, RecordingConfig
 
 
 def _write_config(path: Path, payload: dict[str, object]) -> None:
@@ -124,6 +124,24 @@ def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_pat
     assert dev_cfg.gps.gps_enabled is False
     assert docker_cfg.gps.gps_enabled is False
     assert pi_cfg.logging.history_db_path == Path("/var/lib/vibesensor/history.db")
+    # Every deployment caps a recording at 30 minutes.
+    assert (
+        base_cfg.recording.max_duration_s
+        == dev_cfg.recording.max_duration_s
+        == docker_cfg.recording.max_duration_s
+        == pi_cfg.recording.max_duration_s
+        == 30 * 60
+    )
+
+
+def test_recording_cap_override_must_be_positive(cfg_path: Path) -> None:
+    assert _write_and_load(cfg_path, {"recording": {"max_duration_s": 20}}).recording == (
+        RecordingConfig(max_duration_s=20.0)
+    )
+    for invalid in (0, -5, "long", True):
+        _write_config(cfg_path, {"recording": {"max_duration_s": invalid}})
+        with pytest.raises(ValueError, match="recording.max_duration_s must be a positive"):
+            load_config(cfg_path)
 
 
 # --- server.port validation ---
