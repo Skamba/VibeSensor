@@ -354,11 +354,11 @@ under test.
 | Layer | Runner | What it covers | Command |
 |-------|--------|----------------|---------|
 | **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
-| **Smoke** | Playwright (Chromium) | Critical boot/happy-path flows against a real Vite dev server; explicit file pattern `tests/smoke.critical.spec.ts` | `npm run test:smoke` |
+| **Smoke** | Playwright (Chromium) | User journeys per page against a real Vite dev server with mocked HTTP/WebSocket; file pattern `tests/smoke.*.spec.ts` | `npm run test:smoke` |
 
-Vitest is the canonical fast test layer; reach for it whenever the test does not
-need a real browser. Keep Playwright for the narrow slice of critical journeys
-that need a live browser.
+Vitest is the canonical fast test layer for pure logic; reach for it whenever
+the test does not need a real browser. Playwright journeys cover what a user
+does on each page.
 
 ```bash
 npm run test:unit            # run the Vitest unit suite once
@@ -368,9 +368,10 @@ make ui-test                 # same unit suite from the repo root
 
 Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
 `smoke.*.spec.ts` files via [`vitest.config.ts`](./vitest.config.ts). New
-logic-level tests should land as `tests/<feature>_*.spec.ts`. Add to
-`tests/smoke.critical.spec.ts` only when a flow is required for boot or a core
-happy path (`npx playwright install chromium` once, then `npm run test:smoke`).
+logic-level tests should land as `tests/<feature>_*.spec.ts`. Page journeys
+live in `tests/smoke.<page>.spec.ts`; `tests/smoke.critical.spec.ts` keeps the
+cross-page boot/record/history flows (`npx playwright install chromium` once,
+then `npm run test:smoke`).
 
 ## Signal-driven island tests
 

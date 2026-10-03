@@ -396,6 +396,18 @@ export async function openUpdateTab(page: Page): Promise<void> {
   await openSettingsTab(page, "updateTab");
 }
 
+export async function openSensorsTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "sensorsTab");
+}
+
+export async function openSpeedSourceTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "speedSourceTab");
+}
+
+export async function openEspFlashTab(page: Page): Promise<void> {
+  await openSettingsTab(page, "espFlashTab");
+}
+
 export async function openHistoryTab(page: Page): Promise<void> {
   await page.locator("#tab-history").click();
 }
