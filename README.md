@@ -211,7 +211,7 @@ guided test-drive steps on the server, as the Live page does.
 
 Simulated sensors follow the firmware protocol (HELLO_ACK handshake, clock
 sync, sample-clock `t0_us`), so recordings are raw-backed like real hardware.
-Clock sync is applied about 10 s after a sensor connects; chunks sent before
+Clock sync is applied 2–4 s after a sensor connects; chunks sent before
 that are left out of the raw capture, so a recording started earlier is
 raw-backed from each sensor's first synced chunk. Wheel, driveshaft, and engine order tones follow the server's active
 car (tire size, final drive, gear); pass `--no-car-sync` to keep the default

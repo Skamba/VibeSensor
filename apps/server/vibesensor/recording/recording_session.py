@@ -128,6 +128,12 @@ class RunRecordingSessionService:
                 return self._guided_phases[-1].phase
             return None
 
+    def completed_guided_phases(self) -> tuple[GuidedPhaseName, ...]:
+        """Distinct guided steps the driver finished in this run, in the order first finished."""
+        with self._lock:
+            done = (step.phase for step in self._guided_phases if step.end_t_s is not None)
+            return tuple(dict.fromkeys(done))
+
     def guided_phases_for_run(self, run_id: str) -> tuple[RunGuidedPhase, ...]:
         with self._lock:
             current_run = self._lifecycle.current_run

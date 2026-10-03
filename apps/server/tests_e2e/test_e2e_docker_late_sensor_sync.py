@@ -9,9 +9,10 @@ from tests_e2e.e2e_helpers import ANALYZABLE_SIM_DURATION_S, api_json, remove_al
 
 pytestmark = pytest.mark.e2e
 
-# Sensors apply the server clock offset on the second sync exchange (one every ~5 s),
-# so they stream on their bare device clock for up to ~10 s after connecting.
-_PRE_SYNC_S = 10.0
+# Sensors apply the server clock offset on the second sync exchange (one every 2 s,
+# processing_loop.CLOCK_SYNC_INTERVAL_S), so they stream on their bare device clock
+# for up to ~4 s after connecting.
+_PRE_SYNC_S = 4.0
 
 
 def test_sensors_syncing_after_recording_start_are_replayed_from_raw_capture_e2e(

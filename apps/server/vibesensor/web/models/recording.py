@@ -51,6 +51,13 @@ class RecordingStatusResponse(BaseModel):
         default=None,
         description="The guided test-drive step in progress (sweep, hold, coast_down), if any.",
     )
+    guided_phases_completed: list[GuidedPhaseName] = Field(
+        default_factory=list,
+        description=(
+            "Guided test-drive steps finished so far in the current recording, in the "
+            "order first finished; lets the Live page restore the guided panel after a reload."
+        ),
+    )
     last_stop_reason: RecordingStopReason | None = Field(
         default=None,
         description=(
