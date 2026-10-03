@@ -76,8 +76,17 @@ During recording:
   directory without bloating `samples_v2`
 - `refresh_data_progress()` / `mark_rows_written()` keep the no-data timeout
   clock moving
-- auto-stop is based on elapsed monotonic time since the last data progress, not
-  on wall-clock timestamps
+- auto-stop is based on monotonic time, not wall-clock timestamps: a run stops
+  with reason `no_data_timeout` after `no_data_timeout_s` without data progress,
+  and with reason `max_duration` when it reaches `MAX_RECORDING_DURATION_S`
+  (30 minutes, `recording/lifecycle_state.py`), which keeps post-analysis within
+  the Pi's memory budget
+- raw UDP chunks are only captured once their sensor is clock-synced (see
+  `docs/time_alignment.md`); earlier chunks are dropped so raw replay aligns from
+  each sensor's first synced chunk
+- `GET /api/recording/status` reports `last_stop_reason` for the most recent run
+  until the next run starts; the Live page shows a notice when it is
+  `max_duration`
 
 ### 3. Final flush and finalize
 

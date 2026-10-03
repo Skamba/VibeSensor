@@ -143,14 +143,14 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
         timestamp_utc="2026-02-16T12:00:00+00:00",
     )
 
-    timed_out = logger._sample_flush.append_records(
+    auto_stop_reason = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
         prebuilt_rows=stale_rows,
     )
 
-    assert timed_out is False
+    assert auto_stop_reason is None
     assert fake_history_db.create_calls == []
     assert fake_history_db.append_calls == []
     assert fake_history_db.finalize_calls == []
@@ -164,13 +164,13 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
 
-    timed_out = logger._sample_flush.append_records(
+    auto_stop_reason = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
     )
 
-    assert timed_out is False
+    assert auto_stop_reason is None
     assert fake_history_db.create_calls == [(run_id, start_time_utc)]
     assert fake_history_db.append_calls == [(run_id, 1)]
 
@@ -350,13 +350,13 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
     start_mono = snapshot.start_mono_s
     logger._lifecycle.last_data_progress_mono_s = 0.0
 
-    timed_out = logger._sample_flush.append_records(
+    auto_stop_reason = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
     )
 
-    assert timed_out is True
+    assert auto_stop_reason == "no_data_timeout"
 
 
 def test_append_records_does_not_timeout_on_brief_gap(
@@ -373,10 +373,10 @@ def test_append_records_does_not_timeout_on_brief_gap(
     monkeypatch.setattr("vibesensor.recording.recorder.time.monotonic", lambda: 100.0)
     logger._lifecycle.last_data_progress_mono_s = 95.0
 
-    timed_out = logger._sample_flush.append_records(
+    auto_stop_reason = logger._sample_flush.append_records(
         run_id,
         start_time_utc,
         start_mono,
     )
 
-    assert timed_out is False
+    assert auto_stop_reason is None

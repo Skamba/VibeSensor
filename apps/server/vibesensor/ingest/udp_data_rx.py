@@ -196,12 +196,17 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             if self._raw_capture_sink is not None:
                 if result.is_late:
                     self._raw_capture_sink.note_late_packet_loss(client_id=client_id)
-                self._raw_capture_sink.capture_raw_samples(
-                    client_id=client_id,
-                    sample_rate_hz=sample_rate_hz,
-                    t0_us=msg.t0_us,
-                    samples=msg.samples,
-                )
+                if result.clock_synced:
+                    self._raw_capture_sink.capture_raw_samples(
+                        client_id=client_id,
+                        sample_rate_hz=sample_rate_hz,
+                        t0_us=msg.t0_us,
+                        samples=msg.samples,
+                    )
+                else:
+                    # Raw capture is aligned on the server clock, so a sensor's
+                    # chunks start at its first frame stamped after clock sync.
+                    self._raw_capture_sink.note_presync_chunk(client_id=client_id)
         if result.is_late and self._ingest_diagnostics is not None:
             self._ingest_diagnostics.note_late_packet(client_id=client_id)
         self._send_data_ack(msg, addr, client_id=client_id)

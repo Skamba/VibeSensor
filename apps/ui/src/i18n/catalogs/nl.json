@@ -67,6 +67,7 @@
   "dashboard.logging.saved.body": "Open Geschiedenis om de diagnose, heatmap en exports te bekijken.",
   "dashboard.logging.saved.detail": "Je kunt op elk moment vanuit Live opnieuw een meetrun starten.",
   "dashboard.logging.saved.action": "Open Geschiedenis",
+  "dashboard.logging.auto_stopped_max_duration": "De opname is automatisch gestopt bij de limiet van 30 minuten.",
   "dashboard.logging.blocked.no_cars.title": "Voeg een auto toe voordat je opneemt.",
   "dashboard.logging.blocked.no_cars.body": "Meetruns hebben een actieve auto nodig zodat Geschiedenis en analyse aan de juiste configuratie gekoppeld blijven.",
   "dashboard.logging.blocked.no_cars.detail": "Open Auto's om het eerste profiel aan te maken en Opname starten vrij te geven.",

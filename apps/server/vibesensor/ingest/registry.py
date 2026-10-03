@@ -115,6 +115,10 @@ class DataUpdateResult:
     reset_detected: bool = False
     is_duplicate: bool = False
     is_late: bool = False
+    # Whether the frame's t0_us is on the server clock: the sensor has applied a
+    # synced clock offset and this frame was stamped with it. Frames stamped on
+    # the bare device clock (before the first applied sync) are not alignable.
+    clock_synced: bool = False
 
 
 @dataclass(slots=True)
@@ -141,6 +145,10 @@ class ClientRecord:
     last_ack_status: int | None = None
     pending_sync_cmd_seq: int | None = None
     pending_sync_send_us: int | None = None
+    pending_sync_applies_offset: bool = False
+    # Set once the sensor acknowledged a sync command that carried an offset to
+    # apply; from then on its DATA t0_us values are on the server clock.
+    clock_offset_applied: bool = False
     sync_offset_us: int | None = None
     sync_rtt_us: int | None = None
     last_sync_monotonic_us: int | None = None
@@ -304,12 +312,16 @@ def apply_data_message_update(
         record.timing_jitter_us_ema = 0.0
         record.timing_drift_us_total = 0.0
         record.dedup_window.clear()
+        _forget_clock_sync(record)
 
+    clock_synced = record.clock_offset_applied and _t0_on_server_clock(
+        record, t0_us=t0_us, sample_count=sample_count, mono=mono
+    )
     if record.dedup_window.track(seq):
         record.duplicates_received += 1
-        return DataUpdateResult(is_duplicate=True)
+        return DataUpdateResult(is_duplicate=True, clock_synced=clock_synced)
     if _is_late_packet(record, seq=seq, t0_us=t0_us):
-        return DataUpdateResult(is_late=True)
+        return DataUpdateResult(is_late=True, clock_synced=clock_synced)
 
     record.frames_total += 1
     reset_detected = rebooted
@@ -336,6 +348,8 @@ def apply_data_message_update(
             record.timing_drift_us_total = 0.0
             record.dedup_window.clear()
             record.dedup_window.track(seq)
+            _forget_clock_sync(record)
+            clock_synced = False
             reset_detected = True
         else:
             expected = (record.last_seq + 1) & _SEQ_MASK
@@ -347,7 +361,46 @@ def apply_data_message_update(
     if record.last_seq is None or ((seq - record.last_seq) & _SEQ_MASK) < _SEQ_HALF:
         record.last_seq = seq
     record.last_t0_us = t0_us
-    return DataUpdateResult(reset_detected=reset_detected)
+    return DataUpdateResult(reset_detected=reset_detected, clock_synced=clock_synced)
+
+
+def _forget_clock_sync(record: ClientRecord) -> None:
+    """A rebooted sensor restarts its device clock; its old offset no longer applies."""
+    record.clock_offset_applied = False
+    record.sync_offset_us = None
+    record.sync_rtt_us = None
+    record.pending_sync_cmd_seq = None
+    record.pending_sync_send_us = None
+    record.pending_sync_applies_offset = False
+
+
+def _t0_on_server_clock(
+    record: ClientRecord,
+    *,
+    t0_us: int,
+    sample_count: int,
+    mono: float,
+) -> bool:
+    """Return whether *t0_us* reads as server-clock time rather than bare device time.
+
+    A frame's first sample was taken about one frame duration before it arrived.
+    Bare device time is ``sync_offset_us`` behind the server clock, so the frame
+    is on the server clock when its t0 is closer to that expected server time
+    than its offset-corrected value is. This also rejects frames sampled before
+    the offset was applied that arrive after the sync acknowledgement.
+    """
+    offset_us = record.sync_offset_us
+    if offset_us is None:
+        return False
+    frame_us = (
+        (float(sample_count) / float(record.sample_rate_hz)) * 1_000_000.0
+        if record.sample_rate_hz > 0
+        else 0.0
+    )
+    expected_first_sample_us = (mono * 1_000_000.0) - frame_us
+    return abs(t0_us - expected_first_sample_us) <= abs(
+        t0_us + offset_us - expected_first_sample_us
+    )
 
 
 def project_client_snapshots(
@@ -507,6 +560,8 @@ class ClientRegistry:
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
             if record.pending_sync_cmd_seq == ack.cmd_seq:
+                if record.pending_sync_applies_offset:
+                    record.clock_offset_applied = True
                 if (
                     ack.device_receive_us is not None
                     and ack.device_send_us is not None
@@ -526,6 +581,7 @@ class ClientRegistry:
                     record.last_sync_monotonic_us = server_receive_us
                 record.pending_sync_cmd_seq = None
                 record.pending_sync_send_us = None
+                record.pending_sync_applies_offset = False
 
     def _note_client_counter(
         self,
@@ -657,6 +713,7 @@ class ClientRegistry:
         cmd_seq: int,
         *,
         sync_send_us: int | None = None,
+        sync_applies_offset: bool = False,
     ) -> None:
         with self._lock:
             record = self._get_or_create(client_id)
@@ -665,6 +722,7 @@ class ClientRegistry:
             if sync_send_us is not None:
                 record.pending_sync_cmd_seq = cmd_seq
                 record.pending_sync_send_us = sync_send_us
+                record.pending_sync_applies_offset = sync_applies_offset
 
     def client_snapshots(
         self,

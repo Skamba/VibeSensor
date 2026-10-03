@@ -2708,6 +2708,8 @@ export interface components {
             last_completed_run_error?: string | null;
             /** Last Completed Run Id */
             last_completed_run_id?: string | null;
+            /** @description Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit. */
+            last_stop_reason?: components["schemas"]["RecordingStopReason"] | null;
             /** Run Id */
             run_id: string | null;
             /**
@@ -2725,6 +2727,8 @@ export interface components {
             /** Write Error */
             write_error: string | null;
         };
+        /** @enum {string} */
+        RecordingStopReason: "manual" | "restart" | "shutdown" | "no_data_timeout" | "max_duration";
         /**
          * RemoveClientResponse
          * @description Response body confirming removal of a disconnected client.

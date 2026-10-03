@@ -19,6 +19,7 @@ from unittest.mock import AsyncMock
 
 import numpy as np
 import pytest
+from test_support.clock_sync import complete_clock_sync
 from test_support.polling import async_wait_until
 from test_support.speed import observed_speed
 
@@ -109,6 +110,7 @@ def _register_sensors(registry: ClientRegistry, sensors: list[_SensorSpec]) -> N
         )
         registry.update_from_hello(hello, ("127.0.0.1", 9000 + index))
         registry.set_location(sensor.client_id.hex(), sensor.location)
+        complete_clock_sync(registry, sensor.client_id.hex())
 
 
 def _build_sensor_packet(
