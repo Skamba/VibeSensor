@@ -2,6 +2,5 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   // Keep the signal high with dead files, dependency drift, and the current
   // cleaned-up unused export surface. Exported-type checks stay out for now.
-  "include": ["files", "dependencies", "exports"],
-  "ignoreDependencies": ["openapi-typescript"]
+  "include": ["files", "dependencies", "exports"]
 }

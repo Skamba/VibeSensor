@@ -116,7 +116,7 @@ jobs:
         working-directory: apps/ui
         run: node ../../tools/ui/ensure_ui_bootstrap.mjs
 
-      - name: Format, lint, dead code, dependency boundaries, type check
+      - name: Format, lint, dead code, type check
         run: make ui-typecheck
 
       - name: Unit tests
