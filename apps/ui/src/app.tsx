@@ -20,7 +20,6 @@ import {
   type ViewId,
 } from "./app_store";
 import { appState, liveStatusBadge, panels } from "./app/feature_wiring";
-import { EspFlashPanel } from "./app/views/esp_flash_panel";
 import { HistoryPanel } from "./app/views/history_panel";
 import { RealtimeLiveOverviewPanel } from "./app/views/realtime_live_overview";
 import { RealtimeLoggingPanelView } from "./app/views/realtime_logging_panel";
@@ -29,6 +28,7 @@ import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { UpdatePanel } from "./app/views/update_panel";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
+import { EspFlash } from "./pages/esp_flash/EspFlash";
 
 const NAV: Record<ViewId, { tabId: string; labelKey: string }> = {
   dashboardView: { tabId: "tab-dashboard", labelKey: "nav.live" },
@@ -369,7 +369,7 @@ export function App() {
           <UpdatePanel actions={panels.update.actions} model={panels.update.model} />
         </SettingsTab>
         <SettingsTab id="espFlashTab">
-          <EspFlashPanel actions={panels.espFlash.actions} model={panels.espFlash.model} />
+          <EspFlash />
         </SettingsTab>
       </View>
       <ConfirmationDialog />

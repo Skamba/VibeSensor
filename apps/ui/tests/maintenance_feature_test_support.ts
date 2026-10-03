@@ -2,15 +2,9 @@ import assert from "node:assert/strict";
 
 import { h, render } from "preact";
 
-import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import type { FeatureServices } from "../src/app/feature_deps_base";
 import { createUpdateFeature } from "../src/app/features/update_feature";
 import { type ReadonlySignal, signal } from "../src/app/ui_signals";
-import type {
-  EspFlashPanelActionHandlers,
-  EspFlashPanelRenderModel,
-  EspFlashPanelView,
-} from "../src/app/views/esp_flash_panel";
 import type {
   InternetPanelActionHandlers,
   InternetPanelRenderModel,
@@ -33,37 +27,6 @@ const MAINTENANCE_TEST_TRANSLATIONS: Readonly<Record<string, string>> = {
   "maintenance.stage_state.attention": "Needs attention",
   "maintenance.stage_state.done": "Complete",
   "maintenance.stage_state.upcoming": "Upcoming",
-  "settings.esp_flash.auto_detect": "Auto-detect",
-  "settings.esp_flash.history_empty_title": "No flash attempts yet",
-  "settings.esp_flash.journey.detail.done": "Confirm flash finished.",
-  "settings.esp_flash.journey.detail.erasing": "Erase old firmware.",
-  "settings.esp_flash.journey.detail.flashing": "Write firmware.",
-  "settings.esp_flash.journey.detail.preparing": "Prepare the device.",
-  "settings.esp_flash.journey.detail.validating": "Validate the selected port.",
-  "settings.esp_flash.journey_terminal.failed": "Flash failed.",
-  "settings.esp_flash.journey_title": "Flash progress",
-  "settings.esp_flash.logs_failed_title": "Flash log failed",
-  "settings.esp_flash.logs_idle_title": "Flash log idle",
-  "settings.esp_flash.logs_running_title": "Flash log running",
-  "settings.esp_flash.phase.done": "Done",
-  "settings.esp_flash.phase.erasing": "Erasing",
-  "settings.esp_flash.phase.flashing": "Flashing",
-  "settings.esp_flash.phase.preparing": "Preparing",
-  "settings.esp_flash.phase.validating": "Validating",
-  "settings.esp_flash.readiness.current_step": "Current step",
-  "settings.esp_flash.readiness.one_port": "1 port available",
-  "settings.esp_flash.readiness.summary.ready_ports": "Ready ports",
-  "settings.esp_flash.recovery.flashing.detail":
-    "Reconnect the ESP and retry flashing.",
-  "settings.esp_flash.recovery.title": "Flash recovery",
-  "settings.esp_flash.retry": "Retry flash",
-  "settings.esp_flash.start": "Start flash",
-  "settings.esp_flash.start_readiness.item.connection_blocked":
-    "No ESP port found.",
-  "settings.esp_flash.start_readiness.item.connection_ready": "ESP port ready.",
-  "settings.esp_flash.start_readiness.summary_blocked": "Flash blocked",
-  "settings.esp_flash.start_readiness.summary_ready": "Ready to flash",
-  "settings.esp_flash.start_readiness.summary_running": "Flash running",
   "settings.internet.card_title": "USB internet",
   "settings.internet.summary.not_detected": "No USB internet detected",
   "settings.update.attempt_title": "Latest update attempt",
@@ -247,95 +210,6 @@ function createMountedHost(): HTMLElement {
   return host;
 }
 
-async function createEspFlashFeatureDeps() {
-  const navigation = createFeatureNavigationHarness("espFlashTab");
-  const root = createMountedHost();
-  const { EspFlashPanel } = await import("../src/app/views/esp_flash_panel");
-  const panel: EspFlashPanelView = {
-    actions: signal<EspFlashPanelActionHandlers | null>(null),
-    model: signal<ReadonlySignal<EspFlashPanelRenderModel> | null>(null),
-  };
-  render(h(EspFlashPanel, panel), root);
-  const cleanup = registerMaintenanceCleanup(() => {
-    render(null, root);
-    root.remove();
-  });
-  const els = {
-    get espFlashCancelBtn() {
-      return requireElement<HTMLButtonElement>(root, "#espFlashCancelBtn");
-    },
-    get espFlashHistoryPanel() {
-      return requireElement(root, "#espFlashHistoryPanel");
-    },
-    get espFlashJourneyPanel() {
-      return requireElement(root, "#espFlashJourneyPanel");
-    },
-    get espFlashLogPanel() {
-      return requireElement(root, "#espFlashLogPanel");
-    },
-    get espFlashPortSelect() {
-      return ensureMutableValueProperty(
-        requireElement<HTMLSelectElement>(root, "#espFlashPortSelect"),
-        "__auto__",
-      );
-    },
-    get espFlashReadinessPanel() {
-      return requireElement(root, "#espFlashReadinessPanel");
-    },
-    get espFlashRefreshPortsBtn() {
-      return requireElement<HTMLButtonElement>(
-        root,
-        "#espFlashRefreshPortsBtn",
-      );
-    },
-    get espFlashStartBtn() {
-      return requireElement<HTMLButtonElement>(root, "#espFlashStartBtn");
-    },
-    get espFlashStartSummary() {
-      return requireElement(root, "#espFlashStartSummary");
-    },
-    get espFlashStatusBanner() {
-      return requireElement(root, "#espFlashStatusBanner");
-    },
-    menuButtons: [],
-    settingsTabPanels: [],
-    settingsTabs: [],
-    views: [],
-  };
-
-  return {
-    cleanup,
-    els,
-    get espFlashCancelBtn() {
-      return els.espFlashCancelBtn;
-    },
-    get espFlashJourneyPanel() {
-      return els.espFlashJourneyPanel;
-    },
-    get espFlashPortSelect() {
-      return els.espFlashPortSelect;
-    },
-    get espFlashReadinessPanel() {
-      return els.espFlashReadinessPanel;
-    },
-    get espFlashRefreshPortsBtn() {
-      return els.espFlashRefreshPortsBtn;
-    },
-    get espFlashStartBtn() {
-      return els.espFlashStartBtn;
-    },
-    get espFlashStartSummary() {
-      return els.espFlashStartSummary;
-    },
-    panel,
-    ...navigation.ports,
-    queryClient: createTestQueryClient(),
-    services: createFeatureServices(),
-    setActiveSettingsTabId: navigation.setActiveSettingsTabId,
-    setActiveViewId: navigation.setActiveViewId,
-  };
-}
-
 async function createUpdateFeatureDeps() {
   const navigation = createFeatureNavigationHarness("updateTab");
   const root = createMountedHost();
@@ -463,30 +337,6 @@ export function installMaintenanceFeatureGlobals(): () => void {
   return () => {
     drainMaintenanceCleanups();
     restoreDomGlobals();
-  };
-}
-
-export async function createEspFlashFeatureHarness() {
-  const deps = await createEspFlashFeatureDeps();
-  const feature = createEspFlashFeature(deps);
-  const disposeFeature = feature.dispose.bind(feature);
-
-  return {
-    deps,
-    feature: {
-      ...feature,
-      startPolling(): void {
-        deps.setActiveViewId("settingsView");
-        deps.setActiveSettingsTabId("espFlashTab");
-      },
-      stopPolling(): void {
-        deps.setActiveViewId("dashboardView");
-      },
-      dispose(): void {
-        disposeFeature();
-        deps.cleanup();
-      },
-    },
   };
 }
 

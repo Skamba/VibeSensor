@@ -11,10 +11,7 @@ import {
   type ReadonlySignal,
 } from "../ui_signals";
 import type { DeferredModelSignal } from "./view_model_binding";
-import type {
-  MaintenanceReadinessItem,
-  MaintenanceReadinessPanelModel,
-} from "./maintenance_readiness_view";
+import type { Readiness, ReadinessItem } from "../../components/maintenance";
 import type { InternetStatusPanelModel } from "./internet_status_view";
 import type {
   UpdateStatusBadgeModel,
@@ -38,7 +35,7 @@ export interface InternetPanelRenderModel {
   internetStatus: InternetStatusPanelModel | null;
   passwordInputType: "password" | "text";
   passwordInputValue: string;
-  readiness: MaintenanceReadinessPanelModel;
+  readiness: Readiness;
   selectedTransport: UpdateStartRequestPayload["transport"];
   ssidInputValue: string;
   togglePasswordDisabled: boolean;
@@ -162,7 +159,7 @@ function MaintenanceCard(props: {
 }
 
 function MaintenanceReadinessItemRow(props: {
-  item: MaintenanceReadinessItem;
+  item: ReadinessItem;
 }) {
   const { item } = props;
   const marker = item.state === "ready" ? "\u2713" : "!";
@@ -183,7 +180,7 @@ function MaintenanceReadinessItemRow(props: {
 }
 
 function MaintenanceReadinessPanel(props: {
-  model: MaintenanceReadinessPanelModel;
+  model: Readiness;
 }) {
   const { model } = props;
   return (

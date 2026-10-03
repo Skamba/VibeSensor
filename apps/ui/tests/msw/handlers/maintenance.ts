@@ -1,10 +1,4 @@
 import type {
-  EspFlashCancelPayload,
-  EspFlashHistoryPayload,
-  EspFlashLogsPayload,
-  EspFlashPortsPayload,
-  EspFlashStartPayload,
-  EspFlashStatusPayload,
   HealthStatusPayload,
   UpdateCancelPayload,
   UpdateStartPayload,
@@ -14,7 +8,6 @@ import type {
 } from "../../../src/api/types";
 import type { JsonBodyType } from "msw";
 import {
-  createEspFlashPort,
   createHealthyUpdateStatus,
   createIdleUpdateStatus,
   createUsbInternetStatus,
@@ -34,11 +27,6 @@ type ScenarioInput<T> =
   | ScenarioValue<T>
   | readonly ScenarioValue<T>[]
   | ScenarioResolver<T>;
-
-export type EspFlashStartRequestPayload = {
-  auto_detect: boolean;
-  port: string | null;
-};
 
 function isErrorResponse(value: unknown): value is ErrorResponse {
   return !!value && typeof value === "object" && "detail" in value;
@@ -98,73 +86,6 @@ function makeUpdateCancelPayload(
   };
 }
 
-function makeEspFlashPortsPayload(
-  overrides: Partial<EspFlashPortsPayload> = {},
-): EspFlashPortsPayload {
-  return {
-    ports: [createEspFlashPort()],
-    ...overrides,
-  };
-}
-
-export function makeEspFlashStatusPayload(
-  overrides: Partial<EspFlashStatusPayload> = {},
-): EspFlashStatusPayload {
-  return {
-    state: "idle",
-    phase: "idle",
-    selected_port: null,
-    auto_detect: true,
-    last_success_at: null,
-    error: null,
-    log_count: 0,
-    job_id: null,
-    started_at: null,
-    finished_at: null,
-    exit_code: null,
-    ...overrides,
-  };
-}
-
-function makeEspFlashLogsPayload(
-  overrides: Partial<EspFlashLogsPayload> = {},
-): EspFlashLogsPayload {
-  return {
-    from_index: 0,
-    next_index: 0,
-    lines: [],
-    ...overrides,
-  };
-}
-
-function makeEspFlashHistoryPayload(
-  overrides: Partial<EspFlashHistoryPayload> = {},
-): EspFlashHistoryPayload {
-  return {
-    attempts: [],
-    ...overrides,
-  };
-}
-
-function makeEspFlashStartPayload(
-  overrides: Partial<EspFlashStartPayload> = {},
-): EspFlashStartPayload {
-  return {
-    status: "started",
-    job_id: 1,
-    ...overrides,
-  };
-}
-
-function makeEspFlashCancelPayload(
-  overrides: Partial<EspFlashCancelPayload> = {},
-): EspFlashCancelPayload {
-  return {
-    cancelled: true,
-    ...overrides,
-  };
-}
-
 export function buildUpdateHandlers(
   options: {
     status?: ScenarioInput<UpdateStatusPayload>;
@@ -213,66 +134,6 @@ export function buildUpdateHandlers(
     }),
     http.post(
       uiTestUrl("/api/update/cancel"),
-      async ({ request }) => await resolveJsonScenario(request, resolveCancel),
-    ),
-  ];
-}
-
-export function buildEspFlashHandlers(
-  options: {
-    ports?: ScenarioInput<EspFlashPortsPayload>;
-    status?: ScenarioInput<EspFlashStatusPayload>;
-    logs?: ScenarioInput<EspFlashLogsPayload>;
-    history?: ScenarioInput<EspFlashHistoryPayload>;
-    start?: ScenarioInput<EspFlashStartPayload>;
-    cancel?: ScenarioInput<EspFlashCancelPayload>;
-    startRequests?: EspFlashStartRequestPayload[];
-    onStartRequest?: (payload: EspFlashStartRequestPayload) => void;
-  } = {},
-) {
-  const resolvePorts = createScenarioResolver(
-    options.ports ?? makeEspFlashPortsPayload(),
-  );
-  const resolveStatus = createScenarioResolver(
-    options.status ?? makeEspFlashStatusPayload(),
-  );
-  const resolveLogs = createScenarioResolver(
-    options.logs ?? makeEspFlashLogsPayload(),
-  );
-  const resolveHistory = createScenarioResolver(
-    options.history ?? makeEspFlashHistoryPayload(),
-  );
-  const resolveStart = createScenarioResolver(
-    options.start ?? makeEspFlashStartPayload(),
-  );
-  const resolveCancel = createScenarioResolver(
-    options.cancel ?? makeEspFlashCancelPayload(),
-  );
-  return [
-    http.get(
-      uiTestUrl("/api/esp-flash/ports"),
-      async ({ request }) => await resolveJsonScenario(request, resolvePorts),
-    ),
-    http.get(
-      uiTestUrl("/api/esp-flash/status"),
-      async ({ request }) => await resolveJsonScenario(request, resolveStatus),
-    ),
-    http.get(
-      uiTestUrl("/api/esp-flash/logs"),
-      async ({ request }) => await resolveJsonScenario(request, resolveLogs),
-    ),
-    http.get(
-      uiTestUrl("/api/esp-flash/history"),
-      async ({ request }) => await resolveJsonScenario(request, resolveHistory),
-    ),
-    http.post(uiTestUrl("/api/esp-flash/start"), async ({ request }) => {
-      const payload = (await request.json()) as EspFlashStartRequestPayload;
-      options.startRequests?.push(payload);
-      options.onStartRequest?.(payload);
-      return await resolveJsonScenario(request, resolveStart);
-    }),
-    http.post(
-      uiTestUrl("/api/esp-flash/cancel"),
       async ({ request }) => await resolveJsonScenario(request, resolveCancel),
     ),
   ];
