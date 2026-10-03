@@ -191,7 +191,8 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                     client_id,
                     msg.samples,
                     sample_rate_hz=sample_rate_hz,
-                    t0_us=msg.t0_us,
+                    # Before clock sync, t0 is the sensor's own uptime, not server time.
+                    t0_us=msg.t0_us if result.clock_synced else None,
                 )
             if self._raw_capture_sink is not None:
                 if result.is_late:

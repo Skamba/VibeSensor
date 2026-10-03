@@ -77,7 +77,7 @@ def build_multi_spectrum_payload(
     client_ids: list[str],
     *,
     default_sample_rate_hz: int,
-    waveform_seconds: int,
+    fft_n: int,
 ) -> SpectraPayload:
     """Build the combined multi-client spectrum payload with alignment metadata.
 
@@ -116,7 +116,7 @@ def build_multi_spectrum_payload(
 
         time_range = buf.analysis_time_range(
             default_sample_rate_hz=default_sample_rate_hz,
-            waveform_seconds=waveform_seconds,
+            fft_n=fft_n,
         )
         if time_range is not None:
             ranges.append((client_id, time_range.start_s, time_range.end_s))

@@ -81,8 +81,7 @@ def analysis_time_range(
     count: int,
     last_ingest_mono_s: float,
     sample_rate_hz: int,
-    waveform_seconds: int,
-    capacity: int,
+    window_samples: int,
     last_t0_us: int,
     samples_since_t0: int,
 ) -> tuple[float, float, bool] | None:
@@ -108,10 +107,9 @@ def analysis_time_range(
     sample_rate_hz:
         Current sensor sample rate in Hz; used to convert sample counts to
         seconds.
-    waveform_seconds:
-        Desired analysis window duration in seconds (bounded by *capacity*).
-    capacity:
-        Total buffer capacity in samples.
+    window_samples:
+        Length of the analysed block in samples (the FFT block: the spectrum
+        and its peaks describe only the newest ``fft_n`` samples).
     last_t0_us:
         Sensor-clock timestamp (µs, server-relative after ``CMD_SYNC_CLOCK``)
         of the first sample in the most-recently ingested frame.  Zero if the
@@ -126,10 +124,9 @@ def analysis_time_range(
     sr = sample_rate_hz
     if sr <= 0:
         return None
-    if waveform_seconds <= 0:
+    if window_samples <= 0:
         return None
-    desired = max(1, sr * waveform_seconds)
-    n_window = min(count, capacity, desired)
+    n_window = min(count, window_samples)
     duration_s = n_window / sr
 
     if last_t0_us > 0:

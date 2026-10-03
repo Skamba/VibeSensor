@@ -202,7 +202,7 @@ class SignalProcessor:
             fft_block=fft_block,
             analysis_time_range=buf.analysis_time_range(
                 default_sample_rate_hz=sample_rate_hz,
-                waveform_seconds=self._config.waveform_seconds,
+                fft_n=fft_n,
             ),
         )
 
@@ -236,7 +236,7 @@ class SignalProcessor:
                 self._buffers,
                 client_ids,
                 default_sample_rate_hz=self._config.sample_rate_hz,
-                waveform_seconds=self._config.waveform_seconds,
+                fft_n=self._config.fft_n,
             )
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:

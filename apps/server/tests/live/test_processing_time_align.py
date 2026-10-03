@@ -129,8 +129,7 @@ _ATR_DEFAULTS: dict[str, object] = {
     "count": 1000,
     "last_ingest_mono_s": 100.0,
     "sample_rate_hz": 1000,
-    "waveform_seconds": 2,
-    "capacity": 2000,
+    "window_samples": 2000,
     "last_t0_us": 0,
     "samples_since_t0": 0,
 }
@@ -187,15 +186,11 @@ class TestAnalysisTimeRange:
         # end_s = 5.1
         assert end == pytest.approx(5.1)
 
-    def test_window_capped_by_capacity(self) -> None:
-        result = _atr(
-            count=2000,
-            waveform_seconds=5,  # wants 5000 samples
-            capacity=2000,  # but only 2000 capacity
-        )
+    def test_window_covers_only_the_analysed_block(self) -> None:
+        result = _atr(count=5000, window_samples=2000)
         assert result is not None
         start, end, synced = result
-        # Window should be 2000/1000 = 2s, not 5s
+        # The buffer holds 5 s, but the spectrum covers the newest 2000 samples.
         assert (end - start) == pytest.approx(2.0)
 
     @pytest.mark.parametrize("last_ingest_mono_s", [0.0, -1.0])
