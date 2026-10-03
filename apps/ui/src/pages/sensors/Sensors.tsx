@@ -24,7 +24,10 @@ const SensorRow = memo(function SensorRow(props: {
         <div class="settings-sensor-row__identity">
           <div class="settings-sensor-row__heading">
             <strong>{props.name}</strong>
-            <span class="status-pill settings-entity-status" data-status={connected ? "online" : "offline"}>
+            <span
+              class="status-pill settings-entity-status"
+              data-status={connected ? "online" : "offline"}
+            >
               {t(connected ? "status.online" : "status.offline")}
             </span>
           </div>

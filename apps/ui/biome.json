@@ -17,6 +17,7 @@
     "enabled": true,
     "includes": [
       "src/**/*.ts",
+      "src/**/*.tsx",
       "tests/**/*.ts",
       "playwright.smoke.config.ts",
       "vite.config.ts",
@@ -30,6 +31,7 @@
     "enabled": true,
     "includes": [
       "src/**/*.ts",
+      "src/**/*.tsx",
       "src/**/*.css",
       "src/i18n/catalogs/*.json",
       "tests/**/*.ts",

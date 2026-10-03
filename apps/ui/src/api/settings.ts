@@ -71,20 +71,6 @@ export async function addSettingsCar(
   });
 }
 
-async function updateSettingsCar(
-  carId: string,
-  car: Local.CarUpsertRequest,
-): Promise<Local.CarsPayload> {
-  return await apiJson<Transport.CarsPayload>(
-    `/api/settings/cars/${encodeURIComponent(carId)}`,
-    {
-      method: "PUT",
-      headers: JSON_HEADERS,
-      body: JSON.stringify(car),
-    },
-  );
-}
-
 export async function deleteSettingsCar(
   carId: string,
 ): Promise<Local.CarsPayload> {

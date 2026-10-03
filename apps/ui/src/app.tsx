@@ -115,7 +115,7 @@ function Header() {
             />
           </picture>
         </h1>
-        <nav class="menu" aria-label="Primary" role="tablist">
+        <div class="menu" aria-label="Primary" role="tablist">
           {VIEW_IDS.map((id, index) => (
             <button
               key={id}
@@ -128,12 +128,14 @@ function Header() {
               aria-selected={view === id ? "true" : "false"}
               tabIndex={view === id ? 0 : -1}
               onClick={() => navigate(id)}
-              onKeyDown={(event) => onTabKeyDown(event, VIEW_IDS, index, navigate)}
+              onKeyDown={(event) =>
+                onTabKeyDown(event, VIEW_IDS, index, navigate)
+              }
             >
               <span>{t(NAV[id].labelKey)}</span>
             </button>
           ))}
-        </nav>
+        </div>
       </div>
       <Preferences />
     </div>
@@ -151,15 +153,23 @@ function Preferences() {
           id="speedUnitSelect"
           class="unit-picker"
           aria-label={unitLabel}
-          aria-describedby={speedUnitFeedback.value ? "speedUnitFeedback" : undefined}
-          aria-invalid={speedUnitFeedback.value?.tone === "error" ? "true" : undefined}
+          aria-describedby={
+            speedUnitFeedback.value ? "speedUnitFeedback" : undefined
+          }
+          aria-invalid={
+            speedUnitFeedback.value?.tone === "error" ? "true" : undefined
+          }
           value={selectedSpeedUnit.value}
           onChange={(event) => void saveSpeedUnit(event.currentTarget.value)}
         >
           <option value="kmh">{t("speed.unit.kmh")}</option>
           <option value="mps">{t("speed.unit.mps")}</option>
         </select>
-        <FeedbackSlot id="speedUnitFeedback" message={speedUnitFeedback.value} compact />
+        <FeedbackSlot
+          id="speedUnitFeedback"
+          message={speedUnitFeedback.value}
+          compact
+        />
       </label>
       <label class="header-select" htmlFor="languageSelect">
         <span class="mini-label">{languageLabel}</span>
@@ -167,15 +177,23 @@ function Preferences() {
           id="languageSelect"
           class="lang-picker"
           aria-label={languageLabel}
-          aria-describedby={languageFeedback.value ? "languageFeedback" : undefined}
-          aria-invalid={languageFeedback.value?.tone === "error" ? "true" : undefined}
+          aria-describedby={
+            languageFeedback.value ? "languageFeedback" : undefined
+          }
+          aria-invalid={
+            languageFeedback.value?.tone === "error" ? "true" : undefined
+          }
           value={selectedLanguage.value}
           onChange={(event) => void saveLanguage(event.currentTarget.value)}
         >
           <option value="en">🇺🇸 English</option>
           <option value="nl">🇳🇱 Nederlands</option>
         </select>
-        <FeedbackSlot id="languageFeedback" message={languageFeedback.value} compact />
+        <FeedbackSlot
+          id="languageFeedback"
+          message={languageFeedback.value}
+          compact
+        />
       </label>
     </div>
   );
@@ -190,12 +208,25 @@ function StatusPills() {
       };
   const live = health.value;
   return (
-    <div class="site-header__status" hidden={activeView.value === "dashboardView"}>
+    <div
+      class="site-header__status"
+      hidden={activeView.value === "dashboardView"}
+    >
       <div class="site-header__status-pills">
-        <div id="linkState" class="pill" data-variant={link.variant} aria-live="polite">
+        <div
+          id="linkState"
+          class="pill"
+          data-variant={link.variant}
+          aria-live="polite"
+        >
           {link.text}
         </div>
-        <div id="shellLiveStatus" class="pill" data-variant={live.variant} aria-live="polite">
+        <div
+          id="shellLiveStatus"
+          class="pill"
+          data-variant={live.variant}
+          aria-live="polite"
+        >
           {live.text}
         </div>
       </div>
@@ -249,15 +280,25 @@ function ConfirmationDialog() {
         }}
       >
         <div class="confirmation-dialog__body">
-          <strong id="confirmationDialogTitle" class="confirmation-dialog__title">
+          <strong
+            id="confirmationDialogTitle"
+            class="confirmation-dialog__title"
+          >
             {t("actions.confirm_title")}
           </strong>
-          <p id="confirmationDialogMessage" class="confirmation-dialog__message">
+          <p
+            id="confirmationDialogMessage"
+            class="confirmation-dialog__message"
+          >
             {pending.message}
           </p>
         </div>
         <div class="confirmation-dialog__actions">
-          <button type="button" class="btn" onClick={() => settleConfirmation(false)}>
+          <button
+            type="button"
+            class="btn"
+            onClick={() => settleConfirmation(false)}
+          >
             {t("actions.cancel")}
           </button>
           <button
@@ -294,7 +335,7 @@ function SettingsTabs() {
     settingsTab.value = id;
   };
   return (
-    <nav class="settings-tabs" role="tablist">
+    <div class="settings-tabs" role="tablist">
       {SETTINGS_TAB_IDS.map((id, index) => (
         <button
           key={id}
@@ -306,16 +347,21 @@ function SettingsTabs() {
           aria-selected={current === id ? "true" : "false"}
           tabIndex={current === id ? 0 : -1}
           onClick={() => activate(id)}
-          onKeyDown={(event) => onTabKeyDown(event, SETTINGS_TAB_IDS, index, activate)}
+          onKeyDown={(event) =>
+            onTabKeyDown(event, SETTINGS_TAB_IDS, index, activate)
+          }
         >
           <span>{t(SETTINGS_TAB_LABEL_KEYS[id])}</span>
         </button>
       ))}
-    </nav>
+    </div>
   );
 }
 
-function SettingsTab(props: { id: SettingsTabId; children: ComponentChildren }) {
+function SettingsTab(props: {
+  id: SettingsTabId;
+  children: ComponentChildren;
+}) {
   return (
     <div
       id={props.id}

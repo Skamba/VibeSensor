@@ -25,12 +25,6 @@ export async function deleteHistoryRun(
   );
 }
 
-async function getHistoryRun(runId: string): Promise<Local.HistoryRunPayload> {
-  return await apiJson<Transport.HistoryRunPayload>(
-    `/api/history/${encodeURIComponent(runId)}`,
-  );
-}
-
 export async function getHistoryInsights(
   runId: string,
   lang: string,
