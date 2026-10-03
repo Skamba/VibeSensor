@@ -437,6 +437,26 @@ class TestPersistenceDuringLifecycle:
         assert tracker.status.phase_started_at > started_phase_at
         assert tracker.status.updated_at >= tracker.status.phase_started_at
 
+    def test_success_is_persisted_even_without_a_message(self, tmp_path: Path) -> None:
+        store = UpdateStateStore(path=tmp_path / "state.json")
+        tracker = UpdateStatusTracker(state_store=store)
+        tracker.start_job(
+            UpdateRequest(transport=UpdateTransport.wifi, ssid="TestNet", password="")
+        )
+        for phase in (
+            UpdatePhase.stopping_hotspot,
+            UpdatePhase.connecting_wifi,
+            UpdatePhase.checking,
+        ):
+            tracker.transition(phase)
+
+        tracker.mark_success()
+
+        persisted = UpdateStateStore(path=tmp_path / "state.json").load()
+        assert persisted is not None
+        assert persisted.state == UpdateState.success
+        assert persisted.phase == UpdatePhase.done
+
     def test_invalid_phase_transition_raises(self, tmp_path: Path) -> None:
         tracker = UpdateStatusTracker(
             state_store=UpdateStateStore(tmp_path / "state.json"),
