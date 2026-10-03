@@ -8,7 +8,7 @@ server over HTTP (REST) and WebSocket (live data).
 
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
-- **@tanstack/query-core** — canonical server-state fetch, cache, polling, and invalidation ownership
+- **`src/poll.ts`** — interval + visibility polling for page stores (pre-rewrite pages still use @tanstack/query-core)
 - **Vite** — build tool and dev server
 - **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
@@ -90,21 +90,16 @@ source-of-truth export commands remain the only writers for those files.
 
 ## Server-state ownership
 
-Frontend server-state ownership is centralized on the runtime-owned
-`QueryClient` created in `src/app/runtime/ui_query_client.ts`.
+Each page store owns its server state as signals and calls the `api/*`
+wrappers directly. Polling goes through `src/poll.ts`: `poll({ active,
+intervalMs, load, onData, onError })` loads when `active` turns true and the
+page is visible, re-polls after each result, and only delivers the latest
+request's result, so a slow older response never overwrites newer data. Call
+`refresh()` after a mutation instead of patching a cache.
 
-- Keep app-wide query-client creation in runtime/composition code.
-- Keep feature-specific query keys in
-  `src/app/features/server_state_query_keys.ts`.
-- Keep feature-owned observed-query bridges in
-  `src/app/features/server_state_query.ts` and the owning feature controller.
-- Use TanStack Query for fetches, cache updates, background refetch intervals,
-  and invalidation instead of reintroducing ad hoc loaders or poll loops.
-- Mutations should either write authoritative results into the cache with
-  `setQueryData(...)` or explicitly invalidate/refetch the affected keys.
-- If a production path stays direct, document the concrete reason in code. The
-  narrow allowed exception is one-off browser-owned side effects such as binary
-  file downloads that are not cacheable server state.
+Pages that have not moved to `src/pages/` yet still use the TanStack
+`QueryClient` created in `src/app/runtime/ui_query_client.ts`; it goes away
+with the last of them.
 
 ## Live transport ownership
 

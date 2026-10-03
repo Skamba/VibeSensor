@@ -12,7 +12,7 @@ import {
   buildInternetStatusPanelModel,
   formatUsbInternetSummary,
 } from "./internet_status_view";
-import type { MaintenanceReadinessPanelModel } from "./maintenance_readiness_view";
+import type { Readiness } from "../../components/maintenance";
 import type { UpdatePanelRenderModel } from "./update_panel";
 import { buildUpdateStatusPanelViewModel } from "./update_status_builders";
 import { getUpdateFailureSummary } from "./update_journey_builder";
@@ -50,7 +50,7 @@ export interface UpdateFeatureFormSnapshot {
 
 interface UpdateFeatureActionSummary {
   canStart: boolean;
-  panelModel: MaintenanceReadinessPanelModel;
+  panelModel: Readiness;
   startLabel: string;
   transport: UpdateStartRequestPayload["transport"];
 }
