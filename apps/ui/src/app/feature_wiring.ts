@@ -13,17 +13,16 @@ import { fmt, fmtTs, formatIntLocale } from "../format";
 import { t } from "../i18n";
 import { uiLogger } from "../ui_logger";
 import { createCarsFeature } from "./features/cars_feature";
-import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
 import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
-import { createSpeedSourceFeature } from "./features/speed_source_feature";
 import type { FeatureServices } from "./feature_deps_base";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
-import { createSpeedSourceDerivedState } from "./speed_source_state";
+import { loadSpeedSource, speedSourceSnapshot } from "../settings_store";
+import { deriveSpeedReadoutLabelKey } from "../speed_source";
 import { createAppState } from "./ui_app_state";
 import { computed, effectOnChange, signal } from "./ui_signals";
 import {
@@ -40,10 +39,6 @@ import type { RealtimeLiveOverviewBridge } from "./views/realtime_live_overview"
 import type { RealtimeLoggingPanelBridge } from "./views/realtime_logging_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
 import { createSpectrumPanel } from "./views/spectrum_panel";
-import {
-  createSpeedSourcePanel,
-  type SpeedSourcePanelBindings,
-} from "./views/speed_source_panel";
 import type { VisualVariant } from "./visual_variant";
 import {
   createDeferredModelSignal,
@@ -84,12 +79,6 @@ const carsBindings = {
   wizard: bindings<Omit<CarsWizardPanelBridge, "focus">>(),
 };
 const carsPanel = createCarsPanel(carsBindings);
-const speedSourceBindings: SpeedSourcePanelBindings = {
-  actions: signal(null),
-  diagnostics: createDeferredModelSignal(),
-  model: createDeferredModelSignal(),
-};
-const speedSourcePanel = createSpeedSourcePanel(speedSourceBindings);
 const spectrumPanel = createSpectrumPanel();
 
 export const panels = {
@@ -107,7 +96,6 @@ export const panels = {
     Panel: carsPanel.Panel,
   },
   sensors: bindings<SensorsPanelView>(),
-  speedSource: { ...speedSourceBindings, ...speedSourcePanel },
 };
 
 // --- Controllers ------------------------------------------------------------
@@ -147,17 +135,6 @@ const analysis = createSettingsAnalysisModule({
   refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
 });
 
-const speedSource = createSpeedSourceFeature({
-  panel: panels.speedSource,
-  settings,
-  queryClient,
-  services,
-  formatting: { fmt },
-  getSpeedUnit: () => speedUnit.value,
-  activeViewId: activeView,
-  activeSettingsTabId: settingsTab,
-});
-
 const cars = createCarsFeature({
   settings,
   queryClient,
@@ -172,12 +149,6 @@ const cars = createCarsFeature({
   syncAnalysisInputs: analysis.syncSettingsInputs,
   services,
   formatting: { fmt },
-});
-
-const dashboardSpeedSourceStatus = createDashboardSpeedSourceStatusModule({
-  activeViewId: activeView,
-  queryClient,
-  settings,
 });
 
 const realtimeFeature = createRealtimeFeature({
@@ -221,10 +192,6 @@ function asVariant(variant: string): VisualVariant {
 
 // --- Dashboard speed readout -----------------------------------------------
 
-const speedSourceState = createSpeedSourceDerivedState(
-  settings.speed,
-  computed(() => realtime.rotationalSpeeds.value?.basis_speed_source ?? null),
-);
 panels.liveOverview.speedText.value = computed(() => {
   const mps = speedUnit.value === "mps";
   const unit = t(mps ? "speed.unit.mps" : "speed.unit.kmh");
@@ -232,7 +199,11 @@ panels.liveOverview.speedText.value = computed(() => {
   if (typeof speedMps !== "number" || !Number.isFinite(speedMps)) {
     return t("speed.none", { unit });
   }
-  return t(speedSourceState.speedReadoutLabelKey.value, {
+  const labelKey = deriveSpeedReadoutLabelKey(
+    speedSourceSnapshot.value,
+    realtime.rotationalSpeeds.value?.basis_speed_source,
+  );
+  return t(labelKey, {
     unit,
     value: fmt(mps ? speedMps : speedMps * 3.6, 1),
   });
@@ -266,12 +237,7 @@ onViewEnter(
 );
 onViewEnter(
   "settingsView",
-  loadOnce(() =>
-    Promise.all([
-      speedSource.loadSpeedSourceFromServer(),
-      analysis.loadAnalysisSettingsFromServer(),
-    ]),
-  ),
+  loadOnce(() => analysis.loadAnalysisSettingsFromServer()),
 );
 
 function runStartupTask(name: string, task: () => Promise<unknown>): void {
@@ -281,11 +247,9 @@ function runStartupTask(name: string, task: () => Promise<unknown>): void {
 }
 
 export function startFeatures(): void {
-  dashboardSpeedSourceStatus.bindHandlers();
   realtimeFeature.bindHandlers();
   cars.bindHandlers();
   analysis.bindHandlers();
-  speedSource.bindHandlers();
   history.bindHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {
@@ -303,7 +267,7 @@ export function startFeatures(): void {
     runStartupTask("hydrate dashboard state", () =>
       Promise.all([
         loadDashboardStartupState(queryClient, settings),
-        dashboardSpeedSourceStatus.markStartupReady(),
+        loadSpeedSource(),
       ]).catch((error: unknown) => {
         showError(
           error instanceof Error ? error.message : t("status.view_load_failed"),

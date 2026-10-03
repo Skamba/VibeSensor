@@ -5,7 +5,6 @@ export {
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,
-  getSpeedSourceStatus,
 } from "./api/settings";
 export {
   getCarLibraryBrands,

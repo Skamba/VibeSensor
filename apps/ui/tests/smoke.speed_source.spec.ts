@@ -15,6 +15,7 @@ type SpeedSourceServer = {
   scans: number;
   pairs: string[];
   failNextPut: boolean;
+  putDelayMs?: number;
 };
 
 function statusPayload(server: SpeedSourceServer): Record<string, unknown> {
@@ -81,6 +82,9 @@ async function installSpeedSourceRoutes(
       if (path === "/api/settings/speed-source" && method === "PUT") {
         const body = route.request().postDataJSON() as Record<string, unknown>;
         server.puts.push(body);
+        await new Promise((resolve) =>
+          setTimeout(resolve, server.putDelayMs ?? 0),
+        );
         if (server.failNextPut) {
           server.failNextPut = false;
           await route.fulfill({
@@ -275,4 +279,26 @@ test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
   await expect.poll(() => server.puts.length).toBe(1);
   expect(server.puts[0]).toMatchObject({ speed_source: "obd2" });
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText(/OBD/);
+});
+
+test("journey: a double-clicked save sends one speed source update", async ({
+  page,
+}) => {
+  const server: SpeedSourceServer = {
+    saved: { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 10 },
+    puts: [],
+    scans: 0,
+    pairs: [],
+    failNextPut: false,
+    putDelayMs: 400,
+  };
+  await installSpeedSourceRoutes(page, server);
+  await openSpeedSourceTab(page);
+  await page.locator("#speedSourceChoiceManual").click();
+  await page.locator("#manualSpeedInput").fill("65");
+  await page.locator("#saveSpeedSourceBtn").dblclick();
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
+    "Manual override",
+  );
+  expect(server.puts).toHaveLength(1);
 });
