@@ -1,12 +1,12 @@
 import { convertSpectrumAmplitudesToDbInPlace } from "../../spectrum";
 import { chartSeriesPalette } from "../../theme";
 import type { SpectrumClientData } from "../../transport/live_models";
-import type { SpectrumHeavyFrame } from "../spectrum_animation";
+import type { SpectrumHeavyFrame } from "./spectrum_animation";
 import {
   freqGridsMatch,
-  type SpectrumNumericSeries,
-  type SpectrumSeriesEntry,
-} from "./spectrum_shared";
+  type NumericSeries as SpectrumNumericSeries,
+  type SeriesEntry as SpectrumSeriesEntry,
+} from "./spectrum_model";
 
 const EMPTY_FREQ_AXIS: number[] = [];
 

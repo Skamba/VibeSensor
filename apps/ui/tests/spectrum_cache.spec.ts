@@ -9,7 +9,7 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-describe("createSpectrumCanvasRenderer cache reuse", () => {
+describe("createSpectrumRenderer cache reuse", () => {
   beforeEach(() => {
     installWindowGlobal();
   });
@@ -47,10 +47,10 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
       },
       async ({ prepareFrame, renderer, state }) => {
         const firstPrepared = prepareFrame();
-        renderer.renderPreparedFrame(firstPrepared);
+        renderer.render(firstPrepared);
         await flushSignalUpdates();
 
-        state.spectrum.spectra.value = {
+        state.spectra.value = {
           clients: {
             "sensor-a": {
               ...getRequiredClientSpectrum(state, "sensor-a"),
@@ -60,7 +60,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         };
 
         const nextPrepared = prepareFrame();
-        renderer.renderPreparedFrame(nextPrepared);
+        renderer.render(nextPrepared);
         await flushSignalUpdates();
 
         expect(setDataSnapshots).toHaveLength(2);
@@ -70,58 +70,6 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           true,
         );
         expect(latestSeries[0]).toBeGreaterThan(latestSeries[2] ?? 0);
-      },
-    );
-  });
-
-  test("refreshes chart bands without losing prepared spectrum data", async () => {
-    await withSpectrumRendererHarness(
-      {
-        deps: {
-          loadChartModule: async () => ({
-            createSpectrumChart(): SpectrumChart {
-              return {
-                destroy() {},
-                redraw() {},
-                resize() {},
-                setData() {},
-                setSeriesIsolation() {},
-              };
-            },
-          }),
-        },
-        seedState(state) {
-          installClientSpectra(state, [
-            {
-              client: makeClient("sensor-a", "Front Right Wheel"),
-              spectrum: makeSpectrum(),
-            },
-          ]);
-        },
-      },
-      async ({ prepareFrame, renderer, state }) => {
-        const prepared = prepareFrame();
-        renderer.renderPreparedFrame(prepared);
-        await flushSignalUpdates();
-
-        state.realtime.rotationalSpeeds.value = {
-          basis_speed_source: null,
-          wheel: { rpm: 600, mode: null, reason: null },
-          engine: { rpm: 1800, mode: null, reason: null },
-          driveshaft: { rpm: 600, mode: null, reason: null },
-          order_bands: [
-            {
-              key: "wheel_1x",
-              center_hz: 10,
-              tolerance: 0.1,
-            },
-          ],
-        };
-
-        const refreshed = renderer.refreshPreparedFrameMetadata();
-
-        expect(refreshed.hasData).toBe(true);
-        expect(refreshed.chartBands).toHaveLength(1);
       },
     );
   });
@@ -149,7 +97,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           }),
         },
         seedState(state) {
-          state.transport.wsState.value = "connected";
+          state.wsConnected.value = true;
           installClientSpectra(state, [
             {
               client: makeClient("sensor-a", "Front Right Wheel"),
@@ -159,10 +107,10 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
         },
       },
       async ({ prepareFrame, renderer, state }) => {
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
 
-        state.spectrum.spectra.value = {
+        state.spectra.value = {
           clients: {
             "sensor-a": {
               ...getRequiredClientSpectrum(state, "sensor-a"),
@@ -172,7 +120,7 @@ describe("createSpectrumCanvasRenderer cache reuse", () => {
           },
         };
 
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
 
         expect(setDataSnapshots).toHaveLength(2);

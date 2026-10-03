@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 
-import { lang } from "../src/i18n";
-import { effect } from "../src/app/ui_signals";
+import { effect, signal } from "@preact/signals";
 import type {
   CreateSpectrumChartDeps,
   SpectrumChart,
@@ -18,12 +17,7 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-// Shell signals are module-level; restore the language other tests expect.
-afterEach(() => {
-  lang.value = "en";
-});
-
-describe("createSpectrumCanvasRenderer chart lifecycle", () => {
+describe("createSpectrumRenderer chart lifecycle", () => {
   beforeEach(() => {
     installWindowGlobal();
   });
@@ -76,10 +70,9 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
       },
       async ({ prepareFrame, renderer, state }) => {
         const prepared = prepareFrame();
-        renderer.renderPreparedFrame(prepared);
+        renderer.render(prepared);
 
-        expect(state.spectrum.chartLoading.value).toBe(true);
-        expect(state.spectrum.spectrumPlot.value).toBeNull();
+        expect(state.chartLoading.value).toBe(true);
         expect(createdCharts).toHaveLength(0);
 
         chartModule.resolve({
@@ -87,10 +80,9 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
         });
         await flushSignalUpdates();
 
-        expect(state.spectrum.chartLoading.value).toBe(false);
-        expect(state.spectrum.chartLoadErrorDetail.value).toBeNull();
+        expect(state.chartLoading.value).toBe(false);
+        expect(state.chartLoadError.value).toBeNull();
         expect(createdCharts).toHaveLength(1);
-        expect(state.spectrum.spectrumPlot.value).not.toBeNull();
         expect(createdCharts[0]?.dataSnapshots.at(-1)?.[0]).toEqual([
           10, 15, 20,
         ]);
@@ -102,7 +94,7 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
   test("passes reactive chart text updates through the factory signals", async () => {
     const axisTexts: string[] = [];
     let createCalls = 0;
-    let localeState: { shell: { lang: { value: string } } } | null = null;
+    const locale = signal("en");
 
     await withSpectrumRendererHarness(
       {
@@ -124,10 +116,9 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
               };
             },
           }),
-          t: (key) => `${localeState?.shell.lang.value ?? "en"}:${key}`,
+          t: (key) => `${locale.value}:${key}`,
         },
         seedState(state) {
-          localeState = state;
           installClientSpectra(state, [
             {
               client: makeClient("sensor-a", "Front Right Wheel"),
@@ -136,12 +127,12 @@ describe("createSpectrumCanvasRenderer chart lifecycle", () => {
           ]);
         },
       },
-      async ({ prepareFrame, renderer, state }) => {
+      async ({ prepareFrame, renderer }) => {
         const prepared = prepareFrame();
-        renderer.renderPreparedFrame(prepared);
+        renderer.render(prepared);
         await flushSignalUpdates();
 
-        state.shell.lang.value = "nl";
+        locale.value = "nl";
         await flushSignalUpdates();
 
         expect(createCalls).toBe(1);

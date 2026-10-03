@@ -1,3 +1,5 @@
+import { batch } from "@preact/signals";
+
 import {
   identifyClient,
   removeClient,
@@ -5,7 +7,7 @@ import {
 } from "../../api/clients";
 import { errorMessage, requestConfirmation, showError } from "../../app_store";
 import { t } from "../../i18n";
-import { clients, selectedClientId, syncSelection } from "../../live_store";
+import { clients, syncSelection } from "../../live_store";
 
 export async function setLocation(
   clientId: string,
@@ -50,9 +52,8 @@ export async function remove(clientId: string): Promise<void> {
     showError(errorMessage(error, t("actions.remove_client_failed")));
     return;
   }
-  clients.value = clients.value.filter((client) => client.id !== clientId);
-  if (selectedClientId.value === clientId) {
-    selectedClientId.value = null;
-  }
-  syncSelection();
+  batch(() => {
+    clients.value = clients.value.filter((client) => client.id !== clientId);
+    syncSelection();
+  });
 }

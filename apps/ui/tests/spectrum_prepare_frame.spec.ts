@@ -7,7 +7,7 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-describe("createSpectrumCanvasRenderer frame preparation", () => {
+describe("createSpectrumRenderer frame preparation", () => {
   beforeEach(() => {
     installWindowGlobal();
   });

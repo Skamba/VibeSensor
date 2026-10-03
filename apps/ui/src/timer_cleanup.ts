@@ -1,7 +1,6 @@
-import { effect } from "./ui_signals";
+import { effect } from "@preact/signals";
 
 type TimeoutApi = Pick<typeof globalThis, "clearTimeout" | "setTimeout">;
-type IntervalApi = Pick<typeof globalThis, "clearInterval" | "setInterval">;
 
 type ScheduledHandleStore<Handle> = {
   clear(): void;
@@ -63,23 +62,6 @@ export function createReplaceableTimeout(
           callback();
         }, delayMs),
       );
-    },
-  };
-}
-
-export function createReplaceableInterval(
-  api: IntervalApi = globalThis,
-): ReplaceableTimer {
-  const store = createScheduledHandleStore<ReturnType<typeof setInterval>>(
-    (handle) => api.clearInterval(handle),
-  );
-
-  return {
-    clear(): void {
-      store.clear();
-    },
-    replace(callback: () => void, delayMs: number): void {
-      store.replace(api.setInterval(callback, delayMs));
     },
   };
 }

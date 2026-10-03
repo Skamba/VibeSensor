@@ -1,42 +1,9 @@
-import type { SpectrumChart } from "../spectrum_chart";
 import type {
   SpectrumClientData,
   SpectrumFrameData,
-} from "../transport/live_models";
-import { signal } from "./ui_signals";
-import type { SignalState } from "./signal_state";
+} from "./transport/live_models";
 
-export interface ChartBand {
-  label: string;
-  min_hz: number;
-  max_hz: number;
-  color: string;
-}
-
-export interface SpectrumTickUpdate {
-  spectra: SpectrumFrameData;
-  hasSpectrumData: boolean;
-  hasNewSpectrumFrame: boolean;
-}
-
-export interface SpectrumStateValue {
-  spectrumPlot: SpectrumChart | null;
-  spectra: SpectrumFrameData;
-  chartBands: ChartBand[];
-  hasSpectrumData: boolean;
-  chartLoading: boolean;
-  chartLoadErrorDetail: string | null;
-  framePrepareErrorDetail: string | null;
-}
-
-export type SpectrumState = SignalState<SpectrumStateValue>;
-
-function hasRenderableSpectrumData(spectra: SpectrumFrameData): boolean {
-  return Object.values(spectra.clients).some(
-    (clientSpec) =>
-      clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
-  );
-}
+/** Pure helpers for applying live payloads. */
 
 function hasSpectrumFingerprint(
   spectra: SpectrumFrameData,
@@ -132,59 +99,44 @@ function areSpectrumFramesEqual(
   return true;
 }
 
-export function applySpectrumTick(
-  previousSpectra: SpectrumFrameData,
-  previousHasSpectrumData: boolean,
-  incomingSpectra: SpectrumFrameData | null,
-): SpectrumTickUpdate {
-  if (!incomingSpectra) {
-    return {
-      spectra: previousSpectra,
-      hasSpectrumData: previousHasSpectrumData,
-      hasNewSpectrumFrame: false,
-    };
+/**
+ * The spectra to keep after a payload: the previous object when the payload
+ * has none or an identical frame (so the chart does not redraw), else the new.
+ */
+export function mergeSpectra(
+  previous: SpectrumFrameData,
+  incoming: SpectrumFrameData | null,
+): SpectrumFrameData {
+  if (!incoming) {
+    return previous;
   }
-  if (
-    hasSpectrumFingerprint(previousSpectra) &&
-    hasSpectrumFingerprint(incomingSpectra)
-  ) {
-    if (
-      previousSpectra.frame_fingerprint === incomingSpectra.frame_fingerprint
-    ) {
-      return {
-        spectra: previousSpectra,
-        hasSpectrumData: previousHasSpectrumData,
-        hasNewSpectrumFrame: false,
-      };
-    }
-    return {
-      spectra: incomingSpectra,
-      hasSpectrumData: hasRenderableSpectrumData(incomingSpectra),
-      hasNewSpectrumFrame: true,
-    };
+  if (hasSpectrumFingerprint(previous) && hasSpectrumFingerprint(incoming)) {
+    return previous.frame_fingerprint === incoming.frame_fingerprint
+      ? previous
+      : incoming;
   }
-  if (areSpectrumFramesEqual(previousSpectra, incomingSpectra)) {
-    return {
-      spectra: previousSpectra,
-      hasSpectrumData: previousHasSpectrumData,
-      hasNewSpectrumFrame: false,
-    };
-  }
-  return {
-    spectra: incomingSpectra,
-    hasSpectrumData: hasRenderableSpectrumData(incomingSpectra),
-    hasNewSpectrumFrame: true,
-  };
+  return areSpectrumFramesEqual(previous, incoming) ? previous : incoming;
 }
 
-export function createSpectrumState(): SpectrumState {
-  return {
-    spectrumPlot: signal<SpectrumChart | null>(null),
-    spectra: signal<SpectrumFrameData>({ clients: {} }),
-    chartBands: signal<ChartBand[]>([]),
-    hasSpectrumData: signal(false),
-    chartLoading: signal(false),
-    chartLoadErrorDetail: signal<string | null>(null),
-    framePrepareErrorDetail: signal<string | null>(null),
+/**
+ * Sends the selected sensor to the server once per connection: again after
+ * every reconnect, and whenever the selection changes while connected.
+ */
+export function createSelectionSender(
+  send: (clientId: string | null) => void,
+): (ready: boolean, clientId: string | null) => void {
+  let cycle = 0;
+  let wasReady = false;
+  let lastSent: string | null = null;
+  return (ready, clientId) => {
+    if (ready && !wasReady) {
+      cycle += 1;
+    }
+    wasReady = ready;
+    const key = `${cycle}:${clientId}`;
+    if (ready && key !== lastSent) {
+      lastSent = key;
+      send(clientId);
+    }
   };
 }

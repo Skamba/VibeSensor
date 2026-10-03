@@ -40,7 +40,7 @@ export function installTimerHarness(): TimerHarness {
   };
 }
 
-export async function flushAsyncWork(rounds = 12): Promise<void> {
+async function flushAsyncWork(rounds = 12): Promise<void> {
   for (let index = 0; index < rounds; index += 1) {
     await new Promise<void>((resolve) => {
       setImmediate(() => resolve());

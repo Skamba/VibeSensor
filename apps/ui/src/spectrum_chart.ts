@@ -9,12 +9,7 @@ import {
   type SpectrumChartBox,
   type SpectrumChartRange,
 } from "./spectrum_chart_model";
-import {
-  computed,
-  effect,
-  signal,
-  type ReadonlySignal,
-} from "./app/ui_signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 
 export interface SpectrumSeriesMeta {
   label: string;

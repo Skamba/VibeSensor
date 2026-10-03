@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { createRafAnimation, type RafApi } from "../src/app/dom/raf_animation";
+import {
+  createRafAnimation,
+  type RafApi,
+} from "../src/pages/spectrum/spectrum_animation";
 
 function createFakeRafApi() {
   let nextHandle = 1;

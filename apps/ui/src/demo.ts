@@ -1,25 +1,8 @@
-import { defaultLiveAnalysisConfig } from "../constants";
-import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import {
-  composeVehicleSettings,
-  defaultCarAspectSettings,
-} from "../vehicle_settings";
-import type { AppState } from "./ui_app_state";
-import { batch } from "./ui_signals";
+import { defaultLiveAnalysisConfig } from "./constants";
+import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "./transport/live_models";
 
-type DemoDeps = {
-  ingestTransportPayload(payload: unknown): void;
-  state: Pick<AppState, "settings">;
-};
-
-declare global {
-  interface Window {
-    __vibesensorDemoCleanup?: () => void;
-  }
-}
-
-export function runDemoMode(deps: DemoDeps): void {
-  const { state } = deps;
+/** The canned live payload `?demo` shows instead of connecting to a server. */
+export function demoPayload(): Record<string, unknown> {
   const demoSampleRateHz = defaultLiveAnalysisConfig.sampleRateHz;
   const spectrumMaxHz = defaultLiveAnalysisConfig.spectrumMaxHz;
 
@@ -166,7 +149,7 @@ export function runDemoMode(deps: DemoDeps): void {
     };
   });
 
-  const demoPayload = {
+  return {
     schema_version: EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION,
     server_time: new Date().toISOString(),
     clients: demoClients,
@@ -198,24 +181,11 @@ export function runDemoMode(deps: DemoDeps): void {
     },
     spectra: { clients: demoSpectra },
   };
-
-  batch(() => {
-    state.settings.car.carsLoaded.value = true;
-    state.settings.car.cars.value = [
-      {
-        id: "demo-car-1",
-        name: "Demo Hatch",
-        type: "Simulated setup",
-        variant: "Audit baseline",
-        aspects: composeVehicleSettings(
-          defaultCarAspectSettings,
-          state.settings.analysis.vehicleSettings.value,
-        ),
-      },
-    ];
-    state.settings.car.activeCarId.value = "demo-car-1";
-  });
-  deps.ingestTransportPayload(demoPayload);
-
-  window.__vibesensorDemoCleanup = undefined;
 }
+
+export const DEMO_CAR = {
+  id: "demo-car-1",
+  name: "Demo Hatch",
+  type: "Simulated setup",
+  variant: "Audit baseline",
+} as const;
