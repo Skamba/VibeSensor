@@ -38,8 +38,8 @@ from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
-from vibesensor.report.input import PreparedReportInput
 from vibesensor.report.service import HistoryReportService
+from vibesensor.report.view_model import ReportView
 from vibesensor.settings.services import build_settings_services
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.obd.service import ObdService
@@ -67,11 +67,11 @@ class AppRuntime:
     web: WebServices
 
 
-def _build_prepared_pdf_bytes(prepared: PreparedReportInput) -> bytes:
-    """Render a prepared report input to PDF (reportlab is imported on first use)."""
-    from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
+def _render_report_pdf(view: ReportView) -> bytes:
+    """Render a report view to PDF (reportlab is imported on first use)."""
+    from vibesensor.report.pdf import render_report_pdf
 
-    return build_prepared_report_pdf(prepared)
+    return render_report_pdf(view)
 
 
 def create_history_db(
@@ -246,7 +246,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             HistoryRunService(history),
             current_car_reader=settings.settings_reader,
         ),
-        report_service=HistoryReportService(history, pdf_renderer=_build_prepared_pdf_bytes),
+        report_service=HistoryReportService(history, pdf_renderer=_render_report_pdf),
         export_service=ProjectedHistoryExportService(HistoryExportService(history)),
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,

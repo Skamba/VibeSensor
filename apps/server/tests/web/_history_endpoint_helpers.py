@@ -32,8 +32,9 @@ from vibesensor.recording.sensor_frame_mapping import (
     sensor_frame_from_mapping,
     sensor_frame_to_json_object,
 )
-from vibesensor.report.pdf.pdf_engine import build_prepared_report_pdf
+from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.service import HistoryReportService, PdfRendererFn
+from vibesensor.report.view_model import ReportView
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.web.health_state import RuntimeHealthState
@@ -44,12 +45,9 @@ from vibesensor.web.history_services import (
 from vibesensor.web.router import create_router
 
 
-def _real_pdf_renderer(prepared: object) -> bytes:
-    """Default test renderer wiring the real adapter pipeline."""
-    from vibesensor.report.input import PreparedReportInput
-
-    assert isinstance(prepared, PreparedReportInput)
-    return build_prepared_report_pdf(prepared)
+def _real_pdf_renderer(view: ReportView) -> bytes:
+    """Default test renderer: the real ReportLab renderer."""
+    return render_report_pdf(view)
 
 
 def make_metadata(**overrides: Any) -> dict[str, Any]:

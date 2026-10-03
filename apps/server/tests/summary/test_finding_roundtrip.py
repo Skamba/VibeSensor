@@ -163,27 +163,18 @@ class TestFindingRoundtrip:
         assert restored.origin is not None
         assert restored.origin.reason == "Strong 1x wheel order detected"
 
-    def test_confidence_assessment_preserved(self) -> None:
-        original = Finding(
-            finding_id="F007",
-            suspected_source=VibrationSource.WHEEL_TIRE,
-            confidence=0.7,
-            weak_spatial_separation=True,
-        ).with_confidence_assessment(
-            strength_band_key="moderate",
-            steady_speed=True,
-            has_reference_gaps=False,
-            sensor_count=4,
-        )
+    def test_confidence_level_preserved_including_negligible_cap(self) -> None:
+        for band in ("moderate", "negligible"):
+            original = Finding(
+                finding_id="F007",
+                suspected_source=VibrationSource.WHEEL_TIRE,
+                confidence=0.8,
+            ).with_strength_band(band)
 
-        restored = _roundtrip(original)
+            restored = _roundtrip(original)
 
-        assert restored.confidence_assessment is not None
-        assert original.confidence_assessment is not None
-        assert restored.confidence_assessment.label_key == original.confidence_assessment.label_key
-        assert restored.confidence_assessment.tone == original.confidence_assessment.tone
-        assert restored.confidence_assessment.pct_text == original.confidence_assessment.pct_text
-        assert restored.confidence_assessment.level == original.confidence_assessment.level
+            assert restored.confidence_level is original.confidence_level
+            assert restored.negligible_strength is original.negligible_strength
 
     def test_decode_ignores_pure_presentation_hints(self) -> None:
         baseline_payload = finding_payload_from_domain(

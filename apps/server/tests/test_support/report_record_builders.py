@@ -2,27 +2,20 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
 
 from test_support.core import canonicalize_run_context_metadata
 from vibesensor.analysis._run_input import normalize_run_metadata
+from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,
 )
 from vibesensor.recording.run_metadata_builder import create_run_metadata
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
+from vibesensor.summary.contracts import AnalysisSummary
 
 RUN_END = {"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"}
-
-
-def write_jsonl(path: Path, records: list[dict]) -> None:
-    """Write a list of dicts as newline-delimited JSON."""
-    path.write_text(
-        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
-        encoding="utf-8",
-    )
 
 
 def report_run_metadata(
@@ -223,8 +216,8 @@ def analysis_sample_with_peaks(
     return sample
 
 
-def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None:
-    """Write a small run log with precomputed strength metrics."""
+def sample_log_records(n_samples: int = 20, speed: float = 85.0) -> list[dict[str, Any]]:
+    """A small run's records (metadata, samples with precomputed strength metrics, run end)."""
     metadata = run_metadata_to_json_object(
         create_run_metadata(
             run_id="test-run",
@@ -243,12 +236,7 @@ def write_test_log(path: Path, n_samples: int = 20, speed: float = 85.0) -> None
         "run_id": "test-run",
         "end_time_utc": "2025-01-01T00:10:00+00:00",
     }
-    records = [metadata] + samples + [end]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        "\n".join(json.dumps(r, ensure_ascii=False) for r in records) + "\n",
-        encoding="utf-8",
-    )
+    return [metadata, *samples, end]
 
 
 def make_order_finding_samples(
@@ -271,3 +259,26 @@ def make_order_finding_samples(
         }
         for i in range(n)
     ]
+
+
+def summarize_records(
+    records: list[dict],
+    *,
+    lang: str | None = None,
+    include_samples: bool = True,
+) -> AnalysisSummary:
+    """Analyse run-log style records (metadata, samples, optional run end) in memory."""
+    metadata = next(record for record in records if record.get("record_type") == "run_metadata")
+    end = next((record for record in records if record.get("record_type") == "run_end"), None)
+    if end is not None and end.get("end_time_utc") and not metadata.get("end_time_utc"):
+        metadata = {**metadata, "end_time_utc": end["end_time_utc"]}
+    samples = [record for record in records if record.get("record_type") == "sample"]
+    return summarize_sensor_frames(
+        run_metadata_from_mapping(metadata),
+        [
+            sensor_frame_from_mapping(sample, strict=True, source="sample record")
+            for sample in samples
+        ],
+        lang=lang,
+        include_samples=include_samples,
+    )

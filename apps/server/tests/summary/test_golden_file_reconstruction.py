@@ -55,7 +55,7 @@ class TestGoldenFileReconstruction:
     def test_findings_reconstructed(self, golden_summary: dict) -> None:
         test_run = _reconstruct(golden_summary)
         for finding in test_run.findings:
-            assert finding.confidence_assessment is not None
+            assert finding.confidence_level is not None
 
     def test_speed_profile_from_boundary_snapshots_matches(self, golden_summary: dict) -> None:
         test_run = _reconstruct(golden_summary)

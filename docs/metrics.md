@@ -124,11 +124,9 @@ Hysteresis and persistence logic is handled in `severity.severity_from_peak()`:
 
 ## Run persistence fields
 
-Current runtime history stores sample metrics in SQLite `samples_v2` typed
-columns; the legacy/CLI JSONL boundary uses the same `SensorFrame` field names.
-See `docs/history_db_schema.md` for the current DB schema and
-`docs/run_schema_v2.md` for the legacy JSONL boundary. This section lists only
-metric fields, not the full persistence schema.
+Runtime history stores sample metrics in SQLite `samples_v2` typed columns
+with the `SensorFrame` field names. See `docs/history_db_schema.md` for the DB
+schema. This section lists only metric fields, not the full persistence schema.
 
 ### Metric fields
 
@@ -143,8 +141,7 @@ metric fields, not the full persistence schema.
 
 ### Removed fields (previously present, now deleted)
 
-The following fields were removed to eliminate ambiguity. They are no longer written and will
-be stripped from old records by `normalize_sample_record()`:
+The following fields were removed to eliminate ambiguity. They are no longer written or read:
 
 - `vib_mag_rms_g` — removed; was RMS of 3-axis combined magnitude
 - `vib_mag_p2p_g` — removed; was peak-to-peak of 3-axis combined magnitude

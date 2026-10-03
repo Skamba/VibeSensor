@@ -8,7 +8,6 @@ from _history_endpoint_helpers import (
     FakeHistoryDB,
     FakeLiveWs,
     FakeState,
-    _real_pdf_renderer,
     make_app_and_state,
     make_metadata,
     make_status_app,
@@ -16,10 +15,8 @@ from _history_endpoint_helpers import (
 )
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
-from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.analysis.summarize import summarize_run_data
-from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.web.router import create_router
 
 
@@ -48,59 +45,8 @@ def test_report_pdf_respects_lang_query() -> None:
 
     assert en.content.startswith(b"%PDF")
     assert nl.content.startswith(b"%PDF")
-    assert en.content == nl.content
-
-
-def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
-    app, state = make_app_and_state(language="nl")
-    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-    with TestClient(app) as client:
-        nl = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
-        en = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
-
-    assert nl.content.startswith(b"%PDF")
-    assert en.content.startswith(b"%PDF")
-
-    nl_text = _pdf_text(nl.content)
-    text_from_en_request = _pdf_text(en.content)
-    assert "vibesensor-diagnoserapport" in nl_text
-    assert "vibesensor-diagnoserapport" in text_from_en_request
-    assert "diagnostic worksheet" not in text_from_en_request
-
-
-def test_report_pdf_lang_override_when_template_data_persisted() -> None:
-    metadata = make_metadata(language="nl")
-    samples = [sample(i) for i in range(20)]
-    analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
-    analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-
-    render_count = 0
-    real_renderer = _real_pdf_renderer
-
-    def counting_renderer(prepared: object) -> bytes:
-        nonlocal render_count
-        render_count += 1
-        return real_renderer(prepared)
-
-    db = FakeHistoryDB(metadata, samples, analysis)
-    state = FakeState(db, FakeLiveWs(), pdf_renderer=counting_renderer)
-    app = create_router(state)
-    from fastapi import FastAPI
-
-    fastapi_app = FastAPI()
-    fastapi_app.include_router(app)
-    with TestClient(fastapi_app) as client:
-        nl = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
-        en = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
-
-    assert render_count == 1
-    assert nl.content.startswith(b"%PDF")
-    assert en.content.startswith(b"%PDF")
-    nl_text = _pdf_text(nl.content)
-    text_from_en_request = _pdf_text(en.content)
-    assert "vibesensor-diagnoserapport" in nl_text
-    assert "vibesensor-diagnoserapport" in text_from_en_request
-    assert "diagnostic worksheet" not in text_from_en_request
+    assert "vibesensor vibration report" in _pdf_text(en.content)
+    assert "vibesensor-trillingsrapport" in _pdf_text(nl.content)
 
 
 def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
@@ -120,29 +66,10 @@ def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
     assert first.content == second.content == b"%PDF-cached"
 
 
-def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
-    call_count = 0
-
-    def fake_renderer(_prepared: object) -> bytes:
-        nonlocal call_count
-        call_count += 1
-        return b"%PDF-cached-cross-lang"
-
-    app, state = make_app_and_state(language="nl", pdf_renderer=fake_renderer)
-    state.history_db.analysis["_report_template_data"] = {"lang": "nl", "title": "legacy"}
-    with TestClient(app) as client:
-        first = client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
-        second = client.get("/api/history/run-1/report.pdf", params={"lang": "nl"})
-
-    assert call_count == 1
-    assert first.content == second.content == b"%PDF-cached-cross-lang"
-
-
 def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
 
     @dataclass
     class TimestampFlipDB(FakeHistoryDB):
@@ -168,55 +95,6 @@ def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> No
 
     state = FakeState(
         TimestampFlipDB(metadata, samples, analysis),
-        FakeLiveWs(),
-        pdf_renderer=fake_renderer,
-    )
-    from fastapi import FastAPI
-
-    app = FastAPI()
-    app.include_router(create_router(state))
-    with TestClient(app) as client:
-        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
-        client.get("/api/history/run-1/report.pdf", params={"lang": "en"})
-
-    assert call_count == 2
-
-
-def test_report_pdf_cache_invalidates_when_analysis_content_changes() -> None:
-    metadata = make_metadata()
-    samples = [sample(i) for i in range(20)]
-    first_analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    first_analysis["_report_template_data"] = {"lang": "en", "title": "legacy"}
-    second_analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-    second_analysis["_report_template_data"] = {"lang": "en", "title": "updated"}
-
-    @dataclass
-    class AnalysisFlipDB(FakeHistoryDB):
-        analyses: list[AnalysisSummary] = field(default_factory=list)
-        idx: int = 0
-
-        def get_run(self, run_id: str):
-            result = super().get_run(run_id)
-            if result is None:
-                return None
-            analysis = self.analyses[min(self.idx, len(self.analyses) - 1)]
-            self.idx += 1
-            return replace(result, analysis=make_persisted_analysis(analysis))
-
-    call_count = 0
-
-    def fake_renderer(_prepared: object) -> bytes:
-        nonlocal call_count
-        call_count += 1
-        return b"%PDF-analysis-versioned"
-
-    state = FakeState(
-        AnalysisFlipDB(
-            metadata,
-            samples,
-            first_analysis,
-            analyses=[first_analysis, second_analysis],
-        ),
         FakeLiveWs(),
         pdf_renderer=fake_renderer,
     )

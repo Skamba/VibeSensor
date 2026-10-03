@@ -23,6 +23,7 @@ from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
+from vibesensor.domain.finding_types import ConfidenceLevel
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.summary.finding_fields import (
     finding_from_payload,
@@ -63,7 +64,7 @@ def test_finding_payload_round_trip_preserves_consumer_fields() -> None:
         "phases_detected": ["cruise", "acceleration"],
     }
     assert payload["matched_points"][0]["location"] == "front-left wheel"
-    assert round_trip.confidence_assessment is not None
+    assert round_trip.confidence_level is ConfidenceLevel.STRONG
     assert round_trip.phases_detected == ("cruise", "acceleration")
     assert round_trip.matched_points[0].location == "front-left wheel"
     assert round_trip.matched_points[0].phase == "cruise"

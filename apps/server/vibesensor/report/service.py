@@ -1,8 +1,7 @@
-"""PDF report build coordination for persisted history runs.
+"""PDF report delivery for stored history runs.
 
 Framework-agnostic: raises domain exceptions from ``vibesensor.common.exceptions``
-rather than HTTP-specific exceptions.  The routes layer translates domain
-exceptions to HTTP status codes.
+rather than HTTP-specific exceptions. The routes layer translates them.
 """
 
 from __future__ import annotations
@@ -11,15 +10,20 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from vibesensor.common.exceptions import AnalysisNotReadyError
+from vibesensor.common.filenames import safe_filename
+from vibesensor.history.helpers import async_require_run, require_analysis_ready
 from vibesensor.report.cache import HistoryReportPdfCache
-from vibesensor.report.input import PreparedReportInput
-from vibesensor.report.loader import HistoryReportRequestLoader
+from vibesensor.report.i18n import normalize_lang
+from vibesensor.report.view_model import ReportView, build_report_view
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
 
-#: Callable that turns a prepared canonical report input into PDF bytes.
-PdfRendererFn = Callable[[PreparedReportInput], bytes]
+__all__ = ["HistoryReportPdf", "HistoryReportService", "PdfRendererFn"]
+
+#: Renders a report view to PDF bytes (injected so reportlab loads on first use).
+type PdfRendererFn = Callable[[ReportView], bytes]
 
 
 @dataclass(frozen=True)
@@ -31,31 +35,28 @@ class HistoryReportPdf:
 
 
 class HistoryReportService:
-    """Coordinate cached PDF generation for persisted history reports."""
+    """Build (and cache) the PDF report of one stored run."""
 
-    __slots__ = (
-        "_loader",
-        "_pdf_cache",
-        "_pdf_renderer",
-    )
+    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer")
 
-    def __init__(
-        self,
-        history_db: HistoryDB,
-        *,
-        pdf_renderer: PdfRendererFn,
-    ) -> None:
-        self._loader = HistoryReportRequestLoader(history_db)
+    def __init__(self, history_db: HistoryDB, *, pdf_renderer: PdfRendererFn) -> None:
+        self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
         self._pdf_renderer = pdf_renderer
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
-        request = await self._loader.load_report_request(run_id, requested_lang)
-        cached_pdf = self._pdf_cache.get(request.cache_key)
-        if cached_pdf is not None:
-            return HistoryReportPdf(content=cached_pdf, filename=request.filename)
+        """Render the run's report in the requested language (default: the run's)."""
+        run = await async_require_run(self._history_db, run_id)
+        analysis = require_analysis_ready(run)
+        if "diagnosis" not in analysis.payload:
+            raise AnalysisNotReadyError(
+                "Report data unavailable for this run. Re-analyze to regenerate the PDF."
+            )
+        lang = normalize_lang(requested_lang or analysis.language or run.metadata.language)
         pdf = await self._pdf_cache.get_or_build(
-            request.cache_key,
-            lambda: self._pdf_renderer(request.prepared),
+            (run_id, lang, run.analysis_completed_at),
+            lambda: self._pdf_renderer(
+                build_report_view(analysis.payload, run.metadata, lang=lang)
+            ),
         )
-        return HistoryReportPdf(content=pdf, filename=request.filename)
+        return HistoryReportPdf(content=pdf, filename=f"{safe_filename(run_id)}_report.pdf")

@@ -9,20 +9,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_support.history_db_lifecycle import run_samples
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.analysis.summarize import build_findings_for_samples, summarize_run_data
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
-from vibesensor.recording.run_log import normalize_sample_record
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
-from vibesensor.recording.sensor_frame_mapping import sensor_frame_to_json_object
-from vibesensor.report.document.builder import build_report_document
-from vibesensor.report.pdf.pdf_engine import build_report_pdf
-from vibesensor.report.preparation import prepare_report_input
 
 # ---------------------------------------------------------------------------
 # Helpers / Fixtures
@@ -297,12 +291,6 @@ def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_build_report_pdf_rejects_invalid_type() -> None:
-    """build_report_pdf raises TypeError for non-RTD input."""
-    with pytest.raises(TypeError, match="expects ReportDocument"):
-        build_report_pdf("not a valid input")
-
-
 # ---------------------------------------------------------------------------
 # Fix 16: Insights response stripping
 # ---------------------------------------------------------------------------
@@ -340,65 +328,3 @@ def test_report_cli_summary_excludes_samples_for_pdf() -> None:
 # ---------------------------------------------------------------------------
 # End-to-end pipeline test
 # ---------------------------------------------------------------------------
-
-
-def test_end_to_end_pipeline(db: HistoryDB) -> None:
-    """Full pipeline: create → record → finalize → analyze → persist → report."""
-    run_id = "e2e-test-run"
-    metadata = _simple_metadata(run_id)
-    db.create_run(run_id, _START, _run_metadata(run_id))
-    run = db.get_run(run_id)
-    assert run is not None
-    assert run.status.value == "recording"
-
-    samples = _simple_samples(30)
-    db.append_samples(run_id, [normalize_sample_record(sample) for sample in samples])
-
-    db.finalize_run(run_id, _END)
-    run = db.get_run(run_id)
-    assert run is not None
-    assert run.status.value == "analyzing"
-
-    read_samples = run_samples(db, run_id)
-    normalized = [sensor_frame_to_json_object(sample) for sample in read_samples]
-    summary = summarize_run_data(
-        metadata,
-        normalized,
-        lang="en",
-        file_name=run_id,
-        include_samples=False,
-    )
-    assert isinstance(summary, dict)
-    assert "findings" in summary
-    assert "top_causes" in summary
-    assert "run_suitability" in summary
-    assert "samples" not in summary
-
-    db.store_analysis(run_id, make_persisted_analysis(summary))
-    run = db.get_run(run_id)
-    assert run is not None
-    assert run.status.value == "complete"
-
-    run = db.get_run(run_id)
-    assert run is not None
-    analysis = run.analysis
-    assert analysis is not None
-
-    report_data = build_report_document(prepare_report_input(analysis.to_json_object()))
-    pdf_bytes = build_report_pdf(report_data)
-    assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000
-    assert pdf_bytes[:5] == b"%PDF-"
-
-    # Idempotency — second store_analysis should be skipped
-    db.store_analysis(
-        run_id,
-        make_persisted_analysis({"findings": [{"id": "should-not-overwrite"}]}),
-    )
-    run2 = db.get_run(run_id)
-    assert run2 is not None
-    assert run2.analysis is not None
-    assert run2.analysis.get("run_id") == run_id
-
-    assert "sensor_statistics_by_location" not in analysis
-    assert analysis.get("report_date") == _END

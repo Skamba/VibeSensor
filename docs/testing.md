@@ -59,7 +59,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 `apps/server/tests/` mirrors the backend package layout: a change to
 `vibesensor/<package>/...` starts in `apps/server/tests/<package>/` (for example
 `vibesensor/recording/recorder.py` -> `apps/server/tests/recording/`,
-`vibesensor/report/pdf/` -> `apps/server/tests/report/`,
+`vibesensor/report/pdf.py` -> `apps/server/tests/report/`,
 `vibesensor/speed/obd/` -> `apps/server/tests/speed/obd/`).
 
 - Cross-cutting regressions go in `apps/server/tests/integration/`.

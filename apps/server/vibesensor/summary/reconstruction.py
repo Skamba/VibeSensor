@@ -153,55 +153,7 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
         else None
     )
 
-    _steady = speed_profile.steady_speed if speed_profile is not None else True
     sensor_loc_list = _summary_sensor_locations(payload)
-    _sensor_count = max(len(sensor_loc_list), 1)
-    _amp_summary = payload.get("amplitude_summary")
-    _band_key = (
-        _amp_summary.get("overall_band", "moderate")
-        if isinstance(_amp_summary, Mapping)
-        else "moderate"
-    )
-    _has_ref_gaps = suitability.has_reference_gaps if suitability else False
-
-    findings = tuple(
-        replace(
-            f,
-            confidence_assessment=replace(
-                f.confidence_assessment,
-                steady_speed=_steady,
-                has_reference_gaps=_has_ref_gaps,
-                weak_spatial=f.weak_spatial_separation,
-            ),
-        )
-        if f.confidence_assessment is not None
-        else f.with_confidence_assessment(
-            strength_band_key=_band_key,
-            steady_speed=_steady,
-            has_reference_gaps=_has_ref_gaps,
-            sensor_count=_sensor_count,
-        )
-        for f in findings
-    )
-    top_causes = tuple(
-        replace(
-            f,
-            confidence_assessment=replace(
-                f.confidence_assessment,
-                steady_speed=_steady,
-                has_reference_gaps=_has_ref_gaps,
-                weak_spatial=f.weak_spatial_separation,
-            ),
-        )
-        if f.confidence_assessment is not None
-        else f.with_confidence_assessment(
-            strength_band_key=_band_key,
-            steady_speed=_steady,
-            has_reference_gaps=_has_ref_gaps,
-            sensor_count=_sensor_count,
-        )
-        for f in top_causes
-    )
 
     setup = RunSetup(
         sensors=Sensor.from_location_codes(sensor_loc_list) if sensor_loc_list else (),

@@ -13,7 +13,7 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
    telemetry lives in `apps/server/vibesensor/dsp/order_bands.py`.
 3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
    diagnostics pipeline entrypoint. Boundary helpers such as
-   `summarize_run_data()` / `summarize_log()` live in
+   `summarize_run_data()` / `summarize_sensor_frames()` live in
    `apps/server/vibesensor/analysis/summarize.py` and call the
    diagnostics entrypoint explicitly.
 4. **Public API** — external app/domain code imports from
@@ -117,7 +117,7 @@ run's persisted analysis.
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
-| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_log` | `analysis/summary_payload.py`, `analysis/summarize.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
+| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_run_data`, `summarize_sensor_frames` | `analysis/summary_payload.py`, `analysis/summarize.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Data Flow
 
@@ -170,13 +170,10 @@ The core
 history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an
 explicit advisory overlay at the history delivery boundary, not a hidden input
-to the persisted projection or the default report cache path. Report endpoints
-rebuild a `ReportDocument` from the persisted summary on demand via
-`report/preparation.py:prepare_report_input()`, which
-reconstructs the domain aggregate and assembles the prepared report handoff,
-and `report/document/builder.py:build_report_document()`,
-which performs the final document assembly before adapter-local PDF render
-planning.
+to the persisted projection or the default report cache path. The PDF report
+translates the persisted summary (its `diagnosis` block) plus the run metadata
+on demand (`report/view_model.py`, rendered by `report/pdf.py`; see
+`docs/report_pipeline.md`).
 
 Persisted post-stop analysis strength/intensity outputs are in dB. The one
 exception is the `diagnosis` block (`analysis/diagnosis.py`), which reports
@@ -203,8 +200,8 @@ the PDF both show:
   `weak_reasons` codes; `order_findings` repeats those facts per surfaced
   order-tracked finding (diagnosed one first) as workshop worksheet rows.
 - `zone`: a corner for wheel/tire faults (an axle when two corners on one axle
-  are within 1.5×), `engine_bay` for engine orders, and an axle or
-  `driveshaft_tunnel` for driveline orders.
+  are within 1.5×, `all_wheels` when three or more are), `engine_bay` for
+  engine orders, and an axle or `driveshaft_tunnel` for driveline orders.
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
   strongest location with order markers, `source_checks`
@@ -218,10 +215,8 @@ the PDF both show:
    (or create a new one under `analysis/`).
 2. Call it from `RunAnalysis.summarize()` at the correct point in the
    pipeline.
-3. If the new output is needed by the renderer, persist it through the
-   `summary/` contract, add any report-facing shaping in `report/` or
-   `report/document/`, then update
-   `build_report_document()` and `ReportDocument`. Keep semantic
-   interpretation on the reporting-boundary side rather than in
-   `report/pdf/*`.
+3. If the report needs the new output, persist it through the `summary/`
+   contract (usually the `diagnosis` block), then translate it in
+   `report/view_model.py` and draw it in `report/pdf.py`. The report never
+   re-derives analysis facts.
 4. Run `pytest apps/server/tests/` to verify tests still pass.

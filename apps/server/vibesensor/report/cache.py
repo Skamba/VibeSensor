@@ -7,10 +7,13 @@ from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from vibesensor.report.cache_key import ReportPdfCacheKey
+__all__ = ["HistoryReportPdfCache", "ReportPdfCacheKey"]
 
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
 REPORT_PDF_CACHE_MAX_BYTES = 16 * 1024 * 1024
+
+type ReportPdfCacheKey = tuple[str, str, str | None]
+"""``(run_id, language, analysis_completed_at)``: a re-analysis invalidates the PDF."""
 
 
 @dataclass(frozen=True, slots=True)

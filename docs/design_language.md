@@ -2,7 +2,7 @@
 
 This repo uses a **minimal, flat design system** with a purple accent for both:
 - `apps/ui/` (web application) — auto light/dark via `prefers-color-scheme`
-- `apps/server/vibesensor/report/pdf/` (generated PDF reports) — light/print-friendly
+- `apps/server/vibesensor/report/pdf.py` (generated PDF reports) — light/print-friendly
 
 ## Goals
 - One visual system across live UI and exported reports.
@@ -26,8 +26,8 @@ Core token roles:
 Web tokens are defined in:
 - `apps/ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
-Report tokens are defined in:
-- `apps/server/vibesensor/report/pdf/pdf_style.py`
+Report colors are defined at the top of:
+- `apps/server/vibesensor/report/pdf.py`
 
 ## Theme
 - **Auto theme**: default follows system preference (`prefers-color-scheme`).
@@ -75,50 +75,35 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 
 ## PDF Report Layout
 
-The generated PDF uses A4 portrait and starts with a **one-glance verdict page**:
+A4 portrait, built-in Helvetica, light/print-friendly, drawn by
+`apps/server/vibesensor/report/pdf.py` from the `ReportView` built in
+`report/view_model.py` (see `docs/report_pipeline.md`):
 
-### Page structure
-1. **Verdict page** (page 1) — compact date/car/run metadata, primary source,
-   inspect-first target, short reason, a compact decision path, concise proof
-   rows, ranked source-comparison bars, and the first action plus
-   confirm/clean/parts-gate outcomes. Page 1 intentionally omits the run
-   timeline and support-duration phrasing that can be confused with elapsed
-   runtime. The action preview must not truncate the instruction, the lower
-   layout should use the available vertical space for useful proof/inspection
-   facts, and fallback wording should be operational (for example, "If the
-   primary path is clean: inspect the fallback path") rather than vague caveat
-   language.
-2. **Appendix / evidence pages** — Appendix-B style location proof and hotspot
-   diagrams, Appendix-C diagnosis proof packs, worksheet/action-matrix guidance,
-   and diagnostic peak/evidence tables are rendered from the canonical
-   `ReportDocument`, not by re-running diagnostics in the PDF adapter.
-3. **Inspection path** — full action-card detail, alternatives,
-   confirm/falsify guidance, and longer evidence/context that does not belong on
-   the glanceable verdict page.
+1. **Owner page**: a header band, then the verdict box. The verdict box is
+   tinted by verdict and level: green for no fault, amber for Moderate, red for
+   Strong, grey for weak evidence. It holds one confidence chip (the level word
+   and its action meaning) and one plain sentence. Below that, the next step,
+   fallback step, and check-the-fix boxes, with the car diagram beside them.
+2. **Workshop page**: test conditions grid, findings table (diagnosed row
+   tinted), amplitude table, ruled-out list, spectrum and amplitude-vs-speed
+   charts, and the shop-request box.
+3. **Data quality page**: only when a check warns. Otherwise this information
+   is one footer line on page 2.
 
-### Primitives
-| Primitive | File | Purpose |
-|-----------|------|---------|
-| `parts_for_pattern(system, order)` | `apps/server/vibesensor/report/document/pattern_parts.py` | Centralized pattern-to-parts mapping |
-| `strength_text(db_value, lang)` | `apps/server/vibesensor/report/presentation.py` | Natural-language strength label with dB |
-| `ConfidenceAssessment.tier` | `apps/server/vibesensor/domain/confidence_assessment.py` | Report layout tier (A/B/C) for section visibility |
+Rules:
 
-### Card tone tokens (`apps/server/vibesensor/report/pdf/pdf_style.py`)
-- `brand_surface_soft` — low-emphasis metadata strip background
-- `card_neutral_bg / _border` — informational
-- `card_success_bg / _border` — good / ok status
-- `card_warn_bg / _border` — attention needed
-- `card_error_bg / _border` — critical issue
-
-### Heat-map gradient
-The car hotspot diagram uses a severity gradient defined in
-`apps/server/vibesensor/report/pdf/pdf_style.py` and is planned/rendered
-through the report-document and PDF adapter modules under
-`apps/server/vibesensor/report/document/` and
-`apps/server/vibesensor/report/pdf/`.
+- Never show a confidence percentage.
+- Speeds use an en dash (`50–118 km/h`). Units are kept with their number by a
+  non-breaking space.
+- Built-in Helvetica covers Latin-1 only. Avoid glyphs such as `≤`, `→`, and
+  `≈` in report strings.
+- Colors are module constants in `report/pdf.py`. The accent is the same purple
+  as the UI.
 
 ### i18n
-All user-visible strings go through `tr(lang, KEY)` in `report/i18n.py`. Add new keys there instead of introducing new inline literals across the PDF renderer modules.
+All user-visible strings go through `tr(lang, KEY)` in `report/i18n.py` with
+English and Dutch text in `data/report_i18n.json`. The view model resolves them;
+the renderer never holds literals.
 
 ## Accessibility Notes
 - Keep focus rings visible (`:focus-visible`).

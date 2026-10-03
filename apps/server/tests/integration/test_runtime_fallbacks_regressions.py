@@ -6,11 +6,9 @@ store_analysis_error guard, and i18n formatting.
 
 from __future__ import annotations
 
-import json
 import math
 from pathlib import Path
 
-from _paths import SERVER_ROOT
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
@@ -19,7 +17,6 @@ from vibesensor.dsp.vibration_strength import (
     vibration_strength_db_scalar,
 )
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.report import i18n as report_i18n
 
 
 class TestStrengthFloorFallback:
@@ -101,34 +98,3 @@ class TestStoreAnalysisErrorGuard:
             assert run_after.analysis == run_before.analysis
         finally:
             db.close()
-
-
-class TestEvidencePeakPresentFormat:
-    """Regression: EVIDENCE_PEAK_PRESENT i18n template must use .1f for dB values."""
-
-    def test_dB_format_is_one_decimal(self) -> None:
-        i18n_path = SERVER_ROOT / "vibesensor" / "data" / "report_i18n.json"
-        data = json.loads(i18n_path.read_text())
-
-        en_template = data["EVIDENCE_PEAK_PRESENT"]["en"]
-        nl_template = data["EVIDENCE_PEAK_PRESENT"]["nl"]
-
-        # Must use .1f, not .4f
-        assert ".1f}" in en_template, f"Expected .1f in EN template, got: {en_template}"
-        assert ".1f}" in nl_template, f"Expected .1f in NL template, got: {nl_template}"
-        assert ".4f" not in en_template, "Stale .4f found in EN template"
-        assert ".4f" not in nl_template, "Stale .4f found in NL template"
-
-        rendered = report_i18n.tr(
-            "en",
-            "EVIDENCE_PEAK_PRESENT",
-            freq=12.345,
-            pct=0.25,
-            p95=9.876,
-            units="dB",
-            burst=1.234,
-            cls="persistent",
-        )
-        assert "12.3 Hz" in rendered
-        assert "9.9 dB" in rendered
-        assert "1.2×" in rendered

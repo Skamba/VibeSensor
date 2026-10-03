@@ -108,6 +108,22 @@ def has_any_wheel_location(locations: Iterable[str]) -> bool:
     return any(is_wheel_location(loc) for loc in locations)
 
 
+def _normalized_location(text: str) -> str:
+    return " ".join(text.strip().lower().replace("_", " ").replace("-", " ").split())
+
+
+_CODE_BY_NORMALIZED_LABEL: dict[str, str] = {
+    **{_normalized_location(code): code for code in LOCATION_CODES},
+    **{_normalized_location(label): code for code, label in LOCATION_CODES.items()},
+    **{_normalized_location(code.removesuffix("_wheel")): code for code in WHEEL_LOCATION_CODES},
+}
+
+
+def location_code_for_label(label: str) -> str | None:
+    """Canonical location code for a stored label (``Front Left Wheel``, ``front-left``)."""
+    return _CODE_BY_NORMALIZED_LABEL.get(_normalized_location(label))
+
+
 def all_locations() -> list[dict[str, str]]:
     """Return all known sensor location options as a list of ``{code, label}`` dicts."""
     return [{"code": code, "label": label} for code, label in LOCATION_OPTIONS]

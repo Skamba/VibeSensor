@@ -1,0 +1,285 @@
+"""Report view model: every page-1/page-2 string for each verdict variant, in en and nl."""
+
+from __future__ import annotations
+
+import re
+from copy import deepcopy
+from functools import cache
+from typing import Any
+
+import pytest
+from test_support import ALL_WHEEL_SENSORS, make_fault_samples, make_noise_samples
+from test_support.analysis import run_analysis
+from test_support.report_rendering import report_view_for
+
+from vibesensor.report.view_model import ReportView
+
+_UNRESOLVED_KEY = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
+_PERCENT_CONFIDENCE = re.compile(r"\d+\s?%\s*(confidence|zekerheid)", re.IGNORECASE)
+
+
+@cache
+def _wheel_summary() -> dict[str, Any]:
+    return run_analysis(make_fault_samples(fault_sensor="front-left", sensors=ALL_WHEEL_SENSORS))
+
+
+@cache
+def _healthy_summary() -> dict[str, Any]:
+    return run_analysis(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30))
+
+
+def _variant(**diagnosis: Any) -> dict[str, Any]:
+    summary = deepcopy(_wheel_summary())
+    summary["diagnosis"].update(diagnosis)
+    return summary
+
+
+def _driveline_summary() -> dict[str, Any]:
+    return _variant(
+        source="driveline",
+        order_code="P1",
+        zone="rear_axle",
+        confidence_level="moderate",
+        frequency_hz=44.1,
+        reference_speed_kmh=90.0,
+        speed_min_kmh=61.0,
+        speed_max_kmh=113.0,
+    )
+
+
+def _engine_summary() -> dict[str, Any]:
+    return _variant(
+        source="engine",
+        order_code="E2",
+        zone="engine_bay",
+        confidence_level="strong",
+        frequency_hz=70.3,
+        reference_speed_kmh=90.0,
+    )
+
+
+def _weak_summary() -> dict[str, Any]:
+    return _variant(
+        verdict="weak_evidence",
+        confidence_level="weak",
+        zone="front_axle",
+        weak_reasons=["spread_across_locations", "narrow_speed_range"],
+    )
+
+
+def _all_text(view: ReportView) -> str:
+    owner, mechanic, quality = view.owner, view.mechanic, view.quality
+    parts: list[str] = [view.title, *(f"{f.label} {f.value}" for f in view.header)]
+    parts += [
+        str(value)
+        for value in (
+            owner.headline,
+            owner.level_word,
+            owner.level_meaning,
+            owner.description,
+            owner.candidate,
+            owner.covered,
+            owner.not_covered,
+            owner.confirm,
+            owner.next_step,
+            owner.fallback_step,
+            owner.verify,
+        )
+        if value
+    ]
+    parts += [*owner.reasons, *owner.recapture]
+    parts += [f"{f.label} {f.value}" for f in mechanic.conditions]
+    parts += [
+        " ".join((r.order, r.frequency, r.speeds, r.phases, r.location, r.level))
+        for r in mechanic.worksheet
+    ]
+    parts += [f"{r.location} {r.amplitude} {r.ratio}" for r in mechanic.amplitudes]
+    parts += [*mechanic.ruled_out, *mechanic.shop, mechanic.worksheet_empty or ""]
+    parts += [f"{c.label} {c.detail}" for c in quality.checks]
+    parts += [*quality.warnings, quality.footer_line]
+    return "\n".join(parts)
+
+
+_SCENARIOS = {
+    "healthy": _healthy_summary,
+    "wheel": _wheel_summary,
+    "driveline": _driveline_summary,
+    "engine": _engine_summary,
+    "weak": _weak_summary,
+}
+
+
+@pytest.mark.parametrize("lang", ["en", "nl"])
+@pytest.mark.parametrize("scenario", sorted(_SCENARIOS))
+def test_every_string_is_resolved_and_no_confidence_percentage(scenario: str, lang: str) -> None:
+    view = report_view_for(_SCENARIOS[scenario](), lang=lang)
+    text = _all_text(view)
+
+    assert not _UNRESOLVED_KEY.findall(text), _UNRESOLVED_KEY.findall(text)
+    assert not _PERCENT_CONFIDENCE.search(text)
+    assert "None" not in text
+    assert "nan" not in text.lower().split()
+
+
+def test_healthy_run_says_no_significant_vibration_and_what_was_covered() -> None:
+    view = report_view_for(_healthy_summary())
+    owner = view.owner
+
+    assert owner.verdict == "no_fault"
+    assert owner.headline == "No significant vibration found"
+    assert owner.level is None and owner.level_word is None
+    assert owner.covered is not None and "km/h" in owner.covered
+    assert "front-left wheel" in owner.covered
+    assert owner.not_covered is not None and "no RPM was measured" in owner.not_covered
+    assert owner.verify is None and owner.fallback_step is None
+    assert view.mechanic.worksheet == ()
+    assert view.mechanic.worksheet_empty == (
+        "No vibration that follows wheel, propshaft or engine speed was found."
+    )
+    assert view.mechanic.shop == ("No repair is indicated by this test.",)
+    assert view.owner.diagram.zone is None
+
+
+def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
+    summary = _wheel_summary()
+    view = report_view_for(summary)
+    owner, mechanic = view.owner, view.mechanic
+    level = summary["diagnosis"]["confidence_level"]
+
+    assert owner.headline == "Likely cause: a wheel or tire problem at the front-left wheel"
+    assert owner.level == level
+    assert owner.level_word == level.capitalize()
+    assert owner.description.startswith("A shake that repeats once per wheel turn (10.4 Hz")
+    assert "stronger at the front-left wheel than at the next sensor" in owner.description
+    assert owner.next_step == (
+        "Have the front-left wheel balanced and checked for wheel and tire runout."
+    )
+    assert owner.fallback_step is not None
+    assert owner.fallback_step.startswith("If that doesn't fix it: ask the tire shop to road-force")
+    assert owner.verify is not None and "T1 60 mg today" in owner.verify
+    assert owner.diagram.zone == "front_left_wheel"
+    assert owner.diagram.markers[0].strongest
+
+    assert mechanic.worksheet[0].order == "T1 - once per wheel turn"
+    assert mechanic.worksheet[0].diagnosed
+    assert mechanic.amplitudes[0].location == "front-left wheel"
+    assert mechanic.amplitudes[0].amplitude.startswith("60 mg (")
+    assert mechanic.amplitudes[0].ratio == "1.0x"
+    assert mechanic.amplitude_title == "Amplitude at T1 per location"
+    assert mechanic.shop[0].startswith("Road-force all four wheel/tire assemblies")
+    assert any(line.startswith("Driveline: ") for line in mechanic.ruled_out)
+    assert not any(line.startswith("Wheels/tires") for line in mechanic.ruled_out)
+
+
+def test_moderate_fault_adds_the_cheap_confirming_check() -> None:
+    view = report_view_for(_driveline_summary())
+    owner = view.owner
+
+    assert owner.headline == (
+        "Likely cause: the driveline (propshaft or its joints), near the rear axle"
+    )
+    assert owner.level_word == "Moderate"
+    assert owner.level_meaning == "do the cheap confirming check first."
+    assert owner.confirm is not None and "shift to neutral and coast" in owner.confirm
+    assert owner.next_step.startswith("Have the propshaft checked for runout and balance")
+    assert owner.diagram.zone == "rear_axle"
+    assert "P1 (once per propshaft turn) points to balance or runout" in view.mechanic.shop[2]
+
+
+def test_engine_fault_points_to_the_engine_bay_and_explains_e2() -> None:
+    view = report_view_for(_engine_summary())
+    owner = view.owner
+
+    assert owner.headline == "Likely cause: the engine or its mounts (the engine bay)"
+    assert owner.confirm is None
+    assert "twice per engine revolution (the firing rhythm of a 4-cylinder)" in owner.description
+    assert owner.next_step == "Have the engine and gearbox mounts checked."
+    assert owner.diagram.zone == "engine_bay"
+    assert view.mechanic.shop[0] == "Inspect the engine and gearbox mounts."
+
+
+def test_weak_evidence_hedges_candidate_with_reasons_and_recapture_recipe() -> None:
+    view = report_view_for(_weak_summary())
+    owner = view.owner
+
+    assert owner.headline == "Not enough evidence to name a cause"
+    assert owner.candidate == (
+        "Best guess, not confirmed: a wheel or tire problem at the front wheels."
+    )
+    assert owner.level_word == "Weak"
+    assert owner.reasons[0].startswith("The vibration was about as strong at several sensors")
+    assert owner.reasons[1].startswith("The speed hardly changed")
+    assert owner.recapture == (
+        "Use a smooth, straight road.",
+        "Accelerate slowly from 50 to 120 km/h.",
+        "Hold steady for 20 seconds at the speed where you feel it most.",
+        "From that speed, shift to neutral and coast down.",
+    )
+    assert owner.verify is None
+    assert view.mechanic.shop == (
+        "Don't replace parts based on this report alone; record the test again first.",
+    )
+
+
+def test_dutch_view_translates_and_uses_decimal_commas() -> None:
+    view = report_view_for(_wheel_summary(), lang="nl")
+    owner = view.owner
+
+    assert view.title == "VibeSensor-trillingsrapport"
+    assert (
+        owner.headline
+        == "Waarschijnlijke oorzaak: een wiel- of bandprobleem bij het wiel linksvoor"
+    )
+    assert "10,4 Hz" in owner.description
+    assert owner.next_step.startswith("Laat het wiel linksvoor balanceren")
+    assert view.mechanic.amplitudes[0].location == "wiel linksvoor"
+    assert view.page_label(1, 2) == "Pagina 1 van 2"
+
+
+def test_requested_language_wins_over_the_runs_language() -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["lang"] = "nl"
+
+    assert report_view_for(summary, lang="en").lang == "en"
+
+
+def test_quality_collapses_to_one_footer_line_only_when_everything_passed() -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["warnings"] = []
+    for check in summary["run_suitability"]:
+        check["state"] = "pass"
+    passed = report_view_for(summary).quality
+
+    assert passed.all_passed
+    assert passed.footer_line.startswith("All data checks passed · Run ")
+
+    summary["warnings"] = [
+        {
+            "code": "raw_replay_dropped_chunks",
+            "severity": "warn",
+            "applies_to": "raw_capture",
+            "title": {"_i18n_key": "RUN_CONTEXT_WARNING_RAW_REPLAY_DROPPED_CHUNKS_TITLE"},
+        }
+    ]
+    warned = report_view_for(summary).quality
+
+    assert not warned.all_passed
+    assert warned.warnings == ("Some sensor data packets were lost during recording.",)
+
+
+def test_speed_chart_only_when_the_speed_range_was_swept() -> None:
+    swept = _variant(
+        amplitude_vs_speed=[
+            {"speed_kmh": 52.5, "location": "front-left", "amplitude_mg": 40.0},
+            {"speed_kmh": 92.5, "location": "front-left", "amplitude_mg": 90.0},
+        ]
+    )
+    held = _variant(
+        amplitude_vs_speed=[
+            {"speed_kmh": 77.5, "location": "front-left", "amplitude_mg": 40.0},
+            {"speed_kmh": 82.5, "location": "front-left", "amplitude_mg": 45.0},
+        ]
+    )
+
+    assert report_view_for(swept).mechanic.speed_chart is not None
+    assert report_view_for(held).mechanic.speed_chart is None

@@ -19,7 +19,7 @@ from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import LIGHT_STRENGTH_MAX_DB
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
-from vibesensor.domain.locations import LOCATION_CODES, WHEEL_LOCATION_CODES
+from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.summary.diagnosis_contracts import (
@@ -63,6 +63,7 @@ _ORDER_SOURCES: tuple[VibrationSource, ...] = (
     VibrationSource.DRIVELINE,
     VibrationSource.ENGINE,
 )
+_ALL_WHEELS_MIN_CORNERS = 3
 _DRIVELINE_ZONE_CODES = frozenset({"driveshaft_tunnel", "transmission"})
 
 
@@ -355,6 +356,10 @@ def _presence_ratio(candidate: Finding | None) -> float | None:
     return evidence.presence_ratio
 
 
+def _is_candidate(finding: Finding, candidate: Finding | None) -> bool:
+    return candidate is not None and finding.finding_id == candidate.finding_id
+
+
 def _order_findings(
     candidate: Finding | None,
     findings: Sequence[Finding],
@@ -365,9 +370,12 @@ def _order_findings(
         for finding in findings
         if finding.order_code is not None
         and finding.should_surface
-        and (finding is candidate or finding.confidence_level is not ConfidenceLevel.WEAK)
+        and (
+            _is_candidate(finding, candidate)
+            or finding.confidence_level is not ConfidenceLevel.WEAK
+        )
     ]
-    tracked.sort(key=lambda finding: finding is not candidate)
+    tracked.sort(key=lambda finding: not _is_candidate(finding, candidate))
     rows: list[OrderFindingRow] = []
     for finding in tracked[:_MAX_ORDER_ROWS]:
         hz_per_kmh = _hz_per_kmh(finding)
@@ -399,22 +407,6 @@ def _order_findings(
 # -- interpretation -----------------------------------------------------------
 
 
-def _normalized_location(text: str) -> str:
-    return " ".join(text.strip().lower().replace("_", " ").replace("-", " ").split())
-
-
-_CODE_BY_NORMALIZED_LABEL = {
-    **{_normalized_location(code): code for code in LOCATION_CODES},
-    **{_normalized_location(label): code for code, label in LOCATION_CODES.items()},
-    **{_normalized_location(code.removesuffix("_wheel")): code for code in WHEEL_LOCATION_CODES},
-}
-
-
-def _location_code(location: str) -> str | None:
-    """Canonical location code for a stored label (``Front Left Wheel``, ``front-left``)."""
-    return _CODE_BY_NORMALIZED_LABEL.get(_normalized_location(location))
-
-
 def _axle_zone(codes: Iterable[str]) -> str | None:
     axles = {code.split("_", 1)[0] for code in codes if code in WHEEL_LOCATION_CODES}
     return f"{axles.pop()}_axle" if len(axles) == 1 else None
@@ -430,7 +422,7 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
         for row in rows
         if row["amplitude_mg"] is not None
         and (row["ratio_to_strongest"] or 0.0) >= 1 / 1.5
-        and (code := _location_code(row["location"])) is not None
+        and (code := location_code_for_label(row["location"])) is not None
     ]
     if source is VibrationSource.DRIVELINE:
         if top_codes and top_codes[0] in _DRIVELINE_ZONE_CODES:
@@ -439,6 +431,9 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
     if not top_codes:
         return None
     if len(top_codes) > 1 and source is VibrationSource.WHEEL_TIRE:
+        wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
+        if len(wheels) >= _ALL_WHEELS_MIN_CORNERS:
+            return "all_wheels"
         return _axle_zone(top_codes) or top_codes[0]
     return top_codes[0]
 
