@@ -10,7 +10,6 @@ from test_support.core import FINAL_DRIVE, GEAR_RATIO
 from vibesensor.recording.raw_capture import RawRunCapture
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 GoldenUnavailableReason = Literal["missing_speed", "missing_rpm"]
 GoldenScenarioGroup = Literal[
@@ -43,7 +42,6 @@ class GoldenReplayExpected:
     tolerance_bands: Mapping[str, tuple[float, float]] | None = None
     max_false_positive_confidence: float | None = None
     required_warning_codes: tuple[str, ...] = ()
-    required_metadata_minimums: Mapping[str, float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,8 +89,6 @@ class GoldenReplayRun:
 class GoldenReplayResult:
     fixture: GoldenReplayFixture
     analysis: dict[str, object]
-    manifest: WholeRunArtifactManifest
-    artifact_contents: Mapping[str, bytes]
 
 
 @dataclass(frozen=True, slots=True)

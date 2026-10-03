@@ -23,7 +23,6 @@ class HistoryArtifactAvailabilityResponse(BaseModel):
     """Response body describing persisted artifact availability for a history run."""
 
     raw_capture: Literal["not_recorded", "pending", "available", "missing", "degraded"]
-    whole_run_artifacts: Literal["not_recorded", "pending", "available", "missing", "degraded"]
 
 
 class HistoryRunLifecycleResponse(BaseModel):
@@ -37,7 +36,6 @@ class HistoryRunLifecycleResponse(BaseModel):
         "post_analysis_degraded",
     ]
     raw_capture: Literal["not_recorded", "pending", "ready", "degraded", "missing"]
-    whole_run_artifacts: Literal["not_recorded", "pending", "ready", "degraded", "missing"]
     post_analysis: Literal["pending", "running", "ready", "degraded"]
     report: Literal["pending", "ready", "degraded"]
 
@@ -66,7 +64,6 @@ class HistoryRawCaptureQualityResponse(BaseModel):
 
     severity: Literal["ok", "warn", "degraded", "fatal"]
     reason: str
-    gate_whole_run: bool
     affected_sensor_count: int = 0
     queue_overflow_sensor_count: int = 0
     total_chunk_count: int = 0

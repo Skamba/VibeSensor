@@ -8,7 +8,6 @@ import pytest
 from vibesensor.dsp.window_quality_metrics import analyze_window_clipping
 from vibesensor.dsp.window_quality_scoring import (
     score_window_quality,
-    window_quality_with_context,
 )
 
 
@@ -190,27 +189,6 @@ def test_window_clipping_analysis_flags_shock_clipping_not_single_sample_outlier
     assert shock_quality.clipping_sample_count == 4
     assert "sensor_clipping" in shock_quality.reasons
     assert shock_quality.state == "excluded"
-
-
-def test_window_quality_context_downgrades_missing_speed_and_rpm() -> None:
-    clean = score_window_quality(
-        expected_sample_count=128,
-        returned_sample_count=128,
-        coverage_state="full",
-        peak_amp_g=0.05,
-        noise_floor_amp_g=0.005,
-    )
-
-    quality = window_quality_with_context(
-        clean,
-        context_coverage="missing",
-        speed_validity="missing",
-        rpm_validity="missing",
-    )
-
-    assert quality.state == "limited"
-    assert quality.context_score < 0.5
-    assert "context_unavailable" in quality.reasons
 
 
 def test_window_quality_flags_late_packets_queue_drops_and_reset_timing_loss() -> None:

@@ -11,7 +11,7 @@ PYTHON_MAJOR_MINOR := $(PYTHON_MAJOR).$(PYTHON_MINOR)
 PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
-BACKEND_BENCHMARK_TARGETS ?= tests/analysis/benchmark_whole_run_spectra.py tests/updates/benchmark_update_status_codec.py
+BACKEND_BENCHMARK_TARGETS ?= tests/analysis/benchmark_post_analysis_golden_replay.py tests/updates/benchmark_update_status_codec.py
 CLEAN_PATHS := \
 	$(SERVER_DIR)/build \
 	$(SERVER_DIR)/dist \

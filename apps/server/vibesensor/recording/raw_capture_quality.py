@@ -28,7 +28,6 @@ class RawCaptureLossPolicyAssessment:
 
     severity: RawCaptureLossPolicySeverity
     reason: str
-    gate_whole_run: bool
     affected_sensor_count: int
     queue_overflow_sensor_count: int
     total_chunk_count: int
@@ -42,7 +41,6 @@ class RawCaptureLossPolicyAssessment:
         return {
             "severity": self.severity,
             "reason": self.reason,
-            "gate_whole_run": self.gate_whole_run,
             "affected_sensor_count": self.affected_sensor_count,
             "queue_overflow_sensor_count": self.queue_overflow_sensor_count,
             "total_chunk_count": self.total_chunk_count,
@@ -65,7 +63,6 @@ def assess_raw_capture_loss_policy(
         return RawCaptureLossPolicyAssessment(
             severity="ok",
             reason="raw_capture_not_available",
-            gate_whole_run=False,
             affected_sensor_count=0,
             queue_overflow_sensor_count=0,
             total_chunk_count=0,
@@ -122,7 +119,6 @@ def assess_raw_capture_loss_policy(
     return RawCaptureLossPolicyAssessment(
         severity=severity,
         reason=reason,
-        gate_whole_run=severity == "fatal",
         affected_sensor_count=affected_sensor_count,
         queue_overflow_sensor_count=queue_overflow_sensor_count,
         total_chunk_count=total_chunk_count,

@@ -353,8 +353,6 @@ def test_dutch_report_presentation_localizes_data_shaped_labels() -> None:
         snr_db=None,
         alternative_source=None,
         has_reference_gap=True,
-        speed_gap_window_count=0,
-        rpm_gap_window_count=0,
         car_data_reference_scope=None,
         car_data_confidence=None,
         uses_summary_fallback=True,

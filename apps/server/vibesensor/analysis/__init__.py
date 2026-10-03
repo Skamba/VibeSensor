@@ -1,1 +1,1 @@
-"""Post-run analysis: diagnostics (findings, orders, peaks, whole-run) and post-analysis."""
+"""Post-run analysis: diagnostics (findings, orders, peaks) and post-analysis."""

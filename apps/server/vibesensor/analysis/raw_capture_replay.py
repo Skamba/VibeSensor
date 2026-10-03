@@ -8,9 +8,9 @@ from typing import Literal
 
 import numpy as np
 
-from vibesensor.analysis.whole_run_spectra import build_fft_computer
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.strength_metrics import StrengthMetrics
+from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
@@ -93,7 +93,6 @@ class RawReplaySummary:
     raw_capture_mode: RawCaptureMode
     raw_capture_loss_policy_severity: str = "ok"
     raw_capture_loss_policy_reason: str = "raw_capture_loss_ok"
-    raw_capture_loss_policy_gate_whole_run: bool = False
     raw_capture_loss_policy_max_sensor_drop_ratio: float = 0.0
     raw_capture_loss_policy_max_events_per_minute: float = 0.0
     udp_ingest_queue_drop_count: int = 0
@@ -266,7 +265,6 @@ def _assemble_raw_replay_result(
             raw_capture_mode=raw_capture_mode,
             raw_capture_loss_policy_severity=loss_policy.severity,
             raw_capture_loss_policy_reason=loss_policy.reason,
-            raw_capture_loss_policy_gate_whole_run=loss_policy.gate_whole_run,
             raw_capture_loss_policy_max_sensor_drop_ratio=(loss_policy.max_sensor_drop_ratio),
             raw_capture_loss_policy_max_events_per_minute=(
                 loss_policy.max_sensor_loss_events_per_minute
@@ -532,7 +530,11 @@ def _build_replay_context(
     return _ReplayBuildContext(
         fft_n=fft_n,
         timelines=timelines,
-        fft_computer=build_fft_computer(metadata),
+        fft_computer=SpectralAnalysisComputer(
+            fft_n=fft_n,
+            spectrum_min_hz=SPECTRUM_MIN_HZ,
+            spectrum_max_hz=SPECTRUM_MAX_HZ,
+        ),
         accel_scale_g_per_lsb=metadata.accel_scale_g_per_lsb,
     )
 
@@ -673,7 +675,6 @@ def _build_fft_unavailable_replay_result(
             raw_capture_mode="summary_only",
             raw_capture_loss_policy_severity=loss_policy.severity,
             raw_capture_loss_policy_reason=loss_policy.reason,
-            raw_capture_loss_policy_gate_whole_run=loss_policy.gate_whole_run,
             raw_capture_loss_policy_max_sensor_drop_ratio=loss_policy.max_sensor_drop_ratio,
             raw_capture_loss_policy_max_events_per_minute=(
                 loss_policy.max_sensor_loss_events_per_minute

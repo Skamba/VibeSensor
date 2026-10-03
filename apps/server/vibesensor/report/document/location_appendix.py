@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING
 
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.test_run import TestRun
@@ -22,9 +21,6 @@ from vibesensor.report.presentation import (
 )
 from vibesensor.report.projection import PrimaryReportFacts
 
-if TYPE_CHECKING:
-    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
-
 __all__ = ["build_appendix_b_data"]
 
 
@@ -34,20 +30,11 @@ def build_appendix_b_data(
     primary_candidate_facts: PrimaryReportFacts,
     active_sensor_intensity: Sequence[LocationIntensitySummary],
     proof_basis: str,
-    diagnosis_summary: WholeRunDiagnosisSummary | None = None,
     appendix_context: AppendixBContext,
     tr: Callable[..., str],
 ) -> AppendixBData:
-    dominant_location = (
-        diagnosis_summary.dominant_location
-        if diagnosis_summary is not None and diagnosis_summary.dominant_location
-        else primary_candidate_facts.primary_location
-    )
-    dominance_ratio = (
-        diagnosis_summary.dominance_ratio
-        if diagnosis_summary is not None and diagnosis_summary.dominance_ratio is not None
-        else primary_candidate_facts.dominance_ratio
-    )
+    dominant_location = primary_candidate_facts.primary_location
+    dominance_ratio = primary_candidate_facts.dominance_ratio
     dominance_ratio_text = (
         tr(
             "REPORT_DOMINANCE_RATIO_TEXT",
@@ -79,14 +66,7 @@ def build_appendix_b_data(
         dominant_corner=display_location(dominant_location, tr=tr),
         runner_up_corner=appendix_context.runner_up_corner,
         dominance_ratio_text=dominance_ratio_text,
-        proof_basis_note=_location_proof_basis_note(
-            (
-                diagnosis_summary.location_proof_basis
-                if diagnosis_summary is not None and diagnosis_summary.location_proof_basis
-                else proof_basis
-            ),
-            tr=tr,
-        ),
+        proof_basis_note=_location_proof_basis_note(proof_basis, tr=tr),
         location_confidence=location_confidence_text(
             presented_location_confidence_key(
                 action_status_key=appendix_context.action_status_key,
@@ -110,4 +90,4 @@ def _location_proof_basis_note(proof_basis: str, *, tr: Callable[..., str]) -> s
         return tr("REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_RAW")
     if proof_basis == "supporting_windows_summary_only":
         return tr("REPORT_LOCATION_PROOF_BASIS_SUPPORTING_WINDOWS_SUMMARY")
-    return tr("REPORT_LOCATION_PROOF_BASIS_WHOLE_RUN")
+    return tr("REPORT_LOCATION_PROOF_BASIS_RUN_INTENSITY")

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING
 
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_suitability import SuitabilityCheck
@@ -31,9 +30,6 @@ from vibesensor.report.presentation import (
 from vibesensor.report.projection import PrimaryReportFacts
 from vibesensor.report.report_diagnostics import check_state, has_warning_code, nonpass_detail_lines
 from vibesensor.summary.run_context_warning import RunContextWarning
-
-if TYPE_CHECKING:
-    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "build_appendix_a_data",
@@ -109,19 +105,8 @@ def build_appendix_a_data(
 def build_ranked_candidates(
     aggregate: TestRun,
     *,
-    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary] = (),
     tr: Callable[..., str],
 ) -> tuple[RankedCandidateRow, ...]:
-    if diagnosis_summaries and not diagnosis_summaries[0].uses_summary_fallback:
-        return tuple(
-            _ranked_candidate_row_from_diagnosis_summary(
-                aggregate,
-                summary=summary,
-                index=index,
-                tr=tr,
-            )
-            for index, summary in enumerate(diagnosis_summaries[:3])
-        )
     candidates = list(aggregate.effective_top_causes()[:3])
     rows: list[RankedCandidateRow] = []
     primary_finding = candidates[0] if candidates else None
@@ -145,36 +130,6 @@ def build_ranked_candidates(
             ),
         )
     return tuple(rows)
-
-
-def _ranked_candidate_row_from_diagnosis_summary(
-    aggregate: TestRun,
-    *,
-    summary: WholeRunDiagnosisSummary,
-    index: int,
-    tr: Callable[..., str],
-) -> RankedCandidateRow:
-    matched_finding = _finding_for_diagnosis_summary(aggregate, summary=summary)
-    inspect_first = (
-        display_location(summary.dominant_location, tr=tr)
-        if summary.dominant_location
-        else (
-            display_location(matched_finding.strongest_location, tr=tr)
-            if matched_finding is not None
-            else tr("UNKNOWN")
-        )
-    )
-    return RankedCandidateRow(
-        source_name=human_source(summary.suspected_source, tr=tr),
-        confidence_pct=(
-            f"{max(0.0, summary.total_score or 0.0) * 100:.0f}%"
-            if summary.total_score is not None
-            else ""
-        ),
-        inspect_first=inspect_first,
-        path_role=f"{index + 1}. {_path_role_text(index, tr=tr)}",
-        reason=_diagnosis_summary_reason_text(summary, matched_finding=matched_finding, tr=tr),
-    )
 
 
 def build_recapture_assessment(
@@ -345,104 +300,6 @@ def _candidate_reason_text(
         location=location,
         speed=speed_window or tr("UNKNOWN"),
     )
-
-
-def _finding_for_diagnosis_summary(
-    aggregate: TestRun,
-    *,
-    summary: WholeRunDiagnosisSummary,
-) -> Finding | None:
-    for finding in aggregate.effective_top_causes():
-        if str(finding.suspected_source) == summary.suspected_source:
-            return finding
-    for finding in aggregate.findings:
-        if str(finding.suspected_source) == summary.suspected_source:
-            return finding
-    return None
-
-
-def _diagnosis_summary_reason_text(
-    summary: WholeRunDiagnosisSummary,
-    *,
-    matched_finding: Finding | None,
-    tr: Callable[..., str],
-) -> str:
-    quality_text = _diagnosis_quality_text(summary, tr=tr)
-    if summary.supporting_duration_s is not None and summary.supporting_window_count is not None:
-        support_text = tr(
-            "REPORT_SUPPORT_WINDOW_SUMMARY_FULL",
-            count=str(summary.supporting_window_count),
-            duration=f"{summary.supporting_duration_s:.1f}",
-        )
-        return _append_quality_summary(support_text, quality_text)
-    if summary.supporting_window_count is not None and summary.supporting_window_count > 0:
-        support_text = tr(
-            "REPORT_SUPPORT_WINDOW_SUMMARY_COUNT_ONLY",
-            count=str(summary.supporting_window_count),
-        )
-        return _append_quality_summary(support_text, quality_text)
-    if quality_text is not None:
-        return quality_text
-    if matched_finding is not None:
-        return _candidate_reason_text(matched_finding, tr=tr)
-    return tr("REPORT_SIGNAL_FALLBACK")
-
-
-def _append_quality_summary(support_text: str, quality_text: str | None) -> str:
-    if quality_text is None:
-        return support_text
-    return f"{support_text}; {quality_text}"
-
-
-def _diagnosis_quality_text(
-    summary: WholeRunDiagnosisSummary,
-    *,
-    tr: Callable[..., str],
-) -> str | None:
-    quality = summary.data_quality_summary
-    usable = quality.usable_window_count
-    limited = quality.limited_window_count
-    excluded = quality.excluded_window_count
-    if usable is None and limited is None and excluded is None and not quality.limitation_keys:
-        return None
-    if not quality.limitation_keys:
-        return tr(
-            "REPORT_FINDING_DATA_QUALITY_CLEAN",
-            usable=str(usable or 0),
-            excluded=str(excluded or 0),
-        )
-    return tr(
-        "REPORT_FINDING_DATA_QUALITY_LIMITED",
-        usable=str(usable or 0),
-        excluded=str(excluded or 0),
-        limitations=_data_quality_limitations_text(quality.limitation_keys, tr=tr),
-    )
-
-
-def _data_quality_limitations_text(
-    limitation_keys: Sequence[str],
-    *,
-    tr: Callable[..., str],
-) -> str:
-    labels = [
-        tr(_DATA_QUALITY_LIMITATION_LABEL_KEYS.get(key, "REPORT_DATA_QUALITY_LIMIT_WINDOW"))
-        for key in limitation_keys[:3]
-    ]
-    return ", ".join(labels)
-
-
-_DATA_QUALITY_LIMITATION_LABEL_KEYS: dict[str, str] = {
-    "reference_gap": "REPORT_DATA_QUALITY_LIMIT_REFERENCE",
-    "speed_context": "REPORT_DATA_QUALITY_LIMIT_SPEED_CONTEXT",
-    "sensor_timing": "REPORT_DATA_QUALITY_LIMIT_SENSOR_TIMING",
-    "sensor_mounting": "REPORT_DATA_QUALITY_LIMIT_SENSOR_MOUNTING",
-    "sensor_clipping": "REPORT_DATA_QUALITY_LIMIT_SENSOR_CLIPPING",
-    "road_shock": "REPORT_DATA_QUALITY_LIMIT_ROAD_SHOCK",
-    "weak_spatial": "REPORT_DATA_QUALITY_LIMIT_WEAK_SPATIAL",
-    "ambiguous_location": "REPORT_DATA_QUALITY_LIMIT_AMBIGUOUS_LOCATION",
-    "summary_fallback": "REPORT_DATA_QUALITY_LIMIT_SUMMARY_FALLBACK",
-    "window_quality": "REPORT_DATA_QUALITY_LIMIT_WINDOW",
-}
 
 
 def _path_role_text(index: int, *, tr: Callable[..., str]) -> str:

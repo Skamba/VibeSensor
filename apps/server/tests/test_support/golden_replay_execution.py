@@ -5,7 +5,7 @@ from __future__ import annotations
 import tracemalloc
 from collections.abc import Mapping
 from time import perf_counter
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from test_support.golden_replay_types import (
     GoldenReplayBenchmarkResult,
@@ -20,50 +20,15 @@ from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.analysis.post_analysis_outcomes import PostAnalysisExecutionSuccess
 from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
-from vibesensor.analysis.whole_run_spectra import (
-    raw_capture_range_reader_from_capture,
-)
-from vibesensor.recording.raw_capture import RawCaptureSensorRange, RawRunCapture
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
-
-if TYPE_CHECKING:
-    pass
 
 
 class GoldenReplayRecorder:
-    """Minimal persistence port used by the executor harness.
+    """Minimal persistence port used by the executor harness; writes are recorded."""
 
-    Raw ranges are served from the fixture's in-memory capture; writes are recorded.
-    """
-
-    def __init__(self, raw_capture: RawRunCapture) -> None:
-        self._read_range = raw_capture_range_reader_from_capture(raw_capture)
+    def __init__(self) -> None:
         self.analysis: dict[str, object] | None = None
-        self.manifest: WholeRunArtifactManifest | None = None
-        self.artifact_contents: dict[str, bytes] = {}
         self.errors: list[tuple[str, str]] = []
-
-    def load_raw_capture_sensor_range(
-        self,
-        _run_id: str,
-        client_id: str,
-        *,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None:
-        return self._read_range(client_id, sample_start=sample_start, sample_count=sample_count)
-
-    def store_whole_run_artifacts(
-        self,
-        run_id: str,
-        manifest: WholeRunArtifactManifest,
-        *,
-        artifact_contents: Mapping[str, bytes],
-    ) -> WholeRunArtifactManifest:
-        self.manifest = manifest
-        self.artifact_contents = dict(artifact_contents)
-        return manifest
 
     def store_analysis(
         self,
@@ -86,7 +51,7 @@ def execute_golden_replay_fixture(
     analysis_runner: object | None = None,
 ) -> GoldenReplayResult:
     run = fixture.build(duration_s=duration_s)
-    recorder = GoldenReplayRecorder(run.raw_capture)
+    recorder = GoldenReplayRecorder()
     result = execute_post_analysis(
         run_id=run.run_id,
         db=recorder,
@@ -99,7 +64,6 @@ def execute_golden_replay_fixture(
                 total_summary_row_count=len(run.samples),
                 stride=1,
                 summary_duration_s=duration_s or fixture.duration_s,
-                context_samples=list(run.samples),
                 raw_capture=run.raw_capture,
                 raw_capture_manifest=run.raw_capture.manifest,
             ),
@@ -112,13 +76,7 @@ def execute_golden_replay_fixture(
     )
     assert isinstance(result, PostAnalysisExecutionSuccess)
     assert recorder.analysis is not None
-    assert recorder.manifest is not None
-    return GoldenReplayResult(
-        fixture=fixture,
-        analysis=recorder.analysis,
-        manifest=recorder.manifest,
-        artifact_contents=recorder.artifact_contents,
-    )
+    return GoldenReplayResult(fixture=fixture, analysis=recorder.analysis)
 
 
 def benchmark_golden_replay_fixture(

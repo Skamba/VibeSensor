@@ -56,7 +56,7 @@ from vibesensor.web.router import WebServices
 LOGGER = logging.getLogger(__name__)
 
 RUN_RETENTION_DAYS = 7
-"""Terminal runs (and their raw/whole-run sidecars) older than this are pruned at startup."""
+"""Terminal runs (and their raw-capture sidecars) older than this are pruned at startup."""
 
 
 @dataclass(slots=True)

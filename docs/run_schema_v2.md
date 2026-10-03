@@ -3,7 +3,7 @@
 This document describes the legacy/CLI JSONL run boundary used by
 `recording/run_schema.py` constants and tools such as `vibesensor-report`.
 The current server runtime persists run history in SQLite (`history.db`) plus
-raw-capture and whole-run sidecar directories; see `docs/history_db_schema.md`
+raw-capture sidecar directories; see `docs/history_db_schema.md`
 and `docs/analysis_pipeline.md` for the active storage model.
 
 When a JSONL run file is read or written at this boundary, it has:
@@ -103,9 +103,7 @@ The report pipeline does not infer orders without references.
 When missing, report findings include explicit `reference missing` entries and
 order-specific claims are skipped.
 
-The current whole-run sidecar path scores order traces against the dense window
-grid and persists compact summaries. The legacy JSONL/summary path still uses
-per-sample predicted order frequencies and matches against `top_peaks` within
+Post-stop analysis uses per-sample predicted order frequencies and matches against `top_peaks` within
 tolerance, so wheel/driveline/engine findings can remain valid when speed
 changes during the run.
 

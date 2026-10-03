@@ -6,14 +6,11 @@
 
 1. ``load_run`` loads metadata and summary rows. Missing metadata or an empty
    run ends the attempt with a stored terminal error.
-2. ``build_input`` shapes the canonical ``PostAnalysisRunInput``.
-3. Whole-run sidecar steps: ``whole_run_spectra``, ``whole_run_context``,
-   ``order_traces``, ``order_trace_summary``, ``order_family_summary``,
-   ``spatial_summary`` and ``persist_whole_run_artifacts``. Each is skipped
-   when its raw-capture or upstream-bundle prerequisites are missing.
-4. ``report_facts`` runs the sample-based analysis and folds the whole-run
-   facts into the persisted analysis.
-5. ``persist_analysis`` stores the persisted analysis.
+2. ``build_input`` shapes the canonical ``PostAnalysisRunInput`` (summary rows
+   with FFT peaks recomputed from the raw capture when it is available).
+3. ``analyze`` runs the summary analysis (findings, top causes, most likely
+   origin) that both the UI and the PDF report read.
+4. ``persist_analysis`` stores the persisted analysis.
 
 A storage or memory error (``sqlite3.Error``, ``OSError``, ``MemoryError``)
 or a run too short for strength metrics aborts the sequence. The error is
@@ -31,25 +28,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from vibesensor.analysis._validation import MissingStrengthMetricsError
-from vibesensor.analysis.orders.whole_run_family_summaries import (
-    WholeRunOrderFamilySummaryArtifactBundle,
-    build_whole_run_order_family_summary_artifact_bundle,
-)
-from vibesensor.analysis.orders.whole_run_scoring import (
-    WholeRunOrderTraceSummaryArtifactBundle,
-    build_whole_run_order_trace_summary_artifact_bundle,
-)
-from vibesensor.analysis.orders.whole_run_traces import (
-    WholeRunOrderTraceArtifactBundle,
-    build_whole_run_order_trace_artifact_bundle,
-)
 from vibesensor.analysis.post_analysis_input import (
     PostAnalysisRunInput,
     build_post_analysis_input,
 )
 from vibesensor.analysis.post_analysis_loader import (
     EmptyPostAnalysisSamples,
-    LoadedPostAnalysisRun,
     MissingPostAnalysisMetadata,
     PostAnalysisLoadResult,
     load_post_analysis_run,
@@ -64,47 +48,9 @@ from vibesensor.analysis.post_analysis_outcomes import (
     PostAnalysisExecutionSuccess,
     is_retryable_post_analysis_error,
 )
-from vibesensor.analysis.post_analysis_raw_capture_policy import (
-    WholeRunRawCapturePolicy,
-    assess_whole_run_raw_capture_policy,
-)
-from vibesensor.analysis.post_analysis_whole_run_projection import (
-    append_run_context_warnings,
-    append_whole_run_analysis_metadata,
-    append_whole_run_context,
-    append_whole_run_diagnosis_summaries,
-    append_whole_run_diagnosis_summary_metadata,
-    append_whole_run_order_family_summary_metadata,
-    append_whole_run_order_summaries,
-    append_whole_run_order_trace_metadata,
-    append_whole_run_order_trace_summary_metadata,
-    append_whole_run_spatial_coherence_metadata,
-    append_whole_run_spatial_summaries,
-    append_whole_run_spectral_metadata,
-    build_diagnosis_summary_rows,
-    ranked_whole_run_order_summaries,
-    ranked_whole_run_spatial_summaries,
-    refresh_report_fallback_metadata,
-)
-from vibesensor.analysis.whole_run_context import (
-    WholeRunContextArtifactBundle,
-    build_whole_run_context_artifact_bundle,
-)
-from vibesensor.analysis.whole_run_spatial_coherence import (
-    WholeRunSpatialCoherenceArtifactBundle,
-    build_whole_run_spatial_coherence_artifact_bundle,
-)
-from vibesensor.analysis.whole_run_spectra import (
-    RawCaptureRangeReader,
-    WholeRunSpectralArtifactBundle,
-    WholeRunSpectralBuildResult,
-    build_whole_run_spectral_artifact_bundle_from_ranges,
-)
-from vibesensor.common.json_types import JsonObject, JsonValue
+from vibesensor.common.json_types import JsonObject
 from vibesensor.common.structured_logging import log_extra
-from vibesensor.recording.raw_capture import RawCaptureManifest, RawCaptureSensorRange
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
@@ -138,28 +84,6 @@ class PostAnalysisExecutionConfig:
     analysis_runner: PostAnalysisRunner
     load_run: PostAnalysisLoader = load_post_analysis_run
     defer_retryable_error_storage: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class WholeRunArtifacts:
-    """Bundles built by the whole-run sidecar steps (``None`` when skipped)."""
-
-    stored_manifest: WholeRunArtifactManifest | None = None
-    spectral_result: WholeRunSpectralBuildResult | None = None
-    spectral_bundle: WholeRunSpectralArtifactBundle | None = None
-    context_bundle: WholeRunContextArtifactBundle | None = None
-    order_trace_bundle: WholeRunOrderTraceArtifactBundle | None = None
-    order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle | None = None
-    order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
-    spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class StoredWholeRunArtifactBundle:
-    """Generic sidecar bundle shape for final manifest persistence."""
-
-    manifest: WholeRunArtifactManifest
-    artifact_contents: dict[str, bytes]
 
 
 # ---------------------------------------------------------------------------
@@ -212,12 +136,8 @@ def execute_post_analysis(
                 sampling_method=run_input.sampling_method,
             )
 
-        artifacts = build_whole_run_artifacts(db=db, loaded=loaded, run_input=run_input)
-        summary = build_report_facts(
-            run_input=run_input,
-            analysis_runner=config.analysis_runner,
-            artifacts=artifacts,
-        )
+        with _step(run_id, "analyze"):
+            summary = _analyze(run_input, config.analysis_runner)
         with _step(run_id, "persist_analysis"):
             db.store_analysis(loaded.run_id, summary)
     except _STEP_ERRORS as exc:
@@ -291,392 +211,14 @@ def _step(run_id: str, step_name: str) -> Iterator[JsonObject]:
         )
 
 
-def _record_bundle(details: JsonObject, manifest: WholeRunArtifactManifest | None) -> None:
-    """Record a built bundle's artifact keys, or mark the step skipped when none was built."""
-    if manifest is None:
-        details.update(status="skipped", reason="builder_returned_none")
-        return
-    details["artifacts"] = [item.artifact_key for item in manifest.artifacts]
-
-
-def _warning_codes(warnings: tuple[object, ...]) -> list[JsonValue]:
-    return [code for warning in warnings if isinstance(code := getattr(warning, "code", None), str)]
-
-
-# ---------------------------------------------------------------------------
-# Whole-run sidecar steps
-# ---------------------------------------------------------------------------
-
-
-def build_whole_run_artifacts(
-    *,
-    db: HistoryDB,
-    loaded: LoadedPostAnalysisRun,
-    run_input: PostAnalysisRunInput,
-) -> WholeRunArtifacts:
-    """Build, then persist, the dense whole-run sidecar artifacts for one run."""
-    run_id = loaded.run_id
-    policy = assess_whole_run_raw_capture_policy(loaded)
-
-    spectral_result = _build_spectra(db=db, loaded=loaded, policy=policy)
-    spectral_bundle = spectral_result.bundle if spectral_result is not None else None
-    context_bundle = _build_context(
-        run_id=run_id,
-        run_input=run_input,
-        policy=policy,
-        spectral_result=spectral_result,
-    )
-
-    order_trace_bundle: WholeRunOrderTraceArtifactBundle | None = None
-    with _step(run_id, "order_traces") as step:
-        if spectral_bundle is None or context_bundle is None:
-            step.update(status="skipped", reason="missing_prerequisites")
-        else:
-            order_trace_bundle = build_whole_run_order_trace_artifact_bundle(
-                run_id=run_input.run_id,
-                metadata=run_input.context,
-                spectral_manifest=spectral_bundle.manifest,
-                spectral_artifact_contents=spectral_bundle.artifact_contents,
-                context_labels=context_bundle.labels,
-                samples=run_input.context_samples,
-                lang=run_input.language,
-            )
-            _record_bundle(step, order_trace_bundle.manifest if order_trace_bundle else None)
-
-    order_trace_summary_bundle: WholeRunOrderTraceSummaryArtifactBundle | None = None
-    with _step(run_id, "order_trace_summary") as step:
-        if order_trace_bundle is None or context_bundle is None:
-            step.update(status="skipped", reason="missing_prerequisites")
-        else:
-            order_trace_summary_bundle = build_whole_run_order_trace_summary_artifact_bundle(
-                order_trace_bundle=order_trace_bundle,
-                context_labels=context_bundle.labels,
-            )
-            _record_bundle(
-                step,
-                order_trace_summary_bundle.manifest if order_trace_summary_bundle else None,
-            )
-
-    order_family_summary_bundle: WholeRunOrderFamilySummaryArtifactBundle | None = None
-    with _step(run_id, "order_family_summary") as step:
-        if (
-            order_trace_bundle is None
-            or order_trace_summary_bundle is None
-            or context_bundle is None
-        ):
-            step.update(status="skipped", reason="missing_prerequisites")
-        else:
-            order_family_summary_bundle = build_whole_run_order_family_summary_artifact_bundle(
-                order_trace_bundle=order_trace_bundle,
-                order_trace_summary_bundle=order_trace_summary_bundle,
-                context_labels=context_bundle.labels,
-            )
-            _record_bundle(
-                step,
-                order_family_summary_bundle.manifest if order_family_summary_bundle else None,
-            )
-
-    spatial_coherence_bundle: WholeRunSpatialCoherenceArtifactBundle | None = None
-    with _step(run_id, "spatial_summary") as step:
-        if spectral_bundle is None or context_bundle is None or order_trace_bundle is None:
-            step.update(status="skipped", reason="missing_prerequisites")
-        else:
-            # Spatial coherence is only defined over order-trace points.
-            if order_trace_bundle.points:
-                spatial_coherence_bundle = build_whole_run_spatial_coherence_artifact_bundle(
-                    order_trace_bundle=order_trace_bundle,
-                    spectral_manifest=spectral_bundle.manifest,
-                    spectral_artifact_contents=spectral_bundle.artifact_contents,
-                    context_labels=context_bundle.labels,
-                    samples=run_input.samples,
-                    lang=run_input.language,
-                )
-            _record_bundle(
-                step,
-                spatial_coherence_bundle.manifest if spatial_coherence_bundle else None,
-            )
-
-    stored_manifest: WholeRunArtifactManifest | None = None
-    with _step(run_id, "persist_whole_run_artifacts") as step:
-        merged_bundle = merge_whole_run_artifact_bundles(
-            spectral_bundle,
-            context_bundle,
-            order_trace_bundle,
-            order_trace_summary_bundle,
-            order_family_summary_bundle,
-            spatial_coherence_bundle,
-        )
-        if merged_bundle is None:
-            step.update(status="skipped", reason="no_artifacts_to_persist")
-        else:
-            stored_manifest = db.store_whole_run_artifacts(
-                run_id,
-                merged_bundle.manifest,
-                artifact_contents=merged_bundle.artifact_contents,
-            )
-            if stored_manifest is None:
-                raise OSError(f"Failed to persist whole-run artifacts for run {run_id}")
-            _record_bundle(step, stored_manifest)
-
-    return WholeRunArtifacts(
-        stored_manifest=stored_manifest,
-        spectral_result=spectral_result,
-        spectral_bundle=spectral_bundle,
-        context_bundle=context_bundle,
-        order_trace_bundle=order_trace_bundle,
-        order_trace_summary_bundle=order_trace_summary_bundle,
-        order_family_summary_bundle=order_family_summary_bundle,
-        spatial_coherence_bundle=spatial_coherence_bundle,
-    )
-
-
-def _build_spectra(
-    *,
-    db: HistoryDB,
-    loaded: LoadedPostAnalysisRun,
-    policy: WholeRunRawCapturePolicy,
-) -> WholeRunSpectralBuildResult | None:
-    with _step(loaded.run_id, "whole_run_spectra") as step:
-        if not policy.raw_capture_prerequisites_met():
-            step.update(status="skipped", reason=policy.raw_capture_skip_reason())
-            return None
-        raw_capture_manifest = policy.manifest
-        assert raw_capture_manifest is not None
-        result = build_whole_run_spectral_artifact_bundle_from_ranges(
-            run_id=loaded.run_id,
-            metadata=loaded.metadata,
-            raw_capture_manifest=raw_capture_manifest,
-            raw_range_reader=_raw_range_reader(db, loaded),
-        )
-        step.update(
-            artifacts=(
-                [item.artifact_key for item in result.bundle.manifest.artifacts]
-                if result.bundle is not None
-                else []
-            ),
-            warnings=_warning_codes(tuple(result.coverage_summary.warnings)),
-            bundle_available=result.bundle is not None,
-            coverage_confidence=result.coverage_summary.coverage_confidence,
-        )
-        return result
-
-
-def _raw_range_reader(db: HistoryDB, loaded: LoadedPostAnalysisRun) -> RawCaptureRangeReader:
-    """Read raw waveform ranges for *loaded* through the persistence port."""
-
-    def read_range(
-        client_id: str,
-        *,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None:
-        return db.load_raw_capture_sensor_range(
-            loaded.run_id,
-            client_id,
-            sample_start=sample_start,
-            sample_count=sample_count,
-        )
-
-    return read_range
-
-
-def _build_context(
-    *,
-    run_id: str,
-    run_input: PostAnalysisRunInput,
-    policy: WholeRunRawCapturePolicy,
-    spectral_result: WholeRunSpectralBuildResult | None,
-) -> WholeRunContextArtifactBundle | None:
-    with _step(run_id, "whole_run_context") as step:
-        if not policy.raw_capture_prerequisites_met():
-            step.update(status="skipped", reason=policy.raw_capture_skip_reason())
-            return None
-        raw_capture_manifest = policy.manifest
-        assert raw_capture_manifest is not None
-        # Prefer the spectral window plan so context labels align with the spectra;
-        # otherwise plan windows from the raw sample count (reported as degraded).
-        window_plan = spectral_result.window_plan if spectral_result is not None else None
-        total_sample_count: int | None = None
-        step["build_mode"] = "window_plan"
-        if window_plan is None:
-            step.update(status="degraded", build_mode="total_sample_count_fallback")
-            total_sample_count = whole_run_total_sample_count(raw_capture_manifest)
-            if total_sample_count < 0:
-                raise ValueError("whole-run context builder requires total_sample_count >= 0")
-        bundle = build_whole_run_context_artifact_bundle(
-            run_id=run_input.run_id,
-            metadata=run_input.context,
-            samples=run_input.context_samples,
-            total_sample_count=total_sample_count,
-            window_plan=window_plan,
-        )
-        _record_bundle(step, bundle.manifest if bundle is not None else None)
-        return bundle
-
-
-def whole_run_total_sample_count(manifest: RawCaptureManifest) -> int:
-    if manifest.sensors:
-        return max(int(sensor.sample_count) for sensor in manifest.sensors)
-    return max(0, int(manifest.total_samples))
-
-
-def merge_whole_run_artifact_bundles(
-    *bundles: (
-        WholeRunSpectralArtifactBundle
-        | WholeRunContextArtifactBundle
-        | WholeRunOrderTraceArtifactBundle
-        | WholeRunOrderTraceSummaryArtifactBundle
-        | WholeRunOrderFamilySummaryArtifactBundle
-        | WholeRunSpatialCoherenceArtifactBundle
-        | StoredWholeRunArtifactBundle
-        | None
-    ),
-) -> StoredWholeRunArtifactBundle | None:
-    active_bundles = [bundle for bundle in bundles if bundle is not None]
-    if not active_bundles:
-        return None
-    base_manifest = active_bundles[0].manifest
-    merged_artifacts = list(base_manifest.artifacts)
-    merged_contents = dict(active_bundles[0].artifact_contents)
-    for bundle in active_bundles[1:]:
-        manifest = bundle.manifest
-        if (
-            manifest.run_id != base_manifest.run_id
-            or manifest.relative_dir != base_manifest.relative_dir
-            or manifest.window_policy != base_manifest.window_policy
-            or manifest.total_window_count != base_manifest.total_window_count
-        ):
-            raise ValueError("whole-run artifact bundles must share the same run/window plan")
-        for artifact in manifest.artifacts:
-            if artifact.artifact_key in merged_contents:
-                raise ValueError(
-                    "whole-run artifact bundles must not reuse artifact keys: "
-                    f"{artifact.artifact_key}"
-                )
-            if artifact.artifact_key not in bundle.artifact_contents:
-                raise ValueError(
-                    f"whole-run artifact bundle missing bytes for {artifact.artifact_key}"
-                )
-            merged_artifacts.append(artifact)
-        merged_contents.update(bundle.artifact_contents)
-    return StoredWholeRunArtifactBundle(
-        manifest=WholeRunArtifactManifest(
-            run_id=base_manifest.run_id,
-            relative_dir=base_manifest.relative_dir,
-            window_policy=base_manifest.window_policy,
-            total_window_count=base_manifest.total_window_count,
-            artifacts=tuple(merged_artifacts),
-            created_at=base_manifest.created_at,
-            schema_version=base_manifest.schema_version,
-            storage_type=base_manifest.storage_type,
-            algorithm_versions=dict(base_manifest.algorithm_versions),
-            configuration=dict(base_manifest.configuration),
-            source_raw_manifests=base_manifest.source_raw_manifests,
-        ),
-        artifact_contents=merged_contents,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Report facts
-# ---------------------------------------------------------------------------
-
-
-def build_report_facts(
-    *,
+def _analyze(
     run_input: PostAnalysisRunInput,
     analysis_runner: PostAnalysisRunner,
-    artifacts: WholeRunArtifacts,
 ) -> PersistedAnalysis:
-    """Run the sample-based analysis and fold the whole-run facts into it."""
-    with _step(run_input.run_id, "report_facts") as step:
-        raw_summary = analysis_runner(run_input)
-        summary = (
-            raw_summary
-            if isinstance(raw_summary, PersistedAnalysis)
-            else PersistedAnalysis.from_json_object(raw_summary)
-        )
-
-        spectral_result = artifacts.spectral_result
-        context_bundle = artifacts.context_bundle
-        order_trace_bundle = artifacts.order_trace_bundle
-        order_trace_summary_bundle = artifacts.order_trace_summary_bundle
-        order_family_summary_bundle = artifacts.order_family_summary_bundle
-        spatial_coherence_bundle = artifacts.spatial_coherence_bundle
-        stored_artifact_manifest = artifacts.stored_manifest
-
-        if spectral_result is not None:
-            summary = append_whole_run_spectral_metadata(
-                summary,
-                spectral_result.coverage_summary,
-                spectral_bundle=artifacts.spectral_bundle,
-            )
-            summary = append_run_context_warnings(
-                summary, spectral_result.coverage_summary.warnings
-            )
-        if context_bundle is not None:
-            summary = append_whole_run_context(summary, context_bundle)
-
-        # Diagnosis fusion sees the analysis metadata as it stood before the
-        # order/spatial summaries below were folded in.
-        analysis_metadata_payload = summary.to_json_object().get("analysis_metadata")
-        analysis_metadata = (
-            dict(analysis_metadata_payload) if isinstance(analysis_metadata_payload, dict) else {}
-        )
-
-        if order_trace_bundle is not None:
-            summary = append_whole_run_order_trace_metadata(summary, order_trace_bundle)
-        if order_trace_summary_bundle is not None:
-            summary = append_whole_run_order_trace_summary_metadata(
-                summary,
-                order_trace_summary_bundle,
-            )
-        if order_family_summary_bundle is not None:
-            summary = append_whole_run_order_summaries(summary, order_family_summary_bundle)
-            summary = append_whole_run_order_family_summary_metadata(
-                summary,
-                order_family_summary_bundle,
-            )
-        if spatial_coherence_bundle is not None:
-            summary = append_whole_run_spatial_summaries(summary, spatial_coherence_bundle)
-            summary = append_whole_run_spatial_coherence_metadata(
-                summary,
-                spatial_coherence_bundle,
-            )
-        if context_bundle is not None and order_family_summary_bundle is not None:
-            diagnosis_summaries = build_diagnosis_summary_rows(
-                analysis_metadata=analysis_metadata,
-                context_bundle=context_bundle,
-                order_summaries=ranked_whole_run_order_summaries(
-                    order_family_summary_bundle.summaries
-                ),
-                spatial_summaries=(
-                    ranked_whole_run_spatial_summaries(spatial_coherence_bundle.summaries)
-                    if spatial_coherence_bundle is not None
-                    else ()
-                ),
-                car_order_reference_status=(
-                    run_input.context.car.order_reference_status
-                    if run_input.context.car is not None
-                    else None
-                ),
-            )
-            if diagnosis_summaries:
-                summary = append_whole_run_diagnosis_summaries(summary, diagnosis_summaries)
-                summary = append_whole_run_diagnosis_summary_metadata(
-                    summary,
-                    diagnosis_summaries,
-                )
-        if stored_artifact_manifest is not None:
-            summary = append_whole_run_analysis_metadata(summary, stored_artifact_manifest)
-
-        step.update(
-            whole_run_artifacts_available=stored_artifact_manifest is not None,
-            whole_run_context_available=context_bundle is not None,
-            whole_run_order_family_available=order_family_summary_bundle is not None,
-            whole_run_spatial_available=spatial_coherence_bundle is not None,
-        )
-        return refresh_report_fallback_metadata(summary)
+    raw_summary = analysis_runner(run_input)
+    if isinstance(raw_summary, PersistedAnalysis):
+        return raw_summary
+    return PersistedAnalysis.from_json_object(raw_summary)
 
 
 # ---------------------------------------------------------------------------

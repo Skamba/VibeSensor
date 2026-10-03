@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from math import inf, nan
 
-from vibesensor.analysis.orders._hypothesis_catalog import (
-    order_hypothesis_path_compliance_by_key,
-)
+from vibesensor.analysis.orders.physics import _order_hypotheses
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.dsp.order_bands import (
     build_diagnostic_settings,
@@ -43,7 +41,9 @@ def test_live_order_bands_match_diagnostics_match_window() -> None:
     for speed_mps in (5.0, _DEFAULT_SPEED_MPS, 40.0):
         orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
         assert orders is not None
-        compliance_by_key = order_hypothesis_path_compliance_by_key()
+        compliance_by_key = {
+            hypothesis.key: hypothesis.path_compliance for hypothesis in _order_hypotheses()
+        }
         for band in build_order_bands(orders, settings):
             key = "driveshaft_1x" if band["key"] == "driveshaft_engine_1x" else band["key"]
             expected_half_width_hz = order_peak_tolerance_hz(

@@ -12,7 +12,6 @@ from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.run_schema import RunMetadata, RunRawCaptureFinalize
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 __all__ = [
     "ArtifactAvailabilityState",
@@ -32,12 +31,10 @@ class HistoryArtifactAvailability:
     """Explicit persisted-artifact availability state projected to history consumers."""
 
     raw_capture: ArtifactAvailabilityState = "not_recorded"
-    whole_run_artifacts: ArtifactAvailabilityState = "not_recorded"
 
     def to_json_object(self) -> JsonObject:
         return {
             "raw_capture": self.raw_capture,
-            "whole_run_artifacts": self.whole_run_artifacts,
         }
 
 
@@ -94,7 +91,6 @@ class StoredHistoryRun:
     case_id: str | None = None
     analysis: PersistedAnalysis | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
-    whole_run_artifact_manifest: WholeRunArtifactManifest | None = None
     lifecycle: RunArtifactLifecycle | None = None
     artifact_availability: HistoryArtifactAvailability | None = None
     raw_capture_finalize: RunRawCaptureFinalize | None = None
@@ -120,10 +116,6 @@ class StoredHistoryRun:
             payload["analysis"] = self.analysis.to_json_object()
         if self.raw_capture_manifest is not None:
             payload["raw_capture_manifest"] = self.raw_capture_manifest.to_json_object()
-        if self.whole_run_artifact_manifest is not None:
-            payload["whole_run_artifact_manifest"] = (
-                self.whole_run_artifact_manifest.to_json_object()
-            )
         if self.lifecycle is not None:
             payload["lifecycle"] = self.lifecycle.to_json_object()
         if self.artifact_availability is not None:

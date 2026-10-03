@@ -279,18 +279,6 @@
     "en": "raw capture coverage was incomplete for some replay windows",
     "nl": "de dekking van de ruwe opname was onvolledig voor sommige heranalysevensters"
   },
-  "REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT": {
-    "en": "this run predates whole-run context coverage tracking",
-    "nl": "deze meting is ouder dan de contextdekkingsregistratie over de hele meting"
-  },
-  "REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS": {
-    "en": "speed context was missing or stale for part of the run",
-    "nl": "snelheidscontext ontbrak of was verouderd voor een deel van de meting"
-  },
-  "REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS": {
-    "en": "RPM context was missing or stale for part of the run",
-    "nl": "toerentalcontext ontbrak of was verouderd voor een deel van de meting"
-  },
   "REPORT_CONFIDENCE_CAVEAT_WEAK_SPATIAL": {
     "en": "support spread too widely across the car",
     "nl": "de onderbouwing was te breed verspreid over de auto"
@@ -1743,34 +1731,6 @@
     "en": "Vehicle speed or RPM context could not be aligned with some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
     "nl": "De voertuigsnelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijd-uitgelijnde ordecontext. Niet-uitgelijnde snelheidssamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
   },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_DETAIL": {
-    "en": "Whole-run context was persisted for this run, but {partial_windows} windows had partial context and {missing_windows} windows had none. Speed context gaps affected {speed_gap_windows} windows and RPM context gaps affected {rpm_gap_windows} windows.",
-    "nl": "Context over de hele meting is bewaard, maar {partial_windows} vensters hadden slechts gedeeltelijke context en {missing_windows} vensters helemaal geen. Hiaten in snelheidscontext raakten {speed_gap_windows} vensters en hiaten in toerentalcontext raakten {rpm_gap_windows} vensters."
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_INCOMPLETE_TITLE": {
-    "en": "Whole-run context coverage was incomplete for this run",
-    "nl": "De contextdekking over de hele meting was onvolledig"
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_DETAIL": {
-    "en": "This persisted run predates whole-run context coverage tracking, so report caveats fall back to older summary-era context signals.",
-    "nl": "Deze bewaarde meting dateert van voor de contextdekkingsregistratie over de hele meting. Rapportnotities gebruiken daarom oudere samenvattingssignalen."
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_CONTEXT_LEGACY_TITLE": {
-    "en": "Whole-run context coverage was not captured for this persisted run",
-    "nl": "Contextdekking over de hele meting is niet vastgelegd voor deze bewaarde meting"
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_TITLE": {
-    "en": "Whole-run raw alignment was incomplete",
-    "nl": "De uitlijning van ruwe meetdata over de hele meting was onvolledig"
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_INCOMPLETE_DETAIL": {
-    "en": "Whole-run raw coverage was incomplete for some time-aligned windows; affected order and spatial diagnostics used only fully covered windows. Partial windows: {partial}, missing windows: {missing}, timing gaps: {gaps}, overlaps: {overlaps}, dropped chunks: {dropped}, late or out-of-order packets quarantined from live processing: {late}, UDP ingest queue drops: {udp_ingest}, raw-capture queue overflows: {queue_overflow}, invalid chunks: {invalid}, write errors: {write_errors}, sample-rate mismatches: {mismatches}, sample-rate-unverified sensors: {unverified_rates}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}.",
-    "nl": "De dekking van ruwe meetdata over de hele meting was onvolledig voor sommige tijd-uitgelijnde vensters; getroffen orde- en ruimtelijke diagnostiek gebruikte alleen volledig gedekte vensters. Gedeeltelijke vensters: {partial}, ontbrekende vensters: {missing}, timinggaten: {gaps}, overlappingen: {overlaps}, verloren chunks: {dropped}, late of niet-op-volgorde pakketten die uit live-verwerking zijn gehouden: {late}, drops in de UDP-ingestwachtrij: {udp_ingest}, wachtrijoverlopen voor ruwe opname: {queue_overflow}, ongeldige chunks: {invalid}, schrijffouten: {write_errors}, samplefrequentiemismatches: {mismatches}, sensoren met onbewezen samplefrequentie: {unverified_rates}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen synchronisatie: {sync_unverified}."
-  },
-  "RUN_CONTEXT_WARNING_WHOLE_RUN_ALIGNMENT_UNAVAILABLE_DETAIL": {
-    "en": "Whole-run raw timing could not be proven for the recorded sensors, so time-aligned order and spatial diagnostics were skipped. Legacy sensors: {legacy}, unanchored sensors: {unanchored}, sync-unverified sensors: {sync_unverified}, missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}, sample-rate mismatches: {mismatches}.",
-    "nl": "Timing van ruwe meetdata over de hele meting kon niet worden bewezen voor de opgenomen sensoren, dus tijd-uitgelijnde orde- en ruimtelijke diagnostiek is overgeslagen. Oudere sensoren: {legacy}, niet-verankerde sensoren: {unanchored}, sensoren zonder bewezen synchronisatie: {sync_unverified}, ontbrekend synchronisatiebewijs: {missing_sync}, verouderde synchronisatiesnapshots: {stale}, synchronisatiesnapshots met hoge RTT: {high_rtt}, samplefrequentiemismatches: {mismatches}."
-  },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE": {
     "en": "Raw replay coverage was incomplete",
     "nl": "De dekking van heranalyse op ruwe meetdata was onvolledig"
@@ -2239,8 +2199,8 @@
     "en": "Location proof uses retained diagnosis-supporting windows from persisted summary evidence.",
     "nl": "Het locatiebewijs gebruikt bewaarde diagnosevensters uit opgeslagen samenvattingsgegevens."
   },
-  "REPORT_LOCATION_PROOF_BASIS_WHOLE_RUN": {
-    "en": "No retained diagnosis-supporting windows were available, so location proof falls back to whole-run summary intensity.",
+  "REPORT_LOCATION_PROOF_BASIS_RUN_INTENSITY": {
+    "en": "No retained diagnosis-supporting windows were available, so location proof falls back to the run-wide sensor intensity summary.",
     "nl": "Er waren geen bewaarde diagnosevensters beschikbaar, dus het locatiebewijs valt terug op de samenvattingsintensiteit van de hele meting."
   },
   "REPORT_DOMINANCE_RATIO_UNKNOWN": {
@@ -2254,82 +2214,6 @@
   "REPORT_DOMINANT_CORNER_LABEL": {
     "en": "Dominant corner",
     "nl": "Sterkste hoek"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_COLUMN": {
-    "en": "Caveat",
-    "nl": "Kanttekening"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_DRIFT": {
-    "en": "Frequency drift across the run",
-    "nl": "Frequentie verschoof tijdens de meting"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_LIMITED_SUPPORT": {
-    "en": "Limited supporting windows",
-    "nl": "Beperkt aantal ondersteunende vensters"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_LOW_LOCK": {
-    "en": "Weak speed-synchronous order lock",
-    "nl": "Zwakke snelheids-synchrone ordervergrendeling"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_MISSING": {
-    "en": "Reference data unavailable",
-    "nl": "Referentiegegevens niet beschikbaar"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_REFERENCE_PARTIAL": {
-    "en": "Reference coverage {pct}",
-    "nl": "Referentiedekking {pct}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_SPEED_CONTEXT_LIMITED": {
-    "en": "Speed context limited order diagnosis: {count}",
-    "nl": "Snelheidscontext beperkt orderdiagnose: {count}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_SHOCK_TRANSIENT_WINDOWS": {
-    "en": "Road-shock windows filtered: {count}",
-    "nl": "Wegschokvensters gefilterd: {count}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_CLIPPING_WINDOWS": {
-    "en": "Sensor clipping windows filtered: {count}",
-    "nl": "Sensorclippingvensters gefilterd: {count}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_MOUNTING_ARTIFACT_WINDOWS": {
-    "en": "Sensor mounting artifact windows limited diagnosis: {count}",
-    "nl": "Sensorbevestigingsartefacten beperken diagnose: {count}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_SENSOR_TIMING_INTEGRITY_WINDOWS": {
-    "en": "Sensor timing integrity windows limited diagnosis: {count}",
-    "nl": "Sensortimingintegriteit beperkt diagnose: {count}"
-  },
-  "REPORT_DENSE_EVIDENCE_CAVEAT_WINDOW_QUALITY_LIMITED": {
-    "en": "Usable window quality {pct}; limited {limited}, excluded {excluded}",
-    "nl": "Bruikbare vensterkwaliteit {pct}; beperkt {limited}, uitgesloten {excluded}"
-  },
-  "REPORT_DENSE_EVIDENCE_CHART_LABEL": {
-    "en": "Support / reference coverage",
-    "nl": "Ondersteuning / referentiedekking"
-  },
-  "REPORT_DENSE_EVIDENCE_CHART_VALUE": {
-    "en": "support {support} / reference {reference}",
-    "nl": "ondersteuning {support} / referentie {reference}"
-  },
-  "REPORT_DENSE_EVIDENCE_FREQUENCY_BAND": {
-    "en": "{low}-{high} Hz",
-    "nl": "{low}-{high} Hz"
-  },
-  "REPORT_DENSE_EVIDENCE_GUIDE": {
-    "en": "Dense rows summarize whole-run order-track evidence: support windows, speed-synchronous order lock, stable frequency band, strongest location, and caveats when reference, support, or lock quality is limited.",
-    "nl": "Dichte regels vatten orderbewijs over de hele meting samen: ondersteunende vensters, snelheids-synchrone ordervergrendeling, stabiele frequentieband, sterkste locatie en kanttekeningen bij beperkte referentie, ondersteuning of vergrendelingskwaliteit."
-  },
-  "REPORT_DENSE_EVIDENCE_SUPPORT_COLUMN": {
-    "en": "Support",
-    "nl": "Ondersteuning"
-  },
-  "REPORT_DENSE_EVIDENCE_SUPPORT_VALUE": {
-    "en": "{matched}/{eligible} ({pct}); lock {lock}",
-    "nl": "{matched}/{eligible} ({pct}); vergrendeling {lock}"
-  },
-  "REPORT_DENSE_EVIDENCE_TITLE": {
-    "en": "Dense evidence charts",
-    "nl": "Dichte bewijsgrafieken"
   },
   "REPORT_EVIDENCE_CHAIN_TITLE": {
     "en": "Evidence chain",
@@ -2482,54 +2366,6 @@
   "REPORT_SUPPORT_WINDOW_SUMMARY_NONE": {
     "en": "No retained supporting windows",
     "nl": "Geen bewaarde ondersteunende vensters"
-  },
-  "REPORT_FINDING_DATA_QUALITY_CLEAN": {
-    "en": "quality clean: {usable} usable, {excluded} excluded",
-    "nl": "kwaliteit schoon: {usable} bruikbaar, {excluded} uitgesloten"
-  },
-  "REPORT_FINDING_DATA_QUALITY_LIMITED": {
-    "en": "quality limited: {usable} usable, {excluded} excluded; {limitations}",
-    "nl": "kwaliteit beperkt: {usable} bruikbaar, {excluded} uitgesloten; {limitations}"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_REFERENCE": {
-    "en": "reference gaps",
-    "nl": "referentiegaten"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_SPEED_CONTEXT": {
-    "en": "speed context",
-    "nl": "snelheidscontext"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_SENSOR_TIMING": {
-    "en": "sensor timing",
-    "nl": "sensortiming"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_SENSOR_MOUNTING": {
-    "en": "sensor mounting",
-    "nl": "sensorbevestiging"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_SENSOR_CLIPPING": {
-    "en": "sensor clipping",
-    "nl": "sensorclipping"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_ROAD_SHOCK": {
-    "en": "road shock",
-    "nl": "wegschok"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_WEAK_SPATIAL": {
-    "en": "weak location split",
-    "nl": "zwakke locatiescheiding"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_AMBIGUOUS_LOCATION": {
-    "en": "ambiguous location",
-    "nl": "dubbelzinnige locatie"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_SUMMARY_FALLBACK": {
-    "en": "summary fallback",
-    "nl": "samenvattingsfallback"
-  },
-  "REPORT_DATA_QUALITY_LIMIT_WINDOW": {
-    "en": "window quality",
-    "nl": "vensterkwaliteit"
   },
   "REPORT_MEASUREMENT_ID_COLUMN": {
     "en": "Measurement",

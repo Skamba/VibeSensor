@@ -14,7 +14,6 @@ from vibesensor.history.records import StoredHistoryRun
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.recording.raw_capture import (
     RawCaptureManifest,
-    RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
@@ -46,20 +45,6 @@ class _RunPersistenceStub:
 
     def load_raw_capture(self, _run_id: str) -> RawRunCapture | None:
         return None
-
-    def load_raw_capture_sensor_range(
-        self,
-        _run_id: str,
-        client_id: str,
-        *,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None:
-        return RawCaptureSensorRange.missing(
-            client_id=client_id,
-            requested_sample_start=sample_start,
-            requested_sample_count=sample_count,
-        )
 
 
 def _representative_summary() -> AnalysisSummary:
