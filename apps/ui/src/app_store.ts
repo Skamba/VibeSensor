@@ -47,12 +47,12 @@ export function errorMessage(error: unknown, fallback: string): string {
 
 // --- Navigation -----------------------------------------------------------
 
-const viewLoaders = new Map<ViewId, () => Promise<void>>();
+const viewLoaders = new Map<ViewId, Array<() => Promise<unknown>>>();
 let navigationToken = 0;
 
 /** Registers data a view needs before it is shown (latest navigation wins). */
-export function onViewEnter(view: ViewId, load: () => Promise<void>): void {
-  viewLoaders.set(view, load);
+export function onViewEnter(view: ViewId, load: () => Promise<unknown>): void {
+  viewLoaders.set(view, [...(viewLoaders.get(view) ?? []), load]);
 }
 
 export function navigate(view: ViewId, tab?: SettingsTabId): void {
@@ -60,12 +60,12 @@ export function navigate(view: ViewId, tab?: SettingsTabId): void {
     settingsTab.value = tab;
   }
   const token = ++navigationToken;
-  const load = viewLoaders.get(view);
-  if (!load) {
+  const loaders = viewLoaders.get(view);
+  if (!loaders) {
     activeView.value = view;
     return;
   }
-  load().then(
+  Promise.all(loaders.map((load) => load())).then(
     () => {
       if (token === navigationToken) {
         activeView.value = view;

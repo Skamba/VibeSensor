@@ -28,7 +28,6 @@ export type {
   VehicleSettings,
   CarSettingsValue,
   AnalysisSettingsValue,
-  SpeedSettingsValue,
   CarSettingsState,
   AnalysisSettingsState,
   SpeedSettingsState,

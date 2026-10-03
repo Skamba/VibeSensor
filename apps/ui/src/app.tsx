@@ -28,6 +28,7 @@ import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
+import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Internet, Update } from "./pages/update/Update";
 
 const NAV: Record<ViewId, { tabId: string; labelKey: string }> = {
@@ -357,7 +358,7 @@ export function App() {
           <panels.analysis.Panel />
         </SettingsTab>
         <SettingsTab id="speedSourceTab">
-          <panels.speedSource.Panel />
+          <SpeedSource />
         </SettingsTab>
         <SettingsTab id="sensorsTab">
           <SensorsPanel actions={panels.sensors.actions} model={panels.sensors.model} />

@@ -1,13 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
-  createSpeedSourceDerivedState,
   deriveDisplayedSpeedSourceMode,
   deriveSpeedReadoutLabelKey,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
-} from "../src/app/speed_source_state";
-import { createAppState } from "../src/app/ui_app_state";
-import { signal } from "../src/app/ui_signals";
+} from "../src/speed_source";
 
 describe("speed source state helpers", () => {
   test("prefers the resolved fallback-manual source over gps configuration", () => {
@@ -75,26 +72,23 @@ describe("speed source state helpers", () => {
     expect(isManualEffectiveSpeedSource(settings)).toBe(false);
   });
 
-  test("reactively updates derived signals when settings and runtime source change", () => {
-    const state = createAppState();
-    const runtimeSpeedSource = signal<string | null>(null);
-    const derived = createSpeedSourceDerivedState(
-      state.settings.speed,
-      runtimeSpeedSource,
+  test("the live runtime source applies until the server resolves one", () => {
+    const settings = {
+      speedSource: "gps" as const,
+      manualSpeedKph: 80,
+      resolvedSpeedSource: null,
+    };
+    expect(deriveSpeedReadoutLabelKey(settings, "fallback_manual")).toBe(
+      "speed.override",
     );
-
-    expect(derived.displayedMode.value).toBe("gps");
-    expect(derived.speedReadoutLabelKey.value).toBe("speed.gps");
-    expect(derived.isManualEffective.value).toBe(false);
-
-    runtimeSpeedSource.value = "fallback_manual";
-    expect(derived.displayedMode.value).toBe("manual");
-    expect(derived.speedReadoutLabelKey.value).toBe("speed.override");
-    expect(derived.isManualEffective.value).toBe(true);
-
-    state.settings.speed.resolvedSource.value = "obd2";
-    expect(derived.effectiveSource.value).toBe("obd2");
-    expect(derived.displayedMode.value).toBe("obd2");
-    expect(derived.speedReadoutLabelKey.value).toBe("speed.obd2");
+    expect(isManualEffectiveSpeedSource(settings, "fallback_manual")).toBe(
+      true,
+    );
+    expect(
+      deriveSpeedReadoutLabelKey(
+        { ...settings, resolvedSpeedSource: "obd2" },
+        "fallback_manual",
+      ),
+    ).toBe("speed.obd2");
   });
 });
