@@ -14,7 +14,6 @@ import { t } from "../i18n";
 import { uiLogger } from "../ui_logger";
 import { createCarsFeature } from "./features/cars_feature";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
-import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import type { FeatureServices } from "./feature_deps_base";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
@@ -22,6 +21,7 @@ import { createUiQueryClient } from "./runtime/ui_query_client";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
 import { loadSpeedSource, speedSourceSnapshot } from "../settings_store";
 import { deriveSpeedReadoutLabelKey } from "../speed_source";
+import { refreshHistory } from "../pages/history/history_store";
 import { createAppState } from "./ui_app_state";
 import { computed, effectOnChange, signal } from "./ui_signals";
 import {
@@ -29,7 +29,6 @@ import {
   type CarsListPanelView,
   type CarsWizardPanelBridge,
 } from "./views/cars_panel";
-import type { HistoryPanelView } from "./views/history_table_view";
 import type { RealtimeLiveOverviewBridge } from "./views/realtime_live_overview";
 import type { RealtimeLoggingPanelBridge } from "./views/realtime_logging_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
@@ -77,7 +76,6 @@ export const panels = {
   } as RealtimeLiveOverviewBridge,
   logging: bindings<RealtimeLoggingPanelBridge>(),
   spectrum: spectrumPanel,
-  history: bindings<HistoryPanelView>(),
   cars: {
     list: carsBindings.list,
     wizard: { ...carsBindings.wizard, focus: carsPanel.focus },
@@ -103,16 +101,6 @@ const formatting = {
   formatInt: (value: number) =>
     formatIntLocale(value, appState.shell.lang.value),
 };
-
-const history = createHistoryFeature({
-  history: appState.history,
-  shell: appState.shell,
-  panel: panels.history,
-  navigation: { activatePrimaryView: (view) => navigate(asView(view)) },
-  services,
-  formatting,
-  queryClient,
-});
 
 const cars = createCarsFeature({
   settings,
@@ -149,7 +137,7 @@ const realtimeFeature = createRealtimeFeature({
     },
   },
   sendSelection: () => liveTransport.sendSelection(),
-  onRecordingStatusChanged: () => history.refreshHistory(),
+  onRecordingStatusChanged: refreshHistory,
   services,
   formatting: { formatInt: formatting.formatInt },
   queryClient,
@@ -188,31 +176,6 @@ panels.liveOverview.speedText.value = computed(() => {
 
 // --- Startup ------------------------------------------------------------------
 
-function loadOnce(load: () => Promise<unknown>): () => Promise<void> {
-  let done = false;
-  let pending: Promise<void> | null = null;
-  return () => {
-    if (done) {
-      return Promise.resolve();
-    }
-    pending ??= load().then(
-      () => {
-        done = true;
-      },
-      (error: unknown) => {
-        pending = null;
-        throw error;
-      },
-    );
-    return pending;
-  };
-}
-
-onViewEnter(
-  "historyView",
-  loadOnce(() => history.refreshHistory()),
-);
-
 function runStartupTask(name: string, task: () => Promise<unknown>): void {
   void task().catch((error: unknown) => {
     uiLogger.warn(`UI startup task failed: ${name}`, error);
@@ -222,7 +185,6 @@ function runStartupTask(name: string, task: () => Promise<unknown>): void {
 export function startFeatures(): void {
   realtimeFeature.bindHandlers();
   cars.bindHandlers();
-  history.bindHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {
       appState.spectrum.spectrumPlot.value?.resize();

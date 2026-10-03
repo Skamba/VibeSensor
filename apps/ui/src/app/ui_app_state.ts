@@ -1,4 +1,3 @@
-import { createHistoryState, type HistoryState } from "./history_state";
 import { createRealtimeState, type RealtimeState } from "./realtime_state";
 import { analysisTuning, carSettings, speedSettings } from "../settings_store";
 import { createShellState, type ShellState } from "./shell_state";
@@ -18,11 +17,6 @@ export type {
   LivePayloadUpdateResult,
 } from "./realtime_state";
 export type {
-  HistoryState,
-  HistoryStateValue,
-  RunDetail,
-} from "./history_state";
-export type {
   ChartBand,
   SpectrumState,
   SpectrumStateValue,
@@ -40,7 +34,6 @@ export interface AppState {
   shell: ShellState;
   transport: TransportState;
   realtime: RealtimeState;
-  history: HistoryState;
   settings: SettingsState;
   spectrum: SpectrumState;
 }
@@ -50,7 +43,6 @@ export function createAppState(): AppState {
     shell: createShellState(),
     transport: createTransportState(),
     realtime: createRealtimeState(),
-    history: createHistoryState(),
     settings: {
       car: carSettings,
       analysis: { vehicleSettings: analysisTuning },

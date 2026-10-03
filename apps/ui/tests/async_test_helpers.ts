@@ -10,14 +10,6 @@ export function installWindowGlobal(): void {
     globalThis as unknown as Window & typeof globalThis;
 }
 
-export function jsonResponse(body: unknown, init?: ResponseInit): Response {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-    ...init,
-  });
-}
-
 export function installTimerHarness(): TimerHarness {
   const originalSetTimeout = globalThis.setTimeout;
   const originalClearTimeout = globalThis.clearTimeout;

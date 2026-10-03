@@ -139,7 +139,7 @@ browser-side fetch boundary.
   fails unhandled HTTP requests loudly by default, so missing handlers stay
   obvious instead of silently falling through.
 - Keep reusable feature-area handlers under `tests/msw/handlers/`. Organize
-  them by the feature that owns the HTTP surface (`history.ts`, `settings.ts`)
+  them by the feature that owns the HTTP surface (for example `settings.ts`)
   instead of by individual spec files.
 - Keep cross-feature HTTP primitives in `tests/msw/http.ts`. That file owns the
   shared origin, route helpers, and any low-level helpers that are reused across
