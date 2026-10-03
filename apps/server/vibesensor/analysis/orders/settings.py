@@ -60,7 +60,8 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     snr_weight=0.20,
     correlation_max_shift=0.05,
     correlation_compliance_factor=0.10,
-    negligible_strength_confidence_cap=0.40,
+    # Just below Moderate (0.40): an order at road-noise level is at most Weak.
+    negligible_strength_confidence_cap=0.39,
     light_strength_penalty=0.80,
     localization_base=0.70,
     localization_spread=0.30,

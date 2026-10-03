@@ -84,10 +84,12 @@ def build_diagnosis(
     sensor_count: int,
 ) -> DiagnosisPayload:
     """Build the persisted diagnosis block for one analysed run."""
-    candidate = test_run.diagnosis_candidate
-    verdict = _verdict(candidate)
-    if verdict is DiagnosisVerdict.NO_FAULT:
-        candidate = None
+    # The top cause names the source and its confidence; the order shown (label,
+    # amplitudes, frequency) is that source's dominant order, which workshops act on.
+    top_cause = test_run.diagnosis_candidate
+    verdict = _verdict(top_cause)
+    level = top_cause.confidence_level if top_cause is not None else None
+    candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
     speed_dependence = _speed_dependence(candidate, located, metadata.guided_phases)
     weak_reasons = _weak_reasons(candidate, sensor_count=sensor_count)
@@ -119,8 +121,8 @@ def build_diagnosis(
         "confidence_level": (
             ConfidenceLevel.WEAK.value
             if verdict is DiagnosisVerdict.WEAK_EVIDENCE
-            else candidate.confidence_level.value
-            if candidate is not None
+            else level.value
+            if candidate is not None and level is not None
             else None
         ),
         "finding_id": candidate.finding_id if candidate is not None else None,
@@ -145,7 +147,7 @@ def build_diagnosis(
         "weak_reasons": weak_reasons,
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
-        "order_findings": _order_findings(candidate, test_run.findings),
+        "order_findings": _order_findings(candidate, level, test_run.findings),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
@@ -386,22 +388,40 @@ def _is_candidate(finding: Finding, candidate: Finding | None) -> bool:
 
 def _order_findings(
     candidate: Finding | None,
+    level: ConfidenceLevel | None,
     findings: Sequence[Finding],
 ) -> list[OrderFindingRow]:
-    """Surfaced order-tracked findings, the diagnosed one first."""
+    """Surfaced order-tracked findings, the diagnosed one first at the diagnosis level.
+
+    Orders are listed from Moderate up. The diagnosed source's other order is
+    listed once even when weak on its own: a mechanic reads T1 with T2 present
+    differently from T1 alone.
+    """
+    surfaced = [
+        finding for finding in findings if finding.order_code is not None and finding.should_surface
+    ]
     tracked = [
         finding
-        for finding in findings
-        if finding.order_code is not None
-        and finding.should_surface
-        and (
-            _is_candidate(finding, candidate)
-            or finding.confidence_level is not ConfidenceLevel.WEAK
-        )
+        for finding in surfaced
+        if _is_candidate(finding, candidate) or finding.confidence_level is not ConfidenceLevel.WEAK
     ]
+    if candidate is not None:
+        listed = {
+            finding.order_code
+            for finding in tracked
+            if finding.suspected_source is candidate.suspected_source
+        }
+        for finding in surfaced:
+            if (
+                finding.suspected_source is candidate.suspected_source
+                and finding.order_code not in listed
+            ):
+                listed.add(finding.order_code)
+                tracked.append(finding)
     tracked.sort(key=lambda finding: not _is_candidate(finding, candidate))
     rows: list[OrderFindingRow] = []
     for finding in tracked[:_MAX_ORDER_ROWS]:
+        diagnosed = _is_candidate(finding, candidate)
         hz_per_kmh = _hz_per_kmh(finding)
         reference_speed = _reference_speed_kmh(finding)
         speed_min, speed_max = _matched_speed_range(finding)
@@ -422,7 +442,9 @@ def _order_findings(
                 "speed_max_kmh": speed_max,
                 "phases": list(finding.phases_detected),
                 "presence_ratio": _presence_ratio(finding),
-                "confidence_level": finding.confidence_level.value,
+                "confidence_level": (
+                    level if diagnosed and level is not None else finding.confidence_level
+                ).value,
             }
         )
     return rows

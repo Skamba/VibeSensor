@@ -61,6 +61,32 @@ location's own noise floor next to it:
 dB stays the strength metric for severity bands, live metrics, and every other
 persisted field.
 
+## Diagnosed order
+
+The diagnosis names a source (wheel/tire, driveline, engine) and one of its
+orders (T1/T2, P1/P2, E1/E2). Workshop advice depends on the order (balancing
+fixes T1, not T2), so the label is the order that physically dominates, not the
+one that ranked best: a harmonic often tracks a little more consistently than
+its louder fundamental and outranks it.
+
+`TestRun.diagnosis_order_finding` compares the source's 1st and 2nd order by
+`Finding.level_over_db`: the median of `20·log10(amp_2 / amp_1)` over the
+windows both orders matched (same sensor, same time), so both peaks come from
+one spectrum and road-noise matches either order picked up elsewhere do not
+count. Only the candidate's location counts when the two share at least 4
+windows there; otherwise every location does.
+
+- The 1st order is the label unless the 2nd is at least **3 dB** louder (1.4×
+  the amplitude). A near-equal pair stays on the fundamental. On the
+  simulator, a 4-cylinder engine's E2 sits about 9 dB above E1 and the 2nd
+  order of a wheel or shaft imbalance 8–11 dB below its 1st, so both clear
+  the margin by a wide gap.
+- With fewer than 4 shared windows, or with no surfaced finding for the other
+  order, the best-ranked order stays the label.
+- The source and its confidence level stay those of the best-ranked order
+  (the source's evidence); the amplitudes, frequency, and speeds shown are
+  those of the labelled order.
+
 ## Confidence levels
 
 Users see confidence only as one of three levels, defined by what to do
@@ -74,7 +100,11 @@ Users see confidence only as one of three levels, defined by what to do
 | Weak | < 0.40 | Don't buy parts; record the test again. |
 
 A finding whose run-wide vibration strength band is negligible is capped at
-Moderate. The score itself stays internal (ranking); no percentage is shown in
+Moderate. An order-tracked finding whose own amplitude is negligible (below
+8 dB above the floor, i.e. road noise near an order) is capped just below
+Moderate (0.39), after the corroboration and phase bonuses as well as before
+them: a noise-level order is at most Weak, so on its own it reads as no fault,
+and it cannot outrank a clearly louder order of another source. The score itself stays internal (ranking); no percentage is shown in
 the UI or the PDF.
 
 Where the vibration sits feeds the score of an order-tracked finding
