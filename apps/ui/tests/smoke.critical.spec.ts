@@ -1,5 +1,19 @@
 import { expect, test, type Route } from "@playwright/test";
 
+import type {
+  AnalysisSettingsPayload,
+  CarRecord,
+  CarsPayload,
+  HistoryInsightsPayload,
+  HistoryListPayload,
+  LoggingStatusPayload,
+  UpdateStatusPayload,
+} from "../src/api/types";
+import {
+  makeDiagnosis,
+  makeHistoryInsightsPayload,
+  makeLocationIntensityRow,
+} from "./history_payload_test_support";
 import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 import {
   bootLiveDashboard,
@@ -25,7 +39,7 @@ const strengthMetrics = {
   top_peaks: [],
 };
 
-function selectedCarPayload() {
+function selectedCarPayload(): CarsPayload {
   return {
     cars: [
       {
@@ -52,15 +66,15 @@ test("critical journey: live dashboard records and opens History", async ({
 }) => {
   let startCalls = 0;
   let stopCalls = 0;
-  let recordingStatus = {
+  let recordingStatus: LoggingStatusPayload = {
     enabled: false,
-    run_id: null as string | null,
+    run_id: null,
     write_error: null,
     analysis_in_progress: false,
-    start_time_utc: null as string | null,
+    start_time_utc: null,
     samples_written: 0,
     samples_dropped: 0,
-    last_completed_run_id: null as string | null,
+    last_completed_run_id: null,
     last_completed_run_error: null,
     capture_readiness: buildCaptureReadiness({
       isReady: true,
@@ -85,6 +99,7 @@ test("critical journey: live dashboard records and opens History", async ({
         run_id: "run-001",
         status: "complete",
         start_time_utc: "2026-01-01T00:00:00Z",
+        created_at: "2026-01-01T00:00:00Z",
         sample_count: 42,
       },
     ],
@@ -174,7 +189,7 @@ test("critical journey: live dashboard records and opens History", async ({
 });
 
 test("critical journey: Settings saves analysis tuning", async ({ page }) => {
-  let persistedAnalysisSettings: Record<string, number> = {};
+  let persistedAnalysisSettings = {} as AnalysisSettingsPayload;
   let analysisPutCalls = 0;
 
   await installCommonRoutes(page, {
@@ -183,10 +198,9 @@ test("critical journey: Settings saves analysis tuning", async ({ page }) => {
   await page.route("**/api/settings/analysis", async (route) => {
     if (route.request().method() === "PUT") {
       analysisPutCalls += 1;
-      persistedAnalysisSettings = route.request().postDataJSON() as Record<
-        string,
-        number
-      >;
+      persistedAnalysisSettings = route
+        .request()
+        .postDataJSON() as AnalysisSettingsPayload;
       await fulfillJson(route, persistedAnalysisSettings);
       return;
     }
@@ -209,7 +223,7 @@ test("critical journey: Settings saves analysis tuning", async ({ page }) => {
 test("critical journey: car wizard creates and activates a manual car", async ({
   page,
 }) => {
-  let cars = [] as Array<Record<string, unknown>>;
+  let cars: CarRecord[] = [];
   let activeCarId: string | null = null;
 
   await installCommonRoutes(page, {
@@ -217,7 +231,10 @@ test("critical journey: car wizard creates and activates a manual car", async ({
       const path = requestPath(route);
       const method = route.request().method();
       if (path === "/api/settings/cars" && method === "GET") {
-        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        await fulfillJson<CarsPayload>(route, {
+          cars,
+          active_car_id: activeCarId,
+        });
         return;
       }
       if (path === "/api/settings/cars" && method === "POST") {
@@ -235,12 +252,18 @@ test("critical journey: car wizard creates and activates a manual car", async ({
             },
           },
         ];
-        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        await fulfillJson<CarsPayload>(route, {
+          cars,
+          active_car_id: activeCarId,
+        });
         return;
       }
       if (path === "/api/settings/cars/active" && method === "PUT") {
         activeCarId = "car-1";
-        await fulfillJson(route, { cars, active_car_id: activeCarId });
+        await fulfillJson<CarsPayload>(route, {
+          cars,
+          active_car_id: activeCarId,
+        });
         return;
       }
       await fulfillJson(route, {});
@@ -308,7 +331,7 @@ test("critical journey: History run expands into dB diagnosis", async ({
         await route.fallback();
         return;
       }
-      await fulfillJson(route, {
+      await fulfillJson<HistoryListPayload>(route, {
         runs: [
           {
             run_id: "run-001",
@@ -325,30 +348,27 @@ test("critical journey: History run expands into dB diagnosis", async ({
     },
   });
   await page.route("**/api/history/**/insights**", async (route) => {
-    await fulfillJson(route, {
-      run_id: "run-001",
-      status: "complete",
-      start_time_utc: "2026-01-01T00:00:00Z",
-      duration_s: 12.3,
-      sensor_count_used: 1,
-      diagnosis: {
-        verdict: "no_fault",
-        confidence_level: null,
-        weak_reasons: [],
-      },
-      speed_stats: { min_kmh: 40, max_kmh: 90 },
-      sensor_intensity_by_location: [
-        {
-          location: "Front Left Wheel",
-          p50_intensity_db: 10,
-          p95_intensity_db: 20,
-          max_intensity_db: 30,
-          dropped_frames_delta: 0,
-          queue_overflow_drops_delta: 0,
-          sample_count: 15,
-        },
-      ],
-    });
+    await fulfillJson<HistoryInsightsPayload>(
+      route,
+      makeHistoryInsightsPayload({
+        run_id: "run-001",
+        duration_s: 12.3,
+        sensor_count_used: 1,
+        diagnosis: makeDiagnosis({
+          verdict: "no_fault",
+          confidence_level: null,
+        }),
+        sensor_intensity_by_location: [
+          makeLocationIntensityRow({
+            location: "Front Left Wheel",
+            p50_intensity_db: 10,
+            p95_intensity_db: 20,
+            max_intensity_db: 30,
+            sample_count: 15,
+          }),
+        ],
+      }),
+    );
   });
 
   await openHistoryTab(page);
@@ -380,7 +400,7 @@ test("critical journey: updater becomes startable after Wi-Fi setup", async ({
 }) => {
   await installCommonRoutes(page);
   await page.route("**/api/update/status", async (route) => {
-    await fulfillJson(route, {
+    await fulfillJson<UpdateStatusPayload>(route, {
       state: "idle",
       phase: "idle",
       transport: "wifi",

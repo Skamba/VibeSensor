@@ -30,9 +30,9 @@ export function makeHistoryFinding(
     evidence_summary: "Front-right wheel imbalance",
     finding_id: "finding-1",
     frequency_hz_or_order: 32,
-    strongest_location: "front-right wheel",
+    strongest_location: "Front Right Wheel",
     strongest_speed_band: "80-100 km/h",
-    suspected_source: "wheel_tire",
+    suspected_source: "wheel/tire",
     ...overrides,
   };
 }
@@ -42,7 +42,7 @@ export function makeLocationIntensityRow(
 ): LocationIntensityRow {
   return {
     dropped_frames_delta: 0,
-    location: "front-right wheel",
+    location: "Front Right Wheel",
     max_intensity_db: 32,
     mean_intensity_db: 16,
     p50_intensity_db: 8,

@@ -1,5 +1,16 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+import type {
+  CarLibraryBrandsPayload,
+  CarLibraryGearbox,
+  CarLibraryModel,
+  CarLibraryModelsPayload,
+  CarLibraryTireOption,
+  CarLibraryTypesPayload,
+  CarRecord,
+  CarsPayload,
+  CarUpsertRequest,
+} from "../src/api/types";
 import {
   bootLiveDashboard,
   fulfillJson,
@@ -10,12 +21,10 @@ import {
 
 test.describe.configure({ timeout: 25_000 });
 
-type Car = Record<string, unknown> & { id: string; name: string };
-
 type CarsServer = {
-  cars: Car[];
+  cars: CarRecord[];
   activeCarId: string | null;
-  posts: Array<Record<string, unknown>>;
+  posts: CarUpsertRequest[];
   activations: string[];
   deletes: string[];
   failActivation: boolean;
@@ -24,7 +33,7 @@ type CarsServer = {
   failLibrary: Set<string>;
 };
 
-const GEARBOX = {
+const GEARBOX: CarLibraryGearbox = {
   name: "6-speed manual",
   final_drive_ratio: 3.94,
   top_gear_ratio: 0.79,
@@ -35,7 +44,7 @@ const GEARBOX = {
   source_status: "exact_row",
 };
 
-const TIRE = {
+const TIRE: CarLibraryTireOption = {
   name: "Standard",
   default_axle_for_speed: "rear",
   front: { width_mm: 205, aspect_pct: 55, rim_in: 16 },
@@ -46,7 +55,7 @@ const TIRE = {
   source_confidence: "official_exact",
 };
 
-const GOLF = {
+const GOLF: CarLibraryModel = {
   brand: "VW",
   type: "Hatchback",
   model: "Golf",
@@ -61,7 +70,7 @@ const GOLF = {
   ],
 };
 
-function completeCar(id: string, name: string): Car {
+function completeCar(id: string, name: string): CarRecord {
   return {
     id,
     name,
@@ -91,7 +100,7 @@ function createServer(overrides: Partial<CarsServer> = {}): CarsServer {
 }
 
 async function bootWithCars(page: Page, server: CarsServer) {
-  const snapshot = () => ({
+  const snapshot = (): CarsPayload => ({
     cars: server.cars,
     active_car_id: server.activeCarId,
   });
@@ -100,11 +109,11 @@ async function bootWithCars(page: Page, server: CarsServer) {
       const path = requestPath(route);
       const method = route.request().method();
       if (path === "/api/settings/cars" && method === "POST") {
-        const body = route.request().postDataJSON() as Record<string, unknown>;
+        const body = route.request().postDataJSON() as CarUpsertRequest;
         server.posts.push(body);
         server.cars = [
           ...server.cars,
-          { ...body, id: `car-${server.cars.length + 1}` } as Car,
+          { ...body, id: `car-${server.cars.length + 1}` } as CarRecord,
         ];
         await fulfillJson(route, snapshot());
         return;
@@ -157,12 +166,16 @@ async function bootWithCars(page: Page, server: CarsServer) {
       return;
     }
     if (url.pathname.endsWith("/brands")) {
-      await fulfillJson(route, { brands: ["VW", "Volvo"] });
+      await fulfillJson<CarLibraryBrandsPayload>(route, {
+        brands: ["VW", "Volvo"],
+      });
     } else if (url.pathname.endsWith("/types")) {
-      await fulfillJson(route, { types: ["Hatchback", "Estate"] });
+      await fulfillJson<CarLibraryTypesPayload>(route, {
+        types: ["Hatchback", "Estate"],
+      });
     } else {
       const type = url.searchParams.get("type");
-      await fulfillJson(route, {
+      await fulfillJson<CarLibraryModelsPayload>(route, {
         models:
           type === "Estate"
             ? [{ ...GOLF, type: "Estate", model: "Golf Variant", variants: [] }]

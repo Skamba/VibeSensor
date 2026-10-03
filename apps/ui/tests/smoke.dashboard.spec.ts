@@ -1,12 +1,17 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 
-import type { LoggingStatusPayload } from "../src/api/types";
+import type {
+  CarsPayload,
+  HistoryEntry,
+  LoggingStatusPayload,
+} from "../src/api/types";
 import {
   bootLiveDashboard,
   buildCaptureReadiness,
   fulfillJson,
   installCommonRoutes,
   installFakeWebSocket,
+  type LiveClientFixture,
   openHistoryTab,
   openSensorsTab,
   requestPath,
@@ -20,11 +25,11 @@ const READY = buildCaptureReadiness({
   isReady: true,
   sensors: {
     state: "pass",
-    reasonKey: "ready",
+    reasonKey: "sensors_ready",
     details: { live_sensor_count: 1 },
   },
-  reference: { state: "pass", reasonKey: "ready" },
-  speed: { state: "pass", reasonKey: "ready" },
+  reference: { state: "pass", reasonKey: "reference_ready" },
+  speed: { state: "pass", reasonKey: "speed_stable" },
 });
 
 function idleStatus(
@@ -47,7 +52,7 @@ function idleStatus(
 
 async function activeCar(route: Route): Promise<void> {
   if (requestPath(route).startsWith("/api/settings/cars")) {
-    await fulfillJson(route, {
+    await fulfillJson<CarsPayload>(route, {
       cars: [{ id: "car-1", name: "Test Hatch", type: "sedan", aspects: {} }],
       active_car_id: "car-1",
     });
@@ -56,7 +61,7 @@ async function activeCar(route: Route): Promise<void> {
   await fulfillJson(route, {});
 }
 
-function sensor(locationCode: string) {
+function sensor(locationCode: string): LiveClientFixture {
   return {
     id: SENSOR_ID,
     name: SENSOR_ID,
@@ -86,7 +91,7 @@ async function bootWithStatus(
   page: Page,
   status: (route: Route) => Promise<void>,
   options: {
-    runs?: () => Array<Record<string, unknown>>;
+    runs?: () => HistoryEntry[];
     locationCode?: string;
   } = {},
 ): Promise<void> {
@@ -119,7 +124,7 @@ test("journey: the readiness checklist explains what is missing and links to the
       reasonKey: "sensor_locations_missing",
       details: { unassigned_sensor_count: 1 },
     },
-    reference: { state: "pass", reasonKey: "ready" },
+    reference: { state: "pass", reasonKey: "reference_ready" },
     speed: {
       state: "warn",
       reasonKey: "speed_too_low",
@@ -227,11 +232,13 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
     analysis_in_progress: true,
     last_completed_run_id: "run-002",
   });
-  let runs = [
+  let runs: HistoryEntry[] = [
     {
       run_id: "run-001",
       status: "complete",
       start_time_utc: "2026-01-01T00:00:00Z",
+      created_at: "2026-01-01T00:00:00Z",
+      sample_count: 42,
     },
   ];
   await bootWithStatus(page, (route) => fulfillJson(route, status), {
@@ -255,6 +262,8 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       run_id: "run-002",
       status: "complete",
       start_time_utc: "2026-01-02T00:00:00Z",
+      created_at: "2026-01-02T00:00:00Z",
+      sample_count: 42,
     },
   ];
   await expect(page.locator("#historyTableBody")).toContainText("run-002");
@@ -302,7 +311,10 @@ test("journey: sensor cards show location labels and the strongest signal", asyn
 }) => {
   await installCommonRoutes(page, {
     settingsHandler: activeCar,
-    locations: [{ code: "front_left_wheel" }, { code: "rear_right_wheel" }],
+    locations: [
+      { code: "front_left_wheel", label: "Front Left Wheel" },
+      { code: "rear_right_wheel", label: "Rear Right Wheel" },
+    ],
   });
   await page.route("**/api/recording/status", (route) =>
     fulfillJson(route, idleStatus()),

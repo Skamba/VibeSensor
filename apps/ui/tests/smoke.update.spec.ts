@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import type {
+  UpdateCancelPayload,
+  UpdateStartPayload,
+  UpdateStartRequestPayload,
+  UpdateStatusPayload,
+  UsbInternetStatusPayload,
+} from "../src/api/types";
 import {
   createHealthyUpdateStatus,
   createIdleUpdateStatus,
@@ -15,14 +22,14 @@ import {
 test.describe.configure({ timeout: 20_000 });
 
 type UpdateServer = {
-  status: Record<string, unknown>;
-  starts: Array<Record<string, unknown>>;
+  status: UpdateStatusPayload;
+  starts: UpdateStartRequestPayload[];
   cancels: number;
   startDelayMs?: number;
-  internet?: Record<string, unknown>;
+  internet?: UsbInternetStatusPayload;
 };
 
-const USABLE_USB_INTERNET = {
+const USABLE_USB_INTERNET: UsbInternetStatusPayload = {
   detected: true,
   usable: true,
   interface_name: "usb0",
@@ -52,18 +59,22 @@ async function bootWithUpdateServer(
     await new Promise((resolve) =>
       setTimeout(resolve, server.startDelayMs ?? 0),
     );
-    const body = route.request().postDataJSON() as Record<string, unknown>;
+    const body = route.request().postDataJSON() as UpdateStartRequestPayload;
     server.starts.push(body);
     server.status = createIdleUpdateStatus({
       state: "running",
       phase: "downloading",
-      transport: body.transport as "wifi" | "usb_internet",
-      ssid: (body.ssid as string | undefined) ?? null,
+      transport: body.transport,
+      ssid: body.ssid ?? null,
       started_at: Date.now() / 1000,
       phase_started_at: Date.now() / 1000,
       log_tail: ["Downloading vibesensor-2.0.0.whl"],
     });
-    await fulfillJson(route, { status: "started", job_id: "job-1" });
+    await fulfillJson<UpdateStartPayload>(route, {
+      status: "started",
+      transport: body.transport,
+      ssid: body.ssid ?? null,
+    });
   });
   await page.route("**/api/update/cancel", async (route) => {
     server.cancels += 1;
@@ -74,7 +85,7 @@ async function bootWithUpdateServer(
         { phase: "downloading", message: "Cancelled by user", detail: "" },
       ],
     });
-    await fulfillJson(route, { cancelled: true });
+    await fulfillJson<UpdateCancelPayload>(route, { cancelled: true });
   });
   await bootLiveDashboard(page, { installRoutes: false });
 }
@@ -224,7 +235,8 @@ test("journey: an invalid updater status is reported instead of shown", async ({
   page,
 }) => {
   const server: UpdateServer = {
-    status: { state: "exploded" },
+    // Deliberately malformed: the UI must reject it at the API boundary.
+    status: { state: "exploded" } as unknown as UpdateStatusPayload,
     starts: [],
     cancels: 0,
   };

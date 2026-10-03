@@ -1,5 +1,10 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
+import type {
+  AnalysisSettingsPayload,
+  AnalysisSettingsRequest,
+} from "../src/api/types";
+import { defaultAnalysisSettings } from "../src/constants";
 import {
   bootLiveDashboard,
   fulfillJson,
@@ -10,13 +15,17 @@ import {
 test.describe.configure({ timeout: 20_000 });
 
 type AnalysisServer = {
-  saved: Record<string, number>;
-  puts: Array<Record<string, number>>;
+  saved: AnalysisSettingsPayload;
+  puts: AnalysisSettingsRequest[];
   failPut: boolean;
   hasCar: boolean;
 };
 
-const SAVED = {
+// GET /api/settings/analysis returns the full settings; the page edits the
+// uncertainty tuning on top of the backend defaults.
+const SAVED: AnalysisSettingsPayload = {
+  ...defaultAnalysisSettings,
+  default_axle_for_speed: "average",
   speed_uncertainty_pct: 2.5,
   tire_diameter_uncertainty_pct: 3,
   final_drive_uncertainty_pct: 1,
@@ -56,7 +65,9 @@ async function bootWithAnalysisServer(page: Page, server: AnalysisServer) {
       }
       if (path === "/api/settings/analysis") {
         if (route.request().method() === "PUT") {
-          const body = route.request().postDataJSON() as Record<string, number>;
+          const body = route
+            .request()
+            .postDataJSON() as AnalysisSettingsRequest;
           server.puts.push(body);
           if (server.failPut) {
             await route.fulfill({
@@ -66,7 +77,11 @@ async function bootWithAnalysisServer(page: Page, server: AnalysisServer) {
             });
             return;
           }
-          server.saved = { ...server.saved, ...body };
+          // The page only sends numeric tuning values; the backend merges them.
+          server.saved = {
+            ...server.saved,
+            ...(body as Partial<AnalysisSettingsPayload>),
+          };
         }
         await fulfillJson(route, server.saved);
         return;

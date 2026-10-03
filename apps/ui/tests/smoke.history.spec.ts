@@ -6,18 +6,34 @@ import {
   openHistoryTab,
   requestPath,
 } from "./smoke.helpers";
+import type {
+  DeleteHistoryRunPayload,
+  HistoryEntry,
+  HistoryInsightsPayload,
+  HistoryListPayload,
+  SpeedUnitPayload,
+} from "../src/api/types";
+import {
+  makeDiagnosis,
+  makeHistoryFinding,
+  makeHistoryInsightsPayload,
+  makeLocationIntensityRow,
+} from "./history_payload_test_support";
 
 test.describe.configure({ timeout: 20_000 });
 
 type HistoryServer = {
-  runs: Array<Record<string, unknown>>;
+  runs: HistoryEntry[];
   insightRequests: string[];
   deletes: string[];
   failDeletes: Set<string>;
   pdfStatus: number;
 };
 
-function run(runId: string, overrides: Record<string, unknown> = {}) {
+function run(
+  runId: string,
+  overrides: Partial<HistoryEntry> = {},
+): HistoryEntry {
   return {
     run_id: runId,
     status: "complete",
@@ -31,15 +47,14 @@ function run(runId: string, overrides: Record<string, unknown> = {}) {
   };
 }
 
-function insights(runId: string, lang: string) {
+function insights(runId: string, lang: string): HistoryInsightsPayload {
   const engine = lang === "nl" ? "motor-orde" : "engine order";
-  return {
+  return makeHistoryInsightsPayload({
     run_id: runId,
-    status: "complete",
-    start_time_utc: "2026-01-01T00:00:00Z",
+    lang,
     duration_s: 12.3,
     sensor_count_used: 2,
-    diagnosis: {
+    diagnosis: makeDiagnosis({
       verdict: "fault",
       confidence_level: "strong",
       finding_id: "F001",
@@ -51,11 +66,18 @@ function insights(runId: string, lang: string) {
       reference_speed_kmh: 85,
       speed_min_kmh: 63,
       speed_max_kmh: 105,
-      weak_reasons: [],
+    }),
+    speed_stats: {
+      min_kmh: 60,
+      max_kmh: 110,
+      mean_kmh: null,
+      range_kmh: null,
+      sample_count: 0,
+      stddev_kmh: null,
+      steady_speed: false,
     },
-    speed_stats: { min_kmh: 60, max_kmh: 110 },
     findings: [
-      {
+      makeHistoryFinding({
         finding_id: "F001",
         suspected_source: "wheel/tire",
         confidence: 0.9,
@@ -64,8 +86,8 @@ function insights(runId: string, lang: string) {
         strongest_location: "Front Left Wheel",
         strongest_speed_band: "80-100 km/h",
         evidence_summary: "Wheel order follows road speed.",
-      },
-      {
+      }),
+      makeHistoryFinding({
         finding_id: "F002",
         suspected_source: "engine",
         confidence: 0.3,
@@ -74,21 +96,18 @@ function insights(runId: string, lang: string) {
         strongest_location: "Engine Bay",
         strongest_speed_band: "60-80 km/h",
         evidence_summary: `Weak ${engine}.`,
-      },
+      }),
     ],
-    warnings: [],
     sensor_intensity_by_location: [
-      {
+      makeLocationIntensityRow({
         location: "Front Left Wheel",
         p50_intensity_db: 10,
         p95_intensity_db: 24,
         max_intensity_db: 30,
-        dropped_frames_delta: 0,
-        queue_overflow_drops_delta: 0,
         sample_count: 15,
-      },
+      }),
     ],
-  };
+  });
 }
 
 async function bootWithHistory(page: Page, server: HistoryServer) {
@@ -97,14 +116,14 @@ async function bootWithHistory(page: Page, server: HistoryServer) {
       const path = requestPath(route);
       const url = new URL(route.request().url());
       if (path === "/api/history") {
-        await fulfillJson(route, { runs: server.runs });
+        await fulfillJson<HistoryListPayload>(route, { runs: server.runs });
         return;
       }
       const runId = decodeURIComponent(path.split("/")[3] ?? "");
       if (path.endsWith("/insights")) {
         const lang = url.searchParams.get("lang") ?? "en";
         server.insightRequests.push(`${runId}:${lang}`);
-        await fulfillJson(route, insights(runId, lang));
+        await fulfillJson<HistoryInsightsPayload>(route, insights(runId, lang));
         return;
       }
       if (path.endsWith("/report.pdf")) {
@@ -137,7 +156,10 @@ async function bootWithHistory(page: Page, server: HistoryServer) {
         }
         server.deletes.push(runId);
         server.runs = server.runs.filter((entry) => entry.run_id !== runId);
-        await fulfillJson(route, { run_id: runId, status: "deleted" });
+        await fulfillJson<DeleteHistoryRunPayload>(route, {
+          run_id: runId,
+          status: "deleted",
+        });
         return;
       }
       await fulfillJson(route, {});
@@ -257,14 +279,13 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   page,
 }) => {
   await bootWithHistory(page, createServer());
-  let unit = "kmh";
+  let unit: SpeedUnitPayload["speed_unit"] = "kmh";
   // Routes added later win over the common settings route.
   await page.route("**/api/settings/speed-unit", async (route) => {
     if (route.request().method() !== "GET") {
-      unit = (route.request().postDataJSON() as { speed_unit: string })
-        .speed_unit;
+      unit = (route.request().postDataJSON() as SpeedUnitPayload).speed_unit;
     }
-    await fulfillJson(route, { speed_unit: unit });
+    await fulfillJson<SpeedUnitPayload>(route, { speed_unit: unit });
   });
   await openHistoryTab(page);
   await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
