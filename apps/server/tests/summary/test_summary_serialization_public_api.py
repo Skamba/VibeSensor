@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from test_support.findings import NO_FAULT_DIAGNOSIS
+
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseInterval
 from vibesensor.domain.location_hotspot import LocationIntensitySummary
@@ -53,6 +55,7 @@ def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:
             "sensor_limit": 2.0,
         },
         amp_metric_values=[14.0],
+        diagnosis=NO_FAULT_DIAGNOSIS,
     )
 
     assert summary["run_id"] == "run-1"

@@ -12,6 +12,7 @@ import {
   sourceLabel,
 } from "../src/pages/history/history_model";
 import {
+  makeDiagnosis,
   makeHistoryFinding,
   makeHistoryInsightsPayload,
   makeLocationIntensityRow,
@@ -46,6 +47,19 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
     end_time_utc: "2026-01-01T00:00:12Z",
     duration_s: 12.3,
     sensor_count_used: 2,
+    diagnosis: makeDiagnosis({
+      verdict: "fault",
+      confidence_level: "strong",
+      finding_id: "finding-1",
+      source: "wheel/tire",
+      location: "Front Right Wheel",
+      zone: "front_right_wheel",
+      order_code: "T1",
+      frequency_hz: 12.1,
+      reference_speed_kmh: 85,
+      speed_min_kmh: 63,
+      speed_max_kmh: 105,
+    }),
     most_likely_origin: {
       suspected_source: "wheel_tire",
       location: "front-right wheel",
@@ -56,8 +70,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       makeHistoryFinding({
         suspected_source: "wheel_tire",
         confidence: 0.92,
-        confidence_pct: "92%",
-        confidence_tone: "success",
+        confidence_level: "strong",
         strongest_location: "front-right wheel",
         strongest_speed_band: "80-100 km/h",
         frequency_hz_or_order: 32,
@@ -67,8 +80,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         finding_id: "finding-2",
         suspected_source: "driveline",
         confidence: 0.61,
-        confidence_pct: "61%",
-        confidence_tone: "warn",
+        confidence_level: "moderate",
         strongest_location: "driveshaft tunnel",
         strongest_speed_band: "60-80 km/h",
         frequency_hz_or_order: 18.5,
@@ -78,8 +90,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         finding_id: "finding-3",
         suspected_source: "engine",
         confidence: 0.44,
-        confidence_pct: "44%",
-        confidence_tone: "neutral",
+        confidence_level: "moderate",
         strongest_location: "engine bay",
         strongest_speed_band: "idle",
         frequency_hz_or_order: 12.5,
@@ -89,8 +100,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         finding_id: "finding-4",
         suspected_source: "body_resonance",
         confidence: 0.27,
-        confidence_pct: "27%",
-        confidence_tone: "neutral",
+        confidence_level: "weak",
         strongest_location: "driver seat",
         strongest_speed_band: "100-120 km/h",
         frequency_hz_or_order: 9.2,
@@ -154,7 +164,7 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
   ]);
   expect(row.headline).toBe("history.source.wheel_tire");
   expect(row.meta).toBe(
-    'report.confidence:{"value":"92%"} · history.summary_size: 12.3 s · history.summary_sensor_count: 2',
+    'history.confidence:{"level":"history.confidence_level.strong"} · history.summary_size: 12.3 s · history.summary_sensor_count: 2',
   );
   expect(row.reportPendingHint).toBeNull();
 
@@ -164,9 +174,13 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
   }
   expect(details.insights.primary).toMatchObject({
     headline: "history.source.wheel_tire",
-    confidence: 'report.confidence:{"value":"92%"}',
-    signature: "32.0 Hz",
+    confidence:
+      'history.confidence:{"level":"history.confidence_level.strong"} — history.confidence_meaning.strong',
+    signature: "T1 · 12.1 Hz @ 85 km/h",
+    explanation: "Front-right wheel imbalance",
     nextStepLabel: "history.findings_next_step_label",
+    nextStep:
+      'history.findings_next_step:{"location":"history.zone.front_right_wheel"}',
   });
   expect(details.insights.visibleSecondary).toHaveLength(2);
   expect(details.insights.hiddenSecondary).toHaveLength(1);
@@ -277,22 +291,57 @@ test("explains degraded raw capture", () => {
   });
 });
 
-test("an inconclusive top finding says so instead of naming a source", () => {
+test("a run without a fault says so and covers what was driven", () => {
   const insights = populatedInsights("run-005");
-  insights.findings = [
-    makeHistoryFinding({ suspected_source: "baseline_noise", confidence: 0.2 }),
-  ];
+  insights.diagnosis = makeDiagnosis();
+  insights.speed_stats = { ...insights.speed_stats, min_kmh: 50, max_kmh: 118 };
   const run = historyListRun("run-005");
   const detail = defaultDetail({ preview: insights });
-  expect(buildRow(run, detail, false, f).headline).toBe(
-    "history.row_source_inconclusive",
+  const row = buildRow(run, detail, false, f);
+  expect(row.headline).toBe("history.verdict.no_fault");
+  expect(row.meta).toBe(
+    "history.summary_size: 12.3 s · history.summary_sensor_count: 2",
   );
   const details = buildDetails(run, detail, f);
   expect(details.insights).toMatchObject({
     kind: "findings",
     primary: {
-      headline: "history.inconclusive_title",
-      nextStep: "history.inconclusive_next_step",
+      headline: "history.verdict.no_fault",
+      confidence: "",
+      chips: [
+        { label: "history.covered_speeds", value: "50–118 km/h" },
+        { label: "history.summary_sensor_count", value: "2" },
+      ],
+      nextStep: null,
+    },
+    visibleSecondary: [],
+  });
+});
+
+test("weak evidence hedges the best candidate and asks for a new recording", () => {
+  const insights = populatedInsights("run-006");
+  insights.diagnosis = makeDiagnosis({
+    verdict: "weak_evidence",
+    confidence_level: "weak",
+    finding_id: "finding-1",
+    source: "wheel/tire",
+    zone: "front_axle",
+  });
+  const run = historyListRun("run-006");
+  const detail = defaultDetail({ preview: insights });
+  expect(buildRow(run, detail, false, f).headline).toBe(
+    "history.verdict.weak_evidence",
+  );
+  const details = buildDetails(run, detail, f);
+  expect(details.insights).toMatchObject({
+    kind: "findings",
+    primary: {
+      headline: "history.verdict.weak_evidence",
+      tone: "neutral",
+      explanation:
+        'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.front_axle"}',
+      nextStepLabel: "history.recapture_label",
+      nextStep: "history.recapture_recipe",
     },
   });
 });
@@ -300,6 +349,13 @@ test("an inconclusive top finding says so instead of naming a source", () => {
 test("labels sources, folding unknown keys into title case", () => {
   expect(sourceLabel("wheel_tire", testTranslation)).toBe(
     "history.source.wheel_tire",
+  );
+  // Backend source values use "wheel/tire" and "body resonance".
+  expect(sourceLabel("wheel/tire", testTranslation)).toBe(
+    "history.source.wheel_tire",
+  );
+  expect(sourceLabel("body resonance", testTranslation)).toBe(
+    "history.source.body_resonance",
   );
   expect(sourceLabel("rear_axle-hub", testTranslation)).toBe("Rear Axle Hub");
   expect(sourceLabel("Custom Thing", testTranslation)).toBe("Custom Thing");

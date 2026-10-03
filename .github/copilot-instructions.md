@@ -11,7 +11,8 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 
 ## Repo invariants
 - VibeSensor contains a Python backend (`apps/server/`), TypeScript/Vite UI (`apps/ui/`), ESP32 firmware (`firmware/esp/`), and Raspberry Pi image build (`infra/pi-image/`).
-- Raw ingest/sample acceleration may use g; post-stop analysis outputs must expose vibration strength/intensity in dB only.
+- Raw ingest/sample acceleration may use g; post-stop analysis outputs expose vibration strength/intensity in dB. Only the persisted `diagnosis` block reports amplitude at the diagnosed order in mg, always next to its dB above floor (`docs/metrics.md`).
+- Users see confidence only as one of three action-defined levels (Strong / Moderate / Weak); never expose a confidence percentage in the UI or the PDF.
 - Canonical dB math: `apps/server/vibesensor/dsp/vibration_strength.py::vibration_strength_db_scalar()`.
 - Static config that does not change between deployments belongs in Python constants, not runtime file loaders.
 - Internal shared logic stays in the server package. Generated UI constants come from backend sources (`vibesensor.domain`, `vibesensor.dsp`).

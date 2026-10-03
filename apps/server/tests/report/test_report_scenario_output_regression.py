@@ -62,7 +62,7 @@ class TestMultiSensorLocalization:
         assert len(diagnostic_findings) == 1
         finding = diagnostic_findings[0]
         assert finding["suspected_source"] == "wheel/tire"
-        assert finding["confidence_label_key"] == "CONFIDENCE_HIGH"
+        assert finding["confidence_level"] == "strong"
         assert finding["strongest_location"] == "Front-Left Wheel"
         assert finding["strongest_speed_band"] == "40-50 km/h"
         assert finding["dominance_ratio"] == pytest.approx(3.0)

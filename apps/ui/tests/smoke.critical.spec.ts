@@ -331,6 +331,12 @@ test("critical journey: History run expands into dB diagnosis", async ({
       start_time_utc: "2026-01-01T00:00:00Z",
       duration_s: 12.3,
       sensor_count_used: 1,
+      diagnosis: {
+        verdict: "no_fault",
+        confidence_level: null,
+        weak_reasons: [],
+      },
+      speed_stats: { min_kmh: 40, max_kmh: 90 },
       sensor_intensity_by_location: [
         {
           location: "Front Left Wheel",
@@ -364,6 +370,9 @@ test("critical journey: History run expands into dB diagnosis", async ({
   );
   await expect(frontLeftZone).toContainText("Front Left Wheel");
   await expect(frontLeftZone).toContainText("20.0 dB");
+  await expect(page.locator(".history-details-card")).toContainText(
+    "No significant vibration found",
+  );
 });
 
 test("critical journey: updater becomes startable after Wi-Fi setup", async ({

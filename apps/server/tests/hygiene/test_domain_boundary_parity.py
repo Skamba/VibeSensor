@@ -92,7 +92,6 @@ def test_finding_payload_round_trips_domain_summary_boundary() -> None:
             label_key="CONFIDENCE_HIGH",
             tone="success",
             pct_text="82%",
-            reason="clear repeated order support",
             weak_spatial=True,
         ),
         origin=VibrationOrigin.from_analysis_inputs(
@@ -125,7 +124,7 @@ def test_finding_payload_round_trips_domain_summary_boundary() -> None:
     assert payload["matched_points"][0]["matched_hz"] == 43.5
     assert payload["matched_points"][0]["phase"] == "cruise"
     assert payload["phase_evidence"]["phases_detected"] == ["acceleration", "cruise"]
-    assert payload["confidence_label_key"] == "CONFIDENCE_HIGH"
+    assert payload["confidence_level"] == "strong"
     assert payload["signatures_observed"] == ["wheel order"]
     assert decoded == finding
 

@@ -6,7 +6,6 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
 from math import floor
-from statistics import median as _median
 
 from vibesensor.analysis._sample_metrics import (
     _effective_baseline_floor,
@@ -244,52 +243,47 @@ def top_peaks_table_rows(
     return rows
 
 
+_MIN_ORDER_POINTS_PER_ROW = 3
+_MIN_ORDER_POINT_SHARE_PER_ROW = 0.05
+
+
 def annotate_peak_rows_with_order_labels(
     rows: list[PeakTableRowData],
     findings: Sequence[DomainFinding],
+    *,
+    freq_bin_hz: float = 1.0,
 ) -> list[PeakTableRowData]:
-    """Back-fill peak-table order labels using domain findings before serialization."""
-    if not rows or not findings:
-        return rows
+    """Label peak rows an order finding tracks with its order code and mark them patterned.
 
-    order_annotations: list[tuple[float, str, str]] = []
+    An order that follows speed spreads over several 1 Hz rows (and its pooled
+    amplitude looks bursty), so every row that holds a meaningful share of the
+    finding's matched points belongs to that order, not to a transient.
+    """
+    if not rows or not findings or freq_bin_hz <= 0:
+        return rows
+    row_index = {row.frequency_hz: idx for idx, row in enumerate(rows)}
+    claims: dict[int, tuple[int, DomainFinding]] = {}
     for finding in findings:
-        if finding.finding_id != "F_ORDER" or not finding.matched_points:
+        if finding.order_code is None or not finding.matched_points:
             continue
-        label = finding.order.strip() or (
-            str(finding.frequency_hz) if finding.frequency_hz is not None else ""
+        counts: dict[int, int] = defaultdict(int)
+        for point in finding.matched_points:
+            idx = row_index.get(floor(point.matched_hz / freq_bin_hz) * freq_bin_hz)
+            if idx is not None:
+                counts[idx] += 1
+        min_points = max(
+            _MIN_ORDER_POINTS_PER_ROW,
+            int(len(finding.matched_points) * _MIN_ORDER_POINT_SHARE_PER_ROW),
         )
-        if not label:
-            continue
-        matched_freqs = [
-            point.matched_hz for point in finding.matched_points if point.matched_hz > 0
-        ]
-        if matched_freqs:
-            order_annotations.append(
-                (_median(matched_freqs), label, str(finding.suspected_source).strip()),
-            )
-
-    if not order_annotations:
-        return rows
-
-    tolerance_hz = 2.0
+        for idx, count in counts.items():
+            if count >= min_points and count > claims.get(idx, (0, finding))[0]:
+                claims[idx] = (count, finding)
     annotated = list(rows)
-    used_rows: set[int] = set()
-    for median_hz, label, suspected_source in order_annotations:
-        best_idx: int | None = None
-        best_dist = tolerance_hz + 1.0
-        for idx, row in enumerate(annotated):
-            if idx in used_rows:
-                continue
-            dist = abs(row.frequency_hz - median_hz)
-            if dist < best_dist:
-                best_idx = idx
-                best_dist = dist
-        if best_idx is not None and best_dist <= tolerance_hz:
-            annotated[best_idx] = replace(
-                annotated[best_idx],
-                order_label=label,
-                suspected_source=suspected_source,
-            )
-            used_rows.add(best_idx)
+    for idx, (_count, finding) in claims.items():
+        annotated[idx] = replace(
+            annotated[idx],
+            order_label=finding.order_code or "",
+            suspected_source=str(finding.suspected_source),
+            peak_classification="patterned",
+        )
     return annotated

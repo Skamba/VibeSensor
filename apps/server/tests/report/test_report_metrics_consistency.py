@@ -382,9 +382,6 @@ class TestScenario3HighSpeedFault:
         assert rd.observed.strongest_location == "Front-Right"
         assert rd.observed.speed_band == "110-120 km/h"
         assert rd.observed.certainty_label == "High"
-        assert rd.observed.certainty_reason == (
-            "Missing reference data may affect accuracy; Speed was not steady during measurement"
-        )
 
 
 # ---------------------------------------------------------------------------

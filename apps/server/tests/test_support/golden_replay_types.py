@@ -37,7 +37,7 @@ class GoldenReplayExpected:
     suspected_source: str | None
     strongest_location: str | None = None
     confidence_range: tuple[float, float] = (0.0, 1.0)
-    confidence_label_key: str | None = None
+    confidence_level: str | None = None
     unavailable_reasons: tuple[GoldenUnavailableReason, ...] = ()
     tolerance_bands: Mapping[str, tuple[float, float]] | None = None
     max_false_positive_confidence: float | None = None

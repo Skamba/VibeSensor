@@ -211,14 +211,10 @@ class TestIngestionScenario:
         conf = top_confidence(self.summary)
         assert 0.15 <= conf <= 1.0, f"Confidence {conf:.3f} out of expected range"
 
-    def test_confidence_label_valid(self) -> None:
-        """Top cause has a valid confidence label."""
+    def test_confidence_level_valid(self) -> None:
+        """Top cause has one of the three confidence levels."""
         assert self.top is not None
-        assert self.top.get("confidence_label_key") in (
-            "CONFIDENCE_HIGH",
-            "CONFIDENCE_MEDIUM",
-            "CONFIDENCE_LOW",
-        ), f"Bad confidence label: {self.top.get('confidence_label_key')}"
+        assert self.top.get("confidence_level") in ("strong", "moderate", "weak")
 
     def test_speed_breakdown_nonempty(self) -> None:
         """Speed breakdown includes at least one band."""

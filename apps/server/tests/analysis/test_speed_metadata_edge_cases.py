@@ -21,7 +21,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_no_wheel_fault,
     extract_top,
     make_sample,
@@ -118,7 +118,7 @@ def test_frozen_speed_with_fault(corner: str, sensor: str, speed: float) -> None
     )
     summary = run_analysis(samples)
     # Frozen/constant speed gets a penalty but should still detect
-    assert_confidence_label_valid(summary)
+    assert_confidence_level_valid(summary)
     conf = top_confidence(summary)
     assert conf > 0.0, f"No fault detected at frozen speed={speed}, corner={corner}"
     top = extract_top(summary)

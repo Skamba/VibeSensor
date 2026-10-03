@@ -173,15 +173,11 @@ def assert_has_warnings(summary: dict[str, Any], msg: str = "") -> None:
     assert isinstance(summary["warnings"], list), f"'warnings' is not a list. {msg}"
 
 
-def assert_confidence_label_valid(summary: dict[str, Any], msg: str = "") -> None:
-    """Assert the top cause has a valid confidence label key and tone."""
+def assert_confidence_level_valid(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert the top cause carries one of the three action-defined confidence levels."""
     top = _top_cause_or_fail(summary, msg)
-    label = top.get("confidence_label_key")
-    assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
-        f"Bad confidence_label_key: {label}. {msg}"
-    )
-    tone = top.get("confidence_tone")
-    assert tone in ("success", "warn", "neutral"), f"Bad confidence_tone: {tone}. {msg}"
+    level = top.get("confidence_level")
+    assert level in ("strong", "moderate", "weak"), f"Bad confidence_level: {level}. {msg}"
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +245,7 @@ def assert_diagnosis_contract(
     assert_confidence_between(summary, min_confidence, max_confidence, msg=msg)
 
     # Confidence label and tone
-    assert_confidence_label_valid(summary, msg=msg)
+    assert_confidence_level_valid(summary, msg=msg)
 
     # Speed band
     assert_speed_band_present(summary, msg=msg)

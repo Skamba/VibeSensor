@@ -17,7 +17,7 @@ from vibesensor.domain._numeric import coerce_float
 from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
-from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.finding_types import ConfidenceLevel, VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.summary.analysis_views import (
     FindingEvidenceMetrics,
@@ -157,12 +157,7 @@ def finding_payload_from_domain(finding: Finding) -> FindingPayload:
         finding.frequency_hz if finding.frequency_hz is not None else finding.order or ""
     )
     payload["amplitude_metric"] = _amplitude_metric_payload(finding)
-    assessment = finding.confidence_assessment
-    if assessment is not None:
-        payload["confidence_label_key"] = assessment.label_key
-        payload["confidence_reason"] = assessment.reason
-        payload["confidence_tone"] = assessment.tone
-        payload["confidence_pct"] = assessment.pct_text
+    payload["confidence_level"] = finding.confidence_level.value
     return cast(FindingPayload, payload)
 
 
@@ -189,17 +184,12 @@ def _confidence_assessment_from_payload(
     confidence: float | None,
     weak_spatial_separation: bool,
 ) -> ConfidenceAssessment | None:
-    label_key = payload.get("confidence_label_key")
-    tone = payload.get("confidence_tone")
-    pct_text = payload.get("confidence_pct")
-    if not isinstance(label_key, str) or not isinstance(tone, str) or not isinstance(pct_text, str):
+    level = payload.get("confidence_level")
+    if not isinstance(level, str):
         return None
-    return ConfidenceAssessment(
+    return ConfidenceAssessment.from_level(
+        ConfidenceLevel(level),
         raw_confidence=confidence or 0.0,
-        label_key=label_key,
-        tone=tone,
-        pct_text=pct_text,
-        reason=str(payload.get("confidence_reason") or ""),
         weak_spatial=weak_spatial_separation,
     )
 

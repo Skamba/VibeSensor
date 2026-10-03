@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+from vibesensor.analysis.diagnosis import build_diagnosis
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
@@ -87,6 +88,12 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
         speed_non_null_pct=result.prepared.speed_non_null_pct,
         accel_stats=result.accel_stats,
         amp_metric_values=_amp_metric_values(result.accel_stats),
+        diagnosis=build_diagnosis(
+            test_run=result.test_run,
+            samples=result.samples,
+            metadata=result.metadata,
+            sensor_count=len(result.sensor_locations),
+        ),
     )
     summary["warnings"] = summary_warning_payloads(
         build_summary_warnings(

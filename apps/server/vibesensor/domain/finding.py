@@ -12,6 +12,7 @@ from vibesensor.domain.finding_types import FindingKind, VibrationSource
 
 if TYPE_CHECKING:
     from vibesensor.domain.confidence_assessment import ConfidenceAssessment
+    from vibesensor.domain.finding_types import ConfidenceLevel
     from vibesensor.domain.location_hotspot import LocationHotspot
     from vibesensor.domain.order_match import OrderMatchObservation
     from vibesensor.domain.vibration_origin import VibrationOrigin
@@ -256,6 +257,34 @@ class Finding:
             self.effective_confidence,
             strength_band_key=strength_band_key,
         )
+
+    @property
+    def confidence_level(self) -> ConfidenceLevel:
+        """Action-defined confidence level shown to users (never a percentage).
+
+        Strong >= 0.70, Moderate >= 0.40, otherwise Weak; negligible vibration
+        strength caps Strong at Moderate. The assessment carries that context
+        when present.
+        """
+        if self.confidence_assessment is not None:
+            return self.confidence_assessment.level
+        from vibesensor.domain.confidence_assessment import ConfidenceAssessment as CA
+
+        return CA.assess(self.effective_confidence).level
+
+    _ORDER_CODES: ClassVar[dict[str, str]] = {
+        "wheel_1x": "T1",
+        "wheel_2x": "T2",
+        "driveshaft_1x": "P1",
+        "driveshaft_2x": "P2",
+        "engine_1x": "E1",
+        "engine_2x": "E2",
+    }
+
+    @property
+    def order_code(self) -> str | None:
+        """Workshop order label (T1/T2 tire, P1/P2 propshaft, E1/E2 engine), if order-tracked."""
+        return self._ORDER_CODES.get(self.finding_key.strip().lower())
 
     @property
     def confidence_label_key(self) -> str:
