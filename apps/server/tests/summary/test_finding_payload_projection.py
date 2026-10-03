@@ -136,7 +136,7 @@ def test_projection_keeps_canonical_domain_and_presentation_fields_together() ->
             dominant_phase="cruise",
             reason="Strong wheel-order correlation",
         ),
-    ).with_strength_band("moderate")
+    )
 
     payload = finding_payload_from_domain(finding)
 

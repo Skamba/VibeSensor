@@ -18,9 +18,6 @@ def build_findings_bundle(context: PreparedAnalysisContext) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
 
     domain_findings = _build_findings(context.findings_request())
-    domain_findings = tuple(
-        finding.with_strength_band(context.overall_strength_band_key) for finding in domain_findings
-    )
     diagnostic_findings = tuple(finding for finding in domain_findings if not finding.is_reference)
     phase_timeline = build_phase_timeline(
         context.prepared.phase_segments,

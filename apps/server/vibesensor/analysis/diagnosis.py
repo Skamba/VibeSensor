@@ -391,11 +391,11 @@ def _order_findings(
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
 ) -> list[OrderFindingRow]:
-    """Surfaced order-tracked findings, the diagnosed one first at the diagnosis level.
+    """Surfaced order-tracked findings, one per order, the diagnosed one first at its level.
 
-    Orders are listed from Moderate up. The diagnosed source's other order is
-    listed once even when weak on its own: a mechanic reads T1 with T2 present
-    differently from T1 alone.
+    Orders are listed from Moderate up; a repeated order keeps its best-ranked
+    finding. The diagnosed source's other order is listed once even when weak on
+    its own: a mechanic reads T1 with T2 present differently from T1 alone.
     """
     surfaced = [
         finding for finding in findings if finding.order_code is not None and finding.should_surface
@@ -419,8 +419,13 @@ def _order_findings(
                 listed.add(finding.order_code)
                 tracked.append(finding)
     tracked.sort(key=lambda finding: not _is_candidate(finding, candidate))
+    # One row per order: the same order found again at another corner or speed
+    # band belongs in the per-location amplitudes, not in a second worksheet row.
+    per_order: dict[str, Finding] = {}
+    for finding in tracked:
+        per_order.setdefault(cast(str, finding.order_code), finding)
     rows: list[OrderFindingRow] = []
-    for finding in tracked[:_MAX_ORDER_ROWS]:
+    for finding in list(per_order.values())[:_MAX_ORDER_ROWS]:
         diagnosed = _is_candidate(finding, candidate)
         hz_per_kmh = _hz_per_kmh(finding)
         reference_speed = _reference_speed_kmh(finding)

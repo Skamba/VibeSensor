@@ -231,13 +231,14 @@ BENCH_CASES = (
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
     ),
-    # A clean but faint imbalance (well under the road noise): found and located,
-    # but never "go fix it".
+    # A mild imbalance (about 20 mg at its corner, ten times the other sensors):
+    # quiet elsewhere on the car, yet clearly the one source at that corner.
     Case(
-        "bench-faint-front-left-wheel-sweep",
+        "bench-mild-front-left-wheel-sweep",
         _sweep(_ov("front-left", "wheel_mild_imbalance", 0.15, 1.0)),
-        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=frozenset({"moderate", "weak"})),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
     ),
+    # Barely above the road noise: found and located, but never "go fix it".
     Case(
         "bench-barely-there-front-left-wheel-sweep",
         _sweep(_ov("front-left", "wheel_mild_imbalance", 0.06, 1.0)),
@@ -472,14 +473,7 @@ def _order_hz(car: BenchCar, code: str, speed_kmh: float) -> float:
 
 
 # Known accuracy misses: the benchmark keeps them visible (strict xfail) until fixed.
-_RUN_WIDE_STRENGTH_MISS = (
-    "the strength cap uses the median over every sensor's samples, so a strong "
-    "fault on one corner of a five-sensor run reads as negligible and is capped at "
-    "Moderate (confidence ~0.84)"
-)
 KNOWN_MISSES = {
-    ("bench-rear-left-out-of-round-sweep", "default"): _RUN_WIDE_STRENGTH_MISS,
-    ("bench-rear-left-out-of-round-sweep", "other"): _RUN_WIDE_STRENGTH_MISS,
     ("guided-engine-coastdown", "default"): (
         "the idle tone at 39 Hz matches E2 (~0.51 Hz per km/h) while coasting through "
         "71-82 km/h, so the coast-down reads as following road speed and the engine "
@@ -680,6 +674,10 @@ _NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "P1": "propshaft"
 
 
 def _assert_report_view(result: SimPipelineResult, diagnosis: dict, expected: Expected) -> None:
+    # The mechanic's worksheet lists each order once; where it was strongest is
+    # in the per-location table.
+    worksheet_orders = [row.order for row in result.report.mechanic.worksheet]
+    assert len(worksheet_orders) == len(set(worksheet_orders)), worksheet_orders
     owner = result.report.owner
     assert owner.verdict == diagnosis["verdict"]
     assert owner.level == diagnosis["confidence_level"]

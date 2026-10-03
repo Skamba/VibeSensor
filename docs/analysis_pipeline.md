@@ -197,8 +197,8 @@ the PDF both show:
   percentage is exposed anywhere.
 - `order_code` (T1/T2 tire, P1/P2 propshaft, E1/E2 engine), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and
-  `weak_reasons` codes; `order_findings` repeats those facts per surfaced
-  order-tracked finding (diagnosed one first) as workshop worksheet rows.
+  `weak_reasons` codes; `order_findings` repeats those facts once per surfaced
+  order (its best-ranked finding; diagnosed one first) as workshop worksheet rows.
   The candidate names the source and the confidence level; the order shown
   (label, amplitudes, frequency, speeds) is that source's dominant order,
   `TestRun.diagnosis_order_finding` (see "Diagnosed order" in

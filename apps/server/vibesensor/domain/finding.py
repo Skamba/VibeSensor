@@ -80,7 +80,6 @@ class Finding:
     phases_detected: tuple[str, ...] = ()
     matched_points: tuple[OrderMatchObservation, ...] = ()
 
-    negligible_strength: bool = False
     evidence: FindingEvidence | None = None
     location: LocationHotspot | None = None
     origin: VibrationOrigin | None = None
@@ -218,15 +217,11 @@ class Finding:
     CONFIDENCE_MEDIUM_THRESHOLD: ClassVar[float] = 0.40
 
     @staticmethod
-    def classify_confidence(
-        conf_0_to_1: float,
-        *,
-        negligible_strength: bool = False,
-    ) -> ConfidenceLevel:
-        """Strong >= 0.70, Moderate >= 0.40, else Weak; negligible strength caps at Moderate."""
+    def classify_confidence(conf_0_to_1: float) -> ConfidenceLevel:
+        """Strong >= 0.70, Moderate >= 0.40, else Weak."""
         conf = float(conf_0_to_1) if math.isfinite(conf_0_to_1) else 0.0
         if conf >= Finding.CONFIDENCE_HIGH_THRESHOLD:
-            return ConfidenceLevel.MODERATE if negligible_strength else ConfidenceLevel.STRONG
+            return ConfidenceLevel.STRONG
         if conf >= Finding.CONFIDENCE_MEDIUM_THRESHOLD:
             return ConfidenceLevel.MODERATE
         return ConfidenceLevel.WEAK
@@ -234,9 +229,7 @@ class Finding:
     @property
     def confidence_level(self) -> ConfidenceLevel:
         """Action-defined confidence level shown to users (never a percentage)."""
-        return self.classify_confidence(
-            self.effective_confidence, negligible_strength=self.negligible_strength
-        )
+        return self.classify_confidence(self.effective_confidence)
 
     _ORDER_CODES: ClassVar[dict[str, str]] = {
         "wheel_1x": "T1",
@@ -291,8 +284,3 @@ class Finding:
     def peaks(self) -> PeakClassificationView:
         """Return the current peak-classification view used by report serializers."""
         return PeakClassificationView(classification=self.peak_classification)
-
-    def with_strength_band(self, strength_band_key: str | None) -> Finding:
-        """Return a copy that knows whether the run-wide vibration strength was negligible."""
-        negligible = (strength_band_key or "").strip().lower() == "negligible"
-        return replace(self, negligible_strength=negligible)
