@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from _paths import REPO_ROOT, SERVER_ROOT
 
@@ -73,13 +75,13 @@ def test_firmware_uses_pinned_registry_neopixel_library() -> None:
     platformio_text = (REPO_ROOT / "firmware" / "esp" / "platformio.ini").read_text(
         encoding="utf-8"
     )
-    assert platformio_text.count("platform = espressif32@6.13.0") == 1, (
+    assert len(re.findall(r"^platform = espressif32@\d+\.\d+\.\d+$", platformio_text, re.M)) == 1, (
         "shared ESP32 PlatformIO settings must stay consolidated in one base env"
     )
     assert platformio_text.count("extends = env:firmware_esp32") == 2, (
         "both ESP32 board environments must inherit the shared firmware base env"
     )
-    assert "adafruit/Adafruit NeoPixel@1.15.4" in platformio_text, (
+    assert re.search(r"^\s*adafruit/Adafruit NeoPixel@\d+\.\d+\.\d+$", platformio_text, re.M), (
         "firmware platformio.ini must pin the NeoPixel PlatformIO registry dependency"
     )
     assert "lib_deps =" in platformio_text
