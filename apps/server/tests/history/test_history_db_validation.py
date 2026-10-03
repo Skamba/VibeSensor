@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import json
+import sqlite3
 from typing import cast
 
-import numpy as np
 import pytest
 from test_support.history_db_lifecycle import create_recording_run
 from test_support.history_db_lifecycle import make_analysis_summary as _analysis
 from test_support.history_db_lifecycle import make_run_metadata as _metadata
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.common.json_utils import sanitize_value
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
@@ -40,44 +38,6 @@ def test_list_runs_clamps_negative_limit_to_all_rows(db: HistoryDB) -> None:
 def test_append_samples_rejects_missing_run_id(db: HistoryDB, run_id: str) -> None:
     with pytest.raises(ValueError, match="run_id"):
         db.append_samples(run_id, [sensor_frame_from_mapping({"i": 1})])
-
-
-@pytest.mark.parametrize(
-    ("value", "expected", "expected_type"),
-    [
-        pytest.param(np.float32(1.5), 1.5, float, id="float32"),
-        pytest.param(np.float64(2.5), 2.5, float, id="float64"),
-        pytest.param(np.int32(42), 42, int, id="int32"),
-        pytest.param(np.int64(99), 99, int, id="int64"),
-        pytest.param(np.float64(float("nan")), None, type(None), id="nan"),
-        pytest.param(np.float32(float("inf")), None, type(None), id="inf"),
-    ],
-)
-def test_sanitize_value_handles_numpy_scalars(
-    value: object, expected: object, expected_type: type
-) -> None:
-    result = sanitize_value(value)
-    assert result == expected
-    assert type(result) is expected_type
-
-
-def test_sanitize_value_handles_nested_numpy() -> None:
-    data = {"a": np.float32(1.0), "b": [np.int64(2), np.float64(float("nan"))]}
-    result = sanitize_value(data)
-    assert result == {"a": 1.0, "b": [2, None]}
-    json.dumps(result)
-
-
-def test_sanitize_value_handles_numpy_arrays() -> None:
-    arr = np.array([1.0, 2.0, float("nan")])
-    result = sanitize_value(arr)
-    assert result == [1.0, 2.0, None]
-    json.dumps(result)
-
-    arr2d = np.array([[1.0, 2.0], [3.0, 4.0]])
-    result2d = sanitize_value(arr2d)
-    assert result2d == [[1.0, 2.0], [3.0, 4.0]]
-    json.dumps(result2d)
 
 
 # -- metadata validation warning tests ----------------------------------------
@@ -149,3 +109,23 @@ def test_store_analysis_error_rejects_terminal_status(db: HistoryDB) -> None:
     db.store_analysis("run-te", make_persisted_analysis(_analysis("run-te")))
     # Error after complete should return False
     assert db.store_analysis_error("run-te", "late failure") is False
+
+
+def test_delete_refuses_a_run_that_is_still_recording(db: HistoryDB) -> None:
+    create_recording_run(db, "run-live")
+
+    assert db.delete_run_if_safe("run-live") == (False, "active")
+    assert db.get_run("run-live") is not None
+
+
+def test_reopening_a_current_version_db_restores_missing_schema_objects(tmp_path) -> None:
+    path = tmp_path / "history.db"
+    HistoryDB(path).close()
+    with sqlite3.connect(path) as conn:
+        conn.execute("DROP INDEX idx_runs_status")
+
+    HistoryDB(path).close()
+
+    with sqlite3.connect(path) as conn:
+        names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master")}
+    assert "idx_runs_status" in names

@@ -1,27 +1,38 @@
-"""Shared fixtures for metrics_log tests.
+"""Shared fixtures for recorder tests.
 
-Provides a ``make_logger`` factory fixture that eliminates the ~10 repeated
-keyword arguments every RunRecorder constructor call requires, and shared
-fake collaborators used across multiple test modules.
+``make_logger`` builds a ``RunRecorder`` with test defaults. Speed comes from
+real GPS/OBD speed-source services (``speed_rig``) and persistence from a real
+sqlite ``HistoryDB`` (``history_db``); only the sensor registry/processor and
+settings reader are lightweight stubs.
 """
 
 from __future__ import annotations
 
 import sqlite3
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pytest
+from test_support.obd_runtime import build_connected_obd_runtime_parts
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
-from vibesensor.history.records import AnalyzingRunHealth
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.obd.polling import ObdPidPollResult, ObdPollResult
+from vibesensor.speed.obd.service import ObdService
+from vibesensor.speed.source_coordinator import (
+    SpeedSourceObservationService,
+    SpeedSourceServices,
+    build_speed_source_services,
+)
 
 # ---------------------------------------------------------------------------
 # Fake collaborators
@@ -113,137 +124,97 @@ class _FakeRegistry:
         return self._records.get(client_id)
 
 
+class _SingleSensorRegistry(_FakeRegistry):
+    """One live sensor whose runtime record carries no location code."""
+
+    def __init__(self, sensor_id: str) -> None:
+        super().__init__()
+        record = self._records["active"]
+        record.client_id = sensor_id
+        record.name = sensor_id
+        record.location_code = ""
+        self._sensor_id = sensor_id
+        self._records = {sensor_id: record}
+
+    def active_client_ids(self) -> list[str]:
+        return [self._sensor_id]
+
+
 class _NoActiveRegistry(_FakeRegistry):
     def active_client_ids(self) -> list[str]:
         return []
 
 
-_RAW_GPS_SPEED_UNSET = object()
+@dataclass(slots=True)
+class SpeedRig:
+    """Real GPS + OBD speed-source services, driven only through public APIs."""
 
-
-class _FakeGPSMonitor:
-    speed_mps: float | None = None
-    effective_speed_mps: float | None = None
-    override_speed_mps: float | None = None
-    raw_gps_speed_mps: object | float | None = _RAW_GPS_SPEED_UNSET
-    resolved_source: str | None = None
-    fallback_active: bool = False
-    engine_rpm: float | None = None
-    engine_rpm_source: str | None = None
-    speed_status_override: Any = None
-    obd_status_override: Any = None
-    context_override: Any = None
+    gps: GPSSpeedMonitor
+    obd: ObdService
+    services: SpeedSourceServices
 
     @property
-    def gps_speed_mps(self) -> float | None:
-        if self.raw_gps_speed_mps is _RAW_GPS_SPEED_UNSET:
-            return self.speed_mps
-        return self.raw_gps_speed_mps if isinstance(self.raw_gps_speed_mps, (int, float)) else None
+    def observation(self) -> SpeedSourceObservationService:
+        return self.services.observation
 
-    def resolve_speed(self):
-        from vibesensor.speed.gps_speed import SpeedResolution
+    def gps_speed(self, speed_mps: float | None) -> None:
+        self.gps.speed_mps = speed_mps
 
-        if isinstance(self.override_speed_mps, (int, float)):
-            return SpeedResolution(
-                speed_mps=float(self.override_speed_mps),
-                fallback_active=self.fallback_active,
-                source="manual",
+    def manual(self, speed_kmh: float) -> None:
+        self.services.control.apply_speed_source_settings(
+            effective_speed_kmh=speed_kmh,
+            manual_source_selected=True,
+            selected_source="gps",
+        )
+
+    def manual_fallback(self, speed_kmh: float) -> None:
+        """GPS selected but silent, so the configured manual speed takes over."""
+        self.services.control.apply_speed_source_settings(
+            effective_speed_kmh=speed_kmh,
+            manual_source_selected=False,
+            selected_source="gps",
+        )
+        self.gps.speed_mps = None
+
+    def obd_reading(self, *, speed_kmh: float, rpm: float | None) -> None:
+        self.services.control.apply_speed_source_settings(
+            effective_speed_kmh=None,
+            manual_source_selected=False,
+            selected_source="obd2",
+            obd_device_mac=_OBD_MAC,
+            obd_device_name="OBDLink MX+",
+        )
+        now = time.monotonic()
+        self.obd.apply_poll_cycle(
+            ObdPollResult(
+                rpm=_pid_result(rpm, now) if rpm is not None else ObdPidPollResult.skipped(),
+                speed=_pid_result(speed_kmh, now),
             )
-        if isinstance(self.speed_mps, (int, float)):
-            return SpeedResolution(
-                speed_mps=float(self.speed_mps),
-                fallback_active=self.fallback_active,
-                source=str(self.resolved_source or "gps"),
-            )
-        return SpeedResolution(speed_mps=None, fallback_active=self.fallback_active, source="none")
-
-    def resolve_speed_context_at(self, target_mono_s, *, tolerance_s=None):
-        from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
-
-        if callable(self.context_override):
-            return self.context_override(target_mono_s, tolerance_s=tolerance_s)
-        resolution = self.resolve_speed()
-        selected_source = "manual" if isinstance(self.override_speed_mps, (int, float)) else "gps"
-        gps_speed = self.gps_speed_mps
-        return AlignedSpeedContextSnapshot(
-            selected_speed_source=selected_source,
-            resolved_speed_mps=resolution.speed_mps,
-            resolved_speed_source=resolution.source,
-            resolved_speed_aligned=target_mono_s is not None
-            or resolution.source in {"manual", "fallback_manual"},
-            gps_speed_mps=gps_speed,
-            gps_speed_aligned=target_mono_s is not None and isinstance(gps_speed, (int, float)),
-            measured_engine_rpm=(
-                float(self.engine_rpm) if isinstance(self.engine_rpm, (int, float)) else None
-            ),
-            measured_engine_rpm_source=self.engine_rpm_source,
-            measured_engine_rpm_aligned=target_mono_s is not None
-            and isinstance(self.engine_rpm, (int, float)),
         )
 
-    def status_snapshot(self):
-        from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
-        if self.speed_status_override is not None:
-            return self.speed_status_override
+_OBD_MAC = "00043e5a4a4d"
 
-        speed_mps = self.effective_speed_mps
-        if speed_mps is None and isinstance(self.speed_mps, (int, float)):
-            speed_mps = float(self.speed_mps)
-        effective_speed_kmh = round(float(speed_mps) * 3.6, 2) if speed_mps is not None else None
-        return SpeedSourceStatusSnapshot(
-            gps_enabled=True,
-            connection_state="connected",
-            device="gps0",
-            fix_mode=3,
-            fix_dimension="3d",
-            speed_confidence="high",
-            epx_m=0.6,
-            epy_m=0.6,
-            epv_m=1.2,
-            last_update_age_s=0.2 if effective_speed_kmh is not None else None,
-            raw_speed_kmh=effective_speed_kmh,
-            effective_speed_kmh=effective_speed_kmh,
-            last_error=None,
-            reconnect_delay_s=None,
-            fallback_active=self.fallback_active,
-            speed_source=str(self.resolved_source or "gps"),
-            stale_timeout_s=8.0,
-        )
 
-    def obd_status(self):
-        from vibesensor.speed.obd.models import ObdStatusSnapshot
+def _pid_result(value: float, started_at_s: float) -> ObdPidPollResult:
+    return ObdPidPollResult(
+        value=value,
+        raw_response=None,
+        error=None,
+        duration_s=0.01,
+        executed=True,
+        started_at_s=started_at_s,
+    )
 
-        if self.obd_status_override is not None:
-            return self.obd_status_override
 
-        return ObdStatusSnapshot(
-            configured_device_mac="AA:BB:CC:DD:EE:FF",
-            configured_device_name="Test OBD",
-            connection_state="connected",
-            device_mac="AA:BB:CC:DD:EE:FF",
-            device_name="Test OBD",
-            paired=True,
-            trusted=True,
-            connected=True,
-            rfcomm_channel=1,
-            last_sample_age_s=0.2,
-            last_speed_kmh=round(float(self.speed_mps) * 3.6, 2)
-            if isinstance(self.speed_mps, (int, float))
-            else None,
-            last_rpm=float(self.engine_rpm) if isinstance(self.engine_rpm, (int, float)) else None,
-            rpm_sample_age_s=0.2 if isinstance(self.engine_rpm, (int, float)) else None,
-            rpm_target_interval_ms=250,
-            rpm_effective_hz=4.0 if isinstance(self.engine_rpm, (int, float)) else None,
-            request_rtt_ms=85.0,
-            timeout_count=0,
-            error_count=0,
-            poll_mode="rpm_priority",
-            backoff_active=False,
-            last_error=None,
-            last_raw_response=None,
-            reconnect_delay_s=None,
-        )
+def build_speed_rig() -> SpeedRig:
+    gps = GPSSpeedMonitor(gps_enabled=True)
+    obd = build_connected_obd_runtime_parts(clock=time.monotonic).obd
+    return SpeedRig(
+        gps=gps,
+        obd=obd,
+        services=build_speed_source_services(gps_monitor=gps, obd=obd),
+    )
 
 
 class _FakeProcessor:
@@ -312,62 +283,23 @@ class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
         return AnalysisSettingsSnapshot(**self.values)
 
 
-class _FakeHistoryDB:
-    def __init__(self) -> None:
-        self.create_calls: list[tuple[str, str]] = []
-        self.append_calls: list[tuple[str, int]] = []
-        self.finalize_calls: list[str] = []
-        self.updated_metadata: list[tuple[str, RunMetadata]] = []
-
-    def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
-        self.create_calls.append((run_id, start_time_utc))
-
-    def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
-        self.append_calls.append((run_id, len(samples)))
-        return len(samples)
-
-    def finalize_run(
-        self,
-        run_id: str,
-        end_time_utc: str,
-        metadata: RunMetadata | None = None,
-    ) -> None:
-        if metadata is not None:
-            self.updated_metadata.append((run_id, metadata))
-        self.finalize_calls.append(run_id)
-
-    def update_run_metadata(self, run_id: str, metadata: RunMetadata) -> bool:
-        self.updated_metadata.append((run_id, metadata))
-        return True
-
-    def analyzing_run_health(self) -> AnalyzingRunHealth:
-        return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
-
-    def get_run(self, _run_id: str) -> None:
-        return None
-
-    def store_analysis_error(self, _run_id: str, _error: str) -> bool:
-        return True
-
-
-class _FailingCreateRunHistoryDB(_FakeHistoryDB):
+class _FailingCreateRunHistoryDB(HistoryDB):
     def create_run(self, run_id: str, start_time_utc: str, metadata: RunMetadata) -> None:
         raise sqlite3.OperationalError("create_run boom")
 
 
-class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
+class _FailingAppendHistoryDB(HistoryDB):
     """Fails append_samples enough times to exhaust the retry budget, then succeeds."""
 
-    def __init__(self) -> None:
-        super().__init__()
-        # Must exceed _MAX_APPEND_RETRIES (3) to actually surface a write error
+    def __init__(self, db_path: Path) -> None:
+        super().__init__(db_path)
         from vibesensor.recording.recorder import _MAX_APPEND_RETRIES
 
-        self._append_failures_remaining = _MAX_APPEND_RETRIES
+        self.append_failures_remaining = _MAX_APPEND_RETRIES
 
     def append_samples(self, run_id: str, samples: list[SensorFrame]) -> int:
-        if self._append_failures_remaining > 0:
-            self._append_failures_remaining -= 1
+        if self.append_failures_remaining > 0:
+            self.append_failures_remaining -= 1
             raise sqlite3.OperationalError("append boom")
         return super().append_samples(run_id, samples)
 
@@ -416,7 +348,7 @@ def _make_logger(
     return RunRecorder(
         config,
         registry=reg,
-        gps_monitor=gps_monitor or _FakeGPSMonitor(),
+        gps_monitor=gps_monitor or build_speed_rig().observation,
         processor=processor or _FakeProcessor(registry=reg),
         settings_reader=settings_reader or _FakeAnalysisSettings(),
         history_db=history_db,
@@ -451,15 +383,17 @@ def fake_registry():
 
 
 @pytest.fixture
-def fake_gps_monitor():
-    """Return a fresh ``_FakeGPSMonitor`` instance."""
-    return _FakeGPSMonitor()
+def speed_rig() -> SpeedRig:
+    """Return real speed-source services with no speed yet."""
+    return build_speed_rig()
 
 
 @pytest.fixture
-def fake_history_db():
-    """Return a fresh ``_FakeHistoryDB`` instance."""
-    return _FakeHistoryDB()
+def history_db(tmp_path: Path):
+    """Return a real sqlite ``HistoryDB`` in ``tmp_path``."""
+    db = HistoryDB(tmp_path / "history.db")
+    yield db
+    db.close()
 
 
 @pytest.fixture
@@ -469,15 +403,23 @@ def mutable_fake_settings():
 
 
 @pytest.fixture
-def failing_create_run_db():
-    """Return a ``_FailingCreateRunHistoryDB`` instance."""
-    return _FailingCreateRunHistoryDB()
+def failing_create_run_db(tmp_path: Path):
+    db = _FailingCreateRunHistoryDB(tmp_path / "failing-create.db")
+    yield db
+    db.close()
 
 
 @pytest.fixture
-def failing_append_once_db():
-    """Return a ``_FailingAppendOnceHistoryDB`` instance."""
-    return _FailingAppendOnceHistoryDB()
+def failing_append_once_db(tmp_path: Path):
+    db = _FailingAppendHistoryDB(tmp_path / "failing-append.db")
+    yield db
+    db.close()
+
+
+@pytest.fixture
+def single_sensor_registry():
+    """Factory for a one-sensor registry without a runtime location."""
+    return _SingleSensorRegistry
 
 
 @pytest.fixture

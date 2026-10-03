@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.recording.raw_capture import RawCaptureLossStats
 from vibesensor.recording.run_schema import RunGuidedPhase
 
@@ -43,8 +45,11 @@ def _clock(session):
     return now
 
 
-def test_guided_phases_close_each_step_when_the_next_starts(make_logger) -> None:
-    recorder = make_logger()
+def test_guided_phases_close_each_step_when_the_next_starts(
+    make_logger, history_db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recorder = make_logger(history_db=history_db)
+    monkeypatch.setattr(recorder.post_analysis, "schedule", lambda _run_id: None)
     run_id = recorder.start_recording().run_id
     session = recorder._recording_session
     now = _clock(session)
@@ -70,6 +75,19 @@ def test_guided_phases_close_each_step_when_the_next_starts(make_logger) -> None
     assert recorder.status().guided_phase is None
     # A reloaded Live page restores the finished guided test from the status.
     assert recorder.status().guided_phases_completed == ("sweep", "hold", "coast_down")
+
+    # The finished run's stored metadata carries the guided phases for analysis.
+    active = recorder.registry.get("active")
+    assert active is not None
+    active.frames_total = 1
+    recorder.stop_recording()
+    metadata = history_db.get_run_metadata(run_id)
+    assert metadata is not None
+    assert metadata.guided_phases == (
+        RunGuidedPhase("sweep", 5.0, 25.0),
+        RunGuidedPhase("hold", 25.0, 35.0),
+        RunGuidedPhase("coast_down", 35.0, 43.0),
+    )
 
 
 def test_repeated_guided_steps_are_listed_once(make_logger) -> None:

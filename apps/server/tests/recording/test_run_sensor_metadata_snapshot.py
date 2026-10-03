@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 from dataclasses import replace
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import create_autospec
 
 import pytest
 from test_support.history_db_lifecycle import run_samples
 
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording import _recorder_runtime
+from vibesensor.settings.sensor_settings import SensorSettingsService
 
 
 class _StopLoop(Exception):
@@ -39,7 +40,7 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
             "mount_orientation": "radial",
         }
     }
-    sensor_metadata_reader = MagicMock()
+    sensor_metadata_reader = create_autospec(SensorSettingsService, instance=True)
     sensor_metadata_reader.get_sensors.side_effect = lambda: sensors_by_mac
 
     logger = make_logger(
@@ -115,7 +116,7 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
             "mount_orientation": "radial",
         }
     }
-    sensor_metadata_reader = MagicMock()
+    sensor_metadata_reader = create_autospec(SensorSettingsService, instance=True)
     sensor_metadata_reader.get_sensors.side_effect = lambda: sensors_by_mac
     fake_registry.active_client_ids = lambda: list(active_ids)
 

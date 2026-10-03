@@ -18,7 +18,7 @@ class _StopLoop(Exception):
 def test_recording_keeps_run_start_context_when_settings_change_mid_run(
     make_logger,
     mutable_fake_settings,
-    fake_gps_monitor,
+    speed_rig,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -42,11 +42,11 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
         "active_car_snapshot",
         lambda: active_car_holder[0],
     )
-    fake_gps_monitor.override_speed_mps = 10.0
+    speed_rig.manual(36.0)
 
     logger = make_logger(
         settings_reader=mutable_fake_settings,
-        gps_monitor=fake_gps_monitor,
+        gps_monitor=speed_rig.observation,
         history_db=history_db,
     )
     status = logger.start_recording()

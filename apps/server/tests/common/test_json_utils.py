@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 import numpy as np
 import pytest
 
 from vibesensor.common.json_utils import (
+    as_float_or_none,
+    as_int_or_none,
     deep_merge,
     json_text_dumps,
     payload_object_from_json,
@@ -336,3 +339,43 @@ def test_payload_helpers_project_nested_json_objects() -> None:
     assert payload_value_from_json(value) == value
     assert payload_object_from_json(values[1]) == values[1]
     assert payload_objects_from_json(values) == values
+
+
+class TestAsFloatOrNone:
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (3.14, 3.14),
+            (42, 42.0),
+            (0, 0.0),
+            ("3.14", 3.14),
+            (None, None),
+            ("", None),
+            (float("nan"), None),
+            (float("inf"), None),
+            (float("-inf"), None),
+            ("abc", None),
+            (True, None),
+            (False, None),
+        ],
+    )
+    def test_as_float_or_none(self, value: Any, expected: float | None) -> None:
+        assert as_float_or_none(value) == expected
+
+
+class TestAsIntOrNone:
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            (42, 42),
+            (3.7, 4),
+            (3.2, 3),
+            ("abc", None),
+            (float("nan"), None),
+            (None, None),
+            (True, None),
+            (False, None),
+        ],
+    )
+    def test_as_int_or_none(self, value: Any, expected: int | None) -> None:
+        assert as_int_or_none(value) == expected

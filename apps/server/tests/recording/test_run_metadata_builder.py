@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus, CarSnapshot
+from vibesensor.ingest.registry import ClientRecord, ClientRegistry
+from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.run_metadata_builder import (
     build_run_metadata,
+    create_run_metadata,
     firmware_version_for_run,
 )
-from vibesensor.recording.run_schema import RunCarMetadata
+from vibesensor.recording.run_schema import RUN_METADATA_TYPE, RunCarMetadata
 
 
 def _default_run_metadata_kwargs(**overrides: object) -> dict[str, object]:
@@ -81,36 +84,36 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
 
 class TestFirmwareVersionForRun:
     def test_no_clients(self) -> None:
-        reg = MagicMock()
+        reg = create_autospec(ClientRegistry, instance=True)
         reg.active_client_ids.return_value = []
         assert firmware_version_for_run(reg) is None
 
     def test_single_version(self) -> None:
-        record = MagicMock()
+        record = MagicMock(spec=ClientRecord)
         record.firmware_version = "1.2.3"
-        reg = MagicMock()
+        reg = create_autospec(ClientRegistry, instance=True)
         reg.active_client_ids.return_value = ["c1"]
         reg.get.return_value = record
         assert firmware_version_for_run(reg) == "1.2.3"
 
     def test_multiple_versions_sorted(self) -> None:
         def _get(cid: str) -> MagicMock:
-            record = MagicMock()
+            record = MagicMock(spec=ClientRecord)
             record.firmware_version = {"c1": "1.0.0", "c2": "2.0.0"}[cid]
             return record
 
-        reg = MagicMock()
+        reg = create_autospec(ClientRegistry, instance=True)
         reg.active_client_ids.return_value = ["c1", "c2"]
         reg.get.side_effect = _get
         assert firmware_version_for_run(reg) == "1.0.0, 2.0.0"
 
     def test_blank_and_missing_versions_are_ignored(self) -> None:
         def _get(cid: str) -> MagicMock:
-            record = MagicMock()
+            record = MagicMock(spec=ClientRecord)
             record.firmware_version = {"c1": " ", "c2": None}.get(cid)
             return record
 
-        reg = MagicMock()
+        reg = create_autospec(ClientRegistry, instance=True)
         reg.active_client_ids.return_value = ["c1", "c2"]
         reg.get.side_effect = _get
         assert firmware_version_for_run(reg) is None
@@ -190,3 +193,26 @@ class TestBuildRunMetadata:
         assert meta.car.name == "VibeSensor Simulator"
         assert meta.car.car_type == "sedan"
         assert meta.car.variant is None
+
+
+def _created_run_metadata(**overrides: object) -> dict:
+    defaults: dict[str, object] = {
+        "run_id": "r1",
+        "start_time_utc": "2025-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200,
+        "feature_interval_s": 0.5,
+        "fft_window_size_samples": 256,
+        "accel_scale_g_per_lsb": 1.0 / 256.0,
+    }
+    defaults.update(overrides)
+    return run_metadata_to_json_object(create_run_metadata(**defaults))
+
+
+def test_create_run_metadata_serializes_identity_firmware_and_utc_offset() -> None:
+    meta = _created_run_metadata(firmware_version="esp-fw-1.2.3", recorded_utc_offset_seconds=7200)
+    assert meta["record_type"] == RUN_METADATA_TYPE
+    assert meta["run_id"] == "r1"
+    assert meta["sensor_model"] == "ADXL345"
+    assert meta["firmware_version"] == "esp-fw-1.2.3"
+    assert meta["recorded_utc_offset_seconds"] == 7200

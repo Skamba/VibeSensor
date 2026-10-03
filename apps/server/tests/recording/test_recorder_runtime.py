@@ -18,10 +18,10 @@ async def _raise_stop_loop(_seconds: float) -> None:
 @pytest.mark.asyncio
 async def test_idle_runtime_tick_does_not_create_phantom_run(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 5
@@ -34,17 +34,16 @@ async def test_idle_runtime_tick_does_not_create_phantom_run(
     status = logger.status()
     assert status.enabled is False
     assert status.run_id is None
-    assert fake_history_db.create_calls == []
-    assert fake_history_db.append_calls == []
+    assert history_db.list_runs() == []
 
 
 @pytest.mark.asyncio
 async def test_runtime_auto_stops_a_run_at_the_thirty_minute_limit(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
     started = logger.start_recording()
     snapshot = logger._lifecycle.snapshot()

@@ -12,14 +12,14 @@ from vibesensor.history.history_db import HistoryDB
 
 def test_stop_recording_continues_when_raw_capture_finalize_degrades(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     from vibesensor.recording.raw_capture_writer import RawCaptureFinalizeResult
 
     scheduled: list[str] = []
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection is the narrow private seam needed to prove
     # recorder finalization behavior for degraded/late capture outcomes.
@@ -37,9 +37,10 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
         status = logger.stop_recording()
 
     assert status.enabled is False
-    assert fake_history_db.finalize_calls == [snapshot.run_id]
-    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
-    assert updated_run_id == snapshot.run_id
+    stored = history_db.get_run(snapshot.run_id)
+    assert stored is not None
+    assert stored.end_time_utc is not None
+    metadata = stored.metadata
     assert metadata.raw_capture_finalize is not None
     assert metadata.raw_capture_finalize.status == "timeout"
     assert metadata.raw_capture_finalize.queue_depth == 3
@@ -199,13 +200,13 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
 
 def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from vibesensor.recording.raw_capture_writer import RawCaptureFinalizeResult
 
     scheduled: list[str] = []
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     snapshot = _started_snapshot_with_sample(logger)
     # Raw-capture fault injection keeps the test focused on degraded metadata
     # and scheduling behavior instead of raw writer internals.
@@ -221,8 +222,8 @@ def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata
 
     logger.stop_recording()
 
-    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
-    assert updated_run_id == snapshot.run_id
+    metadata = history_db.get_run_metadata(snapshot.run_id)
+    assert metadata is not None
     assert metadata.raw_capture_finalize is not None
     assert metadata.raw_capture_finalize.status == "failed"
     assert metadata.raw_capture_finalize.error_summary == "raw capture finalize failed"
