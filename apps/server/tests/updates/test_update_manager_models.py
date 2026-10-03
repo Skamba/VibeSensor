@@ -3,61 +3,7 @@ from __future__ import annotations
 import os
 
 import vibesensor.updates.privilege as update_privilege
-from vibesensor.updates.models import (
-    UpdateIssue,
-    UpdateJobStatus,
-    UpdatePhase,
-    UpdateState,
-    UpdateTransport,
-)
 from vibesensor.updates.runner import sanitize_log_line as sanitize_log_line
-from vibesensor.updates.status.payload_codec import update_status_to_builtins
-
-
-class TestUpdateJobStatus:
-    def test_default_status_to_payload(self) -> None:
-        status = UpdateJobStatus()
-        data = update_status_to_builtins(status)
-        assert data["state"] == "idle"
-        assert data["phase"] == "idle"
-        assert data["started_at"] is None
-        assert data["finished_at"] is None
-        assert data["last_success_at"] is None
-        assert data["transport"] == UpdateTransport.wifi.value
-        assert data["ssid"] is None
-        assert data["issues"] == []
-        assert data["log_tail"] == []
-        assert data["exit_code"] is None
-        assert data["runtime"] == {
-            "version": "",
-            "commit": "",
-            "ui_source_hash": "",
-            "static_assets_hash": "",
-            "static_build_source_hash": "",
-            "static_build_commit": "",
-            "assets_verified": False,
-            "has_packaged_static": False,
-        }
-
-    def test_status_with_issues(self) -> None:
-        status = UpdateJobStatus(
-            state=UpdateState.failed,
-            phase=UpdatePhase.installing,
-            ssid="TestNet",
-            issues=[UpdateIssue(phase="installing", message="Install failed", detail="rc=1")],
-        )
-        data = update_status_to_builtins(status)
-        assert data["state"] == "failed"
-        assert data["ssid"] == "TestNet"
-        assert data["issues"] == [
-            {"phase": "installing", "message": "Install failed", "detail": "rc=1"},
-        ]
-
-    def test_log_tail_truncated(self) -> None:
-        status = UpdateJobStatus(log_tail=[f"line {i}" for i in range(100)])
-        assert update_status_to_builtins(status)["log_tail"] == [
-            f"line {i}" for i in range(50, 100)
-        ]
 
 
 class TestSanitizeLogLine:

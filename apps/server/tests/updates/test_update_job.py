@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 from test_support.update_status import build_update_status_harness
@@ -29,7 +29,7 @@ from vibesensor.updates.models import (
     UpdateTransport,
     UpdateValidationConfig,
 )
-from vibesensor.updates.runner import CommandExecutionResult
+from vibesensor.updates.runner import CommandExecutionResult, UpdateCommandExecutor
 from vibesensor.updates.status.payload_codec import UpdateStateStore
 from vibesensor.updates.status.tracker import UpdateStatusTracker
 from vibesensor.updates.venv_slots import RevertedBoot
@@ -159,7 +159,7 @@ class _Slots:
 
 
 def _ok_commands() -> MagicMock:
-    commands = MagicMock()
+    commands = create_autospec(UpdateCommandExecutor, instance=True)
     commands.run = AsyncMock(
         return_value=CommandExecutionResult(returncode=0, stdout="", stderr=""),
     )
@@ -425,57 +425,7 @@ async def test_run_raises_release_error_when_release_check_fails(tmp_path: Path)
     assert harness.transport.cleaned == [harness.transport.prepared]
 
 
-# -- success completion and restart scheduling ------------------------------
-
-
-@pytest.mark.asyncio
-async def test_completion_marks_success_then_schedules_restart(tmp_path: Path) -> None:
-    status = UpdateStatusTracker(
-        state_store=UpdateStateStore(tmp_path / "update_status.json"),
-        status=UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.installing),
-    )
-    harness = _harness(tmp_path, status=status)
-
-    await harness.job._finish_success("Update completed successfully")
-
-    harness.commands.run.assert_awaited_once()
-    assert status.status.state is UpdateState.success
-    assert status.status.terminal_state is UpdateTerminalState.success
-    assert status.status.log_tail == [
-        "Update completed successfully",
-        "Scheduled backend service restart",
-    ]
-    assert status.status.issues == []
-
-
-@pytest.mark.asyncio
-async def test_completion_records_issue_when_restart_scheduling_fails(tmp_path: Path) -> None:
-    status = UpdateStatusTracker(
-        state_store=UpdateStateStore(tmp_path / "update_status.json"),
-        status=UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.checking),
-    )
-    commands = MagicMock()
-    commands.run = AsyncMock(
-        return_value=CommandExecutionResult(returncode=1, stdout="", stderr="boom"),
-    )
-    harness = _harness(tmp_path, status=status, commands=commands)
-
-    await harness.job._finish_success("No server update needed; ESP firmware checked")
-
-    assert commands.run.await_count == 2
-    assert status.status.state is UpdateState.success
-    assert status.status.log_tail == [
-        "No server update needed; ESP firmware checked",
-        "Automatic backend restart scheduling failed",
-    ]
-    assert [(issue.phase, issue.message, issue.detail) for issue in status.status.issues] == [
-        (
-            "done",
-            "Backend restart was not scheduled automatically",
-            "Run 'sudo systemctl restart vibesensor.service' manually",
-        ),
-    ]
-
+# -- success completion, restart scheduling and finalization ---------------------
 
 _SYSTEMD_RUN_RESTART = [
     "systemd-run",
@@ -488,91 +438,114 @@ _SYSTEMD_RUN_RESTART = [
 ]
 
 
-@pytest.mark.asyncio
-async def test_schedule_restart_uses_systemd_run_when_available(tmp_path: Path) -> None:
-    harness = _harness(tmp_path)
-
-    assert await harness.job._schedule_restart() is True
-    harness.commands.run.assert_awaited_once()
-    assert harness.commands.run.await_args.args[0] == _SYSTEMD_RUN_RESTART
-    assert harness.commands.run.await_args.kwargs == {
-        "phase": "done",
-        "timeout": 30,
-        "sudo": True,
-    }
-
-
-@pytest.mark.asyncio
-async def test_schedule_restart_falls_back_to_direct_systemctl_restart(tmp_path: Path) -> None:
-    commands = MagicMock()
+def _commands(*returncodes: int) -> MagicMock:
+    commands = create_autospec(UpdateCommandExecutor, instance=True)
     commands.run = AsyncMock(
         side_effect=[
-            CommandExecutionResult(returncode=1, stdout="", stderr="boom"),
-            CommandExecutionResult(returncode=0, stdout="", stderr=""),
+            CommandExecutionResult(returncode=code, stdout="", stderr="boom" if code else "")
+            for code in returncodes
         ],
     )
-    harness = _harness(tmp_path, commands=commands)
+    return commands
 
-    assert await harness.job._schedule_restart() is True
-    assert [call.args[0] for call in commands.run.await_args_list] == [
+
+@pytest.mark.asyncio
+async def test_success_schedules_a_delayed_restart_through_systemd_run(tmp_path: Path) -> None:
+    harness = _harness(tmp_path, commands=_commands(0))
+
+    await harness.job.run(_request())
+
+    harness.commands.run.assert_awaited_once_with(
+        _SYSTEMD_RUN_RESTART, phase="done", timeout=30, sudo=True
+    )
+    assert harness.status.status.state is UpdateState.success
+    assert harness.status.status.terminal_state is UpdateTerminalState.success
+    assert harness.status.status.log_tail[-2:] == [
+        "No server update needed; ESP firmware checked",
+        "Scheduled backend service restart",
+    ]
+    assert harness.status.status.issues == []
+
+
+@pytest.mark.asyncio
+async def test_restart_falls_back_to_a_direct_systemctl_restart(tmp_path: Path) -> None:
+    harness = _harness(tmp_path, commands=_commands(1, 0))
+
+    await harness.job.run(_request())
+
+    assert [call.args[0] for call in harness.commands.run.await_args_list] == [
         _SYSTEMD_RUN_RESTART,
         ["systemctl", "restart", "vibesensor.service"],
     ]
-
-
-# -- finalization -------------------------------------------------------------
+    assert harness.status.status.issues == []
 
 
 @pytest.mark.asyncio
-async def test_finalize_cleans_up_transport_then_refreshes_runtime(
+async def test_success_records_an_issue_when_no_restart_could_be_scheduled(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    harness = _harness(tmp_path, commands=_commands(1, 1))
+
+    await harness.job.run(_request())
+
+    assert harness.status.status.state is UpdateState.success
+    assert harness.status.status.log_tail[-1] == "Automatic backend restart scheduling failed"
+    assert [
+        (issue.phase, issue.message, issue.detail) for issue in harness.status.status.issues
+    ] == [
+        (
+            "done",
+            "Backend restart was not scheduled automatically",
+            "Run 'sudo systemctl restart vibesensor.service' manually",
+        ),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_run_cleans_up_the_transport_and_refreshes_runtime_details(
+    tmp_path: Path,
 ) -> None:
     harness = _harness(tmp_path)
-    refresh = AsyncMock()
-    monkeypatch.setattr(UpdateJob, "_refresh_runtime_details", refresh)
-    prepared_transport = object()
+    runtime_before = harness.status.status.runtime
 
-    await harness.job._finalize(prepared_transport)
+    await harness.job.run(_request())
 
-    assert harness.transport.cleaned == [prepared_transport]
-    refresh.assert_awaited_once()
+    assert harness.transport.cleaned == [harness.transport.prepared]
+    assert harness.status.status.runtime is not runtime_before
 
 
 @pytest.mark.asyncio
-async def test_finalize_adds_cleanup_note_to_prior_failure(tmp_path: Path) -> None:
-    harness = _harness(tmp_path)
+async def test_cleanup_failure_is_noted_on_the_workflow_error(tmp_path: Path) -> None:
+    harness = _harness(tmp_path, fetch_error=OSError("rate limited"))
     harness.transport.cleanup_error = UpdateCleanupError("transport cleanup failed")
     runtime_before = harness.status.status.runtime
-    workflow_error = RuntimeError("workflow bug")
 
-    await harness.job._finalize(object(), prior_error=workflow_error)
+    with pytest.raises(UpdateReleaseError, match="rate limited") as excinfo:
+        await harness.job.run(_request())
 
-    assert workflow_error.__notes__ == ["Cleanup also failed: transport cleanup failed"]
+    assert excinfo.value.__notes__ == ["Cleanup also failed: transport cleanup failed"]
     assert harness.status.status.runtime is runtime_before
 
 
 @pytest.mark.asyncio
-async def test_finalize_raises_cleanup_error_when_cleanup_fails_after_cancellation(
-    tmp_path: Path,
-) -> None:
-    harness = _harness(tmp_path)
+async def test_cleanup_failure_after_cancellation_is_raised(tmp_path: Path) -> None:
+    harness = _harness(tmp_path, fetch_error=asyncio.CancelledError())
     harness.transport.cleanup_error = UpdateCleanupError("transport cleanup failed")
 
     with pytest.raises(
         UpdateCleanupError,
         match="Cleanup failed after cancellation: transport cleanup failed",
     ):
-        await harness.job._finalize(object(), prior_error=asyncio.CancelledError())
+        await harness.job.run(_request())
 
 
 @pytest.mark.asyncio
-async def test_finalize_raises_cleanup_error_without_prior_failure(tmp_path: Path) -> None:
+async def test_cleanup_failure_after_a_successful_update_is_raised(tmp_path: Path) -> None:
     harness = _harness(tmp_path)
     harness.transport.cleanup_error = UpdateCleanupError("transport cleanup failed")
 
     with pytest.raises(UpdateCleanupError, match="^transport cleanup failed$"):
-        await harness.job._finalize(object())
+        await harness.job.run(_request())
 
 
 # -- startup recovery ----------------------------------------------------------

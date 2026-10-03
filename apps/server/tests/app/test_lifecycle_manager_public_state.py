@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+import time
+from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 from test_support.runtime_lifecycle import (
@@ -11,19 +12,33 @@ from test_support.runtime_lifecycle import (
 )
 
 from vibesensor.app.lifecycle import LifecycleManager
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
+from vibesensor.recording.raw_capture_writer import RunRawCaptureWriter
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.obd.service import ObdService
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.updates.manager import UpdateManager
 
 
 async def _park_forever(*args, **kwargs) -> None:
     await asyncio.Event().wait()
 
 
-async def _wait_until(predicate, *, spins: int = 40) -> None:
-    for _ in range(spins):
-        if predicate():
-            return
-        await asyncio.sleep(0)
-    raise AssertionError("condition not met")
+async def _wait_until(predicate, *, timeout_s: float = 10.0) -> None:
+    """Yield to the loop until *predicate* holds; bounded by time, not loop turns.
+
+    Startup hands work to threads, so a fixed number of loop turns is not enough
+    on a loaded machine.
+    """
+    deadline = time.monotonic() + timeout_s
+    while not predicate():
+        if time.monotonic() > deadline:
+            raise AssertionError("condition not met")
+        await asyncio.sleep(0.001)
 
 
 def _build_lifecycle(*, start_udp_receiver, **overrides):
@@ -40,17 +55,18 @@ async def test_start_marks_runtime_ready_and_tracks_running_tasks() -> None:
     async def _fake_udp(*args, **kwargs):
         return None, None
 
-    control_plane = MagicMock()
+    control_plane = create_autospec(UDPControlPlane, instance=True)
     control_plane.start = AsyncMock()
-    ws_broadcaster = MagicMock()
+    ws_broadcaster = create_autospec(LiveBroadcaster, instance=True)
     ws_broadcaster.run = AsyncMock(side_effect=_park_forever)
-    run_recorder = MagicMock()
+    run_recorder = create_autospec(RunRecorder, instance=True)
+    run_recorder.raw_capture = create_autospec(RunRawCaptureWriter, instance=True)
     run_recorder.run = AsyncMock(side_effect=_park_forever)
-    gps_monitor = MagicMock()
+    gps_monitor = create_autospec(GPSSpeedMonitor, instance=True)
     gps_monitor.run = AsyncMock(side_effect=_park_forever)
-    obd_runner = MagicMock()
+    obd_runner = create_autospec(ObdService, instance=True)
     obd_runner.run = AsyncMock(side_effect=_park_forever)
-    update_manager = MagicMock()
+    update_manager = create_autospec(UpdateManager, instance=True)
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
 
@@ -86,21 +102,22 @@ async def test_start_records_background_task_failure_in_health_state() -> None:
     async def _fake_udp(*args, **kwargs):
         return None, None
 
-    control_plane = MagicMock()
+    control_plane = create_autospec(UDPControlPlane, instance=True)
     control_plane.start = AsyncMock()
 
     async def _failing_ws(*args, **kwargs):
         raise RuntimeError("ws boom")
 
-    ws_broadcaster = MagicMock()
+    ws_broadcaster = create_autospec(LiveBroadcaster, instance=True)
     ws_broadcaster.run = AsyncMock(side_effect=_failing_ws)
-    run_recorder = MagicMock()
+    run_recorder = create_autospec(RunRecorder, instance=True)
+    run_recorder.raw_capture = create_autospec(RunRawCaptureWriter, instance=True)
     run_recorder.run = AsyncMock(side_effect=_park_forever)
-    gps_monitor = MagicMock()
+    gps_monitor = create_autospec(GPSSpeedMonitor, instance=True)
     gps_monitor.run = AsyncMock(side_effect=_park_forever)
-    obd_runner = MagicMock()
+    obd_runner = create_autospec(ObdService, instance=True)
     obd_runner.run = AsyncMock(side_effect=_park_forever)
-    update_manager = MagicMock()
+    update_manager = create_autospec(UpdateManager, instance=True)
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
 
@@ -132,10 +149,10 @@ async def test_start_clears_restartable_failure_after_successful_retry(
     async def _fake_udp(*args, **kwargs):
         return None, None
 
-    control_plane = MagicMock()
+    control_plane = create_autospec(UDPControlPlane, instance=True)
     control_plane.start = AsyncMock()
     restart_started = asyncio.Event()
-    ws_broadcaster = MagicMock()
+    ws_broadcaster = create_autospec(LiveBroadcaster, instance=True)
     ws_run_calls = {"count": 0}
     original_sleep = asyncio.sleep
 
@@ -153,13 +170,14 @@ async def test_start_clears_restartable_failure_after_successful_retry(
         await original_sleep(0)
 
     ws_broadcaster.run = _ws_run
-    run_recorder = MagicMock()
+    run_recorder = create_autospec(RunRecorder, instance=True)
+    run_recorder.raw_capture = create_autospec(RunRawCaptureWriter, instance=True)
     run_recorder.run = AsyncMock(side_effect=_park_forever)
-    gps_monitor = MagicMock()
+    gps_monitor = create_autospec(GPSSpeedMonitor, instance=True)
     gps_monitor.run = AsyncMock(side_effect=_park_forever)
-    obd_runner = MagicMock()
+    obd_runner = create_autospec(ObdService, instance=True)
     obd_runner.run = AsyncMock(side_effect=_park_forever)
-    update_manager = MagicMock()
+    update_manager = create_autospec(UpdateManager, instance=True)
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
 
@@ -199,23 +217,24 @@ async def test_stop_cleans_owned_resources_once_and_clears_public_tasks() -> Non
         active_run_id_before_stop=None,
         write_error=None,
     )
-    run_recorder = MagicMock()
+    run_recorder = create_autospec(RunRecorder, instance=True)
+    run_recorder.raw_capture = create_autospec(RunRawCaptureWriter, instance=True)
     run_recorder.run = AsyncMock(side_effect=_park_forever)
     run_recorder.shutdown_report = MagicMock(return_value=shutdown_report)
-    history_db = MagicMock()
-    control_plane = MagicMock()
+    history_db = create_autospec(HistoryDB, instance=True)
+    control_plane = create_autospec(UDPControlPlane, instance=True)
     control_plane.start = AsyncMock()
     control_plane.close = MagicMock()
-    ws_broadcaster = MagicMock()
+    ws_broadcaster = create_autospec(LiveBroadcaster, instance=True)
     ws_broadcaster.run = AsyncMock(side_effect=_park_forever)
-    gps_monitor = MagicMock()
+    gps_monitor = create_autospec(GPSSpeedMonitor, instance=True)
     gps_monitor.run = AsyncMock(side_effect=_park_forever)
-    obd_runner = MagicMock()
+    obd_runner = create_autospec(ObdService, instance=True)
     obd_runner.run = AsyncMock(side_effect=_park_forever)
-    update_manager = MagicMock()
+    update_manager = create_autospec(UpdateManager, instance=True)
     update_manager.startup_recover = AsyncMock()
     update_manager.job_task = None
-    esp_flash_manager = MagicMock()
+    esp_flash_manager = create_autospec(EspFlashManager, instance=True)
     esp_flash_manager.job_task = None
 
     _runtime_state, lifecycle = _build_lifecycle(
