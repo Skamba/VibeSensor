@@ -121,6 +121,8 @@ NO_FAULT_DIAGNOSIS: DiagnosisPayload = {
     "dominant_phase": None,
     "presence_ratio": None,
     "weak_reasons": [],
+    "guided_phases": [],
+    "speed_dependence": None,
     "order_findings": [],
     "amplitude_basis": "overall",
     "location_amplitudes": [],

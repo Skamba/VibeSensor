@@ -17,6 +17,7 @@ __all__ = [
     "DiagnosisPayload",
     "DiagnosisSpectrum",
     "DiagnosisVerdictValue",
+    "GuidedPhaseValue",
     "LocationAmplitudeRow",
     "OrderCodeValue",
     "OrderFindingRow",
@@ -24,6 +25,7 @@ __all__ = [
     "SourceCheck",
     "SourceCheckReason",
     "SourceCheckStatus",
+    "SpeedDependenceValue",
     "SpectrumPeak",
     "SpeedAmplitudePoint",
     "TestConditions",
@@ -42,7 +44,11 @@ type SourceCheckReason = Literal[
     "no_engine_reference",
     "rpm_estimated",
     "no_matching_order",
+    "stayed_in_neutral",
+    "stopped_in_neutral",
 ]
+type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
+type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]
 type RpmSourceValue = Literal["measured", "estimated", "none"]
 
 
@@ -141,6 +147,8 @@ class DiagnosisPayload(TypedDict):
     dominant_phase: str | None
     presence_ratio: float | None
     weak_reasons: list[str]
+    guided_phases: list[GuidedPhaseValue]
+    speed_dependence: SpeedDependenceValue | None
     order_findings: list[OrderFindingRow]
     amplitude_basis: AmplitudeBasis
     location_amplitudes: list[LocationAmplitudeRow]

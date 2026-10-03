@@ -167,6 +167,10 @@
     "en": "{size} (circumference {circumference} m)",
     "nl": "{size} (omtrek {circumference} m)"
   },
+  "COND_GUIDED": {
+    "en": "Guided test",
+    "nl": "Begeleide test"
+  },
   "COND_PHASES": {
     "en": "Driving covered",
     "nl": "Gereden"
@@ -295,6 +299,22 @@
     "en": "No abnormal play, wear, or looseness is detected.",
     "nl": "Er wordt geen abnormale speling, slijtage of losheid gedetecteerd."
   },
+  "GUIDED_COAST_DOWN": {
+    "en": "neutral coast-down",
+    "nl": "uitrollen in neutraal"
+  },
+  "GUIDED_HOLD": {
+    "en": "steady hold",
+    "nl": "constante snelheid"
+  },
+  "GUIDED_NONE": {
+    "en": "not used",
+    "nl": "niet gebruikt"
+  },
+  "GUIDED_SWEEP": {
+    "en": "speed sweep",
+    "nl": "snelheidsopbouw"
+  },
   "HEADER_CAR": {
     "en": "Car",
     "nl": "Auto"
@@ -322,6 +342,10 @@
   "LEVEL_MODERATE": {
     "en": "Moderate",
     "nl": "Matig"
+  },
+  "LEVEL_MODERATE_COAST_DONE_MEANING": {
+    "en": "the neutral coast-down in this test already backs it up.",
+    "nl": "het uitrollen in neutraal in deze test bevestigt dit al."
   },
   "LEVEL_MODERATE_MEANING": {
     "en": "do the cheap confirming check first.",
@@ -679,6 +703,14 @@
     "en": "no engine-order vibration found (RPM estimated from the gear ratio, not measured)",
     "nl": "geen trilling op motororde gevonden (toerental geschat uit de versnelling, niet gemeten)"
   },
+  "RULED_OUT_STAYED_IN_NEUTRAL": {
+    "en": "ruled out: the vibration kept going while coasting in neutral (it follows road speed)",
+    "nl": "uitgesloten: de trilling bleef bij uitrollen in neutraal (hij volgt de rijsnelheid)"
+  },
+  "RULED_OUT_STOPPED_IN_NEUTRAL": {
+    "en": "ruled out: the vibration stopped while coasting in neutral (it follows engine speed)",
+    "nl": "uitgesloten: de trilling stopte bij uitrollen in neutraal (hij volgt het motortoerental)"
+  },
   "RULED_OUT_TITLE": {
     "en": "Ruled out / not testable",
     "nl": "Uitgesloten / niet te testen"
@@ -870,6 +902,14 @@
   "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND": {
     "en": "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped.",
     "nl": "Snelheidsgegevens ontbreken of zijn onvoldoende; snelheidsgroepering en wielorde-analyse zijn overgeslagen."
+  },
+  "SPEED_DEPENDENCE_ENGINE": {
+    "en": "It follows engine speed: it stopped while coasting in neutral.",
+    "nl": "Hij volgt het motortoerental: hij stopte bij uitrollen in neutraal."
+  },
+  "SPEED_DEPENDENCE_VEHICLE": {
+    "en": "It follows road speed: it kept going while coasting in neutral.",
+    "nl": "Hij volgt de rijsnelheid: hij bleef bij uitrollen in neutraal."
   },
   "SPEED_SOURCE_GPS": {
     "en": "GPS",
@@ -1086,6 +1126,10 @@
   "VERIFY_TITLE": {
     "en": "Check the fix",
     "nl": "Controleer de reparatie"
+  },
+  "WEAK_COAST_CONTRADICTS": {
+    "en": "The neutral coast-down points to a different source than the frequency does.",
+    "nl": "Het uitrollen in neutraal wijst naar een andere bron dan de frequentie."
   },
   "WEAK_FAINT": {
     "en": "It was only slightly above the normal vibration level.",

@@ -208,6 +208,18 @@ the PDF both show:
   (candidate / ruled out / not testable, with a reason), and the reference
   `conditions` (speed source, RPM measured or estimated, tire circumference,
   ratios).
+- `guided_phases` (the guided test-drive steps the driver marked) and
+  `speed_dependence`: after a guided neutral coast-down, `vehicle_speed` when
+  the diagnosed order stayed present while coasting (wheels or driveline) and
+  `engine_speed` when it disappeared (engine). The first 3 s of the coast-down
+  are skipped while the revs drop and the spectrum window clears. Presence at
+  the order's main location inside the coast-down is compared with presence
+  during the rest of the run (≥ 60 % of it: road speed, ≤ 30 %: engine,
+  otherwise unknown). The coast-down rules out the other side in
+  `source_checks` (`stayed_in_neutral` / `stopped_in_neutral`) even without an
+  order reference. When it contradicts the order match (an engine order that
+  stays in neutral, a wheel or driveline order that stops), the verdict drops
+  to `weak_evidence` with the weak reason `coast_test_contradicts`.
 
 ## Adding a New Analysis Step
 

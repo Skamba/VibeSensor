@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 from vibesensor.common.json_types import JsonObject
+from vibesensor.common.json_utils import as_float_or_none
 from vibesensor.common.scalars import text_or_none
 from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.recording.run_metadata_codecs import (
@@ -25,9 +26,11 @@ from vibesensor.recording.run_metadata_codecs import (
     tuple_text_decoder,
 )
 from vibesensor.recording.run_schema import (
+    GUIDED_PHASES,
     RawCaptureFinalizeStatus,
     RunFinalizationStageResult,
     RunFinalizationStageStatus,
+    RunGuidedPhase,
     RunRawCaptureFinalize,
     RunSensorMetadata,
 )
@@ -254,6 +257,28 @@ def run_finalization_stages_from_payload(
         if stage is not None:
             stages.append(stage)
     return tuple(stages)
+
+
+def run_guided_phases_from_payload(payload: object) -> tuple[RunGuidedPhase, ...]:
+    """Decode stored guided test-drive steps, skipping malformed entries."""
+    if not isinstance(payload, list):
+        return ()
+    phases: list[RunGuidedPhase] = []
+    for entry in payload:
+        if not isinstance(entry, Mapping):
+            continue
+        phase = entry.get("phase")
+        start = as_float_or_none(entry.get("start_t_s"))
+        if phase not in GUIDED_PHASES or start is None:
+            continue
+        phases.append(
+            RunGuidedPhase(
+                phase=phase,
+                start_t_s=start,
+                end_t_s=as_float_or_none(entry.get("end_t_s")),
+            )
+        )
+    return tuple(phases)
 
 
 def run_finalization_stage_to_json_object(

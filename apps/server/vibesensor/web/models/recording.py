@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from vibesensor.recording.lifecycle_state import RecordingStopReason
+from vibesensor.recording.run_schema import GuidedPhaseName
 
 
 class RecordingCaptureReadinessCheckResponse(BaseModel):
@@ -25,6 +26,14 @@ class RecordingCaptureReadinessResponse(BaseModel):
     checks: list[RecordingCaptureReadinessCheckResponse]
 
 
+class GuidedPhaseRequest(BaseModel):
+    """Request body that marks the guided test-drive step the driver starts now."""
+
+    phase: GuidedPhaseName | None = Field(
+        description="`sweep`, `hold`, or `coast_down`; `null` ends the guided test.",
+    )
+
+
 class RecordingStatusResponse(BaseModel):
     """Response body with the current recording (run-logging) status."""
 
@@ -38,6 +47,10 @@ class RecordingStatusResponse(BaseModel):
     last_completed_run_id: str | None = None
     last_completed_run_error: str | None = None
     capture_readiness: RecordingCaptureReadinessResponse | None = None
+    guided_phase: GuidedPhaseName | None = Field(
+        default=None,
+        description="The guided test-drive step in progress (sweep, hold, coast_down), if any.",
+    )
     last_stop_reason: RecordingStopReason | None = Field(
         default=None,
         description=(

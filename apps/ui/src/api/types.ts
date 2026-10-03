@@ -45,6 +45,7 @@ export type HistoryRunAnalysisPayload = NonNullable<
 export type LanguagePayload = Schema<"LanguageResponse">;
 export type LocationOption = Schema<"LocationOptionResponse">;
 export type LoggingStatusPayload = Schema<"RecordingStatusResponse">;
+export type GuidedPhase = Schema<"GuidedPhaseName">;
 export type ObdDevicePayload = Schema<"ObdDeviceResponse">;
 export type ObdPairPayload = Schema<"ObdPairResponse">;
 export type ObdScanPayload = Schema<"ObdScanResponse">;

@@ -29,6 +29,7 @@ from vibesensor.recording.run_metadata_sections import (
     reference_tire_circumference,
     run_finalization_stage_to_json_object,
     run_finalization_stages_from_payload,
+    run_guided_phases_from_payload,
     run_raw_capture_finalize_from_payload,
     run_raw_capture_finalize_to_json_object,
     run_sensor_snapshot_to_json_object,
@@ -89,6 +90,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     sensor_snapshots: object = None
     raw_capture_finalize: object = None
     finalization_stages: object = None
+    guided_phases: object = None
     case_id: object = ""
     sensor_mac: object = None
     symptom: object = None
@@ -273,6 +275,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
             data.get("raw_capture_finalize")
         ),
         finalization_stages=run_finalization_stages_from_payload(data.get("finalization_stages")),
+        guided_phases=run_guided_phases_from_payload(data.get("guided_phases")),
         case_id=scalar_state.case_id,
         sensor_mac=scalar_state.sensor_mac,
         symptom=symptom_from_payload(data.get("symptom")),
@@ -300,6 +303,8 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         payload["raw_capture_finalize"] = run_raw_capture_finalize_to_json_object(
             metadata.raw_capture_finalize
         )
+    if metadata.guided_phases:
+        payload["guided_phases"] = [phase.to_json_object() for phase in metadata.guided_phases]
     if metadata.finalization_stages:
         payload["finalization_stages"] = [
             run_finalization_stage_to_json_object(stage) for stage in metadata.finalization_stages

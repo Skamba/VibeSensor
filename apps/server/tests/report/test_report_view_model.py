@@ -67,6 +67,26 @@ def _weak_summary() -> dict[str, Any]:
     )
 
 
+def _guided_summary() -> dict[str, Any]:
+    summary = _variant(
+        guided_phases=["sweep", "hold", "coast_down"], speed_dependence="vehicle_speed"
+    )
+    for check in summary["diagnosis"]["source_checks"]:
+        if check["source"] == "engine":
+            check.update(status="ruled_out", reason="stayed_in_neutral")
+    return summary
+
+
+def _guided_contradiction_summary() -> dict[str, Any]:
+    return _variant(
+        verdict="weak_evidence",
+        confidence_level="weak",
+        guided_phases=["coast_down"],
+        speed_dependence="engine_speed",
+        weak_reasons=["coast_test_contradicts"],
+    )
+
+
 def _all_text(view: ReportView) -> str:
     owner, mechanic, quality = view.owner, view.mechanic, view.quality
     parts: list[str] = [view.title, *(f"{f.label} {f.value}" for f in view.header)]
@@ -106,6 +126,8 @@ _SCENARIOS = {
     "driveline": _driveline_summary,
     "engine": _engine_summary,
     "weak": _weak_summary,
+    "guided": _guided_summary,
+    "guided_contradiction": _guided_contradiction_summary,
 }
 
 
@@ -283,3 +305,63 @@ def test_speed_chart_only_when_the_speed_range_was_swept() -> None:
 
     assert report_view_for(swept).mechanic.speed_chart is not None
     assert report_view_for(held).mechanic.speed_chart is None
+
+
+@pytest.mark.parametrize(
+    ("lang", "follows", "ruled_out", "guided"),
+    [
+        (
+            "en",
+            "It follows road speed: it kept going while coasting in neutral.",
+            "Engine: ruled out: the vibration kept going while coasting in neutral",
+            "speed sweep, steady hold, neutral coast-down",
+        ),
+        (
+            "nl",
+            "Hij volgt de rijsnelheid: hij bleef bij uitrollen in neutraal.",
+            "uitgesloten: de trilling bleef bij uitrollen in neutraal",
+            "snelheidsopbouw, constante snelheid, uitrollen in neutraal",
+        ),
+    ],
+)
+def test_guided_coast_down_classifies_the_vibration(
+    lang: str, follows: str, ruled_out: str, guided: str
+) -> None:
+    view = report_view_for(_guided_summary(), lang=lang)
+
+    assert view.owner.description.endswith(follows)
+    assert any(ruled_out in line for line in view.mechanic.ruled_out)
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    assert guided in conditions.values()
+
+
+def test_contradicting_coast_down_is_a_plain_weak_reason() -> None:
+    view = report_view_for(_guided_contradiction_summary(), lang="en")
+
+    assert view.owner.description.endswith(
+        "It follows engine speed: it stopped while coasting in neutral."
+    )
+    assert (
+        "The neutral coast-down points to a different source than the frequency does."
+        in view.owner.reasons
+    )
+
+
+def test_unguided_run_says_the_guided_test_was_not_used() -> None:
+    view = report_view_for(_wheel_summary(), lang="en")
+
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    assert conditions["Guided test"] == "not used"
+    assert "neutral" not in view.owner.description
+
+
+def test_guided_coast_down_replaces_the_neutral_cheap_check() -> None:
+    engine = _engine_summary()
+    engine["diagnosis"].update(confidence_level="moderate")
+    unguided = report_view_for(engine, lang="en").owner
+    engine["diagnosis"].update(guided_phases=["coast_down"], speed_dependence="engine_speed")
+    guided = report_view_for(engine, lang="en").owner
+
+    assert unguided.confirm is not None and "neutral" in unguided.confirm
+    assert guided.confirm is None
+    assert guided.level_meaning == "the neutral coast-down in this test already backs it up."

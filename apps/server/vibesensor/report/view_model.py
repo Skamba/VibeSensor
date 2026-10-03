@@ -70,6 +70,11 @@ _WEAK_REASON_KEYS = {
     "intermittent": "WEAK_INTERMITTENT",
     "faint": "WEAK_FAINT",
     "single_sensor": "WEAK_SINGLE_SENSOR",
+    "coast_test_contradicts": "WEAK_COAST_CONTRADICTS",
+}
+_SPEED_DEPENDENCE_KEYS = {
+    "vehicle_speed": "SPEED_DEPENDENCE_VEHICLE",
+    "engine_speed": "SPEED_DEPENDENCE_ENGINE",
 }
 _SPEED_SOURCE_KEYS = {
     "gps": "SPEED_SOURCE_GPS",
@@ -402,6 +407,7 @@ def _owner_page(
     description = ctx.t("VERDICT_NO_FAULT_BODY")
     candidate = reasons_title = covered = not_covered = confirm = None
     fallback_step = verify = None
+    level_meaning = ctx.t(f"LEVEL_{level.upper()}_MEANING") if level else None
     reasons: tuple[str, ...] = ()
     recapture: tuple[str, ...] = ()
     next_step = ctx.t("STEP_NO_FAULT")
@@ -421,7 +427,10 @@ def _owner_page(
         step_key = _step_key(diagnosis)
         headline = ctx.t("VERDICT_LIKELY_CAUSE", cause=_cause(ctx, diagnosis))
         description = _description(ctx, diagnosis)
-        confirm = _confirm_check(ctx, diagnosis) if level == "moderate" else None
+        if level == "moderate":
+            confirm = _confirm_check(ctx, diagnosis)
+            if confirm is None:
+                level_meaning = ctx.t("LEVEL_MODERATE_COAST_DONE_MEANING")
         next_step = ctx.t(step_key, zone=zone)
         fallback_step = ctx.t("FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone))
         verify = _verify(ctx, diagnosis)
@@ -431,7 +440,7 @@ def _owner_page(
         confidence_label=ctx.t("CONFIDENCE"),
         level=level,
         level_word=ctx.t(f"LEVEL_{level.upper()}") if level else None,
-        level_meaning=ctx.t(f"LEVEL_{level.upper()}_MEANING") if level else None,
+        level_meaning=level_meaning,
         description=description,
         candidate=candidate,
         reasons_title=reasons_title,
@@ -463,11 +472,14 @@ def _step_key(diagnosis: DiagnosisPayload) -> str:
     return f"STEP_{code}" if code else "STEP_OTHER"
 
 
-def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
+def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
+    """The cheap check for a Moderate fault; ``None`` when the guided coast-down already did it."""
     if diagnosis["source"] == "wheel/tire":
         if diagnosis["zone"] in _WHEEL_CORNERS:
             return ctx.t("CONFIRM_WHEEL", zone=ctx.zone(diagnosis))
         return ctx.t("CONFIRM_AXLE")
+    if diagnosis["speed_dependence"] is not None:
+        return None
     return ctx.t("CONFIRM_NEUTRAL")
 
 
@@ -506,7 +518,11 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
         key = "DESC_PRESENT_RANGE" if high - low >= 10.0 else "DESC_PRESENT_AT"
         parts.append(ctx.t(key, low=ctx.num(low), high=ctx.num(high)))
     sentence = ", ".join(parts)
-    return f"{sentence[:1].upper()}{sentence[1:]}." if sentence else ""
+    text = f"{sentence[:1].upper()}{sentence[1:]}." if sentence else ""
+    dependence = diagnosis["speed_dependence"]
+    if dependence is not None:
+        text = f"{text} {ctx.t(_SPEED_DEPENDENCE_KEYS[dependence])}".strip()
+    return text
 
 
 def _weak_reason(ctx: _Ctx, diagnosis: DiagnosisPayload, reason: str) -> str:
@@ -676,6 +692,11 @@ def _conditions(
         Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])),
         Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
         Fact(ctx.t("COND_PHASES"), phases or unknown),
+        Fact(
+            ctx.t("COND_GUIDED"),
+            ", ".join(ctx.t(f"GUIDED_{phase.upper()}") for phase in diagnosis["guided_phases"])
+            or ctx.t("GUIDED_NONE"),
+        ),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
     )
 
@@ -785,6 +806,8 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
             detail = ctx.t(_NOT_TESTABLE_KEYS.get(reason or "", "NOT_TESTABLE_TIRE"))
         elif reason == "rpm_estimated":
             detail = ctx.t("RULED_OUT_ENGINE_ESTIMATED")
+        elif reason in ("stayed_in_neutral", "stopped_in_neutral"):
+            detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:
             detail = ctx.t(_RULED_OUT_KEYS[key])
         lines.append(f"{ctx.t(f'SOURCE_{key}')}: {detail}")

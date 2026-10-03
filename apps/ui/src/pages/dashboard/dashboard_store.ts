@@ -2,10 +2,11 @@ import { batch, computed, effect, signal } from "@preact/signals";
 
 import {
   getLoggingStatus,
+  markGuidedPhase,
   startLoggingRun,
   stopLoggingRun,
 } from "../../api/logging";
-import type { LoggingStatusPayload } from "../../api/types";
+import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import { errorMessage, isDemoMode, navigate, speedUnit } from "../../app_store";
 import { fmt, formatIntLocale } from "../../format";
 import { lang, t } from "../../i18n";
@@ -29,6 +30,7 @@ import {
   activeCarText,
   formatElapsed,
   freshnessText,
+  guidedTestModel,
   IDLE_STATUS,
   isIdle,
   liveHealth,
@@ -51,6 +53,9 @@ const loggingError = signal<LoggingError | null>(null);
 const nowMs = signal(Date.now());
 /** Elapsed time of the current run, kept once it stops until the next idle. */
 const lastRunElapsed = signal("--");
+const guidedBusy = signal(false);
+/** The run whose guided test the driver finished. */
+const guidedFinishedRunId = signal<string | null>(null);
 
 const formatInt = (value: number) => formatIntLocale(value, lang.value);
 
@@ -169,6 +174,33 @@ export function stopRecording(): Promise<void> {
   return runAction("stopping", stopLoggingRun);
 }
 
+/** Starts the next guided test-drive step, or ends the guided test with `null`. */
+export async function advanceGuidedTest(
+  phase: GuidedPhase | null,
+): Promise<void> {
+  if (guidedBusy.peek()) {
+    return;
+  }
+  guidedBusy.value = true;
+  try {
+    const next = await markGuidedPhase(phase);
+    batch(() => {
+      applyStatus(next);
+      loggingError.value = null;
+      if (phase === null) {
+        guidedFinishedRunId.value = next.run_id ?? null;
+      }
+    });
+  } catch (error) {
+    loggingError.value = {
+      kind: "error",
+      message: errorMessage(error, t("status.unavailable")),
+    };
+  } finally {
+    guidedBusy.value = false;
+  }
+}
+
 /** Summary-panel actions except adding a car, which the shell handles. */
 export function openSummaryTarget(
   action: Exclude<SummaryAction, "open-add-car">,
@@ -234,6 +266,15 @@ export const recording = computed(() =>
   loggingError.value
     ? withLoggingError(baseRecording.value, loggingError.value, t)
     : baseRecording.value,
+);
+
+export const guidedTest = computed(() =>
+  guidedTestModel(
+    status.value,
+    guidedFinishedRunId.value,
+    guidedBusy.value || pending.value !== null,
+    t,
+  ),
 );
 
 export const overview = computed(() => {

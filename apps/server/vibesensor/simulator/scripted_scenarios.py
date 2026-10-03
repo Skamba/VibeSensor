@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+from urllib.error import URLError
 
 from vibesensor.simulator import scripted_scenario_catalog as _scenario_catalog
 from vibesensor.simulator import scripted_targeting as _targeting
 from vibesensor.simulator.scripted_scenario_models import PhasePulse, phase_speed_kmh
 from vibesensor.simulator.scripted_speed_sync import apply_scripted_speed
+from vibesensor.simulator.server_http import mark_server_guided_phase
 from vibesensor.simulator.sim_client import SimClient
 
 __all__ = ["run_scripted_scenario"]
@@ -26,6 +28,7 @@ async def run_scripted_scenario(
     speed_update_period_s: float = 0.5,
 ) -> None:
     scenario = _scenario_catalog.get_scripted_scenario(scenario_name)
+    guided = any(phase.guided_phase is not None for phase in scenario.phases)
     loop = asyncio.get_running_loop()
     server_speed_sync_enabled = True
     cycle = 0
@@ -43,6 +46,17 @@ async def run_scripted_scenario(
                 f"speed={phase.speed_start_kmh:.1f}->{phase.speed_end_kmh:.1f}km/h "
                 f"duration={phase.duration_s:.1f}s"
             )
+            if guided:
+                try:
+                    await asyncio.to_thread(
+                        mark_server_guided_phase,
+                        server_host,
+                        server_http_port,
+                        phase.guided_phase,
+                        server_check_timeout,
+                    )
+                except (URLError, OSError, TimeoutError, ValueError) as exc:
+                    print(f"[scenario] guided phase marker failed: {type(exc).__name__}: {exc}")
             pending_pulses = sorted(phase.pulses, key=_pulse_order_key)
             phase_start = loop.time()
             last_speed_kmh: float | None = None

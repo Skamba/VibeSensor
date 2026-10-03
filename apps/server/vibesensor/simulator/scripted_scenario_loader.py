@@ -7,6 +7,7 @@ import yaml
 from pydantic import ConfigDict, TypeAdapter, ValidationError, with_config
 
 from vibesensor.common.data_files import resolve_static_data_file
+from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.simulator.scripted_scenario_models import (
     PhaseOverride,
     PhasePulse,
@@ -51,6 +52,7 @@ class ScenarioPhasePayload(TypedDict):
     speed_end_kmh: float
     overrides: list[PhaseOverridePayload]
     pulses: NotRequired[list[PhasePulsePayload]]
+    guided_phase: NotRequired[GuidedPhaseName]
 
 
 @with_config(_STRICT_TYPEDDICT_CONFIG)
@@ -132,6 +134,7 @@ def _phase_from_payload(
         speed_end_kmh=payload["speed_end_kmh"],
         overrides=overrides,
         pulses=tuple(_phase_pulse_from_payload(item) for item in payload.get("pulses", [])),
+        guided_phase=payload.get("guided_phase"),
     )
 
 

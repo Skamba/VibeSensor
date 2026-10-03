@@ -75,6 +75,7 @@ def _build_run_metadata_record(
         language_reader=recorder._language_reader,
         recorded_utc_offset_seconds=current_utc_offset_seconds(),
         sensor_snapshots=session.run_sensor_snapshots_for_run(run_id),
+        guided_phases=session.guided_phases_for_run(run_id),
     )
 
 

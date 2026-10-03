@@ -1,0 +1,72 @@
+name: guided-engine-coastdown
+description: Guided test drive (sweep, hold, neutral coast-down) with an engine-order vibration that drops to idle in neutral.
+phases:
+- name: sweep
+  guided_phase: sweep
+  duration_s: 8.0
+  speed_start_kmh: 50.0
+  speed_end_kmh: 100.0
+  overrides:
+  - target: all
+    profile_name: rough_road
+    scene_gain: 0.28
+    scene_noise_gain: 1.0
+    amp_scale: 0.52
+    noise_scale: 1.0
+  - target: all
+    profile_name: engine_order
+    scene_gain: 0.85
+    scene_noise_gain: 1.0
+    amp_scale: 1.0
+    noise_scale: 1.0
+  - target: front-axle
+    profile_name: engine_order
+    scene_gain: 0.92
+    scene_noise_gain: 1.0
+    amp_scale: 1.04
+    noise_scale: 1.0
+  pulses: []
+- name: hold
+  guided_phase: hold
+  duration_s: 6.0
+  speed_start_kmh: 100.0
+  speed_end_kmh: 100.0
+  overrides:
+  - target: all
+    profile_name: rough_road
+    scene_gain: 0.28
+    scene_noise_gain: 1.0
+    amp_scale: 0.52
+    noise_scale: 1.0
+  - target: all
+    profile_name: engine_order
+    scene_gain: 0.85
+    scene_noise_gain: 1.0
+    amp_scale: 1.0
+    noise_scale: 1.0
+  - target: front-axle
+    profile_name: engine_order
+    scene_gain: 0.92
+    scene_noise_gain: 1.0
+    amp_scale: 1.04
+    noise_scale: 1.0
+  pulses: []
+- name: coast-down
+  guided_phase: coast_down
+  duration_s: 10.0
+  speed_start_kmh: 100.0
+  speed_end_kmh: 70.0
+  overrides:
+  - target: all
+    profile_name: rough_road
+    scene_gain: 0.28
+    scene_noise_gain: 1.0
+    amp_scale: 0.52
+    noise_scale: 1.0
+  - target: all
+    profile_name: engine_idle
+    scene_gain: 0.35
+    scene_noise_gain: 1.0
+    amp_scale: 0.6
+    noise_scale: 1.0
+  pulses: []

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -15,7 +16,7 @@ from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.recording.raw_capture import RawCaptureLossStats
 from vibesensor.recording.raw_capture_writer import RunRawCaptureWriter
 from vibesensor.recording.run_context import build_run_context_snapshot
-from vibesensor.recording.run_schema import RunSensorMetadata
+from vibesensor.recording.run_schema import GuidedPhaseName, RunGuidedPhase, RunSensorMetadata
 from vibesensor.recording.run_sensor_snapshot import (
     build_run_sensor_snapshot,
     capture_run_sensor_snapshots,
@@ -66,6 +67,7 @@ class RunRecordingSessionService:
         self._active_run_context: RunContextSnapshot | None = None
         self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
         self._run_ingest_drop_baseline: dict[str, int] | None = None
+        self._guided_phases: list[RunGuidedPhase] = []
 
     @property
     def live_start_mono_s(self) -> float:
@@ -107,6 +109,31 @@ class RunRecordingSessionService:
                 self._run_sensor_snapshots[client_id]
                 for client_id in sorted(self._run_sensor_snapshots)
             )
+
+    def mark_guided_phase(self, phase: GuidedPhaseName | None) -> None:
+        """Close the open guided test-drive step and start *phase* (``None`` ends the test)."""
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if current_run is None or not current_run.is_recording:
+                return
+            t_s = max(0.0, self._monotonic() - self._live_start_mono_s)
+            if self._guided_phases and self._guided_phases[-1].end_t_s is None:
+                self._guided_phases[-1] = replace(self._guided_phases[-1], end_t_s=t_s)
+            if phase is not None:
+                self._guided_phases.append(RunGuidedPhase(phase=phase, start_t_s=t_s))
+
+    def current_guided_phase(self) -> GuidedPhaseName | None:
+        with self._lock:
+            if self._guided_phases and self._guided_phases[-1].end_t_s is None:
+                return self._guided_phases[-1].phase
+            return None
+
+    def guided_phases_for_run(self, run_id: str) -> tuple[RunGuidedPhase, ...]:
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if current_run is None or current_run.run_id != run_id:
+                return ()
+            return tuple(self._guided_phases)
 
     def resolve_run_sensor_presentation(
         self,
@@ -154,6 +181,7 @@ class RunRecordingSessionService:
             sensor_metadata_reader=self._sensor_metadata_reader,
         )
         self._persistence.reset()
+        self._guided_phases = []
         self._live_start_mono_s = snapshot.start_mono_s
         self._raw_capture.start_run(
             snapshot.run_id,
@@ -169,6 +197,7 @@ class RunRecordingSessionService:
         )
 
     def clear_stopped_run(self) -> None:
+        self._guided_phases = []
         self._active_run_context = None
         self._run_sensor_snapshots = {}
         self._run_ingest_drop_baseline = None

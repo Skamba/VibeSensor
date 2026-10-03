@@ -156,3 +156,66 @@
 .logging-actions .btn[hidden] {
   display: none;
 }
+
+.guided-test {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface-container);
+  padding: var(--space-3);
+}
+
+.guided-test__title {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.guided-test__hint,
+.guided-test__done {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.guided-test__steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guided-test__step {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.guided-test__step[data-step-state="current"] {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.guided-test__step[data-step-state="done"] {
+  opacity: 0.7;
+}
+
+.guided-test__step-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+}
+
+.guided-test__instruction {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.guided-test .btn {
+  justify-self: start;
+}

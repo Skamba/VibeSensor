@@ -242,3 +242,75 @@ def test_missing_tire_reference_marks_sources_not_testable() -> None:
     }
     assert statuses["wheel/tire"] == ("not_testable", "no_tire_reference")
     assert diagnosis["conditions"]["tire_circumference_m"] is None
+
+
+# -- guided test drive: neutral coast-down -------------------------------------
+
+_COAST_START_S = 28.0
+_GUIDED = [
+    {"phase": "sweep", "start_t_s": 0.0, "end_t_s": 14.0},
+    {"phase": "hold", "start_t_s": 14.0, "end_t_s": _COAST_START_S},
+    {"phase": "coast_down", "start_t_s": _COAST_START_S, "end_t_s": 40.0},
+]
+
+
+def _guided_analysis(samples: list[dict[str, Any]], *, stops_in_neutral: bool) -> Any:
+    if stops_in_neutral:
+        for sample in samples:
+            if sample["t_s"] >= _COAST_START_S:
+                sample["top_peaks"] = [{"hz": 200.0, "amp": 0.004}]
+                sample["vibration_strength_db"] = 8.0
+    return run_analysis(samples, standard_metadata(guided_phases=_GUIDED))["diagnosis"]
+
+
+def test_wheel_tone_that_stays_in_neutral_follows_road_speed() -> None:
+    diagnosis = _guided_analysis(
+        make_fault_samples(fault_sensor="front-left", sensors=SENSORS, n_samples=40),
+        stops_in_neutral=False,
+    )
+
+    assert diagnosis["verdict"] == "fault"
+    assert diagnosis["source"] == "wheel/tire"
+    assert diagnosis["guided_phases"] == ["sweep", "hold", "coast_down"]
+    assert diagnosis["speed_dependence"] == "vehicle_speed"
+    checks = {check["source"]: check for check in diagnosis["source_checks"]}
+    assert checks["engine"] == {
+        "source": "engine",
+        "status": "ruled_out",
+        "reason": "stayed_in_neutral",
+    }
+
+
+def test_engine_tone_that_stops_in_neutral_follows_engine_speed() -> None:
+    diagnosis = _guided_analysis(
+        make_engine_order_samples(sensors=SENSORS, n_samples=40), stops_in_neutral=True
+    )
+
+    assert diagnosis["source"] == "engine"
+    assert diagnosis["speed_dependence"] == "engine_speed"
+    assert "coast_test_contradicts" not in diagnosis["weak_reasons"]
+    checks = {check["source"]: check for check in diagnosis["source_checks"]}
+    assert checks["wheel/tire"]["reason"] == "stopped_in_neutral"
+
+
+def test_coast_down_that_contradicts_the_order_match_is_weak_evidence() -> None:
+    diagnosis = _guided_analysis(
+        make_fault_samples(fault_sensor="front-left", sensors=SENSORS, n_samples=40),
+        stops_in_neutral=True,
+    )
+
+    assert diagnosis["source"] == "wheel/tire"
+    assert diagnosis["speed_dependence"] == "engine_speed"
+    assert diagnosis["verdict"] == "weak_evidence"
+    assert diagnosis["confidence_level"] == "weak"
+    assert diagnosis["weak_reasons"][0] == "coast_test_contradicts"
+
+
+def test_without_a_guided_coast_down_speed_dependence_is_unknown() -> None:
+    summary = run_analysis(
+        make_fault_samples(fault_sensor="front-left", sensors=SENSORS, n_samples=40)
+    )
+    diagnosis = summary["diagnosis"]
+
+    assert diagnosis["guided_phases"] == []
+    assert diagnosis["speed_dependence"] is None
