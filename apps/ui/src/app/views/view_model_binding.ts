@@ -30,18 +30,3 @@ export function useDeferredModel<T>(
 ): ReadonlySignal<T> {
   return useComputed(() => readDeferredModel(deferred, defaultValue));
 }
-
-export interface ModelActionPanelBindings<TModel, TActions> {
-  actions: Signal<TActions | null>;
-  model: DeferredModelSignal<TModel>;
-}
-
-export function createModelActionPanelBindings<
-  TModel,
-  TActions,
->(): ModelActionPanelBindings<TModel, TActions> {
-  return {
-    actions: signal<TActions | null>(null),
-    model: createDeferredModelSignal<TModel>(),
-  };
-}

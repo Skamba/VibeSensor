@@ -14,6 +14,7 @@ import {
   showError,
 } from "../../app_store";
 import { lang, t } from "../../i18n";
+import { runsChanged } from "../../live_store";
 import { downloadFile } from "./download";
 import {
   EMPTY_RUN_DETAIL,
@@ -114,6 +115,16 @@ onViewEnter("historyView", async () => {
   if (!loaded) {
     await refreshHistory();
     loaded = true;
+  }
+});
+
+// A recording started, stopped, or finished analysis on the dashboard.
+let seenRunsChange = runsChanged.peek();
+effect(() => {
+  const change = runsChanged.value;
+  if (change !== seenRunsChange) {
+    seenRunsChange = change;
+    void refreshHistory();
   }
 });
 

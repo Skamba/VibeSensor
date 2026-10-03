@@ -525,6 +525,7 @@
   "actions.confirm": "Confirm",
   "actions.confirm_title": "Please confirm",
   "actions.identify": "Identify",
+  "actions.identify_failed": "Failed to identify sensor.",
   "actions.remove": "Remove",
   "actions.remove_client_confirm": "Remove sensor {id} from the list?",
   "actions.remove_client_failed": "Failed to remove sensor.",

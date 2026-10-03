@@ -19,17 +19,18 @@ import {
   type SettingsTabId,
   type ViewId,
 } from "./app_store";
-import { appState, liveStatusBadge, panels } from "./app/feature_wiring";
-import { RealtimeLiveOverviewPanel } from "./app/views/realtime_live_overview";
-import { RealtimeLoggingPanelView } from "./app/views/realtime_logging_panel";
-import { SensorsPanel } from "./app/views/sensors_panel";
+import { appState, panels } from "./app/feature_wiring";
 import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { Analysis } from "./pages/analysis/Analysis";
 import { Cars } from "./pages/cars/Cars";
+import { openWizard } from "./pages/cars/wizard_store";
+import { Dashboard } from "./pages/dashboard/Dashboard";
+import { health } from "./pages/dashboard/dashboard_store";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { History } from "./pages/history/History";
+import { Sensors } from "./pages/sensors/Sensors";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Internet, Update } from "./pages/update/Update";
 
@@ -181,7 +182,7 @@ function StatusPills() {
         text: t(WS_STATUS[wsState.value]?.key ?? "ws.connecting"),
         variant: WS_STATUS[wsState.value]?.variant ?? "muted",
       };
-  const live = liveStatusBadge.value;
+  const live = health.value;
   return (
     <div class="site-header__status" hidden={activeView.value === "dashboardView"}>
       <div class="site-header__status-pills">
@@ -321,6 +322,11 @@ function SettingsTab(props: { id: SettingsTabId; children: ComponentChildren }) 
   );
 }
 
+function openAddCar(): void {
+  navigate("settingsView", "carTab");
+  void openWizard();
+}
+
 export function App() {
   const degraded =
     appState.transport.payloadError.value !== null ||
@@ -334,17 +340,7 @@ export function App() {
       </header>
       <ErrorBanner />
       <View id="dashboardView">
-        <div class="dashboard-grid">
-          <div class="panel card dashboard-grid__overview">
-            <RealtimeLiveOverviewPanel view={panels.liveOverview} />
-          </div>
-          <div class="panel card dashboard-grid__main">
-            <SpectrumPanelHost panel={panels.spectrum} />
-          </div>
-          <div class="panel card dashboard-grid__controls">
-            <RealtimeLoggingPanelView view={panels.logging} />
-          </div>
-        </div>
+        <Dashboard spectrum={<SpectrumPanelHost panel={panels.spectrum} />} onAddCar={openAddCar} />
       </View>
       <View id="historyView">
         <div class="panel card">
@@ -363,7 +359,7 @@ export function App() {
           <SpeedSource />
         </SettingsTab>
         <SettingsTab id="sensorsTab">
-          <SensorsPanel actions={panels.sensors.actions} model={panels.sensors.model} />
+          <Sensors />
         </SettingsTab>
         <SettingsTab id="internetTab">
           <Internet />
