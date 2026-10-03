@@ -205,7 +205,9 @@ acceleration/deceleration sweeps and temporary vibration windows. Example:
 vibesensor-sim --count 5 --server-host 127.0.0.1 --scenario accel-front-left-surge
 ```
 
-Run `vibesensor-sim --help` to see the full scripted scenario list.
+Run `vibesensor-sim --help` to see the full scripted scenario list. The
+`guided-wheel-coastdown` and `guided-engine-coastdown` scenarios also mark the
+guided test-drive steps on the server, as the Live page does.
 
 Simulated sensors follow the firmware protocol (HELLO_ACK handshake, clock
 sync, sample-clock `t0_us`), so recordings are raw-backed like real hardware.

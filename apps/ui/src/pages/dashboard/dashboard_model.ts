@@ -1,4 +1,4 @@
-import type { LoggingStatusPayload } from "../../api/types";
+import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import type { CarSelectionState } from "../../car_selection";
 import type { LocationOption } from "../../sensor_locations";
 import type {
@@ -570,5 +570,83 @@ export function withLoggingError(
     showPill: true,
     summaryText: message,
     summaryPanel: null,
+  };
+}
+
+// --- Guided test drive ---------------------------------------------------------
+
+/** Sweep, hold, then a neutral coast-down: the order the driver does them in. */
+const GUIDED_STEPS: readonly GuidedPhase[] = ["sweep", "hold", "coast_down"];
+
+export interface GuidedStep {
+  phase: GuidedPhase;
+  label: string;
+  title: string;
+  instruction: string;
+  state: "done" | "current" | "todo";
+}
+
+export interface GuidedTestModel {
+  visible: boolean;
+  finished: boolean;
+  steps: GuidedStep[];
+  /** What the button does next: a step to start, `null` to finish, absent when done. */
+  action: { label: string; phase: GuidedPhase | null } | null;
+  disabled: boolean;
+}
+
+/**
+ * The optional guided test drive shown while a run records. The server knows
+ * the step in progress; `finishedRunId` remembers that this run's test ended.
+ */
+export function guidedTestModel(
+  status: LoggingStatusPayload,
+  finishedRunId: string | null,
+  busy: boolean,
+  t: Translate,
+): GuidedTestModel {
+  const current = status.guided_phase ?? null;
+  const finished =
+    current === null &&
+    finishedRunId !== null &&
+    finishedRunId === status.run_id;
+  const index = current
+    ? GUIDED_STEPS.indexOf(current)
+    : finished
+      ? GUIDED_STEPS.length
+      : -1;
+  const steps = GUIDED_STEPS.map((phase, i) => ({
+    phase,
+    label: t("dashboard.guided.step_label", {
+      n: i + 1,
+      total: GUIDED_STEPS.length,
+    }),
+    title: t(`dashboard.guided.${phase}.title`),
+    instruction: t(`dashboard.guided.${phase}.instruction`),
+    state: (i < index ? "done" : i === index ? "current" : "todo") as
+      | "done"
+      | "current"
+      | "todo",
+  }));
+  let action: GuidedTestModel["action"] = null;
+  if (index < 0) {
+    action = { label: t("dashboard.guided.start"), phase: GUIDED_STEPS[0] };
+  } else if (index < GUIDED_STEPS.length - 1) {
+    const next = GUIDED_STEPS[index + 1];
+    action = {
+      label: t("dashboard.guided.next", {
+        step: t(`dashboard.guided.${next}.title`),
+      }),
+      phase: next,
+    };
+  } else if (index === GUIDED_STEPS.length - 1) {
+    action = { label: t("dashboard.guided.finish"), phase: null };
+  }
+  return {
+    visible: status.enabled && Boolean(status.run_id),
+    finished,
+    steps,
+    action,
+    disabled: busy,
   };
 }

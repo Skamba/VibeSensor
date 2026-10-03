@@ -15,6 +15,9 @@ from vibesensor.settings.order_reference_settings import order_reference_spec_fr
 
 __all__ = [
     "FFT_WINDOW_TYPE",
+    "GUIDED_PHASES",
+    "GuidedPhaseName",
+    "RunGuidedPhase",
     "PEAK_PICKER_METHOD",
     "RawCaptureFinalizeStatus",
     "RUN_METADATA_TYPE",
@@ -116,6 +119,28 @@ class RunFinalizationStageResult:
         return payload
 
 
+type GuidedPhaseName = Literal["sweep", "hold", "coast_down"]
+GUIDED_PHASES: tuple[GuidedPhaseName, ...] = ("sweep", "hold", "coast_down")
+
+
+@dataclass(frozen=True, slots=True)
+class RunGuidedPhase:
+    """One step of the optional guided test drive on the run's sample clock (``t_s``).
+
+    ``end_t_s`` is ``None`` while the step is open; it then lasts until the run ends.
+    """
+
+    phase: GuidedPhaseName
+    start_t_s: float
+    end_t_s: float | None = None
+
+    def to_json_object(self) -> JsonObject:
+        payload: JsonObject = {"phase": self.phase, "start_t_s": self.start_t_s}
+        if self.end_t_s is not None:
+            payload["end_t_s"] = self.end_t_s
+        return payload
+
+
 @dataclass(slots=True)
 class RunMetadata:
     """Typed persisted run metadata with explicit run-context ownership."""
@@ -151,6 +176,7 @@ class RunMetadata:
     language: str = "en"
     wheel_circumference_m: float | None = None
     recorded_utc_offset_seconds: int | None = None
+    guided_phases: tuple[RunGuidedPhase, ...] = field(default_factory=tuple)
 
     @classmethod
     def create(

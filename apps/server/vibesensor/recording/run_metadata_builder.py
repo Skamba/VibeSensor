@@ -16,6 +16,7 @@ from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_context import order_reference_context_complete
 from vibesensor.recording.run_schema import (
     RunCarMetadata,
+    RunGuidedPhase,
     RunMetadata,
     RunRawCaptureFinalize,
     RunSensorMetadata,
@@ -105,6 +106,7 @@ def build_run_metadata(
     language_reader: UiPreferencesService | None = None,
     recorded_utc_offset_seconds: int | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
+    guided_phases: tuple[RunGuidedPhase, ...] = (),
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
@@ -136,6 +138,7 @@ def build_run_metadata(
     )
     metadata.analysis_settings = analysis_settings_snapshot
     metadata.car = run_car_metadata
+    metadata.guided_phases = guided_phases
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
     if language_reader is not None:
         metadata.language = str(language_reader.language).strip().lower() or "en"

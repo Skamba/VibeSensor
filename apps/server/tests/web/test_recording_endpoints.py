@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -90,6 +92,7 @@ class TestRecordingStatusEndpoint:
             "last_completed_run_error": None,
             "last_stop_reason": None,
             "capture_readiness": None,
+            "guided_phase": None,
         }
 
     def test_status_idle_enabled_false(self, _recording_client) -> None:
@@ -169,6 +172,7 @@ class TestRecordingStartEndpoint:
             "last_completed_run_error": None,
             "last_stop_reason": None,
             "capture_readiness": None,
+            "guided_phase": None,
         }
         state.run_recorder.start_recording.assert_called_once_with()
 
@@ -210,6 +214,7 @@ class TestRecordingStopEndpoint:
             "last_completed_run_error": None,
             "last_stop_reason": None,
             "capture_readiness": None,
+            "guided_phase": None,
         }
         state.run_recorder.stop_recording.assert_called_once_with()
 
@@ -228,3 +233,39 @@ class TestRecordingStopEndpoint:
         assert response.status_code == 200
         assert response.json()["enabled"] is False
         assert response.json()["run_id"] is None
+
+
+class TestGuidedPhaseEndpoint:
+    def test_marks_phase_and_returns_status(self, _recording_client) -> None:
+        client, state = _recording_client
+        snapshot = replace(
+            _make_recording_status_snapshot(enabled=True, run_id="run-abc", samples_written=42),
+            guided_phase="coast_down",
+        )
+        state.run_recorder.mark_guided_phase.return_value = snapshot
+
+        response = client.post("/api/recording/guided-phase", json={"phase": "coast_down"})
+
+        assert response.status_code == 200
+        assert response.json()["guided_phase"] == "coast_down"
+        state.run_recorder.mark_guided_phase.assert_called_once_with("coast_down")
+
+    def test_null_phase_ends_the_guided_test(self, _recording_client) -> None:
+        client, state = _recording_client
+        state.run_recorder.mark_guided_phase.return_value = _make_recording_status_snapshot(
+            enabled=True, run_id="run-abc", samples_written=42
+        )
+
+        response = client.post("/api/recording/guided-phase", json={"phase": None})
+
+        assert response.status_code == 200
+        assert response.json()["guided_phase"] is None
+        state.run_recorder.mark_guided_phase.assert_called_once_with(None)
+
+    def test_rejects_unknown_phase(self, _recording_client) -> None:
+        client, state = _recording_client
+
+        response = client.post("/api/recording/guided-phase", json={"phase": "launch"})
+
+        assert response.status_code == 422
+        state.run_recorder.mark_guided_phase.assert_not_called()

@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 
+from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
@@ -73,6 +74,20 @@ def set_server_speed_override_kmh(
     )
     value = parsed.get("manual_speed_kph") if isinstance(parsed, dict) else None
     return float(value) if isinstance(value, (int, float)) else None
+
+
+def mark_server_guided_phase(
+    host: str, port: int, phase: GuidedPhaseName | None, timeout_s: float
+) -> None:
+    """Mark the guided test-drive step, as the driver does from the Live page."""
+    read_json_response(
+        f"http://{_normalize_http_host(host)}:{port}/api/recording/guided-phase",
+        method="POST",
+        headers={"Content-Type": "application/json"},
+        content=json.dumps({"phase": phase}).encode("utf-8"),
+        timeout_s=timeout_s,
+        context="simulator guided phase",
+    )
 
 
 def _start_local_server(config_path: Path, repo_root: Path) -> subprocess.Popen[str]:

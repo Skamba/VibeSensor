@@ -7,7 +7,7 @@ import asyncio
 import numpy as np
 import pytest
 
-from vibesensor.simulator import scripted_speed_sync
+from vibesensor.simulator import scripted_scenarios, scripted_speed_sync
 from vibesensor.simulator.profiles import PROFILE_LIBRARY
 from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
@@ -183,3 +183,86 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
     assert max(speed_updates) >= 45.0
     assert front_left.pulses
     assert float(front_left.bump_state.sum()) > 0.0
+
+
+@pytest.mark.asyncio
+async def test_run_scripted_scenario_marks_guided_phases_on_the_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marks: list[str | None] = []
+    monkeypatch.setattr(scripted_speed_sync, "set_server_speed_override_kmh", lambda *_args: None)
+    monkeypatch.setattr(
+        scripted_scenarios,
+        "mark_server_guided_phase",
+        lambda _host, _port, phase, _timeout: marks.append(phase),
+    )
+    override = PhaseOverride(
+        target="all",
+        profile_name="rough_road",
+        scene_gain=0.3,
+        scene_noise_gain=1.0,
+        amp_scale=0.6,
+        noise_scale=1.0,
+    )
+    monkeypatch.setitem(
+        SCRIPTED_SCENARIOS,
+        "unit-test-guided",
+        ScriptedScenario(
+            name="unit-test-guided",
+            description="Guided phases then an unguided cool-down.",
+            phases=(
+                ScenarioPhase("sweep", 0.02, 50.0, 90.0, (override,), guided_phase="sweep"),
+                ScenarioPhase("coast", 0.02, 90.0, 70.0, (override,), guided_phase="coast_down"),
+                ScenarioPhase("cool-down", 0.02, 70.0, 70.0, (override,)),
+            ),
+        ),
+    )
+    stop_event = asyncio.Event()
+    task = asyncio.create_task(
+        run_scripted_scenario(
+            _make_clients(),
+            "unit-test-guided",
+            stop_event,
+            server_host="127.0.0.1",
+            server_http_port=8000,
+            server_check_timeout=0.1,
+            speed_update_period_s=0.01,
+        )
+    )
+    async with asyncio.timeout(5.0):
+        while len(marks) < 3:
+            await asyncio.sleep(0.01)
+    stop_event.set()
+    await task
+
+    assert marks[:3] == ["sweep", "coast_down", None]
+
+
+@pytest.mark.asyncio
+async def test_unguided_scenario_never_marks_guided_phases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marks: list[str | None] = []
+    monkeypatch.setattr(scripted_speed_sync, "set_server_speed_override_kmh", lambda *_args: None)
+    monkeypatch.setattr(
+        scripted_scenarios,
+        "mark_server_guided_phase",
+        lambda _host, _port, phase, _timeout: marks.append(phase),
+    )
+    stop_event = asyncio.Event()
+    task = asyncio.create_task(
+        run_scripted_scenario(
+            _make_clients(),
+            "rear-left-cruise-rumble",
+            stop_event,
+            server_host="127.0.0.1",
+            server_http_port=8000,
+            server_check_timeout=0.1,
+            speed_update_period_s=0.01,
+        )
+    )
+    await asyncio.sleep(0.02)
+    stop_event.set()
+    await task
+
+    assert marks == []

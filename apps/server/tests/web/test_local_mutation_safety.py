@@ -113,6 +113,7 @@ def test_all_mutating_http_routes_are_classified_by_method(fake_state) -> None:
         ("POST", "/api/clients/{client_id}/location"),
         ("POST", "/api/esp-flash/cancel"),
         ("POST", "/api/esp-flash/start"),
+        ("POST", "/api/recording/guided-phase"),
         ("POST", "/api/recording/start"),
         ("POST", "/api/recording/stop"),
         ("POST", "/api/settings/cars"),

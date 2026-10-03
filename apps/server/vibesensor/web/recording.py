@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter
 
 from vibesensor.web.models.recording import (
+    GuidedPhaseRequest,
     RecordingCaptureReadinessCheckResponse,
     RecordingCaptureReadinessResponse,
     RecordingStatusResponse,
@@ -53,6 +54,7 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         last_completed_run_error=snapshot.last_completed_run_error,
         capture_readiness=_capture_readiness_response(snapshot),
         last_stop_reason=snapshot.last_stop_reason,
+        guided_phase=snapshot.guided_phase,
     )
 
 
@@ -76,5 +78,12 @@ def create_recording_routes(
     async def stop_logging() -> RecordingStatusResponse:
         """Stop the active recording and return the updated recorder status snapshot."""
         return _recording_status_response(await asyncio.to_thread(run_recorder.stop_recording))
+
+    @router.post("/api/recording/guided-phase", response_model=RecordingStatusResponse)
+    async def mark_guided_phase(body: GuidedPhaseRequest) -> RecordingStatusResponse:
+        """Mark the guided test-drive step (sweep, hold, neutral coast-down) starting now."""
+        return _recording_status_response(
+            await asyncio.to_thread(run_recorder.mark_guided_phase, body.phase)
+        )
 
     return router

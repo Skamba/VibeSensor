@@ -12,6 +12,7 @@ from vibesensor.analysis.post_analysis import PostAnalysisWorker
 from vibesensor.domain.capture_readiness import CaptureReadiness
 from vibesensor.recording.lifecycle_state import RecordingStopReason
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
+from vibesensor.recording.run_schema import GuidedPhaseName
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
@@ -56,6 +57,7 @@ class RunRecorderStatusSnapshot:
     last_completed_run_error: str | None = None
     capture_readiness: CaptureReadiness | None = None
     last_stop_reason: RecordingStopReason | None = None
+    guided_phase: GuidedPhaseName | None = None
 
 
 def build_run_recorder_status(
@@ -67,6 +69,7 @@ def build_run_recorder_status(
     post_analysis: PostAnalysisWorker,
     capture_readiness: CaptureReadiness | None = None,
     last_stop_reason: RecordingStopReason | None = None,
+    guided_phase: GuidedPhaseName | None = None,
 ) -> RunRecorderStatusSnapshot:
     """Build the compact status snapshot exposed by recorder-facing APIs."""
     post_snapshot = post_analysis.snapshot()
@@ -83,6 +86,7 @@ def build_run_recorder_status(
         last_completed_run_error=post_snapshot.last_completed_error,
         capture_readiness=capture_readiness,
         last_stop_reason=last_stop_reason,
+        guided_phase=guided_phase,
     )
 
 
