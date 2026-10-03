@@ -9,10 +9,3 @@ export {
   getCarLibraryTypes,
   getCarLibraryModels,
 } from "./api/car_library";
-export {
-  historyExportUrl,
-  historyReportPdfUrl,
-  getHistory,
-  deleteHistoryRun,
-  getHistoryInsights,
-} from "./api/history";
