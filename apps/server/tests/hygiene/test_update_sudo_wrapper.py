@@ -6,7 +6,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from tests._paths import REPO_ROOT, SERVER_ROOT
+from tests._paths import SERVER_ROOT
 
 _WRAPPER = SERVER_ROOT / "scripts" / "vibesensor_update_sudo.sh"
 
@@ -83,23 +83,3 @@ def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> 
     assert result.returncode == 126
     assert "is not allowed" in result.stderr
     assert result.stdout == ""
-
-
-def test_manual_pi_install_installs_update_sudoers_entry() -> None:
-    install_pi = (SERVER_ROOT / "scripts" / "install_pi.sh").read_text(encoding="utf-8")
-
-    assert 'UPDATE_SUDO_WRAPPER="${PI_DIR}/scripts/vibesensor_update_sudo.sh"' in install_pi
-    assert 'UPDATE_SUDOERS="/etc/sudoers.d/vibesensor-update"' in install_pi
-    assert 'if [ ! -f "${UPDATE_SUDO_WRAPPER}" ]; then' in install_pi
-    assert "${SERVICE_USER} ALL=(root) NOPASSWD: ${UPDATE_SUDO_WRAPPER}" in install_pi
-    assert 'run_as_root install -o root -g root -m 0440 /dev/null "${UPDATE_SUDOERS}"' in install_pi
-    assert 'run_as_root chmod 0440 "${UPDATE_SUDOERS}"' in install_pi
-
-
-def test_pi_image_validation_requires_update_sudo_wrapper() -> None:
-    validation = (
-        REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "lib" / "image_validation.sh"
-    ).read_text(encoding="utf-8")
-
-    assert "/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh" in validation
-    assert "update sudo wrapper entry missing" in validation

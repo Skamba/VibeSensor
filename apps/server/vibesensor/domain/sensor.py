@@ -12,31 +12,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Final
 
+from vibesensor.domain.locations import LOCATION_CODES
+
 __all__ = [
     "Sensor",
     "SensorPlacement",
     "normalize_sensor_id",
 ]
-
-# Domain-internal location code registry.  The canonical external-facing
-# copy lives in ``shared/locations.py``; a hygiene test guards parity.
-_LOCATION_CODES: Final[dict[str, str]] = {
-    "front_left_wheel": "Front Left Wheel",
-    "front_right_wheel": "Front Right Wheel",
-    "rear_left_wheel": "Rear Left Wheel",
-    "rear_right_wheel": "Rear Right Wheel",
-    "transmission": "Transmission",
-    "driveshaft_tunnel": "Driveshaft Tunnel",
-    "engine_bay": "Engine Bay",
-    "front_subframe": "Front Subframe",
-    "rear_subframe": "Rear Subframe",
-    "driver_seat": "Driver Seat",
-    "front_passenger_seat": "Front Passenger Seat",
-    "rear_left_seat": "Rear Left Seat",
-    "rear_center_seat": "Rear Center Seat",
-    "rear_right_seat": "Rear Right Seat",
-    "trunk": "Trunk",
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +51,7 @@ class SensorPlacement:
         code registry.  Falls back to a title-cased version of the code if
         the code is not found.
         """
-        label = _LOCATION_CODES.get(code, code.replace("_", " ").title())
+        label = LOCATION_CODES.get(code, code.replace("_", " ").title())
         return cls(code=code, label=label)
 
 

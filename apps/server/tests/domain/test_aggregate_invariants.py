@@ -138,6 +138,10 @@ class TestCaseLifecycle:
 class TestImpossibleTestRunStates:
     """TestRun __post_init__ must reject impossible field combinations."""
 
+    def test_capture_requires_run_id(self) -> None:
+        with pytest.raises(ValueError, match="run_id"):
+            RunCapture(run_id="")
+
     def test_top_causes_with_empty_findings_raises(self) -> None:
         """top_causes present but findings empty → ValueError."""
         tc = _finding("F001")

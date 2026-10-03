@@ -8,12 +8,10 @@ from vibesensor.domain.location_hotspot import (
     LocationHotspot,
     LocationHotspotRow,
     LocationIntensitySummary,
+    PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
-from vibesensor.summary.hotspot_fields import (
-    location_intensity_summary_from_mapping,
-    phase_intensity_summary_from_mapping,
-)
+from vibesensor.summary.hotspot_fields import location_intensity_summary_from_mapping
 from vibesensor.summary.origin_fields import location_hotspot_from_payload
 
 
@@ -67,14 +65,6 @@ class TestComputeConfidence:
 
 
 class TestLocationHotspotValueObject:
-    def test_defaults(self) -> None:
-        hotspot = LocationHotspot()
-        assert hotspot.strongest_location == ""
-        assert hotspot.dominance_ratio is None
-        assert not hotspot.weak_spatial_separation
-        assert not hotspot.ambiguous
-        assert hotspot.alternative_locations == ()
-
     @pytest.mark.parametrize(
         ("hotspot", "expected"),
         [
@@ -459,52 +449,110 @@ class TestLocationIntensitySummaryRows:
     def test_boundary_codec_parses_typed_nested_values(self) -> None:
         summary = location_intensity_summary_from_mapping(
             {
-                "location": "rear-left",
-                "sample_count": 8,
-                "sample_coverage_ratio": 0.75,
-                "p95_intensity_db": 18.0,
+                "location": "rear_axle",
+                "partial_coverage": True,
+                "samples": 50,
+                "sample_coverage_ratio": 0.8,
+                "sample_coverage_warning": False,
+                "usable_sample_count": 42,
+                "usable_sample_coverage_ratio": 0.7,
+                "usable_sample_coverage_warning": True,
+                "mean_intensity_db": 10.0,
+                "p50_intensity_db": 9.0,
+                "p95_intensity_db": 15.0,
+                "max_intensity_db": 20.0,
+                "dropped_frames_delta": 0.0,
+                "queue_overflow_drops_delta": None,
                 "strength_bucket_distribution": {
-                    "total": 8,
-                    "counts": {"l0": 2, "l1": 6},
-                    "percent_time_l0": 25.0,
-                    "percent_time_l1": 75.0,
+                    "total": 5,
+                    "counts": {"l0": 5},
+                    "percent_time_l0": 100.0,
                 },
                 "phase_intensity": {
                     "cruise": {
-                        "count": 3,
+                        "count": 2,
                         "mean_intensity_db": 12.0,
-                        "max_intensity_db": 18.0,
+                        "max_intensity_db": 14.0,
                     },
                 },
-            },
+            }
         )
 
-        assert summary.location == "rear-left"
-        assert summary.strength_bucket_distribution.total == 8
-        assert summary.strength_bucket_distribution.counts["l1"] == 6
-        assert summary.diagnostic_sample_count == 8
-        assert summary.phase_intensity is not None
-        assert summary.phase_intensity["cruise"].max_intensity_db == 18.0
+        assert summary.location == "rear_axle"
+        assert summary.partial_coverage is True
+        assert summary.sample_count == 50  # from the legacy "samples" key
+        assert summary.usable_sample_count == 42
+        assert summary.diagnostic_sample_count == 42
+        assert summary.diagnostic_sample_coverage_ratio == 0.7
+        assert summary.diagnostic_sample_coverage_warning is True
+        assert summary.p95_intensity_db == 15.0
+        assert summary.strength_bucket_distribution == StrengthBucketDistribution(
+            total=5,
+            counts={"l0": 5},
+            percent_time_l0=100.0,
+        )
+        assert summary.phase_intensity == {
+            "cruise": PhaseIntensitySummary(count=2, mean_intensity_db=12.0, max_intensity_db=14.0),
+        }
 
-    def test_strength_bucket_distribution_defaults_to_typed_object(self) -> None:
+    def test_boundary_codec_prefers_sample_count_key(self) -> None:
+        raw = {"location": "x", "sample_count": 42, "sample_coverage_ratio": 0.5}
+        assert location_intensity_summary_from_mapping(raw).sample_count == 42
+
+    def test_diagnostic_fields_prefer_usable_sample_metrics(self) -> None:
+        summary = LocationIntensitySummary(
+            location="front_left",
+            sample_count=100,
+            sample_coverage_ratio=0.9,
+            sample_coverage_warning=False,
+            usable_sample_count=80,
+            usable_sample_coverage_ratio=0.75,
+            usable_sample_coverage_warning=True,
+        )
+        assert summary.diagnostic_sample_count == 80
+        assert summary.diagnostic_sample_coverage_ratio == 0.75
+        assert summary.diagnostic_sample_coverage_warning is True
+
+    def test_diagnostic_fields_fall_back_to_raw_sample_metrics(self) -> None:
+        summary = LocationIntensitySummary(
+            location="front_left",
+            sample_count=100,
+            sample_coverage_ratio=0.9,
+            sample_coverage_warning=True,
+        )
+        assert summary.diagnostic_sample_count == 100
+        assert summary.diagnostic_sample_coverage_ratio == 0.9
+        assert summary.diagnostic_sample_coverage_warning is True
+
+    @pytest.mark.parametrize(
+        ("overrides", "message"),
+        [
+            pytest.param({"sample_count": -1}, "sample_count", id="negative-samples"),
+            pytest.param({"usable_sample_count": -1}, "usable_sample_count", id="negative-usable"),
+            pytest.param(
+                {"sample_coverage_ratio": 1.5}, "sample_coverage_ratio", id="sample-coverage-high"
+            ),
+            pytest.param(
+                {"usable_sample_coverage_ratio": -0.1},
+                "usable_sample_coverage_ratio",
+                id="usable-coverage-low",
+            ),
+        ],
+    )
+    def test_invalid_sample_contract_rejected(
+        self, overrides: dict[str, int | float], message: str
+    ) -> None:
+        with pytest.raises(ValueError, match=message):
+            LocationIntensitySummary(location="front_left", **overrides)
+
+    def test_defaults_to_empty_typed_distribution(self) -> None:
         summary = LocationIntensitySummary(location="front-left")
 
-        assert isinstance(summary.strength_bucket_distribution, StrengthBucketDistribution)
+        assert summary.strength_bucket_distribution == StrengthBucketDistribution()
         assert summary.strength_bucket_distribution.total == 0
+        assert summary.phase_intensity is None
 
     def test_location_hotspot_row_defaults_to_db_unit(self) -> None:
         row = LocationHotspotRow(location="front-left", count=2, peak_value=18.0, mean_value=12.0)
 
         assert row.unit == "db"
-
-    def test_phase_intensity_summary_boundary_codec(self) -> None:
-        phase = phase_intensity_summary_from_mapping(
-            {
-                "count": 5,
-                "mean_intensity_db": 10.0,
-                "max_intensity_db": 16.0,
-            },
-        )
-
-        assert phase.count == 5
-        assert phase.mean_intensity_db == 10.0

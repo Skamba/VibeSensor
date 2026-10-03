@@ -5,14 +5,11 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.domain.speed_source import SpeedSourceKind
-
-if TYPE_CHECKING:
-    from vibesensor.domain.speed_source import SpeedSource
 
 __all__ = [
     "ResolvedSpeedSource",
@@ -183,12 +180,3 @@ class SpeedSourceConfig:
             self.obd_device_name = None
         if self.speed_source == SpeedSourceKind.MANUAL and self.manual_speed_kph is None:
             raise ValueError("SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph")
-
-    def to_speed_source(self) -> SpeedSource:
-        """Return the domain ``SpeedSource`` value object for this config."""
-        from vibesensor.domain.speed_source import SpeedSource
-
-        return SpeedSource(
-            kind=self.speed_source,
-            manual_speed_kmh=self.manual_speed_kph,
-        )

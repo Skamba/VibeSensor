@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 
 from vibesensor.domain.locations import label_for_code
-from vibesensor.domain.sensor import Sensor, SensorPlacement, normalize_sensor_id
+from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.settings.car_settings import _clamp_str, _UpdateWithRollback
 from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
@@ -58,19 +58,6 @@ class SensorSettingsService:
     def get_sensors(self) -> SensorsByMacPayload:
         with self._lock:
             return self.sensors_payload_unlocked()
-
-    def sensors(self) -> list[Sensor]:
-        with self._lock:
-            return [
-                Sensor(
-                    sensor_id=cfg.sensor_id,
-                    name=cfg.name,
-                    placement=(
-                        SensorPlacement.from_code(cfg.location_code) if cfg.location_code else None
-                    ),
-                )
-                for cfg in self._state.sensors.values()
-            ]
 
     def assign_sensor_location(self, sensor_id: str, location_code: str) -> SensorsByMacPayload:
         normalized_sensor_id = normalize_sensor_id(sensor_id)

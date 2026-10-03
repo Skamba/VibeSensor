@@ -69,7 +69,7 @@ The model uses explicit scope boundaries:
 - finding scope: `ConfidenceLevel`, `FindingEvidence`, `LocationHotspot`,
   `VibrationOrigin`
 - capture lifecycle scope: `Run`, `RunStatus`
-- captured evidence/setup scope: `RunCapture`, `RunSetup`, `Measurement`,
+- captured evidence/setup scope: `RunCapture`, `RunSetup`,
   `ConfigurationSnapshot`, `Sensor`, `SensorPlacement`, `SpeedSource`
 - internal diagnostics / reconstruction / interpretation support:
   `RunMetadataSnapshot`, `OrderMatchObservation`, `DrivingPhaseSummary`,
@@ -143,7 +143,6 @@ TestRun
 RunCapture
   references one Run (by id)
   contains one RunSetup
-  contains Measurement*
 
 RunSetup
   contains Sensor*
@@ -153,7 +152,7 @@ RunSetup
 Reasoning chain:
 
 ```text
-Measurement -> Finding -> Report
+RunCapture (raw samples stay arrays) -> Finding -> Report
 ```
 
 ## Concept categories
@@ -161,7 +160,7 @@ Measurement -> Finding -> Report
 ### Core diagnostic aggregates and entities
 
 `DiagnosticCase`, `TestRun`, `Finding`, `Run`, `RunCapture`, `RunSetup`,
-`Car`, `Symptom`, `DrivingSegment`, `Measurement`, `Sensor`,
+`Car`, `Symptom`, `DrivingSegment`, `Sensor`,
 `SensorPlacement`, `SpeedSource`, `TestPlan`, `RecommendedAction`,
 `SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
 `ConfigurationSnapshot`, `LocationHotspot`.
@@ -179,10 +178,6 @@ confidence users see), `DiagnosisVerdict`, `DrivingPhase`, `SpeedSourceKind`,
 ### Domain value objects exported from Finding scope
 
 `Signature`, `FindingEvidence`, `VibrationOrigin`.
-
-### Domain value objects exported from Measurement scope
-
-`VibrationReading`.
 
 ### Supporting typed internal diagnostics concepts
 
