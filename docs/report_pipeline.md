@@ -56,14 +56,17 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
    - What to do next, by verdict:
      - Fault: the next step, a fallback step ("If that doesn't fix it: ..."),
        the cheap confirming check when the level is Moderate, and how to check
-       the fix (re-run the test; what pass means).
+       the fix (re-run the test; what pass means). After a guided neutral
+       coast-down the description adds whether the vibration follows road or
+       engine speed, and the neutral coast-down check is not suggested again.
      - Weak evidence: the hedged best candidate, 1–2 plain reasons, and a
        recapture recipe.
      - No fault: what the test covered, what it did not cover, and what to do
        if the vibration is still felt.
 2. **Workshop page** (always included):
    - Test conditions: tire size and circumference, ratios, speed source,
-     whether RPM was measured, driving phases, and sensor positions.
+     whether RPM was measured, driving phases, the guided test steps (or "not
+     used"), and sensor positions.
    - A GM-worksheet-style findings table, one row per order-tracked finding.
      Columns: order label with plain text, Hz at the reference speed, km/h
      range, driving phases, presence, strongest location, and level.

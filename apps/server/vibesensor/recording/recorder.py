@@ -36,6 +36,7 @@ from vibesensor.recording.raw_capture_writer import (
     RunRawCaptureWriter,
 )
 from vibesensor.recording.recording_session import RunRecordingSessionService
+from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sample_flush import SampleFlushOrchestrator
 from vibesensor.recording.status_reporting import (
     RunRecorderStatusSnapshot,
@@ -220,7 +221,13 @@ class RunRecorder:
             post_analysis=self.post_analysis,
             capture_readiness=capture_readiness,
             last_stop_reason=last_stop_reason,
+            guided_phase=self._recording_session.current_guided_phase(),
         )
+
+    def mark_guided_phase(self, phase: GuidedPhaseName | None) -> RunRecorderStatusSnapshot:
+        """Mark the guided test-drive step the driver starts now (``None`` ends the test)."""
+        self._recording_session.mark_guided_phase(phase)
+        return self.status()
 
     def health_snapshot(self) -> RunRecorderHealthSnapshot:
         return build_run_recorder_health_snapshot(

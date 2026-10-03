@@ -84,6 +84,8 @@ export function makeDiagnosis(
     dominant_phase: null,
     presence_ratio: null,
     weak_reasons: [],
+    guided_phases: [],
+    speed_dependence: null,
     order_findings: [],
     amplitude_basis: "overall",
     location_amplitudes: [],

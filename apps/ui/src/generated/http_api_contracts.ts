@@ -341,6 +341,7 @@ export interface components {
             dominant_phase: string | null;
             finding_id: string | null;
             frequency_hz: number | null;
+            guided_phases: components["schemas"]["GuidedPhaseValue"][];
             location: string | null;
             location_amplitudes: components["schemas"]["LocationAmplitudeRow"][];
             order_code: components["schemas"]["OrderCodeValue"] | null;
@@ -350,6 +351,7 @@ export interface components {
             source: string | null;
             source_checks: components["schemas"]["SourceCheck"][];
             spectrum: components["schemas"]["DiagnosisSpectrum"] | null;
+            speed_dependence: components["schemas"]["SpeedDependenceValue"] | null;
             speed_max_kmh: number | null;
             speed_min_kmh: number | null;
             verdict: components["schemas"]["DiagnosisVerdictValue"];
@@ -495,6 +497,13 @@ export interface components {
             suspected_source: string;
             weak_spatial_separation?: boolean | null;
         };
+        GuidedPhaseName: "sweep" | "hold" | "coast_down";
+        /** Request body that marks the guided test-drive step the driver starts now. */
+        GuidedPhaseRequest: {
+            /** `sweep`, `hold`, or `coast_down`; `null` ends the guided test. */
+            phase: components["schemas"]["GuidedPhaseName"] | null;
+        };
+        GuidedPhaseValue: "sweep" | "hold" | "coast_down";
         HTTPValidationError: {
             detail?: components["schemas"]["ValidationError"][];
         };
@@ -1019,6 +1028,8 @@ export interface components {
             analysis_in_progress: boolean;
             capture_readiness?: components["schemas"]["RecordingCaptureReadinessResponse"] | null;
             enabled: boolean;
+            /** The guided test-drive step in progress (sweep, hold, coast_down), if any. */
+            guided_phase?: components["schemas"]["GuidedPhaseName"] | null;
             last_completed_run_error?: string | null;
             last_completed_run_id?: string | null;
             /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit. */
@@ -1060,7 +1071,7 @@ export interface components {
             source: string;
             status: components["schemas"]["SourceCheckStatus"];
         };
-        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "rpm_estimated" | "no_matching_order";
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "rpm_estimated" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral";
         SourceCheckStatus: "candidate" | "ruled_out" | "not_testable";
         /** One recurring spectral peak (0.5 Hz bin) and its median amplitude. */
         SpectrumPeak: {
@@ -1080,6 +1091,7 @@ export interface components {
             mean_vibration_strength_db: number | null;
             speed_range: string;
         };
+        SpeedDependenceValue: "vehicle_speed" | "engine_speed";
         /** How vehicle speed is acquired. */
         SpeedSourceKind: "gps" | "obd2" | "manual";
         /** Request body for configuring the speed source (GPS, manual, OBD2, etc.). */

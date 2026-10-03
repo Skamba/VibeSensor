@@ -8,6 +8,7 @@ from vibesensor.recording.run_metadata import (
     run_metadata_to_json_bytes,
     run_metadata_to_json_object,
 )
+from vibesensor.recording.run_schema import RunGuidedPhase
 
 
 def test_run_metadata_codec_roundtrip_uses_nested_symptom_and_reference_context() -> None:
@@ -215,3 +216,38 @@ def test_run_metadata_codec_roundtrip_preserves_finalization_stages() -> None:
     ]
     assert decoded.finalization_stages[0].status == "degraded"
     assert decoded.finalization_stages[0].diagnostic_context["queue_depth"] == 3
+
+
+def test_run_metadata_codec_roundtrip_preserves_guided_phases() -> None:
+    metadata = run_metadata_from_mapping(
+        {
+            "run_id": "run-guided",
+            "start_time_utc": "2026-01-01T00:00:00Z",
+            "sensor_model": "ADXL345",
+            "guided_phases": [
+                {"phase": "sweep", "start_t_s": 2.0, "end_t_s": 30.5},
+                {"phase": "coast_down", "start_t_s": 30.5},
+                {"phase": "launch", "start_t_s": 40.0},
+                {"phase": "hold"},
+            ],
+        }
+    )
+
+    assert metadata.guided_phases == (
+        RunGuidedPhase("sweep", 2.0, 30.5),
+        RunGuidedPhase("coast_down", 30.5, None),
+    )
+    assert run_metadata_to_json_object(metadata)["guided_phases"] == [
+        {"phase": "sweep", "start_t_s": 2.0, "end_t_s": 30.5},
+        {"phase": "coast_down", "start_t_s": 30.5},
+    ]
+    assert run_metadata_from_json(run_metadata_to_json_bytes(metadata)) == metadata
+
+
+def test_run_metadata_without_guided_phases_omits_the_field() -> None:
+    metadata = run_metadata_from_mapping(
+        {"run_id": "run-plain", "start_time_utc": "2026-01-01T00:00:00Z", "sensor_model": "ADXL345"}
+    )
+
+    assert metadata.guided_phases == ()
+    assert "guided_phases" not in run_metadata_to_json_object(metadata)

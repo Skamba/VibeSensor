@@ -87,6 +87,13 @@ During recording:
 - `GET /api/recording/status` reports `last_stop_reason` for the most recent run
   until the next run starts; the Live page shows a notice when it is
   `max_duration`
+- the optional guided test drive on the Live page posts each step to
+  `POST /api/recording/guided-phase` (`sweep`, `hold`, `coast_down`, or `null`
+  to end the test). `RunRecordingSessionService` closes the open step and starts
+  the next one at the current run time (seconds since the run's live start, the
+  same clock as sample `t_s`); the steps are stored as `guided_phases` in the
+  run metadata when the run is finalized. Markers outside a recording are
+  ignored. Status reports the step in progress as `guided_phase`.
 
 ### 3. Final flush and finalize
 

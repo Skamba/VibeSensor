@@ -26,6 +26,7 @@ from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
     DiagnosisPayload,
     DiagnosisSpectrum,
+    GuidedPhaseValue,
     LocationAmplitudeRow,
     OrderCodeValue,
     OrderFindingRow,
@@ -34,13 +35,14 @@ from vibesensor.summary.diagnosis_contracts import (
     SourceCheckReason,
     SpectrumPeak,
     SpeedAmplitudePoint,
+    SpeedDependenceValue,
     TestConditions,
 )
 
 if TYPE_CHECKING:
     from vibesensor.analysis._types import Sample
     from vibesensor.domain.test_run import TestRun
-    from vibesensor.recording.run_schema import RunMetadata
+    from vibesensor.recording.run_schema import RunGuidedPhase, RunMetadata
 
 __all__ = ["build_diagnosis"]
 
@@ -57,6 +59,13 @@ _INTERMITTENT_PRESENCE = 0.5
 _NARROW_SPEED_KMH = 10.0
 _MAX_WEAK_REASONS = 2
 _MAX_ORDER_ROWS = 6
+_MIN_COAST_SAMPLES = 4
+# Engine revs take a moment to drop after the shift to neutral, and each
+# spectrum still holds the seconds before it: skip the start of the coast-down.
+_COAST_SETTLE_S = 3.0
+_MIN_PRESENCE_OUTSIDE_COAST = 0.3
+_FOLLOWS_ROAD_SPEED_RATIO = 0.6
+_FOLLOWS_ENGINE_RATIO = 0.3
 _MEASURED_RPM_EXCLUDED = frozenset({"", "estimated_from_speed_and_ratios", "missing"})
 _ORDER_SOURCES: tuple[VibrationSource, ...] = (
     VibrationSource.WHEEL_TIRE,
@@ -80,6 +89,11 @@ def build_diagnosis(
     if verdict is DiagnosisVerdict.NO_FAULT:
         candidate = None
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
+    speed_dependence = _speed_dependence(candidate, located, metadata.guided_phases)
+    weak_reasons = _weak_reasons(candidate, sensor_count=sensor_count)
+    if _contradicts_coast_test(candidate, speed_dependence):
+        verdict = DiagnosisVerdict.WEAK_EVIDENCE
+        weak_reasons = ["coast_test_contradicts", *weak_reasons][:_MAX_WEAK_REASONS]
     refs = _References(
         tire_circumference_m=metadata.tire_circumference_m,
         final_drive_ratio=_positive(metadata.final_drive_ratio),
@@ -102,7 +116,13 @@ def build_diagnosis(
     spectrum_location = _strongest_row_location(rows) or location
     return {
         "verdict": verdict.value,
-        "confidence_level": candidate.confidence_level.value if candidate is not None else None,
+        "confidence_level": (
+            ConfidenceLevel.WEAK.value
+            if verdict is DiagnosisVerdict.WEAK_EVIDENCE
+            else candidate.confidence_level.value
+            if candidate is not None
+            else None
+        ),
         "finding_id": candidate.finding_id if candidate is not None else None,
         "source": str(candidate.suspected_source) if candidate is not None else None,
         "location": location,
@@ -122,7 +142,9 @@ def build_diagnosis(
         "speed_max_kmh": speed_max,
         "dominant_phase": candidate.dominant_phase if candidate is not None else None,
         "presence_ratio": _presence_ratio(candidate),
-        "weak_reasons": _weak_reasons(candidate, sensor_count=sensor_count),
+        "weak_reasons": weak_reasons,
+        "guided_phases": _guided_phase_names(metadata.guided_phases),
+        "speed_dependence": speed_dependence,
         "order_findings": _order_findings(candidate, test_run.findings),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
@@ -133,7 +155,9 @@ def build_diagnosis(
             centre_speed_kmh=reference_speed,
             refs=refs,
         ),
-        "source_checks": _source_checks(candidate, test_run.findings, refs, samples),
+        "source_checks": _source_checks(
+            candidate, test_run.findings, refs, samples, speed_dependence
+        ),
         "conditions": _conditions(samples, refs),
     }
 
@@ -471,6 +495,7 @@ def _source_checks(
     findings: Sequence[Finding],
     refs: _References,
     samples: Sequence[Sample],
+    speed_dependence: SpeedDependenceValue | None,
 ) -> list[SourceCheck]:
     rpm_source = _rpm_source(samples)
     seen = {
@@ -484,6 +509,14 @@ def _source_checks(
         seen.add(candidate.suspected_source)
     checks: list[SourceCheck] = []
     for source in _ORDER_SOURCES:
+        # The neutral coast-down excludes a source whatever its order match says,
+        # and without needing its order reference.
+        coast_reason = _coast_ruled_out_reason(source, speed_dependence)
+        if coast_reason is not None and (
+            candidate is None or source is not candidate.suspected_source
+        ):
+            checks.append({"source": str(source), "status": "ruled_out", "reason": coast_reason})
+            continue
         if source in seen:
             checks.append({"source": str(source), "status": "candidate", "reason": None})
             continue
@@ -506,6 +539,112 @@ def _source_checks(
             }
         )
     return checks
+
+
+def _coast_ruled_out_reason(
+    source: VibrationSource,
+    speed_dependence: SpeedDependenceValue | None,
+) -> SourceCheckReason | None:
+    if speed_dependence == "vehicle_speed" and source is VibrationSource.ENGINE:
+        return "stayed_in_neutral"
+    if speed_dependence == "engine_speed" and source is not VibrationSource.ENGINE:
+        return "stopped_in_neutral"
+    return None
+
+
+# -- guided test drive --------------------------------------------------------
+
+
+def _guided_phase_names(phases: Sequence[RunGuidedPhase]) -> list[GuidedPhaseValue]:
+    names: list[GuidedPhaseValue] = []
+    for phase in phases:
+        if phase.phase not in names:
+            names.append(phase.phase)
+    return names
+
+
+def _speed_dependence(
+    candidate: Finding | None,
+    located: Sequence[tuple[Sample, str]],
+    phases: Sequence[RunGuidedPhase],
+) -> SpeedDependenceValue | None:
+    """Whether the diagnosed order kept going while coasting in neutral (guided test).
+
+    In neutral the engine drops to idle while road speed carries on, so a
+    wheel or driveline order stays present and an engine order disappears.
+    Compares the order's presence at its strongest location inside the guided
+    coast-down window (after it settles) with its presence during the rest of
+    the run.
+    """
+    if candidate is None or not candidate.matched_points:
+        return None
+    windows = [
+        (phase.start_t_s, phase.end_t_s if phase.end_t_s is not None else float("inf"))
+        for phase in phases
+        if phase.phase == "coast_down"
+    ]
+    settled = [(start + _COAST_SETTLE_S, end) for start, end in windows]
+    if not windows:
+        return None
+    by_location = Counter(point.location for point in candidate.matched_points if point.location)
+    if not by_location:
+        return None
+    location = by_location.most_common(1)[0][0]
+
+    def in_window(t_s: float, spans: Sequence[tuple[float, float]]) -> bool:
+        return any(start <= t_s < end for start, end in spans)
+
+    def split(times: Sequence[float]) -> tuple[int, int]:
+        """Count *times* inside the settled coast-down and outside any coast-down."""
+        inside = sum(1 for t_s in times if in_window(t_s, settled))
+        outside = sum(1 for t_s in times if not in_window(t_s, windows))
+        return inside, outside
+
+    inside, outside = split(
+        [
+            sample.t_s
+            for sample, label in located
+            if label == location
+            and sample.t_s is not None
+            and sample.speed_kmh is not None
+            and sample.speed_kmh > 0
+        ]
+    )
+    if inside < _MIN_COAST_SAMPLES or outside < _MIN_COAST_SAMPLES:
+        return None
+    matched_inside, matched_outside = split(
+        [
+            point.t_s
+            for point in candidate.matched_points
+            if point.location == location and point.t_s is not None
+        ]
+    )
+    present_inside = matched_inside / inside
+    present_outside = matched_outside / outside
+    if present_outside < _MIN_PRESENCE_OUTSIDE_COAST:
+        return None
+    ratio = present_inside / present_outside
+    if ratio >= _FOLLOWS_ROAD_SPEED_RATIO:
+        return "vehicle_speed"
+    if ratio <= _FOLLOWS_ENGINE_RATIO:
+        return "engine_speed"
+    return None
+
+
+def _contradicts_coast_test(
+    candidate: Finding | None,
+    speed_dependence: SpeedDependenceValue | None,
+) -> bool:
+    if candidate is None or speed_dependence is None:
+        return False
+    is_engine = candidate.suspected_source is VibrationSource.ENGINE
+    road_source = candidate.suspected_source in (
+        VibrationSource.WHEEL_TIRE,
+        VibrationSource.DRIVELINE,
+    )
+    return (is_engine and speed_dependence == "vehicle_speed") or (
+        road_source and speed_dependence == "engine_speed"
+    )
 
 
 def _rpm_source(samples: Sequence[Sample]) -> RpmSourceValue:

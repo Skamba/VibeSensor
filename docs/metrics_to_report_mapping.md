@@ -14,10 +14,10 @@ summary's `diagnosis` block (`d` below; contract in
 | Speeds driven, duration, sensors | `speed_stats.min_kmh`/`max_kmh`, `duration_s`, `sensor_count_used` | `50–118 km/h`, `m:ss` |
 | Verdict headline | `d.verdict`, `d.source`, `d.zone` | "Likely cause: …", "Not enough evidence to name a cause", or "No significant vibration found" |
 | Confidence | `d.confidence_level` | Level word + action meaning; never a percentage |
-| Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh` | One sentence |
+| Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh`, `d.speed_dependence` | One sentence, plus "It follows road/engine speed: …" after a guided coast-down |
 | Weak reasons | `d.weak_reasons` (+ `d.presence_ratio`) | Plain sentences |
 | Covered / not covered (no fault) | `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations, `d.conditions.rpm_source` | Sentences |
-| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check) | Fixed texts per order or source |
+| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source |
 | Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
 | Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle, engine bay, or centre tunnel |
 
@@ -25,12 +25,12 @@ summary's `diagnosis` block (`d` below; contract in
 
 | Report element | Source | Format |
 |---|---|---|
-| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `sensor_locations` | Facts grid |
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid |
 | Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level |
 | Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
 | Spectrum | `d.spectrum` (recurring peaks in mg, floor, order markers at the window speed) | Stems + dashed floor + order lines |
 | Amplitude vs speed | `d.amplitude_vs_speed` | Lines per location; shown only for a ≥ 30 km/h sweep |
-| Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio` |
+| Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio`; `Engine: ruled out: the vibration kept going while coasting in neutral` |
 | Shop request | `d.verdict`, `d.source`, `d.order_code` | Tire (road force, match-mount, runout), driveline, engine, or other |
 
 ## Data quality (page 3 or footer)

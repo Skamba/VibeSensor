@@ -50,6 +50,18 @@ def test_load_scripted_scenarios_builds_catalog_from_yaml_resources(tmp_path: Pa
     assert tuple(scenarios) == ("steady-front-left",)
     assert phase.overrides[0].profile_name == "wheel_mild_imbalance"
     assert phase.pulses[0].strength == 0.2
+    assert phase.guided_phase is None
+
+
+def test_bundled_guided_scenarios_mark_sweep_hold_and_neutral_coast_down() -> None:
+    scenarios = load_scripted_scenarios()
+
+    for name in ("guided-wheel-coastdown", "guided-engine-coastdown"):
+        phases = scenarios[name].phases
+        assert [phase.guided_phase for phase in phases] == ["sweep", "hold", "coast_down"]
+        assert phases[-1].speed_end_kmh < phases[-1].speed_start_kmh
+    engine_coast = scenarios["guided-engine-coastdown"].phases[-1]
+    assert "engine_order" not in {override.profile_name for override in engine_coast.overrides}
 
 
 def test_load_scripted_scenarios_rejects_index_name_mismatch(tmp_path: Path) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.recording.raw_capture import RawCaptureLossStats
+from vibesensor.recording.run_schema import RunGuidedPhase
 
 
 def test_recording_session_start_owns_context_snapshots_and_ingest_drop_baseline(
@@ -32,3 +33,58 @@ def test_recording_session_clear_stopped_run_drops_active_context(make_logger) -
 
     assert recorder._recording_session.run_sensor_snapshots_for_run(snapshot.run_id) == ()
     assert recorder._recording_session.ingest_drop_losses() is None
+
+
+def _clock(session):
+    """Pin the run clock to exact floats so step times compare exactly."""
+    now = [1000.0]
+    session._live_start_mono_s = now[0]
+    session._monotonic = lambda: now[0]
+    return now
+
+
+def test_guided_phases_close_each_step_when_the_next_starts(make_logger) -> None:
+    recorder = make_logger()
+    run_id = recorder.start_recording().run_id
+    session = recorder._recording_session
+    now = _clock(session)
+
+    now[0] += 5.0
+    session.mark_guided_phase("sweep")
+    now[0] += 20.0
+    session.mark_guided_phase("hold")
+    now[0] += 10.0
+    session.mark_guided_phase("coast_down")
+    assert session.current_guided_phase() == "coast_down"
+    now[0] += 8.0
+    session.mark_guided_phase(None)
+
+    assert session.current_guided_phase() is None
+    assert session.guided_phases_for_run(run_id) == (
+        RunGuidedPhase("sweep", 5.0, 25.0),
+        RunGuidedPhase("hold", 25.0, 35.0),
+        RunGuidedPhase("coast_down", 35.0, 43.0),
+    )
+    assert recorder.status().guided_phase is None
+
+
+def test_guided_phase_is_ignored_without_an_active_recording(make_logger) -> None:
+    recorder = make_logger()
+
+    status = recorder.mark_guided_phase("sweep")
+
+    assert status.guided_phase is None
+    assert recorder._recording_session.current_guided_phase() is None
+
+
+def test_guided_phases_reset_with_each_new_run(make_logger) -> None:
+    recorder = make_logger()
+    first = recorder.start_recording().run_id
+    assert recorder.mark_guided_phase("hold").guided_phase == "hold"
+    recorder.stop_recording()
+    second = recorder.start_recording().run_id
+
+    session = recorder._recording_session
+    assert session.guided_phases_for_run(first) == ()
+    assert session.guided_phases_for_run(second) == ()
+    assert recorder.status().guided_phase is None

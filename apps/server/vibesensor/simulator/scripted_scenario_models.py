@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.recording.run_schema import GuidedPhaseName
+
 __all__ = [
     "PhaseOverride",
     "PhasePulse",
@@ -36,6 +38,8 @@ class ScenarioPhase:
     speed_end_kmh: float
     overrides: tuple[PhaseOverride, ...]
     pulses: tuple[PhasePulse, ...] = ()
+    # The guided test-drive step the driver would mark when this phase starts.
+    guided_phase: GuidedPhaseName | None = None
 
 
 @dataclass(frozen=True, slots=True)

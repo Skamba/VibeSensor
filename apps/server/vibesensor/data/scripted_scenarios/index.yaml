@@ -9,3 +9,5 @@ scenarios:
 - front-right-cruise-shimmy
 - driveline-coastdown
 - dual-fault-recovery
+- guided-wheel-coastdown
+- guided-engine-coastdown

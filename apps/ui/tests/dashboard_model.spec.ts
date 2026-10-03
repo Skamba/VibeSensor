@@ -5,6 +5,7 @@ import {
   classifyFreshness,
   formatElapsed,
   freshnessText,
+  guidedTestModel,
   IDLE_STATUS,
   isIdle,
   type LiveHealth,
@@ -410,5 +411,83 @@ describe("readiness text", () => {
       checklist(NOT_READY, true, t, formatInt).map((item) => item.checkKey),
     ).toEqual(["reference_ready", "speed_stable"]);
     expect(checklist(null, false, t, formatInt)).toEqual([]);
+  });
+});
+
+describe("guidedTestModel", () => {
+  const recordingRun: LoggingStatusPayload = {
+    ...IDLE_STATUS,
+    enabled: true,
+    run_id: "run-1",
+  };
+  const states = (model: ReturnType<typeof guidedTestModel>) =>
+    model.steps.map((step) => step.state);
+
+  test("only shows while a run records", () => {
+    expect(guidedTestModel(IDLE_STATUS, null, false, t).visible).toBe(false);
+    expect(guidedTestModel(recordingRun, null, false, t).visible).toBe(true);
+  });
+
+  test("offers to start with the sweep before any step", () => {
+    const model = guidedTestModel(recordingRun, null, false, t);
+
+    expect(states(model)).toEqual(["todo", "todo", "todo"]);
+    expect(model.action).toEqual({
+      label: "dashboard.guided.start",
+      phase: "sweep",
+    });
+    expect(model.finished).toBe(false);
+  });
+
+  test("walks sweep, hold, then the neutral coast-down, then finishes", () => {
+    const hold = guidedTestModel(
+      { ...recordingRun, guided_phase: "hold" },
+      null,
+      false,
+      t,
+    );
+    expect(states(hold)).toEqual(["done", "current", "todo"]);
+    expect(hold.action).toEqual({
+      label:
+        'dashboard.guided.next:{"step":"dashboard.guided.coast_down.title"}',
+      phase: "coast_down",
+    });
+    expect(hold.steps[1].instruction).toBe("dashboard.guided.hold.instruction");
+
+    const coast = guidedTestModel(
+      { ...recordingRun, guided_phase: "coast_down" },
+      null,
+      false,
+      t,
+    );
+    expect(states(coast)).toEqual(["done", "done", "current"]);
+    expect(coast.action).toEqual({
+      label: "dashboard.guided.finish",
+      phase: null,
+    });
+  });
+
+  test("a finished guided test marks every step done and offers no action", () => {
+    const model = guidedTestModel(recordingRun, "run-1", false, t);
+
+    expect(model.finished).toBe(true);
+    expect(states(model)).toEqual(["done", "done", "done"]);
+    expect(model.action).toBeNull();
+  });
+
+  test("a guided test finished in an earlier run does not carry over", () => {
+    const model = guidedTestModel(
+      { ...recordingRun, run_id: "run-2" },
+      "run-1",
+      false,
+      t,
+    );
+
+    expect(model.finished).toBe(false);
+    expect(model.action?.phase).toBe("sweep");
+  });
+
+  test("disables the button while a request is in flight", () => {
+    expect(guidedTestModel(recordingRun, null, true, t).disabled).toBe(true);
   });
 });

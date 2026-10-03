@@ -3,6 +3,8 @@ import type { ComponentChildren } from "preact";
 import { t } from "../../i18n";
 import type { RecordingModel, SummaryAction } from "./dashboard_model";
 import {
+  advanceGuidedTest,
+  guidedTest,
   health,
   openSummaryTarget,
   overview,
@@ -211,6 +213,51 @@ function Progress(props: { model: RecordingModel }) {
   );
 }
 
+function GuidedTest() {
+  const model = guidedTest.value;
+  if (!model.visible) {
+    return null;
+  }
+  const action = model.action;
+  return (
+    <section id="guidedTest" class="guided-test" aria-live="polite">
+      <div class="guided-test__title">{t("dashboard.guided.title")}</div>
+      <div class="guided-test__hint">{t("dashboard.guided.hint")}</div>
+      <ol class="guided-test__steps">
+        {model.steps.map((step) => (
+          <li
+            key={step.phase}
+            class="guided-test__step"
+            data-guided-step={step.phase}
+            data-step-state={step.state}
+            aria-current={step.state === "current" ? "step" : undefined}
+          >
+            <div class="guided-test__step-label">{step.label}</div>
+            <strong>{step.title}</strong>
+            {step.state === "current" ? (
+              <div class="guided-test__instruction">{step.instruction}</div>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+      {model.finished ? (
+        <div class="guided-test__done">{t("dashboard.guided.done")}</div>
+      ) : null}
+      {action ? (
+        <button
+          id="guidedTestBtn"
+          class="btn btn--secondary"
+          type="button"
+          disabled={model.disabled}
+          onClick={() => void advanceGuidedTest(action.phase)}
+        >
+          {action.label}
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
 function Recording(props: { onAddCar: () => void }) {
   const model = recording.value;
   const onAction = (action: SummaryAction) => {
@@ -249,6 +296,7 @@ function Recording(props: { onAddCar: () => void }) {
         </span>
       </div>
       <Progress model={model} />
+      <GuidedTest />
       <div class="logging-actions">
         <button
           id="startLoggingBtn"

@@ -344,3 +344,54 @@ test("journey: sensor cards show location labels and the strongest signal", asyn
     "2 / 2",
   );
 });
+
+test("journey: the guided test drive walks sweep, hold and neutral coast-down while recording", async ({
+  page,
+}) => {
+  let status = idleStatus({
+    enabled: true,
+    run_id: "run-7",
+    start_time_utc: new Date(Date.now() - 5_000).toISOString(),
+  });
+  const marked: Array<string | null> = [];
+  await bootWithStatus(page, (route) => fulfillJson(route, status));
+  await page.route("**/api/recording/guided-phase", async (route) => {
+    const phase = (route.request().postDataJSON() as { phase: string | null })
+      .phase;
+    marked.push(phase);
+    status = {
+      ...status,
+      guided_phase: phase as LoggingStatusPayload["guided_phase"],
+    };
+    await fulfillJson(route, status);
+  });
+
+  const panel = page.locator("#guidedTest");
+  const button = page.locator("#guidedTestBtn");
+  await expect(panel).toContainText("Guided test drive (optional)");
+  await expect(button).toHaveText("Start guided test");
+
+  await button.click();
+  await expect(panel.locator('[data-guided-step="sweep"]')).toHaveAttribute(
+    "data-step-state",
+    "current",
+  );
+  await expect(panel).toContainText(
+    "Accelerate smoothly from about 50 to 120 km/h",
+  );
+  await expect(button).toHaveText("Next: Steady hold");
+
+  await button.click();
+  await expect(button).toHaveText("Next: Neutral coast-down");
+  await button.click();
+  await expect(panel).toContainText("shift to neutral");
+  await expect(button).toHaveText("Finish guided test");
+
+  await button.click();
+  await expect(panel).toContainText("Guided test done.");
+  await expect(button).toBeHidden();
+  expect(marked).toEqual(["sweep", "hold", "coast_down", null]);
+
+  status = idleStatus();
+  await expect(panel).toBeHidden();
+});
