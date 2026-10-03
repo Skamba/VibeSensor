@@ -36,7 +36,6 @@ def test_load_scripted_scenarios_builds_catalog_from_yaml_resources(tmp_path: Pa
                             "scene_noise_gain": 1.0,
                             "amp_scale": 1.0,
                             "noise_scale": 1.02,
-                            "common_event_gain": 0.16,
                         }
                     ],
                     "pulses": [{"at_s": 1.0, "target": "front-left", "strength": 0.2}],
@@ -74,7 +73,6 @@ def test_load_scripted_scenarios_rejects_index_name_mismatch(tmp_path: Path) -> 
                             "scene_noise_gain": 1.0,
                             "amp_scale": 1.0,
                             "noise_scale": 1.02,
-                            "common_event_gain": 0.16,
                         }
                     ],
                 }

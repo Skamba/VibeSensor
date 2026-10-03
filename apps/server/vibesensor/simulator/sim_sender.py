@@ -211,7 +211,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Simulation scenario: random road scene, deterministic mild "
             "single-wheel fault, deterministic engine-order excitation, "
-            "fixed road baseline, or one of the scripted multi-phase runs"
+            "fault-free road baseline, or one of the scripted multi-phase runs"
         ),
     )
     parser.add_argument(

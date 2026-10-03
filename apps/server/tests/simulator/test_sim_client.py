@@ -7,7 +7,10 @@ import pytest
 
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import ProcessorConfig
-from vibesensor.simulator.commands import apply_one_wheel_mild_scenario
+from vibesensor.simulator.commands import (
+    apply_one_wheel_mild_scenario,
+    apply_road_fixed_scenario,
+)
 from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 
@@ -20,6 +23,9 @@ _TEST_PROCESSOR_CONFIG = ProcessorConfig(
     spectrum_max_hz=200.0,
     accel_scale_g_per_lsb=None,
 )
+
+
+_SENSORS = ("front-left", "front-right", "rear-left", "rear-right", "trunk")
 
 
 def _make_client(*, seed: int = 1, name: str = "front-left") -> SimClient:
@@ -35,16 +41,6 @@ def _make_client(*, seed: int = 1, name: str = "front-left") -> SimClient:
         profile_name="rough_road",
         noise_floor_std=3.5,
     )
-
-
-def _measure_order_magnitude(client: SimClient, order_hz: float, *, axis: int = 0) -> float:
-    frames = [client.make_frame().astype(np.float32) for _ in range(20)]
-    signal = np.concatenate(frames, axis=0)
-    sample_count = signal.shape[0]
-    freqs = np.fft.rfftfreq(sample_count, d=1.0 / client.sample_rate_hz)
-    order_index = int(np.argmin(np.abs(freqs - order_hz)))
-    spectrum = np.fft.rfft(signal[:, axis])
-    return float(np.abs(spectrum[order_index]) / sample_count)
 
 
 def _measure_p95_strength_db(
@@ -81,35 +77,38 @@ def test_make_frame_keeps_noise_floor_when_scene_gains_are_zero() -> None:
     assert np.abs(frame).sum() > 0
 
 
-def test_common_shaft_tone_does_not_become_corner_dominant_in_one_wheel_runs() -> None:
-    clients = [
-        _make_client(seed=1, name="front-left"),
-        _make_client(seed=2, name="front-right"),
-        _make_client(seed=3, name="rear-left"),
-        _make_client(seed=4, name="rear-right"),
-        _make_client(seed=5, name="trunk"),
-    ]
-    apply_one_wheel_mild_scenario(clients, "front-right")
+def _order_prominence(client: SimClient, order_hz: float) -> float:
+    """Return the order bin's magnitude over the median of its +/-5 Hz neighbourhood."""
+    frames = [client.make_frame().astype(np.float32) for _ in range(20)]
+    signal = np.concatenate(frames, axis=0)[:, 0]
+    freqs = np.fft.rfftfreq(signal.shape[0], d=1.0 / client.sample_rate_hz)
+    spectrum = np.abs(np.fft.rfft(signal))
+    order_index = int(np.argmin(np.abs(freqs - order_hz)))
+    neighbourhood = spectrum[(np.abs(freqs - order_hz) <= 5.0) & (np.abs(freqs - order_hz) > 1.0)]
+    return float(spectrum[order_index] / np.median(neighbourhood))
+
+
+def test_fault_free_road_carries_no_order_tones() -> None:
+    clients = [_make_client(seed=seed, name=name) for seed, name in enumerate(_SENSORS, start=1)]
+    apply_road_fixed_scenario(clients)
 
     for client in clients:
-        client.noise_floor_std = 0.0
-        client.scene_noise_gain = 0.0
-        client.noise_scale = 0.0
-        client.phase_offsets = np.zeros(3, dtype=np.float32)
-        client.rng = np.random.default_rng(0)
+        for order_key, order_hz in DEFAULT_ORDER_HZ.items():
+            prominence = _order_prominence(client, order_hz)
+            assert prominence < 4.0, (client.name, order_key, prominence)
 
-    shaft_1x = DEFAULT_ORDER_HZ["shaft_1x"]
-    magnitudes = {client.name: _measure_order_magnitude(client, shaft_1x) for client in clients}
 
-    other_wheel_mean = np.mean(
-        [
-            magnitudes["front-left"],
-            magnitudes["rear-left"],
-            magnitudes["rear-right"],
-        ]
-    )
-    assert magnitudes["front-right"] < magnitudes["front-left"] * 2.0
-    assert magnitudes["front-right"] < other_wheel_mean * 2.0
+def test_one_wheel_fault_injects_only_wheel_orders() -> None:
+    clients = [_make_client(seed=seed, name=name) for seed, name in enumerate(_SENSORS, start=1)]
+    apply_one_wheel_mild_scenario(clients, "front-right")
+    fault = next(client for client in clients if client.name == "front-right")
+
+    assert _order_prominence(fault, DEFAULT_ORDER_HZ["wheel_1x"]) > 20.0
+    # engine_1x is left out: on the default car it sits within 0.4 Hz of wheel_2x.
+    for client in clients:
+        for order_key in ("shaft_1x", "engine_2x"):
+            prominence = _order_prominence(client, DEFAULT_ORDER_HZ[order_key])
+            assert prominence < 4.0, (client.name, order_key, prominence)
 
 
 @pytest.mark.parametrize("fault_wheel", ["front-left", "front-right", "rear-left"])

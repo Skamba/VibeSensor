@@ -61,7 +61,6 @@ class RoadSceneController:
             client.profile_name = self._baseline_profile(client.name)
             client.scene_gain = self.rng.uniform(0.18, 0.30)
             client.scene_noise_gain = self.rng.uniform(0.88, 1.04)
-            client.common_event_gain = self.rng.uniform(0.02, 0.06)
             client.amp_scale = self.rng.uniform(0.36, 0.55)
             client.noise_scale = self.rng.uniform(0.94, 1.08)
 
@@ -77,7 +76,6 @@ class RoadSceneController:
                 client.scene_noise_gain = self.rng.uniform(0.98, 1.14)
                 client.amp_scale = self.rng.uniform(0.90, 1.08)
                 client.noise_scale = self.rng.uniform(1.00, 1.12)
-                client.common_event_gain = self.rng.uniform(0.18, 0.32)
                 client.pulse(self.rng.uniform(0.28, 0.85))
             else:
                 client.profile_name = self._baseline_profile(client.name)
@@ -85,7 +83,6 @@ class RoadSceneController:
                 client.scene_noise_gain = self.rng.uniform(0.92, 1.08) + 0.06 * coupling
                 client.amp_scale = self.rng.uniform(0.52, 0.70) + 0.22 * coupling
                 client.noise_scale = self.rng.uniform(0.95, 1.06)
-                client.common_event_gain = self.rng.uniform(0.06, 0.12) + 0.10 * coupling
 
     def _apply_all_active(self) -> None:
         pulse_strength = self.rng.uniform(0.22, 0.60)
@@ -94,28 +91,24 @@ class RoadSceneController:
             client.profile_name = self._baseline_profile(client.name)
             client.scene_gain = self.rng.uniform(0.48, 0.74)
             client.scene_noise_gain = self.rng.uniform(0.94, 1.14)
-            client.common_event_gain = self.rng.uniform(0.16, 0.34)
             client.amp_scale = self.rng.uniform(0.70, 0.94)
             client.noise_scale = self.rng.uniform(0.98, 1.12)
             client.pulse(pulse_strength * self.rng.uniform(0.90, 1.10))
 
     def _apply_all_sync_event(self) -> None:
-        # Explicit synchronized but moderate all-sensor event for multi-sensor detection testing.
-        base = self.rng.uniform(0.38, 0.58)
+        # Synchronized moderate road impact on every sensor (broadband, no order tones).
         pulse_strength = self.rng.uniform(0.25, 0.55)
         for client in self.clients:
             client.scene_mode = "all-sync"
             client.profile_name = self._baseline_profile(client.name)
             client.scene_gain = self.rng.uniform(0.52, 0.80)
             client.scene_noise_gain = self.rng.uniform(0.92, 1.12)
-            client.common_event_gain = max(0.0, base + self.rng.uniform(-0.03, 0.03))
             client.amp_scale = self.rng.uniform(0.76, 0.98)
             client.noise_scale = self.rng.uniform(0.98, 1.10)
             client.pulse(pulse_strength * self.rng.uniform(0.90, 1.10))
 
     def _apply_highway_100_sync(self) -> None:
         # 640i-like synchronized event around 100 km/h across all sensors.
-        base = self.rng.uniform(0.46, 0.70)
         pulse_strength = self.rng.uniform(0.20, 0.50)
         for client in self.clients:
             client.scene_mode = "highway100-sync"
@@ -126,7 +119,6 @@ class RoadSceneController:
             )
             client.scene_gain = self.rng.uniform(0.54, 0.78)
             client.scene_noise_gain = self.rng.uniform(0.90, 1.08)
-            client.common_event_gain = max(0.0, base + self.rng.uniform(-0.04, 0.04))
             client.amp_scale = self.rng.uniform(0.78, 1.00)
             client.noise_scale = self.rng.uniform(0.96, 1.08)
             client.pulse(pulse_strength * self.rng.uniform(0.85, 1.15))

@@ -18,7 +18,6 @@ class _SummaryFailingClient:
     scene_noise_gain: float = 1.0
     amp_scale: float = 1.0
     noise_scale: float = 1.0
-    common_event_gain: float = 0.0
     paused: bool = False
 
     @property

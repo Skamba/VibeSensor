@@ -23,14 +23,6 @@ _TWO_PI = 2.0 * np.pi
 # ESP32 crystals are specified around ±10-40 ppm; stay within that envelope.
 _MAX_CLOCK_DRIFT_PPM = 40.0
 
-# Driveline orders shared by every sensor, as (order_key, multiple, amps_xyz).
-_COMMON_ORDER_TONES: tuple[tuple[str, float, tuple[float, float, float]], ...] = (
-    ("wheel_1x", 1.0, (70.0, 58.0, 82.0)),
-    ("wheel_2x", 1.0, (46.0, 38.0, 54.0)),
-    ("shaft_1x", 1.0, (95.0, 76.0, 110.0)),
-    ("engine_2x", 1.0, (64.0, 52.0, 78.0)),
-)
-
 
 @dataclass(slots=True)
 class SimClient:
@@ -51,7 +43,6 @@ class SimClient:
     scene_gain: float = 1.0
     scene_noise_gain: float = 1.0
     scene_mode: str = "all"
-    common_event_gain: float = 0.0
     paused: bool = False
     # Current simulated speed – used to scale order-based profile tones.
     current_speed_kmh: float = DEFAULT_SPEED_KMH
@@ -120,8 +111,7 @@ class SimClient:
             f"mac={self.mac_address} profile={self.profile_name} "
             f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
             f"floor={self.noise_floor_std:.1f} "
-            f"scene={self.scene_mode}:{self.scene_gain:.2f} "
-            f"common={self.common_event_gain:.2f} paused={self.paused} "
+            f"scene={self.scene_mode}:{self.scene_gain:.2f} paused={self.paused} "
             f"clock_drift={self.clock_drift_ppm:+.1f}ppm "
             f"tx_jitter={self.send_jitter_s * 1000:.1f}ms "
             f"offset={self.start_offset_s * 1000:.1f}ms"
@@ -142,10 +132,6 @@ class SimClient:
         local_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
             (self.frame_samples, 3), dtype=np.float32
         )
-        common_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
-            (self.frame_samples, 3), dtype=np.float32
-        )
-
         # Order tones are defined at the reference speed; scale them
         # proportionally to the current speed.
         speed_ratio = 1.0
@@ -168,24 +154,6 @@ class SimClient:
             local_signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
             local_signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
 
-        if self.common_event_gain > 0:
-            # Common order tones shared by all sensors.
-            # Scale by current speed vs DEFAULT_SPEED_KMH reference.
-            common_speed_ratio = (
-                max(0.0, self.current_speed_kmh) / DEFAULT_SPEED_KMH
-                if DEFAULT_SPEED_KMH > 0
-                else 1.0
-            )
-            _gain = self.common_event_gain
-            for order_key, multiple, amps_xyz in _COMMON_ORDER_TONES:
-                effective_hz = order_hz[order_key] * multiple * common_speed_ratio
-                if effective_hz <= 0:
-                    continue
-                omega_t = _TWO_PI * effective_hz * t
-                common_signal[:, 0] += _gain * amps_xyz[0] * _sin(omega_t)
-                common_signal[:, 1] += _gain * amps_xyz[1] * _sin(omega_t + 0.2)
-                common_signal[:, 2] += _gain * amps_xyz[2] * _sin(omega_t + 0.4)
-
         local_signal *= modulation[:, None]
 
         for i in range(self.frame_samples):
@@ -201,10 +169,7 @@ class SimClient:
             size=local_signal.shape,
         ).astype(np.float32)
         local_signal += noise
-        local_signal *= self.amp_scale * self.scene_gain
-        # Keep shared/common tones independent from the local corner gain so
-        # generic driveline content does not inherit wheel-fault amplification.
-        signal = local_signal + common_signal
+        signal = local_signal * (self.amp_scale * self.scene_gain)
         # Keep a minimum broadband floor on every sensor even in quiet/low-gain scenes.
         floor_noise = self.rng.normal(
             0.0,

@@ -12,21 +12,18 @@ phases:
     scene_noise_gain: 1.0
     amp_scale: 0.62
     noise_scale: 1.0
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.42
     scene_noise_gain: 1.0
     amp_scale: 0.74
     noise_scale: 1.0
-    common_event_gain: 0.14
   - target: left-side
     profile_name: wheel_imbalance
     scene_gain: 0.82
     scene_noise_gain: 1.06
     amp_scale: 0.98
     noise_scale: 1.04
-    common_event_gain: 0.2
   pulses:
   - at_s: 1.4
     target: left-side
@@ -45,21 +42,18 @@ phases:
     scene_noise_gain: 1.0
     amp_scale: 0.62
     noise_scale: 1.0
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.42
     scene_noise_gain: 1.0
     amp_scale: 0.74
     noise_scale: 1.0
-    common_event_gain: 0.14
   - target: left-side
     profile_name: wheel_imbalance
     scene_gain: 0.82
     scene_noise_gain: 1.06
     amp_scale: 0.98
     noise_scale: 1.04
-    common_event_gain: 0.2
   pulses: []
 - name: right-load
   duration_s: 5.0
@@ -72,21 +66,18 @@ phases:
     scene_noise_gain: 1.02
     amp_scale: 0.64
     noise_scale: 1.02
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.42
     scene_noise_gain: 1.0
     amp_scale: 0.72
     noise_scale: 1.0
-    common_event_gain: 0.14
   - target: right-side
     profile_name: wheel_imbalance
     scene_gain: 0.8
     scene_noise_gain: 1.06
     amp_scale: 0.96
     noise_scale: 1.04
-    common_event_gain: 0.2
   pulses:
   - at_s: 1.2
     target: right-side
@@ -105,21 +96,18 @@ phases:
     scene_noise_gain: 1.02
     amp_scale: 0.64
     noise_scale: 1.02
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.42
     scene_noise_gain: 1.0
     amp_scale: 0.72
     noise_scale: 1.0
-    common_event_gain: 0.14
   - target: right-side
     profile_name: wheel_imbalance
     scene_gain: 0.8
     scene_noise_gain: 1.06
     amp_scale: 0.96
     noise_scale: 1.04
-    common_event_gain: 0.2
   pulses: []
 - name: straighten-out
   duration_s: 5.0
@@ -132,12 +120,10 @@ phases:
     scene_noise_gain: 0.98
     amp_scale: 0.48
     noise_scale: 0.98
-    common_event_gain: 0.08
   - target: body
     profile_name: rear_body
     scene_gain: 0.28
     scene_noise_gain: 0.98
     amp_scale: 0.56
     noise_scale: 0.98
-    common_event_gain: 0.08
   pulses: []
