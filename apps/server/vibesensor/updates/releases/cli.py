@@ -30,7 +30,7 @@ def fetch_latest_wheel_cli() -> None:
     try:
         release = fetcher.find_latest_release()
         print(f"Latest release: {release.tag} ({release.version})")
-        whl = fetcher.download_wheel(release, dest_dir=args.dest)
+        whl = fetcher.download_asset(release.asset_name, release.asset_url, dest_dir=args.dest)
         print(f"Downloaded: {whl}")
         print(f"SHA256: {release.sha256}")
     except (OSError, ValueError) as exc:

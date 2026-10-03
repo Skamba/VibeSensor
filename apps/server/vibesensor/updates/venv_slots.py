@@ -119,19 +119,6 @@ class VenvSlots:
         os.replace(route, self.root / "bin")
         shutil.rmtree(legacy_bin, ignore_errors=True)
 
-    def clone_slot(self, source: str, name: str) -> None:
-        """Copy slot *source* to a new slot *name* and repoint its script shebangs."""
-        target = self.slot_dir(name)
-        shutil.copytree(self.slot_dir(source), target, symlinks=True)
-        old_prefix = f"#!{self.slot_dir(source)}/".encode()
-        new_prefix = f"#!{target}/".encode()
-        for script in (target / "bin").iterdir():
-            if script.is_symlink() or not script.is_file():
-                continue
-            content = script.read_bytes()
-            if content.startswith(old_prefix):
-                script.write_bytes(new_prefix + content[len(old_prefix) :])
-
     def install_launcher(self, name: str) -> None:
         """Move pip's ``vibesensor-server`` aside and put the boot-check launcher there."""
         self._install_launcher(self.slot_dir(name) / "bin", slot_python=self.slot_python(name))

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import zipfile
-from collections.abc import Mapping
 from dataclasses import dataclass
 from email.message import Message
 from email.parser import Parser
@@ -12,7 +11,6 @@ from pathlib import Path
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
-from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 __all__ = [
@@ -21,7 +19,6 @@ __all__ = [
     "sha256_file",
     "versions_match",
     "wheel_artifact_problem",
-    "wheel_dependency_issues",
     "wheel_metadata_validation_errors",
 ]
 
@@ -121,56 +118,6 @@ def wheel_metadata_validation_errors(
                 f"wheel metadata Requires-Dist {raw_requirement!r} is invalid: {exc}",
             )
     return errors
-
-
-def wheel_dependency_issues(
-    metadata: WheelMetadata,
-    *,
-    python_full_version: str,
-    marker_environment: Mapping[str, str],
-    installed_versions: Mapping[str, str],
-) -> list[str]:
-    """Evaluate wheel dependency metadata against a concrete target environment."""
-    issues: list[str] = []
-    environment = {key: str(value) for key, value in marker_environment.items()}
-    if metadata.requires_python:
-        try:
-            specifier = SpecifierSet(metadata.requires_python)
-        except InvalidSpecifier as exc:
-            return [
-                f"wheel metadata Requires-Python {metadata.requires_python!r} is invalid: {exc}",
-            ]
-        if python_full_version and not specifier.contains(python_full_version, prereleases=True):
-            issues.append(
-                "Python "
-                f"{python_full_version} does not satisfy wheel Requires-Python "
-                f"{metadata.requires_python}",
-            )
-    for raw_requirement in metadata.requires_dist:
-        try:
-            requirement = Requirement(raw_requirement)
-        except InvalidRequirement as exc:
-            issues.append(
-                f"wheel metadata Requires-Dist {raw_requirement!r} is invalid: {exc}",
-            )
-            continue
-        if requirement.marker is not None and not requirement.marker.evaluate(environment):
-            continue
-        requirement_name = canonicalize_name(requirement.name)
-        installed_version = installed_versions.get(requirement_name, "")
-        if not installed_version:
-            suffix = str(requirement.specifier) if requirement.specifier else ""
-            issues.append(f"Missing dependency: {requirement.name}{suffix}")
-            continue
-        if requirement.specifier and not requirement.specifier.contains(
-            installed_version,
-            prereleases=True,
-        ):
-            issues.append(
-                f"Dependency {requirement.name}=={installed_version} does not satisfy "
-                f"{requirement.specifier}",
-            )
-    return issues
 
 
 def wheel_artifact_problem(wheel_path: Path) -> tuple[str, str] | None:

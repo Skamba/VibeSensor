@@ -7,6 +7,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+import tarfile
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib import error
@@ -125,6 +126,61 @@ def test_build_wheel_subcommand_stamps_version_and_reports_artifact(
         if command[:3] == ["/fake/python", "-m", "build"]
     )
     assert pip_index < build_index
+
+
+def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_main_release_module()
+    wheel_path = tmp_path / "dist" / "vibesensor-2026.4.6-py3-none-any.whl"
+    wheel_path.parent.mkdir()
+    wheel_path.write_text("wheel", encoding="utf-8")
+    commands: list[list[str]] = []
+
+    def _fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        command_list = [str(part) for part in command]
+        commands.append(command_list)
+        if command_list[3] == "download":
+            dest = Path(command_list[command_list.index("--dest") + 1])
+            dest.mkdir(parents=True)
+            for name in (wheel_path.name, "numpy-2.5.3-cp313-cp313-linux_armv7l.whl"):
+                (dest / name).write_text(name, encoding="utf-8")
+        return subprocess.CompletedProcess(command_list, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    monkeypatch.setattr(module.sys, "executable", "/fake/python")
+
+    assert (
+        module.main(
+            [
+                "build-wheelhouse",
+                "--wheel-path",
+                str(wheel_path),
+                "--version",
+                "2026.4.6",
+                "--output-dir",
+                str(tmp_path / "out"),
+            ]
+        )
+        == 0
+    )
+
+    output = tmp_path / "out" / "vibesensor-wheelhouse-2026.4.6-cp313-linux_armv7l.tar"
+    assert capsys.readouterr().out.strip() == str(output)
+    download, dry_run = commands
+    assert download[:4] == ["/fake/python", "-m", "pip", "download"]
+    assert dry_run[:4] == ["/fake/python", "-m", "pip", "install"]
+    for command in (download, dry_run):
+        assert "--only-binary=:all:" in command
+        assert command[command.index("--python-version") + 1] == "3.13"
+        assert "linux_armv7l" in command
+        assert command[-1] == f"{wheel_path.resolve()}[esp]"
+    assert "https://www.piwheels.org/simple" in download
+    assert {"--dry-run", "--no-index"} <= set(dry_run)
+    with tarfile.open(output) as tar:
+        assert tar.getnames() == ["numpy-2.5.3-cp313-cp313-linux_armv7l.whl"]
 
 
 def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(

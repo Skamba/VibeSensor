@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
-from test_support.venv_slots import make_legacy_venv
+from test_support.venv_slots import add_slot, make_legacy_venv
 
 from vibesensor.updates.boot_check import (
     MAX_CANDIDATE_STARTS,
@@ -34,7 +34,7 @@ def _slots_with_candidate(tmp_path: Path, *, app_script: str | None = None) -> V
     root = make_legacy_venv(tmp_path / ".venv", server_script=app_script)
     slots = VenvSlots(root)
     slots.adopt("1.0")
-    slots.clone_slot("1.0", "2.0")
+    add_slot(slots, "2.0")
     if app_script is not None:
         for name, label in (("1.0", "previous"), ("2.0", "candidate")):
             app = slots.slot_dir(name) / "bin" / SERVER_APP

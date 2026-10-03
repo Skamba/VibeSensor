@@ -392,7 +392,11 @@ The server venv uses A/B slots: `apps/server/.venv/current` points at
 `.venv/slots/<version>`, and `.venv/bin`, `.venv/lib`, and `.venv/pyvenv.cfg`
 are symlinks through `current`, so systemd units keep using
 `.venv/bin/vibesensor-server`. An update installs the release into a new slot,
-smoke-tests it in an isolated server, flips `current`, and restarts. The new
+smoke-tests it in an isolated server, flips `current`, and restarts. A new slot is a
+fresh venv. Its dependencies come from the release's Pi wheelhouse asset
+(`vibesensor-wheelhouse-<version>-cp313-linux_armv7l.tar`, built by
+`tools/release/main_release.py build-wheelhouse`) and are installed offline with
+`pip --no-index`, so releases can change dependencies without a reflash. The new
 slot's `bin/vibesensor-server` is the boot-check launcher
 (`updates/boot_check.py`): if the new version keeps crashing or is not healthy
 within 60 s, it flips `current` back and the previous version starts again.

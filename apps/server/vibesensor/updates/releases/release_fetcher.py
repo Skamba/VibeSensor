@@ -25,7 +25,7 @@ __all__ = ["ServerReleaseFetcher"]
 
 
 class ServerReleaseFetcher:
-    """Fetch server wheel releases from GitHub Releases."""
+    """Fetch server releases (wheel + Pi dependency wheelhouse) from GitHub Releases."""
 
     __slots__ = ("_client", "_config")
 
@@ -55,7 +55,6 @@ class ServerReleaseFetcher:
             max_bytes=self._MAX_DOWNLOAD_BYTES,
             chunk_size=DOWNLOAD_CHUNK_BYTES,
             size_limit_message=f"Asset exceeds {self._MAX_DOWNLOAD_MB} MB limit",
-            temp_suffix=".whl_tmp",
         )
 
     def find_latest_release(self) -> ReleaseInfo:
@@ -80,22 +79,15 @@ class ServerReleaseFetcher:
             server_repo=self._config.server_repo,
         )
 
-    def download_wheel(
-        self,
-        release: ReleaseInfo,
-        dest_dir: str | Path | None = None,
-    ) -> Path:
-        """Download the wheel for a release.
-
-        Returns the path to the downloaded ``.whl`` file.
-        """
+    def download_asset(self, name: str, url: str, dest_dir: str | Path | None = None) -> Path:
+        """Download one release asset (the wheel or the wheelhouse) into *dest_dir*."""
         if dest_dir is None:
             dest_dir = Path(tempfile.mkdtemp(prefix="vibesensor-release-"))
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        dest = dest_dir / release.asset_name
-        LOGGER.info("Downloading %s", release.asset_name)
-        self._download_asset(release.asset_url, dest)
-        LOGGER.info("Downloaded %s", release.asset_name)
+        dest = dest_dir / name
+        LOGGER.info("Downloading %s", name)
+        self._download_asset(url, dest)
+        LOGGER.info("Downloaded %s", name)
         return dest

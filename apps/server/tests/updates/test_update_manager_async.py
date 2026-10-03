@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import logging
-import zipfile
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -12,10 +10,12 @@ from _update_manager_test_helpers import (
     make_mock_release,
     patch_release_fetcher,
     patch_validation_environment,
+    publish_release,
     run_update,
     seed_runtime_artifacts,
     setup_update_env,
 )
+from test_support.venv_slots import add_slot
 
 from vibesensor.updates.job import UpdateJob
 from vibesensor.updates.manager import UpdateManager
@@ -44,18 +44,6 @@ class _StaticUsbInternetService:
     async def snapshot(self, *, activate: bool = False) -> UsbInternetStatus:
         del activate
         return self._status
-
-
-def _build_fake_wheel(path, *, version: str) -> bytes:
-    dist_info = f"vibesensor-{version}.dist-info"
-    with zipfile.ZipFile(path, "w") as wheel_zip:
-        wheel_zip.writestr("vibesensor/__init__.py", f"__version__ = '{version}'\n")
-        wheel_zip.writestr(
-            f"{dist_info}/METADATA",
-            f"Metadata-Version: 2.1\nName: vibesensor\nVersion: {version}\n",
-        )
-        wheel_zip.writestr(f"{dist_info}/WHEEL", "Wheel-Version: 1.0\nTag: py3-none-any\n")
-    return path.read_bytes()
 
 
 def _assert_hotspot_restore_logged(manager: UpdateManager) -> None:
@@ -118,12 +106,7 @@ class TestUpdateManagerAsync:
                 server_release_fetcher=fetcher,
             )
 
-            mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-            wheel_content = _build_fake_wheel(mock_wheel_path, version="2025.6.15")
-            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-            mock_release = make_mock_release(sha256=wheel_sha256)
-            fetcher.find_latest_release.return_value = mock_release
-            fetcher.download_wheel.return_value = mock_wheel_path
+            publish_release(fetcher, tmp_path / "assets")
             runner.set_response("from vibesensor import __version__", 0, "2025.6.15", "")
             await run_update(manager)
 
@@ -278,9 +261,8 @@ class TestUpdateManagerAsync:
                 tmp_path,
                 server_release_fetcher=fetcher,
             )
-            mock_release = make_mock_release(sha256="abc")
-            fetcher.find_latest_release.return_value = mock_release
-            fetcher.download_wheel.side_effect = OSError("Network error")
+            publish_release(fetcher, tmp_path / "assets")
+            fetcher.download_asset.side_effect = OSError("Network error")
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
         _assert_hotspot_restore_logged(manager)
@@ -292,11 +274,7 @@ class TestUpdateManagerAsync:
                 server_release_fetcher=fetcher,
             )
             runner.set_response("pip", 1, "", "ERROR: Could not install")
-            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-            wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
-            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-            fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
-            fetcher.download_wheel.return_value = fake_wheel
+            publish_release(fetcher, tmp_path / "assets")
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
         slots = VenvSlots(repo / "apps" / "server" / ".venv")
@@ -312,7 +290,7 @@ class TestUpdateManagerAsync:
         manager, runner, repo = setup_update_env(tmp_path)
         slots = VenvSlots(repo / "apps" / "server" / ".venv")
         slots.adopt("2025.6.14")
-        slots.clone_slot("2025.6.14", "2025.6.15")
+        add_slot(slots, "2025.6.15")
         slots.activate("2025.6.15", health_url="http://127.0.0.1:80/api/health")
 
         await run_update(manager, "TestNet", "pass")
@@ -341,10 +319,7 @@ class TestUpdateManagerAsync:
                 tmp_path,
                 server_release_fetcher=fetcher,
             )
-            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-            fake_wheel.write_bytes(b"fake-wheel-content")
-            fetcher.find_latest_release.return_value = make_mock_release(sha256="0" * 64)
-            fetcher.download_wheel.return_value = fake_wheel
+            publish_release(fetcher, tmp_path / "assets", wheel_sha256="0" * 64)
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
         pip_calls = [

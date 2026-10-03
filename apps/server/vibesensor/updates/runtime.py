@@ -37,7 +37,7 @@ __all__ = ["UPDATE_TIMEOUT_S", "build_update_manager"]
 
 LOGGER = logging.getLogger(__name__)
 
-UPDATE_TIMEOUT_S = 600
+UPDATE_TIMEOUT_S = 900
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 
 
@@ -100,7 +100,11 @@ def build_update_manager(
         commands=commands,
         transport=transport,
         release_fetcher=release_fetcher,
-        stager=ServerReleaseStager(status=status, release_fetcher=release_fetcher),
+        stager=ServerReleaseStager(
+            status=status,
+            release_fetcher=release_fetcher,
+            staging_parent=slots.root,
+        ),
         firmware_refresher=FirmwareRefresher(
             commands=commands,
             status=status,

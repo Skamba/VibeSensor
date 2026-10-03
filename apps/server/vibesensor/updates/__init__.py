@@ -8,10 +8,11 @@
   interrupted runs and reporting of boot-check reverts.
 - ``runtime.py`` composes the manager, job, and their collaborators.
 - ``venv_slots.py`` owns the A/B venv layout under ``.venv`` (adoption of a
-  plain venv, clone, activate, prune); ``venv_install.py`` installs a release
-  into a new slot and smoke-tests it; ``boot_check.py`` is the stdlib-only
+  plain venv, activate, prune); ``venv_install.py`` installs a release and its
+  wheelhouse into a fresh slot and smoke-tests it; ``boot_check.py`` is the stdlib-only
   launcher that confirms or reverts a new slot after the restart.
-- ``release_staging.py`` owns release wheel download and SHA-256 verification.
+- ``release_staging.py`` owns release wheel + wheelhouse download, SHA-256
+  verification, and safe wheelhouse extraction.
 - ``artifact_validation.py`` owns wheel artifact and metadata validation.
 - ``validation.py`` owns pre-flight prerequisite checks.
 - ``privilege.py`` owns sudo/privilege-escalation helpers used by command
