@@ -1,4 +1,6 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
+
+import { lang } from "../src/i18n";
 import { createAppState } from "../src/app/ui_app_state";
 import {
   createFeatureHarness,
@@ -13,6 +15,11 @@ import {
   buildHistoryHandlers,
   makeHistoryListPayload,
 } from "./msw/handlers/history";
+
+// Shell signals are module-level; restore the language other tests expect.
+afterEach(() => {
+  lang.value = "en";
+});
 
 installHistoryFeatureTestLifecycle();
 

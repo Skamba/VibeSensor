@@ -19,6 +19,7 @@ _EXPECTED_CORE_SMOKE_SPECS = {
     "smoke.esp_flash.spec.ts",
     "smoke.preferences.spec.ts",
     "smoke.sensors.spec.ts",
+    "smoke.shell.spec.ts",
     "smoke.spectrum.spec.ts",
     "smoke.speed_source.spec.ts",
     "smoke.update.spec.ts",

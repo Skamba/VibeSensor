@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+import { lang } from "../src/i18n";
 import type { SpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
 import type { SpectrumPanelView } from "../src/app/runtime/spectrum_panel_view";
 import { applyLivePayloadUpdate } from "../src/app/realtime_state";
@@ -10,6 +12,11 @@ import {
   createElementStub,
   installDocumentStub,
 } from "./spectrum_test_support";
+
+// Shell signals are module-level; restore the language other tests expect.
+afterEach(() => {
+  lang.value = "en";
+});
 
 async function importUiSpectrumController() {
   return (await import("../src/app/runtime/ui_spectrum_controller"))

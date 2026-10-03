@@ -1,30 +1,14 @@
-import { ensureCatalogLoaded, get as translate, normalizeLang } from "../i18n";
-import { signal, useComputed, type ReadonlySignal } from "./ui_signals";
+import { t } from "../i18n";
+import { useComputed, type ReadonlySignal } from "./ui_signals";
 
-const currentLanguage = signal("en");
-
-export async function setUiLanguage(lang: string): Promise<void> {
-  const normalizedLanguage = normalizeLang(lang);
-  await ensureCatalogLoaded(normalizedLanguage);
-  if (normalizedLanguage === currentLanguage.value) {
-    return;
-  }
-  currentLanguage.value = normalizedLanguage;
-}
-
-export function translateUiText(
-  key: string,
-  vars?: Record<string, unknown>,
-): string {
-  return translate(currentLanguage.value, key, vars);
-}
+// Pre-rewrite views still pass English fallbacks; pages call i18n.t directly.
 
 export function getUiText(
   key: string,
   fallback: string,
   vars?: Record<string, unknown>,
 ): string {
-  return translateUiText(key, vars) || fallback;
+  return t(key, vars) || fallback;
 }
 
 export function useUiText(
@@ -32,5 +16,5 @@ export function useUiText(
   fallback: string,
   vars?: Record<string, unknown>,
 ): ReadonlySignal<string> {
-  return useComputed(() => translateUiText(key, vars) || fallback);
+  return useComputed(() => t(key, vars) || fallback);
 }

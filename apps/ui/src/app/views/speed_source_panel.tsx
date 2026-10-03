@@ -1,4 +1,4 @@
-import { render } from "preact";
+import type { JSX } from "preact";
 
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import {
@@ -12,8 +12,8 @@ import { SpeedSourceConfigPanel } from "./speed_source_config_panel";
 import { SpeedSourceDiagnosticsPanel } from "./speed_source_diagnostics_panel";
 import { DEFAULT_SPEED_SOURCE_DIAGNOSTICS_MODEL } from "./settings_speed_source_presenter";
 import type {
-  SettingsFeedbackMessage,
-} from "./settings_feedback";
+  Feedback,
+} from "../../components/feedback";
 import { readDeferredModel, type DeferredModelSignal } from "./view_model_binding";
 
 type ChoiceCardState = "active" | "draft" | "error";
@@ -48,7 +48,7 @@ export interface SpeedSourcePanelRenderModel {
   choiceCards: Record<DisplayedSpeedSourceMode, SpeedSourceChoiceCardRenderModel>;
   diagnosticsShouldOpen: boolean;
   manualConfigVisible: boolean;
-  manualSpeedFeedback: SettingsFeedbackMessage | null;
+  manualSpeedFeedback: Feedback | null;
   manualSpeedInputValue: string;
   obdConfigVisible: boolean;
   obdConfiguredDeviceText: string;
@@ -56,10 +56,10 @@ export interface SpeedSourcePanelRenderModel {
   obdScanStatusText: string;
   obdSelectionInvalid: boolean;
   scanObdDevicesDisabled: boolean;
-  saveFeedback: SettingsFeedbackMessage | null;
+  saveFeedback: Feedback | null;
   selectedMode: DisplayedSpeedSourceMode;
   showGpsFallbackPanel: boolean;
-  staleTimeoutFeedback: SettingsFeedbackMessage | null;
+  staleTimeoutFeedback: Feedback | null;
   staleTimeoutInputValue: string;
   summary: SpeedSourceSummaryRenderModel;
 }
@@ -190,13 +190,12 @@ function SpeedSourcePanel(props: {
   );
 }
 
-export function mountSpeedSourcePanel(
-  host: HTMLElement,
+export function createSpeedSourcePanel(
   bindings: SpeedSourcePanelBindings,
 ): Pick<
   SpeedSourcePanelView,
   "focusManualSpeedInput" | "focusScanObdDevices" | "focusStaleTimeoutInput" | "isObdConfigVisible"
-> {
+> & { Panel: () => JSX.Element } {
   const diagnosticsDisclosureOpen = signal(false);
   effect(() => {
     if (readDeferredModel(bindings.model, DEFAULT_SPEED_SOURCE_PANEL_MODEL).diagnosticsShouldOpen) {
@@ -212,7 +211,7 @@ export function mountSpeedSourcePanel(
   let manualSpeedInput: HTMLInputElement | null = null;
   let scanObdDevicesBtn: HTMLButtonElement | null = null;
   let staleTimeoutInput: HTMLInputElement | null = null;
-  render(
+  const Panel = () => (
     <SpeedSourcePanel
       manualInputRef={(element) => {
         manualSpeedInput = element;
@@ -228,11 +227,11 @@ export function mountSpeedSourcePanel(
         staleTimeoutInput = element;
       }}
       state={bridgeState}
-    />,
-    host,
+    />
   );
 
   return {
+    Panel,
     focusManualSpeedInput(): void {
       manualSpeedInput?.focus();
     },

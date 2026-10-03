@@ -1,6 +1,6 @@
 import type { LocationOption, LoggingStatusPayload } from "../../api/types";
 import type { AdaptedClient } from "../../transport/live_models";
-import * as I18N from "../../i18n";
+import { translate, translationsOf } from "../../i18n";
 import {
   createCarSelectionDerivedState,
   type CarSelectionState,
@@ -66,12 +66,8 @@ export function createRealtimeSensorState(
   const { realtime, settings, shell, spectrum, t, formatInt } = ctx;
   const carSelection = createCarSelectionDerivedState(settings.car);
 
-  function locationLabelForLang(lang: string, code: string): string {
-    return I18N.get(lang, `location.${code}`, { code });
-  }
-
   function locationLabel(code: string): string {
-    return locationLabelForLang(shell.lang.value, code);
+    return translate(shell.lang.value, `location.${code}`, { code });
   }
 
   function buildLocationOptions(codes: readonly string[]): LocationOption[] {
@@ -101,7 +97,7 @@ export function createRealtimeSensorState(
         return code;
     }
     for (const code of realtime.locationCodes.value) {
-      const labels = I18N.getForAllLangs(`location.${code}`);
+      const labels = translationsOf(`location.${code}`);
       if (labels.some((label) => label === name)) return code;
     }
     const match = locationOptions.value.find((loc) => loc.label === name);

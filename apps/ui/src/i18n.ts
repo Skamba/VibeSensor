@@ -1,98 +1,80 @@
-import enCatalog from "./i18n/catalogs/en.json" with { type: "json" };
+import { signal } from "@preact/signals";
+
+import en from "./i18n/catalogs/en.json" with { type: "json" };
 import { getDefaultNumberFormat } from "./number_format";
 
 type Catalog = Record<string, string>;
-type CatalogModule = { default: Catalog };
+export type Lang = "en" | "nl";
 
 export type NumberVar = {
   number: number;
   options?: Intl.NumberFormatOptions;
 };
 
-const supported = ["en", "nl"] as const;
-type SupportedLanguage = (typeof supported)[number];
+const PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
+const catalogs: Record<Lang, Catalog | null> = { en, nl: null };
 
-const _PLACEHOLDER_RE = /\{([a-zA-Z0-9_]+)\}/g;
-const _catalogs: Partial<Record<SupportedLanguage, Catalog>> = {
-  en: enCatalog,
-};
-const _catalogLoads = new Map<SupportedLanguage, Promise<void>>();
-const _catalogLoaders: Record<SupportedLanguage, () => Promise<CatalogModule>> =
-  {
-    nl: () => import("./i18n/catalogs/nl"),
-    en: async () => ({ default: enCatalog }),
-  };
+/** The active UI language; reading it inside a render or computed subscribes. */
+export const lang = signal<Lang>("en");
 
-export function normalizeLang(value: string): string {
-  const raw = String(value || "")
+export function normalizeLang(value: string | null | undefined): Lang {
+  return String(value ?? "")
     .trim()
-    .toLowerCase();
-  if (raw.startsWith("nl")) return "nl";
-  return "en";
+    .toLowerCase()
+    .startsWith("nl")
+    ? "nl"
+    : "en";
 }
 
-function normalizeSupportedLanguage(value: string): SupportedLanguage {
-  return normalizeLang(value) as SupportedLanguage;
-}
-
-export async function ensureCatalogLoaded(lang: string): Promise<void> {
-  const normalized = normalizeSupportedLanguage(lang);
-  if (_catalogs[normalized]) {
-    return;
+/** Loads the catalog (Dutch is a separate lazy chunk), then switches language. */
+export async function setLanguage(value: string): Promise<void> {
+  const next = normalizeLang(value);
+  if (catalogs[next] === null) {
+    catalogs[next] = (await import("./i18n/catalogs/nl.json")).default;
   }
-  const existingLoad = _catalogLoads.get(normalized);
-  if (existingLoad) {
-    await existingLoad;
-    return;
-  }
-  const load = _catalogLoaders[normalized]().then((module) => {
-    _catalogs[normalized] = module.default;
-  });
-  _catalogLoads.set(normalized, load);
-  try {
-    await load;
-  } finally {
-    _catalogLoads.delete(normalized);
-  }
+  lang.value = next;
+  globalThis.document?.documentElement.setAttribute("lang", next);
 }
 
-function getLoadedCatalog(lang: string): Catalog | undefined {
-  return _catalogs[normalizeSupportedLanguage(lang)];
-}
-
-function isNumberVar(value: unknown): value is NumberVar {
-  return typeof value === "object" && value != null && "number" in value;
-}
-
-function formatVar(lang: string, value: unknown): string {
-  if (isNumberVar(value)) {
-    if (!Number.isFinite(value.number)) return "--";
-    return new Intl.NumberFormat(lang, value.options).format(value.number);
+function formatVar(language: Lang, value: unknown): string {
+  if (typeof value === "object" && value !== null && "number" in value) {
+    const { number, options } = value as NumberVar;
+    return Number.isFinite(number)
+      ? new Intl.NumberFormat(language, options).format(number)
+      : "--";
   }
   if (typeof value === "number") {
-    if (!Number.isFinite(value)) return "--";
-    return getDefaultNumberFormat(lang).format(value);
+    return Number.isFinite(value)
+      ? getDefaultNumberFormat(language).format(value)
+      : "--";
   }
   return String(value);
 }
 
-export function get(
-  lang: string,
+/** Translates `key` in `language`, falling back to English, then the key. */
+export function translate(
+  language: Lang,
   key: string,
   vars?: Record<string, unknown>,
 ): string {
-  const normalized = normalizeLang(lang);
-  const fallback = getLoadedCatalog("en")?.[key] || key;
-  const template = getLoadedCatalog(normalized)?.[key] || fallback;
-  if (!vars || typeof vars !== "object") return template;
-  return String(template).replace(_PLACEHOLDER_RE, (_m, placeholder) => {
-    if (Object.hasOwn(vars, placeholder)) {
-      return formatVar(normalized, vars[placeholder]);
-    }
-    return `{${placeholder}}`;
-  });
+  const template =
+    catalogs[language]?.[key] || en[key as keyof typeof en] || key;
+  if (!vars) {
+    return template;
+  }
+  return template.replace(PLACEHOLDER_RE, (match, name: string) =>
+    Object.hasOwn(vars, name) ? formatVar(language, vars[name]) : match,
+  );
 }
 
-export function getForAllLangs(key: string): string[] {
-  return supported.map((lang) => getLoadedCatalog(lang)?.[key] || key);
+/** Translates `key` in the active language. */
+export function t(key: string, vars?: Record<string, unknown>): string {
+  return translate(lang.value, key, vars);
+}
+
+/** The key's text in every loaded language (used to match free-text labels). */
+export function translationsOf(key: string): string[] {
+  return (Object.keys(catalogs) as Lang[]).map((language) =>
+    translate(language, key),
+  );
 }

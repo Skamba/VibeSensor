@@ -1,4 +1,3 @@
-import { render } from "preact";
 import { useRef } from "preact/hooks";
 
 import { useUiText } from "../ui_i18n";
@@ -17,7 +16,6 @@ import {
   DEFAULT_ESP_FLASH_PANEL_MODEL,
   type EspFlashPanelActionHandlers,
   type EspFlashPanelRenderModel,
-  type EspFlashPanelView,
   type EspFlashPortOptionModel,
   type EspFlashStatusBadgeModel,
 } from "./esp_flash_panel_shared";
@@ -266,7 +264,7 @@ function EspFlashHistoryCard(props: {
   );
 }
 
-function EspFlashPanel(props: {
+export function EspFlashPanel(props: {
   actions: ReadonlySignal<EspFlashPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<EspFlashPanelRenderModel> | null>;
 }) {
@@ -411,8 +409,4 @@ function EspFlashPanel(props: {
       </div>
     </div>
   );
-}
-
-export function mountEspFlashPanel(host: HTMLElement, view: EspFlashPanelView): void {
-  render(<EspFlashPanel actions={view.actions} model={view.model} />, host);
 }

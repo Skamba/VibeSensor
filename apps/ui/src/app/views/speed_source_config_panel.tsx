@@ -1,9 +1,6 @@
 import type { DisplayedSpeedSourceMode } from "../speed_source_state";
 import { getUiText as t } from "../ui_i18n";
-import {
-  settingsFeedbackAttrs,
-  type SettingsFeedbackMessage,
-} from "./settings_feedback";
+import { FeedbackSlot, type Feedback } from "../../components/feedback";
 import type {
   SpeedSourceObdDeviceRenderModel,
   SpeedSourcePanelActionHandlers,
@@ -44,39 +41,6 @@ const SPEED_SOURCE_CHOICES = [
   titleKey: string;
   titleText: string;
 }[];
-
-function SettingsFeedbackBlock(props: {
-  message: SettingsFeedbackMessage;
-}) {
-  const { message } = props;
-  return (
-    <div
-      {...settingsFeedbackAttrs(message)}
-      aria-live={message.tone === "error" ? "assertive" : "polite"}
-    >
-      {message.title ? (
-        <strong class="settings-feedback__title">{message.title}</strong>
-      ) : null}
-      <span class="settings-feedback__body">{message.body}</span>
-      {message.detail ? (
-        <span class="settings-feedback__detail">{message.detail}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function SettingsFeedbackSlot(props: {
-  className: string;
-  id: string;
-  message: SettingsFeedbackMessage | null;
-}) {
-  const { className, id, message } = props;
-  return (
-    <div id={id} class={className} hidden={message === null}>
-      {message ? <SettingsFeedbackBlock message={message} /> : null}
-    </div>
-  );
-}
 
 function SpeedSourceSummarySection(props: {
   summary: SpeedSourcePanelRenderModel["summary"];
@@ -230,9 +194,9 @@ function ManualSpeedSection(props: {
           }
         />
       </div>
-      <SettingsFeedbackSlot
+      <FeedbackSlot
         id="manualSpeedFeedback"
-        className="settings-feedback-slot settings-feedback-slot--compact"
+        compact
         message={model.manualSpeedFeedback}
       />
     </div>
@@ -379,9 +343,9 @@ function GpsFallbackSection(props: {
           }
         />
       </div>
-      <SettingsFeedbackSlot
+      <FeedbackSlot
         id="staleTimeoutFeedback"
-        className="settings-feedback-slot settings-feedback-slot--compact"
+        compact
         message={model.staleTimeoutFeedback}
       />
     </div>
@@ -390,14 +354,13 @@ function GpsFallbackSection(props: {
 
 function SpeedSourceSaveSection(props: {
   actions: SpeedSourcePanelActionHandlers | null;
-  saveFeedback: SettingsFeedbackMessage | null;
+  saveFeedback: Feedback | null;
 }) {
   const { actions, saveFeedback } = props;
   return (
     <>
-      <SettingsFeedbackSlot
+      <FeedbackSlot
         id="speedSourceSaveFeedback"
-        className="settings-feedback-slot"
         message={saveFeedback}
       />
       <div class="settings-actions settings-actions--sticky">

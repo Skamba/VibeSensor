@@ -1,4 +1,4 @@
-import { render, type ComponentChildren } from "preact";
+import type { ComponentChildren } from "preact";
 
 import { useUiText } from "../ui_i18n";
 import {
@@ -377,7 +377,7 @@ function UpdateActionRow(props: {
   );
 }
 
-function UpdatePanel(props: {
+export function UpdatePanel(props: {
   actions: ReadonlySignal<UpdatePanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<UpdatePanelRenderModel> | null>;
 }) {
@@ -440,8 +440,4 @@ function UpdatePanel(props: {
       </div>
     </div>
   );
-}
-
-export function mountUpdatePanel(host: HTMLElement, view: UpdatePanelView): void {
-  render(<UpdatePanel actions={view.actions} model={view.model} />, host);
 }

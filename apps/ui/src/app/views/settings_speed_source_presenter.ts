@@ -17,7 +17,7 @@ import type {
   SpeedSourceObdDeviceRenderModel,
   SpeedSourcePanelRenderModel,
 } from "./speed_source_panel";
-import type { SettingsFeedbackMessage } from "./settings_feedback";
+import type { Feedback } from "../../components/feedback";
 
 export interface SettingsSpeedSourceSettingsSnapshot
   extends SpeedSourceStateSnapshot {
@@ -30,17 +30,17 @@ export interface SettingsSpeedSourceSettingsSnapshot
 export interface SettingsSpeedSourceRenderState {
   diagnosticsOpen: boolean;
   draftDirty: boolean;
-  manualSpeedFeedback: SettingsFeedbackMessage | null;
+  manualSpeedFeedback: Feedback | null;
   manualSpeedInputValue: string;
   obdScanStatusMessage: string | null;
   obdSelectionError: boolean;
   pairInFlightMac: string | null;
-  saveFeedback: SettingsFeedbackMessage | null;
+  saveFeedback: Feedback | null;
   scannedDevices: readonly ObdDevicePayload[];
   scanInFlight: boolean;
   selectedMode: DisplayedSpeedSourceMode;
   settings: SettingsSpeedSourceSettingsSnapshot;
-  staleTimeoutFeedback: SettingsFeedbackMessage | null;
+  staleTimeoutFeedback: Feedback | null;
   staleTimeoutInputValue: string;
 }
 
