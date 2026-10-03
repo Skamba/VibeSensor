@@ -32,7 +32,7 @@ from vibesensor.updates.models import (
 from vibesensor.updates.runner import CommandExecutionResult
 from vibesensor.updates.status.payload_codec import UpdateStateStore
 from vibesensor.updates.status.tracker import UpdateStatusTracker
-from vibesensor.updates.wheel_installation import WheelInstallResult
+from vibesensor.updates.venv_slots import RevertedBoot
 
 CURRENT_VERSION = "2026.4.3"
 
@@ -126,34 +126,32 @@ class _FirmwareRefresher:
         return self.result
 
 
-class _WheelInstaller:
-    def __init__(self, result: WheelInstallResult | None = None) -> None:
-        self.result = result or WheelInstallResult(succeeded=True, rollback_required=False)
+class _Installer:
+    """Fake slot installer: records the install request and the activation order."""
+
+    def __init__(self, transport: _Transport, error: UpdateReleaseError | None = None) -> None:
+        self._transport = transport
+        self.error = error
         self.install_args: tuple[Path, str] | None = None
+        self.activated: list[tuple[str, bool]] = []
 
-    async def install_release(self, wheel_path: Path, expected_version: str) -> WheelInstallResult:
-        self.install_args = (wheel_path, expected_version)
-        return self.result
+    async def install(self, wheel_path: Path, version: str) -> str:
+        self.install_args = (wheel_path, version)
+        if self.error is not None:
+            raise self.error
+        return version
+
+    def activate(self, slot: str) -> None:
+        self.activated.append((slot, self._transport.prepared.completed))
 
 
-class _Rollback:
-    def __init__(self, *, snapshot_ok: bool = True, rollback_result: bool = False) -> None:
-        self.snapshot_ok = snapshot_ok
-        self.rollback_result = rollback_result
-        self.snapshot_attempted = False
-        self.rollback_attempted = False
-        self.interrupted_verifications = 0
+class _Slots:
+    def __init__(self, reverted: RevertedBoot | None = None) -> None:
+        self.reverted = reverted
 
-    async def snapshot_for_rollback(self) -> bool:
-        self.snapshot_attempted = True
-        return self.snapshot_ok
-
-    async def rollback(self) -> bool:
-        self.rollback_attempted = True
-        return self.rollback_result
-
-    async def verify_interrupted_install(self) -> None:
-        self.interrupted_verifications += 1
+    def take_reverted(self) -> RevertedBoot | None:
+        reverted, self.reverted = self.reverted, None
+        return reverted
 
 
 def _ok_commands() -> MagicMock:
@@ -172,8 +170,7 @@ class _Harness:
     fetcher: _Fetcher
     stager: _Stager
     firmware: _FirmwareRefresher
-    wheel_installer: _WheelInstaller
-    rollback: _Rollback
+    installer: _Installer
     commands: MagicMock
 
 
@@ -184,8 +181,8 @@ def _harness(
     latest_release: object | None = None,
     fetch_error: Exception | None = None,
     firmware_result: FirmwareRefreshResult | None = None,
-    install_result: WheelInstallResult | None = None,
-    rollback: _Rollback | None = None,
+    install_error: UpdateReleaseError | None = None,
+    reverted: RevertedBoot | None = None,
     commands: MagicMock | None = None,
 ) -> _Harness:
     tracker = status or _running_tracker(tmp_path)
@@ -198,8 +195,7 @@ def _harness(
     )
     stager = _Stager(tracker, tmp_path / "release.whl")
     firmware = _FirmwareRefresher(firmware_result)
-    wheel_installer = _WheelInstaller(install_result)
-    active_rollback = rollback or _Rollback()
+    installer = _Installer(transport, install_error)
     active_commands = commands or _ok_commands()
     repo = tmp_path / "repo"
     repo.mkdir(exist_ok=True)
@@ -210,10 +206,10 @@ def _harness(
         release_fetcher=fetcher,
         stager=stager,
         firmware_refresher=firmware,
-        wheel_installer=wheel_installer,
-        rollback=active_rollback,
+        installer=installer,
+        slots=_Slots(reverted),
         validation_config=UpdateValidationConfig(
-            rollback_dir=tmp_path / "rollback",
+            venv_root=tmp_path / "venv",
             min_free_disk_bytes=1,
         ),
         repo=repo,
@@ -225,8 +221,7 @@ def _harness(
         fetcher=fetcher,
         stager=stager,
         firmware=firmware,
-        wheel_installer=wheel_installer,
-        rollback=active_rollback,
+        installer=installer,
         commands=active_commands,
     )
 
@@ -338,13 +333,33 @@ async def test_run_installs_release_when_latest_version_is_newer(tmp_path: Path)
 
     assert [staged.release for staged in harness.stager.staged] == [release]
     assert harness.firmware.pinned_tags == ["server-v2026.4.4"]
-    assert harness.rollback.snapshot_attempted is True
-    assert harness.wheel_installer.install_args == (tmp_path / "release.whl", "2026.4.4")
-    assert harness.transport.prepared.completed is True
+    assert harness.installer.install_args == (tmp_path / "release.whl", "2026.4.4")
+    # The new slot only becomes active after the transport finished successfully.
+    assert harness.installer.activated == [("2026.4.4", True)]
     assert harness.status.status.state is UpdateState.success
     assert harness.status.status.issues == []
     assert "Update available: 2026.4.3 → 2026.4.4" in harness.status.status.log_tail
-    assert "Update completed successfully" in harness.status.status.log_tail
+    assert "Update to 2026.4.4 installed; restarting into it" in harness.status.status.log_tail
+    assert harness.commands.run.await_args.args[0][0] == "systemd-run"
+
+
+@pytest.mark.asyncio
+async def test_run_keeps_the_live_slot_when_install_fails(tmp_path: Path) -> None:
+    release = SimpleNamespace(tag="server-v2026.4.4", version="2026.4.4")
+    harness = _harness(
+        tmp_path,
+        latest_release=release,
+        install_error=UpdateReleaseError("Version 2026.4.4 failed its smoke test (exit 1)"),
+    )
+
+    with pytest.raises(UpdateReleaseError, match="failed its smoke test"):
+        await harness.job.run(_request())
+
+    assert harness.status.status.phase is UpdatePhase.installing
+    assert harness.installer.activated == []
+    assert harness.transport.prepared.completed is False
+    harness.commands.run.assert_not_awaited()
+    assert harness.transport.cleaned == [harness.transport.prepared]
 
 
 @pytest.mark.asyncio
@@ -361,7 +376,7 @@ async def test_run_records_firmware_refresh_failure_and_still_installs(tmp_path:
 
     await harness.job.run(_request())
 
-    assert harness.wheel_installer.install_args == (tmp_path / "release.whl", "2026.4.4")
+    assert harness.installer.install_args == (tmp_path / "release.whl", "2026.4.4")
     assert harness.status.status.issues[-1].message == "ESP firmware cache refresh failed (exit 4)"
     assert harness.status.status.issues[-1].detail == "download timed out"
     assert (
@@ -398,133 +413,19 @@ async def test_run_raises_release_error_when_release_check_fails(tmp_path: Path)
     assert harness.transport.cleaned == [harness.transport.prepared]
 
 
-# -- deployment (snapshot, install, rollback) -------------------------------
-
-
-def _staged_release(version: str, wheel_path: Path) -> object:
-    return SimpleNamespace(
-        release=SimpleNamespace(version=version),
-        wheel_path=wheel_path,
-    )
-
-
-def _downloading_tracker(tmp_path: Path) -> UpdateStatusTracker:
-    return _running_tracker(
-        tmp_path,
-        UpdatePhase.stopping_hotspot,
-        UpdatePhase.connecting_wifi,
-        UpdatePhase.checking,
-        UpdatePhase.downloading,
-    )
-
-
-@pytest.mark.asyncio
-async def test_deploy_aborts_before_live_mutation_when_snapshot_fails(tmp_path: Path) -> None:
-    harness = _harness(
-        tmp_path,
-        status=_downloading_tracker(tmp_path),
-        rollback=_Rollback(snapshot_ok=False),
-    )
-
-    with pytest.raises(
-        UpdateReleaseError, match="Rollback snapshot could not be created"
-    ) as excinfo:
-        await harness.job._deploy(_staged_release("2025.6.15", tmp_path / "release.whl"))
-
-    assert excinfo.value.phase == UpdatePhase.installing.value
-    assert excinfo.value.detail == "Install aborted before mutating the live environment"
-    assert harness.status.status.phase == UpdatePhase.installing
-    assert any("Installing update..." in line for line in harness.status.status.log_tail)
-    assert not any("Attempting rollback..." in line for line in harness.status.status.log_tail)
-    assert harness.wheel_installer.install_args is None
-
-
-@pytest.mark.asyncio
-async def test_deploy_installs_staged_release_after_snapshot(tmp_path: Path) -> None:
-    harness = _harness(tmp_path, status=_downloading_tracker(tmp_path))
-    staged_release = _staged_release("2025.6.15", tmp_path / "release.whl")
-
-    await harness.job._deploy(staged_release)
-
-    assert harness.rollback.snapshot_attempted is True
-    assert harness.wheel_installer.install_args == (staged_release.wheel_path, "2025.6.15")
-    assert harness.rollback.rollback_attempted is False
-    assert harness.status.status.phase == UpdatePhase.installing
-    assert harness.status.status.issues == []
-
-
-@pytest.mark.asyncio
-async def test_deploy_raises_plain_failure_without_rollback_for_non_mutating_rejection(
-    tmp_path: Path,
-) -> None:
-    harness = _harness(
-        tmp_path,
-        status=_downloading_tracker(tmp_path),
-        install_result=WheelInstallResult(succeeded=False, rollback_required=False),
-    )
-
-    with pytest.raises(UpdateReleaseError, match="Update install failed"):
-        await harness.job._deploy(_staged_release("2025.6.15", tmp_path / "release.whl"))
-
-    assert not any("Attempting rollback..." in line for line in harness.status.status.log_tail)
-    assert harness.rollback.rollback_attempted is False
-
-
-@pytest.mark.asyncio
-async def test_deploy_logs_rollback_attempt_after_mutating_failure(tmp_path: Path) -> None:
-    harness = _harness(
-        tmp_path,
-        status=_downloading_tracker(tmp_path),
-        install_result=WheelInstallResult(succeeded=False, rollback_required=True),
-        rollback=_Rollback(rollback_result=True),
-    )
-
-    with pytest.raises(
-        UpdateReleaseError,
-        match="Update install failed; rollback restored the previous version",
-    ):
-        await harness.job._deploy(_staged_release("2025.6.15", tmp_path / "release.whl"))
-
-    assert harness.rollback.rollback_attempted is True
-    assert any("Attempting rollback..." in line for line in harness.status.status.log_tail)
-
-
-@pytest.mark.asyncio
-async def test_deploy_reports_incomplete_rollback(tmp_path: Path) -> None:
-    harness = _harness(
-        tmp_path,
-        status=_downloading_tracker(tmp_path),
-        install_result=WheelInstallResult(succeeded=False, rollback_required=True),
-        rollback=_Rollback(rollback_result=False),
-    )
-
-    with pytest.raises(
-        UpdateReleaseError,
-        match="Update install failed and rollback did not complete",
-    ):
-        await harness.job._deploy(_staged_release("2025.6.15", tmp_path / "release.whl"))
-
-    assert harness.rollback.rollback_attempted is True
-
-
 # -- success completion and restart scheduling ------------------------------
 
 
 @pytest.mark.asyncio
-async def test_completion_finishes_transport_then_schedules_restart(tmp_path: Path) -> None:
+async def test_completion_marks_success_then_schedules_restart(tmp_path: Path) -> None:
     status = UpdateStatusTracker(
         state_store=UpdateStateStore(tmp_path / "update_status.json"),
         status=UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.installing),
     )
     harness = _harness(tmp_path, status=status)
-    prepared_transport = _PreparedTransport()
 
-    await harness.job._complete_success(
-        prepared_transport,
-        message="Update completed successfully",
-    )
+    await harness.job._finish_success("Update completed successfully")
 
-    assert prepared_transport.completed is True
     harness.commands.run.assert_awaited_once()
     assert status.status.state is UpdateState.success
     assert status.status.terminal_state is UpdateTerminalState.success
@@ -546,14 +447,9 @@ async def test_completion_records_issue_when_restart_scheduling_fails(tmp_path: 
         return_value=CommandExecutionResult(returncode=1, stdout="", stderr="boom"),
     )
     harness = _harness(tmp_path, status=status, commands=commands)
-    prepared_transport = _PreparedTransport()
 
-    await harness.job._complete_success(
-        prepared_transport,
-        message="No server update needed; ESP firmware checked",
-    )
+    await harness.job._finish_success("No server update needed; ESP firmware checked")
 
-    assert prepared_transport.completed is True
     assert commands.run.await_count == 2
     assert status.status.state is UpdateState.success
     assert status.status.log_tail == [
@@ -670,12 +566,17 @@ async def test_finalize_raises_cleanup_error_without_prior_failure(tmp_path: Pat
 # -- startup recovery ----------------------------------------------------------
 
 
-def _recovery_harness(tmp_path: Path, status: UpdateJobStatus) -> _Harness:
+def _recovery_harness(
+    tmp_path: Path,
+    status: UpdateJobStatus,
+    *,
+    reverted: RevertedBoot | None = None,
+) -> _Harness:
     tracker = UpdateStatusTracker(
         state_store=UpdateStateStore(tmp_path / "update_status.json"),
         status=status,
     )
-    return _harness(tmp_path, status=tracker)
+    return _harness(tmp_path, status=tracker, reverted=reverted)
 
 
 @pytest.mark.asyncio
@@ -688,11 +589,10 @@ async def test_recover_skips_non_running_jobs(tmp_path: Path) -> None:
     assert harness.transport.recovered == []
     assert status.state is UpdateState.idle
     assert status.issues == []
-    assert harness.rollback.interrupted_verifications == 0
 
 
 @pytest.mark.asyncio
-async def test_recover_marks_interrupted_recovers_transport_and_verifies_snapshot(
+async def test_recover_marks_interrupted_and_recovers_transport(
     tmp_path: Path,
 ) -> None:
     status = UpdateJobStatus(
@@ -709,19 +609,41 @@ async def test_recover_marks_interrupted_recovers_transport_and_verifies_snapsho
     assert [(issue.phase, issue.message) for issue in status.issues] == [
         ("startup", "Update interrupted by server restart"),
     ]
-    assert harness.rollback.interrupted_verifications == 1
 
 
 @pytest.mark.asyncio
-async def test_recover_skips_rollback_verification_outside_install_phase(tmp_path: Path) -> None:
-    status = UpdateJobStatus(state=UpdateState.running, phase=UpdatePhase.downloading)
-    harness = _recovery_harness(tmp_path, status)
+async def test_recover_reports_a_boot_check_revert_as_a_failed_update(tmp_path: Path) -> None:
+    status = UpdateJobStatus(
+        state=UpdateState.success,
+        phase=UpdatePhase.done,
+        finished_at=100.0,
+        terminal_state=UpdateTerminalState.success,
+    )
+    harness = _recovery_harness(
+        tmp_path,
+        status,
+        reverted=RevertedBoot(
+            candidate="2026.4.4",
+            previous="2026.4.3",
+            reason="not healthy within 60 s of starting",
+        ),
+    )
 
     await harness.job.recover_interrupted()
 
-    assert harness.transport.recovered == [status]
-    assert status.state is UpdateState.failed
-    assert harness.rollback.interrupted_verifications == 0
+    current = harness.status.status
+    assert current.state is UpdateState.failed
+    assert current.terminal_state is UpdateTerminalState.workflow_failed
+    assert [(issue.phase, issue.message, issue.detail) for issue in current.issues] == [
+        (
+            "installing",
+            "Version 2026.4.4 did not start healthy; reverted to 2026.4.3",
+            "not healthy within 60 s of starting",
+        ),
+    ]
+    assert harness.transport.recovered == []
+    persisted = UpdateStateStore(tmp_path / "update_status.json").load()
+    assert persisted.state is UpdateState.failed
 
 
 @pytest.mark.asyncio

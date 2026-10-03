@@ -386,8 +386,17 @@ The public PDF entrypoint is `apps/server/vibesensor/report/pdf/pdf_engine.py`. 
 Production devices use the wheel-based updater in
 `apps/server/vibesensor/updates/`, with `manager.py` as the public
 API and `job.py` holding the linear update flow (validate, prepare transport,
-check release, stage/snapshot/install with rollback via `rollback.py`,
-complete, clean up).
+check release, stage, install into a new venv slot, switch, restart, clean up).
+
+The server venv uses A/B slots: `apps/server/.venv/current` points at
+`.venv/slots/<version>`, and `.venv/bin`, `.venv/lib`, and `.venv/pyvenv.cfg`
+are symlinks through `current`, so systemd units keep using
+`.venv/bin/vibesensor-server`. An update installs the release into a new slot,
+smoke-tests it in an isolated server, flips `current`, and restarts. The new
+slot's `bin/vibesensor-server` is the boot-check launcher
+(`updates/boot_check.py`): if the new version keeps crashing or is not healthy
+within 60 s, it flips `current` back and the previous version starts again.
+The previous slot is kept until the next update.
 
 Firmware update code lives under
 `apps/server/vibesensor/updates/firmware/`:

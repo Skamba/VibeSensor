@@ -6,6 +6,3 @@ server:
 
 gps:
   gps_enabled: false  # Docker containers do not run a gpsd daemon
-
-update:
-  rollback_dir: /app/apps/server/data/rollback  # Pi default /var/lib/vibesensor/rollback does not exist in container

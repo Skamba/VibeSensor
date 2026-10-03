@@ -37,8 +37,8 @@ run retention in `vibesensor/app/composition.py`).
 
 Keys that are not listed below are ignored with an
 `Ignoring unsupported config key <key>` warning, so device configs written by
-older releases (which accepted keys such as `processing.*`, `ap.channel`, or
-`logging.run_retention_days`) keep loading unchanged.
+older releases (which accepted keys such as `processing.*`, `ap.channel`,
+`update.rollback_dir`, or `logging.run_retention_days`) keep loading unchanged.
 
 For local development examples, see `apps/server/config.dev.yaml`,
 `apps/server/config.docker.yaml`, and `apps/server/config.pi.yaml`.
@@ -97,12 +97,6 @@ Terminal runs older than 7 days are pruned at startup (see
 | Key | Default | Notes |
 |-----|---------|-------|
 | `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1:2947`). Disable this on dev benches or deployments without GPS hardware. |
-
-## `update`
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `update.rollback_dir` | `/var/lib/vibesensor/rollback` | Rollback snapshot directory used by the updater. Keep this on writable persistent storage. |
 
 ## Common operator overrides
 

@@ -4,14 +4,17 @@
 
 1. validate prerequisites and prepare the requested transport (Wi-Fi or USB),
 2. check the latest server release,
-3. either refresh ESP firmware only, or stage, snapshot, install (with
-   rollback on failure) a new server release,
-4. complete transport success and schedule a backend restart,
+3. either refresh ESP firmware only, or stage a new server release and install
+   it into a fresh venv slot that is smoke-tested while the live slot keeps
+   running,
+4. complete transport success, switch to the new slot, and schedule a backend
+   restart (the boot check in ``boot_check.py`` confirms or reverts it),
 5. always clean up the transport and refresh runtime details.
 
-``UpdateJob.recover_interrupted`` repairs transport and rollback state after a
-server restart interrupted a previous run. Task supervision (timeouts,
-cancellation, terminal status) lives in ``manager.py``.
+``UpdateJob.recover_interrupted`` reports an automatic boot-check revert and
+repairs transport state after a server restart interrupted a previous run.
+Task supervision (timeouts, cancellation, terminal status) lives in
+``manager.py``.
 """
 
 from __future__ import annotations
@@ -25,27 +28,26 @@ from vibesensor.common.exceptions import UpdateCleanupError, UpdateError, Update
 from vibesensor.common.structured_logging import log_extra
 from vibesensor.updates.firmware.firmware_refresh import FirmwareRefresher
 from vibesensor.updates.models import (
-    UpdateJobStatus,
     UpdatePhase,
     UpdateRequest,
     UpdateState,
     UpdateTerminalState,
     UpdateValidationConfig,
 )
-from vibesensor.updates.release_staging import ServerReleaseStager, StagedServerRelease
+from vibesensor.updates.release_staging import ServerReleaseStager
 from vibesensor.updates.releases.release_fetcher import (
     ReleaseInfo,
     ServerReleaseFetcher,
 )
 from vibesensor.updates.releases.version_policy import select_update_release
-from vibesensor.updates.rollback import UpdateRollback
 from vibesensor.updates.runner import UpdateCommandExecutor
 from vibesensor.updates.status.runtime_details import collect_runtime_details
 from vibesensor.updates.status.tracker import UpdateStatusTracker
 from vibesensor.updates.transport.coordinator import UpdateTransportCoordinator
 from vibesensor.updates.transport.lifecycles import PreparedUpdateTransport
 from vibesensor.updates.validation import validate_prerequisites
-from vibesensor.updates.wheel_installation import WheelInstallExecutor
+from vibesensor.updates.venv_install import ReleaseVenvInstaller
+from vibesensor.updates.venv_slots import VenvSlots
 
 __all__ = ["UPDATE_RESTART_UNIT", "UPDATE_SERVICE_NAME", "UpdateJob"]
 
@@ -75,14 +77,14 @@ class UpdateJob:
     __slots__ = (
         "_commands",
         "_firmware_refresher",
+        "_installer",
         "_release_fetcher",
         "_repo",
-        "_rollback",
+        "_slots",
         "_stager",
         "_status",
         "_transport",
         "_validation_config",
-        "_wheel_installer",
     )
 
     def __init__(
@@ -94,8 +96,8 @@ class UpdateJob:
         release_fetcher: ServerReleaseFetcher,
         stager: ServerReleaseStager,
         firmware_refresher: FirmwareRefresher,
-        wheel_installer: WheelInstallExecutor,
-        rollback: UpdateRollback,
+        installer: ReleaseVenvInstaller,
+        slots: VenvSlots,
         validation_config: UpdateValidationConfig,
         repo: Path,
     ) -> None:
@@ -105,8 +107,8 @@ class UpdateJob:
         self._release_fetcher = release_fetcher
         self._stager = stager
         self._firmware_refresher = firmware_refresher
-        self._wheel_installer = wheel_installer
-        self._rollback = rollback
+        self._installer = installer
+        self._slots = slots
         self._validation_config = validation_config
         self._repo = repo
 
@@ -164,10 +166,8 @@ class UpdateJob:
                 detail=refresh_result.detail,
                 log_message="ESP firmware refresh failed; refresh-only update did not complete",
             )
-        await self._complete_success(
-            prepared_transport,
-            message="No server update needed; ESP firmware checked",
-        )
+        await prepared_transport.complete_success()
+        await self._finish_success("No server update needed; ESP firmware checked")
 
     async def _install_release(
         self,
@@ -187,47 +187,17 @@ class UpdateJob:
                 self._status.log(
                     "ESP firmware refresh failed; continuing with existing cache",
                 )
-            await self._deploy(staged_release)
-        await self._complete_success(
-            prepared_transport,
-            message="Update completed successfully",
-        )
-
-    async def _deploy(self, staged_release: StagedServerRelease) -> None:
-        """Snapshot, install, and roll back on a failed mutating install."""
-
-        self._status.transition(UpdatePhase.installing)
-        self._status.log("Installing update...")
-        if not await self._rollback.snapshot_for_rollback():
-            raise UpdateReleaseError(
-                "Rollback snapshot could not be created",
-                phase=UpdatePhase.installing.value,
-                detail="Install aborted before mutating the live environment",
+            self._status.transition(UpdatePhase.installing)
+            self._status.log("Installing update...")
+            slot = await self._installer.install(
+                staged_release.wheel_path,
+                str(staged_release.release.version),
             )
-        install_result = await self._wheel_installer.install_release(
-            staged_release.wheel_path,
-            str(staged_release.release.version),
-        )
-        if install_result.succeeded:
-            return
-        if not install_result.rollback_required:
-            raise UpdateReleaseError("Update install failed")
-
-        self._status.log("Attempting rollback...")
-        rollback_succeeded = await self._rollback.rollback()
-        if rollback_succeeded:
-            raise UpdateReleaseError(
-                "Update install failed; rollback restored the previous version",
-            )
-        raise UpdateReleaseError("Update install failed and rollback did not complete")
-
-    async def _complete_success(
-        self,
-        prepared_transport: PreparedUpdateTransport,
-        *,
-        message: str,
-    ) -> None:
         await prepared_transport.complete_success()
+        self._installer.activate(slot)
+        await self._finish_success(f"Update to {slot} installed; restarting into it")
+
+    async def _finish_success(self, message: str) -> None:
         self._status.mark_success(message)
         if not await self._schedule_restart():
             self._status.add_issue(
@@ -302,20 +272,23 @@ class UpdateJob:
     # -- startup recovery --------------------------------------------------
 
     async def recover_interrupted(self) -> None:
-        """Recover transport and rollback state after a server restart mid-update."""
+        """Report a boot-check revert and recover transport state after a restart."""
 
+        reverted = self._slots.take_reverted()
+        if reverted is not None:
+            self._status.fail(
+                UpdatePhase.installing,
+                f"Version {reverted.candidate} did not start healthy; "
+                f"reverted to {reverted.previous}",
+                reverted.reason,
+                log_message=f"Boot check reverted {reverted.candidate}: {reverted.reason}",
+                terminal_state=UpdateTerminalState.workflow_failed,
+            )
         status = self._status.status
         if status.terminal_state in _CLEANUP_FAILED_TERMINAL_STATES:
             await self._transport.recover_interrupted(status)
-            await self._verify_rollback_after_interruption(status)
             return
         if status.state != UpdateState.running or status.finished_at is not None:
             return
         self._status.mark_interrupted("Update interrupted by server restart")
         await self._transport.recover_interrupted(status)
-        await self._verify_rollback_after_interruption(status)
-
-    async def _verify_rollback_after_interruption(self, status: UpdateJobStatus) -> None:
-        if status.phase is not UpdatePhase.installing:
-            return
-        await self._rollback.verify_interrupted_install()

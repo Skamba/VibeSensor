@@ -204,14 +204,39 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    as storage integrity or free-space triage first, then rerun the health checks
    before attempting new recordings.
 
-## Update and rollback checks
+## Update and revert checks
 
 1. Confirm current runtime and update status from the UI or update endpoints.
 2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
 3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the Wheel / ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
-4. If an update fails on-device, do not assume rollback succeeded silently. Confirm service health after the attempt and check updater issues for rollback wheel validation or rollback deployment verification failures. Rollback verification failures use stable issue messages such as `rollback_smoke_failed`, `rollback_static_mismatch`, `rollback_service_unhealthy`, and `rollback_config_missing`.
-5. The updater now aborts before touching the live environment if it cannot write a fresh rollback snapshot or cannot verify free disk space for the rollback area. Treat either condition as an infrastructure problem to fix first, not a retry-until-it-works event.
-6. If rollback metadata is missing, the updater will only trust the newest rollback wheel after structural archive validation; if checksum metadata exists, a mismatch should be treated as a broken rollback snapshot, not a transient install failure.
+4. Updates never modify the running version. The release is installed into a new venv
+   slot (`/opt/VibeSensor/apps/server/.venv/slots/<version>`) and smoke-tested in an
+   isolated server on port 18082. Only then does `.venv/current` switch to it and the
+   service restart. If install or smoke test fails, the update fails and the device
+   keeps running the old slot unchanged.
+5. After the restart, the boot check (the new slot's `bin/vibesensor-server`
+   launcher) reverts automatically to the previous slot when the new version exits
+   twice before becoming healthy, or is not healthy (`/api/health` ready, no failed
+   startup tasks) within 60 s. The next startup reports this as a failed update:
+   "Version X did not start healthy; reverted to Y". While a boot check is pending,
+   new updates are refused with "The previous update is still being verified".
+6. Inspect the slot state on the device:
+
+   ```bash
+   ls -l /opt/VibeSensor/apps/server/.venv/            # current -> slots/<version>
+   ls /opt/VibeSensor/apps/server/.venv/slots/         # active + previous
+   cat /opt/VibeSensor/apps/server/.venv/boot-pending.json 2>/dev/null
+   sudo journalctl -u vibesensor.service | grep boot-check
+   ```
+
+   To revert by hand, run as the service user: `ln -sfn slots/<previous>
+   /opt/VibeSensor/apps/server/.venv/current.tmp && mv -T
+   /opt/VibeSensor/apps/server/.venv/current.tmp
+   /opt/VibeSensor/apps/server/.venv/current`. Then run `sudo systemctl restart
+   vibesensor.service`.
+   Devices flashed before A/B slots have a plain `.venv`. Their first slot update moves
+   it into `slots/<running version>` once. Updates need about 600 MiB free on that
+   filesystem.
 7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
 8. Manual Pi installs create `/etc/sudoers.d/vibesensor-update` for the service
    user. It must point at

@@ -17,7 +17,10 @@ _INSTALL_PI_CHECKS: list[tuple[str, str]] = [
         'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${VENV_DIR}"',
         "Pi install script must ensure virtualenv ownership for update writes",
     ),
-    ("rollback", "Pi install script must create rollback directory for release-based updates"),
+    (
+        "-m vibesensor.updates.venv_slots adopt",
+        "Pi install script must move the venv into an A/B slot for release-based updates",
+    ),
     (
         "vibesensor-fw-refresh",
         "Pi install script must refresh ESP firmware cache from GitHub Releases",

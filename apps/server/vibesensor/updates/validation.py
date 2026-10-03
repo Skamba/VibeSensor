@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import tempfile
 from pathlib import Path
 
 from vibesensor.common.exceptions import UpdatePreparationError
@@ -16,8 +15,10 @@ from vibesensor.updates.models import (
 from vibesensor.updates.privilege import build_privilege_probe_args
 from vibesensor.updates.runner import UpdateCommandExecutor
 from vibesensor.updates.status.tracker import UpdateStatusTracker
+from vibesensor.updates.venv_slots import VenvSlots
 
-MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
+MIN_FREE_DISK_BYTES = 600 * 1024 * 1024
+"""Room for one more venv slot (the pruned previous slot is not counted)."""
 
 
 def _fail_validation(
@@ -27,31 +28,13 @@ def _fail_validation(
     return UpdatePreparationError(message, phase="validating", detail=detail)
 
 
-def _probe_rollback_dir(rollback_dir: Path) -> None:
-    """Verify that the rollback directory exists and accepts a small temp file."""
+def _disk_check_path(venv_root: Path) -> Path:
+    """Return the nearest existing directory on the venv's filesystem."""
 
-    rollback_dir.mkdir(parents=True, exist_ok=True)
-    probe_handle = tempfile.NamedTemporaryFile(
-        prefix=".rollback-write-probe-",
-        dir=rollback_dir,
-        delete=False,
-    )
-    probe_path = Path(probe_handle.name)
-    try:
-        probe_handle.write(b"ok")
-        probe_handle.flush()
-    finally:
-        probe_handle.close()
-    probe_path.unlink(missing_ok=True)
-
-
-def _disk_check_path(rollback_dir: Path) -> Path:
-    """Choose the filesystem whose free space should gate update work."""
-
-    disk_check_path = rollback_dir.parent
-    if not disk_check_path.exists():
-        return Path("/var/lib") if Path("/var/lib").exists() else Path("/")
-    return disk_check_path
+    for candidate in (venv_root, *venv_root.parents):
+        if candidate.exists():
+            return candidate
+    return Path("/")
 
 
 async def validate_prerequisites(
@@ -61,7 +44,7 @@ async def validate_prerequisites(
     config: UpdateValidationConfig,
     request: UpdateRequest,
 ) -> None:
-    """Validate tool availability, privilege access, and disk space."""
+    """Validate tool availability, privilege access, slot state, and disk space."""
     if request.transport == UpdateTransport.wifi:
         status.log(f"Starting update with SSID: {request.ssid}")
     else:
@@ -86,16 +69,16 @@ async def validate_prerequisites(
                 ),
             )
 
-    try:
-        _probe_rollback_dir(config.rollback_dir)
-    except OSError as exc:
+    slots = VenvSlots(config.venv_root)
+    pending = slots.pending_boot()
+    if pending is not None and pending.candidate == slots.active_slot():
         raise _fail_validation(
-            "Rollback directory is not writable",
-            f"{config.rollback_dir}: {exc}",
-        ) from exc
+            "The previous update is still being verified",
+            f"Version {pending.candidate} is in its boot check; try again in a minute",
+        )
 
     try:
-        disk_check_path = _disk_check_path(config.rollback_dir)
+        disk_check_path = _disk_check_path(config.venv_root)
         free_bytes = shutil.disk_usage(disk_check_path).free
         if free_bytes < config.min_free_disk_bytes:
             free_mb = free_bytes // (1024 * 1024)

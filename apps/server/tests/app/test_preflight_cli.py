@@ -82,8 +82,6 @@ def test_preflight_cli_reports_unwritable_history_db_path(
             (
                 "logging:",
                 "  history_db_path: blocked/history.db",
-                "update:",
-                f"  rollback_dir: {tmp_path / 'rollback'}",
             )
         ),
         encoding="utf-8",

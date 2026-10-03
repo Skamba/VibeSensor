@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from test_support.venv_slots import make_legacy_venv
+
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateTransport
 from vibesensor.updates.runner import CommandRunner
@@ -169,7 +171,6 @@ def setup_update_env(
     tmp_path: Path,
     *,
     sudo_ok: bool = True,
-    rollback: bool = True,
     seed_artifacts: bool = False,
     usb_internet_service: object | None = None,
     server_release_fetcher: object | None = None,
@@ -178,14 +179,12 @@ def setup_update_env(
     if sudo_ok:
         runner.set_response("python3 -c pass", 0)
     repo = tmp_path / "repo"
-    repo.mkdir()
+    make_legacy_venv(repo / "apps" / "server" / ".venv")
     kwargs: dict[str, object] = {
         "runner": runner,
         "repo_path": str(repo),
         "state_store": UpdateStateStore(tmp_path / "update_status.json"),
     }
-    if rollback:
-        kwargs["rollback_dir"] = str(tmp_path / "rollback")
     if usb_internet_service is not None:
         kwargs["usb_internet_service"] = usb_internet_service
     if server_release_fetcher is not None:
