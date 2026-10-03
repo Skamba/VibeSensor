@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from test_support.report_helpers import diagnostics_context
 
 from vibesensor.analysis.orders.matching import OrderMatchAccumulator
@@ -152,21 +154,13 @@ class TestOrderMatchEvidenceGate:
 
 
 class TestOrderAnalysisSessionEvidenceGate:
-    def test_session_passes_feature_interval_and_steady_speed_into_match_gate(
-        self,
-        monkeypatch,
-    ) -> None:
+    def test_session_passes_feature_interval_and_steady_speed_into_match_gate(self) -> None:
         captured: dict[str, object] = {}
 
         class FakeAccumulator:
             def is_eligible(self, **kwargs) -> bool:
                 captured.update(kwargs)
                 return False
-
-        monkeypatch.setattr(
-            "vibesensor.analysis.orders.pipeline.match_samples_for_hypothesis",
-            lambda *args, **kwargs: FakeAccumulator(),
-        )
 
         session = _session(steady_speed=True, feature_interval_s=0.25)
         hypothesis = OrderHypothesis(
@@ -176,5 +170,10 @@ class TestOrderAnalysisSessionEvidenceGate:
             order=1.0,
         )
 
-        assert session._test_hypothesis(hypothesis) is None
+        assert (
+            session._evaluate_hypothesis(
+                hypothesis, cast(OrderMatchAccumulator, FakeAccumulator()), wheel_peaks=frozenset()
+            )
+            is None
+        )
         assert captured == {"feature_interval_s": 0.25, "steady_speed": True}

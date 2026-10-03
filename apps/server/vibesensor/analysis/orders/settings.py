@@ -32,6 +32,10 @@ class OrderConfidenceSettings:
     weak_separation_uniform_penalty: float
     weak_separation_mild_penalty: float
     no_wheel_sensor_penalty: float
+    zone_localization_confidence: float
+    zone_min_match_rate: float
+    zone_min_error_score: float
+    zone_min_corroborating_locations: int
     constant_speed_penalty: float
     steady_speed_penalty: float
     sample_saturation_count: int
@@ -66,6 +70,11 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     weak_separation_uniform_penalty=0.70,
     weak_separation_mild_penalty=0.80,
     no_wheel_sensor_penalty=0.75,
+    # What a wheel order at a clearly dominant corner earns with four sensors.
+    zone_localization_confidence=0.69,
+    zone_min_match_rate=0.50,
+    zone_min_error_score=0.50,
+    zone_min_corroborating_locations=2,
     constant_speed_penalty=0.75,
     steady_speed_penalty=0.82,
     sample_saturation_count=20,

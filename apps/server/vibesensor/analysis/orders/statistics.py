@@ -45,9 +45,29 @@ def compute_order_confidence(
     n_connected_locations: int,
     no_wheel_sensors: bool = False,
     path_compliance: float = 1.0,
+    spread_zone_source: bool = False,
 ) -> float:
-    """Compute calibrated confidence for an order-tracking finding."""
+    """Compute calibrated confidence for an order-tracking finding.
+
+    ``spread_zone_source`` marks an engine/driveline order seen with no dominant
+    corner. Those sources are diagnosed as a zone, so the missing corner is
+    expected: once the source evidence itself is established (see
+    ``_zone_evidence_established``), the zone counts as clearly located, like a
+    wheel order at a clearly dominant corner, and the weak-separation penalty
+    does not apply. Otherwise (wheel orders, or faint/poorly matched zone
+    orders) the corner-dominance terms apply unchanged.
+    """
     settings = ORDER_CONFIDENCE_SETTINGS
+    if spread_zone_source and _zone_evidence_established(
+        effective_match_rate=effective_match_rate,
+        error_score=error_score,
+        absolute_strength_db=absolute_strength_db,
+        corroborating_locations=corroborating_locations,
+    ):
+        localization_confidence = max(
+            localization_confidence, settings.zone_localization_confidence
+        )
+        weak_spatial_separation = False
     corr_shift = max(
         0.0,
         min(
@@ -119,6 +139,30 @@ def compute_order_confidence(
     ):
         confidence *= settings.dual_sensor_confidence_scale
     return max(settings.confidence_floor, min(settings.confidence_ceiling, confidence))
+
+
+def _zone_evidence_established(
+    *,
+    effective_match_rate: float,
+    error_score: float,
+    absolute_strength_db: float,
+    corroborating_locations: int,
+) -> bool:
+    """Whether a zone-source order stands on its own evidence, without a dominant corner.
+
+    Requires a vibration of at least the moderate strength band, a tracked order
+    present in at least half of its windows that matches its predicted frequency
+    well, and more than one sensor seeing it. A fault-free run's road noise lands
+    near engine/driveline orders by chance, but faint and patchy, so it fails
+    this check and keeps the corner-dominance penalties.
+    """
+    settings = ORDER_CONFIDENCE_SETTINGS
+    return (
+        absolute_strength_db >= LIGHT_STRENGTH_MAX_DB
+        and effective_match_rate >= settings.zone_min_match_rate
+        and error_score >= settings.zone_min_error_score
+        and corroborating_locations >= settings.zone_min_corroborating_locations
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
