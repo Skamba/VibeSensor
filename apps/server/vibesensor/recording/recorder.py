@@ -365,7 +365,6 @@ class RunRecorder:
             self._lifecycle.stop(reason=reason)
             self._persistence.reset()
             self._recording_session.clear_stopped_run()
-            result = self.status()
         if lifecycle_event is not None:
             (
                 event_action,
@@ -387,7 +386,9 @@ class RunRecorder:
             )
         if run_id_to_analyze and self._history_db is not None:
             self.post_analysis.schedule(run_id_to_analyze)
-        return result
+        # After scheduling, so the stopped run's analysis is visible: with no earlier
+        # completed run the response would otherwise read as idle.
+        return self.status()
 
     def shutdown_report(self, timeout_s: float = 30.0) -> _recorder_types.RecorderShutdownReport:
         return _recorder_types._shutdown_report(self, timeout_s)

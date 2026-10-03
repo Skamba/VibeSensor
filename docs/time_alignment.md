@@ -107,6 +107,19 @@ view still uses them — so each sensor's raw capture starts at its first
 synced chunk and summary rows from before it are simply not raw-backed. A
 sensor reboot forgets its sync until it re-syncs.
 
+Sensors apply every offset the server sends, so a wrong estimate steps their
+`t0_us`. An exchange delayed on either side (a scheduling stall, a Wi-Fi retry)
+has an inflated round trip and an offset error of up to half of it, so the
+registry keeps its current offset when an exchange's round trip exceeds twice
+(and by more than 1 ms) the round trip behind that offset, unless that offset
+is older than 8 s.
+
+The manifest's sample-rate proof compares consecutive chunks in `t0_us` order.
+A dropped chunk or a remaining clock step breaks one of those steps; replay
+records it as a gap or overlap and skips only the windows that cross it. A
+sensor is `timing_inconsistent` (and replays entirely from summary rows) only
+when more than 10% of its chunk steps disagree with the median rate.
+
 Replay only treats `t0_us` as server-monotonic when that proof is
 explicitly `verified`. Older artifacts without the per-sensor proof, or
 newer artifacts whose proof is stale/missing/high-RTT, fall back to the

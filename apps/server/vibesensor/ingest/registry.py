@@ -51,6 +51,14 @@ _RESTART_SEQ_GAP = 1000
 # only milliseconds behind, so a rewind this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000
 _JITTER_EMA_ALPHA = 0.2
+# A sync exchange delayed on either side (a scheduling stall, a Wi-Fi retry) has an
+# inflated round trip, and its offset estimate is off by up to half of it. Sensors
+# apply each offset the server sends, so adopting such an estimate steps their
+# t0_us by milliseconds. An exchange whose round trip is well above the one behind
+# the current estimate is skipped, unless that estimate is getting old.
+_SYNC_RTT_OUTLIER_FACTOR = 2
+_SYNC_RTT_OUTLIER_MARGIN_US = 1_000
+_SYNC_OUTLIER_MAX_HOLD_US = 8_000_000
 _SEQ_MASK = 0xFFFFFFFF
 _SEQ_HALF = 0x80000000
 
@@ -364,6 +372,25 @@ def apply_data_message_update(
     return DataUpdateResult(reset_detected=reset_detected, clock_synced=clock_synced)
 
 
+def _is_sync_rtt_outlier(
+    record: ClientRecord,
+    *,
+    round_trip_us: int,
+    server_receive_us: int,
+) -> bool:
+    """Return whether to keep the current offset instead of this exchange's estimate."""
+    accepted_rtt_us = record.sync_rtt_us
+    accepted_at_us = record.last_sync_monotonic_us
+    if record.sync_offset_us is None or accepted_rtt_us is None or accepted_at_us is None:
+        return False
+    if server_receive_us - accepted_at_us >= _SYNC_OUTLIER_MAX_HOLD_US:
+        return False
+    return round_trip_us > max(
+        _SYNC_RTT_OUTLIER_FACTOR * accepted_rtt_us,
+        accepted_rtt_us + _SYNC_RTT_OUTLIER_MARGIN_US,
+    )
+
+
 def _forget_clock_sync(record: ClientRecord) -> None:
     """A rebooted sensor restarts its device clock; its old offset no longer applies."""
     record.clock_offset_applied = False
@@ -573,12 +600,17 @@ class ClientRegistry:
                         0,
                         server_receive_us - record.pending_sync_send_us - processing_us,
                     )
-                    record.sync_offset_us = (
-                        (record.pending_sync_send_us - ack.device_receive_us)
-                        + (server_receive_us - ack.device_send_us)
-                    ) // 2
-                    record.sync_rtt_us = round_trip_us
-                    record.last_sync_monotonic_us = server_receive_us
+                    if not _is_sync_rtt_outlier(
+                        record,
+                        round_trip_us=round_trip_us,
+                        server_receive_us=server_receive_us,
+                    ):
+                        record.sync_offset_us = (
+                            (record.pending_sync_send_us - ack.device_receive_us)
+                            + (server_receive_us - ack.device_send_us)
+                        ) // 2
+                        record.sync_rtt_us = round_trip_us
+                        record.last_sync_monotonic_us = server_receive_us
                 record.pending_sync_cmd_seq = None
                 record.pending_sync_send_us = None
                 record.pending_sync_applies_offset = False

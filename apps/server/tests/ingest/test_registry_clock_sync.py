@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 from test_support.clock_sync import complete_clock_sync
 
-from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
+from vibesensor.ingest.protocol_messages import AckMessage, DataMessage, HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
 
 
@@ -81,3 +81,67 @@ def test_sensor_reboot_forgets_its_clock_sync() -> None:
     assert record is not None
     assert record.clock_offset_applied is False
     assert record.sync_offset_us is None
+
+
+def _sync_exchange(
+    registry: ClientRegistry,
+    cmd_seq: int,
+    *,
+    send_s: float,
+    offset_us: int,
+    outbound_us: int,
+    inbound_us: int,
+) -> None:
+    """One sync exchange with the given one-way delays (server minus device = offset_us)."""
+    send_us = int(send_s * 1_000_000)
+    device_us = send_us + outbound_us - offset_us
+    registry.mark_cmd_sent("aabbccddeeff", cmd_seq, sync_send_us=send_us, sync_applies_offset=True)
+    registry.update_from_ack(
+        AckMessage(
+            client_id=bytes.fromhex("aabbccddeeff"),
+            cmd_seq=cmd_seq,
+            status=0,
+            device_receive_us=device_us,
+            device_send_us=device_us,
+        ),
+        now_mono=(send_us + outbound_us + inbound_us) / 1_000_000,
+    )
+
+
+def test_a_delayed_sync_exchange_does_not_move_the_clock_offset() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    _sync_exchange(
+        registry, 1, send_s=1_000.0, offset_us=offset_us, outbound_us=150, inbound_us=150
+    )
+    # A 9 ms stall on the way back skews this exchange's estimate by 4.5 ms.
+    _sync_exchange(
+        registry, 2, send_s=1_002.0, offset_us=offset_us, outbound_us=150, inbound_us=9_150
+    )
+
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert record.sync_offset_us == offset_us
+    assert record.sync_rtt_us == 300
+    assert record.last_sync_monotonic_us == 1_000_000_300
+
+
+def test_a_slower_sync_exchange_is_adopted_once_the_current_offset_is_old() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    _sync_exchange(
+        registry, 1, send_s=1_000.0, offset_us=offset_us, outbound_us=150, inbound_us=150
+    )
+    # The link got slower for good: the held estimate expires and the new one is used.
+    _sync_exchange(
+        registry, 2, send_s=1_010.0, offset_us=offset_us, outbound_us=4_000, inbound_us=6_000
+    )
+    _sync_exchange(
+        registry, 3, send_s=1_012.0, offset_us=offset_us, outbound_us=4_000, inbound_us=6_000
+    )
+
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert record.sync_offset_us == offset_us + 1_000
+    assert record.sync_rtt_us == 10_000
+    assert record.last_sync_monotonic_us == 1_012_010_000

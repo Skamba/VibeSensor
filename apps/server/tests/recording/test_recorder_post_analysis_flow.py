@@ -78,6 +78,42 @@ def test_stop_recording_does_not_block_on_post_analysis(
     assert wait_until(lambda: _status() == "complete", timeout_s=5.0)
 
 
+def test_stop_response_of_the_first_run_reports_its_analysis_as_pending(
+    make_logger,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With no earlier completed run, the stop response must still not read as idle.
+
+    The Live page keeps the stopped run's elapsed time until the recorder is idle, so
+    a stop response without the queued analysis made the first run's time vanish.
+    """
+    history_db = HistoryDB(tmp_path / "history.db")
+    allow_summary_finish = threading.Event()
+
+    def _slow_analysis_runner(_run):
+        assert allow_summary_finish.wait(timeout=5.0)
+        return make_persisted_analysis(
+            {"findings": [], "top_causes": [], "analysis_metadata": {}, "case_id": "mock-case"}
+        )
+
+    monkeypatch.setattr(
+        "vibesensor.recording.recorder.build_post_analysis_summary",
+        _slow_analysis_runner,
+    )
+    logger = make_logger(history_db=history_db)
+    _started_snapshot_with_sample(logger)
+
+    try:
+        stopped = logger.stop_recording()
+    finally:
+        allow_summary_finish.set()
+
+    assert stopped.enabled is False
+    assert stopped.last_completed_run_id is None
+    assert stopped.analysis_in_progress is True
+
+
 def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
     make_logger,
     tmp_path: Path,
