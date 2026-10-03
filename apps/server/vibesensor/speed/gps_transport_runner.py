@@ -57,6 +57,7 @@ class GPSTransportRunner:
 
             writer: asyncio.StreamWriter | None = None
             writer_closed = False
+            retry_delay: float | None = None
             try:
                 state.connection_state = "disconnected"
                 reader, connected_writer = await asyncio.wait_for(
@@ -68,7 +69,7 @@ class GPSTransportRunner:
                 await writer.drain()
                 transition = lifecycle.on_connected()
                 state._apply_transition_changes(transition.changes)
-                await self._read_session(
+                retry_delay = await self._read_session(
                     state,
                     reader,
                     lifecycle,
@@ -106,6 +107,8 @@ class GPSTransportRunner:
                 if writer is not None and not writer_closed:
                     writer.close()
                     await writer.wait_closed()
+            if retry_delay is not None:
+                await asyncio.sleep(retry_delay)
 
     async def _read_session(
         self,
@@ -115,16 +118,21 @@ class GPSTransportRunner:
         *,
         tpv_mode: TpvModeReader | None,
         read_metric: MetricReader | None,
-    ) -> None:
+    ) -> float | None:
+        """Read until disabled or the peer closes; return the delay before reconnecting."""
         while True:
             if not state.gps_enabled:
                 state.set_enabled(False)
-                break
+                return None
             line = await asyncio.wait_for(reader.readline(), timeout=self._read_timeout_s)
             if not line:
                 transition = lifecycle.on_stream_disconnected()
                 state._apply_transition_changes(transition.changes)
-                break
+                LOGGER.info(
+                    "GPS stream closed by gpsd, reconnecting in %gs",
+                    transition.sleep_before_retry,
+                )
+                return transition.sleep_before_retry
             payload = self._decode_json_line(line)
             if payload is None:
                 continue
