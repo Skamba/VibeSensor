@@ -54,6 +54,7 @@ class TestGPSReconnectBackoff:
     @pytest.mark.asyncio
     async def test_version_message_sets_device_info(self) -> None:
         monitor = GPSSpeedMonitor(gps_enabled=True)
+        release = asyncio.Event()
 
         async def _handler(reader, writer):
             await reader.readline()
@@ -61,6 +62,8 @@ class TestGPSReconnectBackoff:
             await writer.drain()
             writer.write(b'{"class":"TPV","mode":3,"speed":10.0}\n')
             await writer.drain()
+            # Like a real gpsd, keep the stream open: a close would clear the state under test.
+            await release.wait()
             writer.close()
             await writer.wait_closed()
 
@@ -72,6 +75,7 @@ class TestGPSReconnectBackoff:
             lambda: monitor.device_info == "gpsd 3.25" and monitor.speed_mps == 10.0,
             timeout_s=1.5,
         ), "Timed out waiting for GPS VERSION and TPV messages to update monitor state"
+        release.set()
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
         server.close()
