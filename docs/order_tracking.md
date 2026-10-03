@@ -111,6 +111,11 @@ coordinates the evidence flow:
 If the effective match rate stays below the current threshold, the hypothesis
 does not produce a finding.
 
+Ranking decides the diagnosed source; it does not decide which of that
+source's orders the diagnosis names. `TestRun.diagnosis_order_finding` labels
+the source's louder order, comparing 1x and 2x amplitudes in the windows both
+matched (see "Diagnosed order" in `docs/metrics.md`).
+
 ## Live vs post-stop reuse
 
 The same reference math serves both runtime and diagnostics:

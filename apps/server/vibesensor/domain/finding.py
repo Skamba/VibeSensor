@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, replace
+from statistics import median
 from typing import TYPE_CHECKING, ClassVar
 
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
@@ -260,6 +261,31 @@ class Finding:
     def is_stronger_than(self, other: Finding) -> bool:
         """Whether this finding ranks higher than *other*."""
         return self.phase_adjusted_score > other.phase_adjusted_score
+
+    _MIN_SHARED_WINDOWS: ClassVar[int] = 4
+
+    def level_over_db(self, other: Finding, *, location: str | None = None) -> float | None:
+        """Median dB by which this order's peak exceeds *other*'s in the windows both matched.
+
+        Matched points are paired by sensor location and time, so both amplitudes
+        come from the same spectrum: road-noise matches either order picked up
+        elsewhere in the run do not dilute the comparison. With *location*, only
+        that sensor's windows count. ``None`` when fewer than
+        ``_MIN_SHARED_WINDOWS`` windows are shared.
+        """
+        own: dict[tuple[str, float | None], float] = {
+            (point.location, point.t_s): point.amp
+            for point in self.matched_points
+            if point.t_s is not None
+            and point.amp > 0
+            and (location is None or point.location == location)
+        }
+        levels = [
+            20.0 * math.log10(amp / point.amp)
+            for point in other.matched_points
+            if point.amp > 0 and (amp := own.get((point.location, point.t_s))) is not None
+        ]
+        return median(levels) if len(levels) >= self._MIN_SHARED_WINDOWS else None
 
     @property
     def peaks(self) -> PeakClassificationView:

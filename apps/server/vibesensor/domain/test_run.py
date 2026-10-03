@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 from vibesensor.domain.driving_segment import DrivingSegment
 from vibesensor.domain.finding import Finding, VibrationSource
@@ -106,6 +107,57 @@ class TestRun:
             ):
                 return finding
         return None
+
+    # A source's 2nd order names the diagnosis only when its peak is clearly louder
+    # than the 1st order's in the same windows: by at least 3 dB (1.4x the amplitude).
+    HARMONIC_DOMINANCE_DB: ClassVar[float] = 3.0
+
+    @property
+    def diagnosis_order_finding(self) -> Finding | None:
+        """The diagnosed source's physically dominant order (T1/T2, P1/P2, E1/E2).
+
+        ``diagnosis_candidate`` names the source and its confidence: the order of
+        that source that ranked best. A harmonic often ranks above its louder
+        fundamental (it tracks a little more consistently), but workshop advice
+        follows the dominant order, so this compares the source's 1st and 2nd
+        order by amplitude in the windows both matched, at the candidate's
+        location when they share enough windows there, else at every location.
+        The 1st order wins unless the 2nd is ``HARMONIC_DOMINANCE_DB`` louder.
+        Without shared windows, or without the other order, the candidate stays.
+        """
+        candidate = self.diagnosis_candidate
+        if candidate is None or candidate.order_code is None:
+            return candidate
+        location = (
+            candidate.location.strongest_location
+            if candidate.location is not None
+            else candidate.strongest_location
+        )
+        harmonic = candidate.order_code.endswith("2")
+        others = [
+            finding
+            for finding in self.findings
+            if finding.suspected_source is candidate.suspected_source
+            and finding.order_code is not None
+            and finding.order_code.endswith("2") is not harmonic
+            and finding.should_surface
+        ]
+        if not others:
+            return candidate
+        other = max(
+            others,
+            key=lambda f: (
+                f.strongest_location == candidate.strongest_location,
+                f.phase_adjusted_score,
+            ),
+        )
+        first, second = (other, candidate) if harmonic else (candidate, other)
+        excess_db = second.level_over_db(first, location=location)
+        if excess_db is None:
+            excess_db = second.level_over_db(first)
+        if excess_db is None:
+            return candidate
+        return second if excess_db >= self.HARMONIC_DOMINANCE_DB else first
 
     def effective_top_causes(self) -> tuple[Finding, ...]:
         actionable_tc = tuple(f for f in self.top_causes if not f.is_reference and f.is_actionable)
