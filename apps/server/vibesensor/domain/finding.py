@@ -8,11 +8,9 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, ClassVar
 
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
-from vibesensor.domain.finding_types import FindingKind, VibrationSource
+from vibesensor.domain.finding_types import ConfidenceLevel, FindingKind, VibrationSource
 
 if TYPE_CHECKING:
-    from vibesensor.domain.confidence_assessment import ConfidenceAssessment
-    from vibesensor.domain.finding_types import ConfidenceLevel
     from vibesensor.domain.location_hotspot import LocationHotspot
     from vibesensor.domain.order_match import OrderMatchObservation
     from vibesensor.domain.vibration_origin import VibrationOrigin
@@ -81,9 +79,9 @@ class Finding:
     phases_detected: tuple[str, ...] = ()
     matched_points: tuple[OrderMatchObservation, ...] = ()
 
+    negligible_strength: bool = False
     evidence: FindingEvidence | None = None
     location: LocationHotspot | None = None
-    confidence_assessment: ConfidenceAssessment | None = None
     origin: VibrationOrigin | None = None
     signatures: tuple[Signature, ...] = ()
 
@@ -174,13 +172,6 @@ class Finding:
         return self.kind is FindingKind.DIAGNOSTIC
 
     @property
-    def confidence_pct(self) -> int | None:
-        """Confidence as integer percentage, or None if unset."""
-        if self.confidence is None:
-            return None
-        return round(self.confidence * 100)
-
-    @property
     def source_normalized(self) -> str:
         """Lower-cased, stripped suspected source for comparison."""
         return self.suspected_source.strip().lower()
@@ -229,48 +220,22 @@ class Finding:
     def classify_confidence(
         conf_0_to_1: float,
         *,
-        strength_band_key: str | None = None,
-    ) -> tuple[str, str, str]:
-        """Classify confidence into ``(label_key, tone, pct_text)``."""
+        negligible_strength: bool = False,
+    ) -> ConfidenceLevel:
+        """Strong >= 0.70, Moderate >= 0.40, else Weak; negligible strength caps at Moderate."""
         conf = float(conf_0_to_1) if math.isfinite(conf_0_to_1) else 0.0
-        pct = max(0.0, min(100.0, conf * 100.0))
-        pct_text = f"{pct:.0f}%"
         if conf >= Finding.CONFIDENCE_HIGH_THRESHOLD:
-            label_key, tone = "CONFIDENCE_HIGH", "success"
-        elif conf >= Finding.CONFIDENCE_MEDIUM_THRESHOLD:
-            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
-        else:
-            label_key, tone = "CONFIDENCE_LOW", "neutral"
-        if (
-            strength_band_key or ""
-        ).strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
-            label_key, tone = "CONFIDENCE_MEDIUM", "warn"
-        return label_key, tone, pct_text
-
-    def confidence_label(
-        self,
-        *,
-        strength_band_key: str | None = None,
-    ) -> tuple[str, str, str]:
-        """Return ``(label_key, tone, pct_text)`` for this finding's confidence."""
-        return self.classify_confidence(
-            self.effective_confidence,
-            strength_band_key=strength_band_key,
-        )
+            return ConfidenceLevel.MODERATE if negligible_strength else ConfidenceLevel.STRONG
+        if conf >= Finding.CONFIDENCE_MEDIUM_THRESHOLD:
+            return ConfidenceLevel.MODERATE
+        return ConfidenceLevel.WEAK
 
     @property
     def confidence_level(self) -> ConfidenceLevel:
-        """Action-defined confidence level shown to users (never a percentage).
-
-        Strong >= 0.70, Moderate >= 0.40, otherwise Weak; negligible vibration
-        strength caps Strong at Moderate. The assessment carries that context
-        when present.
-        """
-        if self.confidence_assessment is not None:
-            return self.confidence_assessment.level
-        from vibesensor.domain.confidence_assessment import ConfidenceAssessment as CA
-
-        return CA.assess(self.effective_confidence).level
+        """Action-defined confidence level shown to users (never a percentage)."""
+        return self.classify_confidence(
+            self.effective_confidence, negligible_strength=self.negligible_strength
+        )
 
     _ORDER_CODES: ClassVar[dict[str, str]] = {
         "wheel_1x": "T1",
@@ -287,21 +252,6 @@ class Finding:
         return self._ORDER_CODES.get(self.finding_key.strip().lower())
 
     @property
-    def confidence_label_key(self) -> str:
-        """The i18n key for this finding's confidence tier (no strength override)."""
-        return self.confidence_label()[0]
-
-    @property
-    def confidence_tone(self) -> str:
-        """The display tone for this finding's confidence tier (no strength override)."""
-        return self.confidence_label()[1]
-
-    @property
-    def confidence_pct_text(self) -> str:
-        """Confidence as percentage text (e.g. ``'75%'``)."""
-        return self.confidence_label()[2]
-
-    @property
     def phase_adjusted_score(self) -> float:
         """Phase-aware ranking score used for top-cause selection."""
         cf = self.cruise_fraction
@@ -316,22 +266,7 @@ class Finding:
         """Return the current peak-classification view used by report serializers."""
         return PeakClassificationView(classification=self.peak_classification)
 
-    def with_confidence_assessment(
-        self,
-        strength_band_key: str,
-        steady_speed: bool,
-        has_reference_gaps: bool,
-        sensor_count: int,
-    ) -> Finding:
-        """Return a copy with a computed :class:`ConfidenceAssessment`."""
-        from vibesensor.domain.confidence_assessment import ConfidenceAssessment as CA
-
-        ca = CA.assess(
-            self.effective_confidence,
-            strength_band_key=strength_band_key,
-            steady_speed=steady_speed,
-            has_reference_gaps=has_reference_gaps,
-            weak_spatial=self.weak_spatial_separation,
-            sensor_count=max(sensor_count, 1),
-        )
-        return replace(self, confidence_assessment=ca)
+    def with_strength_band(self, strength_band_key: str | None) -> Finding:
+        """Return a copy that knows whether the run-wide vibration strength was negligible."""
+        negligible = (strength_band_key or "").strip().lower() == "negligible"
+        return replace(self, negligible_strength=negligible)

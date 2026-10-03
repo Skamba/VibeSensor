@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 
 import pytest
 
 from test_support.core import canonicalize_run_context_metadata
-from test_support.findings import make_finding_payload
+from test_support.findings import NO_FAULT_DIAGNOSIS
 from test_support.report_record_builders import (
     RUN_END as RUN_END,
 )
@@ -31,12 +32,6 @@ from test_support.report_record_builders import (
 )
 from test_support.report_record_builders import (
     report_sample as report_sample,
-)
-from test_support.report_record_builders import (
-    write_jsonl as write_jsonl,
-)
-from test_support.report_record_builders import (
-    write_test_log as write_test_log,
 )
 from vibesensor.analysis.location_analysis import LocationAnalysisResult
 from vibesensor.analysis.orders import pipeline as order_findings_module
@@ -62,15 +57,18 @@ def suitability_by_key(summary: dict) -> dict[str, dict]:
 
 
 def minimal_summary(**overrides: Any) -> dict:
-    """Return a bare-minimum summary dict suitable for ``build_report_document``.
+    """Return a bare-minimum analysis summary that the report view model accepts.
 
     Callers can override or extend any key via keyword arguments.
     """
     base: dict = {
         "run_id": "run-01",
+        "lang": "en",
         "metadata": {},
         "report_date": "",
         "record_length": "",
+        "duration_s": 0.0,
+        "raw_sample_rate_hz": None,
         "start_time_utc": "",
         "end_time_utc": "",
         "warnings": [],
@@ -79,9 +77,11 @@ def minimal_summary(**overrides: Any) -> dict:
         "sensor_intensity_by_location": [],
         "sensor_count_used": 0,
         "most_likely_origin": {},
+        "diagnosis": deepcopy(NO_FAULT_DIAGNOSIS),
         "top_causes": [],
         "findings": [],
-        "speed_stats": {},
+        "speed_stats": {"min_kmh": None, "max_kmh": None},
+        "phase_info": {"phase_pcts": {}},
         "test_plan": [],
         "run_suitability": [],
         "plots": {},
@@ -94,117 +94,6 @@ def minimal_summary(**overrides: Any) -> dict:
         metadata.setdefault("run_id", raw_run_id)
         base["metadata"] = metadata
     return base
-
-
-def sequential_same_source_summary(*, weak_spatial: bool = False) -> dict:
-    """Return a report-ready summary with two same-source corners in sequence."""
-    front = make_finding_payload(
-        finding_id="F_FRONT",
-        suspected_source="wheel/tire",
-        confidence=0.64,
-        strongest_location="Front Left",
-        strongest_speed_band="40-60 km/h",
-        dominant_phase="acceleration",
-        phase_evidence={"cruise_fraction": 0.0, "phases_detected": ["acceleration"]},
-        weak_spatial_separation=weak_spatial,
-        frequency_hz_or_order="1x wheel order",
-        matched_points=[
-            {
-                "speed_kmh": 48.0,
-                "predicted_hz": 10.4,
-                "matched_hz": 10.5,
-                "location": "Front Left",
-                "phase": "acceleration",
-                "amp": 0.11,
-            },
-            {
-                "speed_kmh": 54.0,
-                "predicted_hz": 11.6,
-                "matched_hz": 11.7,
-                "location": "Front Left",
-                "phase": "acceleration",
-                "amp": 0.10,
-            },
-        ],
-        confidence_label_key="CONFIDENCE_MEDIUM",
-        confidence_tone="warn",
-        confidence_pct="64%",
-        confidence_reason="Evidence first rose during acceleration.",
-    )
-    rear = make_finding_payload(
-        finding_id="F_REAR",
-        suspected_source="wheel/tire",
-        confidence=0.61,
-        strongest_location="Rear Right",
-        strongest_speed_band="70-90 km/h",
-        dominant_phase="deceleration",
-        phase_evidence={"cruise_fraction": 0.0, "phases_detected": ["deceleration"]},
-        weak_spatial_separation=weak_spatial,
-        frequency_hz_or_order="1x wheel order",
-        matched_points=[
-            {
-                "speed_kmh": 82.0,
-                "predicted_hz": 17.8,
-                "matched_hz": 17.9,
-                "location": "Rear Right",
-                "phase": "deceleration",
-                "amp": 0.10,
-            },
-            {
-                "speed_kmh": 76.0,
-                "predicted_hz": 16.4,
-                "matched_hz": 16.3,
-                "location": "Rear Right",
-                "phase": "deceleration",
-                "amp": 0.09,
-            },
-        ],
-        confidence_label_key="CONFIDENCE_MEDIUM",
-        confidence_tone="warn",
-        confidence_pct="61%",
-        confidence_reason="Evidence returned during deceleration.",
-    )
-    return minimal_summary(
-        lang="en",
-        record_length="00:18.0",
-        sensor_count_used=4,
-        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        sensor_locations_connected_throughout=[
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-        ],
-        findings=[front, rear],
-        top_causes=[front, rear],
-        speed_stats={"steady_speed": False},
-        phase_timeline=[
-            {
-                "phase": "acceleration",
-                "start_t_s": 0.0,
-                "end_t_s": 6.0,
-                "speed_min_kmh": 30.0,
-                "speed_max_kmh": 60.0,
-                "has_fault_evidence": True,
-            },
-            {
-                "phase": "cruise",
-                "start_t_s": 6.0,
-                "end_t_s": 12.0,
-                "speed_min_kmh": 60.0,
-                "speed_max_kmh": 80.0,
-                "has_fault_evidence": False,
-            },
-            {
-                "phase": "deceleration",
-                "start_t_s": 12.0,
-                "end_t_s": 18.0,
-                "speed_min_kmh": 80.0,
-                "speed_max_kmh": 40.0,
-                "has_fault_evidence": True,
-            },
-        ],
-    )
 
 
 _GENERATED_ACTION_STEPS: dict[str, dict[str, Any]] = {
@@ -257,193 +146,6 @@ _GENERATED_ACTION_STEPS: dict[str, dict[str, Any]] = {
         "eta": "10-20 min",
     },
 }
-
-
-def ambiguous_primary_location_summary() -> dict:
-    """Return a summary whose primary hotspot is explicitly ambiguous."""
-    primary = make_finding_payload(
-        finding_id="F_AMBIG",
-        suspected_source="wheel/tire",
-        confidence=0.82,
-        strongest_location="Front Left",
-        strongest_speed_band="60-80 km/h",
-        dominance_ratio=2.0,
-        weak_spatial_separation=False,
-        location_hotspot={
-            "top_location": "Front Left",
-            "ambiguous_location": True,
-            "ambiguous_locations": ["Rear Left"],
-        },
-    )
-    return minimal_summary(
-        lang="en",
-        sensor_count_used=4,
-        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        sensor_locations_connected_throughout=[
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-        ],
-        findings=[primary],
-        top_causes=[primary],
-        speed_stats={"steady_speed": True},
-    )
-
-
-def trunk_primary_guidance_summary(*, primary_source: str) -> dict:
-    """Return a summary with a trunk/body hotspot and mixed-source action plan."""
-    primary_action_ids = {
-        "engine": ("engine_mounts_and_accessories", "engine_combustion_quality"),
-        "driveline": ("driveline_inspection", "driveline_mounts_and_fasteners"),
-    }.get(primary_source)
-    if primary_action_ids is None:
-        raise ValueError(f"Unsupported primary source: {primary_source}")
-    primary = make_finding_payload(
-        finding_id="F_PRIMARY",
-        suspected_source=primary_source,
-        confidence=0.77,
-        strongest_location="Trunk",
-        strongest_speed_band="70-90 km/h",
-    )
-    alternative = make_finding_payload(
-        finding_id="F_WHEEL",
-        suspected_source="wheel/tire",
-        confidence=0.71,
-        strongest_location="Front Left",
-        strongest_speed_band="70-90 km/h",
-    )
-    return minimal_summary(
-        lang="en",
-        sensor_count_used=4,
-        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        sensor_locations_connected_throughout=[
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-        ],
-        findings=[primary, alternative],
-        top_causes=[primary, alternative],
-        speed_stats={"steady_speed": True},
-        test_plan=[
-            dict(_GENERATED_ACTION_STEPS["wheel_balance_and_runout"]),
-            dict(_GENERATED_ACTION_STEPS["wheel_tire_condition"]),
-            *(dict(_GENERATED_ACTION_STEPS[action_id]) for action_id in primary_action_ids),
-        ],
-    )
-
-
-def recapture_guidance_summary(mode: str) -> dict:
-    """Return a recapture-mode summary tailored to one insufficiency mode."""
-    base = {
-        "lang": "en",
-        "record_length": "00:20.0",
-        "sensor_count_used": 4,
-        "sensor_locations": ["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        "sensor_locations_connected_throughout": [
-            "Front Left",
-            "Front Right",
-            "Rear Left",
-            "Rear Right",
-        ],
-        "speed_stats": {"steady_speed": False},
-    }
-    if mode == "steady":
-        finding = make_finding_payload(
-            finding_id="F_STEADY",
-            suspected_source="wheel/tire",
-            confidence=0.34,
-            strongest_location="Front Left",
-            strongest_speed_band="40-60 km/h",
-            confidence_label_key="CONFIDENCE_LOW",
-            confidence_tone="neutral",
-            confidence_pct="34%",
-            confidence_reason="Speed was not steady during measurement",
-        )
-        return minimal_summary(
-            **base,
-            findings=[finding],
-            top_causes=[finding],
-            run_suitability=[
-                {
-                    "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-                    "state": "warn",
-                    "explanation": "SUITABILITY_SPEED_VARIATION_WARN",
-                }
-            ],
-        )
-    if mode == "overlap":
-        overlap_reason = (
-            "Wheel and driveline evidence overlap, so the system could not strongly "
-            "differentiate between them; inspect both areas."
-        )
-        wheel = make_finding_payload(
-            finding_id="F_WHEEL_RECAPTURE",
-            suspected_source="wheel/tire",
-            confidence=0.35,
-            strongest_location="Front Left",
-            strongest_speed_band="60-80 km/h",
-            signatures_observed=["1x wheel order"],
-            confidence_label_key="CONFIDENCE_LOW",
-            confidence_tone="neutral",
-            confidence_pct="35%",
-            confidence_reason=overlap_reason,
-        )
-        driveline = make_finding_payload(
-            finding_id="F_DRIVELINE_RECAPTURE",
-            suspected_source="driveline",
-            confidence=0.33,
-            strongest_location="Front Left",
-            strongest_speed_band="60-80 km/h",
-            signatures_observed=["1x driveshaft"],
-            confidence_label_key="CONFIDENCE_LOW",
-            confidence_tone="neutral",
-            confidence_pct="33%",
-            confidence_reason=overlap_reason,
-        )
-        return minimal_summary(
-            **base,
-            findings=[wheel, driveline],
-            top_causes=[wheel, driveline],
-        )
-    if mode == "weak":
-        finding = make_finding_payload(
-            finding_id="F_WEAK",
-            suspected_source="wheel/tire",
-            confidence=0.55,
-            strongest_location="Front Left",
-            strongest_speed_band="50-70 km/h",
-            weak_spatial_separation=True,
-            confidence_label_key="CONFIDENCE_MEDIUM",
-            confidence_tone="warn",
-            confidence_pct="55%",
-            confidence_reason="Vibration spread across multiple locations",
-        )
-        return minimal_summary(
-            **base,
-            findings=[finding],
-            top_causes=[finding],
-        )
-    if mode == "transient":
-        finding = make_finding_payload(
-            finding_id="F_TRANSIENT",
-            suspected_source="transient_impact",
-            confidence=0.28,
-            strongest_location="Rear Left",
-            strongest_speed_band="20-30 km/h",
-            peak_classification="transient",
-            confidence_label_key="CONFIDENCE_LOW",
-            confidence_tone="neutral",
-            confidence_pct="28%",
-            confidence_reason="Confidence downgraded due to negligible vibration strength",
-        )
-        return minimal_summary(
-            **base,
-            findings=[finding],
-            top_causes=[finding],
-        )
-    raise ValueError(f"Unsupported recapture guidance mode: {mode}")
 
 
 # ---------------------------------------------------------------------------

@@ -5,7 +5,13 @@ from __future__ import annotations
 import pytest
 
 from tests_e2e._docker_edge_helpers import _cleanup_run, _wait_complete
-from tests_e2e.e2e_helpers import api_json, remove_all_clients, run_simulator
+from tests_e2e.e2e_helpers import (
+    api_json,
+    pdf_text,
+    remove_all_clients,
+    run_simulator,
+    wait_report_pdf_ready,
+)
 
 pytestmark = pytest.mark.e2e
 
@@ -44,6 +50,9 @@ def test_fault_free_run_reports_no_significant_vibration_e2e(e2e_env: dict[str, 
         assert diagnosis["source"] is None
         assert diagnosis["amplitude_basis"] == "overall"
         assert len(diagnosis["location_amplitudes"]) == 4
+        pdf = pdf_text(wait_report_pdf_ready(e2e_env["base_url"], run_id).body)
+        assert "no significant vibration found" in pdf
+        assert "%" not in pdf.split("for the workshop")[0]
     finally:
         _cleanup_run(e2e_env["base_url"], run_id)
         remove_all_clients(e2e_env["base_url"])
@@ -67,6 +76,9 @@ def test_wheel_fault_run_names_order_level_and_mg_amplitudes_e2e(
         for finding in insights["findings"]:
             assert finding["confidence_level"] in {"strong", "moderate", "weak"}
             assert "confidence_pct" not in finding
+        pdf = pdf_text(wait_report_pdf_ready(e2e_env["base_url"], run_id).body)
+        assert "likely cause" in pdf or "not enough evidence" in pdf
+        assert "wheel" in pdf
     finally:
         _cleanup_run(e2e_env["base_url"], run_id)
         remove_all_clients(e2e_env["base_url"])

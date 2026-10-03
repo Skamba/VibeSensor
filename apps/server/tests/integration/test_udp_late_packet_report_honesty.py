@@ -9,6 +9,7 @@ from test_support.clock_sync import complete_clock_sync
 from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
+from test_support.report_rendering import report_view_for
 
 from vibesensor.analysis.post_analysis_input import build_post_analysis_input
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
@@ -22,8 +23,6 @@ from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.report.document.builder import build_report_document
-from vibesensor.report.preparation import prepare_persisted_report_input
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 from vibesensor.speed.gps_speed import SpeedResolution
 from vibesensor.summary.run_context_warning import WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS
@@ -233,15 +232,8 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
             warning["code"] for warning in summary["warnings"]
         ]
 
-        prepared = prepare_persisted_report_input(summary)
-        document = build_report_document(prepared)
-
-        late_packet_rows = [
-            row
-            for row in document.data_trust
-            if "late or out-of-order packets quarantined from live processing" in (row.detail or "")
-        ]
-        assert late_packet_rows
-        assert late_packet_rows[0].state == "warn"
+        quality = report_view_for(summary.to_json_object()).quality
+        assert not quality.all_passed
+        assert "Some sensor data packets were lost during recording." in quality.warnings
     finally:
         history_db.close()

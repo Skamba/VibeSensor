@@ -136,19 +136,14 @@ def test_projection_keeps_canonical_domain_and_presentation_fields_together() ->
             dominant_phase="cruise",
             reason="Strong wheel-order correlation",
         ),
-    ).with_confidence_assessment(
-        strength_band_key="moderate",
-        steady_speed=True,
-        has_reference_gaps=False,
-        sensor_count=2,
-    )
+    ).with_strength_band("moderate")
 
     payload = finding_payload_from_domain(finding)
 
     assert payload["finding_id"] == "F_ORDER"
     assert payload["strongest_location"] == "rear-right"
     assert payload["evidence_summary"] == "Strong wheel-order correlation"
-    assert payload["confidence_level"] == finding.confidence_assessment.level
+    assert payload["confidence_level"] == finding.confidence_level
     assert payload["amplitude_metric"]["value"] == 22.3
     assert payload["frequency_hz_or_order"] == ""
 

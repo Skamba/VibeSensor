@@ -312,17 +312,19 @@ layout, mapping rules, and how to add new tests.
 
 ## Reports
 
-Generate a PDF diagnostic report from a recorded run:
+Download a run's PDF report from the History page (English or Dutch), or render
+it from a stored run on the command line:
 
 ```bash
-vibesensor-report path/to/metrics_run.jsonl
+vibesensor-report path/to/history.db <run_id> --lang nl --output report.pdf
 ```
 
-Reports adapt to available data — if speed or engine RPM references are missing,
-order-specific sections are skipped with explicit reason text instead of
-speculative labels. See [docs/run_schema_v2.md](docs/run_schema_v2.md) for the
-run log format. Synthetic analysis scenarios live in
-`apps/server/tests/test_support/`.
+Page 1 is for the owner (verdict, one confidence level, what to do next, how to
+check the fix); page 2 is for the workshop (test conditions, order worksheet,
+amplitudes in mg, spectrum, shop request). Missing tire size or RPM limits the
+order labels and is stated as "not testable" rather than guessed. See
+[docs/report_pipeline.md](docs/report_pipeline.md). Synthetic analysis
+scenarios live in `apps/server/tests/test_support/`.
 
 ## Troubleshooting
 

@@ -39,10 +39,7 @@ from test_support import (
     standard_metadata,
     top_confidence,
 )
-
-from vibesensor.report.document.builder import build_report_document
-from vibesensor.report.pdf.pdf_engine import build_report_pdf
-from vibesensor.report.preparation import prepare_report_input
+from test_support.report_rendering import report_pdf_for
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -57,7 +54,7 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
 
 def _build_pdf_from_summary(summary: dict[str, Any]) -> bytes:
     """Render a PDF directly from an analysis summary."""
-    return build_report_pdf(build_report_document(prepare_report_input(summary)))
+    return report_pdf_for(summary, lang=str(summary.get("lang") or "en"))
 
 
 # ---------------------------------------------------------------------------
@@ -352,7 +349,7 @@ class TestPdfReportValidation:
 
     def test_pdf_contains_diagnostic_sections(self) -> None:
         """PDF text includes major report section keywords."""
-        for keyword in ["diagnostic", "evidence", "inspection"]:
+        for keyword in ["likely cause", "for the workshop", "what to ask the shop"]:
             assert keyword in self.pdf_text, f"Missing section keyword: '{keyword}'"
 
     def test_pdf_mentions_wheel_tire_source(self) -> None:
@@ -394,52 +391,6 @@ class TestPdfReportValidation:
             for token in src.split("/"):
                 if token and len(token) > 2:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
-
-    def test_pdf_topology_page_uses_new_spatial_proof_sections(self) -> None:
-        """Location proof should use the redesigned page-one proof sections."""
-        summary = deepcopy(self.summary)
-        rows = summary.get("sensor_intensity_by_location") or []
-        assert isinstance(rows, list) and rows, "Scenario should provide intensity rows"
-        rows[0]["p95_intensity_db"] = 21.5
-        rows[0]["mean_intensity_db"] = 19.0
-        if len(rows) > 1 and isinstance(rows[1], dict):
-            rows[1]["p95_intensity_db"] = 37.2
-            rows[1]["mean_intensity_db"] = 35.0
-
-        pdf_text = _extract_pdf_text(_build_pdf_from_summary(summary))
-        assert "why this corner wins" in pdf_text
-        assert "dominant corner" in pdf_text
-        assert "location confidence" in pdf_text
-        assert "diagnosed location source" not in pdf_text
-
-    def test_pdf_keeps_long_next_steps_without_ellipsis(self) -> None:
-        """Critical next-steps content should remain readable when long."""
-        summary = deepcopy(self.summary)
-        summary["test_plan"] = [
-            {
-                "what": (
-                    "Inspect front-left corner under load with road-force balancing "
-                    "and vibration capture."
-                ),
-                "why": (
-                    "Correlate wheel-order persistence across speed bins and verify repeatability "
-                    f"for critical action token STEPEND{i:02d}"
-                ),
-                "speed_band": "70-90 km/h",
-                "confirm": "Amplitude drops after intervention",
-                "falsify": "Signature remains unchanged after intervention",
-                "eta": "30 min",
-            }
-            for i in range(1, 9)
-        ]
-        pdf_bytes = _build_pdf_from_summary(summary)
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        pdf_text = _extract_pdf_text(pdf_bytes)
-
-        assert len(reader.pages) >= 2
-        assert "…" not in pdf_text
-        for i in range(1, 9):
-            assert f"stepend{i:02d}" in pdf_text
 
     def test_pdf_preserves_long_header_metadata_text(self) -> None:
         """Long metadata values should wrap without losing critical tail content."""
@@ -524,6 +475,6 @@ class TestPdfLanguageParity:
         """NL PDF should contain Dutch-language content (not just English)."""
         nl_text = _extract_pdf_text(self.pdf_nl)
         # Common Dutch terms that should appear in a diagnostic report
-        dutch_markers = ["diagnos", "voertuig", "wiel", "band", "snelheid", "sensor"]
+        dutch_markers = ["oorzaak", "werkplaats", "wiel", "band", "snelheid", "sensor"]
         found = sum(1 for m in dutch_markers if m in nl_text)
         assert found >= 2, f"NL PDF lacks Dutch content (found {found}/6 markers)"

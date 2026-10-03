@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding
 
+from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, VibrationSource
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.test_run import TestRun
@@ -25,13 +26,13 @@ def test_levels_follow_documented_thresholds(score: float, level: ConfidenceLeve
     assert make_finding(confidence=score).confidence_level is level
 
 
+@pytest.mark.parametrize("score", [float("nan"), float("inf"), -0.2])
+def test_non_finite_or_negative_scores_are_weak(score: float) -> None:
+    assert Finding.classify_confidence(score) is ConfidenceLevel.WEAK
+
+
 def test_negligible_strength_caps_strong_to_moderate() -> None:
-    finding = make_finding(confidence=0.9).with_confidence_assessment(
-        strength_band_key="negligible",
-        steady_speed=True,
-        has_reference_gaps=False,
-        sensor_count=4,
-    )
+    finding = make_finding(confidence=0.9).with_strength_band("negligible")
     assert finding.confidence_level is ConfidenceLevel.MODERATE
 
 

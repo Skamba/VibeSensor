@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence
+from vibesensor.domain.finding_types import ConfidenceLevel
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.summary.finding_fields import finding_from_payload
 
@@ -18,7 +18,6 @@ class TestFindingDomainObject:
             "expected_is_diagnostic",
             "expected_is_reference",
             "expected_is_info",
-            "expected_confidence_pct",
         ),
         [
             pytest.param(
@@ -31,7 +30,6 @@ class TestFindingDomainObject:
                 True,
                 False,
                 False,
-                85,
                 id="diagnostic-finding",
             ),
             pytest.param(
@@ -39,7 +37,6 @@ class TestFindingDomainObject:
                 False,
                 True,
                 False,
-                None,
                 id="reference-finding",
             ),
             pytest.param(
@@ -47,7 +44,6 @@ class TestFindingDomainObject:
                 False,
                 False,
                 True,
-                None,
                 id="informational-finding",
             ),
         ],
@@ -58,12 +54,10 @@ class TestFindingDomainObject:
         expected_is_diagnostic: bool,
         expected_is_reference: bool,
         expected_is_info: bool,
-        expected_confidence_pct: int | None,
     ) -> None:
         assert finding.is_diagnostic is expected_is_diagnostic
         assert finding.is_reference is expected_is_reference
         assert finding.is_informational is expected_is_info
-        assert finding.confidence_pct == expected_confidence_pct
 
     def test_source_normalized(self) -> None:
         finding = Finding(suspected_source=" Wheel/Tire ")
@@ -108,7 +102,7 @@ class TestFindingDomainObject:
         assert finding.strongest_speed_band == "80-100 km/h"
         assert finding.peaks.classification == "harmonic"
         assert finding.is_diagnostic
-        assert finding.confidence_pct == 85
+        assert finding.confidence_level is ConfidenceLevel.STRONG
 
     def test_from_payload_minimal(self) -> None:
         finding = finding_from_payload({"finding_id": "F001", "suspected_source": "engine"})
@@ -152,19 +146,6 @@ class TestFindingComposition:
         assert finding.location is not None
         assert finding.location.is_well_localized
         assert finding.location.display_location == "Fl Wheel"
-
-    def test_finding_with_confidence_assessment(self) -> None:
-        assessment = ConfidenceAssessment.assess(0.85)
-        finding = Finding(
-            finding_id="F001",
-            suspected_source="wheel/tire",
-            confidence=0.85,
-            confidence_assessment=assessment,
-        )
-
-        assert finding.confidence_assessment is not None
-        assert finding.confidence_assessment.tier == "C"
-        assert finding.confidence_assessment.is_conclusive
 
     def test_finding_from_payload_extracts_evidence(self) -> None:
         finding = finding_from_payload(
@@ -250,7 +231,7 @@ class TestFindingComposition:
         finding = Finding(finding_id="F001")
         assert finding.evidence is None
         assert finding.location is None
-        assert finding.confidence_assessment is None
+        assert finding.negligible_strength is False
 
 
 class TestFindingEnrichments:

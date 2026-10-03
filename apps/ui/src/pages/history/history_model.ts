@@ -141,6 +141,7 @@ const ZONE_KEYS = new Set([
   "rear_right_wheel",
   "front_axle",
   "rear_axle",
+  "all_wheels",
   "engine_bay",
   "driveshaft_tunnel",
   "transmission",

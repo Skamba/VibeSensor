@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 from pypdf import PdfReader
+from test_support.report_rendering import report_pdf_for
 from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
@@ -24,9 +25,6 @@ from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
-from vibesensor.report.document.builder import build_report_document
-from vibesensor.report.pdf.pdf_engine import build_report_pdf
-from vibesensor.report.preparation import prepare_report_input
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 
 _FRAME_N = 256
@@ -221,7 +219,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     }
     assert frame_integrity.get("SUITABILITY_CHECK_FRAME_INTEGRITY") == "pass"
 
-    pdf_bytes = build_report_pdf(build_report_document(prepare_report_input(analysis)))
+    pdf_bytes = report_pdf_for(analysis.to_json_object())
     assert pdf_bytes.startswith(b"%PDF-")
     assert len(pdf_bytes) > 1000
     pdf_text = "\n".join(

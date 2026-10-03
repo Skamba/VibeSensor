@@ -179,6 +179,20 @@ def test_faint_weak_candidate_is_not_a_significant_vibration() -> None:
     assert diagnosis["source"] is None
 
 
+def test_wheel_tone_spread_over_most_corners_is_all_wheels() -> None:
+    finding = _order_finding(
+        "wheel_1x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.32,
+        amps={"Front Left Wheel": 0.03, "Front Right Wheel": 0.028, "Rear Left Wheel": 0.025},
+        weak_spatial=True,
+    )
+    diagnosis = _diagnosis(finding)
+
+    assert diagnosis["zone"] == "all_wheels"
+    assert [row["order_code"] for row in diagnosis["order_findings"]] == ["T1"]
+
+
 def test_moderate_candidate_is_a_fault() -> None:
     finding = _order_finding(
         "wheel_1x",

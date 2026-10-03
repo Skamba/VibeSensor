@@ -66,7 +66,7 @@ The model uses explicit scope boundaries:
 - run diagnostic scope: `TestRun`, `Finding`, `DrivingSegment`,
   `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
   `TestPlan`, `CaptureReadiness`, `CaptureReadinessCheck`
-- finding scope: `ConfidenceAssessment`, `FindingEvidence`, `LocationHotspot`,
+- finding scope: `ConfidenceLevel`, `FindingEvidence`, `LocationHotspot`,
   `VibrationOrigin`
 - capture lifecycle scope: `Run`, `RunStatus`
 - captured evidence/setup scope: `RunCapture`, `RunSetup`, `Measurement`,
@@ -164,11 +164,12 @@ Measurement -> Finding -> Report
 `Car`, `Symptom`, `DrivingSegment`, `Measurement`, `Sensor`,
 `SensorPlacement`, `SpeedSource`, `TestPlan`, `RecommendedAction`,
 `SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
-`ConfigurationSnapshot`, `ConfidenceAssessment`, `LocationHotspot`.
+`ConfigurationSnapshot`, `LocationHotspot`.
 
 ### Domain enums
 
-`VibrationSource`, `FindingKind`, `DrivingPhase`, `SpeedSourceKind`,
+`VibrationSource`, `FindingKind`, `ConfidenceLevel` (Strong / Moderate / Weak, the only
+confidence users see), `DiagnosisVerdict`, `DrivingPhase`, `SpeedSourceKind`,
 `RunStatus`.
 
 ### Domain value objects exported from Car scope

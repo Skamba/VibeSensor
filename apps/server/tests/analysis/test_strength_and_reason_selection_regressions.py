@@ -13,56 +13,16 @@ import pytest
 from vibesensor.analysis._sample_metrics import _effective_baseline_floor
 from vibesensor.analysis._validation import _validate_required_strength_metrics
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.report.presentation import strength_label
 
 # ------------------------------------------------------------------
 # 1. strength_label — NaN guard
 # ------------------------------------------------------------------
 
 
-class TestStrengthLabelNanGuard:
-    """NaN dB value should return 'unknown', not 'negligible'."""
-
-    @pytest.mark.parametrize(
-        "db_value",
-        [float("nan"), float("inf"), None],
-        ids=["nan", "inf", "none"],
-    )
-    def test_invalid_returns_unknown(self, db_value: object) -> None:
-        key, label = strength_label(db_value)
-        assert key == "unknown"
-        assert label == "Unknown"
-
-    def test_valid_db_returns_band(self) -> None:
-        key, _label = strength_label(15.0)
-        assert key != "unknown"
-
-
 # ------------------------------------------------------------------
 # 3. ConfidenceAssessment — NaN confidence guard
 # ------------------------------------------------------------------
-
-
-class TestConfidenceAssessmentNanGuard:
-    """NaN confidence must be clamped to 0, producing CONFIDENCE_LOW + '0%'."""
-
-    def test_nan_confidence_returns_low(self) -> None:
-        ca = ConfidenceAssessment.assess(
-            float("nan"),
-            strength_band_key="moderate",
-        )
-        assert ca.label_key == "CONFIDENCE_LOW"
-        assert ca.pct_text == "0%"
-
-    def test_normal_confidence(self) -> None:
-        ca = ConfidenceAssessment.assess(
-            0.85,
-            strength_band_key="moderate",
-        )
-        assert ca.label_key == "CONFIDENCE_HIGH"
-        assert ca.pct_text == "85%"
 
 
 # ------------------------------------------------------------------

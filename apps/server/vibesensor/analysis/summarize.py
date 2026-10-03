@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from pathlib import Path
 
 from vibesensor.analysis._run_input import build_diagnostics_run_input
-from vibesensor.analysis._run_loader import _load_run as load_run
 from vibesensor.analysis.run_analysis import (
     RunAnalysis,
     build_findings_for_sensor_frames,
@@ -70,26 +68,9 @@ def summarize_run_data(
     )
 
 
-def summarize_log(
-    log_path: Path,
-    lang: str | None = None,
-    include_samples: bool = True,
-) -> AnalysisSummary:
-    """Read a JSONL run file, analyse it, and serialize the boundary summary."""
-    metadata, samples, _warnings = load_run(log_path)
-    return summarize_sensor_frames(
-        metadata,
-        samples,
-        lang=lang,
-        file_name=log_path.name,
-        include_samples=include_samples,
-    )
-
-
 __all__ = [
     "analysis_result_to_summary",
     "build_findings_for_samples",
-    "summarize_log",
     "summarize_run_data",
     "summarize_sensor_frames",
 ]
