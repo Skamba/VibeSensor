@@ -25,10 +25,10 @@ import { RealtimeLiveOverviewPanel } from "./app/views/realtime_live_overview";
 import { RealtimeLoggingPanelView } from "./app/views/realtime_logging_panel";
 import { SensorsPanel } from "./app/views/sensors_panel";
 import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
-import { UpdatePanel } from "./app/views/update_panel";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
+import { Internet, Update } from "./pages/update/Update";
 
 const NAV: Record<ViewId, { tabId: string; labelKey: string }> = {
   dashboardView: { tabId: "tab-dashboard", labelKey: "nav.live" },
@@ -363,10 +363,10 @@ export function App() {
           <SensorsPanel actions={panels.sensors.actions} model={panels.sensors.model} />
         </SettingsTab>
         <SettingsTab id="internetTab">
-          <panels.internet.Panel />
+          <Internet />
         </SettingsTab>
         <SettingsTab id="updateTab">
-          <UpdatePanel actions={panels.update.actions} model={panels.update.model} />
+          <Update />
         </SettingsTab>
         <SettingsTab id="espFlashTab">
           <EspFlash />

@@ -19,7 +19,6 @@ import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
 import { createSpeedSourceFeature } from "./features/speed_source_feature";
-import { createUpdateFeature } from "./features/update_feature";
 import type { FeatureServices } from "./feature_deps_base";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
@@ -37,10 +36,6 @@ import {
   type CarsWizardPanelBridge,
 } from "./views/cars_panel";
 import type { HistoryPanelView } from "./views/history_table_view";
-import {
-  createInternetPanel,
-  type InternetPanelBindings,
-} from "./views/internet_panel";
 import type { RealtimeLiveOverviewBridge } from "./views/realtime_live_overview";
 import type { RealtimeLoggingPanelBridge } from "./views/realtime_logging_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
@@ -49,7 +44,6 @@ import {
   createSpeedSourcePanel,
   type SpeedSourcePanelBindings,
 } from "./views/speed_source_panel";
-import type { UpdatePanelView } from "./views/update_panel";
 import type { VisualVariant } from "./visual_variant";
 import {
   createDeferredModelSignal,
@@ -90,8 +84,6 @@ const carsBindings = {
   wizard: bindings<Omit<CarsWizardPanelBridge, "focus">>(),
 };
 const carsPanel = createCarsPanel(carsBindings);
-const internetBindings = bindings<InternetPanelBindings>();
-const internetPanel = createInternetPanel(internetBindings);
 const speedSourceBindings: SpeedSourcePanelBindings = {
   actions: signal(null),
   diagnostics: createDeferredModelSignal(),
@@ -114,10 +106,8 @@ export const panels = {
     wizard: { ...carsBindings.wizard, focus: carsPanel.focus },
     Panel: carsPanel.Panel,
   },
-  internet: { ...internetBindings, ...internetPanel },
   sensors: bindings<SensorsPanelView>(),
   speedSource: { ...speedSourceBindings, ...speedSourcePanel },
-  update: bindings<UpdatePanelView>(),
 };
 
 // --- Controllers ------------------------------------------------------------
@@ -182,14 +172,6 @@ const cars = createCarsFeature({
   syncAnalysisInputs: analysis.syncSettingsInputs,
   services,
   formatting: { fmt },
-});
-
-const update = createUpdateFeature({
-  panels: { update: panels.update, internet: panels.internet },
-  activeViewId: activeView,
-  activeSettingsTabId: settingsTab,
-  services,
-  queryClient,
 });
 
 const dashboardSpeedSourceStatus = createDashboardSpeedSourceStatusModule({
@@ -305,7 +287,6 @@ export function startFeatures(): void {
   analysis.bindHandlers();
   speedSource.bindHandlers();
   history.bindHandlers();
-  update.bindUpdateHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {
       appState.spectrum.spectrumPlot.value?.resize();

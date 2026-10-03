@@ -139,8 +139,8 @@ browser-side fetch boundary.
   fails unhandled HTTP requests loudly by default, so missing handlers stay
   obvious instead of silently falling through.
 - Keep reusable feature-area handlers under `tests/msw/handlers/`. Organize
-  them by the feature that owns the HTTP surface (`history.ts`, `settings.ts`,
-  `maintenance.ts`) instead of by individual spec files.
+  them by the feature that owns the HTTP surface (`history.ts`, `settings.ts`)
+  instead of by individual spec files.
 - Keep cross-feature HTTP primitives in `tests/msw/http.ts`. That file owns the
   shared origin, route helpers, and any low-level helpers that are reused across
   multiple feature handler modules.
@@ -264,17 +264,12 @@ instead of controller-side variant class interpolation.
   island needs imperative DOM work, keep it narrowly scoped to non-render
   integrations such as download anchors, canvas chart lifecycles, observers, or
   external-library mount points instead of generic HTML/string builder helpers.
-- Expected feature shape is one DOM-free controller module per feature in
-  `app/features/` (for example `cars_feature.ts`, `speed_source_feature.ts`,
-  `update_feature.ts`) that owns the feature's signals, query/polling
-  lifecycles, and commands, calls the `api/*` wrappers directly, and binds the
-  typed actions of its panel bridge. Pure view-model builders for that panel
-  live in one `app/views/*` module next to the Preact surface; a separate
-  derived view-state module is only warranted when the derivation is large and
-  shared across panels (as with `realtime_feature_view_state.ts`), and pure
-  state helpers may sit in one `*_state.ts` module (as with
-  `cars_wizard_state.ts`). View surfaces decode local DOM events into typed
-  actions for the owning controller.
+- Expected page shape is `src/pages/<page>/`: a `<Page>.tsx` component that
+  reads the store's signals and calls its commands, a `<page>_store.ts` that
+  owns signals, polling (`src/poll.ts`), and `api/*` calls, and pure helper
+  modules (for example `esp_flash_model.ts`, `update_model.ts`) for text and
+  state derivations with unit tests. Pre-rewrite features still follow the old
+  controller + presenter + panel-bridge shape until their page moves.
 - Do not add pass-through `*_transport.ts` wrappers, per-feature
   `*Ports`/`*Deps` interfaces, or facade/workflow splits for a single
   implementation. Pass controllers a plain context object; test HTTP by faking
