@@ -111,7 +111,9 @@ def score_locations_in_bin(
     if prefer_wheel:
         wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
         if wheel_ranked:
-            ranked_for_winner = wheel_ranked
+            # A lone wheel sensor is still compared with the strongest other sensor.
+            others = [item for item in ranked_for_winner if not is_wheel_location(item[0])]
+            ranked_for_winner = wheel_ranked + (others[:1] if len(wheel_ranked) == 1 else [])
 
     top_loc, top_amp = ranked_for_winner[0]
     top_count = int(per_loc_sample_counts.get(top_loc, 0))

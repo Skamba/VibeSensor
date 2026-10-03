@@ -49,13 +49,18 @@ SENSORS = (
     BenchSensor("VS-25 front right", "front_right_wheel"),
 )
 
-# Other layouts owners use: one sensor, sensors in the cabin only, or a sensor
-# on every mounting point.
+# Other layouts owners use: one sensor, sensors in the cabin only, one wheel
+# sensor plus the cabin, or a sensor on every mounting point.
 ONE_SENSOR = (BenchSensor("VS-12 front left", "front_left_wheel"),)
 CABIN_ONLY = (
     BenchSensor("VS-50 driver seat", "driver_seat"),
     BenchSensor("VS-07 trunk", "trunk"),
     BenchSensor("VS-61 passenger seat", "front_passenger_seat"),
+)
+ONE_WHEEL_AND_CABIN = (
+    BenchSensor("VS-12 front left", "front_left_wheel"),
+    BenchSensor("VS-50 driver seat", "driver_seat"),
+    BenchSensor("VS-07 trunk", "trunk"),
 )
 EVERY_MOUNT = (
     *SENSORS,
@@ -485,6 +490,17 @@ BENCH_CASES = (
             weak_reasons=frozenset({"spread_across_locations"}),
         ),
         layout=CABIN_ONLY,
+    ),
+    # One wheel sensor plus two in the cabin: the faulty wheel is the one with a
+    # sensor, and it stands out from the cabin.
+    Case(
+        "bench-one-wheel-and-cabin-front-left-wheel-sweep",
+        _sweep(
+            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
+            _ov("body", "wheel_imbalance", 0.12, 1.0),
+        ),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        layout=ONE_WHEEL_AND_CABIN,
     ),
     # A sensor on every mounting point: road noise everywhere is still no fault,
     # and a wheel fault still stands out at its corner.
