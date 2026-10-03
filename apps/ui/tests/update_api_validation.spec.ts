@@ -6,10 +6,9 @@ import {
   getUpdateStatus,
 } from "../src/api/settings";
 import { installWindowGlobal } from "./async_test_helpers";
-import { HttpResponse, http, uiTestUrl } from "./msw/http";
-import { createUiMswTestServer } from "./msw/node";
+import { json, route, stubFetch } from "./fetch_stub";
 
-const mswServer = createUiMswTestServer();
+const server = stubFetch();
 
 function makeUpdateStatusPayload() {
   return {
@@ -116,10 +115,8 @@ describe("update HTTP runtime boundary validation", () => {
   });
 
   test("accepts a schema-valid update status response", async () => {
-    mswServer.use(
-      http.get(uiTestUrl("/api/update/status"), () =>
-        HttpResponse.json(makeUpdateStatusPayload()),
-      ),
+    server.use(
+      route("GET /api/update/status", () => json(makeUpdateStatusPayload())),
     );
 
     await expect(getUpdateStatus()).resolves.toMatchObject({
@@ -129,9 +126,9 @@ describe("update HTTP runtime boundary validation", () => {
   });
 
   test("rejects malformed update status payloads at the API boundary", async () => {
-    mswServer.use(
-      http.get(uiTestUrl("/api/update/status"), () =>
-        HttpResponse.json({ ...makeUpdateStatusPayload(), state: "checking" }),
+    server.use(
+      route("GET /api/update/status", () =>
+        json({ ...makeUpdateStatusPayload(), state: "checking" }),
       ),
     );
 
@@ -141,9 +138,9 @@ describe("update HTTP runtime boundary validation", () => {
   });
 
   test("rejects malformed health payloads at the API boundary", async () => {
-    mswServer.use(
-      http.get(uiTestUrl("/api/health"), () =>
-        HttpResponse.json({
+    server.use(
+      route("GET /api/health", () =>
+        json({
           ...makeHealthPayload(),
           data_loss: {
             ...makeHealthPayload().data_loss,
@@ -159,9 +156,9 @@ describe("update HTTP runtime boundary validation", () => {
   });
 
   test("rejects malformed USB internet payloads at the API boundary", async () => {
-    mswServer.use(
-      http.get(uiTestUrl("/api/update/internet-status"), () =>
-        HttpResponse.json({
+    server.use(
+      route("GET /api/update/internet-status", () =>
+        json({
           ...makeUsbInternetStatusPayload(),
           ipv4_addresses: ["10.0.0.2", 42],
         }),

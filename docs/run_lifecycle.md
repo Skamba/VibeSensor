@@ -132,8 +132,8 @@ centralized:
 | post-analysis pending/ready/degraded | persisted `RunStatus` plus stored analysis/corruption state | `PostAnalysisWorker` + `execute_post_analysis()` + history DB lifecycle writes |
 | report ready/degraded | derived directly from post-analysis readiness | `RunArtifactLifecycle` projection only |
 
-History DB queries, history HTTP payloads, report loading, and history UI
-presenters should consume that derived lifecycle object instead of rebuilding
+History DB queries, history HTTP payloads, report loading, and the History
+page should consume that derived lifecycle object instead of rebuilding
 their own readiness heuristics.
 
 ## Persistence and retry rules

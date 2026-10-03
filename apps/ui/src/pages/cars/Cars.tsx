@@ -3,12 +3,7 @@ import { t } from "../../i18n";
 import { carSelection, carSettings } from "../../settings_store";
 import { CarWizard } from "./CarWizard";
 import { carRows, guidance, type InlineState } from "./car_list_model";
-import {
-  activateCar,
-  completeCar,
-  deleteCar,
-  highlighted,
-} from "./cars_store";
+import { activateCar, completeCar, deleteCar, highlighted } from "./cars_store";
 import { openWizard } from "./wizard_store";
 
 function InlineStatePanel(props: {
@@ -28,7 +23,9 @@ function InlineStatePanel(props: {
     >
       <strong class="empty-state__title">{state.title}</strong>
       <span class="empty-state__body">{state.body}</span>
-      {state.detail ? <span class="empty-state__detail">{state.detail}</span> : null}
+      {state.detail ? (
+        <span class="empty-state__detail">{state.detail}</span>
+      ) : null}
       {action ? (
         <div class="empty-state__actions">
           <button
@@ -101,8 +98,12 @@ function CarTableBody() {
               </div>
               {row.type || row.variant ? (
                 <div class="car-row__meta">
-                  {row.type ? <span class="car-row__type">{row.type}</span> : null}
-                  {row.variant ? <span class="car-row__variant">{row.variant}</span> : null}
+                  {row.type ? (
+                    <span class="car-row__type">{row.type}</span>
+                  ) : null}
+                  {row.variant ? (
+                    <span class="car-row__variant">{row.variant}</span>
+                  ) : null}
                 </div>
               ) : null}
               <div class="car-status-stack">
@@ -124,7 +125,9 @@ function CarTableBody() {
                   </span>
                 ) : null}
               </div>
-              {row.detail ? <span class="subtle car-row__detail">{row.detail}</span> : null}
+              {row.detail ? (
+                <span class="subtle car-row__detail">{row.detail}</span>
+              ) : null}
             </div>
           </td>
           <td>
@@ -180,7 +183,12 @@ export function Cars() {
       <div class="panel card">
         <div class="car-tab-header">
           <strong>{t("settings.car.manage")}</strong>
-          <button id="addCarBtn" class="btn btn--success" onClick={() => void openWizard()}>
+          <button
+            id="addCarBtn"
+            type="button"
+            class="btn btn--success"
+            onClick={() => void openWizard()}
+          >
             {t("settings.car.add_new")}
           </button>
         </div>

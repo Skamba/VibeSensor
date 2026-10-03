@@ -6,10 +6,9 @@ import {
   installTimerHarness,
   installWindowGlobal,
 } from "./async_test_helpers";
-import { HttpResponse, http, uiTestUrl } from "./msw/http";
-import { createUiMswTestServer } from "./msw/node";
+import { json, route, stubFetch } from "./fetch_stub";
 
-const mswServer = createUiMswTestServer();
+const server = stubFetch();
 
 describe("apiJson", () => {
   beforeEach(() => {
@@ -21,14 +20,14 @@ describe("apiJson", () => {
     const originalClearTimeout = globalThis.clearTimeout;
     const externalController = new AbortController();
 
-    mswServer.use(
-      http.get(
-        uiTestUrl("/timeout/no-signal"),
-        async () => await new Promise<HttpResponse<never>>(() => undefined),
+    server.use(
+      route(
+        "GET /timeout/no-signal",
+        async () => await new Promise<Response>(() => undefined),
       ),
-      http.get(
-        uiTestUrl("/timeout/with-signal"),
-        async () => await new Promise<HttpResponse<never>>(() => undefined),
+      route(
+        "GET /timeout/with-signal",
+        async () => await new Promise<Response>(() => undefined),
       ),
     );
     globalThis.setTimeout = ((handler: TimerHandler) => {
@@ -55,11 +54,11 @@ describe("apiJson", () => {
 
   test("supports custom timeout overrides and clears their timers after a successful response", async () => {
     const timerHarness = installTimerHarness();
-    const response = createDeferred<HttpResponse<{ ok: boolean }>>();
+    const response = createDeferred<Response>();
     let requestedPath = "";
     let requestedMethod = "";
-    mswServer.use(
-      http.post(uiTestUrl("/timeout/custom"), async ({ request }) => {
+    server.use(
+      route("POST /timeout/custom", async (request) => {
         requestedPath = new URL(request.url).pathname;
         requestedMethod = request.method;
         return await response.promise;
@@ -74,7 +73,7 @@ describe("apiJson", () => {
 
       expect(timerHarness.pendingDelays()).toEqual([20_000]);
 
-      response.resolve(HttpResponse.json({ ok: true }));
+      response.resolve(json({ ok: true }));
       await expect(request).resolves.toEqual({ ok: true });
       expect(requestedPath).toBe("/timeout/custom");
       expect(requestedMethod).toBe("POST");
@@ -86,12 +85,9 @@ describe("apiJson", () => {
 
   test("settings OBD scan uses the extended scan timeout without wall-clock delay", async () => {
     const timerHarness = installTimerHarness();
-    const response = createDeferred<HttpResponse<{ devices: [] }>>();
-    mswServer.use(
-      http.post(
-        uiTestUrl("/api/settings/obd/scan"),
-        async () => await response.promise,
-      ),
+    const response = createDeferred<Response>();
+    server.use(
+      route("POST /api/settings/obd/scan", async () => await response.promise),
     );
 
     try {
@@ -99,7 +95,7 @@ describe("apiJson", () => {
 
       expect(timerHarness.pendingDelays()).toEqual([20_000]);
 
-      response.resolve(HttpResponse.json({ devices: [] }));
+      response.resolve(json({ devices: [] }));
       await expect(request).resolves.toEqual({ devices: [] });
       expect(timerHarness.pendingDelays()).toEqual([]);
     } finally {
@@ -193,26 +189,26 @@ describe("apiJson", () => {
   });
 
   test("handles 204, text response, invalid JSON and non-2xx JSON detail", async () => {
-    mswServer.use(
-      http.get(
-        uiTestUrl("/status204"),
-        () => new HttpResponse(null, { status: 204, statusText: "No Content" }),
+    server.use(
+      route(
+        "GET /status204",
+        () => new Response(null, { status: 204, statusText: "No Content" }),
       ),
-      http.get(
-        uiTestUrl("/text-ok"),
-        () => new HttpResponse("plain-text", { status: 200, statusText: "OK" }),
+      route(
+        "GET /text-ok",
+        () => new Response("plain-text", { status: 200, statusText: "OK" }),
       ),
-      http.get(
-        uiTestUrl("/invalid-json"),
+      route(
+        "GET /invalid-json",
         () =>
-          new HttpResponse("{nope", {
+          new Response("{nope", {
             status: 200,
             statusText: "OK",
             headers: { "content-type": "application/json" },
           }),
       ),
-      http.get(uiTestUrl("/error-json"), () =>
-        HttpResponse.json(
+      route("GET /error-json", () =>
+        json(
           { detail: "bad request detail" },
           { status: 400, statusText: "Bad Request" },
         ),

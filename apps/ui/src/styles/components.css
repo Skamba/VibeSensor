@@ -300,29 +300,6 @@ button[hidden],
 .stat__value[data-variant] {
   color: var(--variant-text);
 }
-.stat__value[data-has-icon="true"] {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-.stat__value-icon {
-  flex: 0 0 auto;
-  width: 1.25rem;
-  height: 1.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1;
-  margin-top: 2px;
-}
-.stat__value-icon[data-variant] {
-  border: 1px solid var(--variant-border);
-  background: var(--variant-surface);
-  color: var(--variant-text);
-}
 
 .app-modal-layer {
   position: fixed;

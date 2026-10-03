@@ -182,8 +182,8 @@ reports contract drift.
 
 For frontend runtime validation policy, treat generated HTTP/WS TypeScript types
 as compile-time contracts only. At owned server-controlled runtime boundaries,
-parse once, validate once, and only then hand typed data to features or
-presenters. Use the Valibot patterns documented in
+parse once, validate once, and only then hand typed data to page stores or
+models. Use the Valibot patterns documented in
 [apps/ui/README.md#http-runtime-boundary-validation](apps/ui/README.md#http-runtime-boundary-validation)
 unless a hot-path custom validator is explicitly justified.
 

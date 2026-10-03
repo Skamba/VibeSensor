@@ -74,8 +74,8 @@ UI typecheck, tests, and builds use the committed files and need only Node.
 
 ## Code Quality
 
-- `npm run lint` checks the hand-written TypeScript, config, and support scripts
-  with Biome.
+- `npm run lint` checks the hand-written TypeScript/TSX, config, and support
+  scripts with Biome (recommended rules, including the a11y set for TSX).
 - `npm run lint:deps` runs dependency-cruiser: pages must not import other
   pages.
 - `npm run lint:unused` runs knip's dead-file, dependency, and cleaned-up unused
@@ -164,7 +164,7 @@ a few frames per second is cheap).
   behaviour belongs in the Playwright journeys.
 - No pass-through wrappers, per-feature `*Ports`/`*Deps` interfaces, or
   facades for a single implementation. Test HTTP by faking the `api/*` module
-  (or MSW when the real request matters).
+  (or `tests/fetch_stub.ts` when the real request matters).
 - Generated HTTP/WS contracts stay behind `api/*.ts` + `api/types.ts`,
   `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
   `ws_payload_validator.ts`; other code imports those, not `src/generated/` or
@@ -182,44 +182,14 @@ a few frames per second is cheap).
 - **Auto theme** — follows system light/dark preference
 - **Demo mode** — `?demo` shows canned live data without a server
 
-## HTTP boundary tests with MSW
+## HTTP boundary tests
 
-Use `msw` as the shared HTTP mocking layer for UI tests that exercise the real
-browser-side fetch boundary.
-
-- Install the shared Node-side lifecycle from `tests/msw/node.ts` whenever the
-  spec calls the real UI HTTP client or otherwise exercises the fetch boundary.
-  The harness normalizes relative `/api/...` requests onto the test origin and
-  fails unhandled HTTP requests loudly by default, so missing handlers stay
-  obvious instead of silently falling through.
-- Keep reusable feature-area handlers under `tests/msw/handlers/`. Organize
-  them by the feature that owns the HTTP surface (for example `settings.ts`)
-  instead of by individual spec files.
-- Keep cross-feature HTTP primitives in `tests/msw/http.ts`. That file owns the
-  shared origin, route helpers, and any low-level helpers that are reused across
-  multiple feature handler modules.
-- Name reusable handler composition helpers `build<Feature>Handlers(...)` or
-  `build<Feature><Scenario>Handlers(...)` when a feature needs a narrower
-  scenario bundle. Name payload builders `make<Feature><Thing>Payload(...)` so
-  handlers and callers read consistently.
-- Prefer composing a realistic scenario from those shared builders over
-  redefining ad hoc `fetch` replacements inside one spec. Reuse existing
-  contract-shaped payload builders instead of inventing mock-only response
-  shapes.
-
-Use MSW when the behavior under test depends on the real HTTP boundary:
-
-- request URLs, methods, payloads, or status handling matter
-- the feature should exercise the actual `fetch`/API wrapper path end to end
-- one shared handler can serve multiple specs in the same feature area
-
-Do **not** use MSW when the test is already below the network seam:
-
-- pure presenters, state derivations, and DOM-only views should stay network-free
-- tests that only need canned or deferred responses should fake the `api/*`
-  wrapper module (`vi.mock("../src/api/settings", ...)`) instead of layering on MSW
-- WebSocket behavior is separate; keep using the existing fake WebSocket helpers
-  for live-session flows instead of trying to route WS traffic through MSW
+Tests of the `api/*` wrappers that need the real `fetch` path (status codes,
+timeouts, request bodies) use `tests/fetch_stub.ts`: `stubFetch().use(route("GET
+/api/health", () => json({...})))`. Unrouted requests fail loudly, and an
+aborted signal rejects the call like a real `fetch`. Tests above the network
+seam fake the `api/*` module instead, and Playwright journeys mock HTTP with
+`page.route` and WebSocket traffic with the fake socket in `tests/smoke.helpers.ts`.
 
 ## WebSocket contract boundary
 
@@ -284,7 +254,9 @@ Vitest auto-discovers `tests/**/*.spec.ts` and excludes the Playwright-owned
 logic-level tests should land as `tests/<feature>_*.spec.ts`. Page journeys
 live in `tests/smoke.<page>.spec.ts`; `tests/smoke.critical.spec.ts` keeps the
 cross-page boot/record/history flows (`npx playwright install chromium` once,
-then `npm run test:smoke`).
+then `npm run test:smoke`). The journeys start a Vite dev server on port 4173,
+or reuse one already there; set `PLAYWRIGHT_SMOKE_PORT` to run several
+worktrees side by side.
 
 ## Unit tests
 

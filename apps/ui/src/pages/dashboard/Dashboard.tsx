@@ -12,7 +12,11 @@ import {
   stopRecording,
 } from "./dashboard_store";
 
-function Stat(props: { id?: string; labelKey: string; children: ComponentChildren }) {
+function Stat(props: {
+  id?: string;
+  labelKey: string;
+  children: ComponentChildren;
+}) {
   return (
     <div id={props.id} class="stat">
       <div class="stat__label">{t(props.labelKey)}</div>
@@ -72,7 +76,9 @@ function Overview() {
       <div id="liveSensorRoster" class="live-sensor-roster">
         {model.sensors.length > 0 ? (
           model.sensors.map((sensor) => {
-            const statusText = t(sensor.connected ? "status.online" : "status.offline");
+            const statusText = t(
+              sensor.connected ? "status.online" : "status.offline",
+            );
             return (
               <article
                 key={sensor.id}
@@ -100,7 +106,10 @@ function Overview() {
   );
 }
 
-function Summary(props: { model: RecordingModel; onAction: (action: SummaryAction) => void }) {
+function Summary(props: {
+  model: RecordingModel;
+  onAction: (action: SummaryAction) => void;
+}) {
   const { summaryPanel: panel, summaryText } = props.model;
   return (
     <div
@@ -110,17 +119,23 @@ function Summary(props: { model: RecordingModel; onAction: (action: SummaryActio
       data-summary-layout={panel ? "panel" : undefined}
     >
       {panel ? (
-        <div class={`empty-state empty-state--inline${panel.action ? " empty-state--actionable" : ""}`}>
+        <div
+          class={`empty-state empty-state--inline${panel.action ? " empty-state--actionable" : ""}`}
+        >
           <strong class="empty-state__title">{panel.title}</strong>
           <span class="empty-state__body">{panel.body}</span>
-          {panel.detail ? <span class="empty-state__detail">{panel.detail}</span> : null}
+          {panel.detail ? (
+            <span class="empty-state__detail">{panel.detail}</span>
+          ) : null}
           {panel.action ? (
             <div class="empty-state__actions">
               <button
                 type="button"
                 class={`btn btn--${panel.action.variant}`}
                 data-inline-state-action={panel.action.action}
-                onClick={() => panel.action && props.onAction(panel.action.action)}
+                onClick={() =>
+                  panel.action && props.onAction(panel.action.action)
+                }
               >
                 {panel.action.label}
               </button>
@@ -162,16 +177,28 @@ function Progress(props: { model: RecordingModel }) {
           </div>
         </div>
       </div>
-      <div id="loggingChecklist" class="capture-readiness" hidden={model.checklist === null}>
+      <div
+        id="loggingChecklist"
+        class="capture-readiness"
+        hidden={model.checklist === null}
+      >
         {model.checklist ? (
           <>
-            <div class="capture-readiness__title">{t("dashboard.capture_readiness.title")}</div>
+            <div class="capture-readiness__title">
+              {t("dashboard.capture_readiness.title")}
+            </div>
             <div class="capture-readiness__list">
               {model.checklist.map((item) => (
-                <div key={item.checkKey} class="capture-readiness__item" data-readiness-state={item.state}>
+                <div
+                  key={item.checkKey}
+                  class="capture-readiness__item"
+                  data-readiness-state={item.state}
+                >
                   <div class="capture-readiness__row">
                     <span class="capture-readiness__label">{item.label}</span>
-                    <span class="capture-readiness__state">{item.stateText}</span>
+                    <span class="capture-readiness__state">
+                      {item.stateText}
+                    </span>
                   </div>
                   <div class="capture-readiness__detail">{item.detail}</div>
                 </div>
@@ -194,14 +221,20 @@ function Recording(props: { onAddCar: () => void }) {
     }
   };
   return (
-    <div class="realtime-logging-shell" data-layout={model.setupMode ? "setup" : undefined}>
+    <div
+      class="realtime-logging-shell"
+      data-layout={model.setupMode ? "setup" : undefined}
+    >
       <div class="card__header card__header--stack">
         <div>
           <div class="card__title">{t("dashboard.run_recording")}</div>
           <Summary model={model} onAction={onAction} />
         </div>
       </div>
-      <div class="logging-row" hidden={!model.showPill && model.runIdText === ""}>
+      <div
+        class="logging-row"
+        hidden={!model.showPill && model.runIdText === ""}
+      >
         <span
           id="loggingStatus"
           class="pill"
@@ -243,7 +276,10 @@ function Recording(props: { onAddCar: () => void }) {
 }
 
 /** The Live view: overview, spectrum (passed in by the shell), and recording. */
-export function Dashboard(props: { spectrum: ComponentChildren; onAddCar: () => void }) {
+export function Dashboard(props: {
+  spectrum: ComponentChildren;
+  onAddCar: () => void;
+}) {
   return (
     <div class="dashboard-grid">
       <div class="panel card dashboard-grid__overview">
