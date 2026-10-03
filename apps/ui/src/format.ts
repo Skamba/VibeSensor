@@ -46,3 +46,38 @@ export function speedUnitKey(unit: SpeedUnit): string {
 export function kmhInUnit(speedKmh: number, unit: SpeedUnit): number {
   return unit === "mps" ? speedKmh / 3.6 : speedKmh;
 }
+
+type Translate = (key: string, vars?: Record<string, unknown>) => string;
+
+/** A speed given in km/h as text in the display unit ("85 km/h", "23.6 m/s"). */
+export function formatSpeed(
+  speedKmh: number | null | undefined,
+  unit: SpeedUnit,
+  t: Translate,
+  digits: number,
+): string {
+  if (typeof speedKmh !== "number" || !Number.isFinite(speedKmh)) {
+    return "--";
+  }
+  return `${fmt(kmhInUnit(speedKmh, unit), digits)} ${t(speedUnitKey(unit))}`;
+}
+
+/** A km/h speed range in the display unit ("60–110 km/h"); null when an end is unknown. */
+export function formatSpeedRange(
+  lowKmh: number | null | undefined,
+  highKmh: number | null | undefined,
+  unit: SpeedUnit,
+  t: Translate,
+): string | null {
+  if (
+    typeof lowKmh !== "number" ||
+    typeof highKmh !== "number" ||
+    !Number.isFinite(lowKmh) ||
+    !Number.isFinite(highKmh)
+  ) {
+    return null;
+  }
+  const low = fmt(kmhInUnit(lowKmh, unit), 0);
+  const high = fmt(kmhInUnit(highKmh, unit), 0);
+  return `${low}–${high} ${t(speedUnitKey(unit))}`;
+}

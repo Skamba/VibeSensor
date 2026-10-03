@@ -3,7 +3,18 @@ import type {
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
 } from "../../api/types";
-import { HISTORY_HEATMAP_POSITIONS } from "../../config";
+import {
+  GUIDED_SWEEP_FROM_KMH,
+  GUIDED_SWEEP_TO_KMH,
+  HISTORY_HEATMAP_POSITIONS,
+} from "../../config";
+import {
+  formatSpeed,
+  formatSpeedRange,
+  kmhInUnit,
+  type SpeedUnit,
+  speedUnitKey,
+} from "../../format";
 
 /** Pure view models for the History page: run rows and the expanded diagnosis. */
 
@@ -14,6 +25,7 @@ export interface Formatters {
   fmt: (value: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
   formatInt: (value: number) => string;
+  speedUnit: SpeedUnit;
 }
 
 /** Per-run loading state for the diagnosis preview, full insights, and PDF. */
@@ -206,7 +218,7 @@ function signatureText(finding: Finding, fmt: Formatters["fmt"]): string {
 
 function diagnosisSignature(
   diagnosis: Diagnosis,
-  fmt: Formatters["fmt"],
+  f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
 ): string {
   const parts: string[] = [];
   if (diagnosis.order_code) {
@@ -215,9 +227,9 @@ function diagnosisSignature(
   if (diagnosis.frequency_hz != null) {
     const at =
       diagnosis.reference_speed_kmh != null
-        ? ` @ ${fmt(diagnosis.reference_speed_kmh, 0)} km/h`
+        ? ` @ ${formatSpeed(diagnosis.reference_speed_kmh, f.speedUnit, f.t, 0)}`
         : "";
-    parts.push(`${fmt(diagnosis.frequency_hz, 1)} Hz${at}`);
+    parts.push(`${f.fmt(diagnosis.frequency_hz, 1)} Hz${at}`);
   }
   return parts.join(" · ") || "--";
 }
@@ -232,11 +244,27 @@ function zoneText(diagnosis: Diagnosis, t: Translate): string {
 function speedRangeText(
   low: number | null | undefined,
   high: number | null | undefined,
-  f: Pick<Formatters, "fmt" | "t">,
+  f: Pick<Formatters, "t" | "speedUnit">,
 ): string {
-  return low != null && high != null
-    ? `${f.fmt(low, 0)}–${f.fmt(high, 0)} km/h`
-    : f.t("report.missing");
+  return formatSpeedRange(low, high, f.speedUnit, f.t) ?? f.t("report.missing");
+}
+
+/** The analysis labels speed bands "80-90 km/h" (or "80 km/h"). */
+const KMH_BAND_RE = /^(\d+(?:\.\d+)?)(?:-(\d+(?:\.\d+)?))? km\/h$/;
+
+/** A server speed-band label in the display unit; unknown shapes pass through. */
+export function speedBandLabel(
+  label: string,
+  f: Pick<Formatters, "t" | "speedUnit">,
+): string {
+  const match = KMH_BAND_RE.exec(label.trim());
+  if (!match) {
+    return label;
+  }
+  const low = Number(match[1]);
+  return match[2] === undefined
+    ? formatSpeed(low, f.speedUnit, f.t, 0)
+    : (formatSpeedRange(low, Number(match[2]), f.speedUnit, f.t) ?? label);
 }
 
 function locationText(
@@ -254,13 +282,11 @@ function locationText(
 function speedBandText(
   finding: Finding,
   summary: HistoryInsightsPayload,
-  t: Translate,
+  f: Pick<Formatters, "t" | "speedUnit">,
 ): string {
-  return (
-    finding.strongest_speed_band ||
-    summary.most_likely_origin?.speed_band ||
-    t("report.missing")
-  );
+  const band =
+    finding.strongest_speed_band || summary.most_likely_origin?.speed_band;
+  return band ? speedBandLabel(band, f) : f.t("report.missing");
 }
 
 export function postAnalysisReady(run: HistoryEntry): boolean {
@@ -432,7 +458,7 @@ function secondaryFinding(
     tone: levelTone(finding.confidence_level),
     signature: signatureText(finding, f.fmt),
     location: locationText(finding, summary, f.t),
-    speedBand: speedBandText(finding, summary, f.t),
+    speedBand: speedBandText(finding, summary, f),
     evidence: String(finding.evidence_summary ?? ""),
   };
 }
@@ -478,7 +504,7 @@ function diagnosisCard(
   return {
     eyebrow: t(weak ? "history.verdict.eyebrow" : "history.primary_diagnosis"),
     headline: weak ? t("history.verdict.weak_evidence") : source,
-    signature: diagnosisSignature(diagnosis, f.fmt),
+    signature: diagnosisSignature(diagnosis, f),
     confidence: [
       confidenceText(level, t),
       level ? t(`history.confidence_meaning.${level}`) : "",
@@ -505,16 +531,27 @@ function diagnosisCard(
       },
       {
         label: t("history.findings_signature"),
-        value: diagnosisSignature(diagnosis, f.fmt),
+        value: diagnosisSignature(diagnosis, f),
       },
     ],
     nextStepLabel: t(
       weak ? "history.recapture_label" : "history.findings_next_step_label",
     ),
     nextStep: weak
-      ? t("history.recapture_recipe")
+      ? recaptureRecipe(f)
       : t("history.findings_next_step", { location: zone }),
   };
+}
+
+function recaptureRecipe(
+  f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
+): string {
+  const speed = (kmh: number) => f.fmt(kmhInUnit(kmh, f.speedUnit), 0);
+  return f.t("history.recapture_recipe", {
+    from: speed(GUIDED_SWEEP_FROM_KMH),
+    to: speed(GUIDED_SWEEP_TO_KMH),
+    unit: f.t(speedUnitKey(f.speedUnit)),
+  });
 }
 
 function insightsModel(detail: RunDetail, f: Formatters): InsightsModel {

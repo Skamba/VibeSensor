@@ -72,6 +72,7 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 - Don't hardcode hex/rgba values inside feature logic.
 - Don't introduce alternate visual systems per page.
 - Don't compute strength metrics in client-side UI code (guardrail enforced by tests).
+- Do show speeds through the `apps/ui/src/format.ts` speed helpers (`formatSpeed`, `formatSpeedRange`), so they follow the km/h / m/s setting. Don't hard-code `km/h` next to a shown speed. The manual-speed input and the PDF report stay in km/h.
 
 ## PDF Report Layout
 
