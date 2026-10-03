@@ -212,7 +212,9 @@ sync, sample-clock `t0_us`), so recordings are raw-backed like real hardware;
 start recording about 10 s after the sensors connect so clock sync has been
 applied. Wheel, driveshaft, and engine order tones follow the server's active
 car (tire size, final drive, gear); pass `--no-car-sync` to keep the default
-car profile.
+car profile. Each scenario injects only its fault's order tones (with weaker
+transfer to nearby sensors); every other sensor carries broadband road noise
+and impacts, so `road-fixed` and `pothole-recovery-loop` are truly fault-free.
 
 ## Deploying to Raspberry Pi
 

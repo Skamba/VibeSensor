@@ -38,7 +38,6 @@ def apply_one_wheel_mild_scenario(clients: Sequence[SimClient], fault_wheel: str
             client.scene_noise_gain = 1.04
             client.amp_scale = 1.0
             client.noise_scale = 1.04
-            client.common_event_gain = 0.12
             client.pulse(0.40)
         else:
             coupling = _cross_corner_coupling(fault_wheel, client.name)
@@ -48,35 +47,38 @@ def apply_one_wheel_mild_scenario(clients: Sequence[SimClient], fault_wheel: str
             client.scene_noise_gain = 0.96 + 0.12 * coupling
             client.amp_scale = 0.58 + 0.30 * coupling
             client.noise_scale = 0.96 + 0.06 * coupling
-            client.common_event_gain = 0.05 + 0.05 * coupling
 
 
 def apply_road_fixed_scenario(clients: Sequence[SimClient]) -> None:
-    """Apply a deterministic baseline road scene for scripted scenarios.
+    """Apply a deterministic fault-free road scene.
 
     Unlike the ``road`` scenario, this does NOT start a background randomizer
     loop.  All clients receive identical, stable gains that produce a mild
-    road-noise baseline without stochastic scene transitions.  This makes
-    scripted multi-phase runs fully reproducible.
+    broadband road-noise baseline (no order tones) without stochastic scene
+    transitions.
     """
     for client in clients:
         client.profile_name = "rough_road"
         client.scene_mode = "road-fixed"
         client.scene_gain = 0.28
         client.scene_noise_gain = 1.02
-        client.common_event_gain = 0.10
         client.amp_scale = 0.52
         client.noise_scale = 1.00
 
 
 def apply_engine_order_scenario(clients: Sequence[SimClient]) -> None:
-    """Apply a deterministic engine-order scenario across all sensors."""
+    """Apply a deterministic engine-order fault, strongest near the engine.
+
+    Every sensor carries the engine tone (it travels through the body), but the
+    front-axle sensors sit closest to the engine bay and read it strongest.
+    """
     for client in clients:
+        slot = _normalize_wheel_slot(client.name)
+        near_engine = slot is not None and slot.startswith("front-")
         client.profile_name = "engine_order"
         client.scene_mode = "engine-order"
-        client.scene_gain = 0.74
+        client.scene_gain = 0.74 if near_engine else 0.42
         client.scene_noise_gain = 1.02
-        client.common_event_gain = 0.10
         client.amp_scale = 0.94
         client.noise_scale = 0.98
 

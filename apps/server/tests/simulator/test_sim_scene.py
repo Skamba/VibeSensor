@@ -14,7 +14,6 @@ class _FakeSimClient:
         self.scene_mode = ""
         self.scene_gain = 0.0
         self.scene_noise_gain = 0.0
-        self.common_event_gain = 0.0
         self.amp_scale = 0.0
         self.noise_scale = 0.0
         self.bump_state = np.zeros(3, dtype=np.float32)
@@ -38,4 +37,3 @@ def test_single_active_keeps_non_active_clients_alive() -> None:
     assert len(active_clients) == 1
     for client in [client for client in clients if client.profile_name != "wheel_mild_imbalance"]:
         assert client.scene_gain >= 0.35
-        assert client.common_event_gain >= 0.10

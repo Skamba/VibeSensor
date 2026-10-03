@@ -66,6 +66,9 @@ class Profile:
     reference_speed_kmh: float | None = None
 
 
+# A profile only carries the tones of the source it simulates. Road and body
+# profiles are broadband noise plus impacts: a healthy car has no order tones,
+# so fault-free sensors and scenarios stay free of wheel/driveshaft/engine orders.
 PROFILE_LIBRARY: dict[str, Profile] = {
     "engine_idle": Profile(
         name="engine_idle",
@@ -84,10 +87,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     "engine_order": Profile(
         name="engine_order",
         tones=(),
+        # A 4-stroke 4-cylinder fires twice per crank revolution, so its
+        # load-dependent vibration is dominated by the 2nd engine order (E2).
         order_tones=(
-            ("engine_1x", 1.0, (185.0, 128.0, 248.0)),
-            ("engine_2x", 1.0, (62.0, 46.0, 92.0)),
-            ("engine_1x", 0.5, (30.0, 22.0, 44.0)),
+            ("engine_2x", 1.0, (185.0, 128.0, 248.0)),
+            ("engine_1x", 1.0, (62.0, 46.0, 92.0)),
         ),
         noise_std=18.0,
         bump_probability=0.001,
@@ -99,11 +103,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "rough_road": Profile(
         name="rough_road",
-        tones=(
-            (8.0, (80.0, 90.0, 130.0)),
-            (15.0, (105.0, 95.0, 140.0)),
-            (34.0, (55.0, 45.0, 85.0)),
-        ),
+        tones=(),
         noise_std=28.0,
         bump_probability=0.012,
         bump_decay=0.92,
@@ -117,7 +117,6 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         order_tones=(
             ("wheel_1x", 1.0, (220.0, 125.0, 170.0)),
             ("wheel_2x", 1.0, (80.0, 52.0, 72.0)),
-            ("wheel_1x", 0.52, (24.0, 18.0, 30.0)),
         ),
         noise_std=24.0,
         bump_probability=0.004,
@@ -133,7 +132,6 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         order_tones=(
             ("wheel_1x", 1.0, (105.0, 62.0, 80.0)),
             ("wheel_2x", 1.0, (28.0, 18.0, 24.0)),
-            ("wheel_1x", 0.52, (8.0, 6.0, 10.0)),
         ),
         noise_std=14.0,
         bump_probability=0.001,
@@ -143,13 +141,24 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         modulation_depth=0.08,
         reference_speed_kmh=DEFAULT_SPEED_KMH,
     ),
+    "driveshaft_imbalance": Profile(
+        name="driveshaft_imbalance",
+        tones=(),
+        order_tones=(
+            ("shaft_1x", 1.0, (150.0, 120.0, 190.0)),
+            ("shaft_1x", 2.0, (45.0, 36.0, 60.0)),
+        ),
+        noise_std=20.0,
+        bump_probability=0.002,
+        bump_decay=0.95,
+        bump_strength=(18.0, 15.0, 26.0),
+        modulation_hz=0.2,
+        modulation_depth=0.10,
+        reference_speed_kmh=DEFAULT_SPEED_KMH,
+    ),
     "rear_body": Profile(
         name="rear_body",
-        tones=(
-            (6.5, (70.0, 88.0, 120.0)),
-            (14.0, (48.0, 60.0, 82.0)),
-            (28.0, (34.0, 28.0, 50.0)),
-        ),
+        tones=(),
         noise_std=22.0,
         bump_probability=0.006,
         bump_decay=0.95,

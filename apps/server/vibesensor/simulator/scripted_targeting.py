@@ -80,4 +80,3 @@ def apply_phase(clients: list[SimClient], scenario_name: str, phase: ScenarioPha
             client.scene_noise_gain = override.scene_noise_gain
             client.amp_scale = override.amp_scale
             client.noise_scale = override.noise_scale
-            client.common_event_gain = override.common_event_gain

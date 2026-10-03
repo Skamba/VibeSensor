@@ -7,19 +7,23 @@ phases:
   speed_end_kmh: 108.0
   overrides:
   - target: all
-    profile_name: wheel_mild_imbalance
+    profile_name: rough_road
     scene_gain: 0.42
     scene_noise_gain: 1.02
     amp_scale: 0.7
     noise_scale: 1.02
-    common_event_gain: 0.14
   - target: body
     profile_name: rear_body
     scene_gain: 0.44
     scene_noise_gain: 1.0
     amp_scale: 0.76
     noise_scale: 1.0
-    common_event_gain: 0.16
+  - target: rear-right
+    profile_name: wheel_mild_imbalance
+    scene_gain: 0.42
+    scene_noise_gain: 1.02
+    amp_scale: 0.7
+    noise_scale: 1.02
   pulses:
   - at_s: 2.4
     target: rear-axle
@@ -35,35 +39,30 @@ phases:
     scene_noise_gain: 1.0
     amp_scale: 0.66
     noise_scale: 1.0
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.56
     scene_noise_gain: 1.04
     amp_scale: 0.84
     noise_scale: 1.04
-    common_event_gain: 0.22
   - target: rear-right
     profile_name: wheel_imbalance
     scene_gain: 0.92
     scene_noise_gain: 1.08
     amp_scale: 1.02
     noise_scale: 1.06
-    common_event_gain: 0.22
   - target: rear-left
     profile_name: wheel_mild_imbalance
     scene_gain: 0.6
     scene_noise_gain: 1.04
     amp_scale: 0.88
     noise_scale: 1.04
-    common_event_gain: 0.18
   - target: right-side
     profile_name: wheel_mild_imbalance
     scene_gain: 0.56
     scene_noise_gain: 1.02
     amp_scale: 0.84
     noise_scale: 1.02
-    common_event_gain: 0.16
   pulses:
   - at_s: 1.6
     target: rear-right
@@ -85,35 +84,30 @@ phases:
     scene_noise_gain: 1.0
     amp_scale: 0.66
     noise_scale: 1.0
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.56
     scene_noise_gain: 1.04
     amp_scale: 0.84
     noise_scale: 1.04
-    common_event_gain: 0.22
   - target: rear-right
     profile_name: wheel_imbalance
     scene_gain: 0.92
     scene_noise_gain: 1.08
     amp_scale: 1.02
     noise_scale: 1.06
-    common_event_gain: 0.22
   - target: rear-left
     profile_name: wheel_mild_imbalance
     scene_gain: 0.6
     scene_noise_gain: 1.04
     amp_scale: 0.88
     noise_scale: 1.04
-    common_event_gain: 0.18
   - target: right-side
     profile_name: wheel_mild_imbalance
     scene_gain: 0.56
     scene_noise_gain: 1.02
     amp_scale: 0.84
     noise_scale: 1.02
-    common_event_gain: 0.16
   pulses: []
 - name: rollout
   duration_s: 6.0
@@ -126,12 +120,10 @@ phases:
     scene_noise_gain: 0.96
     amp_scale: 0.46
     noise_scale: 0.96
-    common_event_gain: 0.06
   - target: body
     profile_name: rear_body
     scene_gain: 0.28
     scene_noise_gain: 0.98
     amp_scale: 0.56
     noise_scale: 0.98
-    common_event_gain: 0.08
   pulses: []
