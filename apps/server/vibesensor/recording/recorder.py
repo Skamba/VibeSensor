@@ -18,7 +18,11 @@ from vibesensor.recording.finalize_stages import (
     ActiveRunFinalizeResult,
     finalize_active_run,
 )
-from vibesensor.recording.lifecycle_state import RecordingStopReason, RunLifecycleState
+from vibesensor.recording.lifecycle_state import (
+    AutoStopReason,
+    RecordingStopReason,
+    RunLifecycleState,
+)
 from vibesensor.recording.persistence_writer import (
     _APPEND_RETRY_DELAYS_S,
     _MAX_APPEND_RETRIES,
@@ -431,6 +435,14 @@ class RunRecorder:
                 ),
             )
             self.post_analysis.schedule(run_id)
+
+    def flush_tick(self) -> tuple[str | None, AutoStopReason | None]:
+        """Append one tick of live samples to the active run.
+
+        Returns the active run id (``None`` when idle) and why the run should
+        auto-stop now, if it should; ``run()`` calls this at ``metrics_log_hz``.
+        """
+        return _recorder_runtime.flush_active_run_tick(self, logger=LOGGER)
 
     async def run(self) -> None:
         await _recorder_runtime.run_loop(self, logger=LOGGER)

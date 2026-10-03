@@ -24,6 +24,7 @@ __all__ = [
     "active_frames_total",
     "analysis_settings_snapshot",
     "normalize_accel_scale_g_per_lsb",
+    "flush_active_run_tick",
     "run_loop",
 ]
 
@@ -63,7 +64,7 @@ def _is_tick_error_message(message: str | None) -> bool:
     )
 
 
-def _flush_active_run_tick(
+def flush_active_run_tick(
     recorder: RunRecorder,
     *,
     logger: logging.Logger,
@@ -103,9 +104,7 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
         try:
             run_id, auto_stop_reason = await asyncio.wait_for(
                 asyncio.to_thread(
-                    _flush_active_run_tick,
-                    recorder,
-                    logger=logger,
+                    recorder.flush_tick,
                 ),
                 timeout=_DB_THREAD_TIMEOUT_S,
             )

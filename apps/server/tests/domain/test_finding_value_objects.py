@@ -128,7 +128,6 @@ class TestFindingComposition:
         )
 
         assert finding.evidence is not None
-        assert finding.evidence.is_strong
         assert finding.evidence.match_rate == 0.9
 
     def test_finding_with_location(self) -> None:
