@@ -3,7 +3,7 @@ applyTo: "apps/server/**"
 ---
 Backend rules. Use `docs/ai/repo-map.md` only for ownership lookup and `docs/domain-model.md` for the full domain graph.
 
-- Put code in the feature package that owns it (`ingest`, `live`, `dsp`, `recording`, `analysis`, `summary`, `report`, `history`, `settings`, `speed`, `updates`, `simulator`, `web`, `app`; `domain` for core value objects, `common` for small cross-cutting helpers). Keep the package rules from `.github/copilot-instructions.md`; the import-linter contracts in `apps/server/pyproject.toml` enforce them.
+- Put code in the feature package that owns it (`ingest`, `live`, `dsp`, `recording`, `analysis`, `summary`, `report`, `history`, `settings`, `speed`, `updates`, `hotspot`, `simulator`, `web`, `app`; `domain` for core value objects, `common` for small cross-cutting helpers). Keep the package rules from `.github/copilot-instructions.md`; the import-linter contracts in `apps/server/pyproject.toml` enforce them.
 - Domain behavior belongs in domain objects or the owning feature module. Persistence, transport, PDF, simulator, and HTTP code translates; it does not duplicate classification, ranking, lifecycle, or computation.
 - Routes live in `web/` (one `create_*_routes` factory per group, assembled in `web/router.py` from `WebServices`); services are constructed once in `app/composition.py`.
 - Keep sensor metadata writes behind the client location-assignment handoff in `apps/server/vibesensor/web/clients.py`.

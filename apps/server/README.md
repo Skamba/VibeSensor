@@ -272,7 +272,8 @@ is on the device, this README owns the backend-side service and config path.
 - The main service units are:
   - `vibesensor.service`
   - `vibesensor-hotspot.service`
-  - `vibesensor-hotspot-self-heal.timer`
+  - `vibesensor-hotspot-self-heal.timer` (hotspot watchdog: brings `VibeSensor-AP`
+    back up, then re-provisions it via `vibesensor-hotspot.service`)
 
 - Common service operations:
 

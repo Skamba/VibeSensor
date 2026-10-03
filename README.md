@@ -26,7 +26,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 - English and Dutch language support
 
 **Deployment**
-- Offline Wi-Fi access point with self-healing hotspot recovery
+- Offline Wi-Fi access point with a watchdog that brings the hotspot back up
 - Two deployment paths: manual install or prebuilt SD card image
 - Docker Compose for desktop development and testing
 - systemd services for automatic startup

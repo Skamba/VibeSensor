@@ -94,15 +94,13 @@ def test_legacy_device_config_with_removed_keys_still_loads(
 
     assert cfg.ap.ssid == "Workshop"
     assert cfg.ap.psk == "secret-psk"
-    assert cfg.ap.self_heal.enabled is False
-    assert cfg.ap.self_heal.state_file == cfg_path.parent / "state/self-heal.json"
     assert cfg.udp.data_port == 9100
     assert cfg.logging.history_db_path == cfg_path.parent / "db/history.db"
     assert cfg.gps.gps_enabled is False
     warned = caplog.text
     for key in (
         "ap.ip",
-        "ap.self_heal.min_restart_interval_seconds",
+        "ap.self_heal",
         "udp.data_queue_maxsize",
         "processing",
         "logging.run_retention_days",
@@ -125,12 +123,6 @@ def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_pat
     assert base_cfg.gps.gps_enabled is True
     assert dev_cfg.gps.gps_enabled is False
     assert docker_cfg.gps.gps_enabled is False
-    assert base_cfg.ap.self_heal.enabled is True
-    assert dev_cfg.ap.self_heal.enabled is True
-    assert docker_cfg.ap.self_heal.enabled is False
-    assert pi_cfg.ap.self_heal.state_file == Path(
-        "/var/lib/vibesensor/hotspot-self-heal-state.json"
-    )
     assert pi_cfg.logging.history_db_path == Path("/var/lib/vibesensor/history.db")
     assert base_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")
     assert pi_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")

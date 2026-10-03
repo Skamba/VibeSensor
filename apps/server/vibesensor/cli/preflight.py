@@ -53,8 +53,6 @@ def _writable_path_checks(cfg: AppConfig) -> tuple[_WritablePathCheck, ...]:
     ]
     if cfg.logging.app_log_path is not None:
         checks.append(_WritablePathCheck("logging.app_log_path", cfg.logging.app_log_path))
-    if cfg.ap.self_heal.enabled:
-        checks.append(_WritablePathCheck("ap.self_heal.state_file", cfg.ap.self_heal.state_file))
     checks.extend(
         (
             _WritablePathCheck(

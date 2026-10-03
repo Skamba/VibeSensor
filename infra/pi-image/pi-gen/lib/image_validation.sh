@@ -279,7 +279,7 @@ validate_image_artifact() {
 
   if ! grep -Eq '^ExecStart=/opt/VibeSensor/apps/server/\.venv/bin/(python|vibesensor-hotspot-self-heal)([[:space:]]|$)' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service"; then
-    echo "Validation failed: hotspot self-heal service ExecStart does not reference the apps/server venv bin dir"
+    echo "Validation failed: hotspot watchdog service ExecStart does not reference the apps/server venv bin dir"
     exit 1
   fi
 
