@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import MagicMock
+from unittest.mock import create_autospec
 
 import pytest
+from fastapi import WebSocket
 
+from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.web.ws_message_router import route_ws_message
 
 
@@ -28,8 +30,8 @@ from vibesensor.web.ws_message_router import route_ws_message
     ],
 )
 def test_route_ws_message_ignores_invalid_messages(message: str) -> None:
-    broadcaster = MagicMock()
-    ws = MagicMock()
+    broadcaster = create_autospec(LiveBroadcaster, instance=True)
+    ws = create_autospec(WebSocket, instance=True)
 
     route_ws_message(broadcaster, ws, message)
 
@@ -37,8 +39,8 @@ def test_route_ws_message_ignores_invalid_messages(message: str) -> None:
 
 
 def test_route_ws_message_applies_valid_selection() -> None:
-    broadcaster = MagicMock()
-    ws = MagicMock()
+    broadcaster = create_autospec(LiveBroadcaster, instance=True)
+    ws = create_autospec(WebSocket, instance=True)
 
     route_ws_message(broadcaster, ws, json.dumps({"client_id": "AA:BB:CC:DD:EE:FF"}))
 
@@ -46,8 +48,8 @@ def test_route_ws_message_applies_valid_selection() -> None:
 
 
 def test_route_ws_message_clears_selection_when_client_id_is_null() -> None:
-    broadcaster = MagicMock()
-    ws = MagicMock()
+    broadcaster = create_autospec(LiveBroadcaster, instance=True)
+    ws = create_autospec(WebSocket, instance=True)
 
     route_ws_message(broadcaster, ws, json.dumps({"client_id": None}))
 

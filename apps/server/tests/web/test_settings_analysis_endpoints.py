@@ -1,4 +1,4 @@
-"""Analysis settings route tests."""
+"""Analysis settings routes over the real active-car analysis settings."""
 
 from __future__ import annotations
 
@@ -9,55 +9,51 @@ from fastapi.testclient import TestClient
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 
 
-def _make_default_snapshot() -> AnalysisSettingsSnapshot:
-    return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
-
-
 @pytest.fixture
-def _analysis_client(fake_state):
+def analysis_client(fake_state):
     from vibesensor.web.settings.analysis import create_analysis_settings_routes
 
-    fake_state.settings_store.analysis_settings_snapshot.return_value = _make_default_snapshot()
+    created = fake_state.car_settings.add_car({"name": "Active"})
+    fake_state.car_settings.set_active_car(created.cars[0]["id"])
     app = FastAPI()
-    app.include_router(create_analysis_settings_routes(analysis_settings=fake_state.settings_store))
+    app.include_router(
+        create_analysis_settings_routes(analysis_settings=fake_state.analysis_settings)
+    )
     with TestClient(app) as client:
-        yield client, fake_state
+        yield client
 
 
-class TestSetAnalysisSettingsEndpoint:
-    def test_empty_changes_is_noop(self, _analysis_client) -> None:
-        """PUT /api/settings/analysis with all-None body skips update_active_car_aspects."""
+def test_get_returns_the_active_car_settings(analysis_client) -> None:
+    result = analysis_client.get("/api/settings/analysis").json()
 
-        client, state = _analysis_client
+    for key, default in AnalysisSettingsSnapshot.DEFAULTS.items():
+        assert result[key] == pytest.approx(default), key
 
-        response = client.put("/api/settings/analysis", json={})
 
-        assert response.status_code == 200
-        state.settings_store.update_active_car_aspects.assert_not_called()
-        assert "tire_width_mm" in response.json()
+def test_put_updates_only_the_sent_settings(analysis_client) -> None:
+    response = analysis_client.put("/api/settings/analysis", json={"tire_width_mm": 265.0})
 
-    def test_valid_changes_calls_update(self, _analysis_client) -> None:
-        client, state = _analysis_client
+    assert response.status_code == 200
+    stored = analysis_client.get("/api/settings/analysis").json()
+    assert stored["tire_width_mm"] == 265.0
+    assert stored["rim_in"] == AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
 
-        response = client.put("/api/settings/analysis", json={"tire_width_mm": 265.0})
 
-        assert response.status_code == 200
-        state.settings_store.update_active_car_aspects.assert_called_once_with(
-            {"tire_width_mm": 265.0}
-        )
+def test_empty_put_changes_nothing(analysis_client) -> None:
+    before = analysis_client.get("/api/settings/analysis").json()
 
-    def test_get_analysis_settings_response_shape(self, _analysis_client) -> None:
-        client, _ = _analysis_client
+    response = analysis_client.put("/api/settings/analysis", json={})
 
-        response = client.get("/api/settings/analysis")
+    assert response.status_code == 200
+    assert response.json() == before
 
-        assert response.status_code == 200
-        result = response.json()
-        for key in (
-            "tire_width_mm",
-            "tire_aspect_pct",
-            "rim_in",
-            "final_drive_ratio",
-            "current_gear_ratio",
-        ):
-            assert key in result
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param({"tire_deflection_factor": 0.84}, id="deflection-below-0.85"),
+        pytest.param({"tire_deflection_factor": 1.01}, id="deflection-above-1"),
+    ],
+)
+def test_out_of_range_request_values_are_rejected(analysis_client, body: dict) -> None:
+    assert analysis_client.put("/api/settings/analysis", json=body).status_code == 422

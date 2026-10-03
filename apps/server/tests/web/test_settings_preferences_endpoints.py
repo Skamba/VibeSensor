@@ -1,4 +1,4 @@
-"""UI preference settings route tests."""
+"""UI preference settings routes over the real preferences service."""
 
 from __future__ import annotations
 
@@ -12,44 +12,41 @@ def _preferences_client(fake_state):
     from vibesensor.web.settings.preferences import create_ui_preferences_routes
 
     app = FastAPI()
-    app.include_router(create_ui_preferences_routes(ui_preferences=fake_state.settings_store))
+    app.include_router(create_ui_preferences_routes(ui_preferences=fake_state.ui_preferences))
     with TestClient(app) as client:
-        yield client, fake_state
+        yield client
 
 
-class TestPreferencesEndpoint:
-    def test_get_language_returns_current_language(self, _preferences_client) -> None:
-        client, state = _preferences_client
-        state.settings_store.language = "lt"
+@pytest.mark.parametrize(
+    ("path", "field", "default", "updated"),
+    [
+        ("/api/settings/language", "language", "en", "nl"),
+        ("/api/settings/speed-unit", "speed_unit", "kmh", "mps"),
+    ],
+)
+def test_preference_round_trips_through_get_and_put(
+    _preferences_client, path: str, field: str, default: str, updated: str
+) -> None:
+    client = _preferences_client
 
-        response = client.get("/api/settings/language")
+    assert client.get(path).json() == {field: default}
+    response = client.put(path, json={field: updated})
 
-        assert response.status_code == 200
-        assert response.json() == {"language": "lt"}
+    assert response.status_code == 200
+    assert response.json() == {field: updated}
+    assert client.get(path).json() == {field: updated}
 
-    def test_set_language_maps_invalid_language_to_400(self, _preferences_client) -> None:
-        client, state = _preferences_client
-        state.settings_store.set_language.side_effect = ValueError("Unsupported language code")
 
-        response = client.put("/api/settings/language", json={"language": "en"})
+@pytest.mark.parametrize(
+    ("path", "body"),
+    [
+        ("/api/settings/language", {"language": "xx"}),
+        ("/api/settings/speed-unit", {"speed_unit": "furlongs"}),
+    ],
+)
+def test_unsupported_preference_values_are_rejected(
+    _preferences_client, path: str, body: dict[str, str]
+) -> None:
+    response = _preferences_client.put(path, json=body)
 
-        assert response.status_code == 400
-
-    def test_get_speed_unit_returns_current_speed_unit(self, _preferences_client) -> None:
-        client, state = _preferences_client
-        state.settings_store.speed_unit = "mps"
-
-        response = client.get("/api/settings/speed-unit")
-
-        assert response.status_code == 200
-        assert response.json() == {"speed_unit": "mps"}
-
-    def test_set_speed_unit_returns_updated_unit(self, _preferences_client) -> None:
-        client, state = _preferences_client
-        state.settings_store.set_speed_unit.return_value = "mps"
-
-        response = client.put("/api/settings/speed-unit", json={"speed_unit": "mps"})
-
-        assert response.status_code == 200
-        state.settings_store.set_speed_unit.assert_called_once_with("mps")
-        assert response.json() == {"speed_unit": "mps"}
+    assert response.status_code == 422
