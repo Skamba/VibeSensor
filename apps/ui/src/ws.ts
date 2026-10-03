@@ -2,8 +2,8 @@ import type { LiveWsPayload } from "./contracts/ws_payload_types";
 import {
   bindReplaceableTimerEffect,
   createReplaceableTimeout,
-} from "./app/timer_cleanup";
-import { batch, signal, type ReadonlySignal } from "./app/ui_signals";
+} from "./timer_cleanup";
+import { batch, type ReadonlySignal, signal } from "@preact/signals";
 
 export type WsUiState =
   | "connecting"

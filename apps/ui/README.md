@@ -76,8 +76,8 @@ UI typecheck, tests, and builds use the committed files and need only Node.
 
 - `npm run lint` checks the hand-written TypeScript, config, and support scripts
   with Biome.
-- `npm run lint:deps` runs dependency-cruiser against the current `src/`
-  boundary rules so feature/runtime/view and transport/app seams stay explicit.
+- `npm run lint:deps` runs dependency-cruiser: pages must not import other
+  pages.
 - `npm run lint:unused` runs knip's dead-file, dependency, and cleaned-up unused
   export checks. Exported-type checks still stay out until their remaining
   signal is worth the extra noise.
@@ -88,7 +88,38 @@ UI typecheck, tests, and builds use the committed files and need only Node.
 Generated contract artifacts stay out of the lint/format path on purpose so the
 source-of-truth export commands remain the only writers for those files.
 
-## Server-state ownership
+## Architecture
+
+`src/main.tsx` renders one Preact tree, `App` from `src/app.tsx`, into `#app`
+and calls `startApp()`, which loads shared settings and connects the live feed.
+The build is one JS bundle plus the lazily loaded Dutch catalog.
+
+- **Shell** — `src/app.tsx` is the header, navigation, unit and language
+  selects, status pills, error banner, confirmation dialog, the
+  Live/History/Settings views, and the settings tab strip. `src/app_store.ts`
+  owns the shell state as module-level signals: active view and settings tab,
+  `navigate()` (with per-view loaders registered through `onViewEnter()`),
+  `showError()`, `requestConfirmation()`, and the persisted preferences.
+- **Pages** — `src/pages/<page>/`: a `<Page>.tsx` component that reads its
+  store's signals and calls its commands, a `<page>_store.ts` that owns signals,
+  polling, and `api/*` calls, and pure helper modules with unit tests. Pages:
+  `dashboard` (overview + recording), `spectrum`, `history`, `cars` (list +
+  add-car wizard), `analysis`, `speed_source`, `sensors`, `update` (Internet +
+  Update tabs), `esp_flash`. `.dependency-cruiser.cjs` keeps pages from
+  importing each other; the shell composes them (for example it passes
+  `<Spectrum/>` into the dashboard and opens the wizard for its add-car prompt).
+- **Shared stores** outside `src/pages/`: `app_store.ts` (shell),
+  `settings_store.ts` (cars, analysis tuning, speed source and its live status),
+  and `live_store.ts` (sensors, selection, speed, spectra, location codes, link
+  state, and `runsChanged`, which the dashboard bumps when a run starts, stops,
+  or finishes so History reloads). Pure helpers sit beside them
+  (`vehicle_settings.ts`, `car_selection.ts`, `speed_source.ts`,
+  `sensor_locations.ts`, `live_sync.ts`).
+- **Text** — `src/i18n.ts` owns the single `t()` and the `lang` signal; the
+  English catalog ships in the bundle and the Dutch one loads on demand.
+  Components call `t()` while rendering, so a language switch re-renders them.
+
+### Server state and polling
 
 Each page store owns its server state as signals and calls the `api/*`
 wrappers directly. Polling goes through `src/poll.ts`: `poll({ active,
@@ -97,32 +128,59 @@ page is visible, re-polls after each result, and only delivers the latest
 request's result, so a slow older response never overwrites newer data. Call
 `refresh()` after a mutation instead of patching a cache.
 
-## Live transport ownership
+### Live transport
 
-Frontend live transport ingress is signal-native end to end.
+- `src/ws.ts` owns the raw WebSocket lifecycle, reconnect/stale timers, and the
+  latest raw payload signal.
+- `src/live_transport.ts` (`startLive()`) mirrors the link state into
+  `live_store`, validates and applies payloads at most once per animation frame
+  and every 100 ms, keeps an unchanged spectrum frame by reference so the chart
+  does not redraw (`live_sync.mergeSpectra`), and sends the selected sensor
+  once per connection and on every change (`live_sync.createSelectionSender`).
+- `?demo` skips the server: `startLive()` installs a demo car and applies the
+  canned payload from `src/demo.ts`; recording-status polling stays off.
 
-- `src/ws.ts` owns raw WebSocket lifecycle, reconnect/stale timers, and the
-  latest raw payload signal from the socket.
-- `src/app/runtime/ui_live_transport_controller.ts` owns the reactive bridge
-  from that socket signal into `AppState.transport`, client-selection sends, and
-  payload application into the runtime state slices.
-- Keep render throttling/RAF pacing only where it is explicitly needed for
-  spectrum or DOM performance. Do not reintroduce callback-style payload fan-out
-  from `ws.ts` into app/runtime consumers.
+### Spectrum
 
-## Spectrum frame preparation
+Frames are prepared synchronously on the main thread (a handful of sensors at
+a few frames per second is cheap).
 
-Spectrum frames are prepared synchronously on the main thread (a handful of
-sensors at a few frames per second is cheap).
+- `pages/spectrum/frame_preparer.ts` turns the live spectra into aligned dB
+  series with a per-sensor cache; it is the only owner of frame preparation.
+- `pages/spectrum/spectrum_renderer.ts` owns the canvas chart lifecycle
+  (`src/spectrum_chart.ts`, the custom renderer), tweening between frames
+  (`spectrum_animation.ts`), order bands, and the focus marker.
+- `pages/spectrum/spectrum_store.ts` re-renders on every new spectra object and
+  owns trace focus, reference bands, the inspector line, and the overlay; the
+  text for those lives in the pure `spectrum_model.ts`.
 
-- `src/app/runtime/ui_spectrum_controller.ts` prepares a frame on every spectra
-  update, surfaces preparation failures in the overlay, and owns teardown.
-- `src/app/runtime/spectrum_frame_preparer.ts` owns the typed frame-prep
-  contract and the pure, cached preparation logic. Do not add a second owner
-  for spectrum frame preparation.
-- `src/app/runtime/spectrum_canvas_renderer.ts` does not prepare frames from
-  raw AppState. It only composes chart-band metadata, owns the canvas chart
-  lifecycle, and renders already prepared frames.
+### Conventions
+
+- Use module-level `signal()`s in a store for state that outlives a render,
+  `computed()` for anything derived, and component hooks only for transient
+  local state. Keep `effect()` for imperative integrations: timers, polling,
+  the canvas chart, the WebSocket.
+- Put text and state derivations in pure modules and unit-test them; rendered
+  behaviour belongs in the Playwright journeys.
+- No pass-through wrappers, per-feature `*Ports`/`*Deps` interfaces, or
+  facades for a single implementation. Test HTTP by faking the `api/*` module
+  (or MSW when the real request matters).
+- Generated HTTP/WS contracts stay behind `api/*.ts` + `api/types.ts`,
+  `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
+  `ws_payload_validator.ts`; other code imports those, not `src/generated/` or
+  `src/contracts/` directly.
+- Shared visual state uses stable data/ARIA selectors such as `data-variant`,
+  `data-choice-state`, `data-selected`, and `data-step-state` instead of
+  variant class interpolation. `styles/app.css` only aggregates the per-surface
+  stylesheets.
+
+## Features
+
+- **Live view** — overview, recording controls, and the multi-sensor spectrum
+- **History view** — recorded runs with the diagnosis, PDF download, and ZIP export
+- **Settings view** — car profiles (wizard with car library), analysis parameters, speed source, sensors, Internet, updates, ESP flashing
+- **Auto theme** — follows system light/dark preference
+- **Demo mode** — `?demo` shows canned live data without a server
 
 ## HTTP boundary tests with MSW
 
@@ -158,115 +216,10 @@ Use MSW when the behavior under test depends on the real HTTP boundary:
 Do **not** use MSW when the test is already below the network seam:
 
 - pure presenters, state derivations, and DOM-only views should stay network-free
-- feature controller tests that only need canned or deferred responses should
-  fake the `api/*` wrapper module the controller imports (`vi.mock("../src/api/settings", ...)`)
-  instead of layering on MSW; controllers do not take injectable transport ports
+- tests that only need canned or deferred responses should fake the `api/*`
+  wrapper module (`vi.mock("../src/api/settings", ...)`) instead of layering on MSW
 - WebSocket behavior is separate; keep using the existing fake WebSocket helpers
   for live-session flows instead of trying to route WS traffic through MSW
-
-## Features
-
-- **Live view** — multi-sensor spectrum chart and recording controls
-- **History view** — recorded runs with insights, PDF download, ZIP export (CSV raw samples + JSON run details)
-- **Settings view** — car profiles (tire/drivetrain wizard with car library), analysis parameters, speed source, sensor naming and location mapping
-- **Auto theme** — follows system light/dark preference
-- **Drive sizing** — larger touch targets on tablet viewports
-- **Demo mode** — deterministic UI state via `?demo=1` for testing
-
-`src/main.tsx` renders one Preact tree, `App` from `src/app.tsx`, into
-`#app`, then starts the features. `app.tsx` is the whole shell: navigation,
-the unit and language selects, status pills, error banner, confirmation dialog,
-the Live/History/Settings views, and the settings tab strip. `src/app_store.ts`
-owns the shell state as module-level signals: active view and settings tab,
-`navigate()` (with per-view loaders registered through `onViewEnter()`),
-`showError()`, `requestConfirmation()`, and the persisted language and speed
-unit preferences. `src/i18n.ts` owns the single `t()` and the `lang` signal;
-the English catalog ships in the bundle and the Dutch one loads on demand.
-
-The build is one JS bundle plus the lazily loaded Dutch catalog. Pages are
-being moved to `src/pages/<page>/` (a component, a small signal store, and pure
-helpers); `.dependency-cruiser.cjs` keeps pages from importing each other.
-Until a page moves, its old feature controller and panel bridge are wired in
-`src/app/feature_wiring.ts`.
-
-Live data the dashboard, sensors, and spectrum share (sensors, selection,
-speed, spectra, location codes) lives in `src/live_store.ts`; the transport
-controller writes it and the pages read it. The dashboard store bumps
-`runsChanged` there when a recording starts, stops, or finishes, and the
-History store reloads on it.
-
-`src/transport/` owns transport-specific helpers such as clone and live-model
-surfaces, while `api/types.ts` owns generated HTTP alias exports used across
-`api/**`, `app/**`, and tests. Generated contract files themselves stay out of
-those consumers. Styling follows same ownership split: `styles/app.css` is only
-the import aggregator, `tokens.css`/`theme.css` own global token and color-mode
-concerns, and `shell.css`, `components.css`, `maintenance*.css`,
-`realtime*.css`, `history*.css`, and `settings-*.css` own the shared and
-feature-specific surfaces directly.
-Shared visual state conventions prefer stable data/ARIA selectors such as
-`data-variant`, `data-choice-state`, `data-selected`, and `data-step-state`
-instead of controller-side variant class interpolation.
-
-## Shared reactive state contract
-
-- AppState top-level slices returned by `createAppState()` are stable signal-field objects composed from feature-owned state modules. Keep new slice defaults and pure update helpers in `app/{shell,transport,realtime,history,settings,spectrum}_state.ts`, and keep `ui_app_state.ts` as the thin composition/compatibility surface.
-- Import shared reactive primitives from `app/ui_signals.ts` so runtime,
-  feature, presenter, and view code shares one documented signals entrypoint.
-- Use `signal()` for shared state that spans modules or needs to outlive a
-  single component render. Keep component-local transient state in hooks.
-- Use `computed()` for derived state instead of mirroring derived fields onto
-  mutable state bags or manual render-model caches. Keep those computed owners
-  in runtime, feature, presenter, or shared adapter modules instead of
-  rebuilding ad-hoc derived state inside view components.
-- Inside Preact components, prefer plain signal reads for already-derived view
-  models. Reach for `useSignal()`, `useSignalEffect()`, or shared adapter hooks
-  only when the component truly owns transient local state or an imperative
-  integration.
-- When several JSX bindings unwrap stable properties from the same model signal,
-  prefer `useSignalProperties()` from `app/ui_signals.ts` over repeating
-  property access or per-property `useComputed(...)` adapters.
-- Use `effect()` only for narrow imperative integrations such as timers,
-  persistence, canvas chart bridges, or other external-library coordination.
-- Preact-rendered copy should come from `getUiText()` or `useUiText()`.
-  Do not leave `data-i18n` attributes in JSX unless a non-Preact consumer still
-  reads them.
-- Existing mutable app-state objects and manual bridge rerenders are follow-up
-  migration residue, not the default pattern for new frontend work.
-- State shared by several pages lives in module-level stores outside
-  `src/pages/`: `app_store.ts` (shell), `settings_store.ts` (cars, analysis
-  tuning, speed source and its live status), with pure helpers beside them
-  (`vehicle_settings.ts`, `car_selection.ts`, `speed_source.ts`). Pre-rewrite
-  features still read the remaining `AppState` slices in `src/app/`.
-
-## Architecture guardrails
-
-- `app/dom/**` plus focused runtime/view helpers own island-host lookup and the
-  remaining imperative DOM seams. Feature, runtime, and presenter modules
-  should receive typed bridges or focused DOM surfaces instead of rebuilding
-  page-wide registries or ad hoc `document.getElementById(...)` lookups.
-- Generated HTTP / WS contracts stay behind narrow UI-owned seams. The approved
-  generated-contract seams are the `api/*.ts` HTTP wrappers plus `api/types.ts`,
-  `transport/live_models.ts`, `server_payload.ts`, `ws.ts`, and
-  `ws_payload_validator.ts`; `app/**` code may import `transport/**` and
-  `api/types.ts`, but not generated contract files directly.
-  `npm run lint:deps` (dependency-cruiser) enforces that boundary.
-- Normal UI rendering belongs in Preact owner surfaces. If code outside an
-  island needs imperative DOM work, keep it narrowly scoped to non-render
-  integrations such as download anchors, canvas chart lifecycles, observers, or
-  external-library mount points instead of generic HTML/string builder helpers.
-- Expected page shape is `src/pages/<page>/`: a `<Page>.tsx` component that
-  reads the store's signals and calls its commands, a `<page>_store.ts` that
-  owns signals, polling (`src/poll.ts`), and `api/*` calls, and pure helper
-  modules (for example `esp_flash_model.ts`, `update_model.ts`) for text and
-  state derivations with unit tests. Pre-rewrite features still follow the old
-  controller + presenter + panel-bridge shape until their page moves.
-- Do not add pass-through `*_transport.ts` wrappers, per-feature
-  `*Ports`/`*Deps` interfaces, or facade/workflow splits for a single
-  implementation. Pass controllers a plain context object; test HTTP by faking
-  the `api/*` module (or MSW when the real request matters) and view effects
-  through a fake panel bridge.
-- Mount Preact owner surfaces directly inside their owning runtime/view module.
-  Do not scatter `preact.render(...)` calls across feature or presenter code.
 
 ## WebSocket contract boundary
 
@@ -286,7 +239,7 @@ Valibot-backed runtime validation now sits at the WebSocket boundary. Live paylo
   helper for frontend runtime boundaries.
 - `src/api/update_validators.ts` is the canonical HTTP pattern: parse once,
   validate once, then return typed data from the API module.
-- Feature controller code may surface validated boundary failures to the UI, but it
+- Page stores may surface validated boundary failures to the UI, but they
   must not rebuild ad hoc `typeof` normalizers for the same payload shape.
 - Keep custom fast-path validators only where large numeric arrays or similar hot
   paths would make generic schema validation measurably more expensive.
@@ -313,7 +266,7 @@ under test.
 
 | Layer | Runner | What it covers | Command |
 |-------|--------|----------------|---------|
-| **Unit / integration** | Vitest (`happy-dom`) | Payload decoders, runtime helpers, feature orchestration, signal-mounted islands, view-level pure helpers — anything that does not require a real browser | `npm run test:unit` |
+| **Unit** | Vitest (`happy-dom`) | Payload decoders, API wrappers, poll/ws helpers, the spectrum renderer, and each page's pure model — anything that does not require a real browser | `npm run test:unit` |
 | **Smoke** | Playwright (Chromium) | User journeys per page against a real Vite dev server with mocked HTTP/WebSocket; file pattern `tests/smoke.*.spec.ts` | `npm run test:smoke` |
 
 Vitest is the canonical fast test layer for pure logic; reach for it whenever

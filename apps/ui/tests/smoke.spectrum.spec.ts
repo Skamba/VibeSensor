@@ -7,6 +7,7 @@ import {
   installCommonRoutes,
   requestPath,
 } from "./smoke.helpers";
+import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
 
 test.describe.configure({ timeout: 20_000 });
 
@@ -212,4 +213,106 @@ test("journey: demo mode animates sensors and the spectrum without a server", as
   await expect.poll(() => paintedPixelCount(page)).toBeGreaterThan(500);
   // Demo mode never polls recording status.
   expect(apiRequests).not.toContain("/api/recording/status");
+});
+
+test("journey: a bad live payload is reported, a good one recovers, and the selected sensor is sent", async ({
+  page,
+}) => {
+  await installReadyDashboardRoutes(page);
+  await page.route("**/api/clients/**", (route) => fulfillJson(route, {}));
+  await page.addInitScript(() => {
+    const live = window as unknown as {
+      emitLive(payload: unknown): void;
+      sentLive: unknown[];
+    };
+    live.sentLive = [];
+    class ControlledWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        live.emitLive = (payload) =>
+          this.onmessage?.(
+            new MessageEvent("message", { data: JSON.stringify(payload) }),
+          );
+      }
+      send(data: string) {
+        live.sentLive.push(JSON.parse(data));
+      }
+      close() {
+        this.readyState = 3;
+      }
+    }
+    window.WebSocket = ControlledWebSocket as unknown as typeof WebSocket;
+  });
+  await page.goto("/");
+  const emit = (payload: unknown) =>
+    page.evaluate(
+      (body) =>
+        (window as unknown as { emitLive(p: unknown): void }).emitLive(body),
+      payload,
+    );
+  const sent = () =>
+    page.evaluate(
+      () => (window as unknown as { sentLive: unknown[] }).sentLive,
+    );
+  const valid = (clients: unknown[]) => ({
+    schema_version: EXPECTED_SCHEMA_VERSION,
+    server_time: new Date().toISOString(),
+    speed_mps: null,
+    selected_client_id: null,
+    rotational_speeds: null,
+    clients,
+    spectra: { clients: {} },
+  });
+  const sensorA = {
+    ...client("aa0000000001", "Front Left", "front_left_wheel"),
+    frame_samples: 200,
+  };
+  const sensorB = {
+    ...client("bb0000000002", "Rear Right", "rear_right_wheel"),
+    frame_samples: 200,
+  };
+
+  await emit({ ...valid([sensorA]), clients: "not a list" });
+  await expect(page.locator("#spectrumOverlay")).toContainText(
+    "Invalid websocket payload",
+  );
+  await expect(page.locator(".wrap")).toHaveAttribute(
+    "data-connection-state",
+    "degraded",
+  );
+
+  await emit(valid([sensorA, sensorB]));
+  await expect(page.locator("#spectrumOverlay")).toHaveText(
+    "Connected, but no spectrum frames yet.",
+  );
+  await expect(page.locator(".wrap")).toHaveAttribute(
+    "data-connection-state",
+    "live",
+  );
+  // On connect the (still empty) selection is sent, then the first live sensor.
+  await expect
+    .poll(sent)
+    .toEqual([{ client_id: null }, { client_id: sensorA.id }]);
+
+  // Removing the selected sensor moves the selection, and the server hears about it.
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="sensorsTab"]').click();
+  await page.locator(`tr[data-client-id="${sensorA.id}"] .row-remove`).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Confirm" })
+    .click();
+  await expect
+    .poll(sent)
+    .toEqual([
+      { client_id: null },
+      { client_id: sensorA.id },
+      { client_id: sensorB.id },
+    ]);
 });

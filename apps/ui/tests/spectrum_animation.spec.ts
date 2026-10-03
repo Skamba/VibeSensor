@@ -3,8 +3,8 @@ import {
   createSpectrumTweenDerivedState,
   resolveSpectrumTweenDurationMs,
   type SpectrumHeavyFrame,
-} from "../src/app/spectrum_animation";
-import { signal } from "../src/app/ui_signals";
+} from "../src/pages/spectrum/spectrum_animation";
+import { signal } from "@preact/signals";
 
 const baseFrame: SpectrumHeavyFrame = {
   seriesIds: ["sensor-1", "sensor-2"],
