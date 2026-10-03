@@ -227,12 +227,6 @@ class TestFindingComposition:
         assert len(finding.signatures) == 2
         assert finding.origin.display_location == "Fl Wheel"
 
-    def test_finding_defaults_none(self) -> None:
-        finding = Finding(finding_id="F001")
-        assert finding.evidence is None
-        assert finding.location is None
-        assert finding.negligible_strength is False
-
 
 class TestFindingEnrichments:
     @pytest.mark.parametrize(

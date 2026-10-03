@@ -2,8 +2,8 @@ import { defaultAnalysisSettings } from "./constants";
 
 /**
  * Vehicle settings: the active car's drivetrain aspects plus the analysis
- * uncertainty tuning. Key lists are pinned against the backend defaults by
- * apps/server/tests/hygiene/test_analysis_settings_sync.py.
+ * uncertainty tuning. Key lists are pinned against the generated backend
+ * defaults by tests/vehicle_settings.spec.ts.
  */
 
 export interface CarAspectSettings {

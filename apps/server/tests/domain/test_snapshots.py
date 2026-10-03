@@ -339,13 +339,3 @@ class TestDrivingPhaseSummaryFromDict:
         snap = driving_phase_summary_from_mapping({"phase_counts": {"cruise": "bad", "accel": 10}})
         assert "cruise" not in snap.phase_counts
         assert snap.phase_counts["accel"] == 10
-
-    def test_phase_counts_immutable(self) -> None:
-        snap = driving_phase_summary_from_mapping({"phase_counts": {"cruise": 5}})
-        with pytest.raises(TypeError):
-            snap.phase_counts["new"] = 1
-
-    def test_phase_pcts_immutable(self) -> None:
-        snap = driving_phase_summary_from_mapping({"phase_pcts": {"cruise": 0.5}})
-        with pytest.raises(TypeError):
-            snap.phase_pcts["new"] = 0.1

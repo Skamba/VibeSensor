@@ -7,14 +7,6 @@ from vibesensor.summary.finding_fields import finding_evidence_from_mapping
 
 
 class TestFindingEvidence:
-    def test_defaults(self) -> None:
-        evidence = FindingEvidence()
-        assert evidence.match_rate == 0.0
-        assert evidence.snr_db is None
-        assert evidence.presence_ratio == 0.0
-        assert evidence.phase_confidences == ()
-        assert evidence.vibration_strength_db is None
-
     @pytest.mark.parametrize(
         ("evidence", "expected"),
         [

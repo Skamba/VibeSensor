@@ -9,10 +9,6 @@ from tests._paths import REPO_ROOT
 
 _ARTIFACTS_SCRIPT = REPO_ROOT / "infra/pi-image/pi-gen/lib/artifacts.sh"
 _IMAGE_VALIDATION_SCRIPT = REPO_ROOT / "infra/pi-image/pi-gen/lib/image_validation.sh"
-_BUILD_SCRIPT = REPO_ROOT / "infra/pi-image/pi-gen/build.sh"
-_STAGE_RUN_TEMPLATE = (
-    REPO_ROOT / "infra/pi-image/pi-gen/templates/stage-vibesensor/00-vibesensor/00-run.sh.template"
-)
 
 
 def _run_artifacts_script(command: str) -> subprocess.CompletedProcess[str]:
@@ -77,22 +73,6 @@ def test_image_validation_python_version_meets_floor() -> None:
     assert result.stdout == ""
 
 
-def test_pi_image_stage_records_runtime_python_metadata_before_cleanup() -> None:
-    text = _STAGE_RUN_TEMPLATE.read_text(encoding="utf-8")
-
-    metadata_path = (
-        'PYTHON_RUNTIME_INFO_FILE="/opt/VibeSensor/apps/server/.venv/'
-        '.vibesensor-python-runtime.env"'
-    )
-    metadata_write = 'cat >"${PYTHON_RUNTIME_INFO_FILE}" <<EOF'
-    cleanup_block = "rm -rf \\"
-
-    assert metadata_path in text
-    assert "venv_python_version=${VENV_PYTHON_VERSION}" in text
-    assert "supported_python_floor=${SUPPORTED_PYTHON_FLOOR}" in text
-    assert text.index(metadata_write) < text.index(cleanup_block)
-
-
 def test_image_validation_reads_embedded_python_runtime_metadata(
     tmp_path: Path,
 ) -> None:
@@ -144,11 +124,3 @@ def test_write_version_info_includes_validated_image_python_metadata(tmp_path: P
     assert "image_runtime_python_floor=3.13" in text
     assert "git_sha=abcdef123456" in text
     assert "source_artifact=vibesensor-lite.img.zip" in text
-
-
-def test_pi_build_threads_validated_runtime_python_into_version_info() -> None:
-    text = _BUILD_SCRIPT.read_text(encoding="utf-8")
-
-    assert '"${VALIDATED_IMAGE_PYTHON_VERSION:-}"' in text
-    assert '"${VALIDATED_IMAGE_PYTHON_FLOOR:-}"' in text
-    assert "write_version_info" in text

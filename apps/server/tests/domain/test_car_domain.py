@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from types import MappingProxyType
 
 import pytest
@@ -56,12 +57,21 @@ class TestOrderReferenceSpecFromSettings:
         assert spec.final_drive_ratio == 0.0
         assert spec.speed_uncertainty_pct == 0.0
 
-    def test_tire_circumference(self) -> None:
-        settings = _order_settings()
-        spec = order_reference_spec_from_mapping(settings)
+    @pytest.mark.parametrize(
+        ("deflection_factor", "effective_factor"),
+        [
+            pytest.param(0.97, 0.97, id="deflected"),
+            pytest.param(1.5, 1.0, id="factor-above-one-ignored"),
+        ],
+    )
+    def test_tire_circumference(self, deflection_factor: float, effective_factor: float) -> None:
+        spec = order_reference_spec_from_mapping(
+            {"tire_width_mm": 285.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
+            deflection_factor=deflection_factor,
+        )
         assert spec is not None
-        assert spec.tire_circumference_m > 0
-        assert spec.tire_circumference_m == spec.tire_spec.circumference_m
+        # 21" rim + 2 x 85.5 mm sidewall = 704.4 mm diameter
+        assert spec.tire_circumference_m == pytest.approx(0.7044 * math.pi * effective_factor)
 
     def test_staggered_tire_setup_prefers_rear_axle_when_selected(self) -> None:
         spec = order_reference_spec_from_mapping(
