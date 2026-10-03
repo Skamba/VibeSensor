@@ -3,13 +3,16 @@
 - ``manager.py`` owns the public updater API: start, cancel, task supervision,
   timeout/cancellation reporting, and startup recovery entry.
 - ``job.py`` owns one update run as a linear async flow (validate, prepare
-  transport, check release, refresh firmware or stage/snapshot/install with
-  rollback, complete, clean up) plus recovery of interrupted runs.
+  transport, check release, refresh firmware or stage and install into a new
+  venv slot, complete, switch, restart, clean up) plus recovery of
+  interrupted runs and reporting of boot-check reverts.
 - ``runtime.py`` composes the manager, job, and their collaborators.
-- ``rollback.py`` owns rollback snapshot capture, restore, and verification.
+- ``venv_slots.py`` owns the A/B venv layout under ``.venv`` (adoption of a
+  plain venv, clone, activate, prune); ``venv_install.py`` installs a release
+  into a new slot and smoke-tests it; ``boot_check.py`` is the stdlib-only
+  launcher that confirms or reverts a new slot after the restart.
 - ``release_staging.py`` owns release wheel download and SHA-256 verification.
-- ``wheel_installation.py`` / ``artifact_validation.py`` own wheel install and
-  artifact validation.
+- ``artifact_validation.py`` owns wheel artifact and metadata validation.
 - ``validation.py`` owns pre-flight prerequisite checks.
 - ``privilege.py`` owns sudo/privilege-escalation helpers used by command
   execution and transport modules.

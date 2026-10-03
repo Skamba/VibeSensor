@@ -124,10 +124,6 @@ def test_base_dev_and_docker_configs_capture_intended_runtime_invariants(tmp_pat
     assert dev_cfg.gps.gps_enabled is False
     assert docker_cfg.gps.gps_enabled is False
     assert pi_cfg.logging.history_db_path == Path("/var/lib/vibesensor/history.db")
-    assert base_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")
-    assert pi_cfg.update.rollback_dir == Path("/var/lib/vibesensor/rollback")
-    assert dev_cfg.update.rollback_dir == SERVER_DIR / "data/rollback"
-    assert docker_cfg.update.rollback_dir != base_cfg.update.rollback_dir
 
 
 # --- server.port validation ---

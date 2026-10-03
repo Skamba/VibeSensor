@@ -29,9 +29,6 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
                 "history_db_path": "/tmp/history.db",
                 "app_log_path": "/tmp/app.log",
             },
-            "update": {
-                "rollback_dir": "/tmp/rollback",
-            },
         },
     )
 
@@ -39,7 +36,6 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
 
     assert result.logging.history_db_path == Path("/tmp/history.db")
     assert result.logging.app_log_path == Path("/tmp/app.log")
-    assert result.update.rollback_dir == Path("/tmp/rollback")
 
 
 def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) -> None:
@@ -51,9 +47,6 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
                 "history_db_path": "data/history.db",
                 "app_log_path": "logs/app.log",
             },
-            "update": {
-                "rollback_dir": "data/rollback",
-            },
         },
     )
 
@@ -61,7 +54,6 @@ def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) 
 
     assert result.logging.history_db_path == config_path.parent / "data/history.db"
     assert result.logging.app_log_path == config_path.parent / "logs/app.log"
-    assert result.update.rollback_dir == config_path.parent / "data/rollback"
 
 
 def test_load_config_preserves_parent_traversal_relative_to_config(tmp_path: Path) -> None:

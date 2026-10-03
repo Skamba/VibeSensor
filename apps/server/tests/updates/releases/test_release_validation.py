@@ -80,9 +80,7 @@ def test_build_release_smoke_config_rewrites_runtime_paths(tmp_path: Path) -> No
     assert data["gps"]["gps_enabled"] is False
     assert data["logging"]["history_db_path"].endswith("history.db")
     assert data["logging"]["app_log_path"].endswith("app.log")
-    assert data["update"]["rollback_dir"].endswith("rollback")
     assert str(tmp_path) in data["logging"]["history_db_path"]
-    assert str(tmp_path) in data["update"]["rollback_dir"]
 
 
 def test_validate_firmware_dist_accepts_generated_manifest(tmp_path: Path) -> None:

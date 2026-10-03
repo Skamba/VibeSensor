@@ -55,9 +55,6 @@ def _writable_path_checks(cfg: AppConfig) -> tuple[_WritablePathCheck, ...]:
         checks.append(_WritablePathCheck("logging.app_log_path", cfg.logging.app_log_path))
     checks.extend(
         (
-            _WritablePathCheck(
-                "update.rollback_dir", cfg.update.rollback_dir, expects_directory=True
-            ),
             _WritablePathCheck("process_settings.update_state_path", update.update_state_path),
             _WritablePathCheck(
                 "process_settings.firmware_cache_dir",

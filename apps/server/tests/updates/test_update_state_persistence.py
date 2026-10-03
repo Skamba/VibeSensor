@@ -104,7 +104,6 @@ def update_env(
         return build_update_manager(
             runner=kw.pop("runner", runner),
             repo_path=kw.pop("repo_path", str(tmp_path / "repo")),
-            rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),
             state_store=kw.pop("state_store", store),
         )
 

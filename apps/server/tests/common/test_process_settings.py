@@ -9,7 +9,6 @@ import pytest
 from vibesensor.common.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
     DEFAULT_UPDATE_REPO_PATH,
-    DEFAULT_UPDATE_ROLLBACK_DIR,
     DEFAULT_UPDATE_STATE_PATH,
     load_bootstrap_env_settings,
     load_update_env_settings,
@@ -22,7 +21,6 @@ def _clear_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "VIBESENSOR_CONFIG_PATH",
         "VIBESENSOR_SERVE_STATIC",
         "VIBESENSOR_REPO_PATH",
-        "VIBESENSOR_ROLLBACK_DIR",
         "VIBESENSOR_UPDATE_STATE_PATH",
         "VIBESENSOR_UPDATE_SUDO_WRAPPER",
         "VIBESENSOR_FIRMWARE_CACHE_DIR",
@@ -113,7 +111,6 @@ def test_update_env_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = load_update_env_settings()
 
     assert settings.repo_path == DEFAULT_UPDATE_REPO_PATH
-    assert settings.rollback_dir == DEFAULT_UPDATE_ROLLBACK_DIR
     assert settings.update_state_path == DEFAULT_UPDATE_STATE_PATH
     assert settings.update_sudo_wrapper is None
     assert settings.firmware_cache_dir == DEFAULT_FIRMWARE_CACHE_DIR
@@ -130,7 +127,6 @@ def test_update_env_settings_accept_env_overrides(
 ) -> None:
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_REPO_PATH", str(tmp_path / "repo"))
-    monkeypatch.setenv("VIBESENSOR_ROLLBACK_DIR", str(tmp_path / "rollback"))
     monkeypatch.setenv("VIBESENSOR_UPDATE_STATE_PATH", str(tmp_path / "update-status.json"))
     monkeypatch.setenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", str(tmp_path / "sudo-wrapper.sh"))
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_CACHE_DIR", str(tmp_path / "firmware"))
@@ -143,7 +139,6 @@ def test_update_env_settings_accept_env_overrides(
     settings = load_update_env_settings()
 
     assert settings.repo_path == tmp_path / "repo"
-    assert settings.rollback_dir == tmp_path / "rollback"
     assert settings.update_state_path == tmp_path / "update-status.json"
     assert settings.update_sudo_wrapper == tmp_path / "sudo-wrapper.sh"
     assert settings.firmware_cache_dir == tmp_path / "firmware"

@@ -28,7 +28,6 @@ __all__ = [
 class IsolatedRuntimePaths:
     root: Path
     data_dir: Path
-    rollback_dir: Path
     config_path: Path
 
 
@@ -90,8 +89,6 @@ def build_isolated_server_config(
     runtime_root.mkdir(parents=True, exist_ok=True)
 
     runtime_data = runtime_root / "data"
-    rollback_dir = runtime_root / "rollback"
-    rollback_dir.mkdir(parents=True, exist_ok=True)
     if data_seed_dir is None:
         runtime_data.mkdir(parents=True, exist_ok=True)
     else:
@@ -116,15 +113,11 @@ def build_isolated_server_config(
     logging["history_db_path"] = str(runtime_data / "history.db")
     logging["app_log_path"] = str(runtime_data / "app.log")
 
-    update = _mapping_section(data, "update")
-    update["rollback_dir"] = str(rollback_dir)
-
     config_path = runtime_root / config_name
     config_path.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
     return IsolatedRuntimePaths(
         root=runtime_root,
         data_dir=runtime_data,
-        rollback_dir=rollback_dir,
         config_path=config_path,
     )
 
@@ -136,19 +129,17 @@ def build_isolated_server_env(
     extra_env: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
     data_dir = runtime_root / "data"
-    rollback_dir = runtime_root / "rollback"
     firmware_dir = runtime_root / "firmware"
     data_dir.mkdir(parents=True, exist_ok=True)
-    rollback_dir.mkdir(parents=True, exist_ok=True)
     firmware_dir.mkdir(parents=True, exist_ok=True)
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     env["VIBESENSOR_UPDATE_STATE_PATH"] = str(data_dir / "update_status.json")
     env["VIBESENSOR_FIRMWARE_CACHE_DIR"] = str(firmware_dir)
-    env["VIBESENSOR_ROLLBACK_DIR"] = str(rollback_dir)
-    if repo_root is not None:
-        env["VIBESENSOR_REPO_PATH"] = str(repo_root)
+    # Without an explicit repo the isolated server's updater points at the empty
+    # runtime root, so it can never see or touch the device's real venv slots.
+    env["VIBESENSOR_REPO_PATH"] = str(repo_root if repo_root is not None else runtime_root)
     if extra_env:
         env.update(extra_env)
     return env

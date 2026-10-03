@@ -145,7 +145,10 @@ When `build.sh` fails, isolate which stage failed before retrying everything:
 The image contains:
 
 - Raspberry Pi OS Lite (Trixie, armhf)
-- VibeSensor Python server with all dependencies
+- VibeSensor Python server with all dependencies, installed as A/B venv slot
+  `apps/server/.venv/slots/<version>` (`.venv/current` points at it, and
+  `.venv/bin`, `.venv/lib`, and `.venv/pyvenv.cfg` route through `current`), so
+  OTA updates can install beside it and revert automatically
 - Built web UI (served from `apps/server/vibesensor/static/`)
 - Preloaded offline ESP build toolchain/packages for `m5stack_atom`
 - systemd services enabled at boot:
@@ -221,6 +224,7 @@ to produce the image. The current flow is:
 1. build app artifacts (UI bundle + `vibesensor-*.whl`),
 2. sync runtime repo + app artifacts into the tracked stage templates,
 3. copy those templates into the generated `pi-gen` stage tree,
-4. build an ARM wheelhouse and install the server from the prebuilt wheel (non-editable),
+4. build an ARM wheelhouse, install the server from the prebuilt wheel (non-editable), and
+   move the venv into its first A/B slot (`python -m vibesensor.updates.venv_slots adopt`),
 5. enable the hotspot service and hotspot watchdog timer,
 6. run the standalone validator when post-build validation is enabled.

@@ -34,6 +34,7 @@ from vibesensor.updates.status.payload_codec import (
 from vibesensor.updates.status.runtime_details import collect_runtime_details
 from vibesensor.updates.status.tracker import UpdateStatusTracker
 from vibesensor.updates.transport.coordinator import UpdateTransportCoordinator
+from vibesensor.updates.venv_slots import VenvSlots
 
 
 class _StaticUsbInternetService:
@@ -90,10 +91,10 @@ def _build_manager_with_cancellation_cleanup(
         release_fetcher=SimpleNamespace(find_latest_release=cancel_release_check),
         stager=MagicMock(),
         firmware_refresher=MagicMock(),
-        wheel_installer=MagicMock(),
-        rollback=MagicMock(),
+        installer=MagicMock(),
+        slots=MagicMock(),
         validation_config=UpdateValidationConfig(
-            rollback_dir=tmp_path / "rollback",
+            venv_root=tmp_path / "venv",
             min_free_disk_bytes=1,
         ),
         repo=repo,
@@ -116,7 +117,6 @@ class TestUpdateManagerAsync:
                 seed_artifacts=True,
                 server_release_fetcher=fetcher,
             )
-            (tmp_path / "rollback").mkdir()
 
             mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
             wheel_content = _build_fake_wheel(mock_wheel_path, version="2025.6.15")
@@ -129,11 +129,13 @@ class TestUpdateManagerAsync:
 
         assert manager.status.state == UpdateState.success
         assert manager.status.exit_code == 0
-        assert [
-            call[0]
-            for call in runner.calls
-            if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
-        ]
+        slots = VenvSlots(_repo / "apps" / "server" / ".venv")
+        new_python = str(slots.slot_python("2025.6.15"))
+        assert any(call[0][:4] == [new_python, "-m", "pip", "install"] for call in runner.calls)
+        assert any("smoke-server" in call[0] for call in runner.calls)
+        assert slots.active_slot() == "2025.6.15"
+        pending = slots.pending_boot()
+        assert pending is not None and pending.previous == "2025.6.14"
         _assert_hotspot_restore_logged(manager)
         fw_mod = "vibesensor.updates.firmware.firmware_cache"
         firmware_refresh_calls = [call[0] for call in runner.calls if fw_mod in " ".join(call[0])]
@@ -162,7 +164,7 @@ class TestUpdateManagerAsync:
         assert not pip_install_calls
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
+        manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False)
         runner.set_response("python3 -c pass", 1, "", "sudo: a password is required")
         with patch(
             "vibesensor.updates.job.UpdateJob._find_latest_release",
@@ -283,14 +285,13 @@ class TestUpdateManagerAsync:
         assert manager.status.state == UpdateState.failed
         _assert_hotspot_restore_logged(manager)
 
-    async def test_install_failure_triggers_rollback(self, tmp_path) -> None:
+    async def test_install_failure_keeps_the_live_slot(self, tmp_path) -> None:
         with patch_release_fetcher(current_version="2025.6.14") as fetcher:
-            manager, runner, _ = setup_update_env(
+            manager, runner, repo = setup_update_env(
                 tmp_path,
                 server_release_fetcher=fetcher,
             )
             runner.set_response("pip", 1, "", "ERROR: Could not install")
-            (tmp_path / "rollback").mkdir()
             fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
             wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
             wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
@@ -298,34 +299,27 @@ class TestUpdateManagerAsync:
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
+        slots = VenvSlots(repo / "apps" / "server" / ".venv")
+        assert slots.active_slot() == "2025.6.14"
+        assert not slots.slot_dir("2025.6.15").exists()
+        assert slots.pending_boot() is None
+        _assert_hotspot_restore_logged(manager)
 
-    async def test_snapshot_failure_aborts_before_install(self, tmp_path) -> None:
-        with (
-            patch_release_fetcher(current_version="2025.6.14") as fetcher,
-            patch(
-                "vibesensor.updates.rollback.UpdateRollback.snapshot_for_rollback",
-                new=AsyncMock(return_value=False),
-            ),
-        ):
-            manager, runner, _ = setup_update_env(
-                tmp_path,
-                seed_artifacts=True,
-                server_release_fetcher=fetcher,
-            )
-            fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-            wheel_content = _build_fake_wheel(fake_wheel, version="2025.6.15")
-            wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
-            fetcher.find_latest_release.return_value = make_mock_release(sha256=wheel_sha256)
-            fetcher.download_wheel.return_value = fake_wheel
-            await run_update(manager, "TestNet", "pass")
+    async def test_update_waits_while_the_previous_one_is_in_its_boot_check(
+        self,
+        tmp_path,
+    ) -> None:
+        manager, runner, repo = setup_update_env(tmp_path)
+        slots = VenvSlots(repo / "apps" / "server" / ".venv")
+        slots.adopt("2025.6.14")
+        slots.clone_slot("2025.6.14", "2025.6.15")
+        slots.activate("2025.6.15", health_url="http://127.0.0.1:80/api/health")
+
+        await run_update(manager, "TestNet", "pass")
 
         assert manager.status.state == UpdateState.failed
-        pip_install_calls = [
-            call[0]
-            for call in runner.calls
-            if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
-        ]
-        assert not pip_install_calls
+        assert manager.status.issues[0].message == "The previous update is still being verified"
+        assert not any("nmcli" in call[0] for call in runner.calls)
 
     async def test_disk_check_failure_aborts_update(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
@@ -590,7 +584,7 @@ class TestUpdateManagerAsync:
 
     @pytest.mark.parametrize("missing_tool", ["nmcli", "python3"])
     async def test_missing_tool_fails_gracefully(self, tmp_path, missing_tool: str) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path, sudo_ok=False, rollback=False)
+        manager, _runner, _ = setup_update_env(tmp_path, sudo_ok=False)
 
         def which_without(name: str) -> str | None:
             return None if name == missing_tool else f"/usr/bin/{name}"

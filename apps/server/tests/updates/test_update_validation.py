@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 from test_support.update_status import build_update_status_harness
 
 from vibesensor.common.exceptions import UpdatePreparationError
+from vibesensor.updates.boot_check import PENDING_FILE
 from vibesensor.updates.models import (
     UpdateRequest,
     UpdateTransport,
@@ -27,38 +29,69 @@ class _Commands:
         return CommandExecutionResult(returncode=0, stdout="", stderr="")
 
 
-@pytest.mark.asyncio
-async def test_validation_fails_when_rollback_dir_probe_fails(monkeypatch, tmp_path: Path) -> None:
-    tracker = build_update_status_harness(tmp_path / "state.json")
-
-    def _raise_probe(rollback_dir: Path) -> None:
-        raise OSError("readonly")
-
-    monkeypatch.setattr("shutil.which", _mock_which)
-    monkeypatch.setattr(
-        "vibesensor.updates.validation._probe_rollback_dir",
-        _raise_probe,
+async def _validate(venv_root: Path, *, min_free_disk_bytes: int = 1) -> None:
+    await validate_prerequisites(
+        commands=_Commands(),
+        status=build_update_status_harness(venv_root.parent / "state.json"),
+        config=UpdateValidationConfig(
+            venv_root=venv_root,
+            min_free_disk_bytes=min_free_disk_bytes,
+        ),
+        request=UpdateRequest(transport=UpdateTransport.wifi, ssid="TestNet", password=""),
     )
 
-    with pytest.raises(
-        UpdatePreparationError,
-        match="Rollback directory is not writable",
-    ) as excinfo:
-        await validate_prerequisites(
-            commands=_Commands(),
-            status=tracker,
-            config=UpdateValidationConfig(
-                rollback_dir=tmp_path / "rollback",
-                min_free_disk_bytes=1,
-            ),
-            request=UpdateRequest(
-                transport=UpdateTransport.wifi,
-                ssid="TestNet",
-                password="",
-            ),
-        )
+
+@pytest.mark.asyncio
+async def test_validation_refuses_while_a_boot_check_is_pending(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr("shutil.which", _mock_which)
+    venv_root = tmp_path / ".venv"
+    venv_root.mkdir()
+    (venv_root / "current").symlink_to("slots/2.0")
+    (venv_root / PENDING_FILE).write_text(
+        json.dumps({"candidate": "2.0", "previous": "1.0", "health_url": "http://x"}),
+    )
+
+    with pytest.raises(UpdatePreparationError, match="still being verified") as excinfo:
+        await _validate(venv_root)
 
     assert excinfo.value.phase == "validating"
-    assert "readonly" in excinfo.value.detail
-    assert tracker.status.state.value == "idle"
-    assert tracker.status.issues == []
+    assert "2.0" in excinfo.value.detail
+
+
+@pytest.mark.asyncio
+async def test_validation_ignores_a_marker_for_a_slot_that_never_became_active(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr("shutil.which", _mock_which)
+    venv_root = tmp_path / ".venv"
+    venv_root.mkdir()
+    (venv_root / "current").symlink_to("slots/1.0")
+    (venv_root / PENDING_FILE).write_text(
+        json.dumps({"candidate": "2.0", "previous": "1.0", "health_url": "http://x"}),
+    )
+
+    await _validate(venv_root)
+
+
+@pytest.mark.asyncio
+async def test_validation_checks_free_space_on_the_venv_filesystem(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr("shutil.which", _mock_which)
+    checked: list[Path] = []
+
+    def _usage(path: Path) -> object:
+        checked.append(Path(path))
+        return type("Usage", (), {"free": 10 * 1024 * 1024})()
+
+    monkeypatch.setattr("shutil.disk_usage", _usage)
+
+    with pytest.raises(UpdatePreparationError, match="Insufficient disk space"):
+        await _validate(tmp_path / "missing" / ".venv", min_free_disk_bytes=600 * 1024 * 1024)
+
+    assert checked == [tmp_path]

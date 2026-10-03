@@ -28,9 +28,6 @@ DEFAULT_CONFIG: JsonObject = {
         "app_log_path": "data/app.log",
     },
     "gps": {"gps_enabled": True},
-    "update": {
-        "rollback_dir": "/var/lib/vibesensor/rollback",
-    },
 }
 
 

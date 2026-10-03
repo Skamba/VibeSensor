@@ -54,7 +54,6 @@ def test_build_isolated_server_config_rewrites_runtime_paths_and_copies_seed_dat
     assert data["gps"]["gps_enabled"] is False
     assert data["logging"]["history_db_path"].endswith("history.db")
     assert data["logging"]["app_log_path"].endswith("app.log")
-    assert data["update"]["rollback_dir"].endswith("rollback")
 
 
 def test_build_isolated_server_env_sets_runtime_paths(tmp_path: Path) -> None:
@@ -67,10 +66,15 @@ def test_build_isolated_server_env_sets_runtime_paths(tmp_path: Path) -> None:
     assert env["PYTHONUNBUFFERED"] == "1"
     assert env["VIBESENSOR_UPDATE_STATE_PATH"].endswith("data/update_status.json")
     assert env["VIBESENSOR_FIRMWARE_CACHE_DIR"].endswith("firmware")
-    assert env["VIBESENSOR_ROLLBACK_DIR"].endswith("rollback")
     assert env["VIBESENSOR_REPO_PATH"] == str(SERVER_ROOT.parent.parent)
     assert env["VIBESENSOR_SERVE_STATIC"] == "0"
     assert env["CUSTOM_FLAG"] == "1"
+
+
+def test_isolated_server_without_a_repo_never_sees_the_device_venv(tmp_path: Path) -> None:
+    env = build_isolated_server_env(tmp_path)
+
+    assert env["VIBESENSOR_REPO_PATH"] == str(tmp_path)
 
 
 def test_build_server_subprocess_cmd_uses_embedded_bootstrap(tmp_path: Path) -> None:

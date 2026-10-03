@@ -89,6 +89,10 @@ fi
   --no-build-isolation \
   "${VIBESENSOR_WHEEL}[esp]" \
   --quiet
+# Move the plain venv into an A/B slot (.venv/slots/<version>) with
+# .venv/bin -> current/bin routes and the boot-check launcher, exactly as the
+# updater does once on devices flashed before A/B slots.
+"${VENV_PYTHON}" -m vibesensor.updates.venv_slots adopt /opt/VibeSensor/apps/server/.venv
 SYSTEM_PYTHON_BIN="$(command -v python3)"
 SYSTEM_PYTHON_VERSION="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
 VENV_PYTHON_VERSION="$("${VENV_PYTHON}" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')"
