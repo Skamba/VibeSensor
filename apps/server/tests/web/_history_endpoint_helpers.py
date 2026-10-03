@@ -6,7 +6,7 @@ import json
 import zipfile
 from dataclasses import dataclass, field
 from typing import Any, cast
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 from fastapi import FastAPI
 from test_support.persisted_analysis import make_persisted_analysis
@@ -37,6 +37,8 @@ from vibesensor.report.service import HistoryReportService, PdfRendererFn
 from vibesensor.report.view_model import ReportView
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.updates.manager import UpdateManager
 from vibesensor.web.health_state import RuntimeHealthState
 from vibesensor.web.history_services import (
     ProjectedHistoryExportService,
@@ -348,8 +350,8 @@ class FakeState:
         self.health_state = RuntimeHealthState()
         self.ingest_diagnostics = IngestDiagnosticsCollector()
         self.health_state.mark_ready()
-        self.update_manager = MagicMock()
-        self.esp_flash_manager = MagicMock()
+        self.update_manager = create_autospec(UpdateManager, instance=True)
+        self.esp_flash_manager = create_autospec(EspFlashManager, instance=True)
         self.run_service = ProjectedHistoryRunService(
             HistoryRunService(
                 self.history_db,

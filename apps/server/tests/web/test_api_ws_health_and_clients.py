@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-import asyncio
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 from _history_endpoint_helpers import make_app_and_state
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-
-async def _close_history_db(db) -> None:
-    db.close()
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.settings.sensor_settings import SensorSettingsService
+from vibesensor.settings.services import build_settings_services
 
 
 def _client_routes_app(registry, control_plane, settings_store, processor) -> FastAPI:
@@ -21,6 +25,45 @@ def _client_routes_app(registry, control_plane, settings_store, processor) -> Fa
     app = FastAPI()
     app.include_router(create_client_routes(registry, control_plane, settings_store, processor))
     return app
+
+
+def _hello(client_hex: str, name: str = "advertised-name") -> HelloMessage:
+    return HelloMessage(
+        client_id=bytes.fromhex(client_hex),
+        control_port=9010,
+        sample_rate_hz=800,
+        name=name,
+        firmware_version="fw",
+    )
+
+
+@dataclass
+class _ClientRig:
+    db: HistoryDB
+    registry: ClientRegistry
+    settings: SensorSettingsService
+    control_plane: UDPControlPlane
+    processor: SignalProcessor
+
+    def app(self) -> FastAPI:
+        return _client_routes_app(self.registry, self.control_plane, self.settings, self.processor)
+
+
+@pytest.fixture
+def client_rig(tmp_path: Path):
+    """Real registry, sensor settings and HistoryDB; spec'd control plane and processor."""
+    db = HistoryDB(tmp_path / "history.db")
+    processor = create_autospec(SignalProcessor, instance=True)
+    processor.all_latest_metrics.return_value = {}
+    rig = _ClientRig(
+        db=db,
+        registry=ClientRegistry(db=db),
+        settings=build_settings_services(db=db).sensor_settings,
+        control_plane=create_autospec(UDPControlPlane, instance=True),
+        processor=processor,
+    )
+    yield rig
+    db.close()
 
 
 def test_ws_selected_client_id_validation() -> None:
@@ -75,326 +118,163 @@ def test_ws_unexpected_update_error_propagates() -> None:
     ],
 )
 def test_identify_client_status(
+    client_rig: _ClientRig,
     known: bool,
     send_result: tuple[bool, int | None] | None,
     status_code: int,
     expected_json: dict[str, object] | None,
 ) -> None:
-    registry = MagicMock()
-    registry.get.return_value = object() if known else None
-    control_plane = MagicMock()
-    control_plane.send_identify.return_value = send_result
-    app = _client_routes_app(registry, control_plane, MagicMock(), MagicMock())
+    if known:
+        client_rig.registry.update_from_hello(
+            _hello("aabbccddeeff"), ("10.4.0.2", 9010), 1.0, now_mono=1.0
+        )
+    client_rig.control_plane.send_identify.return_value = send_result
 
-    with TestClient(app) as client:
+    with TestClient(client_rig.app()) as client:
         response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/identify",
+            "/api/clients/ AA:BB:CC:DD:EE:FF /identify",
             json={"duration_ms": 1000},
         )
 
     assert response.status_code == status_code
     if status_code == 404:
         assert "not found" in response.json()["detail"].lower()
+        client_rig.control_plane.send_identify.assert_not_called()
+    else:
+        client_rig.control_plane.send_identify.assert_called_once_with("aabbccddeeff", 1000)
     if expected_json is not None:
         assert response.json() == expected_json
 
 
-def test_identify_client_normalizes_client_id_before_registry_and_control_plane() -> None:
-    class RecordingRegistry:
-        def __init__(self) -> None:
-            self.requested_ids: list[str] = []
-
-        def get(self, client_id: str) -> object:
-            self.requested_ids.append(client_id)
-            return object()
-
-    class RecordingControlPlane:
-        def __init__(self) -> None:
-            self.calls: list[tuple[str, int]] = []
-
-        def send_identify(self, client_id: str, duration_ms: int) -> tuple[bool, int]:
-            self.calls.append((client_id, duration_ms))
-            return True, 7
-
-    registry = RecordingRegistry()
-    control_plane = RecordingControlPlane()
-    settings_store = MagicMock()
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
-
-    with TestClient(app) as client:
+@pytest.mark.parametrize("duration_ms", [99, 60_001])
+def test_identify_rejects_durations_outside_100ms_to_60s(
+    client_rig: _ClientRig, duration_ms: int
+) -> None:
+    with TestClient(client_rig.app()) as client:
         response = client.post(
-            "/api/clients/ AA:BB:CC:DD:EE:FF /identify",
-            json={"duration_ms": 1000},
+            "/api/clients/aa:bb:cc:dd:ee:ff/identify", json={"duration_ms": duration_ms}
         )
 
-    assert response.status_code == 200
-    assert registry.requested_ids == ["aabbccddeeff"]
-    assert control_plane.calls == [("aabbccddeeff", 1000)]
-    assert response.json() == {"status": "sent", "cmd_seq": 7}
+    assert response.status_code == 422
 
 
-def test_set_client_location_maps_canonical_location_conflict_to_409() -> None:
-    class KnownRegistry:
-        def get(self, _client_id: str) -> object:
-            return object()
-
-    registry = KnownRegistry()
-    control_plane = MagicMock()
-    settings_store = MagicMock()
-    settings_store.assign_sensor_location.side_effect = ValueError(
-        "Location 'front_left_wheel' already assigned to other sensor",
+def test_set_client_location_persists_canonical_name_and_location(client_rig: _ClientRig) -> None:
+    client_rig.registry.update_from_hello(
+        _hello("001122334455"), ("10.4.0.2", 9010), 1.0, now_mono=1.0
     )
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
 
-    with TestClient(app) as client:
+    with TestClient(client_rig.app()) as client:
         response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/location",
+            "/api/clients/00:11:22:33:44:55/location",
             json={"location_code": "front_left_wheel"},
         )
 
-    assert response.status_code == 409
-    assert "already assigned" in response.json()["detail"]
+    assert response.status_code == 200
+    assert response.json()["name"] == "Front Left Wheel"
+    assert response.json()["location_code"] == "front_left_wheel"
+    assert client_rig.settings.get_sensors() == {
+        "001122334455": {"name": "Front Left Wheel", "location_code": "front_left_wheel"}
+    }
+    record = client_rig.registry.get("001122334455")
+    assert record is not None
+    assert (record.name, record.location_code) == ("Front Left Wheel", "front_left_wheel")
 
 
-def test_set_client_location_maps_unknown_location_to_400() -> None:
-    class KnownRegistry:
-        def get(self, _client_id: str) -> object:
-            return object()
+def test_set_client_location_maps_location_conflict_to_409(client_rig: _ClientRig) -> None:
+    for client_hex in ("001122334455", "001122334466"):
+        client_rig.registry.update_from_hello(
+            _hello(client_hex), ("10.4.0.2", 9010), 1.0, now_mono=1.0
+        )
 
-    registry = KnownRegistry()
-    control_plane = MagicMock()
-    settings_store = MagicMock()
-    settings_store.assign_sensor_location.side_effect = ValueError("Unknown location_code")
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
+    with TestClient(client_rig.app()) as client:
+        first = client.post(
+            "/api/clients/00:11:22:33:44:55/location", json={"location_code": "front_left_wheel"}
+        )
+        conflict = client.post(
+            "/api/clients/00:11:22:33:44:66/location", json={"location_code": "front_left_wheel"}
+        )
 
-    with TestClient(app) as client:
+    assert first.status_code == 200
+    assert conflict.status_code == 409
+    assert "already assigned" in conflict.json()["detail"]
+
+
+def test_set_client_location_maps_unknown_location_to_400(client_rig: _ClientRig) -> None:
+    client_rig.registry.update_from_hello(
+        _hello("001122334455"), ("10.4.0.2", 9010), 1.0, now_mono=1.0
+    )
+
+    with TestClient(client_rig.app()) as client:
         response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/location",
+            "/api/clients/00:11:22:33:44:55/location",
             json={"location_code": "not_a_real_location"},
         )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Unknown location_code"
+    assert "location_code" in response.json()["detail"]
 
 
-def test_set_client_location_persists_canonical_name_and_location() -> None:
-    class KnownRegistry:
-        def __init__(self) -> None:
-            self.cleared: list[str] = []
-            self.locations: list[tuple[str, str]] = []
-            self.names: list[tuple[str, str]] = []
+def test_remove_client_clears_persisted_name(client_rig: _ClientRig) -> None:
+    client_rig.registry.update_from_hello(
+        _hello("001122334455"), ("10.4.0.2", 9010), 1.0, now_mono=1.0
+    )
+    client_rig.registry.set_name("001122334455", "Front Left Wheel")
 
-        def get(self, _client_id: str):
-            return type("Rec", (), {"name": "legacy-name"})()
-
-        def set_location(self, client_id: str, location_code: str):
-            self.locations.append((client_id, location_code))
-            return type("Rec", (), {"name": "legacy-name", "location_code": location_code})()
-
-        def set_name(self, client_id: str, name: str):
-            self.names.append((client_id, name))
-            return type("Rec", (), {"name": name, "location_code": "front_left_wheel"})()
-
-        def clear_name(self, client_id: str):
-            self.cleared.append(client_id)
-            return type("Rec", (), {"name": f"client-{client_id[-4:]}"})()
-
-    registry = KnownRegistry()
-    control_plane = MagicMock()
-    settings_store = MagicMock()
-    settings_store.assign_sensor_location.return_value = {
-        "aabbccddeeff": {
-            "name": "Front Left Wheel",
-            "location_code": "front_left_wheel",
-        }
-    }
-    app = _client_routes_app(registry, control_plane, settings_store, MagicMock())
-
-    with TestClient(app) as client:
-        response = client.post(
-            "/api/clients/aa:bb:cc:dd:ee:ff/location",
-            json={"location_code": "front_left_wheel"},
-        )
+    with TestClient(client_rig.app()) as client:
+        response = client.delete("/api/clients/00:11:22:33:44:55")
 
     assert response.status_code == 200
-    settings_store.assign_sensor_location.assert_called_once_with(
-        "aabbccddeeff",
-        "front_left_wheel",
-    )
-    assert registry.locations == [("aabbccddeeff", "front_left_wheel")]
-    assert registry.names == [("aabbccddeeff", "Front Left Wheel")]
-    assert registry.cleared == []
-    assert response.json()["name"] == "Front Left Wheel"
-    assert response.json()["location_code"] == "front_left_wheel"
+    assert response.json() == {"id": "001122334455", "status": "removed"}
+    assert client_rig.db.list_client_names() == {}
 
 
-def test_set_client_location_works_with_real_persistence_in_async_route(
-    tmp_path: Path,
-) -> None:
-    from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol_messages import HelloMessage
-    from vibesensor.ingest.registry import ClientRegistry
-    from vibesensor.settings.services import build_settings_services
-
-    db = HistoryDB(tmp_path / "history.db")
-    try:
-        settings_store = build_settings_services(db=db).sensor_settings
-        registry = ClientRegistry(db=db)
-        registry.update_from_hello(
-            HelloMessage(
-                client_id=bytes.fromhex("001122334455"),
-                control_port=9010,
-                sample_rate_hz=800,
-                name="advertised-name",
-                firmware_version="fw",
-            ),
-            ("10.4.0.2", 9010),
-            1.0,
-            now_mono=1.0,
+def test_remove_client_releases_location_for_replacement_sensor(client_rig: _ClientRig) -> None:
+    for client_hex in ("001122334455", "001122334466"):
+        client_rig.registry.update_from_hello(
+            _hello(client_hex), ("10.4.0.2", 9010), 1.0, now_mono=1.0
         )
 
-        app = _client_routes_app(registry, MagicMock(), settings_store, MagicMock())
-
-        with TestClient(app) as client:
-            response = client.post(
-                "/api/clients/00:11:22:33:44:55/location",
-                json={"location_code": "front_left_wheel"},
-            )
-
-        assert response.status_code == 200
-        assert response.json()["name"] == "Front Left Wheel"
-        assert response.json()["location_code"] == "front_left_wheel"
-        assert settings_store.get_sensors() == {
-            "001122334455": {
-                "name": "Front Left Wheel",
-                "location_code": "front_left_wheel",
-            }
-        }
-    finally:
-        asyncio.run(_close_history_db(db))
-
-
-def test_remove_client_clears_persisted_name_from_async_route(tmp_path: Path) -> None:
-    from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol_messages import HelloMessage
-    from vibesensor.ingest.registry import ClientRegistry
-
-    db = HistoryDB(tmp_path / "history.db")
-    try:
-        registry = ClientRegistry(db=db)
-        registry.update_from_hello(
-            HelloMessage(
-                client_id=bytes.fromhex("001122334455"),
-                control_port=9010,
-                sample_rate_hz=800,
-                name="advertised-name",
-                firmware_version="fw",
-            ),
-            ("10.4.0.2", 9010),
-            1.0,
-            now_mono=1.0,
+    with TestClient(client_rig.app()) as client:
+        assigned = client.post(
+            "/api/clients/00:11:22:33:44:55/location", json={"location_code": "front_left_wheel"}
         )
-        registry.set_name("001122334455", "Front Left Wheel")
+        removed = client.delete("/api/clients/00:11:22:33:44:55")
+        replacement = client.post(
+            "/api/clients/00:11:22:33:44:66/location", json={"location_code": "front_left_wheel"}
+        )
 
-        app = _client_routes_app(registry, MagicMock(), MagicMock(), MagicMock())
-
-        with TestClient(app) as client:
-            response = client.delete("/api/clients/00:11:22:33:44:55")
-
-        assert response.status_code == 200
-        assert response.json() == {"id": "001122334455", "status": "removed"}
-        assert db.list_client_names() == {}
-    finally:
-        asyncio.run(_close_history_db(db))
-
-
-def test_remove_client_releases_location_for_replacement_sensor(tmp_path: Path) -> None:
-    from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol_messages import HelloMessage
-    from vibesensor.ingest.registry import ClientRegistry
-    from vibesensor.settings.services import build_settings_services
-
-    db = HistoryDB(tmp_path / "history.db")
-    try:
-        settings_store = build_settings_services(db=db).sensor_settings
-        registry = ClientRegistry(db=db)
-        for client_hex in ("001122334455", "001122334466"):
-            registry.update_from_hello(
-                HelloMessage(
-                    client_id=bytes.fromhex(client_hex),
-                    control_port=9010,
-                    sample_rate_hz=800,
-                    name="advertised-name",
-                    firmware_version="fw",
-                ),
-                ("10.4.0.2", 9010),
-                1.0,
-                now_mono=1.0,
-            )
-
-        app = _client_routes_app(registry, MagicMock(), settings_store, MagicMock())
-
-        with TestClient(app) as client:
-            assigned = client.post(
-                "/api/clients/00:11:22:33:44:55/location",
-                json={"location_code": "front_left_wheel"},
-            )
-            removed = client.delete("/api/clients/00:11:22:33:44:55")
-            replacement = client.post(
-                "/api/clients/00:11:22:33:44:66/location",
-                json={"location_code": "front_left_wheel"},
-            )
-
-        assert assigned.status_code == 200
-        assert removed.status_code == 200
-        assert replacement.status_code == 200
-        sensors = settings_store.get_sensors()
-        assert sensors["001122334455"]["location_code"] == ""
-        assert sensors["001122334466"]["location_code"] == "front_left_wheel"
-    finally:
-        asyncio.run(_close_history_db(db))
+    assert (assigned.status_code, removed.status_code, replacement.status_code) == (200, 200, 200)
+    sensors = client_rig.settings.get_sensors()
+    assert sensors["001122334455"]["location_code"] == ""
+    assert sensors["001122334466"]["location_code"] == "front_left_wheel"
 
 
 def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol_messages import HelloMessage
-    from vibesensor.ingest.registry import ClientRegistry
-
     db = HistoryDB(tmp_path / "history.db")
     try:
-        registry = ClientRegistry(
-            db=db,
-            live_ttl_seconds=5.0,
-            retention_ttl_seconds=30.0,
+        registry = ClientRegistry(db=db, live_ttl_seconds=5.0, retention_ttl_seconds=30.0)
+        registry.update_from_hello(
+            _hello("001122334455", name="sensor"), ("10.4.0.2", 9010), now=1.0, now_mono=1.0
         )
-        hello = HelloMessage(
-            client_id=bytes.fromhex("001122334455"),
-            control_port=9010,
-            sample_rate_hz=800,
-            name="sensor",
-            firmware_version="fw",
-        )
-        registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0, now_mono=1.0)
-
-        now = {"wall": 9.0, "mono": 9.0}
-        monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: now["wall"])
-        monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: now["mono"])
-
-        control_plane = MagicMock()
-        settings_store = MagicMock()
-        settings_store.get_sensors.return_value = {}
-        processor = MagicMock()
+        monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: 9.0)
+        monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: 9.0)
+        processor = create_autospec(SignalProcessor, instance=True)
         processor.all_latest_metrics.return_value = {}
-        app = _client_routes_app(registry, control_plane, settings_store, processor)
+        app = _client_routes_app(
+            registry,
+            create_autospec(UDPControlPlane, instance=True),
+            build_settings_services(db=db).sensor_settings,
+            processor,
+        )
 
         with TestClient(app) as client:
             response = client.get("/api/clients")
 
         assert response.status_code == 200
-        assert processor.all_latest_metrics.call_args.args == ([],)
+        processor.all_latest_metrics.assert_called_once_with([])
         clients = response.json()["clients"]
         assert len(clients) == 1
         assert clients[0]["id"] == "001122334455"
@@ -403,56 +283,35 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
         assert clients[0]["last_seen_age_ms"] == 8000
         assert clients[0]["latest_metrics"] == {}
     finally:
-        asyncio.run(_close_history_db(db))
+        db.close()
 
 
 def test_get_clients_overlays_canonical_settings_metadata_after_restart(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    from vibesensor.history.history_db import HistoryDB
-    from vibesensor.ingest.protocol_messages import HelloMessage
-    from vibesensor.ingest.registry import ClientRegistry
-    from vibesensor.settings.services import build_settings_services
-
     db = HistoryDB(tmp_path / "history.db")
     try:
-        initial_settings = build_settings_services(db=db)
-        initial_settings.sensor_settings.assign_sensor_location(
-            "00:11:22:33:44:55",
-            "rear_left_wheel",
+        build_settings_services(db=db).sensor_settings.assign_sensor_location(
+            "00:11:22:33:44:55", "rear_left_wheel"
         )
-
         settings_store = build_settings_services(db=db).sensor_settings
         registry = ClientRegistry(db=db)
         registry.update_from_hello(
-            HelloMessage(
-                client_id=bytes.fromhex("001122334455"),
-                control_port=9010,
-                sample_rate_hz=800,
-                name="advertised-name",
-                firmware_version="fw",
-            ),
-            ("10.4.0.2", 9010),
-            now=1.0,
-            now_mono=1.0,
+            _hello("001122334455"), ("10.4.0.2", 9010), now=1.0, now_mono=1.0
         )
         monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: 1.0)
         monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: 1.0)
-
-        control_plane = MagicMock()
-        processor = MagicMock()
+        processor = create_autospec(SignalProcessor, instance=True)
         processor.all_latest_metrics.return_value = {}
-        app = _client_routes_app(registry, control_plane, settings_store, processor)
+        app = _client_routes_app(
+            registry, create_autospec(UDPControlPlane, instance=True), settings_store, processor
+        )
 
         with TestClient(app) as client:
             response = client.get("/api/clients")
 
         assert response.status_code == 200
-        assert settings_store.get_sensors()["001122334455"] == {
-            "name": "Rear Left Wheel",
-            "location_code": "rear_left_wheel",
-        }
         clients = response.json()["clients"]
         assert len(clients) == 1
         assert clients[0]["id"] == "001122334455"
@@ -461,4 +320,4 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
         assert clients[0]["location_code"] == "rear_left_wheel"
         assert clients[0]["latest_metrics"] == {}
     finally:
-        asyncio.run(_close_history_db(db))
+        db.close()

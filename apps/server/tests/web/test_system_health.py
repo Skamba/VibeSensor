@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
+from vibesensor.live.processor import SignalProcessor
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.web.health_snapshot import build_system_health_snapshot
 from vibesensor.web.health_state import RuntimeHealthState
 
@@ -50,11 +53,11 @@ def _make_deps(
     persistence: dict | None = None,
 ) -> tuple[MagicMock, MagicMock]:
     """Return (registry, run_recorder) mocks with configurable snapshots."""
-    registry = MagicMock()
+    registry = create_autospec(ClientRegistry, instance=True)
     registry.data_loss_snapshot.return_value = data_loss or _clean_data_loss()
     registry.active_client_ids.return_value = []
     registry.get.return_value = None
-    run_recorder = MagicMock()
+    run_recorder = create_autospec(RunRecorder, instance=True)
     run_recorder.health_snapshot.return_value = persistence or _clean_persistence()
     run_recorder.last_write_duration_s = 0.0
     run_recorder.max_write_duration_s = 0.0
@@ -62,7 +65,7 @@ def _make_deps(
 
 
 def _make_processor(*, intake_stats: IntakeStatsPayload | None = None) -> MagicMock:
-    proc = MagicMock()
+    proc = create_autospec(SignalProcessor, instance=True)
     proc.intake_stats.return_value = intake_stats or _clean_intake_stats()
     proc.buffer_overflow_drops.return_value = 0
     return proc
