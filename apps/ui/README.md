@@ -25,7 +25,6 @@ running the UI commands below. Native frontend work follows [`.nvmrc`](../../.nv
 cd apps/ui
 npm ci
 npm run lint         # Biome lint over the hand-written UI/config/test files
-npm run lint:deps    # dependency-cruiser boundary checks over src/
 npm run lint:unused  # knip dead-file/dependency/export checks
 npm run format:check # Biome formatter drift check
 npm run dev          # Dev server on http://localhost:5173
@@ -63,10 +62,10 @@ The UI's backend contracts are generated TypeScript, committed to the repo:
 - `src/constants.ts` (from backend-owned shared constants)
 
 `make sync-contracts` (repo root) is the only regeneration entrypoint. It
-exports the OpenAPI/JSON Schema documents to a temp dir, runs
-`openapi-typescript` from `node_modules`, and rewrites the files above plus
-`docs/protocol.md`. It needs the backend venv and UI `node_modules`
-(`make setup`). Run it after changing backend API payloads, WS payloads, or
+exports the OpenAPI/JSON Schema documents, renders their schemas as
+`components["schemas"][Name]` types in Python (`tools/config/sync_contracts.py`),
+and rewrites the files above plus `docs/protocol.md`. It needs only the backend
+venv (`make setup`). Run it after changing backend API payloads, WS payloads, or
 shared constants, and commit the result. CI's `integration` job
 reruns it and fails on `git diff --exit-code`.
 
@@ -76,8 +75,6 @@ UI typecheck, tests, and builds use the committed files and need only Node.
 
 - `npm run lint` checks the hand-written TypeScript/TSX, config, and support
   scripts with Biome (recommended rules, including the a11y set for TSX).
-- `npm run lint:deps` runs dependency-cruiser: pages must not import other
-  pages.
 - `npm run lint:unused` runs knip's dead-file, dependency, and cleaned-up unused
   export checks. Exported-type checks still stay out until their remaining
   signal is worth the extra noise.
@@ -105,7 +102,7 @@ The build is one JS bundle plus the lazily loaded Dutch catalog.
   polling, and `api/*` calls, and pure helper modules with unit tests. Pages:
   `dashboard` (overview + recording), `spectrum`, `history`, `cars` (list +
   add-car wizard), `analysis`, `speed_source`, `sensors`, `update` (Internet +
-  Update tabs), `esp_flash`. `.dependency-cruiser.cjs` keeps pages from
+  Update tabs), `esp_flash`. `tests/page_boundaries.spec.ts` keeps pages from
   importing each other; the shell composes them (for example it passes
   `<Spectrum/>` into the dashboard and opens the wizard for its add-car prompt).
 - **Shared stores** outside `src/pages/`: `app_store.ts` (shell),
