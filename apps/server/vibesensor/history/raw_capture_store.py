@@ -33,6 +33,7 @@ _BYTES_PER_SAMPLE = _AXIS_COUNT * _BYTES_PER_AXIS
 _MANIFEST_FILE_NAME = "manifest.json"
 _RAW_CAPTURE_DIR_NAME = "raw-runs"
 _OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE = 0.02
+_MAX_DISCONTINUOUS_STEP_FRACTION = 0.1
 _DECLARED_SAMPLE_RATE_ALIGNMENT_TOLERANCE = 0.01
 
 
@@ -247,7 +248,9 @@ def _derive_sensor_sample_rate(
 ) -> tuple[int, int | None, RawCaptureSampleRateProofState]:
     declared_sample_rate_hz = stream.sample_rate_hz if stream.sample_rate_hz > 0 else None
     observed_rates_hz: list[float] = []
-    for previous, current in zip(chunk_indexes, chunk_indexes[1:], strict=False):
+    # Chronological like the replay timeline, so a reordered chunk is not a step.
+    ordered = sorted(chunk_indexes, key=lambda chunk: (chunk.t0_us, chunk.sample_start))
+    for previous, current in zip(ordered, ordered[1:], strict=False):
         if previous.sample_count <= 0:
             continue
         delta_t_us = current.t0_us - previous.t0_us
@@ -265,12 +268,17 @@ def _derive_sensor_sample_rate(
             return declared_sample_rate_hz, declared_sample_rate_hz, "declared_only"
         return 0, None, "missing"
 
+    # A dropped chunk or a sensor clock step breaks one chunk-to-chunk step; the replay
+    # timeline splits there and skips the windows that cross it. Only a sensor whose
+    # steps disagree beyond such isolated breaks has an unverifiable sample rate.
     stability_baseline_hz = max(1, representative_rate_hz)
-    max_relative_deviation = max(
-        abs(rate_hz - representative_rate_hz) / stability_baseline_hz
+    discontinuous_step_count = sum(
+        1
         for rate_hz in observed_rates_hz
+        if abs(rate_hz - representative_rate_hz) / stability_baseline_hz
+        > _OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE
     )
-    if max_relative_deviation > _OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE:
+    if discontinuous_step_count > _MAX_DISCONTINUOUS_STEP_FRACTION * len(observed_rates_hz):
         fallback_rate_hz = declared_sample_rate_hz or representative_rate_hz
         return fallback_rate_hz, declared_sample_rate_hz, "timing_inconsistent"
 
