@@ -15,7 +15,6 @@ import { uiLogger } from "../ui_logger";
 import { createCarsFeature } from "./features/cars_feature";
 import { createDashboardSpeedSourceStatusModule } from "./features/dashboard_speed_source_status_module";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
-import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
@@ -37,7 +36,6 @@ import {
   type CarsListPanelView,
   type CarsWizardPanelBridge,
 } from "./views/cars_panel";
-import type { EspFlashPanelView } from "./views/esp_flash_panel_shared";
 import type { HistoryPanelView } from "./views/history_table_view";
 import {
   createInternetPanel,
@@ -116,7 +114,6 @@ export const panels = {
     wizard: { ...carsBindings.wizard, focus: carsPanel.focus },
     Panel: carsPanel.Panel,
   },
-  espFlash: bindings<EspFlashPanelView>(),
   internet: { ...internetBindings, ...internetPanel },
   sensors: bindings<SensorsPanelView>(),
   speedSource: { ...speedSourceBindings, ...speedSourcePanel },
@@ -189,14 +186,6 @@ const cars = createCarsFeature({
 
 const update = createUpdateFeature({
   panels: { update: panels.update, internet: panels.internet },
-  activeViewId: activeView,
-  activeSettingsTabId: settingsTab,
-  services,
-  queryClient,
-});
-
-const espFlash = createEspFlashFeature({
-  panel: panels.espFlash,
   activeViewId: activeView,
   activeSettingsTabId: settingsTab,
   services,
@@ -317,7 +306,6 @@ export function startFeatures(): void {
   speedSource.bindHandlers();
   history.bindHandlers();
   update.bindUpdateHandlers();
-  espFlash.bindHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {
       appState.spectrum.spectrumPlot.value?.resize();

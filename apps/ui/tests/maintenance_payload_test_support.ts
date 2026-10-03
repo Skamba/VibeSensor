@@ -1,22 +1,8 @@
 import type {
-  EspSerialPortPayload,
   HealthStatusPayload,
   UpdateStatusPayload,
   UsbInternetStatusPayload,
 } from "../src/api/types";
-
-export function createEspFlashPort(
-  overrides: Partial<EspSerialPortPayload> = {},
-): EspSerialPortPayload {
-  return {
-    description: "USB UART",
-    pid: 2,
-    port: "/dev/ttyUSB0",
-    serial_number: "abc",
-    vid: 1,
-    ...overrides,
-  };
-}
 
 export function createIdleUpdateStatus(
   overrides: Partial<UpdateStatusPayload> = {},

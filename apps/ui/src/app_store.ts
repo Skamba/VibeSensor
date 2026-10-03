@@ -41,7 +41,7 @@ export const settingsTab = signal<SettingsTabId>("carTab");
 export const errorBanner = signal<string | null>(null);
 export const speedUnit = signal<SpeedUnit>("kmh");
 
-function errorMessage(error: unknown, fallback: string): string {
+export function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 

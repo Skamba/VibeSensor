@@ -16,6 +16,8 @@ type FlashServer = {
   attempts: Array<Record<string, unknown>>;
   starts: Array<Record<string, unknown>>;
   cancels: number;
+  /** Delay before answering start/cancel, to exercise in-flight guards. */
+  actionDelayMs: number;
 };
 
 function idleStatus(): Record<string, unknown> {
@@ -42,6 +44,7 @@ function createServer(): FlashServer {
     attempts: [],
     starts: [],
     cancels: 0,
+    actionDelayMs: 0,
   };
 }
 
@@ -73,6 +76,9 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
         return;
       }
       if (path === "/api/esp-flash/start") {
+        await new Promise((resolve) =>
+          setTimeout(resolve, server.actionDelayMs),
+        );
         const body = route.request().postDataJSON() as Record<string, unknown>;
         server.starts.push(body);
         server.logs = ["Building firmware...", "Writing at 0x00010000 (50 %)"];
@@ -91,6 +97,9 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
       }
       if (path === "/api/esp-flash/cancel") {
         server.cancels += 1;
+        await new Promise((resolve) =>
+          setTimeout(resolve, server.actionDelayMs),
+        );
         server.status = {
           ...server.status,
           phase: "cancelled",
@@ -197,4 +206,28 @@ test("journey: ESP flash cancels a running job and offers a retry", async ({
   await expect(page.locator("#espFlashReadinessPanel")).toContainText(
     "The last flash was cancelled.",
   );
+});
+
+test("journey: ESP flash ignores repeated start and cancel clicks while a request is in flight", async ({
+  page,
+}) => {
+  const server = createServer();
+  server.ports = [{ port: "/dev/ttyACM0", description: "USB JTAG" }];
+  server.actionDelayMs = 400;
+  const startRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/esp-flash/start")) {
+      startRequests.push(request.method());
+    }
+  });
+  await bootWithFlashServer(page, server);
+  await openEspFlashTab(page);
+
+  await page.locator("#espFlashStartBtn").dblclick();
+  await expect(page.locator("#espFlashStatusBanner")).toHaveText("Running");
+  expect(startRequests).toEqual(["POST"]);
+
+  await page.locator("#espFlashCancelBtn").dblclick();
+  await expect(page.locator("#espFlashStatusBanner")).toHaveText("Cancelled");
+  expect(server.cancels).toBe(1);
 });
