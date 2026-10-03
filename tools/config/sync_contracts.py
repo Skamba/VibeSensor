@@ -9,7 +9,9 @@ Run through ``make sync-contracts``. Writes:
 
 Both TypeScript files expose ``components["schemas"][Name]`` types rendered by
 ``render_schema_types`` below; it covers the JSON Schema subset Pydantic emits
-for our models. CI checks drift by running this and ``git diff --exit-code``.
+for our models and raises ``UnsupportedSchemaError`` for anything else, so a new
+model shape fails ``make sync-contracts`` instead of silently becoming ``unknown``.
+CI checks drift by running this and ``git diff --exit-code``.
 """
 
 from __future__ import annotations
@@ -62,6 +64,38 @@ _PRIMITIVES = {
     "null": "null",
 }
 _INDENT = "    "
+# Keywords that change a value's type but that the renderer does not translate.
+_UNSUPPORTED_KEYWORDS = (
+    "allOf",
+    "oneOf",
+    "not",
+    "if",
+    "then",
+    "else",
+    "prefixItems",
+    "contains",
+    "patternProperties",
+    "propertyNames",
+    "dependentSchemas",
+    "unevaluatedItems",
+    "unevaluatedProperties",
+)
+# Keys that only annotate a schema; a schema with nothing else means "any value".
+_ANNOTATION_KEYWORDS = frozenset(
+    {
+        "title",
+        "description",
+        "default",
+        "examples",
+        "deprecated",
+        "readOnly",
+        "writeOnly",
+    }
+)
+
+
+class UnsupportedSchemaError(ValueError):
+    """A JSON Schema construct the TypeScript renderer cannot translate faithfully."""
 
 
 def _key(name: str) -> str:
@@ -86,8 +120,13 @@ def _doc(schema: dict[str, object], indent: str) -> str:
 
 def _render(schema: object, depth: int) -> str:
     """Render one JSON Schema node as a TypeScript type expression."""
+    if isinstance(schema, bool):
+        return "unknown" if schema else "never"
     if not isinstance(schema, dict):
-        return "unknown"
+        raise UnsupportedSchemaError(f"schema node is not an object: {schema!r}")
+    unsupported = [keyword for keyword in _UNSUPPORTED_KEYWORDS if keyword in schema]
+    if unsupported:
+        raise UnsupportedSchemaError(f"unsupported keyword(s) {unsupported}")
     ref = schema.get("$ref")
     if isinstance(ref, str):
         name = ref.rsplit("/", 1)[-1]
@@ -104,13 +143,20 @@ def _render(schema: object, depth: int) -> str:
     if isinstance(kind, list):
         return _union([_render({**schema, "type": k}, depth) for k in kind])
     if kind == "array":
-        item = _render(schema.get("items", {}), depth)
+        items = schema.get("items", {})
+        if isinstance(items, list):
+            raise UnsupportedSchemaError("tuple-style array items")
+        item = _render(items, depth)
         return f"({item})[]" if " | " in item else f"{item}[]"
     if kind == "object" or "properties" in schema:
         return _render_object(schema, depth)
     if isinstance(kind, str) and kind in _PRIMITIVES:
         return _PRIMITIVES[kind]
-    return "unknown"
+    if kind is None and set(schema) <= _ANNOTATION_KEYWORDS:
+        return "unknown"
+    raise UnsupportedSchemaError(
+        f"cannot render schema {json.dumps(schema, sort_keys=True)[:200]}"
+    )
 
 
 def _render_object(schema: dict[str, object], depth: int) -> str:
@@ -139,11 +185,15 @@ def _render_object(schema: dict[str, object], depth: int) -> str:
 
 def render_schema_types(schemas: dict[str, object]) -> str:
     """Render named schemas as ``export interface components { schemas: {...} }``."""
-    body = "".join(
-        f"{_doc(schema, _INDENT * 2) if isinstance(schema, dict) else ''}"
-        f"{_INDENT * 2}{_key(name)}: {_render(schema, 2)};\n"
-        for name, schema in schemas.items()
-    )
+    entries = []
+    for name, schema in schemas.items():
+        try:
+            rendered = _render(schema, 2)
+        except UnsupportedSchemaError as exc:
+            raise UnsupportedSchemaError(f"{name}: {exc}") from exc
+        doc = _doc(schema, _INDENT * 2) if isinstance(schema, dict) else ""
+        entries.append(f"{doc}{_INDENT * 2}{_key(name)}: {rendered};\n")
+    body = "".join(entries)
     return f"export interface components {{\n{_INDENT}schemas: {{\n{body}{_INDENT}}};\n}}\n"
 
 
