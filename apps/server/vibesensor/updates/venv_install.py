@@ -1,27 +1,20 @@
 """Install a release into a new A/B venv slot, smoke-test it, and activate it.
 
-The live slot is never modified: a release is installed into ``slots/<version>``,
-checked there, and only then made active with one symlink flip. The boot check
-(:mod:`vibesensor.updates.boot_check`) confirms or reverts it after the restart.
+The live slot is never modified: a release is installed into a fresh venv at
+``slots/<version>`` from the release's own dependency wheelhouse (offline,
+``--no-index``), checked there, and only then made active with one symlink
+flip. The boot check (:mod:`vibesensor.updates.boot_check`) confirms or
+reverts it after the restart.
 """
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Sequence
+import sys
 from pathlib import Path
 
-import msgspec
-from packaging.requirements import Requirement
-from packaging.utils import canonicalize_name
-
 from vibesensor.common.exceptions import UpdateReleaseError
-from vibesensor.updates.artifact_validation import (
-    read_wheel_metadata,
-    versions_match,
-    wheel_artifact_problem,
-    wheel_dependency_issues,
-)
+from vibesensor.updates.artifact_validation import versions_match, wheel_artifact_problem
 from vibesensor.updates.boot_check import HEALTH_DEADLINE_S
 from vibesensor.updates.models import UpdatePhase
 from vibesensor.updates.runner import CommandExecutionResult, UpdateCommandExecutor
@@ -30,78 +23,11 @@ from vibesensor.updates.venv_slots import VenvSlots
 
 __all__ = ["ReleaseVenvInstaller"]
 
-PIP_TIMEOUT_S = 180.0
+VENV_TIMEOUT_S = 120.0
+PIP_TIMEOUT_S = 420.0
 SMOKE_PORT = 18082
 SMOKE_TIMEOUT_S = 90.0
 _INSTALLING = UpdatePhase.installing.value
-
-
-class _TargetEnvironmentSnapshotRequest(msgspec.Struct, kw_only=True, frozen=True):
-    """Typed request passed to the target-environment snapshot subprocess."""
-
-    distribution_names: list[str]
-
-
-class _TargetEnvironmentSnapshotResponse(msgspec.Struct, kw_only=True, frozen=True):
-    """Typed response returned by the target-environment snapshot subprocess."""
-
-    python_full_version: str
-    marker_environment: dict[str, str]
-    installed_versions: dict[str, str]
-
-
-_TARGET_ENV_SNAPSHOT_SCRIPT = "\n".join(
-    [
-        "import importlib.metadata as metadata",
-        "import msgspec",
-        "import sys",
-        "from packaging.markers import default_environment",
-        "from packaging.utils import canonicalize_name",
-        "class TargetEnvironmentSnapshotRequest(msgspec.Struct, kw_only=True, frozen=True):",
-        "    distribution_names: list[str]",
-        "class TargetEnvironmentSnapshotResponse(msgspec.Struct, kw_only=True, frozen=True):",
-        "    python_full_version: str",
-        "    marker_environment: dict[str, str]",
-        "    installed_versions: dict[str, str]",
-        "payload = msgspec.json.decode(sys.argv[1], type=TargetEnvironmentSnapshotRequest)",
-        "distribution_names = [",
-        "    canonicalize_name(str(name))",
-        "    for name in payload.distribution_names",
-        "]",
-        "installed_versions = {}",
-        "for distribution_name in distribution_names:",
-        "    try:",
-        "        installed_versions[distribution_name] = metadata.version(distribution_name)",
-        "    except metadata.PackageNotFoundError:",
-        "        installed_versions[distribution_name] = ''",
-        "marker_environment = default_environment()",
-        "response = TargetEnvironmentSnapshotResponse(",
-        "    python_full_version=marker_environment.get('python_full_version', ''),",
-        "    marker_environment={",
-        "        str(key): str(value) for key, value in marker_environment.items()",
-        "    },",
-        "    installed_versions=installed_versions,",
-        ")",
-        "sys.stdout.buffer.write(msgspec.json.encode(response))",
-        "sys.stdout.buffer.write(b'\\n')",
-    ],
-)
-
-
-def _target_environment_snapshot_request_json(distribution_names: Sequence[str]) -> str:
-    """Encode the target-environment snapshot request as one JSON CLI argument."""
-
-    return msgspec.json.encode(
-        _TargetEnvironmentSnapshotRequest(distribution_names=list(distribution_names))
-    ).decode("utf-8")
-
-
-def _target_environment_snapshot_response_from_json(
-    raw: bytes | str,
-) -> _TargetEnvironmentSnapshotResponse:
-    """Decode one target-environment snapshot response from subprocess stdout."""
-
-    return msgspec.json.decode(raw, type=_TargetEnvironmentSnapshotResponse)
 
 
 class ReleaseVenvInstaller:
@@ -124,7 +50,7 @@ class ReleaseVenvInstaller:
         self._smoke_config = smoke_config
         self._health_url = health_url
 
-    async def install(self, wheel_path: Path, version: str) -> str:
+    async def install(self, wheel_path: Path, wheelhouse_dir: Path, version: str) -> str:
         """Build slot *version* next to the live one and smoke-test it; return its name."""
         problem = wheel_artifact_problem(wheel_path)
         if problem is not None:
@@ -136,16 +62,27 @@ class ReleaseVenvInstaller:
             await asyncio.to_thread(self._slots.prune, active)
         except OSError as exc:
             raise _slot_error("Could not remove old venv slots", exc) from exc
-        self._status.log(f"Creating venv slot {version} from {active}")
+        self._status.log(f"Creating venv slot {version}")
         try:
-            try:
-                await asyncio.to_thread(self._slots.clone_slot, active, version)
-            except OSError as exc:
-                raise _slot_error(f"Could not create venv slot {version}", exc) from exc
-            python = str(self._slots.slot_python(version))
-            await self._check_dependencies(wheel_path, python)
+            # The running interpreter may itself be a venv; venv builds on its base Python.
             await self._run(
-                [python, "-m", "pip", "install", "--force-reinstall", "--no-deps", str(wheel_path)],
+                [sys.executable, "-m", "venv", str(self._slots.slot_dir(version))],
+                failure=f"Could not create venv slot {version}",
+                timeout=VENV_TIMEOUT_S,
+            )
+            python = str(self._slots.slot_python(version))
+            self._status.log("Installing the release and its dependencies from the wheelhouse")
+            await self._run(
+                [
+                    python,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-index",
+                    "--find-links",
+                    str(wheelhouse_dir),
+                    f"{wheel_path}[esp]",
+                ],
                 failure="Wheel install failed",
                 timeout=PIP_TIMEOUT_S,
             )
@@ -227,45 +164,6 @@ class ReleaseVenvInstaller:
                 detail=result.stderr or result.stdout,
             )
         return result
-
-    async def _check_dependencies(self, wheel_path: Path, python: str) -> None:
-        """Refuse a wheel whose dependencies the cloned slot does not satisfy."""
-        metadata = read_wheel_metadata(wheel_path)
-        requirement_names = sorted(
-            {canonicalize_name(Requirement(raw).name) for raw in metadata.requires_dist},
-        )
-        if not metadata.requires_python and not requirement_names:
-            return
-        result = await self._run(
-            [
-                python,
-                "-c",
-                _TARGET_ENV_SNAPSHOT_SCRIPT,
-                _target_environment_snapshot_request_json(requirement_names),
-            ],
-            failure="Could not validate wheel dependency compatibility",
-        )
-        try:
-            snapshot = _target_environment_snapshot_response_from_json(result.stdout)
-        except (msgspec.DecodeError, msgspec.ValidationError) as exc:
-            raise UpdateReleaseError(
-                "Could not parse wheel dependency compatibility results",
-                phase=_INSTALLING,
-                detail=result.stdout or result.stderr,
-            ) from exc
-        issues = wheel_dependency_issues(
-            metadata,
-            python_full_version=snapshot.python_full_version,
-            marker_environment=snapshot.marker_environment,
-            installed_versions=snapshot.installed_versions,
-        )
-        if issues:
-            raise UpdateReleaseError(
-                "Downloaded wheel is incompatible with the current environment",
-                phase=_INSTALLING,
-                detail="; ".join(issues),
-            )
-        self._status.log("Validated wheel dependency compatibility against the new slot")
 
 
 def _slot_error(message: str, exc: OSError) -> UpdateReleaseError:

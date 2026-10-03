@@ -53,6 +53,9 @@ class ReleaseInfo:
     asset_url: str
     sha256: str = ""
     published_at: str = ""
+    wheelhouse_name: str = ""
+    wheelhouse_url: str = ""
+    wheelhouse_sha256: str = ""
 
     def to_dict(self) -> dict[str, str]:
         """Serialise discovered release metadata for status or debug output."""
@@ -64,6 +67,9 @@ class ReleaseInfo:
             "asset_url": self.asset_url,
             "sha256": self.sha256,
             "published_at": self.published_at,
+            "wheelhouse_name": self.wheelhouse_name,
+            "wheelhouse_url": self.wheelhouse_url,
+            "wheelhouse_sha256": self.wheelhouse_sha256,
         }
 
 

@@ -207,13 +207,21 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
 ## Update and revert checks
 
 1. Confirm current runtime and update status from the UI or update endpoints.
-2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
-3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the Wheel / ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
-4. Updates never modify the running version. The release is installed into a new venv
-   slot (`/opt/VibeSensor/apps/server/.venv/slots/<version>`) and smoke-tested in an
-   isolated server on port 18082. Only then does `.venv/current` switch to it and the
-   service restart. If install or smoke test fails, the update fails and the device
-   keeps running the old slot unchanged.
+2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel and the Pi dependency wheelhouse, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
+3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the wheel, wheelhouse, and ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
+   The wheelhouse (`vibesensor-wheelhouse-<version>-cp313-linux_armv7l.tar`) holds
+   every runtime dependency as armv7l/CPython 3.13 wheels from PyPI and piwheels. If
+   `build-wheelhouse` fails because a dependency has no binary Pi wheel yet, pin that
+   dependency to the last version piwheels has built, or wait for piwheels to build it.
+4. Updates never modify the running version. The release wheel and wheelhouse are
+   downloaded and SHA-256-verified against the GitHub asset digests. Then the
+   release is installed with its dependencies, offline (`pip install --no-index
+   --find-links <wheelhouse>`), into a fresh venv slot
+   (`/opt/VibeSensor/apps/server/.venv/slots/<version>`). That slot is smoke-tested
+   in an isolated server on port 18082. Only then does `.venv/current` switch to it
+   and the service restart. If install or smoke test fails, the update fails and the
+   device keeps running the old slot unchanged. Dependency changes therefore no
+   longer need a reflash.
 5. After the restart, the boot check (the new slot's `bin/vibesensor-server`
    launcher) reverts automatically to the previous slot when the new version exits
    twice before becoming healthy, or is not healthy (`/api/health` ready, no failed
@@ -236,7 +244,7 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    vibesensor.service`.
    Devices flashed before A/B slots have a plain `.venv`. Their first slot update moves
    it into `slots/<running version>` once. Updates need about 600 MiB free on that
-   filesystem.
+   filesystem (new slot plus the staged wheelhouse under `.venv/.staging-*`).
 7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
 8. Manual Pi installs create `/etc/sudoers.d/vibesensor-update` for the service
    user. It must point at

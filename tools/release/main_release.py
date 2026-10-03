@@ -10,6 +10,8 @@ import os
 import re
 import subprocess
 import sys
+import tarfile
+import tempfile
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,6 +21,20 @@ _STANDARD_ESP32_APP_OFFSET = "0x10000"
 _ENV_OFFSET_RE = re.compile(r"ESP32_APP_OFFSET[^0-9A-Fa-f]*(0x[0-9A-Fa-f]+)")
 _GITHUB_API_BASE = "https://api.github.com"
 GITHUB_API_TIMEOUT_S = 30
+
+# The Pi image is Raspberry Pi OS Lite Trixie armhf (infra/pi-image/pi-gen):
+# CPython 3.13 on a Pi 3 (armv7l, glibc 2.41). PyPI has few armv7l wheels, so
+# piwheels (Raspberry Pi OS's own wheel index) fills in numpy, scipy, pyfftw, etc.
+PI_PYTHON_VERSION = "3.13"
+PI_PLATFORMS = (
+    "linux_armv7l",
+    "manylinux2014_armv7l",
+    *(
+        f"manylinux_2_{minor}_armv7l"
+        for minor in (17, 24, 26, 27, 28, 31, 34, 35, 36, 38, 39)
+    ),
+)
+WHEELHOUSE_INDEXES = ("https://pypi.org/simple", "https://www.piwheels.org/simple")
 
 
 @dataclass(frozen=True)
@@ -125,6 +141,85 @@ def build_server_wheel(repo_root: Path, version: str) -> Path:
     if not wheels:
         raise SystemExit("No wheel produced under apps/server/dist.")
     return wheels[-1]
+
+
+def _pi_target_args() -> list[str]:
+    args = [
+        "--only-binary=:all:",
+        "--python-version",
+        PI_PYTHON_VERSION,
+        "--implementation",
+        "cp",
+        "--abi",
+        "cp" + PI_PYTHON_VERSION.replace(".", ""),
+        "--abi",
+        "abi3",
+        "--abi",
+        "none",
+    ]
+    for platform in PI_PLATFORMS:
+        args.extend(("--platform", platform))
+    return args
+
+
+def wheelhouse_name(version: str) -> str:
+    tag = "cp" + PI_PYTHON_VERSION.replace(".", "")
+    return f"vibesensor-wheelhouse-{version}-{tag}-linux_armv7l.tar"
+
+
+def build_wheelhouse(wheel_path: Path, output: Path) -> Path:
+    """Download every runtime dependency of *wheel_path* as Pi wheels into one tar.
+
+    Binary wheels only, so the CI host never compiles anything, followed by an
+    offline dry-run install that proves the set is complete for the target.
+    """
+    requirement = f"{wheel_path.resolve()}[esp]"
+    index_args = [
+        "--index-url",
+        WHEELHOUSE_INDEXES[0],
+        "--extra-index-url",
+        WHEELHOUSE_INDEXES[1],
+    ]
+    with tempfile.TemporaryDirectory(prefix="vibesensor-wheelhouse-") as tmp:
+        wheel_dir = Path(tmp) / "wheels"
+        _run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "download",
+                "--dest",
+                str(wheel_dir),
+                *_pi_target_args(),
+                *index_args,
+                requirement,
+            ]
+        )
+        # The server wheel ships as its own release asset.
+        (wheel_dir / wheel_path.name).unlink(missing_ok=True)
+        _run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--dry-run",
+                "--ignore-installed",
+                "--no-index",
+                "--find-links",
+                str(wheel_dir),
+                *_pi_target_args(),
+                requirement,
+            ]
+        )
+        wheels = sorted(wheel_dir.glob("*.whl"))
+        if not wheels:
+            raise SystemExit("pip download produced no dependency wheels.")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(output, "w") as tar:
+            for wheel in wheels:
+                tar.add(wheel, arcname=wheel.name)
+    return output
 
 
 def _app_offset_from_envdump(firmware_dir: Path, env_name: str) -> str:
@@ -312,6 +407,11 @@ def main(argv: list[str] | None = None) -> int:
     wheel_parser.add_argument("--repo-root", default=None)
     wheel_parser.add_argument("--version", required=True)
 
+    wheelhouse_parser = subparsers.add_parser("build-wheelhouse")
+    wheelhouse_parser.add_argument("--wheel-path", required=True)
+    wheelhouse_parser.add_argument("--version", required=True)
+    wheelhouse_parser.add_argument("--output-dir", required=True)
+
     manifest_parser = subparsers.add_parser("generate-firmware-manifest")
     manifest_parser.add_argument("--firmware-dir", required=True)
     manifest_parser.add_argument("--generated-from", default=None)
@@ -337,6 +437,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "build-wheel":
         wheel_path = build_server_wheel(_repo_root(args.repo_root), args.version)
         print(wheel_path, flush=True)
+        return 0
+
+    if args.command == "build-wheelhouse":
+        output = Path(args.output_dir) / wheelhouse_name(args.version)
+        print(build_wheelhouse(Path(args.wheel_path), output), flush=True)
         return 0
 
     if args.command == "generate-firmware-manifest":

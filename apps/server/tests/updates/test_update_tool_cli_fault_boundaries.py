@@ -39,12 +39,14 @@ def test_fetch_latest_wheel_cli_prints_release_and_downloaded_artifact(
                 version="2026.4.4",
                 sha256="a" * 64,
                 asset_name="vibesensor-2026.4.4-py3-none-any.whl",
+                asset_url="https://api.github.com/assets/1",
             )
 
-        def download_wheel(self, release: object, dest_dir: str) -> Path:
+        def download_asset(self, name: str, url: str, dest_dir: str) -> Path:
+            del url
             dest_path = Path(dest_dir)
             dest_path.mkdir(parents=True, exist_ok=True)
-            wheel_path = dest_path / release.asset_name
+            wheel_path = dest_path / name
             wheel_path.write_text("wheel", encoding="utf-8")
             return wheel_path
 

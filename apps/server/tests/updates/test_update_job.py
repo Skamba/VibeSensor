@@ -111,7 +111,11 @@ class _Stager:
     async def stage(self, release: object):
         if self._status is not None:
             self._status.transition(UpdatePhase.downloading)
-        staged = SimpleNamespace(release=release, wheel_path=self._wheel_path)
+        staged = SimpleNamespace(
+            release=release,
+            wheel_path=self._wheel_path,
+            wheelhouse_dir=self._wheel_path.parent / "wheelhouse",
+        )
         self.staged.append(staged)
         yield staged
 
@@ -132,11 +136,11 @@ class _Installer:
     def __init__(self, transport: _Transport, error: UpdateReleaseError | None = None) -> None:
         self._transport = transport
         self.error = error
-        self.install_args: tuple[Path, str] | None = None
+        self.install_args: tuple[Path, Path, str] | None = None
         self.activated: list[tuple[str, bool]] = []
 
-    async def install(self, wheel_path: Path, version: str) -> str:
-        self.install_args = (wheel_path, version)
+    async def install(self, wheel_path: Path, wheelhouse_dir: Path, version: str) -> str:
+        self.install_args = (wheel_path, wheelhouse_dir, version)
         if self.error is not None:
             raise self.error
         return version
@@ -333,7 +337,11 @@ async def test_run_installs_release_when_latest_version_is_newer(tmp_path: Path)
 
     assert [staged.release for staged in harness.stager.staged] == [release]
     assert harness.firmware.pinned_tags == ["server-v2026.4.4"]
-    assert harness.installer.install_args == (tmp_path / "release.whl", "2026.4.4")
+    assert harness.installer.install_args == (
+        tmp_path / "release.whl",
+        tmp_path / "wheelhouse",
+        "2026.4.4",
+    )
     # The new slot only becomes active after the transport finished successfully.
     assert harness.installer.activated == [("2026.4.4", True)]
     assert harness.status.status.state is UpdateState.success
@@ -376,7 +384,11 @@ async def test_run_records_firmware_refresh_failure_and_still_installs(tmp_path:
 
     await harness.job.run(_request())
 
-    assert harness.installer.install_args == (tmp_path / "release.whl", "2026.4.4")
+    assert harness.installer.install_args == (
+        tmp_path / "release.whl",
+        tmp_path / "wheelhouse",
+        "2026.4.4",
+    )
     assert harness.status.status.issues[-1].message == "ESP firmware cache refresh failed (exit 4)"
     assert harness.status.status.issues[-1].detail == "download timed out"
     assert (

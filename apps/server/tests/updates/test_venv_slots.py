@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from test_support.venv_slots import make_legacy_venv
+from test_support.venv_slots import add_slot, make_legacy_venv, make_venv
 
 from vibesensor.updates.boot_check import PENDING_FILE, REVERTED_FILE, SERVER_APP
 from vibesensor.updates.venv_slots import RevertedBoot, VenvSlots, main
@@ -95,25 +95,9 @@ def test_adopt_resumes_after_an_interruption_before_bin_was_swapped(tmp_path: Pa
     assert not (root / ".bin.legacy").exists()
 
 
-def test_clone_slot_copies_the_env_and_repoints_its_own_shebangs(tmp_path: Path) -> None:
-    slots = _adopted(tmp_path)
-    source_bin = slots.slot_dir("1.0") / "bin"
-    (source_bin / "granian").write_text(f"#!{source_bin}/python3\nrun()\n", encoding="utf-8")
-
-    slots.clone_slot("1.0", "2.0")
-
-    target_bin = slots.slot_dir("2.0") / "bin"
-    assert (target_bin / "granian").read_text() == f"#!{target_bin}/python3\nrun()\n"
-    # Legacy scripts address the routed interpreter and are left alone.
-    assert (target_bin / SERVER_APP).read_text().startswith(f"#!{slots.root}/bin/python")
-    assert os.readlink(target_bin / "python3") == os.readlink(source_bin / "python3")
-    assert slots.active_slot() == "1.0"
-
-
 def test_install_launcher_keeps_pips_script_as_the_app(tmp_path: Path) -> None:
     slots = _adopted(tmp_path)
-    slots.clone_slot("1.0", "2.0")
-    bin_dir = slots.slot_dir("2.0") / "bin"
+    bin_dir = make_venv(slots.slot_dir("2.0")) / "bin"
     (bin_dir / "vibesensor-server").write_text("#!pip-generated\n", encoding="utf-8")
 
     slots.install_launcher("2.0")
@@ -126,7 +110,7 @@ def test_install_launcher_keeps_pips_script_as_the_app(tmp_path: Path) -> None:
 
 def test_activate_arms_the_boot_check_then_switches(tmp_path: Path) -> None:
     slots = _adopted(tmp_path)
-    slots.clone_slot("1.0", "2.0")
+    add_slot(slots, "2.0")
 
     slots.activate("2.0", health_url="http://127.0.0.1:80/api/health")
 
@@ -144,8 +128,8 @@ def test_activate_arms_the_boot_check_then_switches(tmp_path: Path) -> None:
 
 def test_prune_keeps_only_the_named_slot(tmp_path: Path) -> None:
     slots = _adopted(tmp_path)
-    slots.clone_slot("1.0", "2.0")
-    slots.clone_slot("1.0", "3.0")
+    add_slot(slots, "2.0")
+    add_slot(slots, "3.0")
 
     slots.prune("2.0")
 

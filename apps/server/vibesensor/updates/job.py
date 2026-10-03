@@ -191,6 +191,7 @@ class UpdateJob:
             self._status.log("Installing update...")
             slot = await self._installer.install(
                 staged_release.wheel_path,
+                staged_release.wheelhouse_dir,
                 str(staged_release.release.version),
             )
         await prepared_transport.complete_success()
