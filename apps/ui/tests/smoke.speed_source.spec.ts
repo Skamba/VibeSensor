@@ -1,5 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import type {
+  CarsPayload,
+  ObdPairPayload,
+  ObdScanPayload,
+  ObdStatusPayload,
+  SpeedSourcePayload,
+  SpeedSourceRequest,
+  SpeedSourceStatusPayload,
+} from "../src/api/types";
 import {
   bootLiveDashboard,
   fulfillJson,
@@ -10,16 +19,16 @@ import {
 test.describe.configure({ timeout: 20_000 });
 
 type SpeedSourceServer = {
-  saved: Record<string, unknown>;
-  puts: Array<Record<string, unknown>>;
+  saved: SpeedSourcePayload;
+  puts: SpeedSourceRequest[];
   scans: number;
   pairs: string[];
   failNextPut: boolean;
   putDelayMs?: number;
 };
 
-function statusPayload(server: SpeedSourceServer): Record<string, unknown> {
-  const source = String(server.saved.speed_source);
+function statusPayload(server: SpeedSourceServer): SpeedSourceStatusPayload {
+  const source = server.saved.speed_source;
   return {
     connection_state: "connected",
     device: "/dev/ttyACM0",
@@ -42,7 +51,7 @@ function statusPayload(server: SpeedSourceServer): Record<string, unknown> {
   };
 }
 
-function obdStatusPayload(server: SpeedSourceServer): Record<string, unknown> {
+function obdStatusPayload(server: SpeedSourceServer): ObdStatusPayload {
   return {
     backoff_active: false,
     configured_device_mac: server.saved.obd_device_mac ?? null,
@@ -80,7 +89,7 @@ async function installSpeedSourceRoutes(
       const path = requestPath(route);
       const method = route.request().method();
       if (path === "/api/settings/speed-source" && method === "PUT") {
-        const body = route.request().postDataJSON() as Record<string, unknown>;
+        const body = route.request().postDataJSON() as SpeedSourceRequest;
         server.puts.push(body);
         await new Promise((resolve) =>
           setTimeout(resolve, server.putDelayMs ?? 0),
@@ -94,8 +103,13 @@ async function installSpeedSourceRoutes(
           });
           return;
         }
-        server.saved = { ...server.saved, ...body };
-        await fulfillJson(route, server.saved);
+        server.saved = {
+          ...server.saved,
+          manual_speed_kph: body.manual_speed_kph ?? null,
+          speed_source: body.speed_source ?? server.saved.speed_source,
+          stale_timeout_s: body.stale_timeout_s ?? server.saved.stale_timeout_s,
+        };
+        await fulfillJson<SpeedSourcePayload>(route, server.saved);
         return;
       }
       if (path === "/api/settings/speed-source") {
@@ -112,7 +126,7 @@ async function installSpeedSourceRoutes(
       }
       if (path === "/api/settings/obd/scan") {
         server.scans += 1;
-        await fulfillJson(route, {
+        await fulfillJson<ObdScanPayload>(route, {
           devices: [
             {
               connected: false,
@@ -142,7 +156,7 @@ async function installSpeedSourceRoutes(
           obd_device_mac: body.mac_address,
           obd_device_name: "OBDII Link",
         };
-        await fulfillJson(route, {
+        await fulfillJson<ObdPairPayload>(route, {
           configured_device_mac: body.mac_address,
           configured_device_name: "OBDII Link",
           connected: true,
@@ -153,7 +167,10 @@ async function installSpeedSourceRoutes(
         return;
       }
       if (path.startsWith("/api/settings/cars")) {
-        await fulfillJson(route, { cars: [], active_car_id: null });
+        await fulfillJson<CarsPayload>(route, {
+          cars: [],
+          active_car_id: null,
+        });
         return;
       }
       await fulfillJson(route, {});

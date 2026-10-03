@@ -6,21 +6,34 @@ import {
   openEspFlashTab,
   requestPath,
 } from "./smoke.helpers";
+import type {
+  EspFlashCancelPayload,
+  EspFlashHistoryAttemptPayload,
+  EspFlashHistoryPayload,
+  EspFlashLogsPayload,
+  EspFlashPortsPayload,
+  EspFlashStartPayload,
+  EspFlashStatusPayload,
+  EspSerialPortPayload,
+} from "../src/api/types";
+import type { components } from "../src/generated/http_api_contracts";
+
+type EspFlashStartRequest = components["schemas"]["EspFlashStartRequest"];
 
 test.describe.configure({ timeout: 25_000 });
 
 type FlashServer = {
-  ports: Array<{ port: string; description: string }>;
-  status: Record<string, unknown>;
+  ports: EspSerialPortPayload[];
+  status: EspFlashStatusPayload;
   logs: string[];
-  attempts: Array<Record<string, unknown>>;
-  starts: Array<Record<string, unknown>>;
+  attempts: EspFlashHistoryAttemptPayload[];
+  starts: EspFlashStartRequest[];
   cancels: number;
   /** Delay before answering start/cancel, to exercise in-flight guards. */
   actionDelayMs: number;
 };
 
-function idleStatus(): Record<string, unknown> {
+function idleStatus(): EspFlashStatusPayload {
   return {
     auto_detect: true,
     error: null,
@@ -53,18 +66,18 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
     espFlashHandler: async (route: Route) => {
       const path = requestPath(route);
       if (path === "/api/esp-flash/ports") {
-        await fulfillJson(route, { ports: server.ports });
+        await fulfillJson<EspFlashPortsPayload>(route, { ports: server.ports });
         return;
       }
       if (path === "/api/esp-flash/status") {
-        await fulfillJson(route, server.status);
+        await fulfillJson<EspFlashStatusPayload>(route, server.status);
         return;
       }
       if (path === "/api/esp-flash/logs") {
         const after = Number(
           new URL(route.request().url()).searchParams.get("after"),
         );
-        await fulfillJson(route, {
+        await fulfillJson<EspFlashLogsPayload>(route, {
           from_index: after,
           lines: server.logs.slice(after),
           next_index: server.logs.length,
@@ -72,14 +85,16 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
         return;
       }
       if (path === "/api/esp-flash/history") {
-        await fulfillJson(route, { attempts: server.attempts });
+        await fulfillJson<EspFlashHistoryPayload>(route, {
+          attempts: server.attempts,
+        });
         return;
       }
       if (path === "/api/esp-flash/start") {
         await new Promise((resolve) =>
           setTimeout(resolve, server.actionDelayMs),
         );
-        const body = route.request().postDataJSON() as Record<string, unknown>;
+        const body = route.request().postDataJSON() as EspFlashStartRequest;
         server.starts.push(body);
         server.logs = ["Building firmware...", "Writing at 0x00010000 (50 %)"];
         server.status = {
@@ -88,11 +103,14 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
           job_id: 7,
           log_count: server.logs.length,
           phase: "flashing",
-          selected_port: body.port,
+          selected_port: body.port ?? null,
           started_at: 1_700_000_000,
           state: "running",
         };
-        await fulfillJson(route, { job_id: 7, status: "running" });
+        await fulfillJson<EspFlashStartPayload>(route, {
+          job_id: 7,
+          status: "running",
+        });
         return;
       }
       if (path === "/api/esp-flash/cancel") {
@@ -106,7 +124,7 @@ async function bootWithFlashServer(page: Page, server: FlashServer) {
           state: "cancelled",
           finished_at: 1_700_000_010,
         };
-        await fulfillJson(route, { cancelled: true });
+        await fulfillJson<EspFlashCancelPayload>(route, { cancelled: true });
         return;
       }
       await fulfillJson(route, {});

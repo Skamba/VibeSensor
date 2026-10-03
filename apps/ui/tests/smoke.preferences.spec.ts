@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import type {
+  CarsPayload,
+  LanguagePayload,
+  SpeedUnitPayload,
+} from "../src/api/types";
 import {
   fulfillJson,
   installCommonRoutes,
@@ -10,8 +15,8 @@ import {
 test.describe.configure({ timeout: 20_000 });
 
 type PreferenceServer = {
-  language: string;
-  speedUnit: string;
+  language: LanguagePayload["language"];
+  speedUnit: SpeedUnitPayload["speed_unit"];
   puts: Array<{ path: string; body: unknown }>;
   failSpeedUnitPut: boolean;
 };
@@ -25,7 +30,8 @@ async function installPreferenceRoutes(
       const path = requestPath(route);
       const method = route.request().method();
       if (method === "PUT") {
-        const body = route.request().postDataJSON() as Record<string, string>;
+        const body = route.request().postDataJSON() as LanguagePayload &
+          SpeedUnitPayload;
         server.puts.push({ path, body });
         if (path === "/api/settings/speed-unit" && server.failSpeedUnitPut) {
           await route.fulfill({
@@ -42,15 +48,22 @@ async function installPreferenceRoutes(
         }
       }
       if (path === "/api/settings/language") {
-        await fulfillJson(route, { language: server.language });
+        await fulfillJson<LanguagePayload>(route, {
+          language: server.language,
+        });
         return;
       }
       if (path === "/api/settings/speed-unit") {
-        await fulfillJson(route, { speed_unit: server.speedUnit });
+        await fulfillJson<SpeedUnitPayload>(route, {
+          speed_unit: server.speedUnit,
+        });
         return;
       }
       if (path.startsWith("/api/settings/cars")) {
-        await fulfillJson(route, { cars: [], active_car_id: null });
+        await fulfillJson<CarsPayload>(route, {
+          cars: [],
+          active_car_id: null,
+        });
         return;
       }
       await fulfillJson(route, {});

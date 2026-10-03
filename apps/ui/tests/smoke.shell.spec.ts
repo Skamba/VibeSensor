@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import type { CarsPayload, SpeedSourcePayload } from "../src/api/types";
 import { bootLiveDashboard, fulfillJson, requestPath } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
@@ -59,11 +60,14 @@ test("journey: a view that fails to load keeps the current view and shows the er
         return;
       }
       if (path.startsWith("/api/settings/cars")) {
-        await fulfillJson(route, { cars: [], active_car_id: null });
+        await fulfillJson<CarsPayload>(route, {
+          cars: [],
+          active_car_id: null,
+        });
         return;
       }
       if (path === "/api/settings/speed-source") {
-        await fulfillJson(route, {
+        await fulfillJson<SpeedSourcePayload>(route, {
           speed_source: "gps",
           manual_speed_kph: null,
           stale_timeout_s: 10,

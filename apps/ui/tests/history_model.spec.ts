@@ -67,17 +67,17 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
       speed_max_kmh: 105,
     }),
     most_likely_origin: {
-      suspected_source: "wheel_tire",
-      location: "front-right wheel",
+      suspected_source: "wheel/tire",
+      location: "Front Right Wheel",
       speed_band: "80-100 km/h",
       explanation: "Most likely wheel-tire contribution.",
     },
     findings: [
       makeHistoryFinding({
-        suspected_source: "wheel_tire",
+        suspected_source: "wheel/tire",
         confidence: 0.92,
         confidence_level: "strong",
-        strongest_location: "front-right wheel",
+        strongest_location: "Front Right Wheel",
         strongest_speed_band: "80-100 km/h",
         frequency_hz_or_order: 32,
         evidence_summary: "Front-right wheel imbalance",
@@ -87,7 +87,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         suspected_source: "driveline",
         confidence: 0.61,
         confidence_level: "moderate",
-        strongest_location: "driveshaft tunnel",
+        strongest_location: "Driveshaft Tunnel",
         strongest_speed_band: "60-80 km/h",
         frequency_hz_or_order: 18.5,
         evidence_summary: "Secondary driveline contribution",
@@ -97,17 +97,17 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         suspected_source: "engine",
         confidence: 0.44,
         confidence_level: "moderate",
-        strongest_location: "engine bay",
+        strongest_location: "Engine Bay",
         strongest_speed_band: "idle",
         frequency_hz_or_order: 12.5,
         evidence_summary: "Engine harmonics remain visible",
       }),
       makeHistoryFinding({
         finding_id: "finding-4",
-        suspected_source: "body_resonance",
+        suspected_source: "body resonance",
         confidence: 0.27,
         confidence_level: "weak",
-        strongest_location: "driver seat",
+        strongest_location: "Driver Seat",
         strongest_speed_band: "100-120 km/h",
         frequency_hz_or_order: 9.2,
         evidence_summary: "Cabin resonance remains possible",
@@ -131,11 +131,11 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
     ],
     sensor_intensity_by_location: [
       makeLocationIntensityRow({
-        location: "front-right wheel",
+        location: "Front Right Wheel",
         p95_intensity_db: 32,
       }),
       makeLocationIntensityRow({
-        location: "driveshaft tunnel",
+        location: "Driveshaft Tunnel",
         p95_intensity_db: 25.5,
       }),
       makeLocationIntensityRow({
@@ -206,7 +206,7 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
   expect(
     details.heatmap.zones.find((zone) => zone.key === "front-right wheel"),
   ).toMatchObject({
-    label: "front-right wheel",
+    label: "Front Right Wheel",
     valueLabel: "32.0 dB",
     strongest: true,
   });
@@ -415,10 +415,7 @@ test("relabels the analysis speed bands in the display unit", () => {
 });
 
 test("labels sources, folding unknown keys into title case", () => {
-  expect(sourceLabel("wheel_tire", testTranslation)).toBe(
-    "history.source.wheel_tire",
-  );
-  // Backend source values use "wheel/tire" and "body resonance".
+  // Backend source values (VibrationSource) use "wheel/tire" and "body resonance".
   expect(sourceLabel("wheel/tire", testTranslation)).toBe(
     "history.source.wheel_tire",
   );
@@ -435,6 +432,7 @@ test("maps location names onto heatmap positions and scales the colour", () => {
   expect(heatmapLocationKey("Drive shaft tunnel")).toBe("driveshaft tunnel");
   expect(heatmapLocationKey("roof")).toBe("roof");
   expect(normalizeUnit(5, 0, 10)).toBe(0.5);
+  expect(normalizeUnit(15, 10, 20)).toBe(0.5);
   expect(normalizeUnit(7, 7, 7)).toBe(0.5);
   expect(normalizeUnit(0, 0, 0)).toBe(0);
   expect(heatColor(0)).toBe("hsl(212 76% 48%)");
