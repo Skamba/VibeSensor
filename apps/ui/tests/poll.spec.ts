@@ -128,3 +128,31 @@ test("refresh loads immediately even while inactive", async () => {
   expect(seen).toEqual(["now"]);
   p.stop();
 });
+
+test("pauses while the page is hidden and loads again when it returns", async () => {
+  const setVisibility = (state: DocumentVisibilityState) => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: state,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  };
+  let calls = 0;
+  const p = poll({
+    active: signal(true),
+    intervalMs: 500,
+    load: async () => ++calls,
+    onData: () => {},
+  });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(calls).toBe(1);
+
+  setVisibility("hidden");
+  await vi.advanceTimersByTimeAsync(2000);
+  expect(calls).toBe(1);
+
+  setVisibility("visible");
+  await vi.advanceTimersByTimeAsync(0);
+  expect(calls).toBe(2);
+  p.stop();
+});
