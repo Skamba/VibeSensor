@@ -94,8 +94,9 @@ dedicated sampling task.
     fixtures generated from the backend Python codec and covers queue frame building,
     overflow/drop accounting, and ACK-driven eviction behavior
 - Pinned the firmware PlatformIO platform:
-  - `platform = espressif32@6.13.0` so local and CI firmware builds stop drifting with
-    upstream default updates
+  - `platform = espressif32@<exact version>` plus an exact Arduino framework
+    package, so local and CI firmware builds stop drifting with upstream default
+    updates
 - Added PR-time firmware native CI coverage:
   - CI now verifies the generated protocol fixtures are in sync and runs
     `pio test -e native` automatically on pull requests

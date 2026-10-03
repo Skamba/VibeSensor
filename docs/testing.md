@@ -138,7 +138,7 @@ Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make tar
 | `frontend` | frontend paths | `make ui-typecheck`, `make ui-test` |
 | `ui-smoke` | frontend paths | `cd apps/ui && npm run test:smoke` |
 | `integration` | backend or frontend paths | `make sync-contracts && git diff --exit-code`, `make test-e2e`, `python tools/tests/run_release_smoke.py` |
-| `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native` |
+| `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native`, `pio run -e m5stack_atom -e esp32-c3-devkitm-1` |
 
 The `changes` job uses `dorny/paths-filter`: backend paths are `apps/server/`, `tools/`, `infra/pi-image/`, shell scripts/hooks, `docs/protocol.md`, and `.github/actions/`; frontend paths are `apps/ui/`, `tools/ui/`, `tools/config/`; firmware paths are `firmware/`, `tools/firmware/`, and the UDP protocol modules. Docs-only changes run only the secret scan; editing `ci.yml` runs everything.
 

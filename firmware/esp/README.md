@@ -141,7 +141,7 @@ adding build flags in `platformio.ini` (`build_flags`).
 Shared ESP32 build settings live in the `env:firmware_esp32` base environment
 inside `platformio.ini`. Board-specific environments extend that base and pin
 third-party firmware libraries through PlatformIO registry dependencies, including
-`adafruit/Adafruit NeoPixel@1.15.4`.
+`adafruit/Adafruit NeoPixel@1.15.5`.
 
 Supported override macros:
 
