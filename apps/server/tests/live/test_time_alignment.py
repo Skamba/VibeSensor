@@ -30,7 +30,8 @@ def _make_processor(**kwargs) -> SignalProcessor:
         "sample_rate_hz": 200,
         "waveform_seconds": 2,
         "waveform_display_hz": 50,
-        "fft_n": 256,
+        # The analysed block (and so each time range) is 2 s at 200 Hz.
+        "fft_n": 400,
         "spectrum_max_hz": 100,
     }
     defaults.update(kwargs)
@@ -92,7 +93,7 @@ class TestAnalysisTimeRange:
 
     def test_range_limited_by_available_samples(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        # Only 100 samples = 0.5 s of data (less than waveform_seconds=2)
+        # Only 100 samples = 0.5 s of data (less than the 2 s analysed block)
         _fill_sensor(proc, "s1", n_samples=100, sample_rate_hz=200, mono_time=50.0)
         time_range = _time_range(proc, "s1")
         assert time_range is not None
@@ -365,7 +366,7 @@ class TestSyncedClockAlignment:
 
 class TestAnalysisTimeRangeEdgeCases:
     """Tests for Fix 9 (negative samples_since_t0 guard) and Fix 10
-    (waveform_seconds <= 0 early return) in analysis_time_range.
+    (non-positive window early return) in analysis_time_range.
     """
 
     def test_negative_samples_since_t0_clamped_to_zero(self) -> None:
@@ -381,8 +382,7 @@ class TestAnalysisTimeRangeEdgeCases:
             count=400,
             last_ingest_mono_s=10.5,
             sample_rate_hz=200,
-            waveform_seconds=2,
-            capacity=400,
+            window_samples=400,
             last_t0_us=last_t0_us,
             samples_since_t0=-50,  # corrupt / inverted — must be clamped
         )
@@ -394,19 +394,18 @@ class TestAnalysisTimeRangeEdgeCases:
         assert start_s <= end_s
 
     @pytest.mark.parametrize(
-        "waveform_seconds",
+        "window_samples",
         [pytest.param(0, id="zero"), pytest.param(-3, id="negative")],
     )
-    def test_non_positive_waveform_seconds_returns_none(self, waveform_seconds: int) -> None:
-        """Fix 10: waveform_seconds <= 0 must return None rather than a silent 1-sample window."""
+    def test_non_positive_window_returns_none(self, window_samples: int) -> None:
+        """A window of <= 0 samples must return None rather than a silent 1-sample window."""
         from vibesensor.live.time_align import analysis_time_range
 
         result = analysis_time_range(
             count=400,
             last_ingest_mono_s=10.5,
             sample_rate_hz=200,
-            waveform_seconds=waveform_seconds,
-            capacity=400,
+            window_samples=window_samples,
             last_t0_us=0,
             samples_since_t0=0,
         )

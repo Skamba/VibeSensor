@@ -63,7 +63,7 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 | `run_id` | TEXT FK | References `runs(run_id)` with `ON DELETE CASCADE` |
 | `timestamp_utc` | TEXT | ISO-8601 sample time |
 | `t_s` | REAL | Seconds since run start (monotonic) |
-| `analysis_window_start_us` | INTEGER | Optional raw-analysis window start timestamp in run-monotonic microseconds |
+| `analysis_window_start_us` | INTEGER | Optional start of the row's FFT block in run-monotonic microseconds (never negative for a synced window) |
 | `analysis_window_end_us` | INTEGER | Optional raw-analysis window end timestamp in run-monotonic microseconds |
 | `analysis_window_synced` | INTEGER | Optional boolean flag (`0`/`1`) indicating whether the analysis window is synchronized to raw capture timing |
 | `client_id` | TEXT | Sensor MAC address (hex) |

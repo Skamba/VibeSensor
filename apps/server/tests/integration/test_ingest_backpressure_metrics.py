@@ -119,6 +119,7 @@ def _build_sensor_packet(
     step: int,
     seq: int,
     wheel_hz: float,
+    run_start_mono_s: float,
 ) -> bytes:
     time_axis = (np.arange(_FRAME_N) + step * _FRAME_N) / _SAMPLE_RATE_HZ
     rng = np.random.default_rng(seed=(step << 8) + int.from_bytes(client_id, "big"))
@@ -132,7 +133,8 @@ def _build_sensor_packet(
     return pack_data(
         client_id,
         seq=seq,
-        t0_us=int((step * _FRAME_N / _SAMPLE_RATE_HZ) * 1_000_000),
+        # Synced sensor clocks count server-monotonic microseconds.
+        t0_us=int((run_start_mono_s + step * _FRAME_N / _SAMPLE_RATE_HZ) * 1_000_000),
         samples=samples_i16,
     )
 
@@ -291,6 +293,7 @@ async def _drive_bounded_sensor_burst(
                     step,
                     current_seq,
                     wheel_hz,
+                    start_mono,
                 ),
                 ("127.0.0.1", 7000 + index),
             )
@@ -304,6 +307,7 @@ async def _drive_bounded_sensor_burst(
                         step,
                         deferred_late_seq_by_sensor.pop(sensor_id),
                         wheel_hz,
+                        start_mono,
                     ),
                     ("127.0.0.1", 7000 + index),
                 )

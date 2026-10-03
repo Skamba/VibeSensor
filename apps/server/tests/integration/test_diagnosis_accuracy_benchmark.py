@@ -520,7 +520,14 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
     )
     try:
         lossy = bool(case.frame_loss)
-        _assert_case(result, car, case.expected_for(car_key), case.phases, lossy=lossy)
+        _assert_case(
+            result,
+            car,
+            case.expected_for(car_key),
+            case.phases,
+            lossy=lossy,
+            clean_network=not lossy and case.uplink_latency_spike_s == 0,
+        )
         _assert_frame_integrity(result, lossy=lossy)
         if (case.case_id, car_key) in PDF_CASES:
             _assert_pdf_text(result)
@@ -553,6 +560,7 @@ def _assert_case(
     phases: tuple[ScenarioPhase, ...],
     *,
     lossy: bool = False,
+    clean_network: bool = True,
 ) -> None:
     diagnosis = result.diagnosis
     summary = (
@@ -579,7 +587,7 @@ def _assert_case(
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
     _assert_spectrum_markers(diagnosis, car)
     _assert_sensor_identity(result)
-    _assert_raw_backed(result, lossy=lossy)
+    _assert_raw_backed(result, lossy=lossy, clean_network=clean_network)
     _assert_report_view(result, diagnosis, expected)
 
 
@@ -649,14 +657,17 @@ def _assert_frame_integrity(result: SimPipelineResult, *, lossy: bool) -> None:
         assert not result.report.quality.all_passed
 
 
-def _assert_raw_backed(result: SimPipelineResult, *, lossy: bool) -> None:
+def _assert_raw_backed(result: SimPipelineResult, *, lossy: bool, clean_network: bool) -> None:
     """Every sensor clock-synced before the drive, so analysis replays the raw capture.
 
-    Only the first ~2.5 s of rows (whose FFT window reaches back before the
-    recording started) have no raw samples to replay.
+    On a clean network every recorded row is replayed from raw samples (rows
+    whose spectrum reaches back before the start are not recorded at all).
     """
     metadata = result.analysis.payload["analysis_metadata"]
     assert isinstance(metadata, dict)
+    if clean_network:
+        assert metadata["raw_capture_mode"] == "raw_backed", metadata
+        assert metadata["raw_backed_sample_count"] == metadata["total_sample_count"], metadata
     assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}, metadata
     raw_backed, total = metadata["raw_backed_sample_count"], metadata["total_sample_count"]
     assert isinstance(raw_backed, int) and isinstance(total, int)
@@ -725,14 +736,6 @@ def _assert_pdf_text(result: SimPipelineResult) -> None:
             assert view.owner.verify is not None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "known miss: rows from the first ~2.5 s after the start have FFT windows that "
-        "reach back before the raw capture began, so every recording reads as "
-        "partially raw-backed and the report always warns that raw data was missing"
-    ),
-)
 def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:
     case = next(case for case in CASES if case.case_id == "front-right-cruise-shimmy")
     result = run_sim_pipeline(

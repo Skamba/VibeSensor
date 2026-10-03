@@ -141,10 +141,12 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
         snapshot = recorder._lifecycle.snapshot()
         assert snapshot is not None
         run_id = snapshot.run_id
+        # Synced sensor clocks count server-monotonic microseconds from the run start.
+        base_us = int(snapshot.start_mono_s * 1_000_000)
 
-        first = pack_data(_CLIENT_ID, seq=0, t0_us=1_000_000, samples=_samples(40.0))
-        newest = pack_data(_CLIENT_ID, seq=2, t0_us=1_640_000, samples=_samples(55.0))
-        late = pack_data(_CLIENT_ID, seq=1, t0_us=1_320_000, samples=_samples(25.0))
+        first = pack_data(_CLIENT_ID, seq=0, t0_us=base_us + 1_000_000, samples=_samples(40.0))
+        newest = pack_data(_CLIENT_ID, seq=2, t0_us=base_us + 1_640_000, samples=_samples(55.0))
+        late = pack_data(_CLIENT_ID, seq=1, t0_us=base_us + 1_320_000, samples=_samples(25.0))
 
         proto._process_datagram(first, _ADDR)
         proto._process_datagram(newest, _ADDR)
