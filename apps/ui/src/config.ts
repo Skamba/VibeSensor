@@ -5,6 +5,11 @@ export const ESP_FLASH_POLL_ACTIVE_MS = 1_000;
 export const GPS_POLL_FAST_MS = 2_000;
 export const GPS_POLL_SLOW_MS = 10_000;
 
+/** Speeds the guided test drive names (km/h); shown in the driver's speed unit. */
+export const GUIDED_SWEEP_FROM_KMH = 50;
+export const GUIDED_SWEEP_TO_KMH = 120;
+export const GUIDED_COAST_DROP_KMH = 30;
+
 export const SPECTRUM_DB_MIN = 0;
 export const SPECTRUM_DB_MAX = 100;
 export const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;

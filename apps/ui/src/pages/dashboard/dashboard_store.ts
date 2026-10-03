@@ -221,6 +221,7 @@ export const health = computed(() =>
       locationOf,
       status: status.value,
       carActive: carSelection.value.kind === "active",
+      speedUnit: speedUnit.value,
     },
     t,
     formatInt,
@@ -241,6 +242,7 @@ const baseRecording = computed(() => {
             ? "no_cars"
             : "no_active",
       health: health.value,
+      speedUnit: speedUnit.value,
       connectedText: formatInt(
         clients.value.filter((client) => client.connected).length,
       ),

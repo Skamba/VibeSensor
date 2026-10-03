@@ -10,6 +10,7 @@ import {
   normalizeUnit,
   type RunDetail,
   sourceLabel,
+  speedBandLabel,
 } from "../src/pages/history/history_model";
 import {
   makeDiagnosis,
@@ -18,8 +19,13 @@ import {
   makeLocationIntensityRow,
 } from "./history_payload_test_support";
 
+const UNIT_LABELS: Record<string, string> = {
+  "speed.unit.kmh": "km/h",
+  "speed.unit.mps": "m/s",
+};
+
 function testTranslation(key: string, vars?: Record<string, unknown>): string {
-  return vars ? `${key}:${JSON.stringify(vars)}` : key;
+  return vars ? `${key}:${JSON.stringify(vars)}` : (UNIT_LABELS[key] ?? key);
 }
 
 function historyListRun(runId: string): HistoryEntry {
@@ -149,6 +155,7 @@ const f = {
   fmt: (value: number, digits = 0) => Number(value).toFixed(digits),
   fmtTs: (iso: string) => iso,
   formatInt: (value: number) => String(value),
+  speedUnit: "kmh" as const,
 };
 
 test("builds the row summary and the expanded diagnosis from raw insights", () => {
@@ -341,9 +348,70 @@ test("weak evidence hedges the best candidate and asks for a new recording", () 
       explanation:
         'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.front_axle"}',
       nextStepLabel: "history.recapture_label",
-      nextStep: "history.recapture_recipe",
+      nextStep:
+        'history.recapture_recipe:{"from":"50","to":"120","unit":"km/h"}',
     },
   });
+});
+
+test("shows every History speed in the m/s setting", () => {
+  const mps = { ...f, speedUnit: "mps" as const };
+  const run = historyListRun("run-007");
+  const details = buildDetails(
+    run,
+    defaultDetail({ preview: populatedInsights("run-007") }),
+    mps,
+  );
+  if (details.insights.kind !== "findings") {
+    throw new Error("expected findings");
+  }
+  expect(details.insights.primary).toMatchObject({
+    signature: "T1 · 12.1 Hz @ 24 m/s",
+    chips: [
+      { label: "history.findings_location" },
+      { label: "history.findings_speed_band", value: "18–29 m/s" },
+      { label: "history.findings_signature", value: "T1 · 12.1 Hz @ 24 m/s" },
+    ],
+  });
+  expect(
+    [
+      ...details.insights.visibleSecondary,
+      ...details.insights.hiddenSecondary,
+    ].map((finding) => finding.speedBand),
+  ).toEqual(["17–22 m/s", "idle", "28–33 m/s"]);
+
+  const noFault = populatedInsights("run-008");
+  noFault.diagnosis = makeDiagnosis();
+  noFault.speed_stats = { ...noFault.speed_stats, min_kmh: 36, max_kmh: 108 };
+  expect(
+    buildDetails(run, defaultDetail({ preview: noFault }), mps).insights,
+  ).toMatchObject({
+    primary: { chips: [{ value: "10–30 m/s" }, {}] },
+  });
+
+  const weak = populatedInsights("run-009");
+  weak.diagnosis = makeDiagnosis({
+    verdict: "weak_evidence",
+    confidence_level: "weak",
+  });
+  expect(
+    buildDetails(run, defaultDetail({ preview: weak }), mps).insights,
+  ).toMatchObject({
+    primary: {
+      nextStep: 'history.recapture_recipe:{"from":"14","to":"33","unit":"m/s"}',
+    },
+  });
+});
+
+test("relabels the analysis speed bands in the display unit", () => {
+  const mps = { t: testTranslation, speedUnit: "mps" as const };
+  expect(speedBandLabel("80-100 km/h", f)).toBe("80–100 km/h");
+  expect(speedBandLabel("72-108 km/h", mps)).toBe("20–30 m/s");
+  expect(speedBandLabel("90 km/h", mps)).toBe("25 m/s");
+  expect(speedBandLabel(" 36.0-54.0 km/h ", mps)).toBe("10–15 m/s");
+  // Labels in another shape are shown as the server wrote them.
+  expect(speedBandLabel("idle", mps)).toBe("idle");
+  expect(speedBandLabel("80-100 mph", mps)).toBe("80-100 mph");
 });
 
 test("labels sources, folding unknown keys into title case", () => {

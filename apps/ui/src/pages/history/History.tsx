@@ -1,7 +1,7 @@
 import type { CSSProperties, JSX, TargetedMouseEvent } from "preact";
 
 import { historyExportUrl } from "../../api/history";
-import { navigate } from "../../app_store";
+import { navigate, speedUnit } from "../../app_store";
 import { fmt, fmtTs, formatIntLocale } from "../../format";
 import { lang, t } from "../../i18n";
 import {
@@ -35,6 +35,7 @@ function formatters(): Formatters {
     fmt,
     fmtTs,
     formatInt: (value) => formatIntLocale(value, language),
+    speedUnit: speedUnit.value,
   };
 }
 

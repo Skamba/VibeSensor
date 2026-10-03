@@ -2,6 +2,7 @@ import { useEffect, useRef } from "preact/hooks";
 
 import { speedUnit } from "../../app_store";
 import { FeedbackSlot } from "../../components/feedback";
+import { formatSpeed } from "../../format";
 import { t } from "../../i18n";
 import {
   obdStatus,
@@ -24,7 +25,6 @@ import {
   gpsDiagnostics,
   hasReadableName,
   obdDiagnostics,
-  speedText,
 } from "./speed_source_model";
 import {
   chooseMode,
@@ -87,10 +87,11 @@ function Summary() {
     [
       "speedSourceEffectiveSpeed",
       "settings.speed.effective_speed",
-      speedText(
+      formatSpeed(
         activeSpeedKph(snapshot, speedSettings.gpsEffectiveSpeedKph.value),
         speedUnit.value,
         t,
+        1,
       ),
     ],
     [

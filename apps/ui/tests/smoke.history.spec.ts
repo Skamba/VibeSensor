@@ -252,3 +252,40 @@ test("journey: history deletes one run and reports a partial delete-all", async 
     "1 run(s) available",
   );
 });
+
+test("journey: history speeds follow the speed unit setting in English and Dutch", async ({
+  page,
+}) => {
+  await bootWithHistory(page, createServer());
+  let unit = "kmh";
+  // Routes added later win over the common settings route.
+  await page.route("**/api/settings/speed-unit", async (route) => {
+    if (route.request().method() !== "GET") {
+      unit = (route.request().postDataJSON() as { speed_unit: string })
+        .speed_unit;
+    }
+    await fulfillJson(route, { speed_unit: unit });
+  });
+  await openHistoryTab(page);
+  await page.locator('[data-run-toggle="details"][data-run="run-001"]').click();
+  const details = page.locator(".history-details-card");
+  await expect(details).toContainText("T1 · 12.1 Hz @ 85 km/h");
+  await expect(details).toContainText("63–105 km/h");
+  await expect(details).toContainText("60–80 km/h");
+
+  await page.locator("#speedUnitSelect").selectOption("mps");
+  await expect(details).toContainText("T1 · 12.1 Hz @ 24 m/s");
+  await expect(details).toContainText("18–29 m/s");
+  await expect(details).toContainText("17–22 m/s");
+  await expect(details).not.toContainText("km/h");
+  expect(unit).toBe("mps");
+
+  await page.locator("#languageSelect").selectOption("nl");
+  await expect(details).toContainText("Weak motor-orde.");
+  await expect(details).toContainText("@ 24 m/s");
+
+  await page.locator("#speedUnitSelect").selectOption("kmh");
+  await expect(details).toContainText("T1 · 12.1 Hz @ 85 km/u");
+  await expect(details).toContainText("63–105 km/u");
+  await expect(details).not.toContainText("km/h");
+});
