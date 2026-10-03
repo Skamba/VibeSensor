@@ -35,3 +35,16 @@ def test_active_car_aspect_updates_are_clamped_and_reject_negative_uncertainty()
     assert after.tire_width_mm == 500.0
     assert after.rim_in == 10.0
     assert after.speed_uncertainty_pct == before.speed_uncertainty_pct
+
+
+def test_uncertainty_only_updates_keep_the_order_reference_status() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car({"name": "Status"})
+    services.car_settings.set_active_car(created.cars[0]["id"])
+    services.analysis_settings.update_active_car_aspects({"tire_width_mm": 255.0})
+    before = services.car_settings.get_cars().cars[0].get("order_reference_status")
+
+    services.analysis_settings.update_active_car_aspects({"speed_uncertainty_pct": 2.0})
+
+    assert before is not None
+    assert services.car_settings.get_cars().cars[0].get("order_reference_status") == before

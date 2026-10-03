@@ -20,8 +20,10 @@ from vibesensor.dsp.strength_bands import (
 @pytest.mark.parametrize(
     ("vibration_strength_db", "expected"),
     [
+        pytest.param(-5.0, "l0", id="negative"),
         pytest.param(0.0, "l0", id="zero"),
         pytest.param(5.0, "l0", id="below-first-threshold"),
+        pytest.param(7.9, "l0", id="just-below-l1"),
         pytest.param(8.0, "l1", id="l1-threshold"),
         pytest.param(26.0, "l3", id="highest-matching-threshold"),
         pytest.param(46.0, "l5", id="l5-threshold"),

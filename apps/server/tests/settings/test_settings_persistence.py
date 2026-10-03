@@ -25,25 +25,6 @@ class FakeSettingsSnapshotStore:
         self.snapshot = snapshot
 
 
-def _sabotaged_services(tmp_path: Path):
-    db = HistoryDB(tmp_path / "history.db")
-    services = build_settings_services(db=db)
-    original_repo = db
-
-    def _boom(payload: object) -> None:
-        raise OSError("disk full")
-
-    class _SabotagedSettingsSnapshotStore:
-        def get_settings_snapshot(self) -> SettingsSnapshotPayload | None:
-            return original_repo.get_settings_snapshot()
-
-        def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
-            _boom(snapshot)
-
-    services.coordinator._db = _SabotagedSettingsSnapshotStore()
-    return services
-
-
 def test_settings_snapshot_defaults_are_empty_and_gps() -> None:
     services = build_settings_services()
     snapshot = services.coordinator.snapshot()
@@ -231,26 +212,75 @@ def test_settings_snapshot_invalid_active_car_id_clears_selection(tmp_path: Path
     assert snapshot["activeCarId"] is None
 
 
-def test_settings_snapshot_persist_failure_raises_persistence_error(tmp_path: Path) -> None:
+class _ReadOnlySettingsDB(HistoryDB):
+    """A real HistoryDB whose settings writes fail (disk full) once armed."""
+
+    fail_writes = False
+
+    def set_settings_snapshot(self, snapshot: SettingsSnapshotPayload) -> None:
+        if self.fail_writes:
+            raise OSError("disk full")
+        super().set_settings_snapshot(snapshot)
+
+
+def _sabotaged_services(tmp_path: Path):
+    db = _ReadOnlySettingsDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+    created = services.car_settings.add_car({"name": "Test Car", "type": "sedan"})
+    services.car_settings.set_active_car(created.cars[0]["id"])
+    services.sensor_settings.assign_sensor_location("11:22:33:44:55:66", "rear_left_wheel")
+    db.fail_writes = True
+    return services
+
+
+def _settings_state(services) -> tuple[object, ...]:
+    return (
+        services.car_settings.get_cars(),
+        services.speed_source_settings.get_speed_source(),
+        services.ui_preferences.language,
+        services.ui_preferences.speed_unit,
+        services.sensor_settings.get_sensors(),
+    )
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(lambda s: s.car_settings.add_car({"name": "Will Fail"}), id="add-car"),
+        pytest.param(
+            lambda s: s.analysis_settings.update_active_car_aspects({"tire_width_mm": 255.0}),
+            id="car-aspects",
+        ),
+        pytest.param(
+            lambda s: s.speed_source_settings.update_speed_source(
+                {"speedSource": "manual", "manualSpeedKph": 80}
+            ),
+            id="speed-source",
+        ),
+        pytest.param(lambda s: s.ui_preferences.set_language("nl"), id="language"),
+        pytest.param(lambda s: s.ui_preferences.set_speed_unit("mps"), id="speed-unit"),
+        pytest.param(
+            lambda s: s.sensor_settings.assign_sensor_location(
+                "AA:BB:CC:DD:EE:FF", "front_left_wheel"
+            ),
+            id="new-sensor-location",
+        ),
+        pytest.param(
+            lambda s: s.sensor_settings.assign_sensor_location(
+                "11:22:33:44:55:66", "front_left_wheel"
+            ),
+            id="existing-sensor-location",
+        ),
+    ],
+)
+def test_persist_failure_raises_and_rolls_back_in_memory_settings(tmp_path: Path, mutate) -> None:
     services = _sabotaged_services(tmp_path)
+    before = _settings_state(services)
+
     with pytest.raises(PersistenceError, match="Failed to persist"):
-        services.car_settings.add_car({"name": "Will Fail"})
+        mutate(services)
 
-
-def test_settings_snapshot_persist_failure_propagates_on_speed_source_update(
-    tmp_path: Path,
-) -> None:
-    services = _sabotaged_services(tmp_path)
-    with pytest.raises(PersistenceError):
-        services.speed_source_settings.update_speed_source(
-            {"speedSource": "manual", "manualSpeedKph": 80}
-        )
-
-
-def test_settings_snapshot_persist_failure_propagates_on_set_language(tmp_path: Path) -> None:
-    services = _sabotaged_services(tmp_path)
-    with pytest.raises(PersistenceError):
-        services.ui_preferences.set_language("nl")
+    assert _settings_state(services) == before
 
 
 def test_settings_snapshot_persist_failure_logs_error(

@@ -10,7 +10,6 @@ Covers:
 
 from __future__ import annotations
 
-import struct
 from unittest.mock import patch
 
 import numpy as np
@@ -227,46 +226,6 @@ class TestDriftSimulation:
 # ---------------------------------------------------------------------------
 
 
-class TestCmdSyncClockProtocol:
-    """Verify the sync-clock UDP command round-trip and struct sizing stay consistent."""
-
-    def test_pack_and_parse_sync_clock(self) -> None:
-        from vibesensor.ingest.protocol_packing import pack_cmd_sync_clock
-        from vibesensor.ingest.protocol_parsing import parse_cmd
-        from vibesensor.ingest.protocol_wire import CMD_SYNC_CLOCK, CMD_SYNC_CLOCK_BYTES
-
-        client_id = b"\x01\x02\x03\x04\x05\x06"
-        cmd_seq = 42
-        server_time_us = 123_456_789_012
-        applied_offset_us = -4_321
-        round_trip_us = 6_789
-
-        raw = pack_cmd_sync_clock(
-            client_id,
-            cmd_seq,
-            server_time_us,
-            applied_offset_us=applied_offset_us,
-            round_trip_us=round_trip_us,
-        )
-        assert len(raw) == CMD_SYNC_CLOCK_BYTES
-
-        msg = parse_cmd(raw)
-        assert msg.cmd_id == CMD_SYNC_CLOCK
-        assert msg.cmd_seq == cmd_seq
-
-        # Verify the sync payload fields stay stable on the wire.
-        params = msg.params
-        parsed_time_us, parsed_offset_us, parsed_round_trip_us = struct.unpack("<QqI", params)
-        assert parsed_time_us == server_time_us
-        assert parsed_offset_us == applied_offset_us
-        assert parsed_round_trip_us == round_trip_us
-
-    def test_pack_sync_clock_struct_size(self) -> None:
-        from vibesensor.ingest.protocol_wire import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
-
-        assert CMD_SYNC_CLOCK_STRUCT.size == CMD_SYNC_CLOCK_BYTES
-
-
 # ---------------------------------------------------------------------------
 # Synced-clock alignment (t0_us based)
 # ---------------------------------------------------------------------------
@@ -362,51 +321,3 @@ class TestSyncedClockAlignment:
 # ---------------------------------------------------------------------------
 # Wave 3 Bruno3 — analysis_time_range edge-case fixes
 # ---------------------------------------------------------------------------
-
-
-class TestAnalysisTimeRangeEdgeCases:
-    """Tests for Fix 9 (negative samples_since_t0 guard) and Fix 10
-    (non-positive window early return) in analysis_time_range.
-    """
-
-    def test_negative_samples_since_t0_clamped_to_zero(self) -> None:
-        """Fix 9: samples_since_t0 < 0 must not produce end_us < last_t0_us.
-
-        When samples_since_t0 is negative (defensive guard against corruption),
-        analysis_time_range should clamp it to 0 so end_s == last_t0_us / 1e6.
-        """
-        from vibesensor.live.time_align import analysis_time_range
-
-        last_t0_us = 10_000_000  # 10 s
-        result = analysis_time_range(
-            count=400,
-            last_ingest_mono_s=10.5,
-            sample_rate_hz=200,
-            window_samples=400,
-            last_t0_us=last_t0_us,
-            samples_since_t0=-50,  # corrupt / inverted — must be clamped
-        )
-        assert result is not None
-        start_s, end_s, synced = result
-        assert synced is True
-        # end_s must equal last_t0_us / 1e6 (0 samples advanced)
-        assert end_s == pytest.approx(10.0)
-        assert start_s <= end_s
-
-    @pytest.mark.parametrize(
-        "window_samples",
-        [pytest.param(0, id="zero"), pytest.param(-3, id="negative")],
-    )
-    def test_non_positive_window_returns_none(self, window_samples: int) -> None:
-        """A window of <= 0 samples must return None rather than a silent 1-sample window."""
-        from vibesensor.live.time_align import analysis_time_range
-
-        result = analysis_time_range(
-            count=400,
-            last_ingest_mono_s=10.5,
-            sample_rate_hz=200,
-            window_samples=window_samples,
-            last_t0_us=0,
-            samples_since_t0=0,
-        )
-        assert result is None

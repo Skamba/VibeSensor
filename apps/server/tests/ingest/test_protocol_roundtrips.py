@@ -34,6 +34,7 @@ from vibesensor.ingest.protocol_wire import (
     MSG_DATA_ACK,
     MSG_HELLO,
     MSG_HELLO_ACK,
+    VERSION,
 )
 
 
@@ -217,3 +218,14 @@ def test_client_id_mac_roundtrip() -> None:
 
     assert mac == "d0:5a:01:02:03:04"
     assert parse_client_id(mac) == client_id
+
+
+def test_parse_data_reads_the_little_endian_wire_header() -> None:
+    """Firmware sends little-endian headers; decode a hand-built datagram."""
+    header = struct.pack("<BB6sIQH", MSG_DATA, VERSION, bytes.fromhex("aabbccddeeff"), 7, 123, 1)
+    datagram = header + struct.pack("<hhh", 1, -2, 3)
+
+    message = parse_data(datagram)
+
+    assert (message.seq, message.t0_us, message.sample_count) == (7, 123, 1)
+    assert message.samples.tolist() == [[1, -2, 3]]

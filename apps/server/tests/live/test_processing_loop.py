@@ -5,11 +5,12 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import create_autospec, patch
 
 import pytest
 
 from vibesensor.common.exceptions import ProcessingError
+from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.live.processing_loop import (
     CLOCK_SYNC_INTERVAL_S,
     MAX_CONSECUTIVE_FAILURES,
@@ -21,6 +22,7 @@ from vibesensor.live.processing_loop import (
     ProcessingTickFailure,
     ProcessingTickRunner,
 )
+from vibesensor.live.processor import SignalProcessor
 from vibesensor.live.runtime_failures import ProcessingLoopFailure
 
 # ---------------------------------------------------------------------------
@@ -254,10 +256,10 @@ class TestProcessingLoopFailureTracking:
     @pytest.mark.asyncio
     async def test_programmer_bug_propagates_from_ingress_state(self) -> None:
         """Unexpected runtime bugs in ingress state should now fail explicitly."""
-        mock_proc = MagicMock()
+        mock_proc = create_autospec(SignalProcessor, instance=True)
         mock_proc.clients_with_recent_data.return_value = []
         mock_proc.evict_clients.return_value = None
-        mock_registry = MagicMock()
+        mock_registry = create_autospec(ClientRegistry, instance=True)
         mock_registry.active_client_ids.side_effect = RuntimeError("unexpected boom")
         loop, state = _make_loop(processor=mock_proc, registry=mock_registry)
 
@@ -270,11 +272,11 @@ class TestProcessingLoopFailureTracking:
     async def test_failure_message_is_truncated_at_limit(self) -> None:
         """Long exception messages are truncated to _MAX_FAILURE_MESSAGE_LEN."""
         long_msg = "x" * 300
-        mock_proc = MagicMock()
+        mock_proc = create_autospec(SignalProcessor, instance=True)
         mock_proc.clients_with_recent_data.return_value = []
         mock_proc.compute_all.side_effect = ProcessingError(long_msg)
         mock_proc.evict_clients.return_value = None
-        mock_registry = MagicMock()
+        mock_registry = create_autospec(ClientRegistry, instance=True)
         mock_registry.active_client_ids.return_value = []
         loop, state = _make_loop(processor=mock_proc, registry=mock_registry)
 

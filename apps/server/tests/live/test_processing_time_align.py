@@ -80,6 +80,8 @@ class TestComputeOverlap:
                 6.0,
                 id="three-ranges",
             ),
+            pytest.param([5.0], [5.0], 0.0, False, 5.0, 5.0, 0.0, id="single-zero-duration"),
+            pytest.param([0.0, 5.0], [5.0, 10.0], 0.0, False, 5.0, 5.0, 0.0, id="touching-ranges"),
         ],
     )
     def test_compute_overlap_cases(
@@ -149,6 +151,9 @@ class TestAnalysisTimeRange:
             pytest.param({"count": 0}, id="no_data"),
             pytest.param({"count": 100, "last_ingest_mono_s": 0.0}, id="no_timing"),
             pytest.param({"count": 100, "sample_rate_hz": 0}, id="zero_sample_rate"),
+            pytest.param({"count": 100, "sample_rate_hz": -200}, id="negative_sample_rate"),
+            pytest.param({"window_samples": 0}, id="zero_window"),
+            pytest.param({"window_samples": -3}, id="negative_window"),
         ],
     )
     def test_returns_none(self, overrides: dict[str, object]) -> None:
@@ -178,13 +183,21 @@ class TestAnalysisTimeRange:
         result = _atr(
             last_t0_us=5_000_000,  # 5 seconds in µs
             samples_since_t0=100,
+            window_samples=1000,
         )
         assert result is not None
         start, end, synced = result
         assert synced is True
-        # end_us = 5_000_000 + (100 * 1_000_000) // 1000 = 5_100_000
-        # end_s = 5.1
+        # The window ends 100 samples (0.1 s at 1 kHz) after t0 and spans 1000 samples.
         assert end == pytest.approx(5.1)
+        assert start == pytest.approx(4.1)
+
+    def test_sensor_clock_path_clamps_negative_samples_since_t0(self) -> None:
+        result = _atr(last_t0_us=10_000_000, samples_since_t0=-50)
+        assert result is not None
+        _start, end, synced = result
+        assert synced is True
+        assert end == pytest.approx(10.0)
 
     def test_window_covers_only_the_analysed_block(self) -> None:
         result = _atr(count=5000, window_samples=2000)

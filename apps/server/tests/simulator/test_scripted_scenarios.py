@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 
 import numpy as np
 import pytest
@@ -174,11 +175,17 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
             speed_update_period_s=0.01,
         )
     )
-    await asyncio.sleep(0.08)
+    front_left = clients[0]
+    # Wait for the observable effects instead of a fixed wall-clock window: the
+    # speed sync runs in a worker thread and may lag on a loaded machine.
+    deadline = time.monotonic() + 10.0
+    while not (speed_updates and max(speed_updates) >= 45.0 and front_left.pulses):
+        if task.done() or time.monotonic() > deadline:
+            break
+        await asyncio.sleep(0.005)
     stop_event.set()
     await task
 
-    front_left = clients[0]
     assert speed_updates
     assert max(speed_updates) >= 45.0
     assert front_left.pulses

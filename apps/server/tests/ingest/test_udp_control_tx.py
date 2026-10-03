@@ -61,6 +61,10 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
 
     cmd = parse_cmd(payload)
     assert cmd.client_id.hex() == client_hex
+    record = registry.get(client_hex)
+    assert record is not None
+    # The command is tracked so the sensor's ACK can be matched to it.
+    assert (record.last_ack_cmd_seq, record.last_ack_status) == (cmd_seq, None)
 
 
 def test_control_datagram_programming_bug_propagates(
@@ -204,6 +208,8 @@ def test_broadcast_sync_clock_rolls_ack_timestamps_into_next_sync_payload(
     assert record.sync_offset_us == 5_000
     assert record.sync_rtt_us == 4_000
     assert record.last_sync_monotonic_us == 1_004_500
+    # The first sync carried no offset yet, so nothing has been applied on the sensor.
+    assert record.clock_offset_applied is False
 
     current_mono[0] = 2.0
     assert plane.broadcast_sync_clock() == 1

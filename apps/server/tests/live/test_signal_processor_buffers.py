@@ -352,3 +352,18 @@ def test_compute_all_skips_failing_client(
     assert result["missing"] == {}
     assert "compute_metrics failed for bad" in caplog.text
     assert proc.intake_stats()["last_compute_all_duration_s"] > 0
+
+
+def test_spectrum_is_computed_from_the_newest_fft_block() -> None:
+    proc = _processor()
+
+    def tone(n: int, hz: float) -> np.ndarray:
+        block = np.zeros((n, 3), dtype=np.float32)
+        block[:, 0] = 0.5 * np.sin(2 * np.pi * hz * np.arange(n) / 200)
+        return block
+
+    # Older samples carry 31.25 Hz; the newest 128-sample FFT block carries 9.375 Hz.
+    proc.ingest("c", np.vstack([tone(272, 31.25), tone(128, 9.375)]), sample_rate_hz=200)
+
+    peaks = proc.compute_metrics("c")["x"]["peaks"]
+    assert peaks[0]["hz"] == pytest.approx(9.375)

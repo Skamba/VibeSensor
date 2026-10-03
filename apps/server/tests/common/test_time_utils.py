@@ -63,6 +63,8 @@ def test_format_utc_timestamp(value: object, expected: str | None) -> None:
         (-19800, -19800),
         (None, None),
         ("bad", None),
+        (14 * 60 * 60, 14 * 60 * 60),
+        (-12 * 60 * 60, -12 * 60 * 60),
         (15 * 60 * 60, None),
         (True, None),
     ],

@@ -145,3 +145,27 @@ def test_a_slower_sync_exchange_is_adopted_once_the_current_offset_is_old() -> N
     assert record.sync_offset_us == offset_us + 1_000
     assert record.sync_rtt_us == 10_000
     assert record.last_sync_monotonic_us == 1_012_010_000
+
+
+def test_sync_exchanges_beyond_twice_the_accepted_round_trip_are_skipped() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    # Accepted estimate: 4 ms round trip.
+    _sync_exchange(
+        registry, 1, send_s=1_000.0, offset_us=offset_us, outbound_us=2_000, inbound_us=2_000
+    )
+    # 3x the accepted round trip (12 ms, skewed by 4 ms): skipped.
+    _sync_exchange(
+        registry, 2, send_s=1_002.0, offset_us=offset_us, outbound_us=2_000, inbound_us=10_000
+    )
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert (record.sync_offset_us, record.sync_rtt_us) == (offset_us, 4_000)
+
+    # 1.5x the accepted round trip (6 ms, skewed by 1 ms): adopted.
+    _sync_exchange(
+        registry, 3, send_s=1_004.0, offset_us=offset_us, outbound_us=2_000, inbound_us=4_000
+    )
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert (record.sync_offset_us, record.sync_rtt_us) == (offset_us + 1_000, 6_000)

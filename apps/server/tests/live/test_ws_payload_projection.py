@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.ingest.registry import ClientSnapshot
-from vibesensor.live.processing_loop import STALE_DATA_AGE_S
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
@@ -30,12 +29,15 @@ class _FakeProcessor:
     ) -> None:
         self._fresh_ids = fresh_ids
         self._spectra_payload = spectra_payload
+        self.recent_data_ages: list[float] = []
+        self.spectra_requests: list[list[str]] = []
 
     def clients_with_recent_data(self, _client_ids: list[str], *, max_age_s: float) -> list[str]:
-        assert max_age_s == STALE_DATA_AGE_S
+        self.recent_data_ages.append(max_age_s)
         return list(self._fresh_ids)
 
-    def multi_spectrum_payload(self, _fresh_ids: list[str]) -> dict[str, object]:
+    def multi_spectrum_payload(self, fresh_ids: list[str]) -> dict[str, object]:
+        self.spectra_requests.append(list(fresh_ids))
         return dict(self._spectra_payload)
 
 
@@ -106,9 +108,13 @@ def _build_projector(
 
 
 def test_build_shared_payload_projects_live_rows_without_broadcaster() -> None:
-    projector, _processor, _gps_monitor = _build_projector()
+    projector, processor, _gps_monitor = _build_projector()
 
     payload = projector.build_shared_payload(include_heavy=True)
+
+    # Only sensors with data in the last 2 s are live and get spectra.
+    assert processor.recent_data_ages == [2.0]
+    assert processor.spectra_requests == [["aaaaaaaaaaaa"]]
 
     assert payload["selected_client_id"] is None
     assert payload["speed_mps"] == 12.5
@@ -182,3 +188,12 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
         assert payload["clients"][0]["last_seen_age_ms"] == 8000
     finally:
         db.close()
+
+
+def test_spectra_only_cover_sensors_with_recent_data() -> None:
+    projector, processor, _gps_monitor = _build_projector()
+    processor._fresh_ids = []
+
+    projector.build_shared_payload(include_heavy=True)
+
+    assert processor.spectra_requests == [[]]
