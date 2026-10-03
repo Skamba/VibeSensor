@@ -17,7 +17,7 @@ UPDATE_STATUS_LOG_TAIL_LIMIT: int = 50
 class UpdateValidationConfig:
     """Runtime prerequisites needed before an update job can proceed."""
 
-    rollback_dir: Path
+    venv_root: Path
     min_free_disk_bytes: int
 
 

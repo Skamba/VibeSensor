@@ -16,7 +16,6 @@ from vibesensor.app.config_schema import (
     LoggingConfig,
     ServerConfig,
     UDPConfig,
-    UpdateConfig,
 )
 from vibesensor.common.json_types import JsonObject, is_json_object
 from vibesensor.common.json_utils import deep_merge
@@ -100,7 +99,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     udp_cfg = _require_config_section(merged.get("udp", {}), "udp")
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
-    update_cfg = _require_config_section(merged.get("update", {}), "update")
 
     app_log_path_raw = logging_cfg.get("app_log_path")
     app_config = AppConfig(
@@ -124,9 +122,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ),
         ),
         gps=GPSConfig(gps_enabled=bool(gps_cfg["gps_enabled"])),
-        update=UpdateConfig(
-            rollback_dir=_resolve_config_path(str(update_cfg["rollback_dir"]), path),
-        ),
         config_path=path,
     )
     LOGGER.info(

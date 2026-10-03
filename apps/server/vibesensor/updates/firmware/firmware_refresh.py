@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 from vibesensor.updates.models import UpdatePhase
 from vibesensor.updates.runner import UpdateCommandExecutor
 from vibesensor.updates.status.tracker import UpdateStatusTracker
-from vibesensor.updates.venv_paths import reinstall_python_executable
 
 __all__ = ["FirmwareRefreshResult", "FirmwareRefresher"]
 
@@ -45,40 +44,32 @@ class FirmwareRefreshResult:
 class FirmwareRefresher:
     """Run one firmware-cache refresh command and return an explicit outcome."""
 
-    __slots__ = ("_commands", "_repo", "_status", "_timeout_s")
+    __slots__ = ("_commands", "_status", "_timeout_s")
 
     def __init__(
         self,
         *,
         commands: UpdateCommandExecutor,
         status: UpdateStatusTracker,
-        repo: Path,
         timeout_s: float,
     ) -> None:
         self._commands = commands
         self._status = status
-        self._repo = repo
         self._timeout_s = timeout_s
 
     async def refresh_esp_firmware(self, pinned_tag: str = "") -> FirmwareRefreshResult:
         """Refresh the firmware cache and return the explicit outcome."""
 
         self._status.log("Refreshing ESP firmware cache...")
-        venv_python = reinstall_python_executable(self._repo)
-        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
-        refresh_args = ["--cache-dir", "/var/lib/vibesensor/firmware"]
+        refresh_cmd = [
+            sys.executable,
+            "-m",
+            "vibesensor.updates.firmware.firmware_cache",
+            "--cache-dir",
+            "/var/lib/vibesensor/firmware",
+        ]
         if pinned_tag:
-            refresh_args.extend(["--tag", pinned_tag])
-        refresh_cmd = (
-            [
-                venv_python,
-                "-m",
-                "vibesensor.updates.firmware.firmware_cache",
-                *refresh_args,
-            ]
-            if not Path(refresh_exe).is_file()
-            else [refresh_exe, *refresh_args]
-        )
+            refresh_cmd.extend(["--tag", pinned_tag])
         result = await self._commands.run(
             refresh_cmd,
             phase="downloading",

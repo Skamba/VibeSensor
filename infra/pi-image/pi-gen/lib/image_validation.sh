@@ -116,6 +116,8 @@ validate_image_artifact() {
   local ACTUAL_VENV_PYTHON_VERSION=""
   local SHADOW_LINE=""
   local SHADOW_HASH=""
+  local VENV_ROOT=""
+  local ACTIVE_SLOT=""
 
   VALIDATED_IMAGE_PYTHON_VERSION=""
   VALIDATED_IMAGE_PYTHON_FLOOR=""
@@ -304,6 +306,19 @@ validate_image_artifact() {
   if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ] && \
     [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
     echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
+    exit 1
+  fi
+
+  # A/B venv slots: systemd paths route through .venv/bin -> current/bin -> slots/<version>/bin.
+  VENV_ROOT="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv"
+  ACTIVE_SLOT="$(readlink "${VENV_ROOT}/current" || true)"
+  if [ "$(readlink "${VENV_ROOT}/bin" || true)" != "current/bin" ] || [ "${ACTIVE_SLOT#slots/}" = "${ACTIVE_SLOT}" ]; then
+    echo "Validation failed: ${VENV_ROOT} is not in the A/B slot layout (current -> slots/<version>, bin -> current/bin)"
+    exit 1
+  fi
+  if [ ! -x "${VENV_ROOT}/${ACTIVE_SLOT}/bin/vibesensor-server.app" ] || \
+    ! head -n 1 "${VENV_ROOT}/${ACTIVE_SLOT}/bin/vibesensor-server" | grep -q -- ' -IS$'; then
+    echo "Validation failed: ${VENV_ROOT}/${ACTIVE_SLOT} is missing the boot-check launcher"
     exit 1
   fi
 

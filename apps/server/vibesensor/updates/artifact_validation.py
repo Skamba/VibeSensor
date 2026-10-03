@@ -9,21 +9,18 @@ from dataclasses import dataclass
 from email.message import Message
 from email.parser import Parser
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
-if TYPE_CHECKING:
-    from vibesensor.updates.status.tracker import UpdateStatusTracker
-
 __all__ = [
-    "WheelArtifactValidator",
     "WheelMetadata",
     "read_wheel_metadata",
     "sha256_file",
+    "versions_match",
+    "wheel_artifact_problem",
     "wheel_dependency_issues",
     "wheel_metadata_validation_errors",
 ]
@@ -74,7 +71,7 @@ def read_wheel_metadata(wheel_path: Path) -> WheelMetadata:
         return _parse_metadata_message(_metadata_message_from_archive(wheel_zip))
 
 
-def _versions_match(actual_version: str, expected_version: str) -> bool:
+def versions_match(actual_version: str, expected_version: str) -> bool:
     """Compare versions with PEP 440 normalization when possible."""
 
     try:
@@ -104,7 +101,7 @@ def wheel_metadata_validation_errors(
         )
     if not metadata.version:
         errors.append("wheel metadata is missing Version")
-    elif expected_version and not _versions_match(metadata.version, expected_version):
+    elif expected_version and not versions_match(metadata.version, expected_version):
         errors.append(
             "wheel metadata Version "
             f"{metadata.version!r} does not match expected {expected_version!r}",
@@ -176,119 +173,30 @@ def wheel_dependency_issues(
     return issues
 
 
-class WheelArtifactValidator:
-    """Validate updater wheel artifacts through explicit status services."""
-
-    __slots__ = ("_status",)
-
-    def __init__(
-        self,
-        *,
-        status: UpdateStatusTracker,
-    ) -> None:
-        self._status = status
-
-    def _report_failure(
-        self,
-        *,
-        phase: str,
-        message: str,
-        detail: str,
-        fatal: bool,
-    ) -> None:
-        if fatal:
-            self._status.add_issue(phase, message, detail)
-            self._status.mark_failed()
-        else:
-            self._status.add_issue(phase, message, detail)
-
-    def validate_wheel(
-        self,
-        wheel_path: Path,
-        *,
-        phase: str,
-        context: str,
-        fatal: bool,
-        expected_sha256: str | None = None,
-    ) -> bool:
-        """Validate a wheel file and report any failure through the tracker."""
-        if not wheel_path.is_file():
-            self._report_failure(
-                phase=phase,
-                message=f"{context} is missing",
-                detail=str(wheel_path),
-                fatal=fatal,
-            )
-            return False
-        if wheel_path.suffix != ".whl":
-            self._report_failure(
-                phase=phase,
-                message=f"{context} is not a wheel",
-                detail=str(wheel_path),
-                fatal=fatal,
-            )
-            return False
-        if not zipfile.is_zipfile(wheel_path):
-            self._report_failure(
-                phase=phase,
-                message=f"{context} is corrupt",
-                detail=f"{wheel_path} is not a valid wheel archive",
-                fatal=fatal,
-            )
-            return False
-        try:
-            with zipfile.ZipFile(wheel_path) as wheel_zip:
-                bad_member = wheel_zip.testzip()
-                if bad_member is not None:
-                    self._report_failure(
-                        phase=phase,
-                        message=f"{context} is corrupt",
-                        detail=f"{wheel_path} failed archive CRC validation at {bad_member}",
-                        fatal=fatal,
-                    )
-                    return False
-                if not any(name.endswith(".dist-info/METADATA") for name in wheel_zip.namelist()):
-                    self._report_failure(
-                        phase=phase,
-                        message=f"{context} is incomplete",
-                        detail=f"{wheel_path} is missing dist-info metadata",
-                        fatal=fatal,
-                    )
-                    return False
-        except (OSError, zipfile.BadZipFile) as exc:
-            self._report_failure(
-                phase=phase,
-                message=f"{context} could not be opened",
-                detail=f"{wheel_path}: {exc}",
-                fatal=fatal,
-            )
-            return False
-        metadata_errors = wheel_metadata_validation_errors(
-            wheel_path,
-            expected_name="vibesensor",
-        )
-        if metadata_errors:
-            self._report_failure(
-                phase=phase,
-                message=f"{context} metadata is invalid",
-                detail="; ".join(metadata_errors),
-                fatal=fatal,
-            )
-            return False
-        if expected_sha256:
-            actual_sha256 = sha256_file(wheel_path)
-            if actual_sha256 != expected_sha256.lower():
-                self._report_failure(
-                    phase=phase,
-                    message=f"{context} checksum mismatch",
-                    detail=(
-                        f"expected={expected_sha256.lower()} actual={actual_sha256} "
-                        f"path={wheel_path}"
-                    ),
-                    fatal=fatal,
+def wheel_artifact_problem(wheel_path: Path) -> tuple[str, str] | None:
+    """Return ``(message, detail)`` when *wheel_path* is not a usable server wheel."""
+    if not wheel_path.is_file():
+        return "Downloaded wheel is missing", str(wheel_path)
+    if wheel_path.suffix != ".whl":
+        return "Downloaded wheel is not a wheel", str(wheel_path)
+    if not zipfile.is_zipfile(wheel_path):
+        return "Downloaded wheel is corrupt", f"{wheel_path} is not a valid wheel archive"
+    try:
+        with zipfile.ZipFile(wheel_path) as wheel_zip:
+            bad_member = wheel_zip.testzip()
+            if bad_member is not None:
+                return (
+                    "Downloaded wheel is corrupt",
+                    f"{wheel_path} failed archive CRC validation at {bad_member}",
                 )
-                return False
-        return True
+            if not any(name.endswith(".dist-info/METADATA") for name in wheel_zip.namelist()):
+                return "Downloaded wheel is incomplete", f"{wheel_path} has no dist-info metadata"
+    except (OSError, zipfile.BadZipFile) as exc:
+        return "Downloaded wheel could not be opened", f"{wheel_path}: {exc}"
+    metadata_errors = wheel_metadata_validation_errors(wheel_path, expected_name="vibesensor")
+    if metadata_errors:
+        return "Downloaded wheel metadata is invalid", "; ".join(metadata_errors)
+    return None
 
 
 def sha256_file(path: Path) -> str:

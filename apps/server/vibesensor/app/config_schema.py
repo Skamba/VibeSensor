@@ -14,7 +14,6 @@ __all__ = [
     "LoggingConfig",
     "ServerConfig",
     "UDPConfig",
-    "UpdateConfig",
 ]
 
 
@@ -74,13 +73,6 @@ class GPSConfig:
 
 
 @dataclass(slots=True)
-class UpdateConfig:
-    """Server auto-update configuration (rollback directory)."""
-
-    rollback_dir: Path
-
-
-@dataclass(slots=True)
 class AppConfig:
     """Full application configuration assembled from the YAML config file."""
 
@@ -89,6 +81,5 @@ class AppConfig:
     udp: UDPConfig
     logging: LoggingConfig
     gps: GPSConfig
-    update: UpdateConfig
     config_path: Path
     repo_dir: Path = REPO_DIR

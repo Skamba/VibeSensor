@@ -201,7 +201,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     update_manager = build_update_manager(
         ap_con_name=HOTSPOT_CON_NAME,
         wifi_ifname=HOTSPOT_IFNAME,
-        rollback_dir=str(config.update.rollback_dir),
+        server_port=config.server.port,
     )
     esp_flash_manager = EspFlashManager()
 

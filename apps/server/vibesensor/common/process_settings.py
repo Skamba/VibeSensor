@@ -12,7 +12,6 @@ __all__ = [
     "DEFAULT_FIRMWARE_CACHE_DIR",
     "DEFAULT_FIRMWARE_CHANNEL",
     "DEFAULT_UPDATE_REPO_PATH",
-    "DEFAULT_UPDATE_ROLLBACK_DIR",
     "DEFAULT_UPDATE_STATE_PATH",
     "BootstrapEnvSettings",
     "UpdateEnvSettings",
@@ -28,7 +27,6 @@ GITHUB_REPO: Final[str] = "Skamba/VibeSensor"
 CONFIG_PATH_ENV = "VIBESENSOR_CONFIG_PATH"
 SERVE_STATIC_ENV = "VIBESENSOR_SERVE_STATIC"
 UPDATE_REPO_PATH_ENV = "VIBESENSOR_REPO_PATH"
-UPDATE_ROLLBACK_DIR_ENV = "VIBESENSOR_ROLLBACK_DIR"
 UPDATE_STATE_PATH_ENV = "VIBESENSOR_UPDATE_STATE_PATH"
 UPDATE_SUDO_WRAPPER_ENV = "VIBESENSOR_UPDATE_SUDO_WRAPPER"
 FIRMWARE_CACHE_DIR_ENV = "VIBESENSOR_FIRMWARE_CACHE_DIR"
@@ -39,7 +37,6 @@ SERVER_REPO_ENV = "VIBESENSOR_SERVER_REPO"
 GITHUB_TOKEN_ENV = "GITHUB_TOKEN"
 
 DEFAULT_UPDATE_REPO_PATH = Path("/opt/VibeSensor")
-DEFAULT_UPDATE_ROLLBACK_DIR = Path("/var/lib/vibesensor/rollback")
 DEFAULT_UPDATE_STATE_PATH = Path("/var/lib/vibesensor/update/update_status.json")
 DEFAULT_FIRMWARE_CACHE_DIR = Path("/var/lib/vibesensor/firmware")
 FirmwareChannel = Literal["stable", "prerelease"]
@@ -107,7 +104,6 @@ class UpdateEnvSettings:
     """Typed env settings for updater/release runtime overrides."""
 
     repo_path: Path = DEFAULT_UPDATE_REPO_PATH
-    rollback_dir: Path = DEFAULT_UPDATE_ROLLBACK_DIR
     update_state_path: Path = DEFAULT_UPDATE_STATE_PATH
     update_sudo_wrapper: Path | None = None
     firmware_cache_dir: Path = DEFAULT_FIRMWARE_CACHE_DIR
@@ -128,7 +124,6 @@ def load_bootstrap_env_settings() -> BootstrapEnvSettings:
 def load_update_env_settings() -> UpdateEnvSettings:
     return UpdateEnvSettings(
         repo_path=_env_path(UPDATE_REPO_PATH_ENV, DEFAULT_UPDATE_REPO_PATH),
-        rollback_dir=_env_path(UPDATE_ROLLBACK_DIR_ENV, DEFAULT_UPDATE_ROLLBACK_DIR),
         update_state_path=_env_path(UPDATE_STATE_PATH_ENV, DEFAULT_UPDATE_STATE_PATH),
         update_sudo_wrapper=_env_optional_path(UPDATE_SUDO_WRAPPER_ENV),
         firmware_cache_dir=_env_path(FIRMWARE_CACHE_DIR_ENV, DEFAULT_FIRMWARE_CACHE_DIR),
@@ -158,7 +153,6 @@ def summarize_process_settings() -> dict[str, object]:
         "config_path_override": str(bootstrap.config_path) if bootstrap.config_path else None,
         "serve_static": bootstrap.serve_static,
         "repo_path": str(update.repo_path),
-        "rollback_dir": str(update.rollback_dir),
         "update_state_path": str(update.update_state_path),
         "update_sudo_wrapper": (
             str(update.update_sudo_wrapper) if update.update_sudo_wrapper else None
