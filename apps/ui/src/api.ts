@@ -2,10 +2,6 @@ export type * from "./api/types";
 export {
   getAnalysisSettings,
   setAnalysisSettings,
-  getSettingsLanguage,
-  setSettingsLanguage,
-  getSettingsSpeedUnit,
-  setSettingsSpeedUnit,
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,

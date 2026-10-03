@@ -1,5 +1,5 @@
 import { useRef } from "preact/hooks";
-import { render } from "preact";
+import type { JSX } from "preact";
 
 import type { CarsFeatureFocusTarget } from "../features/cars_feature";
 import {
@@ -95,10 +95,12 @@ function CarsPanel(props: {
   );
 }
 
-export function mountCarsPanel(
-  host: HTMLElement,
-  bindings: Pick<CarsPanelView, "list" | "wizard">,
-): Pick<CarsPanelView["wizard"], "focus"> {
+export function createCarsPanel(
+  bindings: {
+    list: CarsListPanelView;
+    wizard: Omit<CarsWizardPanelBridge, "focus">;
+  },
+): Pick<CarsWizardPanelBridge, "focus"> & { Panel: () => JSX.Element } {
   const bridgeState = computed<CarsPanelBridgeState>(() => ({
       actions: bindings.list.actions.value,
       model: bindings.list.model.value,
@@ -107,15 +109,15 @@ export function mountCarsPanel(
     }));
   const wizardFocusRequest = signal<CarsWizardFocusRequest | null>(null);
   let focusRequestToken = 0;
-  render(
+  const Panel = () => (
     <CarsPanel
       state={bridgeState}
       wizardFocusRequest={wizardFocusRequest}
-    />,
-    host,
+    />
   );
 
   return {
+    Panel,
     focus(target): void {
       focusRequestToken += 1;
       wizardFocusRequest.value = { target, token: focusRequestToken };

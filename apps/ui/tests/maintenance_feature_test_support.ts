@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { render } from "preact";
+import { h, render } from "preact";
 
 import { createEspFlashFeature } from "../src/app/features/esp_flash_feature";
 import type { FeatureServices } from "../src/app/feature_deps_base";
@@ -250,14 +250,12 @@ function createMountedHost(): HTMLElement {
 async function createEspFlashFeatureDeps() {
   const navigation = createFeatureNavigationHarness("espFlashTab");
   const root = createMountedHost();
-  const { mountEspFlashPanel } = await import(
-    "../src/app/views/esp_flash_panel"
-  );
+  const { EspFlashPanel } = await import("../src/app/views/esp_flash_panel");
   const panel: EspFlashPanelView = {
     actions: signal<EspFlashPanelActionHandlers | null>(null),
     model: signal<ReadonlySignal<EspFlashPanelRenderModel> | null>(null),
   };
-  mountEspFlashPanel(root, panel);
+  render(h(EspFlashPanel, panel), root);
   const cleanup = registerMaintenanceCleanup(() => {
     render(null, root);
     root.remove();
@@ -341,10 +339,10 @@ async function createEspFlashFeatureDeps() {
 async function createUpdateFeatureDeps() {
   const navigation = createFeatureNavigationHarness("updateTab");
   const root = createMountedHost();
-  const { mountInternetPanel } = await import(
+  const { createInternetPanel } = await import(
     "../src/app/views/internet_panel"
   );
-  const { mountUpdatePanel } = await import("../src/app/views/update_panel");
+  const { UpdatePanel } = await import("../src/app/views/update_panel");
   const internetHost = globalThis.document.createElement("div");
   const updateHost = globalThis.document.createElement("div");
   root.append(internetHost, updateHost);
@@ -356,11 +354,10 @@ async function createUpdateFeatureDeps() {
     actions: signal<InternetPanelActionHandlers | null>(null),
     model: signal<ReadonlySignal<InternetPanelRenderModel> | null>(null),
   };
-  const internet: InternetPanelView = {
-    ...internetBindings,
-    ...mountInternetPanel(internetHost, internetBindings),
-  };
-  mountUpdatePanel(updateHost, update);
+  const internetPanel = createInternetPanel(internetBindings);
+  const internet: InternetPanelView = { ...internetBindings, ...internetPanel };
+  render(h(internetPanel.Panel, null), internetHost);
+  render(h(UpdatePanel, update), updateHost);
   const cleanup = registerMaintenanceCleanup(() => {
     render(null, internetHost);
     render(null, updateHost);

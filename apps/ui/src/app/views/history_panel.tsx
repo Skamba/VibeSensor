@@ -1,4 +1,3 @@
-import { render } from "preact";
 import { useUiText } from "../ui_i18n";
 import {
   useSignalProperties,
@@ -7,7 +6,6 @@ import {
 import { HistoryTableBody } from "./history_table_content";
 import type {
   HistoryPanelActionHandlers,
-  HistoryPanelView,
   HistoryPanelRenderModel,
 } from "./history_table_view";
 import { useDeferredModel } from "./view_model_binding";
@@ -88,8 +86,4 @@ export function HistoryPanel(props: {
       </table>
     </>
   );
-}
-
-function mountHistoryPanel(host: HTMLElement, view: HistoryPanelView): void {
-  render(<HistoryPanel actions={view.actions} model={view.model} />, host);
 }

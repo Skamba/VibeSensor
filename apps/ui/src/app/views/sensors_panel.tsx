@@ -1,6 +1,5 @@
 import type { JSX } from "preact";
 
-import { render } from "preact";
 import { memo } from "preact/compat";
 import { useUiText } from "../ui_i18n";
 import {
@@ -130,7 +129,7 @@ function SensorsTableBody(props: {
   ));
 }
 
-function SensorsPanel(props: {
+export function SensorsPanel(props: {
   actions: ReadonlySignal<SensorsPanelActionHandlers | null>;
   model: ReadonlySignal<ReadonlySignal<SensorsPanelRenderModel> | null>;
 }) {
@@ -179,8 +178,4 @@ function SensorsPanel(props: {
         </div>
       </div>
   );
-}
-
-export function mountSensorsPanel(host: HTMLElement, view: SensorsPanelView): void {
-  render(<SensorsPanel actions={view.actions} model={view.model} />, host);
 }

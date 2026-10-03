@@ -1,10 +1,7 @@
 import type { JSX } from "preact";
 
 import { getUiText as t } from "../ui_i18n";
-import {
-  settingsFeedbackAttrs,
-  type SettingsFeedbackMessage,
-} from "./settings_feedback";
+import { FeedbackBlock, FeedbackSlot, type Feedback } from "../../components/feedback";
 import type {
   AnalysisFieldSpec,
   AnalysisPanelActionHandlers,
@@ -17,26 +14,6 @@ type AnalysisHelpText = {
   fallback: string;
   key: string;
 };
-
-function SettingsFeedbackBlock(props: {
-  message: SettingsFeedbackMessage;
-}) {
-  const { message } = props;
-  return (
-    <div
-      {...settingsFeedbackAttrs(message)}
-      aria-live={message.tone === "error" ? "assertive" : "polite"}
-    >
-      {message.title ? (
-        <strong class="settings-feedback__title">{message.title}</strong>
-      ) : null}
-      <span class="settings-feedback__body">{message.body}</span>
-      {message.detail ? (
-        <span class="settings-feedback__detail">{message.detail}</span>
-      ) : null}
-    </div>
-  );
-}
 
 function handleFieldInput(
   actions: AnalysisPanelActionHandlers | null,
@@ -63,7 +40,7 @@ function AnalysisFieldGuidance(props: {
           <span class="settings-field-guidance__value">{line.value}</span>
         </div>
       ))}
-      {model.error ? <SettingsFeedbackBlock message={model.error} /> : null}
+      {model.error ? <FeedbackBlock message={model.error} live /> : null}
     </div>
   );
 }
@@ -197,17 +174,6 @@ export function AnalysisFieldGroup(props: {
   );
 }
 
-export function AnalysisSaveFeedback(props: {
-  message: SettingsFeedbackMessage | null;
-}) {
-  const { message } = props;
-  return (
-    <div
-      id="analysisSaveFeedback"
-      class="settings-feedback-slot"
-      hidden={message === null}
-    >
-      {message ? <SettingsFeedbackBlock message={message} /> : null}
-    </div>
-  );
+export function AnalysisSaveFeedback(props: { message: Feedback | null }) {
+  return <FeedbackSlot id="analysisSaveFeedback" message={props.message} />;
 }

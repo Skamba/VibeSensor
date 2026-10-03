@@ -7,7 +7,7 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 - Backend app/runtime: `apps/server/vibesensor/app/bootstrap.py`, `apps/server/vibesensor/app/composition.py`
 - Backend HTTP assembly: `apps/server/vibesensor/web/router.py`
 - Backend CLIs: `apps/server/vibesensor/cli/`
-- UI app/runtime: `apps/ui/src/main.ts`, `apps/ui/src/app/ui_app_runtime.ts`, `apps/ui/src/app/runtime/`
+- UI app/shell: `apps/ui/src/main.tsx`, `apps/ui/src/app.tsx`, `apps/ui/src/app_store.ts`
 - Simulator: `apps/server/vibesensor/simulator/`
 - Firmware: `firmware/esp/src/main.cpp`, `firmware/esp/src/runtime_*.{h,cpp}`
 - Pi image: `infra/pi-image/pi-gen/build.sh`, `infra/pi-image/pi-gen/lib/`, `infra/pi-image/pi-gen/templates/`, `infra/pi-image/pi-gen/validate-image.sh`
@@ -59,9 +59,9 @@ Enforced by the import-linter contracts in `apps/server/pyproject.toml` (annotat
 
 ## UI ownership
 
-- `apps/ui/src/app/runtime/`: app-wide composition, long-lived controllers, live transport, spectrum lifecycle.
-- `apps/ui/src/app/features/`: feature workflows, API calls, polling, app-state mutations.
-- `apps/ui/src/app/views/`: DOM rendering, HTML helpers, event-target decoding.
+- `apps/ui/src/app.tsx`, `apps/ui/src/app_store.ts`: the shell (one render root, navigation, preferences, banner, confirmation).
+- `apps/ui/src/pages/<page>/`: page component, page store, pure helpers; pages never import each other.
+- `apps/ui/src/app/`: pre-rewrite features (`features/`, `views/`, `runtime/`) wired in `feature_wiring.ts` until their page moves.
 - `apps/ui/src/api/http.ts`, `apps/ui/src/ws.ts`, generated contracts, validators: canonical transport/contract seams.
 - Contract sync details: `apps/ui/README.md`.
 

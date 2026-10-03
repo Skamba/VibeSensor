@@ -182,41 +182,21 @@ Do **not** use MSW when the test is already below the network seam:
 - **Drive sizing** — larger touch targets on tablet viewports
 - **Demo mode** — deterministic UI state via `?demo=1` for testing
 
-The runtime layer is intentionally split so `ui_app_runtime.ts` stays a
-composition root instead of becoming a single-file owner for transport, shell,
-chart behavior, or page-wide DOM state. Startup now renders one `UiAppRoot`
-tree up front, so the shared shell frame and the dashboard/history/settings
-sections all live inside a single Preact render path instead of a multi-root
-bootstrap layer. `ui_lazy_panels.ts` still gives the runtime typed panel
-contracts immediately, but history/settings lazy loading is now just component
-loading inside that one tree; only the settings subtree keeps its internal
-tab-panel mount path so the per-tab settings panels can keep their existing
-typed view bindings. The spectrum island owns its chart host refs internally
-and passes that typed bridge to the runtime. `app_feature_bundle.ts` creates
-the feature controllers from one `AppFeatureContext` (state, services, query
-client, mounted panels, and the few runtime callbacks) and wires the remaining
-cross-feature calls as plain closures, while `ui_startup_coordinator.ts` runs
-the startup-only loads from a small declarative sync/async plan instead of a
-handwritten boot call chain.
-`startUiApp()` now returns a public dispose handle, and that top-level teardown
-flows through `ui_app_runtime.ts` to stop long-lived effects, polling loops,
-WebSocket reconnect/stale timers, spectrum RAF work, and deferred settings
-panel bindings from one place.
+`src/main.tsx` renders one Preact tree, `App` from `src/app.tsx`, into
+`#app`, then starts the features. `app.tsx` is the whole shell: navigation,
+the unit and language selects, status pills, error banner, confirmation dialog,
+the Live/History/Settings views, and the settings tab strip. `src/app_store.ts`
+owns the shell state as module-level signals: active view and settings tab,
+`navigate()` (with per-view loaders registered through `onViewEnter()`),
+`showError()`, `requestConfirmation()`, and the persisted language and speed
+unit preferences. `src/i18n.ts` owns the single `t()` and the `lang` signal;
+the English catalog ships in the bundle and the Dutch one loads on demand.
 
-The live UI architecture is now fully Preact for the top-level shell and
-primary page composition. `app/runtime/ui_shell_chrome.tsx` owns the primary
-navigation, header preferences, pills, and app banner; `app/ui_app_root.tsx`
-owns the top-level view sections; `app/views/settings_shell.tsx`
-owns the shared settings tab strip and per-tab host wrappers; and the
-individual page/settings panel islands own their local chrome plus typed
-bridges. The remaining
-imperative paths are deliberate runtime integrations rather than alternate UI
-renderers: the shell controller still owns app-level status/preference state,
-the spectrum controller still owns the canvas chart lifecycle through
-island-owned chart refs, and a few focused bridges still move typed wizard or
-status models into island-owned hosts. Those seams should use semantic methods
-like `setModel()` / `setDiagnostics()` rather than generic `render(model)`
-loops.
+The build is one JS bundle plus the lazily loaded Dutch catalog. Pages are
+being moved to `src/pages/<page>/` (a component, a small signal store, and pure
+helpers); `.dependency-cruiser.cjs` keeps pages from importing each other.
+Until a page moves, its old feature controller and panel bridge are wired in
+`src/app/feature_wiring.ts`.
 
 Realtime follows the same controller shape: `realtime_feature.ts` owns the
 polling, mutation flow, logging state signals, and panel action binding,
@@ -373,30 +353,13 @@ live in `tests/smoke.<page>.spec.ts`; `tests/smoke.critical.spec.ts` keeps the
 cross-page boot/record/history flows (`npx playwright install chromium` once,
 then `npm run test:smoke`).
 
-## Signal-driven island tests
+## Unit tests
 
-- Prefer `tests/dom_render_test_support.ts::mountSignalView()` for isolated
-  island tests. It resets the happy-dom body, mounts the Preact view once, and
-  returns a typed bridge plus deterministic cleanup.
-- Drive island state with `signal()` and `computed()` inputs instead of
-  rebuilding the old `render(model)` fixture pattern.
-  `tests/signal_view_reference.spec.ts` contains the reference panel coverage
-  for direct signal JSX bindings, computed-driven output assertions, and
-  effect-backed subscription seams.
-- That Vitest spec also pairs with the focused mounted maintenance feature specs
-  `tests/maintenance_update_signal.spec.ts` and
-  `tests/maintenance_esp_flash_signal.spec.ts`. They run under
-  `npm run test:unit` alongside the rest of the unit suite.
-- Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating signals
-  or when waiting on effect-owned side effects.
-  The same reference file also covers an effect-backed subscription seam through
-  `mountSettingsShell()`.
-- Feature harnesses that need the real maintenance/settings DOM should mount the
-  owning panels with `mountSignalView()` and query semantic IDs from the live
-  DOM, as `tests/maintenance_feature_test_support.ts` now does for the update,
-  internet, and ESP flash panels.
-- Do not add render-model serializers or fake-element bridge helpers for new UI
-  tests; keep panel assertions exercised against mounted DOM.
+- Unit-test pure logic (validators, contracts, formatting, spectrum math,
+  status text, car confidence, view-model builders) without a DOM where
+  possible. Rendered behaviour belongs in the Playwright journeys.
+- Use `tests/async_test_helpers.ts::flushSignalUpdates()` after mutating
+  signals or when waiting on effect-owned side effects.
 
 ## Design Language
 

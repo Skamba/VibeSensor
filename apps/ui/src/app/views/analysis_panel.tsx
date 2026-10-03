@@ -1,4 +1,4 @@
-import { render } from "preact";
+import type { JSX } from "preact";
 import { useRef } from "preact/hooks";
 
 import { getUiText as t } from "../ui_i18n";
@@ -189,10 +189,9 @@ function AnalysisPanel(props: {
   );
 }
 
-export function mountAnalysisPanel(
-  host: HTMLElement,
+export function createAnalysisPanel(
   bindings: AnalysisPanelBindings,
-): Pick<AnalysisPanelView, "focusField" | "openGuidance"> {
+): Pick<AnalysisPanelView, "focusField" | "openGuidance"> & { Panel: () => JSX.Element } {
   const bridgeState = computed<AnalysisPanelBridgeState>(() => ({
     actions: bindings.actions.value,
     availability: readDeferredModel(bindings.carAvailability, DEFAULT_ANALYSIS_CAR_AVAILABILITY),
@@ -201,16 +200,16 @@ export function mountAnalysisPanel(
   const inputFocusRequest = signal<AnalysisFieldFocusRequest | null>(null);
   const guidanceOpenRequest = signal(0);
   let focusRequestToken = 0;
-  render(
+  const Panel = () => (
     <AnalysisPanel
       guidanceOpenRequest={guidanceOpenRequest}
       inputFocusRequest={inputFocusRequest}
       state={bridgeState}
-    />,
-    host,
+    />
   );
 
   return {
+    Panel,
     focusField(field) {
       focusRequestToken += 1;
       inputFocusRequest.value = { field, token: focusRequestToken };
