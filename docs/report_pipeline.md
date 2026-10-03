@@ -67,9 +67,11 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
    - Test conditions: tire size and circumference, ratios, speed source,
      whether RPM was measured, driving phases, the guided test steps (or "not
      used"), and sensor positions.
-   - A GM-worksheet-style findings table, one row per order-tracked finding.
-     Columns: order label with plain text, Hz at the reference speed, km/h
-     range, driving phases, presence, strongest location, and level.
+   - A GM-worksheet-style findings table, one row per order-tracked finding,
+     the diagnosed (dominant) order first and the diagnosed source's other
+     orders under it (for example T1 with T2 present). Columns: order label
+     with plain text, Hz at the reference speed, km/h range, driving phases,
+     presence, strongest location, and level.
    - Per-location amplitude at the diagnosed order in mg, with dB above that
      location's floor in brackets and the ratio to the strongest location.
    - Ruled-out and not-testable sources, each with a plain reason.

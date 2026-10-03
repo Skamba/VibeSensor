@@ -199,6 +199,12 @@ the PDF both show:
   `reference_speed_kmh`, the matched speed range, presence ratio, and
   `weak_reasons` codes; `order_findings` repeats those facts per surfaced
   order-tracked finding (diagnosed one first) as workshop worksheet rows.
+  The candidate names the source and the confidence level; the order shown
+  (label, amplitudes, frequency, speeds) is that source's dominant order,
+  `TestRun.diagnosis_order_finding` (see "Diagnosed order" in
+  `docs/metrics.md`). The diagnosed row carries the diagnosis level. Rows are
+  listed from Moderate up, plus the diagnosed source's other order once even
+  when it is Weak on its own.
 - `zone`: a corner for wheel/tire faults (an axle when two corners on one axle
   are within 1.5×, `all_wheels` when three or more are), `engine_bay` for
   engine orders, and an axle or `driveshaft_tunnel` for driveline orders.

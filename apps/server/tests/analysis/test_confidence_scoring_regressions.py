@@ -162,7 +162,7 @@ class TestSingleSensorNotTriplePenalised:
 
 class TestPersistentPeakNegligibleCapAligned:
     """The negligible-strength cap for persistent peaks must be 0.40,
-    matching the order-finding cap, so that a weak order finding at
+    at or above the order-finding cap (0.39), so that a weak order finding at
     ~0.37 confidence always suppresses persistent peaks at the same
     frequency.
     """
@@ -174,7 +174,7 @@ class TestPersistentPeakNegligibleCapAligned:
 
         A persistent/patterned peak with strength below NEGLIGIBLE_STRENGTH_MAX_DB
         must have its confidence capped at 0.40.  The cap of 0.40 is
-        intentionally aligned with the order-finding negligible cap so
+        intentionally at or above the order-finding negligible cap so
         that a weak order finding at ~0.37 confidence always suppresses
         persistent peaks at the same frequency.
         """

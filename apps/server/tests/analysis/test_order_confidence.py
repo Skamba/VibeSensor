@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
@@ -77,6 +78,23 @@ class TestComputeOrderConfidence:
         """absolute_strength_db below negligible threshold should cap confidence."""
         conf = self._call(absolute_strength_db=5.0)
         assert conf <= 0.45 + 0.001
+
+    def test_bonuses_do_not_lift_a_negligible_order_over_the_cap(self) -> None:
+        """Road noise matched on every sensor in every phase stays at the cap."""
+        cap = ORDER_CONFIDENCE_SETTINGS.negligible_strength_confidence_cap
+        noise = self._call(
+            absolute_strength_db=6.4,
+            effective_match_rate=0.9,
+            error_score=0.9,
+            corr_val=0.95,
+            localization_confidence=1.0,
+            corroborating_locations=4,
+            phases_with_evidence=3,
+            n_connected_locations=4,
+        )
+        assert noise == pytest.approx(cap)
+        penalized = self._call(absolute_strength_db=6.4, weak_spatial_separation=True)
+        assert penalized < cap
 
     @pytest.mark.parametrize(
         ("normal_kw", "penalty_kw"),

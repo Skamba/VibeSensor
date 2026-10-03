@@ -36,9 +36,10 @@ def _points(
             rel_error=0.0,
             amp=amp_g,
             location=location,
+            t_s=float(index),
             speed_kmh=speed,
         )
-        for speed in speeds
+        for index, speed in enumerate(speeds)
     ]
 
 
@@ -50,10 +51,11 @@ def _order_finding(
     amps: dict[str, float],
     strength_db: float = 30.0,
     weak_spatial: bool = False,
+    finding_id: str = "F001",
 ) -> Finding:
     points = [point for location, amp in amps.items() for point in _points(location, amp)]
     return make_finding(
-        finding_id="F001",
+        finding_id=finding_id,
         finding_key=key,
         suspected_source=source,
         confidence=confidence,
@@ -268,6 +270,70 @@ def test_driveline_is_reported_as_a_zone(amps: dict[str, float], zone: str) -> N
 
     assert diagnosis["order_code"] == "P1"
     assert diagnosis["zone"] == zone
+
+
+def test_louder_first_order_names_the_diagnosis_at_the_sources_confidence() -> None:
+    # The 2nd order tracked more consistently and ranked first, but the 1st order
+    # is 10 dB louder in the same windows: the label and its evidence are P1, the
+    # confidence stays the driveline's best, and P2 stays listed under it.
+    harmonic = _order_finding(
+        "driveshaft_2x",
+        VibrationSource.DRIVELINE,
+        confidence=0.52,
+        amps={"Rear Right Wheel": 0.045, "Rear Left Wheel": 0.04},
+    )
+    fundamental = _order_finding(
+        "driveshaft_1x",
+        VibrationSource.DRIVELINE,
+        confidence=0.38,
+        amps={"Rear Right Wheel": 0.15, "Rear Left Wheel": 0.13},
+        finding_id="F002",
+    )
+    diagnosis = _diagnosis(harmonic, fundamental)
+
+    assert diagnosis["verdict"] == "fault"
+    assert diagnosis["confidence_level"] == "moderate"
+    assert diagnosis["order_code"] == "P1"
+    assert diagnosis["finding_id"] == "F002"
+    assert diagnosis["location_amplitudes"][0]["amplitude_mg"] == pytest.approx(150.0)
+    worksheet = [
+        (row["order_code"], row["confidence_level"]) for row in diagnosis["order_findings"]
+    ]
+    assert worksheet == [("P1", "moderate"), ("P2", "moderate")]
+
+
+def test_weak_second_order_of_the_diagnosed_source_is_listed_once() -> None:
+    fundamental = _order_finding(
+        "wheel_1x", VibrationSource.WHEEL_TIRE, confidence=0.8, amps={"Front Left Wheel": 0.2}
+    )
+    harmonic = _order_finding(
+        "wheel_2x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.3,
+        amps={"Front Left Wheel": 0.07},
+        finding_id="F002",
+    )
+    weak_engine = _order_finding(
+        "engine_1x",
+        VibrationSource.ENGINE,
+        confidence=0.3,
+        amps={"Front Left Wheel": 0.01},
+        finding_id="F003",
+    )
+    harmonic_split = _order_finding(
+        "wheel_2x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.28,
+        amps={"Front Right Wheel": 0.07},
+        finding_id="F004",
+    )
+    diagnosis = _diagnosis(fundamental, harmonic, weak_engine, harmonic_split)
+
+    assert diagnosis["order_code"] == "T1"
+    worksheet = [
+        (row["order_code"], row["confidence_level"]) for row in diagnosis["order_findings"]
+    ]
+    assert worksheet == [("T1", "strong"), ("T2", "weak")]
 
 
 def test_missing_tire_reference_marks_sources_not_testable() -> None:

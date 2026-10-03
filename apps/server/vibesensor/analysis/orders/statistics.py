@@ -84,7 +84,8 @@ def compute_order_confidence(
         + (corr_weight * corr_val)
         + (settings.snr_weight * snr_score)
     )
-    if absolute_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
+    negligible = absolute_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB
+    if negligible:
         confidence = min(confidence, settings.negligible_strength_confidence_cap)
     elif absolute_strength_db < LIGHT_STRENGTH_MAX_DB:
         confidence *= settings.light_strength_penalty
@@ -138,6 +139,10 @@ def compute_order_confidence(
         and localization_confidence >= settings.localization_min_scale_threshold
     ):
         confidence *= settings.dual_sensor_confidence_scale
+    if negligible:
+        # Again after the bonuses, so corroboration/phase bonuses cannot lift a
+        # noise-level order over the cap and past a louder order of another source.
+        confidence = min(confidence, settings.negligible_strength_confidence_cap)
     return max(settings.confidence_floor, min(settings.confidence_ceiling, confidence))
 
 
