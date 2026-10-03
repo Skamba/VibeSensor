@@ -226,3 +226,8 @@ jobs:
       - name: Native tests
         working-directory: firmware/esp
         run: pio test -e native
+
+      - name: Build ESP32 images
+        # Catches platform/framework bumps before the release job builds them.
+        working-directory: firmware/esp
+        run: pio run -e m5stack_atom -e esp32-c3-devkitm-1
