@@ -2,7 +2,7 @@ import type { CarRecord } from "../../api/types";
 import {
   type CarSelectionState,
   getCarCompleteness,
-} from "../car_selection_state";
+} from "../../car_selection";
 import { buildOrderReferenceConfidenceDetail } from "../features/car_confidence_summary";
 import { formatSavedCarTireSummary } from "../features/cars_tire_setup";
 

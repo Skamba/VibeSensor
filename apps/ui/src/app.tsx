@@ -27,6 +27,7 @@ import { SensorsPanel } from "./app/views/sensors_panel";
 import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
+import { Analysis } from "./pages/analysis/Analysis";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Internet, Update } from "./pages/update/Update";
@@ -355,7 +356,7 @@ export function App() {
           <panels.cars.Panel />
         </SettingsTab>
         <SettingsTab id="analysisTab">
-          <panels.analysis.Panel />
+          <Analysis />
         </SettingsTab>
         <SettingsTab id="speedSourceTab">
           <SpeedSource />

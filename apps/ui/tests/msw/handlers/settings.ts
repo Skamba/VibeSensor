@@ -1,8 +1,4 @@
-import type {
-  AnalysisSettingsPayload,
-  CarRecord,
-  CarsPayload,
-} from "../../../src/api/types";
+import type { CarRecord, CarsPayload } from "../../../src/api/types";
 import type { JsonBodyType } from "msw";
 
 import { HttpResponse, http, uiRoutePath } from "../http";
@@ -34,35 +30,6 @@ async function resolveHandlerResult<T extends JsonBodyType>(
     );
   }
   return HttpResponse.json(resolved);
-}
-
-export function makeAnalysisSettingsPayload(
-  overrides: Partial<AnalysisSettingsPayload> = {},
-): AnalysisSettingsPayload {
-  const payload = {
-    tire_width_mm: 225,
-    tire_aspect_pct: 45,
-    rim_in: 18,
-    default_axle_for_speed: "rear" as const,
-    final_drive_ratio: 3.08,
-    current_gear_ratio: 0.64,
-    final_drive_uncertainty_pct: 1,
-    gear_uncertainty_pct: 1,
-    tire_deflection_factor: 0.95,
-    tire_diameter_uncertainty_pct: 1,
-    speed_uncertainty_pct: 1,
-    ...overrides,
-  };
-  return {
-    ...payload,
-    default_axle_for_speed: payload.default_axle_for_speed ?? "rear",
-    front_tire_width_mm: payload.front_tire_width_mm ?? undefined,
-    front_tire_aspect_pct: payload.front_tire_aspect_pct ?? undefined,
-    front_rim_in: payload.front_rim_in ?? undefined,
-    rear_tire_width_mm: payload.rear_tire_width_mm ?? undefined,
-    rear_tire_aspect_pct: payload.rear_tire_aspect_pct ?? undefined,
-    rear_rim_in: payload.rear_rim_in ?? undefined,
-  };
 }
 
 function makeCarRecord(overrides: Partial<CarRecord> = {}): CarRecord {
@@ -125,26 +92,6 @@ export function makeCarsPayload(
     cars: [makeCarRecord()],
     ...overrides,
   };
-}
-
-export function buildAnalysisSettingsHandlers(
-  options: {
-    load?: HandlerResult<AnalysisSettingsPayload>;
-    save?: HandlerResult<AnalysisSettingsPayload>;
-  } = {},
-) {
-  const load = options.load ?? makeAnalysisSettingsPayload();
-  const save = options.save ?? load;
-  return [
-    http.get(
-      uiRoutePath("/api/settings/analysis"),
-      async ({ request }) => await resolveHandlerResult(request, load),
-    ),
-    http.put(
-      uiRoutePath("/api/settings/analysis"),
-      async ({ request }) => await resolveHandlerResult(request, save),
-    ),
-  ];
 }
 
 export function buildCarsHandlers(

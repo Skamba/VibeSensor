@@ -15,6 +15,7 @@ _SMOKE_CONFIG = REPO_ROOT / "apps" / "ui" / "playwright.smoke.config.ts"
 _UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
 _EXPECTED_CORE_SMOKE_SPECS = {
+    "smoke.analysis.spec.ts",
     "smoke.critical.spec.ts",
     "smoke.esp_flash.spec.ts",
     "smoke.preferences.spec.ts",

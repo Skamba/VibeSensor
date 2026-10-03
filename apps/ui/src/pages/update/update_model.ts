@@ -640,8 +640,8 @@ export function journeyStages(
         ? "usb_internet"
         : "wifi";
   const phases = transport === "usb_internet" ? USB_STAGES : WIFI_STAGES;
-  const current = phases.findIndex(
-    (phase) => phase === normalizePhase(status.phase),
+  const current = (phases as readonly string[]).indexOf(
+    normalizePhase(status.phase),
   );
   return phases.map((phase, index) => {
     const state = stageState(status, current, index);

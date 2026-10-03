@@ -1,12 +1,10 @@
 import type { LocationOption, LoggingStatusPayload } from "../../api/types";
 import type { AdaptedClient } from "../../transport/live_models";
 import { translate, translationsOf } from "../../i18n";
-import {
-  createCarSelectionDerivedState,
-  type CarSelectionState,
-} from "../car_selection_state";
+import type { CarSelectionState } from "../../car_selection";
+import { carSelection } from "../../settings_store";
 import type { RealtimeState } from "../realtime_state";
-import type { SettingsState } from "../settings_state";
+import type { SettingsState } from "../ui_app_state";
 import type { ShellState } from "../shell_state";
 import type { SpectrumState } from "../spectrum_state";
 import { computed, type ReadonlySignal } from "../ui_signals";
@@ -64,7 +62,6 @@ export function createRealtimeSensorState(
   ctx: RealtimeSensorStateDeps,
 ): RealtimeSensorState {
   const { realtime, settings, shell, spectrum, t, formatInt } = ctx;
-  const carSelection = createCarSelectionDerivedState(settings.car);
 
   function locationLabel(code: string): string {
     return translate(shell.lang.value, `location.${code}`, { code });
@@ -166,7 +163,7 @@ export function createRealtimeSensorState(
   });
 
   const activeCarDisplayState = computed<ActiveCarDisplayState>(() => {
-    const selection = carSelection.selection.value;
+    const selection = carSelection.value;
     if (selection.kind === "loading") {
       return {
         text: t("dashboard.active_car_loading"),
@@ -189,7 +186,7 @@ export function createRealtimeSensorState(
   });
 
   const hasActiveCarSelection = computed(
-    () => carSelection.hasResolvedActiveCar.value,
+    () => carSelection.value.kind === "active",
   );
 
   const liveHealth = computed<LiveHealth>(() => {
@@ -290,7 +287,7 @@ export function createRealtimeSensorState(
 
   return {
     activeCarDisplayState,
-    activeCarSelection: carSelection.selection,
+    activeCarSelection: carSelection,
     assignedClientCount,
     connectedClients,
     hasActiveCarSelection,

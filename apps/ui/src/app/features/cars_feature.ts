@@ -18,16 +18,14 @@ import type {
   CarsPayload,
   CarUpsertRequest,
 } from "../../api/types";
-import {
-  createCarSelectionDerivedState,
-  getCarCompleteness,
-} from "../car_selection_state";
+import { getCarCompleteness } from "../../car_selection";
+import { activeCar, carSelection } from "../../settings_store";
 import type { FeatureFormatting, FeatureServices } from "../feature_deps_base";
+import type { SettingsState } from "../ui_app_state";
 import {
   composeVehicleSettings,
   mergeCarAspectSettings,
-  type SettingsState,
-} from "../settings_state";
+} from "../../vehicle_settings";
 import {
   batch,
   computed,
@@ -37,7 +35,6 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "../ui_signals";
-import type { AnalysisPanelView } from "../views/analysis_panel";
 import {
   buildCarsWizardRenderModel,
   type WizardSummaryData,
@@ -164,12 +161,10 @@ export function createCarsFeature(ctx: {
   settings: SettingsState;
   queryClient: QueryClient;
   panel: CarsPanelView;
-  analysisPanel: Pick<AnalysisPanelView, "carAvailability">;
   activeViewId: ReadonlySignal<string>;
   activeSettingsTabId: ReadonlySignal<string>;
   openAnalysisTab: () => void;
   refreshSpectrumDecorations: () => void;
-  syncAnalysisInputs: () => void;
   services: FeatureServices;
   formatting: Pick<FeatureFormatting, "fmt">;
 }): CarsFeature {
@@ -181,7 +176,6 @@ export function createCarsFeature(ctx: {
   // Saved-car list
   // ---------------------------------------------------------------------
 
-  const carSelection = createCarSelectionDerivedState(settings.car);
   let handlersBound = false;
   let disposeHighlightedCarSync: (() => void) | null = null;
   const highlightedCar = signal<CarsListHighlightedFeedback | null>(null);
@@ -208,15 +202,8 @@ export function createCarsFeature(ctx: {
     return !disposed && generation === requestGeneration;
   }
 
-  ctx.analysisPanel.carAvailability.value = computed(() => {
-    const carSelectionState = carSelection.selection.value;
-    return {
-      hasActiveCar: carSelectionState.kind === "active",
-      isLoading: carSelectionState.kind === "loading",
-    };
-  });
   ctx.panel.list.model.value = computed<CarsListRenderModel>(() => {
-    const carSelectionState = carSelection.selection.value;
+    const carSelectionState = carSelection.value;
     return {
       guidance: buildCarsGuidanceRenderModel({
         carSelectionState,
@@ -261,10 +248,7 @@ export function createCarsFeature(ctx: {
     if (disposed) {
       return;
     }
-    copyActiveCarAspects(carSelection.activeCar.value, settings);
-    if (carSelection.hasResolvedActiveCar.value) {
-      ctx.syncAnalysisInputs();
-    }
+    copyActiveCarAspects(activeCar.value, settings);
   }
 
   /** Stores a server cars payload in the query cache and settings state. */

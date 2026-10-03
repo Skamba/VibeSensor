@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getCarCompleteness } from "../src/app/car_selection_state";
+import { getCarCompleteness } from "../src/car_selection";
 import {
   buildCarsGuidanceRenderModel,
   buildSettingsCarListRenderModel,

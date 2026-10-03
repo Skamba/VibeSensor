@@ -1,8 +1,10 @@
-import type { CarRecord } from "../api/types";
-import { defaultAnalysisSettings } from "../constants";
-import { speedSettings } from "../settings_store";
-import { signal } from "./ui_signals";
-import type { SignalState } from "./signal_state";
+import { defaultAnalysisSettings } from "./constants";
+
+/**
+ * Vehicle settings: the active car's drivetrain aspects plus the analysis
+ * uncertainty tuning. Key lists are pinned against the backend defaults by
+ * apps/server/tests/hygiene/test_analysis_settings_sync.py.
+ */
 
 export interface CarAspectSettings {
   tire_width_mm: number;
@@ -24,7 +26,7 @@ export interface VehicleSettings
   extends CarAspectSettings,
     AnalysisTuningSettings {}
 
-const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
+export const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_width_mm: defaultAnalysisSettings.tire_width_mm,
   tire_aspect_pct: defaultAnalysisSettings.tire_aspect_pct,
   rim_in: defaultAnalysisSettings.rim_in,
@@ -33,7 +35,7 @@ const defaultCarAspectSettings: Readonly<CarAspectSettings> = {
   tire_deflection_factor: defaultAnalysisSettings.tire_deflection_factor,
 };
 
-const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
+export const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
   speed_uncertainty_pct: defaultAnalysisSettings.speed_uncertainty_pct,
   tire_diameter_uncertainty_pct:
     defaultAnalysisSettings.tire_diameter_uncertainty_pct,
@@ -41,9 +43,6 @@ const defaultAnalysisTuningSettings: Readonly<AnalysisTuningSettings> = {
     defaultAnalysisSettings.final_drive_uncertainty_pct,
   gear_uncertainty_pct: defaultAnalysisSettings.gear_uncertainty_pct,
 };
-
-export const defaultVehicleSettings: Readonly<VehicleSettings> =
-  defaultAnalysisSettings;
 
 const carAspectSettingKeys = [
   "tire_width_mm",
@@ -101,44 +100,4 @@ export function mergeAnalysisTuningSettings(
     }
   }
   return next;
-}
-
-export interface CarSettingsValue {
-  activeVehicleSettings: CarAspectSettings;
-  cars: CarRecord[];
-  carsLoaded: boolean;
-  activeCarId: string | null;
-}
-
-export interface AnalysisSettingsValue {
-  vehicleSettings: AnalysisTuningSettings;
-}
-
-export type CarSettingsState = SignalState<CarSettingsValue>;
-export type AnalysisSettingsState = SignalState<AnalysisSettingsValue>;
-export type SpeedSettingsState = typeof speedSettings;
-
-export interface SettingsState {
-  car: CarSettingsState;
-  analysis: AnalysisSettingsState;
-  speed: SpeedSettingsState;
-}
-
-export function createSettingsState(): SettingsState {
-  return {
-    car: {
-      activeVehicleSettings: signal<CarAspectSettings>({
-        ...defaultCarAspectSettings,
-      }),
-      cars: signal<CarRecord[]>([]),
-      carsLoaded: signal(false),
-      activeCarId: signal<string | null>(null),
-    },
-    analysis: {
-      vehicleSettings: signal<AnalysisTuningSettings>({
-        ...defaultAnalysisTuningSettings,
-      }),
-    },
-    speed: speedSettings,
-  };
 }
