@@ -23,7 +23,7 @@ processing buffer or alignment logic.
 ### 1. Sensor Clock Synchronisation (`CMD_SYNC_CLOCK`)
 
 The server periodically broadcasts a `CMD_SYNC_CLOCK` command (every
-≈5 seconds) to every connected sensor.  The command carries the
+2 seconds) to every connected sensor.  The command carries the
 server's monotonic time in microseconds.
 
 | Layer | Change |
@@ -31,11 +31,23 @@ server's monotonic time in microseconds.
 | Protocol | New `CMD_SYNC_CLOCK = 2` command type with 8-byte `server_time_us` payload. |
 | Firmware (ESP) | On receipt, compute `offset = server_time_us − esp_timer_get_time()` and store.  Apply offset to every subsequent `t0_us` in DATA frames. |
 | Server control plane | `UDPControlPlane.broadcast_sync_clock()` iterates active sensors and sends the command. |
-| Processing loop | Calls `broadcast_sync_clock()` every ≈5 seconds. |
+| Processing loop | Calls `broadcast_sync_clock()` every `CLOCK_SYNC_INTERVAL_S` (2 s) of monotonic time, independent of the tick rate. |
 
 After synchronisation all sensors report `t0_us` relative to the
 server's monotonic clock, making timestamps directly comparable across
 sensors.
+
+The 2 s interval is deliberate. Sensors apply the offset from their second
+exchange, so a newly connected sensor is synced after 2–4 s. It also leaves
+room under the two age limits that depend on it: the registry's 8 s
+slow-exchange hold (about three slow exchanges in a row are skipped before an
+old estimate is replaced) and the 15 s sync-age limit of the raw-capture proof
+(several lost exchanges in a row still leave a sensor `verified` at finalize).
+Only the server schedules exchanges; firmware and simulator just answer them,
+so the interval changes without re-flashing sensors. The loop used to count
+ticks for a nominal ≈5 s, which the 10 Hz low-load fast path (up to 8 sensors)
+turned into ≈2 s; the schedule is now timed, so sensor count and CPU load no
+longer change it.
 
 ### 2. Per-Buffer Timing Metadata
 
@@ -135,8 +147,8 @@ only after `HELLO_ACK`, answers `CMD_SYNC_CLOCK` with the sync-clock ACK
 carries a measured RTT, and stamps `t0_us` from a per-sensor sample clock
 (device timer with a few tens of ppm drift) rather than from send time.
 Simulator recordings are therefore raw-backed like real sensors. As with
-real hardware, the offset is applied from the second sync exchange (about
-10 s after a sensor connects); a recording started earlier drops each
+real hardware, the offset is applied from the second sync exchange (2–4 s
+after a sensor connects); a recording started earlier drops each
 sensor's pre-sync chunks and replays from its first synced chunk.
 
 ## Fallback Behaviour

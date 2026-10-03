@@ -93,7 +93,10 @@ During recording:
   the next one at the current run time (seconds since the run's live start, the
   same clock as sample `t_s`); the steps are stored as `guided_phases` in the
   run metadata when the run is finalized. Markers outside a recording are
-  ignored. Status reports the step in progress as `guided_phase`.
+  ignored. Status reports the step in progress as `guided_phase` and the
+  distinct steps finished so far as `guided_phases_completed`, so a Live page
+  reloaded mid-run restores the guided panel (including a finished test). The
+  step texts name their speeds in the UI's speed unit.
 
 ### 3. Final flush and finalize
 

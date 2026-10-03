@@ -357,22 +357,29 @@ test("journey: the guided test drive walks sweep, hold and neutral coast-down wh
   await bootWithStatus(page, (route) => fulfillJson(route, status));
   await page.route("**/api/recording/guided-phase", async (route) => {
     const phase = (route.request().postDataJSON() as { phase: string | null })
-      .phase;
-    marked.push(phase);
+      .phase as LoggingStatusPayload["guided_phase"];
+    marked.push(phase ?? null);
+    const finishedStep = status.guided_phase;
     status = {
       ...status,
-      guided_phase: phase as LoggingStatusPayload["guided_phase"],
+      guided_phase: phase,
+      guided_phases_completed: [
+        ...(status.guided_phases_completed ?? []),
+        ...(finishedStep ? [finishedStep] : []),
+      ],
     };
     await fulfillJson(route, status);
   });
 
   const panel = page.locator("#guidedTest");
   const button = page.locator("#guidedTestBtn");
+  const stepState = (phase: string) =>
+    panel.locator(`[data-guided-step="${phase}"]`);
   await expect(panel).toContainText("Guided test drive (optional)");
   await expect(button).toHaveText("Start guided test");
 
   await button.click();
-  await expect(panel.locator('[data-guided-step="sweep"]')).toHaveAttribute(
+  await expect(stepState("sweep")).toHaveAttribute(
     "data-step-state",
     "current",
   );
@@ -383,6 +390,13 @@ test("journey: the guided test drive walks sweep, hold and neutral coast-down wh
 
   await button.click();
   await expect(button).toHaveText("Next: Neutral coast-down");
+
+  // A reload mid-run picks the guided test up where the driver left it.
+  await page.reload();
+  await expect(stepState("sweep")).toHaveAttribute("data-step-state", "done");
+  await expect(stepState("hold")).toHaveAttribute("data-step-state", "current");
+  await expect(button).toHaveText("Next: Neutral coast-down");
+
   await button.click();
   await expect(panel).toContainText("shift to neutral");
   await expect(button).toHaveText("Finish guided test");
@@ -392,6 +406,37 @@ test("journey: the guided test drive walks sweep, hold and neutral coast-down wh
   await expect(button).toBeHidden();
   expect(marked).toEqual(["sweep", "hold", "coast_down", null]);
 
+  // ...and still knows the guided test is done after another reload.
+  await page.reload();
+  await expect(panel).toContainText("Guided test done.");
+  for (const phase of ["sweep", "hold", "coast_down"]) {
+    await expect(stepState(phase)).toHaveAttribute("data-step-state", "done");
+  }
+  await expect(button).toBeHidden();
+
   status = idleStatus();
   await expect(panel).toBeHidden();
+});
+
+test("journey: guided step speeds follow the speed unit setting", async ({
+  page,
+}) => {
+  const status = idleStatus({
+    enabled: true,
+    run_id: "run-8",
+    start_time_utc: new Date(Date.now() - 5_000).toISOString(),
+    guided_phase: "sweep",
+  });
+  await bootWithStatus(page, (route) => fulfillJson(route, status));
+  const panel = page.locator("#guidedTest");
+  await expect(panel).toContainText("from about 50 to 120 km/h");
+  // Routes added later win over the common settings route.
+  await page.route("**/api/settings/speed-unit", (route) =>
+    fulfillJson(route, { speed_unit: "mps" }),
+  );
+  await page.reload();
+
+  await expect(panel).toContainText(
+    "Accelerate smoothly from about 14 to 33 m/s",
+  );
 });

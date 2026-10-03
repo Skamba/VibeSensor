@@ -5,7 +5,7 @@ import type {
   SpeedSourceRequest,
   SpeedSourceStatusPayload,
 } from "../../api/types";
-import { fmt } from "../../format";
+import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import {
   isManualLikeSpeedSource,
   resolveEffectiveSpeedSource,
@@ -15,7 +15,6 @@ import {
 /** Pure text, validation, and ordering for the speed source page. */
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
-type SpeedUnit = "kmh" | "mps";
 
 export interface ChoiceState {
   selected: boolean;
@@ -44,8 +43,7 @@ export function speedText(
   if (speedKmh === null || !Number.isFinite(speedKmh)) {
     return "--";
   }
-  const value = unit === "mps" ? speedKmh / 3.6 : speedKmh;
-  return `${fmt(value, 1)} ${t(unit === "mps" ? "speed.unit.mps" : "speed.unit.kmh")}`;
+  return `${fmt(kmhInUnit(speedKmh, unit), 1)} ${t(speedUnitKey(unit))}`;
 }
 
 export function activeSourceLabel(

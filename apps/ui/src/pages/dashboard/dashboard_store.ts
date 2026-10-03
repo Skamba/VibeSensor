@@ -54,8 +54,6 @@ const nowMs = signal(Date.now());
 /** Elapsed time of the current run, kept once it stops until the next idle. */
 const lastRunElapsed = signal("--");
 const guidedBusy = signal(false);
-/** The run whose guided test the driver finished. */
-const guidedFinishedRunId = signal<string | null>(null);
 
 const formatInt = (value: number) => formatIntLocale(value, lang.value);
 
@@ -187,9 +185,6 @@ export async function advanceGuidedTest(
     batch(() => {
       applyStatus(next);
       loggingError.value = null;
-      if (phase === null) {
-        guidedFinishedRunId.value = next.run_id ?? null;
-      }
     });
   } catch (error) {
     loggingError.value = {
@@ -271,7 +266,7 @@ export const recording = computed(() =>
 export const guidedTest = computed(() =>
   guidedTestModel(
     status.value,
-    guidedFinishedRunId.value,
+    speedUnit.value,
     guidedBusy.value || pending.value !== null,
     t,
   ),

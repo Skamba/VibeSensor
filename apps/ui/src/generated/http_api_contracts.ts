@@ -1030,6 +1030,8 @@ export interface components {
             enabled: boolean;
             /** The guided test-drive step in progress (sweep, hold, coast_down), if any. */
             guided_phase?: components["schemas"]["GuidedPhaseName"] | null;
+            /** Guided test-drive steps finished so far in the current recording, in the order first finished; lets the Live page restore the guided panel after a reload. */
+            guided_phases_completed?: components["schemas"]["GuidedPhaseName"][];
             last_completed_run_error?: string | null;
             last_completed_run_id?: string | null;
             /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit. */

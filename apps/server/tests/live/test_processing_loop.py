@@ -11,6 +11,7 @@ import pytest
 
 from vibesensor.common.exceptions import ProcessingError
 from vibesensor.live.processing_loop import (
+    CLOCK_SYNC_INTERVAL_S,
     MAX_CONSECUTIVE_FAILURES,
     MAX_FATAL_BACKOFF_CYCLES,
     ProcessingFailureCategory,
@@ -347,6 +348,42 @@ class TestProcessingLoopCadence:
         )
 
         assert delay_s == pytest.approx(0.25)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("client_count", [0, 4, 12])
+    async def test_clock_sync_runs_on_a_fixed_interval_whatever_the_tick_rate(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        client_count: int,
+    ) -> None:
+        # 4 sensors take the 10 Hz low-load fast path, 12 the 4 Hz base cadence.
+        clients = {f"sensor-{index}": _StubRecord() for index in range(client_count)}
+        control_plane = _StubControlPlane()
+        loop, _state = _make_loop(
+            registry=_StubRegistry(clients),
+            fft_update_hz=4,
+            control_plane=control_plane,
+        )
+        now = [100.0]
+        run_for_s = 5.25 * CLOCK_SYNC_INTERVAL_S
+
+        async def _clock_sleep(delay: float) -> None:
+            now[0] += delay
+            if now[0] - 100.0 >= run_for_s:
+                raise asyncio.CancelledError
+
+        async def _inline_to_thread(func, /, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        monkeypatch.setattr("vibesensor.live.processing_loop.time.monotonic", lambda: now[0])
+        monkeypatch.setattr("vibesensor.live.processing_loop.anyio.sleep", _clock_sleep)
+        monkeypatch.setattr(
+            "vibesensor.live.processing_loop.anyio.to_thread.run_sync", _inline_to_thread
+        )
+        with pytest.raises(asyncio.CancelledError):
+            await loop.run()
+
+        assert control_plane.broadcast_calls == 5
 
     @pytest.mark.asyncio
     async def test_sync_clock_offloads_broadcast_to_thread(

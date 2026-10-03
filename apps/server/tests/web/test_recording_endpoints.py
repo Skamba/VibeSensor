@@ -93,6 +93,7 @@ class TestRecordingStatusEndpoint:
             "last_stop_reason": None,
             "capture_readiness": None,
             "guided_phase": None,
+            "guided_phases_completed": [],
         }
 
     def test_status_idle_enabled_false(self, _recording_client) -> None:
@@ -173,6 +174,7 @@ class TestRecordingStartEndpoint:
             "last_stop_reason": None,
             "capture_readiness": None,
             "guided_phase": None,
+            "guided_phases_completed": [],
         }
         state.run_recorder.start_recording.assert_called_once_with()
 
@@ -215,6 +217,7 @@ class TestRecordingStopEndpoint:
             "last_stop_reason": None,
             "capture_readiness": None,
             "guided_phase": None,
+            "guided_phases_completed": [],
         }
         state.run_recorder.stop_recording.assert_called_once_with()
 
@@ -241,6 +244,7 @@ class TestGuidedPhaseEndpoint:
         snapshot = replace(
             _make_recording_status_snapshot(enabled=True, run_id="run-abc", samples_written=42),
             guided_phase="coast_down",
+            guided_phases_completed=("sweep", "hold"),
         )
         state.run_recorder.mark_guided_phase.return_value = snapshot
 
@@ -248,6 +252,7 @@ class TestGuidedPhaseEndpoint:
 
         assert response.status_code == 200
         assert response.json()["guided_phase"] == "coast_down"
+        assert response.json()["guided_phases_completed"] == ["sweep", "hold"]
         state.run_recorder.mark_guided_phase.assert_called_once_with("coast_down")
 
     def test_null_phase_ends_the_guided_test(self, _recording_client) -> None:
