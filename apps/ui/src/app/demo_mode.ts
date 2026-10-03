@@ -1,6 +1,9 @@
 import { defaultLiveAnalysisConfig } from "../constants";
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import { composeVehicleSettings } from "../vehicle_settings";
+import {
+  composeVehicleSettings,
+  defaultCarAspectSettings,
+} from "../vehicle_settings";
 import type { AppState } from "./ui_app_state";
 import { batch } from "./ui_signals";
 
@@ -205,7 +208,7 @@ export function runDemoMode(deps: DemoDeps): void {
         type: "Simulated setup",
         variant: "Audit baseline",
         aspects: composeVehicleSettings(
-          state.settings.car.activeVehicleSettings.value,
+          defaultCarAspectSettings,
           state.settings.analysis.vehicleSettings.value,
         ),
       },
