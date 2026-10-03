@@ -108,7 +108,7 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
         "finding_key": first_cause.get("finding_key"),
         "suspected_source": first_cause.get("suspected_source"),
         "confidence": first_cause.get("confidence"),
-        "confidence_tone": first_cause.get("confidence_tone"),
+        "confidence_level": first_cause.get("confidence_level"),
         "origin_location": origin.get("location"),
         "origin_source": origin.get("suspected_source"),
         "suitability_states": suitability_states,
@@ -158,7 +158,7 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     assert direct_meaning["finding_key"] == reloaded_meaning["finding_key"]
     assert direct_meaning["suspected_source"] == reloaded_meaning["suspected_source"]
     assert direct_meaning["confidence"] == pytest.approx(reloaded_meaning["confidence"])
-    assert direct_meaning["confidence_tone"] == reloaded_meaning["confidence_tone"]
+    assert direct_meaning["confidence_level"] == reloaded_meaning["confidence_level"]
     # Origin location may differ in casing (title-cased by projector) — compare lowered
     assert (direct_meaning["origin_location"] or "").lower() == (
         reloaded_meaning["origin_location"] or ""

@@ -19,7 +19,7 @@ from test_support import (
     CORNER_SENSORS,
     SENSOR_FL,
     assert_confidence_between,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_has_warnings,
     assert_no_wheel_fault,
     assert_strongest_location,
@@ -327,7 +327,7 @@ def test_representative_fault_scenario_matrix(
         assert_wheel_source(summary, msg=tag)
         assert_strongest_location(summary, fault_sensor, msg=tag)
     if case.expect_confidence_label:
-        assert_confidence_label_valid(summary, msg=tag)
+        assert_confidence_level_valid(summary, msg=tag)
     if case.expect_warnings:
         assert_has_warnings(summary, msg=tag)
 

@@ -36,10 +36,7 @@ def test_finding_payload_round_trip_preserves_consumer_fields() -> None:
             finding_id="F_ROUNDTRIP",
             confidence=0.82,
             strongest_location="front-left wheel",
-            confidence_label_key="CONFIDENCE_HIGH",
-            confidence_tone="success",
-            confidence_pct="82%",
-            confidence_reason="Strong order evidence",
+            confidence_level="strong",
             phase_evidence={"cruise_fraction": 0.75, "phases_detected": ["cruise", "acceleration"]},
             matched_points=[
                 {
@@ -60,16 +57,13 @@ def test_finding_payload_round_trip_preserves_consumer_fields() -> None:
     round_trip = finding_from_payload(payload)
 
     assert payload["finding_id"] == "F_ROUNDTRIP"
-    assert payload["confidence_label_key"] == "CONFIDENCE_HIGH"
-    assert payload["confidence_tone"] == "success"
-    assert payload["confidence_pct"] == "82%"
+    assert payload["confidence_level"] == "strong"
     assert payload["phase_evidence"] == {
         "cruise_fraction": 0.75,
         "phases_detected": ["cruise", "acceleration"],
     }
     assert payload["matched_points"][0]["location"] == "front-left wheel"
     assert round_trip.confidence_assessment is not None
-    assert round_trip.confidence_assessment.reason == "Strong order evidence"
     assert round_trip.phases_detected == ("cruise", "acceleration")
     assert round_trip.matched_points[0].location == "front-left wheel"
     assert round_trip.matched_points[0].phase == "cruise"

@@ -34,8 +34,48 @@ classification — never compare raw dB values against band thresholds inline.
 
 For post-stop persisted analysis/report artifacts (`summarize_run_data()` output,
 persisted analysis envelopes, localized report-facing strength/intensity fields),
-expose dB-only strength values. Raw ingest/sample fields may still carry g-based
+expose strength values in dB. Raw ingest/sample fields may still carry g-based
 units.
+
+## Diagnosis amplitude (mg)
+
+Workshops compare vibration by amplitude per location (GM vibration worksheet,
+PicoScope NVH), so the persisted `diagnosis` block reports amplitude at the
+diagnosed order in **mg** (1 mg = 0.001 g), always with the dB above that
+location's own noise floor next to it:
+
+- `location_amplitudes[].amplitude_mg`: median amplitude of the order's matched
+  points at that location (`OrderMatchObservation.amp`, g × 1000). `None` when
+  the order was not detected there.
+- `location_amplitudes[].db_above_floor`:
+  `vibration_strength_db_scalar(peak_band_rms_amp_g=amplitude, floor_amp_g=median
+  floor of that location's samples)`.
+- `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
+- With no diagnosed order (`amplitude_basis = "overall"`), each location reports
+  the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).
+- `amplitude_vs_speed`: median order amplitude (mg) per 5 km/h speed bin and
+  location; `spectrum.peaks`: median amplitude (mg) of peaks recurring in at
+  least 20% of the strongest location's windows within ±5 km/h of the reference
+  speed.
+
+dB stays the strength metric for severity bands, live metrics, and every other
+persisted field.
+
+## Confidence levels
+
+Users see confidence only as one of three levels, defined by what to do
+(`ConfidenceLevel` in `domain/finding_types.py`, derived by
+`Finding.confidence_level` from the finding's internal 0–1 score):
+
+| Level | Score | Meaning for the owner |
+|-------|-------|-----------------------|
+| Strong | ≥ 0.70 | Go fix it. |
+| Moderate | ≥ 0.40 | Do the cheap confirming check first. |
+| Weak | < 0.40 | Don't buy parts; record the test again. |
+
+A finding whose run-wide vibration strength band is negligible is capped at
+Moderate. The score itself stays internal (ranking); no percentage is shown in
+the UI or the PDF.
 
 ## Processing profiles
 

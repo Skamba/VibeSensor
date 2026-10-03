@@ -59,7 +59,11 @@ from vibesensor.settings.snapshot_codec import (
     settings_snapshot_from_json,
     settings_snapshot_to_json,
 )
-from vibesensor.summary.persisted_analysis import PersistedAnalysis
+from vibesensor.summary.persisted_analysis import (
+    PERSISTED_ANALYSIS_SCHEMA_VERSION,
+    STORAGE_SCHEMA_VERSION_KEY,
+    PersistedAnalysis,
+)
 from vibesensor.summary.persisted_codec import (
     persisted_analysis_to_storage_json_object,
 )
@@ -558,6 +562,30 @@ class HistoryDB:
         if manifest is None or not self._raw_capture_store.has_run_artifacts(run_id):
             return None
         return self._raw_capture_store.load_capture(manifest)
+
+    def requeue_outdated_analyses(self) -> list[str]:
+        """Send complete runs analysed under an older schema back to analysis.
+
+        Their stored analysis lacks fields the UI and the report now require, so
+        it is cleared and the run returns to ``analyzing``; startup re-queues
+        analyzing runs. Returns the affected run ids.
+        """
+        now = utc_now_iso()
+        with self._write() as cur:
+            cur.execute(
+                "SELECT run_id FROM runs WHERE status = 'complete' "
+                "AND analysis_json IS NOT NULL "
+                f"AND COALESCE(json_extract(analysis_json, '$.{STORAGE_SCHEMA_VERSION_KEY}'), 0)"
+                " != ?",
+                (PERSISTED_ANALYSIS_SCHEMA_VERSION,),
+            )
+            run_ids = [str(row[0]) for row in cur.fetchall()]
+            cur.executemany(
+                "UPDATE runs SET status = 'analyzing', analysis_json = NULL, "
+                "analysis_started_at = ?, analysis_completed_at = NULL WHERE run_id = ?",
+                [(now, run_id) for run_id in run_ids],
+            )
+        return run_ids
 
     def stale_analyzing_run_ids(self) -> list[str]:
         with self._read() as cur:

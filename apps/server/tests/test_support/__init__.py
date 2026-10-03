@@ -9,7 +9,7 @@ from typing import Any
 from test_support.analysis import extract_top, run_analysis, top_confidence
 from test_support.assertions import (
     assert_confidence_between,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_diagnosis_contract,
     assert_finding_location,
     assert_finding_source,
@@ -95,7 +95,7 @@ __all__ = [
     "top_confidence",
     # assertions
     "assert_confidence_between",
-    "assert_confidence_label_valid",
+    "assert_confidence_level_valid",
     "assert_diagnosis_contract",
     "assert_finding_location",
     "assert_finding_source",

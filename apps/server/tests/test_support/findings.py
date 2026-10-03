@@ -10,6 +10,7 @@ from dataclasses import replace
 
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.summary.diagnosis_contracts import DiagnosisPayload
 from vibesensor.summary.finding_payload_parts import FindingPayload
 
 
@@ -103,3 +104,34 @@ def make_info_finding(
         severity="info",
         **overrides,
     )
+
+
+NO_FAULT_DIAGNOSIS: DiagnosisPayload = {
+    "verdict": "no_fault",
+    "confidence_level": None,
+    "finding_id": None,
+    "source": None,
+    "location": None,
+    "zone": None,
+    "order_code": None,
+    "frequency_hz": None,
+    "reference_speed_kmh": None,
+    "speed_min_kmh": None,
+    "speed_max_kmh": None,
+    "dominant_phase": None,
+    "presence_ratio": None,
+    "weak_reasons": [],
+    "order_findings": [],
+    "amplitude_basis": "overall",
+    "location_amplitudes": [],
+    "amplitude_vs_speed": [],
+    "spectrum": None,
+    "source_checks": [],
+    "conditions": {
+        "speed_source": None,
+        "rpm_source": "none",
+        "tire_circumference_m": None,
+        "final_drive_ratio": None,
+        "gear_ratio": None,
+    },
+}

@@ -59,7 +59,7 @@ def _front_wheel_fixture() -> GoldenReplayFixture:
             suspected_source=_WHEEL_SOURCE,
             strongest_location="front-left",
             confidence_range=(0.45, 0.9),
-            confidence_label_key="CONFIDENCE_MEDIUM",
+            confidence_level="moderate",
             tolerance_bands={"frequency_hz": (9.0, 12.0), "top_confidence": (0.45, 0.9)},
         ),
     )
@@ -77,7 +77,7 @@ def _rear_wheel_fixture() -> GoldenReplayFixture:
             suspected_source=_WHEEL_SOURCE,
             strongest_location="rear-right",
             confidence_range=(0.45, 0.9),
-            confidence_label_key="CONFIDENCE_MEDIUM",
+            confidence_level="moderate",
             tolerance_bands={"frequency_hz": (9.0, 12.0), "top_confidence": (0.45, 0.9)},
         ),
     )
@@ -95,7 +95,7 @@ def _driveshaft_fixture() -> GoldenReplayFixture:
             suspected_source=_DRIVESHAFT_SOURCE,
             strongest_location="rear-left",
             confidence_range=(0.4, 0.9),
-            confidence_label_key="CONFIDENCE_MEDIUM",
+            confidence_level="moderate",
             tolerance_bands={"frequency_hz": (29.0, 34.0), "top_confidence": (0.4, 0.9)},
         ),
     )
@@ -113,7 +113,7 @@ def _engine_fixture() -> GoldenReplayFixture:
             suspected_source=_ENGINE_SOURCE,
             strongest_location="front-left",
             confidence_range=(0.4, 0.9),
-            confidence_label_key="CONFIDENCE_MEDIUM",
+            confidence_level="moderate",
             tolerance_bands={"frequency_hz": (23.0, 27.0), "top_confidence": (0.4, 0.9)},
         ),
     )

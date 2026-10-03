@@ -212,14 +212,6 @@ function Insights(props: { insights: InsightsModel }) {
   let body: JSX.Element;
   if (insights.kind === "state") {
     body = <div class="history-panel-state">{insights.message}</div>;
-  } else if (insights.kind === "empty") {
-    body = (
-      <ul class="history-findings-list history-findings-list--secondary">
-        <li class="history-finding-card history-finding-card--empty">
-          {insights.message}
-        </li>
-      </ul>
-    );
   } else {
     const { primary } = insights;
     body = (

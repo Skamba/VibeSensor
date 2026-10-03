@@ -23,6 +23,7 @@ from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.summary.contracts import AnalysisSummary
+from vibesensor.summary.persisted_analysis import PERSISTED_ANALYSIS_SCHEMA_VERSION
 
 # -- Schema v4 tests ----------------------------------------------------------
 
@@ -160,7 +161,7 @@ def test_store_analysis_persists_summary_directly(
     payload = json.loads(raw)
     # No envelope — summary stored directly
     assert '"summary"' not in raw
-    assert payload["_schema_version"] == 1
+    assert payload["_schema_version"] == PERSISTED_ANALYSIS_SCHEMA_VERSION
     assert payload["lang"] == "en"
     run = db.get_run("r1")
     assert run is not None

@@ -39,22 +39,37 @@ function insights(runId: string, lang: string) {
     start_time_utc: "2026-01-01T00:00:00Z",
     duration_s: 12.3,
     sensor_count_used: 2,
+    diagnosis: {
+      verdict: "fault",
+      confidence_level: "strong",
+      finding_id: "F001",
+      source: "wheel/tire",
+      location: "Front Left Wheel",
+      zone: "front_left_wheel",
+      order_code: "T1",
+      frequency_hz: 12.1,
+      reference_speed_kmh: 85,
+      speed_min_kmh: 63,
+      speed_max_kmh: 105,
+      weak_reasons: [],
+    },
+    speed_stats: { min_kmh: 60, max_kmh: 110 },
     findings: [
       {
-        suspected_source: "wheel_tire",
+        finding_id: "F001",
+        suspected_source: "wheel/tire",
         confidence: 0.9,
-        confidence_pct: "90%",
-        confidence_tone: "success",
+        confidence_level: "strong",
         frequency_hz_or_order: 32,
         strongest_location: "Front Left Wheel",
         strongest_speed_band: "80-100 km/h",
         evidence_summary: "Wheel order follows road speed.",
       },
       {
+        finding_id: "F002",
         suspected_source: "engine",
         confidence: 0.3,
-        confidence_pct: "30%",
-        confidence_tone: "warn",
+        confidence_level: "weak",
         frequency_hz_or_order: 18,
         strongest_location: "Engine Bay",
         strongest_speed_band: "60-80 km/h",
@@ -154,7 +169,8 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   await expect(firstRow.locator(".history-row__diagnosis-title")).toHaveText(
     "Wheel / Tire",
   );
-  await expect(firstRow).toContainText("confidence 90%");
+  await expect(firstRow).toContainText("Confidence: Strong");
+  await expect(firstRow).not.toContainText("%");
 
   await firstRow.locator('[data-run-toggle="details"]').click();
   const details = page.locator(".history-details-card");

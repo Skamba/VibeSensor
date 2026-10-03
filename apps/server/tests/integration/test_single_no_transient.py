@@ -19,7 +19,7 @@ from test_support import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_pairwise_monotonic,
     assert_strict_no_fault,
     assert_tolerant_no_fault,
@@ -174,7 +174,7 @@ def test_single_sensor_very_high_speed(corner: str, profile: dict[str, Any]) -> 
     )
     assert top is not None, f"No finding for {corner}@120"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120")
-    assert_confidence_label_valid(summary, msg=f"{corner}@120")
+    assert_confidence_level_valid(summary, msg=f"{corner}@120")
 
 
 # B.7 – Idle only → no fault (1 case)
@@ -214,7 +214,7 @@ def test_single_sensor_harmonics_1x_2x(corner: str, profile: dict[str, Any]) -> 
     )
     assert top is not None, f"No finding for {corner} with 1x+2x"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x")
-    assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x")
+    assert_confidence_level_valid(summary, msg=f"{corner} 1x+2x")
 
 
 # B.10 – Long duration steady fault (2 corners × 2 durations = 4 cases)

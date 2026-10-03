@@ -807,6 +807,8 @@ export interface components {
             /** Car Id */
             car_id: string;
         };
+        /** @enum {string} */
+        AmplitudeBasis: "order" | "overall";
         /**
          * AmplitudeMetric
          * @description HTTP contract for finding amplitude/strength metadata.
@@ -954,6 +956,7 @@ export interface components {
             /** Case Id */
             case_id?: string | null;
             data_quality: components["schemas"]["DataQualityResponse"];
+            diagnosis: components["schemas"]["DiagnosisPayload"];
             /** Duration S */
             duration_s: number;
             /** End Time Utc */
@@ -1324,6 +1327,8 @@ export interface components {
             vib_mag_rms?: number;
             window_quality?: components["schemas"]["WindowQualityPayload"];
         };
+        /** @enum {string} */
+        ConfidenceLevelValue: "strong" | "moderate" | "weak";
         /**
          * DataQualityAccelSanityResponse
          * @description Response body for acceleration sanity diagnostics.
@@ -1408,6 +1413,70 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * DiagnosisPayload
+         * @description The run verdict, its single confidence level, and the evidence behind it.
+         */
+        DiagnosisPayload: {
+            amplitude_basis: components["schemas"]["AmplitudeBasis"];
+            /** Amplitude Vs Speed */
+            amplitude_vs_speed: components["schemas"]["SpeedAmplitudePoint"][];
+            conditions: components["schemas"]["TestConditions"];
+            confidence_level: components["schemas"]["ConfidenceLevelValue"] | null;
+            /** Dominant Phase */
+            dominant_phase: string | null;
+            /** Finding Id */
+            finding_id: string | null;
+            /** Frequency Hz */
+            frequency_hz: number | null;
+            /** Location */
+            location: string | null;
+            /** Location Amplitudes */
+            location_amplitudes: components["schemas"]["LocationAmplitudeRow"][];
+            order_code: components["schemas"]["OrderCodeValue"] | null;
+            /** Order Findings */
+            order_findings: components["schemas"]["OrderFindingRow"][];
+            /** Presence Ratio */
+            presence_ratio: number | null;
+            /** Reference Speed Kmh */
+            reference_speed_kmh: number | null;
+            /** Source */
+            source: string | null;
+            /** Source Checks */
+            source_checks: components["schemas"]["SourceCheck"][];
+            spectrum: components["schemas"]["DiagnosisSpectrum"] | null;
+            /** Speed Max Kmh */
+            speed_max_kmh: number | null;
+            /** Speed Min Kmh */
+            speed_min_kmh: number | null;
+            verdict: components["schemas"]["DiagnosisVerdictValue"];
+            /** Weak Reasons */
+            weak_reasons: string[];
+            /** Zone */
+            zone: string | null;
+        };
+        /**
+         * DiagnosisSpectrum
+         * @description Recurring peaks at one location within one speed window, with order markers.
+         */
+        DiagnosisSpectrum: {
+            /** Floor Mg */
+            floor_mg: number | null;
+            /** Location */
+            location: string;
+            /** Order Markers */
+            order_markers: {
+                [key: string]: number;
+            };
+            /** Peaks */
+            peaks: components["schemas"]["SpectrumPeak"][];
+            /** Speed Max Kmh */
+            speed_max_kmh: number;
+            /** Speed Min Kmh */
+            speed_min_kmh: number;
+        };
+        /** @enum {string} */
+        DiagnosisVerdictValue: "fault" | "weak_evidence" | "no_fault";
         /**
          * EspFlashCancelResponse
          * @description Response body confirming whether an ESP32 flash job was cancelled.
@@ -1598,21 +1667,14 @@ export interface components {
          *     Boundary serializers and HTTP models should import this TypedDict directly
          *     so future field changes have one source of truth. It intentionally includes
          *     a few presentation-oriented projections (``evidence_summary``,
-         *     ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
-         *     fields) alongside the domain-owned finding data.
+         *     ``frequency_hz_or_order``, ``amplitude_metric``, and the action-defined
+         *     ``confidence_level``) alongside the domain-owned finding data.
          */
         FindingPayload: {
             amplitude_metric: components["schemas"]["AmplitudeMetric"];
             /** Confidence */
             confidence: number | null;
-            /** Confidence Label Key */
-            confidence_label_key?: string | null;
-            /** Confidence Pct */
-            confidence_pct?: string | null;
-            /** Confidence Reason */
-            confidence_reason?: string | null;
-            /** Confidence Tone */
-            confidence_tone?: string | null;
+            confidence_level?: components["schemas"]["ConfidenceLevelValue"] | null;
             /** Diffuse Excitation */
             diffuse_excitation?: boolean | null;
             /** Dominance Ratio */
@@ -2004,6 +2066,7 @@ export interface components {
             /** Case Id */
             case_id?: string | null;
             data_quality: components["schemas"]["DataQualityResponse"];
+            diagnosis: components["schemas"]["DiagnosisPayload"];
             /** Duration S */
             duration_s: number;
             /** End Time Utc */
@@ -2286,6 +2349,22 @@ export interface components {
             language: string;
         };
         /**
+         * LocationAmplitudeRow
+         * @description Amplitude at one sensor location (mg, with dB above that location's floor).
+         */
+        LocationAmplitudeRow: {
+            /** Amplitude Mg */
+            amplitude_mg: number | null;
+            /** Db Above Floor */
+            db_above_floor: number | null;
+            /** Location */
+            location: string;
+            /** Presence Ratio */
+            presence_ratio: number | null;
+            /** Ratio To Strongest */
+            ratio_to_strongest: number | null;
+        };
+        /**
          * LocationHotspotPayload
          * @description HTTP contract for serialized location-hotspot evidence.
          */
@@ -2481,6 +2560,34 @@ export interface components {
             timeout_count: number;
             /** Trusted */
             trusted: boolean;
+        };
+        /** @enum {string} */
+        OrderCodeValue: "T1" | "T2" | "P1" | "P2" | "E1" | "E2";
+        /**
+         * OrderFindingRow
+         * @description One order-tracked finding as a workshop worksheet row.
+         */
+        OrderFindingRow: {
+            confidence_level: components["schemas"]["ConfidenceLevelValue"];
+            /** Finding Id */
+            finding_id: string;
+            /** Frequency Hz */
+            frequency_hz: number | null;
+            /** Location */
+            location: string | null;
+            order_code: components["schemas"]["OrderCodeValue"];
+            /** Phases */
+            phases: string[];
+            /** Presence Ratio */
+            presence_ratio: number | null;
+            /** Reference Speed Kmh */
+            reference_speed_kmh: number | null;
+            /** Source */
+            source: string;
+            /** Speed Max Kmh */
+            speed_max_kmh: number | null;
+            /** Speed Min Kmh */
+            speed_min_kmh: number | null;
         };
         /**
          * OutlierSummaryResponse
@@ -2741,6 +2848,8 @@ export interface components {
         };
         /** @enum {string} */
         ResolvedSpeedSource: "gps" | "obd2" | "manual" | "fallback_manual" | "none";
+        /** @enum {string} */
+        RpmSourceValue: "measured" | "estimated" | "none";
         /**
          * RunSuitabilityCheck
          * @description Typed HTTP contract for one run-suitability diagnostic check.
@@ -2773,6 +2882,42 @@ export interface components {
         SetLocationRequest: {
             /** Location Code */
             location_code: string;
+        };
+        /**
+         * SourceCheck
+         * @description Whether one source family was the candidate, ruled out, or not testable.
+         */
+        SourceCheck: {
+            reason: components["schemas"]["SourceCheckReason"] | null;
+            /** Source */
+            source: string;
+            status: components["schemas"]["SourceCheckStatus"];
+        };
+        /** @enum {string} */
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "rpm_estimated" | "no_matching_order";
+        /** @enum {string} */
+        SourceCheckStatus: "candidate" | "ruled_out" | "not_testable";
+        /**
+         * SpectrumPeak
+         * @description One recurring spectral peak (0.5 Hz bin) and its median amplitude.
+         */
+        SpectrumPeak: {
+            /** Amplitude Mg */
+            amplitude_mg: number;
+            /** Hz */
+            hz: number;
+        };
+        /**
+         * SpeedAmplitudePoint
+         * @description Median amplitude of the diagnosed order in one 5 km/h speed bin at one location.
+         */
+        SpeedAmplitudePoint: {
+            /** Amplitude Mg */
+            amplitude_mg: number;
+            /** Location */
+            location: string;
+            /** Speed Kmh */
+            speed_kmh: number;
         };
         /**
          * SpeedBreakdownRow
@@ -2977,6 +3122,21 @@ export interface components {
             suspected_source?: string | null;
             /** Weak Spatial Separation */
             weak_spatial_separation?: boolean | null;
+        };
+        /**
+         * TestConditions
+         * @description Reference data the order analysis used.
+         */
+        TestConditions: {
+            /** Final Drive Ratio */
+            final_drive_ratio: number | null;
+            /** Gear Ratio */
+            gear_ratio: number | null;
+            rpm_source: components["schemas"]["RpmSourceValue"];
+            /** Speed Source */
+            speed_source: string | null;
+            /** Tire Circumference M */
+            tire_circumference_m: number | null;
         };
         /**
          * TestPlanStepResponse

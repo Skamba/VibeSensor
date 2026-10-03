@@ -20,7 +20,7 @@ from test_support import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_tolerant_no_fault,
     extract_top,
     make_diffuse_samples,
@@ -150,7 +150,7 @@ def test_transient_amplitude_deweighting(
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {label} spike on {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike={label}")
-    assert_confidence_label_valid(summary, msg=f"{corner} spike={label}")
+    assert_confidence_level_valid(summary, msg=f"{corner} spike={label}")
 
 
 # C.6 – Transient at different frequencies (4 freqs = 4 cases)
@@ -274,7 +274,7 @@ def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, An
     top = extract_top(summary)
     assert top is not None, f"Lost fault at 120 + transient for {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120+transient")
-    assert_confidence_label_valid(summary, msg=f"{corner}@120+transient")
+    assert_confidence_level_valid(summary, msg=f"{corner}@120+transient")
 
 
 # C.11 – Transient duration variation (3 durations × 2 corners = 6 cases)
@@ -300,4 +300,4 @@ def test_transient_duration_variation(corner: str, n_spike: int, profile: dict[s
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {n_spike}-sample transient {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike_n={n_spike}")
-    assert_confidence_label_valid(summary, msg=f"{corner} spike_n={n_spike}")
+    assert_confidence_level_valid(summary, msg=f"{corner} spike_n={n_spike}")

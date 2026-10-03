@@ -63,7 +63,7 @@ report rendering can localize them at read time.
 | Strongest location    | `system_cards[].strongest_location`   | `top_causes[].strongest_location`         | string                 |
 | Pattern summary       | `system_cards[].pattern_summary`      | `top_causes[].signatures_observed[:3]`    | comma-separated string |
 | Parts list            | `system_cards[].parts`                | `parts_for_pattern()` (Tier C only)       | list[PartSuggestion]   |
-| Tone                  | `system_cards[].tone`                 | `top_causes[].confidence_tone`            | "success"/"warn"/"neutral" |
+| Tone                  | `system_cards[].tone`                 | `top_causes[].confidence_level`           | "strong"/"moderate"/"weak" |
 
 **Tier gating:**
 - Tier A: no system cards shown (replaced with guidance message)

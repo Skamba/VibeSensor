@@ -90,6 +90,23 @@ class TestRun:
         finding = self.primary_finding
         return finding.strongest_location if finding is not None else None
 
+    _NON_FAULT_SOURCES = frozenset(
+        {VibrationSource.BASELINE_NOISE, VibrationSource.TRANSIENT_IMPACT}
+    )
+
+    @property
+    def diagnosis_candidate(self) -> Finding | None:
+        """The finding the verdict names: the best surfaced, actionable fault candidate."""
+        for finding in self.top_causes:
+            if (
+                finding.is_diagnostic
+                and finding.should_surface
+                and finding.is_actionable
+                and finding.suspected_source not in self._NON_FAULT_SOURCES
+            ):
+                return finding
+        return None
+
     def effective_top_causes(self) -> tuple[Finding, ...]:
         actionable_tc = tuple(f for f in self.top_causes if not f.is_reference and f.is_actionable)
         if actionable_tc:
