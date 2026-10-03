@@ -322,7 +322,9 @@ function stageState(view: FlashView, index: number): StageState {
     : stopped(state)
       ? view.lastJourneyPhase
       : null;
-  const current = JOURNEY_PHASES.findIndex((p) => p === phase);
+  const current = phase
+    ? (JOURNEY_PHASES as readonly string[]).indexOf(phase)
+    : -1;
   if (state === "idle" || current === -1 || index > current) {
     return "upcoming";
   }

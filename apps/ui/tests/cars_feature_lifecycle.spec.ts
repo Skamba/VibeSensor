@@ -185,10 +185,7 @@ describe("cars feature saved-car mutations", () => {
 
     expect(api.setActiveSettingsCar.mock.calls).toEqual([["car-2"]]);
     expect(harness.appState.settings.car.activeCarId.value).toBe("car-2");
-    expect(harness.lifecycleCalls).toEqual([
-      "syncAnalysisInputs",
-      "refreshSpectrumDecorations",
-    ]);
+    expect(harness.lifecycleCalls).toEqual(["refreshSpectrumDecorations"]);
     expect(harness.errors).toEqual([]);
   });
 
@@ -214,9 +211,6 @@ describe("cars feature saved-car mutations", () => {
     expect(confirmations).toEqual([true]);
     expect(api.deleteSettingsCar).toHaveBeenCalledWith("car-2");
     expect(harness.appState.settings.car.cars.value).toEqual(remaining.cars);
-    expect(harness.lifecycleCalls).toEqual([
-      "syncAnalysisInputs",
-      "refreshSpectrumDecorations",
-    ]);
+    expect(harness.lifecycleCalls).toEqual(["refreshSpectrumDecorations"]);
   });
 });

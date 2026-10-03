@@ -18,7 +18,7 @@ import {
   syncSelectedRealtimeClient,
   type RealtimeState,
 } from "../realtime_state";
-import type { SettingsState } from "../settings_state";
+import type { SettingsState } from "../ui_app_state";
 import type { ShellState } from "../shell_state";
 import type { SpectrumState } from "../spectrum_state";
 import {

@@ -6,6 +6,7 @@ import {
   getSpeedSourceStatus,
 } from "./api/settings";
 import type {
+  CarRecord,
   ObdStatusPayload,
   SpeedSourceKind,
   SpeedSourcePayload,
@@ -14,9 +15,45 @@ import type {
 import { activeView, isDemoMode, settingsTab } from "./app_store";
 import { GPS_POLL_FAST_MS, GPS_POLL_SLOW_MS } from "./config";
 import { poll } from "./poll";
+import { type CarSelectionState, deriveCarSelection } from "./car_selection";
 import type { SpeedSourceSnapshot } from "./speed_source";
+import {
+  type AnalysisTuningSettings,
+  type CarAspectSettings,
+  defaultAnalysisTuningSettings,
+  defaultCarAspectSettings,
+} from "./vehicle_settings";
 
-/** Saved settings shared across pages: the speed source and its live status. */
+/**
+ * Saved settings shared across pages: cars and the active car, the analysis
+ * tuning, the speed source, and the live speed status.
+ */
+
+export const carSettings = {
+  cars: signal<CarRecord[]>([]),
+  activeCarId: signal<string | null>(null),
+  carsLoaded: signal(false),
+  /** The active car's aspects, used for live order context. */
+  activeVehicleSettings: signal<CarAspectSettings>({
+    ...defaultCarAspectSettings,
+  }),
+};
+
+export const carSelection = computed<CarSelectionState>(() =>
+  deriveCarSelection(
+    carSettings.cars.value,
+    carSettings.activeCarId.value,
+    carSettings.carsLoaded.value,
+  ),
+);
+
+export const activeCar = computed(() =>
+  carSelection.value.kind === "active" ? carSelection.value.car : null,
+);
+
+export const analysisTuning = signal<AnalysisTuningSettings>({
+  ...defaultAnalysisTuningSettings,
+});
 
 export const speedSettings = {
   source: signal<SpeedSourceKind>("gps"),

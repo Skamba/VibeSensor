@@ -16,7 +16,6 @@ import { createCarsFeature } from "./features/cars_feature";
 import { loadDashboardStartupState } from "./features/dashboard_startup_state";
 import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
-import { createSettingsAnalysisModule } from "./features/settings_analysis_module";
 import type { FeatureServices } from "./feature_deps_base";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
@@ -25,10 +24,6 @@ import { loadSpeedSource, speedSourceSnapshot } from "../settings_store";
 import { deriveSpeedReadoutLabelKey } from "../speed_source";
 import { createAppState } from "./ui_app_state";
 import { computed, effectOnChange, signal } from "./ui_signals";
-import {
-  createAnalysisPanel,
-  type AnalysisPanelBindings,
-} from "./views/analysis_panel";
 import {
   createCarsPanel,
   type CarsListPanelView,
@@ -68,12 +63,6 @@ function bindings<T>(): T {
   return createModelActionPanelBindings() as T;
 }
 
-const analysisBindings: AnalysisPanelBindings = {
-  actions: signal(null),
-  carAvailability: createDeferredModelSignal(),
-  model: createDeferredModelSignal(),
-};
-const analysisPanel = createAnalysisPanel(analysisBindings);
 const carsBindings = {
   list: bindings<CarsListPanelView>(),
   wizard: bindings<Omit<CarsWizardPanelBridge, "focus">>(),
@@ -89,7 +78,6 @@ export const panels = {
   logging: bindings<RealtimeLoggingPanelBridge>(),
   spectrum: spectrumPanel,
   history: bindings<HistoryPanelView>(),
-  analysis: { ...analysisBindings, ...analysisPanel },
   cars: {
     list: carsBindings.list,
     wizard: { ...carsBindings.wizard, focus: carsPanel.focus },
@@ -126,27 +114,16 @@ const history = createHistoryFeature({
   queryClient,
 });
 
-const analysis = createSettingsAnalysisModule({
-  panel: panels.analysis,
-  settings,
-  lang: appState.shell.lang,
-  queryClient,
-  services,
-  refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
-});
-
 const cars = createCarsFeature({
   settings,
   queryClient,
   panel: panels.cars,
-  analysisPanel: panels.analysis,
   activeViewId: activeView,
   activeSettingsTabId: settingsTab,
   openAnalysisTab: () => {
     settingsTab.value = "analysisTab";
   },
   refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
-  syncAnalysisInputs: analysis.syncSettingsInputs,
   services,
   formatting: { fmt },
 });
@@ -235,10 +212,6 @@ onViewEnter(
   "historyView",
   loadOnce(() => history.refreshHistory()),
 );
-onViewEnter(
-  "settingsView",
-  loadOnce(() => analysis.loadAnalysisSettingsFromServer()),
-);
 
 function runStartupTask(name: string, task: () => Promise<unknown>): void {
   void task().catch((error: unknown) => {
@@ -249,7 +222,6 @@ function runStartupTask(name: string, task: () => Promise<unknown>): void {
 export function startFeatures(): void {
   realtimeFeature.bindHandlers();
   cars.bindHandlers();
-  analysis.bindHandlers();
   history.bindHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {

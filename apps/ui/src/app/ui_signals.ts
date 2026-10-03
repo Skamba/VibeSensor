@@ -6,7 +6,6 @@ import {
   untracked,
   useComputed,
   useSignal,
-  useSignalEffect,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
@@ -33,15 +32,7 @@ type MutableSignalPropertyMap<
  * and keep effect() limited to narrow imperative integrations such as timers,
  * storage, or external library bridges.
  */
-export {
-  batch,
-  computed,
-  effect,
-  signal,
-  untracked,
-  useComputed,
-  useSignalEffect,
-};
+export { batch, computed, effect, signal, untracked, useComputed };
 export type { ReadonlySignal, Signal };
 
 const signalPropertiesCache = new WeakMap<object, WeakMap<object, object>>();

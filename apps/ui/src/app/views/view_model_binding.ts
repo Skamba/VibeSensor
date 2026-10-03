@@ -17,7 +17,7 @@ function readDeferredModelValue<T>(
   return deferred.value?.value ?? null;
 }
 
-export function readDeferredModel<T>(
+function readDeferredModel<T>(
   deferred: ReadonlySignal<ReadonlySignal<T> | null>,
   defaultValue: T,
 ): T {

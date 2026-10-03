@@ -242,11 +242,11 @@ instead of controller-side variant class interpolation.
   reads them.
 - Existing mutable app-state objects and manual bridge rerenders are follow-up
   migration residue, not the default pattern for new frontend work.
-- Top-level AppState slices are owned by focused modules:
-  `shell_state.ts`, `transport_state.ts`, `realtime_state.ts`,
-  `history_state.ts`, `settings_state.ts`, and `spectrum_state.ts`.
-  Add new slice fields, defaults, and pure update helpers there instead of
-  growing `ui_app_state.ts`.
+- State shared by several pages lives in module-level stores outside
+  `src/pages/`: `app_store.ts` (shell), `settings_store.ts` (cars, analysis
+  tuning, speed source and its live status), with pure helpers beside them
+  (`vehicle_settings.ts`, `car_selection.ts`, `speed_source.ts`). Pre-rewrite
+  features still read the remaining `AppState` slices in `src/app/`.
 
 ## Architecture guardrails
 

@@ -808,10 +808,7 @@ describe("cars feature saved-car list", () => {
       queryClient.getQueryData(serverStateQueryKeys.settings.cars()),
     ).toEqual(activatedCarsPayload);
     expect(appState.settings.car.activeCarId.value).toBe("car-2");
-    expect(harness.lifecycleCalls).toEqual([
-      "syncAnalysisInputs",
-      "refreshSpectrumDecorations",
-    ]);
+    expect(harness.lifecycleCalls).toEqual(["refreshSpectrumDecorations"]);
     expect(harness.renderState().isOpen).toBe(false);
   });
 
@@ -855,9 +852,6 @@ describe("cars feature saved-car list", () => {
     });
 
     expect(api.setActiveSettingsCar).toHaveBeenCalledWith("car-2");
-    expect(harness.lifecycleCalls).toEqual([
-      "syncAnalysisInputs",
-      "refreshSpectrumDecorations",
-    ]);
+    expect(harness.lifecycleCalls).toEqual(["refreshSpectrumDecorations"]);
   });
 });
