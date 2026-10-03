@@ -16,6 +16,7 @@ _UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
 _EXPECTED_CORE_SMOKE_SPECS = {
     "smoke.analysis.spec.ts",
+    "smoke.cars.spec.ts",
     "smoke.critical.spec.ts",
     "smoke.esp_flash.spec.ts",
     "smoke.history.spec.ts",

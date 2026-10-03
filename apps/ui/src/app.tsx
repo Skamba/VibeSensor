@@ -27,6 +27,7 @@ import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { Analysis } from "./pages/analysis/Analysis";
+import { Cars } from "./pages/cars/Cars";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { History } from "./pages/history/History";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
@@ -353,7 +354,7 @@ export function App() {
       <View id="settingsView">
         <SettingsTabs />
         <SettingsTab id="carTab">
-          <panels.cars.Panel />
+          <Cars />
         </SettingsTab>
         <SettingsTab id="analysisTab">
           <Analysis />
