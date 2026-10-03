@@ -46,7 +46,7 @@ __all__ = [
 _DEFAULT_DEDUP_WINDOW_SIZE = 128
 _RESTART_SEQ_GAP = 1000
 # A sensor that reboots restarts its sequence counter and its device clock; until
-# the server's clock offset is re-applied (second sync, ~10 s after boot) its
+# the server's clock offset is re-applied (second sync, 2-4 s after it reconnects) its
 # t0_us is far behind the previous session. Genuine late/reordered UDP frames are
 # only milliseconds behind, so a rewind this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000

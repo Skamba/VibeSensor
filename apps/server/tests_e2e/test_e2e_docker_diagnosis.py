@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 import pytest
 
@@ -25,8 +25,13 @@ _GUIDED_DURATION_S = 25.0
 
 
 def _record(
-    e2e_env: dict[str, str], scenario: str, *, duration_s: float = _SIM_DURATION_S
+    e2e_env: dict[str, str],
+    scenario: str,
+    *,
+    duration_s: float = _SIM_DURATION_S,
+    before_stop: Callable[[dict], None] | None = None,
 ) -> tuple[str, dict]:
+    """Record *scenario*; *before_stop* sees the live recording status before the stop."""
     base = e2e_env["base_url"]
     remove_all_clients(base)
     run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
@@ -42,6 +47,8 @@ def _record(
         fault_wheel="rear-left",
         speed_kmh=80.0,
     )
+    if before_stop is not None:
+        before_stop(api_json(base, "/api/recording/status"))
     api_json(base, "/api/recording/stop", method="POST")
     run = _wait_complete(base, run_id)
     assert run["status"] == "complete", run
@@ -176,8 +183,14 @@ def test_guided_coast_down_classifies_what_the_vibration_follows_e2e(
     ruled_out: dict[str, str],
     sentence: str,
 ) -> None:
-    run_id, insights = _record(e2e_env, scenario, duration_s=_GUIDED_DURATION_S)
+    live_status: list[dict] = []
+    run_id, insights = _record(
+        e2e_env, scenario, duration_s=_GUIDED_DURATION_S, before_stop=live_status.append
+    )
     try:
+        # What a Live page reloaded mid-run restores the guided panel from.
+        completed = live_status[0]["guided_phases_completed"]
+        assert completed[:2] == ["sweep", "hold"], live_status
         run = api_json(e2e_env["base_url"], f"/api/history/{run_id}")
         marked = [step["phase"] for step in run["metadata"]["guided_phases"]]
         assert marked[:3] == ["sweep", "hold", "coast_down"], marked

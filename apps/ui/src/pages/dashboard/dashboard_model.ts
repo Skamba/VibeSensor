@@ -1,5 +1,6 @@
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import type { CarSelectionState } from "../../car_selection";
+import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { LocationOption } from "../../sensor_locations";
 import type {
   AdaptedClient,
@@ -315,18 +316,18 @@ export function activeCarText(
 
 export function speedText(
   speedMps: number | null,
-  unit: "kmh" | "mps",
+  unit: SpeedUnit,
   labelKey: string,
   t: Translate,
   fmt: (value: number, digits: number) => string,
 ): string {
-  const unitText = t(unit === "mps" ? "speed.unit.mps" : "speed.unit.kmh");
+  const unitText = t(speedUnitKey(unit));
   if (typeof speedMps !== "number" || !Number.isFinite(speedMps)) {
     return t("speed.none", { unit: unitText });
   }
   return t(labelKey, {
     unit: unitText,
-    value: fmt(unit === "mps" ? speedMps : speedMps * 3.6, 1),
+    value: fmt(kmhInUnit(speedMps * 3.6, unit), 1),
   });
 }
 
@@ -577,6 +578,10 @@ export function withLoggingError(
 
 /** Sweep, hold, then a neutral coast-down: the order the driver does them in. */
 const GUIDED_STEPS: readonly GuidedPhase[] = ["sweep", "hold", "coast_down"];
+/** The speeds the step instructions name, shown in the driver's speed unit. */
+const GUIDED_SWEEP_FROM_KMH = 50;
+const GUIDED_SWEEP_TO_KMH = 120;
+const GUIDED_COAST_DROP_KMH = 30;
 
 export interface GuidedStep {
   phase: GuidedPhase;
@@ -595,21 +600,35 @@ export interface GuidedTestModel {
   disabled: boolean;
 }
 
+function guidedInstruction(
+  phase: GuidedPhase,
+  unit: SpeedUnit,
+  t: Translate,
+): string {
+  const speed = (kmh: number) => fmt(kmhInUnit(kmh, unit), 0);
+  return t(`dashboard.guided.${phase}.instruction`, {
+    from: speed(GUIDED_SWEEP_FROM_KMH),
+    to: speed(GUIDED_SWEEP_TO_KMH),
+    drop: speed(GUIDED_COAST_DROP_KMH),
+    unit: t(speedUnitKey(unit)),
+  });
+}
+
 /**
- * The optional guided test drive shown while a run records. The server knows
- * the step in progress; `finishedRunId` remembers that this run's test ended.
+ * The optional guided test drive shown while a run records. The server
+ * reports the step in progress and the steps completed so far, so the panel
+ * survives a page reload mid-run.
  */
 export function guidedTestModel(
   status: LoggingStatusPayload,
-  finishedRunId: string | null,
+  unit: SpeedUnit,
   busy: boolean,
   t: Translate,
 ): GuidedTestModel {
   const current = status.guided_phase ?? null;
+  const completed = status.guided_phases_completed ?? [];
   const finished =
-    current === null &&
-    finishedRunId !== null &&
-    finishedRunId === status.run_id;
+    current === null && GUIDED_STEPS.every((step) => completed.includes(step));
   const index = current
     ? GUIDED_STEPS.indexOf(current)
     : finished
@@ -622,7 +641,7 @@ export function guidedTestModel(
       total: GUIDED_STEPS.length,
     }),
     title: t(`dashboard.guided.${phase}.title`),
-    instruction: t(`dashboard.guided.${phase}.instruction`),
+    instruction: guidedInstruction(phase, unit, t),
     state: (i < index ? "done" : i === index ? "current" : "todo") as
       | "done"
       | "current"

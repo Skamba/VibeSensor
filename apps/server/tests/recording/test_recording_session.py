@@ -51,11 +51,13 @@ def test_guided_phases_close_each_step_when_the_next_starts(make_logger) -> None
 
     now[0] += 5.0
     session.mark_guided_phase("sweep")
+    assert recorder.status().guided_phases_completed == ()
     now[0] += 20.0
     session.mark_guided_phase("hold")
     now[0] += 10.0
     session.mark_guided_phase("coast_down")
     assert session.current_guided_phase() == "coast_down"
+    assert recorder.status().guided_phases_completed == ("sweep", "hold")
     now[0] += 8.0
     session.mark_guided_phase(None)
 
@@ -66,6 +68,18 @@ def test_guided_phases_close_each_step_when_the_next_starts(make_logger) -> None
         RunGuidedPhase("coast_down", 35.0, 43.0),
     )
     assert recorder.status().guided_phase is None
+    # A reloaded Live page restores the finished guided test from the status.
+    assert recorder.status().guided_phases_completed == ("sweep", "hold", "coast_down")
+
+
+def test_repeated_guided_steps_are_listed_once(make_logger) -> None:
+    recorder = make_logger()
+    recorder.start_recording()
+
+    for phase in ("sweep", "hold", "sweep", "hold", None):
+        recorder.mark_guided_phase(phase)
+
+    assert recorder.status().guided_phases_completed == ("sweep", "hold")
 
 
 def test_guided_phase_is_ignored_without_an_active_recording(make_logger) -> None:
@@ -81,6 +95,7 @@ def test_guided_phases_reset_with_each_new_run(make_logger) -> None:
     recorder = make_logger()
     first = recorder.start_recording().run_id
     assert recorder.mark_guided_phase("hold").guided_phase == "hold"
+    assert recorder.mark_guided_phase("coast_down").guided_phases_completed == ("hold",)
     recorder.stop_recording()
     second = recorder.start_recording().run_id
 
@@ -88,3 +103,4 @@ def test_guided_phases_reset_with_each_new_run(make_logger) -> None:
     assert session.guided_phases_for_run(first) == ()
     assert session.guided_phases_for_run(second) == ()
     assert recorder.status().guided_phase is None
+    assert recorder.status().guided_phases_completed == ()

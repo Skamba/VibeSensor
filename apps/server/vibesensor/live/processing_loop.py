@@ -52,6 +52,17 @@ _LOW_LOAD_FAST_PATH_CLIENT_LIMIT = 8
 _LOW_LOAD_FAST_PATH_UPDATE_HZ = 10
 _LOW_LOAD_MAX_DUTY_CYCLE = 0.5
 
+CLOCK_SYNC_INTERVAL_S = 2.0
+"""Seconds between ``CMD_SYNC_CLOCK`` broadcasts, on the monotonic clock.
+
+Sensors apply the server offset from their second exchange, so a sensor that
+connects is raw-backed after 2-4 s. The interval stays well inside the
+registry's 8 s slow-exchange hold and the 15 s raw-capture sync-age limit, so a
+few lost or rejected exchanges in a row neither keep a slow estimate nor make
+the finalize proof ``stale_sync``. Timed rather than counted in ticks, so the
+low-load fast path, sensor count and CPU load don't change it.
+"""
+
 
 class ProcessingHealth(StrEnum):
     """Health status of the processing loop."""
@@ -442,17 +453,18 @@ class ProcessingLoop:
     async def run(self) -> None:
         """Tick loop: low-load fast path with bounded CPU, default cadence otherwise."""
         interval = 1.0 / max(1, self._fft_update_hz)
-        _sync_clock_tick = 0
-        _SYNC_CLOCK_EVERY_N_TICKS = max(1, int(5.0 / interval))  # ~every 5 s
+        next_sync_clock_s: float | None = None
         while True:
             delay = interval
             try:
-                _sync_clock_tick += 1
-                sync_clock = False
-                if _sync_clock_tick >= _SYNC_CLOCK_EVERY_N_TICKS:
-                    _sync_clock_tick = 0
-                    sync_clock = True
                 tick_start = time.monotonic()
+                if next_sync_clock_s is None:
+                    next_sync_clock_s = tick_start + CLOCK_SYNC_INTERVAL_S
+                sync_clock = tick_start >= next_sync_clock_s
+                if sync_clock:
+                    next_sync_clock_s += CLOCK_SYNC_INTERVAL_S
+                    if next_sync_clock_s <= tick_start:  # after a stall: no burst
+                        next_sync_clock_s = tick_start + CLOCK_SYNC_INTERVAL_S
                 active_client_count = await self._run_tick(sync_clock=sync_clock)
                 tick_dur = time.monotonic() - tick_start
                 delay = self._success_delay_s(

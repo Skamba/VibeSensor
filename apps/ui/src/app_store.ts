@@ -7,6 +7,7 @@ import {
   setSettingsSpeedUnit,
 } from "./api/settings";
 import type { Feedback } from "./components/feedback";
+import { type SpeedUnit, speedUnitKey } from "./format";
 import { lang, normalizeLang, setLanguage, t } from "./i18n";
 import { uiLogger } from "./ui_logger";
 
@@ -29,8 +30,6 @@ export const SETTINGS_TAB_IDS = [
   "espFlashTab",
 ] as const;
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
-
-export type SpeedUnit = "kmh" | "mps";
 
 export function isDemoMode(): boolean {
   return new URLSearchParams(globalThis.location?.search).has("demo");
@@ -202,7 +201,7 @@ export async function saveSpeedUnit(value: string): Promise<void> {
     selectedSpeedUnit.value = previous;
     speedUnitFeedback.value = saveFailedFeedback(
       t("speed.unit"),
-      t(previous === "mps" ? "speed.unit.mps" : "speed.unit.kmh"),
+      t(speedUnitKey(previous)),
       error,
     );
   }

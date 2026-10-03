@@ -22,6 +22,7 @@ import {
   checkDetail,
   type Readiness,
 } from "../src/pages/dashboard/readiness";
+import { setLanguage, t as activeT } from "../src/i18n";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 const t = (key: string, vars?: Record<string, unknown>) =>
@@ -424,12 +425,12 @@ describe("guidedTestModel", () => {
     model.steps.map((step) => step.state);
 
   test("only shows while a run records", () => {
-    expect(guidedTestModel(IDLE_STATUS, null, false, t).visible).toBe(false);
-    expect(guidedTestModel(recordingRun, null, false, t).visible).toBe(true);
+    expect(guidedTestModel(IDLE_STATUS, "kmh", false, t).visible).toBe(false);
+    expect(guidedTestModel(recordingRun, "kmh", false, t).visible).toBe(true);
   });
 
   test("offers to start with the sweep before any step", () => {
-    const model = guidedTestModel(recordingRun, null, false, t);
+    const model = guidedTestModel(recordingRun, "kmh", false, t);
 
     expect(states(model)).toEqual(["todo", "todo", "todo"]);
     expect(model.action).toEqual({
@@ -441,8 +442,12 @@ describe("guidedTestModel", () => {
 
   test("walks sweep, hold, then the neutral coast-down, then finishes", () => {
     const hold = guidedTestModel(
-      { ...recordingRun, guided_phase: "hold" },
-      null,
+      {
+        ...recordingRun,
+        guided_phase: "hold",
+        guided_phases_completed: ["sweep"],
+      },
+      "kmh",
       false,
       t,
     );
@@ -452,11 +457,14 @@ describe("guidedTestModel", () => {
         'dashboard.guided.next:{"step":"dashboard.guided.coast_down.title"}',
       phase: "coast_down",
     });
-    expect(hold.steps[1].instruction).toBe("dashboard.guided.hold.instruction");
 
     const coast = guidedTestModel(
-      { ...recordingRun, guided_phase: "coast_down" },
-      null,
+      {
+        ...recordingRun,
+        guided_phase: "coast_down",
+        guided_phases_completed: ["sweep", "hold"],
+      },
+      "kmh",
       false,
       t,
     );
@@ -467,18 +475,26 @@ describe("guidedTestModel", () => {
     });
   });
 
-  test("a finished guided test marks every step done and offers no action", () => {
-    const model = guidedTestModel(recordingRun, "run-1", false, t);
+  test("restores a finished guided test from the server's completed steps", () => {
+    const model = guidedTestModel(
+      {
+        ...recordingRun,
+        guided_phases_completed: ["sweep", "hold", "coast_down"],
+      },
+      "kmh",
+      false,
+      t,
+    );
 
     expect(model.finished).toBe(true);
     expect(states(model)).toEqual(["done", "done", "done"]);
     expect(model.action).toBeNull();
   });
 
-  test("a guided test finished in an earlier run does not carry over", () => {
+  test("a new run without completed steps starts over", () => {
     const model = guidedTestModel(
-      { ...recordingRun, run_id: "run-2" },
-      "run-1",
+      { ...recordingRun, run_id: "run-2", guided_phases_completed: [] },
+      "kmh",
       false,
       t,
     );
@@ -488,6 +504,50 @@ describe("guidedTestModel", () => {
   });
 
   test("disables the button while a request is in flight", () => {
-    expect(guidedTestModel(recordingRun, null, true, t).disabled).toBe(true);
+    expect(guidedTestModel(recordingRun, "kmh", true, t).disabled).toBe(true);
   });
+
+  test.each([
+    {
+      language: "en",
+      unit: "kmh",
+      sweep: "from about 50 to 120 km/h,",
+      coast: "about 30 km/h slower",
+    },
+    {
+      language: "en",
+      unit: "mps",
+      sweep: "from about 14 to 33 m/s,",
+      coast: "about 8 m/s slower",
+    },
+    {
+      language: "nl",
+      unit: "kmh",
+      sweep: "van ongeveer 50 naar 120 km/u,",
+      coast: "ongeveer 30 km/u langzamer",
+    },
+    {
+      language: "nl",
+      unit: "mps",
+      sweep: "van ongeveer 14 naar 33 m/s,",
+      coast: "ongeveer 8 m/s langzamer",
+    },
+  ] as const)(
+    "names step speeds in the speed unit ($language, $unit)",
+    async ({ language, unit, sweep, coast }) => {
+      await setLanguage(language);
+      try {
+        const model = guidedTestModel(recordingRun, unit, false, activeT);
+        const [sweepStep, holdStep, coastStep] = model.steps;
+        expect(sweepStep.instruction).toContain(sweep);
+        expect(coastStep.instruction).toContain(coast);
+        for (const step of model.steps) {
+          expect(step.instruction).not.toMatch(/\{\w+\}/);
+        }
+        expect(holdStep.instruction).not.toMatch(/km\/h|km\/u|m\/s/);
+      } finally {
+        await setLanguage("en");
+      }
+    },
+  );
 });
