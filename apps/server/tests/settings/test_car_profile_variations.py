@@ -21,7 +21,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_no_wheel_fault,
     make_noise_samples,
     make_profile_fault_samples,
@@ -60,7 +60,7 @@ def test_fault_detected_across_profiles(profile: dict[str, object], corner: str)
     assert conf >= 0.25, (
         f"Fault not detected for profile={profile['name']}, corner={corner}: conf={conf:.3f}"
     )
-    assert_confidence_label_valid(summary)
+    assert_confidence_level_valid(summary)
 
 
 # ===================================================================

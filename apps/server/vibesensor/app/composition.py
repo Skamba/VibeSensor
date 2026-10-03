@@ -191,6 +191,9 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         language_reader=settings.ui_preferences,
         ingest_diagnostics=ingest_diagnostics,
     )
+    outdated = history.requeue_outdated_analyses()
+    if outdated:
+        LOGGER.info("Re-analysing %d run(s) stored under an older analysis schema", len(outdated))
     stale_analyzing = history.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)

@@ -20,6 +20,7 @@ from vibesensor.summary.analysis_views import (
     SpeedBreakdownRow,
 )
 from vibesensor.summary.data_quality_contracts import DataQualityResponse
+from vibesensor.summary.diagnosis_contracts import DiagnosisPayload
 from vibesensor.summary.finding_payload_parts import FindingPayload
 
 __all__ = [
@@ -226,6 +227,7 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     findings: Required[list[FindingPayload]]
     top_causes: Required[list[FindingPayload]]
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
+    diagnosis: Required[DiagnosisPayload]
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
     speed_stats: Required[SpeedStatsResponse]

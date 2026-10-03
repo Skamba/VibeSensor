@@ -195,6 +195,17 @@ without a schema-version bump so existing v15 databases keep opening:
 - the column is no longer in the DDL; databases created before the removal
   keep it as an unused nullable column that nothing reads or writes
 - `HistoryDB` deletes any leftover `whole-run-artifacts/` directory when it opens
-- `summary/persisted_codec.py` drops the retired `whole_run_*` analysis fields,
-  `whole_run_*` analysis-metadata keys, and `whole_run_*` warnings when it
-  decodes stored analysis JSON
+- analyses stored before then carry an older `_schema_version` and are
+  re-analysed on startup (see below), so retired `whole_run_*` fields never
+  reach readers
+
+## Outdated stored analyses
+
+`runs.analysis_json` carries `_schema_version`
+(`PERSISTED_ANALYSIS_SCHEMA_VERSION` in `summary/persisted_analysis.py`). When
+the summary contract gains a required field, the version is bumped. On startup,
+`HistoryDB.requeue_outdated_analyses()` moves every `complete` run whose stored
+version differs back to `analyzing` with its analysis cleared, and the startup
+re-queue of `analyzing` runs re-analyses them from their stored samples (and raw
+capture, when still present). Readers treat an analysis with any other version
+as unsupported.

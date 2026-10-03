@@ -12,6 +12,8 @@ import math
 from dataclasses import dataclass
 from typing import ClassVar
 
+from vibesensor.domain.finding_types import ConfidenceLevel
+
 __all__ = ["ConfidenceAssessment"]
 
 
@@ -32,7 +34,18 @@ class ConfidenceAssessment:
     _TIER_HIGH: ClassVar[float] = 0.70
     _TIER_MEDIUM: ClassVar[float] = 0.40
 
+    _LEVEL_BY_LABEL: ClassVar[dict[str, ConfidenceLevel]] = {
+        "CONFIDENCE_HIGH": ConfidenceLevel.STRONG,
+        "CONFIDENCE_MEDIUM": ConfidenceLevel.MODERATE,
+        "CONFIDENCE_LOW": ConfidenceLevel.WEAK,
+    }
+
     # -- domain queries ----------------------------------------------------
+
+    @property
+    def level(self) -> ConfidenceLevel:
+        """Action-defined confidence level (see ``Finding.classify_confidence``)."""
+        return self._LEVEL_BY_LABEL.get(self.label_key, ConfidenceLevel.WEAK)
 
     @property
     def tier(self) -> str:
@@ -54,6 +67,29 @@ class ConfidenceAssessment:
         return self.tier == "A"
 
     # -- factory -----------------------------------------------------------
+
+    @classmethod
+    def from_level(
+        cls,
+        level: ConfidenceLevel,
+        *,
+        raw_confidence: float,
+        weak_spatial: bool = False,
+    ) -> ConfidenceAssessment:
+        """Rebuild an assessment from a persisted level (the level is authoritative)."""
+        label_key, tone = {
+            ConfidenceLevel.STRONG: ("CONFIDENCE_HIGH", "success"),
+            ConfidenceLevel.MODERATE: ("CONFIDENCE_MEDIUM", "warn"),
+            ConfidenceLevel.WEAK: ("CONFIDENCE_LOW", "neutral"),
+        }[level]
+        conf = float(raw_confidence) if math.isfinite(raw_confidence) else 0.0
+        return cls(
+            raw_confidence=conf,
+            label_key=label_key,
+            tone=tone,
+            pct_text=f"{max(0.0, min(100.0, conf * 100.0)):.0f}%",
+            weak_spatial=weak_spatial,
+        )
 
     @classmethod
     def assess(

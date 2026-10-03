@@ -163,9 +163,9 @@ During `execute_post_analysis()`, `PostAnalysisWorker`:
    persistence envelope.
 
 History readers unwrap the envelope back to the summary shape and stay
-persistence-only; they never re-run diagnostics. Analyses stored by older
-versions may still carry retired `whole_run_*` fields; the storage decoder
-(`summary/persisted_codec.py`) drops them on load.
+persistence-only; they never re-run diagnostics. Analyses stored under an
+older persisted-analysis schema version are re-analysed on startup (see
+`docs/history_db_schema.md`).
 The core
 history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an
@@ -178,8 +178,39 @@ and `report/document/builder.py:build_report_document()`,
 which performs the final document assembly before adapter-local PDF render
 planning.
 
-Persisted post-stop analysis strength/intensity outputs are dB-only.
-Raw ingest/sample acceleration fields may still be expressed in g.
+Persisted post-stop analysis strength/intensity outputs are in dB. The one
+exception is the `diagnosis` block (`analysis/diagnosis.py`), which reports
+amplitude at the diagnosed order in mg next to its dB above the location's
+noise floor (see `docs/metrics.md`). Raw ingest/sample acceleration fields may
+still be expressed in g.
+
+### The diagnosis block
+
+`analysis/diagnosis.py:build_diagnosis()` runs once per run, after findings and
+top causes exist, and is persisted as `summary["diagnosis"]`
+(`summary/diagnosis_contracts.py`). It is the single verdict the History UI and
+the PDF both show:
+
+- `verdict`: `fault` (Strong/Moderate candidate), `weak_evidence` (Weak
+  candidate), or `no_fault` (no candidate, or a Weak candidate fainter than the
+  moderate strength band). The candidate is `TestRun.diagnosis_candidate`: the
+  first surfaced, actionable top cause that is not baseline noise or a
+  transient.
+- `confidence_level`: the action-defined level (see `docs/metrics.md`); no
+  percentage is exposed anywhere.
+- `order_code` (T1/T2 tire, P1/P2 propshaft, E1/E2 engine), `frequency_hz` at
+  `reference_speed_kmh`, the matched speed range, presence ratio, and
+  `weak_reasons` codes; `order_findings` repeats those facts per surfaced
+  order-tracked finding (diagnosed one first) as workshop worksheet rows.
+- `zone`: a corner for wheel/tire faults (an axle when two corners on one axle
+  are within 1.5×), `engine_bay` for engine orders, and an axle or
+  `driveshaft_tunnel` for driveline orders.
+- `location_amplitudes` (mg + dB above floor + ratio to the strongest),
+  `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
+  strongest location with order markers, `source_checks`
+  (candidate / ruled out / not testable, with a reason), and the reference
+  `conditions` (speed source, RPM measured or estimated, tire circumference,
+  ratios).
 
 ## Adding a New Analysis Step
 

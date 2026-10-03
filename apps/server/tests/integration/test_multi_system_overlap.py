@@ -26,7 +26,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_diagnosis_contract,
     assert_no_localized_wheel,
     engine_hz,
@@ -441,4 +441,4 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any]) -> None:
     # Validate confidence label if above floor
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:
-        assert_confidence_label_valid(summary, msg=f"profile={profile['name']} {corner}")
+        assert_confidence_level_valid(summary, msg=f"profile={profile['name']} {corner}")

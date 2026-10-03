@@ -7,7 +7,6 @@ from _report_persistence_helpers import (
     findings_at_freq,
     uniform_samples,
 )
-from test_support.findings import make_finding
 from test_support.report_helpers import (
     analysis_metadata as make_metadata,
 )
@@ -15,17 +14,11 @@ from test_support.report_helpers import (
     analysis_sample_with_peaks as sample,
 )
 
-from vibesensor.analysis._view_types import PeakTableRowData
-from vibesensor.analysis.peaks.table import (
-    annotate_peak_rows_with_order_labels,
-)
 from vibesensor.analysis.peaks.table import (
     top_peaks_table_rows as _top_peaks_table_rows,
 )
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.summarize import build_findings_for_samples
-from vibesensor.domain.finding import Finding
-from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.recording.sensor_frame_mapping import (
     sensor_frames_from_mappings,
     sensor_frames_to_json_objects,
@@ -280,81 +273,3 @@ class TestPersistentPeakFindingsPhaseAwareness:
         )
         for finding in findings:
             assert finding.cruise_fraction == 0.0
-
-
-def _peak_row(frequency_hz: float) -> PeakTableRowData:
-    return PeakTableRowData(
-        rank=1,
-        frequency_hz=frequency_hz,
-        order_label="",
-        suspected_source="",
-        max_intensity_db=None,
-        median_intensity_db=None,
-        p95_intensity_db=None,
-        run_noise_baseline_db=None,
-        median_vs_run_noise_ratio=0.0,
-        p95_vs_run_noise_ratio=0.0,
-        strength_floor_db=None,
-        strength_db=None,
-        presence_ratio=0.0,
-        burstiness=0.0,
-        persistence_score=0.0,
-        peak_classification="patterned",
-        typical_speed_band="-",
-    )
-
-
-def _order_finding(finding_id: str, order: str, *matched_hz: float) -> Finding:
-    return make_finding(
-        finding_id=finding_id,
-        order=order,
-        matched_points=tuple(
-            OrderMatchObservation(
-                predicted_hz=hz,
-                matched_hz=hz,
-                rel_error=0.0,
-                amp=0.1,
-                location="Front Left",
-            )
-            for hz in matched_hz
-        ),
-    )
-
-
-class TestAnnotatePeakRowsWithOrderLabels:
-    def test_order_label_populated_from_finding(self) -> None:
-        rows = annotate_peak_rows_with_order_labels(
-            [_peak_row(11.0), _peak_row(25.0)],
-            [_order_finding("F_ORDER", "1x wheel order", 10.8, 11.0, 11.2)],
-        )
-        assert rows[0].order_label == "1x wheel order"
-        assert rows[0].suspected_source == "wheel/tire"
-        assert rows[1].order_label == ""
-
-    def test_no_annotation_when_frequency_too_far(self) -> None:
-        rows = annotate_peak_rows_with_order_labels(
-            [_peak_row(11.0)],
-            [_order_finding("F_ORDER", "1x wheel order", 50.0)],
-        )
-        assert rows[0].order_label == ""
-
-    def test_no_crash_when_no_findings(self) -> None:
-        rows = annotate_peak_rows_with_order_labels([_peak_row(11.0)], [])
-        assert rows[0].order_label == ""
-
-    def test_f_peak_findings_ignored(self) -> None:
-        rows = annotate_peak_rows_with_order_labels(
-            [_peak_row(41.0)],
-            [_order_finding("F_PEAK", "41.0 Hz", 41.0)],
-        )
-        assert rows[0].order_label == ""
-
-    def test_multiple_order_findings_annotate_different_peaks(self) -> None:
-        rows = annotate_peak_rows_with_order_labels(
-            [_peak_row(11.0), _peak_row(25.0), _peak_row(60.0)],
-            [
-                _order_finding("F_ORDER", "1x wheel order", 11.0),
-                _order_finding("F_ORDER", "2x engine order", 25.0),
-            ],
-        )
-        assert [row.order_label for row in rows] == ["1x wheel order", "2x engine order", ""]

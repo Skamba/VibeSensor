@@ -42,7 +42,7 @@ def _expected_snapshot(expected: GoldenReplayExpected) -> dict[str, object]:
         "suspected_source": expected.suspected_source,
         "strongest_location": expected.strongest_location,
         "confidence_range": list(expected.confidence_range),
-        "confidence_label_key": expected.confidence_label_key,
+        "confidence_level": expected.confidence_level,
         "unavailable_reasons": list(expected.unavailable_reasons),
         "tolerance_bands": dict(expected.tolerance_bands or {}),
         "max_false_positive_confidence": expected.max_false_positive_confidence,

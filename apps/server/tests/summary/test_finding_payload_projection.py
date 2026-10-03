@@ -148,7 +148,7 @@ def test_projection_keeps_canonical_domain_and_presentation_fields_together() ->
     assert payload["finding_id"] == "F_ORDER"
     assert payload["strongest_location"] == "rear-right"
     assert payload["evidence_summary"] == "Strong wheel-order correlation"
-    assert payload["confidence_tone"] == finding.confidence_assessment.tone
+    assert payload["confidence_level"] == finding.confidence_assessment.level
     assert payload["amplitude_metric"]["value"] == 22.3
     assert payload["frequency_hz_or_order"] == ""
 

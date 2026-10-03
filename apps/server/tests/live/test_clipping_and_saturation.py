@@ -30,7 +30,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_no_wheel_fault,
     extract_top,
     make_clipped_samples,
@@ -305,7 +305,7 @@ def test_profile_clipped_fault_no_crash(
     # Must produce valid confidence label if there is a finding
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:
-        assert_confidence_label_valid(
+        assert_confidence_level_valid(
             summary,
             msg=f"profile={profile['name']} {corner} clip={clip_amp}",
         )

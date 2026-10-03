@@ -79,8 +79,8 @@ def _assert_expected_outcome(
             assert top.get("strongest_location") == expected.strongest_location
         confidence = float(top.get("confidence", 0.0))
         assert expected.confidence_range[0] <= confidence <= expected.confidence_range[1]
-        if expected.confidence_label_key is not None:
-            assert top.get("confidence_label_key") == expected.confidence_label_key
+        if expected.confidence_level is not None:
+            assert top.get("confidence_level") == expected.confidence_level
     elif top is not None and expected.max_false_positive_confidence is not None:
         assert float(top.get("confidence", 0.0)) <= expected.max_false_positive_confidence
     else:

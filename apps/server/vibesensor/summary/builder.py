@@ -46,6 +46,7 @@ from vibesensor.summary.data_quality_payload import (
     AccelStatisticsLike,
     build_data_quality_dict,
 )
+from vibesensor.summary.diagnosis_contracts import DiagnosisPayload
 from vibesensor.summary.findings_payload import serialize_findings
 from vibesensor.summary.location_intensity_payload import (
     serialize_location_intensity_rows,
@@ -97,6 +98,7 @@ class AnalysisSummaryBuildContext:
     speed_non_null_pct: float
     accel_stats: AccelStatisticsLike
     amp_metric_values: list[float]
+    diagnosis: DiagnosisPayload
 
 
 def build_analysis_summary(
@@ -129,6 +131,7 @@ def build_analysis_summary(
     speed_non_null_pct: float,
     accel_stats: AccelStatisticsLike,
     amp_metric_values: list[float],
+    diagnosis: DiagnosisPayload,
 ) -> AnalysisSummary:
     """Stable public entrypoint for assembling an analysis summary payload."""
 
@@ -162,6 +165,7 @@ def build_analysis_summary(
             speed_non_null_pct=speed_non_null_pct,
             accel_stats=accel_stats,
             amp_metric_values=amp_metric_values,
+            diagnosis=diagnosis,
         )
     )
 
@@ -316,6 +320,7 @@ def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSumma
         "findings": serialize_findings(context.findings),
         "top_causes": serialize_findings(context.top_causes),
         "most_likely_origin": serialize_origin_summary(context.most_likely_origin),
+        "diagnosis": context.diagnosis,
         "test_plan": context.test_plan,
         "phase_timeline": phase_timeline_payload,
         "speed_stats": _speed_stats_payload(context.speed_stats),

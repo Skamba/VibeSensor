@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
-
 from test_support.findings import make_finding_payload
 
-from vibesensor.domain.finding import Finding
-from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.history.projection import (
     project_analysis_summary,
     project_persisted_analysis,
 )
-from vibesensor.summary.finding_fields import finding_payload_from_domain
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 
 
@@ -76,79 +71,6 @@ def test_project_analysis_summary_drops_persisted_origin_without_primary_finding
 
     assert test_run.primary_finding is None
     assert projected["most_likely_origin"] == {}
-
-
-def test_project_analysis_summary_preserves_persisted_confidence_reason() -> None:
-    finding = Finding(
-        finding_id="F001",
-        suspected_source=VibrationSource.WHEEL_TIRE,
-        confidence=0.66,
-        strongest_location="front-left",
-        weak_spatial_separation=True,
-    ).with_confidence_assessment(
-        strength_band_key="moderate",
-        steady_speed=True,
-        has_reference_gaps=False,
-        sensor_count=4,
-    )
-    assert finding.confidence_assessment is not None
-    finding = replace(
-        finding,
-        confidence_assessment=replace(
-            finding.confidence_assessment,
-            reason="Wheel and driveline evidence overlap; inspect both areas.",
-        ),
-    )
-    payload = finding_payload_from_domain(finding)
-    summary = {
-        "case_id": "case-001",
-        "run_id": "run-001",
-        "metadata": _canonical_metadata(),
-        "findings": [payload],
-        "top_causes": [payload],
-        "test_plan": [],
-        "run_suitability": [],
-        "sensor_locations": ["front-left", "front-right", "rear-left", "rear-right"],
-    }
-
-    projected, _ = project_analysis_summary(summary)
-
-    assert projected["top_causes"][0]["confidence_reason"] == payload["confidence_reason"]
-
-
-def test_project_analysis_summary_uses_list_sensor_locations_for_fallback_confidence() -> None:
-    summary = {
-        "case_id": "case-001",
-        "run_id": "run-001",
-        "metadata": _canonical_metadata(),
-        "findings": [
-            make_finding_payload(
-                finding_id="F001",
-                confidence=0.66,
-                strongest_location="front-left",
-                weak_spatial_separation=True,
-            )
-        ],
-        "top_causes": [
-            make_finding_payload(
-                finding_id="F001",
-                confidence=0.66,
-                strongest_location="front-left",
-                weak_spatial_separation=True,
-            )
-        ],
-        "test_plan": [],
-        "run_suitability": [],
-        "sensor_locations": ["front-left", "front-right", "rear-left", "rear-right"],
-    }
-
-    projected, test_run = project_analysis_summary(summary)
-
-    assert test_run.sensor_count == 4
-    assert (
-        projected["top_causes"][0]["confidence_reason"]
-        == "Vibration spread across multiple locations"
-    )
 
 
 def test_project_persisted_analysis_projects_persisted_payload_contract() -> None:

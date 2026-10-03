@@ -13,6 +13,7 @@ from vibesensor.summary.analysis_views import (
     MatchedPoint,
     PhaseEvidence,
 )
+from vibesensor.summary.diagnosis_contracts import ConfidenceLevelValue
 
 __all__ = [
     "AmplitudeMetric",
@@ -64,10 +65,7 @@ class FindingPresentationPayload(TypedDict, total=False):
     evidence_summary: Required[str]
     frequency_hz_or_order: Required[float | str]
     amplitude_metric: Required[AmplitudeMetric]
-    confidence_label_key: str | None
-    confidence_reason: str | None
-    confidence_tone: str | None
-    confidence_pct: str | None
+    confidence_level: ConfidenceLevelValue | None
 
 
 @with_config(ConfigDict(extra="forbid"))
@@ -77,6 +75,6 @@ class FindingPayload(FindingCorePayload, FindingPresentationPayload, total=False
     Boundary serializers and HTTP models should import this TypedDict directly
     so future field changes have one source of truth. It intentionally includes
     a few presentation-oriented projections (``evidence_summary``,
-    ``frequency_hz_or_order``, ``amplitude_metric``, and the confidence label
-    fields) alongside the domain-owned finding data.
+    ``frequency_hz_or_order``, ``amplitude_metric``, and the action-defined
+    ``confidence_level``) alongside the domain-owned finding data.
     """

@@ -85,7 +85,6 @@ export interface PrimaryFinding {
 
 export type InsightsModel =
   | { kind: "state"; message: string }
-  | { kind: "empty"; message: string }
   | {
       kind: "findings";
       primary: PrimaryFinding | null;
@@ -132,6 +131,22 @@ const SOURCE_LABEL_KEYS = new Set([
   "unknown_resonance",
 ]);
 
+type Diagnosis = HistoryInsightsPayload["diagnosis"];
+type ConfidenceLevel = NonNullable<Diagnosis["confidence_level"]>;
+
+const ZONE_KEYS = new Set([
+  "front_left_wheel",
+  "front_right_wheel",
+  "rear_left_wheel",
+  "rear_right_wheel",
+  "front_axle",
+  "rear_axle",
+  "engine_bay",
+  "driveshaft_tunnel",
+  "transmission",
+]);
+const NON_FAULT_SOURCES = new Set(["baseline_noise", "transient_impact"]);
+
 function findings(summary: HistoryInsightsPayload | null): Finding[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
 }
@@ -139,7 +154,8 @@ function findings(summary: HistoryInsightsPayload | null): Finding[] {
 function sourceKey(source: unknown): string {
   return String(source ?? "")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[\s/]+/g, "_");
 }
 
 export function sourceLabel(source: unknown, t: Translate): string {
@@ -151,7 +167,7 @@ export function sourceLabel(source: unknown, t: Translate): string {
   if (SOURCE_LABEL_KEYS.has(key)) {
     return t(`history.source.${key}`);
   }
-  if (!/^[a-z0-9_-]+$/.test(raw)) {
+  if (!/^[a-z0-9_-]+$/.test(key)) {
     return raw;
   }
   return key
@@ -161,31 +177,22 @@ export function sourceLabel(source: unknown, t: Translate): string {
     .join(" ");
 }
 
-function inconclusive(finding: Finding | null): boolean {
-  const key = sourceKey(finding?.suspected_source);
-  return (
-    finding !== null &&
-    (key === "" || key === "unknown_resonance" || key === "baseline_noise")
-  );
+function levelTone(level: ConfidenceLevel | null | undefined): Tone {
+  return level === "strong"
+    ? "success"
+    : level === "moderate"
+      ? "warn"
+      : "neutral";
 }
 
+/** The one confidence expression: a level word, never a percentage. */
 function confidenceText(
-  finding: Finding,
-  f: Pick<Formatters, "fmt" | "t">,
+  level: ConfidenceLevel | null | undefined,
+  t: Translate,
 ): string {
-  const value =
-    typeof finding.confidence_pct === "string" && finding.confidence_pct.trim()
-      ? finding.confidence_pct
-      : typeof finding.confidence === "number" &&
-          Number.isFinite(finding.confidence)
-        ? f.fmt(finding.confidence, 2)
-        : "--";
-  return f.t("report.confidence", { value });
-}
-
-function findingTone(finding: Finding | null): Tone {
-  const tone = String(finding?.confidence_tone ?? "").toLowerCase();
-  return tone === "success" || tone === "warn" ? tone : "neutral";
+  return level
+    ? t("history.confidence", { level: t(`history.confidence_level.${level}`) })
+    : "";
 }
 
 function signatureText(finding: Finding, fmt: Formatters["fmt"]): string {
@@ -194,6 +201,41 @@ function signatureText(finding: Finding, fmt: Formatters["fmt"]): string {
     return `${fmt(raw, 1)} Hz`;
   }
   return String(raw ?? "").trim() || "--";
+}
+
+function diagnosisSignature(
+  diagnosis: Diagnosis,
+  fmt: Formatters["fmt"],
+): string {
+  const parts: string[] = [];
+  if (diagnosis.order_code) {
+    parts.push(diagnosis.order_code);
+  }
+  if (diagnosis.frequency_hz != null) {
+    const at =
+      diagnosis.reference_speed_kmh != null
+        ? ` @ ${fmt(diagnosis.reference_speed_kmh, 0)} km/h`
+        : "";
+    parts.push(`${fmt(diagnosis.frequency_hz, 1)} Hz${at}`);
+  }
+  return parts.join(" · ") || "--";
+}
+
+function zoneText(diagnosis: Diagnosis, t: Translate): string {
+  if (diagnosis.zone && ZONE_KEYS.has(diagnosis.zone)) {
+    return t(`history.zone.${diagnosis.zone}`);
+  }
+  return diagnosis.location || t("report.missing");
+}
+
+function speedRangeText(
+  low: number | null | undefined,
+  high: number | null | undefined,
+  f: Pick<Formatters, "fmt" | "t">,
+): string {
+  return low != null && high != null
+    ? `${f.fmt(low, 0)}–${f.fmt(high, 0)} km/h`
+    : f.t("report.missing");
 }
 
 function locationText(
@@ -305,7 +347,7 @@ export function buildRow(
 ): RowModel {
   const { t, fmt, formatInt } = f;
   const summary = rowSummary(detail);
-  const primary = findings(summary)[0] ?? null;
+  const diagnosis = summary?.diagnosis ?? null;
   const badge = statusBadge(run, detail, t);
   const chips: RowModel["chips"] = [{ key: "status", ...badge }];
   if (failed(run) && run.error_message) {
@@ -316,27 +358,16 @@ export function buildRow(
     });
   }
 
-  const source =
-    summary?.most_likely_origin?.suspected_source ||
-    primary?.suspected_source ||
-    "";
-  const label =
-    primary && inconclusive(primary)
-      ? t("history.row_source_inconclusive")
-      : source
-        ? sourceLabel(source, t)
-        : "";
+  const label = diagnosis ? verdictHeadline(diagnosis, t) : "";
   const ready = postAnalysisReady(run);
   const headline =
     label ||
     (ready && (detail.previewLoading || detail.insightsLoading || !summary)
       ? t("history.row_summary_loading")
-      : ready && summary
-        ? t("history.row_no_findings")
-        : badge.text);
+      : badge.text);
   const meta: string[] = [];
-  if (primary) {
-    meta.push(confidenceText(primary, f));
+  if (diagnosis?.confidence_level) {
+    meta.push(confidenceText(diagnosis.confidence_level, t));
   }
   const duration = durationSeconds(run, detail);
   if (duration !== null) {
@@ -379,6 +410,16 @@ export function buildRow(
   };
 }
 
+function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
+  if (diagnosis.verdict === "no_fault") {
+    return t("history.verdict.no_fault");
+  }
+  if (diagnosis.verdict === "weak_evidence") {
+    return t("history.verdict.weak_evidence");
+  }
+  return sourceLabel(diagnosis.source, t);
+}
+
 function secondaryFinding(
   finding: Finding,
   summary: HistoryInsightsPayload,
@@ -386,8 +427,8 @@ function secondaryFinding(
 ): SecondaryFinding {
   return {
     source: sourceLabel(finding.suspected_source, f.t),
-    confidence: confidenceText(finding, f),
-    tone: findingTone(finding),
+    confidence: confidenceText(finding.confidence_level, f.t),
+    tone: levelTone(finding.confidence_level),
     signature: signatureText(finding, f.fmt),
     location: locationText(finding, summary, f.t),
     speedBand: speedBandText(finding, summary, f.t),
@@ -395,56 +436,83 @@ function secondaryFinding(
   };
 }
 
-function primaryFinding(
+function noFaultCard(
   summary: HistoryInsightsPayload,
-  primary: Finding,
   f: Formatters,
 ): PrimaryFinding {
   const { t } = f;
-  const unclear = inconclusive(primary);
-  const location = locationText(primary, summary, t);
-  const signature = signatureText(primary, f.fmt);
-  const confident =
-    findingTone(primary) === "success" ||
-    (typeof primary.confidence === "number" &&
-      Number.isFinite(primary.confidence) &&
-      primary.confidence >= 0.85);
-  const nextStep = unclear
-    ? t("history.inconclusive_next_step")
-    : confident && location !== t("report.missing")
-      ? t("history.findings_next_step", { location })
-      : null;
+  const speeds = summary.speed_stats;
   return {
-    eyebrow: t(
-      unclear ? "history.capture_verdict" : "history.primary_diagnosis",
-    ),
-    headline: unclear
-      ? t("history.inconclusive_title")
-      : sourceLabel(primary.suspected_source, t),
-    signature,
-    confidence: confidenceText(primary, f),
-    tone: findingTone(primary),
-    explanation: String(
-      primary.evidence_summary ??
-        summary.most_likely_origin?.explanation ??
-        (unclear ? t("history.inconclusive_body") : ""),
-    ),
+    eyebrow: t("history.verdict.eyebrow"),
+    headline: t("history.verdict.no_fault"),
+    signature: "",
+    confidence: "",
+    tone: "success",
+    explanation: t("history.verdict.no_fault_body"),
     chips: [
-      { label: t("history.findings_location"), value: location },
+      {
+        label: t("history.covered_speeds"),
+        value: speedRangeText(speeds.min_kmh, speeds.max_kmh, f),
+      },
+      {
+        label: t("history.summary_sensor_count"),
+        value: f.formatInt(summary.sensor_count_used),
+      },
+    ],
+    nextStepLabel: null,
+    nextStep: null,
+  };
+}
+
+function diagnosisCard(
+  summary: HistoryInsightsPayload,
+  diagnosis: Diagnosis,
+  f: Formatters,
+): PrimaryFinding {
+  const { t } = f;
+  const weak = diagnosis.verdict === "weak_evidence";
+  const level = diagnosis.confidence_level;
+  const zone = zoneText(diagnosis, t);
+  const source = sourceLabel(diagnosis.source, t);
+  return {
+    eyebrow: t(weak ? "history.verdict.eyebrow" : "history.primary_diagnosis"),
+    headline: weak ? t("history.verdict.weak_evidence") : source,
+    signature: diagnosisSignature(diagnosis, f.fmt),
+    confidence: [
+      confidenceText(level, t),
+      level ? t(`history.confidence_meaning.${level}`) : "",
+    ]
+      .filter(Boolean)
+      .join(" — "),
+    tone: levelTone(level),
+    explanation: weak
+      ? t("history.verdict.weak_body", { source, location: zone })
+      : String(
+          summary.findings.find(
+            (item) => item.finding_id === diagnosis.finding_id,
+          )?.evidence_summary ?? "",
+        ),
+    chips: [
+      { label: t("history.findings_location"), value: zone },
       {
         label: t("history.findings_speed_band"),
-        value: speedBandText(primary, summary, t),
+        value: speedRangeText(
+          diagnosis.speed_min_kmh,
+          diagnosis.speed_max_kmh,
+          f,
+        ),
       },
-      { label: t("history.findings_signature"), value: signature },
+      {
+        label: t("history.findings_signature"),
+        value: diagnosisSignature(diagnosis, f.fmt),
+      },
     ],
-    nextStepLabel: nextStep
-      ? t(
-          unclear
-            ? "history.inconclusive_next_step_label"
-            : "history.findings_next_step_label",
-        )
-      : null,
-    nextStep,
+    nextStepLabel: t(
+      weak ? "history.recapture_label" : "history.findings_next_step_label",
+    ),
+    nextStep: weak
+      ? t("history.recapture_recipe")
+      : t("history.findings_next_step", { location: zone }),
   };
 }
 
@@ -460,17 +528,28 @@ function insightsModel(detail: RunDetail, f: Formatters): InsightsModel {
       ),
     };
   }
-  const list = findings(summary);
-  if (!list.length) {
-    return { kind: "empty", message: t("report.no_findings_for_run") };
+  const diagnosis = summary.diagnosis;
+  if (diagnosis.verdict === "no_fault") {
+    return {
+      kind: "findings",
+      primary: noFaultCard(summary, f),
+      secondaryTitle: null,
+      visibleSecondary: [],
+      hiddenSecondary: [],
+      showMoreLabel: null,
+    };
   }
-  const secondary = list
-    .slice(1)
+  const secondary = findings(summary)
+    .filter(
+      (finding) =>
+        finding.finding_id !== diagnosis.finding_id &&
+        !NON_FAULT_SOURCES.has(sourceKey(finding.suspected_source)),
+    )
     .map((finding) => secondaryFinding(finding, summary, f));
   const hidden = secondary.slice(2);
   return {
     kind: "findings",
-    primary: primaryFinding(summary, list[0], f),
+    primary: diagnosisCard(summary, diagnosis, f),
     secondaryTitle: secondary.length
       ? t("history.secondary_candidates_title")
       : null,

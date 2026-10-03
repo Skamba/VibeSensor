@@ -183,7 +183,7 @@ class TestFindingRoundtrip:
         assert restored.confidence_assessment.label_key == original.confidence_assessment.label_key
         assert restored.confidence_assessment.tone == original.confidence_assessment.tone
         assert restored.confidence_assessment.pct_text == original.confidence_assessment.pct_text
-        assert restored.confidence_assessment.reason == original.confidence_assessment.reason
+        assert restored.confidence_assessment.level == original.confidence_assessment.level
 
     def test_decode_ignores_pure_presentation_hints(self) -> None:
         baseline_payload = finding_payload_from_domain(

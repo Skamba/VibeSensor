@@ -5,6 +5,8 @@ from __future__ import annotations
 from enum import StrEnum
 
 __all__ = [
+    "ConfidenceLevel",
+    "DiagnosisVerdict",
     "FindingKind",
     "VibrationSource",
 ]
@@ -33,3 +35,23 @@ class FindingKind(StrEnum):
     REFERENCE = "reference"
     INFORMATIONAL = "informational"
     DIAGNOSTIC = "diagnostic"
+
+
+class ConfidenceLevel(StrEnum):
+    """Action-defined confidence in a diagnosis; the only confidence users see.
+
+    ``STRONG``: go fix it. ``MODERATE``: do the cheap confirming check first.
+    ``WEAK``: don't buy parts; record the test again.
+    """
+
+    STRONG = "strong"
+    MODERATE = "moderate"
+    WEAK = "weak"
+
+
+class DiagnosisVerdict(StrEnum):
+    """Run-level outcome shown identically by the UI and the PDF."""
+
+    FAULT = "fault"
+    WEAK_EVIDENCE = "weak_evidence"
+    NO_FAULT = "no_fault"

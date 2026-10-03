@@ -23,7 +23,7 @@ from test_support import (
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_label_valid,
+    assert_confidence_level_valid,
     assert_has_warnings,
     assert_no_wheel_fault,
     extract_top,
@@ -62,7 +62,7 @@ def test_strong_single_sensor_reaches_high_confidence(profile: dict[str, Any], c
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
     conf = top_confidence(summary)
-    assert_confidence_label_valid(summary)
+    assert_confidence_level_valid(summary)
     assert_has_warnings(summary)
     assert conf >= 0.60, (
         f"Strong single-sensor fault at {corner} ({profile['name']}) "
@@ -101,7 +101,7 @@ def test_strong_4sensor_fault_reaches_medium_confidence(
     assert conf >= 0.40, (
         f"Strong fault at {corner}/{speed} ({profile['name']}) gave conf={conf:.3f}, expected ≥0.40"
     )
-    assert_confidence_label_valid(summary)
+    assert_confidence_level_valid(summary)
     band = parse_speed_band(top)
     assert band[0] <= speed <= band[1]
 
@@ -131,9 +131,9 @@ def test_negligible_strength_caps_to_medium(profile: dict[str, Any], corner: str
     assert top is not None, (
         f"Expected a finding for negligible-strength case at {corner} ({profile['name']})"
     )
-    label = top.get("confidence_label_key", "")
-    assert label != "CONFIDENCE_HIGH", (
-        f"Negligible strength ({corner}, {profile['name']}) should cap to MEDIUM, got {label}"
+    level = top.get("confidence_level", "")
+    assert level != "strong", (
+        f"Negligible strength ({corner}, {profile['name']}) should cap to moderate, got {level}"
     )
 
 
@@ -243,7 +243,7 @@ def test_confidence_label_transition(
     fault_amp: float,
     fault_db: float,
 ) -> None:
-    """Confidence labels should be consistent with the numeric confidence value."""
+    """Confidence levels should be consistent with the numeric confidence value."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
         profile=profile,
@@ -266,30 +266,14 @@ def test_confidence_label_transition(
         )
     else:
         conf = float(top.get("confidence", 0))
-        label = top.get("confidence_label_key", "")
-        tone = top.get("confidence_tone", "")
-
-        # Validate label-confidence consistency
+        level = top.get("confidence_level", "")
+        # Strong >= 0.70 (may be capped to moderate), moderate >= 0.40, else weak.
         if conf >= 0.70:
-            assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM"), (
-                f"conf={conf:.3f} → expected HIGH or MEDIUM label, got {label}"
-            )
+            assert level in ("strong", "moderate"), f"conf={conf:.3f} → got {level}"
         elif conf >= 0.40:
-            assert label in ("CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
-                f"conf={conf:.3f} → expected MEDIUM or LOW label, got {label}"
-            )
+            assert level == "moderate", f"conf={conf:.3f} → got {level}"
         else:
-            assert label in ("CONFIDENCE_LOW", "CONFIDENCE_MEDIUM"), (
-                f"conf={conf:.3f} → expected LOW label, got {label}"
-            )
-
-        # Validate tone-label consistency
-        if label == "CONFIDENCE_HIGH":
-            assert tone == "success"
-        elif label == "CONFIDENCE_MEDIUM":
-            assert tone == "warn"
-        elif label == "CONFIDENCE_LOW":
-            assert tone == "neutral"
+            assert level == "weak", f"conf={conf:.3f} → got {level}"
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
