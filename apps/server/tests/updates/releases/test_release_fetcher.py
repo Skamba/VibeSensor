@@ -135,6 +135,21 @@ class TestGitHubReleaseAsset:
             sha256="a" * 64,
         )
 
+    @pytest.mark.parametrize(
+        "digest",
+        [
+            pytest.param(f"sha256:{'g' * 64}", id="non-hex"),
+            pytest.param(f"sha256:{'a' * 63}", id="short"),
+            pytest.param(f"md5:{'a' * 64}", id="other-algorithm"),
+        ],
+    )
+    def test_untrusted_digests_leave_the_asset_unverified(self, digest: str) -> None:
+        asset = GitHubReleaseAsset.from_api_record(
+            _asset_record(name="wheel.whl", url="https://a", digest=digest)
+        )
+
+        assert asset.sha256 == ""
+
 
 class TestGitHubRelease:
     def test_from_api_record_decodes_release(self) -> None:

@@ -321,3 +321,33 @@ async def test_usb_internet_snapshot_reports_no_carrier_hint_without_activation(
         "Enable USB tethering/personal hotspot and trust this Pi on the phone."
     )
     assert not any("device up eth0" in " ".join(call[0]) for call in runner.calls)
+
+
+@pytest.mark.asyncio
+async def test_usb_interface_is_found_by_its_usb_device_path_and_needs_a_default_route(
+    tmp_path: Path,
+) -> None:
+    sys_class_net = tmp_path / "sys" / "class" / "net"
+    sys_class_net.mkdir(parents=True)
+    # r8152 is not a known tethering driver: only the USB device path identifies it.
+    _make_usb_interface(sys_class_net, interface_name="eth1", driver_name="r8152", carrier_on=True)
+    runner = FakeRunner()
+    runner.set_response(
+        "nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device status",
+        0,
+        "eth1:ethernet:connected:USB LAN\n",
+    )
+    runner.set_response(
+        "ip -4 -o addr show dev eth1 scope global",
+        0,
+        "3: eth1    inet 192.168.8.20/24 brd 192.168.8.255 scope global eth1\n",
+    )
+    runner.set_response("ip -4 route show default dev eth1", 0, "")
+    service = UsbInternetStatusService(runner=runner, sys_class_net=sys_class_net)
+
+    snapshot = await service.snapshot()
+
+    assert snapshot.detected is True
+    assert snapshot.interface_name == "eth1"
+    assert snapshot.has_default_route is False
+    assert snapshot.usable is False

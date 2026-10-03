@@ -244,8 +244,9 @@ async def test_flash_job_uses_cached_bundle_manifest(tmp_path: Path) -> None:
 
     mgr.start(port=None, auto_detect=True)
     assert mgr.status.state.value == "running"
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "success"
     assert mgr.status.phase == "done"
     assert mgr.status.last_success_at == mgr.status.finished_at
@@ -269,8 +270,9 @@ async def test_flash_fails_fast_when_no_firmware_available(tmp_path: Path) -> No
     mgr, _ = _build_manager(cache_dir)
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "failed"
     assert "No firmware bundle available" in str(mgr.status.error)
     assert any("updater" in line.lower() for line in mgr.logs_since(after=0)["lines"])
@@ -284,8 +286,9 @@ async def test_flash_fails_when_bundle_metadata_is_corrupt(tmp_path: Path) -> No
     mgr, runner = _build_manager(cache_dir)
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
 
     assert mgr.status.state.value == "failed"
     assert "metadata is corrupt" in str(mgr.status.error)
@@ -302,8 +305,9 @@ async def test_single_job_lock_and_cancel(tmp_path: Path) -> None:
     with pytest.raises(UpdateError, match="already in progress"):
         mgr.start(port="/dev/ttyUSB0", auto_detect=False)
     assert mgr.cancel() is True
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "cancelled"
     assert mgr.status.phase == "cancelled"
     assert mgr.history()[0]["state"] == "cancelled"
@@ -321,8 +325,9 @@ async def test_multiple_ports_without_choice_fails_actionably(tmp_path: Path) ->
     mgr, _ = _build_manager(cache_dir, ports=two_ports)
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "failed"
     assert "Multiple serial ports" in str(mgr.status.error)
 
@@ -341,8 +346,9 @@ async def test_esp_flash_api_lifecycle(tmp_path: Path) -> None:
     history_ep = _route_endpoint(router, "/api/esp-flash/history", "GET")
 
     await start_ep(type("Req", (), {"port": None, "auto_detect": True})())
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert response_payload(await status_ep())["state"] == "success"
     assert response_payload(await logs_ep(after=0))["next_index"] >= 1
     assert response_payload(await cancel_ep()) == {"cancelled": False}
@@ -364,8 +370,9 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path: Path) -> None:
         await start_ep(req)
     assert exc_info.value.status_code == 409
     mgr.cancel()
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
 
 
 @pytest.mark.asyncio
@@ -382,8 +389,9 @@ async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     mgr, runner = _build_manager(cache_dir)
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "success"
     assert any(call[1:3] == ["-m", "esptool"] for call in runner.calls)
 
@@ -395,8 +403,9 @@ async def test_flash_fails_when_esptool_erase_step_fails(tmp_path: Path) -> None
     mgr, runner = _build_manager(cache_dir, runner=_FakeRunner(fail_erase=True))
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "failed"
     assert mgr.status.phase == "failed"
     assert mgr.status.error == "Flash erase step failed"
@@ -414,8 +423,9 @@ async def test_flash_fails_cleanly_for_operational_os_errors(tmp_path: Path) -> 
     mgr, _runner = _build_manager(cache_dir, runner=_FakeRunner(raise_os_error=True))
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "failed"
     assert mgr.status.error == "Flash failed: serial port disappeared"
     assert "serial port disappeared" in " ".join(mgr.logs_since(after=0)["lines"])
@@ -434,8 +444,9 @@ async def test_flash_no_network_access_in_flash_path(tmp_path: Path, monkeypatch
     monkeypatch.setattr("urllib.request.urlopen", _block_network)
 
     mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
+    task = mgr.job_task
+    assert task is not None
+    await task
     assert mgr.status.state.value == "success"
 
 

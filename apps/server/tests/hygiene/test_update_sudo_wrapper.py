@@ -83,3 +83,11 @@ def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> 
     assert result.returncode == 126
     assert "is not allowed" in result.stderr
     assert result.stdout == ""
+
+
+def test_update_sudo_wrapper_rejects_commands_outside_the_allowlist(tmp_path: Path) -> None:
+    result = _run_wrapper(tmp_path, ["bash", "-c", "id"])
+
+    assert result.returncode == 126
+    assert "is not allowed" in result.stderr
+    assert result.stdout == ""
