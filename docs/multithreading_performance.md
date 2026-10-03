@@ -3,10 +3,9 @@
 ## Summary
 
 Live FFT/metrics computation runs serially, off the asyncio event loop, in one
-worker thread per processing tick. There is no thread pool for live compute or
-for whole-run post-analysis spectra: both workloads are dominated by many small
-NumPy calls that hold the GIL, so thread pools added contention instead of
-speedup.
+worker thread per processing tick. There is no thread pool for live compute:
+it is dominated by many small NumPy calls that hold the GIL, so thread pools
+added contention instead of speedup.
 
 ## Live processing tick
 
@@ -32,13 +31,6 @@ Measured on a 32-thread x86 dev host with fresh data every tick (no cache hits):
 The default tick interval is 250 ms (`FFT_UPDATE_HZ=4`), and the low-load fast
 path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 4/5 core, serial compute (~45–90 ms) stays well inside the tick budget.
-
-## Whole-run post-analysis spectra
-
-`analysis/whole_run_spectra.py` processes chunks serially inside the
-background post-analysis job. Measured on the same host for a 4-sensor, 800 Hz,
-5-minute run (298 windows per sensor): serial ~1.3–1.5 s vs ~6.9–8.4 s with a
-4-thread executor.
 
 ## Post-analysis and UDP ingest
 

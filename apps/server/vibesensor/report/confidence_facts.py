@@ -1,37 +1,27 @@
-"""Prepared report-confidence facts projected from the canonical diagnosis policy."""
+"""Prepared report-confidence facts for the summary diagnosis.
+
+The headline score, label and percentage are the primary finding's own
+confidence, exactly as the UI shows it. The scored assessment only contributes
+the support and counterevidence factors that explain it.
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from dataclasses import replace
 
 from vibesensor.domain.diagnosis_assessment import (
     DiagnosisAssessment,
-    DiagnosisAssessmentFactor,
-    DiagnosisAssessmentFactorDetails,
     DiagnosisAssessmentInputs,
-    apply_diagnosis_assessment_fallback,
-    diagnosis_assessment_from_components,
     score_diagnosis_assessment_inputs,
 )
 from vibesensor.report.decision_facts import ReportDecisionFacts
 from vibesensor.report.evidence_facts import ReportEvidenceFacts
 from vibesensor.report.projection import PrimaryReportFacts
-from vibesensor.summary.whole_run_diagnosis_contracts import (
-    DiagnosisFactor,
-    WholeRunDiagnosisSummary,
-    diagnosis_factor_from_assessment,
-)
-
-if TYPE_CHECKING:
-    from vibesensor.report.facts import ReportContextFacts
 
 __all__ = [
     "ReportConfidenceFacts",
     "ReportConfidenceScoringInputs",
-    "apply_report_confidence_fallback",
     "build_report_confidence_facts",
-    "project_whole_run_diagnosis_factors",
-    "report_confidence_from_diagnosis_summary",
     "score_report_confidence_inputs",
 ]
 
@@ -45,9 +35,8 @@ def build_report_confidence_facts(
     primary_candidate: PrimaryReportFacts,
     evidence_facts: ReportEvidenceFacts,
     decision_facts: ReportDecisionFacts,
-    context_facts: ReportContextFacts,
 ) -> ReportConfidenceFacts:
-    """Build provisional report confidence from explicit persisted evidence signals."""
+    """Build report confidence for the summary diagnosis's primary finding."""
 
     finding_evidence = (
         primary_candidate.domain_primary.evidence
@@ -86,7 +75,7 @@ def build_report_confidence_facts(
             top_support_share=top_support_share,
         )
 
-    return score_report_confidence_inputs(
+    scored = score_report_confidence_inputs(
         ReportConfidenceScoringInputs(
             base_confidence=primary_candidate.confidence
             if primary_candidate.domain_primary
@@ -105,77 +94,35 @@ def build_report_confidence_facts(
             alternative_source=alternative_source,
             has_reference_gap=evidence_facts.has_reference_gap,
             weak_spatial=primary_candidate.weak_spatial,
-            context_traceable=context_facts.traceable,
-            context_source=context_facts.source,
-            speed_gap_window_count=context_facts.speed_gap_window_count,
-            rpm_gap_window_count=context_facts.rpm_gap_window_count,
         )
     )
+    return _with_finding_headline(scored, primary_candidate=primary_candidate)
 
 
-def report_confidence_from_diagnosis_summary(
-    diagnosis_summary: WholeRunDiagnosisSummary,
-) -> ReportConfidenceFacts:
-    """Project report confidence directly from a persisted whole-run diagnosis summary."""
-
-    return diagnosis_assessment_from_components(
-        score_0_to_1=diagnosis_summary.total_score or 0.0,
-        data_basis=diagnosis_summary.data_basis,
-        raw_backed_sample_count=_raw_backed_sample_count(diagnosis_summary.support_factors),
-        supporting_window_count=diagnosis_summary.supporting_window_count,
-        supporting_duration_s=diagnosis_summary.supporting_duration_s,
-        stable_frequency_min_hz=diagnosis_summary.stable_frequency_min_hz,
-        stable_frequency_max_hz=diagnosis_summary.stable_frequency_max_hz,
-        supporting_location_count=_supporting_location_count(diagnosis_summary),
-        top_support_location=_top_support_location(diagnosis_summary),
-        top_support_share=_top_support_share(diagnosis_summary),
-        mean_relative_error=_mean_relative_error(diagnosis_summary),
-        snr_db=_snr_db(diagnosis_summary),
-        alternative_source=diagnosis_summary.alternative_source,
-        has_reference_gap=diagnosis_summary.has_reference_gap,
-        speed_gap_window_count=_speed_gap_window_count(diagnosis_summary),
-        rpm_gap_window_count=_rpm_gap_window_count(diagnosis_summary),
-        car_data_reference_scope=_car_data_reference_scope(diagnosis_summary),
-        car_data_confidence=_car_data_confidence(diagnosis_summary),
-        uses_summary_fallback=diagnosis_summary.uses_summary_fallback,
-        fallback_reason=diagnosis_summary.fallback_reason,
-        support_factors=tuple(
-            _assessment_factor_from_summary_factor(factor)
-            for factor in diagnosis_summary.support_factors
-        ),
-        counterevidence_factors=tuple(
-            _assessment_factor_from_summary_factor(factor)
-            for factor in diagnosis_summary.counterevidence_factors
-        ),
-        confidence_gap_to_alternative=diagnosis_summary.confidence_gap_to_alternative,
-        ambiguous_diagnosis=diagnosis_summary.ambiguous_diagnosis,
-        suspicious=diagnosis_summary.suspicious,
-    )
-
-
-def apply_report_confidence_fallback(
-    facts: ReportConfidenceFacts,
+def _with_finding_headline(
+    assessment: ReportConfidenceFacts,
     *,
-    fallback_reason: str,
+    primary_candidate: PrimaryReportFacts,
 ) -> ReportConfidenceFacts:
-    """Mark report confidence as an explicit fallback without changing its score."""
-
-    return apply_diagnosis_assessment_fallback(facts, fallback_reason=fallback_reason)
-
-
-def project_whole_run_diagnosis_factors(
-    confidence_facts: ReportConfidenceFacts,
-) -> tuple[tuple[DiagnosisFactor, ...], tuple[DiagnosisFactor, ...]]:
-    """Project stable support and counterevidence rows from canonical confidence facts."""
-
-    support = tuple(
-        diagnosis_factor_from_assessment(factor) for factor in confidence_facts.support_factors
+    finding = primary_candidate.domain_primary
+    if finding is None:
+        return assessment
+    finding_assessment = finding.confidence_assessment
+    if finding_assessment is None:
+        label_key, _tone, pct_text = finding.confidence_label()
+        return replace(
+            assessment,
+            score_0_to_1=finding.effective_confidence,
+            label_key=label_key,
+            pct_text=pct_text,
+        )
+    return replace(
+        assessment,
+        score_0_to_1=finding.effective_confidence,
+        label_key=finding_assessment.label_key,
+        pct_text=finding_assessment.pct_text,
+        tier=finding_assessment.tier,
     )
-    counter = tuple(
-        diagnosis_factor_from_assessment(factor)
-        for factor in confidence_facts.counterevidence_factors
-    )
-    return (support, counter)
 
 
 def score_report_confidence_inputs(
@@ -250,8 +197,6 @@ def _summary_fallback_confidence(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=evidence_facts.has_reference_gap,
-        speed_gap_window_count=0,
-        rpm_gap_window_count=0,
         car_data_reference_scope=None,
         car_data_confidence=None,
         uses_summary_fallback=True,
@@ -280,152 +225,6 @@ def _support_location_summary(
         top_location,
         top_count / total,
     )
-
-
-def _assessment_factor_from_summary_factor(
-    factor: object,
-) -> DiagnosisAssessmentFactor:
-    typed_factor = cast("DiagnosisFactor", factor)
-    factor_key = cast(str, typed_factor.factor_key)
-    polarity = cast(str, typed_factor.polarity)
-    severity = cast(str, typed_factor.severity)
-    weight = float(typed_factor.weight)
-    raw_details = typed_factor.details
-    details = DiagnosisAssessmentFactorDetails(
-        raw_backed_sample_count=raw_details.raw_backed_sample_count,
-        supporting_window_count=raw_details.supporting_window_count,
-        supporting_duration_s=raw_details.supporting_duration_s,
-        stable_frequency_min_hz=raw_details.stable_frequency_min_hz,
-        stable_frequency_max_hz=raw_details.stable_frequency_max_hz,
-        frequency_span_hz=raw_details.frequency_span_hz,
-        supporting_location_count=raw_details.supporting_location_count,
-        top_support_location=raw_details.top_support_location,
-        top_support_share=raw_details.top_support_share,
-        mean_relative_error=raw_details.mean_relative_error,
-        snr_db=raw_details.snr_db,
-        alternative_source=raw_details.alternative_source,
-        speed_gap_window_count=raw_details.speed_gap_window_count,
-        rpm_gap_window_count=raw_details.rpm_gap_window_count,
-        fallback_reason=raw_details.fallback_reason,
-        car_data_reference_scope=raw_details.car_data_reference_scope,
-        car_data_confidence=raw_details.car_data_confidence,
-    )
-    return DiagnosisAssessmentFactor(
-        factor_key=factor_key,
-        polarity=polarity,
-        severity=severity,
-        weight=weight,
-        details=details,
-    )
-
-
-def _raw_backed_sample_count(factors: tuple[object, ...]) -> int:
-    for factor in factors:
-        typed_factor = cast("DiagnosisFactor", factor)
-        if typed_factor.factor_key != "raw_backed":
-            continue
-        count = typed_factor.details.raw_backed_sample_count
-        return int(count) if isinstance(count, int | float) else 0
-    return 0
-
-
-def _supporting_location_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        if factor.factor_key not in {
-            "localized_support",
-            "mixed_support_locations",
-        }:
-            continue
-        count = factor.details.supporting_location_count
-        if isinstance(count, int | float):
-            return int(count)
-    return diagnosis_summary.supporting_sensor_count or 0
-
-
-def _top_support_location(diagnosis_summary: WholeRunDiagnosisSummary) -> str | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        if factor.factor_key not in {
-            "localized_support",
-            "mixed_support_locations",
-        }:
-            continue
-        value = factor.details.top_support_location
-        if isinstance(value, str) and value.strip():
-            return value
-    return diagnosis_summary.dominant_location
-
-
-def _top_support_share(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        if factor.factor_key not in {
-            "localized_support",
-            "mixed_support_locations",
-        }:
-            continue
-        value = factor.details.top_support_share
-        if isinstance(value, int | float):
-            return float(value)
-    return None
-
-
-def _mean_relative_error(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        if factor.factor_key not in {"tight_order_lock", "loose_order_lock"}:
-            continue
-        value = factor.details.mean_relative_error
-        if isinstance(value, int | float):
-            return float(value)
-    return None
-
-
-def _snr_db(diagnosis_summary: WholeRunDiagnosisSummary) -> float | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        if factor.factor_key not in {"clean_signal", "noisy_signal"}:
-            continue
-        value = factor.details.snr_db
-        if isinstance(value, int | float):
-            return float(value)
-    return None
-
-
-def _speed_gap_window_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
-    for factor in diagnosis_summary.counterevidence_factors:
-        if factor.factor_key != "speed_context_gaps":
-            continue
-        value = factor.details.speed_gap_window_count
-        if isinstance(value, int | float):
-            return int(value)
-    return 0
-
-
-def _rpm_gap_window_count(diagnosis_summary: WholeRunDiagnosisSummary) -> int:
-    for factor in diagnosis_summary.counterevidence_factors:
-        if factor.factor_key != "rpm_context_gaps":
-            continue
-        value = factor.details.rpm_gap_window_count
-        if isinstance(value, int | float):
-            return int(value)
-    return 0
-
-
-def _car_data_reference_scope(
-    diagnosis_summary: WholeRunDiagnosisSummary,
-) -> str | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        value = factor.details.car_data_reference_scope
-        if isinstance(value, str) and value.strip():
-            return value
-    return None
-
-
-def _car_data_confidence(
-    diagnosis_summary: WholeRunDiagnosisSummary,
-) -> str | None:
-    for factor in (*diagnosis_summary.support_factors, *diagnosis_summary.counterevidence_factors):
-        value = factor.details.car_data_confidence
-        if isinstance(value, str) and value.strip():
-            return value
-    return None
 
 
 def _label_key_for_score(score: float) -> str:

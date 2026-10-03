@@ -3,7 +3,6 @@ from __future__ import annotations
 from test_support.findings import make_finding_payload
 from test_support.report_helpers import minimal_summary
 
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.report import i18n as report_i18n
 from vibesensor.report.document.builder import build_report_document
 from vibesensor.report.preparation import prepare_persisted_report_input
@@ -74,43 +73,20 @@ def test_prepare_persisted_report_input_builds_high_confidence_from_raw_backed_s
             analysis_metadata={
                 "raw_backed_sample_count": 48,
                 "raw_capture_mode": "raw_backed",
-                "whole_run_context_available": True,
-                "whole_run_context_window_count": 8,
-                "whole_run_context_interval_count": 1,
-                "whole_run_context_full_window_count": 8,
-                "whole_run_context_partial_window_count": 0,
-                "whole_run_context_missing_window_count": 0,
-                "whole_run_context_missing_speed_window_count": 0,
-                "whole_run_context_missing_rpm_window_count": 0,
-                "whole_run_context_stale_speed_window_count": 0,
-                "whole_run_context_stale_rpm_window_count": 0,
             },
-            whole_run_context_intervals=[
-                {
-                    "segment_index": 0,
-                    "phase": "cruise",
-                    "load_state": "steady",
-                    "start_window_index": 0,
-                    "end_window_index": 7,
-                    "start_t_s": 0.0,
-                    "end_t_s": 4.0,
-                    "speed_min_kmh": 58.0,
-                    "speed_max_kmh": 70.0,
-                    "speed_band": "50-70",
-                    "full_context_window_count": 8,
-                    "partial_context_window_count": 0,
-                    "missing_context_window_count": 0,
-                }
-            ],
         )
     )
 
     confidence = prepared.report_facts.confidence
     data = build_report_document(prepared)
 
-    assert confidence.label_key == "CONFIDENCE_HIGH"
-    assert confidence.pct_text == "90%"
-    assert confidence.tier == "C"
+    primary_finding = prepared.report_facts.decision.primary_candidate.domain_primary
+    assert primary_finding is not None
+    assert primary_finding.confidence_assessment is not None
+    # The PDF headline confidence is the finding's own confidence, as the UI shows it.
+    assert confidence.score_0_to_1 == primary_finding.effective_confidence
+    assert confidence.label_key == primary_finding.confidence_assessment.label_key
+    assert confidence.pct_text == primary_finding.confidence_assessment.pct_text
     assert "raw_backed" in confidence.signal_keys
     assert "stable_frequency" in confidence.signal_keys
     assert "localized_support" in confidence.signal_keys
@@ -188,7 +164,10 @@ def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary
     confidence = prepared.report_facts.confidence
     data = build_report_document(prepared)
 
-    assert confidence.label_key == "CONFIDENCE_LOW"
+    primary_finding = prepared.report_facts.decision.primary_candidate.domain_primary
+    assert primary_finding is not None
+    assert primary_finding.confidence_assessment is not None
+    assert confidence.pct_text == primary_finding.confidence_assessment.pct_text
     assert "summary_only" in confidence.caveat_keys
     assert "close_alternative" in confidence.caveat_keys
     assert "mixed_support_locations" in confidence.caveat_keys
@@ -197,102 +176,3 @@ def test_prepare_persisted_report_input_builds_low_confidence_from_mixed_summary
     assert confidence.stable_frequency_max_hz == 15.6
     assert data.observed.certainty_reason
     assert data.verdict_page.also_consider == "Driveline"
-
-
-def test_prepare_persisted_report_input_adds_whole_run_context_gap_caveats() -> None:
-    primary = _stable_front_left_wheel_finding("F_CONTEXT_GAPS")
-    prepared = _prepare(
-        _summary(
-            "context-gaps",
-            sensor_count_used=2,
-            sensor_locations=["Front Left", "Rear Left"],
-            sensor_locations_connected_throughout=["Front Left", "Rear Left"],
-            findings=[primary],
-            top_causes=[primary],
-            analysis_metadata={
-                "raw_backed_sample_count": 48,
-                "raw_capture_mode": "raw_backed",
-                "whole_run_context_available": True,
-                "whole_run_context_window_count": 12,
-                "whole_run_context_interval_count": 2,
-                "whole_run_context_full_window_count": 9,
-                "whole_run_context_partial_window_count": 2,
-                "whole_run_context_missing_window_count": 1,
-                "whole_run_context_missing_speed_window_count": 1,
-                "whole_run_context_missing_rpm_window_count": 0,
-                "whole_run_context_stale_speed_window_count": 1,
-                "whole_run_context_stale_rpm_window_count": 1,
-            },
-            whole_run_context_intervals=[
-                {
-                    "segment_index": 0,
-                    "phase": "cruise",
-                    "load_state": "steady",
-                    "start_window_index": 0,
-                    "end_window_index": 7,
-                    "start_t_s": 0.0,
-                    "end_t_s": 4.0,
-                    "speed_min_kmh": 58.0,
-                    "speed_max_kmh": 68.0,
-                    "speed_band": "50-70",
-                    "full_context_window_count": 8,
-                    "partial_context_window_count": 0,
-                    "missing_context_window_count": 0,
-                },
-                {
-                    "segment_index": 1,
-                    "phase": "acceleration",
-                    "load_state": "transient",
-                    "start_window_index": 8,
-                    "end_window_index": 11,
-                    "start_t_s": 4.0,
-                    "end_t_s": 6.0,
-                    "full_context_window_count": 1,
-                    "partial_context_window_count": 2,
-                    "missing_context_window_count": 1,
-                },
-            ],
-        )
-    )
-
-    confidence = prepared.report_facts.confidence
-    data = build_report_document(prepared)
-
-    assert prepared.report_facts.context.source == "whole_run"
-    assert prepared.report_facts.context.has_incomplete_context is True
-    assert "speed_context_gaps" in confidence.caveat_keys
-    assert "rpm_context_gaps" in confidence.caveat_keys
-    assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
-        "whole_run_context_incomplete"
-    ]
-    assert _tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS") in data.observed.certainty_reason
-    assert _tr("REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS") in data.observed.certainty_reason
-
-
-def test_prepare_persisted_report_input_marks_legacy_raw_backed_context_fallback() -> None:
-    primary = _stable_front_left_wheel_finding("F_CONTEXT_LEGACY")
-    prepared = _prepare(
-        _summary(
-            "context-legacy",
-            sensor_count_used=2,
-            sensor_locations=["Front Left", "Rear Left"],
-            sensor_locations_connected_throughout=["Front Left", "Rear Left"],
-            findings=[primary],
-            top_causes=[primary],
-            analysis_metadata={
-                "raw_backed_sample_count": 48,
-                "raw_capture_mode": "raw_backed",
-            },
-        )
-    )
-
-    confidence = prepared.report_facts.confidence
-    data = build_report_document(prepared)
-
-    assert prepared.report_facts.context.source == "legacy"
-    assert LEGACY_CONTEXT_CAVEAT_KEY in confidence.caveat_keys
-    assert "summary_only" not in confidence.caveat_keys
-    assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
-        "whole_run_context_legacy_fallback"
-    ]
-    assert _tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT") in data.observed.certainty_reason

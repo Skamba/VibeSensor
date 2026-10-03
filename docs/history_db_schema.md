@@ -16,18 +16,17 @@ application settings and client names in a single SQLite file located at
 
 `history/` (`history_db.py` and its `*_store.py` helpers) is one synchronous repository over stdlib `sqlite3`:
 
-- `_history_db.py`: `HistoryDB`. Constructing it opens a writer connection and a
+- `history_db.py`: `HistoryDB`. Constructing it opens a writer connection and a
   `query_only` reader connection (WAL lets reads proceed during writes), each guarded by a
   `threading.Lock`, then enforces the schema and runs `PRAGMA quick_check`. It owns run
   creation/finalization, sample appends and keyset-paginated reads, analysis writes, delete
   and retention flows, stale-recording recovery, settings snapshots, and client names.
   Async callers (route handlers, history use cases) offload calls with `asyncio.to_thread`.
-- `_schema.py`: schema DDL, `SCHEMA_VERSION`, open-time schema enforcement, quick check, and
+- `db_schema.py`: schema DDL, `SCHEMA_VERSION`, open-time schema enforcement, quick check, and
   incompatible-schema backup/run-summary export.
-- `_projection.py`: row-to-record projection for history list/detail reads.
-- `_samples.py`: row-serialization helpers for `samples_v2`.
-- `_raw_capture_store.py` / `_whole_run_artifact_store.py`: file-backed raw waveform and
-  whole-run artifact sidecars next to the DB file.
+- `db_projection.py`: row-to-record projection for history list/detail reads.
+- `sample_store.py`: row-serialization helpers for `samples_v2`.
+- `raw_capture_store.py`: file-backed raw waveform sidecars next to the DB file.
 
 ## Tables
 
@@ -45,7 +44,6 @@ One row per recording session.
 | `metadata_json` | TEXT | Run-level metadata (car config, language, sensor model, etc.) |
 | `car_name` | TEXT | Denormalized active car name used by the history list path |
 | `raw_capture_manifest_json` | TEXT | Raw waveform sidecar manifest; may remain after raw files are pruned so history can report missing raw capture explicitly |
-| `whole_run_artifact_manifest_json` | TEXT | Whole-run sidecar manifest for dense post-analysis artifacts |
 | `analysis_json` | TEXT | Post-run analysis summary (`AnalysisSummary` in `summary/contracts.py`) |
 | `error_message` | TEXT | Error description when status = `error` |
 | `sample_count` | INTEGER | Running count of appended samples |
@@ -185,21 +183,18 @@ The cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
 `end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are
 never deleted by the automatic policy. Full run deletion still removes sample
 rows through the existing `ON DELETE CASCADE` foreign key on `samples_v2`, plus
-raw/whole-run sidecar directories.
+raw-capture sidecar directories.
 
-## Dense whole-run sidecars
+## Retired whole-run data
 
-Dense post-run arrays stay outside SQLite under
-`whole-run-artifacts/<run_id>/`. The `runs.whole_run_artifact_manifest_json`
-column stores only a compact manifest: schema/storage versions, input `run_id`,
-window policy, algorithm versions, source raw-capture manifest summaries,
-configuration, generated artifact paths, and per-artifact record counts/formats.
-The same manifest is also written to `whole-run-artifacts/<run_id>/manifest.json`.
+Older versions also ran a dense "whole-run" post-analysis and stored its
+sidecars under `whole-run-artifacts/<run_id>/` plus a
+`runs.whole_run_artifact_manifest_json` column. That pipeline was removed
+without a schema-version bump so existing v15 databases keep opening:
 
-`analysis_json.analysis_metadata` keeps the query-friendly run summary:
-availability/status, manifest path, generated timestamp, algorithm versions,
-configuration, artifact count/keys/paths/formats, window/sensor counts, warning
-codes, and compact top findings/summaries. Dense spectra use `.npy` float32
-sidecars; window labels, order traces, summary rows, and spatial coherence rows
-use JSONL sidecars. History reads treat missing artifact files as `missing` and
-ignore corrupt manifest JSON instead of failing the whole run detail/list path.
+- the column is no longer in the DDL; databases created before the removal
+  keep it as an unused nullable column that nothing reads or writes
+- `HistoryDB` deletes any leftover `whole-run-artifacts/` directory when it opens
+- `summary/persisted_codec.py` drops the retired `whole_run_*` analysis fields,
+  `whole_run_*` analysis-metadata keys, and `whole_run_*` warnings when it
+  decodes stored analysis JSON

@@ -354,7 +354,6 @@ def test_build_post_analysis_summary_adds_analysis_metadata(
         "raw_replay_confidence": "unavailable",
         "raw_capture_loss_policy_severity": "ok",
         "raw_capture_loss_policy_reason": "raw_capture_loss_ok",
-        "raw_capture_loss_policy_gate_whole_run": False,
         "raw_capture_loss_policy_max_sensor_drop_ratio": 0.0,
         "raw_capture_loss_policy_max_events_per_minute": 0.0,
         "fallback_reasons": ["raw_capture_not_configured", "legacy_summary_only"],
@@ -477,7 +476,6 @@ def test_build_post_analysis_summary_propagates_dropped_chunk_metadata_and_warni
         summary["analysis_metadata"]["raw_capture_loss_policy_reason"]
         == "raw_capture_queue_overflow_fatal"
     )
-    assert summary["analysis_metadata"]["raw_capture_loss_policy_gate_whole_run"] is True
     assert summary["analysis_metadata"]["fallback_reasons"] == [
         "raw_capture_loss_exceeded",
         "legacy_summary_only",

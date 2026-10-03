@@ -41,7 +41,6 @@ links onward to the scoped instruction files and repo map below.
 | File | Status | Description |
 |------|--------|-------------|
 | `docs/designs/final-report-redesign.md` | Active | Report/PDF design guidance for the verdict page and appendices. |
-| `docs/designs/whole-run-post-analysis-program.md` | Active | Whole-run post-analysis architecture guidance. |
 
 ## Infrastructure & Operations
 

@@ -1028,14 +1028,6 @@ export interface components {
             top_causes: components["schemas"]["FindingPayload"][];
             /** Warnings */
             warnings: components["schemas"]["SummaryWarningResponse"][];
-            /** Whole Run Context Intervals */
-            whole_run_context_intervals?: components["schemas"]["WholeRunContextInterval"][];
-            /** Whole Run Diagnosis Summaries */
-            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummary"][];
-            /** Whole Run Order Summaries */
-            whole_run_order_summaries?: components["schemas"]["OrderTraceSummary"][];
-            /** Whole Run Spatial Summaries */
-            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummary"][];
         };
         ApiPayloadObject: {
             [key: string]: components["schemas"]["JsonSchemaValue"];
@@ -1416,121 +1408,6 @@ export interface components {
             /** Status */
             status: string;
         };
-        /** @enum {string} */
-        DiagnosisDataQualityLimitation: "reference_gap" | "speed_context" | "sensor_timing" | "sensor_mounting" | "sensor_clipping" | "road_shock" | "weak_spatial" | "ambiguous_location" | "summary_fallback" | "window_quality";
-        /**
-         * DiagnosisDataQualitySummary
-         * @description Compact persisted data-quality rollup for one fused diagnosis.
-         */
-        DiagnosisDataQualitySummary: {
-            /** Excluded Window Count */
-            excluded_window_count?: number | null;
-            /** Limitation Keys */
-            limitation_keys: components["schemas"]["DiagnosisDataQualityLimitation"][];
-            /** Limited Window Count */
-            limited_window_count?: number | null;
-            /** Mean Quality Score */
-            mean_quality_score?: number | null;
-            /** Sensor Clipping Window Count */
-            sensor_clipping_window_count: number;
-            /** Sensor Mounting Artifact Window Count */
-            sensor_mounting_artifact_window_count: number;
-            /** Sensor Timing Integrity Window Count */
-            sensor_timing_integrity_window_count: number;
-            /** Shock Transient Window Count */
-            shock_transient_window_count: number;
-            /** Speed Context Limited Window Count */
-            speed_context_limited_window_count: number;
-            /** Usable Window Count */
-            usable_window_count?: number | null;
-        };
-        /** @enum {string} */
-        DiagnosisExemplarKind: "order_support_interval" | "whole_run_context_interval" | "spatial_location";
-        /**
-         * DiagnosisExemplarReference
-         * @description Compact reference to one persisted exemplar for a fused diagnosis.
-         */
-        DiagnosisExemplarReference: {
-            /** Context Segment Index */
-            context_segment_index?: number | null;
-            kind: components["schemas"]["DiagnosisExemplarKind"];
-            /** Location */
-            location?: string | null;
-            /** Order Hypothesis Key */
-            order_hypothesis_key?: string | null;
-            /** Phase */
-            phase?: string | null;
-            /** Spatial Candidate Key */
-            spatial_candidate_key?: string | null;
-            /** Speed Band */
-            speed_band?: string | null;
-            /** Support Interval Index */
-            support_interval_index?: number | null;
-        };
-        /**
-         * DiagnosisFactor
-         * @description One stable support or counterevidence factor for a fused diagnosis.
-         */
-        DiagnosisFactor: {
-            details: components["schemas"]["DiagnosisFactorDetails"];
-            factor_key: components["schemas"]["DiagnosisFactorKey"];
-            polarity: components["schemas"]["DiagnosisFactorPolarity"];
-            severity: components["schemas"]["DiagnosisFactorSeverity"];
-            /** Weight */
-            weight: number;
-        };
-        /**
-         * DiagnosisFactorDetails
-         * @description Structured details carried by one persisted diagnosis factor row.
-         */
-        DiagnosisFactorDetails: {
-            /** Alternative Source */
-            alternative_source?: string | null;
-            /** Car Data Confidence */
-            car_data_confidence?: string | null;
-            /** Car Data Reference Scope */
-            car_data_reference_scope?: string | null;
-            /** Fallback Reason */
-            fallback_reason?: string | null;
-            /** Frequency Span Hz */
-            frequency_span_hz?: number | null;
-            /** Mean Relative Error */
-            mean_relative_error?: number | null;
-            /** Raw Backed Sample Count */
-            raw_backed_sample_count?: number | null;
-            /** Rpm Gap Window Count */
-            rpm_gap_window_count?: number | null;
-            /** Snr Db */
-            snr_db?: number | null;
-            /** Speed Gap Window Count */
-            speed_gap_window_count?: number | null;
-            /** Stable Frequency Max Hz */
-            stable_frequency_max_hz?: number | null;
-            /** Stable Frequency Min Hz */
-            stable_frequency_min_hz?: number | null;
-            /** Supporting Duration S */
-            supporting_duration_s?: number | null;
-            /** Supporting Location Count */
-            supporting_location_count?: number | null;
-            /** Supporting Window Count */
-            supporting_window_count?: number | null;
-            /** Top Support Location */
-            top_support_location?: string | null;
-            /** Top Support Share */
-            top_support_share?: number | null;
-        };
-        /** @enum {string} */
-        DiagnosisFactorKey: "raw_backed" | "repeated_support" | "sustained_support" | "stable_frequency" | "tight_order_lock" | "localized_support" | "clean_signal" | "user_confirmed_vehicle_data" | "summary_only" | "raw_replay_incomplete" | "legacy_context" | "speed_context_gaps" | "rpm_context_gaps" | "sparse_support" | "brief_support" | "drifting_frequency" | "loose_order_lock" | "mixed_support_locations" | "noisy_signal" | "weak_spatial" | "close_alternative" | "incomplete_reference" | "secondary_vehicle_data" | "approximate_vehicle_data" | "unverified_vehicle_data";
-        /** @enum {string} */
-        DiagnosisFactorPolarity: "support" | "counterevidence";
-        /** @enum {string} */
-        DiagnosisFactorSeverity: "low" | "medium" | "high";
-        /**
-         * DrivingPhase
-         * @description Canonical driving-phase labels.
-         * @enum {string}
-         */
-        DrivingPhase: "idle" | "acceleration" | "cruise" | "deceleration" | "coast_down" | "speed_unknown";
         /**
          * EspFlashCancelResponse
          * @description Response body confirming whether an ESP32 flash job was cancelled.
@@ -2063,11 +1940,6 @@ export interface components {
              * @enum {string}
              */
             raw_capture: "not_recorded" | "pending" | "available" | "missing" | "degraded";
-            /**
-             * Whole Run Artifacts
-             * @enum {string}
-             */
-            whole_run_artifacts: "not_recorded" | "pending" | "available" | "missing" | "degraded";
         };
         /**
          * HistoryFinalizationStageResponse
@@ -2212,14 +2084,6 @@ export interface components {
             top_causes: components["schemas"]["FindingPayload"][];
             /** Warnings */
             warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
-            /** Whole Run Context Intervals */
-            whole_run_context_intervals?: components["schemas"]["WholeRunContextInterval"][];
-            /** Whole Run Diagnosis Summaries */
-            whole_run_diagnosis_summaries?: components["schemas"]["WholeRunDiagnosisSummary"][];
-            /** Whole Run Order Summaries */
-            whole_run_order_summaries?: components["schemas"]["OrderTraceSummary"][];
-            /** Whole Run Spatial Summaries */
-            whole_run_spatial_summaries?: components["schemas"]["SpatialEvidenceSummary"][];
         };
         /**
          * HistoryListEntryResponse
@@ -2281,8 +2145,6 @@ export interface components {
              * @default 0
              */
             affected_sensor_count: number;
-            /** Gate Whole Run */
-            gate_whole_run: boolean;
             /**
              * Max Sensor Drop Ratio
              * @default 0
@@ -2351,11 +2213,6 @@ export interface components {
              * @enum {string}
              */
             stage: "recording" | "post_analysis_pending" | "post_analysis_running" | "post_analysis_ready" | "post_analysis_degraded";
-            /**
-             * Whole Run Artifacts
-             * @enum {string}
-             */
-            whole_run_artifacts: "not_recorded" | "pending" | "ready" | "degraded" | "missing";
         };
         /**
          * HistoryRunResponse
@@ -2497,8 +2354,6 @@ export interface components {
             /** Label */
             label: string;
         };
-        /** @enum {string} */
-        LocationProofBasis: "whole_run_summary" | "supporting_windows_raw_backed" | "supporting_windows_summary_only";
         /**
          * MatchedPoint
          * @description HTTP contract for one serialized finding matched-point observation.
@@ -2626,159 +2481,6 @@ export interface components {
             timeout_count: number;
             /** Trusted */
             trusted: boolean;
-        };
-        /**
-         * OrderHarmonicEvidenceSummary
-         * @description Compact harmonic-specific evidence row for one order-trace summary.
-         */
-        OrderHarmonicEvidenceSummary: {
-            /** Contiguous Support Ratio */
-            contiguous_support_ratio: number;
-            /** Drift Score */
-            drift_score: number;
-            /** Eligible Window Count */
-            eligible_window_count: number;
-            /** Harmonic */
-            harmonic: number;
-            /** Lock Score */
-            lock_score: number;
-            /** Matched Window Count */
-            matched_window_count: number;
-            /** Mean Relative Error */
-            mean_relative_error?: number | null;
-            /** Mean Vibration Strength Db */
-            mean_vibration_strength_db?: number | null;
-            /** Order Label */
-            order_label: string;
-            /** Peak Intensity Db */
-            peak_intensity_db?: number | null;
-            /** Reference Coverage Ratio */
-            reference_coverage_ratio: number;
-            /** Relative Error Stddev */
-            relative_error_stddev?: number | null;
-            /** Support Ratio */
-            support_ratio: number;
-        };
-        /** @enum {string} */
-        OrderTraceFamily: "wheel" | "driveshaft" | "engine";
-        /**
-         * OrderTracePhaseSupport
-         * @description Compact phase-aware support row for one order-trace summary.
-         */
-        OrderTracePhaseSupport: {
-            /** Eligible Window Count */
-            eligible_window_count: number;
-            /** Matched Window Count */
-            matched_window_count: number;
-            /** Phase */
-            phase: string;
-            /** Support Ratio */
-            support_ratio: number;
-        };
-        /**
-         * OrderTraceSummary
-         * @description Compact persisted/report-facing summary derived from dense whole-run order traces.
-         */
-        OrderTraceSummary: {
-            /** Contiguous Support Ratio */
-            contiguous_support_ratio: number;
-            /** Dominant Phase */
-            dominant_phase?: string | null;
-            /** Dominant Speed Band */
-            dominant_speed_band?: string | null;
-            /** Drift Score */
-            drift_score: number;
-            /** Eligible Window Count */
-            eligible_window_count: number;
-            /** Excluded Window Count */
-            excluded_window_count: number;
-            /** Exemplar Interval Index */
-            exemplar_interval_index?: number | null;
-            /** Harmonic Summaries */
-            harmonic_summaries: components["schemas"]["OrderHarmonicEvidenceSummary"][];
-            /** Hypothesis Key */
-            hypothesis_key: string;
-            /** Limited Window Count */
-            limited_window_count: number;
-            /** Lock Score */
-            lock_score: number;
-            /** Longest Contiguous Support Window Count */
-            longest_contiguous_support_window_count: number;
-            /** Matched Window Count */
-            matched_window_count: number;
-            /** Mean Quality Score */
-            mean_quality_score?: number | null;
-            /** Mean Relative Error */
-            mean_relative_error?: number | null;
-            /** Mean Vibration Strength Db */
-            mean_vibration_strength_db?: number | null;
-            order_family: components["schemas"]["OrderTraceFamily"];
-            /** Order Label */
-            order_label: string;
-            /** Peak Intensity Db */
-            peak_intensity_db?: number | null;
-            /** Phase Support */
-            phase_support: components["schemas"]["OrderTracePhaseSupport"][];
-            /** Ref Sources */
-            ref_sources: string[];
-            /** Reference Coverage Ratio */
-            reference_coverage_ratio: number;
-            /** Relative Error Stddev */
-            relative_error_stddev?: number | null;
-            /** Sensor Clipping Window Count */
-            sensor_clipping_window_count: number;
-            /** Sensor Mounting Artifact Window Count */
-            sensor_mounting_artifact_window_count: number;
-            /** Sensor Timing Integrity Window Count */
-            sensor_timing_integrity_window_count: number;
-            /** Shock Transient Window Count */
-            shock_transient_window_count: number;
-            /** Speed Context Limited Window Count */
-            speed_context_limited_window_count: number;
-            /** Stable Frequency Max Hz */
-            stable_frequency_max_hz?: number | null;
-            /** Stable Frequency Min Hz */
-            stable_frequency_min_hz?: number | null;
-            /** Strongest Location */
-            strongest_location?: string | null;
-            /** Support Intervals */
-            support_intervals: components["schemas"]["OrderTraceSupportInterval"][];
-            /** Support Ratio */
-            support_ratio: number;
-            /** Suspected Source */
-            suspected_source: string;
-            /** Total Window Count */
-            total_window_count: number;
-            /** Usable Window Count */
-            usable_window_count: number;
-        };
-        /**
-         * OrderTraceSupportInterval
-         * @description Compact contiguous support interval derived from dense whole-run trace points.
-         */
-        OrderTraceSupportInterval: {
-            /** End T S */
-            end_t_s?: number | null;
-            /** End Window Index */
-            end_window_index: number;
-            /** Interval Index */
-            interval_index: number;
-            /** Load State */
-            load_state?: string | null;
-            /** Matched Window Count */
-            matched_window_count: number;
-            /** Mean Relative Error */
-            mean_relative_error?: number | null;
-            /** Phase */
-            phase?: string | null;
-            /** Speed Band */
-            speed_band?: string | null;
-            /** Start T S */
-            start_t_s?: number | null;
-            /** Start Window Index */
-            start_window_index: number;
-            /** Support Ratio */
-            support_ratio: number;
         };
         /**
          * OutlierSummaryResponse
@@ -3067,63 +2769,6 @@ export interface components {
         SetLocationRequest: {
             /** Location Code */
             location_code: string;
-        };
-        /**
-         * SpatialEvidenceSummary
-         * @description Compact persisted/report-facing whole-run spatial evidence summary.
-         */
-        SpatialEvidenceSummary: {
-            /** Ambiguous Location */
-            ambiguous_location: boolean;
-            /** Candidate Key */
-            candidate_key: string;
-            /** Coherence Ratio */
-            coherence_ratio?: number | null;
-            /** Coherent Window Count */
-            coherent_window_count: number;
-            /** Dominance Ratio */
-            dominance_ratio?: number | null;
-            /** Dominant Location */
-            dominant_location?: string | null;
-            /** Location Separation Db */
-            location_separation_db?: number | null;
-            /** Location Summaries */
-            location_summaries: components["schemas"]["SpatialLocationSummary"][];
-            proof_basis: components["schemas"]["LocationProofBasis"];
-            /** Runner Up Location */
-            runner_up_location?: string | null;
-            /** Supporting Sensor Count */
-            supporting_sensor_count: number;
-            /** Supporting Window Count */
-            supporting_window_count: number;
-            /** Suspected Source */
-            suspected_source: string;
-            /** Total Window Count */
-            total_window_count: number;
-            /** Weak Spatial Separation */
-            weak_spatial_separation: boolean;
-        };
-        /**
-         * SpatialLocationSummary
-         * @description Compact per-location support row for persisted spatial evidence.
-         */
-        SpatialLocationSummary: {
-            /** Coherence Ratio */
-            coherence_ratio?: number | null;
-            /** Coherent Window Count */
-            coherent_window_count: number;
-            /** Location */
-            location: string;
-            /** Mean Vibration Strength Db */
-            mean_vibration_strength_db?: number | null;
-            /** Peak Intensity Db */
-            peak_intensity_db?: number | null;
-            /** Sensor Ids */
-            sensor_ids: string[];
-            /** Support Ratio */
-            support_ratio: number;
-            /** Supporting Window Count */
-            supporting_window_count: number;
         };
         /**
          * SpeedBreakdownRow
@@ -3508,111 +3153,6 @@ export interface components {
             top_peaks: components["schemas"]["StrengthPeak"][];
             /** Vibration Strength Db */
             vibration_strength_db: number;
-        };
-        /**
-         * WholeRunContextInterval
-         * @description Compact segment summary aligned to a contiguous range of whole-run windows.
-         */
-        WholeRunContextInterval: {
-            /** End T S */
-            end_t_s?: number | null;
-            /** End Window Index */
-            end_window_index: number;
-            /** Full Context Window Count */
-            full_context_window_count: number;
-            load_state: components["schemas"]["WholeRunContextLoadState"];
-            /** Missing Context Window Count */
-            missing_context_window_count: number;
-            /** Partial Context Window Count */
-            partial_context_window_count: number;
-            phase: components["schemas"]["DrivingPhase"];
-            /** Segment Index */
-            segment_index: number;
-            /** Speed Band */
-            speed_band?: string | null;
-            /** Speed Max Kmh */
-            speed_max_kmh?: number | null;
-            /** Speed Min Kmh */
-            speed_min_kmh?: number | null;
-            /** Start T S */
-            start_t_s?: number | null;
-            /** Start Window Index */
-            start_window_index: number;
-        };
-        /** @enum {string} */
-        WholeRunContextLoadState: "idle" | "steady" | "transient" | "unknown";
-        /** @enum {string} */
-        WholeRunDiagnosisDataBasis: "raw_backed" | "partial_raw_backed" | "summary_only";
-        /**
-         * WholeRunDiagnosisSummary
-         * @description Compact persisted/report-facing summary for one fused whole-run diagnosis.
-         */
-        WholeRunDiagnosisSummary: {
-            /** Alternative Source */
-            alternative_source?: string | null;
-            /** Ambiguous Diagnosis */
-            ambiguous_diagnosis: boolean;
-            /** Ambiguous Location */
-            ambiguous_location: boolean;
-            /** Confidence Gap To Alternative */
-            confidence_gap_to_alternative?: number | null;
-            /** Counterevidence Factors */
-            counterevidence_factors: components["schemas"]["DiagnosisFactor"][];
-            /** Counterevidence Score */
-            counterevidence_score?: number | null;
-            data_basis: components["schemas"]["WholeRunDiagnosisDataBasis"];
-            data_quality_summary: components["schemas"]["DiagnosisDataQualitySummary"];
-            /** Diagnosis Key */
-            diagnosis_key: string;
-            /** Dominance Ratio */
-            dominance_ratio?: number | null;
-            /** Dominant Location */
-            dominant_location?: string | null;
-            /** Dominant Phase */
-            dominant_phase?: string | null;
-            /** Dominant Speed Band */
-            dominant_speed_band?: string | null;
-            /** Exemplar References */
-            exemplar_references: components["schemas"]["DiagnosisExemplarReference"][];
-            /** Fallback Reason */
-            fallback_reason?: string | null;
-            /** Has Reference Gap */
-            has_reference_gap: boolean;
-            location_proof_basis?: components["schemas"]["LocationProofBasis"] | null;
-            /** Location Separation Db */
-            location_separation_db?: number | null;
-            /** Order Hypothesis Key */
-            order_hypothesis_key?: string | null;
-            /** Rank */
-            rank: number;
-            /** Runner Up Location */
-            runner_up_location?: string | null;
-            /** Spatial Candidate Key */
-            spatial_candidate_key?: string | null;
-            /** Stable Frequency Max Hz */
-            stable_frequency_max_hz?: number | null;
-            /** Stable Frequency Min Hz */
-            stable_frequency_min_hz?: number | null;
-            /** Support Factors */
-            support_factors: components["schemas"]["DiagnosisFactor"][];
-            /** Support Score */
-            support_score?: number | null;
-            /** Supporting Duration S */
-            supporting_duration_s?: number | null;
-            /** Supporting Sensor Count */
-            supporting_sensor_count?: number | null;
-            /** Supporting Window Count */
-            supporting_window_count?: number | null;
-            /** Suspected Source */
-            suspected_source: string;
-            /** Suspicious */
-            suspicious: boolean;
-            /** Total Score */
-            total_score?: number | null;
-            /** Uses Summary Fallback */
-            uses_summary_fallback: boolean;
-            /** Weak Spatial Separation */
-            weak_spatial_separation: boolean;
         };
         /** WindowQualityPayload */
         WindowQualityPayload: {

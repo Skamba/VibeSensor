@@ -116,9 +116,6 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_write_error_chunk_count": run.raw_replay.write_error_chunk_count,
         "raw_capture_loss_policy_severity": run.raw_replay.raw_capture_loss_policy_severity,
         "raw_capture_loss_policy_reason": run.raw_replay.raw_capture_loss_policy_reason,
-        "raw_capture_loss_policy_gate_whole_run": (
-            run.raw_replay.raw_capture_loss_policy_gate_whole_run
-        ),
         "raw_capture_loss_policy_max_sensor_drop_ratio": (
             run.raw_replay.raw_capture_loss_policy_max_sensor_drop_ratio
         ),
@@ -248,11 +245,7 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
 
 def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:
     fallback_reasons = derive_report_fallback_reasons(
-        report_analysis_metadata_from_mapping(analysis_metadata),
-        has_whole_run_context_intervals=False,
-        has_whole_run_order_summaries=False,
-        has_whole_run_spatial_summaries=False,
-        has_whole_run_diagnosis_summaries=False,
+        report_analysis_metadata_from_mapping(analysis_metadata)
     )
     if fallback_reasons:
         analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(fallback_reasons)

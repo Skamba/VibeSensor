@@ -33,7 +33,6 @@ from vibesensor.summary.run_context_warning import RunContextWarning
 
 if TYPE_CHECKING:
     from vibesensor.report.document.document_context import ReportDocumentContext
-    from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = ["build_observed_signature", "build_verdict_page", "build_verdict_page_data"]
 
@@ -60,7 +59,6 @@ def build_verdict_page_data(
     aggregate: TestRun,
     primary: PrimaryCandidateContext,
     report_confidence: ReportConfidenceFacts,
-    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary],
     duration_text: str | None,
     verdict_context: VerdictPageContext,
     suitability_checks: Sequence[SuitabilityCheck],
@@ -117,9 +115,7 @@ def build_verdict_page_data(
         coverage_label=verdict_context.coverage_label,
         also_consider=(
             (
-                human_source(diagnosis_summaries[1].suspected_source, tr=tr)
-                if len(diagnosis_summaries) > 1
-                else human_source(aggregate.effective_top_causes()[1].suspected_source, tr=tr)
+                human_source(aggregate.effective_top_causes()[1].suspected_source, tr=tr)
                 if len(aggregate.effective_top_causes()) > 1
                 else None
             )
@@ -156,7 +152,6 @@ def build_verdict_page(
         aggregate=context.test_run,
         primary=context.primary,
         report_confidence=context.report_facts.confidence,
-        diagnosis_summaries=context.report_facts.report_surface_diagnosis_summaries,
         duration_text=context.run_facts.duration_text,
         verdict_context=context.verdict_page_context,
         suitability_checks=context.decision_facts.suitability_checks,

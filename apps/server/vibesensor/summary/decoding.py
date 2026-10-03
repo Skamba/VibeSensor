@@ -1,10 +1,8 @@
 """Canonical reporting summary boundary for history and PDF preparation.
 
-Persisted whole-run summaries are decoded straight into their canonical
-``summary`` dataclasses. Report/history reload stays tolerant of legacy or
-partial payloads: :func:`lenient_row` coerces each field from the dataclass
-type hints and drops rows that lack required identity fields or fail the
-dataclass validation.
+Report/history reload stays tolerant of legacy or partial payloads:
+:func:`lenient_row` coerces each field from the dataclass type hints and drops
+rows that lack required identity fields or fail the dataclass validation.
 """
 
 from __future__ import annotations
@@ -36,12 +34,6 @@ from vibesensor.summary.analysis_views import PeakTableRow
 from vibesensor.summary.hotspot_fields import (
     location_intensity_summaries_from_rows,
 )
-from vibesensor.summary.order_trace_contracts import OrderTraceSummary
-from vibesensor.summary.spatial_evidence_contracts import SpatialEvidenceSummary
-from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
-from vibesensor.summary.whole_run_diagnosis_contracts import (
-    WholeRunDiagnosisSummary,
-)
 
 __all__ = [
     "NormalizedReportSummary",
@@ -50,7 +42,6 @@ __all__ = [
     "has_projectable_report_payload",
     "lenient_row",
     "lenient_rows",
-    "report_diagnosis_summaries",
     "report_summary_from_mapping",
     "require_projectable_report_payload",
 ]
@@ -85,10 +76,6 @@ class NormalizedReportSummary:
     sensor_intensity_rows: tuple[LocationIntensitySummary, ...]
     peak_table_rows: tuple[PeakTableRow, ...]
     timeline_intervals: tuple[ReportTimelineInterval, ...]
-    whole_run_context_intervals: tuple[WholeRunContextInterval, ...]
-    whole_run_order_summaries: tuple[OrderTraceSummary, ...]
-    whole_run_spatial_summaries: tuple[SpatialEvidenceSummary, ...]
-    whole_run_diagnosis_summaries: tuple[WholeRunDiagnosisSummary, ...]
 
 
 # ---------------------------------------------------------------------------
@@ -212,11 +199,6 @@ def lenient_rows[RowT](cls: type[RowT], raw_rows: object) -> tuple[RowT, ...]:
     return tuple(row for raw in raw_rows if (row := lenient_row(cls, raw)) is not None)
 
 
-def report_diagnosis_summaries(raw_rows: object) -> tuple[WholeRunDiagnosisSummary, ...]:
-    """Tolerantly decode persisted whole-run diagnosis summaries for report/history use."""
-    return lenient_rows(WholeRunDiagnosisSummary, raw_rows)
-
-
 class ReportSummaryNormalizer:
     """Normalize one summary payload into the canonical report-side typed shape."""
 
@@ -243,21 +225,6 @@ class ReportSummaryNormalizer:
             timeline_intervals=lenient_rows(
                 ReportTimelineInterval,
                 self._payload.get("phase_timeline"),
-            ),
-            whole_run_context_intervals=lenient_rows(
-                WholeRunContextInterval,
-                self._payload.get("whole_run_context_intervals"),
-            ),
-            whole_run_order_summaries=lenient_rows(
-                OrderTraceSummary,
-                self._payload.get("whole_run_order_summaries"),
-            ),
-            whole_run_spatial_summaries=lenient_rows(
-                SpatialEvidenceSummary,
-                self._payload.get("whole_run_spatial_summaries"),
-            ),
-            whole_run_diagnosis_summaries=report_diagnosis_summaries(
-                self._payload.get("whole_run_diagnosis_summaries"),
             ),
         )
 

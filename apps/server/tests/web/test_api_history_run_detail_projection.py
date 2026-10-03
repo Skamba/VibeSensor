@@ -83,7 +83,6 @@ def test_history_run_detail_includes_raw_capture_quality() -> None:
     quality = response.json()["raw_capture_quality"]
     assert quality["severity"] == "fatal"
     assert quality["reason"] == "raw_capture_queue_overflow_fatal"
-    assert quality["gate_whole_run"] is True
     assert quality["queue_overflow_chunk_count"] == 120
 
 
@@ -122,7 +121,6 @@ def test_history_run_detail_includes_degraded_raw_capture_finalize_state() -> No
     assert payload["lifecycle"] == {
         "stage": "post_analysis_ready",
         "raw_capture": "degraded",
-        "whole_run_artifacts": "not_recorded",
         "post_analysis": "ready",
         "report": "ready",
     }

@@ -8,6 +8,7 @@ connection (WAL lets reads proceed during a write) are each guarded by a
 from __future__ import annotations
 
 import logging
+import shutil
 import sqlite3
 import threading
 from collections.abc import Callable, Iterator, Mapping
@@ -42,15 +43,11 @@ from vibesensor.history.sample_store import (
     sample_to_v2_row,
     v2_row_to_sensor_frame,
 )
-from vibesensor.history.whole_run_artifact_store import (
-    HistoryWholeRunArtifactStore,
-)
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorClockSync,
-    RawCaptureSensorRange,
     RawRunCapture,
 )
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
@@ -66,7 +63,6 @@ from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.persisted_codec import (
     persisted_analysis_to_storage_json_object,
 )
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,19 +74,18 @@ _APPEND_CHUNK_SIZE = 256
 _RUN_LIST_COLUMNS = (
     "r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
     "r.created_at, r.error_message, r.sample_count, r.car_name, "
-    "r.metadata_json, r.analysis_json, r.raw_capture_manifest_json, "
-    "r.whole_run_artifact_manifest_json"
+    "r.metadata_json, r.analysis_json, r.raw_capture_manifest_json"
 )
 _STORED_RUN_COLUMNS = (
     "run_id, case_id, status, start_time_utc, end_time_utc, "
-    "metadata_json, raw_capture_manifest_json, whole_run_artifact_manifest_json, "
+    "metadata_json, raw_capture_manifest_json, "
     "analysis_json, error_message, created_at, "
     "sample_count, analysis_started_at, analysis_completed_at"
 )
 
 
 class HistoryDB:
-    """Own the history SQLite file plus the raw-capture and whole-run artifact sidecars.
+    """Own the history SQLite file plus the raw-capture sidecar files.
 
     Constructing it opens the database, enforces the current schema (backing up and
     rejecting incompatible files), and runs ``PRAGMA quick_check``. If corruption is
@@ -105,7 +100,6 @@ class HistoryDB:
         "_raw_capture_store",
         "_read_conn",
         "_read_lock",
-        "_whole_run_artifact_store",
         "_write_lock",
     )
 
@@ -121,7 +115,8 @@ class HistoryDB:
         self._write_lock = threading.Lock()
         self._read_lock = threading.Lock()
         self._raw_capture_store = HistoryRawCaptureStore(data_dir=db_path.parent)
-        self._whole_run_artifact_store = HistoryWholeRunArtifactStore(data_dir=db_path.parent)
+        # Whole-run sidecars are no longer produced; drop any left by older versions.
+        shutil.rmtree(db_path.parent / "whole-run-artifacts", ignore_errors=True)
         self._conn: sqlite3.Connection | None = None
         self._read_conn: sqlite3.Connection | None = None
         self._open()
@@ -339,30 +334,6 @@ class HistoryDB:
             return None
         return manifest
 
-    def store_whole_run_artifacts(
-        self,
-        run_id: str,
-        manifest: WholeRunArtifactManifest,
-        *,
-        artifact_contents: dict[str, bytes],
-    ) -> WholeRunArtifactManifest | None:
-        if manifest.run_id != run_id:
-            raise ValueError("whole-run artifact manifest run_id does not match persistence target")
-        stored_manifest = self._whole_run_artifact_store.store_run(
-            manifest,
-            artifact_contents=artifact_contents,
-        )
-        with self._write() as cur:
-            cur.execute(
-                "UPDATE runs SET whole_run_artifact_manifest_json = ? WHERE run_id = ?",
-                (safe_json_dumps(stored_manifest.to_json_object()), run_id),
-            )
-            updated = int(cur.rowcount) > 0
-        if not updated:
-            self._whole_run_artifact_store.delete_run_artifacts(run_id)
-            return None
-        return stored_manifest
-
     def finalize_run(
         self,
         run_id: str,
@@ -484,7 +455,7 @@ class HistoryDB:
             cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
             deleted = int(cur.rowcount) > 0
         if deleted:
-            self._delete_run_artifacts(run_id)
+            self._raw_capture_store.delete_run_artifacts(run_id)
         return deleted, None
 
     def recover_stale_recording_runs(self) -> int:
@@ -507,7 +478,7 @@ class HistoryDB:
         with self._write(immediate=True) as cur:
             cur.executemany("DELETE FROM runs WHERE run_id = ?", [(run_id,) for run_id in run_ids])
         for run_id in run_ids:
-            self._delete_run_artifacts(run_id)
+            self._raw_capture_store.delete_run_artifacts(run_id)
         return len(run_ids)
 
     def _terminal_run_ids_older_than(self, cutoff_utc: str) -> list[str]:
@@ -518,10 +489,6 @@ class HistoryDB:
                 (cutoff_utc,),
             )
             return [str(row[0]) for row in cur.fetchall()]
-
-    def _delete_run_artifacts(self, run_id: str) -> None:
-        self._raw_capture_store.delete_run_artifacts(run_id)
-        self._whole_run_artifact_store.delete_run_artifacts(run_id)
 
     # -- run queries ----------------------------------------------------------
 
@@ -540,7 +507,6 @@ class HistoryDB:
             project_run_list_entry(
                 row,
                 raw_capture_store=self._raw_capture_store,
-                whole_run_artifact_store=self._whole_run_artifact_store,
             )
             for row in rows
         ]
@@ -554,7 +520,6 @@ class HistoryDB:
         return project_stored_run(
             row,
             raw_capture_store=self._raw_capture_store,
-            whole_run_artifact_store=self._whole_run_artifact_store,
         )
 
     def get_run_metadata(self, run_id: str) -> RunMetadata | None:
@@ -593,24 +558,6 @@ class HistoryDB:
         if manifest is None or not self._raw_capture_store.has_run_artifacts(run_id):
             return None
         return self._raw_capture_store.load_capture(manifest)
-
-    def load_raw_capture_sensor_range(
-        self,
-        run_id: str,
-        client_id: str,
-        *,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange | None:
-        manifest = self.get_raw_capture_manifest(run_id)
-        if manifest is None or not self._raw_capture_store.has_run_artifacts(run_id):
-            return None
-        return self._raw_capture_store.load_sensor_range(
-            manifest,
-            client_id=client_id,
-            sample_start=sample_start,
-            sample_count=sample_count,
-        )
 
     def stale_analyzing_run_ids(self) -> list[str]:
         with self._read() as cur:

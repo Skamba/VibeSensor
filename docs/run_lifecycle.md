@@ -17,8 +17,6 @@ one big state-machine class:
   late-finalize replacement rules.
 - `PostAnalysisWorker` owns the background queue and retry policy after a run
   stops.
-- `whole_run_spectra.py` owns the connected bounded raw range-read sidecar
-  executor.
 - `CaptureReadinessTracker` owns the backend pre-record readiness checklist for
   idle/live states.
 - `RunRecorder` coordinates those helpers without re-owning their internals.
@@ -36,7 +34,7 @@ one big state-machine class:
 | `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
 | `RunRecorder` | `recording/recorder.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `analysis/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
-| `execute_post_analysis()` | `analysis/post_analysis_executor.py` | Load metadata/samples/raw manifests, build dense whole-run sidecars and compact persisted analysis, and store success or failure. |
+| `execute_post_analysis()` | `analysis/post_analysis_executor.py` | Load metadata/samples/raw capture, run the summary analysis, and store success or failure. |
 
 ## Lifecycle phases
 
@@ -107,13 +105,11 @@ presence, and raw-capture finalize metadata anymore. The one read-side owner is
 `RunArtifactLifecycle` in `apps/server/vibesensor/history/run_lifecycle.py`.
 
 That model is **derived**, not stored in a separate table or column. It projects
-five fields:
+four fields:
 
 - `stage`: `recording`, `post_analysis_pending`, `post_analysis_running`,
   `post_analysis_ready`, or `post_analysis_degraded`
 - `raw_capture`: `not_recorded`, `pending`, `ready`, `degraded`, or `missing`
-- `whole_run_artifacts`: `not_recorded`, `pending`, `ready`, `degraded`, or
-  `missing`
 - `post_analysis`: `pending`, `running`, `ready`, or `degraded`
 - `report`: `pending`, `ready`, or `degraded`
 
@@ -162,17 +158,10 @@ because there is nothing persistent to close.
 - the queue is FIFO and processed by one daemon thread
 - `_run_post_analysis()` retries transient failures with
   `_RETRY_DELAYS_S = (0.5, 1.0, 2.0)`
-- `execute_post_analysis()` loads the stored run, builds whole-run sidecar
-  artifacts when raw capture is available, calls the injected compact analysis
-  runner, appends compact whole-run summaries/metadata, and stores either
-  analysis output or an analysis error record
-- the loaded post-stop input includes persisted summary rows and raw manifests;
-  compact raw replay may load a full raw-capture bundle, while whole-run spectra
-  read bounded ranges through `HistoryDB.load_raw_capture_sensor_range()`
-- the current whole-run sidecar stages are spectra, context labels, order trace
-  points, order trace summaries, order family summaries, spatial coherence, and
-  artifact persistence; dense artifacts stay under `whole-run-artifacts/`, while
-  `analysis_json` keeps compact report-facing summaries
+- `execute_post_analysis()` loads the stored run, recomputes the summary rows'
+  FFT peaks from raw capture when it is available, calls the injected summary
+  analysis runner, and stores either analysis output or an analysis error
+  record
 
 The worker also exposes `PostAnalysisHealthSnapshot`, which is what the health
 surface uses for queue depth, active run ID, and the most recent completion
@@ -233,8 +222,5 @@ task/timeout helpers:
 | `apps/server/vibesensor/recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
 | `apps/server/vibesensor/recording/recorder.py` | Public recording start/stop entrypoint. |
 | `apps/server/vibesensor/analysis/post_analysis.py` | Queue, worker-thread, retry, and health behavior. |
-| `apps/server/vibesensor/analysis/post_analysis_executor.py` | Load -> whole-run sidecars -> compact analysis -> store execution path, written as straight-line steps (one `post_analysis_step` log line each) that call the whole-run diagnostics builders directly. |
+| `apps/server/vibesensor/analysis/post_analysis_executor.py` | Load -> build input (raw replay) -> analyze -> store execution path, written as straight-line steps (one `post_analysis_step` log line each). |
 | `apps/server/vibesensor/analysis/raw_capture_replay.py` | Raw-window replay for post-stop strength/peak rebuilding before diagnostics. |
-| `apps/server/vibesensor/analysis/whole_run_spectra.py` | Current whole-run spectral sidecar builder over bounded raw range reads. |
-| `apps/server/vibesensor/analysis/whole_run_context.py` | Current whole-run context labels and compact intervals. |
-| `apps/server/vibesensor/analysis/orders/whole_run_*.py` | Current whole-run order trace, scoring, and family-summary sidecar/summarization stages. |

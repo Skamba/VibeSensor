@@ -163,7 +163,6 @@ def _road_shock_fixture() -> GoldenReplayFixture:
             confidence_range=(0.0, 0.45),
             max_false_positive_confidence=0.45,
             tolerance_bands={"top_confidence": (0.0, 0.45)},
-            required_metadata_minimums={"whole_run_spectral_quality_limited_window_count": 1.0},
         ),
     )
 
@@ -225,7 +224,7 @@ def _gps_dropout_fixture() -> GoldenReplayFixture:
             strongest_location="front-left",
             confidence_range=(0.35, 0.9),
             unavailable_reasons=("missing_speed",),
-            tolerance_bands={"missing_speed_windows_min": (1.0, 9999.0)},
+            tolerance_bands={"unaligned_speed_samples_min": (1.0, 9999.0)},
         ),
     )
 
@@ -246,6 +245,6 @@ def _missing_rpm_fixture() -> GoldenReplayFixture:
             confidence_range=(0.0, 0.45),
             unavailable_reasons=("missing_rpm",),
             max_false_positive_confidence=0.45,
-            tolerance_bands={"missing_rpm_windows_min": (1.0, 9999.0)},
+            tolerance_bands={"top_confidence": (0.0, 0.45)},
         ),
     )

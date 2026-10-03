@@ -32,7 +32,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `live/`: signal processor, processing loop, live WebSocket payload and broadcaster.
 - `dsp/`: FFT, window quality, order bands, canonical dB strength math, DSP constants.
 - `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness.
-- `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`, whole-run) and the post-analysis worker.
+- `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`) and the post-analysis worker.
 - `summary/`: the persisted analysis-summary contract and its (de)serialization; read by history, report, and web.
 - `report/`: report facts, document model (`model/`), document assembly (`document/`), PDF rendering (`pdf/`), i18n.
 - `history/`: `HistoryDB` (SQLite), history queries/projections, exports.

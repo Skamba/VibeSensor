@@ -55,7 +55,7 @@ Persisted analysis metadata records the active diagnostic `processing_profile`,
 available profile rows, the live filter chain, the diagnostic filter chain, and
 whether raw diagnostic evidence was preserved.
 
-Raw replay and whole-run spectra use unfiltered raw windows for diagnostic
+Raw replay uses unfiltered raw windows for diagnostic
 strength/spectrum computation. If no raw-backed replay is available, report
 metadata marks the active profile as `diagnostic_filtered` so downstream report
 code can treat summary-derived evidence as a fallback instead of raw evidence.

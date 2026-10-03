@@ -10,7 +10,7 @@ from vibesensor.analysis.post_analysis_loader import (
     MissingPostAnalysisMetadata,
     load_post_analysis_run,
 )
-from vibesensor.recording.raw_capture import RawCaptureManifest, RawCaptureSensorRange
+from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
@@ -59,20 +59,6 @@ def test_load_post_analysis_run_returns_loaded_run() -> None:
         def load_raw_capture(self, _run_id):
             return None
 
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
-
     result = load_post_analysis_run(run_id="run-ok", db=FakeDB())
 
     assert isinstance(result, LoadedPostAnalysisRun)
@@ -95,20 +81,6 @@ def test_load_post_analysis_run_handles_missing_metadata() -> None:
         def load_raw_capture(self, _run_id):
             return None
 
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
-
     result = load_post_analysis_run(run_id="run-missing", db=FakeDB())
 
     assert isinstance(result, MissingPostAnalysisMetadata)
@@ -128,20 +100,6 @@ def test_load_post_analysis_run_handles_no_samples() -> None:
 
         def load_raw_capture(self, _run_id):
             return None
-
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
 
     result = load_post_analysis_run(run_id="run-empty", db=FakeDB())
 
@@ -176,20 +134,6 @@ def test_load_post_analysis_run_preserves_transient_events_when_capped(
 
         def load_raw_capture(self, _run_id):
             return None
-
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
 
     result = load_post_analysis_run(run_id="run-capped", db=FakeDB())
 
@@ -233,20 +177,6 @@ def test_load_post_analysis_run_keeps_event_preserving_selection_deterministic(
         def load_raw_capture(self, _run_id):
             return None
 
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
-
     first = load_post_analysis_run(run_id="run-deterministic", db=FakeDB())
     second = load_post_analysis_run(run_id="run-deterministic", db=FakeDB())
 
@@ -256,79 +186,6 @@ def test_load_post_analysis_run_keeps_event_preserving_selection_deterministic(
     assert len(second.samples) == 3
     assert first.sampling_method == "event_preserving"
     assert [sample.t_s for sample in first.samples] == [sample.t_s for sample in second.samples]
-
-
-def test_load_post_analysis_run_loads_full_context_samples_when_whole_run_artifacts_exist(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "vibesensor.analysis.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES",
-        2,
-    )
-    raw_capture_manifest = RawCaptureManifest(
-        run_id="run-context",
-        relative_dir="raw-runs/run-context",
-        sensors=(),
-        total_samples=4,
-        total_bytes=0,
-        created_at="2025-01-01T00:00:00Z",
-    )
-
-    class FakeDB:
-        def get_run(self, run_id):
-            return _StoredRun(
-                metadata=_run_metadata(run_id),
-                sample_count=4,
-                raw_capture_manifest=raw_capture_manifest,
-            )
-
-        def iter_run_samples(self, _run_id, batch_size=1024, *, stride=1):
-            assert batch_size == 1024
-            assert stride == 1
-            yield sensor_frames_from_mappings(
-                [
-                    {"t_s": 1.0, "vibration_strength_db": 10.0},
-                    {"t_s": 2.0, "vibration_strength_db": 11.0},
-                    {"t_s": 3.0, "vibration_strength_db": 12.0},
-                    {"t_s": 4.0, "vibration_strength_db": 13.0},
-                ]
-            )
-
-        def get_run_samples(self, _run_id):
-            return sensor_frames_from_mappings(
-                [
-                    {"t_s": 1.0, "vibration_strength_db": 10.0},
-                    {"t_s": 2.0, "vibration_strength_db": 11.0},
-                    {"t_s": 3.0, "vibration_strength_db": 12.0},
-                    {"t_s": 4.0, "vibration_strength_db": 13.0},
-                ]
-            )
-
-        def load_raw_capture(self, _run_id):
-            return None
-
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
-
-    result = load_post_analysis_run(run_id="run-context", db=FakeDB())
-
-    assert isinstance(result, LoadedPostAnalysisRun)
-    assert len(result.samples) == 2
-    assert result.context_samples is not None
-    assert len(result.context_samples) == 4
-    assert result.stride == 2
-    assert result.sampling_method == "event_preserving"
 
 
 def test_load_post_analysis_run_defaults_language_to_en() -> None:
@@ -345,20 +202,6 @@ def test_load_post_analysis_run_defaults_language_to_en() -> None:
 
         def load_raw_capture(self, _run_id):
             return None
-
-        def load_raw_capture_sensor_range(
-            self,
-            _run_id,
-            client_id,
-            *,
-            sample_start,
-            sample_count,
-        ):
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
 
     result = load_post_analysis_run(run_id="run-lang", db=FakeDB())
 

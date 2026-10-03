@@ -64,7 +64,6 @@ def build_report_document_sections(
         primary_candidate_facts=context.decision_facts.primary_candidate,
         active_sensor_intensity=context.sensor_facts.proof_intensity,
         proof_basis=context.sensor_facts.proof_basis,
-        diagnosis_summary=context.report_facts.primary_diagnosis,
         appendix_context=context.appendix_b_context,
         tr=context.tr,
     )
@@ -95,7 +94,6 @@ def build_report_document_sections(
             aggregate=context.test_run,
             origin=context.run_facts.origin,
             primary=context.primary,
-            diagnosis_summaries=context.report_facts.whole_run_diagnosis_summaries,
             lang=context.lang,
             tr=context.tr,
         ),

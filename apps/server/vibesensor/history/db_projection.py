@@ -22,9 +22,6 @@ from vibesensor.history.run_lifecycle import (
     RunArtifactLifecycle,
     derive_run_artifact_lifecycle,
 )
-from vibesensor.history.whole_run_artifact_store import (
-    HistoryWholeRunArtifactStore,
-)
 from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata, RunRawCaptureFinalize
@@ -32,7 +29,6 @@ from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.persisted_codec import (
     persisted_analysis_from_storage_json_object,
 )
-from vibesensor.summary.whole_run_analysis import WholeRunArtifactManifest
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +58,6 @@ def _artifact_availability(
 ) -> HistoryArtifactAvailability:
     return HistoryArtifactAvailability(
         raw_capture=_artifact_availability_state(lifecycle.raw_capture),
-        whole_run_artifacts=_artifact_availability_state(lifecycle.whole_run_artifacts),
     )
 
 
@@ -143,37 +138,6 @@ def coerce_raw_capture_manifest(
         return None
 
 
-def _coerce_whole_run_artifact_manifest(
-    *,
-    run_id: str,
-    manifest_json: str | None,
-    source: str,
-) -> WholeRunArtifactManifest | None:
-    parsed = safe_json_loads(
-        manifest_json,
-        context=f"run {run_id} whole_run_artifact_manifest",
-    )
-    if not is_json_object(parsed):
-        if parsed is not None:
-            LOGGER.warning(
-                "%s: run %s whole_run_artifact_manifest_json parsed to %s, expected dict",
-                source,
-                run_id,
-                type(parsed).__name__,
-            )
-        return None
-    try:
-        return WholeRunArtifactManifest.from_mapping(parsed)
-    except (TypeError, ValueError):
-        LOGGER.warning(
-            "%s: run %s whole_run_artifact_manifest_json is corrupt or unsupported",
-            source,
-            run_id,
-            exc_info=True,
-        )
-        return None
-
-
 def _coerce_raw_capture_finalize(
     *,
     run_id: str,
@@ -223,11 +187,9 @@ def _coerce_analysis(
 def _run_lifecycle(
     *,
     raw_capture_store: HistoryRawCaptureStore,
-    whole_run_artifact_store: HistoryWholeRunArtifactStore,
     run_id: str,
     status: RunStatus,
     has_raw_capture_manifest: bool,
-    whole_run_artifact_manifest: WholeRunArtifactManifest | None,
     raw_capture_finalize: RunRawCaptureFinalize | None,
     has_analysis: bool,
     analysis_corrupt: bool,
@@ -237,11 +199,6 @@ def _run_lifecycle(
         has_raw_capture_manifest=has_raw_capture_manifest,
         raw_capture_artifacts_present=(
             has_raw_capture_manifest and raw_capture_store.has_run_artifacts(run_id)
-        ),
-        has_whole_run_artifact_manifest=whole_run_artifact_manifest is not None,
-        whole_run_artifacts_present=(
-            whole_run_artifact_manifest is not None
-            and whole_run_artifact_store.has_manifest_artifacts(whole_run_artifact_manifest)
         ),
         raw_capture_finalize=raw_capture_finalize,
         has_analysis=has_analysis,
@@ -253,7 +210,6 @@ def project_run_list_entry(
     row: Sequence[object],
     *,
     raw_capture_store: HistoryRawCaptureStore,
-    whole_run_artifact_store: HistoryWholeRunArtifactStore,
 ) -> HistoryRunListEntry:
     (
         run_id,
@@ -267,7 +223,6 @@ def project_run_list_entry(
         metadata_json,
         analysis_json,
         raw_capture_manifest_json,
-        whole_run_artifact_manifest_json,
     ) = row
     normalized_run_id = str(run_id)
     normalized_start = str(start)
@@ -283,20 +238,11 @@ def project_run_list_entry(
         analysis_json=str(analysis_json) if analysis_json is not None else None,
         source="list_runs",
     )
-    whole_run_artifact_manifest = _coerce_whole_run_artifact_manifest(
-        run_id=normalized_run_id,
-        manifest_json=str(whole_run_artifact_manifest_json)
-        if whole_run_artifact_manifest_json is not None
-        else None,
-        source="list_runs",
-    )
     lifecycle = _run_lifecycle(
         raw_capture_store=raw_capture_store,
-        whole_run_artifact_store=whole_run_artifact_store,
         run_id=normalized_run_id,
         status=status,
         has_raw_capture_manifest=raw_capture_manifest_json is not None,
-        whole_run_artifact_manifest=whole_run_artifact_manifest,
         raw_capture_finalize=raw_capture_finalize,
         has_analysis=analysis is not None,
         analysis_corrupt=analysis_corrupt,
@@ -320,7 +266,6 @@ def project_stored_run(
     row: Sequence[object],
     *,
     raw_capture_store: HistoryRawCaptureStore,
-    whole_run_artifact_store: HistoryWholeRunArtifactStore,
 ) -> StoredHistoryRun:
     (
         rid,
@@ -330,7 +275,6 @@ def project_stored_run(
         end,
         meta_json,
         raw_capture_manifest_json,
-        whole_run_artifact_manifest_json,
         analysis_json,
         error,
         created,
@@ -357,13 +301,6 @@ def project_stored_run(
         else None,
         source="get_run",
     )
-    whole_run_artifact_manifest = _coerce_whole_run_artifact_manifest(
-        run_id=normalized_run_id,
-        manifest_json=str(whole_run_artifact_manifest_json)
-        if whole_run_artifact_manifest_json is not None
-        else None,
-        source="get_run",
-    )
     analysis, analysis_corrupt = _coerce_analysis(
         run_id=normalized_run_id,
         analysis_json=str(analysis_json) if analysis_json is not None else None,
@@ -371,11 +308,9 @@ def project_stored_run(
     )
     lifecycle = _run_lifecycle(
         raw_capture_store=raw_capture_store,
-        whole_run_artifact_store=whole_run_artifact_store,
         run_id=normalized_run_id,
         status=status,
         has_raw_capture_manifest=has_raw_capture_manifest,
-        whole_run_artifact_manifest=whole_run_artifact_manifest,
         raw_capture_finalize=metadata.raw_capture_finalize,
         has_analysis=analysis is not None,
         analysis_corrupt=analysis_corrupt,
@@ -389,7 +324,6 @@ def project_stored_run(
         metadata=metadata,
         analysis=analysis,
         raw_capture_manifest=raw_capture_manifest,
-        whole_run_artifact_manifest=whole_run_artifact_manifest,
         lifecycle=lifecycle,
         artifact_availability=_artifact_availability(lifecycle=lifecycle),
         raw_capture_finalize=metadata.raw_capture_finalize,

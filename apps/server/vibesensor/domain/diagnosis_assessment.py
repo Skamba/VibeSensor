@@ -1,10 +1,9 @@
-"""Canonical whole-run diagnosis assessment policy and typed results."""
+"""Report diagnosis assessment: confidence factors and caveats for the summary diagnosis."""
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
-from typing import Final, Literal
 
 from vibesensor.domain.finding import Finding
 
@@ -15,16 +14,12 @@ __all__ = [
     "DiagnosisAssessmentFactor",
     "DiagnosisAssessmentFactorDetails",
     "DiagnosisAssessmentInputs",
-    "LEGACY_CONTEXT_CAVEAT_KEY",
-    "apply_diagnosis_assessment_fallback",
     "diagnosis_assessment_from_components",
     "score_diagnosis_assessment_inputs",
 ]
 
 DIAGNOSIS_CLOSE_ALTERNATIVE_REEVALUATION_GAP = 0.10
 DIAGNOSIS_AMBIGUOUS_SCORE_GAP = 0.05
-LEGACY_CONTEXT_CAVEAT_KEY: Final[Literal["legacy_context"]] = "legacy_context"
-"""Shared caveat/factor key for legacy whole-run context fallbacks."""
 
 _DIAGNOSIS_SUSPICIOUS_CAVEAT_KEYS = frozenset(
     {
@@ -52,8 +47,6 @@ class DiagnosisAssessmentFactorDetails:
     mean_relative_error: float | None = None
     snr_db: float | None = None
     alternative_source: str | None = None
-    speed_gap_window_count: int | None = None
-    rpm_gap_window_count: int | None = None
     fallback_reason: str | None = None
     car_data_reference_scope: str | None = None
     car_data_confidence: str | None = None
@@ -74,7 +67,7 @@ class DiagnosisAssessmentFactor:
 
 @dataclass(frozen=True, slots=True)
 class DiagnosisAssessmentInputs:
-    """Normalized canonical inputs for whole-run diagnosis scoring."""
+    """Normalized inputs for report diagnosis scoring."""
 
     base_confidence: float
     data_basis: str
@@ -91,10 +84,6 @@ class DiagnosisAssessmentInputs:
     alternative_source: str | None
     has_reference_gap: bool
     weak_spatial: bool
-    context_traceable: bool
-    context_source: str
-    speed_gap_window_count: int
-    rpm_gap_window_count: int
     car_data_reference_scope: str | None = None
     car_data_confidence: str | None = None
     confidence_gap_to_alternative: float | None = None
@@ -121,8 +110,6 @@ class DiagnosisAssessment:
     snr_db: float | None
     alternative_source: str | None
     has_reference_gap: bool
-    speed_gap_window_count: int
-    rpm_gap_window_count: int
     car_data_reference_scope: str | None
     car_data_confidence: str | None
     uses_summary_fallback: bool
@@ -137,7 +124,7 @@ class DiagnosisAssessment:
 
 
 def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> DiagnosisAssessment:
-    """Apply the canonical whole-run diagnosis scoring policy."""
+    """Apply the report diagnosis scoring policy."""
 
     score = max(0.0, min(0.70, 0.25 + (inputs.base_confidence * 0.40)))
     signal_keys: list[str] = []
@@ -157,18 +144,6 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
     else:
         score -= 0.05
         caveat_keys.append("summary_only")
-
-    if inputs.context_traceable:
-        if inputs.context_source == "legacy":
-            score -= 0.05
-            caveat_keys.append(LEGACY_CONTEXT_CAVEAT_KEY)
-        else:
-            if inputs.speed_gap_window_count > 0:
-                score -= 0.04
-                caveat_keys.append("speed_context_gaps")
-            if inputs.rpm_gap_window_count > 0:
-                score -= 0.04
-                caveat_keys.append("rpm_context_gaps")
 
     if inputs.supporting_window_count is not None:
         if inputs.supporting_window_count >= 4:
@@ -266,8 +241,6 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
         snr_db=inputs.snr_db,
         alternative_source=inputs.alternative_source,
         has_reference_gap=inputs.has_reference_gap,
-        speed_gap_window_count=inputs.speed_gap_window_count,
-        rpm_gap_window_count=inputs.rpm_gap_window_count,
         car_data_reference_scope=inputs.car_data_reference_scope,
         car_data_confidence=inputs.car_data_confidence,
         uses_summary_fallback=False,
@@ -275,47 +248,6 @@ def score_diagnosis_assessment_inputs(inputs: DiagnosisAssessmentInputs) -> Diag
         signal_keys=tuple(dict.fromkeys(signal_keys)),
         caveat_keys=tuple(dict.fromkeys(caveat_keys)),
         confidence_gap_to_alternative=inputs.confidence_gap_to_alternative,
-    )
-
-
-def apply_diagnosis_assessment_fallback(
-    assessment: DiagnosisAssessment,
-    *,
-    fallback_reason: str,
-) -> DiagnosisAssessment:
-    """Mark an assessment as an explicit fallback and rebuild its factor rows."""
-
-    caveat_keys = list(assessment.caveat_keys)
-    if assessment.data_basis == "summary_only" and "summary_only" not in caveat_keys:
-        caveat_keys.append("summary_only")
-    if assessment.data_basis == "partial_raw_backed" and "raw_replay_incomplete" not in caveat_keys:
-        caveat_keys.append("raw_replay_incomplete")
-    return _assessment_from_keys(
-        score_0_to_1=assessment.score_0_to_1,
-        data_basis=assessment.data_basis,
-        raw_backed_sample_count=assessment.raw_backed_sample_count,
-        supporting_window_count=assessment.supporting_window_count,
-        supporting_duration_s=assessment.supporting_duration_s,
-        stable_frequency_min_hz=assessment.stable_frequency_min_hz,
-        stable_frequency_max_hz=assessment.stable_frequency_max_hz,
-        supporting_location_count=assessment.supporting_location_count,
-        top_support_location=assessment.top_support_location,
-        top_support_share=assessment.top_support_share,
-        mean_relative_error=assessment.mean_relative_error,
-        snr_db=assessment.snr_db,
-        alternative_source=assessment.alternative_source,
-        has_reference_gap=assessment.has_reference_gap,
-        speed_gap_window_count=assessment.speed_gap_window_count,
-        rpm_gap_window_count=assessment.rpm_gap_window_count,
-        car_data_reference_scope=assessment.car_data_reference_scope,
-        car_data_confidence=assessment.car_data_confidence,
-        uses_summary_fallback=True,
-        fallback_reason=fallback_reason,
-        signal_keys=assessment.signal_keys,
-        caveat_keys=tuple(dict.fromkeys(caveat_keys)),
-        confidence_gap_to_alternative=assessment.confidence_gap_to_alternative,
-        ambiguous_diagnosis=assessment.ambiguous_diagnosis,
-        suspicious=assessment.suspicious,
     )
 
 
@@ -335,8 +267,6 @@ def diagnosis_assessment_from_components(
     snr_db: float | None,
     alternative_source: str | None,
     has_reference_gap: bool,
-    speed_gap_window_count: int,
-    rpm_gap_window_count: int,
     car_data_reference_scope: str | None,
     car_data_confidence: str | None,
     uses_summary_fallback: bool,
@@ -381,8 +311,6 @@ def diagnosis_assessment_from_components(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=has_reference_gap,
-        speed_gap_window_count=speed_gap_window_count,
-        rpm_gap_window_count=rpm_gap_window_count,
         car_data_reference_scope=car_data_reference_scope,
         car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
@@ -415,8 +343,6 @@ def _assessment_from_keys(
     snr_db: float | None,
     alternative_source: str | None,
     has_reference_gap: bool,
-    speed_gap_window_count: int,
-    rpm_gap_window_count: int,
     car_data_reference_scope: str | None,
     car_data_confidence: str | None,
     uses_summary_fallback: bool,
@@ -449,8 +375,6 @@ def _assessment_from_keys(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=has_reference_gap,
-        speed_gap_window_count=speed_gap_window_count,
-        rpm_gap_window_count=rpm_gap_window_count,
         car_data_reference_scope=car_data_reference_scope,
         car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
@@ -478,8 +402,6 @@ def _assessment_from_keys(
         snr_db=snr_db,
         alternative_source=alternative_source,
         has_reference_gap=has_reference_gap,
-        speed_gap_window_count=speed_gap_window_count,
-        rpm_gap_window_count=rpm_gap_window_count,
         car_data_reference_scope=car_data_reference_scope,
         car_data_confidence=car_data_confidence,
         uses_summary_fallback=uses_summary_fallback,
@@ -562,10 +484,8 @@ def _support_factor_weight(factor_key: str, assessment: DiagnosisAssessment) -> 
 
 
 def _counter_factor_weight(factor_key: str) -> float:
-    if factor_key in {"summary_only", LEGACY_CONTEXT_CAVEAT_KEY, "raw_replay_incomplete"}:
+    if factor_key in {"summary_only", "raw_replay_incomplete"}:
         return 0.05
-    if factor_key in {"speed_context_gaps", "rpm_context_gaps"}:
-        return 0.04
     if factor_key == "secondary_vehicle_data":
         return 0.05
     if factor_key in {
@@ -634,10 +554,6 @@ def _factor_details(
         )
     if factor_key == "close_alternative":
         return replace(details, alternative_source=assessment.alternative_source)
-    if factor_key == "speed_context_gaps":
-        return replace(details, speed_gap_window_count=assessment.speed_gap_window_count)
-    if factor_key == "rpm_context_gaps":
-        return replace(details, rpm_gap_window_count=assessment.rpm_gap_window_count)
     if factor_key == "summary_only" and assessment.uses_summary_fallback:
         return replace(details, fallback_reason=assessment.fallback_reason)
     return details
@@ -671,9 +587,6 @@ def _tier_for_score(*, label_key: str, score_0_to_1: float, caveat_keys: tuple[s
             "weak_spatial",
             "close_alternative",
             "incomplete_reference",
-            LEGACY_CONTEXT_CAVEAT_KEY,
-            "speed_context_gaps",
-            "rpm_context_gaps",
             "noisy_signal",
             "secondary_vehicle_data",
             "approximate_vehicle_data",

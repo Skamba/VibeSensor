@@ -2,19 +2,17 @@
 
 ``AnalysisSummary`` is the one definition of the persisted analysis summary
 (``runs.analysis_json``) and of the ``HistoryRunResponse.analysis`` OpenAPI
-schema. Its whole-run rows reuse the frozen dataclass contracts (``JsonContract``)
-that the post-analysis pipeline produces, so each row shape is defined once.
+schema.
 ``FindingPayload`` lives in ``finding_payload_parts``; endpoint-specific HTTP
 wrappers stay in ``web.models.history``.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Required, TypedDict
+from typing import Literal, Required, TypedDict
 
 from pydantic import ConfigDict, with_config
 
-from vibesensor.common.json_contract import AsJsonObject
 from vibesensor.common.json_types import JsonSchemaObject, JsonSchemaValue
 from vibesensor.summary.analysis_views import (
     PhaseSpeedBreakdownRow,
@@ -23,10 +21,6 @@ from vibesensor.summary.analysis_views import (
 )
 from vibesensor.summary.data_quality_contracts import DataQualityResponse
 from vibesensor.summary.finding_payload_parts import FindingPayload
-from vibesensor.summary.order_trace_contracts import OrderTraceSummary
-from vibesensor.summary.spatial_evidence_contracts import SpatialEvidenceSummary
-from vibesensor.summary.whole_run_analysis import WholeRunContextInterval
-from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "AnalysisSummary",
@@ -234,10 +228,6 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
     test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
-    whole_run_context_intervals: list[Annotated[WholeRunContextInterval, AsJsonObject]]
-    whole_run_order_summaries: list[Annotated[OrderTraceSummary, AsJsonObject]]
-    whole_run_spatial_summaries: list[Annotated[SpatialEvidenceSummary, AsJsonObject]]
-    whole_run_diagnosis_summaries: list[Annotated[WholeRunDiagnosisSummary, AsJsonObject]]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]
     phase_info: Required[PhaseInfoResponse]

@@ -39,7 +39,6 @@ class PostAnalysisRunInput:
     raw_min_sensor_duration_s: float | None
     raw_replay: RawReplaySummary
     raw_replay_window_coverages: tuple[RawReplayWindowCoverage, ...] = field(default_factory=tuple)
-    context_samples: tuple[Sample, ...] = field(default_factory=tuple)
 
     @property
     def run_id(self) -> str:
@@ -90,9 +89,6 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
         raw_min_sensor_duration_s=raw_min_sensor_duration_s,
         raw_replay=replay_result.summary,
         raw_replay_window_coverages=replay_result.window_coverages,
-        context_samples=(
-            tuple(loaded.context_samples) if loaded.context_samples is not None else tuple()
-        ),
     )
 
 

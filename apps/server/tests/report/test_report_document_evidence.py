@@ -105,8 +105,12 @@ def test_build_report_document_surfaces_evidence_snapshot_rows() -> None:
         _tr("REPORT_SUPPORT_WINDOW_SUMMARY_LABEL"),
         _tr("REPORT_STABLE_FREQUENCY_LABEL"),
     ]
+    primary_finding = prepared.report_facts.decision.primary_candidate.domain_primary
+    assert primary_finding is not None
+    assert primary_finding.confidence_assessment is not None
     assert data.verdict_page.proof_snapshot_rows[0].value.startswith(
-        f"{_tr('CONFIDENCE_MEDIUM')} ("
+        f"{_tr(primary_finding.confidence_assessment.label_key)} "
+        f"({primary_finding.confidence_assessment.pct_text})"
     )
     assert data.verdict_page.proof_snapshot_rows[1].value == _tr(
         "REPORT_EVIDENCE_BASIS_RAW",

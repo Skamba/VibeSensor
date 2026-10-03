@@ -17,7 +17,6 @@ from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureChunkIndex,
-    RawCaptureCoverageState,
     RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSampleRateProofState,
@@ -25,7 +24,6 @@ from vibesensor.recording.raw_capture import (
     RawCaptureSensorData,
     RawCaptureSensorLossStats,
     RawCaptureSensorManifest,
-    RawCaptureSensorRange,
     RawRunCapture,
 )
 
@@ -181,88 +179,6 @@ class HistoryRawCaptureStore:
             )
         return RawRunCapture(manifest=manifest, sensors=tuple(sensors))
 
-    def load_sensor_range(
-        self,
-        manifest: RawCaptureManifest,
-        *,
-        client_id: str,
-        sample_start: int,
-        sample_count: int,
-    ) -> RawCaptureSensorRange:
-        if sample_start < 0:
-            raise ValueError("raw capture range requires sample_start >= 0")
-        if sample_count <= 0:
-            raise ValueError("raw capture range requires sample_count > 0")
-        sensor_manifest = manifest.sensor_manifest(client_id)
-        if sensor_manifest is None:
-            return RawCaptureSensorRange.missing(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-            )
-        available_count = max(0, int(sensor_manifest.sample_count))
-        if sample_start >= available_count:
-            return RawCaptureSensorRange(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-                coverage_state="empty",
-                samples_i16=np.empty((0, _AXIS_COUNT), dtype=np.int16),
-                manifest=sensor_manifest,
-                returned_sample_start=sample_start,
-            )
-        actual_start = sample_start
-        actual_end = min(sample_start + sample_count, available_count)
-        actual_count = max(0, actual_end - actual_start)
-        if actual_count <= 0:
-            return RawCaptureSensorRange(
-                client_id=client_id,
-                requested_sample_start=sample_start,
-                requested_sample_count=sample_count,
-                coverage_state="empty",
-                samples_i16=np.empty((0, _AXIS_COUNT), dtype=np.int16),
-                manifest=sensor_manifest,
-                returned_sample_start=sample_start,
-            )
-        run_dir = self._data_dir / manifest.relative_dir
-        index_path = run_dir / sensor_manifest.index_file
-        chunk_indexes = tuple(self._load_chunk_indexes(index_path))
-        overlapping_chunks = _overlapping_chunks(
-            chunk_indexes,
-            sample_start=actual_start,
-            sample_end=actual_end,
-        )
-        if not overlapping_chunks:
-            raise ValueError(
-                f"raw capture index {index_path} has no chunk coverage for "
-                f"{client_id} samples [{actual_start}, {actual_end})"
-            )
-        first_chunk = overlapping_chunks[0]
-        byte_offset = first_chunk.byte_offset + (
-            (actual_start - first_chunk.sample_start) * _BYTES_PER_SAMPLE
-        )
-        samples_i16 = self._read_sensor_range_samples(
-            run_dir / sensor_manifest.data_file,
-            byte_offset=byte_offset,
-            sample_count=actual_count,
-        )
-        returned_count = int(samples_i16.shape[0])
-        coverage_state: RawCaptureCoverageState = (
-            "full" if returned_count == sample_count else "partial"
-        )
-        if returned_count <= 0:
-            coverage_state = "empty"
-        return RawCaptureSensorRange(
-            client_id=client_id,
-            requested_sample_start=sample_start,
-            requested_sample_count=sample_count,
-            coverage_state=coverage_state,
-            samples_i16=samples_i16,
-            manifest=sensor_manifest,
-            returned_sample_start=actual_start,
-            chunks=overlapping_chunks,
-        )
-
     def delete_run_artifacts(self, run_id: str) -> None:
         with self._lock:
             streams = self._open_runs.pop(run_id, None)
@@ -290,18 +206,6 @@ class HistoryRawCaptureStore:
 
     def _read_all_sensor_samples(self, data_path: Path) -> np.ndarray:
         return self._reshape_samples(raw_bytes=data_path.read_bytes(), data_path=data_path)
-
-    def _read_sensor_range_samples(
-        self,
-        data_path: Path,
-        *,
-        byte_offset: int,
-        sample_count: int,
-    ) -> np.ndarray:
-        with data_path.open("rb") as handle:
-            handle.seek(byte_offset)
-            raw_bytes = handle.read(sample_count * _BYTES_PER_SAMPLE)
-        return self._reshape_samples(raw_bytes=raw_bytes, data_path=data_path)
 
     def _reshape_samples(self, *, raw_bytes: bytes, data_path: Path) -> np.ndarray:
         samples_i16 = np.frombuffer(raw_bytes, dtype=np.dtype("<i2")).copy()
@@ -335,20 +239,6 @@ class HistoryRawCaptureStore:
         )
         run_streams[client_id] = stream
         return stream
-
-
-def _overlapping_chunks(
-    chunks: tuple[RawCaptureChunkIndex, ...],
-    *,
-    sample_start: int,
-    sample_end: int,
-) -> tuple[RawCaptureChunkIndex, ...]:
-    return tuple(
-        chunk
-        for chunk in chunks
-        if chunk.sample_start < sample_end
-        and (chunk.sample_start + chunk.sample_count) > sample_start
-    )
 
 
 def _derive_sensor_sample_rate(

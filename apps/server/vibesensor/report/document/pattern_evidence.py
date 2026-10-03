@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.test_run import TestRun
@@ -18,7 +18,6 @@ from vibesensor.report.presentation import (
     order_label_human,
 )
 from vibesensor.summary.origin_fields import build_origin_explanation
-from vibesensor.summary.whole_run_diagnosis_contracts import WholeRunDiagnosisSummary
 
 __all__ = [
     "build_pattern_evidence",
@@ -32,18 +31,13 @@ def build_pattern_evidence(
     aggregate: TestRun,
     origin: VibrationOrigin | None,
     primary: PrimaryCandidateContext,
-    diagnosis_summaries: Sequence[WholeRunDiagnosisSummary],
     lang: str,
     tr: Callable[..., str],
 ) -> PatternEvidence:
     """Build the pattern-evidence block for the report template."""
     effective = aggregate.effective_top_causes()
     domain_primary = effective[0] if effective else aggregate.primary_finding
-    systems_raw = (
-        [human_source(summary.suspected_source, tr=tr) for summary in diagnosis_summaries[:3]]
-        if diagnosis_summaries
-        else [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
-    )
+    systems_raw = [human_source(str(f.suspected_source), tr=tr) for f in effective[:3]]
     systems = list(dict.fromkeys(systems_raw))
     interpretation = resolve_interpretation(origin, lang=lang, tr=tr)
     source_for_why, order_label_for_why = resolve_parts_context(

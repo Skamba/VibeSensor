@@ -30,7 +30,6 @@ class LoadedPostAnalysisRun:
     sampling_method: str = "full"
     evenly_spaced_sample_count: int = 0
     event_sample_count: int = 0
-    context_samples: list[SensorFrame] | None = None
     raw_capture: RawRunCapture | None = None
     raw_capture_manifest: RawCaptureManifest | None = None
 
@@ -99,14 +98,12 @@ def load_post_analysis_run(
         feature_interval_s=metadata.feature_interval_s,
     )
     sample_selection = _select_post_analysis_samples(full_samples)
-    context_samples = list(full_samples) if raw_capture_manifest is not None else None
 
     return LoadedPostAnalysisRun(
         run_id=run_id,
         metadata=metadata,
         language=metadata.language or "en",
         samples=sample_selection.samples,
-        context_samples=context_samples,
         total_summary_row_count=total_summary_row_count,
         summary_duration_s=summary_duration_s,
         stride=sample_selection.stride,
