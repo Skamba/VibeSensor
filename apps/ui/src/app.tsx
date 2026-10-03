@@ -20,7 +20,6 @@ import {
   type ViewId,
 } from "./app_store";
 import { appState, liveStatusBadge, panels } from "./app/feature_wiring";
-import { HistoryPanel } from "./app/views/history_panel";
 import { RealtimeLiveOverviewPanel } from "./app/views/realtime_live_overview";
 import { RealtimeLoggingPanelView } from "./app/views/realtime_logging_panel";
 import { SensorsPanel } from "./app/views/sensors_panel";
@@ -29,6 +28,7 @@ import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { Analysis } from "./pages/analysis/Analysis";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
+import { History } from "./pages/history/History";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Internet, Update } from "./pages/update/Update";
 
@@ -347,7 +347,7 @@ export function App() {
       </View>
       <View id="historyView">
         <div class="panel card">
-          <HistoryPanel actions={panels.history.actions} model={panels.history.model} />
+          <History />
         </div>
       </View>
       <View id="settingsView">
