@@ -1,6 +1,6 @@
 import { createHistoryState, type HistoryState } from "./history_state";
 import { createRealtimeState, type RealtimeState } from "./realtime_state";
-import { createSettingsState, type SettingsState } from "./settings_state";
+import { analysisTuning, carSettings, speedSettings } from "../settings_store";
 import { createShellState, type ShellState } from "./shell_state";
 import { createSpectrumState, type SpectrumState } from "./spectrum_state";
 import { createTransportState, type TransportState } from "./transport_state";
@@ -23,22 +23,18 @@ export type {
   RunDetail,
 } from "./history_state";
 export type {
-  CarAspectSettings,
-  AnalysisTuningSettings,
-  VehicleSettings,
-  CarSettingsValue,
-  AnalysisSettingsValue,
-  CarSettingsState,
-  AnalysisSettingsState,
-  SpeedSettingsState,
-  SettingsState,
-} from "./settings_state";
-export type {
   ChartBand,
   SpectrumState,
   SpectrumStateValue,
   SpectrumTickUpdate,
 } from "./spectrum_state";
+
+/** Pre-rewrite features read the shared settings store through this. */
+export interface SettingsState {
+  car: typeof carSettings;
+  analysis: { vehicleSettings: typeof analysisTuning };
+  speed: typeof speedSettings;
+}
 
 export interface AppState {
   shell: ShellState;
@@ -55,7 +51,11 @@ export function createAppState(): AppState {
     transport: createTransportState(),
     realtime: createRealtimeState(),
     history: createHistoryState(),
-    settings: createSettingsState(),
+    settings: {
+      car: carSettings,
+      analysis: { vehicleSettings: analysisTuning },
+      speed: speedSettings,
+    },
     spectrum: createSpectrumState(),
   };
 }

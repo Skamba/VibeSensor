@@ -84,7 +84,6 @@ export function createCarsHarness(
     settings: appState.settings,
     queryClient,
     panel,
-    analysisPanel: { carAvailability: signal(null) },
     activeViewId,
     activeSettingsTabId,
     openAnalysisTab: () => {
@@ -92,9 +91,6 @@ export function createCarsHarness(
     },
     refreshSpectrumDecorations: () => {
       lifecycleCalls.push("refreshSpectrumDecorations");
-    },
-    syncAnalysisInputs: () => {
-      lifecycleCalls.push("syncAnalysisInputs");
     },
     services: {
       t: createTranslator(),

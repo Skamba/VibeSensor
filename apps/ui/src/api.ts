@@ -1,7 +1,5 @@
 export type * from "./api/types";
 export {
-  getAnalysisSettings,
-  setAnalysisSettings,
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,

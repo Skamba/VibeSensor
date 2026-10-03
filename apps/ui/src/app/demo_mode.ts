@@ -1,6 +1,6 @@
 import { defaultLiveAnalysisConfig } from "../constants";
 import { EXPECTED_LIVE_PAYLOAD_SCHEMA_VERSION } from "../transport/live_models";
-import { composeVehicleSettings } from "./settings_state";
+import { composeVehicleSettings } from "../vehicle_settings";
 import type { AppState } from "./ui_app_state";
 import { batch } from "./ui_signals";
 
