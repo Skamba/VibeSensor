@@ -14,7 +14,7 @@ services:
 
   vibesensor-ui-dev:
     # Separate Vite container keeps frontend tooling out of the backend image.
-    image: node:22-slim
+    image: node:26-slim
     network_mode: host
     working_dir: /workspace/apps/ui
     depends_on:
