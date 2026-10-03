@@ -1,9 +1,6 @@
-import type {
-  CarRecord,
-  SpeedSourceKind,
-  SpeedSourceStatusPayload,
-} from "../api/types";
+import type { CarRecord } from "../api/types";
 import { defaultAnalysisSettings } from "../constants";
+import { speedSettings } from "../settings_store";
 import { signal } from "./ui_signals";
 import type { SignalState } from "./signal_state";
 
@@ -117,19 +114,9 @@ export interface AnalysisSettingsValue {
   vehicleSettings: AnalysisTuningSettings;
 }
 
-export interface SpeedSettingsValue {
-  source: SpeedSourceKind;
-  manualSpeedKph: number | null;
-  obdDeviceMac: string | null;
-  obdDeviceName: string | null;
-  resolvedSource: SpeedSourceStatusPayload["speed_source"] | null;
-  gpsFallbackActive: boolean;
-  gpsEffectiveSpeedKph: number | null;
-}
-
 export type CarSettingsState = SignalState<CarSettingsValue>;
 export type AnalysisSettingsState = SignalState<AnalysisSettingsValue>;
-export type SpeedSettingsState = SignalState<SpeedSettingsValue>;
+export type SpeedSettingsState = typeof speedSettings;
 
 export interface SettingsState {
   car: CarSettingsState;
@@ -152,16 +139,6 @@ export function createSettingsState(): SettingsState {
         ...defaultAnalysisTuningSettings,
       }),
     },
-    speed: {
-      source: signal<SpeedSourceKind>("gps"),
-      manualSpeedKph: signal<number | null>(null),
-      obdDeviceMac: signal<string | null>(null),
-      obdDeviceName: signal<string | null>(null),
-      resolvedSource: signal<SpeedSourceStatusPayload["speed_source"] | null>(
-        null,
-      ),
-      gpsFallbackActive: signal(false),
-      gpsEffectiveSpeedKph: signal<number | null>(null),
-    },
+    speed: speedSettings,
   };
 }
