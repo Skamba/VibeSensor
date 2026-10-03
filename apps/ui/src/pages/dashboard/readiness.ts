@@ -1,4 +1,5 @@
 import type { LoggingStatusPayload } from "../../api/types";
+import { formatSpeed, type SpeedUnit } from "../../format";
 
 /** Text for the server's capture-readiness checks. */
 
@@ -73,6 +74,7 @@ export function checkDetail(
   check: ReadinessCheck,
   t: Translate,
   formatInt: FormatInt,
+  unit: SpeedUnit,
 ): string {
   const key = check.check_key;
   const group = key in KNOWN_REASONS ? key : "capture_ready";
@@ -95,7 +97,12 @@ export function checkDetail(
   } else if (key === "speed_stable") {
     if (reason === "speed_too_low") {
       vars = {
-        minimumSpeed: formatInt(detailCount(check, "minimum_speed_kmh", 20)),
+        minimumSpeed: formatSpeed(
+          detailCount(check, "minimum_speed_kmh", 20),
+          unit,
+          t,
+          0,
+        ),
       };
     } else if (reason === "speed_stabilizing") {
       vars = { seconds: formatInt(detailCount(check, "dwell_remaining_s")) };
@@ -109,6 +116,7 @@ export function readinessSummary(
   readiness: Readiness | null,
   t: Translate,
   formatInt: FormatInt,
+  unit: SpeedUnit,
 ): string {
   if (!readiness) {
     return "";
@@ -118,13 +126,13 @@ export function readinessSummary(
     (check) => check.state === wanted && check.check_key !== "capture_ready",
   );
   if (primary) {
-    return checkDetail(primary, t, formatInt);
+    return checkDetail(primary, t, formatInt, unit);
   }
   if (readiness.is_ready) {
     return "";
   }
   const overall = findCheck(readiness, "capture_ready");
-  return overall ? checkDetail(overall, t, formatInt) : "";
+  return overall ? checkDetail(overall, t, formatInt, unit) : "";
 }
 
 /** Checks to list; while setting up only the ones still failing. */
@@ -133,6 +141,7 @@ export function checklist(
   setupMode: boolean,
   t: Translate,
   formatInt: FormatInt,
+  unit: SpeedUnit,
 ): ChecklistItem[] {
   return CHECK_ORDER.map((key) => findCheck(readiness, key))
     .filter(
@@ -144,6 +153,6 @@ export function checklist(
       state: check.state,
       label: t(`dashboard.capture_readiness.${check.check_key}.label`),
       stateText: t(`dashboard.capture_readiness.state.${check.state}`),
-      detail: checkDetail(check, t, formatInt),
+      detail: checkDetail(check, t, formatInt, unit),
     }));
 }

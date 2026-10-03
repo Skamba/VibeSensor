@@ -12,7 +12,6 @@ import {
   deviceBadges,
   gpsDiagnostics,
   obdDiagnostics,
-  speedText,
 } from "../src/pages/speed_source/speed_source_model";
 
 const t = (key: string, vars?: Record<string, unknown>) =>
@@ -120,12 +119,6 @@ describe("speed source summary", () => {
       activeSpeedKph({ ...gps, resolvedSpeedSource: "fallback_manual" }, 52),
     ).toBe(80);
     expect(activeSpeedKph(gps, 52)).toBe(52);
-  });
-
-  test("formats speeds in the selected unit", () => {
-    expect(speedText(36, "kmh", t)).toBe("36.0 speed.unit.kmh");
-    expect(speedText(36, "mps", t)).toBe("10.0 speed.unit.mps");
-    expect(speedText(null, "kmh", t)).toBe("--");
   });
 
   test("marks the saved card active and a different draft as pending", () => {

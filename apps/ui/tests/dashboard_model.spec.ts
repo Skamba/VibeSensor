@@ -90,6 +90,7 @@ function recording(overrides: Partial<RecordingInputs> = {}) {
       pending: null,
       carBlock: null,
       health: OK_HEALTH,
+      speedUnit: "kmh",
       connectedText: "1",
       assignedText: "1",
       elapsedText: "0:30",
@@ -282,7 +283,13 @@ describe("run health", () => {
     carActive = true,
   ) =>
     liveHealth(
-      { clients, locationOf, status: status(overrides), carActive },
+      {
+        clients,
+        locationOf,
+        status: status(overrides),
+        carActive,
+        speedUnit: "kmh",
+      },
       t,
       formatInt,
     );
@@ -396,22 +403,36 @@ describe("readiness text", () => {
       ["sensors_ready", "fail", "something_new", { live_sensor_count: 3 }],
       ["new_check", "fail", "capture_blocked"],
     ]).checks;
-    expect(checkDetail(stabilizing, t, formatInt)).toBe(
+    expect(checkDetail(stabilizing, t, formatInt, "kmh")).toBe(
       'dashboard.capture_readiness.speed_stable.speed_stabilizing:{"seconds":"3"}',
     );
-    expect(checkDetail(unknown, t, formatInt)).toBe(
+    expect(checkDetail(unknown, t, formatInt, "kmh")).toBe(
       'dashboard.capture_readiness.sensors_ready.ready:{"count":"3"}',
     );
-    expect(checkDetail(other, t, formatInt)).toBe(
+    expect(checkDetail(other, t, formatInt, "kmh")).toBe(
       "dashboard.capture_readiness.capture_ready.capture_blocked",
+    );
+  });
+
+  test("names the minimum cruise speed in the speed unit", () => {
+    const [tooLow] = readiness(false, [
+      ["speed_stable", "fail", "speed_too_low", { minimum_speed_kmh: 30 }],
+    ]).checks;
+    expect(checkDetail(tooLow, t, formatInt, "kmh")).toBe(
+      'dashboard.capture_readiness.speed_stable.speed_too_low:{"minimumSpeed":"30 speed.unit.kmh"}',
+    );
+    expect(checkDetail(tooLow, t, formatInt, "mps")).toBe(
+      'dashboard.capture_readiness.speed_stable.speed_too_low:{"minimumSpeed":"8 speed.unit.mps"}',
     );
   });
 
   test("the setup checklist lists only checks that are not passing", () => {
     expect(
-      checklist(NOT_READY, true, t, formatInt).map((item) => item.checkKey),
+      checklist(NOT_READY, true, t, formatInt, "kmh").map(
+        (item) => item.checkKey,
+      ),
     ).toEqual(["reference_ready", "speed_stable"]);
-    expect(checklist(null, false, t, formatInt)).toEqual([]);
+    expect(checklist(null, false, t, formatInt, "kmh")).toEqual([]);
   });
 });
 

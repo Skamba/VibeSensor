@@ -1,5 +1,10 @@
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import type { CarSelectionState } from "../../car_selection";
+import {
+  GUIDED_COAST_DROP_KMH,
+  GUIDED_SWEEP_FROM_KMH,
+  GUIDED_SWEEP_TO_KMH,
+} from "../../config";
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { LocationOption } from "../../sensor_locations";
 import type {
@@ -126,6 +131,7 @@ export function liveHealth(
     locationOf: (client: AdaptedClient) => string;
     status: LoggingStatusPayload;
     carActive: boolean;
+    speedUnit: SpeedUnit;
   },
   t: Translate,
   formatInt: FormatInt,
@@ -192,7 +198,9 @@ export function liveHealth(
   }
   const readiness = status.capture_readiness ?? null;
   if (readiness && !readiness.is_ready) {
-    return attention(readinessSummary(readiness, t, formatInt));
+    return attention(
+      readinessSummary(readiness, t, formatInt, input.speedUnit),
+    );
   }
   return {
     variant: "ok",
@@ -389,6 +397,7 @@ export interface RecordingInputs {
   /** Set while no car is active (including while cars are loading). */
   carBlock: "no_cars" | "no_active" | null;
   health: LiveHealth;
+  speedUnit: SpeedUnit;
   connectedText: string;
   assignedText: string;
   elapsedText: string;
@@ -499,7 +508,7 @@ export function recordingModel(
       pillVariant: "warn",
       pillText: phase("blocked"),
       phaseText: phase("blocked"),
-      summaryText: readinessSummary(readiness, t, formatInt),
+      summaryText: readinessSummary(readiness, t, formatInt, input.speedUnit),
       summaryPanel: panel(prefix, t, {
         action: noCars ? "open-add-car" : "open-cars",
         label: t(`${prefix}.action`),
@@ -515,7 +524,7 @@ export function recordingModel(
           check.state === "fail" && check.check_key !== "capture_ready",
       ) ?? findCheck(readiness, "capture_ready"))
     : null;
-  const items = checklist(readiness, waiting, t, formatInt);
+  const items = checklist(readiness, waiting, t, formatInt, input.speedUnit);
   return {
     ...base,
     pillVariant: waiting ? "muted" : "ok",
@@ -523,11 +532,12 @@ export function recordingModel(
     phaseText: phase(waiting ? "preparing" : "ready"),
     summaryText: waiting
       ? ""
-      : readinessSummary(readiness, t, formatInt) || input.health.summary,
+      : readinessSummary(readiness, t, formatInt, input.speedUnit) ||
+        input.health.summary,
     summaryPanel: primary
       ? {
           title: t("dashboard.logging.blocked.setup.title"),
-          body: checkDetail(primary, t, formatInt),
+          body: checkDetail(primary, t, formatInt, input.speedUnit),
           detail: null,
           action: setupAction(primary, t),
         }
@@ -578,10 +588,6 @@ export function withLoggingError(
 
 /** Sweep, hold, then a neutral coast-down: the order the driver does them in. */
 const GUIDED_STEPS: readonly GuidedPhase[] = ["sweep", "hold", "coast_down"];
-/** The speeds the step instructions name, shown in the driver's speed unit. */
-const GUIDED_SWEEP_FROM_KMH = 50;
-const GUIDED_SWEEP_TO_KMH = 120;
-const GUIDED_COAST_DROP_KMH = 30;
 
 export interface GuidedStep {
   phase: GuidedPhase;

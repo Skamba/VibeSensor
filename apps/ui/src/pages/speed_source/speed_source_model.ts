@@ -5,7 +5,7 @@ import type {
   SpeedSourceRequest,
   SpeedSourceStatusPayload,
 } from "../../api/types";
-import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
+import { fmt, formatSpeed, type SpeedUnit } from "../../format";
 import {
   isManualLikeSpeedSource,
   resolveEffectiveSpeedSource,
@@ -34,17 +34,6 @@ const CONNECTION_STATE_KEYS: Record<string, string> = {
   stale: "settings.speed.state_stale",
 };
 const MAC_RE = /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i;
-
-export function speedText(
-  speedKmh: number | null,
-  unit: SpeedUnit,
-  t: Translate,
-): string {
-  if (speedKmh === null || !Number.isFinite(speedKmh)) {
-    return "--";
-  }
-  return `${fmt(kmhInUnit(speedKmh, unit), 1)} ${t(speedUnitKey(unit))}`;
-}
 
 export function activeSourceLabel(
   settings: SpeedSourceSnapshot,
@@ -283,12 +272,12 @@ export function gpsDiagnostics(
     row(
       "gpsStatusRawSpeed",
       "settings.speed.raw_speed",
-      status ? speedText(status.raw_speed_kmh, unit, t) : undefined,
+      status ? formatSpeed(status.raw_speed_kmh, unit, t, 1) : undefined,
     ),
     row(
       "gpsStatusEffectiveSpeed",
       "settings.speed.effective_speed",
-      status ? speedText(status.effective_speed_kmh, unit, t) : undefined,
+      status ? formatSpeed(status.effective_speed_kmh, unit, t, 1) : undefined,
     ),
     row(
       "gpsStatusLastError",
