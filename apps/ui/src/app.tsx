@@ -1,4 +1,4 @@
-import type { ComponentChildren, JSX } from "preact";
+import type { ComponentChildren, TargetedKeyboardEvent } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import {
@@ -67,7 +67,7 @@ const WS_STATUS: Record<string, { key: string; variant: string }> = {
 
 /** Arrow/Home/End move between tabs; Enter/Space activate (WAI-ARIA tabs). */
 function onTabKeyDown<T extends string>(
-  event: JSX.TargetedKeyboardEvent<HTMLButtonElement>,
+  event: TargetedKeyboardEvent<HTMLButtonElement>,
   ids: readonly T[],
   index: number,
   activate: (id: T) => void,

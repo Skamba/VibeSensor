@@ -1,3 +1,4 @@
+import type { TargetedInputEvent } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import {
@@ -105,6 +106,17 @@ export function Internet() {
     }
   }, [focusRequest]);
   const badge = internetBadge(view.internet, t);
+  const passwordInputProps = {
+    id: "updatePasswordInput",
+    autoComplete: "off",
+    maxLength: 128,
+    class: "internet-panel__input",
+    value: password.value,
+    disabled: locked,
+    onInput: (event: TargetedInputEvent<HTMLInputElement>) => {
+      password.value = event.currentTarget.value;
+    },
+  };
   return (
     <div class="maintenance-stack">
       <div class="panel card">
@@ -182,18 +194,13 @@ export function Internet() {
                 {t("settings.update.password")}
               </label>
               <div class="internet-panel__input-row">
-                <input
-                  type={passwordVisible.value ? "text" : "password"}
-                  id="updatePasswordInput"
-                  autoComplete="off"
-                  maxLength={128}
-                  class="internet-panel__input"
-                  value={password.value}
-                  disabled={locked}
-                  onInput={(event) => {
-                    password.value = event.currentTarget.value;
-                  }}
-                />
+                {/* Same position and no key, so Preact keeps one <input> and only
+                    flips its type; Preact's per-type input typings need literal types. */}
+                {passwordVisible.value ? (
+                  <input type="text" {...passwordInputProps} />
+                ) : (
+                  <input type="password" {...passwordInputProps} />
+                )}
                 <button
                   type="button"
                   id="updateTogglePasswordBtn"
