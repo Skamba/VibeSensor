@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help doctor setup dev clean pristine format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-golden-replay test-diagnostic-matrix ci test-e2e test-full-suite benchmark-backend benchmark-golden-replay benchmark-compare-backend sync-contracts coverage smoke
+.PHONY: help doctor setup dev clean pristine format shell-lint lint typecheck-backend typecheck ui-lint ui-typecheck ui-test test test-diagnostic-matrix ci test-e2e test-full-suite benchmark-backend benchmark-post-analysis-30min benchmark-compare-backend sync-contracts coverage smoke
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
@@ -11,7 +11,7 @@ PYTHON_MAJOR_MINOR := $(PYTHON_MAJOR).$(PYTHON_MINOR)
 PYTHON_BOOTSTRAP := python$(PYTHON_MAJOR_MINOR)
 VENV_DIR := $(CURDIR)/.venv
 VENV_PYTHON := $(VENV_DIR)/bin/python
-BACKEND_BENCHMARK_TARGETS ?= tests/analysis/benchmark_post_analysis_golden_replay.py tests/updates/benchmark_update_status_codec.py
+BACKEND_BENCHMARK_TARGETS ?= tests/analysis/benchmark_post_analysis_30_minute.py tests/updates/benchmark_update_status_codec.py
 CLEAN_PATHS := \
 	$(SERVER_DIR)/build \
 	$(SERVER_DIR)/dist \
@@ -104,10 +104,6 @@ test: ## Run the backend pytest suite (excludes opt-in diagnostic matrices)
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m pytest -q -m "not diagnostic_matrix" apps/server/tests
 
-test-golden-replay: ## Run fast generated dense post-run golden replay tests
-	@$(RESOLVE_PYTHON) \
-	"$$PYTHON" -m pytest -q apps/server/tests/analysis/test_post_analysis_golden_replay.py
-
 test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices excluded from default backend CI
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m pytest -q -m diagnostic_matrix apps/server/tests
@@ -129,9 +125,9 @@ benchmark-backend: ## Run explicit backend benchmark suite (set BENCHMARK_OPTS /
 	@$(RESOLVE_PYTHON) \
 	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' $(BACKEND_BENCHMARK_TARGETS) $(BENCHMARK_OPTS)
 
-benchmark-golden-replay: ## Run the opt-in 30-minute dense golden replay benchmark
+benchmark-post-analysis-30min: ## Run the opt-in 30-minute simulated-recording post-analysis benchmark
 	@$(RESOLVE_PYTHON) \
-	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' tests/analysis/benchmark_post_analysis_golden_replay.py $(BENCHMARK_OPTS)
+	cd $(SERVER_DIR) && "$$PYTHON" -m pytest --benchmark-only -o addopts='' tests/analysis/benchmark_post_analysis_30_minute.py $(BENCHMARK_OPTS)
 
 benchmark-compare-backend: ## Compare saved backend benchmark runs from apps/server/.benchmarks
 	@$(RESOLVE_PYTHON) \

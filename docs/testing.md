@@ -47,12 +47,20 @@ Benchmarks are opt-in evidence, not default validation:
 
 ```bash
 make benchmark-backend BENCHMARK_OPTS="--benchmark-save=baseline"
-make benchmark-golden-replay BENCHMARK_OPTS="--benchmark-save=golden-replay"
+make benchmark-post-analysis-30min BENCHMARK_OPTS="--benchmark-save=post-analysis-30min"
 make benchmark-compare-backend
-make test-golden-replay
 ```
 
 Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do not disable benchmark mode.
+
+## Diagnosis accuracy benchmark
+
+`apps/server/tests/integration/test_diagnosis_accuracy_benchmark.py` is the accuracy oracle. It replays every simulator scenario plus a few benchmark drives, for the default car and for a car whose engine orders do not coincide with wheel orders, through the real pipeline (`test_support/sim_pipeline.py`: simulator sensor model -> UDP ingest and clock sync -> DSP -> recording with raw capture -> post-analysis -> diagnosis -> report view), in-process on a virtual clock (about 5 s per drive).
+
+- Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, and the report's owner-page text.
+- Default CI runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes.
+- Known misses stay listed as strict xfails (`KNOWN_MISSES`) until the analysis is fixed.
+- New simulator scenarios need a ground-truth entry there; prefer adding a case over adding hand-built peak fixtures in `tests/analysis/`.
 
 ## Backend test placement
 

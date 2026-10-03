@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
+
+
+def sensor_mac_id(client_name: str) -> str:
+    """A stable MAC-style client id (12 hex digits) for a synthetic sensor name.
+
+    Real sensors are keyed by MAC, never by their name or mounting location, so
+    synthetic samples keep the three distinct and joins on any of them are exercised.
+    """
+    return "02" + hashlib.sha1(client_name.encode("utf-8")).hexdigest()[:10]
 
 
 def make_sample(
@@ -37,7 +47,7 @@ def make_sample(
         "strength_bucket": bucket_for_strength(vibration_strength_db),
         "strength_floor_amp_g": strength_floor_amp_g,
         "client_name": client_name,
-        "client_id": client_id or f"sensor-{client_name}",
+        "client_id": client_id or sensor_mac_id(client_name),
         "top_peaks": top_peaks or [],
         "frames_dropped_total": 0,
         "queue_overflow_drops": 0,

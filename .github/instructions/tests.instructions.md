@@ -5,6 +5,7 @@ Backend test rules. Use `docs/testing.md` for the concise test map and command r
 
 - Put new tests in `apps/server/tests/<package>/`, matching the backend package under test (for example `tests/recording/`). Reserve `integration/` for cross-cutting regressions and `hygiene/` for guards.
 - Import shared helpers as `from test_support.X import Y`; do not use `from tests.test_support` or mutate `sys.path`.
+- Diagnosis accuracy is asserted end to end by `tests/integration/test_diagnosis_accuracy_benchmark.py` (simulator drives through the real pipeline via `test_support/sim_pipeline.py`); add a benchmark case for new diagnosis behaviour instead of hand-placed peak fixtures, and declare its expectations from what the scenario injects.
 - Use `test_support/findings.py` factories for finding payloads and `test_support/sample_scenarios.py` for synthetic sample/phase construction. Do not create local duplicates.
 - Replace helper re-exports with direct imports unless the helper adds real logic.
 - Prefer new focused test modules over adding to large omnibus regression files.
