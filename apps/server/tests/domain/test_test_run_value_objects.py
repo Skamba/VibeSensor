@@ -6,7 +6,6 @@ import dataclasses
 
 import pytest
 
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseSegment, DrivingSegment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import RunCapture, RunSetup
@@ -63,7 +62,7 @@ class TestTestRunTopCauseInvariant:
         primary = _make_test_run_finding("F001")
         derived_top_cause = dataclasses.replace(
             primary,
-            confidence_assessment=ConfidenceAssessment.assess(0.82),
+            negligible_strength=True,
         )
 
         test_run = _make_test_run(

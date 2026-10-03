@@ -14,7 +14,6 @@ from vibesensor.common.json_utils import (
 )
 from vibesensor.common.scalars import float_or, optional_float, text_or_none
 from vibesensor.domain._numeric import coerce_float
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
 from vibesensor.domain.finding_types import ConfidenceLevel, VibrationSource
@@ -178,19 +177,15 @@ def _phase_evidence(payload: Mapping[str, object]) -> tuple[float, tuple[str, ..
     return _as_float(phase_ev.get("cruise_fraction")) or 0.0, phases_detected
 
 
-def _confidence_assessment_from_payload(
+def _negligible_strength_from_payload(
     payload: Mapping[str, object],
     *,
     confidence: float | None,
-    weak_spatial_separation: bool,
-) -> ConfidenceAssessment | None:
-    level = payload.get("confidence_level")
-    if not isinstance(level, str):
-        return None
-    return ConfidenceAssessment.from_level(
-        ConfidenceLevel(level),
-        raw_confidence=confidence or 0.0,
-        weak_spatial=weak_spatial_separation,
+) -> bool:
+    """A persisted Moderate level at a Strong score means negligible strength capped it."""
+    return (
+        payload.get("confidence_level") == ConfidenceLevel.MODERATE.value
+        and (confidence or 0.0) >= Finding.CONFIDENCE_HIGH_THRESHOLD
     )
 
 
@@ -280,11 +275,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         matched_points=matched_points,
         evidence=evidence,
         location=location,
-        confidence_assessment=_confidence_assessment_from_payload(
-            payload,
-            confidence=confidence,
-            weak_spatial_separation=weak_spatial_separation,
-        ),
+        negligible_strength=_negligible_strength_from_payload(payload, confidence=confidence),
         origin=origin,
         signatures=_signatures_from_payload(
             payload,

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from test_support.report_helpers import RUN_END, report_sample, write_jsonl
+from test_support.report_helpers import RUN_END, report_sample
 from test_support.report_helpers import report_run_metadata as run_metadata
+from test_support.report_record_builders import summarize_records
 
 from vibesensor.analysis._sensor_locations import _locations_connected_throughout_run
 from vibesensor.analysis.signal_aggregation import _sensor_intensity_by_location
-from vibesensor.analysis.summarize import summarize_log
 
 
 def _typed_samples(mappings: list[dict[str, object]]):
@@ -89,7 +89,6 @@ def test_sensor_intensity_by_location_tracks_observed_and_usable_coverage() -> N
 def test_summary_exposes_usable_location_coverage_without_overstating_connected_rows(
     tmp_path: Path,
 ) -> None:
-    run_path = tmp_path / "run_location_usable_coverage.jsonl"
     records = [run_metadata(run_id="run-usable-coverage", raw_sample_rate_hz=800)]
     for idx in range(10):
         full_sensor = report_sample(
@@ -114,9 +113,8 @@ def test_summary_exposes_usable_location_coverage_without_overstating_connected_
         flaky_sensor["vibration_strength_db"] = None if idx in {0, 1, 8, 9} else 18.0
         records.append(flaky_sensor)
     records.append(RUN_END)
-    write_jsonl(run_path, records)
 
-    summary = summarize_log(run_path, include_samples=False)
+    summary = summarize_records(records, include_samples=False)
 
     assert summary["sensor_locations"] == ["front-left wheel", "front-right wheel"]
     assert summary["sensor_locations_connected_throughout"] == ["front-left wheel"]

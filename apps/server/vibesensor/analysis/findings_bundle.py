@@ -19,15 +19,7 @@ def build_findings_bundle(context: PreparedAnalysisContext) -> FindingsBundle:
 
     domain_findings = _build_findings(context.findings_request())
     domain_findings = tuple(
-        finding
-        if finding.confidence_assessment is not None
-        else finding.with_confidence_assessment(
-            strength_band_key=context.overall_strength_band_key or "",
-            steady_speed=context.prepared.is_steady_speed,
-            has_reference_gaps=not context.reference_complete,
-            sensor_count=len(context.sensor_locations),
-        )
-        for finding in domain_findings
+        finding.with_strength_band(context.overall_strength_band_key) for finding in domain_findings
     )
     diagnostic_findings = tuple(finding for finding in domain_findings if not finding.is_reference)
     phase_timeline = build_phase_timeline(

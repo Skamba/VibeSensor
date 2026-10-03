@@ -17,9 +17,7 @@ __all__ = [
     "FFT_WINDOW_TYPE",
     "PEAK_PICKER_METHOD",
     "RawCaptureFinalizeStatus",
-    "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
-    "RUN_SAMPLE_TYPE",
     "RUN_SCHEMA_VERSION",
     "RunRawCaptureFinalize",
     "RunFinalizationStageResult",
@@ -31,8 +29,6 @@ __all__ = [
 
 RUN_SCHEMA_VERSION = "v2-jsonl"
 RUN_METADATA_TYPE = "run_metadata"
-RUN_SAMPLE_TYPE = "sample"
-RUN_END_TYPE = "run_end"
 FFT_WINDOW_TYPE = "hann"
 PEAK_PICKER_METHOD = "canonical_strength_metrics_module"
 

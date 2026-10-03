@@ -1,144 +1,51 @@
 # Metrics-to-Report Mapping
 
-This document describes how every report field and visual element maps back
-to a specific persisted analysis metric/value.  The report renderer
-(`vibesensor.report.pdf`, entered through `vibesensor.report.pdf.pdf_engine`) must **never** recompute or infer analysis
-values; it reads exclusively from `ReportDocument` (built by
-`vibesensor.report.document.build_report_document()` from a
-prepared report input).
+Every value in the PDF comes from the stored analysis summary (`AnalysisSummary`)
+or the run metadata (`RunMetadata`). `report/view_model.py` only formats and
+translates; it never recomputes analysis values. Most values come from the
+summary's `diagnosis` block (`d` below; contract in
+`summary/diagnosis_contracts.py`).
 
-## Data flow
+## Page 1 (owner)
 
-```
-analysis.summarize.summarize_run_data(meta, samples)
-  → summary dict (persisted in history_db as a versioned analysis envelope)
-    → report.preparation.prepare_report_input(summary)
-      → report.document.builder.build_report_document(prepared_input)
-        → ReportDocument (rebuilt on demand)
-          → report.service.HistoryReportService + report.pdf.pdf_engine.build_report_pdf(ReportDocument)
-          → PDF bytes
-```
+| Report element | Source | Format |
+|---|---|---|
+| Car, tires, date | `metadata.car` name and type, `metadata.analysis_settings` tire size, `start_time_utc` + `recorded_utc_offset_seconds` | `225/45R17`; local time with UTC offset |
+| Speeds driven, duration, sensors | `speed_stats.min_kmh`/`max_kmh`, `duration_s`, `sensor_count_used` | `50–118 km/h`, `m:ss` |
+| Verdict headline | `d.verdict`, `d.source`, `d.zone` | "Likely cause: …", "Not enough evidence to name a cause", or "No significant vibration found" |
+| Confidence | `d.confidence_level` | Level word + action meaning; never a percentage |
+| Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh` | One sentence |
+| Weak reasons | `d.weak_reasons` (+ `d.presence_ratio`) | Plain sentences |
+| Covered / not covered (no fault) | `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations, `d.conditions.rpm_source` | Sentences |
+| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check) | Fixed texts per order or source |
+| Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
+| Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle, engine bay, or centre tunnel |
 
-`summary["warnings"]` is part of the persisted analysis contract.
-These entries are stored as language-neutral i18n references so history APIs and
-report rendering can localize them at read time.
+## Page 2 (workshop)
 
-## Page 1 — Diagnostic Worksheet
+| Report element | Source | Format |
+|---|---|---|
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `sensor_locations` | Facts grid |
+| Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level |
+| Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
+| Spectrum | `d.spectrum` (recurring peaks in mg, floor, order markers at the window speed) | Stems + dashed floor + order lines |
+| Amplitude vs speed | `d.amplitude_vs_speed` | Lines per location; shown only for a ≥ 30 km/h sweep |
+| Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio` |
+| Shop request | `d.verdict`, `d.source`, `d.order_code` | Tire (road force, match-mount, runout), driveline, engine, or other |
 
-### Header panel
+## Data quality (page 3 or footer)
 
-| Report field         | ReportDocument field         | Analysis source key                | Unit / format            |
-|----------------------|------------------------------|------------------------------------|--------------------------|
-| Title                | `title`                      | i18n `DIAGNOSTIC_WORKSHEET`        | string                   |
-| Run date             | `run_datetime`               | `summary.report_date`              | `YYYY-MM-DD HH:MM:SS`   |
-| Car                  | `car.name`, `car.car_type`   | `metadata.car_name`, `metadata.car_type` | string |
-| Start time UTC       | `start_time_utc`             | `summary.start_time_utc`           | ISO 8601 string          |
-| End time UTC         | `end_time_utc`               | `summary.end_time_utc`             | ISO 8601 string          |
-| Run ID               | `run_id`                     | `summary.run_id`                   | string                   |
-| Duration             | `duration_text`              | `summary.record_length`            | human string             |
-| Sensors              | `sensor_count`, `sensor_locations` | `summary.sensor_count_used`, `summary.sensor_locations` | int, list[str] |
-| Sensor model         | `sensor_model`               | `summary.sensor_model`             | string                   |
-| Firmware version     | `firmware_version`           | `summary.firmware_version`         | string                   |
-| Sample count         | `sample_count`               | `summary.rows`                     | int                      |
-| Sample rate          | `sample_rate_hz`             | `summary.raw_sample_rate_hz`       | `{:g}` Hz               |
-| Tire size            | `tire_spec_text`             | `metadata.tire_width_mm/tire_aspect_pct/rim_in` | `{w:g}/{a:g}R{r:g}` |
+| Report element | Source |
+|---|---|
+| Checks | `run_suitability[]` (`check_key` label, `state`, plain meaning; a warning keeps its measured specifics) |
+| Warnings | `warnings[].code` → plain text, else the resolved `title` |
+| Traceability | `run_id`, `sensor_model`, `firmware_version`, `raw_sample_rate_hz`, VibeSensor version |
 
-### Observed Signature panel
+## Units
 
-| Report field             | ReportDocument field                            | Analysis source                             | Unit / format                |
-|--------------------------|-------------------------------------------------|---------------------------------------------|------------------------------|
-| Primary system           | `observed.primary_system`                       | `top_causes[0].source` → `_human_source()`  | i18n string                  |
-| Strongest sensor         | `observed.strongest_location`                   | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
-| Speed band               | `observed.speed_band`                           | `top_causes[0].strongest_speed_band`         | string (e.g. "80–100 km/h") |
-| Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
-| Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `ReportConfidenceFacts.label_key/pct_text` | `"{Label} ({pct}%)"`  |
-| Certainty reason         | `observed.certainty_reason`                     | `ReportConfidenceFacts` signal/caveat text | string                       |
-| Tier indicator           | `certainty_tier_key`                            | `ReportConfidenceFacts.tier` → `"A"`, `"B"`, `"C"` | single char               |
-
-### Systems with Findings panel
-
-| Report field          | ReportDocument field                  | Analysis source                           | Unit / format          |
-|-----------------------|---------------------------------------|-------------------------------------------|------------------------|
-| System name           | `system_cards[].system_name`          | `top_causes[].source` → `_human_source()` | i18n string            |
-| Strongest location    | `system_cards[].strongest_location`   | `top_causes[].strongest_location`         | string                 |
-| Pattern summary       | `system_cards[].pattern_summary`      | `top_causes[].signatures_observed[:3]`    | comma-separated string |
-| Parts list            | `system_cards[].parts`                | `parts_for_pattern()` (Tier C only)       | list[PartSuggestion]   |
-| Tone                  | `system_cards[].tone`                 | `top_causes[].confidence_level`           | "strong"/"moderate"/"weak" |
-
-**Tier gating:**
-- Tier A: no system cards shown (replaced with guidance message)
-- Tier B: system cards shown but parts list cleared, system name suffixed with hypothesis label
-- Tier C: full system cards with parts
-
-### Next Steps panel
-
-| Report field     | ReportDocument field             | Analysis source              | Unit / format  |
-|------------------|----------------------------------|------------------------------|----------------|
-| Action           | `next_steps[].action`            | `test_plan[].what` (Tier B/C) or i18n guidance (Tier A) | string |
-| Why              | `next_steps[].why`               | `test_plan[].why`            | string         |
-| Speed band       | `next_steps[].speed_band`        | `test_plan[].speed_band`     | string         |
-| Rank             | `next_steps[].rank`              | enumeration index            | int            |
-
-**Tier gating:**
-- Tier A: data-collection guidance steps only
-- Tier B/C: test-plan steps from analysis
-
-### Data Trust panel
-
-| Report field | ReportDocument field           | Analysis source              | Unit / format       |
-|--------------|--------------------------------|------------------------------|---------------------|
-| Check        | `data_trust[].check`           | `run_suitability[].check`    | i18n string         |
-| State        | `data_trust[].state`           | `run_suitability[].state`    | "pass" / "warn"     |
-| Detail       | `data_trust[].detail`          | `run_suitability[].explanation` | string or None   |
-
-## Appendix pages — Evidence & Diagnostics
-
-### Car Visual / Location Hotspots
-
-| Report field       | ReportDocument field              | Analysis source                              | Unit / format |
-|--------------------|-----------------------------------|----------------------------------------------|---------------|
-| Location rows      | `location_hotspot_rows`           | Pre-computed from `findings[].matched_points` or `sensor_intensity_by_location` | list[dict] |
-| Hotspot unit       | `location_hotspot_rows[].unit`    | `"db"` | string |
-| Peak value         | `location_hotspot_rows[].peak_value` | max amplitude at location                 | float         |
-| Mean value         | `location_hotspot_rows[].mean_value` | mean amplitude at location                | float         |
-
-### Pattern Evidence panel
-
-| Report field         | ReportDocument field                            | Analysis source                        | Unit / format |
-|----------------------|-------------------------------------------------|----------------------------------------|---------------|
-| Matched systems      | `pattern_evidence.matched_systems`              | `top_causes[:3].source` → `_human_source()` | list[str] |
-| Strongest location   | `pattern_evidence.strongest_location`           | Same as `observed.strongest_location` | string |
-| Speed band           | `pattern_evidence.speed_band`                   | Same as `observed.speed_band`          | string        |
-| Strength             | `pattern_evidence.strength_label`, `.strength_peak_db` | Same as `observed.strength_*` | same format |
-| Certainty            | `pattern_evidence.certainty_label`, `.certainty_pct` | Same as `observed.certainty_*` | same format |
-| Certainty reason     | `pattern_evidence.certainty_reason`             | Same as `observed.certainty_reason`    | string        |
-| Warning              | `pattern_evidence.warning`                      | `certainty_reason` if `weak_spatial_separation` | string or None |
-| Interpretation       | `pattern_evidence.interpretation`               | `most_likely_origin.explanation`       | string        |
-| Why parts listed     | `pattern_evidence.why_parts_text`               | `why_parts_listed()`                   | string        |
-
-### Diagnostic Peaks table
-
-| Report field    | ReportDocument field       | Analysis source                      | Unit / format         |
-|-----------------|----------------------------|--------------------------------------|-----------------------|
-| Rank            | `peak_rows[].rank`         | `plots.peaks_table[].rank`           | int → string          |
-| System          | `peak_rows[].system`       | Inferred from `source`/`order_label` | i18n string           |
-| Frequency       | `peak_rows[].freq_hz`      | `plots.peaks_table[].frequency_hz`   | `{:.1f}` Hz           |
-| Order           | `peak_rows[].order`        | `plots.peaks_table[].order_label`    | string                |
-| Peak (dB)       | `peak_rows[].peak_db`      | `plots.peaks_table[].p95_intensity_db` | `{:.1f}` dB         |
-| Strength (dB)   | `peak_rows[].strength_db`  | `plots.peaks_table[].strength_db`    | `{:.1f}` dB           |
-| Speed band      | `peak_rows[].speed_band`   | `plots.peaks_table[].typical_speed_band` | string            |
-| Relevance       | `peak_rows[].relevance`    | Composed from `peak_classification`, `presence_ratio`, `persistence_score` | `"{class} · {pres:.0%} PRESENCE · SCORE {score:.2f}"` |
-
-## Cross-section consistency rules
-
-1. **Observed ↔ Pattern Evidence**: `strength_label`, `strength_peak_db`,
-   `certainty_label`, `certainty_pct`, `certainty_reason`, `strongest_location`,
-   and `speed_band` must be identical between `observed` and `pattern_evidence`.
-   Both fields are typed as ``PatternEvidence``.
-
-2. **Tier gating**: `certainty_tier_key` controls which sections are shown/suppressed.
-   The tier is derived from `ConfidenceAssessment.tier` (domain thresholds A<0.40, B<0.70, C≥0.70).
-
-3. **Units**: Strength/intensity outputs in persisted analysis and report artifacts are always dB (formatted `{:.1f}`). Frequency remains Hz (`{:.1f}`).
-
-4. **Location hotspot unit**: Always "db" for persisted/report-ready analysis data.
+- **Strength:** dB everywhere. In the diagnosis block, amplitude at the
+  diagnosed order is in mg, always shown next to its dB above floor (see
+  `docs/metrics.md`).
+- **Frequency:** Hz, one decimal.
+- **Speed:** km/h, integers.
+- **Format:** Dutch uses a decimal comma.

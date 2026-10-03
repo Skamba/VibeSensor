@@ -11,8 +11,6 @@ missing direct unit tests that pin their contracts.
 
 from __future__ import annotations
 
-import math
-
 import pytest
 from test_support.findings import make_finding_payload
 
@@ -23,71 +21,6 @@ from vibesensor.summary.finding_fields import finding_from_payload
 # ---------------------------------------------------------------------------
 # Finding.classify_confidence
 # ---------------------------------------------------------------------------
-
-
-class TestConfidenceLabel:
-    """Direct unit tests for Finding.classify_confidence static method."""
-
-    @pytest.mark.parametrize(
-        ("confidence", "strength_band_key", "expected"),
-        [
-            pytest.param(
-                Finding.CONFIDENCE_HIGH_THRESHOLD,
-                None,
-                ("CONFIDENCE_HIGH", "success", "70%"),
-                id="high-threshold",
-            ),
-            pytest.param(
-                (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2,
-                None,
-                ("CONFIDENCE_MEDIUM", "warn", "55%"),
-                id="medium-band",
-            ),
-            pytest.param(
-                Finding.CONFIDENCE_MEDIUM_THRESHOLD - 0.01,
-                None,
-                ("CONFIDENCE_LOW", "neutral", "39%"),
-                id="below-medium",
-            ),
-            pytest.param(0.0, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="zero"),
-            pytest.param(0.82, None, ("CONFIDENCE_HIGH", "success", "82%"), id="integer-pct"),
-            pytest.param(float("nan"), None, ("CONFIDENCE_LOW", "neutral", "0%"), id="nan"),
-            pytest.param(-0.20, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="negative"),
-            pytest.param(math.inf, None, ("CONFIDENCE_LOW", "neutral", "0%"), id="infinite"),
-            pytest.param(1.50, None, ("CONFIDENCE_HIGH", "success", "100%"), id="above-one"),
-            pytest.param(
-                Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
-                "negligible",
-                ("CONFIDENCE_MEDIUM", "warn", "75%"),
-                id="negligible-caps-high",
-            ),
-            pytest.param(
-                (Finding.CONFIDENCE_MEDIUM_THRESHOLD + Finding.CONFIDENCE_HIGH_THRESHOLD) / 2,
-                "negligible",
-                ("CONFIDENCE_MEDIUM", "warn", "55%"),
-                id="negligible-keeps-medium",
-            ),
-            pytest.param(
-                Finding.CONFIDENCE_HIGH_THRESHOLD + 0.05,
-                "strong",
-                ("CONFIDENCE_HIGH", "success", "75%"),
-                id="other-band-keeps-high",
-            ),
-        ],
-    )
-    def test_classify_confidence_cases(
-        self,
-        confidence: float,
-        strength_band_key: str | None,
-        expected: tuple[str, str, str],
-    ) -> None:
-        assert (
-            Finding.classify_confidence(
-                confidence,
-                strength_band_key=strength_band_key,
-            )
-            == expected
-        )
 
 
 class TestSelectTopCauses:
@@ -278,44 +211,3 @@ class TestSelectTopCauses:
             assert domain_findings[0].signature_labels == expected_first_signatures
             assert domain_findings[0].confidence == pytest.approx(0.90)
             assert domain_findings[0].source_normalized == "wheel/tire"
-
-    def test_wheel_driveline_overlap_adds_explicit_reason_when_both_surface(self) -> None:
-        wheel = finding_from_payload(
-            make_finding_payload(
-                finding_id="F_WHEEL",
-                suspected_source="wheel/tire",
-                confidence=0.66,
-                strongest_location="front-left",
-            ),
-        ).with_confidence_assessment(
-            strength_band_key="moderate",
-            steady_speed=True,
-            has_reference_gaps=False,
-            sensor_count=4,
-        )
-        driveline = finding_from_payload(
-            make_finding_payload(
-                finding_id="F_DRIVELINE",
-                suspected_source="driveline",
-                confidence=0.61,
-                strongest_location="front-left",
-            ),
-        ).with_confidence_assessment(
-            strength_band_key="moderate",
-            steady_speed=True,
-            has_reference_gaps=False,
-            sensor_count=4,
-        )
-
-        domain_findings = select_top_causes((wheel, driveline))
-
-        assert [finding.finding_id for finding in domain_findings] == [
-            "F_WHEEL",
-            "F_DRIVELINE",
-        ]
-        for finding in domain_findings:
-            assert finding.confidence_assessment is not None
-            reason = finding.confidence_assessment.reason.lower()
-            assert "wheel and driveline evidence overlap" in reason
-            assert "could not strongly differentiate" in reason
-            assert "inspect both areas" in reason

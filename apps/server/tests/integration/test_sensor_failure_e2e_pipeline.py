@@ -28,9 +28,8 @@ from vibesensor.live.processing_loop import ProcessingLoopState, ProcessingTickR
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
-from vibesensor.report.document.builder import build_report_document
-from vibesensor.report.pdf.pdf_engine import build_report_pdf
-from vibesensor.report.preparation import prepare_report_input
+from vibesensor.report.pdf import render_report_pdf
+from vibesensor.report.view_model import QualityCheck, ReportView, build_report_view
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.web.health_snapshot import build_system_health_snapshot
 from vibesensor.web.health_state import RuntimeHealthState
@@ -58,7 +57,7 @@ class _PipelineArtifacts:
     health: dict[str, object]
     pdf_bytes: bytes
     pdf_text: str
-    report_document: object
+    report_view: ReportView
 
 
 type _BeforeStepHook = Callable[[int, ClientRegistry, dict[str, int]], None]
@@ -149,12 +148,11 @@ def _run_suitability_state(analysis: dict[str, object], check_key: str) -> str |
     return None
 
 
-def _data_trust_row(report_document: object, check: str):
-    rows = getattr(report_document, "data_trust", ())
-    for row in rows:
-        if getattr(row, "check", None) == check:
-            return row
-    raise AssertionError(f"Missing data-trust row for {check!r}")
+def _quality_check(report_view: ReportView, label: str) -> QualityCheck:
+    for check in report_view.quality.checks:
+        if check.label == label:
+            return check
+    raise AssertionError(f"Missing data-quality check {label!r}")
 
 
 def _run_pipeline(
@@ -250,8 +248,8 @@ def _run_pipeline(
     analysis = run.analysis
     assert analysis is not None
 
-    report_document = build_report_document(prepare_report_input(analysis))
-    pdf_bytes = build_report_pdf(report_document)
+    report_view = build_report_view(analysis.payload, run.metadata)
+    pdf_bytes = render_report_pdf(report_view)
     health = build_system_health_snapshot(
         loop_state,
         _ready_health_state(),
@@ -265,7 +263,7 @@ def _run_pipeline(
         health=health,
         pdf_bytes=pdf_bytes,
         pdf_text=_build_pdf_text(pdf_bytes),
-        report_document=report_document,
+        report_view=report_view,
     )
 
 
@@ -319,10 +317,10 @@ def test_dropped_frames_surface_in_health_and_report_data_trust(
         )
         == "warn"
     )
-    frame_integrity = _data_trust_row(artifacts.report_document, "Frame integrity")
-    assert frame_integrity.state == "warn"
-    assert "4 dropped frames" in (frame_integrity.detail or "")
-    assert "0 queue overflows" in (frame_integrity.detail or "")
+    frame_integrity = _quality_check(artifacts.report_view, "Frame integrity")
+    assert not frame_integrity.passed
+    assert "4 dropped frames" in frame_integrity.detail
+    assert "0 queue overflows" in frame_integrity.detail
     assert "front-left" in artifacts.pdf_text
 
 
@@ -349,8 +347,8 @@ def test_sensor_queue_overflow_counter_reaches_report_data_trust(
         )
         == "warn"
     )
-    frame_integrity = _data_trust_row(artifacts.report_document, "Frame integrity")
-    assert frame_integrity.state == "warn"
-    assert "0 dropped frames" in (frame_integrity.detail or "")
-    assert "7 queue overflows" in (frame_integrity.detail or "")
+    frame_integrity = _quality_check(artifacts.report_view, "Frame integrity")
+    assert not frame_integrity.passed
+    assert "0 dropped frames" in frame_integrity.detail
+    assert "7 queue overflows" in frame_integrity.detail
     assert "front-left" in artifacts.pdf_text

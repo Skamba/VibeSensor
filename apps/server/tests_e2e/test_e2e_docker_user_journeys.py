@@ -285,11 +285,13 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
             pdf_en = wait_report_pdf_ready(base_url, run_id_3, lang="en")
             assert str(pdf_nl.headers.get("content-type", "")).startswith("application/pdf")
             assert str(pdf_en.headers.get("content-type", "")).startswith("application/pdf")
+            # The requested language wins over the run's recorded language.
             text_nl = pdf_text(pdf_nl.body)
-            text_from_en_request = pdf_text(pdf_en.body)
-            assert "vibesensor-diagnoserapport" in text_nl
-            assert "vibesensor-diagnoserapport" in text_from_en_request
-            assert "diagnostic worksheet" not in text_from_en_request
+            text_en = pdf_text(pdf_en.body)
+            assert "vibesensor-trillingsrapport" in text_nl
+            assert "voor de werkplaats" in text_nl
+            assert "vibesensor vibration report" in text_en
+            assert "for the workshop" in text_en
 
     finally:
         _delete_resources(base_url, "/api/history/{identifier}", list(created_run_ids))

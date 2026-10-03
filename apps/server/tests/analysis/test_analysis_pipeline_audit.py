@@ -12,14 +12,12 @@ from vibesensor.analysis.phase_segmentation import (
 )
 from vibesensor.analysis.speed_profile_helpers import _speed_stats
 from vibesensor.dsp.fft_analysis import noise_floor
-from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.dsp.vibration_strength import (
     compute_vibration_strength_db,
     percentile,
 )
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
-from vibesensor.report.presentation import strength_label
 
 
 def _make_signal_processor(
@@ -92,20 +90,6 @@ class TestDoubleBinRemoval:
         assert actual_floor == pytest.approx(correct_floor, abs=1e-6), (
             f"Noise floor mismatch: actual={actual_floor:.4f} vs correct={correct_floor:.4f}"
         )
-
-
-class TestBucketVsLabelInconsistency:
-    """
-    consistent with strength_label returning 'negligible'.
-    """
-
-    @pytest.mark.parametrize("db_value", [-5.0, -0.1, -20.0])
-    def test_negative_db_inconsistency(self, db_value: float):
-        bucket = bucket_for_strength(db_value)
-        label_key, label_text = strength_label(db_value, lang="en")
-        # After fix: bucket returns 'l0', consistent with label 'negligible'
-        assert bucket == "l0", f"bucket_for_strength({db_value}) should return 'l0'"
-        assert label_key == "negligible", f"strength_label({db_value}) returns {label_key}"
 
 
 class TestCombinedSpectrumInheritsZeroedBin:

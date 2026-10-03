@@ -2,151 +2,93 @@
 
 ## Overview
 
-The report generation pipeline has two distinct phases:
+The PDF report has two phases:
 
 1. **Post-stop analysis** (`vibesensor.analysis.post_analysis_executor` +
-   `vibesensor.analysis`) — runs once when a recording ends. It recomputes the
-   summary rows' FFT peaks from raw capture when available, runs the summary
-   diagnosis, and persists the resulting `PersistedAnalysis`. That summary
-   diagnosis is the single diagnosis: the UI insights view and the PDF read the
-   same `top_causes` / `most_likely_origin`.
-2. **History request loading + reporting-boundary preparation + rendering**
-      (`vibesensor.history` →
-      `vibesensor.report` →
-      `vibesensor.report.pdf`) — loads the persisted analysis object, shapes
-      runtime warnings and cache metadata, prepares one explicit
-     `PreparedReportInput` with an authoritative reconstructed domain aggregate
-     plus precomputed semantic report facts, builds one canonical
-     `ReportDocument`, and renders a PDF. This phase performs **zero
-      analysis** — it only shapes persisted report data and formats pre-computed
-       results. If a run had raw capture available, raw-backed replay was
-       already folded into the persisted analysis during post-stop execution.
+   `vibesensor.analysis`) runs once when a recording ends and persists the
+   `PersistedAnalysis`. Its `diagnosis` block (`analysis/diagnosis.py`, contract
+   in `summary/diagnosis_contracts.py`) is the single verdict that both the
+   History UI and the PDF show: verdict, confidence level, order label, zone,
+   mg amplitudes per location, amplitude vs speed, recurring-peak spectrum,
+   source checks, and test conditions.
+2. **Report rendering** (`vibesensor.report`) runs on request. It performs no
+   analysis: it translates the stored analysis plus the run metadata into text
+   and draws it.
 
 ```text
-Recording stops
-  → _run_post_analysis() [vibesensor.analysis.post_analysis]
-    → execute_post_analysis() [vibesensor.analysis.post_analysis_executor]
-      → load_post_analysis_run() [vibesensor.analysis.post_analysis_loader]
-      → build_post_analysis_input() [vibesensor.analysis.post_analysis_input]
-        → build_raw_backed_samples() [vibesensor.analysis.raw_capture_replay]
-      → build_post_analysis_summary() [vibesensor.analysis.post_analysis_summary]
-        → RunAnalysis(...).summarize() [vibesensor.analysis.run_analysis]
-        → run_analysis.py + run_data_preparation.py + findings_bundle.py + _analysis_result_builder.py
-        → analysis_result_to_summary() [vibesensor.analysis.summary_payload]
-      → store_analysis() [vibesensor.history.history_db]
-
-GET /api/history/{run_id}/report.pdf [vibesensor.web.history]
-  → HistoryReportService.build_pdf() [vibesensor.report.service]
-    → HistoryReportRequestLoader.load_report_request() [vibesensor.report.loader]
-    → prepare_report_input() [vibesensor.report.preparation]
-    → _build_prepared_pdf_bytes() [vibesensor.app.composition]
-      → build_prepared_report_pdf(prepared_input) [vibesensor.report.pdf.pdf_engine]
-        → build_report_document(prepared_input) [vibesensor.report.document]
-        → build_report_pdf(data) [vibesensor.report.pdf.pdf_engine]
+GET /api/history/{run_id}/report.pdf?lang=nl   [vibesensor.web.history]
+  -> HistoryReportService.build_pdf()          [vibesensor.report.service]
+     -> HistoryDB.get_run() + require_analysis_ready()
+     -> HistoryReportPdfCache (key: run_id, language, analysis_completed_at)
+     -> build_report_view(analysis, metadata, lang=...)  [vibesensor.report.view_model]
+     -> render_report_pdf(view)                           [vibesensor.report.pdf]
 ```
 
-## Key Architectural Rules
+The report language is the requested `lang`, falling back to the run's
+language. `vibesensor-report <history.db> <run_id> [--lang en|nl] [--output
+file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
 
-### Post-stop-only analysis
+## Modules
 
-All diagnostic analysis (findings, ranking, phase segmentation, strength
-classification, test-plan generation, order tracking) runs **once** at
-post-stop time and is persisted.  Report generation **never** re-runs
-analysis.
-
-### Renderer-only report package
-
-The `vibesensor.report.pdf` package contains **only** rendering code:
-
-| File | Purpose |
+| Module | Role |
 |---|---|
-| `pdf_engine.py` | Public PDF entrypoint, validation, pagination, and document orchestration |
-| `pdf_page1.py`, `page1_*.py`, `action_cards.py` | Page-1 composition and section-specific helpers for the shipped worksheet surface |
-| `pdf_appendices/` | Appendix page rendering, shared appendix tables/layout, and title-bar helpers |
-| `pdf_style.py` | Page geometry, shared style tokens, and layout constants for the shipped PDF surface |
-| `pdf_drawing.py`, `pdf_text.py` | Shared drawing and text helpers |
-| `pdf_diagram_render.py` | Diagram planning, drawing, and location normalization |
-| `report_types.py` | Adapter-local render plans derived from `ReportDocument` |
+| `report/view_model.py` | Pure translation of the stored analysis + `RunMetadata` into a `ReportView`: every localized string, number format (decimal comma in Dutch), and chart series the PDF draws. Never re-derives the verdict, level, order labels, amplitudes, or zones. |
+| `report/pdf.py` | ReportLab canvas renderer with built-in Helvetica: one function per page (`_owner_page`, `_mechanic_page`, `_quality_page`), the car diagram, and the spectrum and amplitude-vs-speed charts. Layout only. |
+| `report/service.py` | `HistoryReportService`: loads the run, picks the language, caches PDFs, and calls the injected renderer (composition imports ReportLab lazily on first use). |
+| `report/cache.py` | LRU PDF cache with per-key build coordination. |
+| `report/i18n.py` | `tr()` lookup in `data/report_i18n.json` (English and Dutch), `normalize_lang()`, and `resolve_i18n()` for language-neutral refs in summary warnings and suitability checks. |
 
-**Rule:** Report modules must not import from `vibesensor.analysis` at
-module level.  A guardrail test (`test_report_analysis_separation.py`)
-enforces this.
+`report` never imports `analysis` (import-linter contract in
+`apps/server/pyproject.toml`).
 
-Canonical report preparation now lives in
-`vibesensor.report`, which owns the explicit
-`PreparedReportInput` seam, projectability gating, one-time
-`NormalizedReportSummary` decoding, domain reconstruction, filename/language
-normalization, and grouped semantic fact assembly:
+## Pages
 
-- `facts.py` builds `PreparedReportFacts(run=..., fallback_reasons=..., sensor=..., decision=..., evidence=..., confidence=..., findings=...)`
-- `fallback_reasons.py` owns stable machine-readable fallback reason codes for history/report consumers (`raw_capture_not_configured`, `raw_capture_loss_exceeded`, `raw_capture_finalize_timeout`, `analysis_pending`, `analysis_failed`, and `legacy_summary_only`)
-- `evidence_facts.py` builds explicit proof facts (data basis, supporting-window count/duration, stable frequency band, strongest supporting sensors, and caveats) from persisted analysis + reconstructed domain findings
-- `confidence_facts.py` takes the headline confidence (score, label, percentage) from the primary finding's own confidence assessment — the same value the UI shows — and adds explanatory support/counterevidence factors (raw-backed vs summary-only basis, support count/duration, frequency stability, order-lock quality, spatial concentration, close alternatives, and reference gaps)
-- `findings.py` owns report-facing finding/top-cause presentation shaping
-- `sensor_facts.py` owns sensor/coverage shaping
-- `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
-- `projection.py` owns primary-candidate/origin projection only
+1. **Owner page**:
+   - Header: car, tires, date, speeds driven, duration, and sensors.
+   - Verdict box with exactly one confidence expression: the level word plus
+     its action meaning (Strong: go fix it; Moderate: do the cheap confirming
+     check first; Weak: don't buy parts, record the test again). No
+     percentages.
+   - One plain sentence: what repeats (order), at which frequency and speed,
+     where, and over which speeds.
+   - Car diagram: sensor dots sized by ratio to the strongest location, with the
+     corner or zone highlighted.
+   - What to do next, by verdict:
+     - Fault: the next step, a fallback step ("If that doesn't fix it: ..."),
+       the cheap confirming check when the level is Moderate, and how to check
+       the fix (re-run the test; what pass means).
+     - Weak evidence: the hedged best candidate, 1–2 plain reasons, and a
+       recapture recipe.
+     - No fault: what the test covered, what it did not cover, and what to do
+       if the vibration is still felt.
+2. **Workshop page** (always included):
+   - Test conditions: tire size and circumference, ratios, speed source,
+     whether RPM was measured, driving phases, and sensor positions.
+   - A GM-worksheet-style findings table, one row per order-tracked finding.
+     Columns: order label with plain text, Hz at the reference speed, km/h
+     range, driving phases, presence, strongest location, and level.
+   - Per-location amplitude at the diagnosed order in mg, with dB above that
+     location's floor in brackets and the ratio to the strongest location.
+   - Ruled-out and not-testable sources, each with a plain reason.
+   - Recurring-peak spectrum at the strongest location, with T1/T2/P1/P2/E1/E2
+     markers.
+   - Amplitude-vs-speed chart, shown only when the swept range is at least
+     30 km/h.
+   - Shop-request box for the fault type.
+3. **Data quality page**: suitability checks in plain words, warnings, and
+   traceability (run id, sensor, firmware, sample rate, VibeSensor version).
+   When every check passes and there are no warnings, this collapses into one
+   footer line on page 2.
 
-Canonical report-document assembly lives in
-`vibesensor.report.document`, which maps `PreparedReportInput`
-into the renderer-facing `ReportDocument`. Report-specific interpretation and
-fact preparation live under `vibesensor/report/` (for
-example `facts.py`, `evidence_facts.py`, `confidence_facts.py`, `findings.py`,
-`sensor_facts.py`, `decision_facts.py`, `projection.py`, and
-`preparation.py`) rather than in `report/pdf/` modules.
+## Adding report content
 
-### ReportDocument schema
-
-`ReportDocument` (defined in
-`vibesensor.report.model`) is the canonical rendering
-artifact. It contains everything the PDF renderer
-needs:
-
-- **Display metadata**: title, dates, sensor info, version marker
-- **Observed signature**: primary system, location, speed band, strength
-- **System finding cards**: top-3 ranked findings with parts suggestions
-- **Next steps**: test plan or capture guidance (tier-dependent)
-- **Data trust items**: suitability checks
-- **Pattern evidence**: matched systems, certainty label, interpretation
-- **Evidence snapshots**: concise page-1 proof rows plus Appendix-C proof rows built from prepared evidence facts, not renderer-time DSP
-- **Confidence surfaces**: observed certainty, page-1 confidence row, and proof caveats come from prepared `ReportConfidenceFacts`, not renderer-only heuristics
-- **Fallback reasons**: history and report preparation expose explicit `fallback_reasons` instead of inferring from missing fields; report confidence/caveats use the same stable codes carried in `analysis_metadata.fallback_reasons`
-- **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
-- **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with an explicit note when they fall back to the run-wide sensor intensity summary
-- **Peak rows**: top diagnostic peaks with classification
-- **Rendering context**: domain ``Finding`` objects for findings and effective
-  top causes, sensor intensity, location hotspot rows
-
-### Mapping examples
-
-| Analysis output               | ReportDocument field            |
-|-------------------------------|----------------------------------|
-| `confidence_0_to_1 = 0.62`   | `certainty_tier_key = "B"`      |
-| `findings[].suspected_source` | `system_cards[].system_name`    |
-| `test_plan[].what`            | `next_steps[].action`           |
-| `speed_stats.steady_speed`    | used by `ConfidenceAssessment.assess()` |
-| `sensor_intensity_by_location`| `sensor_intensity_by_location`  |
-
-## Adding new report sections
-
-1. Add any new diagnostics output to `RunAnalysis` / `AnalysisResult` in
-   `vibesensor.analysis`, then project it in
-   `vibesensor.analysis.summary_payload.analysis_result_to_summary()`
-   (or the adapter wrappers in `vibesensor.analysis.summarize` if the
-   change only affects the serialized edge helper).
-2. Add a corresponding field to `ReportDocument` in
-   `vibesensor.report.model`.
-3. If the new section needs report-specific shaping, add it under
-   `vibesensor.report` (`facts.py`, `sensor_facts.py`,
-   `decision_facts.py`, `projection.py`, `findings.py`, `evidence_facts.py`, or
-   `preparation.py` as appropriate), then populate the final renderer field in
-   `build_report_document()` in
-   `vibesensor.report.document`.
-   Keep the default report-request/cache path driven only by persisted run data
-   and persisted analysis. If a feature needs to compare a historical run
-   against current mutable settings, model that as an explicit advisory overlay
-   instead of threading live settings into the base report request.
-4. Render the new field through `pdf_engine.py`, usually by wiring it into the relevant page or section module under `vibesensor.report.pdf`.
-5. Never add history/report semantic interpretation logic to the renderer
-   package — always pre-compute it in
-   `vibesensor.report` before PDF rendering.
+1. If the content is a new diagnostic fact, compute it once in the analysis and
+   persist it in the `diagnosis` block (bump `PERSISTED_ANALYSIS_SCHEMA_VERSION`
+   when the contract gains a required field; stored runs are re-analysed on
+   startup).
+2. Add the text to `ReportView` in `report/view_model.py`, with the strings in
+   `data/report_i18n.json` (both `en` and `nl`).
+3. Draw it in the matching page function in `report/pdf.py`.
+4. Cover it in `tests/report/test_report_view_model.py` (text per scenario) and
+   `tests/report/test_report_pdf.py` (rendered text per variant). Check long
+   values visually by rendering sample pages to PNG (`pypdfium2`).

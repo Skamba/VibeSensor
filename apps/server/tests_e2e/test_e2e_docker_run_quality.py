@@ -86,7 +86,8 @@ def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> No
 
         pdf_resp = wait_report_pdf_ready(base, run_id)
         text = pdf_text(pdf_resp.body)
-        assert "vibesensor diagnostic report" in text
+        assert "vibesensor vibration report" in text
+        assert "for the workshop" in text
         _assert_no_placeholders(text)
     finally:
         api_json(base, "/api/recording/stop", method="POST")

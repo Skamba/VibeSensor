@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pydantic import TypeAdapter
 
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
 from vibesensor.domain.finding_types import VibrationSource
@@ -87,13 +86,6 @@ def test_finding_payload_round_trips_domain_summary_boundary() -> None:
             vibration_strength_db=16.4,
         ),
         location=location,
-        confidence_assessment=ConfidenceAssessment(
-            raw_confidence=0.82,
-            label_key="CONFIDENCE_HIGH",
-            tone="success",
-            pct_text="82%",
-            weak_spatial=True,
-        ),
         origin=VibrationOrigin.from_analysis_inputs(
             suspected_source=VibrationSource.WHEEL_TIRE,
             hotspot=location,

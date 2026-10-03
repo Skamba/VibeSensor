@@ -14,7 +14,7 @@ FastAPI backend for VibeSensor. It ingests UDP telemetry from ESP32 sensor nodes
 ```text
 ESP32 nodes -> ingest/ -> live/ (+ dsp/) -> web/ (HTTP + /ws) -> apps/ui
                        -> recording/ -> history/ (SQLite)
-completed run -> analysis/ -> summary/ -> history/ -> report/ (+ report/pdf/) -> web/
+completed run -> analysis/ -> summary/ -> history/ -> report/ (view_model.py -> pdf.py) -> web/
 ```
 
 All paths above are under `apps/server/vibesensor/`; `app/` wires them together
@@ -373,13 +373,15 @@ update tick.
 
 ## Reports
 
-Generate a PDF from a saved run:
+Render the PDF report of a run stored in a history database:
 
 ```bash
-vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.json
+vibesensor-report path/to/history.db <run_id> --lang en --output report.pdf
 ```
 
-The public PDF entrypoint is `apps/server/vibesensor/report/pdf/pdf_engine.py`. Page composition lives in focused modules under `report/pdf/`, with appendix renderers grouped under `report/pdf/appendices/`.
+`report/view_model.py` turns the stored analysis (its `diagnosis` block) and the
+run metadata into every string the PDF shows; `report/pdf.py` draws one page per
+function with ReportLab. See `docs/report_pipeline.md`.
 
 ## Updates
 

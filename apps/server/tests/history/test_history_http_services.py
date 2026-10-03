@@ -10,7 +10,7 @@ from typing import Any, cast
 import pytest
 from test_support.analysis import run_analysis
 from test_support.persisted_analysis import make_persisted_analysis
-from test_support.report_helpers import report_sample
+from test_support.report_helpers import minimal_summary, report_sample
 
 from vibesensor.common.exceptions import AnalysisNotReadyError
 from vibesensor.domain.car import CarSnapshot
@@ -22,7 +22,8 @@ from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.report.cache import HistoryReportPdfCache
-from vibesensor.report.loader import HistoryReportRequestLoader
+from vibesensor.report.service import HistoryReportService
+from vibesensor.report.view_model import ReportView
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_CAR_SETTINGS_CHANGED,
@@ -158,36 +159,12 @@ async def test_delete_service_uses_delete_reason_mapping() -> None:
 
 
 @pytest.mark.asyncio
-async def test_report_service_load_report_request_uses_persisted_language() -> None:
-    loader = HistoryReportRequestLoader(
-        _HistoryDbStub(
-            run={
-                "run_id": "run-1",
-                "status": "complete",
-                "metadata": {"language": "en"},
-                "analysis_version": 3,
-                "sample_count": 12,
-                "analysis": {"lang": "nl", "findings": [], "title": "X"},
-            },
-        )
-    )
-
-    request = await loader.load_report_request("run-1", "en")
-
-    assert request.filename == "run-1_report.pdf"
-    assert request.cache_key[1] == "nl"
-    assert request.prepared.language == "nl"
-
-
-@pytest.mark.asyncio
-async def test_report_service_load_report_request_keeps_persisted_summary_immutable() -> None:
+async def test_report_service_keeps_persisted_summary_immutable() -> None:
     persisted_analysis = cast(
         AnalysisSummary,
-        {
-            "lang": "en",
-            "findings": [],
-            "top_causes": [],
-            "warnings": [
+        minimal_summary(
+            lang="en",
+            warnings=[
                 {
                     "code": WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
                     "severity": "warn",
@@ -195,15 +172,11 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
                     "title": "Persisted warning",
                 }
             ],
-            "metadata": {
+            metadata={
                 "run_id": "run-1",
-                "active_car_snapshot": {
-                    "id": "car-a",
-                    "name": "Track Car",
-                    "type": "coupe",
-                },
+                "active_car_snapshot": {"id": "car-a", "name": "Track Car", "type": "coupe"},
             },
-        },
+        ),
     )
     history_db = _HistoryDbStub(
         run={
@@ -213,23 +186,22 @@ async def test_report_service_load_report_request_keeps_persisted_summary_immuta
             "analysis": persisted_analysis,
         }
     )
-    loader = HistoryReportRequestLoader(history_db)
+    views: list[ReportView] = []
 
-    request = await loader.load_report_request("run-1", "en")
-    prepared = request.prepared
+    def renderer(view: ReportView) -> bytes:
+        views.append(view)
+        return b"%PDF"
 
-    stored_analysis = history_db.get_run("run-1")
-    assert stored_analysis is not None
-    assert stored_analysis.analysis is not None
-    assert [warning["code"] for warning in stored_analysis.analysis["warnings"]] == [
+    pdf = await HistoryReportService(history_db, pdf_renderer=renderer).build_pdf("run-1", "en")
+
+    assert pdf.filename == "run-1_report.pdf"
+    stored = history_db.get_run("run-1")
+    assert stored is not None and stored.analysis is not None
+    assert [warning["code"] for warning in stored.analysis["warnings"]] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
     ]
-    assert request.cache_key[-1] == "none"
-    assert prepared.report_facts is not None
-    assert [warning.code for warning in prepared.report_facts.decision.warnings] == [
-        WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
-    ]
-    assert prepared.domain_test_run is not None
+    assert views[0].quality.warnings
+    assert not views[0].quality.all_passed
 
 
 @pytest.mark.asyncio
@@ -395,7 +367,7 @@ async def test_report_pdf_cache_builds_once_per_key() -> None:
         calls += 1
         return b"%PDF-cache"
 
-    cache_key = ("run-1", "nl", None, 0, "{}", "analysis", "none")
+    cache_key = ("run-1", "nl", None)
     first = await cache.get_or_build(cache_key, _build)
     second = await cache.get_or_build(cache_key, _build)
 

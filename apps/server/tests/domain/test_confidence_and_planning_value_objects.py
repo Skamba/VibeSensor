@@ -2,64 +2,8 @@
 
 from __future__ import annotations
 
-from vibesensor.domain.confidence_assessment import ConfidenceAssessment
 from vibesensor.domain.test_plan import RecommendedAction as DomainRecommendedAction
 from vibesensor.domain.test_plan import TestPlan as DomainTestPlan
-
-
-class TestConfidenceAssessment:
-    def test_high_confidence(self) -> None:
-        ca = ConfidenceAssessment.assess(0.85)
-        assert ca.label_key == "CONFIDENCE_HIGH"
-        assert ca.tone == "success"
-        assert ca.tier == "C"
-        assert ca.is_conclusive
-        assert not ca.needs_more_data
-
-    def test_medium_confidence(self) -> None:
-        ca = ConfidenceAssessment.assess(0.55)
-        assert ca.label_key == "CONFIDENCE_MEDIUM"
-        assert ca.tone == "warn"
-        assert ca.tier == "B"
-        assert not ca.is_conclusive
-        assert not ca.needs_more_data
-
-    def test_low_confidence(self) -> None:
-        ca = ConfidenceAssessment.assess(0.2)
-        assert ca.label_key == "CONFIDENCE_LOW"
-        assert ca.tone == "neutral"
-        assert ca.tier == "A"
-        assert not ca.is_conclusive
-        assert ca.needs_more_data
-
-    def test_negligible_strength_downgrade(self) -> None:
-        ca = ConfidenceAssessment.assess(0.85, strength_band_key="negligible")
-        assert ca.label_key == "CONFIDENCE_MEDIUM"
-        assert ca.tone == "warn"
-        assert ca.downgraded
-        assert ca.tier == "B"
-
-    def test_reference_gaps_affect_tier(self) -> None:
-        ca = ConfidenceAssessment.assess(0.85, has_reference_gaps=True)
-        assert ca.tier == "B"
-        assert "Missing reference data" in ca.reason
-
-    def test_reasons_combined(self) -> None:
-        ca = ConfidenceAssessment.assess(
-            0.85,
-            steady_speed=False,
-            has_reference_gaps=True,
-            weak_spatial=True,
-            sensor_count=1,
-        )
-        assert "Speed was not steady" in ca.reason
-        assert "Missing reference data" in ca.reason
-        assert "Vibration spread" in ca.reason
-        assert "Single sensor" in ca.reason
-
-    def test_no_reasons_when_all_good(self) -> None:
-        ca = ConfidenceAssessment.assess(0.85, sensor_count=4)
-        assert ca.reason == ""
 
 
 class TestRecommendedAction:

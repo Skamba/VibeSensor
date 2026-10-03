@@ -12,6 +12,7 @@ from typing import Any, cast
 
 import pytest
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.report_helpers import minimal_summary
 
 from vibesensor.common.exceptions import AnalysisNotReadyError
 from vibesensor.domain.run_status import RunStatus
@@ -27,7 +28,8 @@ from vibesensor.report.cache import (
     REPORT_PDF_CACHE_MAX_ENTRIES,
     HistoryReportPdfCache,
 )
-from vibesensor.report.loader import HistoryReportRequestLoader
+from vibesensor.report.service import HistoryReportService
+from vibesensor.report.view_model import ReportView
 
 
 @dataclass
@@ -180,53 +182,54 @@ async def test_report_loader_rejects_unavailable_report_states(
     expected_status: str,
     expected_message: str,
 ) -> None:
-    loader = HistoryReportRequestLoader(
+    service = HistoryReportService(
         _HistoryDbStub(
             run={
                 "run_id": "run-1",
                 "metadata": {"language": "en"},
                 **run_payload,
             }
-        )
+        ),
+        pdf_renderer=lambda _view: b"%PDF",
     )
 
     with pytest.raises(AnalysisNotReadyError, match=expected_message) as exc_info:
-        await loader.load_report_request("run-1", "en")
+        await service.build_pdf("run-1", "en")
 
     assert exc_info.value.status == expected_status
 
 
 @pytest.mark.asyncio
-async def test_report_loader_uses_requested_lang_when_persisted_lang_is_blank() -> None:
-    loader = HistoryReportRequestLoader(
+async def test_report_service_renders_in_the_requested_language() -> None:
+    views: list[ReportView] = []
+
+    def renderer(view: ReportView) -> bytes:
+        views.append(view)
+        return b"%PDF"
+
+    service = HistoryReportService(
         _HistoryDbStub(
             run={
                 "run_id": "run/1 sample",
                 "status": "complete",
                 "metadata": {"language": "en"},
-                "analysis": {
-                    "lang": "   ",
-                    "findings": [],
-                    "top_causes": [],
-                    "test_plan": [],
-                    "run_suitability": [],
-                    "most_likely_origin": {},
-                },
+                "analysis": minimal_summary(lang="en"),
             }
-        )
+        ),
+        pdf_renderer=renderer,
     )
 
-    request = await loader.load_report_request("run/1 sample", " NL ")
+    nl = await service.build_pdf("run/1 sample", " NL ")
+    default = await service.build_pdf("run/1 sample", None)
 
-    assert request.prepared.language == "nl"
-    assert request.cache_key[1] == "nl"
-    assert request.filename == "run_1_sample_report.pdf"
+    assert [view.lang for view in views] == ["nl", "en"]
+    assert nl.filename == default.filename == "run_1_sample_report.pdf"
 
 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_retries_after_build_failure() -> None:
     cache = HistoryReportPdfCache()
-    cache_key = ("run-1", "en", None, 12, "{}", "analysis", "none")
+    cache_key = ("run-1", "en", None)
     calls = 0
 
     def _build() -> bytes:
@@ -257,7 +260,7 @@ async def test_report_pdf_cache_prunes_distinct_failed_build_locks() -> None:
         raise RuntimeError("boom")
 
     for index in range(REPORT_PDF_CACHE_MAX_ENTRIES * 3):
-        cache_key = (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none")
+        cache_key = (f"run-{index}", "en", None)
         with pytest.raises(RuntimeError, match="boom"):
             await cache.get_or_build(cache_key, _build)
 
@@ -268,7 +271,7 @@ async def test_report_pdf_cache_prunes_distinct_failed_build_locks() -> None:
 @pytest.mark.asyncio
 async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> None:
     cache = HistoryReportPdfCache()
-    cache_key = ("run-concurrent", "en", None, 12, "{}", "analysis", "none")
+    cache_key = ("run-concurrent", "en", None)
     first_build_started = threading.Event()
     release_first_build = threading.Event()
     counter_lock = threading.Lock()
@@ -309,10 +312,7 @@ async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
     cache = HistoryReportPdfCache()
-    keys = [
-        (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none")
-        for index in range(REPORT_PDF_CACHE_MAX_ENTRIES + 1)
-    ]
+    keys = [(f"run-{index}", "en", None) for index in range(REPORT_PDF_CACHE_MAX_ENTRIES + 1)]
 
     for index, key in enumerate(keys[:-1]):
         built = await cache.get_or_build(key, lambda index=index: f"%PDF-{index}".encode())
@@ -339,9 +339,7 @@ async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
 @pytest.mark.asyncio
 async def test_report_pdf_cache_evicts_lru_entries_to_stay_within_byte_budget() -> None:
     cache = HistoryReportPdfCache(max_entries=10, max_bytes=10)
-    keys = [
-        (f"run-{index}", "en", None, index, "{}", f"analysis-{index}", "none") for index in range(3)
-    ]
+    keys = [(f"run-{index}", "en", None) for index in range(3)]
 
     for index, key in enumerate(keys):
         assert (
@@ -360,7 +358,7 @@ async def test_report_pdf_cache_evicts_lru_entries_to_stay_within_byte_budget() 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_skips_oversized_single_pdf() -> None:
     cache = HistoryReportPdfCache(max_entries=10, max_bytes=4)
-    cache_key = ("run-big", "en", None, 1, "{}", "analysis-big", "none")
+    cache_key = ("run-big", "en", None)
 
     pdf = await cache.get_or_build(cache_key, lambda: b"12345")
 
