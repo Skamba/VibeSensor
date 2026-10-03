@@ -42,7 +42,6 @@ class _TargetClient:
         self.scene_noise_gain = 0.0
         self.amp_scale = 0.0
         self.noise_scale = 0.0
-        self.common_event_gain = 0.0
 
 
 _CORNERS = ("front-left", "front-right", "rear-left", "rear-right")

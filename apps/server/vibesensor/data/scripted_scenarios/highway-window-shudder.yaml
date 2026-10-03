@@ -12,14 +12,12 @@ phases:
     scene_noise_gain: 1.0
     amp_scale: 0.56
     noise_scale: 1.0
-    common_event_gain: 0.12
   - target: body
     profile_name: rear_body
     scene_gain: 0.38
     scene_noise_gain: 1.0
     amp_scale: 0.68
     noise_scale: 1.0
-    common_event_gain: 0.14
   pulses: []
 - name: resonance-window
   duration_s: 5.0
@@ -32,14 +30,12 @@ phases:
     scene_noise_gain: 1.05
     amp_scale: 0.9
     noise_scale: 1.04
-    common_event_gain: 0.44
   - target: body
     profile_name: rear_body
     scene_gain: 0.72
     scene_noise_gain: 1.04
     amp_scale: 0.98
     noise_scale: 1.04
-    common_event_gain: 0.5
   pulses:
   - at_s: 1.2
     target: all
@@ -61,14 +57,12 @@ phases:
     scene_noise_gain: 1.05
     amp_scale: 0.9
     noise_scale: 1.04
-    common_event_gain: 0.44
   - target: body
     profile_name: rear_body
     scene_gain: 0.72
     scene_noise_gain: 1.04
     amp_scale: 0.98
     noise_scale: 1.04
-    common_event_gain: 0.5
   pulses: []
 - name: clear-air
   duration_s: 6.0
@@ -81,12 +75,10 @@ phases:
     scene_noise_gain: 0.98
     amp_scale: 0.5
     noise_scale: 0.98
-    common_event_gain: 0.1
   - target: body
     profile_name: rear_body
     scene_gain: 0.3
     scene_noise_gain: 0.98
     amp_scale: 0.58
     noise_scale: 0.98
-    common_event_gain: 0.1
   pulses: []

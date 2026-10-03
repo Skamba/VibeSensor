@@ -19,7 +19,6 @@ class PhaseOverride:
     scene_noise_gain: float
     amp_scale: float
     noise_scale: float
-    common_event_gain: float
 
 
 @dataclass(frozen=True, slots=True)

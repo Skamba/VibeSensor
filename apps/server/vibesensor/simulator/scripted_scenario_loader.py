@@ -34,7 +34,6 @@ class PhaseOverridePayload(TypedDict):
     scene_noise_gain: float
     amp_scale: float
     noise_scale: float
-    common_event_gain: float
 
 
 @with_config(_STRICT_TYPEDDICT_CONFIG)
@@ -107,7 +106,6 @@ def _phase_override_from_payload(payload: PhaseOverridePayload) -> PhaseOverride
         scene_noise_gain=payload["scene_noise_gain"],
         amp_scale=payload["amp_scale"],
         noise_scale=payload["noise_scale"],
-        common_event_gain=payload["common_event_gain"],
     )
 
 

@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from vibesensor.simulator import scripted_speed_sync
+from vibesensor.simulator.profiles import PROFILE_LIBRARY
 from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
     scripted_scenario_names,
@@ -29,7 +30,6 @@ class _FakeSimClient:
         self.scene_mode = ""
         self.scene_gain = 0.0
         self.scene_noise_gain = 0.0
-        self.common_event_gain = 0.0
         self.amp_scale = 0.0
         self.noise_scale = 0.0
         self.current_speed_kmh = 0.0
@@ -64,6 +64,20 @@ def test_scripted_scenario_catalog_exposes_ten_complex_runs() -> None:
         "driveline-coastdown",
         "dual-fault-recovery",
     } <= set(scripted_scenario_names())
+
+
+def test_scripted_scenarios_use_known_profiles() -> None:
+    for scenario in SCRIPTED_SCENARIOS.values():
+        for phase in scenario.phases:
+            for override in phase.overrides:
+                assert override.profile_name in PROFILE_LIBRARY, (scenario.name, phase.name)
+
+
+def test_fault_free_scenario_injects_no_tones() -> None:
+    for phase in SCRIPTED_SCENARIOS["pothole-recovery-loop"].phases:
+        for override in phase.overrides:
+            profile = PROFILE_LIBRARY[override.profile_name]
+            assert not profile.tones and not profile.order_tones, (phase.name, override.target)
 
 
 def test_scripted_scenarios_include_explicit_steady_speed_hold_phases() -> None:
@@ -132,7 +146,6 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
                             scene_noise_gain=1.0,
                             amp_scale=0.6,
                             noise_scale=1.0,
-                            common_event_gain=0.1,
                         ),
                         PhaseOverride(
                             target="front-left",
@@ -141,7 +154,6 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
                             scene_noise_gain=1.0,
                             amp_scale=1.0,
                             noise_scale=1.0,
-                            common_event_gain=0.2,
                         ),
                     ),
                     pulses=(PhasePulse(at_s=0.02, target="front-left", strength=0.4),),
