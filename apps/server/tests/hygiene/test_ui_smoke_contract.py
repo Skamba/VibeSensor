@@ -16,6 +16,12 @@ _UI_ROOT = REPO_ROOT / "apps" / "ui"
 _UI_TESTS_DIR = REPO_ROOT / "apps" / "ui" / "tests"
 _EXPECTED_CORE_SMOKE_SPECS = {
     "smoke.critical.spec.ts",
+    "smoke.esp_flash.spec.ts",
+    "smoke.preferences.spec.ts",
+    "smoke.sensors.spec.ts",
+    "smoke.spectrum.spec.ts",
+    "smoke.speed_source.spec.ts",
+    "smoke.update.spec.ts",
 }
 
 
@@ -117,7 +123,7 @@ def test_ui_smoke_command_and_config_alignment() -> None:
     assert workers_env_var == "PLAYWRIGHT_SMOKE_WORKERS"
     assert workers_default == "1"
     assert _smoke_test_dir() == "tests"
-    assert _smoke_test_match_patterns() == ["smoke.critical.spec.ts"]
+    assert _smoke_test_match_patterns() == ["smoke.*.spec.ts"]
     assert smoke_specs
     assert all(name.startswith("smoke") for name in smoke_specs)
 
@@ -128,4 +134,4 @@ def test_core_ui_smoke_specs_exist() -> None:
     missing = _EXPECTED_CORE_SMOKE_SPECS - smoke_specs
     assert not missing, f"Missing core smoke specs: {sorted(missing)}"
     extra = smoke_specs - _EXPECTED_CORE_SMOKE_SPECS
-    assert not extra, f"Unexpected non-critical smoke specs: {sorted(extra)}"
+    assert not extra, f"Unexpected smoke specs: {sorted(extra)}"
