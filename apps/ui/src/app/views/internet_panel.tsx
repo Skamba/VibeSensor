@@ -1,4 +1,4 @@
-import { render, type ComponentChildren } from "preact";
+import type { ComponentChildren, JSX } from "preact";
 import { useRef } from "preact/hooks";
 
 import type { UpdateStartRequestPayload } from "../../api/types";
@@ -447,19 +447,19 @@ function InternetPanel(props: {
   );
 }
 
-export function mountInternetPanel(
-  host: HTMLElement,
+export function createInternetPanel(
   bindings: InternetPanelBindings,
-): Pick<InternetPanelView, "focusSsidInput"> {
+): Pick<InternetPanelView, "focusSsidInput"> & { Panel: () => JSX.Element } {
   const focusRequest = signal<InternetPanelFocusRequest | null>(null);
   let focusRequestToken = 0;
   const state = computed<InternetPanelBridgeState>(() => ({
     actions: bindings.actions.value,
     model: bindings.model.value,
   }));
-  render(<InternetPanel focusRequest={focusRequest} state={state} />, host);
+  const Panel = () => <InternetPanel focusRequest={focusRequest} state={state} />;
 
   return {
+    Panel,
     focusSsidInput() {
       focusRequestToken += 1;
       focusRequest.value = { field: "ssid", token: focusRequestToken };

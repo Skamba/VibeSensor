@@ -26,7 +26,7 @@ import type {
   AnalysisPanelView,
   SettingsAnalysisGuidanceRenderModel,
 } from "../views/analysis_panel";
-import type { SettingsFeedbackMessage } from "../views/settings_feedback";
+import type { Feedback } from "../../components/feedback";
 import { serverStateQueryKeys } from "./server_state_query_keys";
 
 export interface SettingsAnalysisModule {
@@ -155,7 +155,7 @@ export function createSettingsAnalysisModule(ctx: {
   const { t } = services;
   const carSelection = createCarSelectionDerivedState(settings.car);
   const draftValues = signal(buildDraftValues(settings));
-  const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const saveFeedback = signal<Feedback | null>(null);
   const fieldErrorMessages = signal<
     Partial<Record<AnalysisPanelFieldKey, string>>
   >({});

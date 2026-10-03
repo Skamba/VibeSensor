@@ -1,9 +1,10 @@
 import { SPECTRUM_TWEEN_DURATION_MS } from "../../config";
-import type {
-  SpectrumAlignedData,
-  SpectrumChartPlugin,
-  SpectrumSeriesMeta,
-  SpectrumText,
+import {
+  createSpectrumChart,
+  type SpectrumAlignedData,
+  type SpectrumChartPlugin,
+  type SpectrumSeriesMeta,
+  type SpectrumText,
 } from "../../spectrum_chart";
 import { getSpectrumCssVars } from "../../spectrum_css_vars";
 import { orderBandFills } from "../../theme";
@@ -35,10 +36,7 @@ import {
   type SpectrumSeriesEntry,
 } from "./spectrum_shared";
 
-type SpectrumChartModule = Pick<
-  typeof import("../../spectrum_chart"),
-  "createSpectrumChart"
->;
+type SpectrumChartModule = { createSpectrumChart: typeof createSpectrumChart };
 const EMPTY_FREQ_AXIS: number[] = [];
 const EMPTY_SERIES_VALUES: number[][] = [];
 const EMPTY_CHART_DATA: SpectrumAlignedData = [[]];
@@ -577,13 +575,8 @@ export function createSpectrumCanvasRenderer(
   };
 }
 
-let spectrumChartModulePromise: Promise<SpectrumChartModule> | null = null;
-
 function loadSpectrumChartModule(): Promise<SpectrumChartModule> {
-  if (!spectrumChartModulePromise) {
-    spectrumChartModulePromise = import("../../spectrum_chart");
-  }
-  return spectrumChartModulePromise;
+  return Promise.resolve({ createSpectrumChart });
 }
 
 function getChartLoadErrorDetail(error: unknown): string {

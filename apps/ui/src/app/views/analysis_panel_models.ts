@@ -1,4 +1,4 @@
-import type { SettingsFeedbackMessage } from "./settings_feedback";
+import type { Feedback } from "../../components/feedback";
 
 export interface SettingsAnalysisGuidanceLine {
   label: string;
@@ -6,7 +6,7 @@ export interface SettingsAnalysisGuidanceLine {
 }
 
 export interface SettingsAnalysisGuidanceRenderModel {
-  error: SettingsFeedbackMessage | null;
+  error: Feedback | null;
   lines: readonly SettingsAnalysisGuidanceLine[];
 }
 
@@ -24,7 +24,7 @@ export interface AnalysisPanelFieldRenderModel {
 
 export interface AnalysisPanelRenderModel {
   fields: Record<AnalysisPanelFieldKey, AnalysisPanelFieldRenderModel>;
-  saveFeedback: SettingsFeedbackMessage | null;
+  saveFeedback: Feedback | null;
 }
 
 export interface AnalysisPanelCarAvailability {

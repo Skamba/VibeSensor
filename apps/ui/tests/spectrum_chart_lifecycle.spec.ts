@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+import { lang } from "../src/i18n";
 import { effect } from "../src/app/ui_signals";
 import type {
   CreateSpectrumChartDeps,
@@ -15,6 +17,11 @@ import {
   makeSpectrum,
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
+
+// Shell signals are module-level; restore the language other tests expect.
+afterEach(() => {
+  lang.value = "en";
+});
 
 describe("createSpectrumCanvasRenderer chart lifecycle", () => {
   beforeEach(() => {

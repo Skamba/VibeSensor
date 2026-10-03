@@ -32,7 +32,7 @@ import {
   untracked,
   type ReadonlySignal,
 } from "../ui_signals";
-import type { SettingsFeedbackMessage } from "../views/settings_feedback";
+import type { Feedback } from "../../components/feedback";
 import {
   activeSpeedSourceLabel,
   buildSettingsSpeedSourcePanelModel,
@@ -106,9 +106,7 @@ function compareScannedDevices(
   return left.mac_address.localeCompare(right.mac_address);
 }
 
-function cloneFeedback(
-  message: SettingsFeedbackMessage | null,
-): SettingsFeedbackMessage | null {
+function cloneFeedback(message: Feedback | null): Feedback | null {
   return message ? { ...message } : null;
 }
 
@@ -166,9 +164,9 @@ export function createSpeedSourceFeature(ctx: {
   const scanInFlight = signal(false);
   const pairInFlightMac = signal<string | null>(null);
   const obdScanStatusMessage = signal<string | null>(null);
-  const manualSpeedFeedback = signal<SettingsFeedbackMessage | null>(null);
-  const staleTimeoutFeedback = signal<SettingsFeedbackMessage | null>(null);
-  const saveFeedback = signal<SettingsFeedbackMessage | null>(null);
+  const manualSpeedFeedback = signal<Feedback | null>(null);
+  const staleTimeoutFeedback = signal<Feedback | null>(null);
+  const saveFeedback = signal<Feedback | null>(null);
   const obdSelectionError = signal(false);
   const diagnosticsOpen = signal(false);
   let disposed = false;

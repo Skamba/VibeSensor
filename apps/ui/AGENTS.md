@@ -2,5 +2,5 @@
 
 - Frontend rules: `../../.github/instructions/frontend.instructions.md`.
 - Contract sync: `README.md` "Contract sync".
-- Owners: `src/app/runtime/` for composition/controllers, `src/app/features/` for one controller per feature (state, API calls, polling), `src/app/views/` for DOM/event decoding.
-- Validation: `make ui-typecheck`; add `cd apps/ui && npm run build` for bundle behavior and `cd apps/ui && npm run test:smoke` for critical rendered UI journeys.
+- Owners: `src/app.tsx` + `src/app_store.ts` for the shell (one render root, navigation, banner, confirmation, preferences); `src/pages/<page>/` for page components, stores, and pure helpers (pages never import other pages); `src/app/` for pre-rewrite features still wired in `src/app/feature_wiring.ts`.
+- Validation: `make ui-typecheck`; add `cd apps/ui && npm run build` for bundle behavior and `cd apps/ui && npm run test:smoke` for the per-page Playwright journeys.

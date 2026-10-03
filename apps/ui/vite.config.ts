@@ -1,29 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
 
-const VENDOR_CHUNK_PACKAGE_PATHS = [
-  "/preact/",
-  "/@preact/signals/",
-  "/@preact/signals-core/",
-] as const;
-
-function matchesChunkPackage(
-  id: string,
-  packagePaths: readonly string[],
-): boolean {
-  return packagePaths.some((packagePath) => id.includes(packagePath));
-}
-
-function resolveManualChunk(id: string): string | undefined {
-  const normalizedId = id.replace(/\\/g, "/");
-  if (!normalizedId.includes("/node_modules/")) {
-    return undefined;
-  }
-  if (matchesChunkPackage(normalizedId, VENDOR_CHUNK_PACKAGE_PATHS)) {
-    return "vendor";
-  }
-  return undefined;
-}
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   const backendOrigin = env.VITE_BACKEND_ORIGIN || "http://127.0.0.1:8000";
@@ -41,11 +17,6 @@ export default defineConfig(({ mode }) => {
       // Align with tsconfig.json "target": "ES2022" so vite and tsc target the
       // same language level and avoid duplicate down-transpilation.
       target: "es2022",
-      rollupOptions: {
-        output: {
-          manualChunks: resolveManualChunk,
-        },
-      },
     },
     // Our smoke tests and preview helpers target fixed URLs, so fail fast on
     // port conflicts instead of silently hopping to the next available port.
