@@ -21,10 +21,7 @@ from vibesensor.recording.run_suitability_codec import run_suitability_payload
 from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )
-from vibesensor.summary.decoding import (
-    has_projectable_report_payload,
-    report_summary_from_mapping,
-)
+from vibesensor.summary.decoding import has_projectable_report_payload
 from vibesensor.summary.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     dedupe_report_fallback_reasons,
@@ -156,13 +153,8 @@ def _apply_projected_analysis_fallback_reasons(payload: JsonObject) -> None:
     analysis_metadata = payload.get("analysis_metadata")
     if not isinstance(analysis_metadata, dict):
         return
-    normalized = report_summary_from_mapping(payload)
     reasons = derive_report_fallback_reasons(
-        report_analysis_metadata_from_mapping(analysis_metadata),
-        has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
-        has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
-        has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
-        has_whole_run_diagnosis_summaries=bool(normalized.whole_run_diagnosis_summaries),
+        report_analysis_metadata_from_mapping(analysis_metadata)
     )
     if reasons:
         analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(reasons)
@@ -175,27 +167,19 @@ def _history_run_fallback_reasons(run: StoredHistoryRun) -> tuple[str, ...]:
     reasons.extend(finalization_stage_fallback_reasons(run.metadata.finalization_stages))
     if run.analysis is None:
         if run.lifecycle is not None and run.lifecycle.post_analysis in {"pending", "running"}:
-            reasons.append("whole_run_analysis_pending")
+            reasons.append("analysis_pending")
         elif run.status in {RunStatus.RECORDING, RunStatus.ANALYZING}:
-            reasons.append("whole_run_analysis_pending")
+            reasons.append("analysis_pending")
         elif run.status == RunStatus.ERROR or run.error_message:
-            reasons.append("whole_run_analysis_failed")
+            reasons.append("analysis_failed")
         elif run.lifecycle is not None and run.lifecycle.post_analysis == "degraded":
-            reasons.append("whole_run_analysis_failed")
+            reasons.append("analysis_failed")
     else:
-        payload = run.analysis.to_json_object()
-        analysis_metadata = payload.get("analysis_metadata")
+        analysis_metadata = run.analysis.to_json_object().get("analysis_metadata")
         if isinstance(analysis_metadata, dict):
-            normalized = report_summary_from_mapping(payload)
             reasons.extend(
                 derive_report_fallback_reasons(
-                    report_analysis_metadata_from_mapping(analysis_metadata),
-                    has_whole_run_context_intervals=bool(normalized.whole_run_context_intervals),
-                    has_whole_run_order_summaries=bool(normalized.whole_run_order_summaries),
-                    has_whole_run_spatial_summaries=bool(normalized.whole_run_spatial_summaries),
-                    has_whole_run_diagnosis_summaries=bool(
-                        normalized.whole_run_diagnosis_summaries
-                    ),
+                    report_analysis_metadata_from_mapping(analysis_metadata)
                 )
             )
     return tuple(dedupe_report_fallback_reasons(reasons))

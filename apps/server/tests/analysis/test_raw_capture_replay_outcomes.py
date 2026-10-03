@@ -341,7 +341,6 @@ def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None
 
     assert result.raw_replay.raw_capture_loss_policy_severity == "fatal"
     assert result.raw_replay.raw_capture_loss_policy_reason == "raw_capture_queue_overflow_fatal"
-    assert result.raw_replay.raw_capture_loss_policy_gate_whole_run is True
     assert WARNING_CODE_RAW_CAPTURE_LOSS_POLICY in warning_codes(result.raw_replay.warnings)
 
 

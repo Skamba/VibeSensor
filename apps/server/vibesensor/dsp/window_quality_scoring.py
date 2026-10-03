@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from math import isfinite
-from typing import cast
 
 import numpy as np
 
@@ -94,41 +93,6 @@ def score_window_quality(
         mounting_high_frequency_ratio=mounting_analysis.high_frequency_ratio,
         context_score=context_score,
         frequency_stability_score=frequency_score,
-    )
-
-
-def window_quality_with_context(
-    quality: WindowQuality,
-    *,
-    context_coverage: str | None,
-    speed_validity: str | None,
-    rpm_validity: str | None,
-    speed_context_reasons: tuple[str, ...] = (),
-) -> WindowQuality:
-    """Return ``quality`` with the context component updated for a window label."""
-
-    return _quality_from_component_scores(
-        sample_completeness_score=quality.sample_completeness_score,
-        packet_integrity_score=quality.packet_integrity_score,
-        timing_integrity_score=quality.timing_integrity_score,
-        timing_reasons=_timing_reasons_from(quality.reasons),
-        clipping_score=quality.clipping_score,
-        clipping_sample_count=quality.clipping_sample_count,
-        clipping_sample_ratio=quality.clipping_sample_ratio,
-        clipping_axis_counts=quality.clipping_axis_counts,
-        transient_score=quality.transient_score,
-        shock_crest_factor=quality.shock_crest_factor,
-        shock_broadband_ratio=quality.shock_broadband_ratio,
-        mounting_score=quality.mounting_score,
-        mounting_high_frequency_ratio=quality.mounting_high_frequency_ratio,
-        context_score=_context_score(
-            context_coverage=context_coverage,
-            speed_validity=speed_validity,
-            rpm_validity=rpm_validity,
-            speed_context_reasons=speed_context_reasons,
-        ),
-        context_reasons=_window_quality_reasons_from(speed_context_reasons),
-        frequency_stability_score=quality.frequency_stability_score,
     )
 
 
@@ -253,14 +217,6 @@ _TIMING_GAP_REASONS = frozenset(
     }
 )
 _TIMING_RESET_REASONS = frozenset({"window_crosses_overlap"})
-_TIMING_REASON_VALUES = frozenset(
-    {
-        "timing_gap",
-        "late_packet_loss",
-        "server_queue_drop",
-        "sensor_reset",
-    }
-)
 
 
 def _timing_integrity_score(
@@ -286,12 +242,6 @@ def _timing_integrity_score(
         score = min(score, 0.55)
         reasons.append("server_queue_drop")
     return score, tuple(dict.fromkeys(reasons))
-
-
-def _timing_reasons_from(
-    reasons: tuple[WindowQualityReason, ...],
-) -> tuple[WindowQualityReason, ...]:
-    return tuple(reason for reason in reasons if reason in _TIMING_REASON_VALUES)
 
 
 def _context_score(
@@ -328,14 +278,6 @@ _SPEED_CONTEXT_REASON_SCORE_CAPS: dict[str, float] = {
     "speed_unstable": 0.55,
     "speed_assumed": 0.75,
 }
-
-
-def _window_quality_reasons_from(reasons: tuple[str, ...]) -> tuple[WindowQualityReason, ...]:
-    return tuple(
-        cast(WindowQualityReason, reason)
-        for reason in reasons
-        if reason in _SPEED_CONTEXT_REASON_SCORE_CAPS
-    )
 
 
 def _frequency_stability_score(

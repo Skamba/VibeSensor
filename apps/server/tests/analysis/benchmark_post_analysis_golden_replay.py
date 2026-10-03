@@ -1,4 +1,4 @@
-"""Opt-in benchmark for dense golden replay over a realistic 30-minute run."""
+"""Opt-in benchmark for raw-capture replay over a realistic 30-minute run."""
 
 from __future__ import annotations
 
@@ -34,5 +34,7 @@ def test_post_analysis_golden_replay_30_minute_benchmark(benchmark: Any) -> None
     benchmark.extra_info["sensor_count"] = 4
     benchmark.extra_info["peak_memory_bytes"] = result.peak_memory_bytes
     benchmark.extra_info["elapsed_s"] = result.elapsed_s
-    assert result.result.manifest.total_window_count >= _REALISTIC_DURATION_S - 1
+    metadata = result.result.analysis["analysis_metadata"]
+    assert isinstance(metadata, dict)
+    assert int(metadata["analyzed_sample_count"]) > 0
     assert result.peak_memory_bytes > 0

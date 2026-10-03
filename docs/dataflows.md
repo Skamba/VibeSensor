@@ -48,26 +48,16 @@ Deep dive: `docs/run_lifecycle.md`
 | Field | Value |
 |------|-------------|
 | Source | Optional per-run raw capture written alongside an active recording |
-| Main path | `recording/raw_capture_writer.py` -> raw capture manifest/store -> `analysis/post_analysis_loader.py` -> `analysis/post_analysis_input.py` + `raw_capture_replay.py` + `post_analysis_executor.py` (whole-run stages) |
-| Boundary | Raw capture is read through `HistoryDB`; compact replay and dense sidecar production stay inside the post-analysis pipeline |
-| Final consumer | Offline post-stop analysis: raw replay compatibility plus whole-run sidecar builders |
-| Data shape | Persisted and replayable raw artifacts, dense sidecar artifacts, and compact persisted summaries |
+| Main path | `recording/raw_capture_writer.py` -> raw capture manifest/store -> `analysis/post_analysis_loader.py` -> `analysis/post_analysis_input.py` + `raw_capture_replay.py` -> summary analysis |
+| Boundary | Raw capture is read through `HistoryDB`; replay stays inside the post-analysis pipeline |
+| Final consumer | Offline post-stop analysis: summary-row FFT peaks recomputed from raw windows |
+| Data shape | Persisted, replayable raw artifacts and the compact persisted analysis |
 
-Raw capture is not the report path and not the live UI path. Post-analysis may
-use raw replay when the manifest/store exists, or fall back to persisted summary
-rows when it does not. When raw capture is available, whole-run spectra use
-bounded raw range reads, then the sidecar path builds context labels, order
-traces/summaries, family
-summaries, and spatial coherence through the whole-run stage functions in
-`post_analysis_executor.py` and the `whole_run_*` diagnostics modules. Dense spectra/traces/matrices stay in
-`whole-run-artifacts/<run_id>/`; compact report-facing summaries and manifest
-metadata are appended to `analysis_json`.
-
-The whole-run spectral executor is
-`analysis/whole_run_spectra.py`. Degraded or missing raw/whole-run
-state must propagate forward as
-lifecycle/artifact status and report context instead of triggering a second ad
-hoc recovery path in history or PDF code.
+Raw capture is not the report path and not the live UI path. Post-analysis uses
+raw replay when the manifest/store exists, or falls back to the persisted
+summary rows when it does not. Degraded or missing raw state must propagate
+forward as lifecycle/artifact status and report context instead of triggering a
+second ad hoc recovery path in history or PDF code.
 
 Deep dives: `docs/run_lifecycle.md`, `docs/analysis_pipeline.md`
 

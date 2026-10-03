@@ -92,7 +92,6 @@ def test_project_history_run_record_exposes_pending_fallback_reason() -> None:
             "lifecycle": RunArtifactLifecycle(
                 stage="post_analysis_running",
                 raw_capture="ready",
-                whole_run_artifacts="pending",
                 post_analysis="running",
                 report="pending",
             ),
@@ -101,7 +100,7 @@ def test_project_history_run_record_exposes_pending_fallback_reason() -> None:
 
     payload = project_history_run_record(run)
 
-    assert payload["fallback_reasons"] == ["whole_run_analysis_pending"]
+    assert payload["fallback_reasons"] == ["analysis_pending"]
 
 
 def test_project_history_run_record_exposes_analysis_fallback_reasons() -> None:

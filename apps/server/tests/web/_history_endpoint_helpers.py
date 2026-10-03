@@ -129,13 +129,9 @@ class FakeHistoryDB:
     @staticmethod
     def _artifact_availability_from_lifecycle(
         raw_capture: str,
-        whole_run_artifacts: str,
     ) -> HistoryArtifactAvailability:
         return HistoryArtifactAvailability(
             raw_capture="available" if raw_capture == "ready" else raw_capture,
-            whole_run_artifacts=(
-                "available" if whole_run_artifacts == "ready" else whole_run_artifacts
-            ),
         )
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
@@ -146,15 +142,12 @@ class FakeHistoryDB:
             status=RunStatus.COMPLETE,
             has_raw_capture_manifest=False,
             raw_capture_artifacts_present=False,
-            has_whole_run_artifact_manifest=False,
-            whole_run_artifacts_present=False,
             raw_capture_finalize=metadata.raw_capture_finalize,
             has_analysis=True,
             analysis_corrupt=False,
         )
         artifact_availability = self._artifact_availability_from_lifecycle(
             lifecycle.raw_capture,
-            lifecycle.whole_run_artifacts,
         )
         return StoredHistoryRun(
             run_id=run_id,
@@ -195,15 +188,12 @@ class FakeHistoryDB:
             status=RunStatus.COMPLETE,
             has_raw_capture_manifest=False,
             raw_capture_artifacts_present=False,
-            has_whole_run_artifact_manifest=False,
-            whole_run_artifacts_present=False,
             raw_capture_finalize=metadata.raw_capture_finalize,
             has_analysis=True,
             analysis_corrupt=False,
         )
         artifact_availability = self._artifact_availability_from_lifecycle(
             lifecycle.raw_capture,
-            lifecycle.whole_run_artifacts,
         )
         return [
             HistoryRunListEntry(

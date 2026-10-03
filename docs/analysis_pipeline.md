@@ -43,48 +43,22 @@ frequency-bin, and peak-detection steps live in
 `apps/server/vibesensor/dsp/fft_analysis.py`; and live snapshot/metric
 coordination stays under `apps/server/vibesensor/live/`. Live
 metrics use the `live_display` processing profile and a three-sample median
-filter for operator-friendly display. Post-stop raw replay and dense whole-run
-spectra use `diagnostic_raw` when raw capture is available; summary-only
+filter for operator-friendly display. Post-stop raw replay uses
+`diagnostic_raw` when raw capture is available; summary-only
 fallbacks are marked `diagnostic_filtered`. Persisted analysis metadata records
 the active profile, filter chains, and whether raw diagnostic evidence was
 preserved.
 
-The connected full-run dense path is the `whole_run_*` sidecar pipeline wired by
-`build_whole_run_artifacts()` in `analysis/post_analysis_executor.py`,
-which call the diagnostics builders directly. Whole-run spectra now use
-`RawCaptureManifest` plus `HistoryDB.load_raw_capture_sensor_range(...)`
-instead of receiving a full `RawRunCapture`; compact summary-row replay may still
-load full raw capture before compact report-facing summaries are persisted.
+When raw capture is available, `analysis/raw_capture_replay.py` recomputes each
+summary row's FFT peaks and strength metrics from the raw window the row was
+analysed over, so the summary analysis reasons over unfiltered diagnostic
+evidence. Shared window-quality scoring marks clipped, suspect-mounted, or
+timing-compromised windows as limited/excluded evidence rather than treating
+local sensor artifacts or corrupted sample timing as trustworthy vibration
+strength.
 
-Current whole-run sidecar stages:
-
-1. `analysis/whole_run_spectra.py` computes deterministic
-   raw-window spectra from bounded raw range reads and emits `spectral-grid:*`,
-   `spectral-matrix:*`, and `spectral-summary:*` sidecars. The summaries carry
-   window timing, coverage/quality, top peaks, and dB strength facts without
-   forcing reports to read the dense matrices.
-2. `analysis/whole_run_context.py` projects speed/RPM/reference
-   context onto the same window grid and emits dense `context-window-labels`
-   plus compact `whole_run_context_intervals` for `analysis_json`.
-3. `analysis/orders/whole_run_traces.py` joins spectral summaries
-   with context labels and scores wheel/driveshaft/engine hypotheses per window,
-   writing dense `order-trace-points` sidecars.
-4. `analysis/orders/whole_run_scoring.py` collapses trace points
-   into compact lock/stability summaries with reference coverage, contiguous
-   support, drift/error, and lock score.
-5. `analysis/orders/whole_run_family_summaries.py` rolls harmonic
-   summaries up to family-level support intervals and phase summaries.
-6. `analysis/whole_run_spatial_coherence.py` builds candidate-level
-   multi-sensor spatial evidence windows and compact spatial summaries.
-7. `post_analysis_executor.py` persists dense artifacts through
-   `HistoryDB.store_whole_run_artifacts(...)`, appends compact whole-run
-   metadata/summaries into `PersistedAnalysis`, and then stores the report-facing
-   summary through `HistoryDB.store_analysis(...)`.
-
-The sidecar pipeline is the `whole_run_*` implementation above. Shared quality scoring still marks clipped,
-suspect-mounted, or timing-compromised windows as limited/excluded evidence
-rather than treating local sensor artifacts or corrupted sample timing as
-trustworthy vibration strength.
+The summary analysis is the single diagnosis: the UI insights endpoint and the
+PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.
 
 ## Related deep dives
 
@@ -109,14 +83,11 @@ RunRecorder.stop_recording()            # recording/recorder.py
                       ├─ load raw manifest; compact replay may load full RawRunCapture
                       ├─ build_post_analysis_input(...)
                       │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
-                      ├─ whole_run_* sidecar stages (spectra use bounded raw ranges)
                       ├─ analysis_runner(...)
                       │    ← injected by RunRecorder
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
-                      ├─ append compact whole-run summaries/metadata to PersistedAnalysis
-                      ├─ history_db.astore_whole_run_artifacts()
                       └─ history_db.store_analysis()
-                            ← persist sidecars and report-facing summary via the injected HistoryDB
+                            ← persist the summary analysis via the injected HistoryDB
 ```
 
 `PostAnalysisWorker` receives persistence access, the post-stop analysis
@@ -129,9 +100,8 @@ load/store boundary around the injected analysis dependency.
 `RunAnalysis.summarize()` in `run_analysis.py` runs the compact
 summary/report-facing analysis over summary-style samples:
 `prepare_analysis_context()` → `build_findings_bundle()` →
-`build_analysis_result()`. `execute_post_analysis()` runs the whole-run sidecar
-stages before this compact summary is stored, then appends whole-run metadata and
-summaries to the persisted analysis.
+`build_analysis_result()`. `execute_post_analysis()` stores the result as the
+run's persisted analysis.
 
 | # | Step | Key Function(s) | Module | Purpose |
 |---|------|-----------------|--------|---------|
@@ -151,32 +121,10 @@ summaries to the persisted analysis.
 
 ## Data Flow
 
-Whole-run sidecar flow:
-
-```
-Input: persisted summary samples + metadata (+ optional raw-capture manifest/files)
-  │
-  ├─ post_analysis_loader.load_post_analysis_run()
-  │    ├─ loads persisted summary rows and caps compact-analysis input
-  │    └─ loads full RawRunCapture when raw capture is available
-  │
-  ├─ post_analysis_executor.run_whole_run_pipeline_stages()
-  │    ├─ whole_run_spectra.py → dense spectral sidecars + spectral summaries
-  │    ├─ whole_run_context.py → context-window-labels sidecar + compact intervals
-  │    ├─ orders/whole_run_traces.py → dense order-trace sidecar
-  │    ├─ orders/whole_run_scoring.py → compact trace summaries
-  │    ├─ orders/whole_run_family_summaries.py → compact family summaries
-  │    └─ whole_run_spatial_coherence.py → spatial sidecar + compact summaries
-  │
-  ├─ history_db.astore_whole_run_artifacts() → dense sidecar artifacts
-  │
-  └─ compact-analysis/report summary flow
-```
-
-Compact-analysis/report summary flow:
+Summary analysis flow:
 
 ```text
-Input: PostAnalysisRunInput + optional whole-run stage output
+Input: PostAnalysisRunInput (summary rows, FFT peaks recomputed from raw capture when available)
   │
   ├─ _run_input.build_diagnostics_run_input() → typed metadata + samples
   │
@@ -199,8 +147,6 @@ Input: PostAnalysisRunInput + optional whole-run stage output
   ├─ peaks.table.top_peaks_table_rows() → labeled peak table rows
   │    └─ serialize_peak_table() → persisted `plots.peaks_table`
   │
-  ├─ post_analysis_executor.append_whole_run_*() → compact persisted summaries
-  │
   └─ history_db.store_analysis() → PersistedAnalysis/report-facing summary
 ```
 
@@ -208,22 +154,18 @@ Input: PostAnalysisRunInput + optional whole-run stage output
 
 During `execute_post_analysis()`, `PostAnalysisWorker`:
 
-1. Builds and stores dense whole-run sidecar artifacts when raw capture is
-   available and prerequisites pass.
-2. Runs the compact summary analysis path and adds `analysis_metadata` (sample
-   count, sampling method, profile info, raw/whole-run availability, artifact
-   manifest pointers, and stage/fallback details).
-3. Adds compact whole-run context/order/spatial/diagnosis summaries when those
-   stages produced them.
-4. Adds language-neutral trust warnings when the captured run context was
+1. Runs the summary analysis and adds `analysis_metadata` (sample count,
+   sampling method, processing profile, raw-replay coverage, and fallback
+   reasons).
+2. Adds language-neutral trust warnings when the captured run context was
    incomplete for confident order analysis.
-5. Stores the summary via `history_db.store_analysis()` as a versioned
+3. Stores the summary via `history_db.store_analysis()` as a versioned
    persistence envelope.
 
-History readers unwrap the envelope back to the summary shape. When a run has
-raw capture and whole-run sidecars, the persisted analysis summary already
-contains compact report-facing summaries plus sidecar manifest metadata;
-report/history readers still stay persistence-only and never re-run diagnostics.
+History readers unwrap the envelope back to the summary shape and stay
+persistence-only; they never re-run diagnostics. Analyses stored by older
+versions may still carry retired `whole_run_*` fields; the storage decoder
+(`summary/persisted_codec.py`) drops them on load.
 The core
 history/report projection is derived from persisted run data plus the persisted
 analysis summary only; any comparison against current mutable car settings is an

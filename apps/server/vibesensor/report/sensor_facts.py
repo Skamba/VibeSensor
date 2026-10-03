@@ -7,23 +7,30 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite
 from statistics import mean as _mean
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from vibesensor.domain.location_hotspot import LocationHotspotRow, LocationIntensitySummary
 from vibesensor.domain.test_run import TestRun
 from vibesensor.dsp.vibration_strength import compute_db, percentile
-from vibesensor.summary.spatial_evidence_contracts import LocationProofBasis
 
 if TYPE_CHECKING:
     from vibesensor.report.projection import PrimaryReportFacts
 
 __all__ = [
+    "LocationProofBasis",
     "ReportCoverageSummary",
     "ReportSensorFacts",
     "build_report_sensor_facts",
     "enrich_location_proof_sensor_facts",
     "primary_location_has_coverage_gap",
     "sensor_fallback_strength_db",
+]
+
+
+type LocationProofBasis = Literal[
+    "run_intensity_summary",
+    "supporting_windows_raw_backed",
+    "supporting_windows_summary_only",
 ]
 
 
@@ -73,7 +80,7 @@ def build_report_sensor_facts(
         ),
         proof_intensity=active_intensity,
         proof_location_hotspot_rows=tuple(_compute_location_hotspot_rows(active_intensity)),
-        proof_basis="whole_run_summary",
+        proof_basis="run_intensity_summary",
     )
 
 

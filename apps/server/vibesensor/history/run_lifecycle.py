@@ -36,7 +36,6 @@ class RunArtifactLifecycle:
 
     stage: RunLifecycleStage
     raw_capture: ArtifactLifecycleState
-    whole_run_artifacts: ArtifactLifecycleState
     post_analysis: PostAnalysisLifecycleState
     report: ReportLifecycleState
 
@@ -44,7 +43,6 @@ class RunArtifactLifecycle:
         return {
             "stage": self.stage,
             "raw_capture": self.raw_capture,
-            "whole_run_artifacts": self.whole_run_artifacts,
             "post_analysis": self.post_analysis,
             "report": self.report,
         }
@@ -55,8 +53,6 @@ def derive_run_artifact_lifecycle(
     status: RunStatus | str,
     has_raw_capture_manifest: bool,
     raw_capture_artifacts_present: bool,
-    has_whole_run_artifact_manifest: bool,
-    whole_run_artifacts_present: bool,
     raw_capture_finalize: RunRawCaptureFinalize | None,
     has_analysis: bool,
     analysis_corrupt: bool,
@@ -77,11 +73,6 @@ def derive_run_artifact_lifecycle(
             has_manifest=has_raw_capture_manifest,
             artifacts_present=raw_capture_artifacts_present,
             raw_capture_finalize=raw_capture_finalize,
-        ),
-        whole_run_artifacts=_derive_whole_run_artifact_state(
-            has_manifest=has_whole_run_artifact_manifest,
-            artifacts_present=whole_run_artifacts_present,
-            post_analysis=post_analysis,
         ),
         post_analysis=post_analysis,
         report=_derive_report_state(post_analysis),
@@ -134,21 +125,6 @@ def _derive_raw_capture_state(
         return "not_recorded"
     if status == RunStatus.RECORDING:
         return "pending"
-    return "not_recorded"
-
-
-def _derive_whole_run_artifact_state(
-    *,
-    has_manifest: bool,
-    artifacts_present: bool,
-    post_analysis: PostAnalysisLifecycleState,
-) -> ArtifactLifecycleState:
-    if has_manifest:
-        return "ready" if artifacts_present else "missing"
-    if post_analysis in {"pending", "running"}:
-        return "pending"
-    if post_analysis == "degraded":
-        return "degraded"
     return "not_recorded"
 
 

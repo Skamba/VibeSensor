@@ -32,15 +32,9 @@ def test_post_analysis_golden_replay_fast_subset(
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     assert snapshot["case_id"] == fixture.case_id
     assert snapshot["expected"]["suspected_source"] == fixture.expected.suspected_source
-    assert snapshot["artifact_paths"] == result.manifest.generated_artifact_paths
     metadata = result.analysis.get("analysis_metadata")
     assert isinstance(metadata, dict)
-    assert metadata["whole_run_artifacts_available"] is True
-    assert metadata["whole_run_context_available"] is True
-    assert result.manifest.total_window_count > 0
-    assert result.manifest.source_raw_manifests
-    assert result.manifest.algorithm_versions
-    assert result.manifest.generated_artifact_paths
+    assert int(metadata["raw_backed_sample_count"]) > 0
     _assert_expected_outcome(fixture, result.analysis)
 
 
@@ -94,15 +88,19 @@ def _assert_expected_outcome(
 
     _assert_tolerance_bands(fixture, analysis, top)
     _assert_required_warnings(fixture, analysis)
-    _assert_required_metadata(fixture, analysis)
 
     metadata = analysis.get("analysis_metadata")
     assert isinstance(metadata, dict)
+    findings = analysis.get("findings")
+    assert isinstance(findings, list)
     for reason in expected.unavailable_reasons:
         if reason == "missing_speed":
-            assert int(metadata.get("whole_run_context_missing_speed_window_count", 0)) > 0
+            assert int(metadata.get("vehicle_context_unaligned_speed_sample_count", 0)) > 0
         if reason == "missing_rpm":
-            assert int(metadata.get("whole_run_context_missing_rpm_window_count", 0)) > 0
+            assert any(
+                isinstance(finding, dict) and finding.get("finding_id") == "REF_ENGINE"
+                for finding in findings
+            )
 
 
 def _assert_tolerance_bands(
@@ -120,14 +118,10 @@ def _assert_tolerance_bands(
         elif metric == "fixed_frequency_hz":
             assert fixture.primary_frequency_hz is not None
             value = fixture.primary_frequency_hz
-        elif metric == "missing_speed_windows_min":
+        elif metric == "unaligned_speed_samples_min":
             metadata = analysis.get("analysis_metadata")
             assert isinstance(metadata, dict)
-            value = float(metadata.get("whole_run_context_missing_speed_window_count", 0.0))
-        elif metric == "missing_rpm_windows_min":
-            metadata = analysis.get("analysis_metadata")
-            assert isinstance(metadata, dict)
-            value = float(metadata.get("whole_run_context_missing_rpm_window_count", 0.0))
+            value = float(metadata.get("vehicle_context_unaligned_speed_sample_count", 0.0))
         else:
             metadata = analysis.get("analysis_metadata")
             assert isinstance(metadata, dict)
@@ -148,19 +142,6 @@ def _assert_required_warnings(
     assert isinstance(warnings, list)
     actual_codes = {str(warning.get("code")) for warning in warnings if isinstance(warning, dict)}
     assert expected_codes <= actual_codes
-
-
-def _assert_required_metadata(
-    fixture: GoldenReplayFixture,
-    analysis: dict[str, object],
-) -> None:
-    minimums = fixture.expected.required_metadata_minimums or {}
-    if not minimums:
-        return
-    metadata = analysis.get("analysis_metadata")
-    assert isinstance(metadata, dict)
-    for key, minimum in minimums.items():
-        assert float(metadata.get(key, 0.0)) >= minimum
 
 
 def _representative_matched_frequency_hz(top: dict[str, Any]) -> float:

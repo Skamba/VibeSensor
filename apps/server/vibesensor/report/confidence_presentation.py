@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from vibesensor.domain.diagnosis_assessment import LEGACY_CONTEXT_CAVEAT_KEY
 from vibesensor.domain.finding import Finding
 from vibesensor.report.confidence_facts import ReportConfidenceFacts
 from vibesensor.report.presentation import display_lang, display_location, human_source
@@ -197,8 +196,6 @@ def _confidence_caveat_texts(
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SUMMARY_ONLY"))
         elif key == "raw_replay_incomplete":
             parts.append(tr("REPORT_CONFIDENCE_CAVEAT_RAW_REPLAY_INCOMPLETE"))
-        elif key == LEGACY_CONTEXT_CAVEAT_KEY:
-            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_LEGACY_CONTEXT"))
         elif key == "sparse_support":
             parts.append(
                 tr(
@@ -206,10 +203,6 @@ def _confidence_caveat_texts(
                     count=str(max(0, confidence_facts.supporting_window_count or 0)),
                 )
             )
-        elif key == "speed_context_gaps":
-            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_SPEED_CONTEXT_GAPS"))
-        elif key == "rpm_context_gaps":
-            parts.append(tr("REPORT_CONFIDENCE_CAVEAT_RPM_CONTEXT_GAPS"))
         elif key == "brief_support" and confidence_facts.supporting_duration_s is not None:
             parts.append(
                 tr(

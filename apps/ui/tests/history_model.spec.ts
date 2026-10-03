@@ -33,7 +33,6 @@ function historyListRun(runId: string): HistoryEntry {
     lifecycle: {
       stage: "post_analysis_ready",
       raw_capture: "not_recorded",
-      whole_run_artifacts: "ready",
       post_analysis: "ready",
       report: "ready",
     },
@@ -226,7 +225,6 @@ test("keeps the PDF pending until the report is ready", () => {
     lifecycle: {
       stage: "post_analysis_pending",
       raw_capture: "not_recorded",
-      whole_run_artifacts: "pending",
       post_analysis: "pending",
       report: "pending",
     },
@@ -246,7 +244,6 @@ test("keeps the PDF pending until the report is ready", () => {
     lifecycle: {
       stage: "post_analysis_degraded",
       raw_capture: "not_recorded",
-      whole_run_artifacts: "degraded",
       post_analysis: "degraded",
       report: "degraded",
     },

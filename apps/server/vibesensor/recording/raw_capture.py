@@ -22,12 +22,10 @@ __all__ = [
     "RawCaptureSensorLossStats",
     "RawCaptureSensorData",
     "RawCaptureSensorManifest",
-    "RawCaptureSensorRange",
     "RawRunCapture",
 ]
 
 type Int16Array = npt.NDArray[np.int16]
-type RawCaptureCoverageState = Literal["missing", "empty", "partial", "full"]
 type RawCaptureClockDomain = Literal["server_monotonic", "unverified"]
 type RawCaptureSampleRateProofState = Literal[
     "declared_only",
@@ -249,42 +247,6 @@ class RawCaptureSensorData:
 
 
 @dataclass(frozen=True, slots=True)
-class RawCaptureSensorRange:
-    """One manifest-aware raw-capture range read with explicit coverage state."""
-
-    client_id: str
-    requested_sample_start: int
-    requested_sample_count: int
-    coverage_state: RawCaptureCoverageState
-    samples_i16: Int16Array
-    manifest: RawCaptureSensorManifest | None = None
-    returned_sample_start: int | None = None
-    chunks: tuple[RawCaptureChunkIndex, ...] = ()
-
-    @classmethod
-    def missing(
-        cls,
-        *,
-        client_id: str,
-        requested_sample_start: int,
-        requested_sample_count: int,
-    ) -> RawCaptureSensorRange:
-        return cls(
-            client_id=client_id,
-            requested_sample_start=requested_sample_start,
-            requested_sample_count=requested_sample_count,
-            coverage_state="missing",
-            samples_i16=_empty_i16_samples(),
-        )
-
-    @property
-    def returned_sample_count(self) -> int:
-        if self.samples_i16.ndim <= 0:
-            return 0
-        return int(self.samples_i16.shape[0])
-
-
-@dataclass(frozen=True, slots=True)
 class RawRunCapture:
     """Fully loaded raw capture bundle for one run."""
 
@@ -296,7 +258,3 @@ class RawRunCapture:
             if sensor.manifest.client_id == client_id:
                 return sensor
         return None
-
-
-def _empty_i16_samples() -> Int16Array:
-    return np.empty((0, 3), dtype=np.int16)

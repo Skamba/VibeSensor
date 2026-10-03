@@ -103,18 +103,10 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         location_confidence_key=decision_facts.location_confidence_key,
         tr=tr,
     )
-    primary_diagnosis = report_facts.primary_diagnosis
-    primary_location_for_display = (
-        primary_diagnosis.dominant_location
-        if primary_diagnosis is not None and primary_diagnosis.dominant_location
-        else decision_facts.primary_candidate.primary_location
+    primary_location_text = display_location(
+        decision_facts.primary_candidate.primary_location, tr=tr
     )
-    primary_location_text = display_location(primary_location_for_display, tr=tr)
-    runner_up_candidate = (
-        display_location(primary_diagnosis.runner_up_location, tr=tr)
-        if primary_diagnosis is not None and primary_diagnosis.runner_up_location
-        else runner_up_corner(sensor_facts.proof_intensity, tr=tr)
-    )
+    runner_up_candidate = runner_up_corner(sensor_facts.proof_intensity, tr=tr)
     runner_up = (
         runner_up_candidate
         if runner_up_candidate and runner_up_candidate != primary_location_text
@@ -122,9 +114,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
     )
     speed_window_label = (
         display_speed_band(
-            str(primary_diagnosis.dominant_speed_band or "").strip()
-            if primary_diagnosis is not None
-            else str(decision_facts.primary_candidate.primary_speed or "").strip(),
+            str(decision_facts.primary_candidate.primary_speed or "").strip(),
             tr=tr,
         )
         or None
@@ -145,7 +135,6 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         aggregate=test_run,
         facts=decision_facts.primary_candidate,
         confidence_facts=report_facts.confidence,
-        diagnosis_summary=primary_diagnosis,
         tr=tr,
         lang=lang,
     )
@@ -175,11 +164,7 @@ def build_report_document_context(prepared: PreparedReportInput) -> ReportDocume
         appendix_a_context=AppendixAContext(
             action_status_key=decision_facts.action_status_key,
             alternative_source_visible=decision_facts.alternative_source_visible,
-            ranked_candidates=build_ranked_candidates(
-                test_run,
-                diagnosis_summaries=report_facts.report_surface_diagnosis_summaries,
-                tr=tr,
-            ),
+            ranked_candidates=build_ranked_candidates(test_run, tr=tr),
             recapture=recapture,
         ),
         appendix_b_context=AppendixBContext(

@@ -27,12 +27,9 @@ type ReportFallbackReason = Literal[
     "raw_capture_finalize_unsettled",
     "persistence_finalize_unsettled",
     "history_not_ready",
-    "whole_run_analysis_pending",
-    "whole_run_analysis_failed",
+    "analysis_pending",
+    "analysis_failed",
     "legacy_summary_only",
-    "sidecar_summary_mismatch",
-    "whole_run_evidence_missing",
-    "whole_run_evidence_incomplete",
 ]
 
 REPORT_FALLBACK_REASON_VALUES: frozenset[ReportFallbackReason] = frozenset(
@@ -44,12 +41,9 @@ REPORT_FALLBACK_REASON_VALUES: frozenset[ReportFallbackReason] = frozenset(
         "raw_capture_finalize_unsettled",
         "persistence_finalize_unsettled",
         "history_not_ready",
-        "whole_run_analysis_pending",
-        "whole_run_analysis_failed",
+        "analysis_pending",
+        "analysis_failed",
         "legacy_summary_only",
-        "sidecar_summary_mismatch",
-        "whole_run_evidence_missing",
-        "whole_run_evidence_incomplete",
     }
 )
 
@@ -108,29 +102,8 @@ def finalization_stage_fallback_reasons(
 
 def derive_report_fallback_reasons(
     analysis_metadata: ReportAnalysisMetadata,
-    *,
-    has_whole_run_context_intervals: bool,
-    has_whole_run_order_summaries: bool,
-    has_whole_run_spatial_summaries: bool,
-    has_whole_run_diagnosis_summaries: bool,
 ) -> tuple[ReportFallbackReason, ...]:
-    reasons: list[str] = []
-    reasons.extend(_raw_capture_fallback_reasons(analysis_metadata))
-    reasons.extend(
-        _whole_run_fallback_reasons(
-            analysis_metadata,
-            has_whole_run_context_intervals=has_whole_run_context_intervals,
-            has_whole_run_order_summaries=has_whole_run_order_summaries,
-            has_whole_run_spatial_summaries=has_whole_run_spatial_summaries,
-            has_whole_run_diagnosis_summaries=has_whole_run_diagnosis_summaries,
-        )
-    )
-    return dedupe_report_fallback_reasons(reasons)
-
-
-def _raw_capture_fallback_reasons(
-    analysis_metadata: ReportAnalysisMetadata,
-) -> tuple[ReportFallbackReason, ...]:
+    """Return why an analysis could not use full raw-capture evidence."""
     reasons: list[str] = []
     if analysis_metadata.raw_capture_available is False:
         reasons.append("raw_capture_not_configured")
@@ -143,58 +116,3 @@ def _raw_capture_fallback_reasons(
     if analysis_metadata.is_summary_only_capture:
         reasons.append("legacy_summary_only")
     return dedupe_report_fallback_reasons(reasons)
-
-
-def _whole_run_fallback_reasons(
-    analysis_metadata: ReportAnalysisMetadata,
-    *,
-    has_whole_run_context_intervals: bool,
-    has_whole_run_order_summaries: bool,
-    has_whole_run_spatial_summaries: bool,
-    has_whole_run_diagnosis_summaries: bool,
-) -> tuple[ReportFallbackReason, ...]:
-    if has_whole_run_diagnosis_summaries:
-        return ()
-    if _has_sidecar_summary_mismatch(
-        analysis_metadata,
-        has_whole_run_order_summaries=has_whole_run_order_summaries,
-        has_whole_run_spatial_summaries=has_whole_run_spatial_summaries,
-    ):
-        return ("sidecar_summary_mismatch",)
-    has_partial_whole_run_inputs = analysis_metadata.has_partial_whole_run_inputs(
-        has_whole_run_context_intervals=has_whole_run_context_intervals,
-        has_whole_run_order_summaries=has_whole_run_order_summaries,
-        has_whole_run_spatial_summaries=has_whole_run_spatial_summaries,
-    )
-    if has_partial_whole_run_inputs:
-        return ("whole_run_evidence_incomplete",)
-    if (
-        analysis_metadata.raw_capture_mode in {"raw_backed", "partial_raw_backed"}
-        or analysis_metadata.raw_backed_sample_count > 0
-    ):
-        return ("whole_run_evidence_missing",)
-    return ()
-
-
-def _has_sidecar_summary_mismatch(
-    analysis_metadata: ReportAnalysisMetadata,
-    *,
-    has_whole_run_order_summaries: bool,
-    has_whole_run_spatial_summaries: bool,
-) -> bool:
-    if (
-        analysis_metadata.whole_run_diagnosis_summaries_available
-        and analysis_metadata.whole_run_diagnosis_summary_count > 0
-    ):
-        return True
-    if (
-        analysis_metadata.whole_run_order_family_summaries_available
-        and analysis_metadata.whole_run_order_family_summary_count > 0
-        and not has_whole_run_order_summaries
-    ):
-        return True
-    return bool(
-        analysis_metadata.whole_run_spatial_coherence_available
-        and analysis_metadata.whole_run_spatial_coherence_summary_count > 0
-        and not has_whole_run_spatial_summaries
-    )

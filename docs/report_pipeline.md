@@ -5,10 +5,11 @@
 The report generation pipeline has two distinct phases:
 
 1. **Post-stop analysis** (`vibesensor.analysis.post_analysis_executor` +
-   `vibesensor.analysis`) — runs once when a recording ends. It
-   builds dense whole-run sidecar artifacts when raw capture is available, builds
-   the compact diagnostics summary, appends compact whole-run report-facing
-   summaries, and persists the resulting `PersistedAnalysis`.
+   `vibesensor.analysis`) — runs once when a recording ends. It recomputes the
+   summary rows' FFT peaks from raw capture when available, runs the summary
+   diagnosis, and persists the resulting `PersistedAnalysis`. That summary
+   diagnosis is the single diagnosis: the UI insights view and the PDF read the
+   same `top_causes` / `most_likely_origin`.
 2. **History request loading + reporting-boundary preparation + rendering**
       (`vibesensor.history` →
       `vibesensor.report` →
@@ -18,24 +19,20 @@ The report generation pipeline has two distinct phases:
      plus precomputed semantic report facts, builds one canonical
      `ReportDocument`, and renders a PDF. This phase performs **zero
       analysis** — it only shapes persisted report data and formats pre-computed
-       results. If a run had raw capture available, raw-backed replay and any
-       whole-run sidecar summaries were already folded into the persisted
-       analysis during post-stop execution.
+       results. If a run had raw capture available, raw-backed replay was
+       already folded into the persisted analysis during post-stop execution.
 
 ```text
 Recording stops
   → _run_post_analysis() [vibesensor.analysis.post_analysis]
     → execute_post_analysis() [vibesensor.analysis.post_analysis_executor]
       → load_post_analysis_run() [vibesensor.analysis.post_analysis_loader]
-      → build_whole_run_artifacts() [vibesensor.analysis.post_analysis_executor]
-        → whole_run_spectra.py + whole_run_context.py + whole_run_spatial_coherence.py
-        → orders/whole_run_traces.py + orders/whole_run_scoring.py + orders/whole_run_family_summaries.py
-      → astore_whole_run_artifacts() [vibesensor.history.history_db]
+      → build_post_analysis_input() [vibesensor.analysis.post_analysis_input]
+        → build_raw_backed_samples() [vibesensor.analysis.raw_capture_replay]
       → build_post_analysis_summary() [vibesensor.analysis.post_analysis_summary]
         → RunAnalysis(...).summarize() [vibesensor.analysis.run_analysis]
         → run_analysis.py + run_data_preparation.py + findings_bundle.py + _analysis_result_builder.py
         → analysis_result_to_summary() [vibesensor.analysis.summary_payload]
-      → append compact whole-run report-facing summaries
       → store_analysis() [vibesensor.history.history_db]
 
 GET /api/history/{run_id}/report.pdf [vibesensor.web.history]
@@ -82,9 +79,9 @@ Canonical report preparation now lives in
 normalization, and grouped semantic fact assembly:
 
 - `facts.py` builds `PreparedReportFacts(run=..., fallback_reasons=..., sensor=..., decision=..., evidence=..., confidence=..., findings=...)`
-- `fallback_reasons.py` owns stable machine-readable fallback reason codes for history/report consumers (`raw_capture_not_configured`, `raw_capture_loss_exceeded`, `raw_capture_finalize_timeout`, `whole_run_analysis_pending`, `whole_run_analysis_failed`, `legacy_summary_only`, `sidecar_summary_mismatch`, `whole_run_evidence_missing`, and `whole_run_evidence_incomplete`)
+- `fallback_reasons.py` owns stable machine-readable fallback reason codes for history/report consumers (`raw_capture_not_configured`, `raw_capture_loss_exceeded`, `raw_capture_finalize_timeout`, `analysis_pending`, `analysis_failed`, and `legacy_summary_only`)
 - `evidence_facts.py` builds explicit proof facts (data basis, supporting-window count/duration, stable frequency band, strongest supporting sensors, and caveats) from persisted analysis + reconstructed domain findings
-- `confidence_facts.py` converts persisted evidence quality signals into bounded report confidence (raw-backed vs summary-only basis, support count/duration, frequency stability, order-lock quality, spatial concentration, counterevidence, and reference gaps)
+- `confidence_facts.py` takes the headline confidence (score, label, percentage) from the primary finding's own confidence assessment — the same value the UI shows — and adds explanatory support/counterevidence factors (raw-backed vs summary-only basis, support count/duration, frequency stability, order-lock quality, spatial concentration, close alternatives, and reference gaps)
 - `findings.py` owns report-facing finding/top-cause presentation shaping
 - `sensor_facts.py` owns sensor/coverage shaping
 - `decision_facts.py` owns primary-candidate, warning, and action-decision shaping
@@ -115,7 +112,7 @@ needs:
 - **Confidence surfaces**: observed certainty, page-1 confidence row, and proof caveats come from prepared `ReportConfidenceFacts`, not renderer-only heuristics
 - **Fallback reasons**: history and report preparation expose explicit `fallback_reasons` instead of inferring from missing fields; report confidence/caveats use the same stable codes carried in `analysis_metadata.fallback_reasons`
 - **Appendix-C proof pack**: a diagnosis-focused evidence chain plus retained supporting-window exemplars for the selected diagnosis; the older ranked-measurement table is fallback-only when exemplar windows are unavailable
-- **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with explicit summary-only / whole-run fallback notes instead of silently reusing whole-run intensity
+- **Location proof surfaces**: page-1 and Appendix-B location diagrams/hotspot summaries should use diagnosis-supporting window location facts when they exist, with an explicit note when they fall back to the run-wide sensor intensity summary
 - **Peak rows**: top diagnostic peaks with classification
 - **Rendering context**: domain ``Finding`` objects for findings and effective
   top causes, sensor intensity, location hotspot rows

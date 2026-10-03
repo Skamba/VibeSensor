@@ -41,7 +41,6 @@ def test_history_list_includes_degraded_raw_capture_finalize_state() -> None:
     assert run["lifecycle"] == {
         "stage": "post_analysis_ready",
         "raw_capture": "degraded",
-        "whole_run_artifacts": "not_recorded",
         "post_analysis": "ready",
         "report": "ready",
     }
