@@ -1,80 +1,18 @@
 """Immutable captured evidence and setup context for one completed Run.
 
-Co-locates ConfigurationSnapshot, RunSetup, RunCapture, Measurement,
-and VibrationReading — the tightly coupled value objects that together
-describe what was measured and how.
+Co-locates ConfigurationSnapshot, RunSetup and RunCapture — the tightly
+coupled value objects that together describe what was measured and how.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from math import sqrt
 
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.domain.tire_spec import TireSpec
 
-__all__ = ["ConfigurationSnapshot", "Measurement", "RunCapture", "RunSetup", "VibrationReading"]
-
-
-# ---------------------------------------------------------------------------
-# Measurement / VibrationReading
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class Measurement:
-    """A single multi-axis acceleration measurement from an ESP32 sensor."""
-
-    x: float
-    y: float
-    z: float
-    timestamp: datetime
-    sample_rate_hz: int
-    sensor_id: str = ""
-
-    def __post_init__(self) -> None:
-        if self.sample_rate_hz <= 0:
-            raise ValueError(f"sample_rate_hz must be positive, got {self.sample_rate_hz}")
-
-    def peak_amplitude_g(self) -> float:
-        """Return the Euclidean acceleration magnitude in g."""
-        return sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
-
-    def to_vibration_reading(
-        self,
-        noise_floor: float,
-        *,
-        intensity_db: float,
-        strength_bucket: str | None = None,
-    ) -> VibrationReading:
-        peak_amplitude = self.peak_amplitude_g()
-        return VibrationReading(
-            timestamp=self.timestamp,
-            intensity_db=intensity_db,
-            frequency_hz=0.0,
-            peak_amplitude_g=peak_amplitude,
-            noise_floor_g=noise_floor,
-            sensor_id=self.sensor_id,
-            strength_bucket=strength_bucket,
-        )
-
-
-@dataclass(frozen=True, slots=True)
-class VibrationReading:
-    """A processed vibration measurement expressed in dB."""
-
-    timestamp: datetime
-    intensity_db: float
-    frequency_hz: float
-    peak_amplitude_g: float = 0.0
-    noise_floor_g: float = 0.0
-    sensor_id: str = ""
-    strength_bucket: str | None = None
-
-    def get_severity_level(self) -> str:
-        return self.strength_bucket or "l0"
+__all__ = ["ConfigurationSnapshot", "RunCapture", "RunSetup"]
 
 
 # ---------------------------------------------------------------------------
@@ -129,18 +67,13 @@ class RunCapture:
     RunCapture is the bridge between capture lifecycle (Run) and analyzed
     diagnostic meaning (TestRun). It holds captured evidence and setup
     context, interpreted within the case-scoped Car context.
-
-    Note: ``measurements`` defaults to an empty tuple. The analysis pipeline
-    works with raw numpy arrays for DSP performance; converting thousands of
-    samples to Measurement domain objects is prohibitively expensive and
-    currently has no consumer. The structural relationship exists but is not
-    populated for performance reasons.
+    Raw samples stay in the DSP/recording subsystem as arrays; they are not
+    modelled as per-sample domain objects.
     """
 
     run_id: str
     setup: RunSetup = field(default_factory=RunSetup)
     analysis_settings: tuple[tuple[str, int | float | bool | str], ...] = ()
-    measurements: tuple[Measurement, ...] = ()
     sample_count: int = 0
     duration_s: float = 0.0
 

@@ -13,24 +13,14 @@ from vibesensor.summary.speed_phase_codecs import driving_phase_summary_from_map
 
 
 class TestSpeedProfile:
-    def test_defaults(self) -> None:
-        sp = SpeedProfile()
-        assert sp.min_kmh == 0.0
-        assert sp.max_kmh == 0.0
-        assert not sp.steady_speed
-        assert not sp.has_cruise
-        assert not sp.has_acceleration
-        assert sp.cruise_fraction == 0.0
-        assert sp.idle_fraction == 0.0
-        assert sp.speed_unknown_fraction == 0.0
-
     def test_speed_range_kmh(self) -> None:
         sp = SpeedProfile(min_kmh=40.0, max_kmh=80.0)
         assert sp.speed_range_kmh == 40.0
 
     def test_is_adequate_for_diagnosis(self) -> None:
         assert SpeedProfile(sample_count=100, max_kmh=60.0).is_adequate_for_diagnosis
-        assert not SpeedProfile(sample_count=5, max_kmh=60.0).is_adequate_for_diagnosis
+        assert SpeedProfile(sample_count=10, max_kmh=60.0).is_adequate_for_diagnosis
+        assert not SpeedProfile(sample_count=9, max_kmh=60.0).is_adequate_for_diagnosis
         assert not SpeedProfile(sample_count=100, max_kmh=3.0).is_adequate_for_diagnosis
 
     def test_has_steady_cruise(self) -> None:

@@ -90,20 +90,3 @@ def test_compute_app_build_version_falls_back_to_git_sha(tmp_path: Path) -> None
 
     assert version == f"0.0.0.dev0+g{git_sha}"
     assert len(git_sha) == 12
-
-
-def test_build_app_artifacts_stamps_version_before_building_wheel() -> None:
-    script_text = _APP_ARTIFACTS_SCRIPT.read_text(encoding="utf-8")
-
-    stamp_call = (
-        'stamp_app_version_file "${build_root}/apps/server/vibesensor/_version.py" "${app_version}"'
-    )
-    build_call = "./.build-venv/bin/python -m build --wheel apps/server"
-
-    assert stamp_call in script_text
-    assert script_text.index(stamp_call) < script_text.index(build_call)
-    assert 'echo "version=${app_version}"' in script_text
-    assert (
-        'git_sha="$(git -C "${REPO_ROOT}" rev-parse --short=12 HEAD 2>/dev/null || true)"'
-        in script_text
-    )

@@ -91,11 +91,6 @@ class CarSettingsService:
         self._state = state
         self._update_with_rollback = update_with_rollback
 
-    def active_car(self) -> Car | None:
-        """Return the active car as a domain ``Car`` value object."""
-        with self._lock:
-            return self._find_car(self._state.active_car_id)
-
     def cars_snapshot_unlocked(self) -> CarsSnapshot:
         return CarsSnapshot(
             cars=[car_to_persistence_dict(car) for car in self._state.cars],
