@@ -1,4 +1,4 @@
-import type { JSX } from "preact";
+import type { CSSProperties, JSX, TargetedMouseEvent } from "preact";
 
 import { historyExportUrl } from "../../api/history";
 import { navigate } from "../../app_store";
@@ -40,7 +40,7 @@ function formatters(): Formatters {
 
 /** Run buttons sit inside the clickable row; keep their clicks to themselves. */
 function action(run: () => void) {
-  return (event: JSX.TargetedMouseEvent<HTMLElement>) => {
+  return (event: TargetedMouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
     run();
@@ -331,7 +331,7 @@ function Heatmap(props: { heatmap: HeatmapModel }) {
           <div class="history-heatmap__grid">
             {heatmap.zones.map((zone) => {
               const empty = zone.accent === null;
-              const style: JSX.CSSProperties & Record<string, string> = {
+              const style: CSSProperties & Record<string, string> = {
                 gridArea: zone.gridArea,
               };
               if (zone.accent) {

@@ -1,4 +1,4 @@
-import type { JSX } from "preact";
+import type { CSSProperties } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import { t } from "../../i18n";
@@ -16,7 +16,7 @@ import {
   toggleBands,
 } from "./spectrum_store";
 
-const SCREEN_READER_ONLY: JSX.CSSProperties = {
+const SCREEN_READER_ONLY: CSSProperties = {
   border: "0",
   clip: "rect(0 0 0 0)",
   height: "1px",
@@ -29,7 +29,7 @@ const SCREEN_READER_ONLY: JSX.CSSProperties = {
 };
 
 const colorVar = (name: "--band-color" | "--swatch-color", color: string) =>
-  ({ [name]: color }) as JSX.CSSProperties;
+  ({ [name]: color }) as CSSProperties;
 
 function BandLegend() {
   const visible = bandsVisible.value;
