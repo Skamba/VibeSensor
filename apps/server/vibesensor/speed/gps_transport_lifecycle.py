@@ -78,9 +78,16 @@ class TransportLifecycle:
         )
 
     def on_stream_disconnected(self) -> LifecycleTransition:
-        """Clean end-of-stream (remote closed the connection)."""
+        """Clean end-of-stream (remote closed the connection).
+
+        Resets the backoff but still waits the initial delay before reconnecting,
+        so a peer that accepts and immediately closes cannot cause a tight loop.
+        """
         self._current_delay = self._initial_delay
-        return LifecycleTransition(changes=dict(_DISCONNECTED_FIELDS))
+        return LifecycleTransition(
+            changes=dict(_DISCONNECTED_FIELDS),
+            sleep_before_retry=self._initial_delay,
+        )
 
     def on_connection_error(self, exc: BaseException) -> LifecycleTransition:
         """Connection lost or timed out.  Advances the backoff timer."""

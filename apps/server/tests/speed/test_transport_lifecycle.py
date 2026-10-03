@@ -26,14 +26,14 @@ def test_on_connected_returns_connected_state_and_resets_backoff() -> None:
     assert lifecycle.reconnect_delay == 1.0
 
 
-def test_on_stream_disconnected_returns_disconnected_fields_and_resets_backoff() -> None:
+def test_on_stream_disconnected_resets_backoff_and_waits_initial_delay() -> None:
     lifecycle = TransportLifecycle(initial_delay=0.5)
     lifecycle.on_connection_error(RuntimeError("x"))
 
     transition = lifecycle.on_stream_disconnected()
 
     assert transition.changes == _expected_disconnected_fields()
-    assert transition.sleep_before_retry is None
+    assert transition.sleep_before_retry == 0.5
     assert lifecycle.reconnect_delay == 0.5
 
 

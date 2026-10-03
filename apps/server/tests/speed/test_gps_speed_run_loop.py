@@ -298,6 +298,42 @@ async def test_run_resets_speed_on_disconnect(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.asyncio
+async def test_run_waits_before_reconnecting_after_clean_close(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A peer that accepts and immediately closes must not cause a tight reconnect loop."""
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    connection_count = 0
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        nonlocal connection_count
+        connection_count += 1
+        writer.close()
+        await writer.wait_closed()
+
+    monkeypatch.setattr(
+        "vibesensor.speed.gps_transport_lifecycle.GPS_RECONNECT_DELAY_S",
+        0.2,
+    )
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    try:
+        await _await_condition("first GPS connection", lambda: connection_count >= 1)
+        await asyncio.sleep(0.5)
+
+        # 0.5 s at a 0.2 s delay allows a few reconnects; without the delay it was hundreds.
+        assert 1 <= connection_count <= 4
+        assert monitor.speed_mps is None
+    finally:
+        if not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        server.close()
+        await server.wait_closed()
+
+
+@pytest.mark.asyncio
 async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyPatch) -> None:
     """When gps_enabled=False, run() never opens a TCP connection."""
     monitor = GPSSpeedMonitor(gps_enabled=False)
