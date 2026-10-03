@@ -30,7 +30,7 @@ async def run_scripted_scenario(
     scenario = _scenario_catalog.get_scripted_scenario(scenario_name)
     guided = any(phase.guided_phase is not None for phase in scenario.phases)
     loop = asyncio.get_running_loop()
-    server_speed_sync_enabled = True
+    speed_sync_failing = False
     cycle = 0
 
     while not stop_event.is_set():
@@ -74,18 +74,20 @@ async def run_scripted_scenario(
                     or abs(speed_kmh - last_speed_kmh) >= 0.5
                     or elapsed_s >= phase.duration_s
                 ):
-                    speed_sync = await apply_scripted_speed(
+                    sync_error = await apply_scripted_speed(
                         clients,
                         speed_kmh,
                         server_host=server_host,
                         server_http_port=server_http_port,
                         server_check_timeout=server_check_timeout,
-                        server_speed_sync_enabled=server_speed_sync_enabled,
                     )
-                    if speed_sync.failure_message is not None:
-                        print(speed_sync.failure_message)
-                    server_speed_sync_enabled = speed_sync.server_speed_sync_enabled
-                    last_speed_kmh = speed_kmh
+                    if sync_error is not None and not speed_sync_failing:
+                        print(sync_error)
+                    elif sync_error is None and speed_sync_failing:
+                        print("[scenario] speed sync restored")
+                    speed_sync_failing = sync_error is not None
+                    # A failed update is retried on the next tick.
+                    last_speed_kmh = None if speed_sync_failing else speed_kmh
 
                 remaining_s = phase.duration_s - elapsed_s
                 if remaining_s <= 0:
