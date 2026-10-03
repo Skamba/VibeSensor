@@ -12,23 +12,21 @@ import {
 import { fmt, fmtTs, formatIntLocale } from "../format";
 import { t } from "../i18n";
 import { uiLogger } from "../ui_logger";
-import { createCarsFeature } from "./features/cars_feature";
-import { loadDashboardStartupState } from "./features/dashboard_startup_state";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import type { FeatureServices } from "./feature_deps_base";
 import { UiLiveTransportController } from "./runtime/ui_live_transport_controller";
 import { createUiQueryClient } from "./runtime/ui_query_client";
 import { UiSpectrumController } from "./runtime/ui_spectrum_controller";
-import { loadSpeedSource, speedSourceSnapshot } from "../settings_store";
+import {
+  loadCars,
+  loadSpeedSource,
+  speedSourceSnapshot,
+} from "../settings_store";
+import { openWizard } from "../pages/cars/wizard_store";
 import { deriveSpeedReadoutLabelKey } from "../speed_source";
 import { refreshHistory } from "../pages/history/history_store";
 import { createAppState } from "./ui_app_state";
 import { computed, effectOnChange, signal } from "./ui_signals";
-import {
-  createCarsPanel,
-  type CarsListPanelView,
-  type CarsWizardPanelBridge,
-} from "./views/cars_panel";
 import type { RealtimeLiveOverviewBridge } from "./views/realtime_live_overview";
 import type { RealtimeLoggingPanelBridge } from "./views/realtime_logging_panel";
 import type { SensorsPanelView } from "./views/sensors_panel";
@@ -62,11 +60,6 @@ function bindings<T>(): T {
   return createModelActionPanelBindings() as T;
 }
 
-const carsBindings = {
-  list: bindings<CarsListPanelView>(),
-  wizard: bindings<Omit<CarsWizardPanelBridge, "focus">>(),
-};
-const carsPanel = createCarsPanel(carsBindings);
 const spectrumPanel = createSpectrumPanel();
 
 export const panels = {
@@ -76,11 +69,6 @@ export const panels = {
   } as RealtimeLiveOverviewBridge,
   logging: bindings<RealtimeLoggingPanelBridge>(),
   spectrum: spectrumPanel,
-  cars: {
-    list: carsBindings.list,
-    wizard: { ...carsBindings.wizard, focus: carsPanel.focus },
-    Panel: carsPanel.Panel,
-  },
   sensors: bindings<SensorsPanelView>(),
 };
 
@@ -102,20 +90,6 @@ const formatting = {
     formatIntLocale(value, appState.shell.lang.value),
 };
 
-const cars = createCarsFeature({
-  settings,
-  queryClient,
-  panel: panels.cars,
-  activeViewId: activeView,
-  activeSettingsTabId: settingsTab,
-  openAnalysisTab: () => {
-    settingsTab.value = "analysisTab";
-  },
-  refreshSpectrumDecorations: () => spectrum.refreshSpectrumDecorations(),
-  services,
-  formatting: { fmt },
-});
-
 const realtimeFeature = createRealtimeFeature({
   realtime,
   settings,
@@ -133,7 +107,7 @@ const realtimeFeature = createRealtimeFeature({
       settingsTab.value = tab as typeof settingsTab.value;
     },
     openCarWizard: () => {
-      void cars.openWizard();
+      void openWizard();
     },
   },
   sendSelection: () => liveTransport.sendSelection(),
@@ -184,7 +158,6 @@ function runStartupTask(name: string, task: () => Promise<unknown>): void {
 
 export function startFeatures(): void {
   realtimeFeature.bindHandlers();
-  cars.bindHandlers();
   effectOnChange(activeView, (view) => {
     if (view === "dashboardView") {
       appState.spectrum.spectrumPlot.value?.resize();
@@ -199,10 +172,7 @@ export function startFeatures(): void {
       realtimeFeature.refreshLoggingStatus(),
     );
     runStartupTask("hydrate dashboard state", () =>
-      Promise.all([
-        loadDashboardStartupState(queryClient, settings),
-        loadSpeedSource(),
-      ]).catch((error: unknown) => {
+      Promise.all([loadCars(), loadSpeedSource()]).catch((error: unknown) => {
         showError(
           error instanceof Error ? error.message : t("status.view_load_failed"),
         );

@@ -1,12 +1,14 @@
 import { batch, computed, signal } from "@preact/signals";
 
 import {
+  getSettingsCars,
   getSettingsObdStatus,
   getSettingsSpeedSource,
   getSpeedSourceStatus,
 } from "./api/settings";
 import type {
   CarRecord,
+  CarsPayload,
   ObdStatusPayload,
   SpeedSourceKind,
   SpeedSourcePayload,
@@ -22,6 +24,7 @@ import {
   type CarAspectSettings,
   defaultAnalysisTuningSettings,
   defaultCarAspectSettings,
+  mergeCarAspectSettings,
 } from "./vehicle_settings";
 
 /**
@@ -33,10 +36,6 @@ export const carSettings = {
   cars: signal<CarRecord[]>([]),
   activeCarId: signal<string | null>(null),
   carsLoaded: signal(false),
-  /** The active car's aspects, used for live order context. */
-  activeVehicleSettings: signal<CarAspectSettings>({
-    ...defaultCarAspectSettings,
-  }),
 };
 
 export const carSelection = computed<CarSelectionState>(() =>
@@ -50,6 +49,30 @@ export const carSelection = computed<CarSelectionState>(() =>
 export const activeCar = computed(() =>
   carSelection.value.kind === "active" ? carSelection.value.car : null,
 );
+
+/** Default car aspects overlaid with the active car's saved aspects. */
+export const activeCarAspects = computed<CarAspectSettings>(() =>
+  mergeCarAspectSettings(
+    defaultCarAspectSettings,
+    activeCar.value?.aspects ?? {},
+  ),
+);
+
+export function applyCars(payload: CarsPayload): void {
+  batch(() => {
+    carSettings.cars.value = payload.cars;
+    carSettings.carsLoaded.value = true;
+    const activeId = payload.active_car_id;
+    carSettings.activeCarId.value =
+      activeId && payload.cars.some((car) => car.id === activeId)
+        ? activeId
+        : null;
+  });
+}
+
+export async function loadCars(): Promise<void> {
+  applyCars(await getSettingsCars());
+}
 
 export const analysisTuning = signal<AnalysisTuningSettings>({
   ...defaultAnalysisTuningSettings,
