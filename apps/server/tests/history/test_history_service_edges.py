@@ -286,17 +286,20 @@ async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> 
             active_builds += 1
             max_active_builds = max(max_active_builds, active_builds)
         first_build_started.set()
-        if not release_first_build.wait(timeout=1.0):
+        if not release_first_build.wait(timeout=30.0):
             raise RuntimeError("timed out waiting to release build")
         with counter_lock:
             active_builds -= 1
         return b"%PDF-concurrent"
 
     first = asyncio.create_task(cache.get_or_build(cache_key, _build))
-    assert await asyncio.to_thread(first_build_started.wait, 1.0)
+    assert await asyncio.to_thread(first_build_started.wait, 30.0)
 
     second = asyncio.create_task(cache.get_or_build(cache_key, _build))
-    await asyncio.sleep(0.05)
+    # One loop turn runs the second caller up to the per-key lock, which the
+    # first build holds; no wall-clock sleep is needed.
+    await asyncio.sleep(0)
+    assert not second.done()
 
     assert calls == 1
     release_first_build.set()

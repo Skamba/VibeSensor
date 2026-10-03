@@ -65,11 +65,11 @@ def test_start_append_stop_produces_complete_run_in_db(
 
 def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     with caplog.at_level(logging.INFO, logger="vibesensor.recording.recorder"):
@@ -104,11 +104,11 @@ def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
 
 def test_restart_recording_emits_stop_then_start_lifecycle_events(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
     first_status = logger.start_recording()
     assert first_status.run_id is not None

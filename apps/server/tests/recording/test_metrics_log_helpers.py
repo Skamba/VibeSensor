@@ -1,13 +1,21 @@
 from __future__ import annotations
 
+from unittest.mock import ANY
+
 import pytest
 
+from vibesensor.domain.run_status import RunStatus
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording.lifecycle_state import ActiveRunSnapshot
 
 
 # Remaining private seam: these tests need a deterministic active recorder plus
 # exactly one flush without running the async loop. Assertions stay on emitted
 # samples, status, and persisted output rather than recorder object shape.
+def _stored_runs(db: HistoryDB) -> list[tuple[str, str, int, RunStatus]]:
+    return [(r.run_id, r.start_time_utc, r.sample_count, r.status) for r in db.list_runs()]
+
+
 def _started_snapshot(logger) -> ActiveRunSnapshot:
     logger.start_recording()
     snapshot = logger._lifecycle.snapshot()
@@ -69,38 +77,26 @@ def test_build_sample_records_caps_combined_top_peak_list(make_logger, fake_regi
 
 
 @pytest.mark.parametrize(
-    (
-        "gps_speed_mps",
-        "override_speed_mps",
-        "resolved_source",
-        "expected_source",
-        "expected_speed_kmh",
-    ),
+    ("configure", "expected_source", "expected_speed_kmh"),
     [
-        (10.0, 20.0, None, "manual", 20.0 * 3.6),
-        (10.0, None, "gps", "gps", 10.0 * 3.6),
-        (10.0, None, "fallback_manual", "fallback_manual", 10.0 * 3.6),
-        (None, None, None, "none", None),
+        pytest.param(
+            lambda rig: (rig.gps_speed(10.0), rig.manual(72.0)), "manual", 72.0, id="manual"
+        ),
+        pytest.param(lambda rig: rig.gps_speed(10.0), "gps", 36.0, id="gps"),
+        pytest.param(lambda rig: rig.manual_fallback(36.0), "fallback_manual", 36.0, id="fallback"),
+        pytest.param(lambda rig: setattr(rig.gps, "gps_enabled", False), "none", None, id="none"),
     ],
 )
 def test_speed_source_reports(
     make_logger,
-    fake_gps_monitor,
-    gps_speed_mps: float | None,
-    override_speed_mps: float | None,
-    resolved_source: str | None,
+    speed_rig,
+    configure,
     expected_source: str,
     expected_speed_kmh: float | None,
 ) -> None:
-    """speed_source should reflect manual override, GPS, or missing speed state."""
-    fake_gps_monitor.speed_mps = gps_speed_mps
-    fake_gps_monitor.override_speed_mps = override_speed_mps
-    fake_gps_monitor.resolved_source = resolved_source
-    fake_gps_monitor.effective_speed_mps = (
-        override_speed_mps if override_speed_mps is not None else gps_speed_mps
-    )
-
-    logger = make_logger(gps_monitor=fake_gps_monitor)
+    """speed_source should reflect manual override, GPS, fallback, or missing speed."""
+    configure(speed_rig)
+    logger = make_logger(gps_monitor=speed_rig.observation)
 
     rows = logger._sample_flush.build_sample_records(
         run_id="run-1",
@@ -116,22 +112,20 @@ def test_speed_source_reports(
         assert rows[0].speed_kmh == pytest.approx(expected_speed_kmh, abs=0.01)
 
 
-def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_history_db) -> None:
-    logger = make_logger(history_db=fake_history_db)
+def test_stop_without_samples_does_not_persist_history_run(make_logger, history_db) -> None:
+    logger = make_logger(history_db=history_db)
 
     logger.start_recording()
     logger.stop_recording()
 
-    assert fake_history_db.create_calls == []
-    assert fake_history_db.append_calls == []
-    assert fake_history_db.finalize_calls == []
+    assert history_db.list_runs() == []
 
 
 def test_append_records_ignores_stale_recent_metrics_without_new_frames(
     make_logger,
-    fake_history_db,
+    history_db,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -151,13 +145,11 @@ def test_append_records_ignores_stale_recent_metrics_without_new_frames(
     )
 
     assert auto_stop_reason is None
-    assert fake_history_db.create_calls == []
-    assert fake_history_db.append_calls == []
-    assert fake_history_db.finalize_calls == []
+    assert history_db.list_runs() == []
 
 
-def test_history_run_created_on_first_sample_append(make_logger, fake_history_db) -> None:
-    logger = make_logger(history_db=fake_history_db)
+def test_history_run_created_on_first_sample_append(make_logger, history_db) -> None:
+    logger = make_logger(history_db=history_db)
 
     snapshot = _started_snapshot(logger)
     run_id = snapshot.run_id
@@ -171,34 +163,30 @@ def test_history_run_created_on_first_sample_append(make_logger, fake_history_db
     )
 
     assert auto_stop_reason is None
-    assert fake_history_db.create_calls == [(run_id, start_time_utc)]
-    assert fake_history_db.append_calls == [(run_id, 1)]
+    assert _stored_runs(history_db) == [(run_id, start_time_utc, 1, RunStatus.RECORDING)]
 
 
 def test_stop_recording_flushes_first_pending_sample_batch(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
-    logger.start_recording()
+    run_id = logger.start_recording().run_id
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 1
 
     logger.stop_recording()
 
-    run_id, start_time_utc = fake_history_db.create_calls[-1]
-    assert fake_history_db.create_calls == [(run_id, start_time_utc)]
-    assert fake_history_db.append_calls == [(run_id, 1)]
-    assert fake_history_db.finalize_calls == [run_id]
+    assert _stored_runs(history_db) == [(run_id, ANY, 1, RunStatus.ANALYZING)]
 
 
 def test_stop_recording_salvages_final_batch_when_recent_window_is_too_strict(
     make_logger,
-    fake_history_db,
+    history_db,
     fake_registry,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -240,32 +228,29 @@ def test_stop_recording_salvages_final_batch_when_recent_window_is_too_strict(
             return list(client_ids)
 
     logger = make_logger(
-        history_db=fake_history_db,
+        history_db=history_db,
         registry=fake_registry,
         processor=_LateMetricsProcessor(),
     )
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
-    logger.start_recording()
+    run_id = logger.start_recording().run_id
     active = logger.registry.get("active")
     assert active is not None
     active.frames_total = 1
 
     logger.stop_recording()
 
-    run_id, start_time_utc = fake_history_db.create_calls[-1]
-    assert fake_history_db.create_calls == [(run_id, start_time_utc)]
-    assert fake_history_db.append_calls == [(run_id, 1)]
-    assert fake_history_db.finalize_calls == [run_id]
+    assert _stored_runs(history_db) == [(run_id, ANY, 1, RunStatus.ANALYZING)]
 
 
 def test_start_recording_rollover_flushes_first_pending_sample_batch(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     scheduled: list[str] = []
-    logger = make_logger(history_db=fake_history_db)
+    logger = make_logger(history_db=history_db)
     monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
     initial_status = logger.start_recording()
@@ -276,21 +261,19 @@ def test_start_recording_rollover_flushes_first_pending_sample_batch(
 
     next_status = logger.start_recording()
 
-    created_run_id, start_time_utc = fake_history_db.create_calls[-1]
-    assert created_run_id == initial_run_id
-    assert fake_history_db.create_calls == [(created_run_id, start_time_utc)]
-    assert fake_history_db.append_calls == [(created_run_id, 1)]
-    assert fake_history_db.finalize_calls == [created_run_id]
-    assert scheduled == [created_run_id]
-    assert next_status.run_id != created_run_id
+    assert _stored_runs(history_db) == [(initial_run_id, ANY, 1, RunStatus.ANALYZING)]
+    assert scheduled == [initial_run_id]
+    assert next_status.run_id != initial_run_id
 
 
 def test_finalize_preserves_run_metadata_from_recording_start(
     make_logger,
-    fake_history_db,
+    history_db,
     mutable_fake_settings,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    logger = make_logger(settings_reader=mutable_fake_settings, history_db=fake_history_db)
+    logger = make_logger(settings_reader=mutable_fake_settings, history_db=history_db)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
 
     snapshot = _started_snapshot_with_sample(logger)
     run_id = snapshot.run_id
@@ -298,9 +281,8 @@ def test_finalize_preserves_run_metadata_from_recording_start(
     mutable_fake_settings.values["tire_width_mm"] = 315.0
     logger.stop_recording()
 
-    assert fake_history_db.updated_metadata
-    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
-    assert updated_run_id == run_id
+    metadata = history_db.get_run_metadata(run_id)
+    assert metadata is not None
     assert metadata.analysis_settings.tire_width_mm == 285.0
 
 
@@ -380,3 +362,19 @@ def test_append_records_does_not_timeout_on_brief_gap(
     )
 
     assert auto_stop_reason is None
+
+
+def test_written_rows_count_as_data_progress(make_logger, history_db) -> None:
+    logger = make_logger(history_db=history_db)
+    snapshot = _started_snapshot(logger)
+    # The last progress is far in the past, but this flush writes rows.
+    logger._lifecycle.last_data_progress_mono_s = 0.0
+
+    auto_stop_reason = logger._sample_flush.append_records(
+        snapshot.run_id,
+        snapshot.start_time_utc,
+        snapshot.start_mono_s,
+    )
+
+    assert auto_stop_reason is None
+    assert logger.status().enabled is True

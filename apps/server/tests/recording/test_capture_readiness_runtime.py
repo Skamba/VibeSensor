@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock
-
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.recording.capture_readiness import CaptureReadinessTracker
 from vibesensor.recording.capture_readiness_observation import observe_capture_readiness
+from vibesensor.settings.services import build_settings_services
 
 
 def _active_car_snapshot() -> CarSnapshot:
@@ -35,7 +33,7 @@ def _run_context(mutable_fake_settings):
 def _observation(
     *,
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
     sensor_metadata_reader=None,
     now_mono: float,
@@ -43,7 +41,7 @@ def _observation(
     return observe_capture_readiness(
         registry=fake_registry,
         run_context=_run_context(mutable_fake_settings),
-        speed_provider=fake_gps_monitor,
+        speed_provider=speed_rig.observation,
         sensor_metadata_reader=sensor_metadata_reader,
         now_mono=now_mono,
     )
@@ -51,14 +49,12 @@ def _observation(
 
 def test_capture_readiness_passes_after_stable_dwell(
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 23.0
-    fake_gps_monitor.engine_rpm = 2450.0
-    fake_gps_monitor.resolved_source = "obd2"
+    speed_rig.obd_reading(speed_kmh=82.8, rpm=2450.0)
 
     snapshots = []
     for now_mono in (100.0, 104.0, 108.0):
@@ -66,7 +62,7 @@ def test_capture_readiness_passes_after_stable_dwell(
             tracker.evaluate(
                 _observation(
                     fake_registry=fake_registry,
-                    fake_gps_monitor=fake_gps_monitor,
+                    speed_rig=speed_rig,
                     mutable_fake_settings=mutable_fake_settings,
                     now_mono=now_mono,
                 )
@@ -82,18 +78,17 @@ def test_capture_readiness_passes_after_stable_dwell(
 
 def test_capture_readiness_accepts_manual_speed_source_for_start_gate(
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 22.0
-    fake_gps_monitor.resolved_source = "manual"
+    speed_rig.manual(79.2)
 
     readiness = tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=150.0,
         )
@@ -111,34 +106,18 @@ def test_capture_readiness_accepts_manual_speed_source_for_start_gate(
 
 
 def test_capture_readiness_uses_persisted_sensor_location_metadata_when_runtime_location_is_blank(
-    fake_gps_monitor,
+    single_sensor_registry,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 23.0
-    fake_gps_monitor.engine_rpm = 2450.0
-    fake_gps_monitor.resolved_source = "obd2"
+    speed_rig.obd_reading(speed_kmh=82.8, rpm=2450.0)
 
     sensor_id = "001122334455"
-    fake_registry = MagicMock()
-    fake_registry.active_client_ids.return_value = [sensor_id]
-    fake_registry.get.return_value = SimpleNamespace(
-        client_id=sensor_id,
-        name=sensor_id,
-        location_code="",
-        frames_dropped=0,
-        queue_overflow_drops=0,
-        server_queue_drops=0,
-        parse_errors=0,
-    )
-    sensor_metadata_reader = MagicMock()
-    sensor_metadata_reader.get_sensors.return_value = {
-        sensor_id: {
-            "name": sensor_id,
-            "location_code": "front_left_wheel",
-        }
-    }
+    fake_registry = single_sensor_registry(sensor_id)
+    sensor_metadata_reader = build_settings_services().sensor_settings
+    sensor_metadata_reader.assign_sensor_location(sensor_id, "front_left_wheel")
 
     snapshots = []
     for now_mono in (100.0, 104.0, 108.0):
@@ -146,7 +125,7 @@ def test_capture_readiness_uses_persisted_sensor_location_metadata_when_runtime_
             tracker.evaluate(
                 _observation(
                     fake_registry=fake_registry,
-                    fake_gps_monitor=fake_gps_monitor,
+                    speed_rig=speed_rig,
                     mutable_fake_settings=mutable_fake_settings,
                     sensor_metadata_reader=sensor_metadata_reader,
                     now_mono=now_mono,
@@ -164,19 +143,17 @@ def test_capture_readiness_uses_persisted_sensor_location_metadata_when_runtime_
 
 def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 24.0
-    fake_gps_monitor.engine_rpm = 2600.0
-    fake_gps_monitor.resolved_source = "obd2"
+    speed_rig.obd_reading(speed_kmh=86.4, rpm=2600.0)
 
     tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=200.0,
         )
@@ -189,7 +166,7 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     blocked = tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=204.0,
         )
@@ -201,7 +178,7 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     recovered = tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=215.0,
         )
@@ -213,18 +190,18 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
 
 def test_capture_readiness_blocks_without_resolved_speed_source(
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = None
-    fake_gps_monitor.resolved_source = "none"
+    # GPS disabled in the config and no manual speed: nothing resolves a speed.
+    speed_rig.gps.gps_enabled = False
 
     readiness = tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=300.0,
         )
@@ -240,19 +217,17 @@ def test_capture_readiness_blocks_without_resolved_speed_source(
 
 def test_capture_readiness_blocks_when_manual_fallback_is_active(
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 22.0
-    fake_gps_monitor.resolved_source = "fallback_manual"
-    fake_gps_monitor.fallback_active = True
+    speed_rig.manual_fallback(79.2)
 
     readiness = tracker.evaluate(
         _observation(
             fake_registry=fake_registry,
-            fake_gps_monitor=fake_gps_monitor,
+            speed_rig=speed_rig,
             mutable_fake_settings=mutable_fake_settings,
             now_mono=320.0,
         )
@@ -269,16 +244,14 @@ def test_capture_readiness_blocks_when_manual_fallback_is_active(
 def test_run_recorder_status_includes_capture_readiness(
     make_logger,
     fake_registry,
-    fake_gps_monitor,
+    speed_rig,
     mutable_fake_settings,
 ) -> None:
     mutable_fake_settings.active_car = _active_car_snapshot()
-    fake_gps_monitor.speed_mps = 23.0
-    fake_gps_monitor.engine_rpm = 2500.0
-    fake_gps_monitor.resolved_source = "obd2"
+    speed_rig.obd_reading(speed_kmh=82.8, rpm=2500.0)
     logger = make_logger(
         registry=fake_registry,
-        gps_monitor=fake_gps_monitor,
+        gps_monitor=speed_rig.observation,
         settings_reader=mutable_fake_settings,
     )
 

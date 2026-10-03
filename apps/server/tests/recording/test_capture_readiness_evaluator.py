@@ -192,3 +192,56 @@ def test_capture_readiness_evaluator_accepts_ready_observation_from_state_snapsh
         next(check for check in readiness.checks if check.check_key == "capture_ready").state
         == "pass"
     )
+
+
+def _speed_check_for(
+    *,
+    speed_history: tuple[SpeedObservation, ...],
+    age_s: float = 0.2,
+) -> tuple[str, str]:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_observation(
+            speed_status=_SpeedStatus(speed_kmh=speed_history[-1].speed_kmh, age_s=age_s),
+            now_mono=speed_history[-1].observed_at_mono_s,
+        ),
+        state=CaptureReadinessStateSnapshot(
+            integrity=IntegrityState(
+                active=False,
+                frames_dropped=0,
+                queue_overflow_drops=0,
+                server_queue_drops=0,
+                parse_errors=0,
+                quiet_period_remaining_s=None,
+            ),
+            speed_history=speed_history,
+        ),
+    )
+    reference = next(check for check in readiness.checks if check.check_key == "reference_ready")
+    speed = next(check for check in readiness.checks if check.check_key == "speed_stable")
+    return reference.reason_key, speed.reason_key
+
+
+def _steady(start_s: float, end_s: float, step_s: float = 1.0) -> tuple[SpeedObservation, ...]:
+    count = int((end_s - start_s) / step_s) + 1
+    return tuple(
+        SpeedObservation(observed_at_mono_s=start_s + i * step_s, speed_kmh=80.0)
+        for i in range(count)
+    )
+
+
+def test_speed_must_hold_for_the_full_dwell_before_capture_is_ready() -> None:
+    assert _speed_check_for(speed_history=_steady(100.0, 104.0))[1] == "speed_stabilizing"
+    assert _speed_check_for(speed_history=_steady(100.0, 108.0))[1] == "speed_stable"
+
+
+def test_a_single_speed_excursion_wider_than_the_steady_range_blocks_capture() -> None:
+    # 29 samples at 80 km/h and one at 89 km/h: std-dev 1.6 km/h (< 2) but range 9 km/h (> 8).
+    history = (*_steady(100.0, 128.0), SpeedObservation(observed_at_mono_s=129.0, speed_kmh=89.0))
+    assert _speed_check_for(speed_history=history)[1] == "speed_variation_high"
+
+
+def test_speed_older_than_two_seconds_is_stale() -> None:
+    history = _steady(100.0, 108.0)
+    assert _speed_check_for(speed_history=history, age_s=1.9)[0] == "reference_ready"
+    assert _speed_check_for(speed_history=history, age_s=2.5)[0] == "speed_sample_stale"

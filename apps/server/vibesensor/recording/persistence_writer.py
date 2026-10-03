@@ -100,16 +100,6 @@ class RunPersistenceWriter:
             self._history_run_created = bool(value)
 
     @property
-    def history_create_fail_count(self) -> int:
-        with self._lock:
-            return self._history_create_fail_count
-
-    @history_create_fail_count.setter
-    def history_create_fail_count(self, value: int) -> None:
-        with self._lock:
-            self._history_create_fail_count = int(value)
-
-    @property
     def written_sample_count(self) -> int:
         with self._lock:
             return self._written_sample_count
@@ -120,24 +110,9 @@ class RunPersistenceWriter:
             self._written_sample_count = int(value)
 
     @property
-    def dropped_sample_count(self) -> int:
-        with self._lock:
-            return self._dropped_sample_count
-
-    @dropped_sample_count.setter
-    def dropped_sample_count(self, value: int) -> None:
-        with self._lock:
-            self._dropped_sample_count = int(value)
-
-    @property
     def last_write_error(self) -> str | None:
         with self._lock:
             return self._last_write_error
-
-    @last_write_error.setter
-    def last_write_error(self, value: str | None) -> None:
-        with self._lock:
-            self._last_write_error = value
 
     @property
     def last_write_duration_s(self) -> float:
