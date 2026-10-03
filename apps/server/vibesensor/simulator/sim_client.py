@@ -66,6 +66,10 @@ class SimClient:
     # Order frequencies at DEFAULT_SPEED_KMH for the simulated car; the
     # simulator refreshes them from the server's active car when reachable.
     order_hz: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_ORDER_HZ))
+    # Running phase (rad) of each tone at the start of the next frame, keyed by
+    # tone identity, so a tone whose frequency follows the speed stays
+    # phase-continuous across frames instead of jumping at every frame edge.
+    tone_phases: dict[tuple[str, float], float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
@@ -141,18 +145,31 @@ class SimClient:
         _sin = np.sin
         _phase = self.phase_offsets
         order_hz = self.order_hz
-        local_tones = [(freq_hz * speed_ratio, amps_xyz) for freq_hz, amps_xyz in profile.tones]
+        local_tones: list[tuple[tuple[str, float], float, tuple[float, float, float]]] = [
+            (("hz", freq_hz), freq_hz * speed_ratio, amps_xyz)
+            for freq_hz, amps_xyz in profile.tones
+        ]
         local_tones.extend(
-            (order_hz[order_key] * multiple * speed_ratio, amps_xyz)
+            ((order_key, multiple), order_hz[order_key] * multiple * speed_ratio, amps_xyz)
             for order_key, multiple, amps_xyz in profile.order_tones
         )
-        for effective_hz, amps_xyz in local_tones:
+        # Integrate each tone's phase from its previous frame: evaluating
+        # ``sin(2*pi*f*t)`` on absolute time would jump the phase at every
+        # frame edge whenever ``f`` follows a changing speed, smearing the
+        # tone into sidebands at +/- the frame rate.
+        sample_offsets_s = np.arange(self.frame_samples, dtype=np.float64) * dt
+        frame_s = self.frame_samples * dt
+        next_tone_phases: dict[tuple[str, float], float] = {}
+        for tone_key, effective_hz, amps_xyz in local_tones:
             if effective_hz <= 0:
                 continue
-            omega_t = _TWO_PI * effective_hz * t
+            start_phase = self.tone_phases.get(tone_key, 0.0)
+            omega_t = start_phase + _TWO_PI * effective_hz * sample_offsets_s
+            next_tone_phases[tone_key] = (start_phase + _TWO_PI * effective_hz * frame_s) % _TWO_PI
             local_signal[:, 0] += amps_xyz[0] * _sin(omega_t + _phase[0])
             local_signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
             local_signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
+        self.tone_phases = next_tone_phases
 
         local_signal *= modulation[:, None]
 

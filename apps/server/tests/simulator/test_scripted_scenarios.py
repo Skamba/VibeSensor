@@ -186,6 +186,67 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
 
 
 @pytest.mark.asyncio
+async def test_run_scripted_scenario_retries_speed_sync_after_a_failed_update(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One slow server response must not freeze the server's speed for the run."""
+    attempts: list[float] = []
+
+    def flaky_set_server_speed_override_kmh(
+        host: str,
+        port: int,
+        speed_kmh: float,
+        timeout_s: float,
+    ) -> float:
+        attempts.append(speed_kmh)
+        if len(attempts) == 1:
+            raise TimeoutError("timed out")
+        return speed_kmh
+
+    monkeypatch.setattr(
+        scripted_speed_sync,
+        "set_server_speed_override_kmh",
+        flaky_set_server_speed_override_kmh,
+    )
+    override = PhaseOverride(
+        target="all",
+        profile_name="rough_road",
+        scene_gain=0.3,
+        scene_noise_gain=1.0,
+        amp_scale=0.6,
+        noise_scale=1.0,
+    )
+    monkeypatch.setitem(
+        SCRIPTED_SCENARIOS,
+        "unit-test-hold",
+        ScriptedScenario(
+            name="unit-test-hold",
+            description="Constant-speed hold.",
+            phases=(ScenarioPhase("hold", 5.0, 60.0, 60.0, (override,)),),
+        ),
+    )
+    stop_event = asyncio.Event()
+    task = asyncio.create_task(
+        run_scripted_scenario(
+            _make_clients(),
+            "unit-test-hold",
+            stop_event,
+            server_host="127.0.0.1",
+            server_http_port=8000,
+            server_check_timeout=0.1,
+            speed_update_period_s=0.01,
+        )
+    )
+    async with asyncio.timeout(5.0):
+        while len(attempts) < 2:
+            await asyncio.sleep(0.01)
+    stop_event.set()
+    await task
+
+    assert attempts[:2] == [60.0, 60.0]
+
+
+@pytest.mark.asyncio
 async def test_run_scripted_scenario_marks_guided_phases_on_the_server(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
