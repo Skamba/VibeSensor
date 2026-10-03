@@ -79,8 +79,9 @@ During recording:
 - auto-stop is based on monotonic time, not wall-clock timestamps: a run stops
   with reason `no_data_timeout` after `no_data_timeout_s` without data progress,
   and with reason `max_duration` when it reaches `MAX_RECORDING_DURATION_S`
-  (30 minutes, `recording/lifecycle_state.py`), which keeps post-analysis within
-  the Pi's memory budget
+  (30 minutes, `recording/lifecycle_state.py`; the `recording.max_duration_s`
+  config default, which only isolated test runtimes shorten), which keeps
+  post-analysis within the Pi's memory budget
 - raw UDP chunks are only captured once their sensor is clock-synced (see
   `docs/time_alignment.md`); earlier chunks are dropped so raw replay aligns from
   each sensor's first synced chunk

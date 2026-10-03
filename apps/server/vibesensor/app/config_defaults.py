@@ -10,6 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 from vibesensor.common.json_types import JsonObject
+from vibesensor.recording.lifecycle_state import MAX_RECORDING_DURATION_S
 
 DEFAULT_CONFIG: JsonObject = {
     "ap": {
@@ -28,6 +29,8 @@ DEFAULT_CONFIG: JsonObject = {
         "app_log_path": "data/app.log",
     },
     "gps": {"gps_enabled": True},
+    # Isolated test runtimes shorten the cap to exercise the auto-stop path.
+    "recording": {"max_duration_s": MAX_RECORDING_DURATION_S},
 }
 
 
