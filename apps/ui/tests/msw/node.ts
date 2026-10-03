@@ -57,16 +57,3 @@ export function createUiMswTestServer() {
 
   return server;
 }
-
-export function createUiMswTestScope() {
-  const server = setupServer();
-  const restoreInterception = installUiMswInterception(server);
-
-  return {
-    server,
-    close(): void {
-      server.resetHandlers();
-      restoreInterception();
-    },
-  };
-}

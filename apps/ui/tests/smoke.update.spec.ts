@@ -18,6 +18,8 @@ type UpdateServer = {
   status: Record<string, unknown>;
   starts: Array<Record<string, unknown>>;
   cancels: number;
+  startDelayMs?: number;
+  internet?: Record<string, unknown>;
 };
 
 const USABLE_USB_INTERNET = {
@@ -38,7 +40,7 @@ async function bootWithUpdateServer(
 ): Promise<void> {
   await installCommonRoutes(page);
   await page.route("**/api/update/internet-status", async (route) => {
-    await fulfillJson(route, USABLE_USB_INTERNET);
+    await fulfillJson(route, server.internet ?? USABLE_USB_INTERNET);
   });
   await page.route("**/api/health", async (route) => {
     await fulfillJson(route, createHealthyUpdateStatus());
@@ -47,6 +49,9 @@ async function bootWithUpdateServer(
     await fulfillJson(route, server.status);
   });
   await page.route("**/api/update/start", async (route) => {
+    await new Promise((resolve) =>
+      setTimeout(resolve, server.startDelayMs ?? 0),
+    );
     const body = route.request().postDataJSON() as Record<string, unknown>;
     server.starts.push(body);
     server.status = createIdleUpdateStatus({
@@ -149,4 +154,82 @@ test("journey: a Wi-Fi update sends the credentials and clears the password", as
   await expect(page.locator("#updatePasswordInput")).toHaveValue("");
   // Credentials are locked while the update runs.
   await expect(page.locator("#updateSsidInput")).toBeDisabled();
+});
+
+test("journey: the last Wi-Fi network is prefilled and a double-clicked start sends one request", async ({
+  page,
+}) => {
+  const server: UpdateServer = {
+    status: createIdleUpdateStatus({
+      state: "success",
+      phase: "done",
+      transport: "wifi",
+      ssid: "Shop Wi-Fi",
+    }),
+    starts: [],
+    cancels: 0,
+    startDelayMs: 400,
+  };
+  await bootWithUpdateServer(page, server);
+  await openInternetTab(page);
+  await expect(page.locator("#updateSsidInput")).toHaveValue("Shop Wi-Fi");
+
+  await openUpdateTab(page);
+  await page.locator("#updateStartBtn").dblclick();
+  await expect(page.locator("#updateCancelBtn")).toBeVisible();
+  expect(server.starts).toEqual([
+    { transport: "wifi", ssid: "Shop Wi-Fi", password: "" },
+  ]);
+});
+
+test("journey: retrying a failed Wi-Fi update without an SSID leads back to the SSID field", async ({
+  page,
+}) => {
+  const server: UpdateServer = {
+    status: createIdleUpdateStatus({
+      state: "failed",
+      phase: "connecting_wifi",
+      transport: "wifi",
+      issues: [
+        {
+          phase: "connecting_wifi",
+          message: "Wrong password",
+          detail: "802.1X authentication failed",
+        },
+      ],
+    }),
+    starts: [],
+    cancels: 0,
+    internet: {
+      ...USABLE_USB_INTERNET,
+      detected: false,
+      usable: false,
+      interface_name: null,
+    },
+  };
+  await bootWithUpdateServer(page, server);
+  await openUpdateTab(page);
+  await expect(page.locator("#updateStatusPanel")).toContainText(
+    "Wrong password",
+  );
+  const retry = page.locator("#updateStartBtn");
+  await expect(retry).toHaveText("Retry Update");
+  await retry.click();
+  await expect(page.locator("#updateSsidInput")).toBeFocused();
+  await expect(page.locator("#internetTab")).toBeVisible();
+  expect(server.starts).toEqual([]);
+});
+
+test("journey: an invalid updater status is reported instead of shown", async ({
+  page,
+}) => {
+  const server: UpdateServer = {
+    status: { state: "exploded" },
+    starts: [],
+    cancels: 0,
+  };
+  await bootWithUpdateServer(page, server);
+  await openUpdateTab(page);
+  await expect(page.locator("#appErrorBanner")).toBeVisible();
+  await expect(page.locator("#updateOverviewPanel")).toBeEmpty();
 });
