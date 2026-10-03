@@ -8,16 +8,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from test_support.car_library_validation._allowlist import (
+from car_library_validation._allowlist import (
     filter_allowlisted_issues,
     load_car_library_validation_allowlist,
 )
-from test_support.car_library_validation._common import CarLibraryValidationIssue
-from test_support.car_library_validation._exact import (
+from car_library_validation._common import CarLibraryValidationIssue
+from car_library_validation._exact import (
     validate_vehicle_configuration,
     validate_vehicle_configuration_duplicates,
 )
-from test_support.car_library_validation._legacy import validate_legacy_entry
+from car_library_validation._legacy import validate_legacy_entry
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
 __all__ = [
@@ -81,7 +81,9 @@ def validate_vehicle_configurations(
     return filter_allowlisted_issues(issues, allowlist)
 
 
-def _format_issue_summary(label: str, issues: Sequence[CarLibraryValidationIssue]) -> str:
+def _format_issue_summary(
+    label: str, issues: Sequence[CarLibraryValidationIssue]
+) -> str:
     lines = [f"Invalid {label}: {len(issues)} issue(s)"]
     lines.extend(f"- [{issue.rule}] {issue.message}" for issue in issues[:10])
     remaining = len(issues) - 10

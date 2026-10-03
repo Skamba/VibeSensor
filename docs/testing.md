@@ -73,7 +73,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Cross-cutting regressions go in `apps/server/tests/integration/`.
 - Repo/tooling tests go in `apps/server/tests/hygiene/`: run deploy/tooling scripts and assert their outputs, or guard real drift (for example sample column alignment). Do not pin source/config text, exception `__bases__`, or anything `make sync-contracts`, mypy, or import-linter already enforce; domain behaviour belongs in `apps/server/tests/domain/`. Import-direction rules belong in the `[tool.importlinter]` contracts in `apps/server/pyproject.toml`, not in tests.
 - Test module basenames must be unique across `apps/server/tests/` (the tree has no `__init__.py` files).
-- Shared helpers live in `apps/server/tests/test_support/`.
+- Shared helpers live in `apps/server/tests/test_support/`. The vehicle-library data validator the settings tests gate on lives in `tools/car_library/car_library_validation/` (on the pytest `pythonpath`).
 - Do not create test roots that do not match a backend package (for example `api/`, `config/`, `gps/`, `metrics_log/`, `processing/`, `protocol/`, `update/`, or `websocket/`).
 - Contract bridge tests live in `apps/server/tests/integration/` and validate subsystem handoffs such as analysis -> report and persistence -> analysis.
 

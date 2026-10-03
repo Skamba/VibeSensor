@@ -78,8 +78,9 @@ include = ["vibesensor*"]
 addopts = "-n auto --dist worksteal"
 asyncio_mode = "auto"
 timeout = 120
-# Keep tests/ importable so shared helpers use `from test_support...` short imports.
-pythonpath = [".", "tests"]
+# Keep tests/ importable so shared helpers use `from test_support...` short imports;
+# tools/car_library holds the vehicle-library data validator the tests gate on.
+pythonpath = [".", "tests", "../../tools/car_library"]
 testpaths = ["tests"]
 markers = [
     "e2e: end-to-end tests",
@@ -171,7 +172,7 @@ source_modules = ["vibesensor.report"]
 forbidden_modules = ["vibesensor.analysis"]
 
 [tool.deptry]
-known_first_party = ["test_support"]
+known_first_party = ["test_support", "car_library_validation"]
 optional_dependencies_dev_groups = ["dev"]
 package_module_name_map = { PyYAML = ["yaml"], pyserial = ["serial"] }
 # ESP flashing intentionally resolves esptool via PATH / `python -m esptool`

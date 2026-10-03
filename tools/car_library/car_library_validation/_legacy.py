@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from test_support.car_library_validation._common import (
+from car_library_validation._common import (
     CarLibraryValidationIssue,
     model_entity,
     text,
     variant_entity,
 )
-from test_support.car_library_validation._powertrain import (
+from car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_gearboxes,
     validate_manual_or_automatic_claims,
     validate_powertrain_gearbox_consistency,
 )
-from test_support.car_library_validation._tires import validate_default_tire, validate_tire_options
+from car_library_validation._tires import validate_default_tire, validate_tire_options
 
 
 def validate_legacy_entry(
@@ -80,7 +80,9 @@ def validate_legacy_entry(
         )
         variant_gearboxes = variant.get("gearboxes")
         effective_gearboxes = (
-            variant_gearboxes if isinstance(variant_gearboxes, list) else entry.get("gearboxes")
+            variant_gearboxes
+            if isinstance(variant_gearboxes, list)
+            else entry.get("gearboxes")
         )
         if isinstance(variant_gearboxes, list):
             validate_gearboxes(
@@ -103,7 +105,11 @@ def validate_legacy_entry(
             label=variant_label,
             issues=issues,
         )
-        if "tire_width_mm" in variant or "tire_aspect_pct" in variant or "rim_in" in variant:
+        if (
+            "tire_width_mm" in variant
+            or "tire_aspect_pct" in variant
+            or "rim_in" in variant
+        ):
             validate_default_tire(
                 entity=variant_entity_value,
                 label=f"{variant_label} default tire",

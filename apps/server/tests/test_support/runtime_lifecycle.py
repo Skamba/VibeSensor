@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, create_autospec
 
 import numpy as np
 
@@ -15,7 +15,15 @@ from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_control_tx import UDPControlPlane
+from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
+from vibesensor.recording.raw_capture_writer import RunRawCaptureWriter
+from vibesensor.recording.recorder import RunRecorder
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
+from vibesensor.speed.obd.service import ObdService
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
+from vibesensor.updates.manager import UpdateManager
 from vibesensor.web.health_state import RuntimeHealthState
 
 
@@ -220,15 +228,20 @@ def build_runtime(**overrides: Any):
     config = overrides.pop("config", StubConfig(processing=StubProcessingConfig()))
     registry = overrides.pop("registry", StubRegistry())
     processor = overrides.pop("processor", StubProcessor())
-    control_plane = overrides.pop("control_plane", MagicMock())
-    gps_monitor = overrides.pop("gps_monitor", MagicMock())
-    obd_runner = overrides.pop("obd_runner", MagicMock())
+    control_plane = overrides.pop("control_plane", create_autospec(UDPControlPlane, instance=True))
+    gps_monitor = overrides.pop("gps_monitor", create_autospec(GPSSpeedMonitor, instance=True))
+    obd_runner = overrides.pop("obd_runner", create_autospec(ObdService, instance=True))
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
         obd_runner.run = AsyncMock(side_effect=asyncio.CancelledError)
-    history_db = overrides.pop("history_db", MagicMock())
-    diagnostics = overrides.pop("run_recorder", MagicMock())
-    update_manager = overrides.pop("update_manager", MagicMock())
-    esp_flash_manager = overrides.pop("esp_flash_manager", MagicMock())
+    history_db = overrides.pop("history_db", create_autospec(HistoryDB, instance=True))
+    diagnostics = overrides.pop("run_recorder", None)
+    if diagnostics is None:
+        diagnostics = create_autospec(RunRecorder, instance=True)
+        diagnostics.raw_capture = create_autospec(RunRawCaptureWriter, instance=True)
+    update_manager = overrides.pop("update_manager", create_autospec(UpdateManager, instance=True))
+    esp_flash_manager = overrides.pop(
+        "esp_flash_manager", create_autospec(EspFlashManager, instance=True)
+    )
     ingest_diagnostics = overrides.pop("ingest_diagnostics", IngestDiagnosticsCollector())
     processing_state = ProcessingLoopState()
     health_state = RuntimeHealthState()
@@ -251,7 +264,9 @@ def build_runtime(**overrides: Any):
             processor=processor,
             control_plane=control_plane,
         ),
-        ws_broadcaster=overrides.pop("ws_broadcaster", MagicMock()),
+        ws_broadcaster=overrides.pop(
+            "ws_broadcaster", create_autospec(LiveBroadcaster, instance=True)
+        ),
         run_recorder=diagnostics,
         gps_monitor=gps_monitor,
         obd_runner=obd_runner,

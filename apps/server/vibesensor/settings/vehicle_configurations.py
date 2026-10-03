@@ -2,7 +2,7 @@
 
 Rows are schema-checked (pydantic) and provenance refs are resolved here. The
 cross-field plausibility and source-evidence rules for the bundled data run in
-the test suite (``tests/test_support/car_library_validation``), not at startup.
+the test suite (``tools/car_library/car_library_validation``), not at startup.
 """
 
 from __future__ import annotations

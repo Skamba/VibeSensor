@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from test_support.car_library_validation import (
+from car_library_validation import (
     ensure_valid_vehicle_configurations,
     load_car_library_validation_allowlist,
     validate_car_library_rows,
     validate_vehicle_configurations,
 )
-from test_support.car_library_validation.source_evidence import (
+from car_library_validation.source_evidence import (
     ensure_valid_vehicle_configuration_source_evidence,
 )
 

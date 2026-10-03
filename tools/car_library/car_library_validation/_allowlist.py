@@ -6,7 +6,7 @@ import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from test_support.car_library_validation._common import CarLibraryValidationIssue
+from car_library_validation._common import CarLibraryValidationIssue
 
 _ALLOWLIST_FILE = Path(__file__).resolve().parent / "data" / "allowlist.json"
 
@@ -43,7 +43,9 @@ def load_car_library_validation_allowlist(
             raise ValueError(f"{path} allowance #{index} missing non-empty reason")
         key = (rule.strip(), entity.strip())
         if key in allowlist:
-            raise ValueError(f"{path} duplicates allowance for rule={rule!r} entity={entity!r}")
+            raise ValueError(
+                f"{path} duplicates allowance for rule={rule!r} entity={entity!r}"
+            )
         allowlist[key] = reason.strip()
     return allowlist
 
@@ -52,5 +54,11 @@ def filter_allowlisted_issues(
     issues: Sequence[CarLibraryValidationIssue],
     allowlist: Mapping[tuple[str, str], str] | None,
 ) -> tuple[CarLibraryValidationIssue, ...]:
-    allowances = load_car_library_validation_allowlist() if allowlist is None else dict(allowlist)
-    return tuple(issue for issue in issues if (issue.rule, issue.entity) not in allowances)
+    allowances = (
+        load_car_library_validation_allowlist()
+        if allowlist is None
+        else dict(allowlist)
+    )
+    return tuple(
+        issue for issue in issues if (issue.rule, issue.entity) not in allowances
+    )

@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from test_support.car_library_validation.source_evidence import (
+from car_library_validation.source_evidence import (
     load_car_source_registry,
     validate_vehicle_configuration_source_evidence,
 )

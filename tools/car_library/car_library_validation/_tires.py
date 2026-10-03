@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from test_support.car_library_validation._common import (
+from car_library_validation._common import (
     RIM_SUFFIX_RE,
     TIRE_DIAMETER_RANGE_MM,
     CarLibraryValidationIssue,
@@ -90,8 +90,12 @@ def validate_tire_setup(
     label: str,
     issues: list[CarLibraryValidationIssue],
 ) -> None:
-    validate_tire_spec(setup.front, entity=entity, label=f"{label} front tire", issues=issues)
-    validate_tire_spec(setup.rear, entity=entity, label=f"{label} rear tire", issues=issues)
+    validate_tire_spec(
+        setup.front, entity=entity, label=f"{label} front tire", issues=issues
+    )
+    validate_tire_spec(
+        setup.rear, entity=entity, label=f"{label} rear tire", issues=issues
+    )
 
 
 def validate_tire_spec(
@@ -140,7 +144,9 @@ def _tire_spec_from_dimensions_mapping(payload: object) -> TireSpec | None:
     )
 
 
-def _tire_spec_from_values(*, width: object, aspect: object, rim: object) -> TireSpec | None:
+def _tire_spec_from_values(
+    *, width: object, aspect: object, rim: object
+) -> TireSpec | None:
     width_value = float_or_none(width)
     aspect_value = float_or_none(aspect)
     rim_value = float_or_none(rim)

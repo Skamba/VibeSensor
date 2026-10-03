@@ -7,7 +7,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from vibesensor.domain.vehicle_configuration import VehicleConfiguration, VehicleFieldMetadata
+from vibesensor.domain.vehicle_configuration import (
+    VehicleConfiguration,
+    VehicleFieldMetadata,
+)
 
 __all__ = [
     "CarSourceDocument",
@@ -51,14 +54,20 @@ class CarSourceEvidenceIssue:
 def load_car_source_registry(source_packs_dir: Path | None = None) -> CarSourceRegistry:
     """Load and validate the machine-checkable source registry."""
 
-    resolved_source_packs_dir = _SOURCE_PACKS_DIR if source_packs_dir is None else source_packs_dir
+    resolved_source_packs_dir = (
+        _SOURCE_PACKS_DIR if source_packs_dir is None else source_packs_dir
+    )
     sources: dict[str, CarSourceDocument] = {}
     if not resolved_source_packs_dir.is_dir():
-        raise ValueError(f"Car source pack directory is missing: {resolved_source_packs_dir}")
+        raise ValueError(
+            f"Car source pack directory is missing: {resolved_source_packs_dir}"
+        )
 
     pack_paths = sorted(resolved_source_packs_dir.glob("*.json"))
     if not pack_paths:
-        raise ValueError(f"Car source pack directory is empty: {resolved_source_packs_dir}")
+        raise ValueError(
+            f"Car source pack directory is empty: {resolved_source_packs_dir}"
+        )
 
     for path in pack_paths:
         payload = _load_json_object(path)
@@ -212,7 +221,9 @@ def _load_json_object(path: Path) -> Mapping[str, object]:
         with path.open(encoding="utf-8") as fh:
             payload = json.load(fh)
     except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
-        raise ValueError(f"Could not load car source metadata from {path}: {exc}") from exc
+        raise ValueError(
+            f"Could not load car source metadata from {path}: {exc}"
+        ) from exc
     if not isinstance(payload, Mapping):
         raise ValueError(f"{path} must contain a top-level object")
     return payload

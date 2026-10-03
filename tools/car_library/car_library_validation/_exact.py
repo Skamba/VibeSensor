@@ -4,20 +4,23 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from test_support.car_library_validation._common import (
+from car_library_validation._common import (
     CarLibraryValidationIssue,
     variant_entity,
     vehicle_configuration_fuzzy_label_key,
     vehicle_configuration_identity_key,
 )
-from test_support.car_library_validation._powertrain import (
+from car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_final_drive_layout,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
 )
-from test_support.car_library_validation._tires import validate_tire_setup, validate_tire_spec
-from vibesensor.domain.vehicle_configuration import VehicleConfiguration, VehicleConfigurationField
+from car_library_validation._tires import validate_tire_setup, validate_tire_spec
+from vibesensor.domain.vehicle_configuration import (
+    VehicleConfiguration,
+    VehicleConfigurationField,
+)
 
 
 def validate_vehicle_configuration(
@@ -91,7 +94,9 @@ def validate_exact_row_metadata(
         required_fields.add("final_drive_rear")
     if config.gear_ratios is not None:
         required_fields.add("gear_ratios")
-    missing = sorted(field for field in required_fields if config.metadata_for(field) is None)
+    missing = sorted(
+        field for field in required_fields if config.metadata_for(field) is None
+    )
     if missing:
         issues.append(
             CarLibraryValidationIssue(
@@ -111,8 +116,12 @@ def validate_vehicle_configuration_duplicates(
     for config in configs:
         if not config.id:
             continue
-        by_identity.setdefault(vehicle_configuration_identity_key(config), []).append(config)
-        by_fuzzy_label.setdefault(vehicle_configuration_fuzzy_label_key(config), []).append(config)
+        by_identity.setdefault(vehicle_configuration_identity_key(config), []).append(
+            config
+        )
+        by_fuzzy_label.setdefault(
+            vehicle_configuration_fuzzy_label_key(config), []
+        ).append(config)
 
     for group in by_identity.values():
         if len(group) <= 1:

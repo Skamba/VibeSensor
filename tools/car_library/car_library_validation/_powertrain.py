@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from test_support.car_library_validation._common import (
+from car_library_validation._common import (
     AWD_BADGE_TOKENS,
     FINAL_DRIVE_RANGE,
     GEAR_RATIO_RANGE,
@@ -79,7 +79,10 @@ def validate_single_gearbox(
     if not isinstance(gear_ratios, list):
         return
     parsed_ratios = [float_or_none(value) for value in gear_ratios]
-    if any(value is None or not in_range(value, GEAR_RATIO_RANGE) for value in parsed_ratios):
+    if any(
+        value is None or not in_range(value, GEAR_RATIO_RANGE)
+        for value in parsed_ratios
+    ):
         issues.append(
             CarLibraryValidationIssue(
                 rule="gear_ratio_range",
@@ -113,7 +116,10 @@ def validate_drivetrain_badges(
     issues: list[CarLibraryValidationIssue],
 ) -> None:
     normalized_name = variant_name.lower()
-    if any(token in normalized_name for token in AWD_BADGE_TOKENS) and drivetrain != "AWD":
+    if (
+        any(token in normalized_name for token in AWD_BADGE_TOKENS)
+        and drivetrain != "AWD"
+    ):
         issues.append(
             CarLibraryValidationIssue(
                 rule="badge_requires_awd",
@@ -123,7 +129,10 @@ def validate_drivetrain_badges(
                 ),
             )
         )
-    if any(token in normalized_name for token in RWD_BADGE_TOKENS) and drivetrain != "RWD":
+    if (
+        any(token in normalized_name for token in RWD_BADGE_TOKENS)
+        and drivetrain != "RWD"
+    ):
         issues.append(
             CarLibraryValidationIssue(
                 rule="edrive_requires_rwd",
@@ -182,9 +191,13 @@ def validate_manual_or_automatic_claims(
         return
     normalized_name = variant_name.lower()
     gearbox_names = [
-        text(gearbox.get("name")).lower() for gearbox in gearboxes if isinstance(gearbox, Mapping)
+        text(gearbox.get("name")).lower()
+        for gearbox in gearboxes
+        if isinstance(gearbox, Mapping)
     ]
-    if "manual" in normalized_name and not any("manual" in name for name in gearbox_names):
+    if "manual" in normalized_name and not any(
+        "manual" in name for name in gearbox_names
+    ):
         issues.append(
             CarLibraryValidationIssue(
                 rule="manual_claim_mismatch",
@@ -193,7 +206,8 @@ def validate_manual_or_automatic_claims(
             )
         )
     claims_automatic = any(
-        token in normalized_name for token in ("automatic", "steptronic", "dkg", "s tronic")
+        token in normalized_name
+        for token in ("automatic", "steptronic", "dkg", "s tronic")
     )
     if claims_automatic and any("manual" in name for name in gearbox_names):
         issues.append(

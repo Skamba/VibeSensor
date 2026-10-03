@@ -105,7 +105,7 @@ order-analysis fields inline with their own metadata:
   `reason` and only the differing flags. Rows that match the derivation omit
   the block entirely.
 
-`apps/server/tests/test_support/car_library_validation/data/car_sources/*.json` contains only reusable
+`tools/car_library/car_library_validation/data/car_sources/*.json` contains only reusable
 source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through
 those source packs.
 
@@ -181,22 +181,23 @@ only schema-checks rows and resolves shard refs. The cross-field plausibility
 and source-evidence rules gate the bundled data in the test suite instead of
 running at app startup:
 
-- `apps/server/tests/test_support/car_library_validation/` is the validation
+- `tools/car_library/car_library_validation/` is the validation
   facade. Its submodules split allowlists, legacy grouped rows, exact-row
   checks, powertrain rules, tire rules, and duplicate detection.
-- `apps/server/tests/test_support/car_library_validation/source_evidence.py`
+- `tools/car_library/car_library_validation/source_evidence.py`
   resolves `evidence_refs` against `data/car_sources/*.json`.
 - `test_bundled_vehicle_library_passes_validation` in
   `apps/server/tests/settings/test_car_library_validation.py`
   runs both against the packaged shards, so bad data fails CI rather than
-  silently emptying the library on the device.
+  silently emptying the library on the device. Run the same check directly
+  while editing shards with `python tools/car_library/validate_vehicle_library.py`.
 
 The bundled grouped picker is a projection only. Canonical exact-row shards
 remain the single source of truth.
 
 ## Shard JSON Schema
 
-`apps/server/tests/test_support/car_library_validation/data/vehicle_configuration_shard.schema.json`
+`tools/car_library/car_library_validation/data/vehicle_configuration_shard.schema.json`
 is the canonical JSON Schema (Draft 2020-12) for shard files under
 `apps/server/vibesensor/data/vehicle_configurations/**/*.json`. It validates
 the raw on-disk shape, including the `definitions` / `defaults` /
@@ -222,7 +223,7 @@ schema file. Example VS Code setting:
       "fileMatch": [
         "apps/server/vibesensor/data/vehicle_configurations/**/*.json"
       ],
-      "url": "./apps/server/tests/test_support/car_library_validation/data/vehicle_configuration_shard.schema.json"
+      "url": "./tools/car_library/car_library_validation/data/vehicle_configuration_shard.schema.json"
     }
   ]
 }
@@ -234,7 +235,7 @@ contract changes, update both at once.
 ## Duplicate detection
 
 `validate_vehicle_configurations` (in
-`apps/server/tests/test_support/car_library_validation`) flags duplicate
+`tools/car_library/car_library_validation`) flags duplicate
 and near-duplicate exact rows after the per-row checks:
 
 - `duplicate_vehicle_configuration` (hard failure): two or more rows share
@@ -246,6 +247,6 @@ and near-duplicate exact rows after the per-row checks:
   IDs of the colliding peers are listed in the message.
 
 Both rules go through the existing
-`apps/server/tests/test_support/car_library_validation/data/allowlist.json`. To
+`tools/car_library/car_library_validation/data/allowlist.json`. To
 keep an intentional duplicate or label collision, add an entry with the
 rule name, the offending row `id`, and a `reason`.

@@ -100,7 +100,9 @@ def vehicle_configuration_identity_key(
     )
 
 
-def vehicle_configuration_fuzzy_label_key(config: VehicleConfiguration) -> tuple[str, str, str]:
+def vehicle_configuration_fuzzy_label_key(
+    config: VehicleConfiguration,
+) -> tuple[str, str, str]:
     return (
         normalize_label(config.brand),
         normalize_label(config.model_name),
