@@ -9,14 +9,10 @@ from pathlib import Path
 
 import pytest
 from test_support.update_status import build_update_status_harness
-from test_support.venv_slots import make_legacy_venv
+from test_support.venv_slots import add_slot, make_legacy_venv, simulate_slot_command
 
 from vibesensor.common.exceptions import UpdateReleaseError
-from vibesensor.updates.artifact_validation import (
-    read_wheel_metadata,
-    wheel_artifact_problem,
-    wheel_dependency_issues,
-)
+from vibesensor.updates.artifact_validation import wheel_artifact_problem
 from vibesensor.updates.boot_check import SERVER_APP
 from vibesensor.updates.firmware.firmware_refresh import (
     FirmwareRefresher,
@@ -29,14 +25,14 @@ from vibesensor.updates.venv_slots import VenvSlots
 
 RUNNING = "2025.6.14"
 NEW = "2025.6.15"
-_DEPENDENCY_SNAPSHOT = (
-    '{"python_full_version":"3.13.5","marker_environment":{"python_full_version":"3.13.5",'
-    '"python_version":"3.13","sys_platform":"linux"},"installed_versions":{"missingdep":""}}\n'
-)
+WHEELHOUSE = Path("/staging/wheelhouse")
 
 
 class RecordingCommands:
-    """Answers commands by substring; reports *NEW* for the installed-version probe."""
+    """Answers commands by substring and mimics venv/pip file effects.
+
+    The installed-version probe reports *NEW*.
+    """
 
     def __init__(self) -> None:
         self.calls: list[list[str]] = []
@@ -61,10 +57,7 @@ class RecordingCommands:
                 return response
         if "from vibesensor import __version__" in joined:
             return CommandExecutionResult(0, f"{NEW}\n", "")
-        if "pip install" in joined:
-            # pip rewrites the slot's console script for the new version.
-            script = Path(args[0]).parent / "vibesensor-server"
-            script.write_text(f"#!{args[0]}\n# {NEW}\n", encoding="utf-8")
+        simulate_slot_command(args)
         return CommandExecutionResult(0, "", "")
 
     def joined(self) -> list[str]:
@@ -72,6 +65,7 @@ class RecordingCommands:
 
 
 def _build_wheel(path: Path, *, version: str = NEW, requires_dist: tuple[str, ...] = ()) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
     metadata = ["Metadata-Version: 2.1", "Name: vibesensor", f"Version: {version}"]
     metadata.extend(f"Requires-Dist: {entry}" for entry in requires_dist)
     with zipfile.ZipFile(path, "w") as wheel_zip:
@@ -109,14 +103,24 @@ async def test_install_builds_and_smoke_tests_a_new_slot_beside_the_live_one(
     installer, slots, commands, _tracker = _installer(tmp_path)
     wheel = _build_wheel(tmp_path / f"vibesensor-{NEW}-py3-none-any.whl")
 
-    slot = await installer.install(wheel, NEW)
+    slot = await installer.install(wheel, WHEELHOUSE, NEW)
 
     assert slot == NEW
     # The pre-A/B venv became the active slot, untouched by the install.
     assert slots.active_slot() == RUNNING
     python = str(slots.slot_python(NEW))
     assert commands.calls == [
-        [python, "-m", "pip", "install", "--force-reinstall", "--no-deps", str(wheel)],
+        [sys.executable, "-m", "venv", str(slots.slot_dir(NEW))],
+        [
+            python,
+            "-m",
+            "pip",
+            "install",
+            "--no-index",
+            "--find-links",
+            str(WHEELHOUSE),
+            f"{wheel}[esp]",
+        ],
         [python, "-c", "from vibesensor import __version__; print(__version__)"],
         [
             python,
@@ -132,7 +136,7 @@ async def test_install_builds_and_smoke_tests_a_new_slot_beside_the_live_one(
         ],
     ]
     new_bin = slots.slot_dir(NEW) / "bin"
-    assert (new_bin / SERVER_APP).read_text() == f"#!{python}\n# {NEW}\n"
+    assert (new_bin / SERVER_APP).read_text() == f"#!{python}\n# installed\n"
     assert (new_bin / "vibesensor-server").read_text().startswith(f"#!{python} -IS\n")
 
 
@@ -141,7 +145,7 @@ async def test_activate_switches_to_the_installed_slot_with_a_pending_boot_check
     tmp_path: Path,
 ) -> None:
     installer, slots, _commands, _tracker = _installer(tmp_path)
-    await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), NEW)
+    await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), WHEELHOUSE, NEW)
 
     installer.activate(NEW)
 
@@ -156,9 +160,9 @@ async def test_activate_switches_to_the_installed_slot_with_a_pending_boot_check
 async def test_install_prunes_slots_older_than_the_active_one(tmp_path: Path) -> None:
     installer, slots, _commands, _tracker = _installer(tmp_path)
     slots.adopt(RUNNING)
-    slots.clone_slot(RUNNING, "2025.6.1")
+    add_slot(slots, "2025.6.1")
 
-    await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), NEW)
+    await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), WHEELHOUSE, NEW)
 
     assert sorted(p.name for p in (slots.root / "slots").iterdir()) == [RUNNING, NEW]
 
@@ -166,6 +170,7 @@ async def test_install_prunes_slots_older_than_the_active_one(tmp_path: Path) ->
 @pytest.mark.parametrize(
     ("match", "rc", "stdout", "error"),
     [
+        ("-m venv", 1, "", f"Could not create venv slot {NEW} (exit 1)"),
         ("pip install", 1, "", "Wheel install failed (exit 1)"),
         ("from vibesensor import", 0, "2025.6.13\n", "Installed version does not match"),
         ("smoke-server", 1, "", f"Version {NEW} failed its smoke test (exit 1)"),
@@ -183,7 +188,7 @@ async def test_failed_install_removes_the_new_slot_and_keeps_the_live_one(
     commands.set_response(match, rc, stdout, "boom")
 
     with pytest.raises(UpdateReleaseError, match=re.escape(error)) as excinfo:
-        await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), NEW)
+        await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), WHEELHOUSE, NEW)
 
     assert excinfo.value.phase == "installing"
     assert slots.active_slot() == RUNNING
@@ -203,7 +208,7 @@ async def test_install_reports_a_missing_server_venv_as_an_update_failure(
     )
 
     with pytest.raises(UpdateReleaseError, match="Could not move") as excinfo:
-        await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), NEW)
+        await installer.install(_build_wheel(tmp_path / "vibesensor.whl"), WHEELHOUSE, NEW)
 
     assert excinfo.value.phase == "installing"
     assert not (tmp_path / "missing").exists()
@@ -214,7 +219,9 @@ async def test_install_rejects_the_active_version(tmp_path: Path) -> None:
     installer, _slots, commands, _tracker = _installer(tmp_path)
 
     with pytest.raises(UpdateReleaseError, match="already active"):
-        await installer.install(_build_wheel(tmp_path / "v.whl", version=RUNNING), RUNNING)
+        await installer.install(
+            _build_wheel(tmp_path / "v.whl", version=RUNNING), WHEELHOUSE, RUNNING
+        )
 
     assert commands.calls == []
 
@@ -226,35 +233,10 @@ async def test_install_rejects_a_corrupt_wheel_before_touching_slots(tmp_path: P
     broken.write_text("not a wheel", encoding="utf-8")
 
     with pytest.raises(UpdateReleaseError, match="Downloaded wheel is corrupt"):
-        await installer.install(broken, NEW)
+        await installer.install(broken, WHEELHOUSE, NEW)
 
     assert commands.calls == []
     assert not slots.is_adopted()
-
-
-@pytest.mark.asyncio
-async def test_install_rejects_incompatible_dependencies_before_pip(tmp_path: Path) -> None:
-    installer, slots, commands, _tracker = _installer(tmp_path)
-    commands.set_response("missingdep", 0, _DEPENDENCY_SNAPSHOT)
-    wheel = _build_wheel(tmp_path / "vibesensor.whl", requires_dist=("missingdep>=1",))
-
-    with pytest.raises(UpdateReleaseError, match="incompatible with the current environment"):
-        await installer.install(wheel, NEW)
-
-    assert not any("pip install" in call for call in commands.joined())
-    assert not slots.slot_dir(NEW).exists()
-
-
-@pytest.mark.asyncio
-async def test_install_reports_a_malformed_dependency_snapshot(tmp_path: Path) -> None:
-    installer, _slots, commands, _tracker = _installer(tmp_path)
-    commands.set_response("missingdep", 0, "{not-json")
-    wheel = _build_wheel(tmp_path / "vibesensor.whl", requires_dist=("missingdep>=1",))
-
-    with pytest.raises(UpdateReleaseError, match="Could not parse") as excinfo:
-        await installer.install(wheel, NEW)
-
-    assert excinfo.value.detail == "{not-json"
 
 
 def test_wheel_artifact_problem_flags_invalid_metadata(tmp_path: Path) -> None:
@@ -265,33 +247,6 @@ def test_wheel_artifact_problem_flags_invalid_metadata(tmp_path: Path) -> None:
     assert problem is not None
     assert problem[0] == "Downloaded wheel metadata is invalid"
     assert wheel_artifact_problem(_build_wheel(tmp_path / "ok.whl")) is None
-
-
-def test_wheel_dependency_issues_report_python_and_dependency_mismatches(tmp_path: Path) -> None:
-    wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-    _build_wheel(
-        wheel_path,
-        requires_dist=(
-            "packaging>=99",
-            "missingdep>=1",
-            "colorama>=0.4; sys_platform == 'win32'",
-        ),
-    )
-
-    issues = wheel_dependency_issues(
-        read_wheel_metadata(wheel_path),
-        python_full_version="3.13.5",
-        marker_environment={
-            "python_full_version": "3.13.5",
-            "python_version": "3.13",
-            "sys_platform": "linux",
-        },
-        installed_versions={"packaging": "24.2"},
-    )
-
-    assert "Dependency packaging==24.2 does not satisfy >=99" in issues
-    assert "Missing dependency: missingdep>=1" in issues
-    assert all("colorama" not in issue for issue in issues)
 
 
 @pytest.mark.asyncio

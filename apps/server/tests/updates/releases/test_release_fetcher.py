@@ -108,6 +108,9 @@ class TestReleaseInfo:
             "asset_url": "https://api.github.com/repos/Skamba/VibeSensor/releases/assets/123",
             "sha256": "abc123",
             "published_at": "2025-06-15T02:00:00Z",
+            "wheelhouse_name": "",
+            "wheelhouse_url": "",
+            "wheelhouse_sha256": "",
         }
 
 
@@ -201,7 +204,12 @@ MOCK_RELEASES = [
                 name="vibesensor-2025.6.15-py3-none-any.whl",
                 url="https://api.github.com/assets/456",
                 digest=f"sha256:{'a' * 64}",
-            )
+            ),
+            _asset_record(
+                name="vibesensor-wheelhouse-2025.6.15-cp313-linux_armv7l.tar",
+                url="https://api.github.com/assets/457",
+                digest=f"sha256:{'c' * 64}",
+            ),
         ],
     ),
     _release_record(
@@ -241,6 +249,9 @@ class TestServerReleaseFetcher:
         assert release.version == "2025.6.15"
         assert release.asset_name == "vibesensor-2025.6.15-py3-none-any.whl"
         assert release.sha256 == "a" * 64
+        assert release.wheelhouse_name == "vibesensor-wheelhouse-2025.6.15-cp313-linux_armv7l.tar"
+        assert release.wheelhouse_url == "https://api.github.com/assets/457"
+        assert release.wheelhouse_sha256 == "c" * 64
 
     def test_find_latest_skips_draft(self) -> None:
         releases = [
@@ -324,14 +335,7 @@ class TestServerReleaseFetcher:
         with pytest.raises(ValueError, match="missing a trusted SHA-256 digest"):
             fetcher.find_latest_release()
 
-    def test_download_wheel(self, tmp_path: Path) -> None:
-        release = ReleaseInfo(
-            tag="server-v2025.6.15",
-            version="2025.6.15",
-            asset_name="vibesensor-2025.6.15-py3-none-any.whl",
-            asset_url="https://api.github.com/assets/456",
-            sha256="a" * 64,
-        )
+    def test_download_asset(self, tmp_path: Path) -> None:
         wheel_content = b"fake-wheel-content"
 
         class _DownloadFetcher(ServerReleaseFetcher):
@@ -340,12 +344,15 @@ class TestServerReleaseFetcher:
                 dest.write_bytes(wheel_content)
 
         fetcher = _DownloadFetcher(ReleaseFetcherConfig(server_repo="Skamba/VibeSensor"))
-        path = fetcher.download_wheel(release, dest_dir=tmp_path)
+        path = fetcher.download_asset(
+            "vibesensor-2025.6.15-py3-none-any.whl",
+            "https://api.github.com/assets/456",
+            dest_dir=tmp_path,
+        )
 
         assert path.exists()
         assert path.name == "vibesensor-2025.6.15-py3-none-any.whl"
         assert path.read_bytes() == wheel_content
-        assert release.sha256 == "a" * 64
 
 
 class TestVersionPolicy:

@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
+import shutil
+import tarfile
 from collections import deque
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from test_support.venv_slots import make_legacy_venv
+from test_support.venv_slots import make_legacy_venv, simulate_slot_command
 
 from vibesensor.updates.manager import UpdateManager
 from vibesensor.updates.models import UpdateTransport
@@ -64,17 +67,7 @@ class FakeRunner(CommandRunner):
         for match_substr, response in self.responses:
             if match_substr in joined:
                 return response
-        if "pip" in args and "download" in args and "-d" in args:
-            download_dir = Path(args[args.index("-d") + 1])
-            version = next(
-                (arg.split("==", 1)[1] for arg in args if arg.startswith("vibesensor==")),
-                "",
-            )
-            if version:
-                _build_fake_downloaded_wheel(
-                    download_dir / f"vibesensor-{version}-py3-none-any.whl",
-                    version=version,
-                )
+        simulate_slot_command(args)
         return self.default_response
 
 
@@ -205,4 +198,42 @@ def make_mock_release(
     release.tag = tag
     release.sha256 = sha256
     release.asset_name = f"vibesensor-{version}-py3-none-any.whl"
+    return release
+
+
+def publish_release(
+    fetcher: MagicMock,
+    assets_dir: Path,
+    *,
+    version: str = "2025.6.15",
+    wheel_sha256: str | None = None,
+) -> MagicMock:
+    """Make *fetcher* serve a release whose wheel and wheelhouse download like GitHub assets."""
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    wheel = assets_dir / f"vibesensor-{version}-py3-none-any.whl"
+    _build_fake_downloaded_wheel(wheel, version=version)
+    dependency = assets_dir / "anyio-4.15.1-py3-none-any.whl"
+    dependency.write_bytes(b"dependency")
+    wheelhouse = assets_dir / f"vibesensor-wheelhouse-{version}-cp313-linux_armv7l.tar"
+    with tarfile.open(wheelhouse, "w") as tar:
+        tar.add(dependency, arcname=dependency.name)
+
+    release = make_mock_release(
+        version=version,
+        tag=f"server-v{version}",
+        sha256=wheel_sha256 or hashlib.sha256(wheel.read_bytes()).hexdigest(),
+    )
+    release.asset_url = "https://api.github.com/assets/wheel"
+    release.wheelhouse_name = wheelhouse.name
+    release.wheelhouse_url = "https://api.github.com/assets/wheelhouse"
+    release.wheelhouse_sha256 = hashlib.sha256(wheelhouse.read_bytes()).hexdigest()
+    sources = {release.asset_url: wheel, release.wheelhouse_url: wheelhouse}
+
+    def _download(name: str, url: str, dest_dir: Path) -> Path:
+        dest = Path(dest_dir) / name
+        shutil.copyfile(sources[url], dest)
+        return dest
+
+    fetcher.download_asset.side_effect = _download
+    fetcher.find_latest_release.return_value = release
     return release

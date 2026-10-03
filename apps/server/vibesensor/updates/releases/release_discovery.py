@@ -15,6 +15,7 @@ __all__ = [
     "decode_server_releases",
     "find_latest_server_release",
     "find_server_wheel_asset",
+    "find_wheelhouse_asset",
 ]
 
 
@@ -29,6 +30,15 @@ def find_server_wheel_asset(release: GitHubRelease) -> GitHubReleaseAsset | None
 
     for asset in release.assets:
         if asset.name.startswith("vibesensor") and asset.name.endswith(".whl"):
+            return asset
+    return None
+
+
+def find_wheelhouse_asset(release: GitHubRelease) -> GitHubReleaseAsset | None:
+    """Return the Pi dependency wheelhouse (``vibesensor-wheelhouse-*.tar``) when present."""
+
+    for asset in release.assets:
+        if asset.name.startswith("vibesensor-wheelhouse-") and asset.name.endswith(".tar"):
             return asset
     return None
 
@@ -53,6 +63,7 @@ def find_latest_server_release(
             raise ValueError(
                 f"Server release {tag} is missing a trusted SHA-256 digest for {asset.name}",
             )
+        wheelhouse = find_wheelhouse_asset(release)
         return ReleaseInfo(
             tag=tag,
             version=tag.removeprefix("server-v"),
@@ -60,6 +71,9 @@ def find_latest_server_release(
             asset_url=asset.url,
             sha256=asset.sha256,
             published_at=release.published_at,
+            wheelhouse_name=wheelhouse.name if wheelhouse else "",
+            wheelhouse_url=wheelhouse.url if wheelhouse else "",
+            wheelhouse_sha256=wheelhouse.sha256 if wheelhouse else "",
         )
     raise ValueError(
         f"No server release found with tag 'server-v*' in {server_repo}",

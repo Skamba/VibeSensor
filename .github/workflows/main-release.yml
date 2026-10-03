@@ -102,6 +102,19 @@ jobs:
             --host 127.0.0.1 \
             --port 18080
 
+      - name: Build Pi dependency wheelhouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          python_bin="${{ steps.setup-python.outputs.python-path }}"
+          wheel_path="$(echo apps/server/dist/*.whl)"
+          # Binary-only Pi (armv7l, CPython 3.13) wheels from PyPI + piwheels, so OTA
+          # updates can install changed dependencies offline into a new venv slot.
+          "${python_bin}" tools/release/main_release.py build-wheelhouse \
+            --wheel-path "${wheel_path}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --output-dir apps/server/dist
+
       - name: Install PlatformIO
         shell: bash
         run: |
@@ -212,6 +225,7 @@ jobs:
           # compute-version always picks an unused server-v* tag, so this creates a new release.
           gh release create "${{ steps.version.outputs.tag }}" \
             apps/server/dist/*.whl \
+            apps/server/dist/vibesensor-wheelhouse-*.tar \
             "${{ steps.bundle.outputs.path }}" \
             --target "${{ steps.release_source.outputs.sha }}" \
             --title "Wheel / ESP release ${{ steps.version.outputs.version }}" \
