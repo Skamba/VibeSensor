@@ -53,7 +53,6 @@ class PreparedAnalysisContext:
     prepared: PreparedRunData
     accel_stats: AccelStatistics
     reference_complete: bool
-    overall_strength_band_key: str | None
     run_suitability: RunSuitability | None
     sensor_locations: tuple[str, ...]
     connected_locations: frozenset[str]

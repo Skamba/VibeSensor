@@ -31,11 +31,6 @@ def test_non_finite_or_negative_scores_are_weak(score: float) -> None:
     assert Finding.classify_confidence(score) is ConfidenceLevel.WEAK
 
 
-def test_negligible_strength_caps_strong_to_moderate() -> None:
-    finding = make_finding(confidence=0.9).with_strength_band("negligible")
-    assert finding.confidence_level is ConfidenceLevel.MODERATE
-
-
 @pytest.mark.parametrize(
     ("key", "code"),
     [
