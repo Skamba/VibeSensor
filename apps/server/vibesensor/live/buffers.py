@@ -193,15 +193,14 @@ class ClientBuffer:
         self,
         *,
         default_sample_rate_hz: int,
-        waveform_seconds: int,
+        fft_n: int,
     ) -> AnalysisTimeRange | None:
-        """Return the time range covered by the current analysis window."""
+        """Return the time range of the newest FFT block (what the spectrum describes)."""
         time_range = analysis_time_range(
             count=self.count,
             last_ingest_mono_s=self.last_ingest_mono_s,
             sample_rate_hz=self.sample_rate_hz or default_sample_rate_hz,
-            waveform_seconds=waveform_seconds,
-            capacity=self.capacity,
+            window_samples=fft_n,
             last_t0_us=self.last_t0_us,
             samples_since_t0=self.samples_since_t0,
         )

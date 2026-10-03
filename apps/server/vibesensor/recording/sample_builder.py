@@ -80,6 +80,21 @@ def build_sample_records(
         metrics = processor.latest_metrics(client_id)
         if not metrics:
             continue
+        (
+            analysis_window_start_us,
+            analysis_window_end_us,
+            analysis_window_synced,
+            analysis_time_range,
+        ) = _analysis_window_fields(
+            processor=processor,
+            client_id=record.client_id,
+            run_start_mono_s=run_start_mono_s,
+        )
+        if analysis_window_synced and (analysis_window_start_us or 0) < 0:
+            # The spectrum still reaches back before the recording started: that
+            # vibration is not part of this recording (nor of its raw capture).
+            # Only a clock-synced window has an exact start to tell.
+            continue
 
         latest_xyz = processor.latest_sample_xyz(record.client_id)
         accel_x_g = latest_xyz[0] if latest_xyz else None
@@ -122,16 +137,6 @@ def build_sample_records(
                 firmware_version=str(getattr(record, "firmware_version", "") or "") or None,
                 sensors_by_mac=sensors_by_mac,
             )
-        (
-            analysis_window_start_us,
-            analysis_window_end_us,
-            analysis_window_synced,
-            analysis_time_range,
-        ) = _analysis_window_fields(
-            processor=processor,
-            client_id=record.client_id,
-            run_start_mono_s=run_start_mono_s,
-        )
         (
             speed_kmh,
             gps_speed_kmh,

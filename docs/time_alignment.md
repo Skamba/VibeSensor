@@ -60,14 +60,21 @@ longer change it.
 | `samples_since_t0` | Samples ingested since `last_t0_us` was recorded. |
 
 `ingest()` accepts an optional `t0_us` parameter; the UDP data
-receiver passes `msg.t0_us` through.
+receiver passes `msg.t0_us` through once the sensor is clock-synced. Before
+that, `t0_us` is the sensor's own uptime, so the buffer keeps using server
+arrival time.
 
 ### 3. Analysis Time-Range Computation
 
 `ClientBuffer.analysis_time_range()` returns an `AnalysisTimeRange`
-(`start_s`, `end_s`, `synced`). Each metrics snapshot records it, so
-`SignalProcessor.latest_analysis_time_range()` reports the window the latest
-metrics cover (used to place recorded samples on the timeline):
+(`start_s`, `end_s`, `synced`) for the newest FFT block (`fft_n` samples,
+2.56 s at 800 Hz): the spectrum, its peaks and the vibration strength describe
+only that block, not the longer waveform buffer. Each metrics snapshot records
+it, so `SignalProcessor.latest_analysis_time_range()` reports the window the
+latest metrics cover. The recorder uses it to place each sample row on the
+timeline, to take the row's speed at the window's midpoint, and to skip rows
+whose synced window still starts before the recording did (that vibration was
+measured before the user pressed start, and the raw capture cannot replay it):
 
 - **Synced path** (preferred): When `last_t0_us > 0`, the window end is
   computed from the sensor timestamp plus the frame duration.  The
@@ -116,7 +123,9 @@ captured only when its `t0_us` also reads as server-clock time rather than
 bare device time (this catches queued pre-sync frames that arrive after the
 acknowledgement). Chunks a sensor sends before that are dropped — the live
 view still uses them — so each sensor's raw capture starts at its first
-synced chunk and summary rows from before it are simply not raw-backed. A
+synced chunk and summary rows from before it are simply not raw-backed. On a
+clean network every recorded row of a sensor that synced before the start is
+raw-backed, so the report's data-quality checks all pass. A
 sensor reboot forgets its sync until it re-syncs.
 
 Sensors apply every offset the server sends, so a wrong estimate steps their

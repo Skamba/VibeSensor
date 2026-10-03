@@ -27,8 +27,7 @@ class TestAnalysisTimeRangeEdgeCases:
             count=100,
             last_ingest_mono_s=1000.0,
             sample_rate_hz=0,
-            waveform_seconds=5.0,
-            capacity=2048,
+            window_samples=2048,
             last_t0_us=0,
             samples_since_t0=0,
         )
@@ -40,8 +39,7 @@ class TestAnalysisTimeRangeEdgeCases:
             count=50,
             last_ingest_mono_s=1000.0,
             sample_rate_hz=-200,
-            waveform_seconds=5.0,
-            capacity=2048,
+            window_samples=2048,
             last_t0_us=0,
             samples_since_t0=0,
         )
@@ -60,8 +58,7 @@ class TestAnalysisTimeRangeEdgeCases:
             # the sensor-clock path ignores it when last_t0_us > 0.
             last_ingest_mono_s=999.0,
             sample_rate_hz=sr,
-            waveform_seconds=1.0,
-            capacity=2048,
+            window_samples=1000,
             last_t0_us=t0_us,
             samples_since_t0=samples_since_t0,
         )
@@ -70,7 +67,7 @@ class TestAnalysisTimeRangeEdgeCases:
         assert synced is True
         # Expected end: 1.0 + (500 / 1000) = 1.5 s
         assert end_s == pytest.approx(1.5, abs=1e-6)
-        # Duration is 1.0 s (waveform_seconds), so start = 0.5 s
+        # Duration is 1.0 s (1000-sample window), so start = 0.5 s
         assert start_s == pytest.approx(0.5, abs=1e-6)
 
 

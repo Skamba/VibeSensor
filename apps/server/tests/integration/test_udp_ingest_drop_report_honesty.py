@@ -141,9 +141,11 @@ def test_udp_ingest_queue_drop_reaches_persisted_report_honesty(
         snapshot = recorder._lifecycle.snapshot()
         assert snapshot is not None
         run_id = snapshot.run_id
+        # Synced sensor clocks count server-monotonic microseconds from the run start.
+        base_us = int(snapshot.start_mono_s * 1_000_000)
 
-        first = pack_data(_CLIENT_ID, seq=1, t0_us=0, samples=_samples())
-        dropped = pack_data(_CLIENT_ID, seq=2, t0_us=320_000, samples=_samples())
+        first = pack_data(_CLIENT_ID, seq=1, t0_us=base_us + 10_000, samples=_samples())
+        dropped = pack_data(_CLIENT_ID, seq=2, t0_us=base_us + 330_000, samples=_samples())
         proto.datagram_received(first, _ADDR)
         proto.datagram_received(dropped, _ADDR)
 
