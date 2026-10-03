@@ -52,7 +52,6 @@ def test_build_isolated_server_config_rewrites_runtime_paths_and_copies_seed_dat
         "control_port": 19180,
     }
     assert data["gps"]["gps_enabled"] is False
-    assert data["ap"]["self_heal"]["enabled"] is False
     assert data["logging"]["history_db_path"].endswith("history.db")
     assert data["logging"]["app_log_path"].endswith("app.log")
     assert data["update"]["rollback_dir"].endswith("rollback")

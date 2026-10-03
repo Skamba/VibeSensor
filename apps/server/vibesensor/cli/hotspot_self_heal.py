@@ -1,39 +1,18 @@
-"""CLI entry point for the hotspot self-heal watchdog."""
+"""CLI entry point for the hotspot watchdog (``vibesensor-hotspot-self-heal``)."""
 
 from __future__ import annotations
 
-import argparse
 import logging
-from pathlib import Path
 
-from vibesensor.app.config_loader import load_config
-from vibesensor.updates.hotspot.self_heal import run_self_heal
+from vibesensor.hotspot.watchdog import check_hotspot
 
 
 def main() -> None:
-    """Run the hotspot self-heal watchdog from the configured AP settings."""
-    parser = argparse.ArgumentParser(description="VibeSensor hotspot health check and self-healing")
-    parser.add_argument(
-        "--config",
-        type=Path,
-        default=Path("/etc/vibesensor/config.yaml"),
-        help="Path to config.yaml",
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["check-heal", "diagnostics"],
-        default="check-heal",
-        help="check-heal: health check + remediation, diagnostics: collect diagnostics only",
-    )
-    args = parser.parse_args()
+    """Run one hotspot watchdog pass.
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
-
-    cfg = load_config(args.config)
-    diagnostics_only = args.mode == "diagnostics"
-    raise SystemExit(
-        run_self_heal(cfg.ap, cfg.ap.self_heal.state_file, diagnostics_only=diagnostics_only)
-    )
+    Arguments are ignored: systemd units installed by earlier images pass
+    ``--mode check-heal --config …`` and keep calling this entry point after an
+    over-the-air update.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    raise SystemExit(check_hotspot())

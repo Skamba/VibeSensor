@@ -1,5 +1,5 @@
 [Unit]
-Description=Run VibeSensor hotspot self-heal periodically
+Description=Run the VibeSensor hotspot watchdog periodically
 
 [Timer]
 OnBootSec=90s

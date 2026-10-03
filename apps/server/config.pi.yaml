@@ -2,9 +2,5 @@
 # Copied to /etc/vibesensor/config.yaml during install_pi.sh and pi-gen image build.
 # Overrides paths from defaults to use system directories.
 
-ap:
-  self_heal:
-    state_file: /var/lib/vibesensor/hotspot-self-heal-state.json
-
 logging:
   history_db_path: /var/lib/vibesensor/history.db

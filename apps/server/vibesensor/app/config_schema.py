@@ -9,7 +9,6 @@ from vibesensor.app.config_paths import REPO_DIR
 
 __all__ = [
     "APConfig",
-    "APSelfHealConfig",
     "AppConfig",
     "GPSConfig",
     "LoggingConfig",
@@ -20,24 +19,15 @@ __all__ = [
 
 
 @dataclass(slots=True)
-class APSelfHealConfig:
-    """Configuration for the Wi-Fi AP self-heal watchdog."""
-
-    enabled: bool
-    state_file: Path
-
-
-@dataclass(slots=True)
 class APConfig:
     """Operator-owned Wi-Fi access-point settings (SSID and PSK).
 
     Interface, connection name, address, and channel are fixed in
-    ``vibesensor.updates.hotspot.constants``.
+    ``vibesensor.hotspot.constants``.
     """
 
     ssid: str
     psk: str
-    self_heal: APSelfHealConfig
 
 
 @dataclass(slots=True)

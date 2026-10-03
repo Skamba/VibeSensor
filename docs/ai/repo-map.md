@@ -38,7 +38,8 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `history/`: `HistoryDB` (SQLite), history queries/projections, exports.
 - `settings/`: persisted car/sensor/speed-source/analysis/UI settings and the car library.
 - `speed/`: GPS (gpsd), Bluetooth OBD (`obd/`), selected-speed-source coordination.
-- `updates/`: wheel/firmware updater, releases, Wi-Fi uplink, hotspot self-heal.
+- `updates/`: wheel/firmware updater, releases, Wi-Fi uplink.
+- `hotspot/`: fixed hotspot settings and the periodic hotspot watchdog (`vibesensor-hotspot-self-heal` timer).
 - `simulator/`: sensor simulator and WebSocket smoke client.
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings).

@@ -26,6 +26,7 @@ from vibesensor.dsp.constants import (
 from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.runs import HistoryRunService
+from vibesensor.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB, SENSOR_MODEL
@@ -44,7 +45,6 @@ from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.obd.service import ObdService
 from vibesensor.speed.source_coordinator import build_speed_source_services
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
-from vibesensor.updates.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME
 from vibesensor.updates.runtime import build_update_manager
 from vibesensor.web.health_state import RuntimeHealthState
 from vibesensor.web.history_services import (

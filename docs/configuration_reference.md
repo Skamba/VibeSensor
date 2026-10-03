@@ -32,7 +32,7 @@ Only settings that differ between deployments (dev, Docker, Pi, isolated test
 runtimes) or that the operator owns (hotspot SSID/PSK) are configurable. Fixed
 tuning values live as Python constants next to the code that uses them (for
 example the live sample rate in `vibesensor/dsp/constants.py`, hotspot
-address/channel/interface in `vibesensor/updates/hotspot/constants.py`, and
+address/channel/interface in `vibesensor/hotspot/constants.py`, and
 run retention in `vibesensor/app/composition.py`).
 
 Keys that are not listed below are ignored with an
@@ -49,12 +49,12 @@ For local development examples, see `apps/server/config.dev.yaml`,
 |-----|---------|-------|
 | `ap.ssid` | `VibeSensor` | Hotspot SSID. Change this before real deployments. |
 | `ap.psk` | `""` | Empty string means an open AP. Set a PSK for non-prototype deployments. |
-| `ap.self_heal.enabled` | `true` | Enable the hotspot self-heal watchdog/timer. |
-| `ap.self_heal.state_file` | `data/hotspot-self-heal-state.json` | Writable state file used by the self-heal logic. Pi deployments override this into `/var/lib/vibesensor/`. |
 
-The hotspot address (`10.4.0.1/24`), channel (`7`, with 1/6/11 self-heal
-fallbacks), interface (`wlan0`, with a detected-device fallback), and
-NetworkManager profile name (`VibeSensor-AP`) are fixed.
+The hotspot address (`10.4.0.1/24`), channel (`7`), interface (`wlan0`, with a
+detected-device fallback), and NetworkManager profile name (`VibeSensor-AP`)
+are fixed in `vibesensor/hotspot/constants.py`. The hotspot watchdog
+(`vibesensor-hotspot-self-heal.timer`) has no settings; older `ap.self_heal.*`
+keys are ignored with a warning.
 
 ## `server`
 
