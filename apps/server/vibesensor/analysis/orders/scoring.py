@@ -39,6 +39,7 @@ class OrderFindingBuildContext:
     steady_speed: bool
     connected_locations: set[str]
     lang: str
+    shares_wheel_order_peaks: bool = False
 
 
 @dataclass(frozen=True)
@@ -158,11 +159,11 @@ def score_order_finding(
         match.matched_by_location,
         match.matched_points,
     )
-    source_expects_diffuse = hypothesis.suspected_source in (
+    zone_source = hypothesis.suspected_source in (
         VibrationSource.ENGINE,
         VibrationSource.DRIVELINE,
     )
-    effective_diffuse_penalty = 1.0 if source_expects_diffuse else diffuse_penalty
+    effective_diffuse_penalty = 1.0 if zone_source else diffuse_penalty
     confidence = compute_order_confidence(
         effective_match_rate=context.effective_match_rate,
         error_score=error_score,
@@ -182,6 +183,12 @@ def score_order_finding(
         n_connected_locations=len(context.connected_locations),
         no_wheel_sensors=no_wheel_override,
         path_compliance=match.compliance,
+        spread_zone_source=(
+            zone_source
+            and weak_spatial_separation
+            and not context.per_location_dominant
+            and not context.shares_wheel_order_peaks
+        ),
     )
 
     ranking_score = (

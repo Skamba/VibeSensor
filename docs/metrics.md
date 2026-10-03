@@ -77,6 +77,29 @@ A finding whose run-wide vibration strength band is negligible is capped at
 Moderate. The score itself stays internal (ranking); no percentage is shown in
 the UI or the PDF.
 
+Where the vibration sits feeds the score of an order-tracked finding
+(`analysis/orders/statistics.py::compute_order_confidence`), but how depends on
+the source:
+
+- **Wheel/tire** orders are diagnosed at a corner. Evidence spread evenly over
+  the corners (no dominant corner) lowers the score: the localisation factor
+  drops and the weak-separation penalty applies.
+- **Engine and driveline** orders are diagnosed as a zone (engine bay, axle,
+  centre tunnel), so the same order on the left and right is expected. When
+  such an order shows no dominant corner and its own evidence is established,
+  it scores like a wheel order at a clearly dominant corner, with no
+  weak-separation penalty. Established means all of:
+  - at least the moderate strength band (16 dB),
+  - present in at least half of the possible windows,
+  - a close frequency match (error score at least 0.5),
+  - seen on at least two sensors,
+  - and not an alias of a wheel order: fewer than half of its matched peaks
+    were also matched by a wheel order.
+
+  A faint or patchy engine/driveline match keeps the corner-dominance
+  penalties. This is how a fault-free run's road noise near an engine order
+  stays Weak (and so reads as no fault). The guards are tuned on the simulator.
+
 ## Processing profiles
 
 Filtering choices are explicit because live display smoothing must not silently

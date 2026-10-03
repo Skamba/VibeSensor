@@ -125,3 +125,34 @@ class TestComputeOrderConfidence:
         base = self._call(corroborating_locations=1)
         boosted = self._call(corroborating_locations=3)
         assert boosted > base, "3+ corroborating locations should boost confidence"
+
+    _SPREAD: dict[str, Any] = {
+        "weak_spatial_separation": True,
+        "localization_confidence": 0.05,
+        "dominance_ratio": 1.0,
+    }
+
+    def test_established_spread_zone_source_scores_like_a_clear_corner(self) -> None:
+        """Engine/driveline evidence equal on every corner is not penalised for it."""
+        clear_corner = self._call(localization_confidence=0.69, weak_spatial_separation=False)
+
+        assert self._call(**self._SPREAD, spread_zone_source=True) == pytest.approx(clear_corner)
+        assert self._call(**self._SPREAD) < clear_corner
+
+    @pytest.mark.parametrize(
+        "weak_evidence",
+        [
+            pytest.param({"absolute_strength_db": 12.0}, id="light_strength"),
+            pytest.param({"effective_match_rate": 0.40}, id="patchy_match"),
+            pytest.param({"error_score": 0.40}, id="loose_frequency_match"),
+            pytest.param({"corroborating_locations": 1}, id="one_sensor"),
+        ],
+    )
+    def test_spread_zone_source_without_established_evidence_keeps_the_penalties(
+        self,
+        weak_evidence: dict[str, Any],
+    ) -> None:
+        """Healthy-run noise near an engine order stays penalised for having no corner."""
+        assert self._call(**self._SPREAD, **weak_evidence, spread_zone_source=True) == self._call(
+            **self._SPREAD, **weak_evidence
+        )

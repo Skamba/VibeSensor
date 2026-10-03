@@ -99,7 +99,11 @@ coordinates the evidence flow:
    the stored sample peaks.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
    the best speed band or dominant location.
-4. Score the surviving evidence with `score_order_finding()`.
+4. Score the surviving evidence with `score_order_finding()`. Location terms
+   are source-aware: an engine/driveline order with no dominant corner is
+   not penalised for it once its own evidence is established, unless it
+   shares most of its peaks with a wheel order (see "Confidence levels" in
+   `docs/metrics.md`).
 5. Assemble a domain `Finding` with `assemble_order_finding()`.
 6. Split multi-location wheel findings when two corners are both strong.
 7. Apply `suppress_engine_aliases()` before returning the final ranked list.
