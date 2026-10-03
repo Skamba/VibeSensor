@@ -59,7 +59,8 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 - Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, and the report's owner-page text.
 - Default CI runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes.
-- Known misses stay listed as strict xfails (`KNOWN_MISSES`) until the analysis is fixed.
+- Network and clock conditions are part of the cases: a sensor losing frames, busy Wi-Fi delaying clock-sync replies, and a car start where recording begins before the sensor clocks sync (device timers within ~2 s of server time), optionally on congested Wi-Fi where the simulated firmware retransmits frames stop-and-wait (`Case.car_start`, `Case.wifi_retry_loss`). Each sensor's raw capture must stay on one continuous clock.
+- Every analysis rule should be justified by a case it changes for the better; a rule that changes no realistic case is a candidate for deletion. A miss is fixed at its root cause, not listed as an expected failure.
 - New simulator scenarios need a ground-truth entry there; prefer adding a case over adding hand-built peak fixtures in `tests/analysis/`.
 
 ## Backend test placement

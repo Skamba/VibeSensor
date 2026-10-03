@@ -157,6 +157,9 @@ class ClientRecord:
     # Set once the sensor acknowledged a sync command that carried an offset to
     # apply; from then on its DATA t0_us values are on the server clock.
     clock_offset_applied: bool = False
+    # The latest frame stamped on bare device time (before the offset applied).
+    device_frame_seq: int | None = None
+    device_frame_t0_us: int | None = None
     sync_offset_us: int | None = None
     sync_rtt_us: int | None = None
     last_sync_monotonic_us: int | None = None
@@ -322,9 +325,16 @@ def apply_data_message_update(
         record.dedup_window.clear()
         _forget_clock_sync(record)
 
-    clock_synced = record.clock_offset_applied and _t0_on_server_clock(
-        record, t0_us=t0_us, sample_count=sample_count, mono=mono
+    continues_device_timeline = _continues_device_timeline(
+        record, seq=seq, t0_us=t0_us, sample_count=sample_count
     )
+    clock_synced = record.clock_offset_applied and not continues_device_timeline
+    starts_device_timeline = record.device_frame_seq is None and not record.clock_offset_applied
+    if continues_device_timeline or starts_device_timeline:
+        # Only frames on the device timeline extend it: a frame already stamped
+        # on the server clock can arrive before the sync acknowledgement does.
+        record.device_frame_seq = seq
+        record.device_frame_t0_us = t0_us
     if record.dedup_window.track(seq):
         record.duplicates_received += 1
         return DataUpdateResult(is_duplicate=True, clock_synced=clock_synced)
@@ -394,6 +404,8 @@ def _is_sync_rtt_outlier(
 def _forget_clock_sync(record: ClientRecord) -> None:
     """A rebooted sensor restarts its device clock; its old offset no longer applies."""
     record.clock_offset_applied = False
+    record.device_frame_seq = None
+    record.device_frame_t0_us = None
     record.sync_offset_us = None
     record.sync_rtt_us = None
     record.pending_sync_cmd_seq = None
@@ -401,33 +413,43 @@ def _forget_clock_sync(record: ClientRecord) -> None:
     record.pending_sync_applies_offset = False
 
 
-def _t0_on_server_clock(
+# The firmware holds back at most 0.75 s of frames (``kDataMaxFrameAgeMs``) while
+# it retransmits; frames further on were queued after the offset was applied.
+_MAX_HELD_BACK_FRAMES = 8
+# A sensor's sample clock runs continuously: a frame on the same device timeline
+# lands within this of where it predicts (sync offsets are ms to seconds).
+_DEVICE_TIMELINE_MATCH_US = 5_000.0
+
+
+def _continues_device_timeline(
     record: ClientRecord,
     *,
+    seq: int,
     t0_us: int,
     sample_count: int,
-    mono: float,
 ) -> bool:
-    """Return whether *t0_us* reads as server-clock time rather than bare device time.
+    """Whether a frame continues the sensor's last frame stamped on bare device time.
 
-    A frame's first sample was taken about one frame duration before it arrived.
-    Bare device time is ``sync_offset_us`` behind the server clock, so the frame
-    is on the server clock when its t0 is closer to that expected server time
-    than its offset-corrected value is. This also rejects frames sampled before
-    the offset was applied that arrive after the sync acknowledgement.
+    The firmware stamps a frame when it queues it and sends the queue
+    stop-and-wait, so frames queued just before the sensor applied the clock
+    offset can arrive after the sync acknowledgement, still on device time.
+    Their t0 continues the device timeline (``frame duration`` per sequence
+    step), while frames stamped after the offset was applied are
+    ``sync_offset_us`` away from it. With an offset too small to tell, the two
+    timelines coincide and the frame counts as synced.
     """
+    ref_seq, ref_t0_us = record.device_frame_seq, record.device_frame_t0_us
     offset_us = record.sync_offset_us
-    if offset_us is None:
+    if ref_seq is None or ref_t0_us is None or record.sample_rate_hz <= 0:
         return False
-    frame_us = (
-        (float(sample_count) / float(record.sample_rate_hz)) * 1_000_000.0
-        if record.sample_rate_hz > 0
-        else 0.0
-    )
-    expected_first_sample_us = (mono * 1_000_000.0) - frame_us
-    return abs(t0_us - expected_first_sample_us) <= abs(
-        t0_us + offset_us - expected_first_sample_us
-    )
+    if offset_us is not None and abs(offset_us) <= _DEVICE_TIMELINE_MATCH_US:
+        return False
+    frames_after = (seq - ref_seq) & _SEQ_MASK
+    if frames_after == 0 or frames_after > _MAX_HELD_BACK_FRAMES:
+        return False
+    frame_us = (float(sample_count) / float(record.sample_rate_hz)) * 1_000_000.0
+    predicted_t0_us = ref_t0_us + frames_after * frame_us
+    return abs(t0_us - predicted_t0_us) <= _DEVICE_TIMELINE_MATCH_US
 
 
 def project_client_snapshots(

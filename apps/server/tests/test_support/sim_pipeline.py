@@ -23,6 +23,7 @@ import random
 import sys
 import time
 import tracemalloc
+from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -70,6 +71,10 @@ _SENSOR_CONTROL_BASE = 9100
 _NETWORK_LATENCY_S = 0.0015
 _LATENCY_SPIKE_SHARE = 0.3
 _HELLO_INTERVAL_S = 2.0
+# Firmware DATA retransmission (firmware/esp/src/runtime_config.h).
+_DATA_RETRANSMIT_S = 0.120
+_DATA_MAX_RETRANSMITS = 4
+_DATA_MAX_FRAME_AGE_S = 0.750
 _HANDSHAKE_POLL_S = 0.05
 _SPEED_UPDATE_PERIOD_S = 0.5
 _SAMPLE_RATE_HZ = 800
@@ -77,6 +82,9 @@ _FRAME_SAMPLES = 200
 _VIRTUAL_CLOCK_START_S = 50_000.0
 # Sensors apply the server's clock offset from their second sync exchange.
 _CLOCK_SYNC_WARMUP_S = 2.0 * CLOCK_SYNC_INTERVAL_S + 1.0
+# At car start the Pi and the sensors power up together, so a sensor's bare
+# device timer reads within a couple of seconds of the server's monotonic clock.
+_CAR_START_BOOT_SPREAD_S = 2.0
 _POST_ANALYSIS_TIMEOUT_S = 90.0
 _POST_ANALYSIS_S_PER_DRIVE_S = 0.5
 
@@ -135,6 +143,9 @@ class BenchSensor:
     frame_loss: float = 0.0
     # Extra delay of some control replies (sync ACKs) on the way to the server.
     uplink_latency_spike_s: float = 0.0
+    # Share of DATA transmissions lost on congested Wi-Fi; the sensor retransmits
+    # them (stop-and-wait), delaying the frames queued behind.
+    wifi_retry_loss: float = 0.0
 
 
 @dataclass(slots=True)
@@ -303,8 +314,14 @@ def run_sim_pipeline(
     client_seed: int,
     lang: str = "en",
     trace_post_analysis_memory: bool = False,
+    car_start: bool = False,
 ) -> SimPipelineResult:
-    """Record one simulated drive through the production pipeline and return its analysis."""
+    """Record one simulated drive through the production pipeline and return its analysis.
+
+    With *car_start*, everything powers up together and the recording starts as
+    soon as the sensors show up, before their clocks are synced: their first
+    chunks carry bare device time that reads close to (but not at) server time.
+    """
     runtime = build_runtime(load_config(_runtime_config(tmp_path)))
     try:
         return _record(
@@ -316,6 +333,7 @@ def run_sim_pipeline(
             client_seed=client_seed,
             lang=lang,
             trace_post_analysis_memory=trace_post_analysis_memory,
+            car_start=car_start,
         )
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
@@ -331,6 +349,7 @@ def _record(
     client_seed: int,
     lang: str,
     trace_post_analysis_memory: bool,
+    car_start: bool,
 ) -> SimPipelineResult:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -389,6 +408,11 @@ def _record(
                 profile_name="rough_road",
             )
             sim.order_hz = car.order_hz(100.0)
+            if car_start:
+                boot_rng = random.Random(client_seed * 16 + index)
+                sim.device_boot_mono_s = boot_rng.uniform(
+                    -_CAR_START_BOOT_SPREAD_S, _CAR_START_BOOT_SPREAD_S
+                )
             addr = (_SENSOR_HOST, control_port)
 
             def deliver_to_server(
@@ -432,7 +456,8 @@ def _record(
             assert registry.get(client_id) is not None, sensor.spec
             _assign_location(runtime, client_id, sensor.spec.location_code)
             client_ids[sensor.spec.location_code] = client_id
-        loop.run_until(start_s + _CLOCK_SYNC_WARMUP_S)
+        if not car_start:
+            loop.run_until(start_s + _CLOCK_SYNC_WARMUP_S)
 
         drive_s = sum(phase.duration_s for phase in phases)
         post_analysis_timeout_s = max(
@@ -501,8 +526,15 @@ def _start_sensor(
     loop.every(_HELLO_INTERVAL_S, hello, first_s=clock.now_s + sim.start_offset_s)
     frame_duration_us = sim.frame_samples * 1_000_000.0 / sim.sample_rate_hz
     loss_rng = random.Random(sim.client_id)
+    retry_rng = random.Random(sim.client_id[::-1])
+    data_addr = (_SENSOR_HOST, 40_000 + sim.control_port)
+    # Like the firmware (runtime_queue.cpp / runtime_transport.cpp): a frame is
+    # stamped with the clock offset in effect when it is queued, and the queue is
+    # sent stop-and-wait, the head retransmitted until the server acknowledges it.
+    queue: deque[tuple[bytes, float]] = deque()
+    head_attempts = [0]
 
-    def send_frame() -> None:
+    def enqueue() -> None:
         assert sensor.first_due_us is not None and sim.rng is not None
         frame_start_us = sensor.first_due_us + sensor.frame_index * frame_duration_us
         packet = pack_data(
@@ -511,20 +543,49 @@ def _start_sensor(
             t0_us=max(0, int(round(frame_start_us)) + sim.clock_offset_us),
             samples=sim.make_frame(),
         )
-        if loss_rng.random() >= sensor.spec.frame_loss:
-            data_protocol._process_datagram(
-                packet, (_SENSOR_HOST, 40_000 + sim.control_port), received_mono_s=clock.now_s
-            )
         sim.seq = (sim.seq + 1) & 0xFFFFFFFF
         sensor.frame_index += 1
+        tx_delay_s = pending_tx_delay[0]
         schedule_next()
+        if loss_rng.random() < sensor.spec.frame_loss:
+            return  # lost for good (before it reached the radio)
+        queue.append((packet, clock.now_s))
+        if len(queue) == 1:
+            loop.after(tx_delay_s, transmit)
+
+    def transmit() -> None:
+        packet, queued_s = queue[0]
+        head_attempts[0] += 1
+        if retry_rng.random() < sensor.spec.wifi_retry_loss:
+            if (
+                head_attempts[0] <= _DATA_MAX_RETRANSMITS
+                and clock.now_s + _DATA_RETRANSMIT_S - queued_s < _DATA_MAX_FRAME_AGE_S
+            ):
+                loop.after(_DATA_RETRANSMIT_S, transmit)
+                return
+            next_head()
+            return
+        loop.after(
+            _NETWORK_LATENCY_S,
+            lambda: data_protocol._process_datagram(packet, data_addr, received_mono_s=clock.now_s),
+        )
+        # The server's DATA_ACK comes back one more network hop later.
+        loop.after(2 * _NETWORK_LATENCY_S, next_head)
+
+    def next_head() -> None:
+        queue.popleft()
+        head_attempts[0] = 0
+        if queue:
+            transmit()
+
+    pending_tx_delay = [0.0]
 
     def schedule_next() -> None:
         assert sensor.first_due_us is not None and sim.rng is not None
         frame_start_us = sensor.first_due_us + sensor.frame_index * frame_duration_us
         ready_s = sim.monotonic_at_device_us(frame_start_us + frame_duration_us)
-        tx_delay_s = float(sim.rng.uniform(0.0, sim.send_jitter_s))
-        loop.at(ready_s + tx_delay_s + _NETWORK_LATENCY_S, send_frame)
+        pending_tx_delay[0] = float(sim.rng.uniform(0.0, sim.send_jitter_s))
+        loop.at(ready_s, enqueue)
 
     def wait_handshake() -> None:
         if not sim.handshake_complete:

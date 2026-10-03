@@ -30,7 +30,6 @@ type RawCaptureClockDomain = Literal["server_monotonic", "unverified"]
 type RawCaptureSampleRateProofState = Literal[
     "declared_only",
     "observed_consistent",
-    "timing_inconsistent",
     "missing",
 ]
 type RawCaptureClockProofState = Literal[

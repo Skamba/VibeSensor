@@ -118,10 +118,17 @@ proof** captured at finalize time:
 
 Raw capture only stores chunks stamped on the server clock. The registry
 marks a sensor clock-synced once the sensor acknowledges a sync command
-that carried an offset to apply (the second exchange), and a chunk is
-captured only when its `t0_us` also reads as server-clock time rather than
-bare device time (this catches queued pre-sync frames that arrive after the
-acknowledgement). Chunks a sensor sends before that are dropped — the live
+that carried an offset to apply (the second exchange). The firmware stamps a
+frame when it queues it and sends the queue stop-and-wait, retransmitting the
+head for up to 0.75 s, so frames queued just before the offset was applied can
+still arrive after the acknowledgement, on bare device time. The registry
+spots them because they continue the sensor's device timeline (its last
+pre-sync frame's `t0_us` plus one frame duration per sequence step, for up to
+8 frames), whereas frames stamped after the offset was applied are the offset
+away from it. Judging by arrival time instead fails at car start, when the Pi
+and the sensors boot together and a device timer reads within a second or two
+of server time: a synced frame held back by a retransmission then looks like
+device time and was dropped. Chunks a sensor sends before the sync are dropped — the live
 view still uses them — so each sensor's raw capture starts at its first
 synced chunk and summary rows from before it are simply not raw-backed. On a
 clean network every recorded row of a sensor that synced before the start is
@@ -135,11 +142,13 @@ registry keeps its current offset when an exchange's round trip exceeds twice
 (and by more than 1 ms) the round trip behind that offset, unless that offset
 is older than 8 s.
 
-The manifest's sample-rate proof compares consecutive chunks in `t0_us` order.
-A dropped chunk or a remaining clock step breaks one of those steps; replay
-records it as a gap or overlap and skips only the windows that cross it. A
-sensor is `timing_inconsistent` (and replays entirely from summary rows) only
-when more than 10% of its chunk steps disagree with the median rate.
+The manifest's sample-rate proof takes the median rate of consecutive chunks in
+`t0_us` order. A dropped chunk or a remaining clock step breaks one of those
+steps; replay records it as a gap or overlap (beyond 0.75 sample) and skips
+only the windows that cross it, however many there are. Windows between breaks
+hold the same samples the live spectra used, so there is nothing to gain from
+dropping a whole sensor with many breaks: a lossy or congested sensor keeps its
+intact windows raw-backed.
 
 Replay only treats `t0_us` as server-monotonic when that proof is
 explicitly `verified`. Older artifacts without the per-sensor proof, or

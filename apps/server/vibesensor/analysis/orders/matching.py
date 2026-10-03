@@ -18,7 +18,6 @@ from vibesensor.analysis._types import (
 )
 from vibesensor.analysis.constants import (
     MIN_ANALYSIS_FREQ_HZ,
-    ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S,
     ORDER_MIN_COVERAGE_DURATION_S,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_DURATION_S,
@@ -58,9 +57,6 @@ class OrderMatchAccumulator:
     has_phases: bool
     compliance: float
     matched_sample_indices: tuple[int, ...] = ()
-    # ``(sensor, position)`` per match: ``position`` counts that sensor's own
-    # samples, so adjacent positions are adjacent feature windows in time.
-    matched_sensor_positions: tuple[tuple[str, int], ...] = ()
 
     @property
     def match_rate(self) -> float:
@@ -88,11 +84,9 @@ class OrderMatchAccumulator:
 
         possible_duration_s = self.possible * feature_interval_s
         matched_duration_s = self.matched * feature_interval_s
-        contiguous_match_duration_s = self.longest_contiguous_match_points * feature_interval_s
         if (
             possible_duration_s < ORDER_MIN_COVERAGE_DURATION_S
             or matched_duration_s < ORDER_MIN_MATCH_DURATION_S
-            or contiguous_match_duration_s < ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S
         ):
             return False
         if steady_speed:
@@ -108,28 +102,6 @@ class OrderMatchAccumulator:
     def matched_peaks(self) -> frozenset[tuple[int, float]]:
         """The spectral peaks this hypothesis matched, as ``(sample index, peak Hz)``."""
         return frozenset(zip(self.matched_sample_indices, self.measured_vals, strict=True))
-
-    @property
-    def longest_contiguous_match_points(self) -> int:
-        """Largest streak of one sensor's consecutive samples that all matched.
-
-        Samples from several sensors are interleaved in time, so the streak is
-        counted per sensor: a fault felt by only some sensors (one axle, one
-        corner) must not have its streak broken by the sensors that don't feel it.
-        """
-        if not self.matched_sensor_positions:
-            return self.matched
-
-        positions_by_sensor: dict[str, list[int]] = defaultdict(list)
-        for sensor, position in self.matched_sensor_positions:
-            positions_by_sensor[sensor].append(position)
-        longest = 1
-        for positions in positions_by_sensor.values():
-            current = 1
-            for prev_position, position in zip(positions, positions[1:], strict=False):
-                current = current + 1 if position == prev_position + 1 else 1
-                longest = max(longest, current)
-        return longest
 
 
 @dataclass(frozen=True)
@@ -209,8 +181,6 @@ def match_samples_for_hypothesis(
     measured_vals: list[float] = []
     matched_points: list[OrderMatchObservation] = []
     matched_sample_indices: list[int] = []
-    matched_sensor_positions: list[tuple[str, int]] = []
-    sensor_sample_counts: dict[str, int] = defaultdict(int)
     ref_sources: set[str] = set()
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
     matched_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -222,9 +192,6 @@ def match_samples_for_hypothesis(
     compliance = getattr(hypothesis, "path_compliance", 1.0)
 
     for sample_idx, sample in enumerate(samples):
-        sensor = sample.client_id or _location_label(sample, lang=lang)
-        sensor_position = sensor_sample_counts[sensor]
-        sensor_sample_counts[sensor] += 1
         peaks = cached_peaks[sample_idx]
         if not peaks:
             continue
@@ -263,7 +230,6 @@ def match_samples_for_hypothesis(
 
         matched += 1
         matched_sample_indices.append(sample_idx)
-        matched_sensor_positions.append((sensor, sensor_position))
         if sample_location:
             matched_by_location[sample_location] += 1
         if sample_speed_bin is not None:
@@ -313,5 +279,4 @@ def match_samples_for_hypothesis(
         has_phases=has_phases,
         compliance=compliance,
         matched_sample_indices=tuple(matched_sample_indices),
-        matched_sensor_positions=tuple(matched_sensor_positions),
     )

@@ -345,17 +345,6 @@ def _rebuild_sample(
                 reason="sample_rate_missing",
             ),
         )
-    if sensor_manifest.sample_rate_proof_state == "timing_inconsistent":
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="sample_rate_unverified",
-            ),
-        )
     requested_sample_rate_hz = int(sample.sample_rate_hz or 0)
     sample_rate_mismatch = (
         requested_sample_rate_hz > 0 and requested_sample_rate_hz != sample_rate_hz

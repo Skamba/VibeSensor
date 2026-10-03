@@ -1,4 +1,4 @@
-"""Sample-rate proof of a finalized raw capture: isolated timing breaks do not void it."""
+"""Sample-rate proof of a finalized raw capture: timing breaks do not void it."""
 
 from __future__ import annotations
 
@@ -47,24 +47,14 @@ def _contiguous(count: int) -> list[int]:
         ("clock step back", _contiguous(20) + [t0 - 6_000 for t0 in _contiguous(40)[20:]]),
         ("clock step forward", _contiguous(20) + [t0 + 6_000 for t0 in _contiguous(40)[20:]]),
         ("reordered chunk", (lambda t: t[:10] + [t[11], t[10]] + t[12:])(_contiguous(40))),
+        # Replay skips the windows crossing each break; the median rate holds.
+        (
+            "widespread jitter",
+            [t0 + (6_000 if index % 3 == 0 else 0) for index, t0 in enumerate(_contiguous(40))],
+        ),
     ],
 )
-def test_isolated_timing_breaks_keep_the_observed_rate(
+def test_timing_breaks_keep_the_observed_rate(
     tmp_path: Path, label: str, t0s_us: list[int]
 ) -> None:
     assert _proof_state(tmp_path, t0s_us) == "observed_consistent", label
-
-
-def test_widespread_timing_breaks_leave_the_rate_unverified(tmp_path: Path) -> None:
-    jittered = [t0 + (6_000 if index % 3 == 0 else 0) for index, t0 in enumerate(_contiguous(40))]
-
-    assert _proof_state(tmp_path, jittered) == "timing_inconsistent"
-
-
-def test_timing_breaks_in_more_than_a_tenth_of_steps_leave_the_rate_unverified(
-    tmp_path: Path,
-) -> None:
-    # Every 10th chunk jitters: 7 of 39 steps (18%) break, above the 10% tolerance.
-    jittered = [t0 + (6_000 if index % 10 == 0 else 0) for index, t0 in enumerate(_contiguous(40))]
-
-    assert _proof_state(tmp_path, jittered) == "timing_inconsistent"

@@ -97,6 +97,10 @@ class Case:
     frame_loss: dict[str, float] = field(default_factory=dict)
     # Extra delay (s) of 30 % of every sensor's clock-sync replies: busy Wi-Fi.
     uplink_latency_spike_s: float = 0.0
+    # Recording starts right at car start, before the sensor clocks are synced.
+    car_start: bool = False
+    # Share of DATA transmissions every sensor has to retry (congested Wi-Fi).
+    wifi_retry_loss: float = 0.0
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -104,8 +108,19 @@ class Case:
                 sensor,
                 frame_loss=self.frame_loss.get(sensor.location_code, 0.0),
                 uplink_latency_spike_s=self.uplink_latency_spike_s,
+                wifi_retry_loss=self.wifi_retry_loss,
             )
             for sensor in SENSORS
+        )
+
+    @property
+    def clean_network(self) -> bool:
+        """Every sensor synced before the start and no data was lost on the way."""
+        return (
+            not self.frame_loss
+            and self.uplink_latency_spike_s == 0
+            and self.wifi_retry_loss == 0
+            and not self.car_start
         )
 
     def expected_for(self, car: str) -> Expected:
@@ -195,13 +210,50 @@ _TIRE_OUT_OF_ROUND = Profile(
     modulation_depth=0.12,
     reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
-_BENCH_PROFILES = {profile.name: profile for profile in (_ENGINE_FIRST_ORDER, _TIRE_OUT_OF_ROUND)}
+# An unbalanced tire that is also oval: once and twice per turn about equally
+# strong (T2 ~1 dB above T1). Balancing is the cheap first fix, so the diagnosis
+# stays on the fundamental unless the 2nd order clearly dominates.
+_IMBALANCED_OVAL_TIRE = Profile(
+    name="bench_imbalanced_oval_tire",
+    tones=(),
+    order_tones=(
+        ("wheel_1x", 1.0, (150.0, 85.0, 115.0)),
+        ("wheel_2x", 1.0, (165.0, 95.0, 127.0)),
+    ),
+    noise_std=24.0,
+    bump_probability=0.004,
+    bump_decay=0.94,
+    bump_strength=(30.0, 24.0, 45.0),
+    modulation_hz=0.22,
+    modulation_depth=0.12,
+    reference_speed_kmh=DEFAULT_SPEED_KMH,
+)
+_BENCH_PROFILES = {
+    profile.name: profile
+    for profile in (_ENGINE_FIRST_ORDER, _TIRE_OUT_OF_ROUND, _IMBALANCED_OVAL_TIRE)
+}
 
 
 @pytest.fixture(autouse=True)
 def _bench_profiles(monkeypatch: pytest.MonkeyPatch) -> None:
     for name, profile in _BENCH_PROFILES.items():
         monkeypatch.setitem(PROFILE_LIBRARY, name, profile)
+
+
+def _guided(
+    *faults: PhaseOverride,
+    top_kmh: float = 100.0,
+    coast_to_kmh: float = 70.0,
+    coast_s: float = 10.0,
+    coast: tuple[PhaseOverride, ...] | None = None,
+) -> tuple[ScenarioPhase, ...]:
+    """Guided test drive: sweep up, hold, then coast down in neutral."""
+    in_neutral = faults if coast is None else coast
+    return (
+        _phase("sweep", 8.0, 50.0, top_kmh, *faults, guided="sweep"),
+        _phase("hold", 6.0, top_kmh, top_kmh, *faults, guided="hold"),
+        _phase("coast", coast_s, top_kmh, coast_to_kmh, *in_neutral, guided="coast_down"),
+    )
 
 
 def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
@@ -271,6 +323,50 @@ BENCH_CASES = (
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         uplink_latency_spike_s=0.03,
     ),
+    # Car start: the recording starts before the sensor clocks are synced, while
+    # their bare device timers read within ~2 s of server time.
+    Case(
+        "bench-rear-right-wheel-sweep-car-start",
+        _sweep(
+            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+        ),
+        _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
+        car_start=True,
+    ),
+    Case(
+        "bench-rear-right-wheel-sweep-car-start-congested",
+        _sweep(
+            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+        ),
+        _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
+        car_start=True,
+        wifi_retry_loss=0.3,
+    ),
+    Case(
+        "bench-rear-left-imbalanced-oval-sweep",
+        _sweep(_ov("rear-left", _IMBALANCED_OVAL_TIRE.name, 0.85, 1.0)),
+        _fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
+    ),
+    # A long neutral coast-down to 40 km/h: the imbalance fades with speed, so it
+    # is seen in fewer windows than at speed, yet clearly keeps going.
+    Case(
+        "bench-guided-wheel-long-coastdown",
+        _guided(
+            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
+            top_kmh=110.0,
+            coast_to_kmh=40.0,
+            coast_s=14.0,
+        ),
+        _fault(
+            "wheel/tire",
+            {"front_left_wheel"},
+            "T1",
+            speed_dependence="vehicle_speed",
+            dominant_corner=True,
+        ),
+    ),
     Case(
         "bench-driveline-sweep",
         _sweep(
@@ -317,6 +413,26 @@ BENCH_CASES = (
         {
             "default": _fault(
                 "engine", {"engine_bay"}, "E1", speed_dependence="engine_speed", levels=MODERATE
+            )
+        },
+    ),
+    # A failing engine mount passes the engine's first order mostly into the
+    # front-right corner. On the default car E1 sits on T2, so the order evidence
+    # points at that wheel; the coast-down shows it stops in neutral, so it must
+    # not be sent to the tire shop.
+    Case(
+        "bench-guided-engine-mount-front-right",
+        _guided(
+            _ov("all", _ENGINE_FIRST_ORDER.name, 0.25, 0.9),
+            _ov("front-right", _ENGINE_FIRST_ORDER.name, 0.9, 0.9),
+            coast=(_ov("all", "engine_idle", 0.2, 0.6),),
+        ),
+        _fault("engine", {"engine_bay"}, "E1", speed_dependence="engine_speed"),
+        {
+            "default": Expected(
+                verdicts=frozenset({"weak_evidence"}),
+                levels=WEAK_ONLY,
+                speed_dependence="engine_speed",
             )
         },
     ),
@@ -430,6 +546,10 @@ _ORDER_TONES = {
     "E2": ("engine_2x", 1.0),
 }
 _SIM_MG_PER_COUNT = 1000.0 / 256.0  # ADXL345 full-resolution counts
+_FRAME_SAMPLES = 200  # samples per simulated DATA frame (test_support.sim_pipeline)
+# A slow, one-sided sync exchange on busy Wi-Fi can step a sensor clock by up to
+# half its extra delay (30 ms here).
+_MAX_SYNC_STEP_US = 25_000
 
 
 def injected_order_mg(phases: tuple[ScenarioPhase, ...], order_code: str) -> dict[str, float]:
@@ -495,18 +615,14 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         scenario_name=case.case_id,
         phases=case.phases,
         client_seed=seed,
+        car_start=case.car_start,
     )
     try:
         lossy = bool(case.frame_loss)
-        _assert_case(
-            result,
-            car,
-            case.expected_for(car_key),
-            case.phases,
-            lossy=lossy,
-            clean_network=not lossy and case.uplink_latency_spike_s == 0,
-        )
-        _assert_frame_integrity(result, lossy=lossy)
+        _assert_case(result, car, case.expected_for(car_key), case)
+        if not case.wifi_retry_loss:
+            # Congested Wi-Fi may or may not drop a frame for good.
+            _assert_frame_integrity(result, lossy=lossy)
         if (case.case_id, car_key) in PDF_CASES:
             _assert_pdf_text(result)
     finally:
@@ -535,10 +651,7 @@ def _assert_case(
     result: SimPipelineResult,
     car: BenchCar,
     expected: Expected,
-    phases: tuple[ScenarioPhase, ...],
-    *,
-    lossy: bool = False,
-    clean_network: bool = True,
+    case: Case,
 ) -> None:
     diagnosis = result.diagnosis
     summary = (
@@ -560,12 +673,13 @@ def _assert_case(
         assert diagnosis["order_code"] in expected.order_codes, summary
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, summary)
-        _assert_order_amplitude_mg(diagnosis, phases)
+        _assert_order_amplitude_mg(diagnosis, case.phases)
     if expected.speed_dependence is not None:
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
     _assert_spectrum_markers(diagnosis, car)
     _assert_sensor_identity(result)
-    _assert_raw_backed(result, lossy=lossy, clean_network=clean_network)
+    _assert_raw_backed(result, case)
+    _assert_raw_capture_on_one_clock(result)
     _assert_report_view(result, diagnosis, expected)
 
 
@@ -635,25 +749,54 @@ def _assert_frame_integrity(result: SimPipelineResult, *, lossy: bool) -> None:
         assert not result.report.quality.all_passed
 
 
-def _assert_raw_backed(result: SimPipelineResult, *, lossy: bool, clean_network: bool) -> None:
-    """Every sensor clock-synced before the drive, so analysis replays the raw capture.
+def _assert_raw_capture_on_one_clock(result: SimPipelineResult) -> None:
+    """Each sensor's raw chunks sit on its own continuous sample clock.
+
+    The simulated sensors sample without pause, so consecutive raw chunks are a
+    whole number of frames apart (more than one where frames were lost), give or
+    take a clock-sync correction. A chunk stamped on another clock (bare device
+    time, seconds off at car start) breaks that.
+    """
+    capture = result.history_db.load_raw_capture(result.run_id)
+    assert capture is not None
+    for sensor in capture.sensors:
+        frame_us = 1_000_000.0 * _FRAME_SAMPLES / sensor.manifest.sample_rate_hz
+        starts = sorted(chunk.t0_us for chunk in sensor.chunks)
+        for previous, current in zip(starts, starts[1:], strict=False):
+            frames = (current - previous) / frame_us
+            off_us = abs(frames - round(frames)) * frame_us
+            assert round(frames) >= 1 and off_us < _MAX_SYNC_STEP_US, (
+                sensor.manifest.client_id,
+                previous,
+                current,
+            )
+
+
+def _assert_raw_backed(result: SimPipelineResult, case: Case) -> None:
+    """Analysis replays the raw capture wherever the sensor clocks were synced.
 
     On a clean network every recorded row is replayed from raw samples (rows
     whose spectrum reaches back before the start are not recorded at all).
     """
     metadata = result.analysis.payload["analysis_metadata"]
     assert isinstance(metadata, dict)
-    if clean_network:
-        assert metadata["raw_capture_mode"] == "raw_backed", metadata
-        assert metadata["raw_backed_sample_count"] == metadata["total_sample_count"], metadata
-    assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}, metadata
     raw_backed, total = metadata["raw_backed_sample_count"], metadata["total_sample_count"]
     assert isinstance(raw_backed, int) and isinstance(total, int)
-    if lossy:
+    if case.clean_network:
+        assert metadata["raw_capture_mode"] == "raw_backed", metadata
+        assert raw_backed == total, metadata
+    assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}, metadata
+    if case.frame_loss:
         # The lossy sensor's frame gaps leave its rows to the stored summaries.
         assert raw_backed >= 0.6 * total, metadata
         return
-    assert raw_backed >= 0.85 * total, metadata
+    if case.car_start:
+        # Chunks stamped on bare device time before the sync are not captured, so
+        # each sensor's raw timeline starts at its first synced chunk; only the
+        # first seconds (sync plus one FFT window) replay from the summaries.
+        assert raw_backed >= 0.6 * total, metadata
+    else:
+        assert raw_backed >= 0.85 * total, metadata
     assert metadata["raw_replay_sample_rate_unverified_sensor_count"] == 0
     assert metadata["raw_replay_timing_fallback_count"] == 0
 

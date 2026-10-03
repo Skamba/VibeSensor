@@ -32,8 +32,6 @@ _BYTES_PER_AXIS = 2
 _BYTES_PER_SAMPLE = _AXIS_COUNT * _BYTES_PER_AXIS
 _MANIFEST_FILE_NAME = "manifest.json"
 _RAW_CAPTURE_DIR_NAME = "raw-runs"
-_OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE = 0.02
-_MAX_DISCONTINUOUS_STEP_FRACTION = 0.1
 _DECLARED_SAMPLE_RATE_ALIGNMENT_TOLERANCE = 0.01
 
 
@@ -268,20 +266,9 @@ def _derive_sensor_sample_rate(
             return declared_sample_rate_hz, declared_sample_rate_hz, "declared_only"
         return 0, None, "missing"
 
-    # A dropped chunk or a sensor clock step breaks one chunk-to-chunk step; the replay
-    # timeline splits there and skips the windows that cross it. Only a sensor whose
-    # steps disagree beyond such isolated breaks has an unverifiable sample rate.
-    stability_baseline_hz = max(1, representative_rate_hz)
-    discontinuous_step_count = sum(
-        1
-        for rate_hz in observed_rates_hz
-        if abs(rate_hz - representative_rate_hz) / stability_baseline_hz
-        > _OBSERVED_SAMPLE_RATE_STABILITY_TOLERANCE
-    )
-    if discontinuous_step_count > _MAX_DISCONTINUOUS_STEP_FRACTION * len(observed_rates_hz):
-        fallback_rate_hz = declared_sample_rate_hz or representative_rate_hz
-        return fallback_rate_hz, declared_sample_rate_hz, "timing_inconsistent"
-
+    # A dropped chunk or a sensor clock step breaks a chunk-to-chunk step; the
+    # median ignores it, and the replay timeline splits there and skips only the
+    # windows that cross it.
     if declared_sample_rate_hz is not None:
         declared_delta = abs(representative_rate_hz - declared_sample_rate_hz) / max(
             1,
