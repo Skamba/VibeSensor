@@ -1,7 +1,7 @@
 """Print hotspot settings as shell variable exports for sourcing by hotspot_nmcli.sh.
 
 SSID and PSK come from the ``ap`` section of the YAML config; address, channel,
-interface, and connection name are fixed in ``vibesensor.updates.hotspot.constants``.
+interface, and connection name are fixed in ``vibesensor.hotspot.constants``.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from vibesensor.app.config_defaults import DEFAULT_CONFIG
-from vibesensor.updates.hotspot.constants import (
+from vibesensor.hotspot.constants import (
     HOTSPOT_CHANNEL,
     HOTSPOT_CON_NAME,
     HOTSPOT_IFNAME,

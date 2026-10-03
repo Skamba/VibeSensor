@@ -15,10 +15,6 @@ DEFAULT_CONFIG: JsonObject = {
     "ap": {
         "ssid": "VibeSensor",
         "psk": "",
-        "self_heal": {
-            "enabled": True,
-            "state_file": "data/hotspot-self-heal-state.json",
-        },
     },
     "server": {"host": "0.0.0.0", "port": 80},
     "udp": {

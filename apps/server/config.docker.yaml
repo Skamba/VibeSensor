@@ -1,10 +1,6 @@
 # Docker overrides — only fields that differ from Pi defaults.
 # Disables Pi-only services and keeps rollback data in container-local storage.
 
-ap:
-  self_heal:
-    enabled: false  # Docker containers have no NetworkManager/hostapd for AP management
-
 server:
   port: 8000
 

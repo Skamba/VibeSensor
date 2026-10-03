@@ -1,10 +1,10 @@
 [Unit]
-Description=VibeSensor hotspot periodic health check and self-heal
+Description=VibeSensor hotspot watchdog (bring the hotspot back up when it is down)
 After=NetworkManager.service
 Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
-# The timer owns cadence; each run is a single health-check/heal pass.
-ExecStart=__VENV_DIR__/bin/vibesensor-hotspot-self-heal --mode check-heal --config /etc/vibesensor/config.yaml
+# The timer owns cadence; each run is a single check and, if needed, one recovery pass.
+ExecStart=__VENV_DIR__/bin/vibesensor-hotspot-self-heal
 SyslogIdentifier=vibesensor-hotspot-selfheal

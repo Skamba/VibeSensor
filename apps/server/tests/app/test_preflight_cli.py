@@ -22,11 +22,7 @@ def test_preflight_cli_dump_defaults(monkeypatch, capsys) -> None:
     assert captured.err == ""
     assert payload["server"]["port"] == 80
     assert "processing" not in payload
-    assert payload["ap"] == {
-        "ssid": "VibeSensor",
-        "psk": "",
-        "self_heal": {"enabled": True, "state_file": "data/hotspot-self-heal-state.json"},
-    }
+    assert payload["ap"] == {"ssid": "VibeSensor", "psk": ""}
 
 
 def test_preflight_cli_requires_config_without_dump_defaults(monkeypatch, capsys) -> None:

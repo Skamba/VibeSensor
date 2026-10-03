@@ -112,6 +112,12 @@ sudo systemctl status vibesensor.service vibesensor-hotspot.service --no-pager
 sudo systemctl status vibesensor-hotspot-self-heal.timer --no-pager
 ```
 
+   The timer runs the hotspot watchdog every 2 minutes. When `VibeSensor-AP` is
+   not active and no other connection (such as the updater's Wi-Fi uplink) owns
+   `wlan0`, it retries `nmcli connection up` with backoff and then restarts
+   `vibesensor-hotspot.service` to re-provision the profile. Its log lines are
+   in `journalctl -t vibesensor-hotspot-selfheal`.
+
 2. Inspect the recent service logs:
 
 ```bash

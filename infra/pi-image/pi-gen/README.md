@@ -151,7 +151,7 @@ The image contains:
 - systemd services enabled at boot:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
-  - `vibesensor-hotspot-self-heal.timer` — periodic AP health check (every 2 min)
+  - `vibesensor-hotspot-self-heal.timer` — hotspot watchdog (every 2 min): reactivates `VibeSensor-AP`, then re-provisions via `vibesensor-hotspot.service`
 - Bluetooth OBD support prerequisites:
   - `bluez` / `pi-bluetooth` userspace packages in the image
   - privileged helper `apps/server/scripts/vibesensor_obd_admin.py`
@@ -222,5 +222,5 @@ to produce the image. The current flow is:
 2. sync runtime repo + app artifacts into the tracked stage templates,
 3. copy those templates into the generated `pi-gen` stage tree,
 4. build an ARM wheelhouse and install the server from the prebuilt wheel (non-editable),
-5. enable the hotspot and self-heal services,
+5. enable the hotspot service and hotspot watchdog timer,
 6. run the standalone validator when post-build validation is enabled.

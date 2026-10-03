@@ -112,11 +112,6 @@ def build_isolated_server_config(
     gps = _mapping_section(data, "gps")
     gps["gps_enabled"] = False
 
-    ap = _mapping_section(data, "ap")
-    self_heal = _mapping_section(ap, "self_heal")
-    self_heal["enabled"] = False
-    self_heal["state_file"] = str(runtime_data / "hotspot-self-heal-state.json")
-
     logging = _mapping_section(data, "logging")
     logging["history_db_path"] = str(runtime_data / "history.db")
     logging["app_log_path"] = str(runtime_data / "app.log")

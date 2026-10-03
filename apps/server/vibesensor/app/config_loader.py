@@ -12,7 +12,6 @@ from vibesensor.app.config_paths import SERVER_DIR
 from vibesensor.app.config_schema import (
     APConfig,
     AppConfig,
-    APSelfHealConfig,
     GPSConfig,
     LoggingConfig,
     ServerConfig,
@@ -102,18 +101,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     logging_cfg = _require_config_section(merged.get("logging", {}), "logging")
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     update_cfg = _require_config_section(merged.get("update", {}), "update")
-    self_heal_cfg = _require_config_section(ap_cfg.get("self_heal", {}), "ap.self_heal")
 
     app_log_path_raw = logging_cfg.get("app_log_path")
     app_config = AppConfig(
-        ap=APConfig(
-            ssid=str(ap_cfg["ssid"]),
-            psk=str(ap_cfg["psk"]),
-            self_heal=APSelfHealConfig(
-                enabled=bool(self_heal_cfg["enabled"]),
-                state_file=_resolve_config_path(str(self_heal_cfg["state_file"]), path),
-            ),
-        ),
+        ap=APConfig(ssid=str(ap_cfg["ssid"]), psk=str(ap_cfg["psk"])),
         server=ServerConfig(
             host=str(server_cfg["host"]),
             port=_coerce_port(server_cfg["port"], "server.port"),
