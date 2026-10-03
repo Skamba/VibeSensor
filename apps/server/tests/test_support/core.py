@@ -30,113 +30,15 @@ SENSOR_RR = "rear-right"
 ALL_WHEEL_SENSORS = [SENSOR_FL, SENSOR_FR, SENSOR_RL, SENSOR_RR]
 ALL_SENSORS = ALL_WHEEL_SENSORS  # convenience alias
 
-# Non-wheel sensor names for multi-sensor scenarios
-SENSOR_ENGINE = "engine-bay"
-SENSOR_DRIVESHAFT = "driveshaft-tunnel"
-SENSOR_TRANSMISSION = "transmission"
-SENSOR_TRUNK = "trunk"
-SENSOR_DRIVER_SEAT = "driver-seat"
-SENSOR_FRONT_SUBFRAME = "front-subframe"
-SENSOR_REAR_SUBFRAME = "rear-subframe"
-SENSOR_PASSENGER_SEAT = "front-passenger-seat"
-
-NON_WHEEL_SENSORS = [
-    SENSOR_ENGINE,
-    SENSOR_DRIVESHAFT,
-    SENSOR_TRANSMISSION,
-    SENSOR_TRUNK,
-    SENSOR_DRIVER_SEAT,
-    SENSOR_FRONT_SUBFRAME,
-    SENSOR_REAR_SUBFRAME,
-    SENSOR_PASSENGER_SEAT,
-]
-
-# Corner code → canonical sensor name
-CORNER_SENSORS = {
-    "FL": SENSOR_FL,
-    "FR": SENSOR_FR,
-    "RL": SENSOR_RL,
-    "RR": SENSOR_RR,
-}
-
 # Speed bands
 SPEED_LOW = 50.0  # km/h  (wheel_1x ≈ 6.5 Hz with default tires, above MIN_ANALYSIS_FREQ_HZ)
 SPEED_MID = 60.0
 SPEED_HIGH = 100.0
-SPEED_VERY_HIGH = 120.0
-
 # ---------------------------------------------------------------------------
 # Car profiles – five realistic vehicle configurations for cross-profile
 # parameterised testing.  Each profile overrides tire geometry and drivetrain
 # ratios that affect wheel/engine frequency calculations.
 # ---------------------------------------------------------------------------
-
-CAR_PROFILES: list[dict[str, Any]] = [
-    {
-        "name": "performance_suv",
-        "tire_width_mm": 285.0,
-        "tire_aspect_pct": 30.0,
-        "rim_in": 21.0,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-    },
-    {
-        "name": "economy_sedan",
-        "tire_width_mm": 205.0,
-        "tire_aspect_pct": 55.0,
-        "rim_in": 16.0,
-        "final_drive_ratio": 3.94,
-        "current_gear_ratio": 0.73,
-    },
-    {
-        "name": "sports_coupe",
-        "tire_width_mm": 225.0,
-        "tire_aspect_pct": 40.0,
-        "rim_in": 18.0,
-        "final_drive_ratio": 3.27,
-        "current_gear_ratio": 0.85,
-    },
-    {
-        "name": "off_road_truck",
-        "tire_width_mm": 265.0,
-        "tire_aspect_pct": 70.0,
-        "rim_in": 17.0,
-        "final_drive_ratio": 3.73,
-        "current_gear_ratio": 0.75,
-    },
-    {
-        "name": "compact_city",
-        "tire_width_mm": 195.0,
-        "tire_aspect_pct": 65.0,
-        "rim_in": 15.0,
-        "final_drive_ratio": 4.06,
-        "current_gear_ratio": 0.68,
-    },
-]
-
-CAR_PROFILE_IDS: list[str] = [p["name"] for p in CAR_PROFILES]
-
-# Additional profile shapes used by the broader coverage-plan expansion.
-ADDITIONAL_CAR_PROFILES: list[dict[str, Any]] = [
-    {
-        "name": "luxury_sedan",
-        "tire_width_mm": 245.0,
-        "tire_aspect_pct": 45.0,
-        "rim_in": 19.0,
-        "final_drive_ratio": 2.79,
-        "current_gear_ratio": 0.67,
-    },
-    {
-        "name": "cargo_van",
-        "tire_width_mm": 225.0,
-        "tire_aspect_pct": 75.0,
-        "rim_in": 16.0,
-        "final_drive_ratio": 4.30,
-        "current_gear_ratio": 0.79,
-    },
-]
-
-ADDITIONAL_CAR_PROFILE_IDS: list[str] = [p["name"] for p in ADDITIONAL_CAR_PROFILES]
 
 
 def _normalize_wheel_slot(name: str) -> str | None:
@@ -186,80 +88,6 @@ def _fault_transfer_fraction(
         return max(0.0, min(1.0, override))
     # Keep realistic coupling while preserving clear localization headroom.
     return _corner_transfer_fraction(fault_sensor, sink_sensor) * 0.58
-
-
-@cache
-def _profile_circ_cached(
-    tire_width_mm: int,
-    tire_aspect_pct: int,
-    rim_in: int,
-    tire_deflection_factor: float | None,
-) -> float:
-    spec = TireSpec.from_aspects(
-        {"tire_width_mm": tire_width_mm, "tire_aspect_pct": tire_aspect_pct, "rim_in": rim_in},
-        deflection_factor=tire_deflection_factor if tire_deflection_factor is not None else 1.0,
-    )
-    assert spec is not None
-    circ = spec.circumference_m
-    assert circ > 0
-    return circ
-
-
-def profile_circ(profile: dict[str, Any]) -> float:
-    """Compute tire circumference for a car profile."""
-    return _profile_circ_cached(
-        profile["tire_width_mm"],
-        profile["tire_aspect_pct"],
-        profile["rim_in"],
-        profile.get("tire_deflection_factor"),
-    )
-
-
-def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
-    """Compute wheel-1x Hz for a car profile at *speed_kmh*."""
-    circ = profile_circ(profile)
-    hz = speed_kmh * KMH_TO_MPS / circ
-    assert hz > 0
-    return hz
-
-
-@cache
-def _profile_metadata_base(
-    tire_width_mm: int,
-    tire_aspect_pct: int,
-    rim_in: int,
-    tire_deflection_factor: float | None,
-    final_drive_ratio: float,
-    current_gear_ratio: float,
-) -> tuple[tuple[str, Any], ...]:
-    return tuple(
-        standard_metadata(
-            tire_circumference_m=_profile_circ_cached(
-                tire_width_mm,
-                tire_aspect_pct,
-                rim_in,
-                tire_deflection_factor,
-            ),
-            final_drive_ratio=final_drive_ratio,
-            current_gear_ratio=current_gear_ratio,
-        ).items(),
-    )
-
-
-def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any]:
-    """Build run metadata for a specific car profile."""
-    meta = dict(
-        _profile_metadata_base(
-            profile["tire_width_mm"],
-            profile["tire_aspect_pct"],
-            profile["rim_in"],
-            profile.get("tire_deflection_factor"),
-            profile["final_drive_ratio"],
-            profile["current_gear_ratio"],
-        ),
-    )
-    meta.update(overrides)
-    return meta
 
 
 # ---------------------------------------------------------------------------
@@ -370,14 +198,6 @@ def engine_hz(
 # Diagnosis contract assertion helpers
 # ---------------------------------------------------------------------------
 
-_FINDING_REQUIRED_FIELDS = (
-    "finding_id",
-    "suspected_source",
-    "confidence",
-    "evidence_summary",
-    "frequency_hz_or_order",
-)
-
 _TOP_CAUSE_REQUIRED_FIELDS = (
     "finding_id",
     "suspected_source",
@@ -425,46 +245,6 @@ def _assert_speed_band_overlap(band: str, min_kmh: float, max_kmh: float) -> Non
     assert high > min_kmh and low < max_kmh, (
         f"Speed band {band} ({low}-{high}) does not overlap expected range {min_kmh}-{max_kmh} km/h"
     )
-
-
-def assert_finding_contract(
-    finding: dict[str, Any],
-    *,
-    required_fields: tuple[str, ...] = _FINDING_REQUIRED_FIELDS,
-    expected_source: str | None = None,
-    expected_location: str | None = None,
-    expected_speed_band_range: tuple[float, float] | None = None,
-    confidence_range: tuple[float, float] = (0.0, 1.0),
-    expected_finding_key: str | None = None,
-    expect_no_weak_spatial: bool = False,
-) -> None:
-    """Validate a single finding dict satisfies the diagnosis contract."""
-    for field_name in required_fields:
-        assert field_name in finding, (
-            f"Missing required field '{field_name}' in finding: {list(finding.keys())}"
-        )
-
-    _assert_confidence_valid(finding, "confidence", confidence_range)
-
-    if expected_source is not None:
-        _assert_source_contains(finding, "suspected_source", expected_source)
-
-    if expected_location is not None:
-        _assert_location_contains(finding, expected_location)
-
-    if expected_speed_band_range is not None:
-        band = str(finding.get("strongest_speed_band") or "")
-        _assert_speed_band_overlap(band, *expected_speed_band_range)
-
-    if expected_finding_key is not None:
-        assert finding.get("finding_key") == expected_finding_key, (
-            f"Expected finding_key={expected_finding_key!r}, got {finding.get('finding_key')!r}"
-        )
-
-    if expect_no_weak_spatial:
-        assert not finding.get("weak_spatial_separation", True), (
-            "Expected strong spatial separation but got weak"
-        )
 
 
 def assert_top_cause_contract(

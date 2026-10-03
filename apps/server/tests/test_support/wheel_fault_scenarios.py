@@ -140,39 +140,6 @@ def make_speed_sweep_fault_samples(
     return samples
 
 
-def build_fault_samples_at_speed(
-    *,
-    speed_kmh: float,
-    fault_sensor: str,
-    other_sensors: list[str],
-    n_samples: int = 30,
-    dt_s: float = 1.0,
-    start_t_s: float = 0.0,
-    fault_amp: float = 0.06,
-    noise_amp: float = 0.004,
-    fault_vib_db: float = 24.0,
-    noise_vib_db: float = 8.0,
-    add_wheel_2x: bool = True,
-    transfer_fraction: float = 0.20,
-) -> list[dict[str, Any]]:
-    """Build fault samples at a fixed speed for one faulty sensor."""
-    sensors = [fault_sensor, *other_sensors]
-    return make_fault_samples(
-        fault_sensor=fault_sensor,
-        sensors=sensors,
-        speed_kmh=speed_kmh,
-        n_samples=n_samples,
-        dt_s=dt_s,
-        start_t_s=start_t_s,
-        fault_amp=fault_amp,
-        noise_amp=noise_amp,
-        fault_vib_db=fault_vib_db,
-        noise_vib_db=noise_vib_db,
-        add_wheel_2x=add_wheel_2x,
-        transfer_fraction=transfer_fraction,
-    )
-
-
 def build_speed_sweep_fault_samples(
     *,
     speed_start_kmh: float,

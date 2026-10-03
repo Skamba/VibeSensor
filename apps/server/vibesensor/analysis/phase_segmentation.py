@@ -328,22 +328,11 @@ def phase_summary(segments: list[PhaseSegment]) -> DrivingPhaseSummary:
     )
 
 
-def diagnostic_sample_mask(
-    per_sample_phases: list[DrivingPhase],
-    *,
-    exclude_idle: bool = True,
-    exclude_coast_down: bool = False,
-) -> list[bool]:
-    """Return a boolean mask indicating which samples are diagnostically useful.
+def diagnostic_sample_mask(per_sample_phases: list[DrivingPhase]) -> list[bool]:
+    """Return which samples are diagnostically useful: every sample except IDLE.
 
-    By default excludes IDLE samples (engine-off / stationary noise).
-    SPEED_UNKNOWN samples are always *included* so that GPS dropouts do not
-    silently discard valid vibration data (issue #287).
-    Coast-down can optionally be excluded when only powered driving is relevant.
+    IDLE samples are engine-off / stationary noise. SPEED_UNKNOWN samples are
+    *included* so that GPS dropouts do not silently discard valid vibration data
+    (issue #287).
     """
-    excluded: set[DrivingPhase] = set()
-    if exclude_idle:
-        excluded.add(DrivingPhase.IDLE)
-    if exclude_coast_down:
-        excluded.add(DrivingPhase.COAST_DOWN)
-    return [phase not in excluded for phase in per_sample_phases]
+    return [phase is not DrivingPhase.IDLE for phase in per_sample_phases]

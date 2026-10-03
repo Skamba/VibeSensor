@@ -34,6 +34,8 @@ class TestEstimateSpeedDerivative:
             pytest.param([80.0, 80.0, 80.0, 80.0, 80.0], 2, 0, id="steady-near-zero"),
             pytest.param([60.0, 65.0, 70.0, 75.0, 80.0], 2, 1, id="accelerating"),
             pytest.param([80.0, 75.0, 70.0, 65.0, 60.0], 2, -1, id="decelerating"),
+            # Central difference: at the top of a speed peak the car is not accelerating.
+            pytest.param([50.0, 54.0, 56.0, 54.0, 50.0], 2, 0, id="speed-peak-is-level"),
             pytest.param([60.0, 70.0, 80.0], 0, 1, id="first-index-forward-difference"),
             pytest.param([60.0, 70.0, 80.0], 2, 1, id="last-index-backward-difference"),
         ],

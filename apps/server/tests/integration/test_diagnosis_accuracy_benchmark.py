@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import io
 import math
+import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -46,6 +47,25 @@ SENSORS = (
     BenchSensor("VS-12 front left", "front_left_wheel"),
     BenchSensor("VS-33 rear left", "rear_left_wheel"),
     BenchSensor("VS-25 front right", "front_right_wheel"),
+)
+
+# Other layouts owners use: one sensor, sensors in the cabin only, or a sensor
+# on every mounting point.
+ONE_SENSOR = (BenchSensor("VS-12 front left", "front_left_wheel"),)
+CABIN_ONLY = (
+    BenchSensor("VS-50 driver seat", "driver_seat"),
+    BenchSensor("VS-07 trunk", "trunk"),
+    BenchSensor("VS-61 passenger seat", "front_passenger_seat"),
+)
+EVERY_MOUNT = (
+    *SENSORS,
+    BenchSensor("VS-50 driver seat", "driver_seat"),
+    BenchSensor("VS-61 passenger seat", "front_passenger_seat"),
+    BenchSensor("VS-70 engine", "engine_bay"),
+    BenchSensor("VS-71 tunnel", "driveshaft_tunnel"),
+    BenchSensor("VS-72 gearbox", "transmission"),
+    BenchSensor("VS-73 centre seat", "rear_center_seat"),
+    BenchSensor("VS-74 subframe", "front_subframe"),
 )
 
 WHEEL_ZONES = frozenset(
@@ -85,6 +105,8 @@ class Expected:
     speed_dependence: str | None = None
     # One corner carries the fault well above the others (single-wheel faults).
     dominant_corner: bool = False
+    # What a weak-evidence report must say made the run hard to judge.
+    weak_reasons: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +123,8 @@ class Case:
     car_start: bool = False
     # Share of DATA transmissions every sensor has to retry (congested Wi-Fi).
     wifi_retry_loss: float = 0.0
+    # Where the owner mounted the sensors.
+    layout: tuple[BenchSensor, ...] = SENSORS
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -110,7 +134,7 @@ class Case:
                 uplink_latency_spike_s=self.uplink_latency_spike_s,
                 wifi_retry_loss=self.wifi_retry_loss,
             )
-            for sensor in SENSORS
+            for sensor in self.layout
         )
 
     @property
@@ -264,6 +288,8 @@ def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
         _phase("coast", 4.0, 90.0, 70.0, *faults),
     )
 
+
+_FAINT_ENGINE_REASONS = frozenset({"narrow_speed_range"})
 
 BENCH_CASES = (
     Case("bench-healthy-sweep", _sweep(), NO_FAULT),
@@ -433,8 +459,41 @@ BENCH_CASES = (
                 verdicts=frozenset({"weak_evidence"}),
                 levels=WEAK_ONLY,
                 speed_dependence="engine_speed",
+                weak_reasons=frozenset({"coast_test_contradicts"}),
             )
         },
+    ),
+    # One sensor cannot compare corners: the fault is found at its corner, but
+    # never as Strong.
+    Case(
+        "bench-one-sensor-front-left-wheel-sweep",
+        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE),
+        layout=ONE_SENSOR,
+    ),
+    # Sensors in the cabin only feel a wheel imbalance through the body: a wheel
+    # problem, but no corner can be named and it is never Strong.
+    Case(
+        "bench-cabin-only-wheel-sweep",
+        _sweep(_ov("body", "wheel_imbalance", 0.35, 1.0)),
+        Expected(
+            verdicts=frozenset({"fault", "weak_evidence"}),
+            source="wheel/tire",
+            zones=frozenset(sensor.location_code for sensor in CABIN_ONLY),
+            order_codes=frozenset({"T1"}),
+            levels=frozenset({"moderate", "weak"}),
+            weak_reasons=frozenset({"spread_across_locations"}),
+        ),
+        layout=CABIN_ONLY,
+    ),
+    # A sensor on every mounting point: road noise everywhere is still no fault,
+    # and a wheel fault still stands out at its corner.
+    Case("bench-healthy-sweep-every-mount", _sweep(), NO_FAULT, layout=EVERY_MOUNT),
+    Case(
+        "bench-front-left-wheel-sweep-every-mount",
+        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        layout=EVERY_MOUNT,
     ),
     Case(
         "bench-faint-intermittent-engine",
@@ -453,10 +512,18 @@ BENCH_CASES = (
             # resonance, leaving E1 as the tracked engine order.
             order_codes=frozenset({"E1", "E2"}),
             levels=frozenset({"weak", "moderate"}),
+            # Held at 75-76 km/h: too narrow a speed range to follow an order.
+            weak_reasons=_FAINT_ENGINE_REASONS,
         ),
         # On the default car E1 sits on T2, so a faint engine tone may only be
         # named as a hedged guess; the run must not read as an actionable fault.
-        {"default": Expected(verdicts=frozenset({"weak_evidence", "no_fault"}), levels=WEAK_ONLY)},
+        {
+            "default": Expected(
+                verdicts=frozenset({"weak_evidence", "no_fault"}),
+                levels=WEAK_ONLY,
+                weak_reasons=_FAINT_ENGINE_REASONS,
+            )
+        },
     ),
 )
 
@@ -525,6 +592,7 @@ PDF_CASES = frozenset(
         ("front-right-cruise-shimmy", "default"),
         ("bench-faint-intermittent-engine", "default"),
         ("bench-healthy-sweep", "other"),
+        ("bench-rear-right-wheel-sweep", "default"),
     }
 )
 _PDF_HEADLINES = {
@@ -552,7 +620,11 @@ _FRAME_SAMPLES = 200  # samples per simulated DATA frame (test_support.sim_pipel
 _MAX_SYNC_STEP_US = 25_000
 
 
-def injected_order_mg(phases: tuple[ScenarioPhase, ...], order_code: str) -> dict[str, float]:
+def injected_order_mg(
+    phases: tuple[ScenarioPhase, ...],
+    order_code: str,
+    layout: tuple[BenchSensor, ...] = SENSORS,
+) -> dict[str, float]:
     """Peak order-tone amplitude (mg, 3-axis vector) each location receives in any phase."""
     tone = _ORDER_TONES[order_code]
     clients = [
@@ -567,12 +639,12 @@ def injected_order_mg(phases: tuple[ScenarioPhase, ...], order_code: str) -> dic
             server_control_port=0,
             profile_name="rough_road",
         )
-        for index, sensor in enumerate(SENSORS)
+        for index, sensor in enumerate(layout)
     ]
-    injected = {sensor.location_code: 0.0 for sensor in SENSORS}
+    injected = {sensor.location_code: 0.0 for sensor in layout}
     for phase in phases:
         apply_phase(clients, "ground-truth", phase)
-        for sensor, client in zip(SENSORS, clients, strict=True):
+        for sensor, client in zip(layout, clients, strict=True):
             counts = sum(
                 math.hypot(*amps)
                 for key, multiple, amps in PROFILE_LIBRARY[client.profile_name].order_tones
@@ -673,17 +745,27 @@ def _assert_case(
         assert diagnosis["order_code"] in expected.order_codes, summary
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, summary)
-        _assert_order_amplitude_mg(diagnosis, case.phases)
+        _assert_order_amplitude_mg(diagnosis, case)
     if expected.speed_dependence is not None:
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
     _assert_spectrum_markers(diagnosis, car)
+    # The simulated car reports no engine RPM: the engine can only be judged from
+    # RPM estimated from speed and gear, never ruled out as if RPM were measured.
+    assert diagnosis["conditions"]["rpm_source"] != "measured"
+    engine_check = next(c for c in diagnosis["source_checks"] if c["source"] == "engine")
+    assert engine_check["reason"] != "no_matching_order", engine_check
     _assert_sensor_identity(result)
     _assert_raw_backed(result, case)
     _assert_raw_capture_on_one_clock(result)
-    _assert_report_view(result, diagnosis, expected)
+    _assert_report_view(result, diagnosis, expected, case)
+    if diagnosis["verdict"] == "weak_evidence":
+        assert expected.weak_reasons <= set(diagnosis["weak_reasons"]), summary
+        assert len(result.report.owner.reasons) == len(diagnosis["weak_reasons"]) > 0
+    if diagnosis["verdict"] == "fault":
+        _assert_speed_chart(result, diagnosis, case, expected)
 
 
-def _assert_order_amplitude_mg(diagnosis: dict, phases: tuple[ScenarioPhase, ...]) -> None:
+def _assert_order_amplitude_mg(diagnosis: dict, case: Case) -> None:
     """The strongest location's mg level is on the scale of the tone the simulator injected.
 
     It is a median over the run's matched windows (single-axis band level, smeared
@@ -694,9 +776,42 @@ def _assert_order_amplitude_mg(diagnosis: dict, phases: tuple[ScenarioPhase, ...
     assert diagnosis["amplitude_basis"] == "order"
     strongest = diagnosis["location_amplitudes"][0]
     code = location_code_for_label(strongest["location"])
-    injected = injected_order_mg(phases, diagnosis["order_code"])[code]
+    injected = injected_order_mg(case.phases, diagnosis["order_code"], case.layout)[code]
     assert injected > 0, (strongest, diagnosis["order_code"])
     assert injected / 40.0 <= strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
+
+
+def injected_sweep_kmh(phases: tuple[ScenarioPhase, ...], order_code: str) -> float:
+    """Widest steady speed sweep (km/h, over 8 s or more) while the order's tone was injected."""
+    tone = _ORDER_TONES[order_code]
+    return max(
+        (
+            abs(phase.speed_end_kmh - phase.speed_start_kmh)
+            for phase in phases
+            if phase.duration_s >= 8.0
+            and any(
+                (key, multiple) == tone
+                for override in phase.overrides
+                for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+            )
+        ),
+        default=0.0,
+    )
+
+
+def _assert_speed_chart(
+    result: SimPipelineResult, diagnosis: dict, case: Case, expected: Expected
+) -> None:
+    """Amplitude vs speed is charted when the fault was swept over a speed range."""
+    chart = result.report.mechanic.speed_chart
+    span = injected_sweep_kmh(case.phases, diagnosis["order_code"])
+    if span >= 40.0:
+        assert chart is not None, span
+        assert [series.strongest for series in chart.series][:1] == [True]
+        if expected.dominant_corner:
+            # The highlighted curve is the faulty corner's, the loudest one.
+            peaks = [max(amp for _speed, amp in series.points) for series in chart.series]
+            assert peaks[0] == max(peaks), (chart.series[0].label, peaks)
 
 
 def _assert_order_frequency(diagnosis: dict, car: BenchCar, summary: str) -> None:
@@ -744,6 +859,7 @@ def _assert_frame_integrity(result: SimPipelineResult, *, lossy: bool) -> None:
     checks = {check.label: check for check in result.report.quality.checks}
     frame_integrity = checks["Frame integrity"]
     assert frame_integrity.passed is not lossy, frame_integrity
+    assert frame_integrity.state == ("Check" if lossy else "OK"), frame_integrity
     if lossy:
         assert "dropped frames" in frame_integrity.detail
         assert not result.report.quality.all_passed
@@ -801,11 +917,15 @@ def _assert_raw_backed(result: SimPipelineResult, case: Case) -> None:
     assert metadata["raw_replay_timing_fallback_count"] == 0
 
 
+_SOURCE_NAMES_EN = {"wheel/tire": "Wheels/tires", "driveline": "Driveline", "engine": "Engine"}
+
 # What the owner is told to have checked, per diagnosed order.
 _NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "P1": "propshaft", "E2": "mounts"}
 
 
-def _assert_report_view(result: SimPipelineResult, diagnosis: dict, expected: Expected) -> None:
+def _assert_report_view(
+    result: SimPipelineResult, diagnosis: dict, expected: Expected, case: Case
+) -> None:
     # The mechanic's worksheet lists each order once; where it was strongest is
     # in the per-location table.
     worksheet_orders = [row.order for row in result.report.mechanic.worksheet]
@@ -816,6 +936,12 @@ def _assert_report_view(result: SimPipelineResult, diagnosis: dict, expected: Ex
     if diagnosis["verdict"] == "no_fault":
         assert owner.headline == "No significant vibration found"
         assert owner.diagram.zone is None
+        # What the drive did not cover: the simulator reports no engine RPM, and a
+        # drive that never went below 40 km/h says so.
+        not_covered = (owner.not_covered or "").lower()
+        assert "no rpm was measured" in not_covered
+        lowest_kmh = min(min(p.speed_start_kmh, p.speed_end_kmh) for p in case.phases)
+        assert ("speeds below" in not_covered) is (lowest_kmh >= 40.0), not_covered
         return
     zone_text = _ZONE_TEXT_EN.get(diagnosis["zone"])
     if zone_text is not None:
@@ -829,6 +955,10 @@ def _assert_report_view(result: SimPipelineResult, diagnosis: dict, expected: Ex
     assert len(strongest) == 1 and rows
     assert strongest[0].value.endswith(" mg")
     if diagnosis["verdict"] == "fault":
+        # The diagnosed source is never listed among the sources ruled out.
+        source_name = _SOURCE_NAMES_EN.get(diagnosis["source"])
+        ruled_out = result.report.mechanic.ruled_out
+        assert not any(line.startswith(f"{source_name}:") for line in ruled_out), ruled_out
         assert owner.verify is not None
         assert f"{diagnosis['order_code']} " in owner.verify
         assert owner.verify.rstrip(".").endswith("mg today")
@@ -850,11 +980,20 @@ def _assert_pdf_text(result: SimPipelineResult) -> None:
         pages = [" ".join((page.extract_text() or "").split()).lower() for page in reader.pages]
         assert len(pages) >= 2
         assert headline in pages[0], pages[0][:300]
+        # Dutch reports write decimals with a comma (2,9 mg), English with a point.
+        decimal_mg = re.compile(r"\d([.,])\d\s?mg")
+        assert {match.group(1) for page in pages for match in decimal_mg.finditer(page)} <= (
+            {","} if lang == "nl" else {"."}
+        )
         # Levels only, never a confidence percentage (page 1 is the owner page).
         assert "%" not in pages[0]
         if verdict == "fault":
             assert view.owner.next_step.lower()[:40] in pages[0]
             assert view.owner.verify is not None
+        workshop = " ".join(pages[1:])
+        for chart in (view.mechanic.spectrum, view.mechanic.speed_chart):
+            if chart is not None:
+                assert chart.title.lower() in workshop, chart.title
 
 
 def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:

@@ -96,58 +96,6 @@ def minimal_summary(**overrides: Any) -> dict:
     return base
 
 
-_GENERATED_ACTION_STEPS: dict[str, dict[str, Any]] = {
-    "wheel_balance_and_runout": {
-        "action_id": "wheel_balance_and_runout",
-        "what": "ACTION_WHEEL_BALANCE_WHAT",
-        "why": "ACTION_WHEEL_BALANCE_WHY",
-        "confirm": "ACTION_WHEEL_BALANCE_CONFIRM",
-        "falsify": "ACTION_WHEEL_BALANCE_FALSIFY",
-        "eta": "20-45 min",
-    },
-    "wheel_tire_condition": {
-        "action_id": "wheel_tire_condition",
-        "what": "ACTION_TIRE_CONDITION_WHAT",
-        "why": "ACTION_TIRE_CONDITION_WHY",
-        "confirm": "ACTION_TIRE_CONDITION_CONFIRM",
-        "falsify": "ACTION_TIRE_CONDITION_FALSIFY",
-        "eta": "10-20 min",
-    },
-    "driveline_inspection": {
-        "action_id": "driveline_inspection",
-        "what": "ACTION_DRIVELINE_INSPECTION_WHAT",
-        "why": "ACTION_DRIVELINE_INSPECTION_WHY",
-        "confirm": "ACTION_DRIVELINE_INSPECTION_CONFIRM",
-        "falsify": "ACTION_DRIVELINE_INSPECTION_FALSIFY",
-        "eta": "20-35 min",
-    },
-    "driveline_mounts_and_fasteners": {
-        "action_id": "driveline_mounts_and_fasteners",
-        "what": "ACTION_DRIVELINE_MOUNTS_WHAT",
-        "why": "ACTION_DRIVELINE_MOUNTS_WHY",
-        "confirm": "ACTION_DRIVELINE_MOUNTS_CONFIRM",
-        "falsify": "ACTION_DRIVELINE_MOUNTS_FALSIFY",
-        "eta": "10-20 min",
-    },
-    "engine_mounts_and_accessories": {
-        "action_id": "engine_mounts_and_accessories",
-        "what": "ACTION_ENGINE_MOUNTS_WHAT",
-        "why": "ACTION_ENGINE_MOUNTS_WHY",
-        "confirm": "ACTION_ENGINE_MOUNTS_CONFIRM",
-        "falsify": "ACTION_ENGINE_MOUNTS_FALSIFY",
-        "eta": "15-30 min",
-    },
-    "engine_combustion_quality": {
-        "action_id": "engine_combustion_quality",
-        "what": "ACTION_ENGINE_COMBUSTION_WHAT",
-        "why": "ACTION_ENGINE_COMBUSTION_WHY",
-        "confirm": "ACTION_ENGINE_COMBUSTION_CONFIRM",
-        "falsify": "ACTION_ENGINE_COMBUSTION_FALSIFY",
-        "eta": "10-20 min",
-    },
-}
-
-
 # ---------------------------------------------------------------------------
 # Order-analysis integration helpers (merged from report_analysis_integration.py)
 # ---------------------------------------------------------------------------
@@ -249,18 +197,3 @@ def call_build_order_findings(
         kwargs["per_sample_phases"] = per_sample_phases
     kwargs.update(overrides)
     return _findings_build_order_findings(OrderAnalysisRequest(**kwargs))
-
-
-def max_non_ref_confidence(findings: tuple | list) -> float:
-    """Return the highest confidence among non-reference findings."""
-    from vibesensor.domain.finding import Finding
-
-    return max(
-        float(f.confidence or 0.0) if isinstance(f, Finding) else float(f.get("confidence") or 0.0)
-        for f in findings
-        if (
-            not f.finding_id.startswith("REF_")
-            if isinstance(f, Finding)
-            else not str(f.get("finding_id") or "").startswith("REF_")
-        )
-    )

@@ -84,7 +84,7 @@ pythonpath = [".", "tests", "../../tools/car_library"]
 testpaths = ["tests"]
 markers = [
     "e2e: end-to-end tests",
-      "diagnostic_matrix: broad synthetic diagnostic matrices excluded from default backend CI",
+      "diagnostic_matrix: accuracy benchmark repeated over more sensor-id seeds (make test-diagnostic-matrix)",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
     "smoke: minimal critical path checks",
     "benchmark: explicit performance regression benchmarks run outside default CI",

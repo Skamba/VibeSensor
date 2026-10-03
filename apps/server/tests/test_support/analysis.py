@@ -30,16 +30,6 @@ def extract_top(summary: dict[str, Any]) -> dict[str, Any] | None:
     return causes[0] if causes else None
 
 
-def top_corner_label(summary: dict[str, Any]) -> str | None:
-    """Return the human-readable location/corner from the top cause."""
-    top = extract_top(summary)
-    if not top:
-        return None
-    return (
-        top.get("strongest_location") or top.get("location_hotspot") or top.get("suspected_source")
-    )
-
-
 def top_confidence(summary: dict[str, Any]) -> float:
     """Return the confidence (0–1) of the top cause, or 0.0 if none."""
     top = extract_top(summary)

@@ -267,63 +267,6 @@ def _run_pipeline(
     )
 
 
-def test_sample_rate_mismatch_warns_in_health_but_pipeline_completes(
-    history_db: HistoryDB,
-) -> None:
-    sensors = tuple(
-        replace(
-            sensor,
-            advertised_sample_rate_hz=400,
-            signal_sample_rate_hz=400,
-        )
-        if sensor.location == "rear-right"
-        else sensor
-        for sensor in SENSORS
-    )
-
-    artifacts = _run_pipeline(history_db, sensors=sensors)
-
-    top_causes = artifacts.analysis.get("top_causes") or []
-    assert top_causes
-    top_cause = top_causes[0]
-    assert "wheel" in str(top_cause.get("suspected_source", "")).lower()
-    assert str(top_cause.get("strongest_location")) == "front-left"
-    assert artifacts.health["status"] == "warn"
-    assert artifacts.health["sample_rate_mismatch_count"] == 1
-    assert "sample_rate_mismatch" in artifacts.health["degradation_reasons"]
-    assert artifacts.health["data_loss"]["frames_dropped"] == 0
-    assert artifacts.pdf_bytes.startswith(b"%PDF-")
-    assert "front-left" in artifacts.pdf_text
-
-
-def test_dropped_frames_surface_in_health_and_report_data_trust(
-    history_db: HistoryDB,
-) -> None:
-    glitched_sensor = next(sensor for sensor in SENSORS if sensor.location == "rear-right")
-
-    def _before_step(step: int, _registry: ClientRegistry, seq_by_sensor: dict[str, int]) -> None:
-        if step in {18, 42}:
-            seq_by_sensor[glitched_sensor.client_id.hex()] += 2
-
-    artifacts = _run_pipeline(history_db, before_step=_before_step)
-
-    assert artifacts.health["status"] == "warn"
-    assert artifacts.health["data_loss"]["frames_dropped"] == 4
-    assert "frames_dropped" in artifacts.health["degradation_reasons"]
-    assert (
-        _run_suitability_state(
-            artifacts.analysis,
-            "SUITABILITY_CHECK_FRAME_INTEGRITY",
-        )
-        == "warn"
-    )
-    frame_integrity = _quality_check(artifacts.report_view, "Frame integrity")
-    assert not frame_integrity.passed
-    assert "4 dropped frames" in frame_integrity.detail
-    assert "0 queue overflows" in frame_integrity.detail
-    assert "front-left" in artifacts.pdf_text
-
-
 def test_sensor_queue_overflow_counter_reaches_report_data_trust(
     history_db: HistoryDB,
 ) -> None:

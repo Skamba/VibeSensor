@@ -22,18 +22,12 @@ from vibesensor.analysis.prepared_analysis_context import (
 from vibesensor.analysis.run_data_preparation import PreparedRunData, prepare_run_data
 from vibesensor.analysis.statistics import compute_accel_statistics
 from vibesensor.domain.finding import Finding as DomainFinding
-from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.i18n import normalize_lang
 
 if TYPE_CHECKING:
     from vibesensor.domain.test_run import TestRun
-
-
-def summarize_origin(findings: tuple[DomainFinding, ...]) -> VibrationOrigin | None:
-    """Return the most-likely origin as a domain value object."""
-    return VibrationOrigin.from_ranked_findings(findings)
 
 
 class RunAnalysis:
@@ -127,5 +121,4 @@ __all__ = [
     "AnalysisResult",
     "RunAnalysis",
     "build_findings_for_sensor_frames",
-    "summarize_origin",
 ]

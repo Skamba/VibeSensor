@@ -7,7 +7,7 @@ High-traffic validation router. Keep this concise; use Makefile targets and scri
 - Backend iteration: `make test` or targeted `pytest -q apps/server/tests/<module>/`.
 - Before pushing: `make ci` runs lint, backend/UI type checks, backend tests, and UI unit tests.
 - Docs/instruction-only changes need no local gate.
-- Broad synthetic diagnostic matrices: `make test-diagnostic-matrix` (default backend CI excludes `diagnostic_matrix` cases).
+- Diagnosis accuracy across more sensor-id seeds: `make test-diagnostic-matrix` (default backend CI runs one seed).
 - Simulator, UDP ingest, recording, post-analysis, or persistence changes: also run the process-backed e2e suite (`make test-e2e`); `make ci` does not run it.
 - UI validation: `make ui-typecheck`; add UI test/build commands below when the changed seam requires them.
 - Firmware and Pi image validation: use the narrow commands below; avoid hardware/full image builds unless required.
@@ -57,7 +57,8 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 `apps/server/tests/integration/test_diagnosis_accuracy_benchmark.py` is the accuracy oracle. It replays every simulator scenario plus a few benchmark drives, for the default car and for a car whose engine orders do not coincide with wheel orders, through the real pipeline (`test_support/sim_pipeline.py`: simulator sensor model -> UDP ingest and clock sync -> DSP -> recording with raw capture -> post-analysis -> diagnosis -> report view), in-process on a virtual clock (about 5 s per drive).
 
-- Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, and the report's owner-page text.
+- Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, the report's owner-page text, and the amplitude-vs-speed chart for swept faults. A few drives per report variant are also rendered to PDF in English and Dutch.
+- Sensor layouts are part of the cases: one sensor, sensors in the cabin only, and a sensor on every mounting point (`Case.layout`).
 - Default CI runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes.
 - Network and clock conditions are part of the cases: a sensor losing frames, busy Wi-Fi delaying clock-sync replies, and a car start where recording begins before the sensor clocks sync (device timers within ~2 s of server time), optionally on congested Wi-Fi where the simulated firmware retransmits frames stop-and-wait (`Case.car_start`, `Case.wifi_retry_loss`). Each sensor's raw capture must stay on one continuous clock.
 - Every analysis rule should be justified by a case it changes for the better; a rule that changes no realistic case is a candidate for deletion. A miss is fixed at its root cause, not listed as an expected failure.
@@ -86,7 +87,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Import-direction rules are import-linter contracts in `apps/server/pyproject.toml`; `make lint` runs them. Tests must not parse or inspect production source (Ruff `TID251` bans `ast.parse` / `inspect.getsource` in tests).
 - Temporary migration/absence tests must name the stable boundary they protect and be removed once positive current-behavior coverage exists.
 - Use the `smoke`, `long_sim`, and `e2e` markers sparingly.
-- `diagnostic_matrix` marks broad synthetic axis matrices; run them with `make test-diagnostic-matrix`. `make test` and CI exclude them.
+- `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them.
 - For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
 ## Frontend validation

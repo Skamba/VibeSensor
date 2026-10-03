@@ -124,6 +124,7 @@ class TestComputeOrderConfidence:
                 {"absolute_strength_db": 12.0},
                 id="light_strength_band",
             ),
+            pytest.param({"matched": 30}, {"matched": 5}, id="few_matched_samples"),
         ],
     )
     def test_penalty_reduces_confidence(

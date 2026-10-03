@@ -100,11 +100,11 @@ typecheck-backend: ## Run backend mypy checks
 typecheck: ## Run backend and UI type checks
 typecheck: typecheck-backend ui-typecheck
 
-test: ## Run the backend pytest suite (excludes opt-in diagnostic matrices)
+test: ## Run the backend pytest suite (excludes the opt-in benchmark seed matrix)
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m pytest -q -m "not diagnostic_matrix" apps/server/tests
 
-test-diagnostic-matrix: ## Run opt-in broad synthetic diagnostic matrices excluded from default backend CI
+test-diagnostic-matrix: ## Repeat the diagnosis accuracy benchmark over five more sensor-id seeds (opt-in)
 	@$(RESOLVE_PYTHON) \
 	"$$PYTHON" -m pytest -q -m diagnostic_matrix apps/server/tests
 

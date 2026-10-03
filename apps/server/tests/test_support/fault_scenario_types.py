@@ -95,22 +95,3 @@ def own_fault_peaks(
         peaks.append({"hz": whz * 3, "amp": fault.amp * fault.wheel_3x_scale})
     peaks.append({"hz": fault.background_hz, "amp": noise_amp})
     return peaks
-
-
-def apply_gain_mismatch(
-    base: list[dict[str, object]],
-    *,
-    fault_sensor: str,
-    gain_factor: float,
-) -> list[dict[str, object]]:
-    result: list[dict[str, object]] = []
-    for sample in base:
-        if sample["client_name"] == fault_sensor:
-            sample = {**sample}
-            sample["top_peaks"] = [
-                {"hz": peak["hz"], "amp": peak["amp"] * gain_factor}
-                for peak in sample["top_peaks"]  # type: ignore[index]
-            ]
-            sample["vibration_strength_db"] = float(sample["vibration_strength_db"]) + 3.0
-        result.append(sample)
-    return result
