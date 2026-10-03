@@ -102,6 +102,11 @@ class OrderMatchAccumulator:
         return corr is not None and corr >= ORDER_VARIABLE_MIN_CORRELATION
 
     @property
+    def matched_peaks(self) -> frozenset[tuple[int, float]]:
+        """The spectral peaks this hypothesis matched, as ``(sample index, peak Hz)``."""
+        return frozenset(zip(self.matched_sample_indices, self.measured_vals, strict=True))
+
+    @property
     def longest_contiguous_match_points(self) -> int:
         """Largest streak of adjacent matched samples in acquisition order."""
         if not self.matched_sample_indices:

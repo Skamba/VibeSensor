@@ -133,6 +133,49 @@ def test_engine_order_points_to_the_engine_bay_not_a_corner() -> None:
     assert diagnosis["order_code"] in ("E1", "E2")
 
 
+def _engine_sweep(**kwargs: Any) -> list[dict[str, Any]]:
+    """The same engine tone on every sensor while sweeping 50-110 km/h."""
+    samples: list[dict[str, Any]] = []
+    for step, speed_kmh in enumerate(range(50, 120, 10)):
+        samples += make_engine_order_samples(
+            sensors=SENSORS,
+            speed_kmh=float(speed_kmh),
+            n_samples=8,
+            start_t_s=step * 8.0,
+            **kwargs,
+        )
+    return samples
+
+
+def test_engine_tone_equal_on_every_sensor_is_strong_over_a_sweep() -> None:
+    """No dominant corner is expected for the engine: it is diagnosed as a zone."""
+    diagnosis = run_analysis(_engine_sweep())["diagnosis"]
+
+    assert diagnosis["verdict"] == "fault"
+    assert diagnosis["source"] == "engine"
+    assert diagnosis["confidence_level"] == "strong"
+    assert diagnosis["zone"] == "engine_bay"
+
+
+def test_faint_engine_tone_on_every_sensor_is_no_fault() -> None:
+    diagnosis = run_analysis(_engine_sweep(engine_amp=0.008, engine_vib_db=10.0))["diagnosis"]
+
+    assert diagnosis["verdict"] == "no_fault"
+    assert diagnosis["source"] is None
+
+
+def test_engine_order_on_wheel_order_peaks_keeps_the_spread_penalty() -> None:
+    """With the default ratios E1 lands on T2: its frequency can't rule out the wheels."""
+    findings = run_analysis(_engine_sweep())["findings"]
+    levels = {
+        finding["finding_key"]: finding["confidence_level"]
+        for finding in findings
+        if finding["suspected_source"] == "engine"
+    }
+
+    assert levels == {"engine_1x": "moderate", "engine_2x": "strong"}
+
+
 def test_no_candidate_is_no_fault_with_overall_levels() -> None:
     noise = make_finding(
         finding_id="F001",
