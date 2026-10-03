@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import ClassVar
 
 from vibesensor.domain.finding_types import VibrationSource
 
@@ -34,34 +33,6 @@ class FindingEvidence:
     phases_with_evidence: int | None = None
     phase_confidences: tuple[tuple[str, float], ...] = ()
     vibration_strength_db: float | None = None
-
-    _STRONG_MATCH_RATE: ClassVar[float] = 0.70
-    _STRONG_SNR_DB: ClassVar[float] = 6.0
-    _CONSISTENT_BURSTINESS: ClassVar[float] = 0.3
-    _CONSISTENT_PRESENCE: ClassVar[float] = 0.5
-    _WELL_LOCALIZED_CONCENTRATION: ClassVar[float] = 0.6
-
-    @property
-    def is_strong(self) -> bool:
-        """Evidence is strong enough to support a diagnostic conclusion."""
-        return (
-            self.match_rate >= self._STRONG_MATCH_RATE
-            and self.snr_db is not None
-            and self.snr_db >= self._STRONG_SNR_DB
-        )
-
-    @property
-    def is_consistent(self) -> bool:
-        """Evidence is temporally consistent (not bursty/intermittent)."""
-        return (
-            self.burstiness < self._CONSISTENT_BURSTINESS
-            and self.presence_ratio >= self._CONSISTENT_PRESENCE
-        )
-
-    @property
-    def is_well_localized(self) -> bool:
-        """Evidence is spatially concentrated, not diffuse."""
-        return self.spatial_concentration >= self._WELL_LOCALIZED_CONCENTRATION
 
 
 @dataclass(frozen=True, slots=True)

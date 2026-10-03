@@ -2,70 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.summary.finding_fields import finding_evidence_from_mapping
 
 
 class TestFindingEvidence:
-    @pytest.mark.parametrize(
-        ("evidence", "expected"),
-        [
-            pytest.param(
-                FindingEvidence(match_rate=0.8, snr_db=10.0),
-                True,
-                id="strong-evidence",
-            ),
-            pytest.param(
-                FindingEvidence(match_rate=0.5, snr_db=10.0),
-                False,
-                id="low-match-rate",
-            ),
-            pytest.param(
-                FindingEvidence(match_rate=0.8, snr_db=None),
-                False,
-                id="missing-snr",
-            ),
-        ],
-    )
-    def test_is_strong_cases(self, evidence: FindingEvidence, expected: bool) -> None:
-        assert evidence.is_strong is expected
-
-    @pytest.mark.parametrize(
-        ("evidence", "expected"),
-        [
-            pytest.param(
-                FindingEvidence(burstiness=0.1, presence_ratio=0.7),
-                True,
-                id="consistent",
-            ),
-            pytest.param(
-                FindingEvidence(burstiness=0.5, presence_ratio=0.3),
-                False,
-                id="inconsistent",
-            ),
-        ],
-    )
-    def test_is_consistent_cases(self, evidence: FindingEvidence, expected: bool) -> None:
-        assert evidence.is_consistent is expected
-
-    @pytest.mark.parametrize(
-        ("evidence", "expected"),
-        [
-            pytest.param(
-                FindingEvidence(spatial_concentration=0.8),
-                True,
-                id="well-localized",
-            ),
-            pytest.param(
-                FindingEvidence(spatial_concentration=0.3),
-                False,
-                id="diffuse",
-            ),
-        ],
-    )
-    def test_is_well_localized_cases(self, evidence: FindingEvidence, expected: bool) -> None:
-        assert evidence.is_well_localized is expected
-
     def test_boundary_decode_full(self) -> None:
         evidence = finding_evidence_from_mapping(
             {
