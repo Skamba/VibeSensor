@@ -1,7 +1,9 @@
 version: 2
 # Monthly version updates as one grouped PR per ecosystem (pip/npm majors stay
 # separate PRs), plus one grouped PR per ecosystem for security fixes.
-# Docker base images are bumped by hand together with .python-version/.nvmrc.
+# Not tracked here, bumped by hand: Docker base images (together with
+# .python-version/.nvmrc; Python stays on the Pi image's Trixie 3.13 line) and
+# firmware/esp/platformio.ini (Dependabot has no PlatformIO ecosystem).
 updates:
   - package-ecosystem: pip
     directory: /apps/server
@@ -42,7 +44,10 @@ updates:
           - "*"
 
   - package-ecosystem: github-actions
-    directory: /
+    # "/" covers .github/workflows; the local composite actions pin their own.
+    directories:
+      - /
+      - /.github/actions/*
     schedule:
       interval: monthly
     labels:
