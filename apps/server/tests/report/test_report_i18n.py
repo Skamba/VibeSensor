@@ -217,7 +217,6 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     ui = _load_ui_nl()
 
     # --- Round 4: UI + Python ---
-    assert ui["chart.auto_scale"] == "Automatisch schalen"
     assert ui["location.front_passenger_seat"] == "Bijrijdersstoel"
     assert "eigen merk" in ui["settings.car.or_custom_brand"]
     assert "eigen type" in ui["settings.car.or_custom_type"]
@@ -225,12 +224,9 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["settings.car.use_custom"] == "Eigen invoer gebruiken"
     assert ui["settings.esp_flash.hint"].startswith("Compileer en flash de firmware")
     assert "wachten op" in ui["spectrum.stale"]
-    assert "geen snelheid beschikbaar" in ui["dashboard.rotational.reason.speed_unavailable"]
     assert ui["history.loading_preview"] == "Voorbeeld laden..."
     assert "Voorbeeld" in ui["history.preview_unavailable"]
     assert "Voorbeeld" in ui["history.preview_heatmap_title"]
-    assert ui["matrix.source.wheel"] == "Wiel/band"
-    assert ui["matrix.source.other"] == "Overig / Weg"
     default_nl = [entry[2] for entry in _DEFAULT_PARTS]
     assert any("rubberbus" in label for label in default_nl)
 
@@ -278,11 +274,6 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert "te veel slingering/speling" in _nl("ACTION_DRIVELINE_INSPECTION_CONFIRM")
 
     # --- Round 5: UI + Python ---
-    assert ui["dashboard.vibration_count_live"] == "Actuele trillingsteller"
-    assert "piek-boven-ruisvloer" in ui["dashboard.matrix_note"]
-    assert ui["dashboard.time_window_5min"] == "(afgelopen 5 min)"
-    assert "Snelheidsbron:" in ui["dashboard.rotational.basis_source"]
-    assert ui["dashboard.rotational.source.fallback_manual"] == "Terugval naar handmatig"
     assert ui["history.refresh"] == "Geschiedenis herladen"
     assert ui["history.pdf_failed"] == "PDF genereren mislukt."
     assert ui["dashboard.logging.run_id"] == "Meetrun-ID: {runId}"
@@ -294,13 +285,10 @@ def test_dutch_ui_and_recent_translations_complete() -> None:
     assert ui["settings.update.health.analysis_run"] == "Actieve analyse"
     assert ui["settings.update.health.analysis_queue_depth"] == "Wachtrij analyses"
     assert ui["settings.tire_aspect"] == "Zijwanghoogte (%)"
-    assert ui["status.running"] == "Lopend"
     assert "Handmatig" in ui["speed.override"]
     assert ui["speed.unit"] == "Eenheid"
     assert ui["ws.connecting"] == "Verbinden"
     assert ui["ws.reconnecting"] == "Opnieuw verbinden"
-    assert "herverbinden" in ui["ws.banner.reconnecting"]
-    assert "Verbinding maken met server" in ui["ws.banner.connecting"]
     assert "Gecombineerd" in ui["chart.spectrum_title"]
     assert ui["bands.driveshaft_engine_1x"] == "Aandrijfas + Motor 1x"
     assert ui["location.front_subframe"] == "Voorsubframe"

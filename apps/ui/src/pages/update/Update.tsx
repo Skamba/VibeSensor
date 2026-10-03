@@ -64,7 +64,9 @@ function TransportChoice(props: {
       data-disabled={props.unavailable ? "true" : undefined}
       data-choice-state={props.selected ? "active" : undefined}
       data-choice-badge={
-        props.selected ? t("settings.update.transport.selected_badge") : undefined
+        props.selected
+          ? t("settings.update.transport.selected_badge")
+          : undefined
       }
     >
       <input
@@ -158,7 +160,9 @@ export function Internet() {
           </div>
           <div id="updateWifiFields" hidden={usingUsb}>
             <div class="form-group">
-              <label htmlFor="updateSsidInput">{t("settings.update.ssid")}</label>
+              <label htmlFor="updateSsidInput">
+                {t("settings.update.ssid")}
+              </label>
               <input
                 type="text"
                 id="updateSsidInput"
@@ -283,7 +287,9 @@ function UpdateStatusCards() {
                         ? `${failure.phaseLabel} — ${failure.message}`
                         : failure.phaseLabel}
                     </strong>
-                    {failure.detail ? <IssueDetail text={failure.detail} /> : null}
+                    {failure.detail ? (
+                      <IssueDetail text={failure.detail} />
+                    ) : null}
                   </Note>
                   <Note>
                     <strong>{failure.recoveryTitle}</strong>
@@ -298,7 +304,9 @@ function UpdateStatusCards() {
         <Card
           title={t("settings.update.log")}
           subtitle={t(
-            running ? "settings.update.log_intro_running" : "settings.update.log_intro",
+            running
+              ? "settings.update.log_intro_running"
+              : "settings.update.log_intro",
           )}
         >
           <div class="maintenance-card__body">
@@ -306,7 +314,9 @@ function UpdateStatusCards() {
               <InlineEmpty title={placeholder.title} body={placeholder.body} />
             ) : (
               <>
-                {running ? <Note>{t("settings.update.log_running_note")}</Note> : null}
+                {running ? (
+                  <Note>{t("settings.update.log_running_note")}</Note>
+                ) : null}
                 <pre class="log-pre">
                   {status.log_tail.map((line) => `${line}\n`).join("")}
                 </pre>
@@ -398,7 +408,11 @@ export function Update() {
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
-        <Card hero title={t("settings.update.title")} subtitle={t("settings.update.hint")}>
+        <Card
+          hero
+          title={t("settings.update.title")}
+          subtitle={t("settings.update.hint")}
+        >
           <div class="maintenance-card__body maintenance-card__body--hero">
             <Note>{t("settings.update.reconnect_note")}</Note>
             <div

@@ -44,7 +44,10 @@ function BandLegend() {
             data-band-state="active"
             style={colorVar("--band-color", band.color)}
           >
-            <span class="swatch" style={colorVar("--swatch-color", band.color)} />
+            <span
+              class="swatch"
+              style={colorVar("--swatch-color", band.color)}
+            />
             <span>{band.label}</span>
           </div>
         ))
@@ -73,7 +76,9 @@ function TraceLegend() {
         data-legend-state={model.allActive ? "active" : undefined}
         onClick={showAllTraces}
       >
-        <span class="legend-item__label">{t("spectrum.legend.all_series")}</span>
+        <span class="legend-item__label">
+          {t("spectrum.legend.all_series")}
+        </span>
       </button>
       {model.items.map((item) => (
         <button
@@ -105,7 +110,10 @@ export function Spectrum() {
     if (!chart.current || !wrap.current) {
       return;
     }
-    return mountSpectrum({ specChart: chart.current, specChartWrap: wrap.current });
+    return mountSpectrum({
+      specChart: chart.current,
+      specChartWrap: wrap.current,
+    });
   }, []);
   const overlayText = overlay.value;
   const pressed = bandsVisible.value ? "true" : "false";
@@ -116,13 +124,19 @@ export function Spectrum() {
       </div>
       <div id="specChartWrap" class="spectrum-wrap" ref={wrap}>
         <div id="specChart" ref={chart} />
-        <div id="spectrumOverlay" class="empty-state" hidden={overlayText === null}>
+        <div
+          id="spectrumOverlay"
+          class="empty-state"
+          hidden={overlayText === null}
+        >
           {overlayText ?? ""}
         </div>
       </div>
       <div class="spectrum-controls-panel">
         <div class="spectrum-toolbar">
-          <div class="card__subtle spectrum-toolbar__hint">{t("spectrum.controls_hint")}</div>
+          <div class="card__subtle spectrum-toolbar__hint">
+            {t("spectrum.controls_hint")}
+          </div>
           <div class="spectrum-toolbar__bands">
             <button
               id="spectrumBandToggle"
@@ -135,7 +149,11 @@ export function Spectrum() {
               disabled={!hasBands.value}
               onClick={toggleBands}
             >
-              {t(bandsVisible.value ? "spectrum.bands.hide" : "spectrum.bands.show")}
+              {t(
+                bandsVisible.value
+                  ? "spectrum.bands.hide"
+                  : "spectrum.bands.show",
+              )}
             </button>
             <BandLegend />
           </div>

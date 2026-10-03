@@ -254,7 +254,9 @@ function ObdConfig(props: {
                   {device.name?.trim() || device.mac_address}
                 </div>
                 {hasReadableName(device) ? (
-                  <div class="speed-source-device__mac">{device.mac_address}</div>
+                  <div class="speed-source-device__mac">
+                    {device.mac_address}
+                  </div>
                 ) : null}
               </div>
               <div class="speed-source-device__badges">
@@ -409,7 +411,10 @@ export function SpeedSource() {
             onInput={editStaleTimeout}
           />
         </div>
-        <FeedbackSlot id="speedSourceSaveFeedback" message={saveFeedback.value} />
+        <FeedbackSlot
+          id="speedSourceSaveFeedback"
+          message={saveFeedback.value}
+        />
         <div class="settings-actions settings-actions--sticky">
           <button
             id="saveSpeedSourceBtn"

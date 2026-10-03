@@ -61,7 +61,11 @@ export function StatusGrid(props: { rows: readonly StatusRow[] }) {
 export function Note(props: { bad?: boolean; children: ComponentChildren }) {
   return (
     <div
-      class={props.bad ? "maintenance-note maintenance-note--bad" : "maintenance-note"}
+      class={
+        props.bad
+          ? "maintenance-note maintenance-note--bad"
+          : "maintenance-note"
+      }
     >
       {props.children}
     </div>
@@ -86,7 +90,11 @@ export function Card(props: {
 }) {
   return (
     <section
-      class={props.hero ? "maintenance-card maintenance-card--hero" : "maintenance-card"}
+      class={
+        props.hero
+          ? "maintenance-card maintenance-card--hero"
+          : "maintenance-card"
+      }
     >
       <div class="maintenance-card__header">
         <div>

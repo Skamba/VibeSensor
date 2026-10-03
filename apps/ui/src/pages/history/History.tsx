@@ -85,7 +85,9 @@ function RunRow(props: { row: RowModel }) {
         <div class="history-row__run">
           <div class="history-row__run-heading">
             <div class="history-row__car-context">
-              <span class="history-row__car-label">{t("history.car_label")}</span>
+              <span class="history-row__car-label">
+                {t("history.car_label")}
+              </span>
               <span class="history-row__car-name">{row.carName}</span>
             </div>
             <div class="history-row__run-id">{row.runId}</div>
@@ -134,7 +136,9 @@ function RunRow(props: { row: RowModel }) {
         </div>
       </td>
       <td class="history-row__meta-cell history-row__meta-cell--started">
-        <span class="history-row__meta-label">{t("history.table.updated")}</span>
+        <span class="history-row__meta-label">
+          {t("history.table.updated")}
+        </span>
         <span class="history-row__meta-value">{row.startedAt}</span>
       </td>
       <td class="history-row__meta-cell history-row__meta-cell--samples numeric">
@@ -159,7 +163,9 @@ function RunRow(props: { row: RowModel }) {
             </button>
           </div>
         )}
-        {row.pdfError ? <div class="history-inline-error">{row.pdfError}</div> : null}
+        {row.pdfError ? (
+          <div class="history-inline-error">{row.pdfError}</div>
+        ) : null}
       </td>
     </tr>
   );
@@ -184,7 +190,9 @@ function SecondaryCard(props: { finding: SecondaryFinding }) {
       </div>
       <div class="history-finding-card__meta">
         <div class="history-finding-card__meta-item">
-          <span class="history-finding-card__label">{t("history.findings_location")}</span>
+          <span class="history-finding-card__label">
+            {t("history.findings_location")}
+          </span>
           <strong>{finding.location}</strong>
         </div>
         <div class="history-finding-card__meta-item">
@@ -219,13 +227,21 @@ function Insights(props: { insights: InsightsModel }) {
         {primary ? (
           <div class="history-findings-overview">
             <div class="history-findings-overview__header">
-              <div class="history-findings-overview__eyebrow">{primary.eyebrow}</div>
+              <div class="history-findings-overview__eyebrow">
+                {primary.eyebrow}
+              </div>
             </div>
-            <div class={`history-diagnosis-card history-diagnosis-card--${primary.tone}`}>
+            <div
+              class={`history-diagnosis-card history-diagnosis-card--${primary.tone}`}
+            >
               <div class="history-diagnosis-card__header">
                 <div class="history-diagnosis-card__copy">
-                  <div class="history-findings-overview__headline">{primary.headline}</div>
-                  <div class="history-diagnosis-card__signature">{primary.signature}</div>
+                  <div class="history-findings-overview__headline">
+                    {primary.headline}
+                  </div>
+                  <div class="history-diagnosis-card__signature">
+                    {primary.signature}
+                  </div>
                 </div>
                 <span
                   class={`history-diagnosis-card__confidence history-diagnosis-card__confidence--${primary.tone}`}
@@ -234,12 +250,19 @@ function Insights(props: { insights: InsightsModel }) {
                 </span>
               </div>
               {primary.explanation ? (
-                <p class="history-findings-overview__explanation">{primary.explanation}</p>
+                <p class="history-findings-overview__explanation">
+                  {primary.explanation}
+                </p>
               ) : null}
               <div class="history-findings-overview__chips">
                 {primary.chips.map((chip, index) => (
-                  <div key={`${chip.label}:${index}`} class="history-findings-chip">
-                    <span class="history-findings-chip__label">{chip.label}</span>
+                  <div
+                    key={`${chip.label}:${index}`}
+                    class="history-findings-chip"
+                  >
+                    <span class="history-findings-chip__label">
+                      {chip.label}
+                    </span>
                     <strong>{chip.value}</strong>
                   </div>
                 ))}
@@ -257,7 +280,9 @@ function Insights(props: { insights: InsightsModel }) {
         ) : null}
         {insights.secondaryTitle ? (
           <div class="history-secondary-findings">
-            <div class="history-secondary-findings__title">{insights.secondaryTitle}</div>
+            <div class="history-secondary-findings__title">
+              {insights.secondaryTitle}
+            </div>
             <ul class="history-findings-list history-findings-list--secondary">
               {insights.visibleSecondary.map((finding, index) => (
                 <SecondaryCard
@@ -287,7 +312,9 @@ function Insights(props: { insights: InsightsModel }) {
   return (
     <div class="history-insights-block">
       <div class="history-panel-header">
-        <div class="history-panel-header__eyebrow">{t("history.findings_title")}</div>
+        <div class="history-panel-header__eyebrow">
+          {t("history.findings_title")}
+        </div>
       </div>
       {body}
     </div>
@@ -299,7 +326,9 @@ function Heatmap(props: { heatmap: HeatmapModel }) {
   return (
     <div class="history-heatmap">
       <div class="history-heatmap__header">
-        <div class="history-heatmap__title">{t("history.preview_heatmap_title")}</div>
+        <div class="history-heatmap__title">
+          {t("history.preview_heatmap_title")}
+        </div>
       </div>
       {heatmap.kind === "state" ? (
         <p class={heatmap.tone === "error" ? "history-inline-error" : "subtle"}>
@@ -323,12 +352,16 @@ function Heatmap(props: { heatmap: HeatmapModel }) {
                   class={[
                     "history-heatmap__zone",
                     empty ? "history-heatmap__zone--empty" : "",
-                    !empty && zone.strongest ? "history-heatmap__zone--strongest" : "",
+                    !empty && zone.strongest
+                      ? "history-heatmap__zone--strongest"
+                      : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
                   style={style}
-                  title={empty ? zone.label : `${zone.label}: ${zone.valueLabel}`}
+                  title={
+                    empty ? zone.label : `${zone.label}: ${zone.valueLabel}`
+                  }
                   data-location-key={zone.key}
                 >
                   <div class="history-heatmap__zone-label">{zone.label}</div>
@@ -342,7 +375,9 @@ function Heatmap(props: { heatmap: HeatmapModel }) {
                     {zone.valueLabel}
                   </div>
                   <div class="history-heatmap__zone-meter" aria-hidden="true">
-                    {empty ? null : <span class="history-heatmap__zone-meter-fill" />}
+                    {empty ? null : (
+                      <span class="history-heatmap__zone-meter-fill" />
+                    )}
                   </div>
                 </div>
               );
@@ -351,7 +386,10 @@ function Heatmap(props: { heatmap: HeatmapModel }) {
           {heatmap.extras.length ? (
             <div class="history-heatmap__extras">
               {heatmap.extras.map((extra, index) => (
-                <div key={`${extra}:${index}`} class="history-heatmap__extra-chip">
+                <div
+                  key={`${extra}:${index}`}
+                  class="history-heatmap__extra-chip"
+                >
                   {extra}
                 </div>
               ))}
@@ -392,7 +430,9 @@ function DetailsRow(props: { runId: string; model: DetailsModel }) {
                   {model.reloadLabel}
                 </button>
               ) : model.loadingStatus ? (
-                <div class="history-details-header__status">{model.loadingStatus}</div>
+                <div class="history-details-header__status">
+                  {model.loadingStatus}
+                </div>
               ) : null}
               {model.insightsError ? (
                 <span class="history-inline-error">{model.insightsError}</span>
@@ -408,7 +448,9 @@ function DetailsRow(props: { runId: string; model: DetailsModel }) {
                 >
                   <strong>{warning.title}</strong>
                   {warning.detail ? (
-                    <div class="history-warning-banner__detail">{warning.detail}</div>
+                    <div class="history-warning-banner__detail">
+                      {warning.detail}
+                    </div>
                   ) : null}
                 </div>
               ))}

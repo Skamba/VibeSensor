@@ -79,9 +79,27 @@ const MANUAL_FIELDS: Array<{
   min: string;
   step: string;
 }> = [
-  { field: "tireWidth", id: "wizTireWidth", labelKey: "settings.tire_width", min: "100", step: "1" },
-  { field: "tireAspect", id: "wizTireAspect", labelKey: "settings.tire_aspect", min: "20", step: "1" },
-  { field: "rim", id: "wizRim", labelKey: "settings.rim_size", min: "10", step: "0.5" },
+  {
+    field: "tireWidth",
+    id: "wizTireWidth",
+    labelKey: "settings.tire_width",
+    min: "100",
+    step: "1",
+  },
+  {
+    field: "tireAspect",
+    id: "wizTireAspect",
+    labelKey: "settings.tire_aspect",
+    min: "20",
+    step: "1",
+  },
+  {
+    field: "rim",
+    id: "wizRim",
+    labelKey: "settings.rim_size",
+    min: "10",
+    step: "0.5",
+  },
   {
     field: "finalDrive",
     id: "wizFinalDrive",
@@ -89,7 +107,13 @@ const MANUAL_FIELDS: Array<{
     min: "0.1",
     step: "0.01",
   },
-  { field: "topGear", id: "wizGearRatio", labelKey: "settings.top_gear_ratio", min: "0.1", step: "0.01" },
+  {
+    field: "topGear",
+    id: "wizGearRatio",
+    labelKey: "settings.top_gear_ratio",
+    min: "0.1",
+    step: "0.01",
+  },
 ];
 
 interface OptionItem {
@@ -109,14 +133,18 @@ function Options(props: {
 }) {
   return (
     <div
-      class={props.list ? "wizard-options wizard-options--list" : "wizard-options"}
+      class={
+        props.list ? "wizard-options wizard-options--list" : "wizard-options"
+      }
       id={props.id}
     >
       {props.message ? <em>{props.message}</em> : null}
       {props.error ? (
         <div class="wizard-load-error" role="alert">
           <strong class="wizard-load-error__title">{props.error}</strong>
-          <div class="wizard-load-error__hint">{t("settings.wizard.load_failed_hint")}</div>
+          <div class="wizard-load-error__hint">
+            {t("settings.wizard.load_failed_hint")}
+          </div>
           <div class="wizard-load-error__actions">
             <button
               type="button"
@@ -148,7 +176,9 @@ function Options(props: {
           {...item.attrs}
         >
           <span>{item.label}</span>
-          {item.detail ? <span class="wiz-opt-detail">{item.detail}</span> : null}
+          {item.detail ? (
+            <span class="wiz-opt-detail">{item.detail}</span>
+          ) : null}
         </button>
       ))}
     </div>
@@ -176,9 +206,13 @@ function CustomEntry(props: {
   const id = `wizardCustom${props.kind[0].toUpperCase()}${props.kind.slice(1)}`;
   const input = useRef<HTMLInputElement | null>(null);
   return (
-    <div class={props.intro ? "wizard-custom wizard-custom--branch" : "wizard-custom"}>
+    <div
+      class={
+        props.intro ? "wizard-custom wizard-custom--branch" : "wizard-custom"
+      }
+    >
       {props.intro}
-      <label>{t(props.labelKey)}</label>
+      <label for={id}>{t(props.labelKey)}</label>
       <input
         id={id}
         ref={input}
@@ -188,8 +222,11 @@ function CustomEntry(props: {
       />
       <button
         id={`${id}Btn`}
+        type="button"
         class="btn btn--primary"
-        onClick={() => void submitCustom(props.kind, input.current?.value ?? "")}
+        onClick={() =>
+          void submitCustom(props.kind, input.current?.value ?? "")
+        }
       >
         {t("settings.car.use_custom")}
       </button>
@@ -251,8 +288,12 @@ function Steps() {
           placeholder="e.g. C-Class W205"
           intro={
             <>
-              <strong class="wizard-branch-label">{t("settings.car.manual_branch_title")}</strong>
-              <div class="subtle wizard-branch-note">{t("settings.car.manual_model_note")}</div>
+              <strong class="wizard-branch-label">
+                {t("settings.car.manual_branch_title")}
+              </strong>
+              <div class="subtle wizard-branch-note">
+                {t("settings.car.manual_model_note")}
+              </div>
             </>
           }
         />
@@ -273,8 +314,12 @@ function Steps() {
       <div id="wizardStep4" class="wizard-step" hidden={current !== SPECS_STEP}>
         <div class="wizard-branch-card wizard-branch-card--library">
           <div class="wizard-branch-card__header">
-            <strong class="wizard-branch-label">{t("settings.car.library_branch_title")}</strong>
-            <div class="subtle wizard-branch-note">{t("settings.car.library_branch_note")}</div>
+            <strong class="wizard-branch-label">
+              {t("settings.car.library_branch_title")}
+            </strong>
+            <div class="subtle wizard-branch-note">
+              {t("settings.car.library_branch_note")}
+            </div>
           </div>
           <h3>{t("settings.car.step_wheels")}</h3>
           <Options
@@ -310,8 +355,12 @@ function Steps() {
         </div>
         <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
           <div class="wizard-branch-card__header">
-            <strong class="wizard-branch-label">{t("settings.car.manual_branch_title")}</strong>
-            <div class="subtle wizard-custom-specs__note">{t("settings.car.manual_specs_note")}</div>
+            <strong class="wizard-branch-label">
+              {t("settings.car.manual_branch_title")}
+            </strong>
+            <div class="subtle wizard-custom-specs__note">
+              {t("settings.car.manual_specs_note")}
+            </div>
           </div>
           <div class="settings-subgrid">
             {MANUAL_FIELDS.map((input) => (
@@ -324,7 +373,9 @@ function Steps() {
                   min={input.min}
                   step={input.step}
                   value={inputs[input.field]}
-                  onInput={(event) => editManualInput(input.field, event.currentTarget.value)}
+                  onInput={(event) =>
+                    editManualInput(input.field, event.currentTarget.value)
+                  }
                 />
               </div>
             ))}
@@ -350,7 +401,9 @@ export function CarWizard() {
     if (open && !wasOpen.current) {
       const active = document.activeElement;
       returnFocus.current =
-        active instanceof HTMLElement && active !== document.body ? active : null;
+        active instanceof HTMLElement && active !== document.body
+          ? active
+          : null;
       if (card.current) {
         card.current.scrollTop = 0;
       }
@@ -385,7 +438,14 @@ export function CarWizard() {
   const view = summary(state, inputs, fmt, t);
   return (
     <div class="wizard-modal-layer" hidden={!open}>
-      <div id="wizardBackdrop" class="wizard-backdrop" hidden={!open} onClick={closeWizard} />
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: clicking outside closes the dialog; Escape and the close button are the keyboard paths. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: see above. */}
+      <div
+        id="wizardBackdrop"
+        class="wizard-backdrop"
+        hidden={!open}
+        onClick={closeWizard}
+      />
       <div
         id="addCarWizard"
         class="panel card add-car-wizard"
@@ -393,7 +453,9 @@ export function CarWizard() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="wizardTitle"
-        data-spec-branch={current === SPECS_STEP ? (branch ?? "pending") : undefined}
+        data-spec-branch={
+          current === SPECS_STEP ? (branch ?? "pending") : undefined
+        }
         tabIndex={-1}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -413,6 +475,7 @@ export function CarWizard() {
           </div>
           <button
             id="wizardCloseBtn"
+            type="button"
             class="btn btn--muted wizard-close"
             aria-label="Close wizard"
             onClick={closeWizard}
@@ -423,14 +486,18 @@ export function CarWizard() {
         <div class="wizard-shell">
           <div class="wizard-main">
             <div class="wizard-steps">
-              <div class="wizard-step-indicators" aria-label="Add car progress">
+              <div class="wizard-step-indicators">
                 {STEP_LABEL_KEYS.map((key, index) => (
                   <span
                     key={key}
                     class="wizard-step-dot"
                     data-step={String(index)}
                     data-step-state={
-                      index === current ? "active" : index < current ? "done" : "upcoming"
+                      index === current
+                        ? "active"
+                        : index < current
+                          ? "done"
+                          : "upcoming"
                     }
                     aria-current={index === current ? "step" : undefined}
                   >
@@ -442,12 +509,17 @@ export function CarWizard() {
               <Steps />
             </div>
             <div class="wizard-nav">
-              <div id="wizardActionHint" class="subtle wizard-nav__status" aria-live="polite">
+              <div
+                id="wizardActionHint"
+                class="subtle wizard-nav__status"
+                aria-live="polite"
+              >
                 {actionHint(state, inputs, t)}
               </div>
               <div class="wizard-nav__actions">
                 <button
                   id="wizardBackBtn"
+                  type="button"
                   class="btn btn--muted"
                   hidden={current === 0}
                   onClick={() => void goBack()}
@@ -456,9 +528,12 @@ export function CarWizard() {
                 </button>
                 <button
                   id="wizardManualAddBtn"
+                  type="button"
                   class="btn btn--success"
                   hidden={current !== SPECS_STEP}
-                  disabled={!(current === SPECS_STEP && canFinish(state, inputs))}
+                  disabled={
+                    !(current === SPECS_STEP && canFinish(state, inputs))
+                  }
                   onClick={() => void finishWizard()}
                 >
                   {t("settings.car.finish_add")}
@@ -471,14 +546,18 @@ export function CarWizard() {
               <strong>{t("settings.car.wizard_task_title")}</strong>
               <div class="subtle">{t("settings.car.wizard_task_intro")}</div>
             </div>
-            <div class="wizard-summary-card__title">{t("settings.car.wizard_summary_title")}</div>
+            <div class="wizard-summary-card__title">
+              {t("settings.car.wizard_summary_title")}
+            </div>
             <div class="subtle">{t("settings.car.wizard_summary_intro")}</div>
             <div id="wizardSummaryPanel">
               <div class="wizard-summary-preview">
                 <div class="wizard-summary-preview__label">
                   {t("settings.car.wizard_summary_name")}
                 </div>
-                <div class="wizard-summary-preview__value">{view.profileName}</div>
+                <div class="wizard-summary-preview__value">
+                  {view.profileName}
+                </div>
               </div>
               <dl class="wizard-summary-list">
                 {view.rows.map((row) => (

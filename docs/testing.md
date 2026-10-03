@@ -90,12 +90,12 @@ cd apps/ui && npm run test:smoke
 
 | Layer | Runner | Use for |
 |---|---|---|
-| Unit/integration | `npm run test:unit` | logic below browser boundary, payload decoders, runtime helpers, feature workflows, pure view helpers |
+| Unit | `npm run test:unit` | pure page models, payload decoders, poll/ws/live helpers, the spectrum renderer, `api/*` wrappers |
 | Smoke | `npm run test:smoke` | per-page user journeys (`tests/smoke.<page>.spec.ts`) against a real Vite dev server |
 
 - `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`).
-- Use shared MSW helpers under `apps/ui/tests/msw/` for frontend tests that intentionally cross the real HTTP boundary. They normalize relative `/api/...` requests and fail unhandled requests loudly.
-- Do not add MSW to tests that inject transport ports or stay inside presenter/view/state seams. Keep WebSocket mocking on the dedicated fake WebSocket helpers.
+- UI unit tests cover pure logic (each page's model, poll/ws/live helpers, the spectrum renderer) and the `api/*` wrappers; the latter use `apps/ui/tests/fetch_stub.ts`, which fails unrouted requests loudly.
+- Rendered behaviour belongs in the per-page Playwright journeys, which mock HTTP with `page.route` and the WebSocket with the fake socket in `tests/smoke.helpers.ts`.
 
 ## Firmware and Pi image validation
 

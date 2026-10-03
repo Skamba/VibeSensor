@@ -3,16 +3,15 @@ import { addSettingsCar } from "../src/api/settings";
 import { getHistoryInsights } from "../src/api/history";
 import { getLoggingStatus } from "../src/api/logging";
 import type {
+  CarsPayload,
   CarUpsertRequest,
   HistoryInsightsAnalyzingPayload,
   LoggingStatusPayload,
 } from "../src/api/types";
 import { installWindowGlobal } from "./async_test_helpers";
-import { HttpResponse, http, uiTestUrl } from "./msw/http";
-import { buildCarsHandlers, makeCarsPayload } from "./msw/handlers/settings";
-import { createUiMswTestServer } from "./msw/node";
+import { json, route, stubFetch } from "./fetch_stub";
 
-const mswServer = createUiMswTestServer();
+const server = stubFetch();
 
 describe("API adapter clone usage", () => {
   beforeEach(() => {
@@ -39,11 +38,7 @@ describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    mswServer.use(
-      http.get(uiTestUrl("/api/recording/status"), () =>
-        HttpResponse.json(payload),
-      ),
-    );
+    server.use(route("GET /api/recording/status", () => json(payload)));
 
     try {
       await expect(getLoggingStatus()).resolves.toEqual(payload);
@@ -64,7 +59,7 @@ describe("API adapter clone usage", () => {
         current_gear_ratio: 0.82,
       },
     };
-    const responsePayload = makeCarsPayload({ active_car_id: null, cars: [] });
+    const responsePayload: CarsPayload = { active_car_id: null, cars: [] };
     let structuredCloneCalls = 0;
     let requestBody = "";
 
@@ -72,12 +67,10 @@ describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    mswServer.use(
-      ...buildCarsHandlers({
-        create: async (request) => {
-          requestBody = await request.text();
-          return responsePayload;
-        },
+    server.use(
+      route("POST /api/settings/cars", async (request) => {
+        requestBody = await request.text();
+        return json(responsePayload);
       }),
     );
 
@@ -104,9 +97,9 @@ describe("API adapter clone usage", () => {
       structuredCloneCalls += 1;
       return originalStructuredClone(value);
     }) as typeof structuredClone;
-    mswServer.use(
-      http.get(uiTestUrl("/api/history/run-001/insights"), () =>
-        HttpResponse.json(payload, { status: 202 }),
+    server.use(
+      route("GET /api/history/run-001/insights", () =>
+        json(payload, { status: 202 }),
       ),
     );
 
