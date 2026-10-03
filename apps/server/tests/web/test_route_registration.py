@@ -16,8 +16,9 @@ def test_assembled_router_serves_core_runtime_endpoints(fake_state) -> None:
         assert client.get("/api/health").json()["status"] == "ok"
         assert client.get("/api/settings/language").json() == {"language": "en"}
         assert client.put("/api/settings/language", json={"language": "nl"}).json() == {
-            "language": "en",
+            "language": "nl",
         }
+        assert client.get("/api/settings/language").json() == {"language": "nl"}
         assert client.get("/api/clients").json() == {"clients": []}
         assert client.get("/api/recording/status").json()["enabled"] is False
         assert client.get("/api/update/status").json()["state"] == "idle"

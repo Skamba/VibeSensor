@@ -11,12 +11,12 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from unittest.mock import AsyncMock, MagicMock, create_autospec
+from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.history.exports import HistoryExportService
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
@@ -27,7 +27,7 @@ from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 from vibesensor.report.service import HistoryReportService
-from vibesensor.settings.car_config import CarsSnapshot
+from vibesensor.settings.services import SettingsServices, build_settings_services
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
@@ -166,90 +166,30 @@ def _gps_monitor_mock() -> GPSSpeedMonitor:
     return gps_monitor
 
 
-def _default_cars_snapshot() -> CarsSnapshot:
-    return CarsSnapshot(
-        cars=[
-            {
-                "id": "car-1",
-                "name": "Test Car",
-                "type": "sedan",
-                "aspects": {"tire_width_mm": 225.0},
-            }
-        ],
-        active_car_id="car-1",
-    )
-
-
-def _settings_store_mock() -> MagicMock:
-    store = MagicMock()
-    store.analysis_settings_snapshot.return_value = AnalysisSettingsSnapshot(
-        **AnalysisSettingsSnapshot.DEFAULTS
-    )
-    store.get_cars.return_value = _default_cars_snapshot()
-    store.get_speed_source.return_value = {
-        "speedSource": "manual",
-        "manualSpeedKph": 0.0,
-        "staleTimeoutS": 8.0,
-    }
-    store.get_sensors.return_value = {}
-    store.active_car_snapshot.return_value = None
-    store.add_car.return_value = _default_cars_snapshot()
-    store.update_car.return_value = _default_cars_snapshot()
-    store.delete_car.return_value = _default_cars_snapshot()
-    store.set_active_car.return_value = _default_cars_snapshot()
-    store.update_active_car_aspects.return_value = {}
-    store.set_sensor.return_value = {}
-    store.remove_sensor.return_value = True
-    store.update_speed_source.return_value = {
-        "speedSource": "manual",
-        "manualSpeedKph": 0.0,
-        "staleTimeoutS": 8.0,
-    }
-    store.set_language.return_value = "en"
-    store.language = "en"
-    store.set_speed_unit.return_value = "kmh"
-    store.speed_unit = "kmh"
-    return store
-
-
-def _speed_source_service_mock() -> MagicMock:
-    service = MagicMock()
-    service.get_speed_source.return_value = {
-        "speedSource": "manual",
-        "manualSpeedKph": 0.0,
-        "staleTimeoutS": 8.0,
-    }
-    service.update_speed_source.return_value = {
-        "speedSource": "manual",
-        "manualSpeedKph": 0.0,
-        "staleTimeoutS": 8.0,
-    }
-    return service
-
-
 @dataclass
 class FakeState:
-    """Minimal stand-in for router assembly tests.
+    """Router-assembly state: spec'd runtime mocks plus real in-memory settings services.
 
     Its attribute names match ``vibesensor.web.router.WebServices`` so it can be
-    passed straight to ``create_router``.
+    passed straight to ``create_router``. Settings routes run against the real
+    services from ``build_settings_services()``; pass ``settings=`` to share
+    them with the test, or override a single service by keyword.
     """
 
-    config: object = field(default_factory=MagicMock)
     registry: ClientRegistry = field(default_factory=_registry_mock)
     processor: SignalProcessor = field(default_factory=_processor_mock)
     control_plane: UDPControlPlane = field(default_factory=_control_plane_mock)
     ws_broadcaster: LiveBroadcaster = field(default_factory=_ws_broadcaster_mock)
     gps_monitor: GPSSpeedMonitor = field(default_factory=_gps_monitor_mock)
     run_recorder: RunRecorder = field(default_factory=_run_recorder_mock)
-    settings_store: MagicMock = field(default_factory=_settings_store_mock)
+    settings: SettingsServices = field(default_factory=build_settings_services)
     settings_reader: object | None = None
     car_settings: object | None = None
     analysis_settings: object | None = None
     sensor_metadata_store: object | None = None
     ui_preferences: object | None = None
-    speed_source_service: MagicMock = field(default_factory=_speed_source_service_mock)
-    history_db: object = field(default_factory=MagicMock)
+    speed_source_service: object | None = None
+    history_db: object = field(default_factory=lambda: create_autospec(HistoryDB, instance=True))
     update_manager: UpdateManager = field(default_factory=_update_manager_mock)
     esp_flash_manager: EspFlashManager = field(default_factory=_esp_flash_manager_mock)
     processing_loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
@@ -257,7 +197,6 @@ class FakeState:
     ingest_diagnostics: IngestDiagnosticsCollector = field(
         default_factory=IngestDiagnosticsCollector
     )
-    processing_loop: object = field(default_factory=MagicMock)
     run_service: object | None = None
     report_service: object | None = None
     export_service: object | None = None
@@ -265,15 +204,17 @@ class FakeState:
     def __post_init__(self) -> None:
         self.health_state.mark_ready()
         if self.settings_reader is None:
-            self.settings_reader = self.settings_store
+            self.settings_reader = self.settings.settings_reader
         if self.car_settings is None:
-            self.car_settings = self.settings_store
+            self.car_settings = self.settings.car_settings
         if self.analysis_settings is None:
-            self.analysis_settings = self.settings_store
+            self.analysis_settings = self.settings.analysis_settings
         if self.sensor_metadata_store is None:
-            self.sensor_metadata_store = self.settings_store
+            self.sensor_metadata_store = self.settings.sensor_settings
         if self.ui_preferences is None:
-            self.ui_preferences = self.settings_store
+            self.ui_preferences = self.settings.ui_preferences
+        if self.speed_source_service is None:
+            self.speed_source_service = self.settings.speed_source_service
         # Keep router assembly tests focused on dependency wiring rather than
         # bespoke history/export service setup in each caller.
         if self.run_service is None:

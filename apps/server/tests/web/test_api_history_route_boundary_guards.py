@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, create_autospec
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.common.filenames import safe_filename
-from vibesensor.report.service import HistoryReportPdf
+from vibesensor.report.service import HistoryReportPdf, HistoryReportService
 from vibesensor.web.error_boundary import install_http_exception_handlers
 from vibesensor.web.history import create_history_routes
+from vibesensor.web.history_services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+)
 from vibesensor.web.middleware import install_request_logging_middleware
 
 
@@ -25,17 +29,17 @@ class _FakeExportDownload:
 
 
 def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:
-    run_service = MagicMock()
+    run_service = create_autospec(ProjectedHistoryRunService, instance=True)
     run_service.get_run = AsyncMock(return_value={"run_id": "run-1"})
     run_service.get_insights = AsyncMock(return_value={"run_id": "run-1", "status": "complete"})
     run_service.delete_run = AsyncMock(return_value={"run_id": "run-1", "deleted": True})
 
-    report_service = MagicMock()
+    report_service = create_autospec(HistoryReportService, instance=True)
     report_service.build_pdf = AsyncMock(
         return_value=HistoryReportPdf(content=b"%PDF-safe", filename="run-1_report.pdf")
     )
 
-    export_service = MagicMock()
+    export_service = create_autospec(ProjectedHistoryExportService, instance=True)
     export_service.build_export = AsyncMock(return_value=_FakeExportDownload(filename="run-1.zip"))
 
     app = FastAPI()

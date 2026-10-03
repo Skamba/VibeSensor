@@ -47,60 +47,52 @@ def _speed_source_client(fake_state):
 
 
 class TestSpeedSourceEndpoint:
-    def test_get_speed_source_response_shape(self, _speed_source_client) -> None:
-        client, state = _speed_source_client
-        state.speed_source_service.get_speed_source.return_value = {
-            "speedSource": "manual",
-            "manualSpeedKph": 42.0,
-            "staleTimeoutS": 15.0,
-            "obdDeviceMac": "001122334455",
-            "obdDeviceName": "OBDLink MX+",
-        }
-
-        response = client.get("/api/settings/speed-source")
-
-        assert response.status_code == 200
-        assert response.json() == {
-            "speed_source": "manual",
-            "manual_speed_kph": 42.0,
-            "stale_timeout_s": 15.0,
-            "obd_device_mac": "001122334455",
-            "obd_device_name": "OBDLink MX+",
-        }
-
-    def test_update_speed_source_passes_only_non_null_fields(
-        self,
-        _speed_source_client,
-    ) -> None:
-        client, state = _speed_source_client
-        state.speed_source_service.update_speed_source.return_value = {
-            "speedSource": "manual",
-            "manualSpeedKph": 42.0,
-            "staleTimeoutS": 15.0,
-        }
+    def test_put_then_get_round_trips_the_saved_config(self, _speed_source_client) -> None:
+        client, _state = _speed_source_client
 
         response = client.put(
             "/api/settings/speed-source",
-            json={"speed_source": "manual", "manual_speed_kph": 42.0},
+            json={
+                "speed_source": "manual",
+                "manual_speed_kph": 42.0,
+                "stale_timeout_s": 15.0,
+            },
         )
 
         assert response.status_code == 200
-        state.speed_source_service.update_speed_source.assert_called_once_with(
-            {"speedSource": "manual", "manualSpeedKph": 42.0}
+        expected = {
+            "speed_source": "manual",
+            "manual_speed_kph": 42.0,
+            "stale_timeout_s": 15.0,
+            "obd_device_mac": None,
+            "obd_device_name": None,
+        }
+        assert response.json() == expected
+        assert client.get("/api/settings/speed-source").json() == expected
+
+    def test_partial_update_keeps_the_fields_it_omits(self, _speed_source_client) -> None:
+        client, _state = _speed_source_client
+        client.put(
+            "/api/settings/speed-source",
+            json={"speed_source": "gps", "manual_speed_kph": 42.0, "stale_timeout_s": 15.0},
         )
 
-    def test_update_speed_source_maps_invalid_config_to_400(
+        response = client.put("/api/settings/speed-source", json={"stale_timeout_s": 20.0})
+
+        assert response.status_code == 200
+        assert response.json()["manual_speed_kph"] == 42.0
+        assert response.json()["stale_timeout_s"] == 20.0
+
+    def test_manual_source_without_a_manual_speed_is_rejected(
         self,
         _speed_source_client,
     ) -> None:
-        client, state = _speed_source_client
-        state.speed_source_service.update_speed_source.side_effect = ValueError(
-            "SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph"
-        )
+        client, _state = _speed_source_client
 
         response = client.put("/api/settings/speed-source", json={"speed_source": "manual"})
 
         assert response.status_code == 400
+        assert client.get("/api/settings/speed-source").json()["speed_source"] == "gps"
 
     def test_speed_source_status_response_shape(self, _speed_source_client) -> None:
         client, state = _speed_source_client
@@ -112,3 +104,18 @@ class TestSpeedSourceEndpoint:
         result = response.json()
         assert result["speed_source"] == "gps"
         assert result["fix_dimension"] == "3d"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param({"manual_speed_kph": 500.1}, id="manual-speed-above-500"),
+        pytest.param({"manual_speed_kph": -1}, id="negative-manual-speed"),
+        pytest.param({"stale_timeout_s": 2.9}, id="stale-timeout-below-3"),
+        pytest.param({"stale_timeout_s": 120.1}, id="stale-timeout-above-120"),
+    ],
+)
+def test_out_of_range_speed_source_values_are_rejected(_speed_source_client, body) -> None:
+    client, _state = _speed_source_client
+
+    assert client.put("/api/settings/speed-source", json=body).status_code == 422

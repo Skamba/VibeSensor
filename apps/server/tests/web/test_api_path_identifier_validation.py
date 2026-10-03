@@ -1,29 +1,27 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.cli.http_api_schema_export import export_schema
-from vibesensor.settings.car_config import CarsSnapshot
+from vibesensor.report.service import HistoryReportService
+from vibesensor.settings.car_settings import CarSettingsService
+from vibesensor.web.history_services import (
+    ProjectedHistoryExportService,
+    ProjectedHistoryRunService,
+)
 
 
 def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]:
     from vibesensor.web.history import create_history_routes
 
-    run_service = MagicMock()
-    run_service.get_run = AsyncMock()
-    run_service.get_insights = AsyncMock()
-    run_service.delete_run = AsyncMock()
-
-    report_service = MagicMock()
-    report_service.build_pdf = AsyncMock()
-
-    export_service = MagicMock()
-    export_service.build_export = AsyncMock()
+    run_service = create_autospec(ProjectedHistoryRunService, instance=True)
+    report_service = create_autospec(HistoryReportService, instance=True)
+    export_service = create_autospec(ProjectedHistoryExportService, instance=True)
 
     app = FastAPI()
     app.include_router(
@@ -39,18 +37,7 @@ def _history_test_client() -> tuple[TestClient, MagicMock, MagicMock, MagicMock]
 def _settings_test_client() -> tuple[TestClient, MagicMock]:
     from vibesensor.web.settings.cars import create_car_settings_routes
 
-    settings_store = MagicMock()
-    settings_store.get_cars.return_value = CarsSnapshot(
-        cars=[
-            {
-                "id": "car-1",
-                "name": "Test Car",
-                "type": "sedan",
-                "aspects": {"tire_width_mm": 225.0},
-            }
-        ],
-        active_car_id="car-1",
-    )
+    settings_store = create_autospec(CarSettingsService, instance=True)
 
     app = FastAPI()
     app.include_router(create_car_settings_routes(settings_store))

@@ -1,21 +1,9 @@
 from __future__ import annotations
 
-from typing import get_type_hints
-
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
-from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_FIELDS
-from vibesensor.settings.car_config import CarConfigPayload, CarConfigUpdatePayload
-from vibesensor.settings.car_settings import CarSettingsService
+from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.settings_types import (
-    AnalysisSettingsPayload,
     analysis_settings_payload_from_mapping,
 )
-
-
-def test_analysis_settings_payload_keys_match_snapshot_defaults() -> None:
-    assert AnalysisSettingsPayload.__required_keys__ == frozenset()
-    assert AnalysisSettingsPayload.__optional_keys__ == frozenset(ANALYSIS_SETTINGS_FIELDS)
 
 
 def test_analysis_settings_payload_projection_keeps_only_supported_keys() -> None:
@@ -33,22 +21,17 @@ def test_analysis_settings_payload_projection_keeps_only_supported_keys() -> Non
     }
 
 
-def test_http_and_store_annotations_use_analysis_settings_payload() -> None:
-    assert get_type_hints(CarConfigUpdatePayload)["aspects"] == AnalysisSettingsPayload | None
-    assert get_type_hints(CarConfigPayload)["aspects"] is AnalysisSettingsPayload
-    assert get_type_hints(CarSettingsService.active_car_aspects)["return"] == (
-        AnalysisSettingsPayload | None
+def test_active_car_aspect_updates_are_clamped_and_reject_negative_uncertainty() -> None:
+    services = build_settings_services()
+    created = services.car_settings.add_car({"name": "Bounds"})
+    services.car_settings.set_active_car(created.cars[0]["id"])
+    before = services.analysis_settings.analysis_settings_snapshot()
+
+    services.analysis_settings.update_active_car_aspects(
+        {"tire_width_mm": 900.0, "rim_in": 5.0, "speed_uncertainty_pct": -1.0}
     )
-    assert get_type_hints(CarSettingsService.update_active_car_aspects)["aspects"] is (
-        AnalysisSettingsPayload
-    )
-    assert get_type_hints(CarSettingsService.update_active_car_aspects)["return"] is (
-        AnalysisSettingsPayload
-    )
-    analysis_hints = get_type_hints(ActiveCarAnalysisSettingsService.update_active_car_aspects)
-    assert (
-        get_type_hints(ActiveCarAnalysisSettingsService.analysis_settings_snapshot)["return"]
-        is AnalysisSettingsSnapshot
-    )
-    assert analysis_hints["aspects"] is (AnalysisSettingsPayload)
-    assert analysis_hints["return"] is AnalysisSettingsPayload
+
+    after = services.analysis_settings.analysis_settings_snapshot()
+    assert after.tire_width_mm == 500.0
+    assert after.rim_in == 10.0
+    assert after.speed_uncertainty_pct == before.speed_uncertainty_pct

@@ -6,11 +6,7 @@ import math
 
 import pytest
 
-from vibesensor.speed.gps_speed import (
-    MAX_STALE_TIMEOUT_S,
-    MIN_STALE_TIMEOUT_S,
-    GPSSpeedMonitor,
-)
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
 
 
 class TestGPSFallbackSettings:
@@ -19,10 +15,10 @@ class TestGPSFallbackSettings:
     def test_set_fallback_settings_clamps_stale_timeout(self) -> None:
         monitor = GPSSpeedMonitor(gps_enabled=True)
         monitor.set_fallback_settings(stale_timeout_s=0.1)
-        assert monitor.stale_timeout_s == MIN_STALE_TIMEOUT_S
+        assert monitor.stale_timeout_s == 3.0
 
         monitor.set_fallback_settings(stale_timeout_s=99999)
-        assert monitor.stale_timeout_s == MAX_STALE_TIMEOUT_S
+        assert monitor.stale_timeout_s == 120.0
 
         monitor.set_fallback_settings(stale_timeout_s=30)
         assert monitor.stale_timeout_s == 30
@@ -38,8 +34,6 @@ class TestGPSFallbackSettings:
     def test_set_manual_source_selected(self) -> None:
         monitor = GPSSpeedMonitor(gps_enabled=True)
         assert monitor.manual_source_selected is True
-        monitor.set_manual_source_selected(True)
-        assert monitor.manual_source_selected is True
         monitor.set_manual_source_selected(False)
         assert monitor.manual_source_selected is False
 
@@ -49,3 +43,10 @@ def test_set_speed_override_rejects_negative_and_non_finite_values() -> None:
     for invalid_kmh in (-1.0, math.inf, math.nan):
         assert monitor.set_speed_override_kmh(invalid_kmh) is None
     assert monitor.override_speed_mps is None
+
+
+def test_manual_speed_override_is_capped_at_500_kmh() -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=False)
+
+    assert monitor.set_speed_override_kmh(600.0) == 500.0
+    assert monitor.override_speed_mps == pytest.approx(500.0 / 3.6)
