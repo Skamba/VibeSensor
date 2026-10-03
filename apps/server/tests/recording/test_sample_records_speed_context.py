@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, create_autospec
 
 import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.ingest.registry import ClientRecord, ClientRegistry
 from vibesensor.live.analysis_time_range import AnalysisTimeRange
+from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording.sample_builder import build_sample_records
 from vibesensor.recording.sample_speed_context import SpeedContext
 from vibesensor.speed.aligned_speed_context import AlignedSpeedContextSnapshot
 
 
 def test_sample_records_resolve_speed_context_per_sensor_analysis_window() -> None:
-    first = MagicMock()
+    first = MagicMock(spec=ClientRecord)
     first.client_id = "client-a"
     first.name = "Front Left"
     first.location_code = "fl"
@@ -20,7 +22,7 @@ def test_sample_records_resolve_speed_context_per_sensor_analysis_window() -> No
     first.frames_dropped = 0
     first.queue_overflow_drops = 0
 
-    second = MagicMock()
+    second = MagicMock(spec=ClientRecord)
     second.client_id = "client-b"
     second.name = "Rear Right"
     second.location_code = "rr"
@@ -28,11 +30,11 @@ def test_sample_records_resolve_speed_context_per_sensor_analysis_window() -> No
     second.frames_dropped = 0
     second.queue_overflow_drops = 0
 
-    reg = MagicMock()
+    reg = create_autospec(ClientRegistry, instance=True)
     reg.active_client_ids.return_value = ["client-a", "client-b"]
     reg.get.side_effect = lambda client_id: {"client-a": first, "client-b": second}[client_id]
 
-    proc = MagicMock()
+    proc = create_autospec(SignalProcessor, instance=True)
     proc.clients_with_recent_data.return_value = ["client-a", "client-b"]
     proc.latest_metrics.return_value = {"combined": {"strength_metrics": {}}}
     proc.latest_sample_xyz.return_value = None
@@ -87,7 +89,7 @@ def test_sample_records_resolve_speed_context_per_sensor_analysis_window() -> No
 
 
 def test_sample_records_mark_unaligned_vehicle_context_missing_for_analysis_window() -> None:
-    record = MagicMock()
+    record = MagicMock(spec=ClientRecord)
     record.client_id = "client-a"
     record.name = "Front Left"
     record.location_code = "fl"
@@ -95,11 +97,11 @@ def test_sample_records_mark_unaligned_vehicle_context_missing_for_analysis_wind
     record.frames_dropped = 0
     record.queue_overflow_drops = 0
 
-    reg = MagicMock()
+    reg = create_autospec(ClientRegistry, instance=True)
     reg.active_client_ids.return_value = ["client-a"]
     reg.get.return_value = record
 
-    proc = MagicMock()
+    proc = create_autospec(SignalProcessor, instance=True)
     proc.clients_with_recent_data.return_value = ["client-a"]
     proc.latest_metrics.return_value = {"combined": {"strength_metrics": {}}}
     proc.latest_sample_xyz.return_value = None

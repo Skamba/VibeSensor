@@ -339,7 +339,9 @@ async def test_export_archive_builder_creates_csv_and_json_entries() -> None:
                     "run_id": "run-1",
                     "analysis": {"score": 1, "_internal": "secret"},
                 },
-                samples=[{"run_id": "run-1", "t_s": 1.0, "custom": "x"}],
+                samples=[
+                    {"run_id": "run-1", "t_s": 1.0, "location": "front_left_wheel", "custom": "x"}
+                ],
             ),
         )
     )
@@ -353,6 +355,8 @@ async def test_export_archive_builder_creates_csv_and_json_entries() -> None:
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
 
     assert exported["analysis"] == {"score": 1}
+    assert rows[0]["t_s"] == "1.0"
+    assert rows[0]["location"] == "front_left_wheel"
     assert "extras" not in rows[0]
     assert "custom" not in rows[0]
 

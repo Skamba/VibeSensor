@@ -5,15 +5,11 @@ import pytest
 
 def test_build_sample_records_uses_obd_speed_and_measured_engine_rpm(
     make_logger,
-    fake_gps_monitor,
+    speed_rig,
 ) -> None:
-    fake_gps_monitor.speed_mps = 12.0
-    fake_gps_monitor.raw_gps_speed_mps = None
-    fake_gps_monitor.resolved_source = "obd2"
-    fake_gps_monitor.engine_rpm = 2150.0
-    fake_gps_monitor.engine_rpm_source = "obd2"
+    speed_rig.obd_reading(speed_kmh=43.2, rpm=2150.0)
 
-    logger = make_logger(gps_monitor=fake_gps_monitor)
+    logger = make_logger(gps_monitor=speed_rig.observation)
 
     rows = logger._sample_flush.build_sample_records(
         run_id="run-obd",

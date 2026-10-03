@@ -277,11 +277,11 @@ def test_finalize_active_run_logs_failed_stage_and_reraises(
 
 def test_stop_recording_logs_finalize_stage_results(
     make_logger,
-    fake_history_db,
+    history_db,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    recorder = make_logger(history_db=fake_history_db)
+    recorder = make_logger(history_db=history_db)
     started = recorder.start_recording()
     assert started.run_id is not None
 
@@ -313,8 +313,8 @@ def test_stop_recording_logs_finalize_stage_results(
     ]
     assert any(record.stage_name == "FinalizeRawCaptureStage" for record in stage_logs)
     assert any(record.stage_status == "degraded" for record in stage_logs)
-    updated_run_id, metadata = fake_history_db.updated_metadata[-1]
-    assert updated_run_id == started.run_id
+    metadata = history_db.get_run_metadata(started.run_id)
+    assert metadata is not None
     assert [stage.stage_name for stage in metadata.finalization_stages] == [
         "FlushPendingRowsStage",
         "FinalizeRawCaptureStage",

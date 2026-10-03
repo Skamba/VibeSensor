@@ -59,3 +59,12 @@ def test_widespread_timing_breaks_leave_the_rate_unverified(tmp_path: Path) -> N
     jittered = [t0 + (6_000 if index % 3 == 0 else 0) for index, t0 in enumerate(_contiguous(40))]
 
     assert _proof_state(tmp_path, jittered) == "timing_inconsistent"
+
+
+def test_timing_breaks_in_more_than_a_tenth_of_steps_leave_the_rate_unverified(
+    tmp_path: Path,
+) -> None:
+    # Every 10th chunk jitters: 7 of 39 steps (18%) break, above the 10% tolerance.
+    jittered = [t0 + (6_000 if index % 10 == 0 else 0) for index, t0 in enumerate(_contiguous(40))]
+
+    assert _proof_state(tmp_path, jittered) == "timing_inconsistent"
