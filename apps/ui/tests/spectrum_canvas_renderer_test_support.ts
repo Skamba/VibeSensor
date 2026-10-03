@@ -1,21 +1,31 @@
-import type { SpectrumPanelChartDom } from "../src/app/runtime/spectrum_panel_view";
+import { type Signal, signal } from "@preact/signals";
+
+import {
+  createSpectrumFramePreparer,
+  type SpectrumPreparedFrameData,
+} from "../src/pages/spectrum/frame_preparer";
 import type {
-  SpectrumCanvasRenderer,
-  SpectrumCanvasRendererDeps,
-  SpectrumPreparedRenderData,
-} from "../src/app/runtime/spectrum_canvas_renderer";
-import { createSpectrumFramePreparer } from "../src/app/runtime/spectrum_frame_preparer";
-import { createAppState } from "../src/app/ui_app_state";
-import type { AdaptedClient } from "../src/transport/live_models";
+  SpectrumRenderer,
+  SpectrumRendererDeps,
+} from "../src/pages/spectrum/spectrum_renderer";
+import type {
+  AdaptedClient,
+  SpectrumFrameData,
+} from "../src/transport/live_models";
 import {
   createElementStub,
   installDocumentStub,
 } from "./spectrum_test_support";
 
-type AppState = ReturnType<typeof createAppState>;
-type ClientSpectrum = NonNullable<
-  AppState["spectrum"]["spectra"]["value"]["clients"][string]
->;
+/** The live inputs and chart status a renderer test controls. */
+export interface RendererState {
+  clients: Signal<AdaptedClient[]>;
+  spectra: Signal<SpectrumFrameData>;
+  chartLoading: Signal<boolean>;
+  chartLoadError: Signal<string | null>;
+  wsConnected: Signal<boolean>;
+}
+type ClientSpectrum = NonNullable<SpectrumFrameData["clients"][string]>;
 
 interface ClientSpectrumOptions {
   combined?: number[];
@@ -32,15 +42,14 @@ export interface RendererClientFixture {
 }
 
 export interface SpectrumRendererHarnessOptions {
-  deps?: Partial<Omit<SpectrumCanvasRendererDeps, "dom" | "state">>;
-  seedState?: (state: AppState) => void;
+  deps?: Partial<Omit<SpectrumRendererDeps, "dom">>;
+  seedState?: (state: RendererState) => void;
 }
 
 export interface SpectrumRendererHarness {
-  dom: SpectrumPanelChartDom;
-  prepareFrame: () => SpectrumPreparedRenderData;
-  renderer: SpectrumCanvasRenderer;
-  state: AppState;
+  prepareFrame: () => SpectrumPreparedFrameData;
+  renderer: SpectrumRenderer;
+  state: RendererState;
 }
 
 export function makeClient(
@@ -94,12 +103,12 @@ export function makeSpectrum(
 }
 
 export function installClientSpectra(
-  state: AppState,
+  state: RendererState,
   entries: readonly RendererClientFixture[],
 ): void {
-  state.realtime.clients.value = entries.map((entry) => entry.client);
-  state.spectrum.spectra.value = {
-    ...state.spectrum.spectra.value,
+  state.clients.value = entries.map((entry) => entry.client);
+  state.spectra.value = {
+    ...state.spectra.value,
     clients: Object.fromEntries(
       entries.map((entry) => [entry.client.id, entry.spectrum]),
     ),
@@ -107,10 +116,10 @@ export function installClientSpectra(
 }
 
 export function getRequiredClientSpectrum(
-  state: AppState,
+  state: RendererState,
   clientId: string,
 ): ClientSpectrum {
-  const spectrum = state.spectrum.spectra.value.clients[clientId];
+  const spectrum = state.spectra.value.clients[clientId];
   if (!spectrum) {
     throw new Error(`Expected spectrum for ${clientId}`);
   }
@@ -124,19 +133,27 @@ export async function withSpectrumRendererHarness(
   const restoreDocument = installDocumentStub();
   const framePreparer = createSpectrumFramePreparer();
   try {
-    const { createSpectrumCanvasRenderer } = await import(
-      "../src/app/runtime/spectrum_canvas_renderer"
+    const { createSpectrumRenderer } = await import(
+      "../src/pages/spectrum/spectrum_renderer"
     );
-    const state = createAppState();
+    const state: RendererState = {
+      clients: signal([]),
+      spectra: signal({ clients: {} }),
+      chartLoading: signal(false),
+      chartLoadError: signal(null),
+      wsConnected: signal(false),
+    };
     options.seedState?.(state);
     const dom = {
       specChart: createElementStub("div"),
       specChartWrap: createElementStub("div"),
-    } as unknown as SpectrumPanelChartDom;
-    const renderer = createSpectrumCanvasRenderer({
-      state,
+    } as unknown as SpectrumRendererDeps["dom"];
+    const renderer = createSpectrumRenderer({
       dom,
       t: (key) => key,
+      canTween: () => state.wsConnected.value,
+      chartLoading: state.chartLoading,
+      chartLoadError: state.chartLoadError,
       getBandsVisible: () => false,
       getChartBands: () => [],
       getFocusMarker: () => null,
@@ -144,18 +161,12 @@ export async function withSpectrumRendererHarness(
       ...options.deps,
     });
     const prepareFrame = () =>
-      renderer.composePreparedFrame(
-        framePreparer.prepare({
-          clients: state.realtime.clients.value.map((client) => ({
-            id: client.id,
-            name: client.name,
-            connected: client.connected,
-          })),
-          spectraByClient: state.spectrum.spectra.value.clients,
-        }),
-      );
+      framePreparer.prepare({
+        clients: state.clients.value,
+        spectraByClient: state.spectra.value.clients,
+      });
 
-    await run({ dom, prepareFrame, renderer, state });
+    await run({ prepareFrame, renderer, state });
   } finally {
     framePreparer.dispose();
     restoreDocument();

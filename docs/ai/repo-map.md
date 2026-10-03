@@ -61,7 +61,7 @@ Enforced by the import-linter contracts in `apps/server/pyproject.toml` (annotat
 
 - `apps/ui/src/app.tsx`, `apps/ui/src/app_store.ts`: the shell (one render root, navigation, preferences, banner, confirmation).
 - `apps/ui/src/pages/<page>/`: page component, page store, pure helpers; pages never import each other.
-- `apps/ui/src/app/`: pre-rewrite live transport and spectrum (`runtime/`, `views/`) wired in `feature_wiring.ts` until they move; `apps/ui/src/live_store.ts` holds the live data the pages share.
+- `apps/ui/src/live_store.ts` + `live_transport.ts`: live data the pages share and the WebSocket feed that fills it.
 - `apps/ui/src/api/http.ts`, `apps/ui/src/ws.ts`, generated contracts, validators: canonical transport/contract seams.
 - Contract sync details: `apps/ui/README.md`.
 

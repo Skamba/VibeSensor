@@ -1,4 +1,4 @@
-import { computed, effect, signal } from "./app/ui_signals";
+import { computed, effect, signal } from "@preact/signals";
 
 export interface SpectrumCssVars {
   surface: string;

@@ -9,6 +9,7 @@ import type {
   RotationalSpeeds,
   SpectrumFrameData,
 } from "./transport/live_models";
+import type { WsUiState } from "./ws";
 
 /** Live data shared by the dashboard, sensors, and spectrum pages. */
 
@@ -18,8 +19,14 @@ export const speedMps = signal<number | null>(null);
 export const rotationalSpeeds = signal<RotationalSpeeds | null>(null);
 export const spectra = signal<SpectrumFrameData>({ clients: {} });
 
+/** Link to the server's live feed (also set by demo mode). */
+export const wsState = signal<WsUiState>("connecting");
+/** Why the last live payload was rejected, until a valid one arrives. */
+export const payloadError = signal<string | null>(null);
+export const hasReceivedPayload = signal(false);
+
 /** Location codes a sensor can be assigned to. */
-export const locationCodes = signal<string[]>(defaultLocationCodes.slice());
+const locationCodes = signal<string[]>(defaultLocationCodes.slice());
 export const locationChoices = computed(() =>
   locationOptions(locationCodes.value, t),
 );

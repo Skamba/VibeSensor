@@ -5,7 +5,10 @@ import {
   activeView,
   confirmation,
   errorBanner,
+  errorMessage,
+  isDemoMode,
   languageFeedback,
+  loadPreferences,
   navigate,
   saveLanguage,
   saveSpeedUnit,
@@ -14,15 +17,16 @@ import {
   SETTINGS_TAB_IDS,
   settleConfirmation,
   settingsTab,
+  showError,
   speedUnitFeedback,
   VIEW_IDS,
   type SettingsTabId,
   type ViewId,
 } from "./app_store";
-import { appState, panels } from "./app/feature_wiring";
-import { SpectrumPanelHost } from "./app/views/spectrum_panel_host";
 import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
+import { loadLocationCodes, payloadError, wsState } from "./live_store";
+import { startLive } from "./live_transport";
 import { Analysis } from "./pages/analysis/Analysis";
 import { Cars } from "./pages/cars/Cars";
 import { openWizard } from "./pages/cars/wizard_store";
@@ -31,8 +35,11 @@ import { health } from "./pages/dashboard/dashboard_store";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { History } from "./pages/history/History";
 import { Sensors } from "./pages/sensors/Sensors";
+import { Spectrum } from "./pages/spectrum/Spectrum";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Internet, Update } from "./pages/update/Update";
+import { loadCars, loadSpeedSource } from "./settings_store";
+import { uiLogger } from "./ui_logger";
 
 const NAV: Record<ViewId, { tabId: string; labelKey: string }> = {
   dashboardView: { tabId: "tab-dashboard", labelKey: "nav.live" },
@@ -175,7 +182,6 @@ function Preferences() {
 }
 
 function StatusPills() {
-  const { payloadError, wsState } = appState.transport;
   const link = payloadError.value
     ? { text: t("ws.payload_error_pill"), variant: "bad" }
     : {
@@ -329,9 +335,9 @@ function openAddCar(): void {
 
 export function App() {
   const degraded =
-    appState.transport.payloadError.value !== null ||
-    appState.transport.wsState.value === "reconnecting" ||
-    appState.transport.wsState.value === "stale";
+    payloadError.value !== null ||
+    wsState.value === "reconnecting" ||
+    wsState.value === "stale";
   return (
     <div class="wrap" data-connection-state={degraded ? "degraded" : "live"}>
       <header class="site-header">
@@ -340,7 +346,7 @@ export function App() {
       </header>
       <ErrorBanner />
       <View id="dashboardView">
-        <Dashboard spectrum={<SpectrumPanelHost panel={panels.spectrum} />} onAddCar={openAddCar} />
+        <Dashboard spectrum={<Spectrum />} onAddCar={openAddCar} />
       </View>
       <View id="historyView">
         <div class="panel card">
@@ -374,4 +380,25 @@ export function App() {
       <ConfirmationDialog />
     </div>
   );
+}
+
+function runStartupTask(name: string, task: () => Promise<unknown>): void {
+  void task().catch((error: unknown) => {
+    uiLogger.warn(`UI startup task failed: ${name}`, error);
+  });
+}
+
+/** Loads shared settings and connects the live feed (demo mode skips the server). */
+export function startApp(): void {
+  if (!isDemoMode()) {
+    runStartupTask("load preferences", loadPreferences);
+    runStartupTask("load location codes", loadLocationCodes);
+    runStartupTask("hydrate dashboard state", () =>
+      Promise.all([loadCars(), loadSpeedSource()]).catch((error: unknown) => {
+        showError(errorMessage(error, t("status.view_load_failed")));
+        throw error;
+      }),
+    );
+  }
+  startLive();
 }

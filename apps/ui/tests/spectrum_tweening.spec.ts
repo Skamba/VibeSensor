@@ -9,7 +9,7 @@ import {
   withSpectrumRendererHarness,
 } from "./spectrum_canvas_renderer_test_support";
 
-describe("createSpectrumCanvasRenderer tween cadence", () => {
+describe("createSpectrumRenderer tween cadence", () => {
   beforeEach(() => {
     installWindowGlobal();
   });
@@ -50,7 +50,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           nowMs: () => renderTimesMs.shift() ?? 0,
         },
         seedState(state) {
-          state.transport.wsState.value = "connected";
+          state.wsConnected.value = true;
           installClientSpectra(state, [
             {
               client: makeClient("sensor-a", "Front Right Wheel"),
@@ -60,12 +60,12 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
         },
       },
       async ({ prepareFrame, renderer, state }) => {
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
         resetScaleValues.length = 0;
         redrawCalls = 0;
 
-        state.spectrum.spectra.value = {
+        state.spectra.value = {
           clients: {
             "sensor-a": {
               ...getRequiredClientSpectrum(state, "sensor-a"),
@@ -74,7 +74,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
 
         expect(animationStarts[0]).toBeGreaterThan(0);
@@ -112,7 +112,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           nowMs: () => renderTimesMs.shift() ?? 0,
         },
         seedState(state) {
-          state.transport.wsState.value = "connected";
+          state.wsConnected.value = true;
           installClientSpectra(state, [
             {
               client: makeClient("sensor-a", "Front Right Wheel"),
@@ -122,10 +122,10 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
         },
       },
       async ({ prepareFrame, renderer, state }) => {
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
 
-        state.spectrum.spectra.value = {
+        state.spectra.value = {
           clients: {
             "sensor-a": {
               ...getRequiredClientSpectrum(state, "sensor-a"),
@@ -134,7 +134,7 @@ describe("createSpectrumCanvasRenderer tween cadence", () => {
           },
         };
 
-        renderer.renderPreparedFrame(prepareFrame());
+        renderer.render(prepareFrame());
         await flushSignalUpdates();
 
         expect(animationStarts).toEqual([]);
