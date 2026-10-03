@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from statistics import median as _median
 
 from vibesensor.analysis._analysis_models import (
     FindingsBuildRequest,
@@ -12,10 +11,7 @@ from vibesensor.analysis._analysis_models import (
 from vibesensor.analysis._types import AccelStatistics, Sample
 from vibesensor.analysis.run_analysis_projection import build_sensor_analysis
 from vibesensor.analysis.run_data_preparation import PreparedRunData
-from vibesensor.analysis.statistics import (
-    _strength_band_key,
-    compute_frame_integrity_counts,
-)
+from vibesensor.analysis.statistics import compute_frame_integrity_counts
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.recording.run_schema import RunMetadata
 
@@ -67,10 +63,6 @@ def prepare_analysis_context(
     )
     sensor_ids = {client_id for sample in typed_samples if (client_id := sample.client_id)}
     total_dropped, total_overflow = compute_frame_integrity_counts(typed_samples)
-    amp_metric_values = accel_stats["amp_metric_values"]
-    overall_strength_band_key = (
-        _strength_band_key(_median(amp_metric_values)) if amp_metric_values else None
-    )
     return PreparedAnalysisContext(
         file_name=file_name,
         context=context,
@@ -80,7 +72,6 @@ def prepare_analysis_context(
         prepared=prepared,
         accel_stats=accel_stats,
         reference_complete=context.reference_complete,
-        overall_strength_band_key=overall_strength_band_key,
         run_suitability=RunSuitability.evaluate(
             steady_speed=prepared.is_steady_speed,
             speed_sufficient=prepared.speed_sufficient,

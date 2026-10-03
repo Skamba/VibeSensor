@@ -31,7 +31,6 @@ from vibesensor.analysis.speed_profile_helpers import _speed_stats
 from vibesensor.common.time_utils import parse_iso8601
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.dsp.statistics_utils import _mean_variance
-from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.recording.run_schema import RunMetadata
 
 # ── Constants ────────────────────────────────────────────────────────────
@@ -39,25 +38,6 @@ from vibesensor.recording.run_schema import RunMetadata
 # Fraction of sensor ADC limit above which a sample is considered clipping.
 # 2% headroom accounts for quantization effects near the ADC rail.
 _SATURATION_FRACTION = 0.98
-
-_STRENGTH_LABEL_KEY_BY_BUCKET: dict[str, str] = {
-    "l0": "negligible",
-    "l1": "light",
-    "l2": "moderate",
-    "l3": "strong",
-    "l4": "very_strong",
-    "l5": "very_strong",
-}
-
-
-# ── Strength helpers ─────────────────────────────────────────────────────
-
-
-def _strength_band_key(db_value: float | None) -> str | None:
-    if db_value is None or not math.isfinite(db_value):
-        return None
-    return _STRENGTH_LABEL_KEY_BY_BUCKET.get(bucket_for_strength(db_value), "very_strong")
-
 
 # ── Acceleration statistics ──────────────────────────────────────────────
 

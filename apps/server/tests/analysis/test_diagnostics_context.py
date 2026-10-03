@@ -214,6 +214,5 @@ def test_prepare_analysis_context_builds_one_canonical_typed_summary_context() -
     assert analysis_context.context is metadata
     assert analysis_context.samples == tuple(samples)
     assert analysis_context.reference_complete is metadata.reference_complete
-    assert analysis_context.overall_strength_band_key == "moderate"
     assert analysis_context.sensor_locations == ("front-left",)
     assert analysis_context.connected_locations == frozenset({"front-left"})

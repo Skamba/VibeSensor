@@ -99,13 +99,14 @@ Users see confidence only as one of three levels, defined by what to do
 | Moderate | ≥ 0.40 | Do the cheap confirming check first. |
 | Weak | < 0.40 | Don't buy parts; record the test again. |
 
-A finding whose run-wide vibration strength band is negligible is capped at
-Moderate. An order-tracked finding whose own amplitude is negligible (below
+An order-tracked finding whose own amplitude is negligible (below
 8 dB above the floor, i.e. road noise near an order) is capped just below
 Moderate (0.39), after the corroboration and phase bonuses as well as before
 them: a noise-level order is at most Weak, so on its own it reads as no fault,
-and it cannot outrank a clearly louder order of another source. The score itself stays internal (ranking); no percentage is shown in
-the UI or the PDF.
+and it cannot outrank a clearly louder order of another source. Only the
+finding's own amplitude counts: the quiet sensors elsewhere on the car do not
+cap a fault that is loud at its own corner. The score itself stays internal
+(ranking); no percentage is shown in the UI or the PDF.
 
 Where the vibration sits feeds the score of an order-tracked finding
 (`analysis/orders/statistics.py::compute_order_confidence`), but how depends on
