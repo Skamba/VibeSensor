@@ -97,6 +97,16 @@ proof** captured at finalize time:
 - the proof status (`verified`, `stale_sync`, `high_rtt`,
   `missing_sync`, or `missing_registry_record`).
 
+Raw capture only stores chunks stamped on the server clock. The registry
+marks a sensor clock-synced once the sensor acknowledges a sync command
+that carried an offset to apply (the second exchange), and a chunk is
+captured only when its `t0_us` also reads as server-clock time rather than
+bare device time (this catches queued pre-sync frames that arrive after the
+acknowledgement). Chunks a sensor sends before that are dropped — the live
+view still uses them — so each sensor's raw capture starts at its first
+synced chunk and summary rows from before it are simply not raw-backed. A
+sensor reboot forgets its sync until it re-syncs.
+
 Replay only treats `t0_us` as server-monotonic when that proof is
 explicitly `verified`. Older artifacts without the per-sensor proof, or
 newer artifacts whose proof is stale/missing/high-RTT, fall back to the
@@ -113,8 +123,8 @@ carries a measured RTT, and stamps `t0_us` from a per-sensor sample clock
 (device timer with a few tens of ppm drift) rather than from send time.
 Simulator recordings are therefore raw-backed like real sensors. As with
 real hardware, the offset is applied from the second sync exchange (about
-10 s after a sensor connects); a recording started earlier contains one
-clock step per sensor.
+10 s after a sensor connects); a recording started earlier drops each
+sensor's pre-sync chunks and replays from its first synced chunk.
 
 ## Fallback Behaviour
 

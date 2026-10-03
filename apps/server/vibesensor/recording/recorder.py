@@ -18,7 +18,7 @@ from vibesensor.recording.finalize_stages import (
     ActiveRunFinalizeResult,
     finalize_active_run,
 )
-from vibesensor.recording.lifecycle_state import RunLifecycleState
+from vibesensor.recording.lifecycle_state import RecordingStopReason, RunLifecycleState
 from vibesensor.recording.persistence_writer import (
     _APPEND_RETRY_DELAYS_S,
     _MAX_APPEND_RETRIES,
@@ -101,6 +101,7 @@ class RunRecorder:
 
         self._lifecycle = RunLifecycleState(
             no_data_timeout_s=max(1.0, float(config.no_data_timeout_s)),
+            max_duration_s=max(1.0, float(config.max_recording_duration_s)),
         )
 
         self._persistence = RunPersistenceWriter(
@@ -199,6 +200,7 @@ class RunRecorder:
             enabled = self._lifecycle.enabled
             run_id = self._lifecycle.run_id
             start_time_utc = self._lifecycle.start_time_utc
+            last_stop_reason = self._lifecycle.last_stop_reason
             capture_readiness = None
             if not enabled or run_id is None:
                 capture_readiness = self._capture_readiness.evaluate(
@@ -217,6 +219,7 @@ class RunRecorder:
             persistence=self._persistence,
             post_analysis=self.post_analysis,
             capture_readiness=capture_readiness,
+            last_stop_reason=last_stop_reason,
         )
 
     def health_snapshot(self) -> RunRecorderHealthSnapshot:
@@ -336,7 +339,7 @@ class RunRecorder:
         self,
         *,
         _only_if_run_id: str | None = None,
-        reason: str = "manual",
+        reason: RecordingStopReason = "manual",
     ) -> RunRecorderStatusSnapshot:
         lifecycle_event: (
             tuple[str, str, str, str | None, str | None, int | None, int | None] | None
@@ -359,7 +362,7 @@ class RunRecorder:
                     finalize_result.persistence_snapshot.written_sample_count,
                     finalize_result.persistence_snapshot.dropped_sample_count,
                 )
-            self._lifecycle.stop()
+            self._lifecycle.stop(reason=reason)
             self._persistence.reset()
             self._recording_session.clear_stopped_run()
             result = self.status()

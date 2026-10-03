@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
+from test_support.clock_sync import complete_clock_sync
 
 from vibesensor.ingest.protocol_messages import HelloMessage
 from vibesensor.ingest.protocol_packing import pack_data
@@ -52,6 +53,7 @@ async def test_late_packet_is_quarantined_to_raw_capture_only(
         _ADDR,
         now=1.0,
     )
+    complete_clock_sync(registry, "aabbccddeeff")
     processor = _make_processor()
     raw_capture_sink = Mock()
     proto = DataDatagramProtocol(

@@ -73,6 +73,16 @@ export interface BuildRealtimeLoggingPanelViewModelParams
   lastCompletedElapsedText: string;
 }
 
+function withAutoStopNotice(
+  panel: RealtimeLoggingSummaryPanelModel,
+  status: LoggingStatusPayload,
+  t: CaptureReadinessTextDeps["t"],
+): RealtimeLoggingSummaryPanelModel {
+  return status.last_stop_reason === "max_duration"
+    ? { ...panel, detailText: t("dashboard.logging.auto_stopped_max_duration") }
+    : panel;
+}
+
 export function buildRealtimeLoggingPanelViewModel(
   params: BuildRealtimeLoggingPanelViewModelParams,
 ): RealtimeLoggingPanelViewModel {
@@ -226,10 +236,11 @@ export function buildRealtimeLoggingPanelViewModel(
       pillText: t("dashboard.recording_phase.processing"),
       phaseText: t("dashboard.recording_phase.processing"),
       summaryText: "",
-      summaryPanel: buildPostRunSummaryPanel("processing", runId, {
+      summaryPanel: withAutoStopNotice(
+        buildPostRunSummaryPanel("processing", runId, { t, formatInt }),
+        status,
         t,
-        formatInt,
-      }),
+      ),
       runIdText,
       elapsedText: nextLastCompletedElapsedText,
       samplesText,
@@ -250,10 +261,13 @@ export function buildRealtimeLoggingPanelViewModel(
       pillText: t("dashboard.recording_phase.saved"),
       phaseText: t("dashboard.recording_phase.saved"),
       summaryText: "",
-      summaryPanel: buildPostRunSummaryPanel(
-        "saved",
-        status.last_completed_run_id,
-        { t, formatInt },
+      summaryPanel: withAutoStopNotice(
+        buildPostRunSummaryPanel("saved", status.last_completed_run_id, {
+          t,
+          formatInt,
+        }),
+        status,
+        t,
       ),
       runIdText,
       elapsedText: nextLastCompletedElapsedText,

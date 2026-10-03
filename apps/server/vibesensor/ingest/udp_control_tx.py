@@ -159,14 +159,21 @@ class UDPControlPlane:
             if record is None or record.control_addr is None:
                 continue
             seq = _next_seq()
+            round_trip_us = record.sync_rtt_us or 0
             payload = _pack(
                 _fromhex(record.client_id),
                 seq,
                 server_time_us,
                 applied_offset_us=record.sync_offset_us or 0,
-                round_trip_us=record.sync_rtt_us or 0,
+                round_trip_us=round_trip_us,
             )
             _sendto(payload, record.control_addr)
-            registry.mark_cmd_sent(client_id, seq, sync_send_us=server_time_us)
+            # Sensors apply the carried offset only once it has a measured round trip.
+            registry.mark_cmd_sent(
+                client_id,
+                seq,
+                sync_send_us=server_time_us,
+                sync_applies_offset=record.sync_offset_us is not None and round_trip_us > 0,
+            )
             sent += 1
         return sent

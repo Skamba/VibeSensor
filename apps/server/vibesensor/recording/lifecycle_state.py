@@ -8,11 +8,26 @@ persistence, post-analysis scheduling, and the recording tick loop.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run import Run
 
-__all__ = ["ActiveRunSnapshot", "RunLifecycleState"]
+__all__ = [
+    "MAX_RECORDING_DURATION_S",
+    "ActiveRunSnapshot",
+    "AutoStopReason",
+    "RecordingStopReason",
+    "RunLifecycleState",
+]
+
+MAX_RECORDING_DURATION_S = 30 * 60.0
+"""Recordings stop automatically after 30 minutes (keeps post-analysis within Pi memory)."""
+
+type AutoStopReason = Literal["no_data_timeout", "max_duration"]
+type RecordingStopReason = Literal[
+    "manual", "restart", "shutdown", "no_data_timeout", "max_duration"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +42,7 @@ class RunLifecycleState:
     """Own the in-memory lifecycle for the active recording run."""
 
     no_data_timeout_s: float
+    max_duration_s: float = MAX_RECORDING_DURATION_S
     current_run: Run | None = None
     start_time_utc: str | None = None
     start_mono_s: float | None = None
@@ -34,6 +50,7 @@ class RunLifecycleState:
     start_frames_total: int = 0
     last_active_frames_total: int = 0
     shutdown_requested: bool = False
+    last_stop_reason: RecordingStopReason | None = None
 
     @property
     def enabled(self) -> bool:
@@ -65,16 +82,18 @@ class RunLifecycleState:
         self.last_data_progress_mono_s = start_mono_s
         self.start_frames_total = current_total
         self.last_active_frames_total = current_total
+        self.last_stop_reason = None
         return ActiveRunSnapshot(
             run_id=run_id,
             start_time_utc=start_time_utc,
             start_mono_s=start_mono_s,
         )
 
-    def stop(self) -> None:
+    def stop(self, *, reason: RecordingStopReason) -> None:
         run = self.current_run
         if run is not None and run.is_recording:
             run.stop()
+            self.last_stop_reason = reason
         self.current_run = None
         self.start_time_utc = None
         self.start_mono_s = None
@@ -124,8 +143,11 @@ class RunLifecycleState:
     def mark_rows_written(self, *, now_mono_s: float) -> None:
         self.last_data_progress_mono_s = now_mono_s
 
-    def should_auto_stop(self, *, now_mono_s: float) -> bool:
+    def auto_stop_reason(self, *, now_mono_s: float) -> AutoStopReason | None:
+        if self.start_mono_s is not None and now_mono_s - self.start_mono_s >= self.max_duration_s:
+            return "max_duration"
         if self.last_data_progress_mono_s is None:
-            return False
-        elapsed = now_mono_s - self.last_data_progress_mono_s
-        return elapsed >= self.no_data_timeout_s
+            return None
+        if now_mono_s - self.last_data_progress_mono_s >= self.no_data_timeout_s:
+            return "no_data_timeout"
+        return None

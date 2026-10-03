@@ -88,6 +88,7 @@ class TestRecordingStatusEndpoint:
             "samples_dropped": 3,
             "last_completed_run_id": "run-122",
             "last_completed_run_error": None,
+            "last_stop_reason": None,
             "capture_readiness": None,
         }
 
@@ -166,6 +167,7 @@ class TestRecordingStartEndpoint:
             "samples_dropped": 0,
             "last_completed_run_id": None,
             "last_completed_run_error": None,
+            "last_stop_reason": None,
             "capture_readiness": None,
         }
         state.run_recorder.start_recording.assert_called_once_with()
@@ -206,6 +208,7 @@ class TestRecordingStopEndpoint:
             "samples_dropped": 0,
             "last_completed_run_id": None,
             "last_completed_run_error": None,
+            "last_stop_reason": None,
             "capture_readiness": None,
         }
         state.run_recorder.stop_recording.assert_called_once_with()

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from test_support.clock_sync import complete_clock_sync
 from test_support.findings import make_finding_payload
 from test_support.history_db_lifecycle import build_history_db
 from test_support.report_helpers import minimal_summary
@@ -135,6 +136,7 @@ def test_late_udp_packet_reaches_persisted_report_honesty(
             now=1.0,
         )
         registry.set_location(_CLIENT_ID_HEX, "front-left")
+        complete_clock_sync(registry, _CLIENT_ID_HEX)
 
         recorder.start_recording()
         snapshot = recorder._lifecycle.snapshot()
