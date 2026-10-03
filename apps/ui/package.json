@@ -6,7 +6,6 @@
   "sideEffects": false,
   "scripts": {
     "lint": "biome lint .",
-    "lint:deps": "depcruise --config .dependency-cruiser.cjs src",
     "lint:unused": "knip --config knip.jsonc",
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
@@ -30,12 +29,10 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
     "@playwright/test": "^1.63.0",
-    "dependency-cruiser": "^17.4.0",
     "happy-dom": "^20.14.5",
     "knip": "^6.38.0",
-    "openapi-typescript": "^7.13.0",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vite": "^8.3.1",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.3"
   }
 }

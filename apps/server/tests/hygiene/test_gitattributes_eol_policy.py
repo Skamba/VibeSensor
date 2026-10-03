@@ -18,7 +18,6 @@ _REQUIRED_LF_PATTERNS = (
     "*.ts",
     "*.tsx",
     "*.mjs",
-    "*.cjs",
     "*.json",
     "*.jsonc",
     "*.css",

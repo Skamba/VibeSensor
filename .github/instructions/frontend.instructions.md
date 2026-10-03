@@ -5,7 +5,7 @@ Frontend rules for `apps/ui`.
 
 - Contract sync authority is `apps/ui/README.md` "Contract sync". Do not add a second sync path or hand-written API contract drift.
 - `src/main.tsx` renders the single Preact root; `src/app.tsx` is the shell (navigation, preferences, status pills, error banner, confirmation dialog, view and settings-tab switching) and `src/app_store.ts` owns shell state.
-- Pages live in `src/pages/<page>/`: `<Page>.tsx`, a small `<page>_store.ts` (signals, polling, API calls), and pure helper modules with unit tests. Pages never import other pages (dependency-cruiser); share code through `src/` modules outside `pages/` (`app_store.ts`, `settings_store.ts`, `live_store.ts`) and let the shell compose pages.
+- Pages live in `src/pages/<page>/`: `<Page>.tsx`, a small `<page>_store.ts` (signals, polling, API calls), and pure helper modules with unit tests. Pages never import other pages (`tests/page_boundaries.spec.ts`); share code through `src/` modules outside `pages/` (`app_store.ts`, `settings_store.ts`, `live_store.ts`) and let the shell compose pages.
 - Translate with `t()` from `src/i18n.ts` (no inline English fallbacks); the Dutch catalog loads lazily.
 - Keep derived state in store `computed()`s or pure model functions, not in components.
 - Centralize polling, timers, WebSocket/session state, and freshness: poll with `src/poll.ts`; live data flows `src/ws.ts` → `src/live_transport.ts` → `src/live_store.ts`.

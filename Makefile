@@ -155,7 +155,7 @@ ui-lint: ## Run UI lint checks
 	cd $(UI_DIR) && npm run lint
 
 ui-typecheck: ## Run UI format, lint, and TypeScript checks
-	cd $(UI_DIR) && npm run format:check && npm run lint && npm run lint:deps && npm run lint:unused && npm run typecheck && npm run typecheck:tests
+	cd $(UI_DIR) && npm run format:check && npm run lint && npm run lint:unused && npm run typecheck && npm run typecheck:tests
 
 ui-test: ## Run UI unit tests
 	cd $(UI_DIR) && npm run test:unit
