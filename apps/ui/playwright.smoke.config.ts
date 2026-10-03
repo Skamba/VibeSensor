@@ -7,8 +7,8 @@ const configuredSmokeWorkers = Number.parseInt(
 
 export default defineConfig({
   testDir: "tests",
-  // Keep smoke explicit: only the critical journeys run in CI.
-  testMatch: ["smoke.critical.spec.ts"],
+  // One journey file per page; Vitest excludes the same smoke.*.spec.ts names.
+  testMatch: ["smoke.*.spec.ts"],
   outputDir: "test-results/playwright-smoke",
   timeout: 15_000,
   workers:

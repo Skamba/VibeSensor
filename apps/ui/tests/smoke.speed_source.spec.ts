@@ -1,0 +1,278 @@
+import { expect, test, type Page } from "@playwright/test";
+
+import {
+  bootLiveDashboard,
+  fulfillJson,
+  openSpeedSourceTab,
+  requestPath,
+} from "./smoke.helpers";
+
+test.describe.configure({ timeout: 20_000 });
+
+type SpeedSourceServer = {
+  saved: Record<string, unknown>;
+  puts: Array<Record<string, unknown>>;
+  scans: number;
+  pairs: string[];
+  failNextPut: boolean;
+};
+
+function statusPayload(server: SpeedSourceServer): Record<string, unknown> {
+  const source = String(server.saved.speed_source);
+  return {
+    connection_state: "connected",
+    device: "/dev/ttyACM0",
+    effective_speed_kmh:
+      source === "manual" ? server.saved.manual_speed_kph : 52.3,
+    epv_m: null,
+    epx_m: null,
+    epy_m: null,
+    fallback_active: false,
+    fix_dimension: "3d",
+    fix_mode: 3,
+    gps_enabled: source === "gps",
+    last_error: null,
+    last_update_age_s: 0.4,
+    raw_speed_kmh: 52.3,
+    reconnect_delay_s: null,
+    speed_confidence: "high",
+    speed_source: source,
+    stale_timeout_s: server.saved.stale_timeout_s,
+  };
+}
+
+function obdStatusPayload(server: SpeedSourceServer): Record<string, unknown> {
+  return {
+    backoff_active: false,
+    configured_device_mac: server.saved.obd_device_mac ?? null,
+    configured_device_name: server.saved.obd_device_name ?? null,
+    connected: Boolean(server.saved.obd_device_mac),
+    connection_state: "connected",
+    debug_hint: null,
+    device_mac: server.saved.obd_device_mac ?? null,
+    device_name: server.saved.obd_device_name ?? null,
+    error_count: 0,
+    last_error: null,
+    last_raw_response: null,
+    last_rpm: 850,
+    last_sample_age_s: 0.2,
+    last_speed_kmh: 0,
+    paired: true,
+    poll_mode: "rpm_priority",
+    reconnect_delay_s: null,
+    request_rtt_ms: 40,
+    rfcomm_channel: 1,
+    rpm_effective_hz: 4,
+    rpm_sample_age_s: 0.2,
+    rpm_target_interval_ms: 250,
+    timeout_count: 0,
+    trusted: true,
+  };
+}
+
+async function installSpeedSourceRoutes(
+  page: Page,
+  server: SpeedSourceServer,
+): Promise<void> {
+  await bootLiveDashboard(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/speed-source" && method === "PUT") {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        server.puts.push(body);
+        if (server.failNextPut) {
+          server.failNextPut = false;
+          await route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ detail: "Settings store unavailable" }),
+          });
+          return;
+        }
+        server.saved = { ...server.saved, ...body };
+        await fulfillJson(route, server.saved);
+        return;
+      }
+      if (path === "/api/settings/speed-source") {
+        await fulfillJson(route, server.saved);
+        return;
+      }
+      if (path === "/api/settings/speed-source/status") {
+        await fulfillJson(route, statusPayload(server));
+        return;
+      }
+      if (path === "/api/settings/obd/status") {
+        await fulfillJson(route, obdStatusPayload(server));
+        return;
+      }
+      if (path === "/api/settings/obd/scan") {
+        server.scans += 1;
+        await fulfillJson(route, {
+          devices: [
+            {
+              connected: false,
+              mac_address: "00:1D:A5:00:00:02",
+              name: null,
+              paired: false,
+              rfcomm_channel: null,
+              trusted: false,
+            },
+            {
+              connected: false,
+              mac_address: "00:1D:A5:00:00:01",
+              name: "OBDII Link",
+              paired: false,
+              rfcomm_channel: null,
+              trusted: false,
+            },
+          ],
+        });
+        return;
+      }
+      if (path === "/api/settings/obd/pair") {
+        const body = route.request().postDataJSON() as { mac_address: string };
+        server.pairs.push(body.mac_address);
+        server.saved = {
+          ...server.saved,
+          obd_device_mac: body.mac_address,
+          obd_device_name: "OBDII Link",
+        };
+        await fulfillJson(route, {
+          configured_device_mac: body.mac_address,
+          configured_device_name: "OBDII Link",
+          connected: true,
+          paired: true,
+          rfcomm_channel: 1,
+          trusted: true,
+        });
+        return;
+      }
+      if (path.startsWith("/api/settings/cars")) {
+        await fulfillJson(route, { cars: [], active_car_id: null });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+  });
+}
+
+test("journey: Speed source validates, saves a manual override, and recovers from a failed save", async ({
+  page,
+}) => {
+  const server: SpeedSourceServer = {
+    saved: { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 10 },
+    puts: [],
+    scans: 0,
+    pairs: [],
+    failNextPut: false,
+  };
+  await installSpeedSourceRoutes(page, server);
+  await openSpeedSourceTab(page);
+
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText("GPS");
+  await expect(page.locator("#speedSourceEffectiveSpeed")).toContainText(
+    "52.3",
+  );
+  await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  await expect(page.locator("#staleTimeoutInput")).toHaveValue("10");
+  await expect(page.locator("#manualSpeedConfig")).toBeHidden();
+
+  // An out-of-range stale timeout is rejected before anything is sent.
+  await page.locator("#staleTimeoutInput").fill("500");
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect(page.locator("#staleTimeoutFeedback")).toContainText(
+    "Enter a stale timeout between 3s and 120s.",
+  );
+  await expect(page.locator("#staleTimeoutInput")).toBeFocused();
+  await page.locator("#staleTimeoutInput").fill("15");
+
+  await page.locator("#speedSourceChoiceManual").click();
+  await expect(page.locator("#manualSpeedConfig")).toBeVisible();
+  await page.locator("#manualSpeedInput").fill("0");
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect(page.locator("#manualSpeedFeedback")).toContainText(
+    "Enter a manual speed between 0.1 and 500 km/h.",
+  );
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
+    "GPS remains active right now. No changes were saved.",
+  );
+  expect(server.puts).toEqual([]);
+
+  await page.locator("#manualSpeedInput").fill("80");
+  server.failNextPut = true;
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
+    "Speed source was not saved.",
+  );
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
+    "Settings store unavailable",
+  );
+  // The draft survives the failed save.
+  await expect(page.locator("#manualSpeedInput")).toHaveValue("80");
+
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect.poll(() => server.puts.length).toBe(2);
+  expect(server.puts[1]).toEqual({
+    manual_speed_kph: 80,
+    speed_source: "manual",
+    stale_timeout_s: 15,
+  });
+  await expect(page.locator("#speedSourceSaveFeedback")).toBeHidden();
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
+    "Manual override",
+  );
+});
+
+test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
+  page,
+}) => {
+  const server: SpeedSourceServer = {
+    saved: { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 10 },
+    puts: [],
+    scans: 0,
+    pairs: [],
+    failNextPut: false,
+  };
+  await installSpeedSourceRoutes(page, server);
+  await openSpeedSourceTab(page);
+
+  await page.locator("#speedSourceChoiceObd").click();
+  await expect(page.locator("#obdSpeedConfig")).toBeVisible();
+  await expect(page.locator("#obdConfiguredDevice")).toHaveText(
+    "No adapter configured",
+  );
+
+  // OBD-II cannot be saved without a paired adapter.
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
+    "Pair a Bluetooth OBD adapter before saving OBD-II as the speed source.",
+  );
+  await expect(page.locator("#scanObdDevicesBtn")).toBeFocused();
+  expect(server.puts).toEqual([]);
+
+  await page.locator("#scanObdDevicesBtn").click();
+  await expect(page.locator("#obdDeviceScanStatus")).toHaveText(
+    "2 adapter(s) found.",
+  );
+  const devices = page.locator("#obdDeviceList .speed-source-device");
+  await expect(devices).toHaveCount(2);
+  // Named adapters sort ahead of unnamed ones.
+  await expect(devices.first()).toContainText("OBDII Link");
+  await expect(devices.nth(1)).toContainText("00:1D:A5:00:00:02");
+  await expect(devices.first()).toContainText("Pair and use");
+
+  await page.locator('[data-obd-pair-mac="00:1D:A5:00:00:01"]').click();
+  await expect(page.locator("#obdDeviceScanStatus")).toHaveText(
+    "Adapter paired and saved.",
+  );
+  await expect(page.locator("#obdConfiguredDevice")).toContainText(
+    "OBDII Link",
+  );
+  expect(server.pairs).toEqual(["00:1D:A5:00:00:01"]);
+
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect.poll(() => server.puts.length).toBe(1);
+  expect(server.puts[0]).toMatchObject({ speed_source: "obd2" });
+  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(/OBD/);
+});

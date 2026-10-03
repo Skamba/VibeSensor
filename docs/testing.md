@@ -91,7 +91,7 @@ cd apps/ui && npm run test:smoke
 | Layer | Runner | Use for |
 |---|---|---|
 | Unit/integration | `npm run test:unit` | logic below browser boundary, payload decoders, runtime helpers, feature workflows, pure view helpers |
-| Smoke | `npm run test:smoke` | critical boot/happy-path flows against a real Vite dev server |
+| Smoke | `npm run test:smoke` | per-page user journeys (`tests/smoke.<page>.spec.ts`) against a real Vite dev server |
 
 - `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`).
 - Use shared MSW helpers under `apps/ui/tests/msw/` for frontend tests that intentionally cross the real HTTP boundary. They normalize relative `/api/...` requests and fail unhandled requests loudly.
