@@ -88,7 +88,8 @@ ORDER_MIN_COVERAGE_DURATION_S: Final[float] = 4.0
 """Minimum total eligible evidence duration required for an order finding."""
 
 ORDER_MIN_CONTIGUOUS_MATCH_DURATION_S: Final[float] = 1.5
-"""Minimum longest contiguous matched streak required for an order finding."""
+"""Minimum longest streak of one sensor's consecutive matched samples required for an
+order finding."""
 
 ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS: Final[int] = 2
 """Minimum matched speed bins for variable-speed order evidence without relying

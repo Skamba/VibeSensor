@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from typing import cast
 
+from test_support.core import TIRE_CIRC, standard_metadata
 from test_support.report_helpers import diagnostics_context
 
-from vibesensor.analysis.orders.matching import OrderMatchAccumulator
-from vibesensor.analysis.orders.physics import OrderHypothesis
+from vibesensor.analysis._sample_metrics import _sample_top_peaks
+from vibesensor.analysis.orders.matching import (
+    OrderMatchAccumulator,
+    match_samples_for_hypothesis,
+)
+from vibesensor.analysis.orders.physics import OrderHypothesis, _order_hypotheses
 from vibesensor.analysis.orders.pipeline import (
     OrderAnalysisRequest,
     OrderAnalysisSession,
@@ -63,6 +68,7 @@ def _make_accumulator(
         has_phases=False,
         compliance=1.0,
         matched_sample_indices=sample_indices,
+        matched_sensor_positions=tuple(("front_left", index) for index in sample_indices),
     )
 
 
@@ -151,6 +157,45 @@ class TestOrderMatchEvidenceGate:
         )
 
         assert match.is_eligible(feature_interval_s=0.25, steady_speed=False) is True
+
+
+class TestPerSensorContiguity:
+    def test_fault_felt_by_one_of_two_interleaved_sensors_keeps_its_streak(self) -> None:
+        """A rear-axle driveshaft tone must not lose its streak to the quiet front sensor.
+
+        Sensors' samples are interleaved in time; counting the streak across
+        that interleaved sequence capped it at one sample here.
+        """
+        context = diagnostics_context(standard_metadata(feature_interval_s=0.25))
+        hypothesis = next(h for h in _order_hypotheses() if h.key == "driveshaft_1x")
+        probe = sensor_frames_from_mappings([{"speed_kmh": 80.0}])[0]
+        shaft_hz, _ = hypothesis.predicted_hz(probe, context, TIRE_CIRC)
+        assert shaft_hz is not None
+        rows = [
+            {
+                "t_s": 0.25 * index,
+                "client_id": client_id,
+                "speed_kmh": 80.0,
+                "top_peaks": [{"hz": peak_hz, "amp": 0.05}],
+            }
+            for index in range(12)
+            for client_id, peak_hz in (("rear", shaft_hz), ("front", shaft_hz * 1.5))
+        ]
+        samples = sensor_frames_from_mappings(rows)
+
+        match = match_samples_for_hypothesis(
+            samples,
+            [_sample_top_peaks(sample) for sample in samples],
+            hypothesis,
+            context,
+            TIRE_CIRC,
+            None,
+            "en",
+        )
+
+        assert match.matched == 12
+        assert match.longest_contiguous_match_points == 12
+        assert match.is_eligible(feature_interval_s=0.25, steady_speed=True) is True
 
 
 class TestOrderAnalysisSessionEvidenceGate:

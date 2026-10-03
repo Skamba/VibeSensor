@@ -77,6 +77,33 @@ def test_make_frame_keeps_noise_floor_when_scene_gains_are_zero() -> None:
     assert np.abs(frame).sum() > 0
 
 
+def test_speed_following_tone_stays_phase_continuous_across_frames() -> None:
+    """A tone tracking a changing speed must not grow sidebands at +/- the frame rate.
+
+    Evaluating the tone on absolute time jumped its phase at every frame edge
+    once the speed changed, splitting a driveshaft order into peaks 4 Hz away
+    that other orders then matched.
+    """
+    client = _make_client(seed=3, name="rear-left")
+    client.profile_name = "driveshaft_imbalance"
+    client.phase_s = 20.0
+    frames = []
+    for index in range(16):
+        client.current_speed_kmh = 92.0 - 0.5 * index
+        frames.append(client.make_frame().astype(np.float64)[:, 2])
+    signal = np.concatenate(frames)
+    freqs = np.fft.rfftfreq(signal.size, d=1.0 / client.sample_rate_hz)
+    spectrum = np.abs(np.fft.rfft(signal * np.hanning(signal.size)))
+    frame_rate_hz = client.sample_rate_hz / client.frame_samples
+    shaft_hz = DEFAULT_ORDER_HZ["shaft_1x"] * (92.0 - 0.5 * 7.5) / 100.0
+    offset_hz = np.abs(freqs - shaft_hz)
+
+    main = spectrum[offset_hz <= 1.5].max()
+    sidebands = spectrum[np.abs(offset_hz - frame_rate_hz) <= 1.0].max()
+
+    assert sidebands < 0.1 * main
+
+
 def _order_prominence(client: SimClient, order_hz: float) -> float:
     """Return the order bin's magnitude over the median of its +/-5 Hz neighbourhood."""
     frames = [client.make_frame().astype(np.float32) for _ in range(20)]

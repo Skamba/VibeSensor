@@ -4,7 +4,7 @@ import pytest
 
 from vibesensor.simulator.scripted_speed_sync import (
     apply_scripted_speed,
-    speed_sync_disable_message,
+    speed_sync_failure_message,
 )
 
 
@@ -14,7 +14,7 @@ class _FakeSimClient:
 
 
 @pytest.mark.asyncio
-async def test_apply_scripted_speed_disables_sync_after_handled_http_error(
+async def test_apply_scripted_speed_reports_handled_http_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     clients = [_FakeSimClient()]
@@ -32,26 +32,24 @@ async def test_apply_scripted_speed_disables_sync_after_handled_http_error(
         fake_set_server_speed_override_kmh,
     )
 
-    result = await apply_scripted_speed(
+    failure = await apply_scripted_speed(
         clients,
         42.0,
         server_host="127.0.0.1",
         server_http_port=8000,
         server_check_timeout=0.2,
-        server_speed_sync_enabled=True,
     )
 
     assert clients[0].current_speed_kmh == 42.0
-    assert result.server_speed_sync_enabled is False
-    assert result.failure_message == speed_sync_disable_message(OSError("connection refused"))
+    assert failure == speed_sync_failure_message(OSError("connection refused"))
 
 
 @pytest.mark.asyncio
-async def test_apply_scripted_speed_skips_http_call_when_sync_is_already_disabled(
+async def test_apply_scripted_speed_pushes_speed_to_server(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     clients = [_FakeSimClient()]
-    called = False
+    pushed: list[float] = []
 
     def fake_set_server_speed_override_kmh(
         host: str,
@@ -59,8 +57,7 @@ async def test_apply_scripted_speed_skips_http_call_when_sync_is_already_disable
         speed_kmh: float,
         timeout_s: float,
     ) -> float:
-        nonlocal called
-        called = True
+        pushed.append(speed_kmh)
         return speed_kmh
 
     monkeypatch.setattr(
@@ -68,16 +65,14 @@ async def test_apply_scripted_speed_skips_http_call_when_sync_is_already_disable
         fake_set_server_speed_override_kmh,
     )
 
-    result = await apply_scripted_speed(
+    failure = await apply_scripted_speed(
         clients,
         18.0,
         server_host="127.0.0.1",
         server_http_port=8000,
         server_check_timeout=0.2,
-        server_speed_sync_enabled=False,
     )
 
     assert clients[0].current_speed_kmh == 18.0
-    assert called is False
-    assert result.server_speed_sync_enabled is False
-    assert result.failure_message is None
+    assert pushed == [18.0]
+    assert failure is None

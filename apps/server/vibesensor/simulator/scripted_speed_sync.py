@@ -1,23 +1,16 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from urllib.error import URLError
 
 from vibesensor.simulator.server_http import set_server_speed_override_kmh
 from vibesensor.simulator.sim_client import SimClient
 
-__all__ = ["ScriptedSpeedSyncResult", "apply_scripted_speed", "speed_sync_disable_message"]
+__all__ = ["apply_scripted_speed", "speed_sync_failure_message"]
 
 
-@dataclass(frozen=True, slots=True)
-class ScriptedSpeedSyncResult:
-    server_speed_sync_enabled: bool
-    failure_message: str | None = None
-
-
-def speed_sync_disable_message(exc: URLError | OSError | TimeoutError | ValueError) -> str:
-    return f"[scenario] speed sync disabled after HTTP update failed: {type(exc).__name__}: {exc}"
+def speed_sync_failure_message(exc: URLError | OSError | TimeoutError | ValueError) -> str:
+    return f"[scenario] speed sync HTTP update failed, retrying: {type(exc).__name__}: {exc}"
 
 
 async def apply_scripted_speed(
@@ -27,12 +20,16 @@ async def apply_scripted_speed(
     server_host: str,
     server_http_port: int,
     server_check_timeout: float,
-    server_speed_sync_enabled: bool,
-) -> ScriptedSpeedSyncResult:
+) -> str | None:
+    """Set the scripted speed on every client and push it to the server.
+
+    Returns a failure message when the server update failed. Callers retry on
+    their next tick: the simulated tones always follow the scripted speed, so
+    giving up after one slow response would leave the server analysing them
+    against a frozen speed for the rest of the scenario.
+    """
     for client in clients:
         client.current_speed_kmh = speed_kmh
-    if not server_speed_sync_enabled:
-        return ScriptedSpeedSyncResult(server_speed_sync_enabled=False)
     try:
         await asyncio.to_thread(
             set_server_speed_override_kmh,
@@ -42,8 +39,5 @@ async def apply_scripted_speed(
             server_check_timeout,
         )
     except (URLError, OSError, TimeoutError, ValueError) as exc:
-        return ScriptedSpeedSyncResult(
-            server_speed_sync_enabled=False,
-            failure_message=speed_sync_disable_message(exc),
-        )
-    return ScriptedSpeedSyncResult(server_speed_sync_enabled=True)
+        return speed_sync_failure_message(exc)
+    return None
