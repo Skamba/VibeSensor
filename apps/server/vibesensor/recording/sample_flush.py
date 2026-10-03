@@ -9,7 +9,11 @@ from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.recording.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
+from vibesensor.recording.lifecycle_state import (
+    ActiveRunSnapshot,
+    AutoStopReason,
+    RunLifecycleState,
+)
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.recording.sample_builder import _LIVE_SAMPLE_WINDOW_S, build_sample_records
 from vibesensor.recording.sample_speed_context import resolve_speed_context
@@ -144,10 +148,11 @@ class SampleFlushOrchestrator:
         *,
         prebuilt_rows: list[SensorFrame] | None = None,
         refresh_metrics: bool = False,
-    ) -> bool:
+    ) -> AutoStopReason | None:
+        """Append one tick of rows; return why the run should auto-stop, if it should."""
         now_mono_s = self._monotonic()
         if self._current_run_id() != run_id:
-            return False
+            return None
 
         if prebuilt_rows is None and refresh_metrics:
             # Capture one final up-to-date metrics snapshot before stop/rollover
@@ -199,7 +204,7 @@ class SampleFlushOrchestrator:
 
         if rows:
             if self._current_run_id() != run_id:
-                return False
+                return None
             self._lifecycle.mark_rows_written(now_mono_s=now_mono_s)
             self._persistence.append_rows(
                 run_id=run_id,
@@ -207,6 +212,6 @@ class SampleFlushOrchestrator:
                 rows=rows,
             )
 
-        return (self._current_run_id() == run_id) and self._lifecycle.should_auto_stop(
-            now_mono_s=now_mono_s,
-        )
+        if self._current_run_id() != run_id:
+            return None
+        return self._lifecycle.auto_stop_reason(now_mono_s=now_mono_s)

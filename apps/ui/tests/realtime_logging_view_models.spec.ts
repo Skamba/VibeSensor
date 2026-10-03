@@ -74,6 +74,48 @@ function makeCaptureReadiness(
 }
 
 describe("realtime logging view models", () => {
+  test("tells the user when a run stopped at the 30-minute limit", () => {
+    const params = {
+      pendingLoggingAction: null,
+      selectionBlockReason: null,
+      liveHealth: {
+        variant: "ok" as const,
+        text: "dashboard.health.ok",
+        summary: "",
+        showOverviewPill: false,
+      },
+      connectedCountText: "4",
+      assignedCountText: "4",
+      runIdText: "",
+      elapsedText: "--",
+      samplesText: "0",
+      lastCompletedElapsedText: "30:00",
+      t,
+      formatInt,
+    };
+    const autoStopped = buildRealtimeLoggingPanelViewModel({
+      ...params,
+      status: makeStatus({
+        last_completed_run_id: "run-1",
+        last_stop_reason: "max_duration",
+      }),
+    });
+    const stoppedByUser = buildRealtimeLoggingPanelViewModel({
+      ...params,
+      status: makeStatus({
+        last_completed_run_id: "run-1",
+        last_stop_reason: "manual",
+      }),
+    });
+
+    expect(autoStopped.summaryPanel?.detailText).toBe(
+      "dashboard.logging.auto_stopped_max_duration",
+    );
+    expect(stoppedByUser.summaryPanel?.detailText).toBe(
+      "dashboard.logging.saved.detail",
+    );
+  });
+
   test("builds the no-cars blocked panel as typed model data", () => {
     const model = buildRealtimeLoggingPanelViewModel({
       status: makeStatus(),

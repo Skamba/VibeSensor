@@ -72,6 +72,7 @@ class RecordingRawCaptureSink:
     def __init__(self) -> None:
         self.captured: list[tuple[str, int | None, int, np.ndarray]] = []
         self.late_losses: list[str] = []
+        self.presync_chunks: list[str] = []
 
     def capture_raw_samples(
         self,
@@ -85,6 +86,9 @@ class RecordingRawCaptureSink:
 
     def note_late_packet_loss(self, *, client_id: str) -> None:
         self.late_losses.append(client_id)
+
+    def note_presync_chunk(self, *, client_id: str) -> None:
+        self.presync_chunks.append(client_id)
 
 
 @pytest.mark.asyncio
@@ -114,9 +118,9 @@ async def test_parse_to_ingest_keeps_representative_sensor_frames_as_read_only_v
 ) -> None:
     registry = RecordingRegistry(
         results=[
-            DataUpdateResult(),
-            DataUpdateResult(),
-            DataUpdateResult(),
+            DataUpdateResult(clock_synced=True),
+            DataUpdateResult(clock_synced=True),
+            DataUpdateResult(clock_synced=True),
         ],
     )
     processor = RecordingProcessor()
@@ -161,6 +165,35 @@ async def test_parse_to_ingest_keeps_representative_sensor_frames_as_read_only_v
         assert ingest_samples.dtype == np.dtype("<i2")
         assert ingest_samples.flags.owndata is False
         assert ingest_samples.flags.writeable is False
+
+
+@pytest.mark.asyncio
+async def test_frames_before_clock_sync_reach_live_processing_but_not_raw_capture(
+    fake_transport,
+    drain_queue,
+) -> None:
+    registry = RecordingRegistry(
+        results=[DataUpdateResult(clock_synced=False), DataUpdateResult(clock_synced=True)],
+    )
+    processor = RecordingProcessor()
+    raw_capture_sink = RecordingRawCaptureSink()
+    proto = DataDatagramProtocol(
+        registry=registry,
+        processor=processor,
+        raw_capture_sink=raw_capture_sink,
+        queue_maxsize=8,
+    )
+    proto.connection_made(fake_transport)
+    client_id = bytes.fromhex("010203040506")
+    samples = np.zeros((4, 3), dtype=np.int16)
+    proto.datagram_received(pack_data(client_id, seq=1, t0_us=5_000, samples=samples), ("h", 1))
+    proto.datagram_received(pack_data(client_id, seq=2, t0_us=9_000_000, samples=samples), ("h", 1))
+
+    await drain_queue(proto, timeout=1.0)
+
+    assert len(processor.ingested) == 2
+    assert raw_capture_sink.presync_chunks == ["010203040506"]
+    assert [record[2] for record in raw_capture_sink.captured] == [9_000_000]
 
 
 @pytest.mark.asyncio

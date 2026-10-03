@@ -67,6 +67,7 @@
   "dashboard.logging.saved.body": "Open History to review the diagnosis, heatmap, and exports.",
   "dashboard.logging.saved.detail": "You can start another run from Live at any time.",
   "dashboard.logging.saved.action": "Open History",
+  "dashboard.logging.auto_stopped_max_duration": "Recording stopped automatically at the 30-minute limit.",
   "dashboard.logging.blocked.no_cars.title": "Add a car before recording.",
   "dashboard.logging.blocked.no_cars.body": "Runs need an active car so History and analysis stay tied to the right setup.",
   "dashboard.logging.blocked.no_cars.detail": "Open Cars to create the first profile and unlock Start Recording.",

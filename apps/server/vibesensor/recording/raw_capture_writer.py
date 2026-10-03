@@ -82,6 +82,7 @@ class _MutableLossStats:
 class _RunCaptureStats:
     by_client: dict[str, _MutableLossStats] = field(default_factory=dict)
     seen_client_ids: set[str] = field(default_factory=set)
+    presync_chunks_by_client: dict[str, int] = field(default_factory=dict)
 
     def _sensor(self, client_id: str) -> _MutableLossStats:
         return self.by_client.setdefault(client_id, _MutableLossStats())
@@ -104,6 +105,11 @@ class _RunCaptureStats:
 
     def record_seen(self, client_id: str) -> None:
         self.seen_client_ids.add(client_id)
+
+    def record_presync_chunk(self, client_id: str) -> None:
+        self.presync_chunks_by_client[client_id] = (
+            self.presync_chunks_by_client.get(client_id, 0) + 1
+        )
 
     def freeze(self) -> dict[str, RawCaptureLossStats]:
         frozen: dict[str, RawCaptureLossStats] = {}
@@ -243,6 +249,15 @@ class RunRawCaptureWriter:
             self._run_start_monotonic_us = None
             run_stats = self._run_stats
             self._run_stats = None
+        if run_stats is not None:
+            for client_id, chunk_count in sorted(run_stats.presync_chunks_by_client.items()):
+                self._logger.info(
+                    "Raw capture for run %s skipped %d chunk(s) from %s sent before its "
+                    "clock sync; its capture starts at the first synced chunk",
+                    run_id,
+                    chunk_count,
+                    client_id,
+                )
         sensor_clock_sync = None
         if (
             self._sensor_sync_snapshotter is not None
@@ -306,6 +321,15 @@ class RunRawCaptureWriter:
             manifest=request.manifest,
             queue_depth=self._queue.qsize(),
         )
+
+    def note_presync_chunk(self, *, client_id: str) -> None:
+        """Count a chunk skipped because its sensor's clock was not synced yet."""
+        with self._lock:
+            run_stats = self._run_stats
+            run_id = self._active_run_id
+        if run_id is None or run_stats is None:
+            return
+        run_stats.record_presync_chunk(client_id)
 
     def note_late_packet_loss(self, *, client_id: str) -> None:
         with self._lock:

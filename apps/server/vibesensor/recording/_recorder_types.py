@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import current_utc_offset_seconds
+from vibesensor.recording.lifecycle_state import MAX_RECORDING_DURATION_S
 from vibesensor.recording.run_metadata_builder import (
     build_run_metadata,
     firmware_version_for_run,
@@ -35,6 +36,7 @@ class RunRecorderConfig:
     accel_scale_g_per_lsb: float | None = None
     persist_history_db: bool = True
     no_data_timeout_s: float = 15.0
+    max_recording_duration_s: float = MAX_RECORDING_DURATION_S
 
 
 @dataclass(frozen=True, slots=True)

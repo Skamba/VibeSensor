@@ -16,6 +16,7 @@ from vibesensor.settings.analysis_settings_codec import (
 
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.recording.lifecycle_state import AutoStopReason
     from vibesensor.recording.recorder import RunRecorder
     from vibesensor.settings.settings_derivation import SettingsDerivationService
 
@@ -66,12 +67,12 @@ def _flush_active_run_tick(
     recorder: RunRecorder,
     *,
     logger: logging.Logger,
-) -> tuple[str | None, bool]:
+) -> tuple[str | None, AutoStopReason | None]:
     """Flush one active-run tick without holding the recorder lock during I/O-heavy work."""
     with recorder._lock:
         snapshot = recorder._lifecycle.snapshot()
         if snapshot is None:
-            return None, False
+            return None, None
         live_start_mono_s = recorder._recording_session.live_start_mono_s
     timestamp_utc = utc_now_iso()
     live_rows = recorder._sample_flush.build_sample_records(
@@ -86,13 +87,13 @@ def _flush_active_run_tick(
             type(live_rows).__name__,
         )
         live_rows = []
-    no_data_timeout = recorder._sample_flush.append_records(
+    auto_stop_reason = recorder._sample_flush.append_records(
         snapshot.run_id,
         snapshot.start_time_utc,
         live_start_mono_s,
         prebuilt_rows=live_rows,
     )
-    return snapshot.run_id, no_data_timeout
+    return snapshot.run_id, auto_stop_reason
 
 
 async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
@@ -100,7 +101,7 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
     interval = 1.0 / recorder.metrics_log_hz
     while True:
         try:
-            run_id, no_data_timeout = await asyncio.wait_for(
+            run_id, auto_stop_reason = await asyncio.wait_for(
                 asyncio.to_thread(
                     _flush_active_run_tick,
                     recorder,
@@ -113,17 +114,24 @@ async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
                     recorder._persistence.clear_last_write_error()
                 await asyncio.sleep(interval)
                 continue
-            if no_data_timeout:
-                logger.info(
-                    "Auto-stopping run %s after %.1fs without new data",
-                    run_id,
-                    recorder._lifecycle.no_data_timeout_s,
-                )
+            if auto_stop_reason is not None:
+                if auto_stop_reason == "max_duration":
+                    logger.info(
+                        "Auto-stopping run %s at the %.0f s recording limit",
+                        run_id,
+                        recorder._lifecycle.max_duration_s,
+                    )
+                else:
+                    logger.info(
+                        "Auto-stopping run %s after %.1fs without new data",
+                        run_id,
+                        recorder._lifecycle.no_data_timeout_s,
+                    )
                 await asyncio.wait_for(
                     asyncio.to_thread(
                         recorder.stop_recording,
                         _only_if_run_id=run_id,
-                        reason="no_data_timeout",
+                        reason=auto_stop_reason,
                     ),
                     timeout=_DB_THREAD_TIMEOUT_S,
                 )

@@ -153,9 +153,9 @@ def test_start_recording_holds_lock_during_flush_and_finalize(make_logger) -> No
     flush_lock_owned: list[bool] = []
     finalize_lock_owned: list[bool] = []
 
-    def fake_append_records(*args, **kwargs) -> bool:
+    def fake_append_records(*args, **kwargs) -> None:
         flush_lock_owned.append(logger._lock._is_owned())
-        return False
+        return None
 
     def fake_finalize_run(*args, **kwargs) -> bool:
         finalize_lock_owned.append(logger._lock._is_owned())
@@ -180,9 +180,9 @@ def test_stop_recording_holds_lock_during_flush_and_finalize(make_logger) -> Non
     flush_lock_owned: list[bool] = []
     finalize_lock_owned: list[bool] = []
 
-    def fake_append_records(*args, **kwargs) -> bool:
+    def fake_append_records(*args, **kwargs) -> None:
         flush_lock_owned.append(logger._lock._is_owned())
-        return False
+        return None
 
     def fake_finalize_run(*args, **kwargs) -> bool:
         finalize_lock_owned.append(logger._lock._is_owned())
