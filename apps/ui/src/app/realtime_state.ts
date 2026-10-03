@@ -1,4 +1,3 @@
-import type { LoggingStatusPayload } from "../api/types";
 import { defaultLocationCodes } from "../constants";
 import type {
   AdaptedClient,
@@ -14,7 +13,6 @@ export interface RealtimeStateValue {
   selectedClientId: string | null;
   speedMps: number | null;
   rotationalSpeeds: RotationalSpeeds | null;
-  loggingStatus: LoggingStatusPayload;
   locationCodes: string[];
 }
 
@@ -32,7 +30,7 @@ export interface LivePayloadUpdateResult {
   hasNewSpectrumFrame: boolean;
 }
 
-export function syncSelectedRealtimeClient(realtime: RealtimeState): void {
+function syncSelectedRealtimeClient(realtime: RealtimeState): void {
   const clients = realtime.clients.value;
   const firstConnected = clients.find((client) => Boolean(client.connected));
   if (!realtime.selectedClientId.value && clients.length > 0) {
@@ -88,18 +86,6 @@ export function createRealtimeState(): RealtimeState {
     selectedClientId: signal<string | null>(null),
     speedMps: signal<number | null>(null),
     rotationalSpeeds: signal<RotationalSpeeds | null>(null),
-    loggingStatus: signal<LoggingStatusPayload>({
-      enabled: false,
-      run_id: null,
-      write_error: null,
-      analysis_in_progress: false,
-      start_time_utc: null,
-      samples_written: 0,
-      samples_dropped: 0,
-      last_completed_run_id: null,
-      last_completed_run_error: null,
-      capture_readiness: null,
-    }),
     locationCodes: signal(defaultLocationCodes.slice()),
   };
 }

@@ -525,6 +525,7 @@
   "actions.confirm": "Bevestigen",
   "actions.confirm_title": "Bevestiging nodig",
   "actions.identify": "Identificeren",
+  "actions.identify_failed": "Sensor identificeren is mislukt.",
   "actions.remove": "Verwijderen",
   "actions.remove_client_confirm": "Sensor {id} uit de lijst verwijderen?",
   "actions.remove_client_failed": "Verwijderen van sensor is mislukt.",

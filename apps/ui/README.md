@@ -8,7 +8,7 @@ server over HTTP (REST) and WebSocket (live data).
 
 - **TypeScript** — application logic
 - **Preact + @preact/signals** — UI rendering plus shared reactive state
-- **`src/poll.ts`** — interval + visibility polling for page stores (pre-rewrite pages still use @tanstack/query-core)
+- **`src/poll.ts`** — interval + visibility polling for page stores
 - **Vite** — build tool and dev server
 - **Canvas chart renderer** — custom live spectrum visualization
 - **Vitest + happy-dom** — canonical fast unit/integration test runner
@@ -96,10 +96,6 @@ intervalMs, load, onData, onError })` loads when `active` turns true and the
 page is visible, re-polls after each result, and only delivers the latest
 request's result, so a slow older response never overwrites newer data. Call
 `refresh()` after a mutation instead of patching a cache.
-
-Pages that have not moved to `src/pages/` yet still use the TanStack
-`QueryClient` created in `src/app/runtime/ui_query_client.ts`; it goes away
-with the last of them.
 
 ## Live transport ownership
 
@@ -193,17 +189,11 @@ helpers); `.dependency-cruiser.cjs` keeps pages from importing each other.
 Until a page moves, its old feature controller and panel bridge are wired in
 `src/app/feature_wiring.ts`.
 
-Realtime follows the same controller shape: `realtime_feature.ts` owns the
-polling, mutation flow, logging state signals, and panel action binding,
-`realtime_feature_view_state.ts` derives the live overview/logging/sensors models plus idle readiness signatures
-from shared AppState slices, `app/views/realtime_live_overview.tsx` and
-`app/views/realtime_logging_panel.tsx` consume bound model signals inside their
-signal-backed islands, `realtime_capture_readiness_models.ts` owns the
-readiness/checklist helpers, `realtime_logging_summary_models.ts` owns the
-logging summary-panel builders, and `realtime_logging_view_models.ts` stays the
-top-level logging panel compositor and stable re-export surface reused by that
-derived state. `app/views/` now owns typed view-model builders, event-target
-decoding, and signal-backed Preact surfaces for reusable multi-action panels.
+Live data the dashboard, sensors, and spectrum share (sensors, selection,
+speed, spectra, location codes) lives in `src/live_store.ts`; the transport
+controller writes it and the pages read it. The dashboard store bumps
+`runsChanged` there when a recording starts, stops, or finishes, and the
+History store reloads on it.
 
 `src/transport/` owns transport-specific helpers such as clone and live-model
 surfaces, while `api/types.ts` owns generated HTTP alias exports used across
