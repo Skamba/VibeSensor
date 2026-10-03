@@ -5,15 +5,24 @@ import {
   buildCaptureReadiness,
   fulfillJson,
   installCommonRoutes,
+  type LiveClientFixture,
   requestPath,
 } from "./smoke.helpers";
-import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
+import type { CarsPayload, LoggingStatusPayload } from "../src/api/types";
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type WsSpectrumSeries,
+} from "../src/contracts/ws_payload_types";
 
 test.describe.configure({ timeout: 20_000 });
 
 const FREQ = Array.from({ length: 64 }, (_, index) => 2 + index);
 
-function spectrumSeries(peakHz: number, peakAmp: number, db: number) {
+function spectrumSeries(
+  peakHz: number,
+  peakAmp: number,
+  db: number,
+): WsSpectrumSeries {
   return {
     freq: FREQ,
     combined_spectrum_amp_g: FREQ.map((hz) =>
@@ -36,7 +45,11 @@ function spectrumSeries(peakHz: number, peakAmp: number, db: number) {
   };
 }
 
-function client(id: string, name: string, locationCode: string) {
+function client(
+  id: string,
+  name: string,
+  locationCode: string,
+): LiveClientFixture {
   return {
     id,
     name,
@@ -57,7 +70,7 @@ async function installReadyDashboardRoutes(page: Page): Promise<void> {
   await installCommonRoutes(page, {
     settingsHandler: async (route: Route) => {
       if (requestPath(route).startsWith("/api/settings/cars")) {
-        await fulfillJson(route, {
+        await fulfillJson<CarsPayload>(route, {
           cars: [
             { id: "car-1", name: "Test Hatch", type: "sedan", aspects: {} },
           ],
@@ -69,7 +82,7 @@ async function installReadyDashboardRoutes(page: Page): Promise<void> {
     },
   });
   await page.route("**/api/recording/status", async (route) => {
-    await fulfillJson(route, {
+    await fulfillJson<LoggingStatusPayload>(route, {
       enabled: false,
       run_id: null,
       write_error: null,

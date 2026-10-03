@@ -1,46 +1,53 @@
 import type { Page, Route } from "@playwright/test";
-import type { LoggingStatusPayload } from "../src/api/types";
-import { EXPECTED_SCHEMA_VERSION } from "../src/contracts/ws_payload_types";
+import type {
+  CarsPayload,
+  ClientLocationsResponse,
+  HistoryEntry,
+  HistoryListPayload,
+  LocationOption,
+  LoggingStatusPayload,
+  UsbInternetStatusPayload,
+} from "../src/api/types";
+import {
+  EXPECTED_SCHEMA_VERSION,
+  type LiveWsPayload,
+  type WsClientInfo,
+} from "../src/contracts/ws_payload_types";
+
+/** A live sensor row; `frame_samples` defaults to the canonical 200. */
+export type LiveClientFixture = Omit<WsClientInfo, "frame_samples"> &
+  Partial<Pick<WsClientInfo, "frame_samples">>;
+
+/** Live WebSocket fields a journey sets; the rest get neutral defaults. */
+export type LivePayloadFixture = Partial<Omit<LiveWsPayload, "clients">> & {
+  clients?: LiveClientFixture[];
+};
 
 export type FakeWebSocketOptions = {
-  payload?: Record<string, unknown>;
+  payload?: LivePayloadFixture;
   repeatPayloadCount?: number;
   repeatPayloadIntervalMs?: number;
   trackerKey?: string;
 };
 
 export type LiveSensorPayloadOptions = Omit<FakeWebSocketOptions, "payload"> & {
-  clients?: Array<Record<string, unknown>>;
-  extraPayload?: Record<string, unknown>;
+  clients?: LiveClientFixture[];
+  extraPayload?: LivePayloadFixture;
   speedMps?: number | null;
 };
 
 function withCanonicalClientCadence(
-  payload: Record<string, unknown>,
-): Record<string, unknown> {
-  const rawClients = payload.clients;
-  if (!Array.isArray(rawClients)) {
-    return payload;
-  }
-  return {
-    ...payload,
-    clients: rawClients.map((client) => {
-      if (
-        typeof client !== "object" ||
-        client === null ||
-        Array.isArray(client)
-      ) {
-        return client;
+  payload: LivePayloadFixture,
+): LivePayloadFixture {
+  return payload.clients
+    ? {
+        ...payload,
+        clients: payload.clients.map((client) => ({
+          frame_samples: 200,
+          ...client,
+        })),
       }
-      if ("frame_samples" in client) {
-        return client;
-      }
-      return {
-        frame_samples: 200,
-        ...client,
-      };
-    }),
-  };
+    : payload;
 }
 
 export async function installFakeWebSocket(
@@ -175,8 +182,8 @@ async function installLiveSensorPayload(
 }
 
 export type CommonRouteOptions = {
-  runs?: Array<Record<string, unknown>>;
-  locations?: Array<Record<string, unknown>>;
+  runs?: HistoryEntry[];
+  locations?: LocationOption[];
   historyHandler?: (route: Route) => Promise<void>;
   settingsHandler?: (route: Route) => Promise<void>;
   espFlashHandler?: (route: Route) => Promise<void>;
@@ -204,13 +211,14 @@ export function requestPath(route: Route): string {
   return normalizePathname(new URL(route.request().url()).pathname);
 }
 
-export async function fulfillJson(route: Route, body: unknown): Promise<void> {
+/** Pass the contract type (`fulfillJson<CarsPayload>(...)`) so tsc checks the fixture. */
+export async function fulfillJson<T>(route: Route, body: T): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
 
-function defaultSettingsPayload(path: string): Record<string, unknown> {
+function defaultSettingsPayload(path: string): CarsPayload | object {
   if (path === "/api/settings/cars" || path === "/api/settings/cars/active") {
-    return { cars: [], active_car_id: null };
+    return { cars: [], active_car_id: null } satisfies CarsPayload;
   }
   return {};
 }
@@ -271,7 +279,7 @@ export async function installCommonRoutes(
   options: CommonRouteOptions = {},
 ): Promise<void> {
   await page.route("**/api/recording/status", async (route) => {
-    await fulfillJson(route, {
+    await fulfillJson<LoggingStatusPayload>(route, {
       enabled: false,
       run_id: null,
       write_error: null,
@@ -303,10 +311,14 @@ export async function installCommonRoutes(
       await options.historyHandler(route);
       return;
     }
-    await fulfillJson(route, { runs: options.runs ?? [] });
+    await fulfillJson<HistoryListPayload>(route, {
+      runs: options.runs ?? [],
+    });
   });
   await page.route("**/api/client-locations", async (route) => {
-    await fulfillJson(route, { locations: options.locations ?? [] });
+    await fulfillJson<ClientLocationsResponse>(route, {
+      locations: options.locations ?? [],
+    });
   });
   await page.route("**/api/car-library/**", async (route) => {
     await fulfillJson(route, { brands: [], types: [], models: [] });
@@ -335,7 +347,7 @@ export async function installCommonRoutes(
     await fulfillJson(route, {});
   });
   await page.route("**/api/update/internet-status", async (route) => {
-    await fulfillJson(route, {
+    await fulfillJson<UsbInternetStatusPayload>(route, {
       detected: false,
       usable: false,
       interface_name: null,

@@ -26,13 +26,13 @@ describe("spectrum tween derived state", () => {
         [7, 9, 11],
       ],
     });
-    const alpha = signal(0.5);
+    const alpha = signal(0.25);
     const tween = createSpectrumTweenDerivedState(previous, next, alpha);
 
     expect(tween.canTween.value).toBe(true);
     expect(tween.frame.value?.values).toEqual([
-      [2, 3.5, 5],
-      [5.5, 7, 8.5],
+      [1.5, 2.75, 4],
+      [4.75, 6, 7.25],
     ]);
 
     next.value = {
