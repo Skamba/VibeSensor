@@ -12,6 +12,7 @@ from vibesensor.analysis._sample_metrics import _sample_top_peaks
 from vibesensor.analysis._types import PhaseLabels, Sample
 from vibesensor.analysis.constants import (
     CONSTANT_SPEED_STDDEV_KMH,
+    MIN_ORDER_TRACKING_SLOPE,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
 )
@@ -33,6 +34,7 @@ from vibesensor.analysis.orders.scoring import (
 )
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
 from vibesensor.recording.run_schema import RunMetadata
 
 # Maximum dominance ratio for splitting a finding into per-location findings.
@@ -133,6 +135,7 @@ class OrderAnalysisSession:
         "_per_sample_phases",
         "_cached_peaks",
         "_order_reference_spec",
+        "_speed_moves",
     )
 
     def __init__(self, request: OrderAnalysisRequest) -> None:
@@ -148,6 +151,11 @@ class OrderAnalysisSession:
         self._lang = request.lang
         self._per_sample_phases = request.per_sample_phases
         self._order_reference_spec = _order_reference_spec_from_context(request.context)
+        self._speed_moves = trend_moves(
+            (sample.t_s, sample.speed_kmh)
+            for sample in self._samples
+            if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
+        )
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in self._samples
         ]
@@ -242,6 +250,11 @@ class OrderAnalysisSession:
             )
         )
         if effective_match_rate < min_match_rate:
+            return None
+        slope = frequency_tracking_slope(match.matched_points) if self._speed_moves else None
+        if slope is not None and slope < MIN_ORDER_TRACKING_SLOPE:
+            # The matches sit on a fixed-frequency tone the prediction swept
+            # past; that tone stays a (persistent) peak finding of its own.
             return None
 
         build_context = OrderFindingBuildContext(

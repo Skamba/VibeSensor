@@ -99,14 +99,27 @@ coordinates the evidence flow:
    the stored sample peaks.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
    the best speed band or dominant location.
-4. Score the surviving evidence with `score_order_finding()`. Location terms
+4. Reject matches that do not follow the prediction. As speed changes, an
+   order's peaks move one-for-one with its predicted frequency; a fixed
+   resonance (body mode, engine idle) that the prediction sweeps past stays
+   at one frequency, yet falls inside the tolerance band over a speed range.
+   `frequency_tracking_slope()` (`domain/order_match.py`) takes the robust
+   (Theil–Sen) slope of matched vs predicted Hz; below
+   `MIN_ORDER_TRACKING_SLOPE` (0.5) the hypothesis produces no finding. On
+   the simulator real orders score 0.8–1.3 and a 13 Hz body resonance crossed
+   by T1 scores 0.0. It is only judged when the run's speed really changed
+   (`trend_moves()`: the 2 s-median speed trend moves by at least 10 % and by
+   more than twice the spread inside a 2 s bin). At a steady speed an order
+   and a fixed tone look the same, and speed-reading noise would flatten the
+   slope.
+5. Score the surviving evidence with `score_order_finding()`. Location terms
    are source-aware: an engine/driveline order with no dominant corner is
    not penalised for it once its own evidence is established, unless it
    shares most of its peaks with a wheel order (see "Confidence levels" in
    `docs/metrics.md`).
-5. Assemble a domain `Finding` with `assemble_order_finding()`.
-6. Split multi-location wheel findings when two corners are both strong.
-7. Apply `suppress_engine_aliases()` before returning the final ranked list.
+6. Assemble a domain `Finding` with `assemble_order_finding()`.
+7. Split multi-location wheel findings when two corners are both strong.
+8. Apply `suppress_engine_aliases()` before returning the final ranked list.
 
 If the effective match rate stays below the current threshold, the hypothesis
 does not produce a finding.

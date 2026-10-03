@@ -221,7 +221,10 @@ the PDF both show:
   are skipped while the revs drop and the spectrum window clears. Presence at
   the order's main location inside the coast-down is compared with presence
   during the rest of the run (≥ 60 % of it: road speed, ≤ 30 %: engine,
-  otherwise unknown). The coast-down rules out the other side in
+  otherwise unknown). Coast-down matches that stay at one frequency while the
+  prediction falls (an idle tone the order's path crosses) do not count as the
+  order (`frequency_tracking_slope`, judged when the coast-down speed really
+  fell; see `docs/order_tracking.md`). The coast-down rules out the other side in
   `source_checks` (`stayed_in_neutral` / `stopped_in_neutral`) even without an
   order reference. When it contradicts the order match (an engine order that
   stays in neutral, a wheel or driveline order that stops), the verdict drops

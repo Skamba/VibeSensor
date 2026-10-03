@@ -16,10 +16,11 @@ from typing import TYPE_CHECKING, cast
 
 from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
 from vibesensor.analysis._sensor_locations import _location_label
-from vibesensor.analysis.constants import LIGHT_STRENGTH_MAX_DB
+from vibesensor.analysis.constants import LIGHT_STRENGTH_MAX_DB, MIN_ORDER_TRACKING_SLOPE
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
+from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.summary.diagnosis_contracts import (
@@ -639,13 +640,25 @@ def _speed_dependence(
     )
     if inside < _MIN_COAST_SAMPLES or outside < _MIN_COAST_SAMPLES:
         return None
-    matched_inside, matched_outside = split(
-        [
-            point.t_s
-            for point in candidate.matched_points
-            if point.location == location and point.t_s is not None
-        ]
-    )
+    timed = [
+        (point.t_s, point)
+        for point in candidate.matched_points
+        if point.location == location and point.t_s is not None
+    ]
+    matched_inside, matched_outside = split([t_s for t_s, _point in timed])
+    coast_points = [point for t_s, point in timed if in_window(t_s, settled)]
+    coast_speeds = [
+        (sample.t_s, sample.speed_kmh)
+        for sample, label in located
+        if label == location
+        and sample.t_s is not None
+        and sample.speed_kmh is not None
+        and in_window(sample.t_s, settled)
+    ]
+    slope = frequency_tracking_slope(coast_points) if trend_moves(coast_speeds) else None
+    if slope is not None and slope < MIN_ORDER_TRACKING_SLOPE:
+        # A fixed tone near the order's path while coasting, not the order.
+        matched_inside = 0
     present_inside = matched_inside / inside
     present_outside = matched_outside / outside
     if present_outside < _MIN_PRESENCE_OUTSIDE_COAST:

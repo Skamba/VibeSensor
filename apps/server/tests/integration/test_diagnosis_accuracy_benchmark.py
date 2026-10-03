@@ -472,23 +472,6 @@ def _order_hz(car: BenchCar, code: str, speed_kmh: float) -> float:
     return base * _ORDER_MULTIPLE[code]
 
 
-# Known accuracy misses: the benchmark keeps them visible (strict xfail) until fixed.
-KNOWN_MISSES = {
-    ("guided-engine-coastdown", "default"): (
-        "the idle tone at 39 Hz matches E2 (~0.51 Hz per km/h) while coasting through "
-        "71-82 km/h, so the coast-down reads as following road speed and the engine "
-        "fault is demoted to weak evidence"
-    ),
-}
-
-# Misses that only some sensor-id seeds hit (opt-in matrix only).
-MATRIX_KNOWN_MISSES = {
-    ("bench-fixed-resonance-sweep", "default"): (
-        "brief crossings of the fixed 13/26/39 Hz resonances read as a Moderate "
-        "all-wheels T1/T2 fault in 2 of 6 seeds"
-    ),
-}
-
 # Every case runs on one sensor-id seed in default CI; the opt-in matrix repeats
 # each case over more seeds (different MACs, so different noise and clock drift).
 CI_SEED = 1
@@ -496,16 +479,11 @@ MATRIX_SEEDS = (2, 3, 4, 5, 6)
 MATRIX_MIN_PASSES = 4
 
 
-def _case_params(*, matrix: bool = False) -> list[object]:
-    params: list[object] = []
-    for case in CASES:
-        for car_key in sorted(CARS):
-            miss = KNOWN_MISSES.get((case.case_id, car_key))
-            if matrix and miss is None:
-                miss = MATRIX_KNOWN_MISSES.get((case.case_id, car_key))
-            marks = [pytest.mark.xfail(reason=miss, strict=True)] if miss else []
-            params.append(pytest.param(case, car_key, id=f"{case.case_id}-{car_key}", marks=marks))
-    return params
+CASE_PARAMS = [
+    pytest.param(case, car_key, id=f"{case.case_id}-{car_key}")
+    for case in CASES
+    for car_key in sorted(CARS)
+]
 
 
 def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
@@ -535,13 +513,13 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         result.history_db.close()
 
 
-@pytest.mark.parametrize(("case", "car_key"), _case_params())
+@pytest.mark.parametrize(("case", "car_key"), CASE_PARAMS)
 def test_diagnosis_accuracy(case: Case, car_key: str, tmp_path: Path) -> None:
     _run_case(case, car_key, CI_SEED, tmp_path)
 
 
 @pytest.mark.diagnostic_matrix
-@pytest.mark.parametrize(("case", "car_key"), _case_params(matrix=True))
+@pytest.mark.parametrize(("case", "car_key"), CASE_PARAMS)
 def test_diagnosis_accuracy_across_seeds(case: Case, car_key: str, tmp_path: Path) -> None:
     failures: list[str] = []
     for seed in MATRIX_SEEDS:

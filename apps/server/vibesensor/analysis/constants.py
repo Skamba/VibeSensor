@@ -54,6 +54,16 @@ Derived from the strength-labels table: the ``l2`` ("moderate") band starts at
 this threshold, meaning values below this are classified as light or negligible.
 """
 
+MIN_ORDER_TRACKING_SLOPE: Final[float] = 0.5
+"""Least slope of matched vs predicted frequency for matches to count as an order.
+
+An order's peaks move one-for-one with its prediction as speed changes; a
+fixed-frequency tone (body resonance, engine idle in neutral) that the
+prediction sweeps past stays put, giving a slope near 0 (see
+``domain.order_match.frequency_tracking_slope``). Judged only when the speed
+really changed (``domain.order_match.trend_moves``): order hypotheses over the
+whole run, the guided coast-down test inside the coast-down."""
+
 SPEED_BIN_WIDTH_KMH: Final[int] = 10
 """Width of each speed bin in km/h for speed-breakdown tables."""
 
