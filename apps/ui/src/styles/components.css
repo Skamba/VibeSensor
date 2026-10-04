@@ -74,12 +74,16 @@ button,
     filter 120ms ease;
 }
 
-button:hover,
-.btn:hover {
-  border-color: var(--md-sys-color-outline);
-  box-shadow: none;
-  background: var(--md-sys-color-surface-container-high);
-  transform: none;
+/* Touch screens keep :hover on the last tapped element; hover styles apply only
+   where a pointer can hover (enforced by tests/hover_guard.spec.ts). */
+@media (hover: hover) {
+  button:hover,
+  .btn:hover {
+    border-color: var(--md-sys-color-outline);
+    box-shadow: none;
+    background: var(--md-sys-color-surface-container-high);
+    transform: none;
+  }
 }
 button:active,
 .btn:active {
@@ -94,10 +98,12 @@ button.primary {
   border-color: var(--brand-600);
   color: var(--on-fill);
 }
-.btn--primary:hover,
-button.primary:hover {
-  background: var(--brand-600);
-  filter: none;
+@media (hover: hover) {
+  .btn--primary:hover,
+  button.primary:hover {
+    background: var(--brand-600);
+    filter: none;
+  }
 }
 
 .btn--success,
@@ -118,11 +124,13 @@ button.warn {
   border-color: var(--button-danger-quiet-border);
   color: var(--button-danger-quiet-text);
 }
-.btn--danger-quiet:hover {
-  background: var(--button-danger-quiet-hover-surface);
-  border-color: var(--button-danger-quiet-hover-border);
-  color: var(--button-danger-quiet-text);
-  filter: none;
+@media (hover: hover) {
+  .btn--danger-quiet:hover {
+    background: var(--button-danger-quiet-hover-surface);
+    border-color: var(--button-danger-quiet-hover-border);
+    color: var(--button-danger-quiet-text);
+    filter: none;
+  }
 }
 
 button:disabled,

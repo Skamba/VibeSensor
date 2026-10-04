@@ -98,9 +98,13 @@
     background: var(--row-even);
   }
   .settings-entity-table--sensors tbody tr td,
-  .settings-entity-table--sensors tbody tr:nth-child(even) td,
-  .settings-entity-table--sensors tbody tr:hover td {
+  .settings-entity-table--sensors tbody tr:nth-child(even) td {
     background: none;
+  }
+  @media (hover: hover) {
+    .settings-entity-table--sensors tbody tr:hover td {
+      background: none;
+    }
   }
   .settings-sensor-row__location select {
     width: 100%;

@@ -1,3 +1,4 @@
+import type { FuelType } from "./capabilities";
 import { defaultLocationCodes } from "./constants";
 
 /**
@@ -43,9 +44,14 @@ export function sensorLayout(
   return { kind, wheelCount };
 }
 
-/** One sentence on what the layout can and cannot tell. */
-export function layoutConsequence(layout: SensorLayout, t: Translate): string {
-  return t(`sensors.layout.${layout.kind}`, {
+/** One sentence on what the layout can and cannot tell; an EV has no engine. */
+export function layoutConsequence(
+  layout: SensorLayout,
+  fuelType: FuelType,
+  t: Translate,
+): string {
+  const ev = layout.kind === "single" && fuelType === "EV" ? "_ev" : "";
+  return t(`sensors.layout.${layout.kind}${ev}`, {
     count: layout.wheelCount,
     total: WHEEL_CODES.size,
   });

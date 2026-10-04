@@ -88,7 +88,11 @@ function ratioText(value: unknown, fmt: FormatNumber, t: Translate): string {
 
 function rowDetail(car: CarRecord, isComplete: boolean, t: Translate) {
   if (!isComplete) {
-    return t("settings.car.incomplete_detail");
+    return t(
+      car.fuel_type === "EV"
+        ? "settings.car.incomplete_detail_ev"
+        : "settings.car.incomplete_detail",
+    );
   }
   const estimate = estimateNoteKey(
     savedCarReferences(car),
@@ -139,7 +143,12 @@ export function carRows(
           tier: provenanceTier(refs.tire),
         },
         {
-          label: t("settings.car.col_drive"),
+          // An EV's final drive is its single reduction ratio.
+          label: t(
+            car.fuel_type === "EV"
+              ? "settings.car.col_reduction"
+              : "settings.car.col_drive",
+          ),
           value: ratioText(car.aspects?.final_drive_ratio, fmt, t),
           tier: provenanceTier(refs.finalDrive),
         },

@@ -66,6 +66,25 @@ def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> Non
     assert "Engine RPM" not in conditions
 
 
+def test_an_evs_speed_check_names_its_motor_not_a_drivetrain() -> None:
+    summary = run_analysis(
+        _gps(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)),
+        _car("EV", current_gear_ratio=1.0),
+    )
+
+    for lang, label, motor, combustion in (
+        ("en", "Speed variation", "electric-motor orders", "drivetrain"),
+        ("nl", "Snelheidsvariatie", "elektromotor", "aandrijving"),
+    ):
+        (check,) = (
+            check
+            for check in report_view_for(summary, lang=lang).quality.checks
+            if check.label == label
+        )
+        assert motor in check.detail
+        assert combustion not in check.detail
+
+
 def test_an_ev_motor_vibration_is_named_the_motor_not_the_engine() -> None:
     motor_hz = wheel_hz(80.0) * FINAL_DRIVE
     samples = _gps(

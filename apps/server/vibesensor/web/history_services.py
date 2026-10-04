@@ -98,6 +98,7 @@ class ProjectedHistoryRunService:
                 localize_warning_list(warnings, lang=lang),
                 projected.get("run_suitability"),
                 lang=lang,
+                electric=_is_electric_run(projected),
             ),
         )
         validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(projected)
@@ -110,8 +111,15 @@ class ProjectedHistoryRunService:
         return DeleteHistoryRunResponse.model_validate(await self._service.delete_run(run_id))
 
 
+def _is_electric_run(insights: JsonObject) -> bool:
+    """Whether the run's diagnosis was for a battery-electric car (as the PDF decides)."""
+    diagnosis = insights.get("diagnosis")
+    conditions = diagnosis.get("conditions") if is_json_object(diagnosis) else None
+    return is_json_object(conditions) and conditions.get("fuel_type") == "EV"
+
+
 def _with_suitability_warnings(
-    warnings: list[JsonObject], run_suitability: JsonValue, *, lang: str
+    warnings: list[JsonObject], run_suitability: JsonValue, *, lang: str, electric: bool
 ) -> list[JsonObject]:
     """Lead with the failing run-suitability checks, worded as on the PDF quality page.
 
@@ -121,7 +129,7 @@ def _with_suitability_warnings(
     checks = [check for check in rows if is_json_object(check)]
     stated = warning_codes_stated_by_checks(checks)
     return [
-        *cast(list[JsonObject], failing_suitability_warnings(lang, checks)),
+        *cast(list[JsonObject], failing_suitability_warnings(lang, checks, electric=electric)),
         *(warning for warning in warnings if warning.get("code") not in stated),
     ]
 

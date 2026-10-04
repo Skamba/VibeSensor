@@ -47,10 +47,14 @@ def _failing(checks: Iterable[Mapping[str, object]]) -> list[Mapping[str, object
     return [check for check in checks if check.get("state") != "pass"]
 
 
-def suitability_check_detail(lang: str, check: Mapping[str, object]) -> str:
+def suitability_check_detail(
+    lang: str, check: Mapping[str, object], *, electric: bool = False
+) -> str:
     """Plain meaning of one suitability check; a warning keeps its cause and specifics.
 
     The stored explanation is appended unless it only restates the plain sentence.
+    A battery-electric car (*electric*) gets the sentence's ``_EV`` wording where
+    one exists: it has an electric motor, not an engine and a drivetrain.
     """
     key = _check_name(check)
     passed = check["state"] == "pass"
@@ -58,6 +62,8 @@ def suitability_check_detail(lang: str, check: Mapping[str, object]) -> str:
         lang, check.get("explanation"), tr=lambda k, **kw: _tr(lang, k, **kw)
     ).strip()
     plain_key = f"QUALITY_{key}_{'PASS' if passed else 'WARN'}"
+    if electric and _tr(lang, f"{plain_key}_EV") != f"{plain_key}_EV":
+        plain_key = f"{plain_key}_EV"
     plain = _tr(lang, plain_key)
     if plain == plain_key:
         plain = explanation
@@ -77,7 +83,7 @@ def warning_codes_stated_by_checks(checks: Iterable[Mapping[str, object]]) -> fr
 
 
 def failing_suitability_warnings(
-    lang: str, checks: Iterable[Mapping[str, object]]
+    lang: str, checks: Iterable[Mapping[str, object]], *, electric: bool = False
 ) -> list[dict[str, str]]:
     """Each failing check as a localized warning: its label and the PDF's detail text."""
     return [
@@ -86,7 +92,7 @@ def failing_suitability_warnings(
             "severity": "warn",
             "applies_to": "run_suitability",
             "title": _tr(lang, str(check["check_key"])),
-            "detail": suitability_check_detail(lang, check),
+            "detail": suitability_check_detail(lang, check, electric=electric),
         }
         for check in _failing(checks)
     ]

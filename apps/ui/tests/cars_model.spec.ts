@@ -221,6 +221,40 @@ test("a car's capabilities follow its references like the server's readiness", (
   );
 });
 
+test("an EV row names its reduction ratio and motor, not a final drive", () => {
+  const [estimated, incomplete] = carRows(
+    [
+      makeCar({
+        id: "ev",
+        fuel_type: "EV",
+        aspects: complete,
+        order_reference_status: {
+          final_drive_ratio_confidence: "family_default",
+          requires_manual_confirmation: true,
+          selection_source_status: "exact_row",
+        },
+      }),
+      makeCar({
+        id: "new-ev",
+        fuel_type: "EV",
+        aspects: { tire_width_mm: 245 },
+      }),
+    ],
+    "ev",
+    null,
+    fmt,
+    t,
+  );
+  expect(estimated.metrics.map((metric) => metric.label)).toEqual([
+    "settings.car.col_tires",
+    "settings.car.col_reduction",
+  ]);
+  expect(estimated.detail).toBe(
+    "settings.car.estimate.final_drive_ev settings.car.confidence.review_detail",
+  );
+  expect(incomplete.detail).toBe("settings.car.incomplete_detail_ev");
+});
+
 test("the powertrain decides what the engine check can do", () => {
   const estimated = {
     tire: "official_exact",

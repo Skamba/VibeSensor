@@ -22,7 +22,9 @@ History wording: J28, J29, J35) shipped in #4127. WP2 (settings and car wizard
 UI: J01, J04, J05, J07, J08) shipped in #4128. The rest of J13 (a paired
 OBD-II adapter is the speed source until the user picks one) shipped with the
 Pi-verification server fixes. WP7 (EV and PHEV handling: J12) shipped in
-#4138. WP6 (the printable hotspot QR card: J23) shipped in #4139.
+#4138. Its remaining EV wording (the car row's reduction ratio, the estimate
+note, the one-sensor hints and the speed-variation check) shipped with the
+second round of Pi-verification UI fixes. WP6 (the printable hotspot QR card: J23) shipped in #4139.
 
 Owner decisions that bound the fixes (settled):
 

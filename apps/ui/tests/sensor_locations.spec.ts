@@ -63,8 +63,16 @@ test("the sensor layout says what it can localise", () => {
   ]);
   expect(four).toEqual({ kind: "four_wheels", wheelCount: 4 });
   const some = sensorLayout(["front_left_wheel", "rear_right_wheel"]);
-  expect(some && layoutConsequence(some, t)).toBe(
+  expect(some && layoutConsequence(some, null, t)).toBe(
     'sensors.layout.some_wheels:{"count":2,"total":4}',
+  );
+  // One sensor tells the source type; an EV's are the wheels and its motor.
+  const single = sensorLayout(["trunk"]);
+  expect(single && layoutConsequence(single, "ICE", t)).toMatch(
+    /^sensors\.layout\.single:/,
+  );
+  expect(single && layoutConsequence(single, "EV", t)).toMatch(
+    /^sensors\.layout\.single_ev:/,
   );
 });
 

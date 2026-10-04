@@ -298,7 +298,9 @@ export const capabilities = computed(() => {
   const layout = liveSensorLayout.value;
   return {
     ...model,
-    layoutNote: layout ? layoutConsequence(layout, t) : null,
+    layoutNote: layout
+      ? layoutConsequence(layout, activeCar.value?.fuel_type ?? null, t)
+      : null,
   };
 });
 

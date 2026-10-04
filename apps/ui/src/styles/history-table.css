@@ -26,8 +26,10 @@
 .history-table tbody tr:nth-child(even) td {
   background: var(--row-even);
 }
-.history-table tbody tr:hover td {
-  background: var(--row-hover);
+@media (hover: hover) {
+  .history-table tbody tr:hover td {
+    background: var(--row-hover);
+  }
 }
 
 .history-row {
@@ -181,9 +183,11 @@
     background 140ms ease;
 }
 
-.history-row__toggle:hover {
-  color: var(--brand-800);
-  background: transparent;
+@media (hover: hover) {
+  .history-row__toggle:hover {
+    color: var(--brand-800);
+    background: transparent;
+  }
 }
 
 .history-row__toggle:focus-visible {

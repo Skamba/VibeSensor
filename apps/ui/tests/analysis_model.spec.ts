@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { setLanguage } from "../src/i18n";
 import {
   checkDrafts,
   type Drafts,
@@ -7,6 +8,7 @@ import {
   FIELDS,
   guidanceLines,
 } from "../src/pages/analysis/analysis_model";
+import { defaultAnalysisTuningSettings } from "../src/vehicle_settings";
 
 const t = (key: string, vars?: Record<string, unknown>) =>
   vars ? `${key}:${JSON.stringify(vars)}` : key;
@@ -96,5 +98,27 @@ describe("analysis drafts", () => {
     );
     expect(defaults.label).toBe("settings.analysis.default_label");
     expect(defaults.value).toMatch(/^\d+(\.\d)?%$/);
+  });
+
+  test("shows decimals in the UI language but keeps inputs machine-readable", async () => {
+    const gear = FIELDS.find((field) => field.key === "gear_uncertainty_pct");
+    if (!gear) {
+      throw new Error("missing gear field");
+    }
+    await setLanguage("nl");
+    try {
+      // The Pi showed "Standaard 0.2%" on the Dutch Analysis page.
+      expect(guidanceLines(gear, t)[1].value).toBe("0,2%");
+      // A number input only accepts "." whatever the page language.
+      expect(
+        draftsFrom(defaultAnalysisTuningSettings).gear_uncertainty_pct,
+      ).toBe("0.2");
+      const risky = checkDrafts({ ...SAFE, gear_uncertainty_pct: "4.5" }, t);
+      expect(risky.kind === "risky" && risky.confirmation).toContain(
+        '"value":"4,5"',
+      );
+    } finally {
+      await setLanguage("en");
+    }
   });
 });

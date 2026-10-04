@@ -29,7 +29,12 @@ function testTranslation(key: string, vars?: Record<string, unknown>): string {
   return vars ? `${key}:${JSON.stringify(vars)}` : (UNIT_LABELS[key] ?? key);
 }
 
-function historyListRun(runId: string): HistoryEntry {
+type RawCaptureState = NonNullable<HistoryEntry["lifecycle"]>["raw_capture"];
+
+function historyListRun(
+  runId: string,
+  rawCapture: RawCaptureState = "not_recorded",
+): HistoryEntry {
   return {
     run_id: runId,
     start_time_utc: "2026-01-01T00:00:00Z",
@@ -40,7 +45,7 @@ function historyListRun(runId: string): HistoryEntry {
     error_message: null,
     lifecycle: {
       stage: "post_analysis_ready",
-      raw_capture: "not_recorded",
+      raw_capture: rawCapture,
       post_analysis: "ready",
       report: "ready",
     },
@@ -160,8 +165,7 @@ const f = {
 };
 
 test("builds the row summary and the expanded diagnosis from raw insights", () => {
-  const run = historyListRun("run-001");
-  run.lifecycle = { ...run.lifecycle!, raw_capture: "missing" };
+  const run = historyListRun("run-001", "missing");
   const detail = defaultDetail({
     preview: populatedInsights("run-001"),
     insights: populatedInsights("run-001"),
@@ -285,8 +289,7 @@ test("keeps the PDF pending until the report is ready", () => {
 });
 
 test("explains degraded raw capture", () => {
-  const run = historyListRun("run-004");
-  run.lifecycle = { ...run.lifecycle!, raw_capture: "degraded" };
+  const run = historyListRun("run-004", "degraded");
   run.raw_capture_finalize = {
     status: "timeout",
     queue_depth: 3,

@@ -24,9 +24,13 @@
     gap: var(--space-3);
   }
 
-  .history-table tbody tr:nth-child(even) td,
-  .history-table tbody tr:hover td {
+  .history-table tbody tr:nth-child(even) td {
     background: transparent;
+  }
+  @media (hover: hover) {
+    .history-table tbody tr:hover td {
+      background: transparent;
+    }
   }
 
   .history-row {
@@ -106,8 +110,10 @@
     white-space: normal;
   }
 
-  .history-row__toggle:hover {
-    background: var(--menu-hover);
+  @media (hover: hover) {
+    .history-row__toggle:hover {
+      background: var(--menu-hover);
+    }
   }
 
   .history-row__toggle-copy {

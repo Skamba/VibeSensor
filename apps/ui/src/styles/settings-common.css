@@ -193,8 +193,10 @@
 .clients-table tbody tr:nth-child(even) td {
   background: var(--row-even);
 }
-.clients-table tbody tr:hover td {
-  background: var(--row-hover);
+@media (hover: hover) {
+  .clients-table tbody tr:hover td {
+    background: var(--row-hover);
+  }
 }
 .settings-entity-table {
   min-width: 100%;

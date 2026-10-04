@@ -767,9 +767,17 @@
     "en": "The speed was usable for matching the wheel and drivetrain orders.",
     "nl": "De snelheid was bruikbaar om de ordes van wielen en aandrijving te herkennen."
   },
+  "QUALITY_SPEED_VARIATION_PASS_EV": {
+    "en": "The speed was usable for matching the wheel and electric-motor orders.",
+    "nl": "De snelheid was bruikbaar om de ordes van wielen en elektromotor te herkennen."
+  },
   "QUALITY_SPEED_VARIATION_WARN": {
     "en": "The speed could not tell the wheel and drivetrain orders apart.",
     "nl": "Met deze snelheid waren de ordes van wielen en aandrijving niet uit elkaar te houden."
+  },
+  "QUALITY_SPEED_VARIATION_WARN_EV": {
+    "en": "The speed could not tell the wheel and electric-motor orders apart.",
+    "nl": "Met deze snelheid waren de ordes van wielen en elektromotor niet uit elkaar te houden."
   },
   "QUALITY_TITLE": {
     "en": "Data quality and traceability",

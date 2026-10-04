@@ -1,4 +1,5 @@
 import type { AnalysisSettingsRequest } from "../../api/types";
+import { fmt } from "../../format";
 import {
   type AnalysisTuningSettings,
   defaultAnalysisTuningSettings,
@@ -69,22 +70,31 @@ export const FIELDS: readonly FieldSpec[] = [
   },
 ];
 
-function formatSettingValue(value: number): string {
-  return Number.isInteger(value)
-    ? String(value)
-    : String(Number(value.toFixed(1)));
+function roundSetting(value: number): number {
+  return Number(value.toFixed(1));
+}
+
+/** A setting as its number input holds it: at most one decimal, "." separator. */
+function draftValue(value: number): string {
+  return String(roundSetting(value));
+}
+
+/** A setting shown in text, in the UI language ("0.1", nl "0,1"). */
+function displayValue(value: number): string {
+  const rounded = roundSetting(value);
+  return fmt(rounded, Number.isInteger(rounded) ? 0 : 1);
 }
 
 export function draftsFrom(settings: AnalysisTuningSettings): Drafts {
   return {
-    speed_uncertainty_pct: formatSettingValue(settings.speed_uncertainty_pct),
-    tire_diameter_uncertainty_pct: formatSettingValue(
+    speed_uncertainty_pct: draftValue(settings.speed_uncertainty_pct),
+    tire_diameter_uncertainty_pct: draftValue(
       settings.tire_diameter_uncertainty_pct,
     ),
-    final_drive_uncertainty_pct: formatSettingValue(
+    final_drive_uncertainty_pct: draftValue(
       settings.final_drive_uncertainty_pct,
     ),
-    gear_uncertainty_pct: formatSettingValue(settings.gear_uncertainty_pct),
+    gear_uncertainty_pct: draftValue(settings.gear_uncertainty_pct),
   };
 }
 
@@ -96,14 +106,14 @@ export function guidanceLines(
     {
       label: t("settings.analysis.recommended_range_label"),
       value: t("settings.analysis.range_value", {
-        min: formatSettingValue(field.guidedMin),
-        max: formatSettingValue(field.guidedMax),
+        min: displayValue(field.guidedMin),
+        max: displayValue(field.guidedMax),
         unit: UNIT,
       }),
     },
     {
       label: t("settings.analysis.default_label"),
-      value: `${formatSettingValue(defaultAnalysisTuningSettings[field.key])}${UNIT}`,
+      value: `${displayValue(defaultAnalysisTuningSettings[field.key])}${UNIT}`,
     },
   ];
 }
@@ -144,9 +154,9 @@ export function checkDrafts(drafts: Drafts, t: Translate): DraftCheck {
       field: field.key,
       message: t("settings.analysis.invalid_value", {
         field: t(field.labelKey),
-        min: formatSettingValue(field.hardMin),
-        max: formatSettingValue(field.hardMax),
-        value: formatSettingValue(value),
+        min: displayValue(field.hardMin),
+        max: displayValue(field.hardMax),
+        value: displayValue(value),
         unit: UNIT,
       }),
     };
@@ -165,12 +175,10 @@ export function checkDrafts(drafts: Drafts, t: Translate): DraftCheck {
     ...risky.map(({ field, value }) =>
       t("settings.analysis.risky_confirm_line", {
         field: t(field.labelKey),
-        value: formatSettingValue(value),
-        min: formatSettingValue(field.guidedMin),
-        max: formatSettingValue(field.guidedMax),
-        defaultValue: formatSettingValue(
-          defaultAnalysisTuningSettings[field.key],
-        ),
+        value: displayValue(value),
+        min: displayValue(field.guidedMin),
+        max: displayValue(field.guidedMax),
+        defaultValue: displayValue(defaultAnalysisTuningSettings[field.key]),
         unit: UNIT,
       }),
     ),

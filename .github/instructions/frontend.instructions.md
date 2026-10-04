@@ -8,6 +8,8 @@ Frontend rules for `apps/ui`.
 - Pages live in `src/pages/<page>/`: `<Page>.tsx`, a small `<page>_store.ts` (signals, polling, API calls), and pure helper modules with unit tests. Pages never import other pages (`tests/page_boundaries.spec.ts`); share code through `src/` modules outside `pages/` (`app_store.ts`, `settings_store.ts`, `live_store.ts`) and let the shell compose pages.
 - Translate with `t()` from `src/i18n.ts` (no inline English fallbacks); the Dutch catalog loads lazily.
 - Show speeds (the API sends km/h) with `formatSpeed`/`formatSpeedRange` from `src/format.ts` and the shell's `speedUnit` signal, not a hard-coded `km/h`. Only the manual-speed input on Speed Source is entered in km/h.
+- Show numbers with `fmt`/`formatInt` from `src/format.ts` (or as `t()` variables), so Dutch gets a decimal comma, never `String(n)` or `n.toFixed()`. Only a number input's value keeps the `.` it needs.
+- Put every `:hover` rule inside `@media (hover: hover)`. On a phone a tap leaves the hover style on until the next tap elsewhere. `tests/hover_guard.spec.ts` enforces this.
 - Keep derived state in store `computed()`s or pure model functions, not in components.
 - Centralize polling, timers, WebSocket/session state, and freshness: poll with `src/poll.ts`; live data flows `src/ws.ts` → `src/live_transport.ts` → `src/live_store.ts`.
 - Avoid parallel fetch, poll, transport, validation, or contract-sync paths. Reuse `src/api/http.ts`, `src/ws.ts`, generated contracts, `src/ws_payload_validator.ts`, and `src/server_payload.ts`.

@@ -354,7 +354,9 @@ export function estimateNoteKey(
     return "settings.car.estimate.both";
   }
   if (finalDrive) {
-    return "settings.car.estimate.final_drive";
+    return fuelType === "EV"
+      ? "settings.car.estimate.final_drive_ev"
+      : "settings.car.estimate.final_drive";
   }
   return topGear ? "settings.car.estimate.top_gear" : null;
 }
@@ -387,7 +389,11 @@ export function actionHint(
     refs.finalDrive === "missing" &&
     (refs.topGear === "missing" || wizardFuelType(state) === "EV")
   ) {
-    return t("settings.car.finish_pick_gearbox");
+    return t(
+      wizardFuelType(state) === "EV"
+        ? "settings.car.finish_pick_gearbox_ev"
+        : "settings.car.finish_pick_gearbox",
+    );
   }
   return t(
     state.editing

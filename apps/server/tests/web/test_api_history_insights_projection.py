@@ -219,3 +219,22 @@ def test_history_insights_lead_with_the_pdfs_run_suitability_warnings(
     # The replay warning says the same as the check, so it is stated once.
     text = " ".join(f"{warning['title']} {warning['detail']}" for warning in warnings)
     assert text.count(summaries_clause) == 1
+
+
+def test_history_insights_word_an_evs_speed_check_for_its_motor() -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis["run_suitability"] = _PI_RUN_SUITABILITY
+    analysis["diagnosis"]["conditions"]["fuel_type"] = "EV"
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
+
+    with TestClient(app) as client:
+        warnings = client.get("/api/history/run-1/insights").json()["warnings"]
+
+    speed = next(w for w in warnings if w["code"] == "suitability_speed_variation")
+    assert speed["detail"].startswith(
+        "The speed could not tell the wheel and electric-motor orders apart."
+    )

@@ -1035,7 +1035,7 @@ def _quality(ctx: _Ctx, analysis: AnalysisSummary, metadata: RunMetadata) -> Qua
             label=ctx.t(check["check_key"]),
             state=ctx.t("QUALITY_PASS" if check["state"] == "pass" else "QUALITY_WARN"),
             passed=check["state"] == "pass",
-            detail=suitability_check_detail(ctx.lang, check),
+            detail=suitability_check_detail(ctx.lang, check, electric=ctx.electric),
         )
         for check in analysis["run_suitability"]
     )

@@ -5,6 +5,7 @@ import { t } from "../../i18n";
 import { clients, liveSensorLayout, locationChoices } from "../../live_store";
 import { layoutConsequence } from "../../sensor_layout";
 import type { LocationOption } from "../../sensor_locations";
+import { activeCar } from "../../settings_store";
 import type { AdaptedClient } from "../../transport/live_models";
 import {
   identify,
@@ -159,6 +160,7 @@ const MOUNTING_RULES = ["rigid", "firm", "clear", "identify"] as const;
 /** Where to mount the sensors, and what the current layout can localise. */
 function MountingGuide() {
   const layout = liveSensorLayout.value;
+  const fuelType = activeCar.value?.fuel_type ?? null;
   return (
     <details
       id="sensorMountingGuide"
@@ -175,7 +177,7 @@ function MountingGuide() {
             class="settings-help-disclosure__caption"
           >
             {layout
-              ? layoutConsequence(layout, t)
+              ? layoutConsequence(layout, fuelType, t)
               : t("settings.sensors.mounting.no_layout")}
           </span>
         </span>
@@ -186,7 +188,13 @@ function MountingGuide() {
         </div>
         <ul class="sensor-mounting-guide__list">
           {RECOMMENDED_LAYOUTS.map((key) => (
-            <li key={key}>{t(`settings.sensors.mounting.layout.${key}`)}</li>
+            <li key={key}>
+              {t(
+                `settings.sensors.mounting.layout.${key}${
+                  key === "cabin_only" && fuelType === "EV" ? "_ev" : ""
+                }`,
+              )}
+            </li>
           ))}
         </ul>
         <div class="mini-label">
