@@ -23,6 +23,21 @@ _PARTITION_MAGIC = b"\xaa\x50"
 _PARTITION_TYPE_APP = 0x00
 _PARTITION_SUBTYPE_FACTORY = 0x00
 _PARTITION_SUBTYPE_OTA_0 = 0x10
+_ESP_IMAGE_MAGIC = 0xE9
+# esptool chip names by the chip ID in an app image's extended header
+# (esptool's IMAGE_CHIP_ID per target).
+_CHIP_BY_IMAGE_ID = {
+    0: "esp32",
+    2: "esp32s2",
+    5: "esp32c3",
+    9: "esp32s3",
+    12: "esp32c2",
+    13: "esp32c6",
+    16: "esp32h2",
+    18: "esp32p4",
+    20: "esp32c61",
+    23: "esp32c5",
+}
 _GITHUB_API_BASE = "https://api.github.com"
 GITHUB_API_TIMEOUT_S = 30
 
@@ -252,43 +267,94 @@ def _app_offset_from_partitions(env_dir: Path) -> str:
     return _STANDARD_ESP32_APP_OFFSET
 
 
+def _image_chip(firmware_bin: Path) -> str:
+    """Return the esptool chip name a built app image targets.
+
+    ESP32-family images carry their target in the extended header (the chip ID
+    at bytes 12-13), so the binary itself says which chip it was built for.
+    """
+    header = firmware_bin.read_bytes()[:16]
+    if len(header) < 16 or header[0] != _ESP_IMAGE_MAGIC:
+        raise SystemExit(f"{firmware_bin} is not an ESP app image.")
+    chip_id = int.from_bytes(header[12:14], "little")
+    chip = _CHIP_BY_IMAGE_ID.get(chip_id)
+    if chip is None:
+        raise SystemExit(f"{firmware_bin} targets unknown ESP chip ID {chip_id}.")
+    return chip
+
+
+def _platformio_flash_offsets(
+    firmware_dir: Path, env_names: list[str]
+) -> dict[str, dict[str, str]]:
+    """Return ``{env: {image file name: offset}}`` from the PlatformIO build.
+
+    These are the offsets ``pio run -t upload`` passes to esptool, so they follow
+    the chip (the bootloader sits at 0x1000 on ESP32 but 0x0 on ESP32-C3).
+    """
+    result = _run(
+        [
+            "pio",
+            "project",
+            "metadata",
+            "--project-dir",
+            str(firmware_dir),
+            *(arg for name in env_names for arg in ("--environment", name)),
+            "--json-output",
+        ],
+        capture_output=True,
+    )
+    metadata = json.loads(result.stdout)
+    return {
+        name: {
+            Path(image["path"]).name: image["offset"]
+            for image in metadata[name]["extra"]["flash_images"]
+        }
+        for name in env_names
+    }
+
+
 def build_firmware_manifest(
     firmware_dir: Path,
     *,
+    flash_offsets: dict[str, dict[str, str]],
     generated_from: str | None = None,
 ) -> dict[str, object]:
+    """Describe each packaged env: its chip and every image at its flash offset."""
     dist_dir = firmware_dir / "dist"
-    if not dist_dir.is_dir():
-        raise SystemExit(f"Firmware dist directory does not exist: {dist_dir}")
-    manifest: dict[str, object] = {
-        "generated_from": generated_from or os.getenv("GITHUB_SHA", "unknown"),
-        "environments": [],
-    }
-    env_dirs = sorted(path for path in dist_dir.iterdir() if path.is_dir())
-    for env_dir in env_dirs:
+    environments: list[dict[str, object]] = []
+    for env_dir in sorted(path for path in dist_dir.iterdir() if path.is_dir()):
         env_name = env_dir.name
-        app_offset = _app_offset_from_partitions(env_dir)
+        image_offsets = flash_offsets[env_name]
         segments: list[dict[str, str]] = []
-        for file_name, offset in (
-            ("firmware.bin", app_offset),
-            ("bootloader.bin", "0x1000"),
-            ("partitions.bin", "0x8000"),
-            ("boot_app0.bin", "0xe000"),
-        ):
-            artifact = env_dir / file_name
-            if not artifact.exists():
-                continue
+        for artifact in sorted(env_dir.glob("*.bin")):
+            if artifact.name == "firmware.bin":
+                offset = _app_offset_from_partitions(env_dir)
+            elif artifact.name in image_offsets:
+                offset = image_offsets[artifact.name]
+            else:
+                raise SystemExit(
+                    f"{env_name}/{artifact.name} has no flash offset in the "
+                    "PlatformIO build metadata."
+                )
             segments.append(
                 {
-                    "file": f"{env_name}/{file_name}",
+                    "file": f"{env_name}/{artifact.name}",
                     "offset": offset,
                     "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
                 }
             )
-        environments = manifest["environments"]
-        assert isinstance(environments, list)
-        environments.append({"name": env_name, "segments": segments})
-    return manifest
+        segments.sort(key=lambda segment: int(segment["offset"], 16))
+        environments.append(
+            {
+                "name": env_name,
+                "chip": _image_chip(env_dir / "firmware.bin"),
+                "segments": segments,
+            }
+        )
+    return {
+        "generated_from": generated_from or os.getenv("GITHUB_SHA", "unknown"),
+        "environments": environments,
+    }
 
 
 def write_firmware_manifest(
@@ -296,15 +362,17 @@ def write_firmware_manifest(
     *,
     generated_from: str | None = None,
 ) -> Path:
-    manifest_path = firmware_dir / "dist" / "flash.json"
-    manifest_path.write_text(
-        json.dumps(
-            build_firmware_manifest(firmware_dir, generated_from=generated_from),
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+    dist_dir = firmware_dir / "dist"
+    if not dist_dir.is_dir():
+        raise SystemExit(f"Firmware dist directory does not exist: {dist_dir}")
+    env_names = sorted(path.name for path in dist_dir.iterdir() if path.is_dir())
+    manifest = build_firmware_manifest(
+        firmware_dir,
+        flash_offsets=_platformio_flash_offsets(firmware_dir, env_names),
+        generated_from=generated_from,
     )
+    manifest_path = dist_dir / "flash.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest_path
 
 

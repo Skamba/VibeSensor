@@ -265,14 +265,56 @@ async def test_flash_job_uses_cached_bundle_manifest(tmp_path: Path) -> None:
     assert any("erase_flash" in call for call in runner.calls)
     assert any("write_flash" in call for call in runner.calls)
     assert mgr.history()[0]["state"] == "success"
-
-    # Verify manifest-driven offsets are used
-    write_call = [c for c in runner.calls if "write_flash" in c][0]
-    assert "0x10000" in write_call
-    assert "0x1000" in write_call
-    assert "0x8000" in write_call
-    assert any("firmware.bin" in arg for arg in write_call)
     _assert_no_platformio_invocation(runner.calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_picks_the_sensor_build_by_name_not_manifest_order(tmp_path: Path) -> None:
+    # Release manifests list envs alphabetically, so an ESP32-C3 build sorts first.
+    cache_dir = tmp_path / "fw-cache"
+    bundle_dir = cache_dir / "current"
+    write_firmware_bundle(
+        bundle_dir,
+        environments=(("esp32-c3-devkitm-1", "esp32c3"), ("m5stack_atom", "esp32")),
+    )
+    mgr, runner = _build_manager(cache_dir)
+
+    mgr.start(port=None, auto_detect=True)
+    task = mgr.job_task
+    assert task is not None
+    await task
+
+    assert mgr.status.state.value == "success"
+    erase_call, write_call = runner.calls
+    for call in (erase_call, write_call):
+        assert call[call.index("--chip") + 1] == "esp32"
+    flash_args = write_call[write_call.index("-z") + 1 :]
+    images = dict(zip(flash_args[1::2], flash_args[::2], strict=True))
+    assert images == {
+        str(bundle_dir / "m5stack_atom" / "bootloader.bin"): "0x1000",
+        str(bundle_dir / "m5stack_atom" / "partitions.bin"): "0x8000",
+        str(bundle_dir / "m5stack_atom" / "firmware.bin"): "0x10000",
+        next(path for path in images if path.endswith("wifi_nvs.bin")): "0x9000",
+    }
+    assert "Flashing environment: m5stack_atom (esp32)" in mgr.logs_since(after=0)["lines"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_refuses_a_bundle_without_the_sensor_build(tmp_path: Path) -> None:
+    cache_dir = tmp_path / "fw-cache"
+    write_firmware_bundle(cache_dir / "current", environments=(("esp32-c3-devkitm-1", "esp32c3"),))
+    mgr, runner = _build_manager(cache_dir)
+
+    mgr.start(port=None, auto_detect=True)
+    task = mgr.job_task
+    assert task is not None
+    await task
+
+    assert mgr.status.state.value == "failed"
+    assert "no 'm5stack_atom' build (it has: esp32-c3-devkitm-1)" in str(mgr.status.error)
+    assert runner.calls == []
 
 
 @pytest.mark.asyncio

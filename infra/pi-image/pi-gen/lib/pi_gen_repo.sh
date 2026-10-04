@@ -113,12 +113,13 @@ set_base_stage_skip_files() {
 
 prepare_pi_gen_repo() {
   if [ ! -d "${PI_GEN_DIR}/.git" ]; then
-    git clone --depth 1 --branch "${PI_GEN_REF}" https://github.com/RPi-Distro/pi-gen.git "${PI_GEN_DIR}"
-  else
-    git -C "${PI_GEN_DIR}" fetch --depth 1 origin "${PI_GEN_REF}"
-    git -C "${PI_GEN_DIR}" checkout -B "${PI_GEN_REF}" FETCH_HEAD
-    git -C "${PI_GEN_DIR}" reset --hard FETCH_HEAD
+    git init -q "${PI_GEN_DIR}"
+    git -C "${PI_GEN_DIR}" remote add origin https://github.com/RPi-Distro/pi-gen.git
   fi
+  # PI_GEN_REF is a commit SHA (the pinned default) or a branch; GitHub serves
+  # both to a shallow fetch. --force drops the previous run's patches.
+  git -C "${PI_GEN_DIR}" fetch --depth 1 origin "${PI_GEN_REF}"
+  git -C "${PI_GEN_DIR}" checkout -q --force --detach FETCH_HEAD
 
   rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size

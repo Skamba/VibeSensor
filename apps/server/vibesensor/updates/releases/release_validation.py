@@ -15,6 +15,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from vibesensor.updates.artifact_validation import wheel_metadata_validation_errors
+from vibesensor.updates.firmware.esp_flash_types import SENSOR_FIRMWARE_ENV
 
 _RELEASE_SMOKE_RETRY_WAIT_S = 0.5
 
@@ -96,6 +97,10 @@ def validate_firmware_dist(dist_dir: Path) -> list[str]:
             errors.append(f"Duplicate firmware environment name: {env_name}")
         seen_names.add(env_name)
 
+        chip = environment.get("chip", "")
+        if not isinstance(chip, str) or not chip:
+            errors.append(f"{prefix}.chip must name the esptool chip")
+
         segments = environment.get("segments", [])
         if not isinstance(segments, list) or not segments:
             errors.append(f"{prefix}.segments must contain at least one segment")
@@ -137,6 +142,11 @@ def validate_firmware_dist(dist_dir: Path) -> list[str]:
         if not firmware_seen:
             errors.append(f"{prefix} does not include firmware.bin")
 
+    if SENSOR_FIRMWARE_ENV not in seen_names:
+        errors.append(
+            f"Firmware manifest has no '{SENSOR_FIRMWARE_ENV}' environment, "
+            "which the Pi flasher writes to sensors"
+        )
     return errors
 
 

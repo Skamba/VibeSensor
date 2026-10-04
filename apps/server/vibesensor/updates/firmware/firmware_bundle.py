@@ -33,6 +33,7 @@ __all__ = [
     "parse_manifest",
     "read_meta",
     "safe_extractall",
+    "select_environment",
     "validate_bundle",
     "write_meta",
 ]
@@ -101,6 +102,7 @@ def parse_manifest(data: FlashManifestRecord | object) -> FlashManifest:
         envs.append(
             ManifestEnvironment(
                 name=env_record.name,
+                chip=env_record.chip,
                 segments=[
                     ManifestSegment(
                         file=segment.file,
@@ -142,6 +144,11 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
         )
 
     for env in manifest.environments:
+        if not env.chip:
+            raise ValueError(
+                f"Firmware environment '{env.name}' in {bundle_dir} does not name its chip. "
+                "Run the updater while online to fetch a current bundle.",
+            )
         for seg in env.segments:
             seg_path = bundle_dir / seg.file
             if not seg_path.is_file():
@@ -157,6 +164,17 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
                         f"got {actual}. The bundle may be corrupt.",
                     )
     return manifest
+
+
+def select_environment(manifest: FlashManifest, name: str) -> ManifestEnvironment:
+    """Return the manifest environment built for *name*, never by list position."""
+    for env in manifest.environments:
+        if env.name == name:
+            return env
+    available = ", ".join(env.name for env in manifest.environments)
+    raise ValueError(
+        f"Firmware bundle has no '{name}' build (it has: {available}).",
+    )
 
 
 def read_meta(bundle_dir: Path) -> BundleMeta | None:
@@ -241,8 +259,10 @@ def _manifest_environment_record_from_object(
             else:
                 segments.append(ManifestSegmentRecord())
     name = payload.get("name")
+    chip = payload.get("chip")
     return ManifestEnvironmentRecord(
         name=name if isinstance(name, str) else "",
+        chip=chip if isinstance(chip, str) else "",
         segments=segments,
     )
 

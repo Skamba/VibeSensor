@@ -178,10 +178,22 @@ pioarduino release changes the CI PlatformIO cache key, so the first CI run
 downloads the toolchain again.
 
 Build output per environment in `.pio/build/<env>/`: `bootloader.bin` (0x1000 on
-ESP32), `partitions.bin` (0x8000), `firmware.bin` (the app, 0x10000 with the
-default partition table) and `firmware.factory.bin` (all of them merged; not
-shipped). The release workflow ships the first three plus `flash.json`, which
-`tools/release/main_release.py` derives from the built partition table.
+ESP32, 0x0 on ESP32-C3), `partitions.bin` (0x8000), `firmware.bin` (the app,
+0x10000 with the default partition table) and `firmware.factory.bin` (all of them
+merged; not shipped). The release workflow ships the first three plus
+`flash.json`, which `tools/release/main_release.py` derives from the build:
+
+- each env's `chip` (the esptool `--chip` name) comes from the chip ID in the
+  `firmware.bin` image header;
+- bootloader and partition-table offsets come from PlatformIO's flash images
+  (`pio project metadata`), the same offsets `pio run -t upload` uses;
+- the app offset comes from the built partition table (factory app, else `ota_0`).
+
+Environments are listed alphabetically. The Pi flasher (*Settings → ESP Flash*)
+always flashes the `m5stack_atom` environment by name (`SENSOR_FIRMWARE_ENV` in
+`apps/server/vibesensor/updates/firmware/esp_flash_types.py`) and passes its
+`chip` to esptool, so other envs in the bundle (such as the ESP32-C3 build) are
+never picked by position. Release validation fails when `m5stack_atom` is missing.
 
 Supported override macros:
 

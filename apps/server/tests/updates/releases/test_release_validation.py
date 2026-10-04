@@ -28,10 +28,10 @@ _BLOCKED_RELEASE_VALIDATION_OPTIONAL_DEPS = ("httpx", "msgspec", "pydantic")
 
 def _firmware_manifest(
     *,
-    name: str | None = "esp32dev",
+    name: str | None = "m5stack_atom",
     segments: list[dict[str, str]] | None = None,
 ) -> dict[str, object]:
-    environment: dict[str, object] = {}
+    environment: dict[str, object] = {"chip": "esp32"}
     if name is not None:
         environment["name"] = name
     environment["segments"] = segments if segments is not None else []
@@ -40,7 +40,7 @@ def _firmware_manifest(
 
 def _firmware_segment(*, sha256: str | None = None) -> dict[str, str]:
     return {
-        "file": "esp32dev/firmware.bin",
+        "file": "m5stack_atom/firmware.bin",
         "offset": "0x10000",
         "sha256": sha256 if sha256 is not None else hashlib.sha256(b"firmware").hexdigest(),
     }
@@ -53,7 +53,7 @@ def _write_firmware_dist(
     firmware_bytes: bytes | None = b"firmware",
 ) -> Path:
     dist_dir = tmp_path / "dist"
-    env_dir = dist_dir / "esp32dev"
+    env_dir = dist_dir / "m5stack_atom"
     env_dir.mkdir(parents=True)
     if firmware_bytes is not None:
         (env_dir / "firmware.bin").write_bytes(firmware_bytes)
@@ -124,6 +124,23 @@ def test_validate_firmware_dist_reports_missing_environment_name(tmp_path: Path)
     assert "environments[0].name must be a non-empty string" in errors
 
 
+def test_validate_firmware_dist_requires_the_sensor_build(tmp_path: Path) -> None:
+    dist_dir = _write_firmware_dist(
+        tmp_path,
+        manifest=_firmware_manifest(segments=[_firmware_segment()]),
+    )
+    manifest_path = dist_dir / "flash.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["environments"][0]["name"] = "esp32-c3-devkitm-1"
+    del manifest["environments"][0]["chip"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    errors = validate_firmware_dist(dist_dir)
+
+    assert "environments[0].chip must name the esptool chip" in errors
+    assert any("no 'm5stack_atom' environment" in error for error in errors)
+
+
 def test_validate_firmware_dist_reports_checksum_mismatch(tmp_path: Path) -> None:
     dist_dir = _write_firmware_dist(
         tmp_path,
@@ -132,7 +149,7 @@ def test_validate_firmware_dist_reports_checksum_mismatch(tmp_path: Path) -> Non
 
     errors = validate_firmware_dist(dist_dir)
 
-    assert any("sha256 mismatch for esp32dev/firmware.bin" in error for error in errors)
+    assert any("sha256 mismatch for m5stack_atom/firmware.bin" in error for error in errors)
 
 
 def _build_fake_release_wheel(
@@ -241,7 +258,7 @@ def test_release_validation_cli_validate_firmware_manifest_does_not_require_opti
     tmp_path: Path,
 ) -> None:
     dist_dir = tmp_path / "dist"
-    env_dir = dist_dir / "esp32dev"
+    env_dir = dist_dir / "m5stack_atom"
     env_dir.mkdir(parents=True)
     firmware_bin = env_dir / "firmware.bin"
     firmware_bin.write_bytes(b"firmware")
@@ -251,10 +268,11 @@ def test_release_validation_cli_validate_firmware_manifest_does_not_require_opti
                 "generated_from": "deadbeef",
                 "environments": [
                     {
-                        "name": "esp32dev",
+                        "name": "m5stack_atom",
+                        "chip": "esp32",
                         "segments": [
                             {
-                                "file": "esp32dev/firmware.bin",
+                                "file": "m5stack_atom/firmware.bin",
                                 "offset": "0x10000",
                                 "sha256": hashlib.sha256(b"firmware").hexdigest(),
                             },

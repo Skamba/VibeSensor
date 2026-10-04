@@ -5,7 +5,10 @@ init_pi_gen_env() {
   TEMPLATE_ROOT="${SCRIPT_DIR}/templates"
   CACHE_DIR="${SCRIPT_DIR}/.cache"
   PI_GEN_DIR="${CACHE_DIR}/pi-gen"
-  PI_GEN_REF="${PI_GEN_REF:-master}"
+  # Pinned upstream pi-gen commit (master on 2026-09-29). The build patches
+  # upstream files by exact text, so following master let an upstream change
+  # break unchanged main (weekly image, 2026-09-21). Bump deliberately: see README.
+  PI_GEN_REF="${PI_GEN_REF:-c4f875735c109c658cd5ee99eaaaf70886a853b5}"
   PI_IMAGE_RELEASE="${PI_IMAGE_RELEASE:-trixie}"
   STAGE_DIR="${PI_GEN_DIR}/stage-vibesensor"
   STAGE_STEP_DIR="${STAGE_DIR}/00-vibesensor"

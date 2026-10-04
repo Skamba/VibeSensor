@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -89,11 +90,25 @@ def test_validate_bundle_succeeds(tmp_path: Path) -> None:
 
     assert len(manifest.environments) == 1
     assert manifest.environments[0].name == "m5stack_atom"
+    assert manifest.environments[0].chip == "esp32"
     assert [(segment.file, segment.offset) for segment in manifest.environments[0].segments] == [
-        ("m5stack_atom/firmware.bin", "0x10000"),
         ("m5stack_atom/bootloader.bin", "0x1000"),
         ("m5stack_atom/partitions.bin", "0x8000"),
+        ("m5stack_atom/firmware.bin", "0x10000"),
     ]
+
+
+def test_validate_bundle_rejects_an_environment_without_a_chip(tmp_path: Path) -> None:
+    # Bundles from before the manifest named each env's chip cannot be flashed safely.
+    bundle_dir = tmp_path / "bundle"
+    write_firmware_bundle(bundle_dir)
+    manifest_path = bundle_dir / "flash.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    del manifest["environments"][0]["chip"]
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="does not name its chip"):
+        validate_bundle(bundle_dir)
 
 
 def test_validate_bundle_fails_missing_manifest(tmp_path: Path) -> None:

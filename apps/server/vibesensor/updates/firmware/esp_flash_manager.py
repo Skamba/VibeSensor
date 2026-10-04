@@ -14,6 +14,7 @@ from pathlib import Path
 from vibesensor.common.exceptions import UpdateError
 from vibesensor.updates.firmware.esp_flash_runner import SubprocessFlashCommandRunner
 from vibesensor.updates.firmware.esp_flash_types import (
+    SENSOR_FIRMWARE_ENV,
     EspFlashHistoryEntry,
     EspFlashHistoryEntryDict,
     EspFlashState,
@@ -27,7 +28,7 @@ from vibesensor.updates.firmware.esp_serial import (
     PyserialPortProvider,
     resolve_selected_port,
 )
-from vibesensor.updates.firmware.firmware_bundle import validate_bundle
+from vibesensor.updates.firmware.firmware_bundle import select_environment, validate_bundle
 from vibesensor.updates.firmware.firmware_cache import FirmwareCache
 from vibesensor.updates.firmware.sensor_wifi_nvs import build_wifi_nvs_image, nvs_partition_span
 
@@ -240,8 +241,8 @@ class EspFlashManager:
                 f"Using {source_label} firmware bundle (tag={tag_label}) from {bundle_dir}",
             )
             manifest = validate_bundle(bundle_dir)
-            env = manifest.environments[0]
-            self._append_log(f"Flashing environment: {env.name}")
+            env = select_environment(manifest, SENSOR_FIRMWARE_ENV)
+            self._append_log(f"Flashing environment: {env.name} ({env.chip})")
             flash_args: list[str] = []
             partition_table: bytes | None = None
             for seg in env.segments:
@@ -287,7 +288,7 @@ class EspFlashManager:
             port_prefix = [
                 *esptool_cmd,
                 "--chip",
-                "esp32",
+                env.chip,
                 "--port",
                 selected_port,
                 "--before",

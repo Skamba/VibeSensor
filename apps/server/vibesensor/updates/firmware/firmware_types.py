@@ -39,6 +39,7 @@ class ManifestSegmentPayload(TypedDict, total=False):
 
 class ManifestEnvironmentPayload(TypedDict, total=False):
     name: str
+    chip: str
     segments: list[ManifestSegmentPayload]
 
 
@@ -70,6 +71,7 @@ class ManifestSegmentRecord(msgspec.Struct, kw_only=True, frozen=True):
 
 class ManifestEnvironmentRecord(msgspec.Struct, kw_only=True, frozen=True):
     name: str = ""
+    chip: str = ""
     segments: list[ManifestSegmentRecord] = msgspec.field(default_factory=list)
 
 
@@ -124,9 +126,10 @@ class ManifestSegment:
 
 @dataclass
 class ManifestEnvironment:
-    """A flash environment (e.g. board variant) containing multiple flash segments."""
+    """A PlatformIO build env: the esptool chip it targets and its flash segments."""
 
     name: str
+    chip: str
     segments: list[ManifestSegment] = field(default_factory=list)
 
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Protocol, TypedDict
 
 __all__ = [
+    "SENSOR_FIRMWARE_ENV",
     "EspFlashHistoryEntry",
     "EspFlashHistoryEntryDict",
     "EspFlashState",
@@ -20,6 +21,11 @@ __all__ = [
     "SerialPortInfoDict",
     "SerialPortProvider",
 ]
+
+# The PlatformIO env built for the supported sensor (M5Stack ATOM Lite,
+# ESP32-PICO-D4); the default env in firmware/esp/platformio.ini. Release
+# bundles may carry other envs too, so the flasher picks this one by name.
+SENSOR_FIRMWARE_ENV = "m5stack_atom"
 
 
 class EspFlashState(enum.StrEnum):

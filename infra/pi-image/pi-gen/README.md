@@ -203,6 +203,16 @@ The pi-image pipeline now has three explicit ownership layers:
 invokes it automatically when `VALIDATE=1`, and you can rerun it separately
 against an already-built artifact.
 
+The build uses upstream [pi-gen](https://github.com/RPi-Distro/pi-gen) at the
+commit pinned by `PI_GEN_REF` in `lib/common.sh`, not upstream `master`. The
+patches below match upstream files by exact text, so an unpinned `master` let
+an upstream change (RPi-Distro/pi-gen#933) fail the scheduled weekly image on an
+unchanged `main` (2026-09-21 and 09-28). To move to a newer pi-gen, run
+`PI_GEN_REF=master BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh` (or a
+manual weekly workflow run on a branch with the bumped pin), fix any patch that
+no longer matches, then update the pinned SHA. `PI_GEN_REF` also accepts a
+branch or another commit for one-off builds.
+
 During pi-gen repo preparation, the build also patches upstream:
 
 - `export-image/prerun.sh` to size the boot partition at `1 GiB`. Current

@@ -26,38 +26,40 @@ DEFAULT_PARTITION_TABLE = (
 )
 
 
-def write_firmware_bundle(bundle_dir: Path, *, environment: str = "m5stack_atom") -> None:
-    env_dir = bundle_dir / environment
-    env_dir.mkdir(parents=True, exist_ok=True)
-    binaries = {}
-    for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
-        content = DEFAULT_PARTITION_TABLE if name == "partitions.bin" else f"fake-{name}".encode()
-        (env_dir / name).write_bytes(content)
-        binaries[name] = hashlib.sha256(content).hexdigest()
+# Where each chip's ROM loads the second-stage bootloader from.
+_BOOTLOADER_OFFSET = {"esp32": "0x1000", "esp32c3": "0x0000"}
 
-    manifest = {
-        "generated_from": "test",
-        "environments": [
-            {
-                "name": environment,
-                "segments": [
-                    {
-                        "file": f"{environment}/firmware.bin",
-                        "offset": "0x10000",
-                        "sha256": binaries["firmware.bin"],
-                    },
-                    {
-                        "file": f"{environment}/bootloader.bin",
-                        "offset": "0x1000",
-                        "sha256": binaries["bootloader.bin"],
-                    },
-                    {
-                        "file": f"{environment}/partitions.bin",
-                        "offset": "0x8000",
-                        "sha256": binaries["partitions.bin"],
-                    },
-                ],
-            },
-        ],
-    }
+
+def write_firmware_bundle(
+    bundle_dir: Path,
+    *,
+    environments: tuple[tuple[str, str], ...] = (("m5stack_atom", "esp32"),),
+) -> None:
+    """Write a release-shaped bundle with one ``(env name, chip)`` build per entry."""
+    manifest_envs = []
+    for name, chip in environments:
+        env_dir = bundle_dir / name
+        env_dir.mkdir(parents=True, exist_ok=True)
+        segments = []
+        for file_name, offset in (
+            ("bootloader.bin", _BOOTLOADER_OFFSET[chip]),
+            ("partitions.bin", "0x8000"),
+            ("firmware.bin", "0x10000"),
+        ):
+            content = (
+                DEFAULT_PARTITION_TABLE
+                if file_name == "partitions.bin"
+                else f"fake-{name}-{file_name}".encode()
+            )
+            (env_dir / file_name).write_bytes(content)
+            segments.append(
+                {
+                    "file": f"{name}/{file_name}",
+                    "offset": offset,
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                }
+            )
+        manifest_envs.append({"name": name, "chip": chip, "segments": segments})
+
+    manifest = {"generated_from": "test", "environments": manifest_envs}
     (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

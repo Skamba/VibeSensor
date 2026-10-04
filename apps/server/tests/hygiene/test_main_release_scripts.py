@@ -194,24 +194,70 @@ def _partition_entry(subtype: int, offset: int, size: int, label: bytes) -> byte
     )
 
 
-def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
+def _app_image(chip_id: int) -> bytes:
+    """An ESP app image head: magic byte, then the chip ID in the extended header."""
+    return bytes([0xE9]) + bytes(11) + chip_id.to_bytes(2, "little") + b"app"
+
+
+def _write_env_dist(dist_dir: Path, env_name: str, firmware: bytes, partitions: bytes) -> None:
+    env_dir = dist_dir / env_name
+    env_dir.mkdir(parents=True)
+    (env_dir / "firmware.bin").write_bytes(firmware)
+    (env_dir / "bootloader.bin").write_bytes(b"boot-" + env_name.encode())
+    (env_dir / "partitions.bin").write_bytes(partitions)
+
+
+def _fake_platformio_metadata(
+    monkeypatch: pytest.MonkeyPatch, module, flash_images: dict[str, list[dict[str, str]]]
+) -> list[list[str]]:
+    commands: list[list[str]] = []
+
+    def _fake_run(command: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        assert command[:3] == ["pio", "project", "metadata"]
+        envs = [command[i + 1] for i, arg in enumerate(command) if arg == "--environment"]
+        payload = {env: {"extra": {"flash_images": flash_images[env]}} for env in envs}
+        return subprocess.CompletedProcess(command, 0, stdout=json.dumps(payload), stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    return commands
+
+
+def test_generate_firmware_manifest_takes_chip_and_offsets_from_each_build(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     module = _load_main_release_module()
     firmware_dir = tmp_path / "firmware"
-    env_dir = firmware_dir / "dist" / "esp32dev"
-    env_dir.mkdir(parents=True)
-    firmware_bin = env_dir / "firmware.bin"
-    firmware_bin.write_bytes(b"firmware")
-    bootloader_bin = env_dir / "bootloader.bin"
-    bootloader_bin.write_bytes(b"boot")
+    dist_dir = firmware_dir / "dist"
+    atom_firmware = _app_image(0)  # ESP32
+    c3_firmware = _app_image(5)  # ESP32-C3
+    factory = _partition_entry(0x00, 0x10000, 0x140000, b"factory").ljust(3072, b"\xff")
     # OTA layout without a factory app: the bootloader starts ota_0 on a fresh flash.
-    partitions = (
+    ota = (
         _partition_entry(0x10, 0x20000, 0x140000, b"app0")
         + _partition_entry(0x11, 0x160000, 0x140000, b"app1")
     ).ljust(3072, b"\xff")
-    (env_dir / "partitions.bin").write_bytes(partitions)
+    _write_env_dist(dist_dir, "m5stack_atom", atom_firmware, factory)
+    _write_env_dist(dist_dir, "esp32-c3-devkitm-1", c3_firmware, ota)
+
+    def _images(env: str, bootloader_offset: str) -> list[dict[str, str]]:
+        build = f"/build/.pio/build/{env}"
+        return [
+            {"offset": bootloader_offset, "path": f"{build}/bootloader.bin"},
+            {"offset": "0x8000", "path": f"{build}/partitions.bin"},
+            {"offset": "0xe000", "path": "/framework/tools/partitions/boot_app0.bin"},
+        ]
+
+    commands = _fake_platformio_metadata(
+        monkeypatch,
+        module,
+        {
+            "m5stack_atom": _images("m5stack_atom", "0x1000"),
+            "esp32-c3-devkitm-1": _images("esp32-c3-devkitm-1", "0x0000"),
+        },
+    )
 
     assert (
         module.main(
@@ -226,35 +272,73 @@ def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
         == 0
     )
 
-    manifest_path = firmware_dir / "dist" / "flash.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_path = dist_dir / "flash.json"
     assert capsys.readouterr().out.strip() == str(manifest_path)
-    assert manifest == {
+    assert commands == [
+        [
+            "pio",
+            "project",
+            "metadata",
+            "--project-dir",
+            str(firmware_dir),
+            "--environment",
+            "esp32-c3-devkitm-1",
+            "--environment",
+            "m5stack_atom",
+            "--json-output",
+        ]
+    ]
+
+    def _segment(env: str, name: str, offset: str, content: bytes) -> dict[str, str]:
+        return {
+            "file": f"{env}/{name}",
+            "offset": offset,
+            "sha256": hashlib.sha256(content).hexdigest(),
+        }
+
+    c3 = "esp32-c3-devkitm-1"
+    atom = "m5stack_atom"
+    assert json.loads(manifest_path.read_text(encoding="utf-8")) == {
         "generated_from": "deadbeef",
         "environments": [
             {
-                "name": "esp32dev",
+                "name": c3,
+                "chip": "esp32c3",
                 "segments": [
-                    {
-                        "file": "esp32dev/firmware.bin",
-                        "offset": "0x20000",
-                        "sha256": hashlib.sha256(b"firmware").hexdigest(),
-                    },
-                    {
-                        "file": "esp32dev/bootloader.bin",
-                        "offset": "0x1000",
-                        "sha256": hashlib.sha256(b"boot").hexdigest(),
-                    },
-                    {
-                        "file": "esp32dev/partitions.bin",
-                        "offset": "0x8000",
-                        "sha256": hashlib.sha256(partitions).hexdigest(),
-                    },
+                    _segment(c3, "bootloader.bin", "0x0000", b"boot-" + c3.encode()),
+                    _segment(c3, "partitions.bin", "0x8000", ota),
+                    _segment(c3, "firmware.bin", "0x20000", c3_firmware),
+                ],
+            },
+            {
+                "name": atom,
+                "chip": "esp32",
+                "segments": [
+                    _segment(atom, "bootloader.bin", "0x1000", b"boot-" + atom.encode()),
+                    _segment(atom, "partitions.bin", "0x8000", factory),
+                    _segment(atom, "firmware.bin", "0x10000", atom_firmware),
                 ],
             },
         ],
     }
-    assert manifest_path.parent == firmware_dir / "dist"
+
+
+def test_generate_firmware_manifest_refuses_an_image_the_build_does_not_place(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    module = _load_main_release_module()
+    firmware_dir = tmp_path / "firmware"
+    _write_env_dist(firmware_dir / "dist", "m5stack_atom", _app_image(0), b"")
+    _fake_platformio_metadata(
+        monkeypatch,
+        module,
+        {"m5stack_atom": [{"offset": "0x8000", "path": "/build/partitions.bin"}]},
+    )
+
+    with pytest.raises(SystemExit, match=r"m5stack_atom/bootloader.bin has no flash offset"):
+        module.main(["generate-firmware-manifest", "--firmware-dir", str(firmware_dir)])
+
+    assert not (firmware_dir / "dist" / "flash.json").exists()
 
 
 def test_cleanup_releases_dry_run_prints_selected_wheel_esp_releases(
