@@ -30,7 +30,7 @@ server's monotonic time in microseconds.
 |-------|--------|
 | Protocol | New `CMD_SYNC_CLOCK = 2` command type with 8-byte `server_time_us` payload. |
 | Firmware (ESP) | On receipt, compute `offset = server_time_us − esp_timer_get_time()` and store.  Apply offset to every subsequent `t0_us` in DATA frames. |
-| Server control plane | `UDPControlPlane.broadcast_sync_clock()` sends the command to every active sensor; `send_sync_clock()` sends it to one. A HELLO from a sensor that is not on the server clock starts an exchange at once, and the ACK of its first (measuring) exchange triggers the exchange that carries the offset. |
+| Server control plane | `UDPControlPlane.broadcast_sync_clock()` sends the command to every active sensor; `send_sync_clock()` sends it to one. A HELLO from a sensor that is not on the server clock, or that was silent for over 1 s, starts an exchange at once, and the ACK of its first (measuring) exchange triggers the exchange that carries the offset. |
 | Processing loop | Calls `broadcast_sync_clock()` every `CLOCK_SYNC_INTERVAL_S` (2 s) of monotonic time, independent of the tick rate. |
 
 After synchronisation all sensors report `t0_us` relative to the
@@ -43,7 +43,14 @@ within two round trips, before its first frame; waiting for two broadcasts used
 to leave it unsynced for 2–4 s, which raw capture drops (a recording started
 right after the sensors, or a sensor that reconnected mid-run, lost that much
 raw-backed analysis plus one FFT window). A rebooted sensor is re-synced at its
-next HELLO or broadcast (≤ 2 s). The 2 s broadcast interval leaves room under the two age limits that depend on it: the registry's 8 s
+next HELLO or broadcast (≤ 2 s); a HELLO from a sensor that was silent for over
+1 s, longer than a streaming sensor ever is, starts an exchange at once. Until
+the server notices the reboot, that exchange still carries the previous boot's
+offset; the sensor applies it and stamps frames seconds in the past, which after
+a session shorter than 2 s do not rewind far enough to reveal the reboot. The
+acknowledgement measures an offset more than 2 s larger, which only a reboot
+explains, so the registry starts a new session and sends the fresh offset at
+once, before the sensor's first frame. The 2 s broadcast interval leaves room under the two age limits that depend on it: the registry's 8 s
 slow-exchange hold (about three slow exchanges in a row are skipped before an
 old estimate is replaced) and the 15 s sync-age limit of the raw-capture proof
 (several lost exchanges in a row still leave a sensor `verified` at finalize).

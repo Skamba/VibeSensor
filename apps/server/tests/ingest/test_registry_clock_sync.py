@@ -19,9 +19,8 @@ def _data(seq: int, t0_us: int) -> DataMessage:
     )
 
 
-def _registry_with_sensor() -> ClientRegistry:
-    registry = ClientRegistry()
-    registry.update_from_hello(
+def _hello(registry: ClientRegistry, *, now_mono: float) -> bool:
+    return registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex("aabbccddeeff"),
             control_port=9010,
@@ -32,7 +31,13 @@ def _registry_with_sensor() -> ClientRegistry:
         ),
         ("10.4.0.2", 50000),
         now=1.0,
+        now_mono=now_mono,
     )
+
+
+def _registry_with_sensor() -> ClientRegistry:
+    registry = ClientRegistry()
+    _hello(registry, now_mono=1.0)
     return registry
 
 
@@ -91,12 +96,15 @@ def _sync_exchange(
     offset_us: int,
     outbound_us: int,
     inbound_us: int,
-) -> None:
-    """One sync exchange with the given one-way delays (server minus device = offset_us)."""
+) -> bool:
+    """One sync exchange with the given one-way delays (server minus device = offset_us).
+
+    Returns whether the registry wants the applying exchange sent right away.
+    """
     send_us = int(send_s * 1_000_000)
     device_us = send_us + outbound_us - offset_us
     registry.mark_cmd_sent("aabbccddeeff", cmd_seq, sync_send_us=send_us, sync_applies_offset=True)
-    registry.update_from_ack(
+    return registry.update_from_ack(
         AckMessage(
             client_id=bytes.fromhex("aabbccddeeff"),
             cmd_seq=cmd_seq,
@@ -277,3 +285,54 @@ def test_an_offset_a_precise_exchange_proves_wrong_is_replaced_at_once() -> None
         registry, 2, send_s=1_002.0, offset_us=offset_us, outbound_us=150, inbound_us=150
     )
     assert _applied_offset(registry) == offset_us
+
+
+def test_a_sensor_that_applied_its_previous_boots_offset_is_resynced_at_once() -> None:
+    registry = _registry_with_sensor()
+    boot1_offset_us = 500_000_000
+    complete_clock_sync(registry, "aabbccddeeff", offset_us=boot1_offset_us, now_mono_s=1_000.0)
+    for seq in range(7):
+        registry.update_from_data(
+            _data(seq, 1_000_000_000 + seq * 250_000), ("10.4.0.2", 50000), now_mono=1_000.3
+        )
+    # The sensor stops after 1.75 s and boots again 4 s after its first boot; the
+    # next periodic sync still carries the first boot's offset, which it applies.
+    boot2_offset_us = boot1_offset_us + 4_000_000
+    resync_now = _sync_exchange(
+        registry, 3, send_s=1_006.0, offset_us=boot2_offset_us, outbound_us=150, inbound_us=150
+    )
+    stale = registry.update_from_data(
+        _data(0, 1_006_000_000 - 4_000_000), ("10.4.0.2", 50000), now_mono=1_006.25
+    )
+    _sync_exchange(
+        registry, 4, send_s=1_006.3, offset_us=boot2_offset_us, outbound_us=150, inbound_us=150
+    )
+    resynced = registry.update_from_data(
+        _data(1, 1_006_250_000), ("10.4.0.2", 50000), now_mono=1_006.5
+    )
+
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert resync_now is True
+    assert record.reset_count == 1
+    assert stale.clock_synced is False
+    assert (resynced.is_duplicate, resynced.is_late, resynced.clock_synced) == (False, False, True)
+    assert _applied_offset(registry) == boot2_offset_us
+
+
+def test_a_hello_after_the_sensor_went_silent_starts_a_sync_exchange() -> None:
+    registry = _registry_with_sensor()
+    complete_clock_sync(registry, "aabbccddeeff", now_mono_s=1_000.0)
+    for seq in range(6):
+        registry.update_from_data(
+            _data(seq, 1_000_000_000 + seq * 250_000),
+            ("10.4.0.2", 50000),
+            now_mono=1_000.0 + 0.25 * (seq + 1),
+        )
+    streaming_hello = _hello(registry, now_mono=1_001.6)
+    # A broadcast to the sensor goes unanswered: it stopped streaming.
+    registry.mark_cmd_sent("aabbccddeeff", 9, sync_send_us=1_002_000_000, sync_applies_offset=True)
+    hello_after_silence = _hello(registry, now_mono=1_003.5)
+
+    assert streaming_hello is False
+    assert hello_after_silence is True

@@ -55,6 +55,10 @@ _RESTART_SEQ_GAP = 1000
 # broadcast) its t0_us is far behind the previous session. Genuine late/reordered UDP frames are
 # only milliseconds behind, so a rewind this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000
+# A streaming sensor sends a frame every 250 ms and holds frames back at most
+# 0.75 s while it retransmits (``kDataMaxFrameAgeMs``); one silent for longer
+# stopped streaming, and may come back from a reboot.
+_STREAMING_SILENCE_MAX_S = 1.0
 _JITTER_EMA_ALPHA = 0.2
 # A sync exchange delayed on either side (a scheduling stall, a Wi-Fi retry) has an
 # inflated round trip, and its offset estimate is off by up to half of it. Sensors
@@ -390,14 +394,7 @@ def apply_data_message_update(
     if rebooted:
         # Treat the rewound frame as the first frame of a new session instead of
         # discarding every frame as "late" until the sensor's clock catches up.
-        record.reset_count += 1
-        record.last_reset_time = now_ts
-        record.last_seq = None
-        record.last_t0_us = None
-        record.timing_jitter_us_ema = 0.0
-        record.timing_drift_us_total = 0.0
-        record.dedup_window.clear()
-        _forget_clock_sync(record)
+        _restart_session(record, now_ts=now_ts)
 
     continues_device_timeline = _continues_device_timeline(
         record, seq=seq, t0_us=t0_us, sample_count=sample_count
@@ -525,6 +522,38 @@ def _disciplined_sync_offset(
     if abs(deviation_us) - (round_trip_us // 2) > _SYNC_STEP_MIN_ERROR_US:
         return estimate_us
     return current_us + max(-_SYNC_MAX_SLEW_US, min(_SYNC_MAX_SLEW_US, deviation_us))
+
+
+def _stamps_with_previous_boot_offset(record: ClientRecord, *, estimate_us: int) -> bool:
+    """Whether the sensor rebooted and applied the offset of its previous boot.
+
+    The server keeps a sensor's offset until it notices a reboot, and the sensor
+    applies whatever offset the next sync carries, so a restarted sensor can stamp
+    frames on its new device clock plus its previous boot's offset: seconds in the
+    past. Those frames reveal the reboot only when they rewind more than
+    ``_RESTART_T0_REWIND_US`` behind the previous session, which a short previous
+    session never does. That sync's acknowledgement already shows it: the measured
+    offset grew by the time between the two boots, far more than crystal drift or
+    a delayed exchange can move it.
+    """
+    applied_us = record.sync_offset_us
+    return (
+        record.clock_offset_applied
+        and applied_us is not None
+        and estimate_us - applied_us > _RESTART_T0_REWIND_US
+    )
+
+
+def _restart_session(record: ClientRecord, *, now_ts: float) -> None:
+    """Start a rebooted sensor's new session: new sequence numbers, a new device clock."""
+    record.reset_count += 1
+    record.last_reset_time = now_ts
+    record.last_seq = None
+    record.last_t0_us = None
+    record.timing_jitter_us_ema = 0.0
+    record.timing_drift_us_total = 0.0
+    record.dedup_window.clear()
+    _forget_clock_sync(record)
 
 
 def _forget_clock_sync(record: ClientRecord) -> None:
@@ -679,12 +708,19 @@ class ClientRegistry:
         A sensor that is not stamping on the server clock yet (it just connected or
         rebooted) and has no exchange in flight is synced right away instead of at
         the next periodic broadcast, so it streams few chunks raw capture must drop.
+        So is a sensor that was silent for longer than a streaming one ever is: it
+        may have rebooted unnoticed, and the exchange shows a restarted clock (see
+        ``_stamps_with_previous_boot_offset``) before its first frame.
         """
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
             client_id = self._normalize_wire_client_id(hello.client_id)
             record = self._get_or_create(client_id)
+            was_silent = (
+                record.last_seen_mono > 0.0
+                and mono - record.last_seen_mono > _STREAMING_SILENCE_MAX_S
+            )
             record.last_seen = now_ts
             record.last_seen_mono = mono
             hello_port = int(hello.control_port)
@@ -706,7 +742,10 @@ class ClientRegistry:
             record.recent_queue_overflow_drops.add(new_drops, mono)
             record.queue_overflow_drops = reported
             self._metadata.apply_advertised_name(record, hello.name)
-            return not record.clock_offset_applied and record.pending_sync_cmd_seq is None
+            # An exchange still pending with a silent sensor was lost with it.
+            return was_silent or (
+                not record.clock_offset_applied and record.pending_sync_cmd_seq is None
+            )
 
     def update_from_data(
         self,
@@ -794,13 +833,15 @@ class ClientRegistry:
                     round_trip_us=round_trip_us,
                     server_receive_us=server_receive_us,
                 ):
+                    estimate_us = (
+                        (record.pending_sync_send_us - ack.device_receive_us)
+                        + (server_receive_us - ack.device_send_us)
+                    ) // 2
+                    if _stamps_with_previous_boot_offset(record, estimate_us=estimate_us):
+                        _restart_session(record, now_ts=now_ts)
                     record.sync_offset_us = _disciplined_sync_offset(
                         record,
-                        estimate_us=(
-                            (record.pending_sync_send_us - ack.device_receive_us)
-                            + (server_receive_us - ack.device_send_us)
-                        )
-                        // 2,
+                        estimate_us=estimate_us,
                         round_trip_us=round_trip_us,
                     )
                     record.sync_rtt_us = round_trip_us

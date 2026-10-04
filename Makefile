@@ -88,7 +88,8 @@ lint: ## Run Ruff, ShellCheck, dependency/import-layer checks, and config prefli
 	"$$PYTHON" -m ruff check $(LINT_TARGETS) && \
 	"$$PYTHON" -m ruff format --check $(LINT_TARGETS) && \
 	$(MAKE) --no-print-directory shell-lint && \
-	cd $(SERVER_DIR) && deptry . tests --config pyproject.toml && lint-imports --config pyproject.toml && \
+	cd $(SERVER_DIR) && "$$PYTHON" -m deptry . tests --config pyproject.toml && \
+	"$$(dirname "$$PYTHON")/lint-imports" --config pyproject.toml && \
 	cd "$(CURDIR)" && "$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.dev.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.docker.yaml && \
 	"$$PYTHON" -m vibesensor.cli.preflight $(SERVER_DIR)/config.pi.yaml
