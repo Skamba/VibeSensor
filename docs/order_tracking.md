@@ -120,17 +120,6 @@ coordinates the evidence flow:
 6. Assemble a domain `Finding` with `assemble_order_finding()`.
 7. Split multi-location wheel findings when two corners are both strong.
 8. Apply `suppress_engine_aliases()` before returning the final ranked list.
-   An engine order that ranks below the best wheel order and is not clearly
-   more confident than it is demoted as a likely alias. An engine order placed
-   by RPM estimated from speed and gear that mostly lands on a wheel order's
-   peaks has no frequency of its own: it is a fixed multiple of the wheel's
-   (on a car whose top gear puts E1 on T2). When a wheel order is at least
-   6 dB louder than it, it is that wheel's harmonic and is demoted whatever its
-   confidence. An engine fault does not excite the wheel's own orders, and the
-   wheel order it coincides with is as loud as it is. Confidence cannot settle
-   this case, because the wheel order is penalised for spreading into the
-   cabin and the engine zone is not. With measured RPM the engine order keeps
-   its own frequency track and only the confidence rule applies.
 
 If the effective match rate stays below the current threshold, the hypothesis
 does not produce a finding.

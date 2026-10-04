@@ -117,6 +117,17 @@ Default network target already matches the Pi hotspot configuration:
 - Server IP `10.4.0.1`
 - UDP ports `9000/9001`
 
+At boot the firmware loads the hotspot SSID/PSK from NVS (Preferences
+namespace `vs_wifi`, keys `ssid` and `psk`; a stored SSID without `psk` means an
+open hotspot) and falls back to the compile-time values below when NVS holds
+none (`load_wifi_credentials` in `src/runtime_wifi.cpp`). The Pi flasher
+(*Settings → ESP Flash*) erases the chip and writes an NVS image built from the
+Pi's current `ap.ssid` / `ap.psk`
+(`apps/server/vibesensor/updates/firmware/sensor_wifi_nvs.py`), so a sensor
+flashed from the Pi always joins that Pi's hotspot. `pio run -t upload` does not
+erase NVS: a sensor once flashed from a Pi keeps those stored credentials over
+the compile-time ones until you run `pio run -t erase`.
+
 For canonical message IDs/packet sizes and port values, use `docs/protocol.md`.
 
 Optional override via local file (recommended for non-default networks):
@@ -130,10 +141,9 @@ Optional override via local file (recommended for non-default networks):
 
 `include/vibesensor_network.local.h` is gitignored; do not commit secrets.
 
-Wi-Fi credentials are intentionally configured at build time (default header or
-gitignored local override), not mutated at runtime. The offline-first Pi
-hotspot remains the deployment authority, so the firmware/server pair shares a
-stable network target instead of exposing an on-device provisioning flow.
+The firmware has no on-device provisioning flow: credentials come from the Pi
+flasher's NVS image or the build-time defaults, never from the sensor at
+runtime. The offline-first Pi hotspot remains the deployment authority.
 
 Runtime-critical firmware parameters can be overridden without editing source by
 adding build flags in `platformio.ini` (`build_flags`).

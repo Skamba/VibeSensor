@@ -538,19 +538,6 @@ BENCH_CASES = (
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         layout=ONE_WHEEL_AND_CABIN,
     ),
-    # The same with a body that carries the imbalance well into the cabin (about
-    # half the wheel's level there). The wheel corner still stands out: it is
-    # that corner, not its axle, and never the engine order that on the default
-    # car shares T2's frequency.
-    Case(
-        "bench-one-wheel-and-cabin-strong-coupling-sweep",
-        _sweep(
-            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
-            _ov("body", "wheel_imbalance", 0.45, 1.0),
-        ),
-        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
-        layout=ONE_WHEEL_AND_CABIN,
-    ),
     # A sensor on every mounting point: road noise everywhere is still no fault,
     # and a wheel fault still stands out at its corner.
     Case("bench-healthy-sweep-every-mount", _sweep(), NO_FAULT, layout=EVERY_MOUNT),

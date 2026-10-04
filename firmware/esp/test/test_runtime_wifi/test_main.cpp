@@ -34,6 +34,48 @@ std::vector<WiFiClass::ScanResult> target_scan_results() {
 void setUp() {
   arduino_test::reset_time();
   WiFi.reset();
+  Preferences::store().clear();
+}
+
+void test_load_wifi_credentials_prefers_nvs_and_falls_back_to_build_defaults() {
+  WifiState fallback{};
+  vibesensor::runtime::load_wifi_credentials(fallback);
+  TEST_ASSERT_EQUAL_STRING(vibesensor_network::wifi_ssid, fallback.ssid);
+  TEST_ASSERT_EQUAL_STRING(vibesensor_network::wifi_psk, fallback.psk);
+
+  Preferences::store()["vs_wifi/ssid"] = "Workshop";
+  Preferences::store()["vs_wifi/psk"] = "secret-psk";
+  WifiState stored{};
+  vibesensor::runtime::load_wifi_credentials(stored);
+  TEST_ASSERT_EQUAL_STRING("Workshop", stored.ssid);
+  TEST_ASSERT_EQUAL_STRING("secret-psk", stored.psk);
+
+  // An SSID without a PSK is an open hotspot, not the build-time PSK.
+  Preferences::store().erase("vs_wifi/psk");
+  WifiState open_ap{};
+  vibesensor::runtime::load_wifi_credentials(open_ap);
+  TEST_ASSERT_EQUAL_STRING("Workshop", open_ap.ssid);
+  TEST_ASSERT_EQUAL_STRING("", open_ap.psk);
+}
+
+void test_connect_wifi_joins_the_hotspot_stored_in_nvs() {
+  Preferences::store()["vs_wifi/ssid"] = "Workshop";
+  Preferences::store()["vs_wifi/psk"] = "secret-psk";
+  WiFiClass::ScanResult target;
+  target.ssid = "Workshop";
+  target.bssid = {{1, 2, 3, 4, 5, 6}};
+  target.channel = 11;
+  WiFi.setScanResults({target});
+  WiFi.queueBeginOutcome(0);
+  WifiState state{};
+  RuntimeStatus status{};
+
+  TEST_ASSERT_TRUE(vibesensor::runtime::connect_wifi(state, status));
+
+  TEST_ASSERT_EQUAL_INT32(11, state.target_channel);
+  TEST_ASSERT_EQUAL_UINT32(1, WiFi.begin_calls.size());
+  TEST_ASSERT_EQUAL_STRING("Workshop", WiFi.begin_calls[0].ssid.c_str());
+  TEST_ASSERT_EQUAL_STRING("secret-psk", WiFi.begin_calls[0].psk.c_str());
 }
 
 void test_connect_wifi_retries_until_connected_and_uses_scanned_bssid() {
@@ -68,6 +110,7 @@ void test_connect_wifi_retries_until_connected_and_uses_scanned_bssid() {
 
 void test_service_wifi_starts_async_scan_and_schedules_backoff_retry() {
   WifiState state{};
+  vibesensor::runtime::load_wifi_credentials(state);  // done by connect_wifi() at boot
   RuntimeStatus status{};
   WiFi.setStatus(WL_DISCONNECTED);
   WiFi.setScanResults(target_scan_results());
@@ -102,6 +145,8 @@ void test_service_wifi_starts_async_scan_and_schedules_backoff_retry() {
 
 int main(int argc, char** argv) {
   UNITY_BEGIN();
+  RUN_TEST(test_load_wifi_credentials_prefers_nvs_and_falls_back_to_build_defaults);
+  RUN_TEST(test_connect_wifi_joins_the_hotspot_stored_in_nvs);
   RUN_TEST(test_connect_wifi_retries_until_connected_and_uses_scanned_bssid);
   RUN_TEST(test_service_wifi_starts_async_scan_and_schedules_backoff_retry);
   return UNITY_END();

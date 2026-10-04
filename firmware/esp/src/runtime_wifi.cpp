@@ -1,5 +1,6 @@
 #include "runtime_wifi.h"
 
+#include <Preferences.h>
 #include <WiFi.h>
 #include <string.h>
 
@@ -21,7 +22,7 @@ void consume_scan_results(WifiState& state, int found) {
   state.has_target_bssid = false;
   state.target_channel = 0;
   for (int i = 0; i < found; ++i) {
-    if (WiFi.SSID(i) != vibesensor_network::wifi_ssid) {
+    if (WiFi.SSID(i) != state.ssid) {
       continue;
     }
     const uint8_t* bssid = WiFi.BSSID(i);
@@ -69,35 +70,46 @@ bool poll_ap_scan(WifiState& state) {
   return true;
 }
 
+void copy_credential(char* dest, size_t capacity, const char* value) {
+  strncpy(dest, value == nullptr ? "" : value, capacity - 1);
+  dest[capacity - 1] = '\0';
+}
+
 void begin_target_wifi(const WifiState& state) {
-  const bool has_psk =
-      vibesensor_network::wifi_psk != nullptr && strlen(vibesensor_network::wifi_psk) > 0;
+  const char* psk = state.psk[0] != '\0' ? state.psk : nullptr;
   if (state.has_target_bssid && state.target_channel > 0) {
-    if (has_psk) {
-      WiFi.begin(vibesensor_network::wifi_ssid,
-                 vibesensor_network::wifi_psk,
-                 state.target_channel,
-                 state.target_bssid,
-                 true);
-    } else {
-      WiFi.begin(vibesensor_network::wifi_ssid,
-                 nullptr,
-                 state.target_channel,
-                 state.target_bssid,
-                 true);
-    }
+    WiFi.begin(state.ssid, psk, state.target_channel, state.target_bssid, true);
     return;
   }
-  if (has_psk) {
-    WiFi.begin(vibesensor_network::wifi_ssid, vibesensor_network::wifi_psk);
+  if (psk != nullptr) {
+    WiFi.begin(state.ssid, psk);
   } else {
-    WiFi.begin(vibesensor_network::wifi_ssid);
+    WiFi.begin(state.ssid);
   }
 }
 
 }  // namespace
 
+void load_wifi_credentials(WifiState& state) {
+  copy_credential(state.ssid, sizeof(state.ssid), vibesensor_network::wifi_ssid);
+  copy_credential(state.psk, sizeof(state.psk), vibesensor_network::wifi_psk);
+  Preferences prefs;
+  if (!prefs.begin(kWifiPrefsNamespace, /*readOnly=*/true)) {
+    return;
+  }
+  char ssid[sizeof(state.ssid)] = {};
+  char psk[sizeof(state.psk)] = {};
+  if (prefs.getString("ssid", ssid, sizeof(ssid)) > 0 && ssid[0] != '\0') {
+    copy_credential(state.ssid, sizeof(state.ssid), ssid);
+    // An SSID without a stored PSK means an open hotspot.
+    prefs.getString("psk", psk, sizeof(psk));
+    copy_credential(state.psk, sizeof(state.psk), psk);
+  }
+  prefs.end();
+}
+
 bool connect_wifi(WifiState& state, RuntimeStatus& status) {
+  load_wifi_credentials(state);
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
   WiFi.setScanTimeout(kWifiScanTimeoutMs);

@@ -410,7 +410,9 @@ Firmware update code lives under
 `firmware_release_fetcher.py` owns GitHub firmware HTTP access,
 `firmware_bundle.py` owns bundle extraction/validation/metadata helpers,
 `firmware_types.py` owns updater-local cache/release contracts, and
-`esp_flash_manager.py` owns ESP flashing orchestration. Wi-Fi/uplink recovery
+`esp_flash_manager.py` owns ESP flashing orchestration (erase, then write the
+bundle plus `sensor_wifi_nvs.py`'s NVS image carrying the current `ap.ssid` /
+`ap.psk`, so flashed sensors join this hotspot). Wi-Fi/uplink recovery
 code lives under `apps/server/vibesensor/updates/wifi/` and
 `apps/server/vibesensor/updates/transport/`.
 

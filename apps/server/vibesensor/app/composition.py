@@ -209,7 +209,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         wifi_ifname=HOTSPOT_IFNAME,
         server_port=config.server.port,
     )
-    esp_flash_manager = EspFlashManager()
+    esp_flash_manager = EspFlashManager(wifi_ssid=config.ap.ssid, wifi_psk=config.ap.psk)
 
     lifecycle = LifecycleRuntime(
         health_state=health_state,

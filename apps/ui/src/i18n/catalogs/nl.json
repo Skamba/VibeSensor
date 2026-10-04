@@ -697,7 +697,7 @@
   "settings.update.start_failed": "Starten van update mislukt.",
   "settings.update.reconnect_note": "Let op: De pagina kan de verbinding verliezen terwijl de hotspot voor het Wi‑Fi-pad uit staat. De verbinding wordt automatisch hersteld.",
   "settings.esp_flash.title": "ESP Flash",
-  "settings.esp_flash.hint": "Compileer en flash de firmware vanuit de lokale bron op deze Pi.",
+  "settings.esp_flash.hint": "Flash een sensor via USB met de firmware die op deze Pi staat. Geflashte sensoren verbinden met de hotspot van deze Pi met de huidige naam en het huidige wachtwoord; flash elke sensor opnieuw nadat je het hotspotwachtwoord hebt gewijzigd.",
   "settings.esp_flash.port": "Seriële poort",
   "settings.esp_flash.auto_detect": "Automatische detectie",
   "settings.esp_flash.refresh_ports": "Verversen",

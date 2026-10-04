@@ -191,23 +191,6 @@ Fix:
 - **UI:** Add "You can start now and drive off — the recording keeps going
   until you stop it or 30 minutes pass."
 
-**J22 — Setting a hotspot password strands newly flashed sensors.**
-
-Evidence:
-
-- The docs advise setting `ap.psk` (`docs/configuration_reference.md`).
-- Sensor SSID and PSK are compile-time constants (`firmware/esp/README.md`).
-- The on-Pi flasher (`apps/server/vibesensor/updates/firmware/`) does not
-  inject credentials.
-
-Fix:
-
-- **Backend:** The flasher patches the Wi-Fi config into the image (an NVS or
-  config partition), using the Pi's current `ap.ssid` / `ap.psk`.
-- **UI:** Add "Sensors flashed here will join '<SSID>' automatically." Until
-  that exists, add a warning next to the PSK setting: "Sensors only join an
-  open 'VibeSensor' network unless rebuilt with the same password."
-
 ### Misleads
 
 **J02 — A new car inherits the active car's aspects.**
@@ -624,12 +607,10 @@ Dependency order:
 
 ### WP6 — Hotspot and flashing
 
-- **Covers:** J22, J23.
-- **Changes:**
-  - The flasher injects the current SSID/PSK.
-  - Interim warning next to the PSK setting.
-  - QR card artwork in `hardware/`.
-- **Validation:** firmware build, a pi-gen image build, and a manual phone test.
+- **Covers:** J23. J22 (the flasher writes the current SSID/PSK into the
+  sensor's NVS) shipped in this PR.
+- **Changes:** QR card artwork in `hardware/`.
+- **Validation:** a manual phone test.
 
 ### WP7 — EV and PHEV handling
 

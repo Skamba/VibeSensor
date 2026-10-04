@@ -28,11 +28,14 @@ dependencies = [
 
 [project.optional-dependencies]
 esp = [
+  "esp-idf-nvs-partition-gen>=0.3,<0.4",
   "esptool>=5.2.0,<6",
   "pyserial>=3.3,<4",
 ]
 dev = [
   "deptry>=0.25,<0.26",
+  # Flasher tests build the sensor Wi-Fi NVS image (runtime dependency is in `esp`).
+  "esp-idf-nvs-partition-gen>=0.3,<0.4",
   "hypothesis>=6.131,<7",
   "import-linter>=2.11,<3",
   "mypy>=2.2,<3",
@@ -186,6 +189,8 @@ module = [
   "scipy.*",
   "pyfftw",
   "pyfftw.*",
+  "esp_idf_nvs_partition_gen",
+  "esp_idf_nvs_partition_gen.*",
   "reportlab.*",
   "yaml",
 ]

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 from test_support.firmware_bundles import write_firmware_bundle
+from test_support.nvs_reader import read_nvs_strings
 from test_support.routes import iter_api_routes, response_payload
 
 from vibesensor.common.exceptions import ConfigurationError, UpdateError
@@ -47,6 +48,7 @@ class _FakeRunner(FlashCommandRunner):
         raise_os_error: bool = False,
     ) -> None:
         self.calls: list[list[str]] = []
+        self.nvs_images: dict[str, bytes] = {}
         self.call_cwds: list[str] = []
         self.hang = hang
         self.fail_erase = fail_erase
@@ -63,6 +65,13 @@ class _FakeRunner(FlashCommandRunner):
         timeout_s: float | None = None,
     ) -> int:
         self.calls.append(list(args))
+        if "write_flash" in args:
+            # The NVS image lives in a temp dir only for the duration of the write.
+            self.nvs_images = {
+                offset: Path(path).read_bytes()
+                for offset, path in zip(args[-2::-2], args[-1::-2], strict=False)
+                if path.endswith("wifi_nvs.bin")
+            }
         self.call_cwds.append(str(cwd))
         line_cb(f"running {' '.join(args)}")
         if self.raise_os_error:
@@ -133,11 +142,15 @@ def _build_manager(
     *,
     runner: _FakeRunner | None = None,
     ports: list[SerialPortInfo] | None = None,
+    wifi_ssid: str = "VibeSensor",
+    wifi_psk: str = "",
 ) -> tuple[EspFlashManager, _FakeRunner]:
     """Build an ``EspFlashManager`` with sensible defaults for testing."""
     if runner is None:
         runner = _FakeRunner()
     mgr = EspFlashManager(
+        wifi_ssid=wifi_ssid,
+        wifi_psk=wifi_psk,
         runner=runner,
         port_provider=_FakePorts(ports or [_DEFAULT_PORT]),
         firmware_cache=_firmware_cache(cache_dir),
@@ -260,6 +273,45 @@ async def test_flash_job_uses_cached_bundle_manifest(tmp_path: Path) -> None:
     assert "0x8000" in write_call
     assert any("firmware.bin" in arg for arg in write_call)
     _assert_no_platformio_invocation(runner.calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_writes_the_hotspot_credentials_to_the_nvs_partition(tmp_path: Path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    mgr, runner = _build_manager(cache_dir, wifi_ssid="Workshop", wifi_psk="secret-psk")
+
+    mgr.start(port=None, auto_detect=True)
+    task = mgr.job_task
+    assert task is not None
+    await task
+
+    assert mgr.status.state.value == "success"
+    assert list(runner.nvs_images) == ["0x9000"]
+    assert read_nvs_strings(runner.nvs_images["0x9000"]) == {
+        "vs_wifi": {"ssid": "Workshop", "psk": "secret-psk"}
+    }
+    logs = mgr.logs_since(after=0)["lines"]
+    assert "Sensor will join hotspot 'Workshop' (password-protected)" in logs
+    assert not any("secret-psk" in line for line in logs)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_patch_esptool_which")
+async def test_flash_fails_before_erasing_when_the_password_cannot_be_stored(
+    tmp_path: Path,
+) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    mgr, runner = _build_manager(cache_dir, wifi_psk="p" * 65)
+
+    mgr.start(port=None, auto_detect=True)
+    task = mgr.job_task
+    assert task is not None
+    await task
+
+    assert mgr.status.state.value == "failed"
+    assert "password" in str(mgr.status.error)
+    assert runner.calls == []
 
 
 @pytest.mark.asyncio

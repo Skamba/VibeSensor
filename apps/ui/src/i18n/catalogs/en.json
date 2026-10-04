@@ -697,7 +697,7 @@
   "settings.update.start_failed": "Failed to start update.",
   "settings.update.reconnect_note": "Note: The page may disconnect while the hotspot is down for the Wi-Fi path. It will reconnect automatically.",
   "settings.esp_flash.title": "ESP Flash",
-  "settings.esp_flash.hint": "Build and flash firmware from local source on this Pi.",
+  "settings.esp_flash.hint": "Flash a sensor over USB with the firmware stored on this Pi. Flashed sensors join this Pi's hotspot with its current name and password; re-flash every sensor after changing the hotspot password.",
   "settings.esp_flash.port": "Serial Port",
   "settings.esp_flash.auto_detect": "Auto-detect",
   "settings.esp_flash.refresh_ports": "Refresh",

@@ -151,8 +151,11 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     card yet (J23).
 - **Branches:**
   - Port 80 is unavailable: use port 8000 (pi-gen README).
-  - The operator sets `ap.psk` as the docs advise: sensors flashed from the Pi
-    still carry the compile-time open-AP credentials and cannot join (J22).
+  - The operator sets `ap.psk` as the docs advise: sensors must be re-flashed
+    from *Settings → ESP Flash*, which writes the Pi's current `ap.ssid` /
+    `ap.psk` into the sensor's NVS
+    (`apps/server/vibesensor/updates/firmware/sensor_wifi_nvs.py`). Sensors
+    flashed elsewhere only know the open `VibeSensor` network.
 
 ### 3.2 Flashing and adding sensors, assigning mounting locations
 

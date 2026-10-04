@@ -7,6 +7,7 @@ import importlib.util
 import logging
 import shutil
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -28,6 +29,7 @@ from vibesensor.updates.firmware.esp_serial import (
 )
 from vibesensor.updates.firmware.firmware_bundle import validate_bundle
 from vibesensor.updates.firmware.firmware_cache import FirmwareCache
+from vibesensor.updates.firmware.sensor_wifi_nvs import build_wifi_nvs_image, nvs_partition_span
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,6 +60,8 @@ class EspFlashManager:
     def __init__(
         self,
         *,
+        wifi_ssid: str,
+        wifi_psk: str,
         runner: FlashCommandRunner | None = None,
         port_provider: SerialPortProvider | None = None,
         firmware_cache: FirmwareCache | None = None,
@@ -66,6 +70,8 @@ class EspFlashManager:
         self._runner = runner or SubprocessFlashCommandRunner()
         self._ports = port_provider or PyserialPortProvider()
         self._firmware_cache = firmware_cache or FirmwareCache()
+        self._wifi_ssid = wifi_ssid
+        self._wifi_psk = wifi_psk
         self._status = EspFlashStatus()
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -237,9 +243,12 @@ class EspFlashManager:
             env = manifest.environments[0]
             self._append_log(f"Flashing environment: {env.name}")
             flash_args: list[str] = []
+            partition_table: bytes | None = None
             for seg in env.segments:
                 seg_path = bundle_dir / seg.file
                 flash_args.extend([seg.offset, str(seg_path)])
+                if seg_path.name == "partitions.bin":
+                    partition_table = seg_path.read_bytes()
 
             if not flash_args:
                 self._status.exit_code = 1
@@ -261,6 +270,20 @@ class EspFlashManager:
                 return
 
             self._status.selected_port = selected_port
+            if partition_table is None:
+                raise ValueError(
+                    "Firmware bundle has no partitions.bin to place the Wi-Fi settings"
+                )
+            nvs_offset, nvs_size = nvs_partition_span(partition_table)
+            nvs_image = build_wifi_nvs_image(
+                ssid=self._wifi_ssid,
+                psk=self._wifi_psk,
+                size=nvs_size,
+            )
+            self._append_log(
+                f"Sensor will join hotspot '{self._wifi_ssid}' "
+                f"({'password-protected' if self._wifi_psk else 'open'})",
+            )
             port_prefix = [
                 *esptool_cmd,
                 "--chip",
@@ -287,20 +310,25 @@ class EspFlashManager:
                 self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
                 return
 
-            write_cmd = [
-                *port_prefix,
-                "--baud",
-                "115200",
-                "write_flash",
-                "-z",
-                *flash_args,
-            ]
-            write_rc = await self._run_flash_step(
-                "flashing",
-                write_cmd,
-                cwd=bundle_dir,
-                timeout_s=120,
-            )
+            with tempfile.TemporaryDirectory(prefix="vibesensor-nvs-") as nvs_dir:
+                nvs_path = Path(nvs_dir) / "wifi_nvs.bin"
+                nvs_path.write_bytes(nvs_image)
+                write_cmd = [
+                    *port_prefix,
+                    "--baud",
+                    "115200",
+                    "write_flash",
+                    "-z",
+                    *flash_args,
+                    hex(nvs_offset),
+                    str(nvs_path),
+                ]
+                write_rc = await self._run_flash_step(
+                    "flashing",
+                    write_cmd,
+                    cwd=bundle_dir,
+                    timeout_s=120,
+                )
             if self._check_cancelled():
                 return
             self._status.exit_code = write_rc
