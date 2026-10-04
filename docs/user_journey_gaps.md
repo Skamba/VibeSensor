@@ -498,18 +498,11 @@ Fix: add a "Where to mount" panel in Sensors. It shows the recommended layouts
 with what each can localise ([user_journeys.md](user_journeys.md) §5.2) and the
 mounting rules. The readiness line repeats the layout consequence.
 
-**J23 — First-boot discovery: no captive portal and no printed URL.**
+**J23 — No printed SSID/URL card.**
 
-Evidence: the URL is `http://10.4.0.1` (`infra/pi-image/pi-gen/README.md`).
-There is no captive-portal responder.
-
-Fix:
-
-- Answer the OS connectivity probes with a redirect to the UI, which makes the
-  phone open it automatically.
-- Ship a QR or label card with the SSID and URL.
-- On first load, show a hint: "Your phone may say 'no internet' — stay
-  connected."
+The captive-portal probe responses and the first-load "no internet" hint
+shipped in #4112. What remains: ship a QR or label card with the SSID and
+`http://10.4.0.1`.
 
 **J11 — Coverage breadth and weak data (data gap).**
 
@@ -635,8 +628,6 @@ Dependency order:
 - **Changes:**
   - The flasher injects the current SSID/PSK.
   - Interim warning next to the PSK setting.
-  - Captive-portal probe responses (nginx/dnsmasq in the pi-gen stage).
-  - First-load "no internet" hint.
   - QR card artwork in `hardware/`.
 - **Validation:** firmware build, a pi-gen image build, and a manual phone test.
 

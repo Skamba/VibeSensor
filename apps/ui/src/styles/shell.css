@@ -182,6 +182,15 @@
   font-size: 1rem;
 }
 
+.hotspot-hint {
+  flex-wrap: wrap;
+  font-weight: 500;
+}
+
+.hotspot-hint::before {
+  content: "ℹ";
+}
+
 /* Dim dashboard content when connection is degraded */
 .wrap[data-connection-state="degraded"] .view {
   opacity: 0.55;

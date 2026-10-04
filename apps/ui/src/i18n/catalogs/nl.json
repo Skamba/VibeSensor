@@ -808,5 +808,7 @@
   "maintenance.readiness.blocked": "Geblokkeerd",
   "maintenance.readiness.running": "Bezig",
   "ws.payload_error": "Ongeldige servergegevens.",
-  "ws.payload_error_pill": "Gegevensfout"
+  "ws.payload_error_pill": "Gegevensfout",
+  "shell.hotspot_hint": "Je telefoon meldt misschien dat deze wifi geen internet heeft. Blijf verbonden: VibeSensor werkt zonder internet. Kies bij de vraag om verbonden te blijven of het netwerk zonder internet te gebruiken.",
+  "shell.hotspot_hint_dismiss": "Begrepen"
 }

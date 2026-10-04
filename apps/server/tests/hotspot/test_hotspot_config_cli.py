@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from vibesensor.cli.hotspot_config import main
+from vibesensor.hotspot.captive_portal import dnsmasq_probe_address
 
 
 def _run_cli(
@@ -75,4 +76,5 @@ def test_hotspot_config_cli_exports_operator_credentials_and_fixed_network(
         "CHANNEL=7",
         "IFNAME='wlan0'",
         "CON_NAME='VibeSensor-AP'",
+        f"CAPTIVE_DNS_ADDRESS='{dnsmasq_probe_address()}'",
     ]

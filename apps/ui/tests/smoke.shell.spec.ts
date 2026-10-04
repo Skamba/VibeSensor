@@ -94,3 +94,19 @@ test("journey: a view that fails to load keeps the current view and shows the er
   await page.locator("#tab-settings").click();
   await expect(page.locator("#settingsView")).toBeVisible();
 });
+
+test("journey: the first-load hotspot hint stays dismissed after a reload", async ({
+  page,
+}) => {
+  await bootLiveDashboard(page, {
+    fakeWebSocket: { payload: { clients: [], spectra: { clients: {} } } },
+  });
+  const hint = page.locator("#hotspotHint");
+  await expect(hint).toContainText("no internet");
+  await hint.getByRole("button", { name: "Got it" }).click();
+  await expect(hint).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.locator("#tab-dashboard")).toBeVisible();
+  await expect(hint).toHaveCount(0);
+});

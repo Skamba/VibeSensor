@@ -217,6 +217,15 @@ run_as_root tee /etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf >/dev/null
 dns=dnsmasq
 EOF
 
+# Captive portal: the AP's shared-mode dnsmasq (it serves only the hotspot
+# interface) resolves the OS connectivity-probe hosts to the Pi, and the app
+# redirects those probes to the UI, so phones open it automatically. The Pi's
+# own resolver is untouched, so uplink updates still reach the real hosts.
+run_as_root install -d /etc/NetworkManager/dnsmasq-shared.d
+run_as_root tee /etc/NetworkManager/dnsmasq-shared.d/vibesensor-captive-portal.conf >/dev/null <<EOF
+address=${CAPTIVE_DNS_ADDRESS}
+EOF
+
 run_as_root systemctl disable --now dnsmasq.service >/dev/null 2>&1 || true
 if ! run_as_root nmcli general reload >/dev/null 2>&1; then
   if ! run_as_root systemctl reload NetworkManager >/dev/null 2>&1; then

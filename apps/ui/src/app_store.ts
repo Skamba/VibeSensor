@@ -118,6 +118,32 @@ export function settleConfirmation(confirmed: boolean): void {
   current.resolve(confirmed);
 }
 
+// --- First-load hotspot hint ------------------------------------------------
+
+const HOTSPOT_HINT_KEY = "vibesensor.hotspotHintDismissed";
+
+function hotspotHintDismissed(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(HOTSPOT_HINT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Until dismissed: the phone may report "no internet" on the hotspot; stay connected. */
+export const hotspotHintVisible = signal<boolean>(
+  !isDemoMode() && !hotspotHintDismissed(),
+);
+
+export function dismissHotspotHint(): void {
+  hotspotHintVisible.value = false;
+  try {
+    globalThis.localStorage?.setItem(HOTSPOT_HINT_KEY, "1");
+  } catch {
+    // Remembering the dismissal is a per-browser convenience only.
+  }
+}
+
 // --- Preferences (language and speed unit) ---------------------------------
 
 /** What the selects show; differs from the active value while a save runs. */

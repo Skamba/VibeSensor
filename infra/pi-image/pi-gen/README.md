@@ -95,6 +95,7 @@ SSH_FIRST_BOOT_DEBUG=1 ./infra/pi-image/pi-gen/build.sh
 Default access endpoints and SSH credentials in generated images:
 - hotspot address: `10.4.0.1`
 - HTTP UI and API: `http://10.4.0.1` (port `80` default); if the primary listener is unavailable, try `http://10.4.0.1:8000`
+- captive portal: the hotspot's shared-mode dnsmasq (AP interface only) resolves the OS connectivity-probe hosts (Android `generate_204`, Apple `hotspot-detect.html`, Windows `connecttest.txt`, ...) to `10.4.0.1`, and the server redirects them to the UI, so phones open it after joining. `hotspot_nmcli.sh` writes `/etc/NetworkManager/dnsmasq-shared.d/vibesensor-captive-portal.conf` from `vibesensor-hotspot-config`; `validate-image.sh` checks both. The Pi's own DNS is untouched, so Wi-Fi/USB uplink updates still reach the real hosts. Phones may still report "no internet"; users stay connected.
 - user: `pi`
 - password: `vibesensor`
 - remote simulator quick run: `vibesensor-sim --count 5 --duration 60 --server-host 10.4.0.1 --server-http-port 80 --speed-kmh 0 --no-interactive --no-auto-server`

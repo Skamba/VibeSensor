@@ -531,6 +531,20 @@ echo "SSHD_FIRST_BOOT_READINESS_OK"
     exit 1
   fi
 
+  # Captive portal: the hotspot script writes the AP-only dnsmasq entry that
+  # the baked hotspot-config CLI exports for the OS connectivity-probe hosts.
+  if ! grep -n "dnsmasq-shared.d/vibesensor-captive-portal.conf" \
+    "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+    echo "Validation failed: hotspot script does not write the captive-portal dnsmasq entry"
+    exit 1
+  fi
+  if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.cli.hotspot_config /etc/vibesensor/config.yaml \
+    | grep -E "^CAPTIVE_DNS_ADDRESS='/connectivitycheck\.gstatic\.com/.*/captive\.apple\.com/.*/10\.4\.0\.1'$" \
+    >/dev/null; then
+    echo "Validation failed: vibesensor-hotspot-config does not export the captive-portal probe hosts"
+    exit 1
+  fi
+
   if [ -f "${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop" ]; then
     echo "Validation failed: first-boot user wizard still present (${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop)"
     exit 1

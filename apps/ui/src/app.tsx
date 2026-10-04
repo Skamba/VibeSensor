@@ -4,7 +4,9 @@ import { useEffect, useRef } from "preact/hooks";
 import {
   activeView,
   confirmation,
+  dismissHotspotHint,
   errorBanner,
+  hotspotHintVisible,
   errorMessage,
   isDemoMode,
   languageFeedback,
@@ -250,6 +252,24 @@ function ErrorBanner() {
   );
 }
 
+function HotspotHint() {
+  if (!hotspotHintVisible.value) {
+    return null;
+  }
+  return (
+    <div
+      id="hotspotHint"
+      class="connection-banner hotspot-hint"
+      data-variant="muted"
+    >
+      <span>{t("shell.hotspot_hint")}</span>
+      <button type="button" class="btn btn--muted" onClick={dismissHotspotHint}>
+        {t("shell.hotspot_hint_dismiss")}
+      </button>
+    </div>
+  );
+}
+
 function ConfirmationDialog() {
   const pending = confirmation.value;
   const confirmRef = useRef<HTMLButtonElement | null>(null);
@@ -390,6 +410,7 @@ export function App() {
         <Header />
         <StatusPills />
       </header>
+      <HotspotHint />
       <ErrorBanner />
       <View id="dashboardView">
         <Dashboard spectrum={<Spectrum />} onAddCar={openAddCar} />

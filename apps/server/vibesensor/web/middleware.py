@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 from fastapi import FastAPI
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from vibesensor.common.exceptions import VibeSensorError
@@ -19,6 +19,7 @@ from vibesensor.common.structured_logging import (
     log_extra,
     reset_request_id,
 )
+from vibesensor.hotspot.captive_portal import PORTAL_URL, is_probe_host
 
 LOGGER = logging.getLogger(__name__)
 _UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -70,6 +71,26 @@ class LocalMutationSafetyMiddleware:
         response = JSONResponse(
             {"detail": "Mutating local API requests must be same-origin."},
             status_code=403,
+        )
+        await response(scope, receive, send)
+
+
+class CaptivePortalMiddleware:
+    """Redirect OS connectivity probes (resolved to the Pi by the hotspot DNS) to the UI."""
+
+    __slots__ = ("app",)
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope.get("type") != "http" or not is_probe_host(Headers(scope=scope).get("host")):
+            await self.app(scope, receive, send)
+            return
+        response = RedirectResponse(
+            PORTAL_URL,
+            status_code=302,
+            headers={"Cache-Control": "no-store"},
         )
         await response(scope, receive, send)
 
@@ -174,3 +195,7 @@ def install_request_logging_middleware(app: FastAPI) -> None:
 
 def install_local_mutation_safety_middleware(app: FastAPI) -> None:
     app.add_middleware(LocalMutationSafetyMiddleware)
+
+
+def install_captive_portal_middleware(app: FastAPI) -> None:
+    app.add_middleware(CaptivePortalMiddleware)

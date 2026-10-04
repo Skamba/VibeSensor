@@ -1,7 +1,8 @@
 """Print hotspot settings as shell variable exports for sourcing by hotspot_nmcli.sh.
 
 SSID and PSK come from the ``ap`` section of the YAML config; address, channel,
-interface, and connection name are fixed in ``vibesensor.hotspot.constants``.
+interface, and connection name are fixed in ``vibesensor.hotspot.constants``;
+the captive-portal DNS entry comes from ``vibesensor.hotspot.captive_portal``.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ import sys
 from pathlib import Path
 
 from vibesensor.app.config_defaults import DEFAULT_CONFIG
+from vibesensor.hotspot.captive_portal import dnsmasq_probe_address
 from vibesensor.hotspot.constants import (
     HOTSPOT_CHANNEL,
     HOTSPOT_CON_NAME,
@@ -60,6 +62,7 @@ def main() -> None:
         "CHANNEL": HOTSPOT_CHANNEL,
         "IFNAME": HOTSPOT_IFNAME,
         "CON_NAME": HOTSPOT_CON_NAME,
+        "CAPTIVE_DNS_ADDRESS": dnsmasq_probe_address(),
     }
     for name, value in exports.items():
         print(f"{name}={value!r}")

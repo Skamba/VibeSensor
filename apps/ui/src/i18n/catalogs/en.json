@@ -808,5 +808,7 @@
   "maintenance.readiness.blocked": "Blocked",
   "maintenance.readiness.running": "Running",
   "ws.payload_error": "Invalid server payload.",
-  "ws.payload_error_pill": "Payload error"
+  "ws.payload_error_pill": "Payload error",
+  "shell.hotspot_hint": "Your phone may say this Wi-Fi has no internet. Stay connected: VibeSensor works without internet. If asked, choose to keep the connection or use the network without internet.",
+  "shell.hotspot_hint_dismiss": "Got it"
 }

@@ -147,7 +147,8 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     away from the network
     ([TechWiser](https://techwiser.com/fix-android-connected-to-wi-fi-but-no-internet/),
     [SafeSky](https://docs.safesky.app/books/safesky-pilot-playbook/page/using-mobile-internetdata-while-connected-to-a-wifi-network-iosandroid)).
-  - **Today:** none of this exists, and the user must know the IP (J23).
+  - **Today:** the captive portal and the hint exist; there is no printed
+    card yet (J23).
 - **Branches:**
   - Port 80 is unavailable: use port 8000 (pi-gen README).
   - The operator sets `ap.psk` as the docs advise: sensors flashed from the Pi

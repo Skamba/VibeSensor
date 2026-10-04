@@ -33,6 +33,7 @@ from vibesensor.common.structured_logging import configure_logging
 from vibesensor.ingest.udp_data_rx import start_udp_data_receiver
 from vibesensor.web.error_boundary import install_http_exception_handlers
 from vibesensor.web.middleware import (
+    install_captive_portal_middleware,
     install_local_mutation_safety_middleware,
     install_request_logging_middleware,
 )
@@ -93,6 +94,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.state.runtime = runtime
     install_http_exception_handlers(app)
     install_local_mutation_safety_middleware(app)
+    install_captive_portal_middleware(app)
     install_request_logging_middleware(app)
     app.include_router(create_router(runtime.web))
     if bootstrap_settings.serve_static:
