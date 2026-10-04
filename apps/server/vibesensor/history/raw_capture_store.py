@@ -193,6 +193,14 @@ class HistoryRawCaptureStore:
     def run_dir(self, run_id: str) -> Path:
         return self._base_dir / run_id
 
+    def artifact_files(self, manifest: RawCaptureManifest) -> tuple[Path, ...]:
+        """The manifest file plus each sensor's data and index file that exist on disk."""
+        run_dir = self.run_dir(manifest.run_id)
+        names = [_MANIFEST_FILE_NAME]
+        for sensor in manifest.sensors:
+            names += [sensor.data_file, sensor.index_file]
+        return tuple(path for name in names if (path := run_dir / name).is_file())
+
     def _load_chunk_indexes(self, index_path: Path) -> list[RawCaptureChunkIndex]:
         chunk_indexes: list[RawCaptureChunkIndex] = []
         if not index_path.exists():

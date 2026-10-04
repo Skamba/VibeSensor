@@ -28,6 +28,7 @@ type HistoryServer = {
   deletes: string[];
   failDeletes: Set<string>;
   pdfStatus: number;
+  insights?: (runId: string, lang: string) => HistoryInsightsPayload;
 };
 
 function run(
@@ -40,7 +41,7 @@ function run(
     start_time_utc: "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
     created_at: "2026-01-01T00:00:00Z",
-    sample_count: 42,
+    raw_sample_count: 12080,
     car_name: "Test Hatch",
     error_message: null,
     ...overrides,
@@ -54,6 +55,11 @@ function insights(runId: string, lang: string): HistoryInsightsPayload {
     lang,
     duration_s: 12.3,
     sensor_count_used: 2,
+    metadata: {
+      sensor_snapshots: [
+        { sensor_id: "s1", location_code: "front_left_wheel" },
+      ],
+    },
     diagnosis: makeDiagnosis({
       verdict: "fault",
       confidence_level: "strong",
@@ -123,7 +129,10 @@ async function bootWithHistory(page: Page, server: HistoryServer) {
       if (path.endsWith("/insights")) {
         const lang = url.searchParams.get("lang") ?? "en";
         server.insightRequests.push(`${runId}:${lang}`);
-        await fulfillJson<HistoryInsightsPayload>(route, insights(runId, lang));
+        await fulfillJson<HistoryInsightsPayload>(
+          route,
+          (server.insights ?? insights)(runId, lang),
+        );
         return;
       }
       if (path.endsWith("/report.pdf")) {
@@ -193,6 +202,9 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   );
   await expect(firstRow).toContainText("Confidence: Strong");
   await expect(firstRow).not.toContainText("%");
+  await expect(firstRow.locator(".history-row__meta-cell--samples")).toHaveText(
+    "Raw samples12,080",
+  );
 
   await firstRow.locator('[data-run-toggle="details"]').click();
   const details = page.locator(".history-details-card");
@@ -203,12 +215,18 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
       '.history-heatmap__zone[data-location-key="front-left wheel"]',
     ),
   ).toContainText("24.0 dB");
+  // Only the assigned front-left sensor reported; elsewhere no sensor was fitted.
+  const engineBay = details.locator(
+    '.history-heatmap__zone[data-location-key="engine bay"]',
+  );
+  await expect(engineBay).toContainText("no sensor");
 
   await details.locator('[data-run-action="load-insights"]').click();
   await expect.poll(() => server.insightRequests.length).toBeGreaterThan(2);
 
   await page.locator("#languageSelect").selectOption("nl");
   await expect(details).toContainText("Weak motor-orde.");
+  await expect(engineBay).toContainText("geen sensor");
   expect(server.insightRequests).toContain("run-001:nl");
 
   // Clicking the open row again collapses it.
@@ -309,4 +327,42 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   await expect(details).toContainText("T1 · 12.1 Hz @ 85 km/u");
   await expect(details).toContainText("63–105 km/u");
   await expect(details).not.toContainText("km/h");
+});
+
+test("journey: a no-fault run at one steady speed shows that speed and no empty badge", async ({
+  page,
+}) => {
+  const server = createServer();
+  server.runs = [run("run-ok")];
+  server.insights = (runId, lang) =>
+    makeHistoryInsightsPayload({
+      run_id: runId,
+      lang,
+      duration_s: 15,
+      sensor_count_used: 1,
+      diagnosis: makeDiagnosis({ verdict: "no_fault" }),
+      speed_stats: {
+        min_kmh: 50,
+        max_kmh: 50,
+        mean_kmh: 50,
+        range_kmh: 0,
+        sample_count: 0,
+        stddev_kmh: 0,
+        steady_speed: true,
+      },
+    });
+  await bootWithHistory(page, server);
+  await openHistoryTab(page);
+  await page
+    .locator(
+      '[data-run-row="1"][data-run="run-ok"] [data-run-toggle="details"]',
+    )
+    .click();
+  const card = page.locator(".history-diagnosis-card");
+  await expect(card).toContainText("No significant vibration found");
+  await expect(card).toContainText("50 km/h");
+  await expect(card).not.toContainText("50–50");
+  await expect(card.locator(".history-diagnosis-card__confidence")).toHaveCount(
+    0,
+  );
 });

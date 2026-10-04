@@ -143,8 +143,10 @@ function RunRow(props: { row: RowModel }) {
         <span class="history-row__meta-value">{row.startedAt}</span>
       </td>
       <td class="history-row__meta-cell history-row__meta-cell--samples numeric">
-        <span class="history-row__meta-label">{t("history.table.size")}</span>
-        <span class="history-row__meta-value">{row.sampleCount}</span>
+        <span class="history-row__meta-label">
+          {t("history.table.raw_samples")}
+        </span>
+        <span class="history-row__meta-value">{row.rawSampleCount}</span>
       </td>
       <td class="history-row__meta-cell history-row__meta-cell--actions">
         <span class="history-row__meta-label">{t("history.quick_report")}</span>
@@ -183,11 +185,13 @@ function SecondaryCard(props: { finding: SecondaryFinding }) {
           <strong class="history-finding-card__title">{finding.source}</strong>
           <span class="history-finding-card__signal">{finding.signature}</span>
         </div>
-        <span
-          class={`history-finding-card__confidence history-finding-card__confidence--${finding.tone}`}
-        >
-          {finding.confidence}
-        </span>
+        {finding.confidence ? (
+          <span
+            class={`history-finding-card__confidence history-finding-card__confidence--${finding.tone}`}
+          >
+            {finding.confidence}
+          </span>
+        ) : null}
       </div>
       <div class="history-finding-card__meta">
         <div class="history-finding-card__meta-item">
@@ -232,15 +236,19 @@ function Insights(props: { insights: InsightsModel }) {
                   <div class="history-findings-overview__headline">
                     {primary.headline}
                   </div>
-                  <div class="history-diagnosis-card__signature">
-                    {primary.signature}
-                  </div>
+                  {primary.signature ? (
+                    <div class="history-diagnosis-card__signature">
+                      {primary.signature}
+                    </div>
+                  ) : null}
                 </div>
-                <span
-                  class={`history-diagnosis-card__confidence history-diagnosis-card__confidence--${primary.tone}`}
-                >
-                  {primary.confidence}
-                </span>
+                {primary.confidence ? (
+                  <span
+                    class={`history-diagnosis-card__confidence history-diagnosis-card__confidence--${primary.tone}`}
+                  >
+                    {primary.confidence}
+                  </span>
+                ) : null}
               </div>
               {primary.explanation ? (
                 <p class="history-findings-overview__explanation">
@@ -536,7 +544,7 @@ export function History() {
           <tr>
             <th>{t("history.table.file")}</th>
             <th>{t("history.table.updated")}</th>
-            <th class="numeric">{t("history.table.size")}</th>
+            <th class="numeric">{t("history.table.raw_samples")}</th>
             <th>{t("history.table.actions")}</th>
           </tr>
         </thead>

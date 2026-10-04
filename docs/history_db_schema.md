@@ -46,7 +46,7 @@ One row per recording session.
 | `raw_capture_manifest_json` | TEXT | Raw waveform sidecar manifest; may remain after raw files are pruned so history can report missing raw capture explicitly |
 | `analysis_json` | TEXT | Post-run analysis summary (`AnalysisSummary` in `summary/contracts.py`) |
 | `error_message` | TEXT | Error description when status = `error` |
-| `sample_count` | INTEGER | Running count of appended samples |
+| `sample_count` | INTEGER | Running count of appended `samples_v2` rows (analysis windows, not raw accelerometer samples; the raw count is the manifest's `total_samples`) |
 | `created_at` | TEXT | Row creation timestamp |
 | `analysis_started_at` | TEXT | When analysis started |
 | `analysis_completed_at` | TEXT | When analysis finished |
@@ -172,6 +172,23 @@ For a 30-minute run at 4 Hz × 4 sensors (~28,800 samples):
 | Write speed | Slower (JSON serialize per row) | Faster (typed bind params) |
 | Read speed | Slower (JSON parse per row) | Faster (direct column access) |
 | Queryable | No (opaque blobs) | Yes (indexed typed columns) |
+
+## Run export
+
+`GET /api/history/{run_id}/export` (History → Export) returns one ZIP:
+
+| Entry | Contents |
+|-------|----------|
+| `<run>.json` | Run metadata and the stored analysis |
+| `<run>_analysis_windows.csv` | One row per `samples_v2` row: the per-window summaries (speed, peaks, strength) the analysis used, not raw samples |
+| `raw-capture/manifest.json` | Raw capture manifest (sensors, sample rates, sample counts, clock sync, losses) |
+| `raw-capture/<sensor>.raw.i16le` | Raw accelerometer samples, interleaved little-endian int16 x/y/z |
+| `raw-capture/<sensor>.index.jsonl` | One line per received chunk: `sample_start`, `sample_count`, first-sample time `t0_us`, `byte_offset` into the `.raw.i16le` file |
+
+The `raw-capture/` entries are left out when the run kept no raw capture (or its
+files were pruned). A 10-minute single-sensor run adds about 3 MB before
+compression. Export spools that outgrow memory are written next to the database,
+not to the Pi's RAM-backed `/tmp`.
 
 ## Startup retention policy
 

@@ -46,7 +46,7 @@ def test_create_app_serves_composed_routes_with_fake_runtime(
             "start_time_utc": "2026-01-01T00:00:00Z",
             "end_time_utc": "2026-01-01T00:01:00Z",
             "created_at": "2026-01-01T00:01:05Z",
-            "sample_count": 3200,
+            "raw_sample_count": 3200,
         }
     ]
     fake_state.run_service = SimpleNamespace(
@@ -97,7 +97,7 @@ def test_create_app_serves_composed_routes_with_fake_runtime(
         payload = history.json()
         assert payload["runs"][0]["run_id"] == "run-1"
         assert payload["runs"][0]["status"] == "complete"
-        assert payload["runs"][0]["sample_count"] == 3200
+        assert payload["runs"][0]["raw_sample_count"] == 3200
 
     assert start_calls["count"] == 1
     assert stop_calls["count"] == 1

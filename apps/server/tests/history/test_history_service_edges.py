@@ -6,8 +6,10 @@ import asyncio
 import csv
 import io
 import json
+import tempfile
 import threading
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
@@ -36,6 +38,12 @@ from vibesensor.report.view_model import ReportView
 class _HistoryDbStub:
     run: dict[str, Any] | None = None
     samples: list[dict[str, Any]] | None = None
+
+    # Export spools land next to the database; these stubs keep no raw capture.
+    db_path: Path = Path(tempfile.gettempdir()) / "history.db"
+
+    def raw_capture_files(self, run_id: str) -> tuple[Path, ...]:
+        return ()
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
@@ -374,7 +382,7 @@ async def test_report_pdf_cache_skips_oversized_single_pdf() -> None:
 
 
 @pytest.mark.asyncio
-async def test_export_service_build_export_context_shapes_raw_csv_and_safe_name() -> None:
+async def test_export_service_build_export_context_shapes_windows_csv_and_safe_name() -> None:
     service = HistoryExportService(
         _HistoryDbStub(
             run={
@@ -405,9 +413,9 @@ async def test_export_service_build_export_context_shapes_raw_csv_and_safe_name(
 
     export = await service.build_export_context("run/1 sample")
     try:
-        csv_text = export.raw_csv_spool.read().decode("utf-8")
+        csv_text = export.windows_csv_spool.read().decode("utf-8")
     finally:
-        export.raw_csv_spool.close()
+        export.windows_csv_spool.close()
 
     rows = list(csv.DictReader(io.StringIO(csv_text)))
 

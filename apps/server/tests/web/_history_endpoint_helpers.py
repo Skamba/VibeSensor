@@ -3,8 +3,10 @@ from __future__ import annotations
 import csv
 import io
 import json
+import tempfile
 import zipfile
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, cast
 from unittest.mock import MagicMock, create_autospec
 
@@ -45,6 +47,8 @@ from vibesensor.web.history_services import (
     ProjectedHistoryRunService,
 )
 from vibesensor.web.router import create_router
+
+_WINDOWS_CSV = "run-1_analysis_windows.csv"
 
 
 def _real_pdf_renderer(view: ReportView) -> bytes:
@@ -125,6 +129,12 @@ class FakeHistoryDB:
     samples: list[dict[str, Any] | SensorFrame]
     analysis: dict[str, Any] | AnalysisSummary | PersistedAnalysis
     analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
+
+    # Export spools land next to the database; these stubs keep no raw capture.
+    db_path: Path = Path(tempfile.gettempdir()) / "history.db"
+
+    def raw_capture_files(self, run_id: str) -> tuple[Path, ...]:
+        return ()
 
     @staticmethod
     def _artifact_availability_from_lifecycle(
@@ -505,5 +515,5 @@ def read_export_archive(body: bytes) -> tuple[set[str], dict[str, Any], list[dic
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         names = set(archive.namelist())
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
     return names, metadata, rows

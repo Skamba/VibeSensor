@@ -106,6 +106,14 @@ _NOT_TESTABLE_KEYS = {
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
 }
+# Suitability explanations that say nothing beyond their plain QUALITY_* sentence.
+_RESTATING_EXPLANATIONS = frozenset(
+    {
+        "SUITABILITY_SENSOR_COVERAGE_WARN",
+        "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
+        "SUITABILITY_RUN_DURATION_WARNING",
+    }
+)
 _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
     "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
@@ -359,7 +367,10 @@ class _Ctx:
     def speed_range(self, low: float | None, high: float | None) -> str:
         if low is None or high is None:
             return self.t("VALUE_UNKNOWN")
-        return f"{self.num(low)}–{self.num(high)}{_NBSP}km/h"
+        low_text, high_text = self.num(low), self.num(high)
+        # A steady run reads "50 km/h", not "50–50 km/h".
+        value = low_text if low_text == high_text else f"{low_text}–{high_text}"
+        return f"{value}{_NBSP}km/h"
 
 
 def _text(value: object) -> str:
@@ -556,8 +567,10 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             parts.append(ctx.t("DESC_STRONGEST_AT", location=location))
     low, high = diagnosis["speed_min_kmh"], diagnosis["speed_max_kmh"]
     if low is not None and high is not None:
-        key = "DESC_PRESENT_RANGE" if high - low >= 10.0 else "DESC_PRESENT_AT"
-        parts.append(ctx.t(key, low=ctx.num(low), high=ctx.num(high)))
+        if high - low >= 10.0:
+            parts.append(ctx.t("DESC_PRESENT_RANGE", low=ctx.num(low), high=ctx.num(high)))
+        else:
+            parts.append(ctx.t("DESC_PRESENT_AT", speeds=ctx.speed_range(low, high)))
     sentence = ", ".join(parts)
     text = f"{sentence[:1].upper()}{sentence[1:]}." if sentence else ""
     dependence = diagnosis["speed_dependence"]
@@ -595,8 +608,7 @@ def _coverage(
     locations = [ctx.location(row["location"]) for row in diagnosis["location_amplitudes"]]
     covered = ctx.t(
         "COVERED_BODY",
-        low=ctx.num(speeds["min_kmh"] or 0.0),
-        high=ctx.num(speeds["max_kmh"] or 0.0),
+        speeds=ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"]),
         phases=", ".join(ctx.phase(phase) for phase in driven) or ctx.t("VALUE_UNKNOWN"),
         locations=", ".join(locations) or ctx.t("VALUE_UNKNOWN"),
     )
@@ -796,8 +808,7 @@ def _spectrum(ctx: _Ctx, diagnosis: DiagnosisPayload) -> SpectrumChart | None:
         title=ctx.t(
             "SPECTRUM_TITLE",
             location=ctx.location(spectrum["location"]),
-            low=ctx.num(spectrum["speed_min_kmh"]),
-            high=ctx.num(spectrum["speed_max_kmh"]),
+            speeds=ctx.speed_range(spectrum["speed_min_kmh"], spectrum["speed_max_kmh"]),
         ),
         floor_label=ctx.t("SPECTRUM_FLOOR"),
         floor_mg=spectrum["floor_mg"],
@@ -871,12 +882,17 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
 
 
 def _check_detail(ctx: _Ctx, check: Mapping[str, object]) -> str:
-    """Plain meaning of one suitability check; a warning keeps its measured specifics."""
+    """Plain meaning of one suitability check; a warning keeps its cause and specifics.
+
+    The stored explanation is appended unless it only restates the plain sentence.
+    """
     key = str(check["check_key"]).removeprefix("SUITABILITY_CHECK_")
     passed = check["state"] == "pass"
-    explanation = resolve_i18n(ctx.lang, check.get("explanation"), tr=ctx.t).strip()
+    raw = check.get("explanation")
+    explanation = resolve_i18n(ctx.lang, raw, tr=ctx.t).strip()
     plain = ctx.t_or(f"QUALITY_{key}_{'PASS' if passed else 'WARN'}", explanation)
-    if passed or not explanation or explanation == plain:
+    restates = isinstance(raw, Mapping) and raw.get("_i18n_key") in _RESTATING_EXPLANATIONS
+    if passed or restates or not explanation or explanation == plain:
         return plain
     return f"{plain} {explanation}"
 

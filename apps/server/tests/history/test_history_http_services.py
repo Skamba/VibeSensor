@@ -3,8 +3,10 @@ from __future__ import annotations
 import csv
 import io
 import json
+import tempfile
 import zipfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
@@ -34,6 +36,8 @@ from vibesensor.web.history_services import (
     ProjectedHistoryRunService,
 )
 
+_WINDOWS_CSV = "run-1_analysis_windows.csv"
+
 
 @dataclass
 class _HistoryDbStub:
@@ -42,6 +46,12 @@ class _HistoryDbStub:
     samples: list[dict[str, Any]] | None = None
     runs: list[HistoryRunListEntry] | None = None
     list_runs_error: Exception | None = None
+
+    # Export spools land next to the database; these stubs keep no raw capture.
+    db_path: Path = Path(tempfile.gettempdir()) / "history.db"
+
+    def raw_capture_files(self, run_id: str) -> tuple[Path, ...]:
+        return ()
 
     def get_run(self, run_id: str) -> StoredHistoryRun | None:
         if self.run is None:
@@ -350,9 +360,9 @@ async def test_export_archive_builder_creates_csv_and_json_entries() -> None:
     body = b"".join(export.iter_bytes())
 
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
-        assert set(archive.namelist()) == {"run-1.json", "run-1_raw.csv"}
+        assert set(archive.namelist()) == {"run-1.json", _WINDOWS_CSV}
         exported = json.loads(archive.read("run-1.json").decode("utf-8"))
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
 
     assert exported["analysis"] == {"score": 1}
     assert rows[0]["t_s"] == "1.0"

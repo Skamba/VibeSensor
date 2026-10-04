@@ -9,6 +9,7 @@ import logging
 import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from vibesensor.common.filenames import safe_filename
@@ -95,13 +96,21 @@ class HistoryExportDownload:
 
 @dataclass
 class HistoryExportContext:
-    """Raw export artifacts ready for adapter-level packaging."""
+    """Export artifacts ready for adapter-level packaging.
+
+    ``windows_csv_spool`` holds one row per stored analysis window (``sample_count``
+    rows); ``raw_capture_files`` are the run's raw accelerometer capture and its
+    manifest. Spools that outgrow memory go to ``spool_dir`` (the data directory,
+    not a RAM-backed ``/tmp``).
+    """
 
     run_id: str
     safe_name: str
     run: StoredHistoryRun
     sample_count: int
-    raw_csv_spool: tempfile.SpooledTemporaryFile[bytes]
+    windows_csv_spool: tempfile.SpooledTemporaryFile[bytes]
+    raw_capture_files: tuple[Path, ...]
+    spool_dir: Path
 
 
 class HistoryExportService:
@@ -114,28 +123,36 @@ class HistoryExportService:
 
     async def build_export_context(self, run_id: str) -> HistoryExportContext:
         run = await async_require_run(self._history_db, run_id)
-        raw_csv_spool, sample_count = await asyncio.to_thread(self._build_raw_csv_spool, run_id)
+        spool_dir = self._history_db.db_path.parent
+        windows_csv_spool, sample_count = await asyncio.to_thread(
+            self._build_windows_csv_spool, run_id, spool_dir
+        )
+        raw_capture_files = await asyncio.to_thread(self._history_db.raw_capture_files, run_id)
         return HistoryExportContext(
             run_id=run_id,
             safe_name=safe_filename(run_id),
             run=run,
             sample_count=sample_count,
-            raw_csv_spool=raw_csv_spool,
+            windows_csv_spool=windows_csv_spool,
+            raw_capture_files=raw_capture_files,
+            spool_dir=spool_dir,
         )
 
-    def _build_raw_csv_spool(
+    def _build_windows_csv_spool(
         self,
         run_id: str,
+        spool_dir: Path,
     ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
         sample_count = 0
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
+            dir=str(spool_dir),
         )
         spool_built = False
         try:
-            raw_csv_text = io.TextIOWrapper(spool, encoding="utf-8", newline="")
+            csv_text = io.TextIOWrapper(spool, encoding="utf-8", newline="")
             writer = csv.DictWriter(
-                raw_csv_text,
+                csv_text,
                 fieldnames=EXPORT_CSV_COLUMNS,
                 extrasaction="ignore",
             )
@@ -146,8 +163,8 @@ class HistoryExportService:
             ):
                 sample_count += len(batch)
                 writer.writerows(flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch)
-            raw_csv_text.flush()
-            raw_csv_text.detach()
+            csv_text.flush()
+            csv_text.detach()
             spool.seek(0)
             spool_built = True
         finally:

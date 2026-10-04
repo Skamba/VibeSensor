@@ -1136,7 +1136,8 @@ def _assert_pdf_text(result: SimPipelineResult, case: Case) -> None:
         workshop = " ".join(pages[1:])
         for chart in (view.mechanic.spectrum, view.mechanic.speed_chart):
             if chart is not None:
-                assert chart.title.lower() in workshop, chart.title
+                # PDF text extraction turns the non-breaking space before units into a space.
+                assert " ".join(chart.title.lower().split()) in workshop, chart.title
 
 
 def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:

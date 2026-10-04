@@ -39,6 +39,8 @@ describe("speed formatting helpers", () => {
   test("shows a km/h range in the display unit, or null when an end is unknown", () => {
     expect(formatSpeedRange(60, 110, "kmh", t)).toBe("60–110 km/h");
     expect(formatSpeedRange(36, 108, "mps", t)).toBe("10–30 m/s");
+    expect(formatSpeedRange(50, 50, "kmh", t)).toBe("50 km/h");
+    expect(formatSpeedRange(49.8, 50.2, "kmh", t)).toBe("50 km/h");
     expect(formatSpeedRange(null, 110, "kmh", t)).toBeNull();
     expect(formatSpeedRange(60, undefined, "mps", t)).toBeNull();
     expect(formatSpeedRange(60, Number.POSITIVE_INFINITY, "kmh", t)).toBeNull();

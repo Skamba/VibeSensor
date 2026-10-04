@@ -288,7 +288,7 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       status: "complete",
       start_time_utc: "2026-01-01T00:00:00Z",
       created_at: "2026-01-01T00:00:00Z",
-      sample_count: 42,
+      raw_sample_count: 12080,
     },
   ];
   await bootWithStatus(page, (route) => fulfillJson(route, status), {
@@ -313,7 +313,7 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       status: "complete",
       start_time_utc: "2026-01-02T00:00:00Z",
       created_at: "2026-01-02T00:00:00Z",
-      sample_count: 42,
+      raw_sample_count: 12080,
     },
   ];
   await expect(page.locator("#historyTableBody")).toContainText("run-002");

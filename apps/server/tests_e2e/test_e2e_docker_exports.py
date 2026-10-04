@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import io
+import json
+import zipfile
 from datetime import datetime
 
 import pytest
@@ -13,6 +16,7 @@ from tests_e2e._docker_edge_helpers import (
 )
 from tests_e2e.e2e_helpers import (
     api_json,
+    assert_export_entries,
     parse_export_zip,
     wait_export_ready,
 )
@@ -35,10 +39,13 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
         assert f"{run_id}.zip" in str(export_resp.headers.get("content-disposition", ""))
 
         export_json, rows, names = parse_export_zip(export_resp.body)
-        assert names == {f"{run_id}.json", f"{run_id}_raw.csv"}
+        assert_export_entries(names, run_id)
         assert str(export_json.get("run_id")) == run_id
         assert int(export_json.get("sample_count", -1)) == len(rows)
-        assert int(summary.get("sample_count", -1)) == len(rows)
+        with zipfile.ZipFile(io.BytesIO(export_resp.body)) as archive:
+            manifest = json.loads(archive.read("raw-capture/manifest.json"))
+        assert int(manifest["total_samples"]) > 0
+        assert summary.get("raw_sample_count") == manifest["total_samples"]
         assert int(detail.get("sample_count", -1)) == len(rows)
 
         assert rows, "export contains no rows"

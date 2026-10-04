@@ -65,7 +65,8 @@ export interface RowModel {
   toggleLabel: string;
   toggleTitle: string;
   startedAt: string;
-  sampleCount: string;
+  /** Accelerometer samples in the raw capture; "--" when none was kept. */
+  rawSampleCount: string;
   /** Shown instead of the PDF button while the report is not ready. */
   reportPendingHint: string | null;
   pdfLabel: string;
@@ -442,7 +443,8 @@ export function buildRow(
       { runId: run.run_id },
     ),
     startedAt: f.fmtTs(run.start_time_utc),
-    sampleCount: formatInt(run.sample_count),
+    rawSampleCount:
+      run.raw_sample_count == null ? "--" : formatInt(run.raw_sample_count),
     reportPendingHint: reportReady(run)
       ? null
       : t("history.quick_report_pending"),
@@ -722,10 +724,33 @@ export function heatColor(norm: number): string {
   return `hsl(${Math.round(212 - norm * 190)} 76% 48%)`;
 }
 
+/** Heatmap keys of the locations a sensor was assigned to when the run started. */
+function assignedLocationKeys(
+  metadata: HistoryInsightsPayload["metadata"],
+): Set<string> {
+  const { sensor_snapshots: snapshots } = metadata;
+  const keys = new Set<string>();
+  for (const snapshot of Array.isArray(snapshots) ? snapshots : []) {
+    if (
+      typeof snapshot !== "object" ||
+      snapshot === null ||
+      Array.isArray(snapshot)
+    ) {
+      continue;
+    }
+    const { location_code: code } = snapshot;
+    if (typeof code === "string" && code.trim()) {
+      keys.add(heatmapLocationKey(code));
+    }
+  }
+  return keys;
+}
+
 export function buildHeatmap(
   summary: HistoryInsightsPayload,
   f: Pick<Formatters, "fmt" | "t">,
 ): HeatmapModel {
+  const assigned = assignedLocationKeys(summary.metadata);
   const metric = new Map<string, number>();
   const labels = new Map<string, string>();
   for (const row of summary.sensor_intensity_by_location ?? []) {
@@ -752,7 +777,12 @@ export function buildHeatmap(
         key: point.key,
         label,
         gridArea: point.area,
-        valueLabel: f.t("report.missing"),
+        // "missing" only when a sensor there sent nothing; most spots simply have none.
+        valueLabel: f.t(
+          assigned.has(point.key)
+            ? "report.missing"
+            : "history.heatmap_no_sensor",
+        ),
         strongest: false,
         accent: null,
       };

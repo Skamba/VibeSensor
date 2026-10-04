@@ -40,6 +40,7 @@ const SensorRow = memo(function SensorRow(props: {
       <td class="settings-sensor-row__location">
         <select
           class="row-location-select"
+          aria-label={t("settings.sensors.location")}
           data-client-id={id}
           value={props.locationCode}
           onChange={(event) => void setLocation(id, event.currentTarget.value)}

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import io
+import json
 import shutil
+import zipfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -12,12 +15,14 @@ from test_support.history_db_lifecycle import (
 )
 from test_support.history_db_sql import execute_statements as _execute_statements
 
+from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
     RawCaptureSensorClockSync,
 )
+from vibesensor.web.history_services import ProjectedHistoryExportService
 
 
 def _append_chunk(
@@ -239,3 +244,40 @@ def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path, db: H
     db.prune_terminal_runs_older_than_days(1)
 
     assert not raw_dir.exists()
+
+
+async def test_history_list_counts_raw_samples_and_export_carries_the_raw_capture(
+    db: HistoryDB,
+) -> None:
+    create_recording_run(db, "run-export")
+    create_recording_run(db, "run-no-raw", started_at="2026-01-02T00:00:00Z")
+    sensor_a = np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.int16)
+    sensor_b = np.asarray([[-1, -2, -3], [-4, -5, -6]], dtype=np.int16)
+    _append_chunk(db, run_id="run-export", client_id="sensor-a", t0_us=1000, samples=sensor_a)
+    _append_chunk(db, run_id="run-export", client_id="sensor-b", t0_us=1000, samples=sensor_b)
+    db.finalize_raw_capture("run-export")
+
+    counts = {entry.run_id: entry.raw_sample_count for entry in db.list_runs()}
+    assert counts == {"run-export": 5, "run-no-raw": None}
+
+    export = await ProjectedHistoryExportService(HistoryExportService(db)).build_export(
+        "run-export"
+    )
+    with zipfile.ZipFile(io.BytesIO(b"".join(export.iter_bytes()))) as archive:
+        names = set(archive.namelist())
+        manifest = json.loads(archive.read("raw-capture/manifest.json"))
+        raw_a = archive.read("raw-capture/sensor-a.raw.i16le")
+        index_b = archive.read("raw-capture/sensor-b.index.jsonl").decode()
+
+    assert names == {
+        "run-export.json",
+        "run-export_analysis_windows.csv",
+        "raw-capture/manifest.json",
+        "raw-capture/sensor-a.raw.i16le",
+        "raw-capture/sensor-a.index.jsonl",
+        "raw-capture/sensor-b.raw.i16le",
+        "raw-capture/sensor-b.index.jsonl",
+    }
+    assert manifest["total_samples"] == 5
+    assert np.array_equal(np.frombuffer(raw_a, dtype="<i2").reshape(-1, 3), sensor_a)
+    assert json.loads(index_b)["sample_count"] == 2

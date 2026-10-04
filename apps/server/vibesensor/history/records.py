@@ -47,12 +47,15 @@ class HistoryRunListEntry:
     start_time_utc: str
     end_time_utc: str | None
     created_at: str
+    # Stored analysis-window rows (``samples_v2``), not accelerometer samples.
     sample_count: int
     car_name: str | None = None
     error_message: str | None = None
     lifecycle: RunArtifactLifecycle | None = None
     artifact_availability: HistoryArtifactAvailability | None = None
     raw_capture_finalize: RunRawCaptureFinalize | None = None
+    # Accelerometer samples in the raw capture (all sensors); None without one.
+    raw_sample_count: int | None = None
 
     def to_json_object(self) -> JsonObject:
         """Serialize the list-entry record into a JSON-safe persistence payload."""
@@ -62,7 +65,7 @@ class HistoryRunListEntry:
             "start_time_utc": self.start_time_utc,
             "end_time_utc": self.end_time_utc,
             "created_at": self.created_at,
-            "sample_count": self.sample_count,
+            "raw_sample_count": self.raw_sample_count,
         }
         if self.car_name is not None:
             payload["car_name"] = self.car_name

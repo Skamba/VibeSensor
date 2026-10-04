@@ -367,11 +367,24 @@ def wait_report_pdf_ready(
 def parse_export_zip(raw: bytes) -> tuple[dict, list[dict[str, str]], set[str]]:
     with zipfile.ZipFile(io.BytesIO(raw), "r") as archive:
         names = set(archive.namelist())
-        json_name = next(name for name in names if name.endswith(".json"))
-        csv_name = next(name for name in names if name.endswith("_raw.csv"))
+        json_name = next(name for name in names if "/" not in name and name.endswith(".json"))
+        csv_name = next(name for name in names if name.endswith("_analysis_windows.csv"))
         run_json = json.loads(archive.read(json_name).decode("utf-8"))
         rows = list(csv.DictReader(io.StringIO(archive.read(csv_name).decode("utf-8"))))
     return run_json, rows, names
+
+
+def assert_export_entries(names: set[str], run_id: str) -> None:
+    """Top level holds the run JSON + analysis-window CSV; raw capture sits under raw-capture/."""
+    assert {name for name in names if "/" not in name} == {
+        f"{run_id}.json",
+        f"{run_id}_analysis_windows.csv",
+    }
+    raw_names = {name for name in names if name.startswith("raw-capture/")}
+    assert "raw-capture/manifest.json" in raw_names
+    assert any(name.endswith(".raw.i16le") for name in raw_names)
+    assert any(name.endswith(".index.jsonl") for name in raw_names)
+    assert names == raw_names | {f"{run_id}.json", f"{run_id}_analysis_windows.csv"}
 
 
 def run_cleanup_steps(*steps: tuple[str, Callable[[], object]]) -> None:

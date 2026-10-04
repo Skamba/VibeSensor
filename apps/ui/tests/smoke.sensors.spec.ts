@@ -138,3 +138,66 @@ test("journey: Sensors tab shows the empty state without live sensors", async ({
   );
   await expect(guide).toContainText("Never on the wheel or tire");
 });
+
+test("journey: Settings fits a phone and the sensor row stays usable", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installCommonRoutes(page, {
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+  });
+  await installFakeWebSocket(page, {
+    payload: {
+      clients: [
+        {
+          id: CONNECTED_ID,
+          name: "Front Left",
+          connected: true,
+          sample_rate_hz: 800,
+          last_seen_age_ms: 10,
+          dropped_frames: 0,
+          frames_total: 100,
+          location_code: "",
+          mac_address: CONNECTED_ID,
+          firmware_version: "fw-1.0.0",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+
+  const pageOverflow = () =>
+    page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
+    );
+  const tabs = page.locator("#settingsView [role='tab']");
+  const count = await tabs.count();
+  expect(count).toBeGreaterThan(5);
+  for (let index = 0; index < count; index += 1) {
+    // A plain click: no neighbouring tab may cover the target.
+    await tabs.nth(index).click();
+    await expect(tabs.nth(index)).toHaveAttribute("aria-selected", "true");
+    expect(await pageOverflow()).toBeLessThanOrEqual(0);
+  }
+
+  await openSensorsTab(page);
+  const row = page.locator(
+    `#sensorsSettingsBody tr[data-client-id="${CONNECTED_ID}"]`,
+  );
+  for (const control of [
+    row.getByRole("combobox", { name: "Location" }),
+    row.locator(".row-identify"),
+    row.locator(".row-remove"),
+  ]) {
+    // Fully inside the phone's width, not in a sideways-scrolled table.
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+  }
+  expect(await pageOverflow()).toBeLessThanOrEqual(0);
+});

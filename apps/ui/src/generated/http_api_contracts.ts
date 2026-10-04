@@ -743,8 +743,9 @@ export interface components {
             finalization_stages?: components["schemas"]["HistoryFinalizationStageResponse"][] | null;
             lifecycle?: components["schemas"]["HistoryRunLifecycleResponse"] | null;
             raw_capture_finalize?: components["schemas"]["HistoryRawCaptureFinalizeResponse"] | null;
+            /** Accelerometer samples in the raw capture across all sensors; null when the run has no raw capture. */
+            raw_sample_count?: number | null;
             run_id: string;
-            sample_count: number;
             start_time_utc: string;
             status: string;
         };

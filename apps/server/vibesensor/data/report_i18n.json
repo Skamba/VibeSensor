@@ -232,8 +232,8 @@
     "nl": "Wat deze test dekte"
   },
   "COVERED_BODY": {
-    "en": "{low}–{high} km/h ({phases}) with sensors at {locations}.",
-    "nl": "{low}–{high} km/h ({phases}) met sensoren bij {locations}."
+    "en": "{speeds} ({phases}) with sensors at {locations}.",
+    "nl": "{speeds} ({phases}) met sensoren bij {locations}."
   },
   "DESC_FREQUENCY": {
     "en": "A vibration at {hz}",
@@ -244,8 +244,8 @@
     "nl": "Een trilling die {order} terugkomt ({hz} bij {speed})"
   },
   "DESC_PRESENT_AT": {
-    "en": "present at {low}–{high} km/h",
-    "nl": "aanwezig bij {low}–{high} km/h"
+    "en": "present at {speeds}",
+    "nl": "aanwezig bij {speeds}"
   },
   "DESC_PRESENT_RANGE": {
     "en": "present across {low}–{high} km/h",
@@ -908,8 +908,8 @@
     "nl": "ruisvloer"
   },
   "SPECTRUM_TITLE": {
-    "en": "Recurring peaks at {location}, {low}-{high} km/h",
-    "nl": "Terugkerende pieken bij {location}, {low}-{high} km/h"
+    "en": "Recurring peaks at {location}, {speeds}",
+    "nl": "Terugkerende pieken bij {location}, {speeds}"
   },
   "SPEED_CHART_TITLE": {
     "en": "{order} amplitude vs speed",

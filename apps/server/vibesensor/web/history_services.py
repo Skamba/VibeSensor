@@ -117,13 +117,18 @@ class ProjectedHistoryExportService:
     def _build_export_download(self, context: HistoryExportContext) -> HistoryExportDownload:
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
+            dir=str(context.spool_dir),
         )
         download_built = False
         try:
             with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
-                context.raw_csv_spool.seek(0)
-                with archive.open(f"{context.safe_name}_raw.csv", mode="w") as raw_csv:
-                    shutil.copyfileobj(context.raw_csv_spool, raw_csv)
+                context.windows_csv_spool.seek(0)
+                with archive.open(
+                    f"{context.safe_name}_analysis_windows.csv", mode="w"
+                ) as windows_csv:
+                    shutil.copyfileobj(context.windows_csv_spool, windows_csv)
+                for path in context.raw_capture_files:
+                    archive.write(path, arcname=f"raw-capture/{path.name}")
                 archive.writestr(
                     f"{context.safe_name}.json",
                     build_projected_run_details_json(
@@ -143,4 +148,4 @@ class ProjectedHistoryExportService:
         finally:
             if not download_built:
                 spool.close()
-            context.raw_csv_spool.close()
+            context.windows_csv_spool.close()

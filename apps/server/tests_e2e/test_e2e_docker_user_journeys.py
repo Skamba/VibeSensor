@@ -14,6 +14,7 @@ import pytest
 from tests_e2e.e2e_helpers import (
     api_bytes,
     api_json,
+    assert_export_entries,
     parse_export_zip,
     pdf_text,
     remove_all_clients,
@@ -232,7 +233,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
             export_resp = wait_export_ready(base_url, run_id_2)
             assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
             run_details, rows, names = parse_export_zip(export_resp.body)
-            assert names == {f"{run_id_2}.json", f"{run_id_2}_raw.csv"}
+            assert_export_entries(names, run_id_2)
             assert str(run_details.get("run_id")) == run_id_2
             assert rows
             speed_values = [

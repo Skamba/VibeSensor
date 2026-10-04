@@ -33,7 +33,7 @@ function historyListRun(runId: string): HistoryEntry {
     run_id: runId,
     start_time_utc: "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
-    sample_count: 2048,
+    raw_sample_count: 9600,
     status: "complete",
     car_name: "Track Car",
     error_message: null,
@@ -174,6 +174,11 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
     'history.confidence:{"level":"history.confidence_level.strong"} · history.summary_size: 12.3 s · history.summary_sensor_count: 2',
   );
   expect(row.reportPendingHint).toBeNull();
+  expect(row.rawSampleCount).toBe("9600");
+  expect(
+    buildRow({ ...run, raw_sample_count: null }, detail, true, f)
+      .rawSampleCount,
+  ).toBe("--");
 
   const details = buildDetails(run, detail, f);
   if (details.insights.kind !== "findings") {
@@ -486,4 +491,33 @@ test("maps location names onto heatmap positions and scales the colour", () => {
     strongest: true,
     accent: { fillPercent: 50 },
   });
+});
+
+test("heatmap says 'no sensor' where none was assigned, 'missing' where one sent nothing", () => {
+  const heatmap = buildHeatmap(
+    makeHistoryInsightsPayload({
+      metadata: {
+        sensor_snapshots: [
+          { sensor_id: "a", location_code: "front_left_wheel" },
+          { sensor_id: "b", location_code: "rear_right_wheel" },
+        ],
+      },
+      sensor_intensity_by_location: [
+        makeLocationIntensityRow({
+          location: "Front Left Wheel",
+          p95_intensity_db: 7.5,
+        }),
+      ],
+    }),
+    f,
+  );
+  if (heatmap.kind !== "zones") {
+    throw new Error("expected zones");
+  }
+  const value = (key: string) =>
+    heatmap.zones.find((zone) => zone.key === key)?.valueLabel;
+  expect(value("front-left wheel")).toBe("7.5 dB");
+  expect(value("rear-right wheel")).toBe("report.missing");
+  expect(value("engine bay")).toBe("history.heatmap_no_sensor");
+  expect(value("trunk")).toBe("history.heatmap_no_sensor");
 });

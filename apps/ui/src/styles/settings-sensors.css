@@ -50,3 +50,49 @@
   font-size: 0.86rem;
   line-height: 1.45;
 }
+/* Phones: one stacked card per sensor so the location picker and actions stay
+   on screen instead of in a sideways-scrolling table. */
+@media (max-width: 720px) {
+  .settings-entity-table--sensors,
+  .settings-entity-table--sensors tbody,
+  .settings-entity-table--sensors tr,
+  .settings-entity-table--sensors td {
+    display: block;
+  }
+  .settings-entity-table--sensors thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .settings-entity-table--sensors tr {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+  .settings-entity-table--sensors td,
+  .settings-entity-table--sensors td:first-child,
+  .settings-entity-table--sensors td:nth-child(2),
+  .settings-entity-table--sensors td:last-child {
+    min-width: 0;
+    width: auto;
+    padding: 0 var(--space-2);
+    border-bottom: none;
+    white-space: normal;
+  }
+  .settings-entity-table--sensors tbody tr:nth-child(even) {
+    background: var(--row-even);
+  }
+  .settings-entity-table--sensors tbody tr td,
+  .settings-entity-table--sensors tbody tr:nth-child(even) td,
+  .settings-entity-table--sensors tbody tr:hover td {
+    background: none;
+  }
+  .settings-sensor-row__location select {
+    width: 100%;
+    min-width: 0;
+  }
+}

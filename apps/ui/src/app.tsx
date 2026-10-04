@@ -351,11 +351,29 @@ function View(props: { id: ViewId; children: ComponentChildren }) {
 
 function SettingsTabs() {
   const current = settingsTab.value;
+  const visible = activeView.value === "settingsView";
+  const strip = useRef<HTMLDivElement>(null);
   const activate = (id: SettingsTabId) => {
     settingsTab.value = id;
   };
+  // On a phone the strip scrolls; keep the selected tab (e.g. a deep link to
+  // Sensors) in view without scrolling the page.
+  useEffect(() => {
+    const box = strip.current;
+    const tab = box?.querySelector('[aria-selected="true"]');
+    if (!box || !visible || !(tab instanceof HTMLElement)) {
+      return;
+    }
+    const outer = box.getBoundingClientRect();
+    const inner = tab.getBoundingClientRect();
+    if (inner.left < outer.left) {
+      box.scrollLeft += inner.left - outer.left;
+    } else if (inner.right > outer.right) {
+      box.scrollLeft += inner.right - outer.right;
+    }
+  }, [current, visible]);
   return (
-    <div class="settings-tabs" role="tablist">
+    <div class="settings-tabs" role="tablist" ref={strip}>
       {SETTINGS_TAB_IDS.map((id, index) => (
         <button
           key={id}

@@ -318,7 +318,7 @@ def test_spectrum_leaves_out_standstill_when_no_speed_repeats() -> None:
     view = report_view_for(run_analysis([*moving, *idling]))
 
     assert view.mechanic.spectrum is not None
-    assert view.mechanic.spectrum.title.endswith(", 30-120 km/h"), view.mechanic.spectrum.title
+    assert view.mechanic.spectrum.title.endswith(", 30–120\u00a0km/h"), view.mechanic.spectrum.title
 
 
 def test_moderate_fault_adds_the_cheap_confirming_check() -> None:
@@ -430,6 +430,57 @@ def test_quality_collapses_to_one_footer_line_only_when_everything_passed() -> N
 
     assert not warned.all_passed
     assert warned.warnings == ("Some sensor data packets were lost during recording.",)
+
+
+def test_quality_warning_states_each_check_once_and_keeps_measured_counts() -> None:
+    summary = deepcopy(_wheel_summary())
+    states = {
+        "SUITABILITY_CHECK_SENSOR_COVERAGE": ("SUITABILITY_SENSOR_COVERAGE_WARN", {}),
+        "SUITABILITY_CHECK_FRAME_INTEGRITY": (
+            "SUITABILITY_FRAME_INTEGRITY_WARN",
+            {"total_dropped": 3, "total_overflow": 1},
+        ),
+        "SUITABILITY_CHECK_SPEED_VARIATION": ("SUITABILITY_SPEED_VARIATION_WARN", {}),
+    }
+    for check in summary["run_suitability"]:
+        if check["check_key"] in states:
+            key, params = states[check["check_key"]]
+            check["state"] = "warn"
+            check["explanation"] = {"_i18n_key": key, **params}
+    details = {
+        lang: {c.label: c.detail for c in report_view_for(summary, lang=lang).quality.checks}
+        for lang in ("en", "nl")
+    }
+
+    assert details["en"]["Sensor coverage"] == (
+        "Few sensors were active, so the location is less certain."
+    )
+    assert details["nl"]["Sensordekking"] == (
+        "Er waren weinig sensoren actief, dus de locatie is minder zeker."
+    )
+    assert details["en"]["Frame integrity"] == (
+        "Some sensor data was lost or incomplete. 3 dropped frames, 1 queue overflows detected."
+    )
+    assert details["en"]["Speed variation"] == (
+        "The speed could not tell wheel, propshaft and engine orders apart. "
+        "Too little of the run had a known speed; record with GPS or OBD-II speed above 20 km/h."
+    )
+
+
+def test_a_steady_speed_reads_as_one_speed_not_a_range() -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["speed_stats"].update(min_kmh=50.0, max_kmh=50.0)
+    summary["diagnosis"].update(speed_min_kmh=50.0, speed_max_kmh=50.0)
+    summary["diagnosis"]["spectrum"].update(speed_min_kmh=50.0, speed_max_kmh=50.0)
+    view = report_view_for(summary)
+    text = _all_text(view)
+
+    assert "50–50" not in text
+    assert "present at 50\u00a0km/h" in view.owner.description
+    assert view.mechanic.spectrum is not None
+    assert view.mechanic.spectrum.title.endswith(", 50\u00a0km/h")
+    healthy = report_view_for(_healthy_summary())
+    assert healthy.owner.covered is not None and "–" not in healthy.owner.covered.split("(")[0]
 
 
 def test_speed_chart_only_when_the_speed_range_was_swept() -> None:

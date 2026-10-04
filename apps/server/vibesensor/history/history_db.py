@@ -563,6 +563,16 @@ class HistoryDB:
             return None
         return self._raw_capture_store.load_capture(manifest)
 
+    def raw_capture_files(self, run_id: str) -> tuple[Path, ...]:
+        """The run's raw capture on disk: its manifest plus each sensor's data and index.
+
+        Empty when the run recorded no raw capture or its files were pruned.
+        """
+        manifest = self.get_raw_capture_manifest(run_id)
+        if manifest is None:
+            return ()
+        return self._raw_capture_store.artifact_files(manifest)
+
     def requeue_outdated_analyses(self) -> list[str]:
         """Send complete runs analysed under an older schema back to analysis.
 

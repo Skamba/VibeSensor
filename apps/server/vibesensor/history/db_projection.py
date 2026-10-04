@@ -247,6 +247,13 @@ def project_run_list_entry(
         has_analysis=analysis is not None,
         analysis_corrupt=analysis_corrupt,
     )
+    raw_capture_manifest = coerce_raw_capture_manifest(
+        run_id=normalized_run_id,
+        manifest_json=str(raw_capture_manifest_json)
+        if raw_capture_manifest_json is not None
+        else None,
+        source="list_runs",
+    )
     return HistoryRunListEntry(
         run_id=normalized_run_id,
         status=status,
@@ -259,6 +266,9 @@ def project_run_list_entry(
         lifecycle=lifecycle,
         artifact_availability=_artifact_availability(lifecycle=lifecycle),
         raw_capture_finalize=raw_capture_finalize,
+        raw_sample_count=(
+            raw_capture_manifest.total_samples if raw_capture_manifest is not None else None
+        ),
     )
 
 

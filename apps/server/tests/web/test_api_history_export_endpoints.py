@@ -9,6 +9,8 @@ import pytest
 from _history_endpoint_helpers import make_app_and_state
 from fastapi.testclient import TestClient
 
+_WINDOWS_CSV = "run-1_analysis_windows.csv"
+
 
 def test_history_export_streams_zip_with_json_and_csv() -> None:
     app, _ = make_app_and_state(language="en", sample_count=3)
@@ -18,11 +20,11 @@ def test_history_export_streams_zip_with_json_and_csv() -> None:
     body = response.content
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         names = set(archive.namelist())
-        assert names == {"run-1.json", "run-1_raw.csv"}
+        assert names == {"run-1.json", _WINDOWS_CSV}
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
         assert metadata["run_id"] == "run-1"
         assert metadata["sample_count"] == 3
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
         assert len(rows) == 3
 
 
@@ -33,7 +35,7 @@ def test_history_export_csv_nested_values_are_json() -> None:
 
     body = response.content
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
     assert len(rows) == 3
     for row in rows:
         raw = row.get("top_peaks", "")
@@ -61,7 +63,7 @@ def test_history_export_single_pass_fixed_columns() -> None:
     assert call_count == 1
     body = response.content
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
         assert len(rows) == 50
 
 
@@ -87,7 +89,7 @@ def test_history_export_csv_has_fixed_columns() -> None:
 
     body = response.content
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
-        reader = csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8")))
+        reader = csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8")))
         assert tuple(reader.fieldnames or []) == EXPORT_CSV_COLUMNS
 
 
@@ -99,11 +101,11 @@ def test_history_export_large_run() -> None:
     body = response.content
     with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         names = set(archive.namelist())
-        assert "run-1_raw.csv" in names
+        assert "run-1_analysis_windows.csv" in names
         assert "run-1.json" in names
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
         assert metadata["sample_count"] == 1000
-        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        rows = list(csv.DictReader(io.StringIO(archive.read(_WINDOWS_CSV).decode("utf-8"))))
         assert len(rows) == 1000
 
 

@@ -79,5 +79,7 @@ export function formatSpeedRange(
   }
   const low = fmt(kmhInUnit(lowKmh, unit), 0);
   const high = fmt(kmhInUnit(highKmh, unit), 0);
-  return `${low}–${high} ${t(speedUnitKey(unit))}`;
+  // A steady run (or one that rounds to one value) reads "50 km/h", not "50–50".
+  const value = low === high ? low : `${low}–${high}`;
+  return `${value} ${t(speedUnitKey(unit))}`;
 }

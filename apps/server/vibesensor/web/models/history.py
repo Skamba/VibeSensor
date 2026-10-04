@@ -82,7 +82,11 @@ class HistoryListEntryResponse(BaseModel):
     start_time_utc: str
     end_time_utc: str | None = None
     created_at: str
-    sample_count: int
+    raw_sample_count: int | None = Field(
+        default=None,
+        description="Accelerometer samples in the raw capture across all sensors; "
+        "null when the run has no raw capture.",
+    )
     car_name: str | None = None
     error_message: str | None = None
     lifecycle: HistoryRunLifecycleResponse | None = None
