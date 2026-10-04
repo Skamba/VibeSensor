@@ -28,12 +28,7 @@ SENSOR_FR = "front-right"
 SENSOR_RL = "rear-left"
 SENSOR_RR = "rear-right"
 ALL_WHEEL_SENSORS = [SENSOR_FL, SENSOR_FR, SENSOR_RL, SENSOR_RR]
-ALL_SENSORS = ALL_WHEEL_SENSORS  # convenience alias
 
-# Speed bands
-SPEED_LOW = 50.0  # km/h  (wheel_1x ≈ 6.5 Hz with default tires, above MIN_ANALYSIS_FREQ_HZ)
-SPEED_MID = 60.0
-SPEED_HIGH = 100.0
 # ---------------------------------------------------------------------------
 # Car profiles – five realistic vehicle configurations for cross-profile
 # parameterised testing.  Each profile overrides tire geometry and drivetrain

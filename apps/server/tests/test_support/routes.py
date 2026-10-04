@@ -23,3 +23,10 @@ def iter_api_routes(routes: Iterable[Any]) -> Iterator[APIRoute]:
         nested = getattr(container, "routes", None)
         if nested is not None:
             yield from iter_api_routes(nested)
+
+
+def response_payload(response: Any) -> Any:
+    """JSON-ready payload of a route response model (or the value itself)."""
+    if hasattr(response, "model_dump"):
+        return response.model_dump(mode="json")
+    return response

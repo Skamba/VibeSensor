@@ -79,33 +79,6 @@ def make_finding_payload(
     return base
 
 
-def make_ref_finding(finding_id: str = "REF_SPEED", **overrides: object) -> FindingPayload:
-    """Build a reference-type finding payload."""
-    return make_finding_payload(
-        finding_id=finding_id,
-        suspected_source="unknown",
-        confidence=None,
-        severity="reference",
-        ranking_score=0.0,
-        **overrides,
-    )
-
-
-def make_info_finding(
-    finding_id: str = "F_PEAK",
-    confidence: float = 0.10,
-    **overrides: object,
-) -> FindingPayload:
-    """Build an informational finding payload."""
-    return make_finding_payload(
-        finding_id=finding_id,
-        suspected_source="transient_impact",
-        confidence=confidence,
-        severity="info",
-        **overrides,
-    )
-
-
 NO_FAULT_DIAGNOSIS: DiagnosisPayload = {
     "verdict": "no_fault",
     "confidence_level": None,

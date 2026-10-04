@@ -7,10 +7,8 @@ from typing import Any
 import pytest
 from test_support.analysis import run_analysis
 from test_support.core import standard_metadata, wheel_hz
-from test_support.fault_scenarios import (
-    make_engine_order_samples,
-)
 from test_support.findings import make_finding
+from test_support.synthetic_samples import make_engine_order_samples
 
 from vibesensor.analysis.diagnosis import build_diagnosis
 from vibesensor.domain.finding import Finding

@@ -44,3 +44,43 @@ def test_missing_catalog_fails_loudly(monkeypatch: pytest.MonkeyPatch, tmp_path:
     finally:
         monkeypatch.undo()
         report_i18n._load_translations.cache_clear()
+
+
+def _resolve(lang: str, value: object) -> str:
+    return report_i18n.resolve_i18n(
+        lang, value, tr=lambda key, **kw: report_i18n.tr(lang, key, **kw)
+    )
+
+
+def test_lists_of_text_refs_are_joined() -> None:
+    refs = [{"_i18n_key": "VALUE_UNKNOWN"}, {"_i18n_key": "VALUE_UNKNOWN"}]
+    assert _resolve("en", refs) == "unknown unknown"
+
+
+def test_parameters_that_are_codes_are_translated_too() -> None:
+    ref = {"_i18n_key": "ORIGIN_PHASE_ONSET_NOTE", "phase": "acceleration"}
+    assert _resolve("en", ref) == "Vibration onset consistent with acceleration phase."
+    assert _resolve("nl", ref) == "Trillingsaanvang consistent met de acceleratiefase."
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("en", "en"),
+        ("nl", "nl"),
+        ("nl-BE", "nl"),
+        ("NL-NL", "nl"),
+        ("  NL ", "nl"),
+        ("nl_BE.UTF-8", "nl"),
+        ("nld", "nl"),
+        ("fr", "en"),
+        ("en-US", "en"),
+        (None, "en"),
+        (42, "en"),
+        ("", "en"),
+    ],
+)
+def test_report_language_accepts_locale_variants_and_falls_back_to_english(
+    raw: object, expected: str
+) -> None:
+    assert report_i18n.normalize_lang(raw) == expected

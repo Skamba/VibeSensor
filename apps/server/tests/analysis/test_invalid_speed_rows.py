@@ -6,14 +6,9 @@ import math
 from typing import Any
 
 import pytest
-from test_support import (
-    ALL_WHEEL_SENSORS,
-    SENSOR_FL,
-    SENSOR_RR,
-    make_sample,
-    run_analysis,
-    wheel_hz,
-)
+from test_support.analysis import run_analysis
+from test_support.core import ALL_WHEEL_SENSORS, SENSOR_FL, SENSOR_RR, wheel_hz
+from test_support.synthetic_samples import make_sample
 
 
 def _make_speed_scenario_samples(

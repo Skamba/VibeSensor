@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from test_support import (
-    ALL_SENSORS,
+from test_support.core import (
+    ALL_WHEEL_SENSORS,
     assert_summary_sections,
     assert_top_cause_contract,
-    make_sample,
     standard_metadata,
     wheel_hz,
 )
+from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis.location_analysis import summarize_order_match_locations
 from vibesensor.analysis.summarize import summarize_run_data
@@ -75,7 +75,7 @@ def test_a_wheel_sensor_that_drops_out_and_rejoins_does_not_move_the_fault() -> 
     samples: list[dict[str, Any]] = []
     whz = wheel_hz(80.0)
     for i in range(40):
-        for sensor in ALL_SENSORS:
+        for sensor in ALL_WHEEL_SENSORS:
             if sensor == "rear-left" and 10 <= i < 20:
                 continue
             if sensor == "front-right":

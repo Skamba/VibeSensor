@@ -10,19 +10,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_support import (
-    ALL_WHEEL_SENSORS,
-    make_fault_samples,
-    make_noise_samples,
-    standard_metadata,
-)
+from test_support.core import ALL_WHEEL_SENSORS, standard_metadata
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.synthetic_samples import make_fault_samples, make_noise_samples
 
 from vibesensor.analysis._run_input import build_diagnostics_run_input
 from vibesensor.analysis.run_analysis import AnalysisResult, RunAnalysis
 from vibesensor.analysis.summarize import analysis_result_to_summary
-from vibesensor.domain.diagnostic_case import DiagnosticCase
-from vibesensor.domain.test_run import TestRun
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.projection import project_analysis_summary
 from vibesensor.history.records import StoredHistoryRun
@@ -117,25 +111,6 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
 
 
 # -- T9.20: Analysis produces wired domain aggregates ---------------------
-
-
-def test_analysis_produces_wired_domain_aggregates() -> None:
-    """Analysis must produce TestRun and DiagnosticCase with correct wiring."""
-    _analysis, result = _run_analysis()
-
-    assert isinstance(result.test_run, TestRun)
-    assert isinstance(result.diagnostic_case, DiagnosticCase)
-
-    # diagnostic_case.primary_run is wired to the same TestRun
-    assert result.diagnostic_case.primary_run is not None
-    assert result.diagnostic_case.primary_run.run_id == result.test_run.run_id
-
-    # domain aggregates reflect summary content
-    assert len(result.test_run.top_causes) > 0
-    assert result.test_run.run_id == "run-roundtrip"
-    top = result.test_run.top_causes[0]
-    summary = analysis_result_to_summary(result)
-    assert str(top.suspected_source) == summary["top_causes"][0]["suspected_source"]
 
 
 # -- T9.21+T9.22: Persist → reload → project preserves domain meaning -----

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from test_support.sample_scenarios import make_sample
+from test_support.synthetic_samples import make_sample
 
 from vibesensor.recording.sensor_frame_fields import (
     SENSOR_FRAME_FIELD_NAMES,

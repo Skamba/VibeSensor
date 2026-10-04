@@ -20,6 +20,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       firmware: ${{ steps.filter.outputs.firmware }}
+      diagnosis: ${{ steps.filter.outputs.diagnosis }}
 
     steps:
       - uses: actions/checkout@v7
@@ -47,6 +48,19 @@ jobs:
               - 'tools/config/**'
               - 'Makefile'
               - '.nvmrc'
+              - '.github/workflows/ci.yml'
+            diagnosis:
+              - 'apps/server/vibesensor/analysis/**'
+              - 'apps/server/vibesensor/data/**'
+              - 'apps/server/vibesensor/domain/**'
+              - 'apps/server/vibesensor/dsp/**'
+              - 'apps/server/vibesensor/ingest/**'
+              - 'apps/server/vibesensor/recording/**'
+              - 'apps/server/vibesensor/report/**'
+              - 'apps/server/vibesensor/simulator/**'
+              - 'apps/server/vibesensor/summary/**'
+              - 'apps/server/tests/integration/test_diagnosis_accuracy_benchmark.py'
+              - 'apps/server/tests/test_support/sim_pipeline.py'
               - '.github/workflows/ci.yml'
             firmware:
               - 'firmware/**'
@@ -95,6 +109,23 @@ jobs:
 
       - name: Tests
         run: make test
+
+  diagnosis-matrix:
+    # The accuracy benchmark over five more sensor-id seeds (4/5 must pass). It
+    # catches diagnosis regressions that pass on the CI seed but not on others.
+    name: Diagnosis seed matrix
+    needs: changes
+    if: ${{ needs.changes.outputs.diagnosis == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-backend
+
+      - name: Benchmark seed matrix
+        run: make test-diagnostic-matrix
 
   frontend:
     name: Frontend

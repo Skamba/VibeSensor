@@ -8,10 +8,8 @@ from vibesensor.domain.location_hotspot import (
     LocationHotspot,
     LocationHotspotRow,
     LocationIntensitySummary,
-    PhaseIntensitySummary,
     StrengthBucketDistribution,
 )
-from vibesensor.summary.hotspot_fields import location_intensity_summary_from_mapping
 from vibesensor.summary.origin_fields import location_hotspot_from_payload
 
 
@@ -446,59 +444,6 @@ class TestLocationHotspotValueObject:
 
 
 class TestLocationIntensitySummaryRows:
-    def test_boundary_codec_parses_typed_nested_values(self) -> None:
-        summary = location_intensity_summary_from_mapping(
-            {
-                "location": "rear_axle",
-                "partial_coverage": True,
-                "samples": 50,
-                "sample_coverage_ratio": 0.8,
-                "sample_coverage_warning": False,
-                "usable_sample_count": 42,
-                "usable_sample_coverage_ratio": 0.7,
-                "usable_sample_coverage_warning": True,
-                "mean_intensity_db": 10.0,
-                "p50_intensity_db": 9.0,
-                "p95_intensity_db": 15.0,
-                "max_intensity_db": 20.0,
-                "dropped_frames_delta": 0.0,
-                "queue_overflow_drops_delta": None,
-                "strength_bucket_distribution": {
-                    "total": 5,
-                    "counts": {"l0": 5},
-                    "percent_time_l0": 100.0,
-                },
-                "phase_intensity": {
-                    "cruise": {
-                        "count": 2,
-                        "mean_intensity_db": 12.0,
-                        "max_intensity_db": 14.0,
-                    },
-                },
-            }
-        )
-
-        assert summary.location == "rear_axle"
-        assert summary.partial_coverage is True
-        assert summary.sample_count == 50  # from the legacy "samples" key
-        assert summary.usable_sample_count == 42
-        assert summary.diagnostic_sample_count == 42
-        assert summary.diagnostic_sample_coverage_ratio == 0.7
-        assert summary.diagnostic_sample_coverage_warning is True
-        assert summary.p95_intensity_db == 15.0
-        assert summary.strength_bucket_distribution == StrengthBucketDistribution(
-            total=5,
-            counts={"l0": 5},
-            percent_time_l0=100.0,
-        )
-        assert summary.phase_intensity == {
-            "cruise": PhaseIntensitySummary(count=2, mean_intensity_db=12.0, max_intensity_db=14.0),
-        }
-
-    def test_boundary_codec_prefers_sample_count_key(self) -> None:
-        raw = {"location": "x", "sample_count": 42, "sample_coverage_ratio": 0.5}
-        assert location_intensity_summary_from_mapping(raw).sample_count == 42
-
     def test_diagnostic_fields_prefer_usable_sample_metrics(self) -> None:
         summary = LocationIntensitySummary(
             location="front_left",

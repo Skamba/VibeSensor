@@ -8,21 +8,9 @@ from dataclasses import dataclass
 from vibesensor.common.scalars import coerce_count, text_or_none
 
 __all__ = [
-    "REPORT_ANALYSIS_METADATA_STABLE_KEYS",
     "ReportAnalysisMetadata",
     "report_analysis_metadata_from_mapping",
-    "report_analysis_metadata_from_payload",
 ]
-
-REPORT_ANALYSIS_METADATA_STABLE_KEYS = frozenset(
-    {
-        "raw_backed_sample_count",
-        "raw_capture_available",
-        "raw_capture_finalize_status",
-        "raw_capture_loss_policy_severity",
-        "raw_capture_mode",
-    }
-)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,12 +25,6 @@ class ReportAnalysisMetadata:
     raw_capture_mode: str | None
 
     @property
-    def data_basis(self) -> str:
-        if self.raw_capture_mode in {"raw_backed", "partial_raw_backed", "summary_only"}:
-            return self.raw_capture_mode
-        return "raw_backed" if self.raw_backed_sample_count > 0 else "summary_only"
-
-    @property
     def has_fatal_raw_capture_loss(self) -> bool:
         return self.raw_capture_loss_policy_severity == "fatal"
 
@@ -51,14 +33,6 @@ class ReportAnalysisMetadata:
         return self.raw_capture_mode == "summary_only" or (
             self.raw_capture_mode is None and self.raw_backed_sample_count <= 0
         )
-
-
-def report_analysis_metadata_from_payload(
-    payload: Mapping[str, object],
-) -> ReportAnalysisMetadata:
-    raw_metadata = payload.get("analysis_metadata")
-    raw = raw_metadata if isinstance(raw_metadata, Mapping) else None
-    return report_analysis_metadata_from_mapping(raw)
 
 
 def report_analysis_metadata_from_mapping(

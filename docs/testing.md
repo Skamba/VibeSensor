@@ -7,7 +7,7 @@ High-traffic validation router. Keep this concise; use Makefile targets and scri
 - Backend iteration: `make test` or targeted `pytest -q apps/server/tests/<module>/`.
 - Before pushing: `make ci` runs lint, backend/UI type checks, backend tests, and UI unit tests.
 - Docs/instruction-only changes need no local gate.
-- Diagnosis accuracy across more sensor-id seeds: `make test-diagnostic-matrix` (default backend CI runs one seed).
+- Diagnosis accuracy across more sensor-id seeds: `make test-diagnostic-matrix` (CI runs it when diagnosis paths change).
 - Simulator, UDP ingest, recording, post-analysis, or persistence changes: also run the process-backed e2e suite (`make test-e2e`); `make ci` does not run it.
 - UI validation: `make ui-typecheck`; add UI test/build commands below when the changed seam requires them.
 - Firmware and Pi image validation: use the narrow commands below; avoid hardware/full image builds unless required.
@@ -59,7 +59,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 
 - Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, the report's owner-page text, and the amplitude-vs-speed chart for swept faults. A few drives per report variant are also rendered to PDF in English and Dutch.
 - Sensor layouts are part of the cases: one sensor, sensors in the cabin only, and a sensor on every mounting point (`Case.layout`).
-- Default CI runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes.
+- The backend job runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes; CI runs it as the `diagnosis-matrix` job when diagnosis-related paths change (it kills mutants the single seed misses).
 - Network and clock conditions are part of the cases: a sensor losing frames, busy Wi-Fi delaying clock-sync replies, and a car start where recording begins before the sensor clocks sync (device timers within ~2 s of server time), optionally on congested Wi-Fi where the simulated firmware retransmits frames stop-and-wait (`Case.car_start`, `Case.wifi_retry_loss`). Each sensor's raw capture must stay on one continuous clock.
 - Every analysis rule should be justified by a case it changes for the better; a rule that changes no realistic case is a candidate for deletion. A miss is fixed at its root cause, not listed as an expected failure.
 - New simulator scenarios need a ground-truth entry there; prefer adding a case over adding hand-built peak fixtures in `tests/analysis/`.
@@ -77,7 +77,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Test module basenames must be unique across `apps/server/tests/` (the tree has no `__init__.py` files).
 - Shared helpers live in `apps/server/tests/test_support/`. The vehicle-library data validator the settings tests gate on lives in `tools/car_library/car_library_validation/` (on the pytest `pythonpath`).
 - Do not create test roots that do not match a backend package (for example `api/`, `config/`, `gps/`, `metrics_log/`, `processing/`, `protocol/`, `update/`, or `websocket/`).
-- Contract bridge tests live in `apps/server/tests/integration/` and validate subsystem handoffs such as analysis -> report and persistence -> analysis.
+- Subsystem handoffs (ingest -> recording -> persistence -> analysis -> report) are checked end to end by the accuracy benchmark and the e2e suite; `tests/integration/` holds only cross-cutting cases they cannot reach.
 
 ## Backend test rules
 
@@ -87,7 +87,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Import-direction rules are import-linter contracts in `apps/server/pyproject.toml`; `make lint` runs them. Tests must not parse or inspect production source (Ruff `TID251` bans `ast.parse` / `inspect.getsource` in tests).
 - Temporary migration/absence tests must name the stable boundary they protect and be removed once positive current-behavior coverage exists.
 - Use the `smoke`, `long_sim`, and `e2e` markers sparingly.
-- `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them.
+- `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them; the `diagnosis-matrix` CI job runs them.
 - For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
 ## Frontend validation
@@ -148,6 +148,7 @@ Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make tar
 | `backend` | backend paths | `pip check`, `make lint` (Ruff, ShellCheck, deptry, import layers, config preflight), `make typecheck-backend`, `make test` |
 | `frontend` | frontend paths | `make ui-typecheck`, `make ui-test` |
 | `ui-smoke` | frontend paths | `cd apps/ui && npm run test:smoke` |
+| `diagnosis-matrix` | analysis, dsp, domain, ingest, recording, report, simulator, summary or benchmark paths | `make test-diagnostic-matrix` |
 | `integration` | backend or frontend paths | `make sync-contracts && git diff --exit-code`, `make test-e2e`, `python tools/tests/run_release_smoke.py` |
 | `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native`, `pio run -e m5stack_atom -e esp32-c3-devkitm-1` |
 

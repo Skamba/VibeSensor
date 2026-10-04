@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from vibesensor.analysis.diagnosis import build_diagnosis
@@ -15,7 +14,6 @@ from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.data_quality_payload import AccelStatisticsLike
 from vibesensor.summary.plots_payload import serialize_peak_table
 from vibesensor.summary.run_context_warning import (
-    RunContextWarningsInput,
     build_summary_warnings,
 )
 from vibesensor.summary.test_plan_fields import step_payloads_from_plan
@@ -24,7 +22,7 @@ from vibesensor.summary.warning_fields import summary_warning_payloads
 if TYPE_CHECKING:
     from vibesensor.analysis._analysis_result import AnalysisResult
 
-__all__ = ["analysis_result_to_summary", "analysis_summary_with_warnings"]
+__all__ = ["analysis_result_to_summary"]
 
 
 def _amp_metric_values(accel_stats: AccelStatisticsLike) -> list[float]:
@@ -43,17 +41,6 @@ def _serialized_top_causes(result: AnalysisResult) -> tuple[DomainFinding, ...]:
     if actionable:
         return actionable
     return tuple(finding for finding in result.test_run.top_causes if not finding.is_reference)
-
-
-def analysis_summary_with_warnings(
-    summary: AnalysisSummary,
-    warnings: RunContextWarningsInput,
-) -> AnalysisSummary:
-    """Return a typed summary copy with report-facing warning payloads replaced."""
-
-    updated_summary = deepcopy(summary)
-    updated_summary["warnings"] = summary_warning_payloads(warnings)
-    return updated_summary
 
 
 def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:

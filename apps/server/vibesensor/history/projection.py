@@ -21,7 +21,6 @@ from vibesensor.recording.run_suitability_codec import run_suitability_payload
 from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )
-from vibesensor.summary.decoding import has_projectable_report_payload
 from vibesensor.summary.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     dedupe_report_fallback_reasons,
@@ -47,12 +46,17 @@ __all__ = [
 ]
 
 
+def _has_projectable_report_payload(payload: Mapping[str, object]) -> bool:
+    """Whether a stored analysis has the findings or top-cause lists a projection needs."""
+    return isinstance(payload.get("findings"), list) or isinstance(payload.get("top_causes"), list)
+
+
 def _project_analysis_mapping(
     analysis: Mapping[str, object],
     *,
     project_projectable: Callable[[], JsonObject],
 ) -> JsonObject:
-    if has_projectable_report_payload(analysis):
+    if _has_projectable_report_payload(analysis):
         return project_projectable()
     return cast(JsonObject, {key: value for key, value in analysis.items()})
 

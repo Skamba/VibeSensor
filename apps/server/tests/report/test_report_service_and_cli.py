@@ -5,14 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from test_support import ALL_WHEEL_SENSORS, make_fault_samples
 from test_support.analysis import run_analysis
+from test_support.core import ALL_WHEEL_SENSORS
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_analyzing_run,
     create_completed_run,
 )
 from test_support.pdf import extract_pdf_text
+from test_support.synthetic_samples import make_fault_samples
 
 from vibesensor.cli.report import main
 from vibesensor.common.exceptions import AnalysisNotReadyError

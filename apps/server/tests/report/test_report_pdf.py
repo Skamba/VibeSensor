@@ -8,9 +8,10 @@ from typing import Any
 
 import pytest
 from pypdf import PdfReader
-from test_support import ALL_WHEEL_SENSORS, make_fault_samples, make_noise_samples
 from test_support.analysis import run_analysis
+from test_support.core import ALL_WHEEL_SENSORS
 from test_support.report_rendering import report_pdf_for
+from test_support.synthetic_samples import make_fault_samples, make_noise_samples
 
 from vibesensor.report import pdf as report_pdf
 
