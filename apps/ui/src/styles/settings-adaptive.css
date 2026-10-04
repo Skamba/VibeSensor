@@ -13,6 +13,38 @@
     grid-template-columns: 1fr;
   }
 
+  /* Phones: each car is a stacked card instead of a sideways-scrolling row. */
+  .settings-entity-table--cars,
+  .settings-entity-table--cars tbody,
+  .settings-entity-table--cars tr,
+  .settings-entity-table--cars td {
+    display: block;
+    width: 100%;
+  }
+
+  .settings-entity-table--cars thead {
+    display: none;
+  }
+
+  .settings-entity-table--cars td,
+  .settings-entity-table--cars td:first-child,
+  .settings-entity-table--cars td:nth-child(2),
+  .settings-entity-table--cars td:last-child {
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+    border-bottom: none;
+  }
+
+  .settings-entity-table--cars tr {
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  }
+
+  .settings-entity-table--cars tr:last-child {
+    border-bottom: none;
+  }
+
   .car-list-actions,
   .settings-sensor-row__actions {
     justify-content: flex-start;

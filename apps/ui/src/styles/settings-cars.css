@@ -162,3 +162,80 @@
   font-size: 0.78rem;
   min-width: 0;
 }
+/* Provenance chips and "This car can test" (shared by the list and the wizard) */
+.ref-chip {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+}
+.car-row__setup-value .ref-chip {
+  margin-left: 0.35rem;
+}
+.ref-chip[data-tier="exact"],
+.ref-chip[data-tier="checked"] {
+  background: var(--pill-ok-bg);
+  color: var(--pill-ok-text);
+}
+.ref-chip[data-tier="estimate"] {
+  background: var(--pill-warn-bg);
+  color: var(--pill-warn-text);
+}
+.ref-chip[data-tier="user"] {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+.car-capabilities {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.car-capabilities li {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.car-capabilities__mark {
+  font-weight: 700;
+  text-align: center;
+}
+.car-capabilities li[data-mark="ok"] .car-capabilities__mark {
+  color: var(--pill-ok-text);
+}
+.car-capabilities li[data-mark="caveat"] .car-capabilities__mark {
+  color: var(--pill-warn-text);
+}
+.car-capabilities li[data-mark="no"] .car-capabilities__mark {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.car-capabilities__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.4rem;
+  line-height: 1.35;
+}
+.car-capabilities__note {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.car-capabilities--compact {
+  gap: 0.2rem;
+  font-size: 0.82rem;
+}
+.car-capabilities--compact strong {
+  font-weight: 600;
+}
+.car-row__capabilities {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.65rem;
+}

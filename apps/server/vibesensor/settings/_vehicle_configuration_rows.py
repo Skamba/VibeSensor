@@ -156,8 +156,15 @@ def vehicle_configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfi
     final_drive_rear = ratios["final_drive_rear"]["value"] if "final_drive_rear" in ratios else None
     derived_policy = derive_order_analysis_policy(
         top_gear_ratio=ratios["top_gear_ratio"]["value"],
+        top_gear_confidence=ratios["top_gear_ratio"]["confidence"],
         final_drive_front=final_drive_front,
+        final_drive_front_confidence=(
+            ratios["final_drive_front"]["confidence"] if "final_drive_front" in ratios else None
+        ),
         final_drive_rear=final_drive_rear,
+        final_drive_rear_confidence=(
+            ratios["final_drive_rear"]["confidence"] if "final_drive_rear" in ratios else None
+        ),
         drivetrain=drivetrain_value,
     )
     override_row = row.get("order_analysis_policy_override")

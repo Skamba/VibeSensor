@@ -4,6 +4,7 @@ import {
   addSettingsCar,
   deleteSettingsCar,
   setActiveSettingsCar,
+  updateSettingsCar,
 } from "../../api/settings";
 import type {
   CarOrderReferenceStatus,
@@ -18,6 +19,7 @@ import {
 import { getCarCompleteness } from "../../car_selection";
 import { t } from "../../i18n";
 import { analysisTuning, applyCars, carSettings } from "../../settings_store";
+import type { EditedAspects } from "./wizard_model";
 
 /** The car just created by the wizard, highlighted until the user moves on. */
 export const highlighted = signal<{ carId: string; carName: string } | null>(
@@ -117,22 +119,26 @@ export async function activateCar(carId: string): Promise<void> {
   });
 }
 
-/** An incomplete car: make it active, then open the Analysis tab. */
-export async function completeCar(carId: string): Promise<void> {
-  if (!findCar(carId)) {
-    return;
-  }
-  await mutate(async () => {
+/**
+ * Saves the editor's changes (only the changed aspects; a `null` ratio clears
+ * it). The server marks each changed value user-confirmed. Throws on failure.
+ */
+export async function saveCarEdits(
+  carId: string,
+  aspects: EditedAspects,
+): Promise<void> {
+  const started = await mutate(async () => {
     try {
-      if (carId !== carSettings.activeCarId.value) {
-        applyCars(await setActiveSettingsCar(carId));
-      }
+      applyCars(await updateSettingsCar(carId, { aspects }));
       highlighted.value = null;
-      settingsTab.value = "analysisTab";
-    } catch {
-      showError(t("settings.car.activate_failed"));
+    } catch (error) {
+      showError(t("settings.car.update_failed"));
+      throw error;
     }
   });
+  if (!started) {
+    throw new Error("A car settings operation is already in progress.");
+  }
 }
 
 export async function deleteCar(carId: string): Promise<void> {

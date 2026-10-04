@@ -105,8 +105,9 @@ def test_settings_snapshot_reload_keeps_order_reference_status_and_axle_tires(
     assert reloaded["aspects"]["front_tire_width_mm"] == 225.0
     status = reloaded.get("order_reference_status")
     assert status is not None
-    assert status["selection_source_status"] == "exact_row"
-    assert status.get("tire_dimensions_confidence") == "official_exact"
+    # Editing the tires made them user-confirmed; the status survives the reload.
+    assert status["selection_source_status"] == "manual_entry"
+    assert status.get("tire_dimensions_confidence") == "user_confirmed"
 
 
 def test_settings_snapshot_persists_with_protocol_shaped_store() -> None:

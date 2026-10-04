@@ -1,5 +1,6 @@
 import type { ComponentChildren } from "preact";
 
+import { CAPABILITY_MARK_SYMBOL } from "../../capabilities";
 import { t } from "../../i18n";
 import type { RecordingModel, SummaryAction } from "./dashboard_model";
 import {
@@ -233,7 +234,7 @@ function CapabilityLine() {
             data-capability-mark={item.mark}
           >
             <span class="capture-capabilities__mark" aria-hidden="true">
-              {item.mark === "ok" ? "✓" : item.mark === "caveat" ? "~" : "✕"}
+              {CAPABILITY_MARK_SYMBOL[item.mark]}
             </span>
             <span class="capture-capabilities__label">{item.label}</span>
             {item.note ? (

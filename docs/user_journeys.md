@@ -210,25 +210,33 @@ its state in `wizard_store.ts`.
     (`_union_tire_options` in `apps/server/vibesensor/settings/car_library.py`).
   - Each gearbox row carries final drive, top gear and per-field confidence
     (`_gearbox_row_from_configuration` in `car_library.py`).
-  - Choosing a tire also fills the manual tire fields, so the user can edit
-    them, for example for winter tires (`selectTire` in `wizard_store.ts`).
+  - The first tire option, and the gearbox when there is only one, are
+    preselected (`loadSpecs` in `wizard_store.ts`). Choosing a tire or a
+    gearbox fills the specs form, so the user can change any value, for
+    example for winter tires (`tireInputsFromOption` /
+    `ratioInputsFromGearbox` in `wizard_model.ts`).
 - **Tell:**
-  - After a gearbox is selected, the action hint lists the confidence, e.g.
-    "Drive family default · Top gear unverified" (`buildGearboxConfidenceHint`
-    in `apps/ui/src/pages/cars/tires.ts`). It adds
-    `settings.car.confidence.review_detail` ("Review or override these values
-    in Analysis…") when `requires_manual_confirmation` is set, which is true
-    for 414 of 467 rows (see §4).
-  - **Target:** the gearbox list itself marks estimated values. The hint says
-    what an estimate does to the result ("driveline/engine results will be
-    hedged"). Overriding happens in the car editor. **Today:** no editor
-    exists and the Analysis tab cannot edit car data (J04, J07).
+  - Each gearbox option shows its final drive and top gear with a confidence
+    chip: "exact" (official), "checked" (cross-checked secondary source),
+    "estimate" (family default or unverified) or "unknown" (`gearboxParts` in
+    `wizard_model.ts`, `ProvenanceChip` in `CapabilityList.tsx`). The specs
+    form shows the same chip on each value; a typed value is "yours"
+    (`specProvenance`).
+  - When a kept value is an estimate, the action hint says what that does to
+    the result, e.g. "Final drive is an estimate for this model family:
+    driveline results will be marked as estimated" (`estimateNoteKey`,
+    `settings.car.estimate.*`).
+  - The sidebar shows "This car can test" for the values on the form
+    (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
+    as the Live capability line).
+  - `requires_manual_confirmation` is set only when the final drive or top
+    gear is weak (216 of 467 rows, see §4).
 - **Branches:**
-  - The library has no final drive for the gearbox (10 variants, 13 rows).
-    The gearbox is still offered with `final_drive_ratio: null`
-    (`_gearbox_row_from_configuration`) and shown as "FD: unknown"
-    (`gearboxDetail` in `wizard_model.ts`); the car saves without a final drive
-    and the driveline is "couldn't test" until the user adds the value.
+  - The library has no final drive for the gearbox (13 rows). The gearbox is
+    still offered with `final_drive_ratio: null`
+    (`_gearbox_row_from_configuration`) and its final drive chip reads
+    "unknown"; the car saves without a final drive and the driveline is
+    "couldn't test" until the user adds the value.
   - Library load fails: an error with Retry and "Continue with manual specs"
     (`CarWizard.tsx`).
 
@@ -236,54 +244,51 @@ its state in `wizard_store.ts`.
 
 - **Know/do:** Type a brand, type and model, then enter the tire width, aspect
   and rim. Final drive and top gear are entered **if known**.
-- **Prefill (target):**
-  - Placeholders show where to find each value (tire: door jamb or sidewall;
-    final drive: VIN decoder or workshop).
-  - An explicit "I don't know" leaves the field empty.
-  - The tire size can be typed as "225/45 R18".
-- **Today:**
-  - Typing a custom brand calls `/api/car-library/types` for an unknown brand.
-    That returns 404 (`apps/server/vibesensor/web/car_library.py`), and the
-    wizard shows the red `settings.wizard.load_failed_types` /
-    `load_failed_hint` alert ("The car library is unavailable right now…")
-    (`loadLibrary` in `wizard_store.ts`). Every non-Audi/BMW owner sees an
-    error and then types the type and model by hand (J05).
-  - All five spec fields are required (`manualSpecs`,
-    `firstMissingManualField` and `canFinish` in `wizard_model.ts`). The
-    placeholders in `MANUAL_INPUT_EXAMPLES` invite users to copy them (J01).
-  - Whatever the user enters is saved as `user_confirmed` (`carRequest` in
-    `wizard_model.ts`).
-- **Tell (target):** a short "what this car can test" summary in the wizard
-  sidebar:
+- **Prefill:**
+  - A brand or type that is not in the library skips the library lists (no
+    fetch) and says "No library data for {brand}: you'll enter the tire size
+    yourself; final drive and top gear are optional" (`submitCustom` /
+    `loadCurrentStep` in `wizard_store.ts`). A typed name that matches a
+    library entry, in any case, uses the library.
+  - Each field says what it enables and where to find it (tire: sidewall or
+    door-jamb sticker; final drive: VIN decoder, differential tag or dealer;
+    top gear: estimated RPM, which assumes top gear or D)
+    (`settings.car.*_help`).
+  - The tire size can be pasted as on the sidewall, e.g. "225/45 R18" or
+    "P225/45ZR18 94W", and fills the three tire fields (`parseTireSize`).
+  - Final drive and top gear are marked "(optional)", with a neutral
+    "unknown" placeholder; "I don't know" clears the field.
+- **Validation:** only the tire size is required; a ratio must be empty or
+  a positive number (`firstInvalidField` / `canFinish`). Typed values are
+  saved as `user_confirmed`, empty ratios as `null` with no confidence
+  (`carRequest` in `wizard_model.ts`).
+- **Tell:** the "This car can test" sidebar updates as the user types:
   - tire only → wheel/tire;
   - plus final drive → driveline;
-  - plus top gear → engine (estimated, top gear only);
-  - OBD-II → engine without the ratios.
+  - plus top gear → engine (RPM estimated from speed, assuming top gear);
+  - a hint that an OBD-II adapter measures RPM without the ratios.
 - **Branches:**
-  - The user enters only the tire size. **Target:** the car saves and the
-    driveline and engine show "couldn't test". The server and the create
-    request keep missing ratios missing (a `null` ratio means unknown);
-    **Today** only the manual form still requires them (J01).
+  - The user enters only the tire size: the car saves, and the driveline and
+    engine show "couldn't test".
 
 #### 3.3c Editing later
 
-- **Target:** each car row has *Edit*. It reopens the specs step prefilled with
-  the saved values and their provenance. Saving uses
-  `PUT /api/settings/cars/{id}`, which already exists
-  (`apps/server/vibesensor/web/settings/cars.py`). Runs recorded under the old
-  values keep them and History shows "car settings changed"
-  (`add_current_context_warnings` in
+- Each car row shows its tire, final drive and top gear with a confidence
+  chip, a compact "This car can test" list, and *Edit* (*Finish setup* on a
+  car without a tire size) (`carRows` in
+  `apps/ui/src/pages/cars/car_list_model.ts`).
+- *Edit* reopens the specs step prefilled with the saved values and their
+  provenance (`openEditor` in `wizard_store.ts`, `editTarget` in
+  `wizard_model.ts`). Saving sends only the changed values to
+  `PUT /api/settings/cars/{id}` (`editRequest`, `saveCarEdits` in
+  `cars_store.ts`); a cleared ratio is sent as `null` and unset. The server
+  marks each edited value `user_confirmed` and keeps the others' provenance
+  (`update_car` in `apps/server/vibesensor/settings/car_settings.py`).
+- A car saved with different front and rear tires says so in the editor;
+  changing the size there sets one size on all four wheels.
+- Runs recorded under the old values keep them and History shows "car
+  settings changed" (`add_current_context_warnings` in
   `apps/server/vibesensor/recording/run_context.py`).
-- **Today:**
-  - The UI has no update call (`apps/ui/src/api/settings.ts` has only add,
-    delete and set-active), so the only way to change a value is to delete the
-    car and add it again.
-  - "Finish setup" and "Open Analysis" switch to the Analysis tab
-    (`completeCar` in `cars_store.ts`), which only has the four uncertainty
-    percentages (`FIELDS` in `apps/ui/src/pages/analysis/analysis_model.ts`).
-  - The texts `settings.car.incomplete_detail`,
-    `settings.car.created_detail` and `settings.car.confidence.review_detail`
-    promise otherwise (J04).
 - **EVs and PHEVs:** the library has 17 EV and 25 PHEV rows, but `fuel_type`
   is not carried into the car, the run or the analysis. An EV is therefore
   diagnosed and worded as if it had an engine, and gets a neutral coast-down
@@ -498,20 +503,20 @@ changes and update this table.
 | Top-gear confidence | official_exact 211 · official_derived 17 · reputable_secondary 36 · family_default 95 · unverified 108 |
 | Weak (family_default or unverified) | final drive 216/467 (46%), top gear 203/467 (43%), tire 191/467 (41%) |
 | `order_reference_trust` | trusted 240 · approximate 107 · backlog_unverified 120 |
-| `requires_manual_confirmation` | true 414, false 53 (all BMW, via `order_analysis_policy_override` "preserved-from-pre-derivation-curated-data") |
+| `requires_manual_confirmation` | true 216, false 251 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
 | Picker variants without any gearbox | 10 |
 | Variants whose rows differ in tire options | 21 (the picker shows the first row's only) |
 | Model families split into several picker entries by year label | 21 (e.g. X1 F48 ×6, Q5 FY ×5, X3 F25 ×4) |
 
 **How confidence is surfaced today:**
 
-- Per-field confidence reaches the UI only after a gearbox is picked, as a
-  short phrase in the wizard's action hint, and in the saved car's row detail
-  (`buildOrderReferenceConfidenceDetail` / `buildGearboxConfidenceHint` in
-  `apps/ui/src/pages/cars/tires.ts`, `carRows` in
-  `apps/ui/src/pages/cars/car_list_model.ts`).
-- `requires_manual_confirmation` adds the "review in Analysis" sentence. That
-  points to a screen that cannot edit the car (J04).
+- Per-field confidence shows as a chip on each gearbox option, on each value
+  in the specs form and on each saved car's row (`provenanceTier` in
+  `apps/ui/src/car_references.ts`).
+- A weak final drive or top gear adds what it does to the result ("driveline
+  results will be marked as estimated") to the wizard hint and the car row,
+  with "Edit the car if you know the exact figures"
+  (`estimateNoteKey` in `apps/ui/src/pages/cars/wizard_model.ts`).
 - The status is stored on the car and copied into run metadata
   (`apps/server/vibesensor/recording/run_metadata_builder.py`). Analysis
   reads it: a weak final drive or top gear hedges the source checks to
@@ -566,10 +571,9 @@ Legend:
 
 **Today:**
 
-- **Manual entry:** the wizard's manual form still requires final drive and
-  top gear (J01).
-- **Library-estimate row** and **manual speed:** analysis, the report and the
-  Live capability line match the table.
+- **Manual entry**, **library-estimate row** and **manual speed:** the car
+  wizard and car list ("This car can test"), analysis, the report, History and
+  the Live capability line match the table.
 
 ### 5.2 Sensor layout
 

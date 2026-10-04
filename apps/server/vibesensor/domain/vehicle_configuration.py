@@ -135,8 +135,11 @@ class VehicleOrderAnalysisPolicyOverride:
 def derive_order_analysis_policy(
     *,
     top_gear_ratio: float | None,
+    top_gear_confidence: VehicleFieldConfidence | None,
     final_drive_front: float | None,
+    final_drive_front_confidence: VehicleFieldConfidence | None,
     final_drive_rear: float | None,
+    final_drive_rear_confidence: VehicleFieldConfidence | None,
     drivetrain: VehicleDrivetrain | None,
 ) -> VehicleOrderAnalysisPolicy:
     """Compute the default order-analysis policy from row math inputs.
@@ -147,25 +150,37 @@ def derive_order_analysis_policy(
     - ``driveshaft_order``: driven final-drive ratio.
     - ``engine_order``: driven final-drive ratio + top-gear ratio.
 
-    The derived policy uses feasibility for the ``usable_for_*`` flags and
-    sets ``requires_manual_confirmation`` to ``True`` by default. Specific
-    rows can override individual flags via
-    :class:`VehicleOrderAnalysisPolicyOverride`.
+    ``requires_manual_confirmation`` is set only when the driven final drive or
+    the top gear is a weak (``family_default`` or ``unverified``) value; a
+    missing ratio is "couldn't test", not something to confirm. Specific rows
+    can override individual flags via :class:`VehicleOrderAnalysisPolicyOverride`.
     """
 
     if drivetrain == "FWD":
-        driven_final_drive: float | None = final_drive_front
-    elif drivetrain == "RWD":
-        driven_final_drive = final_drive_rear
+        driven: tuple[float | None, VehicleFieldConfidence | None] = (
+            final_drive_front,
+            final_drive_front_confidence,
+        )
+    elif drivetrain == "RWD" or final_drive_rear is not None:
+        driven = (final_drive_rear, final_drive_rear_confidence)
     else:
-        driven_final_drive = final_drive_rear or final_drive_front
+        driven = (final_drive_front, final_drive_front_confidence)
+    driven_final_drive, driven_confidence = driven
     has_driven = driven_final_drive is not None
     has_top_gear = top_gear_ratio is not None
+    present_confidences = tuple(
+        confidence or "unverified"
+        for value, confidence in (
+            (driven_final_drive, driven_confidence),
+            (top_gear_ratio, top_gear_confidence),
+        )
+        if value is not None
+    )
     return VehicleOrderAnalysisPolicy(
         usable_for_engine_order=has_top_gear and has_driven,
         usable_for_driveshaft_order=has_driven,
         usable_for_wheel_order=True,
-        requires_manual_confirmation=True,
+        requires_manual_confirmation=_classify_confidences(present_confidences) != "trusted",
     )
 
 

@@ -5,6 +5,12 @@ import type {
   CarLibraryTireOption,
   CarRecord,
 } from "../src/api/types";
+import {
+  capabilityMark,
+  capabilityNoteKey,
+  carCapabilities,
+} from "../src/capabilities";
+import type { ReferenceProvenance } from "../src/car_references";
 import { getCarCompleteness } from "../src/car_selection";
 import { carRows, guidance } from "../src/pages/cars/car_list_model";
 import {
@@ -16,11 +22,14 @@ import {
   canFinish,
   carRequest,
   EMPTY_MANUAL_INPUTS,
-  firstMissingManualField,
-  gearboxDetail,
+  editRequest,
+  editTarget,
+  firstInvalidField,
+  gearboxParts,
   INITIAL_WIZARD_STATE,
+  parseTireSize,
   progressText,
-  specBranch,
+  specProvenance,
   summary,
   type WizardState,
 } from "../src/pages/cars/wizard_model";
@@ -36,72 +45,9 @@ function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
   };
 }
 
-const labels: Record<string, string> = {
-  "settings.car.empty.title": "Add the first car profile.",
-  "settings.car.empty.body":
-    "Cars define the setup used for recording, saved runs, and analysis settings.",
-  "settings.car.empty.detail":
-    "Start with the add-car wizard so the next recording has the right context.",
-  "settings.car.empty.action": "Add a car",
-  "settings.car.col_tires": "Tires",
-  "settings.car.col_drive": "Drive",
-  "settings.car.col_gear": "Top Gear",
-  "settings.car.active_label": "Active",
-  "settings.car.inactive_label": "Inactive",
-  "settings.car.ready_label": "Ready",
-  "settings.car.incomplete_label": "Needs specs",
-  "settings.car.just_added": "New",
-  "settings.car.activate": "Activate",
-  "settings.car.delete": "Delete",
-  "settings.car.finish_setup": "Finish setup",
-  "settings.car.open_analysis": "Open Analysis",
-  "settings.car.value_missing": "Not set",
-  "settings.car.tires_missing": "Tire size not set",
-  "settings.car.incomplete_detail":
-    "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
-  "settings.car.approximate_detail":
-    "Approximate drivetrain ratios need review.",
-  "settings.car.confidence.part_tires": "Tires {value}",
-  "settings.car.confidence.part_drive": "Drive {value}",
-  "settings.car.confidence.part_gear": "Top gear {value}",
-  "settings.car.confidence.part_transmission": "Transmission {value}",
-  "settings.car.confidence.official_exact": "official source",
-  "settings.car.confidence.official_derived": "officially derived",
-  "settings.car.confidence.reputable_secondary_crosschecked":
-    "secondary cross-check",
-  "settings.car.confidence.family_default": "family default",
-  "settings.car.confidence.unverified": "unverified",
-  "settings.car.confidence.user_confirmed": "user confirmed",
-  "settings.car.confidence.review_detail":
-    "Review or override these values in Analysis before trusting driveshaft or engine-order results.",
-  "settings.car.created_title": "Car added",
-  "settings.car.created_body": "{name} was added and selected for this setup.",
-  "settings.car.created_detail":
-    "Review the highlighted row below or open Analysis to confirm the setup before the next run.",
-  "settings.car.guidance.no_active_title": "Activate one car for this setup.",
-  "settings.car.guidance.no_active":
-    "Activate a car from the list below or add a new one to unlock analysis settings.",
-  "settings.car.guidance.no_active_detail":
-    "Use Activate on a ready row, or Finish setup on an incomplete row, to unlock the rest of Settings.",
-};
-
+/** Echoes the key, plus its variables, so tests pin the catalog key used. */
 function t(key: string, vars?: Record<string, unknown>): string {
-  if (key === "settings.car.created_body") {
-    return `${vars?.name ?? "Unknown"} was added and selected for this setup.`;
-  }
-  if (key === "settings.car.confidence.part_tires") {
-    return `Tires ${vars?.value ?? ""}`.trim();
-  }
-  if (key === "settings.car.confidence.part_drive") {
-    return `Drive ${vars?.value ?? ""}`.trim();
-  }
-  if (key === "settings.car.confidence.part_gear") {
-    return `Top gear ${vars?.value ?? ""}`.trim();
-  }
-  if (key === "settings.car.confidence.part_transmission") {
-    return `Transmission ${vars?.value ?? ""}`.trim();
-  }
-  return labels[key] ?? key;
+  return vars ? `${key}:${JSON.stringify(vars)}` : key;
 }
 
 function fmt(value: number, digits = 0): string {
@@ -138,14 +84,33 @@ test("getCarCompleteness needs only the tire size; ratios are optional", () => {
   ).toEqual(["tire_aspect_pct", "rim_in"]);
 });
 
-test("car rows carry readiness, highlight, and the next action", () => {
+test("car rows show each reference's source and what the car can test", () => {
   const rows = carRows(
     [
-      makeCar({ id: "active", name: "Ready Car", aspects: complete }),
-      makeCar({ id: "inactive", name: "Ready Inactive", aspects: complete }),
+      makeCar({
+        id: "active",
+        name: "Ready Car",
+        aspects: complete,
+        order_reference_status: {
+          tire_dimensions_confidence: "official_exact",
+          final_drive_ratio_confidence: "reputable_secondary_crosschecked",
+          current_gear_ratio_confidence: "user_confirmed",
+          requires_manual_confirmation: false,
+          selection_source_status: "manual_entry",
+        },
+      }),
+      makeCar({
+        id: "estimated",
+        aspects: complete,
+        order_reference_status: {
+          final_drive_ratio_confidence: "family_default",
+          current_gear_ratio_confidence: "family_default",
+          requires_manual_confirmation: true,
+          selection_source_status: "exact_row",
+        },
+      }),
       makeCar({
         id: "new",
-        name: "Needs Work",
         variant: "Project",
         aspects: { tire_width_mm: 245 },
       }),
@@ -156,79 +121,94 @@ test("car rows carry readiness, highlight, and the next action", () => {
     t,
   );
   expect(rows[0]).toMatchObject({
-    activeText: "Active",
     isComplete: true,
     detail: null,
-    primaryAction: null,
-    readinessText: "Ready",
+    activateLabel: null,
+    editLabel: "settings.car.edit",
+    capabilities: {
+      wheel: "ok",
+      driveline: "ok",
+      engine: "estimated_top_gear",
+    },
   });
-  expect(rows[1].primaryAction).toEqual({
-    type: "activate",
-    label: "Activate",
-    className: "btn car-activate-btn",
+  expect(rows[0].metrics.map((metric) => [metric.value, metric.tier])).toEqual([
+    ["225/45R18", "exact"],
+    ["3.08", "checked"],
+    ["0.64", "user"],
+  ]);
+  // Library estimates are flagged on the row, with what they mean for a run.
+  expect(rows[1]).toMatchObject({
+    activateLabel: "settings.car.activate",
+    detail: "settings.car.estimate.both settings.car.confidence.review_detail",
+    capabilities: {
+      driveline: "estimated_final_drive",
+      engine: "estimated_ratios",
+    },
   });
+  // A value saved without a confidence was typed in by the user.
+  expect(rows[1].metrics[0].tier).toBe("user");
   expect(rows[2]).toMatchObject({
     isHighlighted: true,
     variant: "Project",
-    readinessText: "Needs specs",
-    detail:
-      "Open Analysis to finish the missing tire and drivetrain specs before using this car.",
-    primaryAction: {
-      type: "complete",
-      label: "Finish setup",
-      className: "btn btn--primary car-complete-btn",
+    readinessText: "settings.car.incomplete_label",
+    detail: "settings.car.incomplete_detail",
+    activateLabel: null,
+    editLabel: "settings.car.finish_setup",
+    capabilities: {
+      wheel: "missing_tire",
+      driveline: "missing_tire",
+      engine: "missing",
     },
-    metrics: [
-      { label: "Tires", value: "Tire size not set", code: true },
-      { label: "Drive", value: "Not set" },
-      { label: "Top Gear", value: "Not set" },
-    ],
   });
+  expect(rows[2].metrics.map((metric) => [metric.value, metric.tier])).toEqual([
+    ["settings.car.tires_missing", "missing"],
+    ["settings.car.value_missing", "missing"],
+    ["settings.car.value_missing", "missing"],
+  ]);
 });
 
-test("ready cars explain approximate drivetrain sources", () => {
-  const [row] = carRows(
+test("a car's capabilities follow its references like the server's readiness", () => {
+  const refs = (
+    tire: ReferenceProvenance,
+    finalDrive: ReferenceProvenance,
+    topGear: ReferenceProvenance,
+  ) => carCapabilities({ tire, finalDrive, topGear });
+  expect(refs("user_confirmed", "missing", "missing")).toEqual({
+    wheel: "ok",
+    driveline: "missing_final_drive",
+    engine: "missing",
+  });
+  expect(refs("official_exact", "official_derived", "missing")).toEqual({
+    wheel: "ok",
+    driveline: "ok",
+    engine: "missing",
+  });
+  expect(refs("official_exact", "unverified", "official_exact")).toEqual({
+    wheel: "ok",
+    driveline: "estimated_final_drive",
+    engine: "estimated_ratios",
+  });
+  expect(refs("official_exact", "official_exact", "family_default")).toEqual({
+    wheel: "ok",
+    driveline: "ok",
+    engine: "estimated_ratios",
+  });
+  expect(refs("missing", "official_exact", "official_exact").engine).toBe(
+    "missing",
+  );
+  expect(
     [
-      makeCar({
-        aspects: complete,
-        order_reference_status: {
-          selection_source_status: "exact_row",
-          final_drive_ratio_confidence: "family_default",
-          current_gear_ratio_confidence: "family_default",
-          transmission_name: "8-speed automatic",
-          transmission_confidence: "family_default",
-          requires_manual_confirmation: true,
-        },
-      }),
-    ],
-    null,
-    null,
-    fmt,
-    t,
-  );
-  expect(row.detail).toBe(
-    "Drive family default · Top gear family default · Transmission family default. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
-  );
-  const [userConfirmed] = carRows(
-    [
-      makeCar({
-        aspects: complete,
-        order_reference_status: {
-          tire_dimensions_confidence: "user_confirmed",
-          final_drive_ratio_confidence: "user_confirmed",
-          current_gear_ratio_confidence: "user_confirmed",
-          requires_manual_confirmation: false,
-          selection_source_status: "manual_entry",
-        },
-      }),
-    ],
-    null,
-    null,
-    fmt,
-    t,
-  );
-  expect(userConfirmed.detail).toBe(
-    "Tires user confirmed · Drive user confirmed · Top gear user confirmed",
+      "ok",
+      "measured",
+      "estimated_final_drive",
+      "estimated_ratios",
+      "missing_tire",
+      "manual_speed",
+    ].map(capabilityMark),
+  ).toEqual(["ok", "ok", "caveat", "caveat", "no", "no"]);
+  expect(capabilityNoteKey("wheel", "ok")).toBeNull();
+  expect(capabilityNoteKey("engine", "missing")).toBe(
+    "capabilities.engine.missing",
   );
 });
 
@@ -263,12 +243,12 @@ test("guidance shows creation feedback or asks for an active car", () => {
   expect(
     guidance({ kind: "active", car }, { carName: "Demo Car" }, t),
   ).toMatchObject({
-    title: "Car added",
-    body: "Demo Car was added and selected for this setup.",
+    title: "settings.car.created_title",
+    body: 'settings.car.created_body:{"name":"Demo Car"}',
     tone: "success",
   });
   expect(guidance({ kind: "no_active_car" }, null, t)).toMatchObject({
-    title: "Activate one car for this setup.",
+    title: "settings.car.guidance.no_active_title",
     tone: "default",
   });
 });
@@ -329,122 +309,222 @@ test("tire options format staggered sizes and keep front/rear aspects", () => {
   });
 });
 
-test("the specs step needs both a library tire and gearbox, or every manual value", () => {
-  expect(specBranch(specs())).toBeNull();
-  expect(
-    canFinish(
-      specs({ selectedTire: TIRE, specBranch: "library" }),
-      EMPTY_MANUAL_INPUTS,
-    ),
-  ).toBe(false);
-  const library = specs({
-    selectedTire: TIRE,
-    selectedGearbox: GEARBOX,
-    specBranch: "library",
+test("a pasted tire size reads the common sidewall spellings", () => {
+  const size = { tireWidth: "225", tireAspect: "45", rim: "18" };
+  for (const text of [
+    "225/45 R18",
+    "225/45ZR18",
+    "P225/45R18 94W",
+    "225 45 18",
+    "225/45-18",
+  ]) {
+    expect(parseTireSize(text)).toEqual(size);
+  }
+  expect(parseTireSize("205/55 R16,5")).toEqual({
+    tireWidth: "205",
+    tireAspect: "55",
+    rim: "16.5",
   });
-  expect(canFinish(library, EMPTY_MANUAL_INPUTS)).toBe(true);
-  expect(actionHint(library, EMPTY_MANUAL_INPUTS, t)).toBe(
-    "Drive family default · Top gear family default. Review or override these values in Analysis before trusting driveshaft or engine-order results.",
-  );
-  // Without library gearboxes the manual branch is forced.
-  const noGearbox = specs({ selectedModel: { ...MODEL, gearboxes: [] } });
-  expect(specBranch(noGearbox)).toBe("manual");
-  const inputs = {
-    tireWidth: "225",
-    tireAspect: "40",
-    rim: "18",
-    finalDrive: "",
-    topGear: "0.8",
-  };
-  expect(firstMissingManualField(inputs)).toBe("finalDrive");
-  expect(canFinish(noGearbox, inputs)).toBe(false);
-  expect(canFinish(noGearbox, { ...inputs, finalDrive: "4.1" })).toBe(true);
+  expect(parseTireSize("18 inch")).toBeNull();
 });
 
-test("the created car records where each spec came from", () => {
-  expect(
-    carRequest(
-      specs({ selectedTire: TIRE, specBranch: "library" }),
-      EMPTY_MANUAL_INPUTS,
-    ),
-  ).toEqual({ ok: false, focus: "gearbox-option" });
-  const library = carRequest(
-    specs({
-      selectedTire: TIRE,
-      selectedGearbox: GEARBOX,
-      specBranch: "library",
-    }),
-    EMPTY_MANUAL_INPUTS,
+const TYPED = {
+  tireWidth: "225",
+  tireAspect: "40",
+  rim: "18",
+  finalDrive: "",
+  topGear: "",
+};
+
+test("the specs step needs a tire size; the ratios are optional but must be readable", () => {
+  expect(firstInvalidField(EMPTY_MANUAL_INPUTS)).toBe("tireWidth");
+  expect(firstInvalidField({ ...TYPED, rim: "0" })).toBe("rim");
+  expect(firstInvalidField(TYPED)).toBeNull();
+  expect(firstInvalidField({ ...TYPED, topGear: "abc" })).toBe("topGear");
+  expect(canFinish(specs(), TYPED)).toBe(true);
+  expect(canFinish(specs({ step: 3 }), TYPED)).toBe(false);
+
+  const hint = (state: WizardState, inputs: typeof TYPED) =>
+    actionHint(state, inputs, 1, t);
+  expect(hint(specs(), EMPTY_MANUAL_INPUTS)).toBe(
+    "settings.car.finish_needs_tire",
   );
-  expect(library).toMatchObject({
+  expect(hint(specs(), { ...TYPED, finalDrive: "-1" })).toBe(
+    "settings.car.finish_ratio_invalid",
+  );
+  // The library has a gearbox the user has not picked yet.
+  expect(hint(specs(), TYPED)).toBe("settings.car.finish_pick_gearbox");
+  expect(actionHint(specs(), TYPED, 0, t)).toBe("settings.car.finish_ready");
+  // A kept family-default gearbox says what the estimate means for a run.
+  const kept = { ...TYPED, finalDrive: "3.94", topGear: "0.79" };
+  expect(hint(specs({ selectedGearbox: GEARBOX }), kept)).toBe(
+    "settings.car.estimate.both settings.car.estimate.edit_hint",
+  );
+});
+
+test("each saved spec records where it came from", () => {
+  const library = specs({ selectedTire: TIRE, selectedGearbox: GEARBOX });
+  const kept = { ...TYPED, finalDrive: "3.94", topGear: "0.79" };
+  expect(specProvenance(library, kept)).toEqual({
+    tire: "official_exact",
+    finalDrive: "family_default",
+    topGear: "family_default",
+  });
+  expect(carRequest(library, kept)).toMatchObject({
     ok: true,
     aspects: {
       final_drive_ratio: 3.94,
       current_gear_ratio: 0.79,
       front_tire_width_mm: 225,
+      rear_tire_width_mm: 255,
     },
     status: {
       tire_dimensions_confidence: "official_exact",
       final_drive_ratio_confidence: "family_default",
-      transmission_confidence: "unverified",
       requires_manual_confirmation: true,
       selection_source_status: "exact_row",
       transmission_name: "6-speed manual",
+      transmission_confidence: "unverified",
     },
     fuelType: "PHEV",
   });
-  const manual = specs({ selectedTire: TIRE, specBranch: "manual" });
-  const kept = {
-    tireWidth: "225",
-    tireAspect: "40",
-    rim: "18",
-    finalDrive: "4.1",
-    topGear: "0.8",
-  };
-  expect(carRequest(manual, kept)).toMatchObject({
+
+  // Typing the exact figure over an estimate makes it the user's.
+  const corrected = carRequest(library, { ...kept, finalDrive: "4.1" });
+  expect(corrected).toMatchObject({
     ok: true,
-    aspects: { rear_tire_width_mm: 255, final_drive_ratio: 4.1 },
+    aspects: { final_drive_ratio: 4.1 },
     status: {
-      tire_dimensions_confidence: "official_exact",
       final_drive_ratio_confidence: "user_confirmed",
+      current_gear_ratio_confidence: "family_default",
+      requires_manual_confirmation: true,
+      selection_source_status: "manual_entry",
+    },
+  });
+
+  // "I don't know" saves no value and no confidence, never a default.
+  const unknown = carRequest(library, { ...kept, finalDrive: "", topGear: "" });
+  expect(unknown).toMatchObject({
+    ok: true,
+    aspects: { final_drive_ratio: null, current_gear_ratio: null },
+    status: {
+      final_drive_ratio_confidence: null,
+      current_gear_ratio_confidence: null,
+      requires_manual_confirmation: false,
+    },
+  });
+
+  // A custom car is all the user's; an unreadable ratio is refused.
+  const custom = specs({ libraryMiss: "brand", selectedModel: null });
+  expect(carRequest(custom, { ...TYPED, rim: "17" })).toEqual({
+    ok: true,
+    aspects: {
+      current_gear_ratio: null,
+      final_drive_ratio: null,
+      rim_in: 17,
+      tire_aspect_pct: 40,
+      tire_width_mm: 225,
+    },
+    status: {
+      tire_dimensions_confidence: "user_confirmed",
+      final_drive_ratio_confidence: null,
+      current_gear_ratio_confidence: null,
+      requires_manual_confirmation: false,
       selection_source_status: "manual_entry",
     },
     fuelType: null,
   });
-  expect(carRequest(manual, { ...kept, tireWidth: "235" })).toMatchObject({
-    ok: true,
-    aspects: { tire_width_mm: 235 },
-    status: { tire_dimensions_confidence: "user_confirmed" },
-  });
-  expect(carRequest(manual, { ...kept, rim: "" })).toEqual({
+  expect(carRequest(custom, { ...TYPED, topGear: "x" })).toEqual({
     ok: false,
-    focus: "rim",
+    focus: "topGear",
   });
 });
 
-test("a library gearbox without a final drive saves it as unknown", () => {
-  const noFinalDrive: CarLibraryGearbox = {
-    ...GEARBOX,
-    final_drive_ratio: null,
-    final_drive_ratio_confidence: null,
-  };
-  expect(gearboxDetail(noFinalDrive, fmt, t)).toBe(
-    "FD: settings.car.ratio_unknown · Top Gear: 0.79",
-  );
+test("gearbox options carry a confidence chip per ratio", () => {
   expect(
-    carRequest(
-      specs({
-        selectedTire: TIRE,
-        selectedGearbox: noFinalDrive,
-        specBranch: "library",
-      }),
-      EMPTY_MANUAL_INPUTS,
+    gearboxParts(
+      {
+        ...GEARBOX,
+        final_drive_ratio: null,
+        final_drive_ratio_confidence: null,
+        top_gear_ratio_confidence: "official_exact",
+      },
+      fmt,
+      t,
     ),
-  ).toMatchObject({
-    ok: true,
-    aspects: { final_drive_ratio: null, current_gear_ratio: 0.79 },
-    status: { final_drive_ratio_confidence: null },
+  ).toEqual([
+    {
+      text: 'settings.car.gearbox_final_drive:{"value":"settings.car.ratio_unknown"}',
+      tier: "missing",
+    },
+    { text: 'settings.car.gearbox_top_gear:{"value":"0.79"}', tier: "exact" },
+  ]);
+});
+
+test("editing a car sends only what changed, and clearing a ratio unsets it", () => {
+  const car = makeCar({
+    aspects: complete,
+    order_reference_status: {
+      tire_dimensions_confidence: "official_exact",
+      final_drive_ratio_confidence: "family_default",
+      current_gear_ratio_confidence: "family_default",
+      requires_manual_confirmation: true,
+      selection_source_status: "exact_row",
+    },
   });
+  const { target, inputs } = editTarget(car, fmt);
+  expect(inputs).toEqual({
+    tireWidth: "225",
+    tireAspect: "45",
+    rim: "18",
+    finalDrive: "3.08",
+    topGear: "0.64",
+  });
+  expect(target.staggeredTire).toBeNull();
+  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  // Unchanged values keep their saved source.
+  expect(specProvenance(editing, inputs)).toEqual({
+    tire: "official_exact",
+    finalDrive: "family_default",
+    topGear: "family_default",
+  });
+  expect(editRequest(target, inputs)).toEqual({ ok: true, aspects: {} });
+  const changed = { ...inputs, finalDrive: "3.15", topGear: "" };
+  expect(specProvenance(editing, changed)).toMatchObject({
+    finalDrive: "user_confirmed",
+    topGear: "missing",
+  });
+  expect(editRequest(target, changed)).toEqual({
+    ok: true,
+    aspects: { final_drive_ratio: 3.15, current_gear_ratio: null },
+  });
+  expect(editRequest(target, { ...inputs, rim: "19" })).toEqual({
+    ok: true,
+    aspects: { tire_width_mm: 225, tire_aspect_pct: 45, rim_in: 19 },
+  });
+  expect(editRequest(target, { ...inputs, tireWidth: "" })).toEqual({
+    ok: false,
+    focus: "tireWidth",
+  });
+
+  const staggered = editTarget(
+    makeCar({
+      aspects: {
+        ...complete,
+        front_tire_width_mm: 275,
+        front_tire_aspect_pct: 35,
+        front_rim_in: 22,
+        rear_tire_width_mm: 315,
+        rear_tire_aspect_pct: 30,
+        rear_rim_in: 22,
+      },
+    }),
+    fmt,
+  );
+  expect(staggered.inputs.tireWidth).toBe("275");
+  expect(staggered.target.staggeredTire).toBe(
+    "Front 275/35R22 · Rear 315/30R22",
+  );
 });
 
 test("the summary fills in as the wizard advances", () => {
@@ -459,12 +539,8 @@ test("the summary fills in as the wizard advances", () => {
     { label: "settings.car.wizard_summary_brand", value: "VW" },
   ]);
   const done = summary(
-    specs({
-      selectedTire: TIRE,
-      selectedGearbox: GEARBOX,
-      specBranch: "library",
-    }),
-    EMPTY_MANUAL_INPUTS,
+    specs({ selectedTire: TIRE, selectedGearbox: GEARBOX }),
+    { ...TYPED, finalDrive: "3.94", topGear: "" },
     fmt,
     t,
   );
@@ -475,7 +551,9 @@ test("the summary fills in as the wizard advances", () => {
     "Golf",
     "settings.car.wizard_summary_not_needed",
     "Sport · Front 225/40R18 · Rear 255/35R18",
-    "6-speed manual",
+    '6-speed manual · settings.car.wizard_summary_manual_gearbox:{"finalDrive":"3.94","topGear":"settings.car.ratio_unknown"}',
   ]);
-  expect(progressText(4, t)).toBe("settings.car.wizard_progress");
+  expect(progressText(4, t)).toBe(
+    'settings.car.wizard_progress:{"current":5,"step":"settings.car.step_specs_short","total":5}',
+  );
 });

@@ -1,19 +1,21 @@
 import type { CarRecord } from "../../api/types";
+import { type Capabilities, carCapabilities } from "../../capabilities";
+import {
+  type ProvenanceTier,
+  provenanceTier,
+  savedCarReferences,
+} from "../../car_references";
 import {
   type CarSelectionState,
   getCarCompleteness,
 } from "../../car_selection";
-import {
-  buildOrderReferenceConfidenceDetail,
-  formatSavedCarTireSummary,
-} from "./tires";
+import { formatSavedCarTireSummary } from "./tires";
+import { estimateNoteKey } from "./wizard_model";
 
 /** Pure view models for the saved-car list and its guidance banner. */
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 type FormatNumber = (value: number, digits?: number) => string;
-
-export type CarRowAction = "activate" | "complete";
 
 export interface InlineState {
   title: string;
@@ -33,12 +35,17 @@ export interface CarRow {
   activeText: string;
   readinessText: string;
   detail: string | null;
-  metrics: Array<{ label: string; value: string; code?: boolean }>;
-  primaryAction: {
-    type: CarRowAction;
+  metrics: Array<{
     label: string;
-    className: string;
-  } | null;
+    value: string;
+    code?: boolean;
+    tier: ProvenanceTier;
+  }>;
+  capabilities: Capabilities;
+  /** Activate a ready inactive car; `null` for the active one or an incomplete one. */
+  activateLabel: string | null;
+  /** "Finish setup" on an incomplete car, plain "Edit" otherwise. */
+  editLabel: string;
 }
 
 /** The banner above the list: just-added feedback or "no active car". */
@@ -74,27 +81,14 @@ function ratioText(value: unknown, fmt: FormatNumber, t: Translate): string {
     : t("settings.car.value_missing");
 }
 
-function primaryAction(
-  isActive: boolean,
-  isComplete: boolean,
-  t: Translate,
-): CarRow["primaryAction"] {
+function rowDetail(car: CarRecord, isComplete: boolean, t: Translate) {
   if (!isComplete) {
-    return {
-      type: "complete",
-      label: t(
-        isActive ? "settings.car.open_analysis" : "settings.car.finish_setup",
-      ),
-      className: "btn btn--primary car-complete-btn",
-    };
+    return t("settings.car.incomplete_detail");
   }
-  return isActive
-    ? null
-    : {
-        type: "activate",
-        label: t("settings.car.activate"),
-        className: "btn car-activate-btn",
-      };
+  const estimate = estimateNoteKey(savedCarReferences(car));
+  return estimate
+    ? `${t(estimate)} ${t("settings.car.confidence.review_detail")}`
+    : null;
 }
 
 export function carRows(
@@ -107,6 +101,7 @@ export function carRows(
   return cars.map((car) => {
     const isActive = car.id === activeCarId;
     const { isComplete } = getCarCompleteness(car);
+    const refs = savedCarReferences(car);
     return {
       carId: car.id,
       name: car.name,
@@ -123,9 +118,7 @@ export function carRows(
           ? "settings.car.ready_label"
           : "settings.car.incomplete_label",
       ),
-      detail: isComplete
-        ? buildOrderReferenceConfidenceDetail(car.order_reference_status, t)
-        : t("settings.car.incomplete_detail"),
+      detail: rowDetail(car, isComplete, t),
       metrics: [
         {
           label: t("settings.car.col_tires"),
@@ -135,17 +128,25 @@ export function carRows(
             t("settings.car.tires_missing"),
           ),
           code: true,
+          tier: provenanceTier(refs.tire),
         },
         {
           label: t("settings.car.col_drive"),
           value: ratioText(car.aspects?.final_drive_ratio, fmt, t),
+          tier: provenanceTier(refs.finalDrive),
         },
         {
           label: t("settings.car.col_gear"),
           value: ratioText(car.aspects?.current_gear_ratio, fmt, t),
+          tier: provenanceTier(refs.topGear),
         },
       ],
-      primaryAction: primaryAction(isActive, isComplete, t),
+      capabilities: carCapabilities(refs),
+      activateLabel:
+        isComplete && !isActive ? t("settings.car.activate") : null,
+      editLabel: t(
+        isComplete ? "settings.car.edit" : "settings.car.finish_setup",
+      ),
     };
   });
 }

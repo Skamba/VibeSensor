@@ -1,4 +1,12 @@
 import type { LoggingStatusPayload } from "../../api/types";
+import {
+  CAPABILITY_FAMILIES,
+  type Capabilities,
+  type CapabilityFamily,
+  type CapabilityMark,
+  capabilityMark,
+  capabilityNoteKey,
+} from "../../capabilities";
 import { formatSpeed, type SpeedUnit } from "../../format";
 
 /** Text for the server's capture-readiness checks. */
@@ -170,14 +178,10 @@ export function checklist(
 
 // --- "This run can test" -------------------------------------------------------
 
-export type Capabilities = NonNullable<Readiness["capabilities"]>;
-type Family = keyof Capabilities;
-
 export interface CapabilityItem {
-  family: Family;
+  family: CapabilityFamily;
   label: string;
-  /** `ok`: tested; `caveat`: tested, but the result is hedged; `no`: not tested. */
-  mark: "ok" | "caveat" | "no";
+  mark: CapabilityMark;
   note: string | null;
   /** Where the user can fix it, with the button text. */
   fix: { target: "cars" | "speed_source"; label: string } | null;
@@ -188,14 +192,6 @@ export interface CapabilityModel {
   /** The typed-in speed caveat, when the speed source is manual; fixed on the speed-source tab. */
   manualNote: string | null;
 }
-
-const CAPABILITY_MARK: Record<string, CapabilityItem["mark"]> = {
-  ok: "ok",
-  measured: "ok",
-  estimated_final_drive: "caveat",
-  estimated_top_gear: "caveat",
-  estimated_ratios: "caveat",
-};
 
 const CAPABILITY_FIX: Record<string, "cars" | "speed_source"> = {
   missing_tire: "cars",
@@ -218,16 +214,15 @@ export function capabilityModel(
   if (!capabilities) {
     return null;
   }
-  const families: Family[] = ["wheel", "driveline", "engine"];
-  const items = families.map((family): CapabilityItem => {
+  const items = CAPABILITY_FAMILIES.map((family): CapabilityItem => {
     const value = capabilities[family];
     const fix = CAPABILITY_FIX[value];
+    const noteKey = capabilityNoteKey(family, value);
     return {
       family,
-      label: t(`dashboard.capabilities.family.${family}`),
-      mark: CAPABILITY_MARK[value] ?? "no",
-      note:
-        value === "ok" ? null : t(`dashboard.capabilities.${family}.${value}`),
+      label: t(`capabilities.family.${family}`),
+      mark: capabilityMark(value),
+      note: noteKey ? t(noteKey) : null,
       fix: fix
         ? {
             target: fix,
@@ -238,7 +233,7 @@ export function capabilityModel(
   });
   return {
     items,
-    manualNote: families.some(
+    manualNote: CAPABILITY_FAMILIES.some(
       (family) => capabilities[family] === "manual_speed",
     )
       ? t("dashboard.capabilities.manual_note", { speed: manualSpeedText })

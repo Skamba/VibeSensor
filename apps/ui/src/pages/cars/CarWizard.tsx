@@ -2,27 +2,33 @@ import type { ComponentChildren } from "preact";
 import { useLayoutEffect, useRef } from "preact/hooks";
 
 import { activeView } from "../../app_store";
+import { carCapabilities } from "../../capabilities";
+import { provenanceTier } from "../../car_references";
 import { fmt } from "../../format";
 import { t } from "../../i18n";
+import { CapabilityList, ProvenanceChip } from "./CapabilityList";
 import { formatCarLibraryTireOption } from "./tires";
 import {
   actionHint,
   canFinish,
-  gearboxDetail,
-  MANUAL_INPUT_EXAMPLES,
+  gearboxParts,
   type ManualField,
   progressText,
+  type RatioField,
+  type RatioPart,
   SPECS_STEP,
   STEP_LABEL_KEYS,
-  specBranch,
+  specProvenance,
   summary,
   variantDetail,
 } from "./wizard_model";
 import {
   brandOptions,
+  clearRatio,
   closeWizard,
   continueWithManualSpecs,
   editManualInput,
+  editTireSize,
   finishWizard,
   type FocusTarget,
   focusRequest,
@@ -43,6 +49,8 @@ import {
   step,
   submitCustom,
   tireOptions,
+  tireSizeText,
+  tireSizeUnreadable,
   typeOptions,
   variantOptions,
   wizard,
@@ -61,8 +69,9 @@ const FOCUS_SELECTORS: Record<FocusTarget, string[]> = {
   "spec-selection": [
     "#wizardTireList .wiz-opt",
     "#wizardGearboxList .wiz-opt",
-    "#wizTireWidth",
+    "#wizTireSize",
   ],
+  "tire-size": ["#wizTireSize"],
   "type-option": ["#wizardTypeList .wiz-opt", "#wizardCustomType"],
   "variant-option": ["#wizardVariantList .wiz-opt"],
   tireWidth: ["#wizTireWidth"],
@@ -72,10 +81,11 @@ const FOCUS_SELECTORS: Record<FocusTarget, string[]> = {
   topGear: ["#wizGearRatio"],
 };
 
-const MANUAL_FIELDS: Array<{
+const TIRE_FIELDS: Array<{
   field: ManualField;
   id: string;
   labelKey: string;
+  placeholder: string;
   min: string;
   step: string;
 }> = [
@@ -83,6 +93,7 @@ const MANUAL_FIELDS: Array<{
     field: "tireWidth",
     id: "wizTireWidth",
     labelKey: "settings.tire_width",
+    placeholder: "225",
     min: "100",
     step: "1",
   },
@@ -90,6 +101,7 @@ const MANUAL_FIELDS: Array<{
     field: "tireAspect",
     id: "wizTireAspect",
     labelKey: "settings.tire_aspect",
+    placeholder: "45",
     min: "20",
     step: "1",
   },
@@ -97,28 +109,37 @@ const MANUAL_FIELDS: Array<{
     field: "rim",
     id: "wizRim",
     labelKey: "settings.rim_size",
+    placeholder: "18",
     min: "10",
     step: "0.5",
   },
+];
+
+const RATIO_FIELDS: Array<{
+  field: RatioField;
+  id: string;
+  labelKey: string;
+  helpKey: string;
+}> = [
   {
     field: "finalDrive",
     id: "wizFinalDrive",
-    labelKey: "settings.final_drive_ratio",
-    min: "0.1",
-    step: "0.01",
+    labelKey: "settings.car.final_drive_optional",
+    helpKey: "settings.car.final_drive_help",
   },
   {
     field: "topGear",
     id: "wizGearRatio",
-    labelKey: "settings.top_gear_ratio",
-    min: "0.1",
-    step: "0.01",
+    labelKey: "settings.car.top_gear_optional",
+    helpKey: "settings.car.top_gear_help",
   },
 ];
 
 interface OptionItem {
   label: string;
   detail: string | null;
+  /** Ratio parts with confidence chips, shown instead of `detail`. */
+  parts?: RatioPart[];
   selected?: boolean;
   attrs: Record<string, string>;
   onSelect(): void;
@@ -176,7 +197,15 @@ function Options(props: {
           {...item.attrs}
         >
           <span>{item.label}</span>
-          {item.detail ? (
+          {item.parts ? (
+            <span class="wiz-opt-detail wiz-opt-parts">
+              {item.parts.map((part) => (
+                <span key={part.text} class="wiz-opt-part">
+                  {part.text} <ProvenanceChip tier={part.tier} />
+                </span>
+              ))}
+            </span>
+          ) : item.detail ? (
             <span class="wiz-opt-detail">{item.detail}</span>
           ) : null}
         </button>
@@ -234,6 +263,126 @@ function CustomEntry(props: {
   );
 }
 
+function LibraryMissNote() {
+  const { brand, carType, libraryMiss } = wizard.value;
+  return libraryMiss ? (
+    <div class="wizard-info-line" role="status">
+      {t("settings.wizard.no_library_data", {
+        name: libraryMiss === "brand" ? brand : `${brand} ${carType}`,
+      })}
+    </div>
+  ) : null;
+}
+
+function SpecsForm() {
+  const state = wizard.value;
+  const inputs = manualInputs.value;
+  const refs = specProvenance(state, inputs);
+  const editing = state.editing;
+  const fromLibrary =
+    tireOptions.value.length > 0 || gearboxOptions.value.length > 0;
+  return (
+    <div class="wizard-branch-card wizard-custom-specs" id="wizardSpecsForm">
+      <div class="wizard-branch-card__header">
+        <strong class="wizard-branch-label">
+          {t("settings.car.specs_title")}
+        </strong>
+        <div class="subtle wizard-custom-specs__note">
+          {t(
+            editing
+              ? "settings.car.edit_specs_note"
+              : fromLibrary
+                ? "settings.car.library_specs_note"
+                : "settings.car.manual_specs_note",
+          )}
+        </div>
+      </div>
+      <div class="field wizard-spec-field">
+        <label htmlFor="wizTireSize" class="wizard-spec-label">
+          <span>{t("settings.car.tire_size")}</span>
+          <ProvenanceChip tier={provenanceTier(refs.tire)} />
+        </label>
+        <input
+          id="wizTireSize"
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          placeholder={t("settings.car.tire_size_placeholder")}
+          value={tireSizeText.value}
+          aria-describedby="wizTireSizeHelp"
+          onInput={(event) => editTireSize(event.currentTarget.value)}
+        />
+        <div id="wizTireSizeHelp" class="subtle wizard-field-help">
+          {tireSizeUnreadable.value
+            ? t("settings.car.tire_size_unreadable")
+            : t("settings.car.tire_size_help")}
+        </div>
+        {editing?.staggeredTire ? (
+          <div class="subtle wizard-field-help" data-staggered-note>
+            {t("settings.car.staggered_note", {
+              sizes: editing.staggeredTire,
+            })}
+          </div>
+        ) : null}
+      </div>
+      <div class="settings-subgrid wizard-tire-grid">
+        {TIRE_FIELDS.map((input) => (
+          <div class="field" key={input.field}>
+            <label htmlFor={input.id}>{t(input.labelKey)}</label>
+            <input
+              id={input.id}
+              type="number"
+              inputMode="decimal"
+              placeholder={input.placeholder}
+              min={input.min}
+              step={input.step}
+              value={inputs[input.field]}
+              onInput={(event) =>
+                editManualInput(input.field, event.currentTarget.value)
+              }
+            />
+          </div>
+        ))}
+      </div>
+      {RATIO_FIELDS.map((input) => (
+        <div class="field wizard-spec-field" key={input.field}>
+          <label htmlFor={input.id} class="wizard-spec-label">
+            <span>{t(input.labelKey)}</span>
+            <ProvenanceChip tier={provenanceTier(refs[input.field])} />
+          </label>
+          <div class="wizard-ratio-row">
+            <input
+              id={input.id}
+              type="number"
+              inputMode="decimal"
+              placeholder={t("settings.car.ratio_placeholder")}
+              min="0.1"
+              step="0.01"
+              value={inputs[input.field]}
+              aria-describedby={`${input.id}Help`}
+              onInput={(event) =>
+                editManualInput(input.field, event.currentTarget.value)
+              }
+            />
+            <button
+              type="button"
+              class="btn btn--muted wizard-unknown-btn"
+              data-ratio-unknown={input.field}
+              disabled={!inputs[input.field]}
+              onClick={() => clearRatio(input.field)}
+            >
+              {t("settings.car.ratio_dont_know")}
+            </button>
+          </div>
+          <div id={`${input.id}Help`} class="subtle wizard-field-help">
+            {t(input.helpKey)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Steps() {
   const current = step.value;
   const state = wizard.value;
@@ -255,7 +404,8 @@ function Steps() {
     attrs: { "data-idx": String(index) },
     onSelect: () => void selectModel(index),
   }));
-  const inputs = manualInputs.value;
+  const tires = tireOptions.value;
+  const gearboxes = gearboxOptions.value;
   return (
     <>
       <div id="wizardStep0" class="wizard-step" hidden={current !== 0}>
@@ -270,31 +420,43 @@ function Steps() {
       </div>
       <div id="wizardStep1" class="wizard-step" hidden={current !== 1}>
         <h3>{t("settings.car.step_type")}</h3>
+        <LibraryMissNote />
         <Options id="wizardTypeList" {...types} />
         <CustomEntry
           kind="type"
-          labelKey="settings.car.or_custom_type"
+          labelKey={
+            state.libraryMiss
+              ? "settings.car.custom_type"
+              : "settings.car.or_custom_type"
+          }
           maxLength={32}
           placeholder="e.g. Van"
         />
       </div>
       <div id="wizardStep2" class="wizard-step" hidden={current !== 2}>
         <h3>{t("settings.car.step_model")}</h3>
+        <LibraryMissNote />
         <Options id="wizardModelList" list {...models} />
         <CustomEntry
           kind="model"
-          labelKey="settings.car.or_custom_model"
+          labelKey={
+            state.libraryMiss
+              ? "settings.car.custom_model"
+              : "settings.car.or_custom_model"
+          }
           maxLength={64}
           placeholder="e.g. C-Class W205"
           intro={
-            <>
-              <strong class="wizard-branch-label">
-                {t("settings.car.manual_branch_title")}
-              </strong>
-              <div class="subtle wizard-branch-note">
-                {t("settings.car.manual_model_note")}
-              </div>
-            </>
+            state.libraryMiss ? null : (
+              <>
+                <strong class="wizard-branch-label">
+                  {t("settings.car.manual_branch_title")}
+                </strong>
+                <div class="subtle wizard-branch-note">
+                  {t("settings.car.manual_model_note")}
+                </div>
+              </>
+            )
           }
         />
       </div>
@@ -312,75 +474,42 @@ function Steps() {
         />
       </div>
       <div id="wizardStep4" class="wizard-step" hidden={current !== SPECS_STEP}>
-        <div class="wizard-branch-card wizard-branch-card--library">
-          <div class="wizard-branch-card__header">
-            <strong class="wizard-branch-label">
-              {t("settings.car.library_branch_title")}
-            </strong>
-            <div class="subtle wizard-branch-note">
-              {t("settings.car.library_branch_note")}
-            </div>
+        {tires.length ? (
+          <div class="wizard-library-picks">
+            <h3>{t("settings.car.step_wheels")}</h3>
+            <Options
+              id="wizardTireList"
+              items={tires.map((tire, index) => ({
+                label: tire.name,
+                detail: formatCarLibraryTireOption(tire, fmt),
+                selected: tire === state.selectedTire,
+                attrs: { "data-tire-idx": String(index) },
+                onSelect: () => selectTire(index),
+              }))}
+            />
           </div>
-          <h3>{t("settings.car.step_wheels")}</h3>
-          <Options
-            id="wizardTireList"
-            items={tireOptions.value.map((tire, index) => ({
-              label: tire.name,
-              detail: formatCarLibraryTireOption(tire, fmt),
-              selected: tire === state.selectedTire,
-              attrs: { "data-tire-idx": String(index) },
-              onSelect: () => selectTire(index),
-            }))}
-          />
-          <h3 class="wizard-section-title">{t("settings.car.step_gearbox")}</h3>
-          <Options
-            id="wizardGearboxList"
-            list
-            message={noGearboxesMessage.value}
-            items={
-              noGearboxesMessage.value
-                ? []
-                : gearboxOptions.value.map((gearbox, index) => ({
-                    label: gearbox.name,
-                    detail: gearboxDetail(gearbox, fmt, t),
-                    selected: gearbox === state.selectedGearbox,
-                    attrs: { "data-idx": String(index) },
-                    onSelect: () => selectGearbox(index),
-                  }))
-            }
-          />
-        </div>
-        <div class="wizard-branch-divider">
-          <span>{t("settings.car.branch_divider")}</span>
-        </div>
-        <div class="wizard-branch-card wizard-branch-card--manual wizard-custom-specs">
-          <div class="wizard-branch-card__header">
-            <strong class="wizard-branch-label">
-              {t("settings.car.manual_branch_title")}
-            </strong>
-            <div class="subtle wizard-custom-specs__note">
-              {t("settings.car.manual_specs_note")}
-            </div>
+        ) : null}
+        {gearboxes.length || noGearboxesMessage.value ? (
+          <div class="wizard-library-picks">
+            <h3 class="wizard-section-title">
+              {t("settings.car.step_gearbox")}
+            </h3>
+            <Options
+              id="wizardGearboxList"
+              list
+              message={noGearboxesMessage.value}
+              items={gearboxes.map((gearbox, index) => ({
+                label: gearbox.name,
+                detail: null,
+                parts: gearboxParts(gearbox, fmt, t),
+                selected: gearbox === state.selectedGearbox,
+                attrs: { "data-idx": String(index) },
+                onSelect: () => selectGearbox(index),
+              }))}
+            />
           </div>
-          <div class="settings-subgrid">
-            {MANUAL_FIELDS.map((input) => (
-              <div class="field" key={input.field}>
-                <label htmlFor={input.id}>{t(input.labelKey)}</label>
-                <input
-                  id={input.id}
-                  type="number"
-                  placeholder={MANUAL_INPUT_EXAMPLES[input.field]}
-                  min={input.min}
-                  step={input.step}
-                  value={inputs[input.field]}
-                  onInput={(event) =>
-                    editManualInput(input.field, event.currentTarget.value)
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        ) : null}
+        <SpecsForm />
       </div>
     </>
   );
@@ -391,7 +520,7 @@ export function CarWizard() {
   const state = wizard.value;
   const inputs = manualInputs.value;
   const current = state.step;
-  const branch = specBranch(state);
+  const editing = state.editing;
   const card = useRef<HTMLDivElement | null>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(open);
@@ -436,6 +565,10 @@ export function CarWizard() {
   }, [request, viewVisible]);
 
   const view = summary(state, inputs, fmt, t);
+  const capabilities =
+    current === SPECS_STEP
+      ? carCapabilities(specProvenance(state, inputs))
+      : null;
   return (
     <div class="wizard-modal-layer" hidden={!open}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: clicking outside closes the dialog; Escape and the close button are the keyboard paths. */}
@@ -453,9 +586,7 @@ export function CarWizard() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="wizardTitle"
-        data-spec-branch={
-          current === SPECS_STEP ? (branch ?? "pending") : undefined
-        }
+        data-mode={editing ? "edit" : "add"}
         tabIndex={-1}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -467,11 +598,23 @@ export function CarWizard() {
       >
         <div class="wizard-header">
           <div class="wizard-header__text">
-            <strong id="wizardTitle">{t("settings.car.add_title")}</strong>
-            <div class="subtle">{t("settings.car.wizard_intro")}</div>
-            <div id="wizardProgressText" class="wizard-progress-text">
-              {progressText(current, t)}
+            <strong id="wizardTitle">
+              {editing
+                ? t("settings.car.edit_title", { name: editing.name })
+                : t("settings.car.add_title")}
+            </strong>
+            <div class="subtle">
+              {t(
+                editing
+                  ? "settings.car.edit_intro"
+                  : "settings.car.wizard_intro",
+              )}
             </div>
+            {editing ? null : (
+              <div id="wizardProgressText" class="wizard-progress-text">
+                {progressText(current, t)}
+              </div>
+            )}
           </div>
           <button
             id="wizardCloseBtn"
@@ -486,7 +629,7 @@ export function CarWizard() {
         <div class="wizard-shell">
           <div class="wizard-main">
             <div class="wizard-steps">
-              <div class="wizard-step-indicators">
+              <div class="wizard-step-indicators" hidden={Boolean(editing)}>
                 {STEP_LABEL_KEYS.map((key, index) => (
                   <span
                     key={key}
@@ -514,14 +657,14 @@ export function CarWizard() {
                 class="subtle wizard-nav__status"
                 aria-live="polite"
               >
-                {actionHint(state, inputs, t)}
+                {actionHint(state, inputs, gearboxOptions.value.length, t)}
               </div>
               <div class="wizard-nav__actions">
                 <button
                   id="wizardBackBtn"
                   type="button"
                   class="btn btn--muted"
-                  hidden={current === 0}
+                  hidden={current === 0 || Boolean(editing)}
                   onClick={() => void goBack()}
                 >
                   {t("settings.car.back")}
@@ -536,16 +679,48 @@ export function CarWizard() {
                   }
                   onClick={() => void finishWizard()}
                 >
-                  {t("settings.car.finish_add")}
+                  {t(
+                    editing
+                      ? "settings.car.finish_save"
+                      : "settings.car.finish_add",
+                  )}
                 </button>
               </div>
             </div>
           </div>
-          <aside class="wizard-summary-card" aria-live="polite">
-            <div class="wizard-task-callout">
-              <strong>{t("settings.car.wizard_task_title")}</strong>
-              <div class="subtle">{t("settings.car.wizard_task_intro")}</div>
-            </div>
+          <aside
+            class={
+              capabilities
+                ? "wizard-summary-card wizard-summary-card--capabilities"
+                : "wizard-summary-card"
+            }
+            aria-live="polite"
+          >
+            {capabilities ? (
+              <section
+                class="wizard-capabilities"
+                aria-labelledby="wizardCapabilitiesTitle"
+              >
+                <div
+                  id="wizardCapabilitiesTitle"
+                  class="wizard-summary-card__title"
+                >
+                  {t("capabilities.car_title")}
+                </div>
+                <CapabilityList
+                  id="wizardCapabilities"
+                  capabilities={capabilities}
+                />
+                <div class="subtle wizard-capabilities__obd">
+                  {t("capabilities.obd_hint")}
+                </div>
+              </section>
+            ) : (
+              <div class="wizard-task-callout">
+                <strong>{t("settings.car.wizard_task_title")}</strong>
+                <div class="subtle">{t("settings.car.wizard_task_intro")}</div>
+              </div>
+            )}
             <div class="wizard-summary-card__title">
               {t("settings.car.wizard_summary_title")}
             </div>

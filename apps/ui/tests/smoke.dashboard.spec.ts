@@ -198,7 +198,7 @@ test("journey: a parked car can start, and the capability line says what the run
   ).toHaveAttribute("data-capability-mark", "ok");
   await expect(
     capabilities.locator('[data-capability="engine"]'),
-  ).toContainText("top gear only");
+  ).toContainText("assuming top gear");
   await expect(page.locator("#captureLayoutNote")).toContainText("One sensor");
   await capabilities
     .locator('[data-capability="driveline"]')

@@ -11,14 +11,21 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api/types";
+import { fmt } from "../../format";
 import { t } from "../../i18n";
-import { createAndActivateCar } from "./cars_store";
+import { carSettings } from "../../settings_store";
+import { createAndActivateCar, saveCarEdits } from "./cars_store";
 import {
   carRequest,
   EMPTY_MANUAL_INPUTS,
+  editRequest,
+  editTarget,
   INITIAL_WIZARD_STATE,
   type ManualField,
   type ManualInputs,
+  parseTireSize,
+  type RatioField,
+  ratioInputsFromGearbox,
   resolveGearboxes,
   resolveTireOptions,
   SPECS_STEP,
@@ -37,6 +44,7 @@ export type FocusTarget =
   | "gearbox-option"
   | "model-option"
   | "spec-selection"
+  | "tire-size"
   | "type-option"
   | "variant-option"
   | ManualField;
@@ -64,6 +72,9 @@ export const variantOptions = signal<readonly CarLibraryVariant[]>([]);
 export const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
 export const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
 export const noGearboxesMessage = signal<string | null>(null);
+/** The sidewall-style tire size the user typed, and whether it could be read. */
+export const tireSizeText = signal("");
+export const tireSizeUnreadable = signal(false);
 export const focusRequest = signal<{ target: FocusTarget; seq: number } | null>(
   null,
 );
@@ -77,8 +88,18 @@ function update(patch: Partial<WizardState>): void {
   wizard.value = { ...wizard.value, ...patch };
 }
 
-/** Clears every option list after `step`, so stale choices never show. */
+function resetSpecsForm(inputs: ManualInputs): void {
+  manualInputs.value = inputs;
+  tireSizeText.value = "";
+  tireSizeUnreadable.value = false;
+}
+
+/**
+ * Clears every option list after `step`, so stale choices never show, and the
+ * specs: values prefilled for another car must not be saved as the user's.
+ */
 function resetOptionsAfter(step: "brand" | "type" | "model" | "variant"): void {
+  resetSpecsForm(EMPTY_MANUAL_INPUTS);
   if (step === "brand") {
     typeOptions.value = idle();
   }
@@ -139,49 +160,63 @@ function loadSpecs(generation: number): void {
     state.selectedVariant,
   );
   const selectedTire =
-    tires.length > 0
-      ? state.selectedTire && tires.includes(state.selectedTire)
-        ? state.selectedTire
-        : tires[0]
-      : null;
+    state.selectedTire && tires.includes(state.selectedTire)
+      ? state.selectedTire
+      : (tires[0] ?? null);
+  // Prefill as much as the library knows: the first tire, and the gearbox
+  // when the variant has only one.
+  const selectedGearbox =
+    state.selectedGearbox && gearboxes.includes(state.selectedGearbox)
+      ? state.selectedGearbox
+      : gearboxes.length === 1
+        ? gearboxes[0]
+        : null;
   batch(() => {
     tireOptions.value = tires;
     gearboxOptions.value = gearboxes;
-    noGearboxesMessage.value = gearboxes.length
-      ? null
-      : t("settings.wizard.no_gearboxes");
+    noGearboxesMessage.value =
+      tires.length && !gearboxes.length
+        ? t("settings.wizard.no_gearboxes")
+        : null;
+    let inputs = manualInputs.value;
     if (selectedTire) {
-      manualInputs.value = tireInputsFromOption(
-        selectedTire,
-        manualInputs.value,
-      );
+      inputs = tireInputsFromOption(selectedTire, inputs);
     }
-    update({
-      selectedTire,
-      ...(tires.length && gearboxes.length
-        ? {}
-        : {
-            specBranch: "manual" as const,
-            selectedGearbox: gearboxes.length ? state.selectedGearbox : null,
-          }),
-    });
+    if (selectedGearbox) {
+      inputs = ratioInputsFromGearbox(selectedGearbox, inputs);
+    }
+    manualInputs.value = inputs;
+    update({ selectedTire, selectedGearbox });
   });
   if (stillCurrent(generation, (s) => s.step === SPECS_STEP)) {
     focus(
-      gearboxes.length
-        ? tires.length
-          ? "spec-selection"
-          : "gearbox-option"
-        : "tireWidth",
+      tires.length
+        ? "spec-selection"
+        : gearboxes.length
+          ? "gearbox-option"
+          : "tire-size",
     );
   }
+}
+
+/** A typed brand or type with no library data: skip its lists, say so once. */
+function skipLibrary<T>(
+  options: Signal<LibraryOptions<T>>,
+  target: FocusTarget,
+) {
+  options.value = { status: "ready", message: null, options: [] };
+  focus(target);
 }
 
 /** Loads whatever the current step needs from the car library. */
 export async function loadCurrentStep(): Promise<void> {
   const generation = ++loadGeneration;
-  const { step, brand, carType, selectedModel } = wizard.value;
-  if (step === 0) {
+  const { step, brand, carType, selectedModel, libraryMiss } = wizard.value;
+  if (step === 1 && libraryMiss === "brand") {
+    skipLibrary(typeOptions, "custom-type");
+  } else if (step === 2 && libraryMiss !== null) {
+    skipLibrary(modelOptions, "custom-model");
+  } else if (step === 0) {
     await loadLibrary(
       generation,
       (s) => s.step === 0,
@@ -236,6 +271,27 @@ export async function openWizard(): Promise<void> {
   await loadCurrentStep();
 }
 
+/** Opens a saved car's specs, prefilled with its values and their sources. */
+export function openEditor(carId: string): void {
+  const car = carSettings.cars.value.find((entry) => entry.id === carId);
+  if (!car) {
+    return;
+  }
+  loadGeneration += 1;
+  const { target, inputs } = editTarget(car, fmt);
+  batch(() => {
+    wizard.value = {
+      ...INITIAL_WIZARD_STATE,
+      step: SPECS_STEP,
+      editing: target,
+    };
+    resetOptionsAfter("brand");
+    resetSpecsForm(inputs);
+    isOpen.value = true;
+  });
+  focus("tire-size");
+}
+
 export function closeWizard(): void {
   loadGeneration += 1;
   isOpen.value = false;
@@ -252,15 +308,24 @@ export async function goBack(): Promise<void> {
   if (previous === 3 && !state.selectedModel?.variants?.length) previous = 2;
   if (previous === 2 && !state.carType) previous = 1;
   if (previous === 1 && !state.brand) previous = 0;
-  update({ step: previous });
+  // Back on the type step, a library brand offers its types again.
+  const libraryMiss =
+    previous === 0 || (previous === 1 && state.libraryMiss === "type")
+      ? null
+      : state.libraryMiss;
+  update({ step: previous, libraryMiss });
   await loadCurrentStep();
 }
 
-export async function selectBrand(brand: string): Promise<void> {
+export async function selectBrand(
+  brand: string,
+  inLibrary = true,
+): Promise<void> {
   batch(() => {
     update({
       ...INITIAL_WIZARD_STATE,
       brand,
+      libraryMiss: inLibrary ? null : "brand",
       step: 1,
     });
     resetOptionsAfter("brand");
@@ -268,10 +333,19 @@ export async function selectBrand(brand: string): Promise<void> {
   await loadCurrentStep();
 }
 
-export async function selectType(carType: string): Promise<void> {
-  const { brand } = wizard.value;
+export async function selectType(
+  carType: string,
+  inLibrary = true,
+): Promise<void> {
+  const { brand, libraryMiss } = wizard.value;
   batch(() => {
-    update({ ...INITIAL_WIZARD_STATE, brand, carType, step: 2 });
+    update({
+      ...INITIAL_WIZARD_STATE,
+      brand,
+      carType,
+      libraryMiss: libraryMiss ?? (inLibrary ? null : "type"),
+      step: 2,
+    });
     resetOptionsAfter("type");
   });
   await loadCurrentStep();
@@ -290,7 +364,6 @@ export async function selectModel(index: number): Promise<void> {
       selectedVariant: null,
       selectedGearbox: null,
       selectedTire: null,
-      specBranch: null,
     });
     resetOptionsAfter("model");
   });
@@ -308,7 +381,6 @@ export async function selectVariant(index: number): Promise<void> {
       step: SPECS_STEP,
       selectedGearbox: null,
       selectedTire: null,
-      specBranch: null,
     });
     resetOptionsAfter("variant");
   });
@@ -328,9 +400,17 @@ export function selectTire(index: number): void {
 export function selectGearbox(index: number): void {
   const gearbox = gearboxOptions.value[index];
   if (gearbox) {
-    update({ selectedGearbox: gearbox, specBranch: "library" });
+    batch(() => {
+      update({ selectedGearbox: gearbox });
+      manualInputs.value = ratioInputsFromGearbox(gearbox, manualInputs.value);
+    });
     focus("finish");
   }
+}
+
+function libraryMatch(options: readonly string[], text: string): string | null {
+  const wanted = text.toLowerCase();
+  return options.find((option) => option.toLowerCase() === wanted) ?? null;
 }
 
 /** Custom text entries must be non-blank; blank entries refocus the input. */
@@ -344,9 +424,14 @@ export async function submitCustom(
     return;
   }
   if (kind === "brand") {
-    await selectBrand(trimmed);
+    const { status, options } = brandOptions.value;
+    const known = libraryMatch(options, trimmed);
+    // Only a loaded brand list proves the library has no data for this brand.
+    await selectBrand(known ?? trimmed, known !== null || status !== "ready");
   } else if (kind === "type") {
-    await selectType(trimmed);
+    const { status, options } = typeOptions.value;
+    const known = libraryMatch(options, trimmed);
+    await selectType(known ?? trimmed, known !== null || status !== "ready");
   } else {
     await continueWithManualSpecs(trimmed);
   }
@@ -363,7 +448,6 @@ export async function continueWithManualSpecs(
       selectedVariant: null,
       selectedGearbox: null,
       selectedTire: null,
-      specBranch: "manual",
       step: SPECS_STEP,
     });
     resetOptionsAfter("model");
@@ -372,30 +456,53 @@ export async function continueWithManualSpecs(
 }
 
 export function editManualInput(field: ManualField, value: string): void {
+  manualInputs.value = { ...manualInputs.value, [field]: value };
+}
+
+/** "I don't know": the ratio stays unknown and its check shows "couldn't test". */
+export function clearRatio(field: RatioField): void {
+  editManualInput(field, "");
+}
+
+/** A size typed as on the sidewall ("225/45 R18") fills the three tire fields. */
+export function editTireSize(text: string): void {
+  const parsed = parseTireSize(text);
   batch(() => {
-    manualInputs.value = { ...manualInputs.value, [field]: value };
-    if (isOpen.value && wizard.value.step === SPECS_STEP) {
-      update({ specBranch: "manual" });
+    tireSizeText.value = text;
+    tireSizeUnreadable.value = Boolean(text.trim()) && parsed === null;
+    if (parsed) {
+      manualInputs.value = { ...manualInputs.value, ...parsed };
     }
   });
 }
 
 export async function finishWizard(): Promise<void> {
   const state = wizard.value;
-  const request = carRequest(state, manualInputs.value);
-  if (!request.ok) {
-    focus(request.focus);
-    return;
-  }
   try {
-    await createAndActivateCar({
-      name: wizardCarName(state.brand, state.model, state.selectedVariant),
-      type: state.carType || "Custom",
-      variant: state.selectedVariant?.name,
-      aspects: request.aspects,
-      status: request.status,
-      fuelType: request.fuelType,
-    });
+    if (state.editing) {
+      const request = editRequest(state.editing, manualInputs.value);
+      if (!request.ok) {
+        focus(request.focus);
+        return;
+      }
+      if (Object.keys(request.aspects).length) {
+        await saveCarEdits(state.editing.carId, request.aspects);
+      }
+    } else {
+      const request = carRequest(state, manualInputs.value);
+      if (!request.ok) {
+        focus(request.focus);
+        return;
+      }
+      await createAndActivateCar({
+        name: wizardCarName(state.brand, state.model, state.selectedVariant),
+        type: state.carType || "Custom",
+        variant: state.selectedVariant?.name,
+        aspects: request.aspects,
+        status: request.status,
+        fuelType: request.fuelType,
+      });
+    }
   } catch {
     focus("finish");
     return;

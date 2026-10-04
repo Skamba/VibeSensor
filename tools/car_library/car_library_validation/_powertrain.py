@@ -245,7 +245,6 @@ def validate_final_drive_layout(
     if config.driven_final_drive_ratio is None and (
         config.order_analysis_policy.usable_for_driveshaft_order
         or config.order_analysis_policy.usable_for_wheel_order
-        or not config.order_analysis_policy.requires_manual_confirmation
     ):
         issues.append(
             CarLibraryValidationIssue(

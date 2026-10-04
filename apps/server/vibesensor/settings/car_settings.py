@@ -202,11 +202,13 @@ class CarSettingsService:
                 car.aspects
             )
             clear_final_drive = clear_gear = False
+            aspect_updates: AnalysisSettingsPayload = {}
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
                 raw_aspects: Mapping[str, object] = car_data["aspects"]
+                aspect_updates = sanitize_analysis_settings(raw_aspects)
                 new_aspects = _merge_aspects_with_tire_setup(
                     current=new_aspects,
-                    updates=sanitize_analysis_settings(raw_aspects),
+                    updates=aspect_updates,
                 )
                 # An explicit null ratio means "unknown": drop the stored value.
                 clear_final_drive = _is_explicit_null(raw_aspects, "final_drive_ratio")
@@ -222,7 +224,11 @@ class CarSettingsService:
                     new_variant = _clamp_str(raw_variant, 64) or None
                 else:
                     new_variant = None
-            new_order_reference_status = car.order_reference_status
+            # Without an explicit status, every reference the user edited becomes
+            # user-confirmed; the untouched ones keep their provenance.
+            new_order_reference_status = _updated_order_reference_status(
+                car.order_reference_status, aspect_updates
+            )
             if "order_reference_status" in car_data:
                 raw_order_reference_status = car_data["order_reference_status"]
                 if isinstance(raw_order_reference_status, Mapping):

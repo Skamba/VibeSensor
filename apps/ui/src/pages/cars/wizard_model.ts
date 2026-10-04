@@ -4,15 +4,25 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
   CarOrderReferenceStatus,
+  CarRecord,
 } from "../../api/types";
 import {
-  buildGearboxConfidenceHint,
+  type CarReferences,
+  confidenceProvenance,
+  isWeak,
+  type ProvenanceTier,
+  provenanceTier,
+  type ReferenceProvenance,
+  savedCarReferences,
+} from "../../car_references";
+import {
   formatCarLibraryTireOption,
+  formatSavedCarTireSummary,
   tireOptionFront,
   tireSetupAspectsFromOption,
 } from "./tires";
 
-/** Pure state rules and text for the add-car wizard. */
+/** Pure state rules and text for the add-car wizard and the car editor. */
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 type FormatNumber = (value: number, digits?: number) => string;
@@ -26,18 +36,28 @@ export const STEP_LABEL_KEYS = [
 ] as const;
 export const SPECS_STEP = 4;
 
-export type SpecBranch = "library" | "manual" | null;
+/** A saved car being edited: the specs it started with and where they came from. */
+export interface EditTarget {
+  carId: string;
+  name: string;
+  original: ManualInputs;
+  provenance: CarReferences;
+  /** The saved front/rear sizes when they differ; editing the tire sets one size. */
+  staggeredTire: string | null;
+}
 
 export interface WizardState {
   step: number;
   brand: string;
   carType: string;
   model: string;
+  /** Which typed entry is not in the car library, so its lists are skipped. */
+  libraryMiss: "brand" | "type" | null;
   selectedModel: CarLibraryModel | null;
   selectedVariant: CarLibraryVariant | null;
   selectedGearbox: CarLibraryGearbox | null;
   selectedTire: CarLibraryTireOption | null;
-  specBranch: SpecBranch;
+  editing: EditTarget | null;
 }
 
 export interface ManualInputs {
@@ -49,10 +69,10 @@ export interface ManualInputs {
 }
 
 export type ManualField = keyof ManualInputs;
+export type RatioField = "finalDrive" | "topGear";
 
-// Manual specs start empty: anything saved from this form is sent as
-// user-confirmed vehicle data, so it must be a value the user entered (or a
-// library value they kept), never a silent default.
+// Specs start empty: a value saved from this form is either one the user
+// entered or a library value they kept, never a silent default.
 export const EMPTY_MANUAL_INPUTS: ManualInputs = {
   tireWidth: "",
   tireAspect: "",
@@ -61,25 +81,17 @@ export const EMPTY_MANUAL_INPUTS: ManualInputs = {
   topGear: "",
 };
 
-/** Example values shown as input placeholders only. */
-export const MANUAL_INPUT_EXAMPLES: ManualInputs = {
-  tireWidth: "225",
-  tireAspect: "45",
-  rim: "18",
-  finalDrive: "3.08",
-  topGear: "0.64",
-};
-
 export const INITIAL_WIZARD_STATE: WizardState = {
   step: 0,
   brand: "",
   carType: "",
   model: "",
+  libraryMiss: null,
   selectedModel: null,
   selectedVariant: null,
   selectedGearbox: null,
   selectedTire: null,
-  specBranch: null,
+  editing: null,
 };
 
 export function resolveGearboxes(
@@ -116,50 +128,84 @@ function positive(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-/** The manual tire and gearbox, when every field holds a positive number. */
-function manualSpecs(inputs: ManualInputs): {
-  tire: { width: number; aspect: number; rim: number } | null;
-  gearbox: { finalDrive: number; topGear: number } | null;
-} {
+/** An optional ratio: empty is unknown (`null`); anything else must be positive. */
+function ratioInput(text: string): number | null | "invalid" {
+  if (!text.trim()) {
+    return null;
+  }
+  return positive(text) ?? "invalid";
+}
+
+function ratioText(value: number | null): string {
+  return value === null ? "" : String(value);
+}
+
+/**
+ * Reads a tire size typed as on the sidewall: "225/45 R18", "225/45ZR18",
+ * "P225/45R18 94W", "225 45 18" or "225/45-18".
+ */
+export function parseTireSize(
+  text: string,
+): Pick<ManualInputs, "tireWidth" | "tireAspect" | "rim"> | null {
+  const match =
+    /^\s*[a-z]{0,2}\s*(\d{3})\s*[/\s]\s*(\d{2})\s*(?:[a-z]{0,2}\s*-?\s*|-)\s*(\d{2}(?:[.,]\d)?)\b/i.exec(
+      text,
+    );
+  if (!match) {
+    return null;
+  }
+  const [, width, aspect, rim] = match;
+  return { tireWidth: width, tireAspect: aspect, rim: rim.replace(",", ".") };
+}
+
+function specTire(
+  inputs: ManualInputs,
+): { width: number; aspect: number; rim: number } | null {
   const [width, aspect, rim] = [
     inputs.tireWidth,
     inputs.tireAspect,
     inputs.rim,
   ].map(positive);
-  const [finalDrive, topGear] = [inputs.finalDrive, inputs.topGear].map(
-    positive,
+  return width && aspect && rim ? { width, aspect, rim } : null;
+}
+
+/** The first field that blocks saving: a missing tire value or an unreadable ratio. */
+export function firstInvalidField(inputs: ManualInputs): ManualField | null {
+  const tire = (["tireWidth", "tireAspect", "rim"] as const).find(
+    (field) => positive(inputs[field]) === null,
   );
-  return {
-    tire: width && aspect && rim ? { width, aspect, rim } : null,
-    gearbox: finalDrive && topGear ? { finalDrive, topGear } : null,
-  };
+  if (tire) {
+    return tire;
+  }
+  return (
+    (["finalDrive", "topGear"] as const).find(
+      (field) => ratioInput(inputs[field]) === "invalid",
+    ) ?? null
+  );
 }
 
-export function firstMissingManualField(
+/** True while the tire fields still hold the selected library tire. */
+function tireMatchesOption(
+  option: CarLibraryTireOption | null,
   inputs: ManualInputs,
-): ManualField | null {
-  const order: ManualField[] = [
-    "tireWidth",
-    "tireAspect",
-    "rim",
-    "finalDrive",
-    "topGear",
-  ];
-  return order.find((field) => positive(inputs[field]) === null) ?? null;
-}
-
-/** True while the manual tire fields still hold the selected library tire. */
-function manualTireMatchesOption(
-  option: CarLibraryTireOption,
-  inputs: ManualInputs,
-): boolean {
-  const front = tireOptionFront(option);
+): option is CarLibraryTireOption {
+  const front = option ? tireOptionFront(option) : null;
   return (
     front != null &&
     positive(inputs.tireWidth) === front.width_mm &&
     positive(inputs.tireAspect) === front.aspect_pct &&
     positive(inputs.rim) === front.rim_in
   );
+}
+
+function sameTire(a: ManualInputs, b: ManualInputs): boolean {
+  return (["tireWidth", "tireAspect", "rim"] as const).every(
+    (field) => positive(a[field]) === positive(b[field]),
+  );
+}
+
+function sameRatio(a: string, b: string): boolean {
+  return ratioInput(a) === ratioInput(b);
 }
 
 export function tireInputsFromOption(
@@ -177,54 +223,166 @@ export function tireInputsFromOption(
     : current;
 }
 
-/** Library vs manual specs; manual is forced when the library has no tires or gearboxes. */
-export function specBranch(state: WizardState): SpecBranch {
-  if (state.step !== SPECS_STEP) {
-    return null;
+export function ratioInputsFromGearbox(
+  gearbox: CarLibraryGearbox,
+  current: ManualInputs,
+): ManualInputs {
+  return {
+    ...current,
+    finalDrive: ratioText(gearbox.final_drive_ratio),
+    topGear: ratioText(gearbox.top_gear_ratio),
+  };
+}
+
+/** The editor's starting point for a saved car. */
+export function editTarget(
+  car: CarRecord,
+  fmt: FormatNumber,
+): { target: EditTarget; inputs: ManualInputs } {
+  const aspects = car.aspects ?? {};
+  const pick = (...values: unknown[]) =>
+    values.find((value) => positive(value) !== null) as number | undefined;
+  const front = {
+    width: pick(aspects.front_tire_width_mm, aspects.tire_width_mm),
+    aspect: pick(aspects.front_tire_aspect_pct, aspects.tire_aspect_pct),
+    rim: pick(aspects.front_rim_in, aspects.rim_in),
+  };
+  const staggered =
+    positive(aspects.rear_tire_width_mm) !== null &&
+    (aspects.rear_tire_width_mm !== front.width ||
+      aspects.rear_tire_aspect_pct !== front.aspect ||
+      aspects.rear_rim_in !== front.rim);
+  const inputs: ManualInputs = {
+    tireWidth: front.width === undefined ? "" : String(front.width),
+    tireAspect: front.aspect === undefined ? "" : String(front.aspect),
+    rim: front.rim === undefined ? "" : String(front.rim),
+    finalDrive: ratioText(positive(aspects.final_drive_ratio)),
+    topGear: ratioText(positive(aspects.current_gear_ratio)),
+  };
+  return {
+    target: {
+      carId: car.id,
+      name: car.name,
+      original: inputs,
+      provenance: savedCarReferences(car),
+      staggeredTire: staggered
+        ? formatSavedCarTireSummary(aspects, fmt, "")
+        : null,
+    },
+    inputs,
+  };
+}
+
+/**
+ * Where each spec on the form comes from right now: a value kept from the
+ * library (or from the saved car) keeps its source; a typed value is the
+ * user's; an empty or unreadable one is missing.
+ */
+export function specProvenance(
+  state: WizardState,
+  inputs: ManualInputs,
+): CarReferences {
+  const { editing, selectedGearbox: gearbox } = state;
+  const ratio = (
+    field: RatioField,
+    libraryValue: number | null | undefined,
+    libraryConfidence: string | null | undefined,
+    saved: ReferenceProvenance | undefined,
+  ): ReferenceProvenance => {
+    const value = ratioInput(inputs[field]);
+    if (value === null || value === "invalid") {
+      return "missing";
+    }
+    if (editing && sameRatio(inputs[field], editing.original[field])) {
+      return saved ?? "user_confirmed";
+    }
+    if (gearbox && libraryValue === value) {
+      return confidenceProvenance(libraryConfidence, "unverified");
+    }
+    return "user_confirmed";
+  };
+  let tire: ReferenceProvenance;
+  if (!specTire(inputs)) {
+    tire = "missing";
+  } else if (editing && sameTire(inputs, editing.original)) {
+    tire = editing.provenance.tire;
+  } else if (tireMatchesOption(state.selectedTire, inputs)) {
+    tire = confidenceProvenance(
+      state.selectedTire.source_confidence,
+      "unverified",
+    );
+  } else {
+    tire = "user_confirmed";
   }
-  const tires = resolveTireOptions(state.selectedModel, state.selectedVariant);
-  const gearboxes = resolveGearboxes(
-    state.selectedModel,
-    state.selectedVariant,
-  );
-  return !tires.length || !gearboxes.length ? "manual" : state.specBranch;
+  return {
+    tire,
+    finalDrive: ratio(
+      "finalDrive",
+      gearbox?.final_drive_ratio,
+      gearbox?.final_drive_ratio_confidence,
+      editing?.provenance.finalDrive,
+    ),
+    topGear: ratio(
+      "topGear",
+      gearbox?.top_gear_ratio,
+      gearbox?.top_gear_ratio_confidence,
+      editing?.provenance.topGear,
+    ),
+  };
 }
 
 export function canFinish(state: WizardState, inputs: ManualInputs): boolean {
-  const branch = specBranch(state);
-  if (branch === "library") {
-    return Boolean(state.selectedTire && state.selectedGearbox);
+  return state.step === SPECS_STEP && firstInvalidField(inputs) === null;
+}
+
+/** The consequence of the library estimates in the specs, or `null` without any. */
+export function estimateNoteKey(refs: CarReferences): string | null {
+  const finalDrive = isWeak(refs.finalDrive);
+  const topGear = isWeak(refs.topGear);
+  if (finalDrive && topGear) {
+    return "settings.car.estimate.both";
   }
-  if (branch === "manual") {
-    const specs = manualSpecs(inputs);
-    return Boolean(specs.tire && specs.gearbox);
+  if (finalDrive) {
+    return "settings.car.estimate.final_drive";
   }
-  return false;
+  return topGear ? "settings.car.estimate.top_gear" : null;
 }
 
 export function actionHint(
   state: WizardState,
   inputs: ManualInputs,
+  gearboxCount: number,
   t: Translate,
 ): string {
   if (state.step !== SPECS_STEP) {
     return "";
   }
-  const branch = specBranch(state);
-  if (branch === "library" && canFinish(state, inputs)) {
-    return (
-      buildGearboxConfidenceHint(state.selectedGearbox, t) ??
-      t("settings.car.finish_library_ready")
-    );
+  const invalid = firstInvalidField(inputs);
+  if (invalid === "finalDrive" || invalid === "topGear") {
+    return t("settings.car.finish_ratio_invalid");
   }
-  if (branch === "manual") {
-    return t(
-      canFinish(state, inputs)
-        ? "settings.car.finish_manual_ready"
-        : "settings.car.finish_manual_missing",
-    );
+  if (invalid) {
+    return t("settings.car.finish_needs_tire");
   }
-  return t("settings.car.finish_choose_path");
+  const refs = specProvenance(state, inputs);
+  const estimate = estimateNoteKey(refs);
+  if (estimate) {
+    return `${t(estimate)} ${t("settings.car.estimate.edit_hint")}`;
+  }
+  if (
+    !state.editing &&
+    gearboxCount > 0 &&
+    !state.selectedGearbox &&
+    refs.finalDrive === "missing" &&
+    refs.topGear === "missing"
+  ) {
+    return t("settings.car.finish_pick_gearbox");
+  }
+  return t(
+    state.editing
+      ? "settings.car.finish_edit_ready"
+      : "settings.car.finish_ready",
+  );
 }
 
 export function progressText(step: number, t: Translate): string {
@@ -239,15 +397,52 @@ function rimText(rim: number, fmt: FormatNumber): string {
   return fmt(rim, Number.isInteger(rim) ? 0 : 1);
 }
 
-function libraryTireText(
-  tire: CarLibraryTireOption | null,
+function tireSummary(
+  state: WizardState,
+  inputs: ManualInputs,
   fmt: FormatNumber,
+  t: Translate,
 ): string | null {
-  const size = tire ? formatCarLibraryTireOption(tire, fmt) : null;
-  if (!tire || !size) {
+  const tire = specTire(inputs);
+  if (!tire) {
     return null;
   }
-  return tire.name ? `${tire.name} · ${size}` : size;
+  const kept = state.selectedTire;
+  if (tireMatchesOption(kept, inputs)) {
+    const size = formatCarLibraryTireOption(kept, fmt);
+    if (size) {
+      return kept.name ? `${kept.name} · ${size}` : size;
+    }
+  }
+  return t("settings.car.wizard_summary_manual_tire", {
+    width: fmt(tire.width, 0),
+    aspect: fmt(tire.aspect, 0),
+    rim: rimText(tire.rim, fmt),
+  });
+}
+
+function gearboxSummary(
+  state: WizardState,
+  inputs: ManualInputs,
+  fmt: FormatNumber,
+  t: Translate,
+): string | null {
+  const ratio = (field: RatioField) => {
+    const value = ratioInput(inputs[field]);
+    return typeof value === "number"
+      ? fmt(value, 2)
+      : t("settings.car.ratio_unknown");
+  };
+  if (state.step < SPECS_STEP) {
+    return null;
+  }
+  const ratios = t("settings.car.wizard_summary_manual_gearbox", {
+    finalDrive: ratio("finalDrive"),
+    topGear: ratio("topGear"),
+  });
+  return state.selectedGearbox
+    ? `${state.selectedGearbox.name} · ${ratios}`
+    : ratios;
 }
 
 /** The "current selection" panel: profile name plus the rows reached so far. */
@@ -258,29 +453,28 @@ export function summary(
   t: Translate,
 ): { profileName: string; rows: Array<{ label: string; value: string }> } {
   const pending = t("settings.car.wizard_summary_pending");
+  const specRows: Array<[string, string | null, number]> = [
+    ["settings.car.wizard_summary_tire", tireSummary(state, inputs, fmt, t), 4],
+    [
+      "settings.car.wizard_summary_gearbox",
+      gearboxSummary(state, inputs, fmt, t),
+      4,
+    ],
+  ];
+  if (state.editing) {
+    return {
+      profileName: state.editing.name,
+      rows: specRows.map(([labelKey, value]) => ({
+        label: t(labelKey),
+        value: value ?? pending,
+      })),
+    };
+  }
   const atSpecs = state.step >= SPECS_STEP;
   const variantImplicit =
     atSpecs &&
     ((!state.selectedModel && Boolean(state.model)) ||
       (state.selectedModel !== null && !state.selectedModel.variants?.length));
-  const manual = specBranch(state) === "manual";
-  const specs = manualSpecs(inputs);
-  const tire =
-    manual && specs.tire
-      ? t("settings.car.wizard_summary_manual_tire", {
-          width: fmt(specs.tire.width, 0),
-          aspect: fmt(specs.tire.aspect, 0),
-          rim: rimText(specs.tire.rim, fmt),
-        })
-      : libraryTireText(state.selectedTire, fmt);
-  const gearbox = manual
-    ? specs.gearbox
-      ? t("settings.car.wizard_summary_manual_gearbox", {
-          finalDrive: fmt(specs.gearbox.finalDrive, 2),
-          topGear: fmt(specs.gearbox.topGear, 2),
-        })
-      : null
-    : (state.selectedGearbox?.name ?? null);
   const rows: Array<[string, string | null, number]> = [
     ["settings.car.wizard_summary_brand", state.brand || null, 1],
     ["settings.car.wizard_summary_type", state.carType || null, 2],
@@ -291,8 +485,7 @@ export function summary(
         (variantImplicit ? t("settings.car.wizard_summary_not_needed") : null),
       4,
     ],
-    ["settings.car.wizard_summary_tire", tire, 4],
-    ["settings.car.wizard_summary_gearbox", gearbox, 4],
+    ...specRows,
   ];
   return {
     profileName: state.model
@@ -307,22 +500,70 @@ export function summary(
   };
 }
 
-export function gearboxDetail(
+export interface RatioPart {
+  text: string;
+  tier: ProvenanceTier;
+}
+
+/** A gearbox option's ratios, each with its confidence chip. */
+export function gearboxParts(
   gearbox: CarLibraryGearbox,
   fmt: FormatNumber,
   t: Translate,
-): string {
-  const finalDrive =
-    gearbox.final_drive_ratio === null
-      ? t("settings.car.ratio_unknown")
-      : fmt(gearbox.final_drive_ratio, 2);
-  return `FD: ${finalDrive} · Top Gear: ${fmt(gearbox.top_gear_ratio, 2)}`;
+): RatioPart[] {
+  const part = (
+    key: string,
+    value: number | null,
+    confidence: string | null | undefined,
+  ): RatioPart => {
+    const provenance =
+      value === null
+        ? "missing"
+        : confidenceProvenance(confidence, "unverified");
+    return {
+      text: t(key, {
+        value: value === null ? t("settings.car.ratio_unknown") : fmt(value, 2),
+      }),
+      tier: provenanceTier(provenance),
+    };
+  };
+  return [
+    part(
+      "settings.car.gearbox_final_drive",
+      gearbox.final_drive_ratio,
+      gearbox.final_drive_ratio_confidence,
+    ),
+    part(
+      "settings.car.gearbox_top_gear",
+      gearbox.top_gear_ratio,
+      gearbox.top_gear_ratio_confidence,
+    ),
+  ];
 }
 
 export function variantDetail(variant: CarLibraryVariant): string | null {
   return (
     [variant.drivetrain, variant.engine].filter(Boolean).join(" · ") || null
   );
+}
+
+/** The powertrain all of the variant's gearboxes share, if any. */
+function libraryFuelType(
+  state: WizardState,
+): CarLibraryGearbox["fuel_type"] | null {
+  if (state.selectedGearbox) {
+    return state.selectedGearbox.fuel_type;
+  }
+  const fuelTypes = new Set(
+    resolveGearboxes(state.selectedModel, state.selectedVariant).map(
+      (gearbox) => gearbox.fuel_type,
+    ),
+  );
+  return fuelTypes.size === 1 ? [...fuelTypes][0] : null;
+}
+
+function confidenceOrNull(provenance: ReferenceProvenance) {
+  return provenance === "missing" ? null : provenance;
 }
 
 export type CarRequest =
@@ -334,83 +575,104 @@ export type CarRequest =
       /** The library row's powertrain; `null` for a car entered by hand. */
       fuelType: CarLibraryGearbox["fuel_type"] | null;
     }
-  | { ok: false; focus: "spec-selection" | "gearbox-option" | ManualField };
+  | { ok: false; focus: ManualField };
 
 /**
- * The car to create from the wizard: library specs carry their source
- * confidence; manual specs are user-confirmed, except a library tire the
- * user kept unchanged.
+ * The car to create: library values the user kept carry their source
+ * confidence; typed values are user-confirmed; empty ratios stay unknown.
  */
 export function carRequest(
   state: WizardState,
   inputs: ManualInputs,
 ): CarRequest {
-  if (specBranch(state) === "library") {
-    const tire = state.selectedTire;
-    const gearbox = state.selectedGearbox;
-    if (!tire) {
-      return { ok: false, focus: "spec-selection" };
-    }
-    if (!gearbox) {
-      return { ok: false, focus: "gearbox-option" };
-    }
-    return {
-      ok: true,
-      aspects: {
-        current_gear_ratio: gearbox.top_gear_ratio,
-        final_drive_ratio: gearbox.final_drive_ratio,
-        ...tireSetupAspectsFromOption(tire),
-      },
-      status: {
-        tire_dimensions_confidence: tire.source_confidence ?? "unverified",
-        current_gear_ratio_confidence:
-          gearbox.top_gear_ratio_confidence ?? "unverified",
-        final_drive_ratio_confidence:
-          gearbox.final_drive_ratio === null
-            ? null
-            : (gearbox.final_drive_ratio_confidence ?? "unverified"),
-        requires_manual_confirmation:
-          gearbox.requires_manual_confirmation ?? true,
-        selection_source_status: gearbox.source_status ?? "exact_row",
-        transmission_confidence:
-          gearbox.transmission_confidence ?? "unverified",
-        transmission_name: gearbox.name,
-      },
-      fuelType: gearbox.fuel_type,
-    };
+  const invalid = firstInvalidField(inputs);
+  if (invalid) {
+    return { ok: false, focus: invalid };
   }
-  const missing = firstMissingManualField(inputs);
-  if (missing) {
-    return { ok: false, focus: missing };
-  }
-  const keptTire =
-    state.selectedTire && manualTireMatchesOption(state.selectedTire, inputs)
-      ? state.selectedTire
-      : null;
+  const refs = specProvenance(state, inputs);
+  const keptTire = tireMatchesOption(state.selectedTire, inputs)
+    ? state.selectedTire
+    : null;
   const keptAspects = keptTire ? tireSetupAspectsFromOption(keptTire) : {};
-  const keepsTire = keptTire !== null && Object.keys(keptAspects).length > 0;
+  const tireAspects = Object.keys(keptAspects).length
+    ? keptAspects
+    : {
+        rim_in: Number(inputs.rim),
+        tire_aspect_pct: Number(inputs.tireAspect),
+        tire_width_mm: Number(inputs.tireWidth),
+      };
+  const gearbox = state.selectedGearbox;
+  const fromLibrary =
+    keptTire !== null &&
+    gearbox !== null &&
+    sameRatio(inputs.finalDrive, ratioText(gearbox.final_drive_ratio)) &&
+    sameRatio(inputs.topGear, ratioText(gearbox.top_gear_ratio));
+  const status: CarOrderReferenceStatus = {
+    tire_dimensions_confidence: confidenceOrNull(refs.tire),
+    final_drive_ratio_confidence: confidenceOrNull(refs.finalDrive),
+    current_gear_ratio_confidence: confidenceOrNull(refs.topGear),
+    requires_manual_confirmation:
+      isWeak(refs.finalDrive) || isWeak(refs.topGear),
+    selection_source_status: fromLibrary ? "exact_row" : "manual_entry",
+  };
+  if (gearbox) {
+    status.transmission_name = gearbox.name;
+    status.transmission_confidence =
+      gearbox.transmission_confidence ?? "unverified";
+  }
   return {
     ok: true,
     aspects: {
-      current_gear_ratio: Number(inputs.topGear),
-      final_drive_ratio: Number(inputs.finalDrive),
-      ...(keepsTire
-        ? keptAspects
+      current_gear_ratio: positive(inputs.topGear),
+      final_drive_ratio: positive(inputs.finalDrive),
+      ...tireAspects,
+    },
+    status,
+    fuelType: libraryFuelType(state),
+  };
+}
+
+/** The aspects an edit changes; a `null` ratio clears it. */
+export interface EditedAspects {
+  tire_width_mm?: number;
+  tire_aspect_pct?: number;
+  rim_in?: number;
+  final_drive_ratio?: number | null;
+  current_gear_ratio?: number | null;
+}
+
+export type EditRequest =
+  | { ok: true; aspects: EditedAspects }
+  | { ok: false; focus: ManualField };
+
+/**
+ * The changes to save for an edited car: only the values that changed (a
+ * cleared ratio is `null`). The server marks each changed value user-confirmed.
+ */
+export function editRequest(
+  editing: EditTarget,
+  inputs: ManualInputs,
+): EditRequest {
+  const invalid = firstInvalidField(inputs);
+  if (invalid) {
+    return { ok: false, focus: invalid };
+  }
+  return {
+    ok: true,
+    aspects: {
+      ...(sameTire(inputs, editing.original)
+        ? {}
         : {
-            rim_in: Number(inputs.rim),
-            tire_aspect_pct: Number(inputs.tireAspect),
             tire_width_mm: Number(inputs.tireWidth),
+            tire_aspect_pct: Number(inputs.tireAspect),
+            rim_in: Number(inputs.rim),
           }),
+      ...(sameRatio(inputs.finalDrive, editing.original.finalDrive)
+        ? {}
+        : { final_drive_ratio: positive(inputs.finalDrive) }),
+      ...(sameRatio(inputs.topGear, editing.original.topGear)
+        ? {}
+        : { current_gear_ratio: positive(inputs.topGear) }),
     },
-    status: {
-      tire_dimensions_confidence: keepsTire
-        ? (keptTire.source_confidence ?? "unverified")
-        : "user_confirmed",
-      current_gear_ratio_confidence: "user_confirmed",
-      final_drive_ratio_confidence: "user_confirmed",
-      requires_manual_confirmation: false,
-      selection_source_status: "manual_entry",
-    },
-    fuelType: null,
   };
 }

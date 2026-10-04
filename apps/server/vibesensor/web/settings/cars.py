@@ -71,7 +71,7 @@ def create_car_settings_routes(car_settings: CarSettingsService) -> APIRouter:
         responses=_CAR_NOT_FOUND_RESPONSES,
     )
     async def update_car(car_id: str, req: CarConfigUpdatePayload) -> CarsSnapshot:
-        """Update an existing car profile while preserving unspecified fields."""
+        """Update a saved car, keeping unspecified fields; edits become user-confirmed."""
 
         normalized_car_id = normalize_car_id_or_400(car_id)
         try:

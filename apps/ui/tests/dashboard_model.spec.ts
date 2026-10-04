@@ -494,16 +494,11 @@ describe("capability line", () => {
     );
     expect(marks(model)).toEqual([
       ["wheel", "ok", null, null],
-      [
-        "driveline",
-        "no",
-        "dashboard.capabilities.driveline.missing_final_drive",
-        "cars",
-      ],
+      ["driveline", "no", "capabilities.driveline.missing_final_drive", "cars"],
       [
         "engine",
         "caveat",
-        "dashboard.capabilities.engine.estimated_top_gear",
+        "capabilities.engine.estimated_top_gear",
         "speed_source",
       ],
     ]);

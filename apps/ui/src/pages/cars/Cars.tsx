@@ -1,10 +1,11 @@
 import { fmt } from "../../format";
 import { t } from "../../i18n";
 import { carSelection, carSettings } from "../../settings_store";
+import { CapabilityList, ProvenanceChip } from "./CapabilityList";
 import { CarWizard } from "./CarWizard";
 import { carRows, guidance, type InlineState } from "./car_list_model";
-import { activateCar, completeCar, deleteCar, highlighted } from "./cars_store";
-import { openWizard } from "./wizard_store";
+import { activateCar, deleteCar, highlighted } from "./cars_store";
+import { openEditor, openWizard } from "./wizard_store";
 
 function InlineStatePanel(props: {
   state: InlineState;
@@ -137,28 +138,46 @@ function CarTableBody() {
                   <span class="car-row__setup-label">{metric.label}</span>
                   <span class="car-row__setup-value">
                     {metric.code ? <code>{metric.value}</code> : metric.value}
+                    {metric.tier === "missing" ? null : (
+                      <ProvenanceChip tier={metric.tier} />
+                    )}
                   </span>
                 </div>
               ))}
             </div>
+            <div class="car-row__capabilities">
+              <span class="car-row__setup-label">
+                {t("capabilities.car_title")}
+              </span>
+              <CapabilityList compact capabilities={row.capabilities} />
+            </div>
           </td>
           <td>
             <div class="car-list-actions">
-              {row.primaryAction ? (
+              {row.activateLabel ? (
                 <button
                   type="button"
-                  class={row.primaryAction.className}
-                  data-car-action={row.primaryAction.type}
+                  class="btn car-activate-btn"
+                  data-car-action="activate"
                   data-car-id={row.carId}
-                  onClick={() =>
-                    void (row.primaryAction?.type === "activate"
-                      ? activateCar(row.carId)
-                      : completeCar(row.carId))
-                  }
+                  onClick={() => void activateCar(row.carId)}
                 >
-                  {row.primaryAction.label}
+                  {row.activateLabel}
                 </button>
               ) : null}
+              <button
+                type="button"
+                class={
+                  row.isComplete
+                    ? "btn car-edit-btn"
+                    : "btn btn--primary car-edit-btn"
+                }
+                data-car-action="edit"
+                data-car-id={row.carId}
+                onClick={() => openEditor(row.carId)}
+              >
+                {row.editLabel}
+              </button>
               <button
                 type="button"
                 class="btn btn--danger-quiet car-delete-btn"

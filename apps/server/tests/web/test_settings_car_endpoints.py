@@ -100,6 +100,45 @@ def test_ratios_are_optional_and_a_null_ratio_clears_the_stored_one(car_client) 
     assert cleared["order_reference_status"]["current_gear_ratio_confidence"] == ("official_exact")
 
 
+def test_editing_a_reference_makes_only_that_one_user_confirmed(car_client) -> None:
+    library_status = {
+        "selection_source_status": "exact_row",
+        "requires_manual_confirmation": True,
+        "tire_dimensions_confidence": "official_exact",
+        "final_drive_ratio_confidence": "family_default",
+        "current_gear_ratio_confidence": "official_derived",
+        "transmission_name": "8-speed automatic",
+        "transmission_confidence": "official_exact",
+    }
+    car = _add(
+        car_client,
+        name="Library",
+        aspects={
+            "tire_width_mm": 225.0,
+            "tire_aspect_pct": 45.0,
+            "rim_in": 17.0,
+            "final_drive_ratio": 3.15,
+            "current_gear_ratio": 0.67,
+        },
+        order_reference_status=library_status,
+    )["cars"][0]
+
+    edited = car_client.put(
+        f"/api/settings/cars/{car['id']}",
+        json={"aspects": {"final_drive_ratio": 3.38, "current_gear_ratio": None}},
+    ).json()["cars"][0]
+
+    assert edited["aspects"]["final_drive_ratio"] == 3.38
+    assert "current_gear_ratio" not in edited["aspects"]
+    status = edited["order_reference_status"]
+    assert status["final_drive_ratio_confidence"] == "user_confirmed"
+    assert status.get("current_gear_ratio_confidence") is None
+    assert status["tire_dimensions_confidence"] == "official_exact"
+    assert status["transmission_name"] == "8-speed automatic"
+    assert status["selection_source_status"] == "manual_entry"
+    assert status["requires_manual_confirmation"] is False
+
+
 def test_library_powertrain_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_state) -> None:
     car = _add(car_client, name="i4 eDrive40", fuel_type="EV")["cars"][0]
     assert car["fuel_type"] == "EV"
