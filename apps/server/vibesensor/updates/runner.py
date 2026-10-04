@@ -10,7 +10,11 @@ import re
 from dataclasses import dataclass
 from typing import Protocol
 
-from vibesensor.updates.privilege import build_sudo_args
+from vibesensor.common.privileged_helper import (
+    UPDATE_HELPER,
+    PrivilegedHelperUnavailableError,
+    run_privileged_async,
+)
 
 LOGGER = logging.getLogger(__name__)
 COMMAND_KILL_WAIT_S = 5.0
@@ -139,8 +143,16 @@ class CommandRunner:
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        """Return (returncode, stdout, stderr)."""
+        """Return (returncode, stdout, stderr).
+
+        ``privileged`` commands run as root. Unless the server already is root,
+        they go to the privileged helper socket, which runs them through the
+        updater allowlist wrapper (``env`` does not apply there).
+        """
+        if privileged and os.geteuid() != 0:
+            return await _run_privileged(args, timeout=timeout)
         merged_env = {**os.environ, **env} if env else None
         proc: asyncio.subprocess.Process | None = None
         stdout_task: asyncio.Task[tuple[bytes, bool]] | None = None
@@ -198,6 +210,14 @@ class CommandRunner:
             return (127, "", f"Command not found: {args[0]}")
         except OSError as exc:
             return (1, "", str(exc))
+
+
+async def _run_privileged(args: list[str], *, timeout: float) -> tuple[int, str, str]:
+    try:
+        result = await run_privileged_async(UPDATE_HELPER, args, timeout_s=timeout)
+    except PrivilegedHelperUnavailableError as exc:
+        return (126, "", str(exc))
+    return (result.returncode, result.stdout, result.stderr)
 
 
 # ---------------------------------------------------------------------------
@@ -267,13 +287,14 @@ class UpdateCommandExecutor:
         *,
         timeout: float,
         phase: str,
-        sudo: bool = False,
+        privileged: bool = False,
         env: dict[str, str] | None = None,
     ) -> CommandExecutionResult:
-        full_args = build_sudo_args(args) if sudo else list(args)
         if self._reporter is not None:
-            self._reporter.command_started(phase=phase, args=full_args)
-        rc, stdout, stderr = await self._runner.run(full_args, timeout=timeout, env=env)
+            self._reporter.command_started(phase=phase, args=args)
+        rc, stdout, stderr = await self._runner.run(
+            args, timeout=timeout, env=env, privileged=privileged
+        )
         result = CommandExecutionResult(returncode=rc, stdout=stdout, stderr=stderr)
         if self._reporter is not None:
             self._reporter.command_finished(phase=phase, result=result)

@@ -78,18 +78,14 @@ def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
 def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> None:
     client, _, _speed_status_service, obd_admin_service = _build_client()
     obd_admin_service.scan_obd_devices.side_effect = ExternalCommandError(
-        "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
-        "to run non-interactively."
+        "Privileged helper socket /run/vibesensor-privileged.sock is unavailable"
     )
 
     response = client.post("/api/settings/obd/scan")
 
     assert response.status_code == 503
     assert response.json() == {
-        "detail": (
-            "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
-            "to run non-interactively."
-        )
+        "detail": ("Privileged helper socket /run/vibesensor-privileged.sock is unavailable")
     }
 
 

@@ -12,10 +12,12 @@ from vibesensor.updates.models import (
     UpdateTransport,
     UpdateValidationConfig,
 )
-from vibesensor.updates.privilege import build_privilege_probe_args
 from vibesensor.updates.runner import UpdateCommandExecutor
 from vibesensor.updates.status.tracker import UpdateStatusTracker
 from vibesensor.updates.venv_slots import VenvSlots
+
+_PRIVILEGE_PROBE_ARGS = ["python3", "-c", "pass"]
+"""Harmless command the updater allowlist accepts; proves the privileged path works."""
 
 MIN_FREE_DISK_BYTES = 600 * 1024 * 1024
 """Room for one more venv slot (the pruned previous slot is not counted)."""
@@ -55,16 +57,17 @@ async def validate_prerequisites(
 
     if os.geteuid() != 0:
         result = await commands.run(
-            build_privilege_probe_args(),
+            _PRIVILEGE_PROBE_ARGS,
             phase="validating",
             timeout=5,
-            sudo=True,
+            privileged=True,
         )
         if result.returncode != 0:
+            reason = (result.stderr or result.stdout).strip() or f"exit {result.returncode}"
             raise _fail_validation(
                 "Insufficient privileges",
                 (
-                    "Cannot run updater privileged commands non-interactively. "
+                    f"The privileged helper could not run updater commands ({reason}). "
                     "In dev/Docker environments, hotspot management is not available."
                 ),
             )

@@ -1,0 +1,15 @@
+[Unit]
+Description=VibeSensor privileged helper socket (root commands for the updater and Bluetooth OBD)
+# vibesensor.service runs with NoNewPrivileges=true, so sudo cannot work from it.
+# Each connection starts one vibesensor-privileged@.service instance as root;
+# only the service user (and root) may connect.
+
+[Socket]
+ListenStream=/run/vibesensor-privileged.sock
+SocketUser=__SERVICE_USER__
+SocketMode=0600
+Accept=yes
+MaxConnections=8
+
+[Install]
+WantedBy=sockets.target

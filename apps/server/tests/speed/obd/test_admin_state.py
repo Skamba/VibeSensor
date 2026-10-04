@@ -22,7 +22,7 @@ def test_observe_configured_obd_device_skips_lookup_without_configured_mac() -> 
 
 def test_observe_configured_obd_device_returns_helper_error_for_operational_failure() -> None:
     admin_client = MagicMock()
-    admin_client.device_info.side_effect = ExternalCommandError("sudo helper missing")
+    admin_client.device_info.side_effect = ExternalCommandError("privileged helper missing")
 
     observation = observe_configured_obd_device(
         admin_client=admin_client,
@@ -30,7 +30,7 @@ def test_observe_configured_obd_device_returns_helper_error_for_operational_fail
     )
 
     assert observation.snapshot is None
-    assert observation.helper_error == "sudo helper missing"
+    assert observation.helper_error == "privileged helper missing"
 
 
 def test_observe_configured_obd_device_returns_helper_error_for_os_failure() -> None:

@@ -58,8 +58,9 @@ class FakeRunner(CommandRunner):
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        self.calls.append((list(args), {"timeout": timeout, "env": env}))
+        self.calls.append((list(args), {"timeout": timeout, "env": env, "privileged": privileged}))
         joined = " ".join(args)
         for match_substr, response_queue in self.response_sequences:
             if match_substr in joined and response_queue:
@@ -85,11 +86,9 @@ def patch_validation_environment(
 ) -> Iterator[None]:
     """Patch updater validation to a deterministic non-root test environment."""
 
-    sudo_prefix = [] if effective_uid == 0 else ["sudo", "-n"]
     with (
         patch("shutil.which", tool_lookup),
         patch("vibesensor.updates.validation.os.geteuid", return_value=effective_uid),
-        patch("vibesensor.updates.privilege._sudo_prefix", return_value=sudo_prefix),
     ):
         yield
 
@@ -163,13 +162,13 @@ def patch_release_fetcher(current_version: str = "2025.6.15") -> Iterator[MagicM
 def setup_update_env(
     tmp_path: Path,
     *,
-    sudo_ok: bool = True,
+    privileged_ok: bool = True,
     seed_artifacts: bool = False,
     usb_internet_service: object | None = None,
     server_release_fetcher: object | None = None,
 ) -> tuple[UpdateManager, FakeRunner, Path]:
     runner = FakeRunner()
-    if sudo_ok:
+    if privileged_ok:
         runner.set_response("python3 -c pass", 0)
     repo = tmp_path / "repo"
     make_legacy_venv(repo / "apps" / "server" / ".venv")

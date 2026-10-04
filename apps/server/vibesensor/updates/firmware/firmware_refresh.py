@@ -74,7 +74,6 @@ class FirmwareRefresher:
             refresh_cmd,
             phase="downloading",
             timeout=self._timeout_s,
-            sudo=False,
         )
         if result.returncode != 0:
             return FirmwareRefreshResult.failure(

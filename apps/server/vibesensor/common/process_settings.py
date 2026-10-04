@@ -11,6 +11,7 @@ __all__ = [
     "CONFIG_PATH_ENV",
     "DEFAULT_FIRMWARE_CACHE_DIR",
     "DEFAULT_FIRMWARE_CHANNEL",
+    "DEFAULT_PRIVILEGED_SOCKET",
     "DEFAULT_UPDATE_REPO_PATH",
     "DEFAULT_UPDATE_STATE_PATH",
     "BootstrapEnvSettings",
@@ -18,6 +19,7 @@ __all__ = [
     "export_config_path_env",
     "load_bootstrap_env_settings",
     "load_update_env_settings",
+    "privileged_socket_path",
     "summarize_process_settings",
 ]
 
@@ -28,7 +30,7 @@ CONFIG_PATH_ENV = "VIBESENSOR_CONFIG_PATH"
 SERVE_STATIC_ENV = "VIBESENSOR_SERVE_STATIC"
 UPDATE_REPO_PATH_ENV = "VIBESENSOR_REPO_PATH"
 UPDATE_STATE_PATH_ENV = "VIBESENSOR_UPDATE_STATE_PATH"
-UPDATE_SUDO_WRAPPER_ENV = "VIBESENSOR_UPDATE_SUDO_WRAPPER"
+PRIVILEGED_SOCKET_ENV = "VIBESENSOR_PRIVILEGED_SOCKET"
 FIRMWARE_CACHE_DIR_ENV = "VIBESENSOR_FIRMWARE_CACHE_DIR"
 FIRMWARE_REPO_ENV = "VIBESENSOR_FIRMWARE_REPO"
 FIRMWARE_CHANNEL_ENV = "VIBESENSOR_FIRMWARE_CHANNEL"
@@ -39,6 +41,8 @@ GITHUB_TOKEN_ENV = "GITHUB_TOKEN"
 DEFAULT_UPDATE_REPO_PATH = Path("/opt/VibeSensor")
 DEFAULT_UPDATE_STATE_PATH = Path("/var/lib/vibesensor/update/update_status.json")
 DEFAULT_FIRMWARE_CACHE_DIR = Path("/var/lib/vibesensor/firmware")
+DEFAULT_PRIVILEGED_SOCKET = Path("/run/vibesensor-privileged.sock")
+"""ListenStream of apps/server/systemd/vibesensor-privileged.socket."""
 FirmwareChannel = Literal["stable", "prerelease"]
 DEFAULT_FIRMWARE_CHANNEL: FirmwareChannel = "stable"
 
@@ -105,7 +109,6 @@ class UpdateEnvSettings:
 
     repo_path: Path = DEFAULT_UPDATE_REPO_PATH
     update_state_path: Path = DEFAULT_UPDATE_STATE_PATH
-    update_sudo_wrapper: Path | None = None
     firmware_cache_dir: Path = DEFAULT_FIRMWARE_CACHE_DIR
     firmware_repo: str = GITHUB_REPO
     firmware_channel: FirmwareChannel = DEFAULT_FIRMWARE_CHANNEL
@@ -125,7 +128,6 @@ def load_update_env_settings() -> UpdateEnvSettings:
     return UpdateEnvSettings(
         repo_path=_env_path(UPDATE_REPO_PATH_ENV, DEFAULT_UPDATE_REPO_PATH),
         update_state_path=_env_path(UPDATE_STATE_PATH_ENV, DEFAULT_UPDATE_STATE_PATH),
-        update_sudo_wrapper=_env_optional_path(UPDATE_SUDO_WRAPPER_ENV),
         firmware_cache_dir=_env_path(FIRMWARE_CACHE_DIR_ENV, DEFAULT_FIRMWARE_CACHE_DIR),
         firmware_repo=_env_str(FIRMWARE_REPO_ENV, GITHUB_REPO),
         firmware_channel=_env_firmware_channel(FIRMWARE_CHANNEL_ENV),
@@ -133,6 +135,12 @@ def load_update_env_settings() -> UpdateEnvSettings:
         server_repo=_env_str(SERVER_REPO_ENV, GITHUB_REPO),
         github_token=_env_str(GITHUB_TOKEN_ENV, ""),
     )
+
+
+def privileged_socket_path() -> Path:
+    """Return the privileged helper socket (overridable for tests)."""
+
+    return _env_path(PRIVILEGED_SOCKET_ENV, DEFAULT_PRIVILEGED_SOCKET)
 
 
 def export_config_path_env(config_path: Path | None) -> None:
@@ -154,9 +162,7 @@ def summarize_process_settings() -> dict[str, object]:
         "serve_static": bootstrap.serve_static,
         "repo_path": str(update.repo_path),
         "update_state_path": str(update.update_state_path),
-        "update_sudo_wrapper": (
-            str(update.update_sudo_wrapper) if update.update_sudo_wrapper else None
-        ),
+        "privileged_socket": str(privileged_socket_path()),
         "firmware_cache_dir": str(update.firmware_cache_dir),
         "firmware_repo": update.firmware_repo,
         "firmware_channel": update.firmware_channel,

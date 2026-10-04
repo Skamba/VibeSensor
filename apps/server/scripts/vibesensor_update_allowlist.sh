@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Restricted sudo wrapper for VibeSensor system update.
-# Only allows a whitelist of commands that the update process needs.
-# install_pi.sh installs the matching sudoers entry for the service user.
+# Allowlist wrapper for the root commands the VibeSensor updater needs.
+# vibesensor_privileged_helper.py runs it as root for "update" requests that
+# the server sends over vibesensor-privileged.socket; it is the security
+# boundary for those requests, so it only runs the exact commands below.
 set -euo pipefail
 
 ALLOWED_COMMAND_NAMES=("nmcli" "python3" "systemd-run" "systemctl")
@@ -118,7 +119,7 @@ if [ -n "${REQUESTED_PATH}" ]; then
 fi
 
 if [ -z "${COMMAND_NAME}" ] || ! invocation_allowed "${COMMAND_NAME}" "${@:2}"; then
-  echo "vibesensor_update_sudo: command '$1' is not allowed" >&2
+  echo "vibesensor_update_allowlist: command '$1' is not allowed" >&2
   exit 126
 fi
 

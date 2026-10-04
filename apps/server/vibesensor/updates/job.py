@@ -226,7 +226,7 @@ class UpdateJob:
                 command,
                 phase="done",
                 timeout=30,
-                sudo=True,
+                privileged=True,
             )
             if result.returncode == 0:
                 self._status.log("Scheduled backend service restart")

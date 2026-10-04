@@ -90,6 +90,64 @@ assert_wheel_static_data_contract() {
   fi
 }
 
+unit_value() {
+  local unit_file="$1" key="$2"
+  sed -n "s/^${key}=//p" "${unit_file}" | tail -n 1
+}
+
+# vibesensor.service runs with NoNewPrivileges=true, so sudo cannot work from
+# it. Its root commands go through vibesensor-privileged.socket instead; check
+# that the socket, the helper unit, and the scripts they run line up.
+assert_privileged_helper_contract() {
+  local root_mnt="$1"
+  local unit_dir="${root_mnt}/etc/systemd/system"
+  local scripts_dir="${root_mnt}/opt/VibeSensor/apps/server/scripts"
+  local socket_unit="${unit_dir}/vibesensor-privileged.socket"
+  local helper_unit="${unit_dir}/vibesensor-privileged@.service"
+  local server_unit="${unit_dir}/vibesensor.service"
+  local script="" unit=""
+
+  for script in vibesensor_privileged_helper.py vibesensor_update_allowlist.sh vibesensor_obd_admin.py; do
+    if [ ! -x "${scripts_dir}/${script}" ]; then
+      echo "Validation failed: missing executable ${scripts_dir}/${script}"
+      exit 1
+    fi
+  done
+  for unit in "${socket_unit}" "${helper_unit}" "${server_unit}"; do
+    if [ ! -f "${unit}" ]; then
+      echo "Validation failed: missing ${unit}"
+      exit 1
+    fi
+  done
+  if [ ! -L "${unit_dir}/sockets.target.wants/vibesensor-privileged.socket" ]; then
+    echo "Validation failed: vibesensor-privileged.socket is not enabled in sockets.target"
+    exit 1
+  fi
+  if [ "$(unit_value "${server_unit}" NoNewPrivileges)" != "true" ]; then
+    echo "Validation failed: vibesensor.service must keep NoNewPrivileges=true"
+    exit 1
+  fi
+  if [ "$(unit_value "${socket_unit}" ListenStream)" != "/run/vibesensor-privileged.sock" ] || \
+    [ "$(unit_value "${socket_unit}" Accept)" != "yes" ] || \
+    [ "$(unit_value "${socket_unit}" SocketMode)" != "0600" ]; then
+    echo "Validation failed: vibesensor-privileged.socket must listen on /run/vibesensor-privileged.sock with Accept=yes and SocketMode=0600"
+    exit 1
+  fi
+  if [ "$(unit_value "${socket_unit}" SocketUser)" != "$(unit_value "${server_unit}" User)" ]; then
+    echo "Validation failed: vibesensor-privileged.socket SocketUser does not match the vibesensor.service User"
+    exit 1
+  fi
+  if [ "$(unit_value "${helper_unit}" ExecStart)" != "/usr/bin/python3 -I /opt/VibeSensor/apps/server/scripts/vibesensor_privileged_helper.py" ] || \
+    [ "$(unit_value "${helper_unit}" StandardInput)" != "socket" ]; then
+    echo "Validation failed: vibesensor-privileged@.service must run the installed helper script on the socket"
+    exit 1
+  fi
+  if [ -e "${root_mnt}/etc/sudoers.d/vibesensor-update" ]; then
+    echo "Validation failed: stale ${root_mnt}/etc/sudoers.d/vibesensor-update (sudo cannot work under NoNewPrivileges)"
+    exit 1
+  fi
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -231,32 +289,7 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if [ ! -x "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh" ]; then
-    echo "Validation failed: missing executable ${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh"
-    exit 1
-  fi
-
-  if [ ! -x "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" ]; then
-    echo "Validation failed: missing executable ${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py"
-    exit 1
-  fi
-
-  if [ ! -f "${ROOT_MNT}/etc/sudoers.d/vibesensor-update" ]; then
-    echo "Validation failed: missing ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
-    exit 1
-  fi
-
-  if ! sudo grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh' \
-    "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"; then
-    echo "Validation failed: update sudo wrapper entry missing from ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
-    exit 1
-  fi
-
-  if ! sudo grep -Fq '/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py' \
-    "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"; then
-    echo "Validation failed: OBD helper sudoers entry missing from ${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
-    exit 1
-  fi
+  assert_privileged_helper_contract "${ROOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then
@@ -614,9 +647,10 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   echo "=== Validation: usbmuxd service + udev rule ==="
   ls -l "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" "${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules"
 
-  echo "=== Validation: Bluetooth helper + sudoers ==="
-  ls -l "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py" "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
-  sudo grep -n 'vibesensor_.*sudo\|vibesensor_obd_admin.py' "${ROOT_MNT}/etc/sudoers.d/vibesensor-update"
+  echo "=== Validation: privileged helper (updater + Bluetooth OBD) ==="
+  ls -l "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_privileged_helper.py" \
+    "${ROOT_MNT}/etc/systemd/system/vibesensor-privileged.socket"
+  grep -n '^ListenStream=\|^SocketUser=\|^SocketMode=' "${ROOT_MNT}/etc/systemd/system/vibesensor-privileged.socket"
 
   echo "=== Validation: vibesensor systemd units ==="
   find "${ROOT_MNT}/etc/systemd/system" -maxdepth 1 -iname '*vibesensor*' -print || true

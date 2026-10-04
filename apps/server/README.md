@@ -239,7 +239,8 @@ Updater and release tooling also expose focused overrides:
 - `VIBESENSOR_FIRMWARE_PINNED_TAG`
 - `VIBESENSOR_SERVER_REPO`
 - `VIBESENSOR_UPDATE_STATE_PATH`
-- `VIBESENSOR_UPDATE_SUDO_WRAPPER`
+- `VIBESENSOR_PRIVILEGED_SOCKET` (privileged helper socket; default
+  `/run/vibesensor-privileged.sock`)
 
 Those update-related variables are intended for controlled packaging, staging,
 or recovery scenarios rather than day-to-day dashboard use.
@@ -274,6 +275,12 @@ is on the device, this README owns the backend-side service and config path.
   - `vibesensor-hotspot.service`
   - `vibesensor-hotspot-self-heal.timer` (hotspot watchdog: brings `VibeSensor-AP`
     back up, then re-provisions it via `vibesensor-hotspot.service`)
+  - `vibesensor-privileged.socket` (root commands for the updater and Bluetooth
+    OBD admin; `vibesensor.service` runs with `NoNewPrivileges=true` and never
+    uses sudo; see
+    [docs/operational-runbooks.md](../../docs/operational-runbooks.md#one-time-migration-to-the-privileged-helper))
+- `scripts/install_systemd_units.sh` renders and enables all of these units.
+  `install_pi.sh` runs it, and it doubles as the offline migration path.
 
 - Common service operations:
 

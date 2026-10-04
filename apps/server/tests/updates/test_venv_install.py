@@ -47,9 +47,9 @@ class RecordingCommands:
         *,
         timeout: float,
         phase: str,
-        sudo: bool = False,
+        privileged: bool = False,
     ) -> CommandExecutionResult:
-        del timeout, phase, sudo
+        del timeout, phase, privileged
         self.calls.append(list(args))
         joined = " ".join(args)
         for match, response in self.responses:

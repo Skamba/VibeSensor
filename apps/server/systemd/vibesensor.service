@@ -2,6 +2,10 @@
 Description=VibeSensor FastAPI Server
 After=network-online.target
 Wants=network-online.target
+# Root commands (updater, Bluetooth OBD) go through this socket; see
+# vibesensor-privileged.socket. NoNewPrivileges below rules out sudo.
+Wants=vibesensor-privileged.socket
+After=vibesensor-privileged.socket
 
 [Service]
 Type=simple

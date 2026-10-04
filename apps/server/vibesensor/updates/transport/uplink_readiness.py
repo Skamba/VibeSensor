@@ -61,7 +61,6 @@ class UpdateUplinkReadiness:
                 probe_cmd,
                 phase=str(phase),
                 timeout=5,
-                sudo=False,
             )
             if probe_result.returncode == 0:
                 self._status.log(f"DNS probe succeeded on attempt {attempt_number}")

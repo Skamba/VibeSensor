@@ -11,13 +11,6 @@ install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
 install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
 install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
 install -d "${ROOTFS_DIR}/etc/systemd/system/ssh.service.d"
-install -d "${ROOTFS_DIR}/etc/sudoers.d"
-# Updater and Bluetooth OBD admin run as pi and use restricted privileged helpers.
-cat >"${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update" <<'SUDOERS'
-pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh
-pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_obd_admin.py
-SUDOERS
-chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update"
 
 # Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
 on_chroot << 'CHROOT_EOF'
@@ -245,6 +238,21 @@ sed \
   -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
   -e 's#__SERVICE_USER__#pi#g' \
   "${SYSTEMD_SRC}/vibesensor.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor.service"
+
+# Root commands for the updater and Bluetooth OBD admin: vibesensor.service
+# (NoNewPrivileges=true, so no sudo) connects to this socket, and systemd runs
+# each request as root through the allowlist wrapper it names.
+sed \
+  -e 's#__SERVICE_USER__#pi#g' \
+  "${SYSTEMD_SRC}/vibesensor-privileged.socket" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-privileged.socket"
+
+sed \
+  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
+  "${SYSTEMD_SRC}/vibesensor-privileged@.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-privileged@.service"
+
+mkdir -p "${ROOTFS_DIR}/etc/systemd/system/sockets.target.wants"
+ln -sf /etc/systemd/system/vibesensor-privileged.socket \
+  "${ROOTFS_DIR}/etc/systemd/system/sockets.target.wants/vibesensor-privileged.socket"
 
 mkdir -p "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants"
 ln -sf /etc/systemd/system/vibesensor.service \

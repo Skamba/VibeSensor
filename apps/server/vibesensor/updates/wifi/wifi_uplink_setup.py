@@ -81,7 +81,7 @@ class UpdateUplinkProvisioner:
                 ],
                 phase="connecting_wifi",
                 timeout=float(self._config.uplink_connect_wait_s + 10),
-                sudo=True,
+                privileged=True,
             )
             if connect_result.returncode == 0:
                 return
@@ -118,7 +118,7 @@ class UpdateUplinkProvisioner:
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
 
     async def _validate_open_network(self, ssid: str) -> None:
@@ -140,7 +140,7 @@ class UpdateUplinkProvisioner:
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if scan_result.returncode != 0:
             return
@@ -160,7 +160,7 @@ class UpdateUplinkProvisioner:
             ["nmcli", "-t", "-f", "UUID,NAME", "connection", "show"],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if connection_list.returncode != 0:
             return
@@ -174,7 +174,7 @@ class UpdateUplinkProvisioner:
                 ["nmcli", "connection", "delete", "uuid", uuid],
                 phase="connecting_wifi",
                 timeout=self._config.nmcli_timeout_s,
-                sudo=True,
+                privileged=True,
             )
 
     async def _create_uplink_connection(self, ssid: str) -> None:
@@ -198,7 +198,7 @@ class UpdateUplinkProvisioner:
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if create_result.returncode == 0:
             return
@@ -230,7 +230,7 @@ class UpdateUplinkProvisioner:
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if configure_result.returncode == 0:
             return
@@ -257,7 +257,7 @@ class UpdateUplinkProvisioner:
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if password_result.returncode == 0:
             return
@@ -275,5 +275,5 @@ class UpdateUplinkProvisioner:
             ["nmcli", "connection", "delete", self._config.uplink_connection_name],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )

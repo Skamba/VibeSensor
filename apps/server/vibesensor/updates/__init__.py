@@ -15,10 +15,10 @@
   verification, and safe wheelhouse extraction.
 - ``artifact_validation.py`` owns wheel artifact and metadata validation.
 - ``validation.py`` owns pre-flight prerequisite checks.
-- ``privilege.py`` owns sudo/privilege-escalation helpers used by command
-  execution and transport modules.
 - ``runner.py`` owns command execution primitives (``CommandRunner``,
   ``UpdateCommandExecutor``), command reporting, and log-line sanitisation.
+  ``privileged=True`` commands go to the root-side privileged helper
+  (``vibesensor.common.privileged_helper``), never through sudo.
 - ``transport/`` owns prepared-transport interfaces, transport coordination,
   transport-neutral uplink readiness, and USB transport execution behavior.
 - ``usb_status.py`` owns the USB internet readiness service, while

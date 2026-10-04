@@ -1,100 +1,44 @@
-"""Unprivileged client for the privileged Bluetooth OBD helper script."""
+"""Unprivileged client for the root-side Bluetooth OBD helper."""
 
 from __future__ import annotations
 
 import json
-import subprocess
 from collections.abc import Callable
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, cast
 
 from vibesensor.common.operational_errors import ExternalCommandError
+from vibesensor.common.privileged_helper import OBD_HELPER, PrivilegedResult, run_privileged
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 
-__all__ = ["CommandResult", "ObdAdminClient"]
+__all__ = ["ObdAdminClient"]
 
-_OBD_SUDO_HELPER_ERROR = (
-    "Bluetooth OBD scan requires the Pi sudo helper and NOPASSWD sudoers entry "
-    "to run non-interactively."
-)
 _OBD_HELPER_LAUNCH_ERROR = (
     "Bluetooth OBD helper failed before returning structured output. "
     "Verify the helper installation on the Pi and try again."
 )
 
-
-@dataclass(frozen=True, slots=True)
-class CommandResult:
-    """Captured subprocess result."""
-
-    returncode: int
-    stdout: str
-    stderr: str
+CommandRunner = Callable[[list[str], int], PrivilegedResult]
 
 
-CommandRunner = Callable[[list[str], int], CommandResult]
-
-
-def _default_helper_script() -> Path:
-    for root in Path(__file__).resolve().parents:
-        candidate = root / "scripts" / "vibesensor_obd_admin.py"
-        if candidate.is_file():
-            return candidate
-    return Path(__file__).resolve().parents[3] / "scripts" / "vibesensor_obd_admin.py"
-
-
-def _default_runner(argv: list[str], timeout_s: int) -> CommandResult:
-    try:
-        completed = subprocess.run(
-            argv,
-            check=False,
-            text=True,
-            capture_output=True,
-            timeout=timeout_s,
-        )
-    except FileNotFoundError as exc:
-        raise ExternalCommandError(f"Required command is unavailable: {argv[0]}") from exc
-    except subprocess.TimeoutExpired as exc:
-        stdout = str(exc.stdout or "").strip()
-        stderr = str(exc.stderr or "").strip()
-        raise ExternalCommandError(
-            f"OBD helper timed out after {timeout_s}s"
-            + (f": {stderr}" if stderr else "")
-            + (f" ({stdout})" if stdout else "")
-        ) from exc
-    return CommandResult(
-        returncode=int(completed.returncode),
-        stdout=completed.stdout.strip(),
-        stderr=completed.stderr.strip(),
-    )
+def _default_runner(args: list[str], timeout_s: int) -> PrivilegedResult:
+    return run_privileged(OBD_HELPER, args, timeout_s=timeout_s)
 
 
 class ObdAdminClient:
-    """Invoke the root-owned Bluetooth helper via ``sudo -n`` and parse JSON."""
+    """Run ``vibesensor_obd_admin.py`` as root via the privileged helper and parse JSON."""
 
-    __slots__ = ("_helper_script", "_runner", "_sudo_path")
+    __slots__ = ("_runner",)
 
-    def __init__(
-        self,
-        *,
-        helper_script: Path | None = None,
-        sudo_path: str = "sudo",
-        runner: CommandRunner | None = None,
-    ) -> None:
-        self._helper_script = (
-            _default_helper_script() if helper_script is None else Path(helper_script)
-        )
-        self._sudo_path = sudo_path
+    def __init__(self, *, runner: CommandRunner | None = None) -> None:
         self._runner = _default_runner if runner is None else runner
 
     def _run_helper(self, args: list[str], *, timeout_s: int) -> dict[str, Any]:
-        argv = [self._sudo_path, "-n", str(self._helper_script), *args]
-        result = self._runner(argv, timeout_s)
-        launch_error = self._pre_json_failure(result)
-        if launch_error is not None:
-            raise ExternalCommandError(launch_error)
-        raw_output = result.stdout or result.stderr or ""
+        result = self._runner(args, timeout_s)
+        stdout = result.stdout.strip()
+        stderr = result.stderr.strip()
+        if result.returncode != 0 and not stdout and stderr and not stderr.startswith("{"):
+            raise ExternalCommandError(f"{_OBD_HELPER_LAUNCH_ERROR} ({stderr})")
+        raw_output = stdout or stderr
         try:
             payload_raw = json.loads(raw_output or "{}")
         except json.JSONDecodeError as exc:
@@ -106,31 +50,9 @@ class ObdAdminClient:
             raise ExternalCommandError("Bluetooth OBD helper returned a non-object JSON payload")
         payload = cast(dict[str, Any], payload_raw)
         if result.returncode != 0:
-            error = str(
-                payload.get("error")
-                or result.stderr
-                or result.stdout
-                or "Bluetooth OBD helper failed"
-            )
+            error = str(payload.get("error") or stderr or stdout or "Bluetooth OBD helper failed")
             raise ExternalCommandError(error)
         return payload
-
-    @staticmethod
-    def _pre_json_failure(result: CommandResult) -> str | None:
-        if result.returncode == 0 or result.stdout:
-            return None
-        stderr = result.stderr.strip()
-        if not stderr or stderr.lstrip().startswith("{"):
-            return None
-        lowered = stderr.lower()
-        if (
-            "sudo:" in lowered
-            or "password is required" in lowered
-            or "a terminal is required" in lowered
-            or "no tty present" in lowered
-        ):
-            return _OBD_SUDO_HELPER_ERROR
-        return _OBD_HELPER_LAUNCH_ERROR
 
     @staticmethod
     def _device_from_payload(raw: object) -> ObdDeviceSnapshot:

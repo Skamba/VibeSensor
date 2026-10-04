@@ -14,7 +14,7 @@ from test_support.obd_runtime import (
     build_obd_runtime_parts as _build_runtime_parts,
 )
 
-from vibesensor.common.operational_errors import ExternalCommandError
+from vibesensor.common.privileged_helper import PrivilegedHelperUnavailableError
 from vibesensor.speed.obd.connection_executor import ObdConnectionLoopState
 from vibesensor.speed.obd.connection_plan import ObdConnectionStep, ObdConnectionStepKind
 from vibesensor.speed.obd.elm327 import ObdTransportError
@@ -203,9 +203,11 @@ def test_obd_status_snapshot_does_not_refresh_admin_state_implicitly() -> None:
     assert status.trusted is False
 
 
-def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
+def test_obd_status_reports_install_hint_when_privileged_helper_is_missing() -> None:
     admin_client = MagicMock()
-    admin_client.device_info.side_effect = ExternalCommandError("sudo: a password is required")
+    admin_client.device_info.side_effect = PrivilegedHelperUnavailableError(
+        "Privileged helper socket /run/vibesensor-privileged.sock is unavailable"
+    )
     parts = _build_runtime_parts(clock=lambda: 100.0, admin_client=admin_client)
     parts.obd.apply_speed_source_settings(
         effective_speed_kmh=None,
@@ -218,8 +220,8 @@ def test_obd_status_reports_sudo_helper_hint_when_admin_refresh_fails() -> None:
     parts.obd.refresh_obd_status()
     status = parts.obd.status_snapshot()
 
-    assert "sudo" in str(status.last_error).lower()
-    assert "sudo helper" in str(obd_debug_hint(status)).lower()
+    assert "privileged helper" in str(status.last_error).lower()
+    assert "install_pi.sh" in str(obd_debug_hint(status))
 
 
 def test_obd_connection_state_marks_disconnected_after_fatal_poll_cycle() -> None:

@@ -156,10 +156,10 @@ The image contains:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
   - `vibesensor-hotspot-self-heal.timer` — hotspot watchdog (every 2 min): reactivates `VibeSensor-AP`, then re-provisions via `vibesensor-hotspot.service`
+  - `vibesensor-privileged.socket` — root commands for the updater and Bluetooth OBD admin. `vibesensor.service` runs with `NoNewPrivileges=true`, so it cannot use sudo. Each connection runs `vibesensor-privileged@.service` as root, through the allowlist wrapper it names (`vibesensor_update_allowlist.sh`, `vibesensor_obd_admin.py`). There is no sudoers entry.
 - Bluetooth OBD support prerequisites:
   - `bluez` / `pi-bluetooth` userspace packages in the image
-  - privileged helper `apps/server/scripts/vibesensor_obd_admin.py`
-  - NOPASSWD sudoers entry for the `pi` service user so the local UI can scan/pair adapters without SSH
+  - root-side helper `apps/server/scripts/vibesensor_obd_admin.py`, reached through `vibesensor-privileged.socket` so the local UI can scan/pair adapters without SSH
 
 ## Flash
 

@@ -8,10 +8,12 @@ import pytest
 
 from vibesensor.common.process_settings import (
     DEFAULT_FIRMWARE_CACHE_DIR,
+    DEFAULT_PRIVILEGED_SOCKET,
     DEFAULT_UPDATE_REPO_PATH,
     DEFAULT_UPDATE_STATE_PATH,
     load_bootstrap_env_settings,
     load_update_env_settings,
+    privileged_socket_path,
     summarize_process_settings,
 )
 
@@ -22,7 +24,7 @@ def _clear_backend_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "VIBESENSOR_SERVE_STATIC",
         "VIBESENSOR_REPO_PATH",
         "VIBESENSOR_UPDATE_STATE_PATH",
-        "VIBESENSOR_UPDATE_SUDO_WRAPPER",
+        "VIBESENSOR_PRIVILEGED_SOCKET",
         "VIBESENSOR_FIRMWARE_CACHE_DIR",
         "VIBESENSOR_FIRMWARE_REPO",
         "VIBESENSOR_FIRMWARE_CHANNEL",
@@ -112,7 +114,6 @@ def test_update_env_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert settings.repo_path == DEFAULT_UPDATE_REPO_PATH
     assert settings.update_state_path == DEFAULT_UPDATE_STATE_PATH
-    assert settings.update_sudo_wrapper is None
     assert settings.firmware_cache_dir == DEFAULT_FIRMWARE_CACHE_DIR
     assert settings.firmware_repo == "Skamba/VibeSensor"
     assert settings.firmware_channel == "stable"
@@ -128,7 +129,6 @@ def test_update_env_settings_accept_env_overrides(
     _clear_backend_env(monkeypatch)
     monkeypatch.setenv("VIBESENSOR_REPO_PATH", str(tmp_path / "repo"))
     monkeypatch.setenv("VIBESENSOR_UPDATE_STATE_PATH", str(tmp_path / "update-status.json"))
-    monkeypatch.setenv("VIBESENSOR_UPDATE_SUDO_WRAPPER", str(tmp_path / "sudo-wrapper.sh"))
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_CACHE_DIR", str(tmp_path / "firmware"))
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_REPO", "example/fw")
     monkeypatch.setenv("VIBESENSOR_FIRMWARE_CHANNEL", "prerelease")
@@ -140,7 +140,6 @@ def test_update_env_settings_accept_env_overrides(
 
     assert settings.repo_path == tmp_path / "repo"
     assert settings.update_state_path == tmp_path / "update-status.json"
-    assert settings.update_sudo_wrapper == tmp_path / "sudo-wrapper.sh"
     assert settings.firmware_cache_dir == tmp_path / "firmware"
     assert settings.firmware_repo == "example/fw"
     assert settings.firmware_channel == "prerelease"
@@ -185,3 +184,15 @@ def test_process_settings_summary_redacts_github_token(
     assert summary["repo_path"] == str(tmp_path / "repo")
     assert summary["github_token_configured"] is True
     assert "ghp_secret" not in str(summary)
+
+
+def test_privileged_socket_path_defaults_to_the_socket_unit_and_accepts_override(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _clear_backend_env(monkeypatch)
+    assert privileged_socket_path() == DEFAULT_PRIVILEGED_SOCKET
+
+    monkeypatch.setenv("VIBESENSOR_PRIVILEGED_SOCKET", str(tmp_path / "helper.sock"))
+    assert privileged_socket_path() == tmp_path / "helper.sock"
+    assert summarize_process_settings()["privileged_socket"] == str(tmp_path / "helper.sock")

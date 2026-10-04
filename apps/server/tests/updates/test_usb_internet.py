@@ -46,8 +46,9 @@ class _UsbActivationRunner(FakeRunner):
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        self.calls.append((list(args), {"timeout": timeout, "env": env}))
+        self.calls.append((list(args), {"timeout": timeout, "env": env, "privileged": privileged}))
         joined = " ".join(args)
         if "nmcli --wait 15 device up eth0" in joined:
             self._activation_attempted = True
@@ -82,8 +83,9 @@ class _UsbActivationFailureRunner(FakeRunner):
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        self.calls.append((list(args), {"timeout": timeout, "env": env}))
+        self.calls.append((list(args), {"timeout": timeout, "env": env, "privileged": privileged}))
         joined = " ".join(args)
         if "nmcli --wait 15 device up eth0" in joined:
             return (4, "", "Error: Connection activation failed: device not ready")
@@ -238,13 +240,13 @@ async def test_usb_internet_snapshot_can_activate_detected_but_unavailable_inter
         carrier_on=True,
     )
 
-    service = UsbInternetStatusService(
-        runner=_UsbActivationRunner(),
-        sys_class_net=sys_class_net,
-    )
+    runner = _UsbActivationRunner()
+    service = UsbInternetStatusService(runner=runner, sys_class_net=sys_class_net)
 
     snapshot = await service.snapshot(activate=True)
 
+    activation_calls = [opts for args, opts in runner.calls if "up" in args]
+    assert [opts["privileged"] for opts in activation_calls] == [True]
     assert snapshot.detected is True
     assert snapshot.usable is True
     assert snapshot.interface_name == "eth0"

@@ -289,12 +289,71 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    it into `slots/<running version>` once. Updates need about 600 MiB free on that
    filesystem (new slot plus the staged wheelhouse under `.venv/.staging-*`).
 7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
-8. Manual Pi installs create `/etc/sudoers.d/vibesensor-update` for the service
-   user. It must point at
-   `/opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh` for the
-   standard install layout; custom clone paths must use the exact installed
-   script path.
+8. Root commands (Wi-Fi uplink and hotspot `nmcli` calls, the privilege probe,
+   the post-update restart, Bluetooth OBD scan/pair) go through the privileged
+   helper, never sudo. `vibesensor.service` runs with `NoNewPrivileges=true`,
+   which makes sudo refuse to run. The server connects to
+   `/run/vibesensor-privileged.sock` (`vibesensor-privileged.socket`, owned by
+   the service user, mode 0600). For each connection systemd starts a
+   `vibesensor-privileged@.service` instance as root. That instance runs
+   `apps/server/scripts/vibesensor_privileged_helper.py`, which passes the
+   request only to the allowlist wrapper it names:
+   `vibesensor_update_allowlist.sh` or `vibesensor_obd_admin.py`. Check it with
+   `systemctl status vibesensor-privileged.socket` and
+   `journalctl -t vibesensor-privileged`. "Privileged helper socket ... is
+   unavailable" in the update log or OBD status means the socket units are
+   missing; see the migration below. Root runs these scripts, so keep the
+   install tree (`/opt/VibeSensor` on the image) root-owned.
 9. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
+
+## One-time migration to the privileged helper
+
+Devices installed before the privileged helper granted the service user sudo on
+`vibesensor_update_sudo.sh`. Their hardened `vibesensor.service`
+(`NoNewPrivileges=true`, two-capability bounding set) makes sudo refuse. So on
+those devices the in-app update (Wi-Fi and USB), the hotspot recovery, and
+Bluetooth OBD scan/pair all fail, and the updater cannot install the fix itself.
+Migrate each device once by hand. You need SSH and the `pi` password.
+
+- **Manual installs (git clone):** `git pull`, then
+  `sudo ./apps/server/scripts/install_pi.sh` (needs internet). It installs the
+  socket units, removes `/etc/sudoers.d/vibesensor-update`, and restarts the
+  server.
+- **Prebuilt image, reflash:** back up `/var/lib/vibesensor/` and
+  `/etc/vibesensor/config.yaml`, flash an image built from a release that has
+  the privileged helper, then restore both.
+- **Prebuilt image, in place:** let the old updater run once without the
+  hardening, then install the new root side.
+  1. Add a runtime-only drop-in (gone after a reboot) so the old sudo-based
+     updater can work:
+
+     ```bash
+     ssh -t pi@10.4.0.1
+     sudo mkdir -p /run/systemd/system/vibesensor.service.d
+     printf '[Service]\nNoNewPrivileges=no\nCapabilityBoundingSet=~\n' |
+       sudo tee /run/systemd/system/vibesensor.service.d/migrate.conf
+     sudo systemctl daemon-reload && sudo systemctl restart vibesensor.service
+     ```
+
+  2. In the UI, update to a release that has the privileged helper (Wi-Fi or
+     USB). Wait until the server is back on the new version.
+  3. From a checkout of that release on a computer joined to the hotspot:
+
+     ```bash
+     ssh pi@10.4.0.1 'rm -rf /tmp/vs-migrate && mkdir /tmp/vs-migrate'
+     scp -r apps/server/scripts apps/server/systemd pi@10.4.0.1:/tmp/vs-migrate/
+     ssh -t pi@10.4.0.1 'sudo rm -rf /run/systemd/system/vibesensor.service.d &&
+       sudo cp -r /tmp/vs-migrate/scripts /tmp/vs-migrate/systemd /opt/VibeSensor/apps/server/ &&
+       sudo /opt/VibeSensor/apps/server/scripts/install_systemd_units.sh'
+     ```
+
+  `install_systemd_units.sh` works offline. It re-renders every unit, installs
+  and starts `vibesensor-privileged.socket`, removes the stale sudoers entry and
+  wrapper, and restarts the server.
+
+Afterwards, `systemctl is-active vibesensor-privileged.socket` prints `active`,
+`/etc/sudoers.d/vibesensor-update` is gone, and the Update panel can start an
+update.
 
 ## Local release readiness
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,7 @@ from vibesensor.updates.runner import (
 
 class _StaticRunner(CommandRunner):
     def __init__(self, *, response: CommandExecutionResult) -> None:
-        self.calls: list[tuple[list[str], float, dict[str, str] | None]] = []
+        self.calls: list[tuple[list[str], float, dict[str, str] | None, bool]] = []
         self._response = response
 
     async def run(
@@ -27,8 +28,9 @@ class _StaticRunner(CommandRunner):
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        self.calls.append((list(args), timeout, env))
+        self.calls.append((list(args), timeout, env, privileged))
         return (self._response.returncode, self._response.stdout, self._response.stderr)
 
 
@@ -72,7 +74,51 @@ async def test_update_command_executor_returns_structured_result_without_reporte
     result = await executor.run(["echo", "ok"], phase="checking", timeout=5)
 
     assert result == CommandExecutionResult(returncode=0, stdout="ok\n", stderr="")
-    assert runner.calls == [(["echo", "ok"], 5, None)]
+    assert runner.calls == [(["echo", "ok"], 5, None, False)]
+
+
+@pytest.mark.asyncio
+async def test_update_command_executor_passes_privileged_commands_unprefixed() -> None:
+    runner = _StaticRunner(response=CommandExecutionResult(returncode=0, stdout="", stderr=""))
+    executor = UpdateCommandExecutor(runner=runner)
+
+    await executor.run(["nmcli", "connection", "up", "x"], phase="x", timeout=5, privileged=True)
+
+    assert runner.calls == [(["nmcli", "connection", "up", "x"], 5, None, True)]
+
+
+@pytest.mark.asyncio
+async def test_privileged_command_reports_missing_helper_socket_without_running_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    marker = tmp_path / "ran"
+    monkeypatch.setattr(os, "geteuid", lambda: 1000)
+    monkeypatch.setenv("VIBESENSOR_PRIVILEGED_SOCKET", str(tmp_path / "missing.sock"))
+
+    rc, stdout, stderr = await CommandRunner().run(
+        ["touch", str(marker)], timeout=5, privileged=True
+    )
+
+    assert (rc, stdout) == (126, "")
+    assert "missing.sock is unavailable" in stderr
+    assert "install_pi.sh" in stderr
+    assert not marker.exists()
+
+
+@pytest.mark.asyncio
+async def test_privileged_command_runs_directly_when_already_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    marker = tmp_path / "ran"
+    monkeypatch.setattr(os, "geteuid", lambda: 0)
+    monkeypatch.setenv("VIBESENSOR_PRIVILEGED_SOCKET", str(tmp_path / "missing.sock"))
+
+    rc, _stdout, _stderr = await CommandRunner().run(
+        ["touch", str(marker)], timeout=5, privileged=True
+    )
+
+    assert rc == 0
+    assert marker.exists()
 
 
 @pytest.mark.asyncio

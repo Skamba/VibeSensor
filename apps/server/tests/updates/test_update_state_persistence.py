@@ -56,8 +56,9 @@ class FakeRunner(CommandRunner):
         *,
         timeout: float = 30,
         env: dict[str, str] | None = None,
+        privileged: bool = False,
     ) -> tuple[int, str, str]:
-        self.calls.append((list(args), {"timeout": timeout, "env": env}))
+        self.calls.append((list(args), {"timeout": timeout, "env": env, "privileged": privileged}))
         joined = " ".join(args)
         for match_substr, response in self.responses:
             if match_substr in joined:
@@ -540,7 +541,7 @@ class TestPersistenceDuringLifecycle:
     async def test_state_persisted_after_job_ends(self, update_env) -> None:
         """After the update job finishes, the final state is persisted."""
         _, store, runner, make_mgr = update_env
-        runner.set_response("python3 -c pass", 1, "", "no sudo")
+        runner.set_response("python3 -c pass", 1, "", "no privileged helper")
         mgr = make_mgr()
 
         with (

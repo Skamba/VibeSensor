@@ -43,7 +43,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `clock/`: steps the RTC-less Pi's unsynchronised wall clock to the browser clock the UI reports on connect (needs `CAP_SYS_TIME` from `vibesensor.service`).
 - `simulator/`: sensor simulator and WebSocket smoke client.
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
-- `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings).
+- `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client).
 - `cli/`: console entry points.
 - Report flow details: `docs/report_pipeline.md`.
 - User journeys and expectation-setting principles (car wizard, readiness, source checks, report wording): `docs/user_journeys.md`; open gaps: `docs/user_journey_gaps.md`.

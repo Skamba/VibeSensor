@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from vibesensor.updates.models import UsbInternetStatus
-from vibesensor.updates.privilege import build_sudo_args
 from vibesensor.updates.runner import CommandRunner
 from vibesensor.updates.usb_status_evaluation import (
     candidate_diagnostic,
@@ -41,17 +40,9 @@ class UsbInternetStatusService:
 
     async def _activate_interface(self, interface_name: str) -> str:
         rc, stdout, stderr = await self._runner.run(
-            build_sudo_args(
-                [
-                    "nmcli",
-                    "--wait",
-                    str(_USB_ACTIVATION_WAIT_S),
-                    "device",
-                    "up",
-                    interface_name,
-                ]
-            ),
+            ["nmcli", "--wait", str(_USB_ACTIVATION_WAIT_S), "device", "up", interface_name],
             timeout=float(_USB_ACTIVATION_WAIT_S + 5),
+            privileged=True,
         )
         if rc == 0:
             return ""

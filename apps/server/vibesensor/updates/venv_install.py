@@ -156,7 +156,7 @@ class ReleaseVenvInstaller:
         failure: str,
         timeout: float = 30.0,
     ) -> CommandExecutionResult:
-        result = await self._commands.run(args, phase=_INSTALLING, timeout=timeout, sudo=False)
+        result = await self._commands.run(args, phase=_INSTALLING, timeout=timeout)
         if result.returncode != 0:
             raise UpdateReleaseError(
                 f"{failure} (exit {result.returncode})",

@@ -35,7 +35,7 @@ class UpdateHotspotRecovery:
             ["nmcli", "connection", "down", self._config.ap_con_name],
             phase="stopping_hotspot",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if result.returncode != 0:
             self._status.log("Hotspot down returned non-zero; may already be inactive")
@@ -49,7 +49,7 @@ class UpdateHotspotRecovery:
             ["nmcli", "connection", "down", self._config.uplink_connection_name],
             phase="restore",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if down_result.returncode != 0:
             detail = down_result.stderr.strip() or down_result.stdout.strip() or "no output"
@@ -62,7 +62,7 @@ class UpdateHotspotRecovery:
             ["nmcli", "connection", "delete", self._config.uplink_connection_name],
             phase="restore",
             timeout=self._config.nmcli_timeout_s,
-            sudo=True,
+            privileged=True,
         )
         if delete_result.returncode != 0:
             detail = delete_result.stderr.strip() or delete_result.stdout.strip() or "no output"
@@ -92,7 +92,7 @@ class UpdateHotspotRecovery:
                 ["nmcli", "connection", "up", self._config.ap_con_name],
                 phase="restore",
                 timeout=self._config.nmcli_timeout_s,
-                sudo=True,
+                privileged=True,
             )
             if result.returncode == 0:
                 self._status.log(f"Hotspot restored on attempt {attempt_number}")

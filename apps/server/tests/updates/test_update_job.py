@@ -456,7 +456,7 @@ async def test_success_schedules_a_delayed_restart_through_systemd_run(tmp_path:
     await harness.job.run(_request())
 
     harness.commands.run.assert_awaited_once_with(
-        _SYSTEMD_RUN_RESTART, phase="done", timeout=30, sudo=True
+        _SYSTEMD_RUN_RESTART, phase="done", timeout=30, privileged=True
     )
     assert harness.status.status.state is UpdateState.success
     assert harness.status.status.terminal_state is UpdateTerminalState.success

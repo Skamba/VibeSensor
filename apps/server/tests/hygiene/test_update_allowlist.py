@@ -1,4 +1,4 @@
-"""Guard the updater sudo wrapper install and allowlist behavior."""
+"""Guard the updater allowlist wrapper that the privileged helper runs as root."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 from tests._paths import SERVER_ROOT
 
-_WRAPPER = SERVER_ROOT / "scripts" / "vibesensor_update_sudo.sh"
+_WRAPPER = SERVER_ROOT / "scripts" / "vibesensor_update_allowlist.sh"
 
 
 def _write_tool(bin_dir: Path, name: str) -> Path:
@@ -33,7 +33,7 @@ def _run_wrapper(tmp_path: Path, args: list[str]) -> subprocess.CompletedProcess
     )
 
 
-def test_update_sudo_wrapper_allows_expected_update_commands(tmp_path: Path) -> None:
+def test_update_allowlist_allows_expected_update_commands(tmp_path: Path) -> None:
     allowed_commands = [
         ["python3", "-c", "pass"],
         ["nmcli", "connection", "up", "VibeSensor-uplink"],
@@ -57,7 +57,7 @@ def test_update_sudo_wrapper_allows_expected_update_commands(tmp_path: Path) -> 
         assert result.stdout.strip().endswith(" ".join(command[1:]))
 
 
-def test_update_sudo_wrapper_rejects_basename_spoofing(tmp_path: Path) -> None:
+def test_update_allowlist_rejects_basename_spoofing(tmp_path: Path) -> None:
     evil_dir = tmp_path / "evil"
     evil_dir.mkdir()
     evil_nmcli = _write_tool(evil_dir, "nmcli")
@@ -69,7 +69,7 @@ def test_update_sudo_wrapper_rejects_basename_spoofing(tmp_path: Path) -> None:
     assert result.stdout == ""
 
 
-def test_update_sudo_wrapper_rejects_unexpected_subcommands(tmp_path: Path) -> None:
+def test_update_allowlist_rejects_unexpected_subcommands(tmp_path: Path) -> None:
     result = _run_wrapper(tmp_path, ["nmcli", "general", "status"])
 
     assert result.returncode == 126
@@ -77,7 +77,7 @@ def test_update_sudo_wrapper_rejects_unexpected_subcommands(tmp_path: Path) -> N
     assert result.stdout == ""
 
 
-def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> None:
+def test_update_allowlist_rejects_malformed_nmcli_options(tmp_path: Path) -> None:
     result = _run_wrapper(tmp_path, ["nmcli", "--wait"])
 
     assert result.returncode == 126
@@ -85,7 +85,7 @@ def test_update_sudo_wrapper_rejects_malformed_nmcli_options(tmp_path: Path) -> 
     assert result.stdout == ""
 
 
-def test_update_sudo_wrapper_rejects_commands_outside_the_allowlist(tmp_path: Path) -> None:
+def test_update_allowlist_rejects_commands_outside_the_allowlist(tmp_path: Path) -> None:
     result = _run_wrapper(tmp_path, ["bash", "-c", "id"])
 
     assert result.returncode == 126

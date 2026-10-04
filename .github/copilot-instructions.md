@@ -17,7 +17,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Canonical dB math: `apps/server/vibesensor/dsp/vibration_strength.py::vibration_strength_db_scalar()`.
 - Static config that does not change between deployments belongs in Python constants, not runtime file loaders.
 - Internal shared logic stays in the server package. Generated UI constants come from backend sources (`vibesensor.domain`, `vibesensor.dsp`).
-- Backend code lives in per-feature packages under `apps/server/vibesensor/`; `common/` holds only small cross-cutting helpers (JSON, time, logging, errors, units, process env settings). Runtime bootstrap/subprocess orchestration belongs in `app/` or the owning feature package.
+- Backend code lives in per-feature packages under `apps/server/vibesensor/`; `common/` holds only small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client). Runtime bootstrap/subprocess orchestration belongs in `app/` or the owning feature package.
 - Pi hotspot provisioning is offline-first; required packages are baked into the image. Pi image outputs must be deterministic and self-validated.
 
 ## Backend/domain boundaries

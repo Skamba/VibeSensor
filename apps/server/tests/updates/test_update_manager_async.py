@@ -146,21 +146,20 @@ class TestUpdateManagerAsync:
         ]
         assert not pip_install_calls
 
-    async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
-        manager, runner, _ = setup_update_env(tmp_path, sudo_ok=False)
-        runner.set_response("python3 -c pass", 1, "", "sudo: a password is required")
+    async def test_missing_privileged_helper_fails_gracefully(self, tmp_path) -> None:
+        manager, runner, _ = setup_update_env(tmp_path, privileged_ok=False)
+        runner.set_response("python3 -c pass", 126, "", "Privileged helper socket is unavailable")
         with patch(
             "vibesensor.updates.job.UpdateJob._find_latest_release",
             side_effect=AssertionError("release resolution should not run without privileges"),
         ):
             await run_update(manager, "TestNet", "pass", effective_uid=1000)
         assert manager.status.state == UpdateState.failed
-        assert (
-            "privileg"
-            in " ".join(
-                f"{issue.message} {issue.detail}" for issue in manager.status.issues
-            ).lower()
-        )
+        probe_calls = [opts for args, opts in runner.calls if args == ["python3", "-c", "pass"]]
+        assert probe_calls and all(opts["privileged"] for opts in probe_calls)
+        issues = " ".join(f"{issue.message} {issue.detail}" for issue in manager.status.issues)
+        assert "Insufficient privileges" in issues
+        assert "Privileged helper socket is unavailable" in issues
 
     async def test_wifi_connection_failure(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
@@ -466,11 +465,11 @@ class TestUpdateManagerAsync:
             manager, runner, _ = setup_update_env(tmp_path)
             original_run = runner.run
 
-            async def slow_run(args, *, timeout=30, env=None):
+            async def slow_run(args, *, timeout=30, env=None, privileged=False):
                 if "connection up VibeSensor-Uplink" in " ".join(args):
                     await asyncio.sleep(300)
                     return (0, "", "")
-                return await original_run(args, timeout=timeout, env=env)
+                return await original_run(args, timeout=timeout, env=env, privileged=privileged)
 
             runner.run = slow_run
             manager.start("TestNet", "pass")
@@ -559,7 +558,7 @@ class TestUpdateManagerAsync:
 
     @pytest.mark.parametrize("missing_tool", ["nmcli", "python3"])
     async def test_missing_tool_fails_gracefully(self, tmp_path, missing_tool: str) -> None:
-        manager, _runner, _ = setup_update_env(tmp_path, sudo_ok=False)
+        manager, _runner, _ = setup_update_env(tmp_path, privileged_ok=False)
 
         def which_without(name: str) -> str | None:
             return None if name == missing_tool else f"/usr/bin/{name}"

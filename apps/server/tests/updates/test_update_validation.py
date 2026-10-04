@@ -24,8 +24,8 @@ def _mock_which(name: str) -> str | None:
 
 
 class _Commands:
-    async def run(self, args, *, timeout, phase, sudo=False, env=None):
-        del args, timeout, phase, sudo, env
+    async def run(self, args, *, timeout, phase, privileged=False, env=None):
+        del args, timeout, phase, privileged, env
         return CommandExecutionResult(returncode=0, stdout="", stderr="")
 
 

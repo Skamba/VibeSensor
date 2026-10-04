@@ -6,6 +6,11 @@ from vibesensor.speed.obd.models import ObdStatusSnapshot
 
 __all__ = ["obd_debug_hint"]
 
+_HELPER_MISSING_HINT = (
+    "Re-run apps/server/scripts/install_pi.sh on the Pi to install the privileged helper "
+    "(vibesensor-privileged.socket) that Bluetooth scan and pairing need."
+)
+
 
 def obd_debug_hint(snapshot: ObdStatusSnapshot) -> str | None:
     """Return operator guidance from a pure OBD runtime snapshot."""
@@ -13,15 +18,15 @@ def obd_debug_hint(snapshot: ObdStatusSnapshot) -> str | None:
     helper_error = snapshot.helper_error
     if helper_error is not None:
         lowered = helper_error.lower()
-        if "password" in lowered or "sudo" in lowered:
-            return "Install the Bluetooth OBD sudo helper and NOPASSWD sudoers entry on the Pi."
+        if "privileged helper" in lowered:
+            return _HELPER_MISSING_HINT
         return "Bluetooth admin helper failed; try scan/pair again after power-cycling the adapter."
 
     last_error = snapshot.last_error
     if last_error is not None:
         lowered = last_error.lower()
-        if "password" in lowered or "sudo" in lowered:
-            return "Install the Bluetooth OBD sudo helper and NOPASSWD sudoers entry on the Pi."
+        if "privileged helper" in lowered:
+            return _HELPER_MISSING_HINT
     if snapshot.configured_device_mac is None:
         return (
             "Pair a Bluetooth OBD adapter in Settings before selecting OBD-II as the speed source."
