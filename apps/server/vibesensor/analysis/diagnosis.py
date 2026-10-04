@@ -14,7 +14,12 @@ from math import floor
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
-from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
+from vibesensor.analysis._reference_resolution import (
+    ENGINE_OFF_RPM_SOURCE,
+    ESTIMATED_RPM_SOURCE,
+    _effective_engine_rpm,
+    _tire_reference_from_context,
+)
 from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
 from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import (
@@ -178,7 +183,7 @@ def build_diagnosis(
         "source_checks": _source_checks(
             candidate, test_run.findings, refs, samples, speed_dependence
         ),
-        "conditions": _conditions(samples, refs),
+        "conditions": _conditions(refs),
     }
 
 
@@ -210,6 +215,9 @@ class _References:
     gear_ratio_provenance: ReferenceProvenance
     speed_source: str | None
     fuel_type: FuelTypeValue | None
+    rpm_source: RpmSourceValue
+    # Measured RPM shows the engine running for enough of the drive to test it.
+    engine_ran: bool
 
     @property
     def electric(self) -> bool:
@@ -240,6 +248,7 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
     tire = metadata.tire_circumference_m
     final_drive = _positive(metadata.final_drive_ratio)
     gear = _positive(metadata.current_gear_ratio)
+    rpm_source, engine_ran = _rpm_readings(metadata, samples)
     return _References(
         tire_circumference_m=tire,
         final_drive_ratio=final_drive,
@@ -255,6 +264,8 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
         ),
         speed_source=run_speed_source(samples),
         fuel_type=metadata.fuel_type,
+        rpm_source=rpm_source,
+        engine_ran=engine_ran,
     )
 
 
@@ -653,7 +664,7 @@ def _source_checks(
     samples: Sequence[Sample],
     speed_dependence: SpeedDependenceValue | None,
 ) -> list[SourceCheck]:
-    rpm_source = _rpm_source(samples)
+    rpm_source = refs.rpm_source
     seen = {
         finding.suspected_source
         for finding in findings
@@ -687,7 +698,7 @@ def _source_checks(
         if measured_engine:
             # Measured RPM also shows when the engine ran; with it off for most of
             # the drive (a hybrid driving electrically) its orders were not tested.
-            reason = None if _engine_ran(samples) else "engine_not_running"
+            reason = None if refs.engine_ran else "engine_not_running"
         elif refs.tire_circumference_m is None:
             reason = "no_tire_reference"
         elif source is not VibrationSource.WHEEL_TIRE and refs.final_drive_ratio is None:
@@ -852,38 +863,36 @@ def _contradicts_coast_test(
     )
 
 
-def _rpm_measured(sample: Sample) -> bool:
-    return (
-        sample.engine_rpm is not None
-        and sample.engine_rpm >= 0
-        and sample.engine_rpm_source.strip().lower() not in _MEASURED_RPM_EXCLUDED
-    )
+def _rpm_readings(metadata: RunMetadata, samples: Sequence[Sample]) -> tuple[RpmSourceValue, bool]:
+    """Where the engine RPM the analysis used came from, and whether the engine ran.
 
-
-def _rpm_source(samples: Sequence[Sample]) -> RpmSourceValue:
-    # A measured 0 rpm (engine off) still counts as measured RPM.
-    measured = estimated = 0
+    Per sample as the order analysis resolves it (``_effective_engine_rpm``): a
+    plug-in hybrid's measured 0 rpm (engine off) counts as measured RPM; a
+    combustion car's 0 rpm reading is a bad one, estimated from speed instead.
+    """
+    tire_circumference_m, _ = _tire_reference_from_context(metadata)
+    measured = estimated = running = 0
     for sample in samples:
-        if _rpm_measured(sample):
+        rpm, source = _effective_engine_rpm(sample, metadata, tire_circumference_m)
+        if source == ENGINE_OFF_RPM_SOURCE:
             measured += 1
-        elif sample.engine_rpm is not None and sample.engine_rpm > 0:
+        elif rpm is None or rpm <= 0:
+            continue
+        elif source.strip().lower() in _MEASURED_RPM_EXCLUDED:
             estimated += 1
+        else:
+            measured += 1
+            running += 1
+    engine_ran = bool(measured) and 100.0 * running / measured >= SPEED_COVERAGE_MIN_PCT
     if measured and measured >= estimated:
-        return "measured"
-    return "estimated_top_gear" if estimated else "none"
+        return "measured", engine_ran
+    return ("estimated_top_gear" if estimated else "none"), engine_ran
 
 
-def _engine_ran(samples: Sequence[Sample]) -> bool:
-    """Measured RPM shows the engine running for enough of the drive to test its orders."""
-    readings = [sample.engine_rpm for sample in samples if _rpm_measured(sample)]
-    running = sum(1 for rpm in readings if rpm is not None and rpm > 0)
-    return bool(readings) and 100.0 * running / len(readings) >= SPEED_COVERAGE_MIN_PCT
-
-
-def _conditions(samples: Sequence[Sample], refs: _References) -> TestConditions:
+def _conditions(refs: _References) -> TestConditions:
     return {
         "speed_source": refs.speed_source,
-        "rpm_source": _rpm_source(samples),
+        "rpm_source": refs.rpm_source,
         "tire_circumference_m": refs.tire_circumference_m,
         "final_drive_ratio": refs.final_drive_ratio,
         "gear_ratio": refs.gear_ratio,

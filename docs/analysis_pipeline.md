@@ -236,9 +236,13 @@ the PDF both show:
     reduction ratio), so the driveline check is its motor check; no E1/E2
     markers are drawn and `speed_dependence` stays `null` (no neutral
     decouples the motor).
-  - With measured RPM, a 0 rpm sample means the engine was off: it is not
-    replaced by an estimate. If the engine ran in fewer than 35 % of the
-    measured samples, the engine is `not_testable` with `engine_not_running`.
+  - On a plug-in hybrid, a measured 0 rpm sample means the engine was off: it
+    is not replaced by an estimate. If the engine ran in fewer than 35 % of
+    the measured samples, the engine is `not_testable` with
+    `engine_not_running`. A combustion engine does not stop while the car
+    moves, so on any other car a 0 rpm reading is a bad one (an OBD glitch or
+    ignition-off data): the RPM is estimated from speed as when none was
+    measured, and the engine check is hedged the same way.
   - `ruled_out` (`no_matching_order`): no match on references the user gave
     or the library verified, and for the engine only with measured RPM.
   - Provenance is the car's recorded field confidence, `user_confirmed` when

@@ -31,7 +31,10 @@ def _wheel_summary() -> dict[str, Any]:
 
 @cache
 def _healthy_summary() -> dict[str, Any]:
-    return run_analysis(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30))
+    # No top-gear ratio and no OBD-II: the engine orders cannot be placed.
+    return run_analysis(
+        make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30), current_gear_ratio=None
+    )
 
 
 def _variant(**diagnosis: Any) -> dict[str, Any]:

@@ -147,3 +147,26 @@ def test_the_report_says_when_the_powertrain_is_not_known() -> None:
 
     assert conditions["Powertrain"] == "not provided; analysed as a car with a combustion engine"
     assert conditions_nl["Aandrijving"].startswith("niet opgegeven")
+
+
+def test_obd_reading_0_rpm_while_driving_a_combustion_car_is_not_an_engine_off() -> None:
+    """A combustion engine does not stop while the car drives: 0 rpm is a bad reading.
+
+    The engine orders fall back to RPM estimated from speed in top gear, as with
+    no RPM at all, and the report never words it as a hybrid driving electrically.
+    """
+    for car in (_car("ICE"), None):
+        engine = _gps(make_engine_order_samples(sensors=ALL_WHEEL_SENSORS, n_samples=40), rpm=0.0)
+        summary = run_analysis(engine, car)
+        noise = run_analysis(
+            _gps(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30), rpm=0.0), car
+        )
+        view = report_view_for(noise)
+        texts = [*view.mechanic.ruled_out, *view.owner.not_covered, view.owner.description]
+        texts += [fact.value for fact in view.mechanic.conditions]
+
+        assert summary["diagnosis"]["source"] == "engine"
+        assert noise["diagnosis"]["conditions"]["rpm_source"] == "estimated_top_gear"
+        assert _checks(noise)["engine"] == ("ruled_out_estimated", "top_gear_assumed")
+        for text in texts:
+            assert "hybrid" not in text.lower() and "engine was off" not in text.lower(), text

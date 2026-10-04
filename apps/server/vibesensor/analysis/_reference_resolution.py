@@ -43,9 +43,16 @@ def _effective_engine_rpm(
     measured = sample.engine_rpm
     if measured is not None and measured > 0:
         return measured, sample.engine_rpm_source or "measured"
-    if measured is not None and sample.engine_rpm_source not in _NOT_MEASURED_RPM_SOURCES:
-        # A measured 0 rpm: the engine is off (a hybrid driving electrically, or
-        # stop-start), so there is no engine order to estimate from speed.
+    if (
+        measured is not None
+        and context.fuel_type == "PHEV"
+        and sample.engine_rpm_source not in _NOT_MEASURED_RPM_SOURCES
+    ):
+        # A measured 0 rpm on a plug-in hybrid: the engine is off while it drives
+        # electrically, so there is no engine order to estimate from speed. A
+        # combustion engine does not stop while the car moves: there 0 rpm is a
+        # bad reading (an OBD glitch, ignition-off data) and the RPM is estimated
+        # as when none was measured.
         return None, ENGINE_OFF_RPM_SOURCE
 
     speed_kmh = sample.speed_kmh
