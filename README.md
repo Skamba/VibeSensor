@@ -73,7 +73,7 @@ firmware/
 infra/
   pi-image/    Raspberry Pi image build pipeline
 docs/          Protocol spec, run schema, design language
-hardware/      Bill of materials and wiring reference
+hardware/      Bill of materials, wiring reference and the hotspot QR card
 tools/         Utilities (config checks, tests, support scripts)
 artifacts/     Build/runtime artifacts (non-source)
 ```
@@ -269,6 +269,8 @@ Connect a phone to the `VibeSensor` Wi-Fi (the default config uses
 an open AP with empty PSK). The hotspot answers the phone's connectivity check
 as a captive portal, so the phone offers to "sign in" and opens the UI; if it
 does not, open http://10.4.0.1. Sensor nodes should appear within seconds.
+The printable [hotspot card](hardware/README.md#hotspot-card) carries both as
+QR codes.
 
 > Default AP credentials are for prototype use only. Change SSID/PSK before
 > real-world deployment.

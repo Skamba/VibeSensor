@@ -147,8 +147,10 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     away from the network
     ([TechWiser](https://techwiser.com/fix-android-connected-to-wi-fi-but-no-internet/),
     [SafeSky](https://docs.safesky.app/books/safesky-pilot-playbook/page/using-mobile-internetdata-while-connected-to-a-wifi-network-iosandroid)).
-  - **Today:** the captive portal and the hint exist; there is no printed
-    card yet (J23).
+  - **Today:** the captive portal and the hint exist. The printable card is
+    `hardware/qr_card_example.pdf` for the stock network;
+    `tools/hardware/make_qr_card.py` makes one for a custom `ap.ssid` /
+    `ap.psk` ([hardware/README.md](../hardware/README.md)).
 - **Branches:**
   - Port 80 is unavailable: use port 8000 (pi-gen README).
   - The operator sets `ap.psk` as the docs advise: sensors must be re-flashed

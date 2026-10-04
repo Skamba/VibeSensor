@@ -48,7 +48,7 @@ For local development examples, see `apps/server/config.dev.yaml`,
 | Key | Default | Notes |
 |-----|---------|-------|
 | `ap.ssid` | `VibeSensor` | Hotspot SSID. Change this before real deployments. |
-| `ap.psk` | `""` | Empty string means an open AP. Set a PSK for non-prototype deployments. After changing `ap.ssid` or `ap.psk`, restart the Pi and re-flash every sensor from *Settings → ESP Flash*: the flasher writes the current SSID/PSK into the sensor's NVS, while sensors flashed elsewhere only know the open `VibeSensor` network. |
+| `ap.psk` | `""` | Empty string means an open AP. Set a PSK for non-prototype deployments. After changing `ap.ssid` or `ap.psk`, restart the Pi and re-flash every sensor from *Settings → ESP Flash*: the flasher writes the current SSID/PSK into the sensor's NVS, while sensors flashed elsewhere only know the open `VibeSensor` network. Print a new hotspot card with `tools/hardware/make_qr_card.py` ([hardware/README.md](../hardware/README.md#hotspot-card)). |
 
 The hotspot address (`10.4.0.1/24`), channel (`7`), interface (`wlan0`, with a
 detected-device fallback), and NetworkManager profile name (`VibeSensor-AP`)

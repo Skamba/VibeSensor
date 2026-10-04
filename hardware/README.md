@@ -41,3 +41,25 @@ The ESP32 connects to the ADXL345 via I2C over the ATOM Lite 4-pin Unit port:
 No soldering required — the M5Stack components connect with plug-in cables.
 
 See [firmware/esp/README.md](../firmware/esp/README.md) for firmware configuration.
+
+## Hotspot card
+
+A credit-card-sized card (85.6 x 54 mm) to keep with the Pi. It has a Wi-Fi
+QR code that joins the hotspot, a QR code that opens the web UI, and both
+written out for phones that cannot scan.
+[qr_card_example.pdf](qr_card_example.pdf) and
+[qr_card_example.svg](qr_card_example.svg) are the stock open `VibeSensor`
+network and `http://10.4.0.1`. Print one at 100% scale (no "fit to page").
+
+After you set your own `ap.ssid` / `ap.psk`, make a new card with the repo
+venv. The QR code and the card print the PSK, so keep that card out of the
+repository:
+
+```bash
+.venv/bin/python tools/hardware/make_qr_card.py --ssid MyCar --psk 'my passphrase' --out ~/vibesensor_card
+```
+
+This writes `~/vibesensor_card.svg` and `~/vibesensor_card.pdf`. An empty
+`--psk` (the default) makes an open-network code. A PSK must be 8-63
+characters or 64 hex digits. Use `--url` if you reach the UI on another
+address, for example `http://10.4.0.1:8000`.

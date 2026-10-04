@@ -22,7 +22,7 @@ History wording: J28, J29, J35) shipped in #4127. WP2 (settings and car wizard
 UI: J01, J04, J05, J07, J08) shipped in #4128. The rest of J13 (a paired
 OBD-II adapter is the speed source until the user picks one) shipped with the
 Pi-verification server fixes. WP7 (EV and PHEV handling: J12) shipped in
-#4138.
+#4138. WP6 (the printable hotspot QR card: J23) shipped in #4139.
 
 Owner decisions that bound the fixes (settled):
 
@@ -69,12 +69,6 @@ Fix:
   2010–2017") and resolve the year inside the variant step.
 - **Data:** Extend the year ranges where the drivetrain did not change (WP5).
 
-**J23 — No printed SSID/URL card.**
-
-The captive-portal probe responses and the first-load "no internet" hint
-shipped in #4112. What remains: ship a QR or label card with the SSID and
-`http://10.4.0.1`.
-
 **J11 — Coverage breadth and weak data (data gap).**
 
 Evidence ([user_journeys.md](user_journeys.md) §4):
@@ -92,7 +86,7 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP5 and WP6 are independent.
+- WP5 is the only package left.
 
 ### WP5 — Car-library data
 
@@ -110,15 +104,8 @@ Dependency order:
   in [user_journeys.md](user_journeys.md) §4.
 - **Depends on:** nothing. Gearboxes with a null final drive are served.
 
-### WP6 — Hotspot and flashing
-
-- **Covers:** J23. J22 (the flasher writes the current SSID/PSK into the
-  sensor's NVS) shipped in this PR.
-- **Changes:** QR card artwork in `hardware/`.
-- **Validation:** a manual phone test.
-
 ---
 
 ## 3. Suggested order
 
-WP5 and WP6 at any time.
+WP5 at any time.

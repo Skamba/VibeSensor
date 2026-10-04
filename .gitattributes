@@ -21,3 +21,6 @@
 *.timer text eol=lf
 Dockerfile* text eol=lf
 Makefile text eol=lf
+*.svg text eol=lf
+# Byte-compared by tests/hygiene/test_qr_card.py: never normalise line endings.
+*.pdf binary
