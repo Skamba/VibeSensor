@@ -124,6 +124,10 @@ That means:
 3. numeric order-analysis consumers read normalized values from canonical exact
    rows, not from model-family defaults
 
+A picker variant offers the union of its rows' tire options, one option per
+tire size (front and rear). When several rows list the same size, the option
+with the best source confidence wins.
+
 A picker gearbox option needs a driven final-drive ratio, so only exact rows
 that carry one become gearbox options. Rows may leave the final drive
 unresolved on purpose (the manufacturer publishes none, or publishes split

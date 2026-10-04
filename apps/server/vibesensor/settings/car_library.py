@@ -131,6 +131,50 @@ def _tire_options_for_config(config: VehicleConfiguration) -> list[CarLibraryTir
     return [_default_tire_option(config)]
 
 
+# Best first; ``None`` (no metadata) ranks below every named confidence.
+_TIRE_CONFIDENCE_RANK: dict[str | None, int] = {
+    "user_confirmed": 0,
+    "official_exact": 1,
+    "official_derived": 2,
+    "reputable_secondary_crosschecked": 3,
+    "family_default": 4,
+    "unverified": 5,
+    None: 6,
+}
+
+
+def _tire_size_key(option: CarLibraryTireOption) -> tuple[object, ...]:
+    front = option.get("front")
+    rear = option.get("rear")
+    return (
+        tuple(front.values()) if front else None,
+        tuple(rear.values()) if rear else None,
+    )
+
+
+def _union_tire_options(configs: list[VehicleConfiguration]) -> list[CarLibraryTireOption]:
+    """Union the tire options of a variant's rows, one option per tire size.
+
+    Rows of one variant (for example its manual and automatic gearbox rows)
+    can list different tire sizes; the picker must offer all of them. When
+    several rows list the same size, the option with the best source
+    confidence wins and keeps the position where that size first appeared.
+    """
+
+    by_size: dict[tuple[object, ...], CarLibraryTireOption] = {}
+    for config in configs:
+        for option in _tire_options_for_config(config):
+            key = _tire_size_key(option)
+            current = by_size.get(key)
+            if current is None:
+                by_size[key] = option
+            elif _TIRE_CONFIDENCE_RANK.get(
+                option.get("source_confidence"), 6
+            ) < _TIRE_CONFIDENCE_RANK.get(current.get("source_confidence"), 6):
+                by_size[key] = option
+    return list(by_size.values())
+
+
 def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryGearbox | None:
     final_drive_ratio = config.driven_final_drive_ratio
     if final_drive_ratio is None:
@@ -157,7 +201,7 @@ def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryG
 
 def _library_variant_from_configs(configs: list[VehicleConfiguration]) -> CarLibraryVariant:
     first = configs[0]
-    tire_options = _tire_options_for_config(first)
+    tire_options = _union_tire_options(configs)
     gearboxes = [
         row
         for row in (_gearbox_row_from_configuration(config) for config in configs)
