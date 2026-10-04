@@ -6,6 +6,7 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, replace
 
 from vibesensor.analysis._reference_resolution import (
+    ESTIMATED_RPM_SOURCE,
     _order_reference_spec_from_context,
 )
 from vibesensor.analysis._sample_metrics import _sample_top_peaks
@@ -178,13 +179,32 @@ class OrderAnalysisSession:
             )
         )
         findings: list[tuple[float, DomainFinding]] = []
+        wheel_locked_engine_keys: set[str] = set()
         for hypothesis, match in matches:
-            result = self._evaluate_hypothesis(hypothesis, match, wheel_peaks=wheel_peaks)
-            if result is not None:
-                findings.append(result)
+            shares_wheel_order_peaks = (
+                hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
+                and _shared_fraction(match.matched_peaks, wheel_peaks)
+                >= _WHEEL_ALIAS_SHARED_PEAK_FRACTION
+            )
+            result = self._evaluate_hypothesis(
+                hypothesis, match, shares_wheel_order_peaks=shares_wheel_order_peaks
+            )
+            if result is None:
+                continue
+            findings.append(result)
+            if (
+                hypothesis.suspected_source is VibrationSource.ENGINE
+                and shares_wheel_order_peaks
+                and match.ref_sources == {ESTIMATED_RPM_SOURCE}
+            ):
+                wheel_locked_engine_keys.add(hypothesis.key)
 
         findings = _split_multi_location_findings(findings)
-        return suppress_engine_aliases(findings, min_confidence=ORDER_MIN_CONFIDENCE)
+        return suppress_engine_aliases(
+            findings,
+            wheel_locked_engine_keys=frozenset(wheel_locked_engine_keys),
+            min_confidence=ORDER_MIN_CONFIDENCE,
+        )
 
     def _should_test(self, hypothesis: OrderHypothesis) -> bool:
         """Whether to test this hypothesis given available references."""
@@ -219,13 +239,13 @@ class OrderAnalysisSession:
         hypothesis: OrderHypothesis,
         match: OrderMatchAccumulator,
         *,
-        wheel_peaks: frozenset[tuple[int, float]],
+        shares_wheel_order_peaks: bool,
     ) -> tuple[float, DomainFinding] | None:
         """Evaluate and assemble a finding for one matched hypothesis.
 
-        *wheel_peaks* are the peaks any wheel order matched: an engine or
-        driveline order that mostly lands on those same peaks cannot be told
-        apart from a wheel order by its frequency.
+        *shares_wheel_order_peaks* marks an engine or driveline order that mostly
+        lands on peaks a wheel order matched too: its frequency cannot tell it
+        apart from that wheel order.
         """
         if not match.is_eligible(
             feature_interval_s=self._context.feature_interval_s,
@@ -267,11 +287,7 @@ class OrderAnalysisSession:
             steady_speed=self._steady_speed,
             connected_locations=self._connected_locations,
             lang=self._lang,
-            shares_wheel_order_peaks=(
-                hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
-                and _shared_fraction(match.matched_peaks, wheel_peaks)
-                >= _WHEEL_ALIAS_SHARED_PEAK_FRACTION
-            ),
+            shares_wheel_order_peaks=shares_wheel_order_peaks,
         )
         score = score_order_finding(
             hypothesis,

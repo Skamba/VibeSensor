@@ -66,6 +66,7 @@ def detect_diffuse_excitation(
 def suppress_engine_aliases(
     findings: list[tuple[float, DomainFinding]],
     *,
+    wheel_locked_engine_keys: frozenset[str] = frozenset(),
     min_confidence: float = ORDER_MIN_CONFIDENCE,
 ) -> list[DomainFinding]:
     """Suppress engine findings likely to be aliases of stronger wheel findings.
@@ -74,40 +75,57 @@ def suppress_engine_aliases(
     finding are kept intact — a better ranking score indicates superior
     frequency tracking, meaning the engine hypothesis is a better physical
     explanation than the coincidentally close wheel harmonic.
+
+    *wheel_locked_engine_keys* name engine orders placed by RPM estimated from
+    speed and gear that land on a wheel order's peaks: such an order has no
+    frequency of its own, it is a fixed multiple of the wheel's. When a wheel
+    order is clearly louder than it (an engine fault does not excite the
+    wheel's own orders, and the wheel order it coincides with is as loud as it
+    is), it is that wheel's harmonic and is suppressed whatever the ranking and
+    confidence say: those are built under different location rules (a wheel
+    order is penalised for spreading into the cabin, an engine zone is not).
     """
-    best_wheel_conf = max(
+    wheels = [
+        (score, finding)
+        for score, finding in findings
+        if finding.source_normalized == VibrationSource.WHEEL_TIRE
+    ]
+    best_wheel_conf = max((finding.effective_confidence for _, finding in wheels), default=0.0)
+    best_wheel_ranking = max((score for score, _ in wheels), default=0.0)
+    loudest_wheel_db = max(
         (
-            finding.effective_confidence
-            for _, finding in findings
-            if finding.source_normalized == VibrationSource.WHEEL_TIRE
+            finding.vibration_strength_db
+            for _, finding in wheels
+            if finding.vibration_strength_db is not None
         ),
-        default=0.0,
-    )
-    best_wheel_ranking = max(
-        (
-            score
-            for score, finding in findings
-            if finding.source_normalized == VibrationSource.WHEEL_TIRE
-        ),
-        default=0.0,
+        default=None,
     )
     if best_wheel_conf > 0:
         settings = ORDER_HEURISTIC_SETTINGS
         for index, (ranking_score, finding) in enumerate(findings):
             if finding.source_normalized != VibrationSource.ENGINE:
                 continue
-            if ranking_score >= best_wheel_ranking:
-                continue
-            eng_conf = finding.effective_confidence
-            if eng_conf <= best_wheel_conf * settings.harmonic_alias_ratio:
-                suppressed = eng_conf * settings.engine_alias_suppression
-                new_ranking_score = ranking_score * settings.engine_alias_suppression
-                finding = replace(
+            wheel_harmonic = (
+                finding.finding_key in wheel_locked_engine_keys
+                and loudest_wheel_db is not None
+                and finding.vibration_strength_db is not None
+                and loudest_wheel_db - finding.vibration_strength_db
+                >= settings.wheel_locked_alias_margin_db
+            )
+            if not wheel_harmonic:
+                if ranking_score >= best_wheel_ranking:
+                    continue
+                if finding.effective_confidence > best_wheel_conf * settings.harmonic_alias_ratio:
+                    continue
+            new_ranking_score = ranking_score * settings.engine_alias_suppression
+            findings[index] = (
+                new_ranking_score,
+                replace(
                     finding,
-                    confidence=suppressed,
+                    confidence=finding.effective_confidence * settings.engine_alias_suppression,
                     ranking_score=new_ranking_score,
-                )
-                findings[index] = (new_ranking_score, finding)
+                ),
+            )
     findings.sort(key=lambda item: item[0], reverse=True)
     valid = [item[1] for item in findings if item[1].effective_confidence >= min_confidence]
     return valid[:5]

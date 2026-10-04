@@ -6,8 +6,12 @@ Pure order-tracking rules whose effects the simulator benchmark cannot isolate.
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import run_analysis
+from test_support.core import standard_metadata, wheel_hz
 from test_support.findings import make_finding
+from test_support.synthetic_samples import make_sample
 
+from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
 from vibesensor.analysis._run_input import normalize_run_metadata
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import _compute_effective_match_rate
@@ -208,6 +212,96 @@ def test_weaker_engine_alias_of_a_wheel_order_is_suppressed() -> None:
     engine = [f for f in result if str(f.suspected_source).strip().lower() == "engine"]
     assert len(engine) == 1
     assert engine[0].effective_confidence == pytest.approx(0.30)
+
+
+# A front-left wheel imbalance (T1 well above T2) with one wheel sensor and two
+# cabin sensors that feel half of it, swept 50-115 km/h in top gear (ratio 0.8).
+_CABIN_SHARE = {"front_left_wheel": 1.0, "driver_seat": 0.55, "trunk": 0.5}
+_TOP_GEAR = 0.8
+
+
+def _drive(
+    *,
+    e1_per_t1: float,
+    wheel_fault: bool = True,
+    engine_tone_g: float = 0.0,
+    measured_rpm: bool = False,
+) -> list[dict]:
+    samples = []
+    for step in range(60):
+        speed_kmh = 50.0 + 65.0 * step / 59
+        t1_hz = wheel_hz(speed_kmh)
+        for index, (location, share) in enumerate(_CABIN_SHARE.items()):
+            scale = share * (1.0 + 0.03 * ((step * 7 + index) % 5))
+            peaks = [{"hz": 142.5, "amp": 0.004}]
+            if wheel_fault:
+                peaks += [
+                    {"hz": t1_hz, "amp": 0.12 * scale},
+                    {"hz": 2.0 * t1_hz, "amp": 0.04 * scale},
+                ]
+            if engine_tone_g:
+                jitter = 1.0 + 0.03 * ((step * 3 + index) % 4)
+                peaks.append({"hz": e1_per_t1 * t1_hz, "amp": engine_tone_g * jitter})
+            sample = make_sample(
+                t_s=step * 0.5,
+                speed_kmh=speed_kmh,
+                client_name=location,
+                location=location,
+                top_peaks=peaks,
+                vibration_strength_db=28.0 * share,
+                strength_floor_amp_g=0.004,
+                engine_rpm=e1_per_t1 * t1_hz * 60.0,
+            )
+            # Recording stores RPM from OBD, or else the estimate from speed and gear.
+            sample["engine_rpm_source"] = "obd2" if measured_rpm else ESTIMATED_RPM_SOURCE
+            samples.append(sample)
+    return samples
+
+
+def _analyse(samples: list[dict], *, e1_per_t1: float) -> dict:
+    metadata = standard_metadata(
+        run_id="run-1", final_drive_ratio=e1_per_t1 / _TOP_GEAR, current_gear_ratio=_TOP_GEAR
+    )
+    return run_analysis(samples, metadata)
+
+
+# The car's top gear puts the engine's first order on the wheel's second. The
+# wheel orders lose confidence for spreading into the cabin; the engine order on
+# T2 does not (an engine is diagnosed as a zone), although T1 is ~10 dB louder.
+@pytest.mark.parametrize(
+    ("measured_rpm", "source", "order_code"),
+    [
+        # RPM inferred from speed and gear is locked to T2: T1 shows it is the wheel.
+        (False, "wheel/tire", "T1"),
+        # Measured RPM gives the engine order a frequency of its own, so an engine
+        # fault on T2's frequency is not explained away by a louder wheel order.
+        (True, "engine", "E1"),
+    ],
+    ids=["estimated-rpm", "measured-rpm"],
+)
+def test_engine_order_on_a_wheel_harmonic_is_the_wheel_only_with_estimated_rpm(
+    measured_rpm: bool, source: str, order_code: str
+) -> None:
+    samples = _drive(e1_per_t1=2.0, measured_rpm=measured_rpm)
+
+    diagnosis = _analyse(samples, e1_per_t1=2.0)["diagnosis"]
+
+    assert (diagnosis["source"], diagnosis["order_code"]) == (source, order_code)
+    assert diagnosis["conditions"]["rpm_source"] == (
+        "measured" if measured_rpm else "estimated_top_gear"
+    )
+
+
+def test_engine_tone_off_the_wheel_orders_keeps_its_score_next_to_a_louder_wheel() -> None:
+    # E1 at 2.72 x T1 (between T2 and T3), 12 dB below the wheel's T1.
+    def engine_confidence(*, wheel_fault: bool) -> float:
+        samples = _drive(e1_per_t1=2.72, wheel_fault=wheel_fault, engine_tone_g=0.03)
+        findings = _analyse(samples, e1_per_t1=2.72)["findings"]
+        return next(f["confidence"] for f in findings if f["suspected_source"] == "engine")
+
+    assert engine_confidence(wheel_fault=True) == pytest.approx(
+        engine_confidence(wheel_fault=False)
+    )
 
 
 def _context(overrides: dict | None = None):

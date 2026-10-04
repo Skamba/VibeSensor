@@ -131,6 +131,11 @@ the source:
   penalties. This is how a fault-free run's road noise near an engine order
   stays Weak (and so reads as no fault). The guards are tuned on the simulator.
 
+Because wheel and engine scores follow different location rules, a score
+comparison does not decide whether an engine order on a wheel harmonic belongs to
+the wheel when its RPM is estimated; their amplitudes do (step 8 in
+`docs/order_tracking.md`).
+
 ## Processing profiles
 
 Filtering choices are explicit because live display smoothing must not silently

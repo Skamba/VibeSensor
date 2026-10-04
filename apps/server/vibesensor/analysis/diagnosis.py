@@ -14,6 +14,7 @@ from math import floor
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
+from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
 from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
 from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import (
@@ -76,7 +77,7 @@ _COAST_SETTLE_S = 3.0
 _MIN_PRESENCE_OUTSIDE_COAST = 0.3
 _FOLLOWS_ROAD_SPEED_RATIO = 0.6
 _FOLLOWS_ENGINE_RATIO = 0.3
-_MEASURED_RPM_EXCLUDED = frozenset({"", "estimated_from_speed_and_ratios", "missing"})
+_MEASURED_RPM_EXCLUDED = frozenset({"", ESTIMATED_RPM_SOURCE, "missing"})
 _ORDER_SOURCES: tuple[VibrationSource, ...] = (
     VibrationSource.WHEEL_TIRE,
     VibrationSource.DRIVELINE,
