@@ -130,4 +130,11 @@ test("journey: Sensors tab shows the empty state without live sensors", async ({
   await expect(page.locator("#sensorsSettingsBody")).toContainText(
     "No sensors detected yet.",
   );
+  // The mounting guide is open until all four wheels have a sensor.
+  const guide = page.locator("#sensorMountingGuide");
+  await expect(guide).toHaveAttribute("open", "");
+  await expect(page.locator("#sensorLayoutConsequence")).toHaveText(
+    "No connected sensor has a location yet.",
+  );
+  await expect(guide).toContainText("Never on the wheel or tire");
 });

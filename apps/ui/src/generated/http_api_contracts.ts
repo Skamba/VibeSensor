@@ -386,6 +386,8 @@ export interface components {
             speed_min_kmh: number;
         };
         DiagnosisVerdictValue: "fault" | "weak_evidence" | "no_fault";
+        DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
+        EngineCapability: "measured" | "estimated_top_gear" | "estimated_ratios" | "missing" | "manual_speed";
         /** Response body confirming whether an ESP32 flash job was cancelled. */
         EspFlashCancelResponse: {
             cancelled: boolean;
@@ -1042,9 +1044,9 @@ export interface components {
         ProcessingProfile: "live_display" | "diagnostic_raw" | "diagnostic_filtered";
         /** Which order families the active car can test; informational, never blocks capture. */
         RecordingCaptureCapabilitiesResponse: {
-            driveline: "ok" | "missing_final_drive" | "missing_tire";
-            engine: "measured" | "estimated_top_gear" | "missing";
-            wheel: "ok" | "missing_tire";
+            driveline: components["schemas"]["DrivelineCapability"];
+            engine: components["schemas"]["EngineCapability"];
+            wheel: components["schemas"]["WheelCapability"];
         };
         /** One capture-readiness checklist item returned by the recording status route. */
         RecordingCaptureReadinessCheckResponse: {
@@ -1330,6 +1332,7 @@ export interface components {
             top_peaks: components["schemas"]["StrengthPeak"][];
             vibration_strength_db: number;
         };
+        WheelCapability: "ok" | "missing_tire" | "manual_speed";
         WindowQualityPayload: {
             clipping_axis_counts: {
                 [key: string]: number;

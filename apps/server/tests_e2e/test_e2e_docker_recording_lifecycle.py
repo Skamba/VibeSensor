@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 import pytest
 
 from tests_e2e._docker_edge_helpers import (
@@ -14,6 +16,8 @@ from tests_e2e.e2e_helpers import (
     api_json,
     history_run_ids,
     registered_client_ids,
+    remove_all_clients,
+    run_simulator,
     sim_client_ids,
     wait_for,
 )
@@ -68,6 +72,69 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
         api_json(base, "/api/recording/stop", method="POST", expected_status=(200,))
         for run_id in run_ids:
             _cleanup_run(base, run_id)
+
+
+def test_readiness_never_waits_on_speed_and_names_what_a_typed_in_speed_can_test_e2e(
+    e2e_env: dict[str, str],
+) -> None:
+    """Start is gated only on sensors, car and speed source; a steady speed is advice.
+
+    The simulator types in its speed (a manual override), so readiness must say
+    the run can test nothing for sure (docs/run_lifecycle.md, "capabilities").
+    """
+    base = e2e_env["base_url"]
+    remove_all_clients(base)
+    (sensor_id,) = sim_client_ids(1)
+    simulator = threading.Thread(
+        target=run_simulator,
+        kwargs={
+            "base_url": base,
+            "sim_host": e2e_env["sim_host"],
+            "sim_data_port": e2e_env["sim_data_port"],
+            "sim_control_port": e2e_env["sim_control_port"],
+            "client_control_base": e2e_env["sim_client_control_base"],
+            "duration_s": 14.0,
+            "count": 1,
+            "names": "front-left",
+            "speed_kmh": 80.0,
+        },
+    )
+    simulator.start()
+    seen: list[dict] = []
+    try:
+        wait_for(
+            lambda: sensor_id in registered_client_ids(base) or None,
+            timeout_s=10.0,
+            message="simulated sensor never registered",
+        )
+        api_json(
+            base,
+            f"/api/clients/{sensor_id}/location",
+            method="POST",
+            body={"location_code": "front_left_wheel"},
+        )
+
+        def ready() -> dict | None:
+            readiness = api_json(base, "/api/recording/status")["capture_readiness"]
+            seen.append(readiness)
+            return readiness if readiness["is_ready"] else None
+
+        readiness = wait_for(ready, timeout_s=10.0, message="readiness never became ready")
+        assert readiness["capabilities"] == {
+            "wheel": "manual_speed",
+            "driveline": "manual_speed",
+            "engine": "manual_speed",
+        }, readiness
+        speed_states = {
+            check["state"]
+            for snapshot in seen
+            for check in snapshot["checks"]
+            if check["check_key"] == "speed_stable"
+        }
+        assert "fail" not in speed_states, seen
+    finally:
+        simulator.join()
+        remove_all_clients(base)
 
 
 def test_logging_stop_when_idle_noop(e2e_env: dict[str, str]) -> None:

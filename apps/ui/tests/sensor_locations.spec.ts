@@ -4,6 +4,7 @@ import {
   locationCodeForClient,
   locationOptions,
 } from "../src/sensor_locations";
+import { layoutConsequence, sensorLayout } from "../src/sensor_layout";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 const codes = ["front_left_wheel", "rear_right_wheel", "driver_seat", "trunk"];
@@ -39,4 +40,29 @@ test("names match shorthand, any language's label, or the option label", () => {
   expect(locate({ name: "Trunk" })).toBe("trunk");
   expect(locate({ name: "Mystery" })).toBe("");
   expect(locate({})).toBe("");
+});
+
+test("the sensor layout says what it can localise", () => {
+  const t = (key: string, vars?: Record<string, unknown>) =>
+    vars ? `${key}:${JSON.stringify(vars)}` : key;
+  const kind = (codes: string[]) => sensorLayout(codes)?.kind ?? null;
+  expect(kind([])).toBeNull();
+  expect(kind(["", ""])).toBeNull();
+  expect(kind(["front_left_wheel"])).toBe("single");
+  expect(kind(["driver_seat", "trunk"])).toBe("no_wheels");
+  expect(kind(["front_left_wheel", "front_left_wheel", "trunk"])).toBe(
+    "some_wheels",
+  );
+  const four = sensorLayout([
+    "front_left_wheel",
+    "front_right_wheel",
+    "rear_left_wheel",
+    "rear_right_wheel",
+    "",
+  ]);
+  expect(four).toEqual({ kind: "four_wheels", wheelCount: 4 });
+  const some = sensorLayout(["front_left_wheel", "rear_right_wheel"]);
+  expect(some && layoutConsequence(some, t)).toBe(
+    'sensors.layout.some_wheels:{"count":2,"total":4}',
+  );
 });

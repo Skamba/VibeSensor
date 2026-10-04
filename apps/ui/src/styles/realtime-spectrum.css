@@ -164,3 +164,44 @@
   background: var(--swatch-color, currentColor);
   border: 1px solid rgba(20, 32, 51, 0.2);
 }
+.band-status {
+  display: grid;
+  gap: var(--space-2);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.band-status__message {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.band-status__families {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.band-status__family {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  background: var(--md-sys-color-surface-container);
+  padding: 0.25rem 0.65rem;
+}
+.band-status__family-label {
+  font-weight: 600;
+}
+.band-status__family-note {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+}
+.band-status__family[data-band-family-state="on"] {
+  border-color: var(--brand-600);
+}
+.band-status__family[data-band-family-state="missing"] {
+  border-style: dashed;
+  color: var(--md-sys-color-on-surface-variant);
+}

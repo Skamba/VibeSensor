@@ -57,7 +57,7 @@ vibration complaint.
   [OBDLink](https://obdlink.nl/en/what-is-eobd)), and ELM327 Bluetooth adapters
   are the common consumer tool ([Car Scanner](https://www.carscanner.info/choosing-obdii-adapter/)).
   Many of these dongles are Wi-Fi rather than Bluetooth. VibeSensor only
-  supports Bluetooth, because the Pi's Wi-Fi runs the hotspot (J17).
+  supports Bluetooth, because the Pi's Wi-Fi runs the hotspot.
 - **Needs:** to know what the extra data buys. Measured RPM makes the engine
   check independent of gear and final drive. An exact final drive makes a
   driveline "ruled out" trustworthy. Partial knowledge must still be useful.
@@ -178,10 +178,11 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     - one sensor gives the source type only.
   - Mounting rules: a rigid part near each wheel such as the knuckle or strut
     base (never the rotating wheel), with a firm fixing.
-  - The readiness line repeats this. **Today:** there is no mounting or layout
-    guidance anywhere in the UI. Readiness only warns
-    `dashboard.capture_readiness.sensors_ready.limited_sensor_coverage` below
-    three sensors (`apps/server/vibesensor/domain/capture_readiness.py`) (J21).
+  - The readiness line repeats this. **Today:** the Sensors tab has a "Where to
+    mount the sensors" panel (`MountingGuide` in
+    `apps/ui/src/pages/sensors/Sensors.tsx`) with the layouts, the mounting
+    rules and the current layout's consequence (`apps/ui/src/sensor_layout.ts`);
+    the Live capability line repeats the consequence.
 - **Branches:**
   - A sensor has no location: readiness fails `sensor_locations_missing`
     (`_sensors_check` in
@@ -297,19 +298,21 @@ Entry point: *Settings → Speed Source*
 
 | Source | Hardware | What it enables | What it cannot do |
 |---|---|---|---|
-| GPS | A USB GPS receiver read through gpsd ([configuration_reference.md](configuration_reference.md)). It is **not in the BOM**, and the Pi 3 A+ has a single USB port ([Pishop](https://www.pishop.us/product/raspberry-pi-3-model-a-plus-512mb-ram/)) that USB internet also uses. | Live speed for wheel and driveline orders; sweeps; coast-down. | RPM is estimated from ratios, assuming top gear. |
-| OBD-II | A **Bluetooth** ELM327 adapter paired with the Pi (`settings.speed.obd_caption`). Wi-Fi dongles cannot be used (J17). | Live speed *and measured RPM*. With measured RPM the engine is testable without tire size or final drive (`_source_checks` in `apps/server/vibesensor/analysis/diagnosis.py`). | Nothing extra: readiness needs fresh RPM, not the ratios. |
+| GPS | A USB GPS receiver read through gpsd ([configuration_reference.md](configuration_reference.md)). It is listed as an alternative in the [hardware BOM](../hardware/README.md), and the Pi 3 A+ has a single USB port ([Pishop](https://www.pishop.us/product/raspberry-pi-3-model-a-plus-512mb-ram/)) that USB internet also uses. | Live speed for wheel and driveline orders; sweeps; coast-down. | RPM is estimated from ratios, assuming top gear. |
+| OBD-II | A **Bluetooth** ELM327 adapter paired with the Pi (`settings.speed.obd_caption`). Wi-Fi dongles cannot be used. | Live speed *and measured RPM*. With measured RPM the engine is testable without tire size or final drive (`_source_checks` in `apps/server/vibesensor/analysis/diagnosis.py`). | Nothing extra: readiness needs fresh RPM, not the ratios. |
 | Manual | None. | Only a test held at that one fixed speed (`apps/server/vibesensor/speed/speed_resolution.py`). | Sweeps, amplitude vs speed, and the coast-down check. Every sample is treated as being at the set speed. |
 
 - **Tell (target):** each choice explains what it enables, using the table
   above. Choosing manual shows "Only for a steady-speed test at exactly this
-  speed. Results will be hedged." **Today** the captions are only
-  `settings.speed.gps_caption` ("Use live GPS speed when it is healthy and
-  available") and `settings.speed.manual_caption` ("Use a fixed speed when you
-  need a deliberate override") (J13, J14, J15).
+  speed. Results will be hedged." **Today** the captions say this, and a "What
+  each source can do" table (`settings.speed.compare.*`) repeats the table
+  above. GPS stays the default even with a paired OBD-II adapter (J13).
 - **Branches:**
   - GPS selected with no receiver or no fix: readiness waits for a live reading
-    (`_reference_check` in `capture_readiness_evaluator.py`).
+    (`_reference_check` in `capture_readiness_evaluator.py`). When gpsd has
+    never seen a receiver, the page, the Live setup panel and the spectrum say
+    "No GPS receiver found — plug in a USB GPS receiver or switch to OBD-II"
+    (`gpsReceiverMissing` in `apps/ui/src/speed_source.ts`).
   - Live data goes stale with a manual fallback set: the fallback is used,
     readiness says so, and the report names the source "entered by hand"
     (`SPEED_SOURCE_FALLBACK_MANUAL`).
@@ -341,19 +344,13 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   carries a non-blocking `capabilities` field (`_capabilities` in
   `apps/server/vibesensor/recording/capture_readiness_evaluator.py`) for the
   capability line.
-- **Today:**
-  - The capability line is not shown yet (J20).
-  - Start Recording stays disabled until the car moves at ≥ 20 km/h at a
-    steady speed for 8 s (`startDisabled` in
-    `apps/ui/src/pages/dashboard/dashboard_model.ts`;
-    `apps/server/vibesensor/domain/capture_readiness.py`; `_speed_check` in the
-    evaluator). The driver has to operate the phone while driving, or needs a
-    passenger. The backend itself does not gate the start
-    (`apps/server/vibesensor/web/recording.py`) (J19).
-  - With a manual speed, `speed_stable` passes without any measurement
-    (`_speed_check`) (J15). Analysis does hedge it: every source that is not
-    the cause is `not_testable(manual_speed)`, and the report's speed check
-    warns.
+- **Today:** as the target. `speed_stable` only warns (a "Tip" for the hold
+  step), so Start is enabled while parked, with "You can start now and drive
+  off". The capability line (`capabilityModel` in
+  `apps/ui/src/pages/dashboard/readiness.ts`) shows each family as tested,
+  estimated (weak library ratios, top-gear RPM) or not tested, with a fix
+  button. With a typed-in speed it shows nothing as tested and says the
+  matching only holds at exactly that speed.
 
 ### 3.6 Recording: free drive and guided drive
 
@@ -382,11 +379,15 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - The live bands use fresh measured OBD-II RPM for the engine, and a
     missing reference blanks only its own family (`vehicle_orders_hz` in
     `apps/server/vibesensor/dsp/order_bands.py`).
-  - **Today:** none of the wording above is said in the UI (J24, J12). The
-    report states it (`RPM_ESTIMATED_TOP_GEAR`, `RULED_OUT_ENGINE_TOP_GEAR`).
+  - **Today:** the guided steps and the band labels say it ("Engine 1x (est.,
+    top gear)" / "(measured)"), and the spectrum's band status names what a
+    blank family needs ("needs final drive", "needs top gear or OBD-II"). The
+    report states it too (`RPM_ESTIMATED_TOP_GEAR`,
+    `RULED_OUT_ENGINE_TOP_GEAR`). The EV wording is still missing (J12).
 - **Branches:**
   - A reload mid-run restores the guided panel ([run_lifecycle.md](run_lifecycle.md)).
-  - Speed below 20 km/h or unstable before Start keeps Start disabled (J19).
+  - Speed below 20 km/h or unstable before Start is only advice for the hold
+    step; it does not disable Start.
 
 ### 3.7 Post-analysis and viewing results (History)
 
@@ -471,7 +472,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - The updater installs into an A/B venv, smoke-tests it, and reverts
   automatically if the service is unhealthy after a restart.
 - **Branch:** on the Pi 3 A+, the USB uplink and a USB GPS receiver compete for
-  the single port (J13).
+  the single port; the BOM recommends a Bluetooth OBD-II adapter for that
+  reason.
 
 ---
 
@@ -566,12 +568,8 @@ Legend:
 
 - **Manual entry:** the wizard's manual form still requires final drive and
   top gear (J01).
-- **Library-estimate row** and **manual speed:** analysis and the report
-  match the table. Readiness `capabilities` do not yet reflect weak ratios or
-  a manual speed, and readiness passes a manual speed without measuring
-  anything (`_speed_check`) (J15, J20).
-- **Engine with GPS:** the top-gear caveat is in the report but missing from
-  the guided steps and the live bands (J24).
+- **Library-estimate row** and **manual speed:** analysis, the report and the
+  Live capability line match the table.
 
 ### 5.2 Sensor layout
 
@@ -583,8 +581,8 @@ Legend:
 | Four wheels (± cabin) | ✓ | ✓ corner / axle / all four; all four gets the neutral coast check, not an axle swap (`_confirm_check` in `view_model.py`) |
 | Engine bay / tunnel / transmission sensors | ✓ | ✓ driveline/engine zone (`_zone`) |
 
-**Today:** readiness warns below 3 sensors, but nothing explains that one
-sensor cannot localise (J21).
+**Today:** as the table; the Sensors tab's mounting panel and the Live
+capability line state the current layout's consequence.
 
 ### 5.3 Vehicle type
 

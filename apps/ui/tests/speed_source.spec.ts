@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import type { ObdDevicePayload, ObdStatusPayload } from "../src/api/types";
+import type {
+  ObdDevicePayload,
+  ObdStatusPayload,
+  SpeedSourceStatusPayload,
+} from "../src/api/types";
 import {
   activeSourceLabel,
   activeSpeedKph,
@@ -16,6 +20,7 @@ import {
 import {
   deriveDisplayedSpeedSourceMode,
   deriveSpeedReadoutLabelKey,
+  gpsReceiverMissing,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
   type SpeedSourceSnapshot,
@@ -376,4 +381,35 @@ describe("diagnostics", () => {
       obdStatusDebugHint: "--",
     });
   });
+});
+
+test("GPS without a receiver: gpsd on, but never a device or a reading", () => {
+  const gpsd: SpeedSourceStatusPayload = {
+    connection_state: "connected",
+    device: null,
+    effective_speed_kmh: null,
+    epv_m: null,
+    epx_m: null,
+    epy_m: null,
+    fallback_active: false,
+    fix_dimension: "none",
+    fix_mode: null,
+    gps_enabled: true,
+    last_error: null,
+    last_update_age_s: null,
+    raw_speed_kmh: null,
+    reconnect_delay_s: null,
+    speed_confidence: "low",
+    speed_source: "none",
+    stale_timeout_s: 10,
+  };
+  expect(gpsReceiverMissing("gps", gpsd)).toBe(true);
+  expect(gpsReceiverMissing("gps", { ...gpsd, device: "/dev/ttyACM0" })).toBe(
+    false,
+  );
+  expect(gpsReceiverMissing("gps", { ...gpsd, last_update_age_s: 4 })).toBe(
+    false,
+  );
+  expect(gpsReceiverMissing("obd2", gpsd)).toBe(false);
+  expect(gpsReceiverMissing("gps", null)).toBe(false);
 });

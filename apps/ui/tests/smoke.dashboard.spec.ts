@@ -146,7 +146,8 @@ test("journey: the readiness checklist explains what is missing and links to the
     "data-layout",
     "setup",
   );
-  await expect(page.locator(".dashboard-grid__main")).toBeHidden();
+  // The live spectrum stays visible while setting up.
+  await expect(page.locator("#specChart")).toBeVisible();
   const items = page.locator("#loggingChecklist .capture-readiness__item");
   await expect(items).toHaveCount(2);
   await expect(items.nth(1)).toContainText("30");
@@ -155,6 +156,55 @@ test("journey: the readiness checklist explains what is missing and links to the
   await summary.getByRole("button", { name: "Open Sensors" }).click();
   await expect(page.locator("#sensorsTab")).toBeVisible();
   await expect(page.locator("#shellLiveStatus")).toHaveText("Needs attention");
+});
+
+test("journey: a parked car can start, and the capability line says what the run can test", async ({
+  page,
+}) => {
+  const parked = buildCaptureReadiness({
+    isReady: true,
+    sensors: {
+      state: "pass",
+      reasonKey: "sensors_ready",
+      details: { live_sensor_count: 1 },
+    },
+    reference: { state: "pass", reasonKey: "reference_ready" },
+    speed: {
+      state: "warn",
+      reasonKey: "speed_too_low",
+      details: { minimum_speed_kmh: 30 },
+    },
+    overall: { state: "pass", reasonKey: "ready_with_warnings" },
+  });
+  parked.capabilities = {
+    wheel: "ok",
+    driveline: "missing_final_drive",
+    engine: "estimated_top_gear",
+  };
+  await bootWithStatus(page, (route) =>
+    fulfillJson(route, idleStatus({ capture_readiness: parked })),
+  );
+
+  await expect(page.locator("#startLoggingBtn")).toBeEnabled();
+  await expect(page.locator("#startHint")).toBeVisible();
+  const speedItem = page.locator(
+    '#loggingChecklist [data-readiness-state="warn"]',
+  );
+  await expect(speedItem).toContainText("Tip");
+
+  const capabilities = page.locator("#captureCapabilities");
+  await expect(
+    capabilities.locator('[data-capability="wheel"]'),
+  ).toHaveAttribute("data-capability-mark", "ok");
+  await expect(
+    capabilities.locator('[data-capability="engine"]'),
+  ).toContainText("top gear only");
+  await expect(page.locator("#captureLayoutNote")).toContainText("One sensor");
+  await capabilities
+    .locator('[data-capability="driveline"]')
+    .getByRole("button", { name: "Add final drive" })
+    .click();
+  await expect(page.locator("#carTab")).toBeVisible();
 });
 
 test("journey: an unreadable recording status disables recording until it recovers", async ({
@@ -396,7 +446,7 @@ test("journey: the guided test drive walks sweep, hold and neutral coast-down wh
     "current",
   );
   await expect(panel).toContainText(
-    "Accelerate smoothly from about 50 to 120 km/h",
+    "In top gear (or D), accelerate smoothly from about 50 to 120 km/h",
   );
   await expect(button).toHaveText("Next: Steady hold");
 
@@ -449,6 +499,6 @@ test("journey: guided step speeds follow the speed unit setting", async ({
   await page.reload();
 
   await expect(panel).toContainText(
-    "Accelerate smoothly from about 14 to 33 m/s",
+    "In top gear (or D), accelerate smoothly from about 14 to 33 m/s",
   );
 });

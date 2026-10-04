@@ -156,7 +156,92 @@ export function checklist(
       checkKey: check.check_key,
       state: check.state,
       label: t(`dashboard.capture_readiness.${check.check_key}.label`),
-      stateText: t(`dashboard.capture_readiness.state.${check.state}`),
+      // A steady speed is advice for the guided hold step; it never blocks.
+      stateText: t(
+        `dashboard.capture_readiness.state.${
+          check.check_key === "speed_stable" && check.state === "warn"
+            ? "advice"
+            : check.state
+        }`,
+      ),
       detail: checkDetail(check, t, formatInt, unit),
     }));
+}
+
+// --- "This run can test" -------------------------------------------------------
+
+export type Capabilities = NonNullable<Readiness["capabilities"]>;
+type Family = keyof Capabilities;
+
+export interface CapabilityItem {
+  family: Family;
+  label: string;
+  /** `ok`: tested; `caveat`: tested, but the result is hedged; `no`: not tested. */
+  mark: "ok" | "caveat" | "no";
+  note: string | null;
+  /** Where the user can fix it, with the button text. */
+  fix: { target: "cars" | "speed_source"; label: string } | null;
+}
+
+export interface CapabilityModel {
+  items: CapabilityItem[];
+  /** The typed-in speed caveat, when the speed source is manual; fixed on the speed-source tab. */
+  manualNote: string | null;
+}
+
+const CAPABILITY_MARK: Record<string, CapabilityItem["mark"]> = {
+  ok: "ok",
+  measured: "ok",
+  estimated_final_drive: "caveat",
+  estimated_top_gear: "caveat",
+  estimated_ratios: "caveat",
+};
+
+const CAPABILITY_FIX: Record<string, "cars" | "speed_source"> = {
+  missing_tire: "cars",
+  missing_final_drive: "cars",
+  estimated_final_drive: "cars",
+  estimated_ratios: "cars",
+  missing: "cars",
+  estimated_top_gear: "speed_source",
+};
+
+/**
+ * What the run can test with the active car's references and the speed
+ * source (docs/user_journeys.md §5.1). Never blocks the start.
+ */
+export function capabilityModel(
+  capabilities: Capabilities | null,
+  manualSpeedText: string,
+  t: Translate,
+): CapabilityModel | null {
+  if (!capabilities) {
+    return null;
+  }
+  const families: Family[] = ["wheel", "driveline", "engine"];
+  const items = families.map((family): CapabilityItem => {
+    const value = capabilities[family];
+    const fix = CAPABILITY_FIX[value];
+    return {
+      family,
+      label: t(`dashboard.capabilities.family.${family}`),
+      mark: CAPABILITY_MARK[value] ?? "no",
+      note:
+        value === "ok" ? null : t(`dashboard.capabilities.${family}.${value}`),
+      fix: fix
+        ? {
+            target: fix,
+            label: t(`dashboard.capabilities.fix.${family}.${value}`),
+          }
+        : null,
+    };
+  });
+  return {
+    items,
+    manualNote: families.some(
+      (family) => capabilities[family] === "manual_speed",
+    )
+      ? t("dashboard.capabilities.manual_note", { speed: manualSpeedText })
+      : null,
+  };
 }

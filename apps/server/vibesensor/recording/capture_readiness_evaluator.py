@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import math
-from typing import Literal
 
 from vibesensor.analysis.constants import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
+from vibesensor.analysis.speed_profile_helpers import speed_typed_in
 from vibesensor.domain.capture_readiness import (
     CaptureCapabilities,
     CaptureReadiness,
     CaptureReadinessCheck,
     CaptureReadinessPolicy,
+    DrivelineCapability,
+    EngineCapability,
+    WheelCapability,
 )
+from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES
 from vibesensor.recording.capture_readiness_observation import (
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,
@@ -53,27 +57,41 @@ def _capabilities(
     policy: CaptureReadinessPolicy,
     observation: CaptureReadinessObservation,
 ) -> CaptureCapabilities | None:
-    if not observation.run_context.has_car_context:
+    car = observation.run_context.car
+    if car is None:
         return None
     spec = order_reference_spec_from_snapshot(observation.run_context.analysis_settings)
+    status = car.order_reference_status
+    weak_final_drive = (
+        status is not None and status.final_drive_ratio_confidence in WEAK_FIELD_CONFIDENCES
+    )
+    weak_top_gear = (
+        status is not None and status.current_gear_ratio_confidence in WEAK_FIELD_CONFIDENCES
+    )
+    speed = observation.speed
+    manual = speed is not None and speed_typed_in(speed.source, simulated=False)
+    wheel: WheelCapability
+    driveline: DrivelineCapability
     if spec is None:
-        driveline: Literal["ok", "missing_final_drive", "missing_tire"] = "missing_tire"
-    elif spec.supports_driveshaft_reference:
-        driveline = "ok"
+        wheel = driveline = "missing_tire"
     else:
-        driveline = "missing_final_drive"
-    engine: Literal["measured", "estimated_top_gear", "missing"]
+        wheel = "manual_speed" if manual else "ok"
+        if not spec.supports_driveshaft_reference:
+            driveline = "missing_final_drive"
+        elif manual:
+            driveline = "manual_speed"
+        else:
+            driveline = "estimated_final_drive" if weak_final_drive else "ok"
+    engine: EngineCapability
     if _obd_rpm_fresh(policy, observation):
         engine = "measured"
-    elif spec is not None and spec.supports_engine_reference:
-        engine = "estimated_top_gear"
-    else:
+    elif spec is None or not spec.supports_engine_reference:
         engine = "missing"
-    return CaptureCapabilities(
-        wheel="ok" if spec is not None else "missing_tire",
-        driveline=driveline,
-        engine=engine,
-    )
+    elif manual:
+        engine = "manual_speed"
+    else:
+        engine = "estimated_ratios" if weak_final_drive or weak_top_gear else "estimated_top_gear"
+    return CaptureCapabilities(wheel=wheel, driveline=driveline, engine=engine)
 
 
 def _obd_rpm_fresh(
@@ -247,10 +265,11 @@ def _reference_check(
             ),
         )
 
+    # A live reading of 0 km/h is valid: the car may be parked when the run starts.
     if (
         not _is_finite_number(effective_speed_kmh)
         or effective_speed_kmh is None
-        or effective_speed_kmh <= 0.0
+        or effective_speed_kmh < 0.0
     ):
         return CaptureReadinessCheck(
             check_key="reference_ready",
@@ -296,11 +315,16 @@ def _speed_check(
     observation: CaptureReadinessObservation,
     speed_history: tuple[SpeedObservation, ...],
 ) -> CaptureReadinessCheck:
+    """Steady-speed advice for the guided hold step; it warns but never blocks.
+
+    A run may start while parked and cover pulling away and low speeds; the
+    run analysis ignores standstill.
+    """
     speed = observation.speed
     if speed is None:
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_sample_missing",
         )
 
@@ -310,14 +334,14 @@ def _speed_check(
         if not _is_finite_number(speed_kmh) or speed_kmh is None:
             return CaptureReadinessCheck(
                 check_key="speed_stable",
-                state="fail",
+                state="warn",
                 reason_key="speed_sample_missing",
                 details=(("speed_source", speed_source),),
             )
         if speed_kmh < policy.min_ready_speed_kmh:
             return CaptureReadinessCheck(
                 check_key="speed_stable",
-                state="fail",
+                state="warn",
                 reason_key="speed_too_low",
                 details=(
                     ("speed_kmh", round(speed_kmh, 2)),
@@ -345,7 +369,7 @@ def _speed_check(
     ):
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_sample_missing",
             details=(("speed_source", speed_source),),
         )
@@ -354,7 +378,7 @@ def _speed_check(
     if speed_kmh < policy.min_ready_speed_kmh:
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_too_low",
             details=(
                 ("speed_kmh", round(speed_kmh, 2)),
@@ -365,7 +389,7 @@ def _speed_check(
     if len(speed_history) < 2:
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_stabilizing",
             details=(
                 ("speed_kmh", round(speed_kmh, 2)),
@@ -387,7 +411,7 @@ def _speed_check(
     if dwell_observed_s < policy.stable_speed_dwell_s:
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_stabilizing",
             details=(
                 ("speed_kmh", round(speed_kmh, 2)),
@@ -398,7 +422,7 @@ def _speed_check(
     if range_kmh > STEADY_SPEED_RANGE_KMH or stddev_kmh > STEADY_SPEED_STDDEV_KMH:
         return CaptureReadinessCheck(
             check_key="speed_stable",
-            state="fail",
+            state="warn",
             reason_key="speed_variation_high",
             details=(
                 ("mean_speed_kmh", round(mean_speed_kmh, 2)),

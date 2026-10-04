@@ -8,10 +8,11 @@ import {
 } from "../../api/logging";
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import { errorMessage, isDemoMode, navigate, speedUnit } from "../../app_store";
-import { fmt, formatIntLocale } from "../../format";
+import { fmt, formatIntLocale, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
 import {
   clients,
+  liveSensorLayout,
   locationChoices,
   locationOf,
   rotationalSpeeds,
@@ -20,12 +21,18 @@ import {
   speedMps,
 } from "../../live_store";
 import { poll } from "../../poll";
+import { layoutConsequence } from "../../sensor_layout";
 import {
   carSelection,
   carSettings,
+  speedSettings,
   speedSourceSnapshot,
+  speedStatus,
 } from "../../settings_store";
-import { deriveSpeedReadoutLabelKey } from "../../speed_source";
+import {
+  deriveSpeedReadoutLabelKey,
+  gpsReceiverMissing,
+} from "../../speed_source";
 import {
   activeCarText,
   formatElapsed,
@@ -44,6 +51,7 @@ import {
   type SummaryAction,
   withLoggingError,
 } from "./dashboard_model";
+import { capabilityModel } from "./readiness";
 
 const STATUS_POLL_MS = 2_000;
 
@@ -243,6 +251,10 @@ const baseRecording = computed(() => {
             : "no_active",
       health: health.value,
       speedUnit: speedUnit.value,
+      gpsReceiverMissing: gpsReceiverMissing(
+        speedSettings.source.value,
+        speedStatus.value,
+      ),
       connectedText: formatInt(
         clients.value.filter((client) => client.connected).length,
       ),
@@ -264,6 +276,27 @@ export const recording = computed(() =>
     ? withLoggingError(baseRecording.value, loggingError.value, t)
     : baseRecording.value,
 );
+
+/** What the next run can test, and what the sensor layout can localise; idle only. */
+export const capabilities = computed(() => {
+  const current = status.value;
+  if (current.enabled) {
+    return null;
+  }
+  const model = capabilityModel(
+    current.capture_readiness?.capabilities ?? null,
+    formatSpeed(speedSettings.manualSpeedKph.value, speedUnit.value, t, 0),
+    t,
+  );
+  if (!model) {
+    return null;
+  }
+  const layout = liveSensorLayout.value;
+  return {
+    ...model,
+    layoutNote: layout ? layoutConsequence(layout, t) : null,
+  };
+});
 
 export const guidedTest = computed(() =>
   guidedTestModel(

@@ -378,6 +378,19 @@ function setupAction(
   return null;
 }
 
+/** Names the likely cause when the live speed is missing because GPS has no receiver. */
+function speedSourceHint(
+  check: { check_key: string; reason_key?: string | null },
+  gpsReceiverMissing: boolean,
+  t: Translate,
+): string | null {
+  return gpsReceiverMissing &&
+    check.check_key === "reference_ready" &&
+    check.reason_key !== "active_car_missing"
+    ? `${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`
+    : null;
+}
+
 function panel(
   prefix: string,
   t: Translate,
@@ -399,6 +412,8 @@ export interface RecordingInputs {
   carBlock: "no_cars" | "no_active" | null;
   health: LiveHealth;
   speedUnit: SpeedUnit;
+  /** GPS is the speed source but no USB receiver is plugged in. */
+  gpsReceiverMissing: boolean;
   connectedText: string;
   assignedText: string;
   elapsedText: string;
@@ -539,7 +554,7 @@ export function recordingModel(
       ? {
           title: t("dashboard.logging.blocked.setup.title"),
           body: checkDetail(primary, t, formatInt, input.speedUnit),
-          detail: null,
+          detail: speedSourceHint(primary, input.gpsReceiverMissing, t),
           action: setupAction(primary, t),
         }
       : null,

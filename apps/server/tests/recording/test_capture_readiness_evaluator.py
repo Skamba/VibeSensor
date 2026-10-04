@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.capture_readiness import CaptureCapabilities, CaptureReadinessPolicy
-from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.car import CarOrderReferenceStatus, CarSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.recording.capture_readiness_evaluator import evaluate_capture_readiness
 from vibesensor.recording.capture_readiness_observation import (
@@ -232,15 +232,38 @@ def _steady(start_s: float, end_s: float, step_s: float = 1.0) -> tuple[SpeedObs
     )
 
 
-def test_speed_must_hold_for_the_full_dwell_before_capture_is_ready() -> None:
+def test_speed_must_hold_for_the_full_dwell_before_it_counts_as_steady() -> None:
     assert _speed_check_for(speed_history=_steady(100.0, 104.0))[1] == "speed_stabilizing"
     assert _speed_check_for(speed_history=_steady(100.0, 108.0))[1] == "speed_stable"
 
 
-def test_a_single_speed_excursion_wider_than_the_steady_range_blocks_capture() -> None:
+def test_a_single_speed_excursion_wider_than_the_steady_range_is_not_steady() -> None:
     # 29 samples at 80 km/h and one at 89 km/h: std-dev 1.6 km/h (< 2) but range 9 km/h (> 8).
     history = (*_steady(100.0, 128.0), SpeedObservation(observed_at_mono_s=129.0, speed_kmh=89.0))
     assert _speed_check_for(speed_history=history)[1] == "speed_variation_high"
+
+
+@pytest.mark.parametrize("speed_source", ["gps", "obd2"])
+def test_a_parked_car_with_live_speed_can_start_and_gets_steady_speed_advice(
+    speed_source: str,
+) -> None:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_observation(
+            speed_status=_SpeedStatus(source=speed_source, speed_kmh=0.0),
+            obd=CaptureReadinessObdObservation(rpm=800.0, rpm_age_s=0.2),
+        ),
+        state=_QUIET_STATE,
+    )
+
+    checks = {check.check_key: check for check in readiness.checks}
+    assert readiness.is_ready
+    assert checks["reference_ready"].state == "pass"
+    assert (checks["speed_stable"].state, checks["speed_stable"].reason_key) == (
+        "warn",
+        "speed_too_low",
+    )
+    assert checks["capture_ready"].reason_key == "ready_with_warnings"
 
 
 def test_speed_older_than_two_seconds_is_stale() -> None:
@@ -267,24 +290,42 @@ _QUIET_STATE = CaptureReadinessStateSnapshot(
     [
         pytest.param(
             _TIRE_ONLY,
-            "manual",
+            "gps",
             None,
             CaptureCapabilities(wheel="ok", driveline="missing_final_drive", engine="missing"),
             id="tire-only",
         ),
         pytest.param(
             {**_TIRE_ONLY, "final_drive_ratio": 3.15},
-            "manual",
+            "gps",
             None,
             CaptureCapabilities(wheel="ok", driveline="ok", engine="missing"),
             id="no-top-gear",
         ),
         pytest.param(
             _FULL_ASPECTS,
-            "manual",
+            "gps",
             None,
             CaptureCapabilities(wheel="ok", driveline="ok", engine="estimated_top_gear"),
             id="full-specs",
+        ),
+        pytest.param(
+            _FULL_ASPECTS,
+            "manual",
+            None,
+            CaptureCapabilities(
+                wheel="manual_speed", driveline="manual_speed", engine="manual_speed"
+            ),
+            id="typed-in-speed-tests-nothing",
+        ),
+        pytest.param(
+            _TIRE_ONLY,
+            "manual",
+            None,
+            CaptureCapabilities(
+                wheel="manual_speed", driveline="missing_final_drive", engine="missing"
+            ),
+            id="typed-in-speed-names-missing-references-first",
         ),
         pytest.param(
             _TIRE_ONLY,
@@ -295,7 +336,7 @@ _QUIET_STATE = CaptureReadinessStateSnapshot(
         ),
         pytest.param(
             {},
-            "manual",
+            "gps",
             None,
             CaptureCapabilities(wheel="missing_tire", driveline="missing_tire", engine="missing"),
             id="no-tire",
@@ -322,6 +363,64 @@ def test_missing_references_never_block_capture_and_show_as_capabilities(
         check for check in readiness.checks if check.check_key == "reference_ready"
     )
     assert reference_check.reason_key == "reference_ready"
+    assert readiness.capabilities == capabilities
+
+
+@pytest.mark.parametrize(
+    ("final_drive", "top_gear", "capabilities"),
+    [
+        pytest.param(
+            "family_default",
+            "official_exact",
+            CaptureCapabilities(
+                wheel="ok", driveline="estimated_final_drive", engine="estimated_ratios"
+            ),
+            id="weak-final-drive",
+        ),
+        pytest.param(
+            "official_exact",
+            "unverified",
+            CaptureCapabilities(wheel="ok", driveline="ok", engine="estimated_ratios"),
+            id="weak-top-gear",
+        ),
+        pytest.param(
+            "reputable_secondary_crosschecked",
+            "official_derived",
+            CaptureCapabilities(wheel="ok", driveline="ok", engine="estimated_top_gear"),
+            id="checked-library-values",
+        ),
+    ],
+)
+def test_weak_library_ratios_show_as_estimated_capabilities(
+    final_drive: str,
+    top_gear: str,
+    capabilities: CaptureCapabilities,
+) -> None:
+    observation = _observation(speed_status=_SpeedStatus(source="gps", speed_kmh=82.0))
+    car = observation.run_context.car
+    assert car is not None
+    run_context = RunContextSnapshot(
+        analysis_settings=observation.run_context.analysis_settings,
+        car=CarSnapshot(
+            car_id=car.car_id,
+            name=car.name,
+            car_type=car.car_type,
+            aspects=dict(car.aspects),
+            order_reference_status=CarOrderReferenceStatus(
+                selection_source_status="exact_row",
+                tire_dimensions_confidence="official_exact",
+                final_drive_ratio_confidence=final_drive,
+                current_gear_ratio_confidence=top_gear,
+            ),
+        ),
+    )
+
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=replace(observation, run_context=run_context),
+        state=_QUIET_STATE,
+    )
+
     assert readiness.capabilities == capabilities
 
 

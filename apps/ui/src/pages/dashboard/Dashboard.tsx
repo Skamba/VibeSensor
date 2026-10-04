@@ -4,6 +4,7 @@ import { t } from "../../i18n";
 import type { RecordingModel, SummaryAction } from "./dashboard_model";
 import {
   advanceGuidedTest,
+  capabilities,
   guidedTest,
   health,
   openSummaryTarget,
@@ -213,6 +214,70 @@ function Progress(props: { model: RecordingModel }) {
   );
 }
 
+function CapabilityLine() {
+  const model = capabilities.value;
+  if (!model) {
+    return null;
+  }
+  return (
+    <section id="captureCapabilities" class="capture-capabilities">
+      <div class="capture-readiness__title">
+        {t("dashboard.capabilities.title")}
+      </div>
+      <ul class="capture-capabilities__list">
+        {model.items.map((item) => (
+          <li
+            key={item.family}
+            class="capture-capabilities__item"
+            data-capability={item.family}
+            data-capability-mark={item.mark}
+          >
+            <span class="capture-capabilities__mark" aria-hidden="true">
+              {item.mark === "ok" ? "✓" : item.mark === "caveat" ? "~" : "✕"}
+            </span>
+            <span class="capture-capabilities__label">{item.label}</span>
+            {item.note ? (
+              <span class="capture-capabilities__note">{item.note}</span>
+            ) : null}
+            {item.fix ? (
+              <button
+                type="button"
+                class="btn capture-capabilities__fix"
+                onClick={() =>
+                  openSummaryTarget(
+                    item.fix?.target === "cars"
+                      ? "open-cars"
+                      : "open-speed-source",
+                  )
+                }
+              >
+                {item.fix.label}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {model.manualNote ? (
+        <p id="captureManualSpeedNote" class="capture-capabilities__caveat">
+          {model.manualNote}{" "}
+          <button
+            type="button"
+            class="btn capture-capabilities__fix"
+            onClick={() => openSummaryTarget("open-speed-source")}
+          >
+            {t("dashboard.capabilities.fix.manual_speed")}
+          </button>
+        </p>
+      ) : null}
+      {model.layoutNote ? (
+        <p id="captureLayoutNote" class="capture-capabilities__layout">
+          {model.layoutNote}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function GuidedTest() {
   const model = guidedTest.value;
   if (!model.visible) {
@@ -296,6 +361,7 @@ function Recording(props: { onAddCar: () => void }) {
         </span>
       </div>
       <Progress model={model} />
+      <CapabilityLine />
       <GuidedTest />
       <div class="logging-actions">
         <button
@@ -319,6 +385,11 @@ function Recording(props: { onAddCar: () => void }) {
           {t("dashboard.stop_recording")}
         </button>
       </div>
+      {model.showStop || model.startDisabled ? null : (
+        <p id="startHint" class="card__subtle logging-start-hint">
+          {t("dashboard.logging.start_hint")}
+        </p>
+      )}
     </div>
   );
 }

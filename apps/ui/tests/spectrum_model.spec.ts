@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   activeFrequency,
+  bandStatus,
   bandsAt,
   createInspectorFeed,
   focusEntry,
@@ -42,6 +43,11 @@ const bands = orderBands(
   t,
 );
 
+const engineLabel = t("bands.with_basis", {
+  band: "bands.engine_1x",
+  basis: "bands.basis.estimated_top_gear",
+});
+
 function input(overrides: Partial<InspectorInput> = {}): InspectorInput {
   return {
     entries,
@@ -59,10 +65,33 @@ describe("order bands", () => {
     expect(bands.map((band) => [band.label, band.min_hz, band.max_hz])).toEqual(
       [
         ["bands.wheel_1x", 18, 22],
-        ["bands.engine_1x", 27, 33],
+        [engineLabel, 27, 33],
       ],
     );
     expect(orderBands(null, t)).toEqual([]);
+  });
+
+  test("engine bands say whether the RPM is measured or assumes top gear", () => {
+    const measured = orderBands(
+      {
+        basis_speed_source: null,
+        wheel: { rpm: 600, mode: null, reason: null },
+        driveshaft: { rpm: 1800, mode: null, reason: null },
+        engine: { rpm: 2400, mode: "measured", reason: null },
+        order_bands: [
+          { key: "driveshaft_engine_1x", center_hz: 40, tolerance: 0.1 },
+          { key: "driveshaft_1x", center_hz: 30, tolerance: 0.1 },
+        ],
+      },
+      t,
+    );
+    expect(measured.map((band) => band.label)).toEqual([
+      t("bands.with_basis", {
+        band: "bands.driveshaft_engine_1x",
+        basis: "bands.basis.measured",
+      }),
+      "bands.driveshaft_1x",
+    ]);
   });
 
   test("the band legend lists the bands at the inspected frequency", () => {
@@ -73,6 +102,91 @@ describe("order bands", () => {
     expect(activeFrequency(input({ cursorIdx: 2 }))).toBe(30);
     expect(activeFrequency(input({ pinnedId: "b" }))).toBe(30);
     expect(bandsAt(bands, 40)).toEqual([]);
+  });
+});
+
+describe("band status", () => {
+  const blank = { rpm: null, mode: null, reason: null };
+  const speeds = (
+    overrides: Partial<NonNullable<Parameters<typeof orderBands>[0]>>,
+  ) => ({
+    basis_speed_source: null,
+    wheel: blank,
+    driveshaft: blank,
+    engine: blank,
+    order_bands: [],
+    ...overrides,
+  });
+  const states = (status: ReturnType<typeof bandStatus>) =>
+    status.families.map((family) => [family.key, family.state, family.note]);
+
+  test("without a car the spectrum says bands need one", () => {
+    expect(
+      bandStatus(
+        {
+          carActive: false,
+          speeds: null,
+          speedMps: 20,
+          gpsReceiverMissing: false,
+        },
+        t,
+      ),
+    ).toEqual({ message: "spectrum.bands.need_car", families: [] });
+  });
+
+  test("names the reference each blank family needs and the engine basis", () => {
+    const status = bandStatus(
+      {
+        carActive: true,
+        speeds: speeds({
+          wheel: { rpm: 600, mode: null, reason: null },
+          driveshaft: { rpm: null, mode: null, reason: "missing_final_drive" },
+          engine: { rpm: 2000, mode: "estimated", reason: null },
+        }),
+        speedMps: 20,
+        gpsReceiverMissing: false,
+      },
+      t,
+    );
+    expect(status.message).toBeNull();
+    expect(states(status)).toEqual([
+      ["wheel", "on", null],
+      [
+        "driveline",
+        "missing",
+        "spectrum.bands.needs.driveline.missing_final_drive",
+      ],
+      ["engine", "on", "bands.basis.estimated_top_gear"],
+    ]);
+  });
+
+  test("without speed it says why: parked, no speed, or no GPS receiver", () => {
+    const waiting = speeds({
+      wheel: { rpm: null, mode: null, reason: "speed_unavailable" },
+    });
+    const message = (speedMps: number | null, gpsReceiverMissing: boolean) =>
+      bandStatus(
+        { carActive: true, speeds: waiting, speedMps, gpsReceiverMissing },
+        t,
+      ).message;
+    expect(message(0, false)).toBe("spectrum.bands.need_motion");
+    expect(message(null, false)).toBe("spectrum.bands.need_speed");
+    expect(message(null, true)).toBe(
+      "spectrum.bands.need_speed speed.gps_no_receiver.title: speed.gps_no_receiver.body",
+    );
+    expect(
+      states(
+        bandStatus(
+          {
+            carActive: true,
+            speeds: null,
+            speedMps: null,
+            gpsReceiverMissing: false,
+          },
+          t,
+        ),
+      ).map(([, state]) => state),
+    ).toEqual(["waiting", "waiting", "waiting"]);
   });
 });
 
@@ -115,14 +229,14 @@ describe("inspector", () => {
   test("describes the hovered bin, else the focused peak, else a hint", () => {
     expect(inspectorText(input({ cursorIdx: 2 }), t)).toEqual({
       mode: "hover",
-      text: 'spectrum.inspector_hover:{"sensor":"Front","freq":"30.0","value":"3.0","bands":"bands.engine_1x"}',
+      text: `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "30.0", value: "3.0", bands: engineLabel })}`,
     });
     expect(inspectorText(input(), t)).toEqual({
       mode: "focus",
       text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"12.0","bands":"bands.wheel_1x"}',
     });
     expect(inspectorText(input({ pinnedId: "b" }), t).text).toBe(
-      'spectrum.inspector_focus_selected:{"sensor":"Rear","freq":"30.0","value":"8.0","bands":"bands.engine_1x"}',
+      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "8.0", bands: engineLabel })}`,
     );
     expect(inspectorText(input({ entries: [] }), t)).toEqual({
       mode: "idle",

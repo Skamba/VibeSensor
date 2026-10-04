@@ -11,9 +11,19 @@ __all__ = [
     "CaptureReadinessCheck",
     "CaptureReadinessDetailValue",
     "CaptureReadinessPolicy",
+    "DrivelineCapability",
+    "EngineCapability",
+    "WheelCapability",
 ]
 
 type CaptureReadinessDetailValue = int | float | str
+type WheelCapability = Literal["ok", "missing_tire", "manual_speed"]
+type DrivelineCapability = Literal[
+    "ok", "estimated_final_drive", "missing_final_drive", "missing_tire", "manual_speed"
+]
+type EngineCapability = Literal[
+    "measured", "estimated_top_gear", "estimated_ratios", "missing", "manual_speed"
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,15 +50,19 @@ class CaptureReadinessCheck:
 
 @dataclass(frozen=True, slots=True)
 class CaptureCapabilities:
-    """Which order families the active car's references can test (never blocks capture).
+    """Which order families the run can test (never blocks capture).
 
-    ``wheel`` needs the tire size, ``driveline`` also the final drive, and ``engine``
-    is ``measured`` with fresh OBD-II RPM, else ``estimated_top_gear`` from the ratios.
+    Mirrors the post-run source checks: ``wheel`` needs the tire size,
+    ``driveline`` also the final drive (``estimated_final_drive`` when it is a
+    weak library value), and ``engine`` is ``measured`` with fresh OBD-II RPM,
+    else estimated from speed assuming top gear (``estimated_ratios`` when the
+    final drive or top gear is a weak library value). A typed-in speed makes
+    every family ``manual_speed``: order matching then holds only at that speed.
     """
 
-    wheel: Literal["ok", "missing_tire"]
-    driveline: Literal["ok", "missing_final_drive", "missing_tire"]
-    engine: Literal["measured", "estimated_top_gear", "missing"]
+    wheel: WheelCapability
+    driveline: DrivelineCapability
+    engine: EngineCapability
 
 
 @dataclass(frozen=True, slots=True)

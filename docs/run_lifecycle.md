@@ -31,7 +31,7 @@ one big state-machine class:
 | `RunRawCaptureWriter` | `recording/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
 | `RunRecordingSessionService` | `recording/recording_session.py` | Active run context/sensor snapshots, start-run side effects, and ingest-drop baseline accounting. |
 | `RawCaptureFinalizeRegistry` | `recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
-| `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed dwell, and recent integrity quiet windows for the idle recording gate. |
+| `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed advice, and recent integrity quiet windows for the idle recording gate. |
 | `RunRecorder` | `recording/recorder.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `analysis/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
 | `execute_post_analysis()` | `analysis/post_analysis_executor.py` | Load metadata/samples/raw capture, run the summary analysis, and store success or failure. |
@@ -59,13 +59,19 @@ No active run is recording:
 - `PostAnalysisWorker` may still be busy with an older run
 - `RunRecorder.status()` includes a backend-owned `CaptureReadiness` checklist
   so `/api/recording/status` and the Live dashboard can explain whether
-  steady-state capture is ready to start. `reference_ready` needs only an
-  active car and a working live speed (OBD-II also needs fresh RPM); missing
-  car references never block capture. `capabilities` reports, without
-  blocking, which order families the active car can test: `wheel`
-  (`ok`/`missing_tire`), `driveline` (`ok`/`missing_final_drive`/`missing_tire`)
-  and `engine` (`measured` from fresh OBD-II RPM, `estimated_top_gear` from the
-  ratios, or `missing`); it is `null` without an active car
+  a recording is ready to start. `reference_ready` needs only an active car
+  and a working live speed (OBD-II also needs fresh RPM); a live 0 km/h counts,
+  so a run can start while parked. Missing car references never block capture.
+  `speed_stable` (20 km/h held for 8 s) is advice for the guided hold step: it
+  warns but never blocks. `capabilities` reports, without
+  blocking, which order families the run can test, mirroring the post-run
+  source checks: `wheel` (`ok`/`missing_tire`), `driveline`
+  (`ok`/`estimated_final_drive` for a weak library final drive/
+  `missing_final_drive`/`missing_tire`) and `engine` (`measured` from fresh
+  OBD-II RPM, `estimated_top_gear` from the ratios, `estimated_ratios` when the
+  final drive or top gear is a weak library value, or `missing`). A typed-in
+  (manual) speed makes every family that has its references `manual_speed`.
+  `capabilities` is `null` without an active car
 
 ### 2. Recording active
 

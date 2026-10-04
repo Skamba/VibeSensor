@@ -61,3 +61,20 @@ export function deriveSpeedReadoutLabelKey(
   }
   return isManualLikeSpeedSource(effective) ? "speed.override" : "speed.gps";
 }
+
+/**
+ * GPS is the chosen source but gpsd has never reported a receiver: no device
+ * and no reading. The Pi has no built-in GPS, so a USB receiver is required.
+ */
+export function gpsReceiverMissing(
+  source: SpeedSourceKind,
+  status: SpeedSourceStatusPayload | null,
+): boolean {
+  return (
+    source === "gps" &&
+    status !== null &&
+    status.gps_enabled &&
+    status.device === null &&
+    status.last_update_age_s === null
+  );
+}

@@ -47,7 +47,7 @@ def _observation(
     )
 
 
-def test_capture_readiness_passes_after_stable_dwell(
+def test_steady_speed_is_advice_that_passes_after_the_dwell(
     fake_registry,
     speed_rig,
     mutable_fake_settings,
@@ -69,8 +69,10 @@ def test_capture_readiness_passes_after_stable_dwell(
             )
         )
 
-    assert not snapshots[0].is_ready
-    assert snapshots[-1].is_ready
+    # Start is allowed at once; the dwell only turns the advice into a pass.
+    assert all(snapshot.is_ready for snapshot in snapshots)
+    first = next(check for check in snapshots[0].checks if check.check_key == "speed_stable")
+    assert (first.state, first.reason_key) == ("warn", "speed_stabilizing")
     speed_check = next(check for check in snapshots[-1].checks if check.check_key == "speed_stable")
     assert speed_check.state == "pass"
     assert speed_check.reason_key == "speed_stable"
@@ -326,10 +328,10 @@ def test_run_recorder_status_includes_capture_readiness(
     status = logger.status()
 
     assert status.capture_readiness is not None
-    assert not status.capture_readiness.is_ready
+    assert status.capture_readiness.is_ready
     assert (
         next(
             check for check in status.capture_readiness.checks if check.check_key == "capture_ready"
         ).reason_key
-        == "capture_blocked"
+        == "ready_with_warnings"
     )

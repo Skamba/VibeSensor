@@ -6,6 +6,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from vibesensor.domain.capture_readiness import (
+    DrivelineCapability,
+    EngineCapability,
+    WheelCapability,
+)
 from vibesensor.recording.lifecycle_state import RecordingStopReason
 from vibesensor.recording.run_schema import GuidedPhaseName
 
@@ -22,9 +27,9 @@ class RecordingCaptureReadinessCheckResponse(BaseModel):
 class RecordingCaptureCapabilitiesResponse(BaseModel):
     """Which order families the active car can test; informational, never blocks capture."""
 
-    wheel: Literal["ok", "missing_tire"]
-    driveline: Literal["ok", "missing_final_drive", "missing_tire"]
-    engine: Literal["measured", "estimated_top_gear", "missing"]
+    wheel: WheelCapability
+    driveline: DrivelineCapability
+    engine: EngineCapability
 
 
 class RecordingCaptureReadinessResponse(BaseModel):

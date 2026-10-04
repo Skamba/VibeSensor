@@ -11,6 +11,7 @@ from vibesensor.live.payload_types import (
     RotationalSpeedsPayload,
     RotationalSpeedValuePayload,
 )
+from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 from vibesensor.speed.speed_source_config import ResolvedSpeedSource
 
 
@@ -39,6 +40,9 @@ def build_rotational_speeds_payload(
 
     Each family is independent: a missing reference blanks only its own
     family, and a fresh measured engine RPM (OBD-II) drives the engine values.
+    A blank family's ``reason`` names the first missing reference
+    (``missing_tire``, ``missing_final_drive``, ``missing_gear_ratio``), else
+    ``speed_unavailable``.
     """
     measured_rpm = (
         float(measured_engine_rpm)
@@ -52,23 +56,29 @@ def build_rotational_speeds_payload(
         settings=analysis_settings,
         measured_engine_rpm=measured_rpm,
     )
-    missing_reason = (
-        "speed_unavailable" if speed_mps is None or speed_mps <= 0 else "missing_reference"
+    spec = order_reference_spec_from_snapshot(analysis_settings)
+    wheel_missing = None if spec is not None and spec.supports_wheel_reference else "missing_tire"
+    drive_missing = wheel_missing or (
+        None if spec is not None and spec.supports_driveshaft_reference else "missing_final_drive"
+    )
+    engine_missing = drive_missing or (
+        None if spec is not None and spec.supports_engine_reference else "missing_gear_ratio"
     )
 
-    def _value(hz: float | None, *, mode: str) -> RotationalSpeedValuePayload:
+    def _value(hz: float | None, *, mode: str, missing: str | None) -> RotationalSpeedValuePayload:
         if hz is None:
-            return {"rpm": None, "mode": "calculated", "reason": missing_reason}
+            return {"rpm": None, "mode": "calculated", "reason": missing or "speed_unavailable"}
         return {"rpm": hz * SECONDS_PER_MINUTE, "mode": mode, "reason": None}
 
     bands = build_order_bands(orders_hz)
     return {
         "basis_speed_source": basis_speed_source,
-        "wheel": _value(orders_hz.get("wheel_hz"), mode="calculated"),
-        "driveshaft": _value(orders_hz.get("drive_hz"), mode="calculated"),
+        "wheel": _value(orders_hz.get("wheel_hz"), mode="calculated", missing=wheel_missing),
+        "driveshaft": _value(orders_hz.get("drive_hz"), mode="calculated", missing=drive_missing),
         "engine": _value(
             orders_hz.get("engine_hz"),
             mode="measured" if measured_rpm is not None else "calculated",
+            missing=engine_missing,
         ),
         "order_bands": bands or None,
     }

@@ -25,10 +25,25 @@ type SpeedSourceServer = {
   pairs: string[];
   failNextPut: boolean;
   putDelayMs?: number;
+  /** gpsd runs but has never seen a receiver. */
+  noGpsReceiver?: boolean;
 };
 
 function statusPayload(server: SpeedSourceServer): SpeedSourceStatusPayload {
   const source = server.saved.speed_source;
+  if (server.noGpsReceiver) {
+    return {
+      ...statusPayload({ ...server, noGpsReceiver: false }),
+      device: null,
+      effective_speed_kmh: null,
+      fix_dimension: "none",
+      fix_mode: null,
+      last_update_age_s: null,
+      raw_speed_kmh: null,
+      speed_confidence: "low",
+      speed_source: "none",
+    };
+  }
   return {
     connection_state: "connected",
     device: "/dev/ttyACM0",
@@ -196,6 +211,12 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
     "52.3",
   );
   await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  await expect(page.locator("#gpsReceiverMissing")).toHaveCount(0);
+  const consequences = page.locator("#speedSourceConsequences");
+  await expect(consequences.locator(".speed-source-consequence")).toHaveCount(
+    3,
+  );
+  await expect(consequences).toContainText("assuming top gear (or D)");
   await expect(page.locator("#staleTimeoutInput")).toHaveValue("10");
   await expect(page.locator("#manualSpeedConfig")).toBeHidden();
 
@@ -242,6 +263,23 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
   await expect(page.locator("#speedSourceSaveFeedback")).toBeHidden();
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
     "Manual override",
+  );
+});
+
+test("journey: GPS without a receiver says to plug one in or switch to OBD-II", async ({
+  page,
+}) => {
+  await installSpeedSourceRoutes(page, {
+    saved: { speed_source: "gps", manual_speed_kph: null, stale_timeout_s: 10 },
+    puts: [],
+    scans: 0,
+    pairs: [],
+    failNextPut: false,
+    noGpsReceiver: true,
+  });
+  await openSpeedSourceTab(page);
+  await expect(page.locator("#gpsReceiverMissing")).toContainText(
+    "No GPS receiver found",
   );
 });
 

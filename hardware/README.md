@@ -13,6 +13,20 @@ Bill of materials for the VibeSensor prototype.
 
 Multiple sensor nodes (items 2-4) can connect to a single Pi simultaneously.
 
+## Speed source (pick one)
+
+VibeSensor needs a live road speed to match vibrations to wheel, driveline and
+engine orders. The Pi has no built-in GPS. Choose one:
+
+| Part | Gives | Notes |
+|------|-------|-------|
+| Bluetooth ELM327 OBD-II adapter (recommended) | Live speed and measured engine RPM | **Bluetooth only.** Wi-Fi OBD dongles cannot connect: the Pi's Wi-Fi runs the sensor hotspot. Pair it on the Speed source tab. |
+| USB GPS receiver (u-blox based, gpsd-compatible) | Live speed; engine RPM is estimated assuming top gear (or D) | The Pi 3 A+ has a single USB port, which the USB internet uplink also uses. |
+
+Without either, a speed can be typed in, but then the run only holds at
+exactly that speed and the results are hedged. The Speed source tab in the web
+UI shows the same comparison.
+
 ## Wiring
 
 The ESP32 connects to the ADXL345 via I2C over the ATOM Lite 4-pin Unit port:

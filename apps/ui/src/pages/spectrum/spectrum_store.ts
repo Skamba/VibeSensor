@@ -8,14 +8,18 @@ import {
   payloadError,
   rotationalSpeeds,
   spectra,
+  speedMps,
   wsState,
 } from "../../live_store";
+import { carSelection, speedSettings, speedStatus } from "../../settings_store";
+import { gpsReceiverMissing } from "../../speed_source";
 import {
   createSpectrumFramePreparer,
   type SpectrumPreparedFrameData,
 } from "./frame_preparer";
 import {
   activeFrequency,
+  bandStatus,
   bandsAt,
   createInspectorFeed,
   type FocusMarker,
@@ -61,6 +65,22 @@ const chartBands = computed(() => orderBands(rotationalSpeeds.value, t));
 export const hasBands = computed(
   () => chartBands.value.length > 0 && prepared.value.entries.length > 0,
 );
+/** Which order families can be drawn, or why none are. */
+export const bandCoverage = computed(() => {
+  const selection = carSelection.value.kind;
+  return bandStatus(
+    {
+      carActive: selection !== "no_cars" && selection !== "no_active_car",
+      speeds: rotationalSpeeds.value,
+      speedMps: speedMps.value,
+      gpsReceiverMissing: gpsReceiverMissing(
+        speedSettings.source.value,
+        speedStatus.value,
+      ),
+    },
+    t,
+  );
+});
 export const bandsVisible = computed(
   () => bandsRequested.value && hasBands.value,
 );

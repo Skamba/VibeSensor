@@ -62,7 +62,49 @@ def test_build_rotational_speeds_payload_blanks_only_the_family_missing_a_refere
     assert payload["driveshaft"] == {
         "rpm": None,
         "mode": "calculated",
-        "reason": "missing_reference",
+        "reason": "missing_final_drive",
     }
-    assert payload["engine"]["reason"] == "missing_reference"
+    assert payload["engine"]["reason"] == "missing_final_drive"
     assert [band["key"] for band in payload["order_bands"] or []] == ["wheel_1x", "wheel_2x"]
+
+
+@pytest.mark.parametrize(
+    ("dropped", "speed_mps", "reasons"),
+    [
+        pytest.param(
+            {"current_gear_ratio"},
+            15.0,
+            (None, None, "missing_gear_ratio"),
+            id="no-top-gear",
+        ),
+        pytest.param(
+            {"tire_width_mm"},
+            15.0,
+            ("missing_tire", "missing_tire", "missing_tire"),
+            id="no-tire",
+        ),
+        pytest.param(
+            {"current_gear_ratio"},
+            None,
+            ("speed_unavailable", "speed_unavailable", "missing_gear_ratio"),
+            id="no-speed-names-the-missing-reference-first",
+        ),
+    ],
+)
+def test_a_blank_family_names_the_reference_it_needs(
+    dropped: set[str],
+    speed_mps: float | None,
+    reasons: tuple[str | None, str | None, str | None],
+) -> None:
+    aspects = {key: value for key, value in TEST_CAR_ASPECTS.items() if key not in dropped}
+    payload = build_rotational_speeds_payload(
+        basis_speed_source="gps",
+        speed_mps=speed_mps,
+        analysis_settings=AnalysisSettingsSnapshot(**aspects),
+    )
+
+    assert (
+        payload["wheel"]["reason"],
+        payload["driveshaft"]["reason"],
+        payload["engine"]["reason"],
+    ) == reasons

@@ -5,6 +5,7 @@ import { t } from "../../i18n";
 import {
   activeBands,
   announcement,
+  bandCoverage,
   bandsVisible,
   hasBands,
   inspector,
@@ -56,6 +57,36 @@ function BandLegend() {
           {t("spectrum.bands.none")}
         </div>
       )}
+    </div>
+  );
+}
+
+/** The order families the bands cover, greyed with what each still needs. */
+function BandStatusLine() {
+  const { message, families } = bandCoverage.value;
+  if (message === null && families.length === 0) {
+    return null;
+  }
+  return (
+    <div id="bandStatus" class="band-status">
+      {message ? <div class="band-status__message">{message}</div> : null}
+      {families.length ? (
+        <ul class="band-status__families">
+          {families.map((family) => (
+            <li
+              key={family.key}
+              class="band-status__family"
+              data-band-family={family.key}
+              data-band-family-state={family.state}
+            >
+              <span class="band-status__family-label">{family.label}</span>
+              {family.note ? (
+                <span class="band-status__family-note">{family.note}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
@@ -157,6 +188,7 @@ export function Spectrum() {
             </button>
             <BandLegend />
           </div>
+          <BandStatusLine />
         </div>
         <div id="spectrumInspector" class="spectrum-inspector">
           {inspector.value}

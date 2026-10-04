@@ -3,6 +3,7 @@ import { computed, signal } from "@preact/signals";
 import { getClientLocations } from "./api/clients";
 import { defaultLocationCodes } from "./constants";
 import { t, translationsOf } from "./i18n";
+import { sensorLayout } from "./sensor_layout";
 import { locationCodeForClient, locationOptions } from "./sensor_locations";
 import type {
   AdaptedClient,
@@ -43,6 +44,13 @@ export function locationOf(client: AdaptedClient): string {
     (code) => translationsOf(`location.${code}`),
   );
 }
+
+/** The layout of the connected sensors that have a location. */
+export const liveSensorLayout = computed(() =>
+  sensorLayout(
+    clients.value.filter((client) => client.connected).map(locationOf),
+  ),
+);
 
 export async function loadLocationCodes(): Promise<void> {
   const { locations } = await getClientLocations();

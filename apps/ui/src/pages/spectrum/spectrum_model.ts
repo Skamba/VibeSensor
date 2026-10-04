@@ -88,13 +88,29 @@ const BAND_STYLE: Record<string, { color: string; name: string }> = {
   },
 };
 
+/** Bands that follow engine RPM, labelled with how the RPM was obtained. */
+const ENGINE_BANDS = new Set([
+  "engine_1x",
+  "engine_2x",
+  "driveshaft_engine_1x",
+]);
+
+/** "measured" with fresh OBD-II RPM, else "est., top gear" (estimated from speed). */
+function engineBasis(speeds: RotationalSpeeds, t: Translate): string {
+  return t(
+    speeds.engine.mode === "measured"
+      ? "bands.basis.measured"
+      : "bands.basis.estimated_top_gear",
+  );
+}
+
 /** Order reference bands from the server's rotational speeds. */
 export function orderBands(
   speeds: RotationalSpeeds | null,
   t: Translate,
 ): ChartBand[] {
   const bands = speeds?.order_bands;
-  if (!Array.isArray(bands)) {
+  if (!speeds || !Array.isArray(bands)) {
     return [];
   }
   const output: ChartBand[] = [];
@@ -109,14 +125,95 @@ export function orderBands(
       continue;
     }
     const style = BAND_STYLE[band.key];
+    const name = t(style?.name ?? band.key);
     output.push({
-      label: t(style?.name ?? band.key),
+      label: ENGINE_BANDS.has(band.key)
+        ? t("bands.with_basis", { band: name, basis: engineBasis(speeds, t) })
+        : name,
       min_hz: Math.max(0, center * (1 - tolerance)),
       max_hz: center * (1 + tolerance),
       color: style?.color ?? orderBandFills.wheel1,
     });
   }
   return output;
+}
+
+export type BandFamilyKey = "wheel" | "driveline" | "engine";
+
+export interface BandFamily {
+  key: BandFamilyKey;
+  label: string;
+  /** `on`: drawn; `missing`: a car reference is missing; `waiting`: no speed yet. */
+  state: "on" | "missing" | "waiting";
+  /** How the engine RPM is known, or what the family needs. */
+  note: string | null;
+}
+
+export interface BandStatus {
+  /** Why no bands are drawn at all, when that is the case. */
+  message: string | null;
+  families: BandFamily[];
+}
+
+const MISSING_REFERENCES = new Set([
+  "missing_tire",
+  "missing_final_drive",
+  "missing_gear_ratio",
+]);
+
+/**
+ * Which order families the live spectrum can draw, and what each one needs.
+ * The spectrum itself always shows; only the bands need a car and a speed.
+ */
+export function bandStatus(
+  input: {
+    /** `false` once the cars have loaded and none is active. */
+    carActive: boolean;
+    speeds: RotationalSpeeds | null;
+    speedMps: number | null;
+    gpsReceiverMissing: boolean;
+  },
+  t: Translate,
+): BandStatus {
+  if (!input.carActive) {
+    return { message: t("spectrum.bands.need_car"), families: [] };
+  }
+  const { speeds } = input;
+  const rows: Array<[BandFamilyKey, RotationalSpeeds["wheel"] | undefined]> = [
+    ["wheel", speeds?.wheel],
+    ["driveline", speeds?.driveshaft],
+    ["engine", speeds?.engine],
+  ];
+  const families = rows.map(([key, value]): BandFamily => {
+    const label = t(`spectrum.bands.family.${key}`);
+    if (value && value.rpm !== null) {
+      return {
+        key,
+        label,
+        state: "on",
+        note: key === "engine" && speeds ? engineBasis(speeds, t) : null,
+      };
+    }
+    const reason = value?.reason ?? "";
+    return MISSING_REFERENCES.has(reason)
+      ? {
+          key,
+          label,
+          state: "missing",
+          note: t(`spectrum.bands.needs.${key}.${reason}`),
+        }
+      : { key, label, state: "waiting", note: null };
+  });
+  if (!families.some((family) => family.state === "waiting")) {
+    return { message: null, families };
+  }
+  const message =
+    input.speedMps === 0
+      ? t("spectrum.bands.need_motion")
+      : input.gpsReceiverMissing
+        ? `${t("spectrum.bands.need_speed")} ${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`
+        : t("spectrum.bands.need_speed");
+  return { message, families };
 }
 
 export function bandsAt(

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "preact/hooks";
 
 import { speedUnit } from "../../app_store";
-import { FeedbackSlot } from "../../components/feedback";
+import { FeedbackBlock, FeedbackSlot } from "../../components/feedback";
 import { formatSpeed } from "../../format";
 import { t } from "../../i18n";
 import {
@@ -12,6 +12,7 @@ import {
 } from "../../settings_store";
 import {
   type DisplayedSpeedSourceMode,
+  gpsReceiverMissing,
   resolveEffectiveSpeedSource,
 } from "../../speed_source";
 import {
@@ -169,6 +170,69 @@ function Choices() {
           </label>
         );
       })}
+    </div>
+  );
+}
+
+/** What each source needs and can test (docs/user_journeys.md §3.4). */
+function Consequences() {
+  return (
+    <details
+      id="speedSourceConsequences"
+      class="settings-help-disclosure speed-source-consequences"
+      open
+    >
+      <summary class="settings-help-disclosure__summary">
+        <span class="settings-help-disclosure__heading">
+          <span class="settings-help-disclosure__title">
+            {t("settings.speed.compare.title")}
+          </span>
+        </span>
+      </summary>
+      <div class="settings-help-disclosure__body">
+        {CHOICES.map((choice) => (
+          <dl
+            key={choice.mode}
+            class="speed-source-consequence"
+            data-speed-source-consequence={choice.mode}
+          >
+            <dt class="speed-source-consequence__source">
+              {t(choice.titleKey)}
+            </dt>
+            {(["hardware", "enables", "limits"] as const).map((aspect) => (
+              <dd key={aspect} class="speed-source-consequence__row">
+                <span class="speed-source-consequence__label">
+                  {t(`settings.speed.compare.${aspect}`)}
+                </span>
+                <span>
+                  {t(`settings.speed.compare.${choice.mode}.${aspect}`)}
+                </span>
+              </dd>
+            ))}
+          </dl>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+/** GPS is chosen, but no USB receiver is plugged in. */
+function GpsReceiverHint() {
+  if (
+    selectedMode.value !== "gps" ||
+    !gpsReceiverMissing("gps", speedStatus.value)
+  ) {
+    return null;
+  }
+  return (
+    <div id="gpsReceiverMissing">
+      <FeedbackBlock
+        message={{
+          title: t("speed.gps_no_receiver.title"),
+          body: t("speed.gps_no_receiver.body"),
+          tone: "error",
+        }}
+      />
     </div>
   );
 }
@@ -366,6 +430,7 @@ export function SpeedSource() {
         <strong>{t("settings.speed.title")}</strong>
         <Summary />
         <Choices />
+        <GpsReceiverHint />
         <div
           id="manualSpeedConfig"
           class="speed-source-config"
@@ -427,6 +492,7 @@ export function SpeedSource() {
           </button>
         </div>
       </div>
+      <Consequences />
       <Diagnostics />
     </>
   );

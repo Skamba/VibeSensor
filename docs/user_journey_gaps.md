@@ -16,7 +16,8 @@ J09 (variant tire options) shipped in #4110. WP1a (references may be missing:
 J02, J03, J06, J18, J25, the backend half of J01 and the measured-RPM bands of
 J24) shipped in #4115. WP1b (provenance-aware source checks: J27, the
 analysis half of J15, the report half of J24, and the provenance data for J35)
-shipped in #4117.
+shipped in #4117. WP3 (speed source, readiness and dashboard UI: J14, J15,
+J17, J19, J20, J21, J24 and most of J13) shipped in #4125.
 
 Owner decisions that bound the fixes (settled):
 
@@ -62,7 +63,8 @@ Fix:
     speed when no OBD-II adapter is connected. Leave empty if unknown."
 
   Change the placeholders to "e.g. 3.15" / "e.g. 0.67" in grey, or "unknown".
-  Show a live "This car can test:" summary next to the form (see J20).
+  Show a live "This car can test:" summary next to the form, like the
+  capability line on Live.
 - **Behaviour:** `manualSpecs` returns tire plus nullable ratios. `canFinish`
   needs only a valid tire size. The car routes already accept a null ratio
   (unknown; on an update it clears the stored value).
@@ -93,29 +95,6 @@ Fix:
   redirect.
 - **Backend:** The PUT accepts partial aspects and per-field provenance. When
   the user edits a value, that field's provenance becomes `user_confirmed`.
-
-**J19 — Start Recording requires a steady ≥ 20 km/h for 8 s.**
-
-Evidence:
-
-- `startDisabled` in `apps/ui/src/pages/dashboard/dashboard_model.ts` follows
-  readiness.
-- `domain/capture_readiness.py` (20 km/h, 8 s dwell) and `_speed_check` in
-  the evaluator.
-- The backend does not gate the start (`web/recording.py`).
-
-The driver has to tap the phone while driving at speed, or bring a passenger.
-Low-speed complaints (brake judder, pull-away shudder) cannot be captured from
-the start.
-
-Fix:
-
-- **Behaviour:** Start is enabled when sensors, car and live speed are present.
-  `speed_stable` becomes advice ("Drive steadily above 20 km/h for the hold
-  step"). Recording while parked is allowed. The run analysis already ignores
-  standstill.
-- **UI:** Add "You can start now and drive off — the recording keeps going
-  until you stop it or 30 minutes pass."
 
 ### Misleads
 
@@ -165,75 +144,6 @@ Fix:
   classification, or treat it as not applicable.
 - **UI:** Replace the EV guided coast-down step with "Lift off and let the car
   coast; avoid regen if your car allows".
-
-**J14 — The speed-source page does not explain consequences.**
-
-Evidence: the captions `settings.speed.gps_caption`,
-`settings.speed.obd_caption` and `settings.speed.manual_caption`.
-
-Fix: add a three-row table on the page. Its text is in
-[user_journeys.md](user_journeys.md) §3.4 (GPS: needs a USB receiver, RPM
-estimated in top gear; OBD-II: Bluetooth ELM327, measures RPM; Manual:
-fixed-speed test only).
-
-**J15 — A manual speed over-claims before the run.**
-
-Analysis is fixed: with a manual speed every source check that is not a
-candidate is `not_testable(manual_speed)`, `manual_speed` is the first weak
-reason, and the report says so (`NOT_TESTABLE_MANUAL_SPEED`,
-`WEAK_MANUAL_SPEED`).
-
-Evidence (what remains):
-
-- `speed_stable` passes immediately at a set speed ≥ 20 km/h (`_speed_check`
-  in the readiness evaluator).
-- `reference_ready` passes when the speed is > 0 (`_reference_check`).
-- Readiness `capabilities` report wheel, driveline and engine as testable with
-  a manual speed.
-
-Fix:
-
-- **UI:** "Speed was entered by hand (fixed {v} km/h); order matching only
-  holds if you drove at exactly that speed." The capability line (J20) shows
-  nothing as testable with a manual speed.
-
-**J20 — Readiness does not state what the run can test.**
-
-Evidence: the readiness copy is limited to
-`dashboard.capture_readiness.reference_ready.ready` ("Live speed and
-rotational reference data are ready") and the reason keys in
-`apps/ui/src/pages/dashboard/readiness.ts`.
-
-Fix:
-
-- **UI:** Add a capability line under readiness. It is driven by the
-  readiness `capabilities` field (`wheel`, `driveline`, `engine`; see
-  [run_lifecycle.md](run_lifecycle.md)) and links each item to its fix ("add final drive",
-  "connect OBD-II"):
-  "This run can test: Wheels/tires ✓ · Driveline ~ estimated final drive ·
-  Engine ~ RPM estimated (top gear only)".
-
-**J24 [F4] — The top-gear assumption is never stated.**
-
-Evidence:
-
-- The guided-drive strings `dashboard.guided.*` have no gear guidance.
-- The band labels `bands.*` are "Engine 1x".
-
-The report half is fixed: `conditions.rpm_source` is `estimated_top_gear`,
-the engine check is `ruled_out_estimated(top_gear_assumed)`, and the report
-prints `RPM_ESTIMATED_TOP_GEAR` and `RULED_OUT_ENGINE_TOP_GEAR` ("no match
-with the engine orders estimated for top gear; lower gears were not
-checked").
-
-Fix:
-
-- **UI:** The sweep step reads "Drive in top gear (or D) — without OBD-II, the
-  engine check assumes top gear." The band legend reads "Engine 1× (est., top
-  gear)", or "(measured)" with OBD.
-- The live bands already use fresh OBD-II RPM, and a missing reference blanks
-  only its own family; the legend should grey out the missing families with
-  "needs final drive" / "needs top gear or OBD-II".
 
 **J28 — History does not show what was tested, and the no-fault text
 over-claims.**
@@ -315,41 +225,17 @@ Fix:
   2010–2017") and resolve the year inside the variant step.
 - **Data:** Extend the year ranges where the drivetrain did not change (WP5).
 
-**J13 — The default source is GPS, but there is no GPS receiver in the BOM and
-the Pi has one USB port.**
+**J13 — GPS stays the default source even when an OBD-II adapter is paired.**
 
-Evidence:
+The BOM now recommends a Bluetooth OBD-II adapter or a USB GPS receiver
+(`hardware/README.md`), and the Speed source tab says "No GPS receiver found"
+when gpsd has never seen one (`gpsReceiverMissing` in
+`apps/ui/src/speed_source.ts`).
 
-- `SpeedSourceConfig.default` (`speed/speed_source_config.py`) is GPS.
-- The `hardware/README.md` BOM has none.
-- The Pi 3 A+ has a single USB 2.0 port, which the USB internet uplink
-  (`settings.internet.hint`) also needs.
+Evidence (what remains): `SpeedSourceConfig.default`
+(`speed/speed_source_config.py`) is GPS.
 
-Fix:
-
-- **Docs and BOM:** List a recommended u-blox USB receiver, or recommend OBD-II
-  as the primary source.
-- **UI:** When GPS is selected and gpsd reports no device: "No GPS receiver
-  found — plug in a USB GPS receiver or switch to OBD-II."
-- Consider defaulting to OBD-II when a paired adapter exists.
-
-**J17 — OBD-II is Bluetooth only, and the page does not say so clearly.**
-
-Evidence: `settings.speed.obd_caption` mentions Bluetooth but not that Wi-Fi
-dongles cannot work; wlan0 is the AP, so Wi-Fi ELM327 dongles cannot connect.
-
-Fix: add a caption, "Bluetooth ELM327 adapters only — Wi-Fi OBD dongles are
-not supported", and put a link to it in the BOM.
-
-**J21 — No sensor layout or mounting guidance.**
-
-Evidence: there are no strings for it in the UI catalogs. Readiness only warns
-below 3 sensors (`domain/capture_readiness.py`,
-`dashboard.capture_readiness.sensors_ready.limited_sensor_coverage`).
-
-Fix: add a "Where to mount" panel in Sensors. It shows the recommended layouts
-with what each can localise ([user_journeys.md](user_journeys.md) §5.2) and the
-mounting rules. The readiness line repeats the layout consequence.
+Fix: consider defaulting to OBD-II when a paired adapter exists.
 
 **J23 — No printed SSID/URL card.**
 
@@ -374,7 +260,7 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP2, WP3 and WP4 have no dependencies.
+- WP2 and WP4 have no dependencies.
 - WP5 and WP6 are independent.
 - WP7 depends on WP2 and WP4.
 
@@ -392,23 +278,6 @@ Dependency order:
 - **Backend tweak in the same PR:** `requires_manual_confirmation` derived
   only from weak fields (`derive_order_analysis_policy` in
   `domain/vehicle_configuration.py`).
-
-### WP3 — Speed source, readiness and dashboard UI
-
-- **Covers:** J13, J14, J15 (readiness and UI), J17, J19, J20, J21, and the
-  live and guided half of J24 (UI side).
-- **Changes:**
-  - Speed-source consequence table and a "no GPS receiver" hint.
-  - Bluetooth-only caption.
-  - Start enabled without the speed dwell.
-  - Capability line.
-  - Sensor layout and mounting panel.
-  - Guided step wording "top gear (or D)".
-  - Band legend "est., top gear" / "measured".
-- **Validation:** UI tests plus the e2e suite (start gating).
-- **Note:** the capability line should use the same statuses as the source
-  checks (`ruled_out_estimated`, `not_testable(manual_speed)`); readiness
-  `capabilities` do not yet reflect weak library ratios or a manual speed.
 
 ### WP4 — Report and History wording
 
@@ -459,6 +328,6 @@ Dependency order:
 ## 3. Suggested order
 
 1. WP2.
-2. WP3 and WP4.
+2. WP4.
 3. WP5 and WP6 at any time.
 4. WP7 last.

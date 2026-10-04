@@ -18,6 +18,7 @@ import {
   withLoggingError,
 } from "../src/pages/dashboard/dashboard_model";
 import {
+  capabilityModel,
   checklist,
   checkDetail,
   type Readiness,
@@ -73,7 +74,7 @@ function readiness(
 const NOT_READY = readiness(false, [
   ["sensors_ready", "pass", "ready", { live_sensor_count: 4 }],
   ["reference_ready", "fail", "speed_source_missing"],
-  ["speed_stable", "fail", "speed_sample_missing"],
+  ["speed_stable", "warn", "speed_sample_missing"],
   ["capture_ready", "fail", "capture_blocked"],
 ]);
 
@@ -92,6 +93,7 @@ function recording(overrides: Partial<RecordingInputs> = {}) {
       carBlock: null,
       health: OK_HEALTH,
       speedUnit: "kmh",
+      gpsReceiverMissing: false,
       connectedText: "1",
       assignedText: "1",
       elapsedText: "0:30",
@@ -141,11 +143,37 @@ describe("recording card", () => {
         variant: "primary",
       },
     });
-    expect(model.checklist?.map((item) => item.checkKey)).toEqual([
-      "reference_ready",
-      "speed_stable",
+    expect(
+      model.checklist?.map((item) => [item.checkKey, item.stateText]),
+    ).toEqual([
+      ["reference_ready", "dashboard.capture_readiness.state.fail"],
+      ["speed_stable", "dashboard.capture_readiness.state.advice"],
     ]);
     expect(model.startDisabled).toBe(true);
+  });
+
+  test("a missing live speed with GPS but no receiver names the receiver", () => {
+    const detail = (gpsReceiverMissing: boolean) =>
+      recording({
+        status: status({ capture_readiness: NOT_READY }),
+        gpsReceiverMissing,
+      }).summaryPanel?.detail;
+    expect(detail(true)).toBe(
+      "speed.gps_no_receiver.title: speed.gps_no_receiver.body",
+    );
+    expect(detail(false)).toBeNull();
+  });
+
+  test("a parked car can start: unsteady speed is only advice", () => {
+    const parked = readiness(true, [
+      ["sensors_ready", "pass", "ready", { live_sensor_count: 4 }],
+      ["reference_ready", "pass", "ready"],
+      ["speed_stable", "warn", "speed_too_low", { minimum_speed_kmh: 30 }],
+      ["capture_ready", "pass", "ready_with_warnings"],
+    ]);
+    const model = recording({ status: status({ capture_readiness: parked }) });
+    expect(model.startDisabled).toBe(false);
+    expect(model.setupMode).toBe(false);
   });
 
   test("a missing active car points at the car settings", () => {
@@ -438,6 +466,77 @@ describe("readiness text", () => {
       ),
     ).toEqual(["reference_ready", "speed_stable"]);
     expect(checklist(null, false, t, formatInt, "kmh")).toEqual([]);
+  });
+});
+
+describe("capability line", () => {
+  const marks = (model: ReturnType<typeof capabilityModel>) =>
+    model?.items.map((item) => [
+      item.family,
+      item.mark,
+      item.note,
+      item.fix?.target ?? null,
+    ]);
+
+  test("is absent without an active car", () => {
+    expect(capabilityModel(null, "80 km/h", t)).toBeNull();
+  });
+
+  test("marks tested, estimated and untested families with their fix", () => {
+    const model = capabilityModel(
+      {
+        wheel: "ok",
+        driveline: "missing_final_drive",
+        engine: "estimated_top_gear",
+      },
+      "80 km/h",
+      t,
+    );
+    expect(marks(model)).toEqual([
+      ["wheel", "ok", null, null],
+      [
+        "driveline",
+        "no",
+        "dashboard.capabilities.driveline.missing_final_drive",
+        "cars",
+      ],
+      [
+        "engine",
+        "caveat",
+        "dashboard.capabilities.engine.estimated_top_gear",
+        "speed_source",
+      ],
+    ]);
+    expect(model?.manualNote).toBeNull();
+    expect(
+      marks(
+        capabilityModel(
+          { wheel: "ok", driveline: "ok", engine: "measured" },
+          "80 km/h",
+          t,
+        ),
+      )?.map(([, mark]) => mark),
+    ).toEqual(["ok", "ok", "ok"]);
+  });
+
+  test("a typed-in speed tests nothing for sure and says so once", () => {
+    const model = capabilityModel(
+      {
+        wheel: "manual_speed",
+        driveline: "manual_speed",
+        engine: "manual_speed",
+      },
+      "80 km/h",
+      t,
+    );
+    expect(model?.items.map((item) => [item.mark, item.fix])).toEqual([
+      ["no", null],
+      ["no", null],
+      ["no", null],
+    ]);
+    expect(model?.manualNote).toBe(
+      'dashboard.capabilities.manual_note:{"speed":"80 km/h"}',
+    );
   });
 });
 

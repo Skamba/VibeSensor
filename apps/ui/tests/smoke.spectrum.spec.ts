@@ -64,8 +64,7 @@ function client(
   };
 }
 
-// The spectrum card only shows once an active car and ready capture
-// readiness move the dashboard out of its setup layout.
+// An active car and ready capture readiness: the order bands can draw.
 async function installReadyDashboardRoutes(page: Page): Promise<void> {
   await installCommonRoutes(page, {
     settingsHandler: async (route: Route) => {
@@ -148,8 +147,8 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
         rotational_speeds: {
           basis_speed_source: "gps",
           wheel: { rpm: 700, mode: "calculated", reason: null },
-          driveshaft: { rpm: null, mode: null, reason: "no_car" },
-          engine: { rpm: null, mode: null, reason: "no_car" },
+          driveshaft: { rpm: null, mode: null, reason: "missing_final_drive" },
+          engine: { rpm: null, mode: null, reason: "missing_final_drive" },
           order_bands: [{ key: "wheel_1x", center_hz: 11.7, tolerance: 0.08 }],
         },
       },
@@ -170,6 +169,16 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
   await legend.locator(".legend-item--reset").click();
   await expect(frontLeft).toHaveAttribute("aria-pressed", "false");
 
+  // The band status names what each family needs.
+  const bandStatus = page.locator("#bandStatus");
+  await expect(
+    bandStatus.locator('[data-band-family="wheel"]'),
+  ).toHaveAttribute("data-band-family-state", "on");
+  await expect(
+    bandStatus.locator('[data-band-family="driveline"]'),
+  ).toContainText("needs final drive");
+  await expect(bandStatus.locator(".band-status__message")).toHaveCount(0);
+
   const bandToggle = page.locator("#spectrumBandToggle");
   await expect(bandToggle).toBeVisible();
   await expect(page.locator("#bandLegend")).toBeHidden();
@@ -184,6 +193,31 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
   }
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator("#spectrumInspector")).toContainText("Hz");
+});
+
+test("journey: without a car the spectrum still draws and says why there are no bands", async ({
+  page,
+}) => {
+  await bootLiveDashboard(page, {
+    fakeWebSocket: {
+      payload: {
+        speed_mps: 0,
+        clients: [client("001122334455", "Front Left", "front_left_wheel")],
+        spectra: {
+          clients: { "001122334455": spectrumSeries(12, 0.08, 31) },
+        },
+      },
+    },
+  });
+  await expect(page.locator(".realtime-logging-shell")).toHaveAttribute(
+    "data-layout",
+    "setup",
+  );
+  await expect(page.locator("#specChart canvas")).toBeVisible();
+  await expect.poll(() => paintedPixelCount(page)).toBeGreaterThan(500);
+  await expect(page.locator("#bandStatus")).toContainText(
+    "Order bands need an active car",
+  );
 });
 
 test("journey: spectrum explains when connected sensors have no frames yet", async ({
