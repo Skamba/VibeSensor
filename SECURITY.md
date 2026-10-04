@@ -26,6 +26,26 @@ call mutating endpoints. Secure deployments should still set a hotspot PSK,
 limit who can join the local network, and avoid exposing the server outside the
 trusted appliance network.
 
+## SSH access (accepted risk)
+
+Generated Pi images enable SSH with password login for the `pi` user, using the
+standard default password documented in
+[infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md). This is a
+deliberate owner decision, not an oversight:
+
+- VibeSensor is a short-lived diagnosis tool. It runs for a test drive or a
+  workshop session, then gets unplugged.
+- It has no internet connection of its own. SSH is only reachable from devices
+  that have joined the Pi's hotspot, or over a temporary Wi-Fi/USB uplink that
+  the operator sets up for an update.
+- A known password keeps recovery simple: an owner or mechanic can always get in
+  over the hotspot without keys or per-device secrets.
+
+Reports that only say "default SSH password" or "password authentication is
+enabled" are therefore out of scope. Builders who want something stricter can
+set their own password at build time (`VS_FIRST_USER_PASS`) or provision key-only
+SSH; see the image README.
+
 ## Reporting a vulnerability
 
 Use GitHub private vulnerability reporting from this repository's Security tab

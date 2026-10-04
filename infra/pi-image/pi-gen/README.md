@@ -112,7 +112,7 @@ Override at build time if needed:
 VS_FIRST_USER_NAME=pi VS_FIRST_USER_PASS='your-password' ./infra/pi-image/pi-gen/build.sh
 ```
 
-If you require key-only SSH, provision authorized keys during image customization and validate they exist; this repo defaults to password auth for recovery-oriented hotspot deployments.
+Password SSH with the standard default password is the accepted default, not a gap to fix: VibeSensor is a short-lived diagnosis tool without its own internet connection, so SSH is only reachable from the hotspot (or a temporary update uplink), and a known password keeps recovery simple. See [SECURITY.md](../../../SECURITY.md#ssh-access-accepted-risk). If you require key-only SSH, provision authorized keys during image customization and validate they exist.
 
 ## Failure recovery
 
