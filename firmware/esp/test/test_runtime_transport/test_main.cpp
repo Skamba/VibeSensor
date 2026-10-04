@@ -30,7 +30,7 @@ FrameQueueState make_queue_state(DataFrame* frames, size_t capacity) {
 void append_full_frame(FrameQueueState& state,
                        RuntimeStatus& status,
                        int16_t sample_base,
-                       uint64_t first_due_us,
+                       uint64_t first_sample_us,
                        int64_t clock_offset_us) {
   for (uint16_t i = 0; i < vibesensor::runtime::kFrameSamples; ++i) {
     const int16_t value = static_cast<int16_t>(sample_base + static_cast<int16_t>(i));
@@ -39,7 +39,8 @@ void append_full_frame(FrameQueueState& state,
                                        value,
                                        static_cast<int16_t>(value + 1),
                                        static_cast<int16_t>(value + 2),
-                                       first_due_us + i,
+                                       first_sample_us + i,
+                                       false,
                                        clock_offset_us);
   }
 }

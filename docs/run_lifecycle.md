@@ -112,12 +112,16 @@ During recording:
 1. capture one last pending flush if new data exists
 2. finalize the raw artifact bundle and persist its compact manifest on the run
    row when raw chunks were captured
-3. ask `RunPersistenceWriter.ready_for_analysis()` whether the run has both a
-   created history row and at least one written sample
-4. call `RunPersistenceWriter.finalize_run()`
+3. call `RunPersistenceWriter.finalize_run()`, which first creates the history
+   row if no sample ever did
+4. ask `RunPersistenceWriter.ready_for_analysis()` whether the run has a
+   created history row
 5. call `RunLifecycleState.stop()` and clear the active run context
 6. reset the persistence helper for the next live run
 7. schedule post-analysis only when `ready_for_analysis()` returned the run ID
+
+A run that collected no samples is still analysed: post-analysis stores it in
+History with the error "No samples collected during run", so it never vanishes.
 
 If `finalize_run()` fails, `RunRecorder` still schedules post-analysis when the
 run was otherwise ready. The persistence layer handles that fallback path by

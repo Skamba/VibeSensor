@@ -10,6 +10,7 @@ import pytest
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.sensor_timing import SensorTimingGuard
 from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
@@ -141,6 +142,10 @@ class TestBuildSystemHealthSnapshotOk:
             server_queue_drops=0,
             parse_errors=0,
             duplicates_received=3,
+            # Stamps 14.5 s behind real time at 742 samples/s (firmware cf117a43e).
+            timing_guard=SensorTimingGuard(
+                state="timestamp_lag", min_lag_us=14_500_000, effective_rate_hz=742.0
+            ),
         )
         ingest_diagnostics = IngestDiagnosticsCollector()
         ingest_diagnostics.note_udp_processed(
@@ -188,6 +193,11 @@ class TestBuildSystemHealthSnapshotOk:
         assert client["frames_dropped"] == 2
         assert client["queue_overflow_drops"] == 1
         assert client["duplicates_received"] == 3
+        assert client["timing_state"] == "timestamp_lag"
+        assert client["timing_min_lag_ms"] == 14_500.0
+        assert client["effective_sample_rate_hz"] == 742.0
+        assert "sensor_timestamp_lag" in result["degradation_reasons"]
+        assert result["status"] == "warn"
 
 
 _HEALTH_MUTATIONS: dict[str, Callable[[RuntimeHealthState], None]] = {

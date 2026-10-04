@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +20,7 @@ from test_support.obd_runtime import build_connected_obd_runtime_parts
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.history.history_db import HistoryDB
+from vibesensor.ingest.sensor_timing import SensorTimingGuard
 from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
@@ -52,6 +53,7 @@ class _FakeRecord:
     queue_overflow_drops: int = 0
     server_queue_drops: int = 0
     parse_errors: int = 0
+    timing_guard: SensorTimingGuard = field(default_factory=SensorTimingGuard)
 
 
 class _FakeRegistry:

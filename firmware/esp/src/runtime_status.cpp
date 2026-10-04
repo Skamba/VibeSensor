@@ -38,8 +38,8 @@ void report_runtime_status(RuntimeStatus& status,
   Serial.printf(
       "status wifi=%d q=%u/%u drop={queue:%lu stale:%lu retry:%lu} "
       "tx_fail={pack:%lu begin:%lu end:%lu} "
-      "sensor={err:%lu stat:%lu data:%lu trunc:%lu bus:%lu/%lu reinit:%lu/%lu miss:%lu late:%lu handoff:%lu "
-      "sq:%u/%u prefetch:%u refill:%u/%u} "
+      "sensor={err:%lu stat:%lu data:%lu ovf:%lu lost:%lu resync:%lu bus:%lu/%lu "
+      "reinit:%lu/%lu handoff:%lu sq:%u/%u fifo:%u read:%lu samples:%lu rate_mhz:%lu clk_err_us:%ld} "
       "wifi_retry={attempts:%lu fail:%lu} sync={offset_us:%lld rtt_us:%lu} "
       "parse={ctrl:%lu ack:%lu} last_error=%u@%lu\n",
       WiFi.status(),
@@ -54,19 +54,21 @@ void report_runtime_status(RuntimeStatus& status,
       static_cast<unsigned long>(sampling.sensor_read_errors),
       static_cast<unsigned long>(sampling.sensor_fifo_status_failures),
       static_cast<unsigned long>(sampling.sensor_fifo_data_failures),
-      static_cast<unsigned long>(sampling.sensor_fifo_truncated),
+      static_cast<unsigned long>(sampling.sensor_fifo_overflows),
+      static_cast<unsigned long>(sampling.sampling_lost_samples),
+      static_cast<unsigned long>(sampling.sampling_clock_resyncs),
       static_cast<unsigned long>(sampling.sensor_bus_recovery_success),
       static_cast<unsigned long>(sampling.sensor_bus_recovery_attempts),
       static_cast<unsigned long>(sampling.sensor_reinit_success),
       static_cast<unsigned long>(sampling.sensor_reinit_attempts),
-      static_cast<unsigned long>(sampling.sampling_missed_samples),
-      static_cast<unsigned long>(sampling.sampling_recovery_abandons),
       static_cast<unsigned long>(sampling.sampling_handoff_overflow_drops),
       static_cast<unsigned>(sampling.sample_handoff_size),
       static_cast<unsigned>(sampling.sample_handoff_capacity),
-      static_cast<unsigned>(sampling.sensor_prefetch_count),
-      static_cast<unsigned>(sampling.last_refill_count),
-      static_cast<unsigned>(sampling.last_refill_request),
+      static_cast<unsigned>(sampling.last_fifo_entries),
+      static_cast<unsigned long>(sampling.sensor_samples_total),
+      static_cast<unsigned long>(sampling.samples_total),
+      static_cast<unsigned long>(sampling.sensor_rate_mhz),
+      static_cast<long>(sampling.sample_clock_error_us),
       static_cast<unsigned long>(status.wifi_reconnect_attempts),
       static_cast<unsigned long>(status.wifi_connect_failures),
       static_cast<long long>(status.sync_offset_us),

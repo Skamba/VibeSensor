@@ -83,10 +83,14 @@ void append_sample(FrameQueueState& state,
                    int16_t x,
                    int16_t y,
                    int16_t z,
-                   uint64_t sample_due_us,
+                   uint64_t sample_us,
+                   bool gap_before,
                    int64_t clock_offset_us) {
+  if (gap_before) {
+    enqueue_frame(state, status, clock_offset_us);
+  }
   if (state.build_count == 0) {
-    state.build_t0_us = sample_due_us;
+    state.build_t0_us = sample_us;
   }
 
   const size_t idx = static_cast<size_t>(state.build_count) * kAxesPerSample;

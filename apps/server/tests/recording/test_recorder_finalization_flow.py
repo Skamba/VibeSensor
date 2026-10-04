@@ -110,15 +110,17 @@ class _ZeroAppendHistoryDB(_DelegatingHistoryDB):
             "persistence_finalize_unsettled",
         ),
         (
+            # The history run exists but holds no rows: it is still analysed, so
+            # History records it with the "no samples" error.
             _ZeroAppendHistoryDB,
             "not_configured",
             {
                 "FlushPendingRowsStage": "skipped",
                 "FinalizeRawCaptureStage": "skipped",
                 "FinalizePersistenceStage": "ok",
-                "ResolvePostAnalysisCandidateStage": "skipped",
+                "ResolvePostAnalysisCandidateStage": "ok",
             },
-            "history_not_ready",
+            "ready",
         ),
     ],
 )

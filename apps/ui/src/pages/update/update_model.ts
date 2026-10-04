@@ -88,6 +88,8 @@ const HEALTH_REASON_KEYS = new Set([
   "server_queue_drops",
   "parse_errors",
   "persistence_write_error",
+  "sensor_timestamp_lag",
+  "sensor_rate_mismatch",
 ]);
 const SUBSYSTEM_RANK = { ready: 0, degraded: 1, unhealthy: 2 } as const;
 

@@ -11,9 +11,9 @@ dedicated sampling task.
   - frame size is clamped so DATA packets always fit UDP MTU (`<= 1500` bytes)
 - Hardened ADXL345 reads:
   - I2C register and burst reads now return explicit success/failure
-  - FIFO truncation and I2C errors are detected and counted
+  - FIFO overflows and I2C errors are detected and counted
   - repeated sensor read errors trigger bounded sensor re-init attempts
-  - staged refill recovery now does one immediate retry, then one fast
+  - staged read recovery does one immediate retry, then one fast
     bus-level recovery + retry, before escalating to the heavier reinit path
   - FIFO status-read failures and FIFO data-read failures are tracked separately
 - Hardened Wi-Fi reconnect behavior:
@@ -31,29 +31,25 @@ dedicated sampling task.
   - firmware now advertises HELLO-ack capability, waits for a server `HELLO_ACK`
     before sending DATA frames, and keeps the existing periodic HELLO beacons for
     control-port discovery and liveness
-- Fixed sampling missed-sample double-count:
-  - when `sample_once()` returns false (sensor unavailable), the code now advances
-    `g_next_sample_due_us` before breaking so the post-loop lag detector does not
-    re-count the same slot as an additional missed sample
 - Moved sampling onto a dedicated periodic task with explicit ownership:
-  - the sampling task is now the sole owner of `Wire`, ADXL345 access, the
-    prefetch ring, and the sample cadence state
+  - the sampling task is the sole owner of `Wire`, ADXL345 access, and the
+    sample clock
   - the main loop only drains produced samples, builds frames, and services
     transport, Wi-Fi, LED, and periodic logging
   - a bounded sample handoff queue now forms the producer/consumer boundary
   - the sampling task is pinned with an explicit core selection policy instead
     of inheriting whatever core happened to run startup; startup logging now
     prints the loop/current/sampling core choice once for validation
-- Replaced the old fixed catch-up budget with backlog-aware late handling:
-  - recovery now depends on real context like prefetch occupancy, recent refill
-    outcome, and handoff headroom instead of one wall-clock budget constant
-  - missed samples are declared only after the code decides recovery is no
-    longer credible for the current backlog
-- Deepened deterministic prefetch behaviour:
-  - steady-state refills target `24` buffered samples instead of riding the low
-    end of the `32`-sample software buffer
-  - late or refill-shortfall conditions target the full `32`-sample buffer to
-    preserve recovery margin when the sensor path is under pressure
+- Replaced timer-paced sampling with sensor-paced sampling (see README
+  "Sample timing"):
+  - the old per-sample one-shot timer was re-armed with a relative step, so
+    callback latency stretched every period: ~742-758 samples/s were delivered
+    while `t0_us` advanced on the nominal 800 Hz schedule (~55 ms/s behind real
+    time) and the ADXL345 FIFO overflowed silently
+  - the task now drains the whole FIFO on a dithered poll interval, stamps
+    every sample with a second-order sample clock locked to the ESP clock, and
+    resamples onto an exact grid of the declared rate; FIFO overflows and the
+    samples they lost are counted and start a new frame
 - Fixed ignored `beginPacket()` return value in `send_hello()` and `send_ack()`:
   - both functions now check whether `beginPacket()` succeeded before calling
     `write()` / `endPacket()`, preventing writes into an invalid UDP send state
@@ -82,7 +78,7 @@ dedicated sampling task.
     programmatically so erasing is unnecessary; changed to `eraseap=false`
 - Fixed partial sensor read results silently discarded:
   - when `read_samples()` returned both `io_error=true` and a non-zero `read_count`
-    (valid samples delivered before the I2C failure), the prefetch ring ignored them
+    (valid samples delivered before the I2C failure), the sampling path ignored them
     entirely due to `else if (read_count > 0)` gating; changed to process valid
     partial samples unconditionally while keeping the consecutive-error counter
     update only on fully clean reads (no io_error) as before
@@ -128,15 +124,19 @@ Key fields:
 - `tx_fail.pack|begin|end`: packet encoding / UDP begin / UDP send failures
 - `sensor.err`: sensor I2C read failures
 - `sensor.stat|data`: FIFO status-register failures vs FIFO data-read failures
-- `sensor.trunc`: FIFO truncation events (reader could not consume full FIFO depth in one pass)
+- `sensor.ovf`: polls that found the ADXL345 FIFO full (one at boot is normal:
+  the FIFO fills before the first poll)
+- `sensor.lost`: samples lost to FIFO overflows, as measured by the sample clock
+- `sensor.resync`: sample-clock restarts (each starts a new frame)
 - `sensor.bus`: successful fast bus recoveries / attempted bus recoveries
 - `sensor.reinit`: `successes/attempts` of ADXL reinitialization after repeated errors
-- `sensor.miss`: missed/skipped sampling slots
-- `sensor.late`: backlog-abandon events where recovery was judged no longer credible
 - `sensor.handoff`: samples dropped because the sample handoff queue was already full
 - `sensor.sq`: current handoff-queue fill / capacity
-- `sensor.prefetch`: current software prefetch occupancy
-- `sensor.refill`: `granted/requested` samples from the most recent refill attempt
+- `sensor.fifo`: FIFO entries found by the latest poll
+- `sensor.read` / `sensor.samples`: samples read from the sensor / resampled
+  samples produced (800 per second)
+- `sensor.rate_mhz`: the sensor's own sample rate as the clock tracks it (mHz)
+- `sensor.clk_err_us`: latest FIFO-depth timing estimate minus the clock
 - `wifi_retry.attempts|fail`: reconnect attempts and initial connect failures
 - `parse.ctrl|ack`: invalid control command / DATA_ACK packets
 - `last_error`: latest error code and timestamp (ms)

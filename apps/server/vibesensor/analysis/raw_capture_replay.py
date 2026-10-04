@@ -89,6 +89,7 @@ class RawReplaySummary:
     sync_unverified_sensor_count: int
     stale_sync_sensor_count: int
     high_rtt_sensor_count: int
+    timing_unreliable_sensor_count: int
     replay_confidence: RawReplayConfidence
     raw_capture_mode: RawCaptureMode
     raw_capture_loss_policy_severity: str = "ok"
@@ -154,6 +155,7 @@ class _RawTimelineSummary:
     sync_unverified_sensor_count: int
     stale_sync_sensor_count: int
     high_rtt_sensor_count: int
+    timing_unreliable_sensor_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,6 +263,7 @@ def _assemble_raw_replay_result(
             sync_unverified_sensor_count=timeline_summary.sync_unverified_sensor_count,
             stale_sync_sensor_count=timeline_summary.stale_sync_sensor_count,
             high_rtt_sensor_count=timeline_summary.high_rtt_sensor_count,
+            timing_unreliable_sensor_count=timeline_summary.timing_unreliable_sensor_count,
             replay_confidence=replay_confidence,
             raw_capture_mode=raw_capture_mode,
             raw_capture_loss_policy_severity=loss_policy.severity,
@@ -293,6 +296,7 @@ def _assemble_raw_replay_result(
                 sync_unverified_sensor_count=timeline_summary.sync_unverified_sensor_count,
                 stale_sync_sensor_count=timeline_summary.stale_sync_sensor_count,
                 high_rtt_sensor_count=timeline_summary.high_rtt_sensor_count,
+                timing_unreliable_sensor_count=timeline_summary.timing_unreliable_sensor_count,
                 loss_policy=loss_policy,
             ),
         ),
@@ -487,6 +491,7 @@ def _build_raw_capture_unavailable_replay_result(
             sync_unverified_sensor_count=0,
             stale_sync_sensor_count=0,
             high_rtt_sensor_count=0,
+            timing_unreliable_sensor_count=0,
             replay_confidence="unavailable",
             raw_capture_mode="summary_only",
             udp_ingest_queue_drop_count=0,
@@ -609,6 +614,12 @@ def _summarize_raw_timelines(
             for timeline in timelines.values()
             if timeline.clock_sync is not None and timeline.clock_sync.proof_state == "high_rtt"
         ),
+        timing_unreliable_sensor_count=sum(
+            1
+            for timeline in timelines.values()
+            if timeline.clock_sync is not None
+            and timeline.clock_sync.proof_state == "timing_unreliable"
+        ),
     )
 
 
@@ -660,6 +671,7 @@ def _build_fft_unavailable_replay_result(
             sync_unverified_sensor_count=0,
             stale_sync_sensor_count=0,
             high_rtt_sensor_count=0,
+            timing_unreliable_sensor_count=0,
             replay_confidence="fallback",
             raw_capture_mode="summary_only",
             raw_capture_loss_policy_severity=loss_policy.severity,
@@ -690,6 +702,7 @@ def _build_fft_unavailable_replay_result(
                 sync_unverified_sensor_count=0,
                 stale_sync_sensor_count=0,
                 high_rtt_sensor_count=0,
+                timing_unreliable_sensor_count=0,
                 loss_policy=loss_policy,
             ),
         ),
@@ -818,6 +831,7 @@ def _build_replay_warnings(
     sync_unverified_sensor_count: int,
     stale_sync_sensor_count: int,
     high_rtt_sensor_count: int,
+    timing_unreliable_sensor_count: int,
     loss_policy: RawCaptureLossPolicyAssessment | None = None,
 ) -> tuple[RunContextWarning, ...]:
     if legacy_sensor_count > 0 and raw_backed_summary_row_count <= 0:
@@ -846,7 +860,8 @@ def _build_replay_warnings(
             0,
             sync_unverified_sensor_count
             - max(0, stale_sync_sensor_count)
-            - max(0, high_rtt_sensor_count),
+            - max(0, high_rtt_sensor_count)
+            - max(0, timing_unreliable_sensor_count),
         )
         warnings.append(
             RunContextWarning(
@@ -860,6 +875,7 @@ def _build_replay_warnings(
                     missing_sync=str(missing_sync_sensor_count),
                     stale=str(max(0, stale_sync_sensor_count)),
                     high_rtt=str(max(0, high_rtt_sensor_count)),
+                    timing=str(max(0, timing_unreliable_sensor_count)),
                 ),
             )
         )

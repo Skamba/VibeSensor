@@ -114,7 +114,10 @@ proof** captured at finalize time:
 - the last successful sync-ack monotonic timestamp,
 - the applied offset and measured RTT,
 - the proof status (`verified`, `stale_sync`, `high_rtt`,
-  `missing_sync`, or `missing_registry_record`).
+  `timing_unreliable`, `missing_sync`, or `missing_registry_record`).
+  `timing_unreliable` means the sensor was synced but the server-side
+  timing guard (see "Sensor timing guard" below) flagged its stamps as
+  falling behind real time or its delivered rate as off from the declared one.
 
 Raw capture only stores chunks stamped on the server clock. The registry
 marks a sensor clock-synced once the sensor acknowledges a sync command
@@ -152,7 +155,7 @@ intact windows raw-backed.
 
 Replay only treats `t0_us` as server-monotonic when that proof is
 explicitly `verified`. Older artifacts without the per-sensor proof, or
-newer artifacts whose proof is stale/missing/high-RTT, fall back to the
+newer artifacts whose proof is stale/missing/high-RTT/timing-unreliable, fall back to the
 persisted summary sample instead of guessing raw alignment. Gaps,
 overlaps, dropped chunks, and other incomplete raw coverage still fall
 back per window and emit deterministic warnings.
@@ -168,6 +171,37 @@ Simulator recordings are therefore raw-backed like real sensors. As with
 real hardware, the offset is applied from the second sync exchange (2–4 s
 after a sensor connects); a recording started earlier drops each
 sensor's pre-sync chunks and replays from its first synced chunk.
+
+### 7. Sensor Timing Guard
+
+A sync offset only maps the sensor's clock onto the server clock; it does not
+prove the sensor stamps its samples correctly. Firmware that stamped `t0_us`
+from a nominal 800 Hz schedule while its ADXL345 delivered ~740 samples/s
+fell ~55 ms per second behind real time; summary rows were then skipped (their
+analysis window started before the run) and a 15 s recording ended with no
+samples. The registry therefore checks every synced sensor in 20 s windows of
+receive time (`vibesensor/ingest/sensor_timing.py`):
+
+- **arrival lag**: receive time minus the time of the frame's last sample, as
+  the window minimum (strips Wi-Fi and retransmit delays). Above 1 s (frames
+  are held back at most 0.75 s), or more than 0.25 s ahead, the state is
+  `timestamp_lag`.
+- **effective rate**: samples delivered per second of receive time, frames
+  lost in transit counted from sequence gaps. More than 2 % off the declared
+  rate is `rate_mismatch`.
+
+A flagged sensor shows up as the health degradation reason
+`sensor_timestamp_lag` / `sensor_rate_mismatch` (with per-client
+`timing_state`, `timing_min_lag_ms` and `effective_sample_rate_hz` under
+`ingest.clients`), fails the `sensors_ready` capture-readiness check with
+`sensor_timing_unreliable`, and gets the raw-capture clock proof
+`timing_unreliable`. A run that still ends without samples is recorded in
+History with the error "No samples collected during run".
+
+The firmware side (`firmware/esp/lib/sample_timing/sample_timing.h`) stamps
+each sample from the sensor's measured period, locked to the ESP clock, and
+resamples onto an exact grid of the declared rate, so `t0_us` is the real time
+of the frame's first sample and the declared rate is the delivered one.
 
 ## Fallback Behaviour
 

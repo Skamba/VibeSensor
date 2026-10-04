@@ -29,6 +29,7 @@ const KNOWN_REASONS: Record<string, readonly string[]> = {
     "no_live_sensors",
     "sensor_locations_missing",
     "recent_integrity_events",
+    "sensor_timing_unreliable",
     "limited_sensor_coverage",
   ],
   reference_ready: [
@@ -85,6 +86,10 @@ export function checkDetail(
     if (reason === "sensor_locations_missing") {
       vars = {
         count: formatInt(detailCount(check, "unassigned_sensor_count")),
+      };
+    } else if (reason === "sensor_timing_unreliable") {
+      vars = {
+        count: formatInt(detailCount(check, "timing_unreliable_sensor_count")),
       };
     } else if (reason === "recent_integrity_events") {
       vars = {

@@ -19,62 +19,6 @@ constexpr uint16_t clamp_sample_rate(uint16_t configured_hz,
              : (configured_hz > max_hz ? max_hz : configured_hz);
 }
 
-struct SamplingIntervalSchedule {
-  uint32_t sample_rate_hz = 0;
-  uint64_t base_interval_us = 0;
-  uint32_t remainder_us = 0;
-  uint32_t accumulated_remainder_us = 0;
-};
-
-inline SamplingIntervalSchedule make_sampling_interval_schedule(uint32_t sample_rate_hz) {
-  SamplingIntervalSchedule schedule{};
-  schedule.sample_rate_hz = sample_rate_hz;
-  if (sample_rate_hz == 0U) {
-    return schedule;
-  }
-  schedule.base_interval_us = 1000000ULL / sample_rate_hz;
-  schedule.remainder_us = static_cast<uint32_t>(1000000ULL % sample_rate_hz);
-  return schedule;
-}
-
-inline uint64_t sampling_schedule_advance_us(SamplingIntervalSchedule& schedule,
-                                             uint64_t slot_count = 1U) {
-  if (slot_count == 0U || schedule.sample_rate_hz == 0U) {
-    return 0;
-  }
-  const uint64_t total_remainder =
-      static_cast<uint64_t>(schedule.accumulated_remainder_us) +
-      (static_cast<uint64_t>(schedule.remainder_us) * slot_count);
-  const uint64_t carry_us = total_remainder / schedule.sample_rate_hz;
-  schedule.accumulated_remainder_us =
-      static_cast<uint32_t>(total_remainder % schedule.sample_rate_hz);
-  return (schedule.base_interval_us * slot_count) + carry_us;
-}
-
-inline uint64_t sampling_slots_due(uint64_t now_us,
-                                   uint64_t next_due_us,
-                                   uint64_t step_us) {
-  if (step_us == 0 || now_us < next_due_us) {
-    return 0;
-  }
-  return ((now_us - next_due_us) / step_us) + 1;
-}
-
-inline uint64_t sampling_slots_due(uint64_t now_us,
-                                   uint64_t next_due_us,
-                                   SamplingIntervalSchedule schedule) {
-  if (schedule.sample_rate_hz == 0U || next_due_us == 0U || now_us < next_due_us) {
-    return 0;
-  }
-  uint64_t due_slots = 1;
-  uint64_t candidate_due_us = next_due_us + sampling_schedule_advance_us(schedule);
-  while (candidate_due_us <= now_us) {
-    due_slots++;
-    candidate_due_us += sampling_schedule_advance_us(schedule);
-  }
-  return due_slots;
-}
-
 enum class SensorFailureClass : uint8_t {
   kNone = 0,
   kRegisterAccess = 1,
@@ -97,18 +41,16 @@ inline bool sensor_failure_requires_forced_reinit(SensorFailureClass failure_cla
          failure_class == SensorFailureClass::kSensorConfiguration;
 }
 
-struct SamplingRefillRetryStep {
+struct SensorReadRetryStep {
   bool retry_read = false;
   bool recover_bus = false;
 };
 
-inline SamplingRefillRetryStep sampling_refill_retry_step(uint8_t exhausted_failures,
-                                                          SensorFailureClass failure_class,
-                                                          size_t requested_samples,
-                                                          size_t recovered_samples) {
-  SamplingRefillRetryStep step{};
-  if (requested_samples == 0 || recovered_samples >= requested_samples ||
-      !sensor_failure_is_communication(failure_class)) {
+// A failed FIFO drain is retried once, then once more after a bus recovery.
+inline SensorReadRetryStep sensor_read_retry_step(uint8_t exhausted_failures,
+                                                  SensorFailureClass failure_class) {
+  SensorReadRetryStep step{};
+  if (!sensor_failure_is_communication(failure_class)) {
     return step;
   }
   if (exhausted_failures == 0U) {
@@ -120,92 +62,6 @@ inline SamplingRefillRetryStep sampling_refill_retry_step(uint8_t exhausted_fail
     step.recover_bus = true;
   }
   return step;
-}
-
-struct SamplingRefillPlan {
-  size_t request_samples = 0;
-  size_t target_prefetch = 0;
-  bool aggressive = false;
-};
-
-inline SamplingRefillPlan sampling_prefetch_refill_plan(size_t prefetch_count,
-                                                        size_t prefetch_capacity,
-                                                        size_t low_water_samples,
-                                                        size_t steady_target_samples,
-                                                        size_t late_target_samples,
-                                                        size_t due_slots,
-                                                        bool recent_refill_shortfall) {
-  SamplingRefillPlan plan{};
-  if (prefetch_capacity <= prefetch_count) {
-    return plan;
-  }
-
-  const bool late = due_slots > 1 || recent_refill_shortfall;
-  const size_t trigger = late ? steady_target_samples : low_water_samples;
-  if (prefetch_count > trigger) {
-    return plan;
-  }
-
-  const size_t desired_target = late ? late_target_samples : steady_target_samples;
-  const size_t capped_target =
-      desired_target > prefetch_capacity ? prefetch_capacity : desired_target;
-  if (capped_target <= prefetch_count) {
-    return plan;
-  }
-
-  plan.target_prefetch = capped_target;
-  plan.request_samples = capped_target - prefetch_count;
-  plan.aggressive = late;
-  return plan;
-}
-
-struct SamplingRecoveryPlan {
-  size_t attempt_slots = 0;
-  size_t missed_slots = 0;
-};
-
-inline bool sampling_recovery_abandoned(size_t missed_slots) {
-  return missed_slots > 1U;
-}
-
-inline SamplingRecoveryPlan sampling_recovery_plan(size_t due_slots,
-                                                   size_t handoff_headroom,
-                                                   size_t prefetch_count,
-                                                   size_t last_refill_request,
-                                                   size_t last_refill_count) {
-  SamplingRecoveryPlan plan{};
-  if (due_slots == 0) {
-    return plan;
-  }
-  if (handoff_headroom == 0) {
-    plan.missed_slots = due_slots;
-    return plan;
-  }
-
-  const size_t deliverable_slots = due_slots < handoff_headroom ? due_slots : handoff_headroom;
-  if (due_slots == 1) {
-    plan.attempt_slots = deliverable_slots;
-    plan.missed_slots = due_slots - deliverable_slots;
-    return plan;
-  }
-  if (prefetch_count >= deliverable_slots) {
-    plan.attempt_slots = deliverable_slots;
-    plan.missed_slots = due_slots - deliverable_slots;
-    return plan;
-  }
-  if (last_refill_count == 0) {
-    plan.attempt_slots = prefetch_count > 0 ? 1U : 0U;
-    plan.missed_slots = due_slots - plan.attempt_slots;
-    return plan;
-  }
-  if (last_refill_count < last_refill_request && prefetch_count == 0) {
-    plan.missed_slots = due_slots;
-    return plan;
-  }
-
-  plan.attempt_slots = deliverable_slots;
-  plan.missed_slots = due_slots - deliverable_slots;
-  return plan;
 }
 
 inline uint16_t clamp_frame_samples(uint16_t configured_samples,

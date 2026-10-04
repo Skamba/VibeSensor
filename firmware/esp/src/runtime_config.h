@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "adxl345.h"
 #include "reliability.h"
 #include "vibesensor_contracts.h"
 #include "vibesensor_proto.h"
@@ -114,10 +115,20 @@ constexpr int kDefaultSamplingTaskCore =
 #endif
 constexpr int kSamplingTaskCore = VIBESENSOR_SAMPLING_TASK_CORE;
 
-constexpr size_t kSensorPrefetchSamples = 32;
-constexpr size_t kSensorPrefetchLowWaterSamples = 16;
-constexpr size_t kSensorPrefetchSteadyTargetSamples = 24;
-constexpr size_t kSensorPrefetchLateTargetSamples = 32;
+// The sampling task drains the whole ADXL345 FIFO every poll. The interval
+// varies by +/- the jitter around the base (see sample_timing.h) so
+// I2C read bursts do not form a fixed cadence; the longest interval must stay
+// well inside the 32-sample FIFO (40 ms at 800 Hz).
+#ifndef VIBESENSOR_SAMPLING_POLL_INTERVAL_US
+#define VIBESENSOR_SAMPLING_POLL_INTERVAL_US 10000
+#endif
+#ifndef VIBESENSOR_SAMPLING_POLL_JITTER_US
+#define VIBESENSOR_SAMPLING_POLL_JITTER_US 5000
+#endif
+constexpr uint32_t kSamplingPollIntervalUs =
+    static_cast<uint32_t>(VIBESENSOR_SAMPLING_POLL_INTERVAL_US);
+constexpr uint32_t kSamplingPollJitterUs = static_cast<uint32_t>(VIBESENSOR_SAMPLING_POLL_JITTER_US);
+constexpr uint8_t kAdxlRateCode = adxl345_rate_code(kSampleRateHz);
 constexpr size_t kSampleHandoffQueueSamples = static_cast<size_t>(kFrameSamples) * 2U;
 constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr size_t kMaxDataAckPacketsPerLoop = 8;
@@ -135,10 +146,6 @@ constexpr uint32_t kWifiRetryIntervalMaxMs = 60000;
 #endif
 constexpr uint32_t kWifiScanIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_SCAN_INTERVAL_MS);
 
-#ifndef VIBESENSOR_ENABLE_SYNTH_FALLBACK
-#define VIBESENSOR_ENABLE_SYNTH_FALLBACK 0
-#endif
-
 static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be > 0");
 static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
 static_assert(VIBESENSOR_FRAME_QUEUE_LEN_MIN > 0,
@@ -155,16 +162,14 @@ static_assert(kSamplingTaskCore >= 0 && kSamplingTaskCore < kRuntimeCoreCount,
               "sampling task core must be inside the runtime core range");
 static_assert(kDefaultSamplingTaskCore >= 0 && kDefaultSamplingTaskCore < kRuntimeCoreCount,
               "default sampling task core must be inside the runtime core range");
-static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSamples,
-              "sensor prefetch low-water must be below prefetch capacity");
-static_assert(kSensorPrefetchSteadyTargetSamples <= kSensorPrefetchSamples,
-              "steady prefetch target must fit inside capacity");
-static_assert(kSensorPrefetchLateTargetSamples <= kSensorPrefetchSamples,
-              "late prefetch target must fit inside capacity");
-static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSteadyTargetSamples,
-              "steady prefetch target must exceed low-water");
-static_assert(kSensorPrefetchSteadyTargetSamples <= kSensorPrefetchLateTargetSamples,
-              "late prefetch target must be at least the steady target");
+static_assert(kAdxlRateCode != 0,
+              "VIBESENSOR_SAMPLE_RATE_HZ must be an ADXL345 output data rate (25 Hz x 2^n)");
+static_assert(kSamplingPollJitterUs < kSamplingPollIntervalUs,
+              "sampling poll jitter must stay below the poll interval");
+static_assert(static_cast<uint64_t>(kSamplingPollIntervalUs + kSamplingPollJitterUs) *
+                      kSampleRateHz <=
+                  16ULL * 1000000ULL,
+              "the longest sampling poll interval must stay within half the ADXL345 FIFO");
 static_assert(kSampleHandoffQueueSamples >= static_cast<size_t>(kFrameSamples),
               "sample handoff queue must hold at least one frame of samples");
 

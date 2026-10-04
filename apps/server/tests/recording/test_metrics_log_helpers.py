@@ -112,13 +112,24 @@ def test_speed_source_reports(
         assert rows[0].speed_kmh == pytest.approx(expected_speed_kmh, abs=0.01)
 
 
-def test_stop_without_samples_does_not_persist_history_run(make_logger, history_db) -> None:
+def test_stop_without_samples_records_the_run_in_history_with_an_error(
+    make_logger, history_db
+) -> None:
+    # A run that captured nothing (sensor gone, or its timestamps unusable) must
+    # not vanish: History shows it with the reason, and so does the recorder status.
     logger = make_logger(history_db=history_db)
 
-    logger.start_recording()
+    run_id = logger.start_recording().run_id
     logger.stop_recording()
+    assert logger.post_analysis.wait(timeout_s=10.0)
 
-    assert history_db.list_runs() == []
+    run = history_db.get_run(run_id)
+    assert run is not None
+    assert run.status == "error"
+    assert run.error_message == "No samples collected during run"
+    status = logger.status()
+    assert status.last_completed_run_id == run_id
+    assert status.last_completed_run_error == "No samples collected during run"
 
 
 def test_append_records_ignores_stale_recent_metrics_without_new_frames(

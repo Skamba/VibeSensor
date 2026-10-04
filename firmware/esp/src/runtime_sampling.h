@@ -5,6 +5,7 @@
 
 #include "adxl345.h"
 #include "reliability.h"
+#include "sample_timing.h"
 #include "runtime_config.h"
 #include "runtime_queue.h"
 #include "runtime_sample_handoff.h"
@@ -18,19 +19,14 @@ struct SamplingState {
   TwoWire& i2c;
   ADXL345 adxl;
   bool sensor_ok = false;
-  int16_t sensor_batch_xyz[kSensorPrefetchSamples * kAxesPerSample] = {};
-  int16_t sensor_prefetch_xyz[kSensorPrefetchSamples * kAxesPerSample] = {};
-  size_t sensor_prefetch_head = 0;
-  size_t sensor_prefetch_tail = 0;
-  size_t sensor_prefetch_count = 0;
+  int16_t sensor_batch_xyz[ADXL345::kMaxFifoEntries * kAxesPerSample] = {};
   uint8_t sensor_consecutive_errors = 0;
   uint32_t last_sensor_reinit_ms = 0;
-  uint64_t next_sample_due_us = 0;
-  vibesensor::reliability::SamplingIntervalSchedule due_schedule = {};
-  vibesensor::reliability::SamplingIntervalSchedule timer_schedule = {};
-  size_t last_refill_request = 0;
-  size_t last_refill_count = 0;
-  bool recent_refill_shortfall = false;
+  vibesensor::sample_timing::SampleClock sample_clock = {};
+  vibesensor::sample_timing::Resampler resampler = {};
+  uint32_t poll_rng_state = 1;
+  // The next published sample follows missing samples (lost or dropped).
+  bool pending_gap = false;
   PendingSample handoff_storage[kSampleHandoffQueueSamples] = {};
   SampleHandoffState handoff;
   SamplingStatusSnapshot status = {};

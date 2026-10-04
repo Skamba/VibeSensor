@@ -473,6 +473,7 @@ def _snapshot_raw_capture_sensor_sync(
             last_sync_monotonic_us=last_sync_monotonic_us,
             sync_offset_us=sync_offset_us,
             sync_rtt_us=sync_rtt_us,
+            timing_degraded=record.timing_guard.degraded,
         )
         snapshot[client_id] = RawCaptureSensorClockSync(
             clock_domain="server_monotonic" if proof_state == "verified" else "unverified",
@@ -493,6 +494,7 @@ def _raw_capture_clock_proof_state(
     last_sync_monotonic_us: int | None,
     sync_offset_us: int | None,
     sync_rtt_us: int | None,
+    timing_degraded: bool,
 ) -> RawCaptureClockProofState:
     if sync_offset_us is None or sync_rtt_us is None or last_sync_monotonic_us is None:
         return "missing_sync"
@@ -502,6 +504,10 @@ def _raw_capture_clock_proof_state(
         return "stale_sync"
     if sync_rtt_us > _RAW_CAPTURE_MAX_SYNC_RTT_US:
         return "high_rtt"
+    if timing_degraded:
+        # Synced, but its stamps fall behind real time or its rate is off
+        # (``SensorTimingGuard``): the offset does not make them trustworthy.
+        return "timing_unreliable"
     return "verified"
 
 

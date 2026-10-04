@@ -188,6 +188,36 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     assert sensors_check.reason_key == "limited_sensor_coverage"
 
 
+def test_capture_readiness_blocks_while_a_sensor_timing_is_unreliable(
+    fake_registry,
+    speed_rig,
+    mutable_fake_settings,
+) -> None:
+    # A sensor stamping behind real time would record rows analysis skips:
+    # block the start instead of recording a run that ends empty.
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    speed_rig.obd_reading(speed_kmh=86.4, rpm=2600.0)
+    active_client = fake_registry.get("active")
+    assert active_client is not None
+    active_client.timing_guard.state = "timestamp_lag"
+
+    blocked = tracker.evaluate(
+        _observation(
+            fake_registry=fake_registry,
+            speed_rig=speed_rig,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=200.0,
+        )
+    )
+
+    sensors_check = next(check for check in blocked.checks if check.check_key == "sensors_ready")
+    assert sensors_check.state == "fail"
+    assert sensors_check.reason_key == "sensor_timing_unreliable"
+    assert dict(sensors_check.details)["timing_unreliable_sensor_count"] == 1
+    assert not blocked.is_ready
+
+
 def test_capture_readiness_blocks_without_resolved_speed_source(
     fake_registry,
     speed_rig,

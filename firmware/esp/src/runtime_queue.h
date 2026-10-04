@@ -35,12 +35,16 @@ bool allocate_frame_queue(FrameQueueState& state);
 size_t frame_queue_size(const FrameQueueState& state);
 size_t frame_queue_capacity(const FrameQueueState& state);
 size_t frame_queue_bytes(const FrameQueueState& state);
+// Adds one sample stamped at sample_us (device clock). A sample after a gap
+// (gap_before) starts a new frame, so every frame's samples are contiguous
+// and its t0 stays exact; the frame before the gap goes out short.
 void append_sample(FrameQueueState& state,
                    RuntimeStatus& status,
                    int16_t x,
                    int16_t y,
                    int16_t z,
-                   uint64_t sample_due_us,
+                   uint64_t sample_us,
+                   bool gap_before,
                    int64_t clock_offset_us);
 DataFrame* peek_frame(FrameQueueState& state);
 void drop_front_frame(FrameQueueState& state);

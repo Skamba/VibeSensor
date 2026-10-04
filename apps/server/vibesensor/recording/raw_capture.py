@@ -37,6 +37,7 @@ type RawCaptureClockProofState = Literal[
     "missing_sync",
     "stale_sync",
     "high_rtt",
+    "timing_unreliable",
     "missing_registry_record",
 ]
 

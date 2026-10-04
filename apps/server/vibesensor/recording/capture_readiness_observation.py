@@ -34,6 +34,7 @@ class CaptureReadinessSensorObservation:
     queue_overflow_drops: int
     server_queue_drops: int
     parse_errors: int
+    timing_degraded: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +114,7 @@ def _sensor_observation(
         queue_overflow_drops=int(getattr(client, "queue_overflow_drops", 0)),
         server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
         parse_errors=int(getattr(client, "parse_errors", 0)),
+        timing_degraded=client.timing_guard.degraded,
     )
 
 

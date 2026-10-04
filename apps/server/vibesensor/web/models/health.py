@@ -89,6 +89,9 @@ class HealthIngestClientResponse(BaseModel):
     server_queue_drops: int
     parse_errors: int
     duplicates_received: int
+    timing_state: Literal["unknown", "ok", "timestamp_lag", "rate_mismatch"]
+    timing_min_lag_ms: float | None
+    effective_sample_rate_hz: float | None
 
 
 class HealthIngestResponse(BaseModel):

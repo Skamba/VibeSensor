@@ -788,8 +788,8 @@
     "nl": "Heranalyse van ruwe meetdata gebruikte opgeslagen samenvattingsmetingen"
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_DETAIL": {
-    "en": "Raw capture timing could not be proven against the recorder clock for {sensors} sensor(s), so affected metrics used persisted summary samples. Missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}.",
-    "nl": "Timing van de ruwe opname kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen meetwaarden gebruikten opgeslagen samenvattingssamples. Ontbrekend synchronisatiebewijs: {missing_sync}, verouderde synchronisatiesnapshots: {stale}, synchronisatiesnapshots met hoge RTT: {high_rtt}."
+    "en": "Raw capture timing could not be proven against the recorder clock for {sensors} sensor(s), so affected metrics used persisted summary samples. Missing sync proof: {missing_sync}, stale sync snapshots: {stale}, high-RTT sync snapshots: {high_rtt}, timestamps drifting from real time or off-rate: {timing}.",
+    "nl": "Timing van de ruwe opname kon voor {sensors} sensor(en) niet tegen de recorderklok worden bewezen, dus getroffen meetwaarden gebruikten opgeslagen samenvattingssamples. Ontbrekend synchronisatiebewijs: {missing_sync}, verouderde synchronisatiesnapshots: {stale}, synchronisatiesnapshots met hoge RTT: {high_rtt}, tijdstempels die afwijken van de echte tijd of de samplerate: {timing}."
   },
   "RUN_CONTEXT_WARNING_RAW_REPLAY_SYNC_UNVERIFIED_TITLE": {
     "en": "Raw replay could not prove clock alignment for some sensors",

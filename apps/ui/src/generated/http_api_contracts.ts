@@ -522,6 +522,7 @@ export interface components {
             advertised_sample_rate_hz: number;
             client_id: string;
             duplicates_received: number;
+            effective_sample_rate_hz: number | null;
             estimated_ingest_hz: number;
             frames_dropped: number;
             last_ack_latency_ms: number;
@@ -532,6 +533,8 @@ export interface components {
             processed_samples: number;
             queue_overflow_drops: number;
             server_queue_drops: number;
+            timing_min_lag_ms: number | null;
+            timing_state: "unknown" | "ok" | "timestamp_lag" | "rate_mismatch";
         };
         HealthIngestResponse: {
             clients: components["schemas"]["HealthIngestClientResponse"][];

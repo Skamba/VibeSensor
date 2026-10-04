@@ -5,10 +5,13 @@
 namespace vibesensor::runtime {
 
 struct PendingSample {
-  uint64_t due_us = 0;
+  // When the sensor took the sample, on the device clock (esp_timer).
+  uint64_t sample_us = 0;
   int16_t x = 0;
   int16_t y = 0;
   int16_t z = 0;
+  // Samples are missing between the previous sample and this one.
+  bool gap_before = false;
 };
 
 struct SampleHandoffState {

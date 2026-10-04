@@ -13,9 +13,9 @@ SampleHandoffState make_state(PendingSample* storage, size_t capacity) {
   return state;
 }
 
-PendingSample make_sample(uint64_t due_us, int16_t base) {
+PendingSample make_sample(uint64_t sample_us, int16_t base) {
   PendingSample sample{};
-  sample.due_us = due_us;
+  sample.sample_us = sample_us;
   sample.x = base;
   sample.y = static_cast<int16_t>(base + 1);
   sample.z = static_cast<int16_t>(base + 2);
@@ -31,18 +31,18 @@ void test_sample_handoff_preserves_fifo_order_across_wrap() {
 
   PendingSample drained{};
   TEST_ASSERT_TRUE(vibesensor::runtime::dequeue_pending_sample(state, &drained));
-  TEST_ASSERT_EQUAL_UINT64(10, drained.due_us);
+  TEST_ASSERT_EQUAL_UINT64(10, drained.sample_us);
   TEST_ASSERT_EQUAL_INT16(1, drained.x);
 
   TEST_ASSERT_TRUE(vibesensor::runtime::enqueue_pending_sample(state, make_sample(30, 20)));
   TEST_ASSERT_TRUE(vibesensor::runtime::enqueue_pending_sample(state, make_sample(40, 30)));
 
   TEST_ASSERT_TRUE(vibesensor::runtime::dequeue_pending_sample(state, &drained));
-  TEST_ASSERT_EQUAL_UINT64(20, drained.due_us);
+  TEST_ASSERT_EQUAL_UINT64(20, drained.sample_us);
   TEST_ASSERT_TRUE(vibesensor::runtime::dequeue_pending_sample(state, &drained));
-  TEST_ASSERT_EQUAL_UINT64(30, drained.due_us);
+  TEST_ASSERT_EQUAL_UINT64(30, drained.sample_us);
   TEST_ASSERT_TRUE(vibesensor::runtime::dequeue_pending_sample(state, &drained));
-  TEST_ASSERT_EQUAL_UINT64(40, drained.due_us);
+  TEST_ASSERT_EQUAL_UINT64(40, drained.sample_us);
   TEST_ASSERT_FALSE(vibesensor::runtime::dequeue_pending_sample(state, &drained));
 }
 

@@ -20,13 +20,14 @@ from tests_e2e.e2e_helpers import (
     remove_all_clients,
     wait_export_ready,
     wait_for_stable,
+    wait_run_status,
     wait_report_pdf_ready,
 )
 
 pytestmark = pytest.mark.e2e
 
 
-def test_no_data_stop_does_not_create_history_run_e2e(e2e_env: dict[str, str]) -> None:
+def test_no_data_stop_records_a_failed_history_run_with_the_reason_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     remove_all_clients(base)
 
@@ -59,9 +60,13 @@ def test_no_data_stop_does_not_create_history_run_e2e(e2e_env: dict[str, str]) -
     first = api_json(base, "/api/recording/start", method="POST")
     run_empty = str(first["run_id"])
     api_json(base, "/api/recording/stop", method="POST")
-    after_empty = history_run_ids(base)
-    assert run_empty not in after_empty
-    assert after_empty == before
+    try:
+        # An empty run must not vanish: History shows it failed and why.
+        run = wait_run_status(base, run_empty, statuses=("error",), timeout_s=30.0)
+        assert run["error_message"] == "No samples collected during run"
+        assert history_run_ids(base) == before | {run_empty}
+    finally:
+        _cleanup_run(base, run_empty)
 
 
 def test_representative_report_pipeline_smoke_e2e(e2e_env: dict[str, str]) -> None:

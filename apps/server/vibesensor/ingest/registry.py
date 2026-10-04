@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.ingest.client_metadata import ClientMetadataManager
+from vibesensor.ingest.sensor_timing import SensorTimingGuard
 from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
@@ -168,6 +169,7 @@ class ClientRecord:
     last_t0_us: int | None = None
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
+    timing_guard: SensorTimingGuard = field(default_factory=SensorTimingGuard)
     duplicates_received: int = 0
     dedup_window: DedupWindow = field(default_factory=DedupWindow)
 
@@ -311,6 +313,7 @@ def apply_data_message_update(
         record.last_t0_us = None
         record.timing_jitter_us_ema = 0.0
         record.timing_drift_us_total = 0.0
+        record.timing_guard.reset()
 
     rebooted = _is_rebooted_session(record, seq=seq, t0_us=t0_us)
     if rebooted:
@@ -343,6 +346,7 @@ def apply_data_message_update(
 
     record.frames_total += 1
     reset_detected = rebooted
+    missed_frames = 0
     if (
         record.sample_rate_hz > 0
         and sample_count > 0
@@ -375,10 +379,19 @@ def apply_data_message_update(
                 gap = (seq - expected) & _SEQ_MASK
                 if gap < _SEQ_HALF:
                     record.frames_dropped += gap
+                    missed_frames = gap
 
     if record.last_seq is None or ((seq - record.last_seq) & _SEQ_MASK) < _SEQ_HALF:
         record.last_seq = seq
     record.last_t0_us = t0_us
+    if clock_synced:
+        record.timing_guard.observe(
+            t0_us=t0_us,
+            sample_count=sample_count,
+            sample_rate_hz=record.sample_rate_hz,
+            receive_mono_s=mono,
+            missed_frames=missed_frames,
+        )
     return DataUpdateResult(reset_detected=reset_detected, clock_synced=clock_synced)
 
 
@@ -404,6 +417,7 @@ def _is_sync_rtt_outlier(
 def _forget_clock_sync(record: ClientRecord) -> None:
     """A rebooted sensor restarts its device clock; its old offset no longer applies."""
     record.clock_offset_applied = False
+    record.timing_guard.reset()
     record.device_frame_seq = None
     record.device_frame_t0_us = None
     record.sync_offset_us = None

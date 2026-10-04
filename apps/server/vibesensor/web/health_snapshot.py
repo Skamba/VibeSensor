@@ -8,6 +8,7 @@ from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
     RawCaptureRuntimeSnapshot,
 )
+from vibesensor.ingest.sensor_timing import SensorTimingState
 from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
@@ -67,6 +68,9 @@ class IngestClientHealthSnapshot(TypedDict):
     server_queue_drops: int
     parse_errors: int
     duplicates_received: int
+    timing_state: SensorTimingState
+    timing_min_lag_ms: float | None
+    effective_sample_rate_hz: float | None
 
 
 class IngestHealthSnapshot(TypedDict):
@@ -170,6 +174,16 @@ def build_system_health_snapshot(
         degradation_reasons.append("analyzing_runs_present")
     if persistence["last_completed_run_error"]:
         degradation_reasons.append("last_analysis_failed")
+    timing_states = {
+        record.timing_guard.state
+        for client_id in registry.active_client_ids()
+        if (record := registry.get(client_id)) is not None
+    }
+    # A sensor whose stamps fall behind real time, or that delivers samples at
+    # another rate than it declares, records data analysis cannot use.
+    for timing_state in ("timestamp_lag", "rate_mismatch"):
+        if timing_state in timing_states:
+            degradation_reasons.append(f"sensor_{timing_state}")
     runtime_clients = ingest_diagnostics.client_snapshots()
     udp_snapshot = ingest_diagnostics.udp_snapshot()
     raw_capture_snapshot = ingest_diagnostics.raw_capture_snapshot()
@@ -223,6 +237,13 @@ def build_system_health_snapshot(
                 "server_queue_drops": int(getattr(record, "server_queue_drops", 0)),
                 "parse_errors": int(getattr(record, "parse_errors", 0)),
                 "duplicates_received": int(getattr(record, "duplicates_received", 0)),
+                "timing_state": record.timing_guard.state,
+                "timing_min_lag_ms": (
+                    None
+                    if record.timing_guard.min_lag_us is None
+                    else record.timing_guard.min_lag_us / 1000.0
+                ),
+                "effective_sample_rate_hz": record.timing_guard.effective_rate_hz,
             }
         )
         seen_client_ids.add(client_id)
@@ -244,6 +265,9 @@ def build_system_health_snapshot(
                 "server_queue_drops": 0,
                 "parse_errors": 0,
                 "duplicates_received": 0,
+                "timing_state": "unknown",
+                "timing_min_lag_ms": None,
+                "effective_sample_rate_hz": None,
             }
         )
     ingest_clients.sort(key=lambda row: str(row["client_id"]))

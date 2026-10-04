@@ -141,9 +141,11 @@ class RunPersistenceWriter:
             self._retry_after_mono_s = 0.0
 
     def ready_for_analysis(self, run_id: str | None) -> str | None:
+        # A run without samples is analysed too: post-analysis records it in
+        # History with the error "No samples collected during run", so a run that
+        # captured nothing is visible instead of silently discarded.
         with self._lock:
-            ready = run_id and self._history_run_created and self._written_sample_count > 0
-            if ready:
+            if run_id and self._history_run_created:
                 return run_id
             return None
 
@@ -296,6 +298,10 @@ class RunPersistenceWriter:
 
     def finalize_run(self, run_id: str, start_time_utc: str, end_utc: str) -> bool:
         history_db = self._history_db
+        if history_db is not None and self._history_db_enabled:
+            # The history run is created lazily with the first rows; a run that
+            # wrote none still gets its History entry.
+            self.ensure_history_run(run_id, start_time_utc)
         with self._lock:
             if not self._history_run_created:
                 return True

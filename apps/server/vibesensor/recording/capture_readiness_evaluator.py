@@ -140,6 +140,20 @@ def _sensors_check(
             details=tuple(details),
         )
 
+    timing_degraded_count = sum(1 for sensor in active_sensors if sensor.timing_degraded)
+    if timing_degraded_count > 0:
+        # Its timestamps fall behind real time or its sample rate is off: the
+        # samples cannot be placed on the run's timeline.
+        return CaptureReadinessCheck(
+            check_key="sensors_ready",
+            state="fail",
+            reason_key="sensor_timing_unreliable",
+            details=(
+                ("live_sensor_count", live_sensor_count),
+                ("timing_unreliable_sensor_count", timing_degraded_count),
+            ),
+        )
+
     if live_sensor_count < policy.low_sensor_count_warn_threshold:
         return CaptureReadinessCheck(
             check_key="sensors_ready",

@@ -133,6 +133,9 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         "raw_replay_sync_unverified_sensor_count": run.raw_replay.sync_unverified_sensor_count,
         "raw_replay_stale_sync_sensor_count": run.raw_replay.stale_sync_sensor_count,
         "raw_replay_high_rtt_sensor_count": run.raw_replay.high_rtt_sensor_count,
+        "raw_replay_timing_unreliable_sensor_count": (
+            run.raw_replay.timing_unreliable_sensor_count
+        ),
         "raw_replay_confidence": run.raw_replay.replay_confidence,
     }
     analysis_metadata.update(_processing_profile_metadata(run))

@@ -22,6 +22,12 @@ const subsystemHealthStatusSchema = v.picklist([
   "unhealthy",
 ]);
 const rawCapturePressureStateSchema = v.picklist(["ok", "warn", "degraded"]);
+const sensorTimingStateSchema = v.picklist([
+  "unknown",
+  "ok",
+  "timestamp_lag",
+  "rate_mismatch",
+]);
 
 const stringMapSchema = v.record(v.string(), v.string());
 const integerMapSchema = v.record(v.string(), integerSchema);
@@ -139,6 +145,7 @@ const healthIngestClientSchema = v.looseObject({
   advertised_sample_rate_hz: integerSchema,
   client_id: v.string(),
   duplicates_received: integerSchema,
+  effective_sample_rate_hz: nullableFiniteNumberSchema,
   estimated_ingest_hz: finiteNumberSchema,
   frames_dropped: integerSchema,
   last_ack_latency_ms: finiteNumberSchema,
@@ -149,6 +156,8 @@ const healthIngestClientSchema = v.looseObject({
   processed_samples: integerSchema,
   queue_overflow_drops: integerSchema,
   server_queue_drops: integerSchema,
+  timing_min_lag_ms: nullableFiniteNumberSchema,
+  timing_state: sensorTimingStateSchema,
 });
 
 const healthIngestSchema = v.looseObject({

@@ -26,19 +26,26 @@ struct SamplingStatusSnapshot {
   uint32_t sensor_read_errors = 0;
   uint32_t sensor_fifo_status_failures = 0;
   uint32_t sensor_fifo_data_failures = 0;
-  uint32_t sensor_fifo_truncated = 0;
+  // Polls that found the ADXL345 FIFO full: it may have discarded samples.
+  uint32_t sensor_fifo_overflows = 0;
   uint32_t sensor_bus_recovery_attempts = 0;
   uint32_t sensor_bus_recovery_success = 0;
   uint32_t sensor_reinit_attempts = 0;
   uint32_t sensor_reinit_success = 0;
-  uint32_t sampling_missed_samples = 0;
-  uint32_t sampling_recovery_abandons = 0;
+  // Samples the sensor produced that were never read, and timeline restarts
+  // (see SampleClock in reliability.h).
+  uint32_t sampling_lost_samples = 0;
+  uint32_t sampling_clock_resyncs = 0;
   uint32_t sampling_handoff_overflow_drops = 0;
+  // Samples read from the sensor, and resampled samples published.
+  uint32_t sensor_samples_total = 0;
+  uint32_t samples_total = 0;
+  // The sensor's measured output data rate (mHz) and the last clock error.
+  uint32_t sensor_rate_mhz = 0;
+  int32_t sample_clock_error_us = 0;
   uint16_t sample_handoff_size = 0;
   uint16_t sample_handoff_capacity = 0;
-  uint16_t sensor_prefetch_count = 0;
-  uint16_t last_refill_request = 0;
-  uint16_t last_refill_count = 0;
+  uint16_t last_fifo_entries = 0;
   uint8_t last_error_code = 0;
   uint32_t last_error_ms = 0;
 };

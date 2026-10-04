@@ -15,14 +15,6 @@ from tests.recording.test_metrics_log_helpers import (
 )
 from vibesensor.analysis.post_analysis import PostAnalysisHealthSnapshot
 from vibesensor.history.history_db import HistoryDB
-from vibesensor.history.records import AnalyzingRunHealth
-
-
-class _NullDB:
-    """Stub DB for tests that need a non-None history_db without real DB ops."""
-
-    def analyzing_run_health(self):
-        return AnalyzingRunHealth(analyzing_run_count=0, analyzing_oldest_age_s=None)
 
 
 def test_stop_recording_does_not_block_on_post_analysis(
@@ -152,9 +144,10 @@ def test_post_analysis_unexpected_failure_surfaces_worker_error_status(
 
 def test_shutdown_blocks_new_start_recording_until_wait_completes(
     make_logger,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    logger = make_logger(history_db=_NullDB())
+    logger = make_logger(history_db=HistoryDB(tmp_path / "history.db"))
     logger.start_recording()
     initial_run_id = logger.status().run_id
     assert initial_run_id is not None

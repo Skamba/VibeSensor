@@ -4,7 +4,6 @@ namespace {
 constexpr uint8_t REG_DEVID = 0x00;
 constexpr uint8_t REG_BW_RATE = 0x2C;
 constexpr uint8_t REG_POWER_CTL = 0x2D;
-constexpr uint8_t REG_INT_ENABLE = 0x2E;
 constexpr uint8_t REG_DATA_FORMAT = 0x31;
 constexpr uint8_t REG_DATAX0 = 0x32;
 constexpr uint8_t REG_FIFO_CTL = 0x38;
@@ -13,11 +12,8 @@ constexpr uint8_t REG_FIFO_STATUS = 0x39;
 constexpr uint8_t VALUE_DEVID = 0xE5;
 constexpr uint8_t VALUE_POWER_CTL_STANDBY = 0x00;
 constexpr uint8_t VALUE_POWER_CTL_MEASURE = 0x08;
-constexpr uint8_t VALUE_INT_ENABLE_WATERMARK = 0x02;
 constexpr uint8_t VALUE_DATA_FORMAT_FULL_RES_16G = 0x0B;
-constexpr uint8_t VALUE_BW_RATE_800HZ = 0x0D;
 constexpr uint8_t VALUE_FIFO_STREAM_MODE = 0x80;
-constexpr uint8_t MASK_FIFO_WATERMARK = 0x1F;
 constexpr uint8_t MASK_FIFO_ENTRIES = 0x3F;
 constexpr uint32_t kI2cClockHz = 400000;
 constexpr unsigned int kFifoPopDelayUs = 5;
@@ -38,12 +34,12 @@ ADXL345::ADXL345(TwoWire& wire,
                  uint8_t i2c_addr,
                  int sda_pin,
                  int scl_pin,
-                 uint8_t fifo_watermark)
+                 uint8_t rate_code)
     : wire_(wire),
       i2c_addr_(i2c_addr),
       sda_pin_(sda_pin),
       scl_pin_(scl_pin),
-      fifo_watermark_(fifo_watermark),
+      rate_code_(rate_code),
       available_(false) {}
 
 bool ADXL345::begin(FailureKind* failure_kind) {
@@ -74,22 +70,15 @@ bool ADXL345::begin(FailureKind* failure_kind) {
     available_ = false;
     return false;
   }
-  // 800 Hz output data rate.
-  if (!write_reg(REG_BW_RATE, VALUE_BW_RATE_800HZ)) {
+  // Output data rate: the sample rate the firmware declares.
+  if (!write_reg(REG_BW_RATE, rate_code_)) {
     set_failure(failure_kind, FailureKind::kConfigWrite);
     available_ = false;
     return false;
   }
-  // FIFO stream mode with configurable watermark.
-  if (!write_reg(
-          REG_FIFO_CTL,
-          static_cast<uint8_t>(VALUE_FIFO_STREAM_MODE | (fifo_watermark_ & MASK_FIFO_WATERMARK)))) {
-    set_failure(failure_kind, FailureKind::kConfigWrite);
-    available_ = false;
-    return false;
-  }
-  // Enable watermark interrupt bit (optional, polled in this prototype).
-  if (!write_reg(REG_INT_ENABLE, VALUE_INT_ENABLE_WATERMARK)) {
+  // FIFO stream mode: the FIFO keeps the newest 32 samples; the sampling task
+  // polls and drains it, so no watermark or interrupt is used.
+  if (!write_reg(REG_FIFO_CTL, VALUE_FIFO_STREAM_MODE)) {
     set_failure(failure_kind, FailureKind::kConfigWrite);
     available_ = false;
     return false;
@@ -127,30 +116,27 @@ bool ADXL345::available() const {
   return available_;
 }
 
-size_t ADXL345::read_samples(int16_t* xyz_interleaved,
-                             size_t max_samples,
-                             FailureKind* failure_kind,
-                             bool* fifo_truncated) {
+bool ADXL345::read_fifo_entries(size_t* entries, FailureKind* failure_kind) {
   set_failure(failure_kind, FailureKind::kNone);
-  if (fifo_truncated != nullptr) {
-    *fifo_truncated = false;
+  *entries = 0;
+  if (!available_) {
+    return false;
   }
-  if (!available_ || max_samples == 0 || xyz_interleaved == nullptr) {
-    return 0;
-  }
-
   uint8_t fifo_status = 0;
   if (!read_reg(REG_FIFO_STATUS, &fifo_status)) {
     set_failure(failure_kind, FailureKind::kFifoStatusRead);
-    return 0;
+    return false;
   }
-  size_t entries = static_cast<size_t>(fifo_status & MASK_FIFO_ENTRIES);
-  if (entries == 0) {
+  *entries = static_cast<size_t>(fifo_status & MASK_FIFO_ENTRIES);
+  return true;
+}
+
+size_t ADXL345::read_fifo_samples(int16_t* xyz_interleaved,
+                                  size_t count,
+                                  FailureKind* failure_kind) {
+  set_failure(failure_kind, FailureKind::kNone);
+  if (!available_ || count == 0 || xyz_interleaved == nullptr) {
     return 0;
-  }
-  size_t count = entries < max_samples ? entries : max_samples;
-  if (fifo_truncated != nullptr && entries > max_samples) {
-    *fifo_truncated = true;
   }
 
   // Read each FIFO entry individually (6 bytes per entry).
@@ -177,6 +163,7 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved,
     xyz_interleaved[out + 1] = static_cast<int16_t>(raw[2] | (raw[3] << 8));
     xyz_interleaved[out + 2] = static_cast<int16_t>(raw[4] | (raw[5] << 8));
   }
+  delayMicroseconds(kFifoPopDelayUs);
   return count;
 }
 
