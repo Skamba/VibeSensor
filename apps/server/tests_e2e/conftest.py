@@ -52,6 +52,7 @@ class E2EServer:
     sim_data_port: int
     sim_control_port: int
     sim_client_control_base: int
+    sim_gps_port: int
     log_path: Path
 
 
@@ -146,6 +147,7 @@ def _running_server(
     http_port = _free_port(socket.SOCK_STREAM)
     sim_data_port = _free_port(socket.SOCK_DGRAM)
     sim_control_port = _free_port(socket.SOCK_DGRAM)
+    sim_gps_port = _free_port(socket.SOCK_STREAM)
     runtime = build_isolated_server_config(
         _BASE_CONFIG,
         runtime_root,
@@ -155,10 +157,11 @@ def _running_server(
         udp_control_port=sim_control_port,
         data_seed_dir=_DATA_SEED_DIR,
     )
-    if config_overrides:
-        config = yaml.safe_load(runtime.config_path.read_text(encoding="utf-8"))
-        config.update(config_overrides)
-        runtime.config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    config = yaml.safe_load(runtime.config_path.read_text(encoding="utf-8"))
+    # The simulator reports its speed as a GPS receiver on this port.
+    config["gps"] = {"gps_enabled": True, "gpsd_port": sim_gps_port}
+    config.update(config_overrides or {})
+    runtime.config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
     env = build_isolated_server_env(
         runtime.root, repo_root=ROOT, extra_env={"VIBESENSOR_SERVE_STATIC": "0"}
     )
@@ -169,6 +172,7 @@ def _running_server(
         sim_data_port=sim_data_port,
         sim_control_port=sim_control_port,
         sim_client_control_base=_free_udp_port_block(_SIM_CLIENT_PORT_SLOTS),
+        sim_gps_port=sim_gps_port,
         log_path=log_path,
     )
     with log_path.open("w", encoding="utf-8") as log_file:
@@ -196,6 +200,7 @@ def _env_for(server: E2EServer) -> dict[str, str]:
         "sim_data_port": str(server.sim_data_port),
         "sim_control_port": str(server.sim_control_port),
         "sim_client_control_base": str(server.sim_client_control_base),
+        "sim_gps_port": str(server.sim_gps_port),
     }
 
 

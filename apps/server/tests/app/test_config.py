@@ -100,7 +100,7 @@ def test_legacy_device_config_with_removed_keys_still_loads(
             "raw_capture_retention_days": 7,
             "shutdown_analysis_timeout_s": 10,
         },
-        "gps": {"gps_enabled": False, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
+        "gps": {"gps_enabled": False, "gpsd_host": "127.0.0.1", "gpsd_port": 2950},
         "tracing": {"enabled": True, "output_path": "data/traces.jsonl"},
     }
 
@@ -112,6 +112,7 @@ def test_legacy_device_config_with_removed_keys_still_loads(
     assert cfg.udp.data_port == 9100
     assert cfg.logging.history_db_path == cfg_path.parent / "db/history.db"
     assert cfg.gps.gps_enabled is False
+    assert cfg.gps.gpsd_port == 2950
     warned = caplog.text
     for key in (
         "ap.ip",
@@ -119,7 +120,7 @@ def test_legacy_device_config_with_removed_keys_still_loads(
         "udp.data_queue_maxsize",
         "processing",
         "logging.run_retention_days",
-        "gps.gpsd_port",
+        "gps.gpsd_host",
         "tracing",
     ):
         assert f"Ignoring unsupported config key {key}\n" in warned + "\n"

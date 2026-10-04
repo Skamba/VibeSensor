@@ -100,6 +100,7 @@ class StubLoggingConfig:
 @dataclass(slots=True)
 class StubGpsConfig:
     gps_enabled: bool = True
+    gpsd_port: int = 2947
 
 
 @dataclass(slots=True)
@@ -269,6 +270,7 @@ def build_runtime(**overrides: Any):
         ),
         run_recorder=diagnostics,
         gps_monitor=gps_monitor,
+        gpsd_port=config.gps.gpsd_port,
         obd_runner=obd_runner,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,

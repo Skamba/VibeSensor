@@ -224,8 +224,7 @@ the PDF both show:
   - `not_testable`: its reference is missing (`no_tire_reference`,
     `no_drive_reference`, `no_engine_reference`), or the speed was typed in
     by hand (`manual_speed`; every sample carries the set value, even on a
-    desk). Runs from the simulator (all firmware `sim-*`) are exempt: their
-    manual speed is the simulated drive's true speed.
+    desk).
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a
     car-library ratio with `family_default` / `unverified` confidence, else

@@ -359,7 +359,7 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setattr(asyncio, "sleep", _spy_sleep)
 
-    task = asyncio.create_task(monitor.run())
+    task = asyncio.create_task(monitor.run(port=2947))
     try:
         await asyncio.wait_for(disabled_poll_seen.wait(), timeout=1.0)
 

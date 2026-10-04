@@ -14,6 +14,7 @@ from vibesensor.simulator.commands import (
     apply_road_fixed_scenario,
     choose_default_profile,
 )
+from vibesensor.simulator.gps_feed import start_gps_feed
 from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
 from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
@@ -25,7 +26,9 @@ from vibesensor.simulator.scripted_scenarios import run_scripted_scenario
 from vibesensor.simulator.scripted_targeting import apply_phase
 from vibesensor.simulator.server_http import (
     maybe_start_server,
+    select_server_gps_speed,
     set_server_speed_override_kmh,
+    wait_for_server_gps_speed,
 )
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.sim_runtime import (
@@ -38,6 +41,8 @@ from vibesensor.simulator.sim_runtime import (
 
 ROOT = Path(__file__).resolve().parents[2]
 _STATIC_SCENARIOS: tuple[str, ...] = ("road", "one-wheel-mild", "engine-order", "road-fixed")
+# The server retries gpsd with up to 15 s backoff, plus its connect timeout.
+_GPS_FIX_TIMEOUT_S = 30.0
 
 
 async def async_main(args: argparse.Namespace) -> None:
@@ -77,25 +82,29 @@ async def async_main(args: argparse.Namespace) -> None:
         for client in clients:
             client.current_speed_kmh = initial_phase.speed_start_kmh
 
+    scripted = is_scripted_scenario(args.scenario)
     override_speed_kmh = max(0.0, float(args.speed_kmh))
-    if override_speed_kmh > 0.0 and not is_scripted_scenario(args.scenario):
-        applied_speed = set_server_speed_override_kmh(
-            args.server_host,
-            args.server_http_port,
-            override_speed_kmh,
-            args.server_check_timeout,
-        )
-        shown_speed = applied_speed if applied_speed is not None else override_speed_kmh
+    gps_feed = args.gps_port > 0 and (scripted or override_speed_kmh > 0.0)
+    if override_speed_kmh > 0.0 and not scripted:
         # Propagate speed to all clients so order-based profiles scale tones.
         for client in clients:
             client.current_speed_kmh = override_speed_kmh
-        print(f"Applied server speed override: {shown_speed:.1f} km/h")
+        if not gps_feed:
+            applied_speed = set_server_speed_override_kmh(
+                args.server_host,
+                args.server_http_port,
+                override_speed_kmh,
+                args.server_check_timeout,
+            )
+            shown_speed = applied_speed if applied_speed is not None else override_speed_kmh
+            print(f"Applied server speed override: {shown_speed:.1f} km/h")
 
     interactive = args.interactive or (
         not args.no_interactive and args.duration <= 0 and sys.stdin.isatty()
     )
     stop_event = asyncio.Event()
     tasks: list[asyncio.Task[Any]] = []
+    gps_server: asyncio.Server | None = None
     server_url = f"http://{args.server_host}"
     if int(args.server_http_port) != 80:
         server_url = f"{server_url}:{args.server_http_port}"
@@ -117,7 +126,22 @@ async def async_main(args: argparse.Namespace) -> None:
     print("\n".join(c.summary() for c in clients))
 
     try:
-        if is_scripted_scenario(args.scenario):
+        if gps_feed:
+            gps_server = await start_gps_feed(clients, args.gps_host, args.gps_port, stop_event)
+            await asyncio.to_thread(
+                select_server_gps_speed,
+                args.server_host,
+                args.server_http_port,
+                args.server_check_timeout,
+            )
+            await asyncio.to_thread(
+                wait_for_server_gps_speed,
+                args.server_host,
+                args.server_http_port,
+                _GPS_FIX_TIMEOUT_S,
+            )
+            print(f"Server reads the simulated GPS speed from port {args.gps_port}")
+        if scripted:
             tasks.append(
                 asyncio.create_task(
                     run_scripted_scenario(
@@ -127,6 +151,7 @@ async def async_main(args: argparse.Namespace) -> None:
                         server_host=args.server_host,
                         server_http_port=args.server_http_port,
                         server_check_timeout=args.server_check_timeout,
+                        gps_feed=gps_feed,
                     )
                 )
             )
@@ -146,7 +171,7 @@ async def async_main(args: argparse.Namespace) -> None:
             tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
         if args.scenario == "road" and not args.no_road_scene:
             tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
-        elif is_scripted_scenario(args.scenario):
+        elif scripted:
             print(f"[scenario] scripted={args.scenario} (complex speed/profile timeline enabled)")
         else:
             print(
@@ -163,6 +188,8 @@ async def async_main(args: argparse.Namespace) -> None:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        if gps_server is not None:
+            gps_server.close()
         if managed_server is not None:
             managed_server.terminate()
             try:
@@ -202,8 +229,21 @@ def parse_args() -> argparse.Namespace:
         "--speed-kmh",
         type=float,
         default=DEFAULT_SPEED_KMH,
-        help="Server manual speed override (km/h) applied before run",
+        help=(
+            "Simulated car speed (km/h); typed into the server as a manual speed "
+            "unless --gps-port reports it. 0 leaves the server speed alone"
+        ),
     )
+    parser.add_argument(
+        "--gps-port",
+        type=int,
+        default=0,
+        help=(
+            "Report the simulated speed as a GPS receiver (gpsd protocol) on this port "
+            "and switch the server to GPS speed; point the server's gps.gpsd_port here"
+        ),
+    )
+    parser.add_argument("--gps-host", default="127.0.0.1", help="Address for --gps-port")
     parser.add_argument(
         "--scenario",
         choices=(*_STATIC_SCENARIOS, *scripted_scenario_names()),

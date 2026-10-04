@@ -93,6 +93,8 @@ def test_readiness_never_waits_on_speed_and_names_what_a_typed_in_speed_can_test
             "sim_data_port": e2e_env["sim_data_port"],
             "sim_control_port": e2e_env["sim_control_port"],
             "client_control_base": e2e_env["sim_client_control_base"],
+            # A typed-in speed: the run can test nothing for sure.
+            "gps_port": None,
             "duration_s": 14.0,
             "count": 1,
             "names": "front-left",

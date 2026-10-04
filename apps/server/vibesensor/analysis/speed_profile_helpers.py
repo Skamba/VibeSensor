@@ -32,13 +32,9 @@ def run_speed_source(samples: Sequence[Sample]) -> str | None:
     return counts.most_common(1)[0][0] if counts else None
 
 
-def speed_typed_in(speed_source: str | None, *, simulated: bool) -> bool:
-    """The run speed was entered by hand, not measured live (GPS/OBD-II).
-
-    The simulator's manual speed is the simulated drive's true speed, so a
-    simulated run does not count.
-    """
-    return speed_source in _MANUAL_SPEED_SOURCES and not simulated
+def speed_typed_in(speed_source: str | None) -> bool:
+    """The run speed was entered by hand, not measured live (GPS/OBD-II)."""
+    return speed_source in _MANUAL_SPEED_SOURCES
 
 
 def _amplitude_weighted_speed_window(

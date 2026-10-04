@@ -204,13 +204,11 @@ class _References:
     final_drive_provenance: ReferenceProvenance
     gear_ratio_provenance: ReferenceProvenance
     speed_source: str | None
-    # The simulator's manual speed is the simulated drive's true speed.
-    simulated: bool
 
     @property
     def manual_speed(self) -> bool:
         """The speed was typed in by hand, not measured live (GPS/OBD-II)."""
-        return speed_typed_in(self.speed_source, simulated=self.simulated)
+        return speed_typed_in(self.speed_source)
 
     @property
     def estimated_final_drive(self) -> bool:
@@ -240,7 +238,6 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
             gear, status.current_gear_ratio_confidence if status is not None else None
         ),
         speed_source=run_speed_source(samples),
-        simulated=metadata.simulated,
     )
 
 

@@ -89,6 +89,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
                 client_control_base=sim_client_control_base,
+                gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
             )
@@ -183,6 +184,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
                 client_control_base=sim_client_control_base,
+                gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
             )
@@ -223,6 +225,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
                 client_control_base=sim_client_control_base,
+                gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
             )
@@ -263,6 +266,7 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
                 client_control_base=sim_client_control_base,
+                gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
             )

@@ -148,6 +148,7 @@ def run_simulator(
     sim_data_port: str,
     sim_control_port: str,
     client_control_base: str,
+    gps_port: str | None,
     duration_s: float,
     count: int = 4,
     names: str = "front-left,front-right,rear-left,rear-right",
@@ -183,6 +184,7 @@ def run_simulator(
         client_control_base,
         "--no-auto-server",
         "--no-interactive",
+        *(["--gps-port", gps_port] if gps_port is not None else []),
     ]
     subprocess.run(sim_cmd, cwd=str(ROOT), check=True)
 

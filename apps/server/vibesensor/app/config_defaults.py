@@ -29,7 +29,8 @@ DEFAULT_CONFIG: JsonObject = {
         # Relative to the directory of history_db_path (the data directory).
         "app_log_path": "app.log",
     },
-    "gps": {"gps_enabled": True},
+    # gpsd runs on the Pi itself (127.0.0.1); 2947 is its standard TCP port.
+    "gps": {"gps_enabled": True, "gpsd_port": 2947},
     # Isolated test runtimes shorten the cap to exercise the auto-stop path.
     "recording": {"max_duration_s": MAX_RECORDING_DURATION_S},
 }

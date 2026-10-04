@@ -77,6 +77,7 @@ class LifecycleRuntime:
     ws_broadcaster: LiveBroadcaster
     run_recorder: RunRecorder
     gps_monitor: GPSSpeedMonitor
+    gpsd_port: int
     obd_runner: ObdService
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
@@ -215,7 +216,7 @@ class LifecycleManager:
             (
                 "gps-speed",
                 lambda: self._start_supervised(
-                    lambda: r.gps_monitor.run(),
+                    lambda: r.gps_monitor.run(port=r.gpsd_port),
                     "gps-speed",
                 ),
             ),

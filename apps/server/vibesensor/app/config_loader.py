@@ -132,7 +132,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 else _resolve_path(str(app_log_path_raw), history_db_path.parent)
             ),
         ),
-        gps=GPSConfig(gps_enabled=bool(gps_cfg["gps_enabled"])),
+        gps=GPSConfig(
+            gps_enabled=bool(gps_cfg["gps_enabled"]),
+            gpsd_port=_coerce_port(gps_cfg["gpsd_port"], "gps.gpsd_port"),
+        ),
         recording=RecordingConfig(
             max_duration_s=_coerce_positive_float(
                 recording_cfg["max_duration_s"], "recording.max_duration_s"

@@ -44,6 +44,7 @@ def _record(
         sim_data_port=e2e_env["sim_data_port"],
         sim_control_port=e2e_env["sim_control_port"],
         client_control_base=e2e_env["sim_client_control_base"],
+        gps_port=e2e_env["sim_gps_port"],
         duration_s=duration_s,
         count=4,
         scenario=scenario,

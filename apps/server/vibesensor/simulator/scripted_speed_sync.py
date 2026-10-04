@@ -20,16 +20,21 @@ async def apply_scripted_speed(
     server_host: str,
     server_http_port: int,
     server_check_timeout: float,
+    gps_feed: bool,
 ) -> str | None:
-    """Set the scripted speed on every client and push it to the server.
+    """Set the scripted speed on every client and, unless a GPS feed reports it, type it in.
 
-    Returns a failure message when the server update failed. Callers retry on
+    With *gps_feed* the simulated GPS receiver reports the clients' speed, so
+    nothing is sent. Otherwise returns a failure message when the server's
+    manual-speed update failed. Callers retry on
     their next tick: the simulated tones always follow the scripted speed, so
     giving up after one slow response would leave the server analysing them
     against a frozen speed for the rest of the scenario.
     """
     for client in clients:
         client.current_speed_kmh = speed_kmh
+    if gps_feed:
+        return None
     try:
         await asyncio.to_thread(
             set_server_speed_override_kmh,

@@ -225,6 +225,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ws_broadcaster=ws_broadcaster,
         run_recorder=run_recorder,
         gps_monitor=gps_monitor,
+        gpsd_port=config.gps.gpsd_port,
         obd_runner=obd,
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,

@@ -38,6 +38,7 @@ async def test_apply_scripted_speed_reports_handled_http_error(
         server_host="127.0.0.1",
         server_http_port=8000,
         server_check_timeout=0.2,
+        gps_feed=False,
     )
 
     assert clients[0].current_speed_kmh == 42.0
@@ -45,8 +46,9 @@ async def test_apply_scripted_speed_reports_handled_http_error(
 
 
 @pytest.mark.asyncio
-async def test_apply_scripted_speed_pushes_speed_to_server(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(("gps_feed", "typed_in"), [(False, [18.0]), (True, [])])
+async def test_apply_scripted_speed_types_it_in_unless_a_gps_feed_reports_it(
+    monkeypatch: pytest.MonkeyPatch, gps_feed: bool, typed_in: list[float]
 ) -> None:
     clients = [_FakeSimClient()]
     pushed: list[float] = []
@@ -71,8 +73,9 @@ async def test_apply_scripted_speed_pushes_speed_to_server(
         server_host="127.0.0.1",
         server_http_port=8000,
         server_check_timeout=0.2,
+        gps_feed=gps_feed,
     )
 
     assert clients[0].current_speed_kmh == 18.0
-    assert pushed == [18.0]
+    assert pushed == typed_in
     assert failure is None

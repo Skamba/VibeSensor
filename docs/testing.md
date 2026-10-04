@@ -39,6 +39,7 @@ pytest -q apps/server/tests/integration/
 
 - `apps/server/tests_e2e/conftest.py` starts one real server subprocess per pytest-xdist worker (session-scoped `e2e_server` fixture): a runtime dir under pytest's tmp dir with `config.docker.yaml` cloned and paths rewritten, seed data copied, and free loopback HTTP/UDP ports. The server is terminated at session end and also dies with its worker.
 - Tests drive it over HTTP and run `vibesensor.simulator.sim_sender` against it via the `e2e_env` fixture. Tests on one worker share that server sequentially, so each test restores the settings, clients, and runs it touches. Simulator sensor ids are deterministic per index (`sim_client_ids`), and sensor location assignments persist by sensor id, so tests that assign locations call `remove_all_clients` in their cleanup (removing a sensor releases its location).
+- The simulator reports its speed as a GPS receiver (gpsd protocol) on the worker server's `gps.gpsd_port` (`run_simulator(gps_port=...)`, `vibesensor-sim --gps-port`), so recorded runs carry a measured speed; `gps_port=None` types the speed in as a manual speed instead.
 - Failing e2e tests append the server and app log tails to the pytest report.
 - Simulated captures that must finish post-analysis need at least `ANALYZABLE_SIM_DURATION_S` (two FFT analysis windows); `_simulate()` defaults to it.
 - `long_sim` marks longer simulated runs; the fast selection excludes them. Override the worker count with `make test-e2e E2E_WORKERS=<n>`.

@@ -104,7 +104,8 @@ Terminal runs older than 7 days are pruned at startup (see
 
 | Key | Default | Notes |
 |-----|---------|-------|
-| `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1:2947`). Disable this on dev benches or deployments without GPS hardware. |
+| `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1`). Disable this on dev benches or deployments without GPS hardware. |
+| `gps.gpsd_port` | `2947` | gpsd's TCP port. Only isolated test runtimes change it, to read the simulator's GPS feed (`vibesensor-sim --gps-port`). |
 
 ## `recording`
 

@@ -51,7 +51,7 @@ def prepare_analysis_context(
         run_suitability=RunSuitability.evaluate(
             steady_speed=prepared.is_steady_speed,
             speed_sufficient=prepared.speed_sufficient,
-            manual_speed=speed_typed_in(run_speed_source(samples), simulated=context.simulated),
+            manual_speed=speed_typed_in(run_speed_source(samples)),
             sensor_count=len(sensor_ids),
             reference_complete=context.reference_complete,
             sat_count=accel_stats["sat_count"],

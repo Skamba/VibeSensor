@@ -172,6 +172,7 @@ async def test_run_scripted_scenario_advances_speed_and_fires_temporary_pulses(
             server_host="127.0.0.1",
             server_http_port=8000,
             server_check_timeout=0.1,
+            gps_feed=False,
             speed_update_period_s=0.01,
         )
     )
@@ -241,6 +242,7 @@ async def test_run_scripted_scenario_retries_speed_sync_after_a_failed_update(
             server_host="127.0.0.1",
             server_http_port=8000,
             server_check_timeout=0.1,
+            gps_feed=False,
             speed_update_period_s=0.01,
         )
     )
@@ -294,6 +296,7 @@ async def test_run_scripted_scenario_marks_guided_phases_on_the_server(
             server_host="127.0.0.1",
             server_http_port=8000,
             server_check_timeout=0.1,
+            gps_feed=False,
             speed_update_period_s=0.01,
         )
     )
@@ -326,6 +329,7 @@ async def test_unguided_scenario_never_marks_guided_phases(
             server_host="127.0.0.1",
             server_http_port=8000,
             server_check_timeout=0.1,
+            gps_feed=False,
             speed_update_period_s=0.01,
         )
     )

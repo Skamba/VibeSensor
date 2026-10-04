@@ -196,16 +196,6 @@ def test_a_typed_in_speed_still_names_a_found_cause_but_says_why_it_is_hedged() 
     assert _checks({"diagnosis": diagnosis})["driveline"] == ("not_testable", "manual_speed")
 
 
-def test_simulated_sensors_drive_at_the_speed_they_set() -> None:
-    """The simulator's manual speed is the simulated car's true speed."""
-    samples = _driven(
-        make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30), speed_source="manual"
-    )
-    summary = run_analysis(samples, standard_metadata(firmware_version="sim-0.2"))
-
-    assert _checks(summary)["wheel/tire"] == ("ruled_out", "no_matching_order")
-
-
 _COAST_START_S = 28.0
 _GUIDED = [
     {"phase": "sweep", "start_t_s": 0.0, "end_t_s": 14.0},

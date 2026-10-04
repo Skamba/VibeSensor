@@ -25,6 +25,7 @@ async def run_scripted_scenario(
     server_host: str,
     server_http_port: int,
     server_check_timeout: float,
+    gps_feed: bool,
     speed_update_period_s: float = 0.5,
 ) -> None:
     scenario = _scenario_catalog.get_scripted_scenario(scenario_name)
@@ -80,6 +81,7 @@ async def run_scripted_scenario(
                         server_host=server_host,
                         server_http_port=server_http_port,
                         server_check_timeout=server_check_timeout,
+                        gps_feed=gps_feed,
                     )
                     if sync_error is not None and not speed_sync_failing:
                         print(sync_error)

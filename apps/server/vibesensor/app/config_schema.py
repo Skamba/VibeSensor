@@ -68,9 +68,10 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class GPSConfig:
-    """GPS enable flag; gpsd address is fixed in ``vibesensor.speed.gps_speed``."""
+    """GPS enable flag and gpsd port (gpsd runs on the Pi itself, ``127.0.0.1``)."""
 
     gps_enabled: bool
+    gpsd_port: int
 
 
 @dataclass(slots=True)

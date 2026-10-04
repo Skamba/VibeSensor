@@ -76,6 +76,38 @@ def set_server_speed_override_kmh(
     return float(value) if isinstance(value, (int, float)) else None
 
 
+def select_server_gps_speed(host: str, port: int, timeout_s: float) -> None:
+    """Switch the server to GPS speed, which the simulated GPS receiver reports."""
+    read_json_response(
+        _speed_source_url(host, port),
+        method="PUT",
+        headers={"Content-Type": "application/json"},
+        content=json.dumps({"speed_source": "gps"}).encode("utf-8"),
+        timeout_s=timeout_s,
+        context="simulator GPS speed source",
+    )
+
+
+def wait_for_server_gps_speed(host: str, port: int, timeout_s: float) -> None:
+    """Block until the server reads a fresh GPS speed (it reconnects to gpsd with backoff)."""
+    url = f"{_speed_source_url(host, port)}/status"
+    deadline = time.monotonic() + timeout_s
+    while True:
+        status = read_json_response(url, timeout_s=2.0, context="simulator GPS speed status")
+        age_s = status.get("last_update_age_s") if isinstance(status, dict) else None
+        if (
+            isinstance(status, dict)
+            and status.get("speed_source") == "gps"
+            and status.get("raw_speed_kmh") is not None
+            and isinstance(age_s, (int, float))
+            and age_s < 1.0
+        ):
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"server read no GPS speed from the simulator: {status}")
+        time.sleep(0.2)
+
+
 def mark_server_guided_phase(
     host: str, port: int, phase: GuidedPhaseName | None, timeout_s: float
 ) -> None:

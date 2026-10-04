@@ -70,7 +70,7 @@ def _capabilities(
         status is not None and status.current_gear_ratio_confidence in WEAK_FIELD_CONFIDENCES
     )
     speed = observation.speed
-    manual = speed is not None and speed_typed_in(speed.source, simulated=False)
+    manual = speed is not None and speed_typed_in(speed.source)
     wheel: WheelCapability
     driveline: DrivelineCapability
     if spec is None:
