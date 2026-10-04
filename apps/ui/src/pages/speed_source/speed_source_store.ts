@@ -5,7 +5,7 @@ import {
   scanSettingsObdDevices,
   updateSettingsSpeedSource,
 } from "../../api/settings";
-import type { ObdDevicePayload } from "../../api/types";
+import type { ObdDevicePayload, SpeedSourceKind } from "../../api/types";
 import {
   activeView,
   errorMessage,
@@ -22,11 +22,8 @@ import {
   refreshSpeedStatus,
   speedSettings,
   speedSourceSnapshot,
+  speedStatus,
 } from "../../settings_store";
-import {
-  type DisplayedSpeedSourceMode,
-  deriveDisplayedSpeedSourceMode,
-} from "../../speed_source";
 import {
   activeSourceLabel,
   checkSave,
@@ -36,13 +33,12 @@ import {
 const OBD_RESCAN_MS = 2_000;
 
 /** Unsaved edits; `null` means "show the saved value". */
-const modeDraft = signal<DisplayedSpeedSourceMode | null>(null);
+const modeDraft = signal<SpeedSourceKind | null>(null);
 const manualSpeedDraft = signal<string | null>(null);
 const staleTimeoutDraft = signal<string | null>(null);
 
-export const savedMode = computed(() =>
-  deriveDisplayedSpeedSourceMode(speedSourceSnapshot.value),
-);
+/** The saved choice, even while a manual fallback stands in for a lost live source. */
+export const savedMode = computed(() => speedSettings.source.value);
 export const selectedMode = computed(() => modeDraft.value ?? savedMode.value);
 export const draftPending = computed(
   () => modeDraft.value !== null && modeDraft.value !== savedMode.value,
@@ -123,7 +119,7 @@ onViewEnter("settingsView", async () => {
   }
 });
 
-export function chooseMode(mode: DisplayedSpeedSourceMode): void {
+export function chooseMode(mode: SpeedSourceKind): void {
   batch(() => {
     modeDraft.value = mode;
     clearFeedback();
@@ -153,7 +149,11 @@ export async function saveSpeedSource(): Promise<void> {
     return;
   }
   clearFeedback();
-  const activeSource = activeSourceLabel(speedSourceSnapshot.value, t);
+  const activeSource = activeSourceLabel(
+    speedSourceSnapshot.value,
+    speedStatus.value,
+    t,
+  );
   const check = checkSave({
     source: modeDraft.value ?? speedSettings.source.value,
     manualSpeed: manualSpeedInput.value,

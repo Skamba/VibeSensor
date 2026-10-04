@@ -43,9 +43,11 @@ input {
     color 120ms ease;
 }
 
-.menu-btn:hover {
-  background: var(--menu-hover);
-  color: var(--md-sys-color-on-surface);
+@media (hover: hover) {
+  .menu-btn:hover {
+    background: var(--menu-hover);
+    color: var(--md-sys-color-on-surface);
+  }
 }
 
 .menu-btn[aria-selected="true"] {

@@ -22,7 +22,14 @@ type DrivelineCapability = Literal[
     "ok", "estimated_final_drive", "missing_final_drive", "missing_tire", "manual_speed"
 ]
 type EngineCapability = Literal[
-    "measured", "estimated_top_gear", "estimated_ratios", "missing", "manual_speed"
+    "measured",
+    "estimated_top_gear",
+    "estimated_ratios",
+    "missing_tire",
+    "missing_final_drive",
+    "missing_top_gear",
+    "missing_ratios",
+    "manual_speed",
 ]
 
 
@@ -56,7 +63,9 @@ class CaptureCapabilities:
     ``driveline`` also the final drive (``estimated_final_drive`` when it is a
     weak library value), and ``engine`` is ``measured`` with fresh OBD-II RPM,
     else estimated from speed assuming top gear (``estimated_ratios`` when the
-    final drive or top gear is a weak library value). A typed-in speed makes
+    final drive or top gear is a weak library value). Without OBD-II, a missing
+    reference is named: ``missing_tire`` first, then ``missing_final_drive``,
+    ``missing_top_gear``, or ``missing_ratios`` for both. A typed-in speed makes
     every family ``manual_speed``: order matching then holds only at that speed.
     """
 

@@ -57,6 +57,7 @@ class RunRecorderStatusSnapshot:
     last_completed_run_error: str | None = None
     capture_readiness: CaptureReadiness | None = None
     last_stop_reason: RecordingStopReason | None = None
+    last_run_id: str | None = None
     guided_phase: GuidedPhaseName | None = None
     guided_phases_completed: tuple[GuidedPhaseName, ...] = ()
 
@@ -70,6 +71,7 @@ def build_run_recorder_status(
     post_analysis: PostAnalysisWorker,
     capture_readiness: CaptureReadiness | None = None,
     last_stop_reason: RecordingStopReason | None = None,
+    last_run_id: str | None = None,
     guided_phase: GuidedPhaseName | None = None,
     guided_phases_completed: tuple[GuidedPhaseName, ...] = (),
 ) -> RunRecorderStatusSnapshot:
@@ -88,6 +90,7 @@ def build_run_recorder_status(
         last_completed_run_error=post_snapshot.last_completed_error,
         capture_readiness=capture_readiness,
         last_stop_reason=last_stop_reason,
+        last_run_id=last_run_id,
         guided_phase=guided_phase,
         guided_phases_completed=guided_phases_completed,
     )

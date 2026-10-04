@@ -157,7 +157,7 @@ test("car rows show each reference's source and what the car can test", () => {
     capabilities: {
       wheel: "missing_tire",
       driveline: "missing_tire",
-      engine: "missing",
+      engine: "missing_tire",
     },
   });
   expect(rows[2].metrics.map((metric) => [metric.value, metric.tier])).toEqual([
@@ -176,12 +176,18 @@ test("a car's capabilities follow its references like the server's readiness", (
   expect(refs("user_confirmed", "missing", "missing")).toEqual({
     wheel: "ok",
     driveline: "missing_final_drive",
-    engine: "missing",
+    engine: "missing_ratios",
   });
+  // The engine note names exactly the ratio that is missing.
   expect(refs("official_exact", "official_derived", "missing")).toEqual({
     wheel: "ok",
     driveline: "ok",
-    engine: "missing",
+    engine: "missing_top_gear",
+  });
+  expect(refs("official_exact", "missing", "user_confirmed")).toEqual({
+    wheel: "ok",
+    driveline: "missing_final_drive",
+    engine: "missing_final_drive",
   });
   expect(refs("official_exact", "unverified", "official_exact")).toEqual({
     wheel: "ok",
@@ -194,7 +200,7 @@ test("a car's capabilities follow its references like the server's readiness", (
     engine: "estimated_ratios",
   });
   expect(refs("missing", "official_exact", "official_exact").engine).toBe(
-    "missing",
+    "missing_tire",
   );
   expect(
     [
@@ -207,8 +213,8 @@ test("a car's capabilities follow its references like the server's readiness", (
     ].map(capabilityMark),
   ).toEqual(["ok", "ok", "caveat", "caveat", "no", "no"]);
   expect(capabilityNoteKey("wheel", "ok")).toBeNull();
-  expect(capabilityNoteKey("engine", "missing")).toBe(
-    "capabilities.engine.missing",
+  expect(capabilityNoteKey("engine", "missing_top_gear")).toBe(
+    "capabilities.engine.missing_top_gear",
   );
 });
 

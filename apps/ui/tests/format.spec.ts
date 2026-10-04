@@ -1,10 +1,30 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import {
+  fmt,
   fmtTs,
   formatEpochTimestamp,
   formatSpeed,
   formatSpeedRange,
 } from "../src/format";
+import { setLanguage } from "../src/i18n";
+
+afterEach(async () => {
+  await setLanguage("en");
+});
+
+describe("number formatting", () => {
+  test("uses the active language's decimal separator, without grouping", async () => {
+    expect(fmt(3.0812, 2)).toBe("3.08");
+    expect(fmt(2.01, 3)).toBe("2.010");
+    expect(fmt(2350.25, 1)).toBe("2350.3");
+    expect(fmt(Number.NaN, 1)).toBe("--");
+    await setLanguage("nl");
+    // "2.010" would read as two thousand and ten in Dutch.
+    expect(fmt(2.01, 3)).toBe("2,010");
+    expect(fmt(3.0812, 2)).toBe("3,08");
+    expect(fmt(2350.25, 1)).toBe("2350,3");
+  });
+});
 
 describe("timestamp formatting helpers", () => {
   test("formats valid timestamps through locale path and falls back for invalid values", () => {

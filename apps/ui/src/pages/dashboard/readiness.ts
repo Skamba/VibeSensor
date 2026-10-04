@@ -189,7 +189,7 @@ export interface CapabilityItem {
 
 export interface CapabilityModel {
   items: CapabilityItem[];
-  /** The typed-in speed caveat, when the speed source is manual; fixed on the speed-source tab. */
+  /** The typed-in speed caveat (chosen, or standing in for a lost live source); fixed on the speed-source tab. */
   manualNote: string | null;
 }
 
@@ -198,7 +198,8 @@ const CAPABILITY_FIX: Record<string, "cars" | "speed_source"> = {
   missing_final_drive: "cars",
   estimated_final_drive: "cars",
   estimated_ratios: "cars",
-  missing: "cars",
+  missing_top_gear: "cars",
+  missing_ratios: "cars",
   estimated_top_gear: "speed_source",
 };
 
@@ -209,6 +210,7 @@ const CAPABILITY_FIX: Record<string, "cars" | "speed_source"> = {
 export function capabilityModel(
   capabilities: Capabilities | null,
   manualSpeedText: string,
+  fallbackReason: string | null,
   t: Translate,
 ): CapabilityModel | null {
   if (!capabilities) {
@@ -236,7 +238,12 @@ export function capabilityModel(
     manualNote: CAPABILITY_FAMILIES.some(
       (family) => capabilities[family] === "manual_speed",
     )
-      ? t("dashboard.capabilities.manual_note", { speed: manualSpeedText })
+      ? fallbackReason
+        ? t("dashboard.capabilities.fallback_note", {
+            reason: fallbackReason,
+            speed: manualSpeedText,
+          })
+        : t("dashboard.capabilities.manual_note", { speed: manualSpeedText })
       : null,
   };
 }

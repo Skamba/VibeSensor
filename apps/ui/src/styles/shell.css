@@ -19,6 +19,12 @@
   gap: var(--space-2);
 }
 
+/* Grid items default to min-width: auto; let each header row shrink to the screen. */
+.site-header__main,
+.site-header__status {
+  min-width: 0;
+}
+
 .site-header__main {
   display: flex;
   align-items: center;

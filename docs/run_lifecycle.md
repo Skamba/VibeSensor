@@ -69,7 +69,9 @@ No active run is recording:
   (`ok`/`estimated_final_drive` for a weak library final drive/
   `missing_final_drive`/`missing_tire`) and `engine` (`measured` from fresh
   OBD-II RPM, `estimated_top_gear` from the ratios, `estimated_ratios` when the
-  final drive or top gear is a weak library value, or `missing`). A typed-in
+  final drive or top gear is a weak library value, or what is missing:
+  `missing_tire`, `missing_final_drive`, `missing_top_gear`, or
+  `missing_ratios` for both). A typed-in
   (manual) speed makes every family that has its references `manual_speed`.
   `capabilities` is `null` without an active car
 
@@ -122,8 +124,11 @@ During recording:
    row if no sample ever did
 4. ask `RunPersistenceWriter.ready_for_analysis()` whether the run has a
    created history row
-5. call `RunLifecycleState.stop()` and clear the active run context
-6. reset the persistence helper for the next live run
+5. call `RunLifecycleState.stop()` and clear the active run context; the
+   stopped run's ID stays in status as `last_run_id` until the next run starts
+6. end the persistence helper's run (`end_run()`): write state is cleared but
+   `samples_written`/`samples_dropped` stay in status until the next run, so
+   the Live page names the run and its sample count while it is analysed
 7. schedule post-analysis only when `ready_for_analysis()` returned the run ID
 
 A run that collected no samples is still analysed: post-analysis stores it in

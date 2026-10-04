@@ -4,7 +4,6 @@ import { useEffect, useRef } from "preact/hooks";
 import { t } from "../../i18n";
 import {
   activeBands,
-  announcement,
   bandCoverage,
   bandsVisible,
   hasBands,
@@ -16,18 +15,6 @@ import {
   showAllTraces,
   toggleBands,
 } from "./spectrum_store";
-
-const SCREEN_READER_ONLY: CSSProperties = {
-  border: "0",
-  clip: "rect(0 0 0 0)",
-  height: "1px",
-  margin: "-1px",
-  overflow: "hidden",
-  padding: "0",
-  position: "absolute",
-  whiteSpace: "nowrap",
-  width: "1px",
-};
 
 const colorVar = (name: "--band-color" | "--swatch-color", color: string) =>
   ({ [name]: color }) as CSSProperties;
@@ -192,14 +179,6 @@ export function Spectrum() {
         </div>
         <div id="spectrumInspector" class="spectrum-inspector">
           {inspector.value}
-        </div>
-        <div
-          class="spectrum-inspector-announcer"
-          aria-live="polite"
-          aria-atomic="true"
-          style={SCREEN_READER_ONLY}
-        >
-          {announcement.value}
         </div>
         <div id="legend" class="legend">
           <TraceLegend />

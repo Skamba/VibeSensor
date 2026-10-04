@@ -111,9 +111,11 @@
   cursor: pointer;
   scroll-margin-top: calc((var(--space-6) * 2) + var(--space-4));
 }
-.legend-item--interactive:hover {
-  border-color: var(--brand-400);
-  background: var(--menu-hover);
+@media (hover: hover) {
+  .legend-item--interactive:hover {
+    border-color: var(--brand-400);
+    background: var(--menu-hover);
+  }
 }
 .legend-item--interactive[data-legend-state="active"] {
   border-color: var(--brand-600);

@@ -1,3 +1,4 @@
+import { fmt } from "./format";
 import { getSpectrumCssVars } from "./spectrum_css_vars";
 import {
   buildSpectrumChartTickValues,
@@ -491,9 +492,9 @@ function requireCanvasContext(
 }
 
 function formatHzTick(value: number): string {
-  return value >= 100 ? value.toFixed(0) : value.toFixed(1);
+  return fmt(value, value >= 100 ? 0 : 1);
 }
 
 function formatDbTick(value: number): string {
-  return value.toFixed(0);
+  return fmt(value, 0);
 }

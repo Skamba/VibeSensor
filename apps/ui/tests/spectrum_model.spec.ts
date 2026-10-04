@@ -229,14 +229,18 @@ describe("inspector", () => {
   test("describes the hovered bin, else the focused peak, else a hint", () => {
     expect(inspectorText(input({ cursorIdx: 2 }), t)).toEqual({
       mode: "hover",
-      text: `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "30.0", value: "3.0", bands: engineLabel })}`,
+      text: `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "30.0", value: "3.0" })} · ${engineLabel}`,
     });
+    // A frequency outside every order band gets no band suffix at all.
+    expect(inspectorText(input({ cursorIdx: 3 }), t).text).toBe(
+      `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "40.0", value: "1.0" })}`,
+    );
     expect(inspectorText(input(), t)).toEqual({
       mode: "focus",
-      text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"12.0","bands":"bands.wheel_1x"}',
+      text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"12.0"} · bands.wheel_1x',
     });
     expect(inspectorText(input({ pinnedId: "b" }), t).text).toBe(
-      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "8.0", bands: engineLabel })}`,
+      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "8.0" })} · ${engineLabel}`,
     );
     expect(inspectorText(input({ entries: [] }), t)).toEqual({
       mode: "idle",
@@ -244,14 +248,12 @@ describe("inspector", () => {
     });
   });
 
-  test("hover lines are throttled and never announced; focus lines are announced once", () => {
+  test("hover lines are throttled; focus lines show at once, each change only once", () => {
     let now = 0;
     const timers: Array<{ at: number; run: () => void }> = [];
     const shown: string[] = [];
-    const announced: string[] = [];
     const feed = createInspectorFeed({
       show: (text) => shown.push(text),
-      announce: (text) => announced.push(text),
       now: () => now,
       schedule: (run, delayMs) => {
         const timer = { at: now + delayMs, run };
@@ -273,15 +275,13 @@ describe("inspector", () => {
     expect(shown).toEqual(["h1"]);
     advance(33);
     expect(shown).toEqual(["h1", "h3"]);
-    expect(announced).toEqual([]);
 
     feed.update({ mode: "hover", text: "h4" });
     feed.update({ mode: "focus", text: "peak" });
     advance(100);
     expect(shown).toEqual(["h1", "h3", "peak"]);
-    expect(announced).toEqual(["peak"]);
     feed.update({ mode: "focus", text: "peak" });
-    expect(announced).toEqual(["peak"]);
+    expect(shown).toEqual(["h1", "h3", "peak"]);
   });
 });
 

@@ -330,6 +330,7 @@ export function speedText(
   labelKey: string,
   t: Translate,
   fmt: (value: number, digits: number) => string,
+  fallbackReason: string | null = null,
 ): string {
   const unitText = t(speedUnitKey(unit));
   if (typeof speedMps !== "number" || !Number.isFinite(speedMps)) {
@@ -338,6 +339,7 @@ export function speedText(
   return t(labelKey, {
     unit: unitText,
     value: fmt(kmhInUnit(speedMps * 3.6, unit), 1),
+    ...(fallbackReason ? { reason: fallbackReason } : {}),
   });
 }
 
@@ -345,10 +347,9 @@ function runIdText(status: LoggingStatusPayload, t: Translate): string {
   if (status.enabled && status.run_id) {
     return t("dashboard.logging.run_id", { runId: status.run_id });
   }
-  return status.last_completed_run_id
-    ? t("dashboard.logging.last_run_id", {
-        runId: status.last_completed_run_id,
-      })
+  const lastRunId = status.last_run_id ?? status.last_completed_run_id;
+  return lastRunId
+    ? t("dashboard.logging.last_run_id", { runId: lastRunId })
     : "";
 }
 
@@ -395,10 +396,9 @@ function panel(
   prefix: string,
   t: Translate,
   action: SummaryPanel["action"],
-  vars?: Record<string, unknown>,
 ): SummaryPanel {
   return {
-    title: t(`${prefix}.title`, vars),
+    title: t(`${prefix}.title`),
     body: t(`${prefix}.body`),
     detail: t(`${prefix}.detail`),
     action,
@@ -489,19 +489,17 @@ export function recordingModel(
   }
   if (status.analysis_in_progress || status.last_completed_run_id) {
     const key = status.analysis_in_progress ? "processing" : "saved";
-    const runId = status.last_completed_run_id ?? t("status.unavailable");
-    const summary = panel(
-      `dashboard.logging.${key}`,
-      t,
-      {
-        action: "open-history",
-        label: t(`dashboard.logging.${key}.action`),
-        variant: "primary",
-      },
-      { runId },
-    );
+    const summary = panel(`dashboard.logging.${key}`, t, {
+      action: "open-history",
+      label: t(`dashboard.logging.${key}.action`),
+      variant: "primary",
+    });
     return {
       ...base,
+      // The counters describe the run stopped since the server started, if any.
+      samplesText: status.last_run_id
+        ? formatInt(status.samples_written ?? 0)
+        : "--",
       pillVariant: status.analysis_in_progress ? "warn" : "ok",
       pillText: phase(key),
       phaseText: phase(key),

@@ -51,6 +51,7 @@ class RunLifecycleState:
     last_active_frames_total: int = 0
     shutdown_requested: bool = False
     last_stop_reason: RecordingStopReason | None = None
+    last_run_id: str | None = None
 
     @property
     def enabled(self) -> bool:
@@ -83,6 +84,7 @@ class RunLifecycleState:
         self.start_frames_total = current_total
         self.last_active_frames_total = current_total
         self.last_stop_reason = None
+        self.last_run_id = None
         return ActiveRunSnapshot(
             run_id=run_id,
             start_time_utc=start_time_utc,
@@ -94,6 +96,7 @@ class RunLifecycleState:
         if run is not None and run.is_recording:
             run.stop()
             self.last_stop_reason = reason
+            self.last_run_id = run.run_id
         self.current_run = None
         self.start_time_utc = None
         self.start_mono_s = None

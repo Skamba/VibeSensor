@@ -28,6 +28,7 @@ def _make_recording_status_snapshot(
     last_completed_run_id: str | None = None,
     last_completed_run_error: str | None = None,
     capture_readiness: CaptureReadiness | None = None,
+    last_run_id: str | None = None,
 ) -> RunRecorderStatusSnapshot:
     return RunRecorderStatusSnapshot(
         enabled=enabled,
@@ -40,6 +41,7 @@ def _make_recording_status_snapshot(
         last_completed_run_id=last_completed_run_id,
         last_completed_run_error=last_completed_run_error,
         capture_readiness=capture_readiness,
+        last_run_id=last_run_id,
     )
 
 
@@ -60,7 +62,9 @@ def _recording_client(fake_state):
     fake_state.run_recorder.stop_recording.return_value = _make_recording_status_snapshot(
         enabled=False,
         run_id=None,
-        samples_written=0,
+        samples_written=42,
+        analysis_in_progress=True,
+        last_run_id="run-abc",
     )
     app = FastAPI()
     app.include_router(create_recording_routes(fake_state.run_recorder))
@@ -95,6 +99,7 @@ class TestRecordingStatusEndpoint:
             "last_completed_run_id": "run-122",
             "last_completed_run_error": None,
             "last_stop_reason": None,
+            "last_run_id": None,
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],
@@ -134,7 +139,7 @@ class TestRecordingStatusEndpoint:
                     ),
                 ),
                 capabilities=CaptureCapabilities(
-                    wheel="ok", driveline="missing_final_drive", engine="missing"
+                    wheel="ok", driveline="missing_final_drive", engine="missing_ratios"
                 ),
             ),
         )
@@ -161,7 +166,7 @@ class TestRecordingStatusEndpoint:
             "capabilities": {
                 "wheel": "ok",
                 "driveline": "missing_final_drive",
-                "engine": "missing",
+                "engine": "missing_ratios",
             },
         }
 
@@ -184,6 +189,7 @@ class TestRecordingStartEndpoint:
             "last_completed_run_id": None,
             "last_completed_run_error": None,
             "last_stop_reason": None,
+            "last_run_id": None,
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],
@@ -210,7 +216,7 @@ class TestRecordingStartEndpoint:
 
 
 class TestRecordingStopEndpoint:
-    def test_stop_returns_idle_status(self, _recording_client) -> None:
+    def test_stop_names_the_stopped_run_while_it_is_analysed(self, _recording_client) -> None:
         client, state = _recording_client
 
         response = client.post("/api/recording/stop")
@@ -220,13 +226,14 @@ class TestRecordingStopEndpoint:
             "enabled": False,
             "run_id": None,
             "write_error": None,
-            "analysis_in_progress": False,
+            "analysis_in_progress": True,
             "start_time_utc": None,
-            "samples_written": 0,
+            "samples_written": 42,
             "samples_dropped": 0,
             "last_completed_run_id": None,
             "last_completed_run_error": None,
             "last_stop_reason": None,
+            "last_run_id": "run-abc",
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],

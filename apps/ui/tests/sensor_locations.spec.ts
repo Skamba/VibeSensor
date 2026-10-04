@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import {
   locationCodeForClient,
+  locationLabel,
   locationOptions,
 } from "../src/sensor_locations";
 import { layoutConsequence, sensorLayout } from "../src/sensor_layout";
@@ -65,4 +66,13 @@ test("the sensor layout says what it can localise", () => {
   expect(some && layoutConsequence(some, t)).toBe(
     'sensors.layout.some_wheels:{"count":2,"total":4}',
   );
+});
+
+test("a stored location (code or English label) shows in the UI language", () => {
+  expect(locationLabel("trunk", t)).toBe("Trunk");
+  expect(locationLabel("Front Right Wheel", t)).toBe(
+    "location.front_right_wheel",
+  );
+  expect(locationLabel("engine-bay", t)).toBe("location.engine_bay");
+  expect(locationLabel("Roof rack", t)).toBe("Roof rack");
 });

@@ -51,8 +51,6 @@ const chartLoading = signal(false);
 const chartLoadError = signal<string | null>(null);
 const prepareError = signal<string | null>(null);
 export const inspector = signal("");
-/** The inspector line for screen readers (focus changes only, not hover). */
-export const announcement = signal("");
 
 const levels: SensorLevels = {
   strengthDb: (id) =>
@@ -202,9 +200,6 @@ export function mountSpectrum(dom: {
   const feed = createInspectorFeed({
     show: (text) => {
       inspector.value = text;
-    },
-    announce: (text) => {
-      announcement.value = text;
     },
     now: () => performance.now(),
     schedule: (run, delayMs) => {

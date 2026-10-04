@@ -252,6 +252,31 @@ describe("recording card", () => {
     expect(saved.elapsedText).toBe("1:05");
   });
 
+  test("the first run after a server restart keeps its name and samples while analysed", () => {
+    // The stop response clears run_id and nothing has completed yet.
+    const stopped = recording({
+      status: status({
+        analysis_in_progress: true,
+        last_run_id: "run-7",
+        samples_written: 4800,
+      }),
+    });
+    expect(stopped.summaryPanel?.title).toBe(
+      "dashboard.logging.processing.title",
+    );
+    expect(stopped.runIdText).toBe(
+      'dashboard.logging.last_run_id:{"runId":"run-7"}',
+    );
+    expect(stopped.samplesText).toBe("4800");
+    // An analysis the server resumed after a restart: no counts describe that run.
+    const resumed = recording({
+      status: status({ analysis_in_progress: true, samples_written: 0 }),
+    });
+    expect(resumed.samplesText).toBe("--");
+    expect(resumed.runIdText).toBe("");
+    expect(JSON.stringify(resumed)).not.toContain("status.unavailable");
+  });
+
   test("a run that hit the 30-minute limit says it stopped automatically", () => {
     const detail = (reason: LoggingStatusPayload["last_stop_reason"]) =>
       recording({
@@ -411,6 +436,11 @@ describe("live overview helpers", () => {
     expect(speedText(10, "kmh", "speed.label", t, fmt)).toBe(
       'speed.label:{"unit":"speed.unit.kmh","value":"36.0"}',
     );
+    expect(
+      speedText(10, "kmh", "speed.fallback", t, fmt, "No GPS receiver found"),
+    ).toBe(
+      'speed.fallback:{"unit":"speed.unit.kmh","value":"36.0","reason":"No GPS receiver found"}',
+    );
     expect(speedText(10, "mps", "speed.label", t, fmt)).toBe(
       'speed.label:{"unit":"speed.unit.mps","value":"10.0"}',
     );
@@ -479,7 +509,7 @@ describe("capability line", () => {
     ]);
 
   test("is absent without an active car", () => {
-    expect(capabilityModel(null, "80 km/h", t)).toBeNull();
+    expect(capabilityModel(null, "80 km/h", null, t)).toBeNull();
   });
 
   test("marks tested, estimated and untested families with their fix", () => {
@@ -490,6 +520,7 @@ describe("capability line", () => {
         engine: "estimated_top_gear",
       },
       "80 km/h",
+      null,
       t,
     );
     expect(marks(model)).toEqual([
@@ -508,6 +539,7 @@ describe("capability line", () => {
         capabilityModel(
           { wheel: "ok", driveline: "ok", engine: "measured" },
           "80 km/h",
+          null,
           t,
         ),
       )?.map(([, mark]) => mark),
@@ -522,6 +554,7 @@ describe("capability line", () => {
         engine: "manual_speed",
       },
       "80 km/h",
+      null,
       t,
     );
     expect(model?.items.map((item) => [item.mark, item.fix])).toEqual([
@@ -531,6 +564,21 @@ describe("capability line", () => {
     ]);
     expect(model?.manualNote).toBe(
       'dashboard.capabilities.manual_note:{"speed":"80 km/h"}',
+    );
+    // GPS was chosen but has no receiver: say so instead of "speed is typed in".
+    expect(
+      capabilityModel(
+        {
+          wheel: "manual_speed",
+          driveline: "manual_speed",
+          engine: "manual_speed",
+        },
+        "80 km/h",
+        "No GPS receiver found",
+        t,
+      )?.manualNote,
+    ).toBe(
+      'dashboard.capabilities.fallback_note:{"reason":"No GPS receiver found","speed":"80 km/h"}',
     );
   });
 });

@@ -15,6 +15,7 @@ import {
   type SpeedUnit,
   speedUnitKey,
 } from "../../format";
+import { locationLabel } from "../../sensor_locations";
 
 /** Pure view models for the History page: run rows and the expanded diagnosis. */
 
@@ -273,7 +274,9 @@ function zoneText(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.zone && ZONE_KEYS.has(diagnosis.zone)) {
     return t(`history.zone.${diagnosis.zone}`);
   }
-  return diagnosis.location || t("report.missing");
+  return diagnosis.location
+    ? locationLabel(diagnosis.location, t)
+    : t("report.missing");
 }
 
 function speedRangeText(
@@ -307,11 +310,9 @@ function locationText(
   summary: HistoryInsightsPayload,
   t: Translate,
 ): string {
-  return (
-    finding.strongest_location ||
-    summary.most_likely_origin?.location ||
-    t("report.missing")
-  );
+  const location =
+    finding.strongest_location || summary.most_likely_origin?.location;
+  return location ? locationLabel(location, t) : t("report.missing");
 }
 
 function speedBandText(
@@ -888,7 +889,7 @@ function insightWarnings(detail: RunDetail): DetailsModel["warnings"] {
     }));
 }
 
-/** Folds free-text location names onto the fixed car-diagram positions. */
+/** Folds free-text location names onto location codes (the car-diagram positions use codes). */
 export function heatmapLocationKey(location: unknown): string {
   const raw = String(location || "")
     .toLowerCase()
@@ -896,22 +897,15 @@ export function heatmapLocationKey(location: unknown): string {
     .replace(/\s+/g, " ")
     .trim();
   const has = (...words: string[]) => words.every((word) => raw.includes(word));
-  if (has("front left", "wheel")) return "front-left wheel";
-  if (has("front right", "wheel")) return "front-right wheel";
-  if (has("rear left", "wheel")) return "rear-left wheel";
-  if (has("rear right", "wheel")) return "rear-right wheel";
-  if (has("engine")) return "engine bay";
-  if (has("drive", "tunnel")) return "driveshaft tunnel";
-  if (has("driver", "seat")) return "driver seat";
+  if (has("front left", "wheel")) return "front_left_wheel";
+  if (has("front right", "wheel")) return "front_right_wheel";
+  if (has("rear left", "wheel")) return "rear_left_wheel";
+  if (has("rear right", "wheel")) return "rear_right_wheel";
+  if (has("engine")) return "engine_bay";
+  if (has("drive", "tunnel")) return "driveshaft_tunnel";
+  if (has("driver", "seat")) return "driver_seat";
   if (has("trunk")) return "trunk";
-  return raw;
-}
-
-function titleCase(key: string): string {
-  return key
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return raw.replaceAll(" ", "_");
 }
 
 /** 0..1 within [min, max]; a single value sits mid-range (or at 0 when zero). */
@@ -965,7 +959,7 @@ export function buildHeatmap(
     }
     const label = String(row.location ?? "").trim();
     if (key && label) {
-      labels.set(key, label);
+      labels.set(key, locationLabel(label, f.t));
     }
   }
   const values = [...metric.values()];
@@ -973,7 +967,7 @@ export function buildHeatmap(
   const max = values.length ? Math.max(...values) : null;
   const zones = HISTORY_HEATMAP_POSITIONS.map((point) => {
     const value = metric.get(point.key);
-    const label = labels.get(point.key) || titleCase(point.key);
+    const label = locationLabel(point.key, f.t);
     if (value === undefined || min === null || max === null) {
       return {
         key: point.key,
@@ -1006,7 +1000,7 @@ export function buildHeatmap(
     .filter(([key]) => !known.has(key))
     .map(
       ([key, value]) =>
-        `${labels.get(key) || titleCase(key)} · ${f.fmt(value, 1)} dB`,
+        `${labels.get(key) ?? locationLabel(key, f.t)} · ${f.fmt(value, 1)} dB`,
     );
   return { kind: "zones", zones, extras };
 }

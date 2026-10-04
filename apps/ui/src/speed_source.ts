@@ -8,11 +8,11 @@ export interface SpeedSourceSnapshot {
   resolvedSpeedSource: SpeedSourceStatusPayload["speed_source"] | null;
 }
 
-export type DisplayedSpeedSourceMode = "gps" | "manual" | "obd2";
 export type SpeedReadoutLabelKey =
   | "speed.gps"
   | "speed.override"
-  | "speed.obd2";
+  | "speed.obd2"
+  | "speed.fallback";
 
 export function isManualLikeSpeedSource(
   source: string | null | undefined,
@@ -39,18 +39,6 @@ export function isManualEffectiveSpeedSource(
   );
 }
 
-/** Which choice card reads as active: a manual fallback shows as Manual. */
-export function deriveDisplayedSpeedSourceMode(
-  settings: SpeedSourceSnapshot,
-  runtimeSpeedSource?: string | null,
-): DisplayedSpeedSourceMode {
-  const effective = resolveEffectiveSpeedSource(settings, runtimeSpeedSource);
-  if (effective === "obd2") {
-    return "obd2";
-  }
-  return isManualLikeSpeedSource(effective) ? "manual" : settings.speedSource;
-}
-
 export function deriveSpeedReadoutLabelKey(
   settings: SpeedSourceSnapshot,
   runtimeSpeedSource?: string | null,
@@ -59,7 +47,34 @@ export function deriveSpeedReadoutLabelKey(
   if (effective === "obd2") {
     return "speed.obd2";
   }
-  return isManualLikeSpeedSource(effective) ? "speed.override" : "speed.gps";
+  if (effective === "fallback_manual") {
+    return "speed.fallback";
+  }
+  return effective === "manual" ? "speed.override" : "speed.gps";
+}
+
+/**
+ * Why the typed-in fallback speed stands in for the chosen live source (GPS
+ * without a receiver or a fix, or OBD-II without live speed); null when the
+ * chosen source is in effect.
+ */
+export function fallbackReasonKey(
+  settings: SpeedSourceSnapshot,
+  status: SpeedSourceStatusPayload | null,
+  runtimeSpeedSource?: string | null,
+): string | null {
+  if (
+    resolveEffectiveSpeedSource(settings, runtimeSpeedSource) !==
+    "fallback_manual"
+  ) {
+    return null;
+  }
+  if (settings.speedSource === "obd2") {
+    return "speed.fallback_reason.obd2";
+  }
+  return gpsReceiverMissing(settings.speedSource, status)
+    ? "speed.gps_no_receiver.title"
+    : "speed.fallback_reason.gps_no_fix";
 }
 
 /**

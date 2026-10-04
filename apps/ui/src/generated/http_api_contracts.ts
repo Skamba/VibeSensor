@@ -387,7 +387,7 @@ export interface components {
         };
         DiagnosisVerdictValue: "fault" | "weak_evidence" | "no_fault";
         DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
-        EngineCapability: "measured" | "estimated_top_gear" | "estimated_ratios" | "missing" | "manual_speed";
+        EngineCapability: "measured" | "estimated_top_gear" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed";
         /** Response body confirming whether an ESP32 flash job was cancelled. */
         EspFlashCancelResponse: {
             cancelled: boolean;
@@ -1076,6 +1076,8 @@ export interface components {
             guided_phases_completed?: components["schemas"]["GuidedPhaseName"][];
             last_completed_run_error?: string | null;
             last_completed_run_id?: string | null;
+            /** The run most recently stopped since the server started; cleared when a new run starts. Until then `samples_written` and `samples_dropped` describe it. */
+            last_run_id?: string | null;
             /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit. */
             last_stop_reason?: components["schemas"]["RecordingStopReason"] | null;
             run_id: string | null;

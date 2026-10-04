@@ -316,7 +316,7 @@ function Insights(props: { insights: InsightsModel }) {
                 <div class="history-diagnosis-card__next-step">
                   <span class="history-diagnosis-card__next-step-label">
                     {primary.nextStepLabel}
-                  </span>
+                  </span>{" "}
                   <strong>{primary.nextStep}</strong>
                 </div>
               ) : null}

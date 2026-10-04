@@ -320,7 +320,11 @@ Entry point: *Settings → Speed Source*
     (`gpsReceiverMissing` in `apps/ui/src/speed_source.ts`).
   - Live data goes stale with a manual fallback set: the fallback is used,
     readiness says so, and the report names the source "entered by hand"
-    (`SPEED_SOURCE_FALLBACK_MANUAL`).
+    (`SPEED_SOURCE_FALLBACK_MANUAL`). The Live speed readout, the capability
+    note and the Speed source summary name why the fallback is used (the same
+    "No GPS receiver found" text, "GPS has no fix yet", or "No live OBD-II
+    speed"; `fallbackReasonKey` in `apps/ui/src/speed_source.ts`) instead of
+    calling it a manual override.
 
 ### 3.5 Pre-drive readiness
 

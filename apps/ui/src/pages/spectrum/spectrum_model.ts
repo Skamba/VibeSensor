@@ -1,3 +1,4 @@
+import { fmt } from "../../format";
 import { orderBandFills } from "../../theme";
 import type { RotationalSpeeds } from "../../transport/live_models";
 import type { WsUiState } from "../../ws";
@@ -67,9 +68,8 @@ export function freqGridsMatch(
   return true;
 }
 
-export const formatHz = (value: number) =>
-  value >= 100 ? value.toFixed(0) : value.toFixed(1);
-const formatDb = (value: number) => value.toFixed(1);
+export const formatHz = (value: number) => fmt(value, value >= 100 ? 0 : 1);
+const formatDb = (value: number) => fmt(value, 1);
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
@@ -283,11 +283,12 @@ export function inspectorText(
   if (!entry) {
     return idle;
   }
-  const bandText = (freq: number) => {
+  // The order bands the frequency falls in, appended only when there are any.
+  const withBands = (text: string, freq: number) => {
     const active = bandsAt(input.bands, freq);
     return active.length
-      ? active.map((band) => band.label).join(", ")
-      : t("spectrum.inspector_no_band");
+      ? `${text} · ${active.map((band) => band.label).join(", ")}`
+      : text;
   };
   const { cursorIdx, freqAxis } = input;
   if (cursorIdx !== null && cursorIdx >= 0 && cursorIdx < freqAxis.length) {
@@ -295,12 +296,14 @@ export function inspectorText(
     const value = entry.values[Math.min(cursorIdx, entry.values.length - 1)];
     return {
       mode: "hover",
-      text: t("spectrum.inspector_hover", {
-        sensor: entry.label,
-        freq: formatHz(freq),
-        value: isFiniteNumber(value) ? formatDb(value) : "--",
-        bands: bandText(freq),
-      }),
+      text: withBands(
+        t("spectrum.inspector_hover", {
+          sensor: entry.label,
+          freq: formatHz(freq),
+          value: isFiniteNumber(value) ? formatDb(value) : "--",
+        }),
+        freq,
+      ),
     };
   }
   const peak = focusPeak(entry, freqAxis, input.levels);
@@ -309,16 +312,18 @@ export function inspectorText(
   }
   return {
     mode: "focus",
-    text: t(
-      input.pinnedId
-        ? "spectrum.inspector_focus_selected"
-        : "spectrum.inspector_focus_strongest",
-      {
-        sensor: entry.label,
-        freq: formatHz(peak.freq),
-        value: formatDb(peak.value),
-        bands: bandText(peak.freq),
-      },
+    text: withBands(
+      t(
+        input.pinnedId
+          ? "spectrum.inspector_focus_selected"
+          : "spectrum.inspector_focus_strongest",
+        {
+          sensor: entry.label,
+          freq: formatHz(peak.freq),
+          value: formatDb(peak.value),
+        },
+      ),
+      peak.freq,
     ),
   };
 }
@@ -429,12 +434,12 @@ export function overlayMessage(
 const HOVER_THROTTLE_MS = 33;
 
 /**
- * Feeds inspector lines to the screen: hover lines at most every 33 ms and
- * never announced; focus lines announced once each; idle lines immediately.
+ * Feeds inspector lines to the screen: hover lines at most every 33 ms; focus
+ * and idle lines immediately. The line is plain text, not a live region: it
+ * changes with every live frame, so announcing it would talk over the user.
  */
 export function createInspectorFeed(deps: {
   show(text: string): void;
-  announce(text: string): void;
   now(): number;
   schedule(run: () => void, delayMs: number): () => void;
 }): {
@@ -442,21 +447,14 @@ export function createInspectorFeed(deps: {
   dispose(): void;
 } {
   let shown: string | null = null;
-  let announced: string | null = null;
   let pendingHover: string | null = null;
   let lastHoverAt: number | null = null;
   let cancelTimer: (() => void) | null = null;
 
-  const commit = (text: string, announce: boolean) => {
-    const shouldAnnounce = announce && text !== announced;
-    if (text === shown && !shouldAnnounce) {
-      return;
-    }
-    shown = text;
-    deps.show(text);
-    if (shouldAnnounce) {
-      announced = text;
-      deps.announce(text);
+  const commit = (text: string) => {
+    if (text !== shown) {
+      shown = text;
+      deps.show(text);
     }
   };
   const flushHover = () => {
@@ -466,7 +464,7 @@ export function createInspectorFeed(deps: {
     const text = pendingHover;
     pendingHover = null;
     lastHoverAt = deps.now();
-    commit(text, false);
+    commit(text);
   };
   const cancelHover = () => {
     cancelTimer?.();
@@ -477,7 +475,7 @@ export function createInspectorFeed(deps: {
     update(line) {
       if (line.mode !== "hover") {
         cancelHover();
-        commit(line.text, line.mode === "focus");
+        commit(line.text);
         return;
       }
       pendingHover = line.text;

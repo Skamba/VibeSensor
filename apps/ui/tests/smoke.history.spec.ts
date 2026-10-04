@@ -225,12 +225,12 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   await expect(details).toContainText("Weak engine order.");
   await expect(
     details.locator(
-      '.history-heatmap__zone[data-location-key="front-left wheel"]',
+      '.history-heatmap__zone[data-location-key="front_left_wheel"]',
     ),
   ).toContainText("24.0 dB");
   // Only the assigned front-left sensor reported; elsewhere no sensor was fitted.
   const engineBay = details.locator(
-    '.history-heatmap__zone[data-location-key="engine bay"]',
+    '.history-heatmap__zone[data-location-key="engine_bay"]',
   );
   await expect(engineBay).toContainText("no sensor");
   // What the run checked and what it couldn't, in the PDF's words.
@@ -350,9 +350,15 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   await expect(details).toContainText("@ 24 m/s");
 
   await page.locator("#speedUnitSelect").selectOption("kmh");
-  await expect(details).toContainText("T1 · 12.1 Hz @ 85 km/u");
+  // Dutch decimals and translated heatmap locations.
+  await expect(details).toContainText("T1 · 12,1 Hz @ 85 km/u");
   await expect(details).toContainText("63–105 km/u");
   await expect(details).not.toContainText("km/h");
+  await expect(
+    page.locator(
+      '.history-heatmap__zone[data-location-key="front_left_wheel"] .history-heatmap__zone-label',
+    ),
+  ).toHaveText("Voorwiel links");
 });
 
 test("journey: a no-fault run at one steady speed shows that speed and no empty badge", async ({

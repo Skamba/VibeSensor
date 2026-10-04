@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "preact/hooks";
 
+import type { SpeedSourceKind } from "../../api/types";
 import { speedUnit } from "../../app_store";
 import { FeedbackBlock, FeedbackSlot } from "../../components/feedback";
 import { formatSpeed } from "../../format";
@@ -11,7 +12,6 @@ import {
   speedStatus,
 } from "../../settings_store";
 import {
-  type DisplayedSpeedSourceMode,
   gpsReceiverMissing,
   resolveEffectiveSpeedSource,
 } from "../../speed_source";
@@ -52,7 +52,7 @@ import {
 } from "./speed_source_store";
 
 const CHOICES: ReadonlyArray<{
-  mode: DisplayedSpeedSourceMode;
+  mode: SpeedSourceKind;
   id: string;
   titleKey: string;
   captionKey: string;
@@ -83,7 +83,7 @@ function Summary() {
     [
       "speedSourceCurrentSource",
       "settings.speed.current_source",
-      activeSourceLabel(snapshot, t),
+      activeSourceLabel(snapshot, speedStatus.value, t),
     ],
     [
       "speedSourceEffectiveSpeed",

@@ -64,6 +64,7 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         last_completed_run_error=snapshot.last_completed_run_error,
         capture_readiness=_capture_readiness_response(snapshot),
         last_stop_reason=snapshot.last_stop_reason,
+        last_run_id=snapshot.last_run_id,
         guided_phase=snapshot.guided_phase,
         guided_phases_completed=list(snapshot.guided_phases_completed),
     )

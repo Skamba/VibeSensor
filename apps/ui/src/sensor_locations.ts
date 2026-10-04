@@ -1,3 +1,4 @@
+import { defaultLocationCodes } from "./constants";
 import type { AdaptedClient } from "./transport/live_models";
 
 /** Pure helpers that map sensors onto install locations. */
@@ -15,6 +16,20 @@ const SHORTHAND_LOCATIONS: Record<string, string> = {
 export interface LocationOption {
   code: string;
   label: string;
+}
+
+const KNOWN_CODES: ReadonlySet<string> = new Set(defaultLocationCodes);
+
+/**
+ * A location as a run stores it (a code like "engine_bay" or the server's
+ * English label "Engine Bay") in the UI language; unknown text passes through.
+ */
+export function locationLabel(location: string, t: Translate): string {
+  const code = location
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  return KNOWN_CODES.has(code) ? t(`location.${code}`) : location;
 }
 
 export function locationOptions(

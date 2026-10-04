@@ -16,6 +16,7 @@ from vibesensor.domain.capture_readiness import (
     WheelCapability,
 )
 from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES
+from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.recording.capture_readiness_observation import (
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,
@@ -85,13 +86,23 @@ def _capabilities(
     engine: EngineCapability
     if _obd_rpm_fresh(policy, observation):
         engine = "measured"
-    elif spec is None or not spec.supports_engine_reference:
-        engine = "missing"
+    elif spec is None:
+        engine = "missing_tire"
+    elif not spec.supports_engine_reference:
+        engine = _missing_engine_ratios(spec)
     elif manual:
         engine = "manual_speed"
     else:
         engine = "estimated_ratios" if weak_final_drive or weak_top_gear else "estimated_top_gear"
     return CaptureCapabilities(wheel=wheel, driveline=driveline, engine=engine)
+
+
+def _missing_engine_ratios(spec: OrderReferenceSpec) -> EngineCapability:
+    no_final_drive = not spec.supports_driveshaft_reference
+    no_top_gear = not spec.has_engine_reference
+    if no_final_drive and no_top_gear:
+        return "missing_ratios"
+    return "missing_final_drive" if no_final_drive else "missing_top_gear"
 
 
 def _obd_rpm_fresh(

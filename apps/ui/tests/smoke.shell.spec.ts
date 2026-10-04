@@ -110,3 +110,56 @@ test("journey: the first-load hotspot hint stays dismissed after a reload", asyn
   await expect(page.locator("#tab-dashboard")).toBeVisible();
   await expect(hint).toHaveCount(0);
 });
+
+test.describe("on a phone in Dutch", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("journey: the header fits the screen on Live, History and Settings", async ({
+    page,
+  }) => {
+    await bootLiveDashboard(page, {
+      fakeWebSocket: { payload: { clients: [], spectra: { clients: {} } } },
+      settingsHandler: async (route) => {
+        const path = requestPath(route);
+        if (path === "/api/settings/language") {
+          await fulfillJson(route, { language: "nl" });
+          return;
+        }
+        if (path.startsWith("/api/settings/cars")) {
+          await fulfillJson<CarsPayload>(route, {
+            cars: [],
+            active_car_id: null,
+          });
+          return;
+        }
+        await fulfillJson(route, {});
+      },
+    });
+    await expect(page.locator("#tab-history")).toHaveText("Geschiedenis");
+    const overflow = () =>
+      page.evaluate(() => {
+        const width = document.documentElement.clientWidth;
+        return {
+          page: document.documentElement.scrollWidth - width,
+          // Every header control stays fully on screen (no sideways-scrolled tabs).
+          header: [
+            ...document.querySelectorAll(
+              ".site-header button, .site-header select, .site-header .pill",
+            ),
+          ]
+            .map((element) => element.getBoundingClientRect())
+            .filter((box) => box.width > 0)
+            .some((box) => box.left < 0 || box.right > width),
+        };
+      });
+    for (const tab of ["#tab-dashboard", "#tab-history", "#tab-settings"]) {
+      await page.locator(tab).click();
+      await expect(page.locator(tab)).toHaveAttribute("aria-selected", "true");
+      expect(await overflow()).toEqual({ page: 0, header: false });
+    }
+  });
+});

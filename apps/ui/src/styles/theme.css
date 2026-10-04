@@ -112,6 +112,9 @@
     padding: 0.65rem 1.2rem;
     font-size: 1rem;
   }
+  .menu .menu-btn {
+    min-height: 44px;
+  }
 
   .pill,
   .badge,

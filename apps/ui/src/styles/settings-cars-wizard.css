@@ -58,9 +58,11 @@
   min-width: 2.5rem;
   min-height: 2.5rem;
 }
-.wizard-close:hover {
-  color: var(--md-sys-color-on-surface);
-  background: var(--md-sys-color-surface-container-high);
+@media (hover: hover) {
+  .wizard-close:hover {
+    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface-container-high);
+  }
 }
 .wizard-shell {
   display: grid;
@@ -237,9 +239,11 @@
   background: var(--md-sys-color-surface-container);
   text-align: left;
 }
-.wizard-options .wiz-opt:hover {
-  border-color: var(--brand-400);
-  background: var(--menu-hover);
+@media (hover: hover) {
+  .wizard-options .wiz-opt:hover {
+    border-color: var(--brand-400);
+    background: var(--menu-hover);
+  }
 }
 .wizard-options .wiz-opt:focus-visible {
   outline: none;

@@ -131,14 +131,23 @@ class RunPersistenceWriter:
             )
 
     def reset(self) -> None:
+        """Clear all per-run state, sample counts included (a new run starts)."""
         with self._lock:
-            self._history_run_created = False
-            self._history_create_fail_count = 0
-            self._retry_cycle_count = 0
+            self._clear_write_state_locked()
             self._written_sample_count = 0
             self._dropped_sample_count = 0
-            self._last_write_error = None
-            self._retry_after_mono_s = 0.0
+
+    def end_run(self) -> None:
+        """Clear per-run write state but keep the stopped run's sample counts for the status."""
+        with self._lock:
+            self._clear_write_state_locked()
+
+    def _clear_write_state_locked(self) -> None:
+        self._history_run_created = False
+        self._history_create_fail_count = 0
+        self._retry_cycle_count = 0
+        self._last_write_error = None
+        self._retry_after_mono_s = 0.0
 
     def ready_for_analysis(self, run_id: str | None) -> str | None:
         # A run without samples is analysed too: post-analysis records it in

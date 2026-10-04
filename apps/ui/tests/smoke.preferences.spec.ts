@@ -103,7 +103,7 @@ test("journey: speed unit and language switch persist and re-render the UI", asy
   await expect(page.locator("#tab-settings")).toHaveText("Instellingen");
   await expect(page.locator("#languageSelect")).toHaveValue("nl");
   await expect(page.locator("#speedUnitSelect")).toHaveValue("mps");
-  await expect(speed).toContainText("10.0 m/s");
+  await expect(speed).toContainText("10,0 m/s");
 
   await page.locator("#languageSelect").selectOption("en");
   await expect(page.locator("#tab-history")).toHaveText("History");

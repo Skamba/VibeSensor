@@ -7,6 +7,7 @@ import type {
 } from "../../api/types";
 import { fmt, formatSpeed, type SpeedUnit } from "../../format";
 import {
+  fallbackReasonKey,
   isManualLikeSpeedSource,
   resolveEffectiveSpeedSource,
   type SpeedSourceSnapshot,
@@ -37,12 +38,17 @@ const MAC_RE = /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i;
 
 export function activeSourceLabel(
   settings: SpeedSourceSnapshot,
+  status: SpeedSourceStatusPayload | null,
   t: Translate,
 ): string {
   const effective = resolveEffectiveSpeedSource(settings);
+  const fallbackReason = fallbackReasonKey(settings, status);
+  if (fallbackReason) {
+    return t("settings.speed.current_source_fallback_manual", {
+      reason: t(fallbackReason),
+    });
+  }
   switch (effective) {
-    case "fallback_manual":
-      return t("settings.speed.current_source_fallback_manual");
     case "manual":
       return t("settings.speed.current_source_manual_override");
     case "gps":

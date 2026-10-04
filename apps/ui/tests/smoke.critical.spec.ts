@@ -386,7 +386,7 @@ test("critical journey: History run expands into dB diagnosis", async ({
     "Diagnostic panel",
   );
   const frontLeftZone = page.locator(
-    '.history-heatmap__zone[data-location-key="front-left wheel"]',
+    '.history-heatmap__zone[data-location-key="front_left_wheel"]',
   );
   await expect(frontLeftZone).toContainText("Front Left Wheel");
   await expect(frontLeftZone).toContainText("20.0 dB");

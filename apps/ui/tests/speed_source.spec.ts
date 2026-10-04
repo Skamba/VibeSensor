@@ -18,8 +18,8 @@ import {
   obdDiagnostics,
 } from "../src/pages/speed_source/speed_source_model";
 import {
-  deriveDisplayedSpeedSourceMode,
   deriveSpeedReadoutLabelKey,
+  fallbackReasonKey,
   gpsReceiverMissing,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
@@ -50,7 +50,6 @@ describe("effective speed source", () => {
       string,
       SpeedSourceSnapshot,
       {
-        mode: string;
         label: string;
         effective: string | null;
         manual: boolean;
@@ -65,8 +64,7 @@ describe("effective speed source", () => {
         resolvedSpeedSource: "fallback_manual",
       },
       {
-        mode: "manual",
-        label: "speed.override",
+        label: "speed.fallback",
         effective: "fallback_manual",
         manual: true,
       },
@@ -74,13 +72,12 @@ describe("effective speed source", () => {
     [
       "gps stays selected when gps is resolved",
       { speedSource: "gps", manualSpeedKph: 80, resolvedSpeedSource: "gps" },
-      { mode: "gps", label: "speed.gps", effective: "gps", manual: false },
+      { label: "speed.gps", effective: "gps", manual: false },
     ],
     [
       "a manual setting shows before live status arrives",
       { speedSource: "manual", manualSpeedKph: 45, resolvedSpeedSource: null },
       {
-        mode: "manual",
         label: "speed.override",
         effective: "manual",
         manual: true,
@@ -89,7 +86,7 @@ describe("effective speed source", () => {
     [
       "unavailable gps does not invent manual mode",
       { speedSource: "gps", manualSpeedKph: null, resolvedSpeedSource: "none" },
-      { mode: "gps", label: "speed.gps", effective: "none", manual: false },
+      { label: "speed.gps", effective: "none", manual: false },
     ],
     [
       "a resolved OBD-II source reads as OBD",
@@ -98,10 +95,9 @@ describe("effective speed source", () => {
         manualSpeedKph: null,
         resolvedSpeedSource: "obd2",
       },
-      { mode: "obd2", label: "speed.obd2", effective: "obd2", manual: false },
+      { label: "speed.obd2", effective: "obd2", manual: false },
     ],
   ])("%s", (_name, settings, expected) => {
-    expect(deriveDisplayedSpeedSourceMode(settings)).toBe(expected.mode);
     expect(deriveSpeedReadoutLabelKey(settings)).toBe(expected.label);
     expect(resolveEffectiveSpeedSource(settings)).toBe(expected.effective);
     expect(isManualEffectiveSpeedSource(settings)).toBe(expected.manual);
@@ -114,7 +110,7 @@ describe("effective speed source", () => {
       resolvedSpeedSource: null,
     };
     expect(deriveSpeedReadoutLabelKey(settings, "fallback_manual")).toBe(
-      "speed.override",
+      "speed.fallback",
     );
     expect(isManualEffectiveSpeedSource(settings, "fallback_manual")).toBe(
       true,
@@ -210,16 +206,16 @@ describe("speed source summary", () => {
       ...gps,
       resolvedSpeedSource: "fallback_manual" as const,
     };
-    expect(activeSourceLabel(fallback, t)).toBe(
-      "settings.speed.current_source_fallback_manual",
+    expect(activeSourceLabel(fallback, null, t)).toBe(
+      'settings.speed.current_source_fallback_manual:{"reason":"speed.fallback_reason.gps_no_fix"}',
     );
-    expect(activeSourceLabel(gps, t)).toBe("settings.speed.gps");
-    expect(activeSourceLabel({ ...gps, speedSource: "manual" }, t)).toBe(
+    expect(activeSourceLabel(gps, null, t)).toBe("settings.speed.gps");
+    expect(activeSourceLabel({ ...gps, speedSource: "manual" }, null, t)).toBe(
       "settings.speed.current_source_manual_override",
     );
-    expect(activeSourceLabel({ ...gps, resolvedSpeedSource: "obd2" }, t)).toBe(
-      "dashboard.rotational.source.obd2",
-    );
+    expect(
+      activeSourceLabel({ ...gps, resolvedSpeedSource: "obd2" }, null, t),
+    ).toBe("dashboard.rotational.source.obd2");
     expect(activeSpeedKph(fallback, 52)).toBe(80);
     expect(activeSpeedKph(gps, 52)).toBe(52);
   });
@@ -412,4 +408,28 @@ test("GPS without a receiver: gpsd on, but never a device or a reading", () => {
   );
   expect(gpsReceiverMissing("obd2", gpsd)).toBe(false);
   expect(gpsReceiverMissing("gps", null)).toBe(false);
+
+  // The fallback speed stands in for the chosen source, and the UI says why.
+  const gps: SpeedSourceSnapshot = {
+    speedSource: "gps",
+    manualSpeedKph: 50,
+    resolvedSpeedSource: "fallback_manual",
+  };
+  expect(fallbackReasonKey(gps, gpsd)).toBe("speed.gps_no_receiver.title");
+  expect(fallbackReasonKey(gps, { ...gpsd, device: "/dev/ttyACM0" })).toBe(
+    "speed.fallback_reason.gps_no_fix",
+  );
+  expect(fallbackReasonKey({ ...gps, speedSource: "obd2" }, null)).toBe(
+    "speed.fallback_reason.obd2",
+  );
+  expect(fallbackReasonKey({ ...gps, resolvedSpeedSource: "gps" }, gpsd)).toBe(
+    null,
+  );
+  expect(
+    activeSourceLabel(gps, gpsd, (key, vars) =>
+      vars ? `${key}:${JSON.stringify(vars)}` : key,
+    ),
+  ).toBe(
+    'settings.speed.current_source_fallback_manual:{"reason":"speed.gps_no_receiver.title"}',
+  );
 });

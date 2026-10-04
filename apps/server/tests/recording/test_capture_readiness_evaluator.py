@@ -292,15 +292,26 @@ _QUIET_STATE = CaptureReadinessStateSnapshot(
             _TIRE_ONLY,
             "gps",
             None,
-            CaptureCapabilities(wheel="ok", driveline="missing_final_drive", engine="missing"),
+            CaptureCapabilities(
+                wheel="ok", driveline="missing_final_drive", engine="missing_ratios"
+            ),
             id="tire-only",
         ),
         pytest.param(
             {**_TIRE_ONLY, "final_drive_ratio": 3.15},
             "gps",
             None,
-            CaptureCapabilities(wheel="ok", driveline="ok", engine="missing"),
+            CaptureCapabilities(wheel="ok", driveline="ok", engine="missing_top_gear"),
             id="no-top-gear",
+        ),
+        pytest.param(
+            {**_TIRE_ONLY, "current_gear_ratio": 0.64},
+            "gps",
+            None,
+            CaptureCapabilities(
+                wheel="ok", driveline="missing_final_drive", engine="missing_final_drive"
+            ),
+            id="no-final-drive",
         ),
         pytest.param(
             _FULL_ASPECTS,
@@ -323,7 +334,7 @@ _QUIET_STATE = CaptureReadinessStateSnapshot(
             "manual",
             None,
             CaptureCapabilities(
-                wheel="manual_speed", driveline="missing_final_drive", engine="missing"
+                wheel="manual_speed", driveline="missing_final_drive", engine="missing_ratios"
             ),
             id="typed-in-speed-names-missing-references-first",
         ),
@@ -338,7 +349,9 @@ _QUIET_STATE = CaptureReadinessStateSnapshot(
             {},
             "gps",
             None,
-            CaptureCapabilities(wheel="missing_tire", driveline="missing_tire", engine="missing"),
+            CaptureCapabilities(
+                wheel="missing_tire", driveline="missing_tire", engine="missing_tire"
+            ),
             id="no-tire",
         ),
     ],
@@ -440,4 +453,4 @@ def test_obd_speed_needs_fresh_rpm_but_no_ratios() -> None:
     )
     assert reference_check.reason_key == "obd_rpm_stale"
     assert readiness.capabilities is not None
-    assert readiness.capabilities.engine == "missing"
+    assert readiness.capabilities.engine == "missing_ratios"

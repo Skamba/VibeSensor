@@ -206,6 +206,7 @@ class RunRecorder:
             run_id = self._lifecycle.run_id
             start_time_utc = self._lifecycle.start_time_utc
             last_stop_reason = self._lifecycle.last_stop_reason
+            last_run_id = self._lifecycle.last_run_id
             capture_readiness = None
             if not enabled or run_id is None:
                 capture_readiness = self._capture_readiness.evaluate(
@@ -225,6 +226,7 @@ class RunRecorder:
             post_analysis=self.post_analysis,
             capture_readiness=capture_readiness,
             last_stop_reason=last_stop_reason,
+            last_run_id=last_run_id,
             guided_phase=self._recording_session.current_guided_phase(),
             guided_phases_completed=self._recording_session.completed_guided_phases(),
         )
@@ -375,7 +377,7 @@ class RunRecorder:
                     finalize_result.persistence_snapshot.dropped_sample_count,
                 )
             self._lifecycle.stop(reason=reason)
-            self._persistence.reset()
+            self._persistence.end_run()
             self._recording_session.clear_stopped_run()
         if lifecycle_event is not None:
             (

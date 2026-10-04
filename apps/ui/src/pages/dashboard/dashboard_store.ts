@@ -31,6 +31,7 @@ import {
 } from "../../settings_store";
 import {
   deriveSpeedReadoutLabelKey,
+  fallbackReasonKey,
   gpsReceiverMissing,
 } from "../../speed_source";
 import {
@@ -286,6 +287,7 @@ export const capabilities = computed(() => {
   const model = capabilityModel(
     current.capture_readiness?.capabilities ?? null,
     formatSpeed(speedSettings.manualSpeedKph.value, speedUnit.value, t, 0),
+    fallbackReason.value,
     t,
   );
   if (!model) {
@@ -339,6 +341,16 @@ export const overview = computed(() => {
   };
 });
 
+/** Why the typed-in fallback speed is in use (translated), or null. */
+const fallbackReason = computed(() => {
+  const key = fallbackReasonKey(
+    speedSourceSnapshot.value,
+    speedStatus.value,
+    rotationalSpeeds.value?.basis_speed_source,
+  );
+  return key ? t(key) : null;
+});
+
 export const speedReadout = computed(() =>
   speedText(
     speedMps.value,
@@ -349,5 +361,6 @@ export const speedReadout = computed(() =>
     ),
     t,
     fmt,
+    fallbackReason.value,
   ),
 );

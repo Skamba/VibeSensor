@@ -81,3 +81,10 @@ class RecordingStatusResponse(BaseModel):
             "`max_duration` means it hit the 30-minute recording limit."
         ),
     )
+    last_run_id: str | None = Field(
+        default=None,
+        description=(
+            "The run most recently stopped since the server started; cleared when a new "
+            "run starts. Until then `samples_written` and `samples_dropped` describe it."
+        ),
+    )

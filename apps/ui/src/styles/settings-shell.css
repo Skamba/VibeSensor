@@ -23,8 +23,10 @@
     color 0.15s,
     border-color 0.15s;
 }
-.settings-tab:hover {
-  color: var(--md-sys-color-on-surface);
+@media (hover: hover) {
+  .settings-tab:hover {
+    color: var(--md-sys-color-on-surface);
+  }
 }
 .settings-tab[aria-selected="true"] {
   color: var(--md-sys-color-primary);

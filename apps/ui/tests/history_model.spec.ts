@@ -210,9 +210,10 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
     throw new Error("expected heatmap zones");
   }
   expect(
-    details.heatmap.zones.find((zone) => zone.key === "front-right wheel"),
+    details.heatmap.zones.find((zone) => zone.key === "front_right_wheel"),
   ).toMatchObject({
-    label: "Front Right Wheel",
+    // Translated from the location code, not the server's English label.
+    label: "location.front_right_wheel",
     valueLabel: "32.0 dB",
     strongest: true,
   });
@@ -556,7 +557,7 @@ test("a wheel fault felt only in the cabin names no wheel and asks for wheel sen
   });
   expect(cabinOnly("weak_evidence")).toMatchObject({
     explanation:
-      'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.unlocated_wheel:{\\"location\\":\\"Driver Seat\\"}"}',
+      'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.unlocated_wheel:{\\"location\\":\\"location.driver_seat\\"}"}',
     nextStep:
       'history.findings_next_step_locate_wheel history.recapture_recipe:{"from":"50","to":"120","unit":"km/h"}',
   });
@@ -636,8 +637,8 @@ test("labels sources, folding unknown keys into title case", () => {
 });
 
 test("maps location names onto heatmap positions and scales the colour", () => {
-  expect(heatmapLocationKey("Front_Left Wheel")).toBe("front-left wheel");
-  expect(heatmapLocationKey("Drive shaft tunnel")).toBe("driveshaft tunnel");
+  expect(heatmapLocationKey("Front_Left Wheel")).toBe("front_left_wheel");
+  expect(heatmapLocationKey("Drive shaft tunnel")).toBe("driveshaft_tunnel");
   expect(heatmapLocationKey("roof")).toBe("roof");
   expect(normalizeUnit(5, 0, 10)).toBe(0.5);
   expect(normalizeUnit(15, 10, 20)).toBe(0.5);
@@ -657,7 +658,7 @@ test("maps location names onto heatmap positions and scales the colour", () => {
     throw new Error("expected zones");
   }
   expect(single.zones.find((zone) => zone.key === "trunk")).toMatchObject({
-    label: "Trunk",
+    label: "location.trunk",
     strongest: true,
     accent: { fillPercent: 50 },
   });
@@ -686,8 +687,8 @@ test("heatmap says 'no sensor' where none was assigned, 'missing' where one sent
   }
   const value = (key: string) =>
     heatmap.zones.find((zone) => zone.key === key)?.valueLabel;
-  expect(value("front-left wheel")).toBe("7.5 dB");
-  expect(value("rear-right wheel")).toBe("report.missing");
-  expect(value("engine bay")).toBe("history.heatmap_no_sensor");
+  expect(value("front_left_wheel")).toBe("7.5 dB");
+  expect(value("rear_right_wheel")).toBe("report.missing");
+  expect(value("engine_bay")).toBe("history.heatmap_no_sensor");
   expect(value("trunk")).toBe("history.heatmap_no_sensor");
 });

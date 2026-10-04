@@ -82,7 +82,7 @@ def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
             snapshot.start_time_utc,
             snapshot.start_mono_s,
         )
-        logger.stop_recording()
+        stopped = logger.stop_recording()
 
     lifecycle_records = [rec for rec in caplog.records if rec.message == "run_lifecycle"]
     assert [rec.run_action for rec in lifecycle_records] == ["started", "stopped"]
@@ -100,6 +100,14 @@ def test_start_and_stop_recording_emit_structured_run_lifecycle_events(
     assert stop_record.samples_written > 0
     assert stop_record.samples_dropped == 0
     assert isinstance(stop_record.end_time_utc, str)
+
+    # Until the next start, the status names the stopped run and keeps its sample count.
+    assert stopped.run_id is None
+    assert stopped.last_run_id == snapshot.run_id
+    assert stopped.samples_written == stop_record.samples_written
+    restarted = logger.start_recording()
+    assert restarted.last_run_id is None
+    assert restarted.samples_written == 0
 
 
 def test_restart_recording_emits_stop_then_start_lifecycle_events(

@@ -31,12 +31,29 @@
     min-width: 0;
     width: 100%;
   }
+  /* Tabs share the row and wrap a long label instead of overflowing the screen. */
   .menu {
+    display: flex;
     width: 100%;
-    overflow-x: auto;
+  }
+  .menu .menu-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: auto;
+    min-height: 38px;
+    padding: var(--space-1) var(--space-2);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
   }
   .site-header__status-pills {
     width: 100%;
+  }
+  .site-header__status-pills .pill {
+    max-width: 100%;
+    height: auto;
+    min-height: 30px;
+    padding-block: 2px;
   }
   .speed {
     min-width: 0;

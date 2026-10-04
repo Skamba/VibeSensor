@@ -1,15 +1,30 @@
+import { lang } from "./i18n";
 import { getDefaultNumberFormat } from "./number_format";
 
+const fixedFormats = new Map<string, Intl.NumberFormat>();
+
+/** `n` with exactly `digits` decimals in the active language ("3.08", nl "3,08"); no grouping. */
 export function fmt(n: number, digits = 2): string {
   if (typeof n !== "number" || !Number.isFinite(n)) return "--";
-  return n.toFixed(digits);
+  const language = lang.value;
+  const key = `${language}:${digits}`;
+  let format = fixedFormats.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(language, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+      useGrouping: false,
+    });
+    fixedFormats.set(key, format);
+  }
+  return format.format(n);
 }
 
 function formatDateTime(date: Date, invalidText: string): string {
   if (!Number.isFinite(date.getTime())) {
     return invalidText;
   }
-  return date.toLocaleString();
+  return date.toLocaleString(lang.value);
 }
 
 export function fmtTs(iso: string): string {
