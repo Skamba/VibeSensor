@@ -6,6 +6,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Backend rules: `.github/instructions/backend.instructions.md`; updater rules: `.github/instructions/backend-updates.instructions.md`.
 - Frontend rules: `.github/instructions/frontend.instructions.md`; firmware rules: `.github/instructions/firmware.instructions.md`.
 - Pi image rules: `.github/instructions/pi-image.instructions.md`; backend test rules: `.github/instructions/tests.instructions.md`.
+- Product behaviour for the car wizard, speed source, readiness, diagnosis source checks, and report/History wording follows the principles in `docs/user_journeys.md`; open gaps are tracked in `docs/user_journey_gaps.md`.
 - Use `docs/ai/repo-map.md` only when `rg`, file names, imports, and tests do not reveal ownership.
 - Do not add more files under `docs/ai/`. Design docs under `docs/designs/` must declare `Status: Active`, `Historical`, or `Superseded`; only Active docs are current guidance.
 

@@ -45,6 +45,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings).
 - `cli/`: console entry points.
 - Report flow details: `docs/report_pipeline.md`.
+- User journeys and expectation-setting principles (car wizard, readiness, source checks, report wording): `docs/user_journeys.md`; open gaps: `docs/user_journey_gaps.md`.
 - Analysis/run/live ingest details: `docs/analysis_pipeline.md`, `docs/run_lifecycle.md`, `docs/intake_buffering.md`, `docs/order_tracking.md`.
 
 ## Backend package rules

@@ -12,6 +12,7 @@ Backend rules. Use `docs/ai/repo-map.md` only for ownership lookup and `docs/dom
 - Do not create phantom domain/infrastructure types consumed by no production path, or single-consumer domain satellites that should live with their host.
 - Preserve report ranking and persistence-aware diagnostics. Do not regress report ranking to max-only peak selection.
 - Keep transient/impact events visible in reports without promoting them above likely persistent faults by default.
+- Car settings, readiness, diagnosis source checks, and report wording: check the principles in `docs/user_journeys.md` (no silent reference defaults; claim only what was tested) and update `docs/user_journey_gaps.md` when you close a gap.
 - Validate report-facing output: rendered/API/PDF text and ordering, not only helper internals. User-facing report text changes require `apps/server/vibesensor/data/report_i18n.json`.
 - Prefer the shared `msgspec`-backed helpers (`json_text_dumps`, `safe_json_dumps`) for backend-owned persistence/history/export JSON text. CLI/debug/log sinks may use stdlib `json` for formatting, ASCII escaping, or script portability.
 - Prefer explicit payload contracts (`TypedDict`, dataclass, protocol, `JsonValue`/`JsonObject`) over `Any`. Use `object` for untrusted inputs, `ParamSpec` for callable wrappers, and focused contracts for nested state.

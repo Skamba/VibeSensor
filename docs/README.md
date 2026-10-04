@@ -20,6 +20,13 @@ links onward to the scoped instruction files and repo map below.
 | `.github/instructions/pi-image.instructions.md` | Pi-image-specific rules and validation deltas for `infra/pi-image/**`. |
 | `.github/instructions/tests.instructions.md` | Backend test-specific conventions and commands for `apps/server/tests/**`. |
 
+## Product & user journeys
+
+| File | Description |
+|------|-------------|
+| `docs/user_journeys.md` | Personas, end-to-end user journeys (target state), expectation-setting principles, car-library coverage, and the capability matrix. |
+| `docs/user_journey_gaps.md` | Living tracker of the gaps between the journeys and the code, with the work packages that close them. |
+
 ## Architecture & Design
 
 | File | Description |

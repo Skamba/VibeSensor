@@ -13,4 +13,5 @@ Frontend rules for `apps/ui`.
 - Avoid parallel fetch, poll, transport, validation, or contract-sync paths. Reuse `src/api/http.ts`, `src/ws.ts`, generated contracts, `src/ws_payload_validator.ts`, and `src/server_payload.ts`.
 - Keep server/WebSocket inputs as `unknown` until Valibot, generated contracts, schema-backed validation, or a documented hot-path validator proves the shape.
 - Keep `src/` free of `any`/`as any`; prefer interfaces, unions, and narrowing helpers.
+- Car wizard, speed source, readiness, and History wording: check the principles in `docs/user_journeys.md` and update `docs/user_journey_gaps.md` when you close a gap.
 - Validation: run `make ui-typecheck` for frontend logic/contracts/composition. Add `cd apps/ui && npm run build` for bundle behavior, `npm run test:unit` for pure logic, and `npm run test:smoke` for the per-page journeys.

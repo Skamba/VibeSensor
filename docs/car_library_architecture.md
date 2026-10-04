@@ -195,6 +195,8 @@ running at app startup:
   runs both against the packaged shards, so bad data fails CI rather than
   silently emptying the library on the device. Run the same check directly
   while editing shards with `python tools/car_library/validate_vehicle_library.py`.
+- `python tools/car_library/car_library_stats.py` prints the coverage numbers
+  behind the table in `docs/user_journeys.md` §4; re-run it after data changes.
 
 The bundled grouped picker is a projection only. Canonical exact-row shards
 remain the single source of truth.
