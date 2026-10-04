@@ -89,7 +89,7 @@ def select_server_gps_speed(host: str, port: int, timeout_s: float) -> None:
 
 
 def wait_for_server_gps_speed(host: str, port: int, timeout_s: float) -> None:
-    """Block until the server reads a fresh GPS speed (it reconnects to gpsd with backoff)."""
+    """Block until the server reads a fresh GPS speed (it retries a refused gpsd every 2 s)."""
     url = f"{_speed_source_url(host, port)}/status"
     deadline = time.monotonic() + timeout_s
     while True:

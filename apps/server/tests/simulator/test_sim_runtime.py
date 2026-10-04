@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import socket
 from dataclasses import dataclass
 
 import pytest
 
-from vibesensor.simulator.sim_runtime import command_loop
+from vibesensor.ingest.protocol_packing import pack_hello_ack
+from vibesensor.ingest.protocol_parsing import parse_hello
+from vibesensor.simulator.sim_client import SimClient, make_client_id
+from vibesensor.simulator.sim_runtime import command_loop, run_client
 
 
 @dataclass
@@ -57,3 +61,49 @@ async def test_command_loop_propagates_unexpected_command_errors(
 
     with pytest.raises(RuntimeError, match="boom"):
         await command_loop([_SummaryFailingClient()], stop_event)
+
+
+async def test_sensors_on_one_host_each_announce_the_control_port_they_bound() -> None:
+    """Each simulated sensor binds its own free control port and the server can reach it.
+
+    A fixed or pre-probed port can be taken by another process before the
+    simulator binds it; the sensor then never connected while the run went on.
+    """
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server.bind(("127.0.0.1", 0))
+    server.setblocking(False)
+    server_port = server.getsockname()[1]
+    sims = [
+        SimClient(
+            name=f"sim-{index}",
+            client_id=make_client_id(index),
+            control_port=0,
+            sample_rate_hz=800,
+            frame_samples=200,
+            server_host="127.0.0.1",
+            server_data_port=server_port,
+            server_control_port=server_port,
+            profile_name="rough_road",
+        )
+        for index in (1, 2)
+    ]
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    runs = [asyncio.create_task(run_client(sim, 0.05, stop)) for sim in sims]
+    try:
+        announced: dict[bytes, int] = {}
+        while len(announced) < len(sims):
+            data, (_host, source_port) = await asyncio.wait_for(loop.sock_recvfrom(server, 4096), 5)
+            hello = parse_hello(data)
+            assert hello.control_port == source_port != 0
+            announced[hello.client_id] = hello.control_port
+        assert len(set(announced.values())) == len(sims)
+        for client_id, control_port in announced.items():
+            await loop.sock_sendto(server, pack_hello_ack(client_id), ("127.0.0.1", control_port))
+        async with asyncio.timeout(5):
+            while not all(sim.handshake_complete for sim in sims):
+                await asyncio.sleep(0.01)
+    finally:
+        stop.set()
+        await asyncio.gather(*runs, return_exceptions=True)
+        server.close()

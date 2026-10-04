@@ -25,7 +25,6 @@ def _simulate(
         sim_host=e["sim_host"],
         sim_data_port=e["sim_data_port"],
         sim_control_port=e["sim_control_port"],
-        client_control_base=e["sim_client_control_base"],
         gps_port=e["sim_gps_port"],
         duration_s=duration,
         count=count,

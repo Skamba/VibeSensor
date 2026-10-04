@@ -64,7 +64,6 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
     sim_host = e2e_env["sim_host"]
     sim_data_port = e2e_env["sim_data_port"]
     sim_control_port = e2e_env["sim_control_port"]
-    sim_client_control_base = e2e_env["sim_client_control_base"]
 
     cars_before = api_json(base_url, "/api/settings/cars")
     original_active_raw = cars_before.get("active_car_id")
@@ -88,7 +87,6 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                client_control_base=sim_client_control_base,
                 gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
@@ -183,7 +181,6 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                client_control_base=sim_client_control_base,
                 gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
@@ -224,7 +221,6 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                client_control_base=sim_client_control_base,
                 gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,
@@ -265,7 +261,6 @@ def test_e2e_docker_user_journeys(journey_group: str, e2e_env: dict[str, str]) -
                 sim_host=sim_host,
                 sim_data_port=sim_data_port,
                 sim_control_port=sim_control_port,
-                client_control_base=sim_client_control_base,
                 gps_port=e2e_env["sim_gps_port"],
                 duration_s=_SIM_DURATION_S,
                 count=4,

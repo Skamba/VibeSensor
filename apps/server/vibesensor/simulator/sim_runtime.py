@@ -146,11 +146,17 @@ async def road_scene_loop(clients: list[SimClient], stop_event: asyncio.Event) -
 
 
 async def run_client(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
+    """Stream one simulated sensor until *stop_event* is set.
+
+    Every simulated sensor shares the host's address, so each binds a free
+    control port and announces it in its HELLO, as a sensor announces its own.
+    """
     loop = asyncio.get_running_loop()
     control_transport, _ = await loop.create_datagram_endpoint(
         lambda: ClientProtocol(sim),
-        local_addr=("0.0.0.0", sim.control_port),
+        local_addr=("0.0.0.0", 0),
     )
+    sim.control_port = int(control_transport.get_extra_info("sockname")[1])
     data_transport, _ = await loop.create_datagram_endpoint(
         lambda: DataProtocol(sim),
         local_addr=("0.0.0.0", 0),

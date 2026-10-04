@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterator
 
 import pytest
@@ -43,7 +44,6 @@ def _record(
         sim_host=e2e_env["sim_host"],
         sim_data_port=e2e_env["sim_data_port"],
         sim_control_port=e2e_env["sim_control_port"],
-        client_control_base=e2e_env["sim_client_control_base"],
         gps_port=e2e_env["sim_gps_port"],
         duration_s=duration_s,
         count=4,
@@ -111,9 +111,16 @@ def test_wheel_fault_run_names_corner_order_level_and_mg_amplitudes_e2e(
     )
     try:
         diagnosis = insights["diagnosis"]
+        metadata = api_json(base, f"/api/history/{run_id}")["analysis"]["analysis_metadata"]
+        # In full: pytest shortens a dict to one line, hiding why the evidence was weak.
+        evidence = json.dumps(
+            {"diagnosis": diagnosis, "findings": insights["findings"], "metadata": metadata},
+            indent=1,
+            default=str,
+        )
         # The simulator puts the imbalance on the sensor advertised as "rear left".
-        assert diagnosis["verdict"] == "fault", diagnosis
-        assert diagnosis["confidence_level"] in {"strong", "moderate"}, diagnosis
+        assert diagnosis["verdict"] == "fault", evidence
+        assert diagnosis["confidence_level"] in {"strong", "moderate"}, evidence
         assert diagnosis["source"] == "wheel/tire"
         assert diagnosis["order_code"] == "T1"
         assert diagnosis["location"] == "Rear Left Wheel", diagnosis
@@ -133,7 +140,6 @@ def test_wheel_fault_run_names_corner_order_level_and_mg_amplitudes_e2e(
         for finding in insights["findings"]:
             assert finding["confidence_level"] in {"strong", "moderate", "weak"}
             assert "confidence_pct" not in finding
-        metadata = api_json(base, f"/api/history/{run_id}")["analysis"]["analysis_metadata"]
         assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}
         assert metadata["raw_backed_sample_count"] > 0
 

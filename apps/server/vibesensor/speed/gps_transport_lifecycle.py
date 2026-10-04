@@ -93,14 +93,23 @@ class TransportLifecycle:
         )
 
     def on_connection_error(self, exc: BaseException) -> LifecycleTransition:
-        """Connection lost or timed out.  Advances the backoff timer."""
-        delay = self._current_delay
+        """Connection refused, lost or timed out.  Advances the backoff timer.
+
+        A refused connection retries at the initial delay instead: nothing
+        listens (gpsd stopped, restarting or not started yet), the refusal costs
+        nothing, and backing off would leave the speed missing for up to the
+        maximum delay after gpsd is back.
+        """
+        if isinstance(exc, ConnectionRefusedError):
+            delay = self._initial_delay
+        else:
+            delay = self._current_delay
+            self._current_delay = min(self._max_delay, delay * self._backoff_factor)
         changes = {
             **_DISCONNECTED_FIELDS,
             "last_error": str(exc) or type(exc).__name__,
             "current_reconnect_delay": delay,
         }
-        self._current_delay = min(self._max_delay, delay * self._backoff_factor)
         return LifecycleTransition(changes=changes, sleep_before_retry=delay)
 
     def reset_delay(self) -> None:

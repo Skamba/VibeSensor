@@ -87,6 +87,18 @@ def test_connection_error_advances_backoff_with_max_cap(
     assert [transition.sleep_before_retry for transition in transitions] == expected_delays
 
 
+def test_refused_connection_retries_at_initial_delay_without_advancing_backoff() -> None:
+    lifecycle = TransportLifecycle(initial_delay=1.0, max_delay=10.0)
+    lifecycle.on_connection_error(TimeoutError())
+    lifecycle.on_connection_error(TimeoutError())
+
+    refused = [lifecycle.on_connection_error(ConnectionRefusedError()) for _ in range(3)]
+
+    assert [transition.sleep_before_retry for transition in refused] == [1.0, 1.0, 1.0]
+    assert refused[0].changes["current_reconnect_delay"] == 1.0
+    assert lifecycle.on_connection_error(TimeoutError()).sleep_before_retry == 4.0
+
+
 def test_reset_delay_restores_initial_delay_after_backoff() -> None:
     lifecycle = TransportLifecycle(initial_delay=0.1)
     lifecycle.on_connection_error(RuntimeError("x"))

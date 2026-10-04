@@ -5,6 +5,7 @@ import asyncio
 import contextlib
 import subprocess
 import sys
+from collections.abc import Coroutine
 from pathlib import Path
 from typing import Any
 
@@ -41,7 +42,7 @@ from vibesensor.simulator.sim_runtime import (
 
 ROOT = Path(__file__).resolve().parents[2]
 _STATIC_SCENARIOS: tuple[str, ...] = ("road", "one-wheel-mild", "engine-order", "road-fixed")
-# The server retries gpsd with up to 15 s backoff, plus its connect timeout.
+# The server retries a refused gpsd connection every 2 s; the rest is headroom for a loaded host.
 _GPS_FIX_TIMEOUT_S = 30.0
 
 
@@ -58,7 +59,7 @@ async def async_main(args: argparse.Namespace) -> None:
         SimClient(
             name=names[i],
             client_id=make_client_id(i + 1),
-            control_port=args.client_control_base + i,
+            control_port=0,  # run_client binds a free port and announces it
             sample_rate_hz=args.sample_rate_hz,
             frame_samples=args.frame_samples,
             server_host=args.server_host,
@@ -104,6 +105,20 @@ async def async_main(args: argparse.Namespace) -> None:
     )
     stop_event = asyncio.Event()
     tasks: list[asyncio.Task[Any]] = []
+    failures: list[BaseException] = []
+
+    def stop_on_failure(task: asyncio.Task[Any]) -> None:
+        # A sensor that cannot stream must end the run: carrying on with fewer
+        # sensors than requested would pass for a sensor that never connected.
+        if not task.cancelled() and (exc := task.exception()) is not None:
+            failures.append(exc)
+            stop_event.set()
+
+    def spawn(coro: Coroutine[Any, Any, Any]) -> None:
+        task = asyncio.create_task(coro)
+        task.add_done_callback(stop_on_failure)
+        tasks.append(task)
+
     gps_server: asyncio.Server | None = None
     server_url = f"http://{args.server_host}"
     if int(args.server_http_port) != 80:
@@ -142,35 +157,31 @@ async def async_main(args: argparse.Namespace) -> None:
             )
             print(f"Server reads the simulated GPS speed from port {args.gps_port}")
         if scripted:
-            tasks.append(
-                asyncio.create_task(
-                    run_scripted_scenario(
-                        clients,
-                        args.scenario,
-                        stop_event,
-                        server_host=args.server_host,
-                        server_http_port=args.server_http_port,
-                        server_check_timeout=args.server_check_timeout,
-                        gps_feed=gps_feed,
-                    )
+            spawn(
+                run_scripted_scenario(
+                    clients,
+                    args.scenario,
+                    stop_event,
+                    server_host=args.server_host,
+                    server_http_port=args.server_http_port,
+                    server_check_timeout=args.server_check_timeout,
+                    gps_feed=gps_feed,
                 )
             )
         if not args.no_car_sync:
-            tasks.append(
-                asyncio.create_task(
-                    active_car_order_loop(
-                        clients,
-                        stop_event,
-                        server_host=args.server_host,
-                        server_http_port=args.server_http_port,
-                        server_check_timeout=args.server_check_timeout,
-                    )
+            spawn(
+                active_car_order_loop(
+                    clients,
+                    stop_event,
+                    server_host=args.server_host,
+                    server_http_port=args.server_http_port,
+                    server_check_timeout=args.server_check_timeout,
                 )
             )
         for client in clients:
-            tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
+            spawn(run_client(client, args.hello_interval, stop_event))
         if args.scenario == "road" and not args.no_road_scene:
-            tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
+            spawn(road_scene_loop(clients, stop_event))
         elif scripted:
             print(f"[scenario] scripted={args.scenario} (complex speed/profile timeline enabled)")
         else:
@@ -179,9 +190,9 @@ async def async_main(args: argparse.Namespace) -> None:
                 "(no road-scene randomization)"
             )
         if args.duration > 0:
-            tasks.append(asyncio.create_task(auto_stop(args.duration, stop_event)))
+            spawn(auto_stop(args.duration, stop_event))
         if interactive:
-            tasks.append(asyncio.create_task(command_loop(clients, stop_event)))
+            spawn(command_loop(clients, stop_event))
         await stop_event.wait()
     finally:
         stop_event.set()
@@ -196,6 +207,8 @@ async def async_main(args: argparse.Namespace) -> None:
                 managed_server.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 managed_server.kill()
+    if failures:
+        raise failures[0]
 
 
 def parse_args() -> argparse.Namespace:
@@ -221,7 +234,6 @@ def parse_args() -> argparse.Namespace:
         default=3.5,
         help="Per-sensor always-on broadband noise floor (raw sample units).",
     )
-    parser.add_argument("--client-control-base", type=int, default=9100)
     parser.add_argument(
         "--duration", type=float, default=0.0, help="Optional run duration in seconds"
     )

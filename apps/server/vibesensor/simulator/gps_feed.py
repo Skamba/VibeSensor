@@ -51,4 +51,6 @@ async def start_gps_feed(
             with contextlib.suppress(ConnectionError):
                 await writer.wait_closed()
 
-    return await asyncio.start_server(report, host, port)
+    # SO_REUSEPORT, like the server's own listener: a test harness can hold the
+    # port for a run of simulators so no other process takes it in between.
+    return await asyncio.start_server(report, host, port, reuse_port=True)
