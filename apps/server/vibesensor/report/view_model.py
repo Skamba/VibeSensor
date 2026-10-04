@@ -64,6 +64,7 @@ _ZONE_KEYS = frozenset(
 _WHEEL_CORNERS = frozenset(
     {"front_left_wheel", "front_right_wheel", "rear_left_wheel", "rear_right_wheel"}
 )
+_WHEEL_ZONES = _WHEEL_CORNERS | {"front_axle", "rear_axle", "all_wheels"}
 _WEAK_REASON_KEYS = {
     "spread_across_locations": "WEAK_SPREAD",
     "narrow_speed_range": "WEAK_NARROW_SPEED",
@@ -329,6 +330,9 @@ class _Ctx:
             return self.t(f"WHEELS_{zone.upper()}")
         if zone in _ZONE_KEYS:
             return self.t(f"ZONE_{zone.upper()}")
+        if zone:
+            # Another mounting point (a seat, the boot): the location it names.
+            return self.t_or(f"LOC_{zone.upper()}", self.location(diagnosis["location"]))
         return self.location(diagnosis["location"])
 
     def phase(self, phase: str) -> str:
@@ -417,11 +421,11 @@ def _owner_page(
         headline = ctx.t("VERDICT_WEAK")
         description = _description(ctx, diagnosis)
         candidate = ctx.t("VERDICT_WEAK_CANDIDATE", cause=_cause(ctx, diagnosis))
-        reasons = tuple(
-            _weak_reason(ctx, diagnosis, reason) for reason in diagnosis["weak_reasons"]
-        )
+        reasons = tuple(_weak_reason(ctx, reason) for reason in diagnosis["weak_reasons"])
         reasons_title = ctx.t("WEAK_REASONS_TITLE") if reasons else None
         recapture = tuple(ctx.t(key) for key in _RECAPTURE_KEYS)
+        if _unlocated_wheel(diagnosis):
+            recapture = (ctx.t("STEP_WHEEL_UNLOCATED"), *recapture)
         next_step = ctx.t("RECAPTURE_TITLE")
     else:
         step_key = _step_key(diagnosis)
@@ -431,8 +435,13 @@ def _owner_page(
             confirm = _confirm_check(ctx, diagnosis)
             if confirm is None:
                 level_meaning = ctx.t("LEVEL_MODERATE_COAST_DONE_MEANING")
-        next_step = ctx.t(step_key, zone=zone)
-        fallback_step = ctx.t("FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone))
+        if _unlocated_wheel(diagnosis):
+            # Locating the wheel comes first; the shop route is the alternative.
+            next_step = ctx.t("STEP_WHEEL_UNLOCATED")
+            fallback_step = ctx.t("STEP_WHEEL_UNLOCATED_ALTERNATIVE")
+        else:
+            next_step = ctx.t(step_key, zone=zone)
+            fallback_step = ctx.t("FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone))
         verify = _verify(ctx, diagnosis)
     return OwnerPage(
         verdict=verdict,
@@ -462,7 +471,14 @@ def _owner_page(
     )
 
 
+def _unlocated_wheel(diagnosis: DiagnosisPayload) -> bool:
+    """A wheel/tire fault felt strongest away from the wheels (no wheel sensor near it)."""
+    return diagnosis["source"] == "wheel/tire" and diagnosis["zone"] not in _WHEEL_ZONES
+
+
 def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
+    if _unlocated_wheel(diagnosis):
+        return ctx.t("CAUSE_WHEEL_UNLOCATED", zone=ctx.zone(diagnosis))
     key = _source_key(diagnosis["source"]) or "OTHER"
     return ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
 
@@ -525,12 +541,9 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     return text
 
 
-def _weak_reason(ctx: _Ctx, diagnosis: DiagnosisPayload, reason: str) -> str:
+def _weak_reason(ctx: _Ctx, reason: str) -> str:
     key = _WEAK_REASON_KEYS.get(reason)
-    if key is None:
-        return reason
-    presence = diagnosis["presence_ratio"]
-    return ctx.t(key, share=ctx.share(presence) if presence is not None else "")
+    return ctx.t(key) if key is not None else reason
 
 
 def _verify(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:

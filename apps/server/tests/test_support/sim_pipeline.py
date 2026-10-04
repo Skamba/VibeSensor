@@ -29,7 +29,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 
@@ -46,6 +46,7 @@ from vibesensor.live.processing_loop import (
     ProcessingLoopState,
     ProcessingTickRunner,
 )
+from vibesensor.recording.lifecycle_state import RecordingStopReason
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.view_model import ReportView, build_report_view
@@ -53,6 +54,8 @@ from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_s
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.sim_runtime import ClientProtocol
+from vibesensor.speed.obd.polling import ObdPidPollResult, ObdPollResult
+from vibesensor.speed.obd.service import ObdService
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.web.router import WebServices
 
@@ -87,6 +90,10 @@ _CLOCK_SYNC_WARMUP_S = 2.0 * CLOCK_SYNC_INTERVAL_S + 1.0
 _CAR_START_BOOT_SPREAD_S = 2.0
 _POST_ANALYSIS_TIMEOUT_S = 90.0
 _POST_ANALYSIS_S_PER_DRIVE_S = 0.5
+# A paired Bluetooth OBD adapter: unlike manual speed, it reports standstill.
+_OBD_ADAPTER = {"obdDeviceMac": "00:1D:A5:68:98:8A", "obdDeviceName": "OBDII"}
+
+SpeedSource = Literal["manual", "obd2"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,6 +165,7 @@ class SimPipelineResult:
     metadata: RunMetadata
     post_analysis_s: float
     post_analysis_peak_bytes: int | None
+    stop_reason: RecordingStopReason | None
 
     @property
     def diagnosis(self) -> dict[str, Any]:
@@ -252,18 +260,16 @@ class _Sensor:
     addr: tuple[str, int] = field(default=("", 0))
 
 
-def _runtime_config(tmp_path: Path) -> Path:
+def _runtime_config(tmp_path: Path, max_recording_duration_s: float | None) -> Path:
     tmp_path.mkdir(parents=True, exist_ok=True)
     path = tmp_path / "config.yaml"
-    path.write_text(
-        yaml.safe_dump(
-            {
-                "logging": {"history_db_path": str(tmp_path / "history.db")},
-                "gps": {"gps_enabled": False},
-            }
-        ),
-        encoding="utf-8",
-    )
+    config: dict[str, Any] = {
+        "logging": {"history_db_path": str(tmp_path / "history.db")},
+        "gps": {"gps_enabled": False},
+    }
+    if max_recording_duration_s is not None:
+        config["recording"] = {"max_duration_s": max_recording_duration_s}
+    path.write_text(yaml.safe_dump(config), encoding="utf-8")
     return path
 
 
@@ -315,14 +321,20 @@ def run_sim_pipeline(
     lang: str = "en",
     trace_post_analysis_memory: bool = False,
     car_start: bool = False,
+    speed_source: SpeedSource = "manual",
+    max_recording_duration_s: float | None = None,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
     With *car_start*, everything powers up together and the recording starts as
     soon as the sensors show up, before their clocks are synced: their first
     chunks carry bare device time that reads close to (but not at) server time.
+
+    The drive's speed reaches the server as the manual speed, or with *speed_source*
+    ``"obd2"`` from a connected OBD adapter (speed PID only), which also reports 0 km/h.
+    *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
     """
-    runtime = build_runtime(load_config(_runtime_config(tmp_path)))
+    runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
     try:
         return _record(
             runtime,
@@ -334,6 +346,7 @@ def run_sim_pipeline(
             lang=lang,
             trace_post_analysis_memory=trace_post_analysis_memory,
             car_start=car_start,
+            speed_source=speed_source,
         )
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
@@ -350,6 +363,7 @@ def _record(
     lang: str,
     trace_post_analysis_memory: bool,
     car_start: bool,
+    speed_source: SpeedSource,
 ) -> SimPipelineResult:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -447,8 +461,12 @@ def _record(
 
         # Before the drive: the simulator starts in its first phase, the user
         # assigns locations once the sensors show up.
+        if speed_source == "obd2":
+            web.speed_source_service.update_speed_source({"speedSource": "obd2", **_OBD_ADAPTER})  # type: ignore[typeddict-item]
+            lifecycle.obd_runner.mark_connected()
+        set_speed = _speed_setter(web, lifecycle.obd_runner, clients, speed_source)
         apply_phase(clients, scenario_name, phases[0])
-        _set_speed(web, clients, phases[0].speed_start_kmh)
+        set_speed(phases[0].speed_start_kmh)
         loop.run_until(start_s + 1.0)
         client_ids: dict[str, str] = {}
         for sensor in sims.values():
@@ -469,7 +487,9 @@ def _record(
         guided = any(phase.guided_phase is not None for phase in phases)
         phase_start = clock.now_s
         for phase in phases:
-            _schedule_phase(loop, web, clients, scenario_name, phase, phase_start, guided, recorder)
+            _schedule_phase(
+                loop, set_speed, clients, scenario_name, phase, phase_start, guided, recorder
+            )
             phase_start += phase.duration_s
         loop.run_until(phase_start)
         if guided:
@@ -477,7 +497,7 @@ def _record(
         if trace_post_analysis_memory:
             tracemalloc.start()
         analysis_started = time.perf_counter()
-        recorder.stop_recording()
+        recorder.stop_recording(_only_if_run_id=run_id)
 
     assert recorder.post_analysis.wait(timeout_s=post_analysis_timeout_s)
     post_analysis_s = time.perf_counter() - analysis_started
@@ -497,6 +517,7 @@ def _record(
         metadata=run.metadata,
         post_analysis_s=post_analysis_s,
         post_analysis_peak_bytes=peak_bytes,
+        stop_reason=recorder.status().last_stop_reason,
     )
 
 
@@ -617,21 +638,43 @@ def _processing_ticker(
 
 
 def _flush_tick(recorder: RunRecorder) -> None:
+    """One pass of ``_recorder_runtime.run_loop``: flush, and stop at the recording cap."""
     run_id, auto_stop_reason = recorder.flush_tick()
-    assert auto_stop_reason is None, (run_id, auto_stop_reason)
+    if auto_stop_reason is None:
+        return
+    # The sensors stream through the whole drive, so only the cap may stop it.
+    assert auto_stop_reason == "max_duration", (run_id, auto_stop_reason)
+    recorder.stop_recording(_only_if_run_id=run_id, reason=auto_stop_reason)
 
 
-def _set_speed(web: WebServices, clients: Sequence[SimClient], speed_kmh: float) -> None:
-    for client in clients:
-        client.current_speed_kmh = speed_kmh
-    try:
-        web.speed_source_service.update_speed_source(
-            {"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}
-        )
-    except ValueError:
-        # Standstill is not a valid manual speed: like the simulator's HTTP
-        # update, the rejected value leaves the server on its last speed.
-        pass
+def _speed_setter(
+    web: WebServices, obd: ObdService, clients: Sequence[SimClient], speed_source: SpeedSource
+) -> Callable[[float], None]:
+    def set_speed(speed_kmh: float) -> None:
+        for client in clients:
+            client.current_speed_kmh = speed_kmh
+        if speed_source == "obd2":
+            # One completed speed PID read, as ``ObdConnectionExecutor`` polls it.
+            speed = ObdPidPollResult(
+                value=float(round(speed_kmh)),
+                raw_response=None,
+                error=None,
+                duration_s=0.0,
+                executed=True,
+                started_at_s=time.monotonic(),
+            )
+            obd.apply_poll_cycle(ObdPollResult(rpm=ObdPidPollResult.skipped(), speed=speed))
+            return
+        try:
+            web.speed_source_service.update_speed_source(
+                {"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}
+            )
+        except ValueError:
+            # Standstill is not a valid manual speed: like the simulator's HTTP
+            # update, the rejected value leaves the server on its last speed.
+            pass
+
+    return set_speed
 
 
 def _assign_location(runtime: AppRuntime, client_id: str, location_code: str) -> None:
@@ -645,7 +688,7 @@ def _assign_location(runtime: AppRuntime, client_id: str, location_code: str) ->
 
 def _schedule_phase(
     loop: _EventLoop,
-    web: WebServices,
+    set_speed: Callable[[float], None],
     clients: list[SimClient],
     scenario_name: str,
     phase: ScenarioPhase,
@@ -673,6 +716,6 @@ def _schedule_phase(
         speed = phase_speed_kmh(phase, elapsed)
         loop.at(
             phase_start_s + elapsed + 1e-6,
-            lambda speed=speed: _set_speed(web, clients, speed),
+            lambda speed=speed: set_speed(speed),
         )
         elapsed += _SPEED_UPDATE_PERIOD_S

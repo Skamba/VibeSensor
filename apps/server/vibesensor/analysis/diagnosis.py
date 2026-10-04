@@ -16,7 +16,11 @@ from typing import TYPE_CHECKING, cast
 
 from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
 from vibesensor.analysis._sensor_locations import _location_label
-from vibesensor.analysis.constants import LIGHT_STRENGTH_MAX_DB, MIN_ORDER_TRACKING_SLOPE
+from vibesensor.analysis.constants import (
+    LIGHT_STRENGTH_MAX_DB,
+    MIN_ORDER_TRACKING_SLOPE,
+    NEGLIGIBLE_STRENGTH_MAX_DB,
+)
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
@@ -57,6 +61,8 @@ _SPECTRUM_MAX_HZ = 200.0
 _SPECTRUM_MIN_PRESENCE = 0.2
 _SPECTRUM_MAX_PEAKS = 40
 _INTERMITTENT_PRESENCE = 0.5
+_PRESENCE_SLOT_S = 0.5
+_PRESENT_LEVEL_RATIO = 0.5
 _NARROW_SPEED_KMH = 10.0
 _MAX_WEAK_REASONS = 2
 _MAX_ORDER_ROWS = 6
@@ -92,8 +98,10 @@ def build_diagnosis(
     level = top_cause.confidence_level if top_cause is not None else None
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
+    floors = _location_floors(located)
+    presence = _presence_ratio(candidate, located, floors)
     speed_dependence = _speed_dependence(candidate, located, metadata.guided_phases)
-    weak_reasons = _weak_reasons(candidate, sensor_count=sensor_count)
+    weak_reasons = _weak_reasons(candidate, presence, sensor_count=sensor_count)
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
         weak_reasons = ["coast_test_contradicts", *weak_reasons][:_MAX_WEAK_REASONS]
@@ -105,10 +113,10 @@ def build_diagnosis(
     rows: list[LocationAmplitudeRow]
     basis: AmplitudeBasis
     if candidate is not None and candidate.matched_points:
-        rows = _order_location_amplitudes(candidate, located)
+        rows = _order_location_amplitudes(candidate, located, floors)
         basis = "order"
     else:
-        rows = _overall_location_amplitudes(located)
+        rows = _overall_location_amplitudes(located, floors)
         basis = "overall"
     location = candidate.strongest_location if candidate is not None else None
     if candidate is not None and candidate.location is not None:
@@ -144,11 +152,11 @@ def build_diagnosis(
         "speed_min_kmh": speed_min,
         "speed_max_kmh": speed_max,
         "dominant_phase": candidate.dominant_phase if candidate is not None else None,
-        "presence_ratio": _presence_ratio(candidate),
+        "presence_ratio": presence,
         "weak_reasons": weak_reasons,
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
-        "order_findings": _order_findings(candidate, level, test_run.findings),
+        "order_findings": _order_findings(candidate, level, test_run.findings, located, floors),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
@@ -240,6 +248,7 @@ def _with_ratios(
 def _order_location_amplitudes(
     candidate: Finding,
     located: Sequence[tuple[Sample, str]],
+    floors: dict[str, float],
 ) -> list[LocationAmplitudeRow]:
     amps: dict[str, list[float]] = defaultdict(list)
     for point in candidate.matched_points:
@@ -262,11 +271,12 @@ def _order_location_amplitudes(
         )
         for location in locations
     }
-    return _with_ratios(medians, floors=_location_floors(located), presence=presence)
+    return _with_ratios(medians, floors=floors, presence=presence)
 
 
 def _overall_location_amplitudes(
     located: Sequence[tuple[Sample, str]],
+    floors: dict[str, float],
 ) -> list[LocationAmplitudeRow]:
     peaks: dict[str, list[float]] = defaultdict(list)
     for sample, location in located:
@@ -278,11 +288,7 @@ def _overall_location_amplitudes(
         location: percentile(sorted(peaks[location]), 0.95) if peaks.get(location) else None
         for location in locations
     }
-    return _with_ratios(
-        p95,
-        floors=_location_floors(located),
-        presence=dict.fromkeys(locations),
-    )
+    return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations))
 
 
 def _strongest_row_location(rows: Sequence[LocationAmplitudeRow]) -> str | None:
@@ -374,13 +380,54 @@ def _peak_frequency_hz(candidate: Finding | None) -> float | None:
         return None
 
 
-def _presence_ratio(candidate: Finding | None) -> float | None:
+def _presence_ratio(
+    candidate: Finding | None,
+    located: Sequence[tuple[Sample, str]],
+    floors: dict[str, float],
+) -> float | None:
+    """Share of the moving drive in which the order was there, at any sensor.
+
+    Counted over the whole drive in short time slots. Neither the finding's
+    match rate (rescued to its best location or speed band) nor its raw
+    matches say this: the matcher also lands on floor-level noise near the
+    predicted frequency, and each spectrum spans a few seconds, so it still
+    shows a vibration that stopped seconds ago. A match counts when it stands
+    out of the sensor's noise floor and reaches half the order's usual level
+    there at that speed, i.e. the vibration filled most of that spectrum.
+    """
     if candidate is None or candidate.evidence is None:
         return None
-    evidence = candidate.evidence
-    if candidate.matched_points:
-        return evidence.match_rate
-    return evidence.presence_ratio
+    if not candidate.matched_points:
+        return candidate.evidence.presence_ratio
+    moving = {
+        floor(sample.t_s / _PRESENCE_SLOT_S)
+        for sample, _location in located
+        if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
+    }
+    if not moving:
+        return candidate.evidence.match_rate
+    standing_out: dict[tuple[str, float], list[tuple[float, float]]] = defaultdict(list)
+    for point in candidate.matched_points:
+        location = point.location or ""
+        if point.t_s is None or point.speed_kmh is None or point.speed_kmh <= 0:
+            continue
+        floor_amp = floors.get(location)
+        if floor_amp is not None and (
+            vibration_strength_db_scalar(peak_band_rms_amp_g=point.amp, floor_amp_g=floor_amp)
+            < NEGLIGIBLE_STRENGTH_MAX_DB
+        ):
+            continue
+        speed_bin = floor(point.speed_kmh / _SPEED_BIN_KMH)
+        standing_out[(location, speed_bin)].append((point.t_s, point.amp))
+    present: set[int] = set()
+    for points in standing_out.values():
+        usual = median(amp for _t_s, amp in points)
+        present.update(
+            floor(t_s / _PRESENCE_SLOT_S)
+            for t_s, amp in points
+            if amp >= _PRESENT_LEVEL_RATIO * usual
+        )
+    return len(present & moving) / len(moving)
 
 
 def _is_candidate(finding: Finding, candidate: Finding | None) -> bool:
@@ -391,6 +438,8 @@ def _order_findings(
     candidate: Finding | None,
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
+    located: Sequence[tuple[Sample, str]],
+    floors: dict[str, float],
 ) -> list[OrderFindingRow]:
     """Surfaced order-tracked findings, one per order, the diagnosed one first at its level.
 
@@ -447,7 +496,7 @@ def _order_findings(
                 "speed_min_kmh": speed_min,
                 "speed_max_kmh": speed_max,
                 "phases": list(finding.phases_detected),
-                "presence_ratio": _presence_ratio(finding),
+                "presence_ratio": _presence_ratio(finding, located, floors),
                 "confidence_level": (
                     level if diagnosed and level is not None else finding.confidence_level
                 ).value,
@@ -490,7 +539,12 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
     return top_codes[0]
 
 
-def _weak_reasons(candidate: Finding | None, *, sensor_count: int) -> list[str]:
+def _weak_reasons(
+    candidate: Finding | None,
+    presence: float | None,
+    *,
+    sensor_count: int,
+) -> list[str]:
     if candidate is None:
         return []
     reasons: list[str] = []
@@ -507,7 +561,6 @@ def _weak_reasons(candidate: Finding | None, *, sensor_count: int) -> list[str]:
         and speed_max - speed_min < _NARROW_SPEED_KMH
     ):
         reasons.append("narrow_speed_range")
-    presence = _presence_ratio(candidate)
     if presence is not None and presence < _INTERMITTENT_PRESENCE:
         reasons.append("intermittent")
     strength = candidate.vibration_strength_db
@@ -548,13 +601,18 @@ def _source_checks(
         if source in seen:
             checks.append({"source": str(source), "status": "candidate", "reason": None})
             continue
-        reason: SourceCheckReason | None = None
-        if refs.tire_circumference_m is None:
+        reason: SourceCheckReason | None
+        if source is VibrationSource.ENGINE and rpm_source == "measured":
+            # Measured RPM places the engine orders without the tire or drive ratios.
+            reason = None
+        elif refs.tire_circumference_m is None:
             reason = "no_tire_reference"
         elif source is not VibrationSource.WHEEL_TIRE and refs.final_drive_ratio is None:
             reason = "no_drive_reference"
         elif source is VibrationSource.ENGINE and rpm_source == "none":
             reason = "no_engine_reference"
+        else:
+            reason = None
         if reason is not None:
             checks.append({"source": str(source), "status": "not_testable", "reason": reason})
             continue

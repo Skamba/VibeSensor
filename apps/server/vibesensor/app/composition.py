@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -129,7 +130,8 @@ def build_runtime(config: AppConfig) -> AppRuntime:
 
     # Speed sources (GPS, OBD) and the selected-source coordination.
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
-    obd = ObdService()
+    # Read the clock per call, like the recorder, so one clock times speed and samples.
+    obd = ObdService(monotonic=lambda: time.monotonic())
     speed_services = build_speed_source_services(gps_monitor=gps_monitor, obd=obd)
 
     settings = build_settings_services(history, speed_control=speed_services.control)

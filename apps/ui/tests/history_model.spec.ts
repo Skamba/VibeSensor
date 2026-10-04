@@ -354,6 +354,39 @@ test("weak evidence hedges the best candidate and asks for a new recording", () 
   });
 });
 
+test("a wheel fault felt only in the cabin names no wheel and asks for wheel sensors", () => {
+  const cabinOnly = (verdict: "fault" | "weak_evidence") => {
+    const insights = populatedInsights("run-008");
+    insights.diagnosis = makeDiagnosis({
+      verdict,
+      confidence_level: verdict === "fault" ? "moderate" : "weak",
+      finding_id: "finding-1",
+      source: "wheel/tire",
+      location: "Driver Seat",
+      zone: "driver_seat",
+    });
+    const details = buildDetails(
+      historyListRun("run-008"),
+      defaultDetail({ preview: insights }),
+      f,
+    );
+    if (details.insights.kind !== "findings") {
+      throw new Error("expected findings");
+    }
+    return details.insights.primary;
+  };
+  expect(cabinOnly("fault")).toMatchObject({
+    nextStepLabel: "history.findings_next_step_label",
+    nextStep: "history.findings_next_step_locate_wheel",
+  });
+  expect(cabinOnly("weak_evidence")).toMatchObject({
+    explanation:
+      'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.unlocated_wheel:{\\"location\\":\\"Driver Seat\\"}"}',
+    nextStep:
+      'history.findings_next_step_locate_wheel history.recapture_recipe:{"from":"50","to":"120","unit":"km/h"}',
+  });
+});
+
 test("shows every History speed in the m/s setting", () => {
   const mps = { ...f, speedUnit: "mps" as const };
   const run = historyListRun("run-007");

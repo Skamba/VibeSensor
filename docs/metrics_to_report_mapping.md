@@ -15,9 +15,9 @@ summary's `diagnosis` block (`d` below; contract in
 | Verdict headline | `d.verdict`, `d.source`, `d.zone` | "Likely cause: …", "Not enough evidence to name a cause", or "No significant vibration found" |
 | Confidence | `d.confidence_level` | Level word + action meaning; never a percentage |
 | Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh`, `d.speed_dependence` | One sentence, plus "It follows road/engine speed: …" after a guided coast-down |
-| Weak reasons | `d.weak_reasons` (+ `d.presence_ratio`) | Plain sentences |
+| Weak reasons | `d.weak_reasons` (`intermittent`: `d.presence_ratio`, the share of the moving drive in which the order was there, is under half) | Plain sentences, no percentages |
 | Covered / not covered (no fault) | `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations, `d.conditions.rpm_source` | Sentences |
-| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source |
+| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source; a wheel/tire fault whose zone is not a wheel (cabin-only sensors) names no wheel and asks for a sensor at each wheel |
 | Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
 | Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle, engine bay, or centre tunnel |
 

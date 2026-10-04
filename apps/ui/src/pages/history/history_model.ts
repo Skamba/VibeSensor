@@ -158,6 +158,15 @@ const ZONE_KEYS = new Set([
   "driveshaft_tunnel",
   "transmission",
 ]);
+const WHEEL_ZONE_KEYS = new Set([
+  "front_left_wheel",
+  "front_right_wheel",
+  "rear_left_wheel",
+  "rear_right_wheel",
+  "front_axle",
+  "rear_axle",
+  "all_wheels",
+]);
 const NON_FAULT_SOURCES = new Set(["baseline_noise", "transient_impact"]);
 
 function findings(summary: HistoryInsightsPayload | null): Finding[] {
@@ -232,6 +241,14 @@ function diagnosisSignature(
     parts.push(`${f.fmt(diagnosis.frequency_hz, 1)} Hz${at}`);
   }
   return parts.join(" · ") || "--";
+}
+
+/** A wheel/tire fault felt strongest away from the wheels: no wheel can be named. */
+function unlocatedWheel(diagnosis: Diagnosis): boolean {
+  return (
+    diagnosis.source === "wheel/tire" &&
+    !WHEEL_ZONE_KEYS.has(diagnosis.zone ?? "")
+  );
 }
 
 function zoneText(diagnosis: Diagnosis, t: Translate): string {
@@ -501,6 +518,8 @@ function diagnosisCard(
   const level = diagnosis.confidence_level;
   const zone = zoneText(diagnosis, t);
   const source = sourceLabel(diagnosis.source, t);
+  const unlocated = unlocatedWheel(diagnosis);
+  const locateWheel = t("history.findings_next_step_locate_wheel");
   return {
     eyebrow: t(weak ? "history.verdict.eyebrow" : "history.primary_diagnosis"),
     headline: weak ? t("history.verdict.weak_evidence") : source,
@@ -513,7 +532,12 @@ function diagnosisCard(
       .join(" — "),
     tone: levelTone(level),
     explanation: weak
-      ? t("history.verdict.weak_body", { source, location: zone })
+      ? t("history.verdict.weak_body", {
+          source,
+          location: unlocated
+            ? t("history.zone.unlocated_wheel", { location: zone })
+            : zone,
+        })
       : String(
           summary.findings.find(
             (item) => item.finding_id === diagnosis.finding_id,
@@ -537,9 +561,13 @@ function diagnosisCard(
     nextStepLabel: t(
       weak ? "history.recapture_label" : "history.findings_next_step_label",
     ),
-    nextStep: weak
-      ? recaptureRecipe(f)
-      : t("history.findings_next_step", { location: zone }),
+    nextStep: unlocated
+      ? weak
+        ? `${locateWheel} ${recaptureRecipe(f)}`
+        : locateWheel
+      : weak
+        ? recaptureRecipe(f)
+        : t("history.findings_next_step", { location: zone }),
   };
 }
 

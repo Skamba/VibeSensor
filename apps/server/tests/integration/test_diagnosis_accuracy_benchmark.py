@@ -22,7 +22,13 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
-from test_support.sim_pipeline import BenchCar, BenchSensor, SimPipelineResult, run_sim_pipeline
+from test_support.sim_pipeline import (
+    BenchCar,
+    BenchSensor,
+    SimPipelineResult,
+    SpeedSource,
+    run_sim_pipeline,
+)
 
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
@@ -96,6 +102,25 @@ _ZONE_TEXT_EN = {
     "all_wheels": "all four wheels",
     "engine_bay": "engine bay",
 }
+_CABIN_TEXT = {
+    "driver_seat": ("driver seat", "bestuurdersstoel"),
+    "trunk": ("boot", "kofferbak"),
+    "front_passenger_seat": ("front passenger seat", "bijrijdersstoel"),
+}
+# A wheel fault felt only in the cabin: no wheel named, and the owner is told to
+# put sensors at the wheels to find it.
+_UNLOCATED_WHEEL_TEXT = {
+    "en": (
+        "could not be pinned to one wheel",
+        "felt strongest at the {}",
+        "a sensor at each wheel",
+    ),
+    "nl": (
+        "niet aan één wiel te koppelen",
+        "het sterkst gevoeld bij {}",
+        "bij elk wiel een sensor",
+    ),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,6 +155,8 @@ class Case:
     wifi_retry_loss: float = 0.0
     # Where the owner mounted the sensors.
     layout: tuple[BenchSensor, ...] = SENSORS
+    # How the drive's speed reaches the server; only OBD reports standing still.
+    speed_source: SpeedSource = "manual"
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -154,6 +181,14 @@ class Case:
 
     def expected_for(self, car: str) -> Expected:
         return self.by_car.get(car, self.expected)
+
+    @property
+    def wheel_sensors(self) -> bool:
+        return any(sensor.location_code in WHEEL_ZONES for sensor in self.layout)
+
+    @property
+    def stands_still(self) -> bool:
+        return any(phase.speed_start_kmh == 0 == phase.speed_end_kmh for phase in self.phases)
 
 
 def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expected:
@@ -294,7 +329,8 @@ def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
     )
 
 
-_FAINT_ENGINE_REASONS = frozenset({"narrow_speed_range"})
+# Held at 75-76 km/h, and the tone is there for 12 s of the 28 s drive.
+_FAINT_ENGINE_REASONS = frozenset({"narrow_speed_range", "intermittent"})
 
 BENCH_CASES = (
     Case("bench-healthy-sweep", _sweep(), NO_FAULT),
@@ -511,6 +547,18 @@ BENCH_CASES = (
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         layout=EVERY_MOUNT,
     ),
+    # Idling at a standstill before pulling away (the OBD speed reads 0 km/h):
+    # standing still is no speed band, and the wheel fault is still found.
+    Case(
+        "bench-standstill-pull-away-front-left-wheel",
+        (
+            _phase("idle", 8.0, 0.0, 0.0),
+            _phase("pull_away", 6.0, 0.0, 50.0, _ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+            *_sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        ),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        speed_source="obd2",
+    ),
     Case(
         "bench-faint-intermittent-engine",
         (
@@ -528,7 +576,6 @@ BENCH_CASES = (
             # resonance, leaving E1 as the tracked engine order.
             order_codes=frozenset({"E1", "E2"}),
             levels=frozenset({"weak", "moderate"}),
-            # Held at 75-76 km/h: too narrow a speed range to follow an order.
             weak_reasons=_FAINT_ENGINE_REASONS,
         ),
         # On the default car E1 sits on T2, so a faint engine tone may only be
@@ -609,6 +656,7 @@ PDF_CASES = frozenset(
         ("bench-faint-intermittent-engine", "default"),
         ("bench-healthy-sweep", "other"),
         ("bench-rear-right-wheel-sweep", "default"),
+        ("bench-cabin-only-wheel-sweep", "default"),
     }
 )
 _PDF_HEADLINES = {
@@ -704,6 +752,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         phases=case.phases,
         client_seed=seed,
         car_start=case.car_start,
+        speed_source=case.speed_source,
     )
     try:
         lossy = bool(case.frame_loss)
@@ -712,7 +761,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
             # Congested Wi-Fi may or may not drop a frame for good.
             _assert_frame_integrity(result, lossy=lossy)
         if (case.case_id, car_key) in PDF_CASES:
-            _assert_pdf_text(result)
+            _assert_pdf_text(result, case)
     finally:
         result.history_db.close()
 
@@ -771,6 +820,7 @@ def _assert_case(
     engine_check = next(c for c in diagnosis["source_checks"] if c["source"] == "engine")
     assert engine_check["reason"] != "no_matching_order", engine_check
     _assert_sensor_identity(result)
+    _assert_speed_breakdown(result, case)
     _assert_raw_backed(result, case)
     _assert_raw_capture_on_one_clock(result)
     _assert_report_view(result, diagnosis, expected, case)
@@ -871,6 +921,19 @@ def _assert_sensor_identity(result: SimPipelineResult) -> None:
         assert all(name and name != client_id for name, _location in seen)
 
 
+def _assert_speed_breakdown(result: SimPipelineResult, case: Case) -> None:
+    """The per-speed breakdown counts every moving sample and no standstill one."""
+    speeds = [
+        row.speed_kmh
+        for batch in result.history_db.iter_run_samples(result.run_id, batch_size=2048)
+        for row in batch
+    ]
+    standstill = sum(1 for speed in speeds if speed == 0)
+    assert (standstill > 0) is case.stands_still, standstill
+    breakdown = result.analysis.payload["speed_breakdown"]
+    assert sum(row["count"] for row in breakdown) == len(speeds) - standstill, breakdown
+
+
 def _assert_frame_integrity(result: SimPipelineResult, *, lossy: bool) -> None:
     checks = {check.label: check for check in result.report.quality.checks}
     frame_integrity = checks["Frame integrity"]
@@ -959,10 +1022,18 @@ def _assert_report_view(
         lowest_kmh = min(min(p.speed_start_kmh, p.speed_end_kmh) for p in case.phases)
         assert ("speeds below" in not_covered) is (lowest_kmh >= 40.0), not_covered
         return
+    cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
+    assert cause_text is not None
     zone_text = _ZONE_TEXT_EN.get(diagnosis["zone"])
     if zone_text is not None:
-        cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
-        assert cause_text is not None and zone_text in cause_text, cause_text
+        assert zone_text in cause_text, cause_text
+    unlocated_wheel = diagnosis["source"] == "wheel/tire" and not case.wheel_sensors
+    if unlocated_wheel:
+        not_pinned, felt_at, mount_sensors = _UNLOCATED_WHEEL_TEXT["en"]
+        assert not_pinned in cause_text, cause_text
+        assert felt_at.format(_CABIN_TEXT[diagnosis["zone"]][0]) in cause_text, cause_text
+        advice = owner.next_step if diagnosis["verdict"] == "fault" else " ".join(owner.recapture)
+        assert mount_sensors in advice, advice
     assert owner.diagram.zone == diagnosis["zone"]
     level_words = {"strong": "Strong", "moderate": "Moderate", "weak": "Weak"}
     assert owner.level_word == level_words[diagnosis["confidence_level"]]
@@ -979,7 +1050,7 @@ def _assert_report_view(
         assert f"{diagnosis['order_code']} " in owner.verify
         assert owner.verify.rstrip(".").endswith("mg today")
         keyword = _NEXT_STEP_KEYWORDS.get(diagnosis["order_code"])
-        if keyword is not None:
+        if keyword is not None and not unlocated_wheel:
             assert keyword in owner.next_step, owner.next_step
     if expected.dominant_corner and diagnosis["verdict"] == "fault":
         corner = _ZONE_TEXT_EN[diagnosis["zone"]]
@@ -988,8 +1059,9 @@ def _assert_report_view(
         )
 
 
-def _assert_pdf_text(result: SimPipelineResult) -> None:
+def _assert_pdf_text(result: SimPipelineResult, case: Case) -> None:
     verdict = result.diagnosis["verdict"]
+    unlocated_wheel = result.diagnosis["source"] == "wheel/tire" and not case.wheel_sensors
     for lang, headline in zip(("en", "nl"), _PDF_HEADLINES[verdict], strict=True):
         view = build_report_view(result.analysis.payload, result.metadata, lang=lang)
         reader = PdfReader(io.BytesIO(render_report_pdf(view)))
@@ -1003,6 +1075,11 @@ def _assert_pdf_text(result: SimPipelineResult) -> None:
         )
         # Levels only, never a confidence percentage (page 1 is the owner page).
         assert "%" not in pages[0]
+        if unlocated_wheel:
+            not_pinned, felt_at, mount_sensors = _UNLOCATED_WHEEL_TEXT[lang]
+            felt_where = _CABIN_TEXT[result.diagnosis["zone"]][lang == "nl"]
+            for text in (not_pinned, felt_at.format(felt_where), mount_sensors):
+                assert text in pages[0], (text, pages[0][:400])
         if verdict == "fault":
             assert view.owner.next_step.lower()[:40] in pages[0]
             assert view.owner.verify is not None
@@ -1026,5 +1103,31 @@ def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:
         quality = result.report.quality
         assert all(check.passed for check in quality.checks)
         assert quality.all_passed, quality.warnings
+    finally:
+        result.history_db.close()
+
+
+def test_recording_stops_at_the_configured_cap_and_is_still_analysed(tmp_path: Path) -> None:
+    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    assert sum(phase.duration_s for phase in phases) == 35.0
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="capped-drive",
+        phases=phases,
+        client_seed=CI_SEED,
+        max_recording_duration_s=20.0,
+    )
+    try:
+        assert result.stop_reason == "max_duration"
+        assert result.analysis.payload["duration_s"] == pytest.approx(20.0, abs=1.0)
+        diagnosis = result.diagnosis
+        assert (diagnosis["verdict"], diagnosis["source"], diagnosis["zone"]) == (
+            "fault",
+            "wheel/tire",
+            "front_left_wheel",
+        )
     finally:
         result.history_db.close()

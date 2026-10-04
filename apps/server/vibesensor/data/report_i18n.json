@@ -155,6 +155,10 @@
     "en": "a wheel or tire problem at {zone}",
     "nl": "een wiel- of bandprobleem bij {zone}"
   },
+  "CAUSE_WHEEL_UNLOCATED": {
+    "en": "a wheel or tire problem that could not be pinned to one wheel (felt strongest at the {zone})",
+    "nl": "een wiel- of bandprobleem dat niet aan één wiel te koppelen is (het sterkst gevoeld bij {zone})"
+  },
   "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS": {
     "en": "Collect a longer run with stable driving conditions.",
     "nl": "Neem een langere meting op met stabiele rijomstandigheden."
@@ -983,6 +987,14 @@
     "en": "have the wheel bearing and hub of {zone} checked for play and runout.",
     "nl": "laat het wiellager en de naaf van {zone} controleren op speling en slingering."
   },
+  "STEP_WHEEL_UNLOCATED": {
+    "en": "Mount a sensor at each wheel and record the test again to find which wheel or tire it is.",
+    "nl": "Monteer bij elk wiel een sensor en meet de test opnieuw om te vinden welk wiel of welke band het is."
+  },
+  "STEP_WHEEL_UNLOCATED_ALTERNATIVE": {
+    "en": "Without more sensors: ask the tire shop to balance and road-force all four wheels.",
+    "nl": "Zonder extra sensoren: laat de bandenspecialist alle vier de wielen balanceren en road-force meten."
+  },
   "STRONGEST_AT_LOCATION_IN_SPEED_RANGE": {
     "en": "Strongest at {location} in {speed_range} (~{dominance}x vs next location in that speed bin{weak_note}).",
     "nl": "Sterkst bij {location} in {speed_range} (~{dominance}x t.o.v. volgende locatie in die snelheidsband{weak_note})."
@@ -1136,8 +1148,8 @@
     "nl": "Hij lag maar net boven het normale trillingsniveau."
   },
   "WEAK_INTERMITTENT": {
-    "en": "It was present only part of the time ({share} of the matching samples).",
-    "nl": "Hij was maar een deel van de tijd aanwezig ({share} van de passende metingen)."
+    "en": "It came and went: it was there for less than half of the drive.",
+    "nl": "Hij kwam en ging: hij was er minder dan de helft van de rit."
   },
   "WEAK_NARROW_SPEED": {
     "en": "The speed hardly changed, so it can't be confirmed that the vibration follows the wheels, propshaft or engine.",

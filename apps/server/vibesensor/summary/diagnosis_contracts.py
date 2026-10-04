@@ -145,6 +145,7 @@ class DiagnosisPayload(TypedDict):
     speed_min_kmh: float | None
     speed_max_kmh: float | None
     dominant_phase: str | None
+    # Share of the moving drive in which the diagnosed order was there (any sensor).
     presence_ratio: float | None
     weak_reasons: list[str]
     guided_phases: list[GuidedPhaseValue]

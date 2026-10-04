@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 from test_support.analysis import run_analysis
-from test_support.core import ALL_WHEEL_SENSORS
+from test_support.core import ALL_WHEEL_SENSORS, standard_metadata
 from test_support.report_rendering import report_view_for
 from test_support.synthetic_samples import make_fault_samples, make_noise_samples
 
@@ -192,6 +192,60 @@ def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     assert mechanic.shop[0].startswith("Road-force all four wheel/tire assemblies")
     assert any(line.startswith("Driveline: ") for line in mechanic.ruled_out)
     assert not any(line.startswith("Wheels/tires") for line in mechanic.ruled_out)
+
+
+@pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])
+def test_missing_final_drive_leaves_only_what_it_needs_untested(measured_rpm: bool) -> None:
+    samples = make_fault_samples(fault_sensor="front-left", sensors=ALL_WHEEL_SENSORS)
+    if measured_rpm:
+        for sample in samples:
+            sample.update(engine_rpm=2400.0, engine_rpm_source="obd2")
+    summary = run_analysis(samples, standard_metadata(final_drive_ratio=None))
+    diagnosis = summary["diagnosis"]
+    checks = {
+        check["source"]: (check["status"], check["reason"]) for check in diagnosis["source_checks"]
+    }
+    ruled_out = report_view_for(summary).mechanic.ruled_out
+
+    # Speed and tire size alone still place the wheel orders.
+    assert (diagnosis["verdict"], diagnosis["source"], diagnosis["zone"]) == (
+        "fault",
+        "wheel/tire",
+        "front_left_wheel",
+    )
+    assert checks["driveline"] == ("not_testable", "no_drive_reference")
+    assert "Driveline: not testable: no final-drive ratio" in ruled_out
+    if measured_rpm:
+        assert checks["engine"] == ("ruled_out", "no_matching_order")
+        assert "Engine: no engine-order vibration found" in ruled_out
+    else:
+        assert checks["engine"] == ("not_testable", "no_drive_reference")
+        assert "Engine: not testable: no final-drive ratio" in ruled_out
+
+
+@pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])
+def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
+    measured_rpm: bool,
+) -> None:
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
+    if measured_rpm:
+        for sample in samples:
+            sample.update(engine_rpm=2400.0, engine_rpm_source="obd2")
+    summary = run_analysis(samples, standard_metadata(tire_circumference_m=None))
+    checks = {
+        check["source"]: (check["status"], check["reason"])
+        for check in summary["diagnosis"]["source_checks"]
+    }
+    ruled_out = report_view_for(summary).mechanic.ruled_out
+
+    assert summary["diagnosis"]["verdict"] == "no_fault"
+    assert checks["wheel/tire"] == checks["driveline"] == ("not_testable", "no_tire_reference")
+    if measured_rpm:
+        assert checks["engine"] == ("ruled_out", "no_matching_order")
+        assert "Engine: no engine-order vibration found" in ruled_out
+    else:
+        assert checks["engine"] == ("not_testable", "no_tire_reference")
+        assert "Engine: not testable: no tire size" in ruled_out
 
 
 def test_moderate_fault_adds_the_cheap_confirming_check() -> None:
