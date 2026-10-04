@@ -575,6 +575,16 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
         if top_codes and top_codes[0] in _DRIVELINE_ZONE_CODES:
             return top_codes[0]
         return _axle_zone(top_codes) or "driveshaft_tunnel"
+    if source is VibrationSource.WHEEL_TIRE and not candidate.weak_spatial_separation:
+        # A clearly dominant corner names the zone, as it names the location:
+        # the per-location medians over the whole drive dilute a fault that was
+        # only there for part of it.
+        location = (
+            candidate.location.strongest_location if candidate.location is not None else None
+        ) or candidate.strongest_location
+        code = location_code_for_label(location) if location else None
+        if code in WHEEL_LOCATION_CODES:
+            return code
     if not top_codes:
         return None
     if len(top_codes) > 1 and source is VibrationSource.WHEEL_TIRE:

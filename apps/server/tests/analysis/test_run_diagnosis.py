@@ -100,16 +100,32 @@ def test_driveline_is_reported_as_a_zone(amps: dict[str, float], zone: str) -> N
 
 
 @pytest.mark.parametrize(
-    ("amps", "zone"),
+    ("amps", "weak_spatial", "zone"),
     [
         # A cabin sensor close behind the only wheel sensor: that corner, not its axle.
-        ({"Front Left Wheel": 0.15, "Driver Seat": 0.12}, "front_left_wheel"),
-        ({"Driver Seat": 0.16, "Front Left Wheel": 0.15}, "front_left_wheel"),
-        ({"Front Left Wheel": 0.15, "Front Right Wheel": 0.14, "Driver Seat": 0.12}, "front_axle"),
+        ({"Front Left Wheel": 0.15, "Driver Seat": 0.12}, True, "front_left_wheel"),
+        ({"Driver Seat": 0.16, "Front Left Wheel": 0.15}, True, "front_left_wheel"),
+        (
+            {"Front Left Wheel": 0.15, "Front Right Wheel": 0.14, "Driver Seat": 0.12},
+            True,
+            "front_axle",
+        ),
+        # A corner the order analysis found clearly dominant names the zone, even
+        # when the medians over the whole drive put another corner close to it
+        # (a fault that was there for only part of the drive).
+        ({"Front Left Wheel": 0.15, "Front Right Wheel": 0.14}, False, "front_left_wheel"),
     ],
 )
-def test_wheel_zone_needs_two_corners_for_an_axle(amps: dict[str, float], zone: str) -> None:
-    finding = _order_finding("wheel_1x", VibrationSource.WHEEL_TIRE, confidence=0.6, amps=amps)
+def test_wheel_zone_needs_two_corners_for_an_axle(
+    amps: dict[str, float], weak_spatial: bool, zone: str
+) -> None:
+    finding = _order_finding(
+        "wheel_1x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.6,
+        amps=amps,
+        weak_spatial=weak_spatial,
+    )
 
     assert _diagnosis(finding)["zone"] == zone
 

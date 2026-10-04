@@ -34,6 +34,7 @@ class OrderConfidenceSettings:
     no_wheel_sensor_penalty: float
     zone_localization_confidence: float
     zone_min_match_rate: float
+    zone_min_peak_over_floor: float
     zone_min_error_score: float
     zone_min_corroborating_locations: int
     constant_speed_penalty: float
@@ -73,7 +74,12 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     no_wheel_sensor_penalty=0.75,
     # What a wheel order at a clearly dominant corner earns with four sensors.
     zone_localization_confidence=0.69,
-    zone_min_match_rate=0.50,
+    # Share of windows with the order clearly present: its peak at least 6 dB
+    # over the window's floor. Road noise sitting on the order's frequency by
+    # chance does not count, so a tone heard for under 40 % of the drive is not
+    # established evidence however exactly a measured speed tracks it.
+    zone_min_match_rate=0.40,
+    zone_min_peak_over_floor=2.0,
     zone_min_error_score=0.50,
     zone_min_corroborating_locations=2,
     constant_speed_penalty=0.75,

@@ -101,26 +101,15 @@ def suppress_engine_aliases(
     ]
     best_wheel_conf = max((finding.effective_confidence for _, finding in wheels), default=0.0)
     best_wheel_ranking = max((score for score, _ in wheels), default=0.0)
-    loudest_wheel_db = max(
-        (
-            finding.vibration_strength_db
-            for _, finding in wheels
-            if finding.vibration_strength_db is not None
-        ),
-        default=None,
-    )
     located_wheels = [finding for _, finding in wheels if not finding.weak_spatial_separation]
     if best_wheel_conf > 0:
         settings = ORDER_HEURISTIC_SETTINGS
         for index, (ranking_score, finding) in enumerate(findings):
             if finding.source_normalized != VibrationSource.ENGINE:
                 continue
-            wheel_harmonic = (
-                finding.finding_key in wheel_locked_engine_keys
-                and loudest_wheel_db is not None
-                and finding.vibration_strength_db is not None
-                and loudest_wheel_db - finding.vibration_strength_db
-                >= settings.wheel_locked_alias_margin_db
+            wheel_harmonic = finding.finding_key in wheel_locked_engine_keys and any(
+                _level_at_wheel_corner_db(wheel, finding) >= settings.wheel_locked_alias_margin_db
+                for _, wheel in wheels
             )
             spread_under_wheel = finding.weak_spatial_separation and any(
                 _level_at_wheel_corner_db(wheel, finding) >= settings.spread_engine_alias_margin_db

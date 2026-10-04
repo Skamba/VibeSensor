@@ -119,8 +119,11 @@ coordinates the evidence flow:
    more than twice the spread inside a 2 s bin). At a steady speed an order
    and a fixed tone look the same, and speed-reading noise would flatten the
    slope.
-5. Score the surviving evidence with `score_order_finding()`. Location terms
-   are source-aware: an engine/driveline order with no dominant corner is
+5. Score the surviving evidence with `score_order_finding()`. The location
+   comes from the 10 km/h speed bin whose matches carry the most order
+   amplitude in total (mean amplitude × matches), so a short stretch at
+   speeds the rest of the drive did not reach cannot outvote the bins that
+   hold most of the evidence. Location terms are source-aware: an engine/driveline order with no dominant corner is
    not penalised for it once its own evidence is established, unless it
    shares most of its peaks with a wheel order (see "Confidence levels" in
    `docs/metrics.md`).
@@ -132,7 +135,8 @@ coordinates the evidence flow:
    by RPM estimated from speed and gear that mostly lands on a wheel order's
    peaks has no frequency of its own: it is a fixed multiple of the wheel's
    (on a car whose top gear puts E1 on T2). When a wheel order is at least
-   6 dB louder than it, it is that wheel's harmonic and is demoted whatever its
+   6 dB louder than it at the wheel's corner (median over the windows both
+   matched there), it is that wheel's harmonic and is demoted whatever its
    confidence. An engine fault does not excite the wheel's own orders, and the
    wheel order it coincides with is as loud as it is. Confidence cannot settle
    this case, because the wheel order is penalised for spreading into the
@@ -141,9 +145,8 @@ coordinates the evidence flow:
    The same holds for an engine order with no dominant location, at any
    frequency: it is spared the spread penalty a wheel order takes, so it is
    compared with each wheel order that has a dominant corner by level. When
-   that wheel order is at least 9 dB louder than it at the wheel's corner
-   (median over the windows both matched there), the engine tone the whole car
-   shares is demoted. The margin is wider than the 6 dB above because peak
+   that wheel order is at least 9 dB louder than it at the wheel's corner,
+   the engine tone the whole car shares is demoted. The margin is wider than the 6 dB above because peak
    levels read on a speed sweep favour the slower-moving lower order by a few
    dB.
 

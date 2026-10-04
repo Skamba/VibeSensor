@@ -16,6 +16,7 @@ from vibesensor.analysis.orders.heuristics import (
 )
 from vibesensor.analysis.orders.matching import OrderMatchAccumulator
 from vibesensor.analysis.orders.physics import OrderHypothesis
+from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.statistics import (
     compute_amplitude_and_error_stats,
     compute_order_confidence,
@@ -189,6 +190,7 @@ def score_order_finding(
             and not context.per_location_dominant
             and not context.shares_wheel_order_peaks
         ),
+        zone_match_rate=context.effective_match_rate * _clear_match_share(match),
     )
 
     ranking_score = (
@@ -214,3 +216,21 @@ def score_order_finding(
         strongest_location=loc_result.display_location if loc_result is not None else "",
         hotspot_speed_band=loc_result.speed_range if loc_result is not None else "",
     )
+
+
+def _clear_match_share(match: OrderMatchAccumulator) -> float:
+    """Share of the matched peaks that stand clearly above their window's floor.
+
+    A peak at the floor is noise that happened to sit on the order's frequency;
+    with a measured speed every window predicts the order exactly, so such
+    chance matches are frequent on a rough road.
+    """
+    if not match.matched_amp:
+        return 0.0
+    ratio = ORDER_CONFIDENCE_SETTINGS.zone_min_peak_over_floor
+    clear = sum(
+        1
+        for amp, floor in zip(match.matched_amp, match.matched_floor, strict=True)
+        if amp >= ratio * floor
+    )
+    return clear / len(match.matched_amp)

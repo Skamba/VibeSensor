@@ -155,8 +155,8 @@ class Case:
     wifi_retry_loss: float = 0.0
     # Where the owner mounted the sensors.
     layout: tuple[BenchSensor, ...] = SENSORS
-    # How the drive's speed reaches the server; only OBD reports standing still.
-    speed_source: SpeedSource = "manual"
+    # How the measured speed of the drive reaches the server.
+    speed_source: SpeedSource = "gps"
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -1073,7 +1073,7 @@ _ENGINE_TOP_GEAR_LINE = (
     "Engine: no match with the engine orders estimated for top gear; lower gears were not checked"
 )
 _COAST_REASONS = ("stayed_in_neutral", "stopped_in_neutral")
-_SPEED_SOURCE_TEXT = {"manual": "entered by hand", "obd2": "OBD"}
+_SPEED_SOURCE_TEXT = {"gps": "GPS", "obd2": "OBD"}
 _SOURCE_NAMES_EN = {"wheel/tire": "Wheels/tires", "driveline": "Driveline", "engine": "Engine"}
 
 # What the owner is told to have checked, per diagnosed order.

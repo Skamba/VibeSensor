@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence, Set
 from dataclasses import dataclass
-from math import ceil, floor, log1p
+from math import ceil, floor
 
 from vibesensor.analysis.math_utils import _weighted_percentile
 from vibesensor.domain.finding_types import VibrationSource
@@ -167,16 +167,16 @@ def score_locations_in_bin(
 def select_best_location_result(
     candidates: Sequence[LocationAnalysisResult],
 ) -> LocationAnalysisResult | None:
-    """Pick the strongest per-bin location result."""
-    best: LocationAnalysisResult | None = None
-    for candidate in candidates:
-        candidate_score = candidate.mean_amp * log1p(candidate.total_samples)
-        best_score = (
-            best.mean_amp * log1p(best.total_samples) if best is not None else float("-inf")
-        )
-        if best is None or candidate_score > best_score:
-            best = candidate
-    return best
+    """Pick the speed bin holding the most order amplitude (mean amplitude x matches).
+
+    A short stretch at speeds the rest of the drive did not reach must not
+    name the location over the bins that hold most of the evidence.
+    """
+    return max(
+        candidates,
+        key=lambda candidate: candidate.mean_amp * candidate.total_samples,
+        default=None,
+    )
 
 
 def weighted_speed_window_label(speed_weight_pairs: Sequence[tuple[float, float]]) -> str | None:

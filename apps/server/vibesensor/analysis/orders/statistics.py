@@ -46,6 +46,7 @@ def compute_order_confidence(
     no_wheel_sensors: bool = False,
     path_compliance: float = 1.0,
     spread_zone_source: bool = False,
+    zone_match_rate: float = 0.0,
 ) -> float:
     """Compute calibrated confidence for an order-tracking finding.
 
@@ -59,7 +60,7 @@ def compute_order_confidence(
     """
     settings = ORDER_CONFIDENCE_SETTINGS
     if spread_zone_source and _zone_evidence_established(
-        effective_match_rate=effective_match_rate,
+        zone_match_rate=zone_match_rate,
         error_score=error_score,
         absolute_strength_db=absolute_strength_db,
         corroborating_locations=corroborating_locations,
@@ -148,7 +149,7 @@ def compute_order_confidence(
 
 def _zone_evidence_established(
     *,
-    effective_match_rate: float,
+    zone_match_rate: float,
     error_score: float,
     absolute_strength_db: float,
     corroborating_locations: int,
@@ -156,15 +157,16 @@ def _zone_evidence_established(
     """Whether a zone-source order stands on its own evidence, without a dominant corner.
 
     Requires a vibration of at least the moderate strength band, a tracked order
-    present in at least half of its windows that matches its predicted frequency
-    well, and more than one sensor seeing it. A fault-free run's road noise lands
+    clearly present (*zone_match_rate*: peaks well over the floor) in enough of
+    its windows that matches its predicted frequency well, and more than one
+    sensor seeing it. A fault-free run's road noise lands
     near engine/driveline orders by chance, but faint and patchy, so it fails
     this check and keeps the corner-dominance penalties.
     """
     settings = ORDER_CONFIDENCE_SETTINGS
     return (
         absolute_strength_db >= LIGHT_STRENGTH_MAX_DB
-        and effective_match_rate >= settings.zone_min_match_rate
+        and zone_match_rate >= settings.zone_min_match_rate
         and error_score >= settings.zone_min_error_score
         and corroborating_locations >= settings.zone_min_corroborating_locations
     )

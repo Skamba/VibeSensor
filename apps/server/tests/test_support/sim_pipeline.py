@@ -54,10 +54,10 @@ from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_s
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.sim_runtime import ClientProtocol
+from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.obd.polling import ObdPidPollResult, ObdPollResult
 from vibesensor.speed.obd.service import ObdService
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
-from vibesensor.web.router import WebServices
 
 __all__ = [
     "BenchCar",
@@ -90,10 +90,10 @@ _CLOCK_SYNC_WARMUP_S = 2.0 * CLOCK_SYNC_INTERVAL_S + 1.0
 _CAR_START_BOOT_SPREAD_S = 2.0
 _POST_ANALYSIS_TIMEOUT_S = 90.0
 _POST_ANALYSIS_S_PER_DRIVE_S = 0.5
-# A paired Bluetooth OBD adapter: unlike manual speed, it reports standstill.
+# A paired Bluetooth OBD adapter.
 _OBD_ADAPTER = {"obdDeviceMac": "00:1D:A5:68:98:8A", "obdDeviceName": "OBDII"}
 
-SpeedSource = Literal["manual", "obd2"]
+SpeedSource = Literal["gps", "obd2"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -321,7 +321,7 @@ def run_sim_pipeline(
     lang: str = "en",
     trace_post_analysis_memory: bool = False,
     car_start: bool = False,
-    speed_source: SpeedSource = "manual",
+    speed_source: SpeedSource = "gps",
     max_recording_duration_s: float | None = None,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
@@ -330,8 +330,9 @@ def run_sim_pipeline(
     soon as the sensors show up, before their clocks are synced: their first
     chunks carry bare device time that reads close to (but not at) server time.
 
-    The drive's speed reaches the server as the manual speed, or with *speed_source*
-    ``"obd2"`` from a connected OBD adapter (speed PID only), which also reports 0 km/h.
+    The drive's speed reaches the server as a measured speed: from gpsd (a 3D fix,
+    as the GPS receiver reports it) or, with *speed_source* ``"obd2"``, from a
+    connected OBD adapter (speed PID only).
     *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
     """
     runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
@@ -464,7 +465,13 @@ def _record(
         if speed_source == "obd2":
             web.speed_source_service.update_speed_source({"speedSource": "obd2", **_OBD_ADAPTER})  # type: ignore[typeddict-item]
             lifecycle.obd_runner.mark_connected()
-        set_speed = _speed_setter(web, lifecycle.obd_runner, clients, speed_source)
+        else:
+            web.speed_source_service.update_speed_source({"speedSource": "gps"})
+            lifecycle.gps_monitor.gps_enabled = True
+            lifecycle.gps_monitor.connection_state = "connected"
+        set_speed = _speed_setter(
+            lifecycle.gps_monitor, lifecycle.obd_runner, clients, speed_source
+        )
         apply_phase(clients, scenario_name, phases[0])
         set_speed(phases[0].speed_start_kmh)
         loop.run_until(start_s + 1.0)
@@ -648,7 +655,7 @@ def _flush_tick(recorder: RunRecorder) -> None:
 
 
 def _speed_setter(
-    web: WebServices, obd: ObdService, clients: Sequence[SimClient], speed_source: SpeedSource
+    gps: GPSSpeedMonitor, obd: ObdService, clients: Sequence[SimClient], speed_source: SpeedSource
 ) -> Callable[[float], None]:
     def set_speed(speed_kmh: float) -> None:
         for client in clients:
@@ -665,14 +672,8 @@ def _speed_setter(
             )
             obd.apply_poll_cycle(ObdPollResult(rpm=ObdPidPollResult.skipped(), speed=speed))
             return
-        try:
-            web.speed_source_service.update_speed_source(
-                {"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}
-            )
-        except ValueError:
-            # Standstill is not a valid manual speed: like the simulator's HTTP
-            # update, the rejected value leaves the server on its last speed.
-            pass
+        # One gpsd TPV report with a 3D fix, as ``GPSTransportRunner`` reads it.
+        gps._transport.ingest_message({"class": "TPV", "mode": 3, "speed": speed_kmh / 3.6})
 
     return set_speed
 

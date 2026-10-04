@@ -205,8 +205,12 @@ the PDF both show:
   `docs/metrics.md`). The diagnosed row carries the diagnosis level. Rows are
   listed from Moderate up, plus the diagnosed source's other order once even
   when it is Weak on its own.
-- `zone`: a corner for wheel/tire faults (an axle when two corners on one axle
-  are within 1.5×, `all_wheels` when three or more are), `engine_bay` for
+- `zone`: a corner for wheel/tire faults: the finding's location when the
+  order analysis found a dominant corner, otherwise from the per-location
+  amplitudes (an axle when two corners on one axle are within 1.5×,
+  `all_wheels` when three or more are). The amplitudes are medians over the
+  whole drive, so they understate a fault that was there for only part of
+  it. `engine_bay` for
   engine orders, and an axle or `driveshaft_tunnel` for driveline orders.
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
