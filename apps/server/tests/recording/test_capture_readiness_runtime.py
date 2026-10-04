@@ -190,6 +190,43 @@ def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
     assert sensors_check.reason_key == "limited_sensor_coverage"
 
 
+def test_capture_readiness_ignores_frames_lost_to_an_expected_interruption(
+    fake_registry,
+    speed_rig,
+    mutable_fake_settings,
+) -> None:
+    # A Bluetooth OBD scan starves the shared radio: the loss it causes is
+    # expected and must not hold the dashboard at "Preparing".
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    speed_rig.obd_reading(speed_kmh=86.4, rpm=2600.0)
+    observe = {
+        "fake_registry": fake_registry,
+        "speed_rig": speed_rig,
+        "mutable_fake_settings": mutable_fake_settings,
+    }
+    tracker.evaluate(_observation(**observe, now_mono=200.0))
+    active_client = fake_registry.get("active")
+    assert active_client is not None
+    active_client.frames_dropped = 14
+    active_client.expected_frames_dropped = 13
+
+    one_real_loss = tracker.evaluate(_observation(**observe, now_mono=204.0))
+    sensors_check = next(
+        check for check in one_real_loss.checks if check.check_key == "sensors_ready"
+    )
+    assert sensors_check.reason_key == "recent_integrity_events"
+    assert ("frames_dropped", 1) in sensors_check.details
+
+    active_client.frames_dropped = 40
+    active_client.expected_frames_dropped = 39
+    after_quiet = tracker.evaluate(_observation(**observe, now_mono=216.0))
+    sensors_check = next(
+        check for check in after_quiet.checks if check.check_key == "sensors_ready"
+    )
+    assert sensors_check.reason_key == "limited_sensor_coverage"
+
+
 def test_capture_readiness_blocks_while_a_sensor_timing_is_unreliable(
     fake_registry,
     speed_rig,

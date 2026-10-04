@@ -16,6 +16,9 @@ const nullableFiniteNumberSchema = v.nullable(finiteNumberSchema);
 const updateStateSchema = v.picklist(["idle", "running", "success", "failed"]);
 const updateTransportSchema = v.picklist(["wifi", "usb_internet"]);
 const healthStatusSchema = v.picklist(["ok", "warn", "degraded"]);
+const expectedFrameLossSchema = v.nullable(
+  v.picklist(["stream_start", "bluetooth_scan", "bluetooth_pairing"]),
+);
 const subsystemHealthStatusSchema = v.picklist([
   "ready",
   "degraded",
@@ -93,6 +96,7 @@ const healthRecentDataLossSchema = v.looseObject({
   window_s: integerSchema,
   frame_loss_clients: integerSchema,
   frames_dropped: integerSchema,
+  expected_frames_dropped: integerSchema,
   buffer_overflow_drops: integerSchema,
   queue_overflow_drops: integerSchema,
   server_queue_drops: integerSchema,
@@ -157,9 +161,11 @@ const healthIngestClientSchema = v.looseObject({
   duplicates_received: integerSchema,
   effective_sample_rate_hz: nullableFiniteNumberSchema,
   estimated_ingest_hz: finiteNumberSchema,
+  expected_frames_dropped: integerSchema,
   frames_dropped: integerSchema,
   last_ack_latency_ms: finiteNumberSchema,
   last_packet_queue_age_ms: finiteNumberSchema,
+  last_expected_loss_reason: expectedFrameLossSchema,
   late_packets: integerSchema,
   parse_errors: integerSchema,
   processed_packets: integerSchema,

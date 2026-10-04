@@ -325,6 +325,14 @@ Entry point: *Settings → Speed Source*
     "No GPS receiver found" text, "GPS has no fix yet", or "No live OBD-II
     speed"; `fallbackReasonKey` in `apps/ui/src/speed_source.ts`) instead of
     calling it a manual override.
+  - Scanning for or pairing an OBD-II adapter: the Pi 3 A+ shares one radio
+    between Wi-Fi and Bluetooth, so a scan or pairing briefly interrupts sensor
+    data. The page says so (`settings.speed.obd_scan_interrupts`), scans only
+    when asked, and the server refuses both with 409 while recording
+    (`create_obd_admin_routes` in `apps/server/vibesensor/web/settings/obd.py`).
+    The frames lost meanwhile are marked as expected loss
+    (`ClientRegistry.expecting_frame_loss`) and do not raise a sensor
+    frame-loss warning.
 
 ### 3.5 Pre-drive readiness
 

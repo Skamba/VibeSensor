@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 from test_support.runtime_lifecycle import build_registry_with_hello, make_data_message
 
 from vibesensor.ingest.client_payloads import snapshot_for_api
 from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.registry import EXPECTED_LOSS_DRAIN_S, STREAM_START_GRACE_S
 
 _FRAME_S = 0.25  # 200 samples at 800 Hz
 
@@ -27,8 +29,8 @@ def _feed(registry, client_id: bytes, seqs: range | list[int], start_mono: float
 
 def test_frame_loss_warning_clears_a_minute_after_the_loss(tmp_path: Path) -> None:
     registry, client_id = build_registry_with_hello(tmp_path)
-    # Ten frames lost out of about thirty.
-    mono = _feed(registry, client_id, [*range(10), *range(20, 40)], start_mono=10.0)
+    # Ten frames lost out of about forty, well after the stream started.
+    mono = _feed(registry, client_id, [*range(30), *range(40, 50)], start_mono=10.0)
 
     row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
     assert (row["dropped_frames"], row["frame_loss_recent"]) == (10, True)
@@ -36,7 +38,7 @@ def test_frame_loss_warning_clears_a_minute_after_the_loss(tmp_path: Path) -> No
     assert (recent["frame_loss_clients"], recent["frames_dropped"]) == (1, 10)
 
     # A clean minute later the warning is gone but the total remains.
-    mono = _feed(registry, client_id, range(40, 40 + 250), start_mono=mono)
+    mono = _feed(registry, client_id, range(50, 50 + 250), start_mono=mono)
     row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
     assert (row["dropped_frames"], row["frame_loss_recent"]) == (10, False)
     assert registry.recent_data_loss_snapshot(now_mono=mono)["frames_dropped"] == 0
@@ -79,3 +81,53 @@ def test_device_queue_overflow_counts_only_new_drops_and_survives_reboots(
     assert registry.recent_data_loss_snapshot(now_mono=102.0)["queue_overflow_drops"] == 9
     assert registry.recent_data_loss_snapshot(now_mono=200.0)["queue_overflow_drops"] == 0
     assert registry.data_loss_snapshot()["queue_overflow_drops"] == 2
+
+
+def test_frames_lost_as_a_stream_starts_are_kept_but_not_a_recent_warning(
+    tmp_path: Path,
+) -> None:
+    """Frames the sensor queued while the server was down age out at the first ACKs."""
+    registry, client_id = build_registry_with_hello(tmp_path)
+    assert 3 * _FRAME_S < STREAM_START_GRACE_S
+    mono = _feed(registry, client_id, [0, 1, 2, *range(6, 40)], start_mono=10.0)
+
+    row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
+    assert (row["dropped_frames"], row["frame_loss_recent"]) == (3, False)
+    recent = registry.recent_data_loss_snapshot(now_mono=mono)
+    assert (recent["frames_dropped"], recent["expected_frames_dropped"]) == (0, 3)
+    record = registry.get(client_id.hex())
+    assert record is not None
+    assert (record.expected_frames_dropped, record.last_expected_loss_reason) == (
+        3,
+        "stream_start",
+    )
+
+
+def test_frames_lost_to_a_bluetooth_scan_are_annotated_until_the_drain_ends(
+    tmp_path: Path,
+) -> None:
+    registry, client_id = build_registry_with_hello(tmp_path)
+    # Fake sensor time stays behind the real clock that times the drain window.
+    mono = _feed(registry, client_id, range(40), start_mono=time.monotonic() - 30.0)
+
+    with registry.expecting_frame_loss("bluetooth_scan"):
+        mono = _feed(registry, client_id, range(45, 60), start_mono=mono)
+    # Frames already in flight when the scan ends still count as scan loss.
+    mono = _feed(registry, client_id, range(62, 64), start_mono=time.monotonic())
+
+    recent = registry.recent_data_loss_snapshot(now_mono=mono)
+    assert (recent["frames_dropped"], recent["expected_frames_dropped"]) == (0, 7)
+    record = registry.get(client_id.hex())
+    assert record is not None
+    assert record.last_expected_loss_reason == "bluetooth_scan"
+
+    # After the drain window a gap is ordinary loss again.
+    mono = _feed(
+        registry,
+        client_id,
+        range(70, 80),
+        start_mono=time.monotonic() + EXPECTED_LOSS_DRAIN_S + 1.0,
+    )
+    recent = registry.recent_data_loss_snapshot(now_mono=mono)
+    assert (recent["frames_dropped"], recent["expected_frames_dropped"]) == (6, 7)
+    assert registry.data_loss_snapshot()["frames_dropped"] == 13

@@ -37,7 +37,7 @@ def test_scan_devices_sends_helper_args_and_parses_json() -> None:
 
     devices = client.scan_devices(timeout_s=9)
 
-    assert calls == [(["scan", "--timeout", "9"], 17)]
+    assert calls == [(["scan", "--timeout", "9"], 27)]
     assert devices[0].mac_address == "02000000004d"
     assert devices[0].name == "OBDLink MX+"
     assert devices[0].rfcomm_channel == 1

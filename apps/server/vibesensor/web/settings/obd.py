@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from vibesensor.web._helpers import (
     OpenAPIResponses,
@@ -28,13 +30,25 @@ from vibesensor.web.settings.presentation import (
 )
 
 if TYPE_CHECKING:
+    from vibesensor.ingest.registry import ClientRegistry, ExpectedFrameLoss
+    from vibesensor.recording.recorder import RunRecorder
     from vibesensor.settings.speed_source_runtime import SpeedSourceSettingsService
     from vibesensor.speed.obd.service import ObdService
     from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 
 
 _OBD_ADMIN_RESPONSES: OpenAPIResponses = {
+    409: {"description": "A recording is running; Bluetooth would interrupt its sensor data."},
     503: {"description": "Bluetooth OBD helper unavailable or the requested action failed."},
+}
+_RECORDING_ACTIVE_DETAIL = {
+    "bluetooth_scan": (
+        "Stop the recording before scanning: a Bluetooth scan interrupts sensor data "
+        "for about 10 seconds."
+    ),
+    "bluetooth_pairing": (
+        "Stop the recording before pairing: Bluetooth pairing interrupts sensor data."
+    ),
 }
 
 
@@ -42,10 +56,24 @@ def create_obd_admin_routes(
     speed_source_service: SpeedSourceSettingsService,
     speed_status_service: SpeedSourceObservationService,
     obd_admin_service: ObdService,
+    registry: ClientRegistry,
+    run_recorder: RunRecorder,
 ) -> APIRouter:
-    """Create routes for Bluetooth OBD scanning, pairing, and status."""
+    """Create routes for Bluetooth OBD scanning, pairing, and status.
+
+    The Pi's Wi-Fi and Bluetooth share one radio: scanning or pairing starves
+    the sensors' Wi-Fi for its duration. Both are refused while recording, and
+    the frames they cost are recorded as expected loss, not a sensor fault.
+    """
 
     router = APIRouter(tags=["settings"])
+
+    @contextmanager
+    def bluetooth_radio_busy(reason: ExpectedFrameLoss) -> Iterator[None]:
+        if run_recorder.enabled:
+            raise HTTPException(status_code=409, detail=_RECORDING_ACTIVE_DETAIL[reason])
+        with registry.expecting_frame_loss(reason), route_errors_to_http():
+            yield
 
     @router.post(
         "/api/settings/obd/scan",
@@ -53,9 +81,9 @@ def create_obd_admin_routes(
         responses=_OBD_ADMIN_RESPONSES,
     )
     async def scan_obd_devices() -> ObdScanResponse:
-        """Scan nearby Bluetooth OBD adapters using the privileged helper."""
+        """Scan nearby Bluetooth OBD adapters (about 10 s; sensor data pauses meanwhile)."""
 
-        with route_errors_to_http():
+        with bluetooth_radio_busy("bluetooth_scan"):
             devices = await asyncio.to_thread(obd_admin_service.scan_obd_devices)
         return obd_scan_response(devices)
 
@@ -68,7 +96,7 @@ def create_obd_admin_routes(
         """Pair, trust, connect, and persist the selected Bluetooth OBD adapter."""
 
         normalized_mac = normalize_mac_or_400(req.mac_address)
-        with route_errors_to_http():
+        with bluetooth_radio_busy("bluetooth_pairing"):
             device = await asyncio.to_thread(
                 obd_admin_service.pair_obd_device,
                 normalized_mac,

@@ -93,7 +93,7 @@ describe("apiJson", () => {
     try {
       const request = scanSettingsObdDevices();
 
-      expect(timerHarness.pendingDelays()).toEqual([20_000]);
+      expect(timerHarness.pendingDelays()).toEqual([30_000]);
 
       response.resolve(json({ devices: [] }));
       await expect(request).resolves.toEqual({ devices: [] });

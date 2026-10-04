@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from unittest.mock import MagicMock, create_autospec
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.common.operational_errors import ExternalCommandError
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.recording.recorder import RunRecorder
 from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.speed_source_runtime import SpeedSourceSettingsService
 from vibesensor.speed.obd.models import ObdDeviceSnapshot, ObdStatusSnapshot
@@ -13,7 +16,17 @@ from vibesensor.speed.source_coordinator import SpeedSourceObservationService
 from vibesensor.speed.speed_status import SpeedSourceStatusSnapshot
 
 
-def _build_client() -> tuple[TestClient, SpeedSourceSettingsService, MagicMock, MagicMock]:
+@dataclass(frozen=True)
+class _Harness:
+    client: TestClient
+    speed_source_service: SpeedSourceSettingsService
+    speed_status_service: MagicMock
+    obd_admin_service: MagicMock
+    registry: MagicMock
+    run_recorder: MagicMock
+
+
+def _build_client(*, recording: bool = False) -> _Harness:
     from vibesensor.speed.obd.service import ObdService
     from vibesensor.web.settings.obd import create_obd_admin_routes
 
@@ -39,24 +52,32 @@ def _build_client() -> tuple[TestClient, SpeedSourceSettingsService, MagicMock, 
         stale_timeout_s=8.0,
     )
     obd_admin_service = create_autospec(ObdService, instance=True)
+    registry = create_autospec(ClientRegistry, instance=True)
+    run_recorder = create_autospec(RunRecorder, instance=True)
+    run_recorder.enabled = recording
     app = FastAPI()
     app.include_router(
         create_obd_admin_routes(
             speed_source_service=speed_source_service,
             speed_status_service=speed_status_service,
             obd_admin_service=obd_admin_service,
+            registry=registry,
+            run_recorder=run_recorder,
         )
     )
-    return (
-        TestClient(app),
-        speed_source_service,
-        speed_status_service,
-        obd_admin_service,
+    return _Harness(
+        client=TestClient(app),
+        speed_source_service=speed_source_service,
+        speed_status_service=speed_status_service,
+        obd_admin_service=obd_admin_service,
+        registry=registry,
+        run_recorder=run_recorder,
     )
 
 
 def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
-    client, _, _speed_status_service, obd_admin_service = _build_client()
+    harness = _build_client()
+    client, obd_admin_service = harness.client, harness.obd_admin_service
     obd_admin_service.scan_obd_devices.return_value = [
         ObdDeviceSnapshot(
             mac_address="02000000004d",
@@ -76,7 +97,8 @@ def test_scan_obd_devices_endpoint_returns_serialized_devices() -> None:
 
 
 def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> None:
-    client, _, _speed_status_service, obd_admin_service = _build_client()
+    harness = _build_client()
+    client, obd_admin_service = harness.client, harness.obd_admin_service
     obd_admin_service.scan_obd_devices.side_effect = ExternalCommandError(
         "Privileged helper socket /run/vibesensor-privileged.sock is unavailable"
     )
@@ -90,7 +112,8 @@ def test_scan_obd_devices_endpoint_returns_structured_runtime_error_detail() -> 
 
 
 def test_pair_obd_device_endpoint_returns_503_for_operational_failure() -> None:
-    client, _, _speed_status_service, obd_admin_service = _build_client()
+    harness = _build_client()
+    client, obd_admin_service = harness.client, harness.obd_admin_service
     obd_admin_service.pair_obd_device.side_effect = ExternalCommandError(
         "Bluetooth OBD helper failed"
     )
@@ -105,12 +128,9 @@ def test_pair_obd_device_endpoint_returns_503_for_operational_failure() -> None:
 
 
 def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
-    (
-        client,
-        speed_source_service,
-        _speed_status_service,
-        obd_admin_service,
-    ) = _build_client()
+    harness = _build_client()
+    client, obd_admin_service = harness.client, harness.obd_admin_service
+    speed_source_service = harness.speed_source_service
     obd_admin_service.pair_obd_device.return_value = ObdDeviceSnapshot(
         mac_address="02000000004d",
         name="OBDLink MX+",
@@ -134,7 +154,9 @@ def test_pair_obd_device_endpoint_normalizes_mac_and_persists_config() -> None:
 
 
 def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
-    client, _, speed_status_service, obd_admin_service = _build_client()
+    harness = _build_client()
+    client, obd_admin_service = harness.client, harness.obd_admin_service
+    speed_status_service = harness.speed_status_service
     speed_status_service.obd_status.return_value = ObdStatusSnapshot(
         configured_device_mac="02000000004d",
         configured_device_name="OBDLink MX+",
@@ -172,3 +194,40 @@ def test_get_obd_status_endpoint_returns_runtime_snapshot() -> None:
     assert body["backoff_active"] is True
     obd_admin_service.refresh_obd_status.assert_called_once_with()
     speed_status_service.obd_status.assert_called_once_with()
+
+
+def test_scan_and_pair_are_refused_while_recording() -> None:
+    harness = _build_client(recording=True)
+
+    scan = harness.client.post("/api/settings/obd/scan")
+    pair = harness.client.post(
+        "/api/settings/obd/pair",
+        json={"mac_address": "02:00:00:00:00:4D"},
+    )
+
+    assert (scan.status_code, pair.status_code) == (409, 409)
+    assert "Stop the recording" in scan.json()["detail"]
+    assert "Stop the recording" in pair.json()["detail"]
+    harness.obd_admin_service.scan_obd_devices.assert_not_called()
+    harness.obd_admin_service.pair_obd_device.assert_not_called()
+    harness.registry.expecting_frame_loss.assert_not_called()
+
+
+def test_scan_and_pair_mark_the_sensor_frame_loss_they_cause_as_expected() -> None:
+    harness = _build_client()
+    harness.obd_admin_service.scan_obd_devices.return_value = []
+    harness.obd_admin_service.pair_obd_device.side_effect = ExternalCommandError(
+        "Bluetooth OBD helper failed"
+    )
+
+    assert harness.client.post("/api/settings/obd/scan").status_code == 200
+    pair = harness.client.post(
+        "/api/settings/obd/pair",
+        json={"mac_address": "02:00:00:00:00:4D"},
+    )
+
+    assert pair.status_code == 503
+    reasons = [call.args[0] for call in harness.registry.expecting_frame_loss.call_args_list]
+    assert reasons == ["bluetooth_scan", "bluetooth_pairing"]
+    window = harness.registry.expecting_frame_loss.return_value
+    assert window.__exit__.call_count == 2

@@ -99,6 +99,8 @@ def create_router(services: WebServices) -> APIRouter:
             s.speed_source_service,
             s.speed_status_service,
             s.obd_admin_service,
+            s.registry,
+            s.run_recorder,
         ),
     )
     router.include_router(create_ui_preferences_routes(s.ui_preferences))

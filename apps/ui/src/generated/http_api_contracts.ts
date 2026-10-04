@@ -449,6 +449,7 @@ export interface components {
             serial_number?: string | null;
             vid?: number | null;
         };
+        ExpectedFrameLoss: "stream_start" | "bluetooth_scan" | "bluetooth_pairing";
         /** HTTP contract for serialized evidence metrics attached to a finding. */
         FindingEvidenceMetrics: {
             burstiness?: number | null;
@@ -542,8 +543,10 @@ export interface components {
             duplicates_received: number;
             effective_sample_rate_hz: number | null;
             estimated_ingest_hz: number;
+            expected_frames_dropped: number;
             frames_dropped: number;
             last_ack_latency_ms: number;
+            last_expected_loss_reason: components["schemas"]["ExpectedFrameLoss"] | null;
             last_packet_queue_age_ms: number;
             late_packets: number;
             parse_errors: number;
@@ -595,6 +598,7 @@ export interface components {
         /** Data loss in the last ``window_s`` seconds; health warnings use only these. */
         HealthRecentDataLossResponse: {
             buffer_overflow_drops: number;
+            expected_frames_dropped: number;
             frame_loss_clients: number;
             frames_dropped: number;
             parse_errors: number;

@@ -38,6 +38,16 @@ warns only when a sensor lost at least 1 % of its recent frames
 no longer keep `status` at `warn`. The dashboard's frame-loss chip uses the
 same per-sensor `frame_loss_recent` flag.
 
+Some frame loss is expected and stays out of `frames_dropped` warnings and
+capture readiness: the frames a sensor loses in the first 5 s of its stream
+(it buffers while the server is down and old frames age out at the first ACKs)
+and the frames lost while a Bluetooth OBD scan or pairing has the Pi's shared
+radio (plus 3 s for frames in flight). They still count in
+`data_loss.frames_dropped`; `recent_data_loss.expected_frames_dropped` and the
+per-client `expected_frames_dropped` / `last_expected_loss_reason`
+(`stream_start`, `bluetooth_scan`, `bluetooth_pairing`) show them. Scans and
+pairing are refused with 409 while a recording runs.
+
 Use `subsystems` for machine-readable triage. Each subsystem reports
 `status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
 top-level `status` and `degradation_reasons` for compatibility with older tools.
@@ -83,7 +93,9 @@ grep '"event": "post_analysis_step"' /path/to/app.log | tail -n 20
 
 1. Confirm the health endpoint responds and inspect connected clients. Compare
    `recent_data_loss.frames_dropped` (last minute) with `data_loss.frames_dropped`
-   (since start) to tell ongoing loss from a past burst.
+   (since start) to tell ongoing loss from a past burst. Subtract
+   `ingest.clients[].expected_frames_dropped` for loss with a known cause
+   (`last_expected_loss_reason`).
 2. Check whether the simulator or live devices reproduce the drop pattern consistently.
 3. Reduce Wi-Fi contention and confirm the Pi hotspot channel and proximity are reasonable.
 4. If the problem is local-only, inspect Docker logs:

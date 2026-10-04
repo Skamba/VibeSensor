@@ -135,6 +135,7 @@ def _registry_mock() -> ClientRegistry:
         "window_s": 60,
         "frame_loss_clients": 0,
         "frames_dropped": 0,
+        "expected_frames_dropped": 0,
         "queue_overflow_drops": 0,
         "server_queue_drops": 0,
         "parse_errors": 0,

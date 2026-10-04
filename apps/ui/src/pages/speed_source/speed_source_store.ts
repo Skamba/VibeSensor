@@ -6,16 +6,9 @@ import {
   updateSettingsSpeedSource,
 } from "../../api/settings";
 import type { ObdDevicePayload, SpeedSourceKind } from "../../api/types";
-import {
-  activeView,
-  errorMessage,
-  onViewEnter,
-  settingsTab,
-  showError,
-} from "../../app_store";
+import { errorMessage, onViewEnter, showError } from "../../app_store";
 import type { Feedback } from "../../components/feedback";
 import { t } from "../../i18n";
-import { poll } from "../../poll";
 import {
   applySpeedSource,
   loadSpeedSource,
@@ -29,8 +22,6 @@ import {
   checkSave,
   compareDevices,
 } from "./speed_source_model";
-
-const OBD_RESCAN_MS = 2_000;
 
 /** Unsaved edits; `null` means "show the saved value". */
 const modeDraft = signal<SpeedSourceKind | null>(null);
@@ -73,7 +64,6 @@ export const scannedDevices = signal<readonly ObdDevicePayload[]>([]);
 export const scanInFlight = signal(false);
 export const pairingMac = signal<string | null>(null);
 export const scanStatus = signal<string | null>(null);
-const rescanRequested = signal(false);
 
 function requestFocus(field: "manual" | "stale" | "scan"): void {
   focusRequest.value = { field, seq: (focusRequest.peek()?.seq ?? 0) + 1 };
@@ -237,7 +227,6 @@ export async function scanDevices(): Promise<void> {
   try {
     const { devices } = await scanSettingsObdDevices();
     batch(() => {
-      rescanRequested.value = true;
       scannedDevices.value = [...devices].sort(compareDevices);
       scanStatus.value =
         devices.length > 0
@@ -287,20 +276,3 @@ export async function pairDevice(macAddress: string): Promise<void> {
     pairingMac.value = null;
   }
 }
-
-// After a manual scan, keep merging rescans so newly advertising adapters
-// show up while OBD-II is selected on the visible tab.
-poll({
-  active: computed(
-    () =>
-      rescanRequested.value &&
-      activeView.value === "settingsView" &&
-      settingsTab.value === "speedSourceTab" &&
-      selectedMode.value === "obd2" &&
-      !scanInFlight.value &&
-      pairingMac.value === null,
-  ),
-  intervalMs: OBD_RESCAN_MS,
-  load: scanSettingsObdDevices,
-  onData: ({ devices }) => mergeDevices(devices),
-});

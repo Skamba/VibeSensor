@@ -110,7 +110,9 @@ def _sensor_observation(
     return CaptureReadinessSensorObservation(
         client_id=client.client_id,
         location_code=location_code,
-        frames_dropped=int(getattr(client, "frames_dropped", 0)),
+        # Loss from an expected interruption (a Bluetooth scan, the sensor's
+        # first seconds after a server restart) is no reason to wait.
+        frames_dropped=client.frames_dropped - client.expected_frames_dropped,
         queue_overflow_drops=int(getattr(client, "queue_overflow_drops", 0)),
         server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
         parse_errors=int(getattr(client, "parse_errors", 0)),

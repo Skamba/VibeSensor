@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import copy
 import logging
+import math
 import time
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING, Literal
@@ -41,6 +43,7 @@ __all__ = [
     "ClientSnapshot",
     "DataUpdateResult",
     "DedupWindow",
+    "ExpectedFrameLoss",
     "apply_data_message_update",
     "project_client_snapshots",
 ]
@@ -74,6 +77,23 @@ _SYNC_MAX_SLEW_US = 200
 _SYNC_STEP_MIN_ERROR_US = 5_000
 _SEQ_MASK = 0xFFFFFFFF
 _SEQ_HALF = 0x80000000
+
+type ExpectedFrameLoss = Literal["stream_start", "bluetooth_scan", "bluetooth_pairing"]
+"""Why a sequence gap is expected rather than a sensor or Wi-Fi fault.
+
+- ``stream_start``: the sensor sends stop-and-wait and drops a frame it could
+  not deliver within 0.75 s (``kDataMaxFrameAgeMs``). Frames it queued while the
+  server was down (a restart or update) or before its handshake age out while
+  the first ones are acknowledged, so its first seconds at this server show a
+  gap of a few frames.
+- ``bluetooth_scan`` / ``bluetooth_pairing``: the Pi 3's Wi-Fi and Bluetooth
+  share one radio; a Bluetooth scan or pairing starves Wi-Fi for its duration.
+"""
+
+STREAM_START_GRACE_S = 5.0
+"""Gaps this soon after a sensor's stream started are its backlog draining."""
+EXPECTED_LOSS_DRAIN_S = 3.0
+"""An interruption's backlog keeps surfacing as gaps this long after it ends."""
 
 
 def _resolve_now_wall(now: float | None) -> float:
@@ -188,6 +208,14 @@ class ClientRecord:
     # never reset and stay for diagnostics.
     recent_frames: RecentCounter = field(default_factory=RecentCounter)
     recent_frames_dropped: RecentCounter = field(default_factory=RecentCounter)
+    # Frames lost to an expected interruption (``ExpectedFrameLoss``): part of
+    # ``frames_dropped`` but kept out of the recent loss warnings.
+    expected_frames_dropped: int = 0
+    recent_expected_frames_dropped: RecentCounter = field(default_factory=RecentCounter)
+    last_expected_loss_reason: ExpectedFrameLoss | None = None
+    # When the sensor's current stream started at this server (its first frame
+    # after the server started, the sensor connected, or the sensor rebooted).
+    stream_start_mono: float | None = None
     recent_queue_overflow_drops: RecentCounter = field(default_factory=RecentCounter)
     recent_server_queue_drops: RecentCounter = field(default_factory=RecentCounter)
     recent_parse_errors: RecentCounter = field(default_factory=RecentCounter)
@@ -335,8 +363,14 @@ def apply_data_message_update(
     addr: tuple[str, int],
     now_ts: float,
     mono: float,
+    expected_loss: ExpectedFrameLoss | None = None,
 ) -> DataUpdateResult:
-    """Apply one DATA message to an existing client record."""
+    """Apply one DATA message to an existing client record.
+
+    A sequence gap counts toward ``frames_dropped``; it raises the recent loss
+    warnings unless *expected_loss* names an interruption in progress or the
+    sensor's stream only just started.
+    """
 
     record.last_seen = now_ts
     record.last_seen_mono = mono
@@ -383,6 +417,8 @@ def apply_data_message_update(
 
     record.frames_total += 1
     record.recent_frames.add(1, mono)
+    if record.last_seq is None:
+        record.stream_start_mono = mono
     reset_detected = rebooted
     missed_frames = 0
     if (
@@ -409,6 +445,7 @@ def apply_data_message_update(
             record.dedup_window.clear()
             record.dedup_window.track(seq)
             _forget_clock_sync(record)
+            record.stream_start_mono = mono
             clock_synced = False
             reset_detected = True
         else:
@@ -416,8 +453,7 @@ def apply_data_message_update(
             if seq != expected:
                 gap = (seq - expected) & _SEQ_MASK
                 if gap < _SEQ_HALF:
-                    record.frames_dropped += gap
-                    record.recent_frames_dropped.add(gap, mono)
+                    _count_dropped_frames(record, gap, mono=mono, expected_loss=expected_loss)
                     missed_frames = gap
 
     if record.last_seq is None or ((seq - record.last_seq) & _SEQ_MASK) < _SEQ_HALF:
@@ -432,6 +468,27 @@ def apply_data_message_update(
             missed_frames=missed_frames,
         )
     return DataUpdateResult(reset_detected=reset_detected, clock_synced=clock_synced)
+
+
+def _count_dropped_frames(
+    record: ClientRecord,
+    gap: int,
+    *,
+    mono: float,
+    expected_loss: ExpectedFrameLoss | None,
+) -> None:
+    record.frames_dropped += gap
+    stream_start = record.stream_start_mono
+    if expected_loss is None and (
+        stream_start is not None and mono - stream_start < STREAM_START_GRACE_S
+    ):
+        expected_loss = "stream_start"
+    if expected_loss is None:
+        record.recent_frames_dropped.add(gap, mono)
+        return
+    record.expected_frames_dropped += gap
+    record.recent_expected_frames_dropped.add(gap, mono)
+    record.last_expected_loss_reason = expected_loss
 
 
 def _is_sync_rtt_outlier(
@@ -586,6 +643,8 @@ class ClientRegistry:
             retention_ttl_seconds=retention_ttl_seconds,
         )
         self._clients: dict[str, ClientRecord] = {}
+        self._expected_loss: ExpectedFrameLoss | None = None
+        self._expected_loss_until_mono = 0.0
         self._metadata = ClientMetadataManager(
             lock=self._lock,
             get_or_create=self._get_or_create,
@@ -676,7 +735,22 @@ class ClientRegistry:
                 addr=addr,
                 now_ts=now_ts,
                 mono=mono,
+                expected_loss=(
+                    self._expected_loss if mono <= self._expected_loss_until_mono else None
+                ),
             )
+
+    @contextmanager
+    def expecting_frame_loss(self, reason: ExpectedFrameLoss) -> Iterator[None]:
+        """Attribute sequence gaps to *reason* while the block runs and briefly after."""
+        with self._lock:
+            self._expected_loss = reason
+            self._expected_loss_until_mono = math.inf
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._expected_loss_until_mono = time.monotonic() + EXPECTED_LOSS_DRAIN_S
 
     def update_from_ack(
         self,
@@ -834,6 +908,8 @@ class ClientRegistry:
         """Data loss in the last ``RECENT_WINDOW_S`` seconds, summed over clients.
 
         ``frame_loss_clients`` counts clients over ``FRAME_LOSS_WARN_RATIO``.
+        ``expected_frames_dropped`` (an expected interruption) is not in
+        ``frames_dropped``.
         """
         with self._lock:
             mono = _resolve_now_mono(now_mono)
@@ -841,6 +917,7 @@ class ClientRegistry:
                 "window_s": int(RECENT_WINDOW_S),
                 "frame_loss_clients": 0,
                 "frames_dropped": 0,
+                "expected_frames_dropped": 0,
                 "queue_overflow_drops": 0,
                 "server_queue_drops": 0,
                 "parse_errors": 0,
@@ -849,6 +926,9 @@ class ClientRegistry:
                 if recent_frame_loss(record, mono):
                     snapshot["frame_loss_clients"] += 1
                 snapshot["frames_dropped"] += record.recent_frames_dropped.total(mono)
+                snapshot["expected_frames_dropped"] += record.recent_expected_frames_dropped.total(
+                    mono
+                )
                 snapshot["queue_overflow_drops"] += record.recent_queue_overflow_drops.total(mono)
                 snapshot["server_queue_drops"] += record.recent_server_queue_drops.total(mono)
                 snapshot["parse_errors"] += record.recent_parse_errors.total(mono)

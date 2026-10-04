@@ -8,6 +8,7 @@ from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
     RawCaptureRuntimeSnapshot,
 )
+from vibesensor.ingest.registry import ExpectedFrameLoss
 from vibesensor.ingest.sensor_timing import SensorTimingState
 from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
@@ -64,6 +65,8 @@ class IngestClientHealthSnapshot(TypedDict):
     last_packet_queue_age_ms: float
     last_ack_latency_ms: float
     frames_dropped: int
+    expected_frames_dropped: int
+    last_expected_loss_reason: ExpectedFrameLoss | None
     queue_overflow_drops: int
     server_queue_drops: int
     parse_errors: int
@@ -229,6 +232,8 @@ def build_system_health_snapshot(
                     runtime_client.last_ack_latency_ms if runtime_client is not None else 0.0
                 ),
                 "frames_dropped": int(getattr(record, "frames_dropped", 0)),
+                "expected_frames_dropped": record.expected_frames_dropped,
+                "last_expected_loss_reason": record.last_expected_loss_reason,
                 "queue_overflow_drops": int(getattr(record, "queue_overflow_drops", 0)),
                 "server_queue_drops": int(getattr(record, "server_queue_drops", 0)),
                 "parse_errors": int(getattr(record, "parse_errors", 0)),
@@ -257,6 +262,8 @@ def build_system_health_snapshot(
                 "last_packet_queue_age_ms": runtime_client.last_packet_queue_age_ms,
                 "last_ack_latency_ms": runtime_client.last_ack_latency_ms,
                 "frames_dropped": 0,
+                "expected_frames_dropped": 0,
+                "last_expected_loss_reason": None,
                 "queue_overflow_drops": 0,
                 "server_queue_drops": 0,
                 "parse_errors": 0,

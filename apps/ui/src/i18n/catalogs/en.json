@@ -475,6 +475,7 @@
   "settings.speed.obd_scan_found": "{count} adapter(s) found.",
   "settings.speed.obd_scan_empty": "No nearby Bluetooth OBD adapters found.",
   "settings.speed.obd_scan_failed": "Bluetooth OBD scan failed.",
+  "settings.speed.obd_scan_interrupts": "A scan or pairing uses the Pi's shared radio and briefly interrupts sensor data. It is not available while recording.",
   "settings.speed.obd_pair_and_use": "Pair and use",
   "settings.speed.obd_use": "Use adapter",
   "settings.speed.obd_pairing": "Pairing adapter...",

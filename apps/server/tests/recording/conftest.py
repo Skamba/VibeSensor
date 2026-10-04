@@ -50,6 +50,7 @@ class _FakeRecord:
     location_code: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
+    expected_frames_dropped: int = 0
     queue_overflow_drops: int = 0
     server_queue_drops: int = 0
     parse_errors: int = 0

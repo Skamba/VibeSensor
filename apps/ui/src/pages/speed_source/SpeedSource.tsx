@@ -310,6 +310,9 @@ function ObdConfig(props: {
       <div id="obdDeviceScanStatus" class="subtle">
         {scanStatus.value ?? t("settings.speed.obd_scan_idle")}
       </div>
+      <div id="obdScanInterruptNote" class="subtle">
+        {t("settings.speed.obd_scan_interrupts")}
+      </div>
       <div id="obdDeviceList" class="speed-source-device-list">
         {scannedDevices.value.map((device) => (
           <div class="speed-source-device" key={device.mac_address}>

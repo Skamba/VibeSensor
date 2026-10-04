@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.common.privileged_helper import OBD_HELPER, PrivilegedResult, run_privileged
+from vibesensor.speed.obd.admin_bluetooth import POWER_ON_WAIT_S
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 
 __all__ = ["ObdAdminClient"]
@@ -72,7 +73,7 @@ class ObdAdminClient:
     def scan_devices(self, *, timeout_s: int = 8) -> list[ObdDeviceSnapshot]:
         payload = self._run_helper(
             ["scan", "--timeout", str(max(3, timeout_s))],
-            timeout_s=max(15, timeout_s + 8),
+            timeout_s=max(15, timeout_s + 8) + POWER_ON_WAIT_S,
         )
         devices_raw = payload.get("devices")
         if not isinstance(devices_raw, list):
@@ -80,9 +81,9 @@ class ObdAdminClient:
         return [self._device_from_payload(item) for item in devices_raw]
 
     def pair_device(self, mac_address: str) -> ObdDeviceSnapshot:
-        payload = self._run_helper(["pair", mac_address], timeout_s=35)
+        payload = self._run_helper(["pair", mac_address], timeout_s=35 + POWER_ON_WAIT_S)
         return self._device_from_payload(payload.get("device"))
 
     def device_info(self, mac_address: str) -> ObdDeviceSnapshot:
-        payload = self._run_helper(["info", mac_address], timeout_s=15)
+        payload = self._run_helper(["info", mac_address], timeout_s=15 + POWER_ON_WAIT_S)
         return self._device_from_payload(payload.get("device"))

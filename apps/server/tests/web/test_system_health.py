@@ -34,6 +34,7 @@ def _clean_recent_data_loss() -> dict:
         "window_s": 60,
         "frame_loss_clients": 0,
         "frames_dropped": 0,
+        "expected_frames_dropped": 0,
         "queue_overflow_drops": 0,
         "server_queue_drops": 0,
         "parse_errors": 0,
@@ -151,7 +152,9 @@ class TestBuildSystemHealthSnapshotOk:
         registry.active_client_ids.return_value = ["sensor-a"]
         registry.get.return_value = SimpleNamespace(
             sample_rate_hz=800,
-            frames_dropped=2,
+            frames_dropped=5,
+            expected_frames_dropped=3,
+            last_expected_loss_reason="bluetooth_scan",
             queue_overflow_drops=1,
             server_queue_drops=0,
             parse_errors=0,
@@ -204,7 +207,9 @@ class TestBuildSystemHealthSnapshotOk:
         assert client["late_packets"] == 1
         assert client["last_packet_queue_age_ms"] == 20.0
         assert client["last_ack_latency_ms"] == 30.0
-        assert client["frames_dropped"] == 2
+        assert client["frames_dropped"] == 5
+        assert client["expected_frames_dropped"] == 3
+        assert client["last_expected_loss_reason"] == "bluetooth_scan"
         assert client["queue_overflow_drops"] == 1
         assert client["duplicates_received"] == 3
         assert client["timing_state"] == "timestamp_lag"

@@ -309,6 +309,9 @@ test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
   );
   await expect(page.locator("#scanObdDevicesBtn")).toBeFocused();
   expect(server.puts).toEqual([]);
+  await expect(page.locator("#obdScanInterruptNote")).toContainText(
+    "briefly interrupts sensor data",
+  );
 
   await page.locator("#scanObdDevicesBtn").click();
   await expect(page.locator("#obdDeviceScanStatus")).toHaveText(
@@ -334,6 +337,8 @@ test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
   await expect.poll(() => server.puts.length).toBe(1);
   expect(server.puts[0]).toMatchObject({ speed_source: "obd2" });
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText(/OBD/);
+  // Each scan interrupts sensor data, so the page never rescans on its own.
+  expect(server.scans).toBe(1);
 });
 
 test("journey: a double-clicked save sends one speed source update", async ({

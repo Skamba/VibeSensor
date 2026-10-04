@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from vibesensor.ingest.registry import ExpectedFrameLoss
+
 
 class HealthDataLossResponse(BaseModel):
     """Response body for aggregated client data-loss counters."""
@@ -26,6 +28,10 @@ class HealthRecentDataLossResponse(BaseModel):
     frame_loss_clients: int
     """Clients that lost at least 1 % of their frames in the window."""
     frames_dropped: int
+    expected_frames_dropped: int
+    """Frames lost to an expected interruption (a sensor's first seconds after a
+    server restart, a Bluetooth OBD scan or pairing); not in ``frames_dropped``
+    and never a warning."""
     buffer_overflow_drops: int
     queue_overflow_drops: int
     server_queue_drops: int
@@ -98,6 +104,9 @@ class HealthIngestClientResponse(BaseModel):
     last_packet_queue_age_ms: float
     last_ack_latency_ms: float
     frames_dropped: int
+    expected_frames_dropped: int
+    """The part of ``frames_dropped`` lost to an expected interruption."""
+    last_expected_loss_reason: ExpectedFrameLoss | None
     queue_overflow_drops: int
     server_queue_drops: int
     parse_errors: int

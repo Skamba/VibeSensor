@@ -8,7 +8,10 @@ import type * as Local from "../api/types";
 import type * as Transport from "./types";
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
-const OBD_SCAN_TIMEOUT_MS = 20_000;
+// The server scans for 8 s and may first wait up to 10 s for BlueZ to power the
+// adapter on; pairing, trusting and connecting take up to 45 s.
+const OBD_SCAN_TIMEOUT_MS = 30_000;
+const OBD_PAIR_TIMEOUT_MS = 60_000;
 
 export async function getSettingsLanguage(): Promise<Local.LanguagePayload> {
   return await apiJson<Transport.LanguagePayload>("/api/settings/language");
@@ -160,6 +163,7 @@ export async function pairSettingsObdDevice(
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({ mac_address: macAddress }),
+    timeoutMs: OBD_PAIR_TIMEOUT_MS,
   });
 }
 

@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import subprocess
+import time
 from collections.abc import Callable
 
-__all__ = ["BluetoothAdminSession", "CommandRunner", "HelperFailure"]
+__all__ = ["POWER_ON_WAIT_S", "BluetoothAdminSession", "CommandRunner", "HelperFailure"]
 
 CommandRunner = Callable[[list[str], int, bool], tuple[int, str, str]]
+
+# Unblocking a soft-blocked adapter makes BlueZ power it on by itself; a
+# ``power on`` racing that answers org.bluez.Error.Busy. Wait for it instead.
+_POWER_ON_BUSY = "org.bluez.Error.Busy"
+POWER_ON_WAIT_S = 10
+_POWER_ON_POLL_S = 0.5
 
 
 class HelperFailure(RuntimeError):
@@ -43,10 +50,18 @@ def _default_runner(argv: list[str], timeout_s: int, allow_timeout: bool) -> tup
 class BluetoothAdminSession:
     """Run privileged Bluetooth admin commands and prepare the controller."""
 
-    __slots__ = ("_runner",)
+    __slots__ = ("_monotonic", "_runner", "_sleep")
 
-    def __init__(self, *, runner: CommandRunner | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        runner: CommandRunner | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
         self._runner = _default_runner if runner is None else runner
+        self._sleep = sleep
+        self._monotonic = monotonic
 
     def run(self, argv: list[str], *, timeout_s: int, allow_timeout: bool = False) -> str:
         returncode, stdout, stderr = self._runner(argv, timeout_s, allow_timeout)
@@ -76,4 +91,20 @@ class BluetoothAdminSession:
     def prepare_controller(self) -> None:
         self.run(["rfkill", "unblock", "bluetooth"], timeout_s=5, allow_timeout=False)
         self.run(["systemctl", "start", "bluetooth"], timeout_s=10, allow_timeout=False)
-        self.bluetoothctl("power", "on", timeout_s=10)
+        try:
+            self.bluetoothctl("power", "on", timeout_s=10)
+        except HelperFailure as exc:
+            if _POWER_ON_BUSY not in str(exc):
+                raise
+            self._wait_until_powered(exc)
+
+    def _wait_until_powered(self, busy: HelperFailure) -> None:
+        """Poll the adapter BlueZ is already powering on; re-raise *busy* if it never is."""
+        deadline = self._monotonic() + POWER_ON_WAIT_S
+        while True:
+            self._sleep(_POWER_ON_POLL_S)
+            show = self.bluetoothctl("show", timeout_s=5, ignore_errors=True)
+            if any(line.strip() == "Powered: yes" for line in show.splitlines()):
+                return
+            if self._monotonic() >= deadline:
+                raise busy
