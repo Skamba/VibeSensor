@@ -55,7 +55,7 @@ void test_connect_wifi_retries_until_connected_and_uses_scanned_bssid() {
   TEST_ASSERT_EQUAL_UINT8(11, status.last_error_code);
   TEST_ASSERT_EQUAL_INT(WIFI_STA, WiFi.mode_value);
   TEST_ASSERT_FALSE(WiFi.sleep_enabled);
-  TEST_ASSERT_EQUAL_INT(WIFI_AUTH_WPA_PSK, WiFi.min_security);
+  TEST_ASSERT_EQUAL_UINT32(6000, WiFi.scan_timeout_ms);
   TEST_ASSERT_EQUAL_UINT32(3, WiFi.begin_calls.size());
   TEST_ASSERT_TRUE(WiFi.begin_calls[0].used_bssid);
   TEST_ASSERT_EQUAL_INT32(6, WiFi.begin_calls[0].channel);
@@ -63,6 +63,7 @@ void test_connect_wifi_retries_until_connected_and_uses_scanned_bssid() {
   TEST_ASSERT_EQUAL_UINT32(2, WiFi.disconnect_calls.size());
   TEST_ASSERT_TRUE(WiFi.disconnect_calls[0].wifioff);
   TEST_ASSERT_TRUE(WiFi.disconnect_calls[0].eraseap);
+  TEST_ASSERT_EQUAL_UINT32(0, WiFi.disconnect_calls[0].timeout_ms);
 }
 
 void test_service_wifi_starts_async_scan_and_schedules_backoff_retry() {
@@ -88,6 +89,7 @@ void test_service_wifi_starts_async_scan_and_schedules_backoff_retry() {
   TEST_ASSERT_EQUAL_UINT32(1, WiFi.disconnect_calls.size());
   TEST_ASSERT_TRUE(WiFi.disconnect_calls[0].wifioff);
   TEST_ASSERT_FALSE(WiFi.disconnect_calls[0].eraseap);
+  TEST_ASSERT_EQUAL_UINT32(0, WiFi.disconnect_calls[0].timeout_ms);
 
   arduino_test::set_millis(26000);
   vibesensor::runtime::service_wifi(state, status);

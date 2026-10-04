@@ -183,8 +183,18 @@ def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
         assert tar.getnames() == ["numpy-2.5.3-cp313-cp313-linux_armv7l.whl"]
 
 
+def _partition_entry(subtype: int, offset: int, size: int, label: bytes) -> bytes:
+    return (
+        b"\xaa\x50"
+        + bytes([0x00, subtype])
+        + offset.to_bytes(4, "little")
+        + size.to_bytes(4, "little")
+        + label.ljust(16, b"\x00")
+        + bytes(4)
+    )
+
+
 def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
-    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -196,29 +206,12 @@ def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
     firmware_bin.write_bytes(b"firmware")
     bootloader_bin = env_dir / "bootloader.bin"
     bootloader_bin.write_bytes(b"boot")
-    commands: list[list[str]] = []
-
-    def _fake_run(
-        command: list[str],
-        *,
-        cwd: str | None = None,
-        check: bool = True,
-        text: bool = True,
-        capture_output: bool = False,
-    ) -> subprocess.CompletedProcess[str]:
-        del cwd, check, text, capture_output
-        command_list = [str(part) for part in command]
-        commands.append(command_list)
-        if command_list[:3] == ["pio", "run", "-e"] and "envdump" in command_list:
-            return subprocess.CompletedProcess(
-                command_list,
-                0,
-                stdout="ESP32_APP_OFFSET=0x20000\n",
-                stderr="",
-            )
-        return subprocess.CompletedProcess(command_list, 0, stdout="", stderr="")
-
-    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    # OTA layout without a factory app: the bootloader starts ota_0 on a fresh flash.
+    partitions = (
+        _partition_entry(0x10, 0x20000, 0x140000, b"app0")
+        + _partition_entry(0x11, 0x160000, 0x140000, b"app1")
+    ).ljust(3072, b"\xff")
+    (env_dir / "partitions.bin").write_bytes(partitions)
 
     assert (
         module.main(
@@ -252,11 +245,15 @@ def test_generate_firmware_manifest_subcommand_writes_manifest_and_reports_path(
                         "offset": "0x1000",
                         "sha256": hashlib.sha256(b"boot").hexdigest(),
                     },
+                    {
+                        "file": "esp32dev/partitions.bin",
+                        "offset": "0x8000",
+                        "sha256": hashlib.sha256(partitions).hexdigest(),
+                    },
                 ],
             },
         ],
     }
-    assert any(command[:3] == ["pio", "run", "-e"] and "envdump" in command for command in commands)
     assert manifest_path.parent == firmware_dir / "dist"
 
 

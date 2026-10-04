@@ -2,6 +2,7 @@
 
 #include <Esp.h>
 #include <WiFi.h>
+#include <esp_mac.h>
 #include <esp_timer.h>
 #include <string.h>
 
@@ -87,8 +88,9 @@ void send_sync_clock_ack(TransportState& state,
 }  // namespace
 
 void initialize_transport(TransportState& state) {
-  String mac = WiFi.macAddress();
-  if (!vibesensor::parse_mac(mac, state.client_id)) {
+  // Read the station MAC from eFuse: on Arduino-ESP32 3.x WiFi.macAddress() returns
+  // 00:00:00:00:00:00 once the station interface is down (e.g. after a failed boot connect).
+  if (esp_read_mac(state.client_id, ESP_MAC_WIFI_STA) != ESP_OK) {
     derive_fallback_client_id(state.client_id);
   }
   state.control_port =

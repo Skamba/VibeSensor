@@ -54,9 +54,26 @@ const char* reset_reason_name(esp_reset_reason_t reason) {
   }
 }
 
+// The core already starts the task watchdog (5 s, idle task of the configured cores
+// subscribed); widen its timeout for the loop task and keep the idle subscriptions.
 void enable_runtime_watchdog() {
-  const esp_err_t err = esp_task_wdt_init(kLoopWatchdogTimeoutSeconds, true);
-  if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+  uint32_t idle_core_mask = 0;
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0
+  idle_core_mask |= 1U << 0;
+#endif
+#if CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU1
+  idle_core_mask |= 1U << 1;
+#endif
+  const esp_task_wdt_config_t config = {
+      .timeout_ms = kLoopWatchdogTimeoutSeconds * 1000U,
+      .idle_core_mask = idle_core_mask,
+      .trigger_panic = true,
+  };
+  esp_err_t err = esp_task_wdt_reconfigure(&config);
+  if (err == ESP_ERR_INVALID_STATE) {
+    err = esp_task_wdt_init(&config);
+  }
+  if (err != ESP_OK) {
     Serial.printf("WARN: failed to init task watchdog (%d)\n", static_cast<int>(err));
     return;
   }

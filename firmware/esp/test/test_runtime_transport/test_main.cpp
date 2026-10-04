@@ -57,6 +57,8 @@ void setUp() {
   arduino_test::reset_time();
   WiFi.reset();
   ESP.setEfuseMac(0xD05A00000001ULL);
+  const uint8_t station_mac[vibesensor::kClientIdBytes] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
+  arduino_test::set_station_mac(station_mac);
 }
 
 void test_service_tx_tracks_send_failures_and_retries_after_backoff() {
@@ -172,9 +174,24 @@ void test_service_tx_drops_stale_and_retry_exhausted_frames() {
   TEST_ASSERT_NULL(vibesensor::runtime::peek_frame(queue_state));
 }
 
-void test_initialize_transport_uses_efuse_fallback_client_id_when_wifi_mac_is_invalid() {
+void test_initialize_transport_uses_station_mac_while_wifi_is_down() {
   TransportState transport{};
-  WiFi.setMacAddress("not-a-mac");
+  WiFi.setStatus(WL_DISCONNECTED);
+  const uint8_t station_mac[vibesensor::kClientIdBytes] = {0x24, 0x0A, 0xC4, 0x12, 0x34, 0x63};
+  arduino_test::set_station_mac(station_mac);
+
+  vibesensor::runtime::initialize_transport(transport);
+
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(station_mac, transport.client_id, vibesensor::kClientIdBytes);
+  TEST_ASSERT_EQUAL_UINT16(
+      vibesensor::runtime::kControlPortBase + (0x63U % 100U),
+      transport.control_port);
+}
+
+void test_initialize_transport_uses_efuse_fallback_client_id_when_mac_read_fails() {
+  TransportState transport{};
+  const uint8_t unused_mac[vibesensor::kClientIdBytes] = {};
+  arduino_test::set_station_mac(unused_mac, ESP_FAIL);
   ESP.setEfuseMac(0x112233445566ULL);
 
   vibesensor::runtime::initialize_transport(transport);
@@ -192,6 +209,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_service_tx_tracks_send_failures_and_retries_after_backoff);
   RUN_TEST(test_service_control_rx_handles_handshake_identify_and_sync_clock);
   RUN_TEST(test_service_tx_drops_stale_and_retry_exhausted_frames);
-  RUN_TEST(test_initialize_transport_uses_efuse_fallback_client_id_when_wifi_mac_is_invalid);
+  RUN_TEST(test_initialize_transport_uses_station_mac_while_wifi_is_down);
+  RUN_TEST(test_initialize_transport_uses_efuse_fallback_client_id_when_mac_read_fails);
   return UNITY_END();
 }

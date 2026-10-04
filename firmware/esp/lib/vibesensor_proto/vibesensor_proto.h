@@ -34,7 +34,6 @@ enum HelloCapabilityFlags : uint8_t {
   kHelloCapExplicitAck = 1 << 0,
 };
 
-bool parse_mac(const String& mac, uint8_t out_client_id[6]);
 String client_id_hex(const uint8_t client_id[6]);
 
 size_t pack_hello(uint8_t* out,

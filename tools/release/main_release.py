@@ -18,7 +18,11 @@ from pathlib import Path
 from urllib import error, request
 
 _STANDARD_ESP32_APP_OFFSET = "0x10000"
-_ENV_OFFSET_RE = re.compile(r"ESP32_APP_OFFSET[^0-9A-Fa-f]*(0x[0-9A-Fa-f]+)")
+_PARTITION_ENTRY_SIZE = 32
+_PARTITION_MAGIC = b"\xaa\x50"
+_PARTITION_TYPE_APP = 0x00
+_PARTITION_SUBTYPE_FACTORY = 0x00
+_PARTITION_SUBTYPE_OTA_0 = 0x10
 _GITHUB_API_BASE = "https://api.github.com"
 GITHUB_API_TIMEOUT_S = 30
 
@@ -222,22 +226,30 @@ def build_wheelhouse(wheel_path: Path, output: Path) -> Path:
     return output
 
 
-def _app_offset_from_envdump(firmware_dir: Path, env_name: str) -> str:
-    try:
-        stdout = _run(
-            ["pio", "run", "-e", env_name, "-t", "envdump"],
-            cwd=firmware_dir,
-            capture_output=True,
-        ).stdout
-    except subprocess.CalledProcessError:
+def _app_offset_from_partitions(env_dir: Path) -> str:
+    """Return the offset of the app the bootloader starts on a fresh flash.
+
+    Reads the built ``partitions.bin`` (32-byte ESP-IDF entries): the factory app
+    when present, else ``ota_0``. pioarduino no longer exposes the offset in
+    ``pio run -t envdump``, so the table itself is the source of truth.
+    """
+    table_path = env_dir / "partitions.bin"
+    if not table_path.is_file():
         return _STANDARD_ESP32_APP_OFFSET
-    match = _ENV_OFFSET_RE.search(stdout)
-    if match is None:
-        return _STANDARD_ESP32_APP_OFFSET
-    try:
-        return hex(int(match.group(1), 16))
-    except ValueError:
-        return _STANDARD_ESP32_APP_OFFSET
+    table = table_path.read_bytes()
+    app_offsets: dict[int, int] = {}
+    for start in range(
+        0, len(table) - _PARTITION_ENTRY_SIZE + 1, _PARTITION_ENTRY_SIZE
+    ):
+        entry = table[start : start + _PARTITION_ENTRY_SIZE]
+        if entry[:2] != _PARTITION_MAGIC:
+            break
+        if entry[2] == _PARTITION_TYPE_APP:
+            app_offsets.setdefault(entry[3], int.from_bytes(entry[4:8], "little"))
+    for subtype in (_PARTITION_SUBTYPE_FACTORY, _PARTITION_SUBTYPE_OTA_0):
+        if subtype in app_offsets:
+            return hex(app_offsets[subtype])
+    return _STANDARD_ESP32_APP_OFFSET
 
 
 def build_firmware_manifest(
@@ -255,7 +267,7 @@ def build_firmware_manifest(
     env_dirs = sorted(path for path in dist_dir.iterdir() if path.is_dir())
     for env_dir in env_dirs:
         env_name = env_dir.name
-        app_offset = _app_offset_from_envdump(firmware_dir, env_name)
+        app_offset = _app_offset_from_partitions(env_dir)
         segments: list[dict[str, str]] = []
         for file_name, offset in (
             ("firmware.bin", app_offset),

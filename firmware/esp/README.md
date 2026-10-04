@@ -143,6 +143,33 @@ inside `platformio.ini`. Board-specific environments extend that base and pin
 third-party firmware libraries through PlatformIO registry dependencies, including
 `adafruit/Adafruit NeoPixel@1.15.5`.
 
+## Platform upgrades
+
+The firmware builds on Arduino-ESP32 3.3.12 (ESP-IDF 5.5) through the community
+[pioarduino](https://github.com/pioarduino/platform-espressif32) platform, pinned
+to one release zip in `platformio.ini`. The official `platformio/espressif32`
+platform stops at Arduino-ESP32 2.0.17.
+
+Dependabot cannot track a URL platform, so check for a newer stable release when
+you bump the other dependencies:
+
+```bash
+curl -s https://api.github.com/repos/pioarduino/platform-espressif32/releases/latest | grep tag_name
+```
+
+`releases/latest` skips pre-releases (the `-RC` builds); stay on stable releases.
+To upgrade, change the release tag in the `platform` URL, then run
+`pio test -e native` and `pio run -e m5stack_atom -e esp32-c3-devkitm-1`, and
+check Espressif's Arduino-ESP32 migration notes for the new core. A new
+pioarduino release changes the CI PlatformIO cache key, so the first CI run
+downloads the toolchain again.
+
+Build output per environment in `.pio/build/<env>/`: `bootloader.bin` (0x1000 on
+ESP32), `partitions.bin` (0x8000), `firmware.bin` (the app, 0x10000 with the
+default partition table) and `firmware.factory.bin` (all of them merged; not
+shipped). The release workflow ships the first three plus `flash.json`, which
+`tools/release/main_release.py` derives from the built partition table.
+
 Supported override macros:
 
 - `VIBESENSOR_SAMPLE_RATE_HZ`

@@ -5,7 +5,6 @@
 
 namespace vibesensor {
 namespace {
-constexpr size_t kMacStringBytes = 17;
 constexpr size_t kClientIdHexChars = kClientIdBytes * 2;
 constexpr size_t kHelloNameMaxBytes = 32;
 constexpr size_t kFirmwareVersionMaxBytes = 32;
@@ -60,22 +59,6 @@ bool packet_client_id_matches(const uint8_t* data,
 }
 
 }  // namespace
-
-bool parse_mac(const String& mac, uint8_t out_client_id[6]) {
-  if (mac.length() != kMacStringBytes) {
-    return false;
-  }
-  unsigned int values[kClientIdBytes];
-  if (sscanf(mac.c_str(), "%2x:%2x:%2x:%2x:%2x:%2x",
-              &values[0], &values[1], &values[2],
-              &values[3], &values[4], &values[5]) != static_cast<int>(kClientIdBytes)) {
-    return false;
-  }
-  for (size_t i = 0; i < kClientIdBytes; ++i) {
-    out_client_id[i] = static_cast<uint8_t>(values[i]);
-  }
-  return true;
-}
 
 String client_id_hex(const uint8_t client_id[6]) {
   char buf[kClientIdHexChars + 1];

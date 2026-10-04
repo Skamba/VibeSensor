@@ -10,6 +10,13 @@
 namespace vibesensor::runtime {
 namespace {
 
+// Arduino-ESP32 3.x defaults a stuck scan to 60 s and makes disconnect() wait up to
+// 100 ms for the link to drop. Keep the 2.x behaviour: 20 x the 300 ms per-channel
+// dwell for scans, and no blocking wait on disconnect (it runs on the loop task that
+// drains the 200 ms sample handoff queue).
+constexpr uint32_t kWifiScanTimeoutMs = 6000;
+constexpr unsigned long kWifiDisconnectWaitMs = 0;
+
 void consume_scan_results(WifiState& state, int found) {
   state.has_target_bssid = false;
   state.target_channel = 0;
@@ -92,10 +99,8 @@ void begin_target_wifi(const WifiState& state) {
 
 bool connect_wifi(WifiState& state, RuntimeStatus& status) {
   WiFi.mode(WIFI_STA);
-#ifdef WIFI_AUTH_WPA_PSK
-  WiFi.setMinSecurity(WIFI_AUTH_WPA_PSK);
-#endif
   WiFi.setSleep(false);
+  WiFi.setScanTimeout(kWifiScanTimeoutMs);
   refresh_target_ap(state);
   for (uint8_t attempt = 1; attempt <= kWifiInitialConnectAttempts; ++attempt) {
     begin_target_wifi(state);
@@ -111,7 +116,7 @@ bool connect_wifi(WifiState& state, RuntimeStatus& status) {
     }
     status.wifi_connect_failures++;
     set_last_error(status, 11);
-    WiFi.disconnect(true, true);
+    WiFi.disconnect(true, true, kWifiDisconnectWaitMs);
     delay(kWifiRetryBackoffMs);
   }
   return false;
@@ -138,7 +143,7 @@ void service_wifi(WifiState& state, RuntimeStatus& status) {
   state.last_wifi_retry_ms = now;
   status.wifi_reconnect_attempts++;
   set_last_error(status, 12);
-  WiFi.disconnect(true, false);
+  WiFi.disconnect(true, false, kWifiDisconnectWaitMs);
   begin_target_wifi(state);
   state.wifi_retry_failures =
       vibesensor::reliability::saturating_inc_u8(state.wifi_retry_failures);

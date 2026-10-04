@@ -13,9 +13,6 @@ constexpr wl_status_t WL_CONNECTED = 3;
 constexpr wl_status_t WL_DISCONNECTED = 6;
 constexpr int WIFI_STA = 1;
 constexpr int WIFI_SCAN_RUNNING = -1;
-#ifndef WIFI_AUTH_WPA_PSK
-#define WIFI_AUTH_WPA_PSK 1
-#endif
 
 class WiFiClass {
  public:
@@ -38,6 +35,7 @@ class WiFiClass {
   struct DisconnectCall {
     bool wifioff = false;
     bool eraseap = false;
+    unsigned long timeout_ms = 100;
   };
 
   void reset() {
@@ -47,9 +45,8 @@ class WiFiClass {
     begin_outcomes_.clear();
     scan_delete_count = 0;
     mode_value = 0;
-    min_security = -1;
+    scan_timeout_ms = 60000;
     sleep_enabled = true;
-    mac_address = "D0:5A:00:00:00:01";
     async_scan_response = WIFI_SCAN_RUNNING;
     scan_complete_response = WIFI_SCAN_RUNNING;
     connected_ = false;
@@ -72,11 +69,9 @@ class WiFiClass {
     begin_outcomes_.push_back(status_polls_until_connected);
   }
 
-  void setMacAddress(const String& value) { mac_address = value; }
-
   void mode(int value) { mode_value = value; }
 
-  void setMinSecurity(int value) { min_security = value; }
+  void setScanTimeout(uint32_t ms) { scan_timeout_ms = ms; }
 
   void setSleep(bool value) { sleep_enabled = value; }
 
@@ -129,24 +124,22 @@ class WiFiClass {
     return status_value;
   }
 
-  void disconnect(bool wifioff, bool eraseap) {
+  void disconnect(bool wifioff, bool eraseap, unsigned long timeout_ms = 100) {
     DisconnectCall call;
     call.wifioff = wifioff;
     call.eraseap = eraseap;
+    call.timeout_ms = timeout_ms;
     disconnect_calls.push_back(call);
     connected_ = false;
     status_value = WL_DISCONNECTED;
   }
 
-  String macAddress() const { return mac_address; }
-
   std::vector<BeginCall> begin_calls;
   std::vector<DisconnectCall> disconnect_calls;
   int scan_delete_count = 0;
   int mode_value = 0;
-  int min_security = -1;
+  uint32_t scan_timeout_ms = 60000;
   bool sleep_enabled = true;
-  String mac_address = "D0:5A:00:00:00:01";
   int16_t async_scan_response = WIFI_SCAN_RUNNING;
   int16_t scan_complete_response = WIFI_SCAN_RUNNING;
 
