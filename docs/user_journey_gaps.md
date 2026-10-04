@@ -19,7 +19,9 @@ analysis half of J15, the report half of J24, and the provenance data for J35)
 shipped in #4117. WP3 (speed source, readiness and dashboard UI: J14, J15,
 J17, J19, J20, J21, J24 and most of J13) shipped in #4125. WP4 (report and
 History wording: J28, J29, J35) shipped in #4127. WP2 (settings and car wizard
-UI: J01, J04, J05, J07, J08) shipped in #4128.
+UI: J01, J04, J05, J07, J08) shipped in #4128. The rest of J13 (a paired
+OBD-II adapter is the speed source until the user picks one) shipped with the
+Pi-verification server fixes.
 
 Owner decisions that bound the fixes (settled):
 
@@ -84,18 +86,6 @@ Fix:
 - **Picker:** Group by generation code with a year range ("5 Series F10,
   2010–2017") and resolve the year inside the variant step.
 - **Data:** Extend the year ranges where the drivetrain did not change (WP5).
-
-**J13 — GPS stays the default source even when an OBD-II adapter is paired.**
-
-The BOM now recommends a Bluetooth OBD-II adapter or a USB GPS receiver
-(`hardware/README.md`), and the Speed source tab says "No GPS receiver found"
-when gpsd has never seen one (`gpsReceiverMissing` in
-`apps/ui/src/speed_source.ts`).
-
-Evidence (what remains): `SpeedSourceConfig.default`
-(`speed/speed_source_config.py`) is GPS.
-
-Fix: consider defaulting to OBD-II when a paired adapter exists.
 
 **J23 — No printed SSID/URL card.**
 

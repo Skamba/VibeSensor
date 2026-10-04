@@ -196,9 +196,14 @@ def packaged_static_index_path() -> Path:
 
 
 def validate_packaged_static_assets() -> Path:
+    """Require the packaged UI and its build record (commit and hashes for update status)."""
+    # Imported here: the manifest and metadata subcommands run without the app's deps.
+    from vibesensor.updates.status.runtime_details import UI_BUILD_METADATA_FILE
+
     index_path = packaged_static_index_path()
-    if not index_path.is_file():
-        raise RuntimeError(f"Missing packaged UI asset: {index_path}")
+    for path in (index_path, index_path.with_name(UI_BUILD_METADATA_FILE)):
+        if not path.is_file():
+            raise RuntimeError(f"Missing packaged UI asset: {path}")
     return index_path
 
 

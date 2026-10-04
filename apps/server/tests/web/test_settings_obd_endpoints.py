@@ -231,3 +231,28 @@ def test_scan_and_pair_mark_the_sensor_frame_loss_they_cause_as_expected() -> No
     assert reasons == ["bluetooth_scan", "bluetooth_pairing"]
     window = harness.registry.expecting_frame_loss.return_value
     assert window.__exit__.call_count == 2
+
+
+def test_pairing_makes_the_adapter_the_speed_source_unless_one_was_chosen() -> None:
+    harness = _build_client()
+    harness.obd_admin_service.pair_obd_device.return_value = ObdDeviceSnapshot(
+        mac_address="02000000004d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=True,
+        rfcomm_channel=1,
+    )
+
+    def pair() -> None:
+        response = harness.client.post(
+            "/api/settings/obd/pair", json={"mac_address": "02:00:00:00:00:4D"}
+        )
+        assert response.status_code == 200
+
+    pair()
+    assert harness.speed_source_service.get_speed_source()["speedSource"] == "obd2"
+
+    harness.speed_source_service.update_speed_source({"speedSource": "gps"})
+    pair()
+    assert harness.speed_source_service.get_speed_source()["speedSource"] == "gps"

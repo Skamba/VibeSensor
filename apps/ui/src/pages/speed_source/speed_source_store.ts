@@ -268,7 +268,8 @@ export async function pairDevice(macAddress: string): Promise<void> {
       ]);
       scanStatus.value = t("settings.speed.obd_pair_success");
     });
-    await refreshSpeedStatus();
+    // Until a source is chosen, the server switches to the adapter just paired.
+    await Promise.all([loadSpeedSource(), refreshSpeedStatus()]);
   } catch (error) {
     scanStatus.value = t("settings.speed.obd_pair_failed");
     showError(errorMessage(error, t("settings.speed.obd_pair_failed")));

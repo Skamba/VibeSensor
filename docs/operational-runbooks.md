@@ -262,6 +262,12 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
 ## Update and revert checks
 
 1. Confirm current runtime and update status from the UI or update endpoints.
+   `GET /api/update/status` `runtime.commit` is the commit the release was built
+   from (stamped into `vibesensor/_version.py` by `build-wheel` and the pi-gen
+   artifact build; a git checkout reports its HEAD). The `static_build_*` fields
+   come from the UI build record (`static/.vibesensor-ui-build.json`) shipped in
+   the wheel, and `assets_verified` means the packaged assets still hash to that
+   record. The release smoke step fails if the wheel lacks the record.
 2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel and the Pi dependency wheelhouse, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
 3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the wheel, wheelhouse, and ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
    The wheelhouse (`vibesensor-wheelhouse-<version>-cp313-linux_armv7l.tar`) holds

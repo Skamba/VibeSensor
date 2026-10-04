@@ -34,6 +34,8 @@ class SpeedSourceUpdatePayload(TypedDict, total=False):
 
 class SpeedSourcePayload(TypedDict):
     speedSource: SpeedSourceKind
+    # Whether the user picked ``speedSource``; absent in files saved before it existed.
+    speedSourceChosen: NotRequired[bool]
     manualSpeedKph: float | None
     staleTimeoutS: float
     obdDeviceMac: NotRequired[str | None]
@@ -92,13 +94,19 @@ def _parse_obd_device_name(value: object) -> str | None:
 
 @dataclass(slots=True)
 class SpeedSourceConfig:
-    """Speed source settings (GPS, OBD2, or manual) with fallback policy."""
+    """Speed source settings (GPS, OBD2, or manual) with fallback policy.
+
+    Until the user picks a source (``speed_source_chosen``), a paired OBD-II
+    adapter is preferred over GPS: it gives speed and measured RPM. A choice the
+    user made is never overridden.
+    """
 
     speed_source: SpeedSourceKind
     manual_speed_kph: float | None
     stale_timeout_s: float
     obd_device_mac: str | None = None
     obd_device_name: str | None = None
+    speed_source_chosen: bool = False
 
     @property
     def manual_source_selected(self) -> bool:
@@ -121,18 +129,32 @@ class SpeedSourceConfig:
         speed_source = _coerce_speed_source(data.get("speedSource"))
         manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
         stale_timeout_s = _parse_stale_timeout(data.get("staleTimeoutS"))
-        return cls(
+        chosen = data.get("speedSourceChosen")
+        config = cls(
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
             stale_timeout_s=stale_timeout_s,
             obd_device_mac=_parse_obd_device_mac(data.get("obdDeviceMac")),
             obd_device_name=_parse_obd_device_name(data.get("obdDeviceName")),
+            # Older files did not record the choice; only GPS, the default, could be unchosen.
+            speed_source_chosen=(
+                chosen if isinstance(chosen, bool) else speed_source is not SpeedSourceKind.GPS
+            ),
         )
+        config._prefer_paired_obd()
+        return config
+
+    def _prefer_paired_obd(self) -> None:
+        if not self.speed_source_chosen:
+            self.speed_source = (
+                SpeedSourceKind.OBD2 if self.obd_device_mac is not None else SpeedSourceKind.GPS
+            )
 
     def to_dict(self) -> SpeedSourcePayload:
         """Serialize this speed source config to a plain dict for JSON persistence."""
         payload: SpeedSourcePayload = {
             "speedSource": self.speed_source,
+            "speedSourceChosen": self.speed_source_chosen,
             "manualSpeedKph": self.manual_speed_kph,
             "staleTimeoutS": self.stale_timeout_s,
         }
@@ -149,6 +171,7 @@ class SpeedSourceConfig:
             stale_timeout_s=self.stale_timeout_s,
             obd_device_mac=self.obd_device_mac,
             obd_device_name=self.obd_device_name,
+            speed_source_chosen=self.speed_source_chosen,
         )
 
     def updated(self, data: SpeedSourceUpdatePayload) -> SpeedSourceConfig:
@@ -161,6 +184,7 @@ class SpeedSourceConfig:
         speed_source = data.get("speedSource")
         if speed_source is not None:
             self.speed_source = _coerce_speed_source(speed_source)
+            self.speed_source_chosen = True
         if "manualSpeedKph" in data:
             manual_speed = data["manualSpeedKph"]
             if manual_speed is None:
@@ -178,5 +202,6 @@ class SpeedSourceConfig:
             self.obd_device_name = _parse_obd_device_name(data["obdDeviceName"])
         if self.obd_device_mac is None:
             self.obd_device_name = None
+        self._prefer_paired_obd()
         if self.speed_source == SpeedSourceKind.MANUAL and self.manual_speed_kph is None:
             raise ValueError("SpeedSourceConfig with speed_source=MANUAL requires manual_speed_kph")

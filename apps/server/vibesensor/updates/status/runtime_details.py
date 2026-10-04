@@ -62,70 +62,74 @@ def hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
-def collect_runtime_details(repo: Path) -> UpdateRuntimeDetails:
-    """Collect runtime versioning and static-asset verification details."""
-    ui_root = repo / "apps" / "ui"
-    static_root = repo / "apps" / "server" / "vibesensor" / "static"
-    metadata_path = static_root / UI_BUILD_METADATA_FILE
-
+def _git_head(repo: Path) -> str:
+    if not (repo / ".git").exists():
+        return ""
     try:
-        from vibesensor import __version__
+        proc = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except OSError:
+        LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
+        return ""
+    return proc.stdout.strip() if proc.returncode == 0 else ""
 
-        version = __version__
-    except ImportError:
-        LOGGER.debug("vibesensor.__version__ not available", exc_info=True)
-        version = "unknown"
 
-    commit = ""
-    if (repo / ".git").exists():
-        try:
-            proc = subprocess.run(
-                ["git", "-C", str(repo), "rev-parse", "HEAD"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if proc.returncode == 0:
-                commit = proc.stdout.strip()
-        except OSError:
-            LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
+def _read_ui_build_metadata(static_root: Path) -> _UiBuildMetadataRecord:
+    metadata_path = static_root / UI_BUILD_METADATA_FILE
+    if not metadata_path.is_file():
+        return _UiBuildMetadataRecord()
+    try:
+        return _ui_build_metadata_from_json(metadata_path.read_bytes())
+    except OSError:
+        return _UiBuildMetadataRecord()
 
-    has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
-    ui_source_hash = hash_tree(
-        ui_root,
-        ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
-    )
-    static_assets_hash = hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
 
-    metadata = _UiBuildMetadataRecord()
-    if metadata_path.is_file():
-        try:
-            metadata = _ui_build_metadata_from_json(metadata_path.read_bytes())
-        except OSError:
-            metadata = _UiBuildMetadataRecord()
+def collect_runtime_details(
+    repo: Path, *, packaged_static: Path = _PACKAGED_STATIC_DIR
+) -> UpdateRuntimeDetails:
+    """Collect runtime versioning and static-asset verification details.
 
+    A source checkout verifies its own static build against its UI sources. A
+    release install has neither ``.git`` nor UI sources: its commit is stamped
+    into ``vibesensor._version`` and its static assets, with their build
+    record, ship inside the wheel.
+    """
+    ui_root = repo / "apps" / "ui"
+    repo_static = repo / "apps" / "server" / "vibesensor" / "static"
+    static_root = repo_static if repo_static.exists() else packaged_static
+
+    from vibesensor import __version__
+    from vibesensor._version import __commit__
+
+    metadata = _read_ui_build_metadata(static_root)
     static_build_source_hash = _ui_build_metadata_text(metadata.ui_source_hash)
     static_build_assets_hash = _ui_build_metadata_text(metadata.static_assets_hash)
     static_build_commit = _ui_build_metadata_text(metadata.git_commit)
-    has_repo_static = static_root.exists()
+    static_assets_hash = hash_tree(static_root, ignore_names={UI_BUILD_METADATA_FILE})
+    # Without UI sources the build record is the best statement of what the assets came from.
+    ui_source_hash = (
+        hash_tree(ui_root, ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"})
+        if ui_root.exists()
+        else static_build_source_hash
+    )
     assets_verified = (
         bool(ui_source_hash)
         and bool(static_assets_hash)
-        and bool(static_build_source_hash)
-        and bool(static_build_assets_hash)
         and ui_source_hash == static_build_source_hash
         and static_assets_hash == static_build_assets_hash
     )
-    if not has_repo_static:
-        assets_verified = has_packaged_static
     return UpdateRuntimeDetails(
-        version=version,
-        commit=commit,
+        version=__version__,
+        commit=_git_head(repo) or __commit__,
         ui_source_hash=ui_source_hash,
         static_assets_hash=static_assets_hash,
         static_build_source_hash=static_build_source_hash,
         static_build_commit=static_build_commit,
         assets_verified=assets_verified,
-        has_packaged_static=has_packaged_static,
+        has_packaged_static=(packaged_static / "index.html").exists(),
     )

@@ -535,3 +535,22 @@ def test_validate_packaged_static_assets_requires_index(monkeypatch) -> None:
 
     with pytest.raises(RuntimeError, match="Missing packaged UI asset"):
         validate_packaged_static_assets()
+
+
+def test_validate_packaged_static_assets_requires_the_ui_build_record(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """Without it a release install reports no commit or asset hashes in update status."""
+    static_dir = tmp_path / "vibesensor" / "static"
+    static_dir.mkdir(parents=True)
+    (static_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+
+    class _Module:
+        __file__ = str(tmp_path / "vibesensor" / "app" / "__init__.py")
+
+    monkeypatch.setattr(importlib, "import_module", lambda _name: _Module())
+
+    with pytest.raises(RuntimeError, match=r"\.vibesensor-ui-build\.json"):
+        validate_packaged_static_assets()
+    (static_dir / ".vibesensor-ui-build.json").write_text("{}", encoding="utf-8")
+    assert validate_packaged_static_assets() == static_dir / "index.html"

@@ -300,9 +300,12 @@ its state in `wizard_store.ts`.
 ### 3.4 Choosing a speed source
 
 Entry point: *Settings → Speed Source*
-(`apps/ui/src/pages/speed_source/SpeedSource.tsx`). The default source is GPS
-(`SpeedSourceConfig.default` in
-`apps/server/vibesensor/speed/speed_source_config.py`).
+(`apps/ui/src/pages/speed_source/SpeedSource.tsx`). Until the user picks a
+source, it is OBD-II when an adapter is paired and GPS otherwise
+(`SpeedSourceConfig` in `apps/server/vibesensor/speed/speed_source_config.py`):
+pairing an adapter makes it the source, and unpairing goes back to GPS. A
+source the user saved is never changed (`speedSourceChosen`). Settings saved
+before the choice was recorded count GPS as not chosen.
 
 | Source | Hardware | What it enables | What it cannot do |
 |---|---|---|---|
@@ -314,7 +317,7 @@ Entry point: *Settings → Speed Source*
   above. Choosing manual shows "Only for a steady-speed test at exactly this
   speed. Results will be hedged." **Today** the captions say this, and a "What
   each source can do" table (`settings.speed.compare.*`) repeats the table
-  above. GPS stays the default even with a paired OBD-II adapter (J13).
+  above.
 - **Branches:**
   - GPS selected with no receiver or no fix: readiness waits for a live reading
     (`_reference_check` in `capture_readiness_evaluator.py`). When gpsd has

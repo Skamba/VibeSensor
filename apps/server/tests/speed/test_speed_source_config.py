@@ -65,3 +65,36 @@ def test_apply_update_clears_obd_name_when_mac_clears() -> None:
     config.apply_update({"obdDeviceMac": None})
     assert config.obd_device_mac is None
     assert config.obd_device_name is None
+
+
+def test_a_paired_adapter_is_the_source_until_the_user_chooses_one() -> None:
+    config = SpeedSourceConfig.default()
+    config.apply_update({"obdDeviceMac": "02:00:00:00:00:4D"})
+    assert (config.speed_source, config.speed_source_chosen) == ("obd2", False)
+
+    # Unpairing goes back to the default.
+    config.apply_update({"obdDeviceMac": None})
+    assert config.speed_source == "gps"
+
+
+def test_an_explicit_choice_is_never_overridden_by_pairing() -> None:
+    config = SpeedSourceConfig.default()
+    config.apply_update({"speedSource": "gps"})
+    config.apply_update({"obdDeviceMac": "02:00:00:00:00:4D"})
+
+    assert (config.speed_source, config.speed_source_chosen) == ("gps", True)
+    reloaded = SpeedSourceConfig.from_dict(config.to_dict())
+    assert (reloaded.speed_source, reloaded.speed_source_chosen) == ("gps", True)
+
+
+def test_settings_saved_before_the_choice_was_recorded() -> None:
+    """GPS was the default, so a stored GPS with a paired adapter was never a choice."""
+    legacy_gps = SpeedSourceConfig.from_dict(
+        {"speedSource": "gps", "obdDeviceMac": "02000000004d", "staleTimeoutS": 10}
+    )
+    legacy_manual = SpeedSourceConfig.from_dict(
+        {"speedSource": "manual", "manualSpeedKph": 80.0, "obdDeviceMac": "02000000004d"}
+    )
+
+    assert (legacy_gps.speed_source, legacy_gps.speed_source_chosen) == ("obd2", False)
+    assert (legacy_manual.speed_source, legacy_manual.speed_source_chosen) == ("manual", True)
