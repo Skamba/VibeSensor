@@ -17,18 +17,18 @@ summary's `diagnosis` block (`d` below; contract in
 | Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh`, `d.speed_dependence` | One sentence, plus "It follows road/engine speed: …" after a guided coast-down |
 | Weak reasons | `d.weak_reasons` (`intermittent`: `d.presence_ratio`, the share of the moving drive in which the order was there, is under half) | Plain sentences, no percentages |
 | Covered / not covered (no fault) | `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations, `d.conditions.rpm_source` | Sentences |
-| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source; a wheel/tire fault whose zone is not a wheel (cabin-only sensors) names no wheel and asks for a sensor at each wheel |
+| Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source; a wheel fault on all four wheels gets the neutral coast check instead of an axle swap; a wheel/tire fault whose zone is not a wheel (cabin-only sensors) names no wheel and asks for a sensor at each wheel |
 | Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
-| Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle, engine bay, or centre tunnel |
+| Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle (wheel/tire: two corners of that axle near the top), engine bay, or centre tunnel |
 
 ## Page 2 (workshop)
 
 | Report element | Source | Format |
 |---|---|---|
-| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid |
-| Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level |
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
+| Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level (the diagnosed row carries `d.confidence_level`, Weak when the coast-down contradicts it) |
 | Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
-| Spectrum | `d.spectrum` (recurring peaks in mg, floor, order markers at the window speed) | Stems + dashed floor + order lines |
+| Spectrum | `d.spectrum` (recurring peaks in mg over the moving samples, floor, order markers at the window speed; E1/E2 from the median measured RPM when RPM was measured) | Stems + dashed floor + order lines |
 | Amplitude vs speed | `d.amplitude_vs_speed` | Lines per location; shown only for a ≥ 30 km/h sweep |
 | Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio`; `Engine: ruled out: the vibration kept going while coasting in neutral` |
 | Shop request | `d.verdict`, `d.source`, `d.order_code` | Tire (road force, match-mount, runout), driveline, engine, or other |

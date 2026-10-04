@@ -915,6 +915,10 @@
     "en": "It follows road speed: it kept going while coasting in neutral.",
     "nl": "Hij volgt de rijsnelheid: hij bleef bij uitrollen in neutraal."
   },
+  "SPEED_SOURCE_FALLBACK_MANUAL": {
+    "en": "entered by hand (no live GPS/OBD speed)",
+    "nl": "handmatig ingevoerd (geen live GPS/OBD-snelheid)"
+  },
   "SPEED_SOURCE_GPS": {
     "en": "GPS",
     "nl": "GPS"

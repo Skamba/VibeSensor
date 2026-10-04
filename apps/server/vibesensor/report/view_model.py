@@ -81,6 +81,7 @@ _SPEED_SOURCE_KEYS = {
     "gps": "SPEED_SOURCE_GPS",
     "obd2": "SPEED_SOURCE_OBD",
     "manual": "SPEED_SOURCE_MANUAL",
+    "fallback_manual": "SPEED_SOURCE_FALLBACK_MANUAL",
 }
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
 _RPM_KEYS = {"measured": "RPM_MEASURED", "estimated": "RPM_ESTIMATED", "none": "RPM_NONE"}
@@ -493,7 +494,9 @@ def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     if diagnosis["source"] == "wheel/tire":
         if diagnosis["zone"] in _WHEEL_CORNERS:
             return ctx.t("CONFIRM_WHEEL", zone=ctx.zone(diagnosis))
-        return ctx.t("CONFIRM_AXLE")
+        if diagnosis["zone"] != "all_wheels":
+            return ctx.t("CONFIRM_AXLE")
+        # On all four wheels a swap moves nothing; the coast-down still tells it from the engine.
     if diagnosis["speed_dependence"] is not None:
         return None
     return ctx.t("CONFIRM_NEUTRAL")
@@ -688,7 +691,7 @@ def _conditions(
     )
     source = conditions["speed_source"]
     speed_key = _SPEED_SOURCE_KEYS.get(source or "")
-    speed_source = ctx.t(speed_key) if speed_key else (source or unknown)
+    speed_source = ctx.t(speed_key) if speed_key else unknown
     phases = ", ".join(
         ctx.t("PHASE_SHARE", phase=ctx.phase(phase), share=ctx.share(share / 100.0))
         for phase, share in sorted(

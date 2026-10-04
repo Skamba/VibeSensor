@@ -11,7 +11,11 @@ import pytest
 from test_support.analysis import run_analysis
 from test_support.core import ALL_WHEEL_SENSORS, standard_metadata
 from test_support.report_rendering import report_view_for
-from test_support.synthetic_samples import make_fault_samples, make_noise_samples
+from test_support.synthetic_samples import (
+    make_engine_order_samples,
+    make_fault_samples,
+    make_noise_samples,
+)
 
 from vibesensor.report.view_model import ReportView
 
@@ -246,6 +250,61 @@ def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
     else:
         assert checks["engine"] == ("not_testable", "no_tire_reference")
         assert "Engine: not testable: no tire size" in ruled_out
+
+
+@pytest.mark.parametrize(
+    ("lang", "text"),
+    [
+        ("en", "entered by hand (no live GPS/OBD speed)"),
+        ("nl", "handmatig ingevoerd (geen live GPS/OBD-snelheid)"),
+    ],
+)
+def test_manual_fallback_speed_source_is_named_in_plain_words(lang: str, text: str) -> None:
+    samples = make_fault_samples(fault_sensor="front-left", sensors=ALL_WHEEL_SENSORS)
+    for sample in samples:
+        sample["speed_source"] = "fallback_manual"
+    view = report_view_for(run_analysis(samples), lang=lang)
+
+    assert view.mechanic.conditions[2].value == text
+
+
+def test_measured_rpm_places_the_engine_markers_without_gear_ratios() -> None:
+    samples = make_engine_order_samples(sensors=ALL_WHEEL_SENSORS, _engine_hz_override=50.0)
+    for sample in samples:
+        sample["engine_rpm_source"] = "obd2"
+    summary = run_analysis(
+        samples, standard_metadata(final_drive_ratio=None, current_gear_ratio=None)
+    )
+    spectrum = report_view_for(summary).mechanic.spectrum
+
+    assert spectrum is not None
+    markers = dict(spectrum.markers)
+    assert markers["E1"] == pytest.approx(50.0)
+    assert markers["E2"] == pytest.approx(100.0)
+    assert "P1" not in markers
+
+
+def test_spectrum_leaves_out_standstill_when_no_speed_repeats() -> None:
+    # Ten one-off speeds: no 10 km/h window holds enough samples, so the spectrum
+    # takes the whole drive, but the idling at 0 km/h is still left out.
+    moving = [
+        sample
+        for index, speed in enumerate(range(30, 130, 10))
+        for sample in make_fault_samples(
+            fault_sensor="front-left",
+            sensors=ALL_WHEEL_SENSORS,
+            speed_kmh=float(speed),
+            n_samples=1,
+            start_t_s=index,
+        )
+    ]
+    idling = make_noise_samples(
+        sensors=ALL_WHEEL_SENSORS, speed_kmh=0.0, n_samples=10, start_t_s=10.0
+    )
+    view = report_view_for(run_analysis([*moving, *idling]))
+
+    assert view.mechanic.spectrum is not None
+    assert view.mechanic.spectrum.title.endswith(", 30-120 km/h"), view.mechanic.spectrum.title
 
 
 def test_moderate_fault_adds_the_cheap_confirming_check() -> None:

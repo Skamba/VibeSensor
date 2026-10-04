@@ -99,6 +99,21 @@ def test_driveline_is_reported_as_a_zone(amps: dict[str, float], zone: str) -> N
     assert diagnosis["zone"] == zone
 
 
+@pytest.mark.parametrize(
+    ("amps", "zone"),
+    [
+        # A cabin sensor close behind the only wheel sensor: that corner, not its axle.
+        ({"Front Left Wheel": 0.15, "Driver Seat": 0.12}, "front_left_wheel"),
+        ({"Driver Seat": 0.16, "Front Left Wheel": 0.15}, "front_left_wheel"),
+        ({"Front Left Wheel": 0.15, "Front Right Wheel": 0.14, "Driver Seat": 0.12}, "front_axle"),
+    ],
+)
+def test_wheel_zone_needs_two_corners_for_an_axle(amps: dict[str, float], zone: str) -> None:
+    finding = _order_finding("wheel_1x", VibrationSource.WHEEL_TIRE, confidence=0.6, amps=amps)
+
+    assert _diagnosis(finding)["zone"] == zone
+
+
 # -- guided test drive: neutral coast-down -------------------------------------
 
 _COAST_START_S = 28.0

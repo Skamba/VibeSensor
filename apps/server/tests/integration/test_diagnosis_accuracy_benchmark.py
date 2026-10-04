@@ -996,6 +996,7 @@ def _assert_raw_backed(result: SimPipelineResult, case: Case) -> None:
     assert metadata["raw_replay_timing_fallback_count"] == 0
 
 
+_SPEED_SOURCE_TEXT = {"manual": "entered by hand", "obd2": "OBD"}
 _SOURCE_NAMES_EN = {"wheel/tire": "Wheels/tires", "driveline": "Driveline", "engine": "Engine"}
 
 # What the owner is told to have checked, per diagnosed order.
@@ -1012,6 +1013,8 @@ def _assert_report_view(
     owner = result.report.owner
     assert owner.verdict == diagnosis["verdict"]
     assert owner.level == diagnosis["confidence_level"]
+    conditions = {fact.label: fact.value for fact in result.report.mechanic.conditions}
+    assert conditions["Speed source"] == _SPEED_SOURCE_TEXT[case.speed_source], conditions
     if diagnosis["verdict"] == "no_fault":
         assert owner.headline == "No significant vibration found"
         assert owner.diagram.zone is None
@@ -1037,6 +1040,14 @@ def _assert_report_view(
     assert owner.diagram.zone == diagnosis["zone"]
     level_words = {"strong": "Strong", "moderate": "Moderate", "weak": "Weak"}
     assert owner.level_word == level_words[diagnosis["confidence_level"]]
+    # Page 2 marks the diagnosed order at the level page 1 gives it.
+    diagnosed_levels = [row.level for row in result.report.mechanic.worksheet if row.diagnosed]
+    assert diagnosed_levels == [owner.level_word], diagnosed_levels
+    if (diagnosis["zone"], diagnosis["confidence_level"]) == ("all_wheels", "moderate") and (
+        diagnosis["speed_dependence"] is None
+    ):
+        # Swapping axles moves nothing when all four wheels carry it.
+        assert owner.confirm is not None and "coast" in owner.confirm, owner.confirm
     rows = [row for row in diagnosis["location_amplitudes"] if row["amplitude_mg"] is not None]
     strongest = [marker for marker in owner.diagram.markers if marker.strongest]
     assert len(strongest) == 1 and rows

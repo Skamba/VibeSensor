@@ -21,6 +21,7 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
@@ -105,6 +106,10 @@ def build_diagnosis(
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
         weak_reasons = ["coast_test_contradicts", *weak_reasons][:_MAX_WEAK_REASONS]
+    if candidate is None:
+        level = None
+    elif verdict is DiagnosisVerdict.WEAK_EVIDENCE:
+        level = ConfidenceLevel.WEAK
     refs = _References(
         tire_circumference_m=metadata.tire_circumference_m,
         final_drive_ratio=_positive(metadata.final_drive_ratio),
@@ -127,13 +132,7 @@ def build_diagnosis(
     spectrum_location = _strongest_row_location(rows) or location
     return {
         "verdict": verdict.value,
-        "confidence_level": (
-            ConfidenceLevel.WEAK.value
-            if verdict is DiagnosisVerdict.WEAK_EVIDENCE
-            else level.value
-            if candidate is not None and level is not None
-            else None
-        ),
+        "confidence_level": level.value if level is not None else None,
         "finding_id": candidate.finding_id if candidate is not None else None,
         "source": str(candidate.suspected_source) if candidate is not None else None,
         "location": location,
@@ -535,7 +534,10 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
         wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
         if len(wheels) >= _ALL_WHEELS_MIN_CORNERS:
             return "all_wheels"
-        return _axle_zone(top_codes) or top_codes[0]
+        if len(wheels) == 1:
+            # The only wheel sensor near the top names its corner, not its axle.
+            return wheels[0]
+        return _axle_zone(wheels) or top_codes[0]
     return top_codes[0]
 
 
@@ -781,18 +783,34 @@ def _conditions(samples: Sequence[Sample], refs: _References) -> TestConditions:
 # -- spectrum -----------------------------------------------------------------
 
 
-def _order_markers(refs: _References, speed_kmh: float) -> dict[str, float]:
+def _measured_rpm(samples: Sequence[Sample]) -> float | None:
+    rpms = [
+        sample.engine_rpm
+        for sample in samples
+        if sample.engine_rpm is not None
+        and sample.engine_rpm > 0
+        and sample.engine_rpm_source.strip().lower() not in _MEASURED_RPM_EXCLUDED
+    ]
+    return median(rpms) if rpms else None
+
+
+def _order_markers(
+    refs: _References, speed_kmh: float, measured_rpm: float | None
+) -> dict[str, float]:
+    """Order frequencies at *speed_kmh*; measured RPM places E1/E2, as in the analysis."""
     tire = refs.tire_circumference_m
     wheel = wheel_hz_from_speed_kmh(speed_kmh, tire) if tire is not None else None
-    if wheel is None:
-        return {}
-    markers = {"T1": wheel, "T2": 2 * wheel}
-    if refs.final_drive_ratio is not None:
-        shaft = wheel * refs.final_drive_ratio
-        markers |= {"P1": shaft, "P2": 2 * shaft}
-        if refs.gear_ratio is not None:
-            engine = shaft * refs.gear_ratio
-            markers |= {"E1": engine, "E2": 2 * engine}
+    markers: dict[str, float] = {}
+    engine = measured_rpm / SECONDS_PER_MINUTE if measured_rpm is not None else None
+    if wheel is not None:
+        markers |= {"T1": wheel, "T2": 2 * wheel}
+        if refs.final_drive_ratio is not None:
+            shaft = wheel * refs.final_drive_ratio
+            markers |= {"P1": shaft, "P2": 2 * shaft}
+            if engine is None and refs.gear_ratio is not None:
+                engine = shaft * refs.gear_ratio
+    if engine is not None:
+        markers |= {"E1": engine, "E2": 2 * engine}
     return markers
 
 
@@ -805,24 +823,28 @@ def _spectrum(
 ) -> DiagnosisSpectrum | None:
     if location is None:
         return None
-    at_location = [sample for sample, label in located if label == location]
-    speeds = sorted(
-        sample.speed_kmh
-        for sample in at_location
-        if sample.speed_kmh is not None and sample.speed_kmh > 0
-    )
-    if not at_location or not speeds:
-        return None
-    centre = centre_speed_kmh if centre_speed_kmh is not None else median(speeds)
-    window = [
-        sample
-        for sample in at_location
-        if sample.speed_kmh is not None
-        and abs(sample.speed_kmh - centre) <= _SPECTRUM_HALF_WINDOW_KMH
+    # Moving samples only: standing still is no point on the speed axis.
+    moving = [
+        (sample, sample.speed_kmh)
+        for sample, label in located
+        if label == location and sample.speed_kmh is not None and sample.speed_kmh > 0
     ]
-    if len(window) < _SPECTRUM_MIN_WINDOW_SAMPLES:
-        window = [sample for sample in at_location if sample.speed_kmh is not None]
-    window_speeds = [sample.speed_kmh for sample in window if sample.speed_kmh is not None]
+    if not moving:
+        return None
+    centre = (
+        centre_speed_kmh
+        if centre_speed_kmh is not None
+        else median(speed for _sample, speed in moving)
+    )
+    in_window = [
+        (sample, speed)
+        for sample, speed in moving
+        if abs(speed - centre) <= _SPECTRUM_HALF_WINDOW_KMH
+    ]
+    if len(in_window) < _SPECTRUM_MIN_WINDOW_SAMPLES:
+        in_window = moving
+    window = [sample for sample, _speed in in_window]
+    window_speeds = [speed for _sample, speed in in_window]
     bins: dict[float, list[float]] = defaultdict(list)
     for sample in window:
         seen: dict[float, float] = {}
@@ -851,5 +873,5 @@ def _spectrum(
         "speed_max_kmh": max(window_speeds),
         "floor_mg": _mg(median(floors)) if floors else None,
         "peaks": peaks,
-        "order_markers": _order_markers(refs, window_centre),
+        "order_markers": _order_markers(refs, window_centre, _measured_rpm(window)),
     }
