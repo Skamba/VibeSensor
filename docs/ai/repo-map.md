@@ -40,6 +40,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `speed/`: GPS (gpsd), Bluetooth OBD (`obd/`), selected-speed-source coordination.
 - `updates/`: wheel/firmware updater, releases, Wi-Fi uplink.
 - `hotspot/`: fixed hotspot settings, the captive-portal probe hosts (`captive_portal.py`, used by the hotspot DNS and `web/middleware.py`), and the periodic hotspot watchdog (`vibesensor-hotspot-self-heal` timer).
+- `clock/`: steps the RTC-less Pi's unsynchronised wall clock to the browser clock the UI reports on connect (needs `CAP_SYS_TIME` from `vibesensor.service`).
 - `simulator/`: sensor simulator and WebSocket smoke client.
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings).

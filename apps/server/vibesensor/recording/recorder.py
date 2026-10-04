@@ -84,7 +84,7 @@ class RunRecorder:
         history_db: HistoryDB | None = None,
         settings_reader: SettingsDerivationService | None = None,
         sensor_metadata_reader: SensorSettingsService | None = None,
-        language_reader: UiPreferencesService | None = None,
+        ui_preferences: UiPreferencesService | None = None,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
@@ -101,7 +101,7 @@ class RunRecorder:
         )
         self._lock = RLock()
         self._history_db = history_db
-        self._language_reader = language_reader
+        self._ui_preferences = ui_preferences
         self._capture_readiness = CaptureReadinessTracker()
 
         self._lifecycle = RunLifecycleState(

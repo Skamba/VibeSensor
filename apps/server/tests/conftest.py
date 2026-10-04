@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 
+from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.runs import HistoryRunService
@@ -200,6 +201,12 @@ class FakeState:
     run_service: object | None = None
     report_service: object | None = None
     export_service: object | None = None
+    # Sync state "unknown": the router-assembly state never steps the host clock.
+    browser_clock: BrowserClockCorrector = field(
+        default_factory=lambda: BrowserClockCorrector(
+            recording=lambda: False, synchronized=lambda: None
+        )
+    )
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()

@@ -10,7 +10,7 @@ summary's `diagnosis` block (`d` below; contract in
 
 | Report element | Source | Format |
 |---|---|---|
-| Car, tires, date | `metadata.car` name and type, `metadata.analysis_settings` tire size, `start_time_utc` + `recorded_utc_offset_seconds` | `225/45R17`; local time with UTC offset |
+| Car, tires, date | `metadata.car` name and type, `metadata.analysis_settings` tire size, `start_time_utc` in the browser-reported time zone, else with `recorded_utc_offset_seconds` | `225/45R17`; local time with UTC offset |
 | Speeds driven, duration, sensors | `speed_stats.min_kmh`/`max_kmh`, `duration_s`, `sensor_count_used` | `50–118 km/h`, `m:ss` |
 | Verdict headline | `d.verdict`, `d.source`, `d.zone` | "Likely cause: …", "Not enough evidence to name a cause", or "No significant vibration found" |
 | Confidence | `d.confidence_level` | Level word + action meaning; never a percentage |

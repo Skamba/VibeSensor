@@ -17,7 +17,8 @@ from test_support.synthetic_samples import (
     make_noise_samples,
 )
 
-from vibesensor.report.view_model import ReportView
+from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.report.view_model import ReportView, build_report_view
 
 _UNRESOLVED_KEY = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
 _PERCENT_CONFIDENCE = re.compile(r"\d+\s?%\s*(confidence|zekerheid)", re.IGNORECASE)
@@ -390,6 +391,21 @@ def test_requested_language_wins_over_the_runs_language() -> None:
     summary["lang"] = "nl"
 
     assert report_view_for(summary, lang="en").lang == "en"
+
+
+def test_report_date_shows_in_the_users_time_zone_not_the_recorded_offset() -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["start_time_utc"] = "2025-07-01T10:00:00Z"
+    metadata = run_metadata_from_mapping(
+        {**summary["metadata"], "run_id": "run", "recorded_utc_offset_seconds": 0}
+    )
+
+    def dates(time_zone: str | None) -> list[str]:
+        view = build_report_view(summary, metadata, lang="en", time_zone=time_zone)
+        return [fact.value for fact in view.header if fact.value.startswith("2025-")]
+
+    assert dates("Europe/Amsterdam") == ["2025-07-01 12:00:00 UTC+02:00"]
+    assert dates(None) == ["2025-07-01 10:00:00 UTC"]
 
 
 def test_quality_collapses_to_one_footer_line_only_when_everything_passed() -> None:

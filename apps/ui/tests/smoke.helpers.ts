@@ -1,5 +1,6 @@
 import type { Page, Route } from "@playwright/test";
 import type {
+  BrowserClockPayload,
   CarsPayload,
   ClientLocationsResponse,
   HistoryEntry,
@@ -322,6 +323,13 @@ export async function installCommonRoutes(
   });
   await page.route("**/api/car-library/**", async (route) => {
     await fulfillJson(route, { brands: [], types: [], models: [] });
+  });
+  await page.route("**/api/system/browser-clock", async (route) => {
+    await fulfillJson<BrowserClockPayload>(route, {
+      action: "within_threshold",
+      offset_s: 0,
+      time_zone: null,
+    });
   });
   await page.route("**/api/settings/**", async (route) => {
     const path = requestPath(route);

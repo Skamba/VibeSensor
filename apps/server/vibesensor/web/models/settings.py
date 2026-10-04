@@ -189,3 +189,26 @@ class AnalysisSettingsResponse(BaseModel):
     final_drive_uncertainty_pct: float
     gear_uncertainty_pct: float
     tire_deflection_factor: float
+
+
+class BrowserClockRequest(_FrozenBase):
+    """The browser's clock and IANA time zone, reported when the UI connects."""
+
+    epoch_ms: int = Field(gt=0)
+    time_zone: str | None = Field(default=None, max_length=64)
+
+
+class BrowserClockResponse(BaseModel):
+    """What the server did with the reported clock, and the stored time zone."""
+
+    action: Literal[
+        "stepped",
+        "within_threshold",
+        "ntp_synchronized",
+        "sync_state_unknown",
+        "recording",
+        "already_stepped",
+        "not_permitted",
+    ]
+    offset_s: float
+    time_zone: str | None

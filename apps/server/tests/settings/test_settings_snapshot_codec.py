@@ -27,6 +27,7 @@ def test_settings_snapshot_json_round_trip_preserves_canonical_payload() -> None
         "obdDeviceName": "OBDLink MX+",
         "language": "nl",
         "speedUnit": "mps",
+        "timeZone": "Europe/Amsterdam",
         "sensorsByMac": {
             "112233445566": {
                 "name": "Rear Left Wheel",

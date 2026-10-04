@@ -119,6 +119,7 @@ def test_all_mutating_http_routes_are_classified_by_method(fake_state) -> None:
         ("POST", "/api/settings/cars"),
         ("POST", "/api/settings/obd/pair"),
         ("POST", "/api/settings/obd/scan"),
+        ("POST", "/api/system/browser-clock"),
         ("POST", "/api/update/cancel"),
         ("POST", "/api/update/start"),
         ("PUT", "/api/settings/analysis"),

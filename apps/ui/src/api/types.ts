@@ -5,6 +5,7 @@ type Schema<Name extends keyof components["schemas"]> =
 
 export type AnalysisSettingsRequest = Schema<"AnalysisSettingsRequest">;
 export type AnalysisSettingsPayload = Schema<"AnalysisSettingsResponse">;
+export type BrowserClockPayload = Schema<"BrowserClockResponse">;
 export type CarLibraryBrandsPayload = Schema<"CarLibraryBrandsResponse">;
 export type CarLibraryGearbox = Schema<"CarLibraryGearboxEntry">;
 export type CarLibraryModel = Schema<"CarLibraryModelEntry">;

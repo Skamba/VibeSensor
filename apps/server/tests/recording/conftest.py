@@ -363,7 +363,7 @@ def make_logger(tmp_path: Path):
     """Factory fixture: call ``make_logger(...)`` to get a RunRecorder.
 
     Accepts the same keyword overrides as ``RunRecorder`` (e.g.
-    ``make_logger(history_db=my_db, language_reader=my_language_reader)``).
+    ``make_logger(history_db=my_db, ui_preferences=my_ui_preferences)``).
     Any dependency not supplied gets a sensible fake default.
     """
 

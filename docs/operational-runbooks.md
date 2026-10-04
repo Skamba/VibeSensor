@@ -179,6 +179,36 @@ cgps -s
    in config instead of repeatedly treating poor satellite reception as a server
    failure.
 
+## Diagnose a wrong Pi clock or run times
+
+The Pi has no RTC. Without internet, systemd-timesyncd restores the clock from
+the last saved time, so it can be days or months behind. Every time the UI
+connects it posts the browser clock and IANA time zone to
+`POST /api/system/browser-clock`. The server steps the system clock to the
+browser clock once per process, and only when all of these hold:
+
+- the kernel reports the clock as unsynchronised (no NTP sync; `adjtimex`
+  returns `TIME_ERROR`);
+- it is more than 10 s off;
+- no run is recording.
+
+The step needs `CAP_SYS_TIME`, which `vibesensor.service` grants. Look for
+`Stepped the unsynchronised system clock` (warning) or `no CAP_SYS_TIME` (info)
+in the journal. The response's `action` says what happened. Sensor timing runs
+on the monotonic clock, so a step does not disturb sync. The step is not
+persisted, so after a reboot without internet the next UI connection corrects
+the clock again.
+
+Reports show run times in the stored browser time zone, at the run's own date
+(DST-correct). They fall back to the offset recorded with the run until a
+browser has reported a zone. The History list formats times in the viewing
+browser's zone.
+
+```bash
+timedatectl show --property=NTPSynchronized --value
+journalctl -u vibesensor --no-pager | grep -E 'system clock|CAP_SYS_TIME'
+```
+
 ## Diagnose storage or history DB write problems
 
 1. Start with `/api/health` and look for persistence-facing degradation reasons

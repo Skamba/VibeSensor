@@ -38,6 +38,21 @@ export async function setSettingsSpeedUnit(
   });
 }
 
+/** Reports the browser clock and zone; the server steps an unsynchronised Pi clock. */
+export async function reportBrowserClock(
+  epochMs: number,
+  timeZone: string | null,
+): Promise<Local.BrowserClockPayload> {
+  return await apiJson<Transport.BrowserClockPayload>(
+    "/api/system/browser-clock",
+    {
+      method: "POST",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ epoch_ms: epochMs, time_zone: timeZone }),
+    },
+  );
+}
+
 export async function getAnalysisSettings(): Promise<Local.AnalysisSettingsPayload> {
   return await apiJson<Transport.AnalysisSettingsPayload>(
     "/api/settings/analysis",

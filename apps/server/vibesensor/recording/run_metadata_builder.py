@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from vibesensor.common.time_utils import coerce_utc_offset_seconds
+from vibesensor.common.time_utils import coerce_utc_offset_seconds, utc_offset_seconds_in
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.dsp.vibration_strength import (
@@ -103,8 +103,7 @@ def build_run_metadata(
     active_car_snapshot: CarSnapshot | None = None,
     raw_capture_manifest: RawCaptureManifest | None = None,
     raw_capture_finalize: RunRawCaptureFinalize | None = None,
-    language_reader: UiPreferencesService | None = None,
-    recorded_utc_offset_seconds: int | None = None,
+    ui_preferences: UiPreferencesService | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
     guided_phases: tuple[RunGuidedPhase, ...] = (),
 ) -> RunMetadata:
@@ -132,7 +131,10 @@ def build_run_metadata(
         fft_window_size_samples=(fft_window_size_samples if fft_window_size_samples > 0 else None),
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
-        recorded_utc_offset_seconds=recorded_utc_offset_seconds,
+        recorded_utc_offset_seconds=utc_offset_seconds_in(
+            ui_preferences.time_zone if ui_preferences is not None else None,
+            start_time_utc,
+        ),
         sensor_snapshots=sensor_snapshots,
         raw_capture_finalize=raw_capture_finalize,
     )
@@ -140,8 +142,8 @@ def build_run_metadata(
     metadata.car = run_car_metadata
     metadata.guided_phases = guided_phases
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
-    if language_reader is not None:
-        metadata.language = str(language_reader.language).strip().lower() or "en"
+    if ui_preferences is not None:
+        metadata.language = str(ui_preferences.language).strip().lower() or "en"
     return metadata
 
 

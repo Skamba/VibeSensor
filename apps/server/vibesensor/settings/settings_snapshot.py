@@ -15,4 +15,5 @@ class SettingsSnapshotPayload(SpeedSourcePayload):
     activeCarId: str | None
     language: LanguageCode
     speedUnit: SpeedUnitCode
+    timeZone: str | None
     sensorsByMac: SensorsByMacPayload

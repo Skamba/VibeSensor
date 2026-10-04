@@ -152,16 +152,16 @@ class TestBuildRunMetadata:
         meta = build_run_metadata(
             **_default_run_metadata_kwargs(
                 run_id="run-lang",
-                language_reader=SimpleNamespace(language="fi"),
+                ui_preferences=SimpleNamespace(language="fi", time_zone=None),
             ),
         )
         assert meta.language == "fi"
 
-    def test_language_reader_defaults_to_en_when_blank(self) -> None:
+    def test_ui_preferences_defaults_to_en_when_blank(self) -> None:
         meta = build_run_metadata(
             **_default_run_metadata_kwargs(
                 run_id="run-lang-default",
-                language_reader=SimpleNamespace(language="   "),
+                ui_preferences=SimpleNamespace(language="   ", time_zone=None),
             ),
         )
         assert meta.language == "en"

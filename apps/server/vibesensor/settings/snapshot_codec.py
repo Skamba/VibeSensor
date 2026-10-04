@@ -37,6 +37,7 @@ class SettingsSnapshotRecord(msgspec.Struct, kw_only=True, frozen=True):
     obdDeviceName: str | None = None
     language: LanguageCode = "en"
     speedUnit: SpeedUnitCode = "kmh"
+    timeZone: str | None = None
     sensorsByMac: dict[str, SensorConfigRecord] = msgspec.field(default_factory=dict)
 
 
@@ -96,6 +97,7 @@ def _settings_snapshot_payload_from_record(
         "staleTimeoutS": record.staleTimeoutS,
         "language": record.language,
         "speedUnit": record.speedUnit,
+        "timeZone": record.timeZone,
         "sensorsByMac": {
             sensor_id: {"name": config.name, "location_code": config.location_code}
             for sensor_id, config in record.sensorsByMac.items()

@@ -8,6 +8,7 @@ import pytest
 
 from vibesensor.common.time_utils import (
     coerce_utc_offset_seconds,
+    format_run_timestamp,
     format_timestamp_in_recorded_timezone,
     format_utc_timestamp,
     parse_iso8601,
@@ -91,3 +92,25 @@ def test_format_timestamp_in_recorded_timezone(
     expected: str | None,
 ) -> None:
     assert format_timestamp_in_recorded_timezone(value, recorded_utc_offset_seconds) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "time_zone", "expected"),
+    [
+        # The user's zone wins over the offset stored with the run (the image default),
+        # and is taken at the run's own instant: summer and winter differ.
+        ("2025-07-01T10:00:00Z", "Europe/Amsterdam", "2025-07-01 12:00:00 UTC+02:00"),
+        ("2025-01-15T10:00:00Z", "Europe/Amsterdam", "2025-01-15 11:00:00 UTC+01:00"),
+        # No (or an unknown) zone: fall back to the stored offset.
+        ("2025-07-01T10:00:00Z", None, "2025-07-01 13:00:00 UTC+03:00"),
+        ("2025-07-01T10:00:00Z", "Mars/Olympus_Mons", "2025-07-01 13:00:00 UTC+03:00"),
+        (None, "Europe/Amsterdam", None),
+    ],
+)
+def test_format_run_timestamp_prefers_the_users_zone(
+    value: str | None, time_zone: str | None, expected: str | None
+) -> None:
+    assert (
+        format_run_timestamp(value, time_zone=time_zone, recorded_utc_offset_seconds=10800)
+        == expected
+    )

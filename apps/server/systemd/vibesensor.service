@@ -7,8 +7,10 @@ Wants=network-online.target
 Type=simple
 User=__SERVICE_USER__
 PermissionsStartOnly=true
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+# CAP_SYS_TIME: the Pi has no RTC; the server steps an unsynchronised clock to
+# the connected browser's clock (vibesensor/clock/browser_clock.py).
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SYS_TIME
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_SYS_TIME
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full

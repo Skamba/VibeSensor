@@ -1,6 +1,7 @@
 import { batch, effect } from "@preact/signals";
 
 import { isDemoMode } from "./app_store";
+import { createClockReporter } from "./clock_report";
 import { DEMO_CAR, demoPayload } from "./demo";
 import { t } from "./i18n";
 import {
@@ -108,12 +109,12 @@ export function startLive(): void {
   const sendSelection = createSelectionSender((clientId) =>
     ws.send({ client_id: clientId }),
   );
+  const reportClock = createClockReporter();
   effect(() => {
     const state = wsState.value;
-    sendSelection(
-      state === "connected" || state === "no_data",
-      selectedClientId.value,
-    );
+    const ready = state === "connected" || state === "no_data";
+    reportClock(ready);
+    sendSelection(ready, selectedClientId.value);
   });
   ws.connect();
 }

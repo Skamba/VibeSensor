@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
 from math import isfinite
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 _MIN_UTC_OFFSET_SECONDS = -(12 * 60 * 60)
 _MAX_UTC_OFFSET_SECONDS = 14 * 60 * 60
@@ -66,9 +67,19 @@ def coerce_utc_offset_seconds(value: object) -> int | None:
     return offset_seconds
 
 
-def current_utc_offset_seconds() -> int | None:
-    """Return the current local UTC offset in seconds."""
-    offset = datetime.now().astimezone().utcoffset()
+def utc_offset_seconds_in(time_zone: str | None, instant_iso: str) -> int | None:
+    """Return the UTC offset of IANA *time_zone* at *instant_iso*, or ``None``.
+
+    Run times are shown in the user's zone (reported by the browser), never the
+    server's local zone: the Pi image's default zone is not the user's.
+    """
+    instant = parse_iso8601(instant_iso)
+    if time_zone is None or instant is None:
+        return None
+    try:
+        offset = instant.astimezone(ZoneInfo(time_zone)).utcoffset()
+    except (ZoneInfoNotFoundError, ValueError):
+        return None
     if offset is None:
         return None
     return coerce_utc_offset_seconds(int(offset.total_seconds()))
@@ -102,6 +113,24 @@ def format_timestamp_in_recorded_timezone(
     recorded_tz = timezone(timedelta(seconds=offset_seconds))
     localized = dt.astimezone(recorded_tz)
     return localized.strftime("%Y-%m-%d %H:%M:%S") + " " + _format_utc_offset_label(offset_seconds)
+
+
+def format_run_timestamp(
+    value: object,
+    *,
+    time_zone: str | None,
+    recorded_utc_offset_seconds: object,
+) -> str | None:
+    """Format a run timestamp in the user's time zone, else the offset stored with the run.
+
+    The zone's offset is taken at the timestamp itself, so summer and winter runs
+    each show their own local time.
+    """
+    zone_offset = utc_offset_seconds_in(time_zone, value) if isinstance(value, str) else None
+    return format_timestamp_in_recorded_timezone(
+        value,
+        zone_offset if zone_offset is not None else recorded_utc_offset_seconds,
+    )
 
 
 def format_duration_mm_ss(seconds: float) -> str:

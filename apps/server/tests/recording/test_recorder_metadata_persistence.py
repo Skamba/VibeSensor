@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from test_support.history_db_lifecycle import run_samples
@@ -49,19 +50,28 @@ def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
     assert metadata.car.car_type == "sedan"
 
 
-def test_run_metadata_captures_recorded_utc_offset(
+@pytest.mark.parametrize(
+    ("time_zone", "start_time_utc", "expected_offset_s"),
+    [
+        pytest.param("Europe/Amsterdam", "2026-10-04T08:52:51Z", 7200, id="cest-summer"),
+        pytest.param("Europe/Amsterdam", "2026-01-15T08:00:00Z", 3600, id="cet-winter"),
+        pytest.param(None, "2026-10-04T08:52:51Z", None, id="unknown-zone-is-utc"),
+    ],
+)
+def test_run_metadata_records_the_users_time_zone_offset_not_the_servers(
     make_logger,
-    monkeypatch: pytest.MonkeyPatch,
+    time_zone: str | None,
+    start_time_utc: str,
+    expected_offset_s: int | None,
 ) -> None:
-    logger = make_logger()
-    monkeypatch.setattr(
-        "vibesensor.recording._recorder_types.current_utc_offset_seconds",
-        lambda: 7200,
+    """The Pi image runs Europe/London; a Dutch user's run must carry +02:00 in summer."""
+    logger = make_logger(
+        ui_preferences=SimpleNamespace(language="en", time_zone=time_zone),
     )
 
-    metadata = _build_run_metadata_record(logger, "run-1", "2026-01-01T00:00:00Z")
+    metadata = _build_run_metadata_record(logger, "run-1", start_time_utc)
 
-    assert metadata.recorded_utc_offset_seconds == 7200
+    assert metadata.recorded_utc_offset_seconds == expected_offset_s
 
 
 def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:

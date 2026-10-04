@@ -183,7 +183,7 @@ def _run_pipeline(
         gps_monitor=observed_speed(gps_monitor),
         processor=processor,
         history_db=history_db,
-        language_reader=SimpleNamespace(language="en"),
+        ui_preferences=SimpleNamespace(language="en", time_zone=None),
     )
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=256)
     proto.connection_made(_FakeTransport())

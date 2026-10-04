@@ -137,6 +137,17 @@ export interface components {
             hz?: number;
             snr_ratio?: number;
         };
+        /** The browser's clock and IANA time zone, reported when the UI connects. */
+        BrowserClockRequest: {
+            epoch_ms: number;
+            time_zone?: string | null;
+        };
+        /** What the server did with the reported clock, and the stored time zone. */
+        BrowserClockResponse: {
+            action: "stepped" | "within_threshold" | "ntp_synchronized" | "sync_state_unknown" | "recording" | "already_stepped" | "not_permitted";
+            offset_s: number;
+            time_zone: string | null;
+        };
         /** One car profile as persisted in the settings snapshot and served over HTTP. */
         CarConfigPayload: {
             aspects: components["schemas"]["AnalysisSettingsPayload"];

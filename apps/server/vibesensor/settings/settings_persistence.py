@@ -91,6 +91,7 @@ class SettingsPersistenceCoordinator:
             self._speed_source_state.config = SpeedSourceConfig.from_dict(snapshot)
             self._ui_preferences_state.language = snapshot["language"]
             self._ui_preferences_state.speed_unit = snapshot["speedUnit"]
+            self._ui_preferences_state.time_zone = snapshot["timeZone"]
 
             self._sensor_state.sensors = {
                 sensor_id: SensorConfig.from_dict(sensor_id, value)
@@ -105,6 +106,7 @@ class SettingsPersistenceCoordinator:
                 **self._speed_source_state.config.to_dict(),
                 "language": self._ui_preferences_state.language,
                 "speedUnit": self._ui_preferences_state.speed_unit,
+                "timeZone": self._ui_preferences_state.time_zone,
                 "sensorsByMac": {
                     sensor_id: config.to_dict()
                     for sensor_id, config in self._sensor_state.sensors.items()

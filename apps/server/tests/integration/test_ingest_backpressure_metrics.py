@@ -191,7 +191,7 @@ def _build_smoke_context(history_db: HistoryDB) -> _IngestSmokeContext:
         gps_monitor=observed_speed(gps_monitor),
         processor=processor,
         history_db=history_db,
-        language_reader=SimpleNamespace(language="en"),
+        ui_preferences=SimpleNamespace(language="en", time_zone=None),
         ingest_diagnostics=ingest_diagnostics,
     )
     proto = DataDatagramProtocol(

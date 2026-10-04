@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from vibesensor._version import __version__
-from vibesensor.common.time_utils import format_timestamp_in_recorded_timezone
+from vibesensor.common.time_utils import format_run_timestamp
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.i18n import normalize_lang, resolve_i18n, tr
@@ -278,14 +278,19 @@ def build_report_view(
     metadata: RunMetadata,
     *,
     lang: str | None = None,
+    time_zone: str | None = None,
 ) -> ReportView:
-    """Build the full report view for one stored run in ``lang`` (default: the run's)."""
+    """Build the full report view for one stored run in ``lang`` (default: the run's).
+
+    Times show in IANA ``time_zone`` (the user's) when given, else in the offset
+    recorded with the run.
+    """
     ctx = _Ctx(normalize_lang(lang or analysis.get("lang") or metadata.language))
     diagnosis = analysis["diagnosis"]
     return ReportView(
         lang=ctx.lang,
         title=ctx.t("REPORT_TITLE"),
-        header=_header(ctx, analysis, metadata),
+        header=_header(ctx, analysis, metadata, time_zone),
         owner=_owner_page(ctx, analysis, diagnosis),
         mechanic=_mechanic_page(ctx, analysis, metadata, diagnosis),
         quality=_quality(ctx, analysis, metadata),
@@ -388,7 +393,12 @@ def _car_name(ctx: _Ctx, metadata: RunMetadata) -> str:
     return name or car_type or ctx.t("VALUE_UNKNOWN")
 
 
-def _header(ctx: _Ctx, analysis: AnalysisSummary, metadata: RunMetadata) -> tuple[Fact, ...]:
+def _header(
+    ctx: _Ctx,
+    analysis: AnalysisSummary,
+    metadata: RunMetadata,
+    time_zone: str | None,
+) -> tuple[Fact, ...]:
     speeds = analysis["speed_stats"]
     unknown = ctx.t("VALUE_UNKNOWN")
     return (
@@ -396,9 +406,10 @@ def _header(ctx: _Ctx, analysis: AnalysisSummary, metadata: RunMetadata) -> tupl
         Fact(ctx.t("HEADER_TIRES"), _tire_size(metadata) or unknown),
         Fact(
             ctx.t("HEADER_DATE"),
-            format_timestamp_in_recorded_timezone(
+            format_run_timestamp(
                 analysis.get("start_time_utc") or metadata.start_time_utc,
-                metadata.recorded_utc_offset_seconds,
+                time_zone=time_zone,
+                recorded_utc_offset_seconds=metadata.recorded_utc_offset_seconds,
             )
             or unknown,
         ),

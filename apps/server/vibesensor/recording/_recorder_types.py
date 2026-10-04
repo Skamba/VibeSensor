@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from vibesensor.common.time_utils import current_utc_offset_seconds
 from vibesensor.recording.lifecycle_state import MAX_RECORDING_DURATION_S
 from vibesensor.recording.run_metadata_builder import (
     build_run_metadata,
@@ -72,8 +71,7 @@ def _build_run_metadata_record(
         active_car_snapshot=run_context.car,
         raw_capture_manifest=finalize_registry.manifest_for_run(run_id),
         raw_capture_finalize=finalize_registry.finalize_for_run(run_id),
-        language_reader=recorder._language_reader,
-        recorded_utc_offset_seconds=current_utc_offset_seconds(),
+        ui_preferences=recorder._ui_preferences,
         sensor_snapshots=session.run_sensor_snapshots_for_run(run_id),
         guided_phases=session.guided_phases_for_run(run_id),
     )

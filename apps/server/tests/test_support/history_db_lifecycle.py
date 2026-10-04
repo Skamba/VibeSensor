@@ -80,6 +80,7 @@ def make_settings_snapshot() -> SettingsSnapshotPayload:
         "staleTimeoutS": 10.0,
         "language": "en",
         "speedUnit": "kmh",
+        "timeZone": None,
         "sensorsByMac": {},
     }
 

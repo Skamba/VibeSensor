@@ -211,7 +211,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(
         history_db=history_db,
-        language_reader=SimpleNamespace(language="nl"),
+        ui_preferences=SimpleNamespace(language="nl", time_zone=None),
     )
 
     snapshot = _started_snapshot_with_sample(logger)

@@ -1,4 +1,4 @@
-"""Focused persisted UI language and units preferences."""
+"""Focused persisted UI language, units and time-zone preferences."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from threading import RLock
 from typing import get_args
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from vibesensor.settings.car_settings import _UpdateWithRollback
 from vibesensor.settings.settings_transaction import log_settings_change
@@ -31,10 +32,23 @@ class UiPreferencesState:
 
     language: LanguageCode = "en"
     speed_unit: SpeedUnitCode = "kmh"
+    time_zone: str | None = None
+    """The user's IANA time zone, as reported by the browser; ``None`` until known."""
+
+
+def validated_time_zone(value: object) -> str | None:
+    """Return *value* when it names an IANA time zone this system knows, else ``None``."""
+    if not isinstance(value, str) or not value or len(value) > 64:
+        return None
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError):
+        return None
+    return value
 
 
 class UiPreferencesService:
-    """Persisted language and speed-unit preferences."""
+    """Persisted language, speed-unit and time-zone preferences."""
 
     __slots__ = ("_lock", "_state", "_update_with_rollback")
 
@@ -101,4 +115,34 @@ class UiPreferencesService:
                 after=self._state.speed_unit,
             ),
             result=lambda: self._state.speed_unit,
+        )
+
+    @property
+    def time_zone(self) -> str | None:
+        with self._lock:
+            return self._state.time_zone
+
+    def set_time_zone(self, value: str) -> str | None:
+        """Store the user's IANA time zone; reports format run times in it."""
+        time_zone = validated_time_zone(value)
+        if time_zone is None:
+            raise ValueError(f"unknown IANA time zone: {value!r}")
+
+        def _apply(previous: str | None) -> bool:
+            if previous == time_zone:
+                return False
+            self._state.time_zone = time_zone
+            return True
+
+        return self._update_with_rollback(
+            snapshot=lambda: self._state.time_zone,
+            apply=_apply,
+            restore=lambda previous: setattr(self._state, "time_zone", previous),
+            audit_log=lambda previous: log_settings_change(
+                LOGGER,
+                action="set_time_zone",
+                before=previous,
+                after=self._state.time_zone,
+            ),
+            result=lambda: self._state.time_zone,
         )

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
+from vibesensor.web.browser_clock import create_browser_clock_routes
 from vibesensor.web.car_library import create_car_library_routes
 from vibesensor.web.clients import create_client_routes
 from vibesensor.web.health import create_health_routes
@@ -21,6 +22,7 @@ from vibesensor.web.updates import create_update_routes
 from vibesensor.web.websocket import create_websocket_routes
 
 if TYPE_CHECKING:
+    from vibesensor.clock.browser_clock import BrowserClockCorrector
     from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.ingest.udp_control_tx import UDPControlPlane
@@ -71,6 +73,7 @@ class WebServices:
     export_service: ProjectedHistoryExportService
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
+    browser_clock: BrowserClockCorrector
 
 
 def create_router(services: WebServices) -> APIRouter:
@@ -99,6 +102,7 @@ def create_router(services: WebServices) -> APIRouter:
         ),
     )
     router.include_router(create_ui_preferences_routes(s.ui_preferences))
+    router.include_router(create_browser_clock_routes(s.browser_clock, s.ui_preferences))
     router.include_router(create_analysis_settings_routes(s.analysis_settings))
     router.include_router(create_car_library_routes())
     router.include_router(

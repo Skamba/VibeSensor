@@ -13,6 +13,7 @@ from test_support.analysis import summarize_mappings
 from test_support.persisted_analysis import make_persisted_analysis
 
 from vibesensor.analysis.summarize import summarize_sensor_frames
+from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.records import (
@@ -351,6 +352,7 @@ class FakeState:
         self.health_state.mark_ready()
         self.update_manager = create_autospec(UpdateManager, instance=True)
         self.esp_flash_manager = create_autospec(EspFlashManager, instance=True)
+        self.browser_clock = create_autospec(BrowserClockCorrector, instance=True)
         self.run_service = ProjectedHistoryRunService(
             HistoryRunService(
                 self.history_db,

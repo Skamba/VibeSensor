@@ -37,12 +37,20 @@ class HistoryReportPdf:
 class HistoryReportService:
     """Build (and cache) the PDF report of one stored run."""
 
-    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer")
+    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer", "_time_zone")
 
-    def __init__(self, history_db: HistoryDB, *, pdf_renderer: PdfRendererFn) -> None:
+    def __init__(
+        self,
+        history_db: HistoryDB,
+        *,
+        pdf_renderer: PdfRendererFn,
+        time_zone: Callable[[], str | None] = lambda: None,
+    ) -> None:
         self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
         self._pdf_renderer = pdf_renderer
+        # The user's IANA zone (reported by the browser); run times render in it.
+        self._time_zone = time_zone
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
         """Render the run's report in the requested language (default: the run's)."""
@@ -53,10 +61,11 @@ class HistoryReportService:
                 "Report data unavailable for this run. Re-analyze to regenerate the PDF."
             )
         lang = normalize_lang(requested_lang or analysis.language or run.metadata.language)
+        time_zone = self._time_zone()
         pdf = await self._pdf_cache.get_or_build(
-            (run_id, lang, run.analysis_completed_at),
+            (run_id, lang, run.analysis_completed_at, time_zone),
             lambda: self._pdf_renderer(
-                build_report_view(analysis.payload, run.metadata, lang=lang)
+                build_report_view(analysis.payload, run.metadata, lang=lang, time_zone=time_zone)
             ),
         )
         return HistoryReportPdf(content=pdf, filename=f"{safe_filename(run_id)}_report.pdf")

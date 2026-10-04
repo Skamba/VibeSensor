@@ -71,8 +71,10 @@ def test_server_systemd_runs_packaged_server_with_narrow_steady_state_privileges
         "/var/log/vibesensor",
         "__VENV_DIR__",
     }
-    assert shlex.split(_only_value(service, "AmbientCapabilities")) == ["CAP_NET_BIND_SERVICE"]
-    assert shlex.split(_only_value(service, "CapabilityBoundingSet")) == ["CAP_NET_BIND_SERVICE"]
+    # Port 80 and stepping the RTC-less clock (vibesensor.clock); nothing else.
+    expected_caps = ["CAP_NET_BIND_SERVICE", "CAP_SYS_TIME"]
+    assert shlex.split(_only_value(service, "AmbientCapabilities")) == expected_caps
+    assert shlex.split(_only_value(service, "CapabilityBoundingSet")) == expected_caps
     assert "CAP_SYS_ADMIN" not in _only_value(service, "CapabilityBoundingSet")
 
     prestart_commands = [shlex.split(value) for value in service["ExecStartPre"]]

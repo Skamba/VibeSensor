@@ -229,7 +229,7 @@ async def test_report_service_renders_in_the_requested_language() -> None:
 @pytest.mark.asyncio
 async def test_report_pdf_cache_retries_after_build_failure() -> None:
     cache = HistoryReportPdfCache()
-    cache_key = ("run-1", "en", None)
+    cache_key = ("run-1", "en", None, None)
     calls = 0
 
     def _build() -> bytes:
@@ -260,7 +260,7 @@ async def test_report_pdf_cache_prunes_distinct_failed_build_locks() -> None:
         raise RuntimeError("boom")
 
     for index in range(REPORT_PDF_CACHE_MAX_ENTRIES * 3):
-        cache_key = (f"run-{index}", "en", None)
+        cache_key = (f"run-{index}", "en", None, None)
         with pytest.raises(RuntimeError, match="boom"):
             await cache.get_or_build(cache_key, _build)
 
@@ -271,7 +271,7 @@ async def test_report_pdf_cache_prunes_distinct_failed_build_locks() -> None:
 @pytest.mark.asyncio
 async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> None:
     cache = HistoryReportPdfCache()
-    cache_key = ("run-concurrent", "en", None)
+    cache_key = ("run-concurrent", "en", None, None)
     first_build_started = threading.Event()
     release_first_build = threading.Event()
     counter_lock = threading.Lock()
@@ -315,7 +315,7 @@ async def test_report_pdf_cache_serializes_concurrent_callers_for_same_key() -> 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
     cache = HistoryReportPdfCache()
-    keys = [(f"run-{index}", "en", None) for index in range(REPORT_PDF_CACHE_MAX_ENTRIES + 1)]
+    keys = [(f"run-{index}", "en", None, None) for index in range(REPORT_PDF_CACHE_MAX_ENTRIES + 1)]
 
     for index, key in enumerate(keys[:-1]):
         built = await cache.get_or_build(key, lambda index=index: f"%PDF-{index}".encode())
@@ -342,7 +342,7 @@ async def test_report_pdf_cache_evicts_lru_entries_via_public_api() -> None:
 @pytest.mark.asyncio
 async def test_report_pdf_cache_evicts_lru_entries_to_stay_within_byte_budget() -> None:
     cache = HistoryReportPdfCache(max_entries=10, max_bytes=10)
-    keys = [(f"run-{index}", "en", None) for index in range(3)]
+    keys = [(f"run-{index}", "en", None, None) for index in range(3)]
 
     for index, key in enumerate(keys):
         assert (
@@ -361,7 +361,7 @@ async def test_report_pdf_cache_evicts_lru_entries_to_stay_within_byte_budget() 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_skips_oversized_single_pdf() -> None:
     cache = HistoryReportPdfCache(max_entries=10, max_bytes=4)
-    cache_key = ("run-big", "en", None)
+    cache_key = ("run-big", "en", None, None)
 
     pdf = await cache.get_or_build(cache_key, lambda: b"12345")
 

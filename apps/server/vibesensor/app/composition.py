@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.app.lifecycle import LifecycleRuntime
+from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.dsp.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -191,7 +192,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         history_db=history,
         settings_reader=settings.settings_reader,
         sensor_metadata_reader=settings.sensor_settings,
-        language_reader=settings.ui_preferences,
+        ui_preferences=settings.ui_preferences,
         ingest_diagnostics=ingest_diagnostics,
     )
     outdated = history.requeue_outdated_analyses()
@@ -249,10 +250,15 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             HistoryRunService(history),
             current_car_reader=settings.settings_reader,
         ),
-        report_service=HistoryReportService(history, pdf_renderer=_render_report_pdf),
+        report_service=HistoryReportService(
+            history,
+            pdf_renderer=_render_report_pdf,
+            time_zone=lambda: settings.ui_preferences.time_zone,
+        ),
         export_service=ProjectedHistoryExportService(HistoryExportService(history)),
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
+        browser_clock=BrowserClockCorrector(recording=lambda: run_recorder.enabled),
     )
     settings.speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, web=web)

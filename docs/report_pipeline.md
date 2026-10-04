@@ -44,7 +44,9 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
 ## Pages
 
 1. **Owner page**:
-   - Header: car, tires, date, speeds driven, duration, and sensors.
+   - Header: car, tires, date, speeds driven, duration, and sensors. The date
+     shows in the user's time zone (reported by the browser), else in the
+     offset recorded with the run.
    - Verdict box with exactly one confidence expression: the level word plus
      its action meaning (Strong: go fix it; Moderate: do the cheap confirming
      check first; Weak: don't buy parts, record the test again). No
