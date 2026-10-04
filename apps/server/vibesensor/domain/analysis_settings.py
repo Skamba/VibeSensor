@@ -46,12 +46,16 @@ ANALYSIS_SETTINGS_BOUNDS: dict[str, tuple[float, float]] = {
     "tire_deflection_factor": (0.85, 1.0),
 }
 
+ANALYSIS_SETTINGS_REFERENCE_KEYS: tuple[str, ...] = (
+    "tire_width_mm",
+    "tire_aspect_pct",
+    "rim_in",
+    "final_drive_ratio",
+    "current_gear_ratio",
+)
+"""Car references with no default: missing stays missing (0.0 in the snapshot)."""
+
 ANALYSIS_SETTINGS_DEFAULTS: dict[str, float] = {
-    "tire_width_mm": 285.0,
-    "tire_aspect_pct": 30.0,
-    "rim_in": 21.0,
-    "final_drive_ratio": 3.08,
-    "current_gear_ratio": 0.64,
     "speed_uncertainty_pct": 1.0,
     "tire_diameter_uncertainty_pct": 1.0,
     "final_drive_uncertainty_pct": 0.1,
@@ -66,6 +70,8 @@ class AnalysisSettingsSnapshot:
     use-case logic.
 
     Behavioral tire geometry access goes through ``order_reference_spec``.
+    Tire and ratio fields are 0.0 when the car does not provide them; only the
+    tuning values (uncertainties, tire deflection) have defaults.
     """
 
     # -- Validation constants (single source of truth) -------------------------

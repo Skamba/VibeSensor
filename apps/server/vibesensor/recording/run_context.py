@@ -39,8 +39,7 @@ def order_reference_context_complete(metadata: RunMetadata) -> bool:
         raw_sample_rate_hz
         and tire_circumference_m
         and order_reference_spec is not None
-        and order_reference_spec.is_complete
-        and order_reference_spec.has_engine_reference
+        and order_reference_spec.supports_engine_reference
     )
 
 

@@ -188,4 +188,11 @@ export const DEMO_CAR = {
   name: "Demo Hatch",
   type: "Simulated setup",
   variant: "Audit baseline",
+  aspects: {
+    tire_width_mm: 285,
+    tire_aspect_pct: 30,
+    rim_in: 21,
+    final_drive_ratio: 3.08,
+    current_gear_ratio: 0.64,
+  },
 } as const;

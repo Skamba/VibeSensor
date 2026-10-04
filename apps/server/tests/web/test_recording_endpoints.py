@@ -8,7 +8,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.domain.capture_readiness import CaptureReadiness, CaptureReadinessCheck
+from vibesensor.domain.capture_readiness import (
+    CaptureCapabilities,
+    CaptureReadiness,
+    CaptureReadinessCheck,
+)
 from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 
 
@@ -120,7 +124,7 @@ class TestRecordingStatusEndpoint:
                     CaptureReadinessCheck(
                         check_key="reference_ready",
                         state="fail",
-                        reason_key="active_car_missing",
+                        reason_key="speed_source_missing",
                     ),
                     CaptureReadinessCheck(
                         check_key="capture_ready",
@@ -128,6 +132,9 @@ class TestRecordingStatusEndpoint:
                         reason_key="capture_blocked",
                         details=(("blocking_check", "reference_ready"),),
                     ),
+                ),
+                capabilities=CaptureCapabilities(
+                    wheel="ok", driveline="missing_final_drive", engine="missing"
                 ),
             ),
         )
@@ -141,7 +148,7 @@ class TestRecordingStatusEndpoint:
                 {
                     "check_key": "reference_ready",
                     "state": "fail",
-                    "reason_key": "active_car_missing",
+                    "reason_key": "speed_source_missing",
                     "details": {},
                 },
                 {
@@ -151,6 +158,11 @@ class TestRecordingStatusEndpoint:
                     "details": {"blocking_check": "reference_ready"},
                 },
             ],
+            "capabilities": {
+                "wheel": "ok",
+                "driveline": "missing_final_drive",
+                "engine": "missing",
+            },
         }
 
 

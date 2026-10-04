@@ -35,61 +35,40 @@ def build_rotational_speeds_payload(
     measured_engine_rpm: float | None = None,
     analysis_settings: AnalysisSettingsSnapshot,
 ) -> RotationalSpeedsPayload:
-    """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
-    measured_engine_available = isinstance(measured_engine_rpm, NUMERIC_TYPES) and not isinstance(
-        measured_engine_rpm, bool
-    )
-    measured_engine_value = (
+    """Assemble the ``rotational_speeds`` sub-dict for the WS payload.
+
+    Each family is independent: a missing reference blanks only its own
+    family, and a fresh measured engine RPM (OBD-II) drives the engine values.
+    """
+    measured_rpm = (
         float(measured_engine_rpm)
-        if measured_engine_available and measured_engine_rpm is not None
+        if isinstance(measured_engine_rpm, NUMERIC_TYPES)
+        and not isinstance(measured_engine_rpm, bool)
+        and measured_engine_rpm > 0
         else None
     )
-    if speed_mps is None or speed_mps <= 0:
-        reason: str | None = "speed_unavailable"
-        orders_hz = None
-    else:
-        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
-        reason = "invalid_vehicle_settings" if orders_hz is None else None
+    orders_hz = vehicle_orders_hz(
+        speed_mps=speed_mps,
+        settings=analysis_settings,
+        measured_engine_rpm=measured_rpm,
+    )
+    missing_reason = (
+        "speed_unavailable" if speed_mps is None or speed_mps <= 0 else "missing_reference"
+    )
 
-    if reason is not None:
-        _component: RotationalSpeedValuePayload = {
-            "rpm": None,
-            "mode": "calculated",
-            "reason": reason,
-        }
-        return {
-            "basis_speed_source": basis_speed_source,
-            "wheel": {**_component},
-            "driveshaft": {**_component},
-            "engine": (
-                {
-                    "rpm": measured_engine_value,
-                    "mode": "measured",
-                    "reason": None,
-                }
-                if measured_engine_available
-                else {**_component}
-            ),
-            "order_bands": None,
-        }
+    def _value(hz: float | None, *, mode: str) -> RotationalSpeedValuePayload:
+        if hz is None:
+            return {"rpm": None, "mode": "calculated", "reason": missing_reason}
+        return {"rpm": hz * SECONDS_PER_MINUTE, "mode": mode, "reason": None}
 
-    assert orders_hz is not None
-    wheel_rpm = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
-    drive_rpm = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
-    engine_rpm = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
-
+    bands = build_order_bands(orders_hz)
     return {
         "basis_speed_source": basis_speed_source,
-        "wheel": {"rpm": wheel_rpm, "mode": "calculated", "reason": None},
-        "driveshaft": {"rpm": drive_rpm, "mode": "calculated", "reason": None},
-        "engine": (
-            {
-                "rpm": measured_engine_value,
-                "mode": "measured",
-                "reason": None,
-            }
-            if measured_engine_available
-            else {"rpm": engine_rpm, "mode": "calculated", "reason": None}
+        "wheel": _value(orders_hz.get("wheel_hz"), mode="calculated"),
+        "driveshaft": _value(orders_hz.get("drive_hz"), mode="calculated"),
+        "engine": _value(
+            orders_hz.get("engine_hz"),
+            mode="measured" if measured_rpm is not None else "calculated",
         ),
-        "order_bands": build_order_bands(orders_hz, analysis_settings),
+        "order_bands": bands or None,
     }

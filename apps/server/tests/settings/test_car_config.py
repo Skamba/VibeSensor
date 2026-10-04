@@ -41,6 +41,7 @@ def test_missing_id_gets_generated() -> None:
     assert first.id and second.id and first.id != second.id
 
 
-def test_invalid_aspect_is_replaced_by_a_number() -> None:
+def test_invalid_reference_aspect_is_dropped_not_defaulted() -> None:
     car = car_from_persistence_dict({"aspects": {"tire_width_mm": "not_a_number"}})
-    assert isinstance(car.aspects.get("tire_width_mm"), (int, float))
+    assert "tire_width_mm" not in car.aspects
+    assert car.order_reference_spec is None

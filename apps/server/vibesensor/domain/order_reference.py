@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import TypedDict
 
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
 __all__ = [
+    "OrderFrequencies",
     "OrderReferenceSpec",
     "order_reference_mapping_from_spec",
     "wheel_hz_from_speed_kmh",
@@ -33,6 +35,17 @@ def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> fl
     if not math.isfinite(speed_kmh) or speed_kmh <= 0:
         return None
     return _wheel_hz_from_speed_mps(speed_kmh * _KMH_TO_MPS, tire_circumference_m)
+
+
+class OrderFrequencies(TypedDict, total=False):
+    """Rotational order frequencies (Hz) per family; a family without its references is absent."""
+
+    wheel_hz: float
+    wheel_uncertainty_pct: float
+    drive_hz: float
+    drive_uncertainty_pct: float
+    engine_hz: float
+    engine_uncertainty_pct: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,11 +96,6 @@ class OrderReferenceSpec:
         return self.supports_driveshaft_reference and self.has_engine_reference
 
     @property
-    def is_complete(self) -> bool:
-        """Whether all required fields are present for order analysis."""
-        return self.supports_driveshaft_reference
-
-    @property
     def wheel_uncertainty_pct(self) -> float:
         return _combined_relative_uncertainty(
             self.speed_uncertainty_pct / 100.0,
@@ -115,7 +123,7 @@ class OrderReferenceSpec:
     def engine_hz(self, speed_mps: float) -> float | None:
         """Engine rotational frequency (Hz) from vehicle speed (m/s)."""
         whz = self.wheel_hz(speed_mps)
-        if whz is None or not self.is_complete or not self.has_engine_reference:
+        if whz is None or not self.supports_engine_reference:
             return None
         result = whz * self.final_drive_ratio * self.current_gear_ratio
         return result if math.isfinite(result) else None
@@ -167,28 +175,31 @@ class OrderReferenceSpec:
         engine_rpm = engine_hz * 60.0
         return engine_rpm if math.isfinite(engine_rpm) else None
 
-    def orders_hz_from_speed_mps(self, speed_mps: float | None) -> dict[str, float] | None:
+    def orders_hz_from_speed_mps(self, speed_mps: float | None) -> OrderFrequencies:
+        """Order frequencies for each family the references support.
+
+        Wheel orders need the tire, driveshaft orders also the final drive, and
+        engine orders also the gear ratio; a missing reference drops only its
+        own family.
+        """
+        orders: OrderFrequencies = {}
         if speed_mps is None or not math.isfinite(speed_mps) or speed_mps <= 0:
-            return None
-        if not self.supports_engine_reference:
-            return None
+            return orders
         wheel_hz = self.wheel_hz_from_speed_mps(speed_mps)
         if wheel_hz is None:
-            return None
+            return orders
+        orders["wheel_hz"] = wheel_hz
+        orders["wheel_uncertainty_pct"] = self.wheel_uncertainty_pct
         drive_hz = self.driveshaft_hz_from_wheel_hz(wheel_hz)
+        if drive_hz is None or drive_hz <= 0:
+            return orders
+        orders["drive_hz"] = drive_hz
+        orders["drive_uncertainty_pct"] = self.drive_uncertainty_pct
         engine_hz = self.engine_hz_from_wheel_hz(wheel_hz)
-        if drive_hz is None or engine_hz is None:
-            return None
-        if not all(math.isfinite(v) and v > 0 for v in (wheel_hz, drive_hz, engine_hz)):
-            return None
-        return {
-            "wheel_hz": wheel_hz,
-            "drive_hz": drive_hz,
-            "engine_hz": engine_hz,
-            "wheel_uncertainty_pct": self.wheel_uncertainty_pct,
-            "drive_uncertainty_pct": self.drive_uncertainty_pct,
-            "engine_uncertainty_pct": self.engine_uncertainty_pct,
-        }
+        if engine_hz is not None and engine_hz > 0:
+            orders["engine_hz"] = engine_hz
+            orders["engine_uncertainty_pct"] = self.engine_uncertainty_pct
+        return orders
 
 
 def _combined_relative_uncertainty(*parts: float) -> float:
@@ -207,14 +218,17 @@ def order_reference_mapping_from_spec(spec: OrderReferenceSpec) -> dict[str, flo
         "tire_width_mm": boundary_tire.width_mm,
         "tire_aspect_pct": boundary_tire.aspect_pct,
         "rim_in": boundary_tire.rim_in,
-        "final_drive_ratio": spec.final_drive_ratio,
-        "current_gear_ratio": spec.current_gear_ratio,
         "speed_uncertainty_pct": spec.speed_uncertainty_pct,
         "tire_diameter_uncertainty_pct": spec.tire_diameter_uncertainty_pct,
         "final_drive_uncertainty_pct": spec.final_drive_uncertainty_pct,
         "gear_uncertainty_pct": spec.gear_uncertainty_pct,
         "tire_deflection_factor": boundary_tire.deflection_factor,
     }
+    # A missing ratio stays missing rather than turning into 0.0.
+    if spec.final_drive_ratio > 0:
+        payload["final_drive_ratio"] = spec.final_drive_ratio
+    if spec.current_gear_ratio > 0:
+        payload["current_gear_ratio"] = spec.current_gear_ratio
     setup = spec.tire_setup
     if setup.is_staggered or setup.default_axle_for_speed != "rear":
         payload.update(

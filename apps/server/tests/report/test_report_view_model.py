@@ -227,6 +227,19 @@ def test_missing_final_drive_leaves_only_what_it_needs_untested(measured_rpm: bo
         assert "Engine: not testable: no final-drive ratio" in ruled_out
 
 
+def test_missing_top_gear_leaves_only_the_engine_untested() -> None:
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
+    summary = run_analysis(samples, standard_metadata(current_gear_ratio=None))
+    checks = {
+        check["source"]: (check["status"], check["reason"])
+        for check in summary["diagnosis"]["source_checks"]
+    }
+
+    assert checks["wheel/tire"] == ("ruled_out", "no_matching_order")
+    assert checks["driveline"] == ("ruled_out", "no_matching_order")
+    assert checks["engine"] == ("not_testable", "no_engine_reference")
+
+
 @pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])
 def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
     measured_rpm: bool,

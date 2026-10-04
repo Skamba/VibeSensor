@@ -17,9 +17,9 @@ export interface components {
         };
         /** Structured partial payload for analysis-setting updates and car aspects. */
         AnalysisSettingsPayload: {
-            current_gear_ratio?: number;
+            current_gear_ratio?: number | null;
             default_axle_for_speed?: components["schemas"]["TireSpeedAxle"];
-            final_drive_ratio?: number;
+            final_drive_ratio?: number | null;
             final_drive_uncertainty_pct?: number;
             front_rim_in?: number;
             front_tire_aspect_pct?: number;
@@ -57,9 +57,9 @@ export interface components {
         };
         /** Response body reflecting the current validated analysis settings. */
         AnalysisSettingsResponse: {
-            current_gear_ratio: number;
+            current_gear_ratio?: number | null;
             default_axle_for_speed: "front" | "rear" | "average";
-            final_drive_ratio: number;
+            final_drive_ratio?: number | null;
             final_drive_uncertainty_pct: number;
             front_rim_in?: number | null;
             front_tire_aspect_pct?: number | null;
@@ -68,12 +68,12 @@ export interface components {
             rear_rim_in?: number | null;
             rear_tire_aspect_pct?: number | null;
             rear_tire_width_mm?: number | null;
-            rim_in: number;
+            rim_in?: number | null;
             speed_uncertainty_pct: number;
-            tire_aspect_pct: number;
+            tire_aspect_pct?: number | null;
             tire_deflection_factor: number;
             tire_diameter_uncertainty_pct: number;
-            tire_width_mm: number;
+            tire_width_mm?: number | null;
         };
         /** Persisted analysis summary (``runs.analysis_json``) and its HTTP response schema. */
         AnalysisSummary: {
@@ -160,7 +160,8 @@ export interface components {
         };
         /** A gearbox option from the car library (gear ratios). */
         CarLibraryGearboxEntry: {
-            final_drive_ratio: number;
+            /** `null` when the library has no final drive for this gearbox. */
+            final_drive_ratio: number | null;
             final_drive_ratio_confidence?: string | null;
             gear_ratios?: number[] | null;
             gear_ratios_confidence?: string | null;
@@ -1009,6 +1010,12 @@ export interface components {
         };
         ProcessingFilterId: "median_3_sample_time_domain";
         ProcessingProfile: "live_display" | "diagnostic_raw" | "diagnostic_filtered";
+        /** Which order families the active car can test; informational, never blocks capture. */
+        RecordingCaptureCapabilitiesResponse: {
+            driveline: "ok" | "missing_final_drive" | "missing_tire";
+            engine: "measured" | "estimated_top_gear" | "missing";
+            wheel: "ok" | "missing_tire";
+        };
         /** One capture-readiness checklist item returned by the recording status route. */
         RecordingCaptureReadinessCheckResponse: {
             check_key: string;
@@ -1020,6 +1027,8 @@ export interface components {
         };
         /** Backend-owned live capture-readiness summary for idle/pre-record states. */
         RecordingCaptureReadinessResponse: {
+            /** `null` without an active car. */
+            capabilities?: components["schemas"]["RecordingCaptureCapabilitiesResponse"] | null;
             checks: components["schemas"]["RecordingCaptureReadinessCheckResponse"][];
             is_ready: boolean;
         };

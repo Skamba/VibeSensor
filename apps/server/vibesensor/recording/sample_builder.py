@@ -52,11 +52,16 @@ def build_sample_records(
     """Build one batch of typed sample records from all active clients."""
 
     order_reference_spec = order_reference_spec_from_snapshot(analysis_settings_snapshot)
+    # Unknown ratios are 0.0 in the snapshot; samples record them as missing.
     final_drive_ratio = (
-        order_reference_spec.final_drive_ratio if order_reference_spec is not None else None
+        order_reference_spec.final_drive_ratio
+        if order_reference_spec is not None and order_reference_spec.final_drive_ratio > 0
+        else None
     )
     gear_ratio = (
-        order_reference_spec.current_gear_ratio if order_reference_spec is not None else None
+        order_reference_spec.current_gear_ratio
+        if order_reference_spec is not None and order_reference_spec.current_gear_ratio > 0
+        else None
     )
     sensors_by_mac = sensor_metadata_reader.get_sensors() if sensor_metadata_reader else {}
 
@@ -164,10 +169,8 @@ def build_sample_records(
                 speed_source=speed_source,
                 engine_rpm=engine_rpm,
                 engine_rpm_source=engine_rpm_source,
-                gear=gear_ratio if isinstance(gear_ratio, float) else None,
-                final_drive_ratio=(
-                    final_drive_ratio if isinstance(final_drive_ratio, float) else None
-                ),
+                gear=gear_ratio,
+                final_drive_ratio=final_drive_ratio,
                 accel_x_g=accel_x_g,
                 accel_y_g=accel_y_g,
                 accel_z_g=accel_z_g,

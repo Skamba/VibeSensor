@@ -16,7 +16,6 @@ from fastapi.testclient import TestClient
 
 from vibesensor.settings.car_library import (
     get_brands,
-    get_exact_configurations_for_variant,
     get_types_for_brand,
 )
 from vibesensor.web.car_library import create_car_library_routes
@@ -75,35 +74,30 @@ def test_every_bundled_brand_type_and_model_passes_http_response_models(
     assert model_count > 0
 
 
-def test_models_without_a_driven_final_drive_are_served_without_gearboxes(
+def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_drive(
     car_library_client: TestClient,
 ) -> None:
-    """Models whose exact rows leave the final drive unresolved still return 200.
+    """Rows that leave the final drive unresolved still offer their gearbox.
 
     Canonical rows keep an unpublished or unencodable final drive unresolved
-    instead of guessing it, so the picker cannot build a gearbox option. The
-    API still serves the model's tires and variants with ``gearboxes == []``
-    so clients can fall back to manual gearbox entry.
+    instead of guessing it. The gearbox is served with ``final_drive_ratio:
+    null`` (and no final-drive confidence) next to its top gear, so the car
+    can be saved and the driveline order reports "not testable".
     """
-    gearbox_less_models: list[str] = []
+    unknown_fd_models: list[str] = []
     for brand, car_type in _bundled_brand_types():
         response = car_library_client.get(
             "/api/car-library/models", params={"brand": brand, "type": car_type}
         )
         assert response.status_code == 200, f"{brand}/{car_type}: {response.text}"
         for model in response.json()["models"]:
-            if model["gearboxes"]:
-                continue
-            gearbox_less_models.append(model["model"])
-            assert model["tire_options"], model["model"]
-            assert model["variants"], model["model"]
             for variant in model["variants"]:
-                assert variant["gearboxes"] == [], (model["model"], variant["name"])
-                configs = get_exact_configurations_for_variant(
-                    brand, car_type, model["model"], variant["name"]
-                )
-                assert configs, (model["model"], variant["name"])
-                assert all(config.driven_final_drive_ratio is None for config in configs)
+                assert variant["gearboxes"], (model["model"], variant["name"])
+                for gearbox in variant["gearboxes"]:
+                    assert gearbox["top_gear_ratio"] > 0
+                    if gearbox["final_drive_ratio"] is None:
+                        assert gearbox["final_drive_ratio_confidence"] is None
+                        unknown_fd_models.append(model["model"])
 
     # Audi TT RS Coupe (8S) is one of the rows whose final drive Audi does not publish.
-    assert "TT RS Coupe (8S, 2022)" in gearbox_less_models
+    assert "TT RS Coupe (8S, 2022)" in unknown_fd_models

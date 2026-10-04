@@ -310,8 +310,13 @@ export function summary(
 export function gearboxDetail(
   gearbox: CarLibraryGearbox,
   fmt: FormatNumber,
+  t: Translate,
 ): string {
-  return `FD: ${fmt(gearbox.final_drive_ratio, 2)} · Top Gear: ${fmt(gearbox.top_gear_ratio, 2)}`;
+  const finalDrive =
+    gearbox.final_drive_ratio === null
+      ? t("settings.car.ratio_unknown")
+      : fmt(gearbox.final_drive_ratio, 2);
+  return `FD: ${finalDrive} · Top Gear: ${fmt(gearbox.top_gear_ratio, 2)}`;
 }
 
 export function variantDetail(variant: CarLibraryVariant): string | null {
@@ -323,7 +328,8 @@ export function variantDetail(variant: CarLibraryVariant): string | null {
 export type CarRequest =
   | {
       ok: true;
-      aspects: Record<string, number | string>;
+      /** A `null` ratio is unknown: the car is saved without it. */
+      aspects: Record<string, number | string | null>;
       status: CarOrderReferenceStatus;
     }
   | { ok: false; focus: "spec-selection" | "gearbox-option" | ManualField };
@@ -358,7 +364,9 @@ export function carRequest(
         current_gear_ratio_confidence:
           gearbox.top_gear_ratio_confidence ?? "unverified",
         final_drive_ratio_confidence:
-          gearbox.final_drive_ratio_confidence ?? "unverified",
+          gearbox.final_drive_ratio === null
+            ? null
+            : (gearbox.final_drive_ratio_confidence ?? "unverified"),
         requires_manual_confirmation:
           gearbox.requires_manual_confirmation ?? true,
         selection_source_status: gearbox.source_status ?? "exact_row",

@@ -12,6 +12,9 @@ target state) and the code.
 - Delete this file (and its links) when the last gap is gone.
 
 WP0 (diagnosis queued fixes: J16, J30, J31, J32, J33, J34) shipped in #4109.
+J09 (variant tire options) shipped in #4110. WP1a (references may be missing:
+J02, J03, J06, J18, J25, the backend half of J01 and the measured-RPM bands of
+J24) shipped in #4115.
 
 Owner decisions that bound the fixes (settled):
 
@@ -59,46 +62,8 @@ Fix:
   Change the placeholders to "e.g. 3.15" / "e.g. 0.67" in grey, or "unknown".
   Show a live "This car can test:" summary next to the form (see J20).
 - **Behaviour:** `manualSpecs` returns tire plus nullable ratios. `canFinish`
-  needs only a valid tire size.
-- **Backend:** `CarAspects` and the create route must accept null
-  `final_drive_ratio` / `current_gear_ratio` (depends on J03).
-
-**J03 [F3] — The server silently fills missing references with defaults.**
-
-Evidence (missing keys become 285/30R21, 3.08, 0.64):
-
-- `car_from_persistence_dict` (`apps/server/vibesensor/settings/car_config.py`)
-  starts from `ANALYSIS_SETTINGS_DEFAULTS`.
-- `analysis_settings_snapshot_from_aspects`
-  (`apps/server/vibesensor/settings/settings_derivation.py`) fills the
-  defaults again for the analysis snapshot.
-- The default values live on `AnalysisSettingsSnapshot`
-  (`apps/server/vibesensor/domain/analysis_settings.py`).
-
-Downstream:
-
-- `OrderReferenceSpec.is_complete` (`domain/order_reference.py`) is always
-  true, so readiness `order_reference_incomplete` (`_reference_check` in
-  `recording/capture_readiness_evaluator.py`), the run `reference_complete`
-  flag (`order_reference_context_complete` in `recording/run_context.py`), the
-  suitability warning (`domain/run_suitability.py`) and the UI's "Needs specs"
-  state (`getCarCompleteness` in `apps/ui/src/car_selection.ts`) never fire.
-- `_source_checks` (`analysis/diagnosis.py`) then reports driveline and engine
-  as `ruled_out` against fictitious ratios.
-
-Fix:
-
-- **Backend:** Split the defaults. Keep the uncertainty and deflection defaults
-  (`*_uncertainty_pct`, `tire_deflection_factor`). Drop the defaults for
-  `tire_width_mm`, `tire_aspect_pct`, `rim_in`, `final_drive_ratio` and
-  `current_gear_ratio`; these stay `None` unless provided. This applies in
-  `car_from_persistence_dict`, in `analysis_settings_snapshot_from_aspects`,
-  and in the run metadata.
-- No migration: existing stored cars keep their persisted values. Cars that
-  were created with untouched defaults cannot be told apart; the release note
-  says to check the car's specs.
-- **Tests:** a car with only a tire gives driveline and engine `not_testable`
-  with reasons `no_drive` / `no_engine`.
+  needs only a valid tire size. The car routes already accept a null ratio
+  (unknown; on an update it clears the stored value).
 
 **J04 — No way to edit a saved car, and the Analysis tab is a dead end.**
 
@@ -127,47 +92,6 @@ Fix:
 - **Backend:** The PUT accepts partial aspects and per-field provenance. When
   the user edits a value, that field's provenance becomes `user_confirmed`.
 
-**J06 — Library variants without a gearbox force the user to invent ratios.**
-
-Evidence:
-
-- `_gearbox_row_from_configuration`
-  (`apps/server/vibesensor/settings/car_library.py`) drops gearboxes without
-  a driven final drive.
-- The picker has 10 such variants (13 rows: Audi 8S TT/TTS/TT RS, 8V RS 3,
-  8Y).
-- The wizard forces manual (`specBranch` in `wizard_model.ts`;
-  `settings.wizard.no_gearboxes`), which means J01.
-
-Fix:
-
-- **Backend:** Serve the gearbox with `final_drive_ratio: null` and its top
-  gear and confidence, instead of dropping it.
-- **UI:** Show it as "7-speed S tronic · final drive unknown". The car saves;
-  the driveline is "couldn't test" until the user edits it.
-- Depends on J01/J03.
-
-**J18 [B2] — Readiness demands references that analysis no longer needs.**
-
-Evidence:
-
-- `_reference_check` (`recording/capture_readiness_evaluator.py`) fails
-  `order_reference_incomplete` when there is no final drive
-  (`OrderReferenceSpec.is_complete` equals `supports_driveshaft_reference`).
-- For OBD it requires `supports_engine_reference` (tire, final drive and
-  gear), even though OBD supplies the RPM itself.
-- Today this is hidden by J03. Once J03 is fixed, every tire-only car is
-  blocked from recording.
-
-Fix:
-
-- **Backend:** Make `reference_ready` require only an active car and a live
-  speed source. The order-reference state moves into a non-blocking
-  `capabilities` field on the readiness payload:
-  `{wheel: ok|missing_tire, driveline: ok|estimated|missing_final_drive,
-  engine: measured|estimated_top_gear|missing}`.
-- For OBD, require only fresh RPM.
-
 **J19 — Start Recording requires a steady ≥ 20 km/h for 8 s.**
 
 Evidence:
@@ -192,22 +116,6 @@ Fix:
   until you stop it or 30 minutes pass."
 
 ### Misleads
-
-**J02 — A new car inherits the active car's aspects.**
-
-Evidence:
-
-- `createAndActivateCar` (`apps/ui/src/pages/cars/cars_store.ts`) merges
-  `composeVehicleSettings(activeCarAspects.value, analysisTuning.value)`
-  under the new car's aspects.
-- `activeCarAspects` (`apps/ui/src/settings_store.ts`) is the defaults merged
-  with the active car.
-
-A second car silently gets the first car's final drive and top gear (or the
-defaults).
-
-Fix: send only the wizard's values plus the uncertainty tuning. Absent keys
-stay absent.
 
 **J07 — Confidence is not shown in the picker, and the review text appears on
 89% of library cars.**
@@ -295,14 +203,14 @@ rotational reference data are ready") and the reason keys in
 
 Fix:
 
-- **UI:** Add a capability line under readiness. It is driven by the J18
-  `capabilities` field and links each item to its fix ("add final drive",
+- **UI:** Add a capability line under readiness. It is driven by the
+  readiness `capabilities` field (`wheel`, `driveline`, `engine`; see
+  [run_lifecycle.md](run_lifecycle.md)) and links each item to its fix ("add final drive",
   "connect OBD-II"):
   "This run can test: Wheels/tires ✓ · Driveline ~ estimated final drive ·
   Engine ~ RPM estimated (top gear only)".
 
-**J24 [F4] — The top-gear assumption is never stated, and the live bands ignore
-OBD RPM.**
+**J24 [F4] — The top-gear assumption is never stated.**
 
 Evidence:
 
@@ -310,8 +218,6 @@ Evidence:
 - The band labels `bands.*` are "Engine 1x".
 - `RPM_ESTIMATED` in `report_i18n.json` reads "RPM: not measured; estimated
   from gear ratio"; the engine ruled-out string does not mention top gear.
-- `vehicle_orders_hz` (`dsp/order_bands.py`) builds engine bands from speed
-  and ratios even when OBD RPM is live.
 - Run samples label the source `estimated_from_speed_and_ratios`
   (`recording/sample_speed_context.py`).
 
@@ -323,18 +229,9 @@ Fix:
 - **Report:** `RPM_ESTIMATED` reads "not measured — estimated from speed
   assuming top gear ({ratio})". The engine ruled-out reads "No match with
   engine orders estimated for top gear; lower gears were not checked."
-- **Backend:** `vehicle_orders_hz` takes measured RPM when it is fresh.
-
-**J25 — Live order bands vanish when any ratio is missing.**
-
-Evidence: `OrderReferenceSpec.orders_hz_from_speed_mps`
-(`domain/order_reference.py`) returns None unless the engine reference is
-supported, so the wheel and driveshaft bands disappear too.
-
-Fix: return each family independently (wheel from the tire; driveshaft from
-the tire and final drive; engine from the gear or measured RPM). The legend
-greys out the missing families with "needs final drive" / "needs top gear or
-OBD-II".
+- The live bands already use fresh OBD-II RPM, and a missing reference blanks
+  only its own family; the legend should grey out the missing families with
+  "needs final drive" / "needs top gear or OBD-II".
 
 **J27 [F1] — Library confidence is ignored in ruled-out verdicts.**
 
@@ -420,16 +317,6 @@ Fix:
 - Add a single "225/45 R18" text input that fills the three tire fields.
 - Add an "I don't know" link that clears the field (needs J01).
 
-**J09 — The variant's tire options come from the first row only.**
-
-Evidence:
-
-- `_library_variant_from_configs` (`settings/car_library.py`).
-- 21 of 334 variants have rows whose tire options differ.
-
-Fix: union the tire options across the variant's rows. De-duplicate by size
-and keep the best confidence.
-
 **J10 — Model fragmentation and launch-year-only rows.**
 
 Evidence:
@@ -504,31 +391,11 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP1a has no dependencies.
-- WP1b depends on WP1a.
-- WP2 depends on WP1a; it can start in parallel and land after it.
-- WP3 depends on WP1a. Its capability line also needs WP1b.
+- WP1b and WP2 have no dependencies.
+- WP3's capability line needs WP1b.
 - WP4 depends on WP1b.
 - WP5 and WP6 are independent.
 - WP7 depends on WP2 and WP4.
-
-### WP1a — References may be missing (backend, foundation)
-
-- **Covers:** J03, J18, J25, plus the backend half of J01/J06 (nullable
-  ratios, serving a gearbox without a final drive).
-- **Changes:**
-  - Drop the reference defaults from `car_from_persistence_dict` and
-    `analysis_settings_snapshot_from_aspects`.
-  - Make the aspects schema accept null.
-  - Readiness gains a non-blocking `capabilities` field. `reference_ready`
-    needs only a car and a live speed. OBD needs only fresh RPM.
-  - `orders_hz_from_speed_mps` returns each order family independently, and
-    `vehicle_orders_hz` uses measured RPM.
-  - `car_library.py` serves gearboxes with a null final drive.
-- **Validation:** `make ci` plus the process-backed e2e suite (it changes
-  readiness and recording).
-- **Risk:** the simulator and e2e fixtures may rely on the defaults; update
-  them to explicit specs.
 
 ### WP1b — Provenance-aware source checks (backend/analysis)
 
@@ -541,14 +408,12 @@ Dependency order:
   - Expose provenance in `conditions`.
   - Retire or replace the dead `order_analysis_car_data_confidence`.
   - Powertrain: plumb `fuel_type` through (prepares WP7).
-- **Depends on:** WP1a.
 
 ### WP2 — Settings and car wizard UI
 
-- **Covers:** J01, J02, J04, J05, J06 (UI half), J07, J08.
+- **Covers:** J01, J04, J05, J07, J08.
 - **Changes:**
   - Optional ratio fields with help text and the "This car can test" sidebar.
-  - The create request sends only the wizard's values.
   - Car *Edit*, using the existing PUT.
   - Re-word the `incomplete_detail` and `review_detail` strings.
   - Custom brand without a fetch.
@@ -558,7 +423,6 @@ Dependency order:
 - **Backend tweak in the same PR:** `requires_manual_confirmation` derived
   only from weak fields (`derive_order_analysis_policy` in
   `domain/vehicle_configuration.py`).
-- **Depends on:** WP1a (nullable aspects).
 
 ### WP3 — Speed source, readiness and dashboard UI
 
@@ -573,8 +437,7 @@ Dependency order:
   - Guided step wording "top gear (or D)".
   - Band legend "est., top gear" / "measured".
 - **Validation:** UI tests plus the e2e suite (start gating).
-- **Depends on:** WP1a. The capability line uses WP1b's statuses once it
-  lands.
+- **Depends on:** the capability line uses WP1b's statuses once it lands.
 
 ### WP4 — Report and History wording
 
@@ -590,9 +453,8 @@ Dependency order:
 
 ### WP5 — Car-library data
 
-- **Covers:** J09 (loader union of tire options), J10, J11.
+- **Covers:** J10, J11.
 - **Changes:**
-  - Union the tire options per variant.
   - Group the picker by generation.
   - Extend year ranges where the drivetrain did not change.
   - Add Touring and Avant bodies for the 3/5 Series and A4/A6.
@@ -603,7 +465,7 @@ Dependency order:
 - **Validation:** the car-library schema tests and
   `tools/car_library/car_library_stats.py` before and after; update the table
   in [user_journeys.md](user_journeys.md) §4.
-- **Depends on:** nothing. WP1a lets null final drives be served.
+- **Depends on:** nothing. Gearboxes with a null final drive are served.
 
 ### WP6 — Hotspot and flashing
 
@@ -626,12 +488,7 @@ Dependency order:
 
 ## 3. Suggested order
 
-1. WP1a.
-2. WP1b and WP2.
-3. WP3 and WP4.
-4. WP5 and WP6 at any time.
-5. WP7 last.
-
-WP1a without WP2 leaves the wizard still forcing ratios, which is harmless.
-WP2 without WP1a would let users skip ratios that the server then refills with
-the old defaults. **Do not ship WP2 before WP1a.**
+1. WP1b and WP2.
+2. WP3 and WP4.
+3. WP5 and WP6 at any time.
+4. WP7 last.

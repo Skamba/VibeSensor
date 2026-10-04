@@ -363,8 +363,7 @@ function setupAction(
     return action("open-sensors", "sensors");
   }
   if (check.check_key === "reference_ready") {
-    return check.reason_key === "active_car_missing" ||
-      check.reason_key === "order_reference_incomplete"
+    return check.reason_key === "active_car_missing"
       ? action("open-cars", "cars")
       : action("open-speed-source", "speed_source");
   }

@@ -21,10 +21,7 @@ import { type CarSelectionState, deriveCarSelection } from "./car_selection";
 import type { SpeedSourceSnapshot } from "./speed_source";
 import {
   type AnalysisTuningSettings,
-  type CarAspectSettings,
   defaultAnalysisTuningSettings,
-  defaultCarAspectSettings,
-  mergeCarAspectSettings,
 } from "./vehicle_settings";
 
 /**
@@ -48,14 +45,6 @@ export const carSelection = computed<CarSelectionState>(() =>
 
 export const activeCar = computed(() =>
   carSelection.value.kind === "active" ? carSelection.value.car : null,
-);
-
-/** Default car aspects overlaid with the active car's saved aspects. */
-export const activeCarAspects = computed<CarAspectSettings>(() =>
-  mergeCarAspectSettings(
-    defaultCarAspectSettings,
-    activeCar.value?.aspects ?? {},
-  ),
 );
 
 export function applyCars(payload: CarsPayload): void {

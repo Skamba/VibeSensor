@@ -15,7 +15,6 @@ from tests_e2e.e2e_helpers import (
     sim_client_ids,
     wait_report_pdf_ready,
 )
-from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS
 
 pytestmark = pytest.mark.e2e
 
@@ -156,7 +155,7 @@ def test_wheel_fault_run_names_corner_order_level_and_mg_amplitudes_e2e(
 def _distinct_orders_car(e2e_env: dict[str, str]) -> Iterator[None]:
     """A car whose engine orders sit apart from the wheel orders and the idle tones.
 
-    With the default 3.08 x 0.64 ratios the first engine order lands on the
+    With the simulator car's 3.08 x 0.64 ratios the first engine order lands on the
     second wheel order, so the coast-down could not tell the two apart.
     """
     base = e2e_env["base_url"]
@@ -186,27 +185,14 @@ def _distinct_orders_car(e2e_env: dict[str, str]) -> Iterator[None]:
     try:
         yield
     finally:
-        previous = before["active_car_id"]
-        if previous is not None:
-            api_json(base, "/api/settings/cars/active", method="PUT", body={"car_id": previous})
-            api_json(base, f"/api/settings/cars/{car_id}", method="DELETE")
-        else:
-            # The last car can't be deleted: put the default geometry back instead.
-            api_json(
-                base,
-                "/api/settings/analysis",
-                method="PUT",
-                body={
-                    key: ANALYSIS_SETTINGS_DEFAULTS[key]
-                    for key in (
-                        "tire_width_mm",
-                        "tire_aspect_pct",
-                        "rim_in",
-                        "final_drive_ratio",
-                        "current_gear_ratio",
-                    )
-                },
-            )
+        # The session server always has its simulator car active.
+        api_json(
+            base,
+            "/api/settings/cars/active",
+            method="PUT",
+            body={"car_id": before["active_car_id"]},
+        )
+        api_json(base, f"/api/settings/cars/{car_id}", method="DELETE")
 
 
 @pytest.mark.usefixtures("_distinct_orders_car")

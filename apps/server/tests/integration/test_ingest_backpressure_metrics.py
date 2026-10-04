@@ -20,11 +20,11 @@ from unittest.mock import AsyncMock
 import numpy as np
 import pytest
 from test_support.clock_sync import complete_clock_sync
+from test_support.core import TEST_CAR_ASPECTS
 from test_support.polling import async_wait_until
 from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -433,8 +433,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
     ctx.ws_broadcaster.add(websocket, None)
 
     tire = TireSpec.from_aspects(
-        AnalysisSettingsSnapshot.DEFAULTS,
-        deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
+        TEST_CAR_ASPECTS, deflection_factor=TEST_CAR_ASPECTS["tire_deflection_factor"]
     )
     assert tire is not None
     tire_circumference_m = tire.circumference_m

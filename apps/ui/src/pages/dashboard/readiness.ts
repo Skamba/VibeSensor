@@ -33,7 +33,6 @@ const KNOWN_REASONS: Record<string, readonly string[]> = {
   ],
   reference_ready: [
     "active_car_missing",
-    "order_reference_incomplete",
     "speed_source_missing",
     "speed_source_not_live",
     "speed_source_fallback_active",

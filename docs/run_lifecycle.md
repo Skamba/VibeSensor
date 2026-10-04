@@ -59,7 +59,13 @@ No active run is recording:
 - `PostAnalysisWorker` may still be busy with an older run
 - `RunRecorder.status()` includes a backend-owned `CaptureReadiness` checklist
   so `/api/recording/status` and the Live dashboard can explain whether
-  steady-state capture is ready to start
+  steady-state capture is ready to start. `reference_ready` needs only an
+  active car and a working live speed (OBD-II also needs fresh RPM); missing
+  car references never block capture. `capabilities` reports, without
+  blocking, which order families the active car can test: `wheel`
+  (`ok`/`missing_tire`), `driveline` (`ok`/`missing_final_drive`/`missing_tire`)
+  and `engine` (`measured` from fresh OBD-II RPM, `estimated_top_gear` from the
+  ratios, or `missing`); it is `null` without an active car
 
 ### 2. Recording active
 

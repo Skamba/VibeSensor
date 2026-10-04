@@ -17,6 +17,7 @@ import {
   carRequest,
   EMPTY_MANUAL_INPUTS,
   firstMissingManualField,
+  gearboxDetail,
   INITIAL_WIZARD_STATE,
   progressText,
   specBranch,
@@ -115,20 +116,26 @@ const complete = {
   current_gear_ratio: 0.64,
 };
 
-test("getCarCompleteness lists the missing required specs", () => {
+test("getCarCompleteness needs only the tire size; ratios are optional", () => {
   expect(getCarCompleteness(makeCar({ aspects: complete }))).toEqual({
     isComplete: true,
     missingKeys: [],
   });
   expect(
+    getCarCompleteness(
+      makeCar({
+        aspects: {
+          ...complete,
+          final_drive_ratio: null,
+          current_gear_ratio: null,
+        },
+      }),
+    ).isComplete,
+  ).toBe(true);
+  expect(
     getCarCompleteness(makeCar({ aspects: { tire_width_mm: 245, rim_in: 0 } }))
       .missingKeys,
-  ).toEqual([
-    "tire_aspect_pct",
-    "rim_in",
-    "final_drive_ratio",
-    "current_gear_ratio",
-  ]);
+  ).toEqual(["tire_aspect_pct", "rim_in"]);
 });
 
 test("car rows carry readiness, highlight, and the next action", () => {
@@ -409,6 +416,31 @@ test("the created car records where each spec came from", () => {
   expect(carRequest(manual, { ...kept, rim: "" })).toEqual({
     ok: false,
     focus: "rim",
+  });
+});
+
+test("a library gearbox without a final drive saves it as unknown", () => {
+  const noFinalDrive: CarLibraryGearbox = {
+    ...GEARBOX,
+    final_drive_ratio: null,
+    final_drive_ratio_confidence: null,
+  };
+  expect(gearboxDetail(noFinalDrive, fmt, t)).toBe(
+    "FD: settings.car.ratio_unknown · Top Gear: 0.79",
+  );
+  expect(
+    carRequest(
+      specs({
+        selectedTire: TIRE,
+        selectedGearbox: noFinalDrive,
+        specBranch: "library",
+      }),
+      EMPTY_MANUAL_INPUTS,
+    ),
+  ).toMatchObject({
+    ok: true,
+    aspects: { final_drive_ratio: null, current_gear_ratio: 0.79 },
+    status: { final_drive_ratio_confidence: null },
   });
 });
 

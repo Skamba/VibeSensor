@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from test_support.core import TEST_CAR_ASPECTS
+
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.recording.lifecycle_state import RunLifecycleState
 
 
 def _analysis_settings_snapshot() -> AnalysisSettingsSnapshot:
-    return AnalysisSettingsSnapshot(**AnalysisSettingsSnapshot.DEFAULTS)
+    return AnalysisSettingsSnapshot(**TEST_CAR_ASPECTS)
 
 
 def test_start_new_run_enables_state_and_returns_snapshot() -> None:

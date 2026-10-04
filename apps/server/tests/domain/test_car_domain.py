@@ -120,17 +120,13 @@ class TestOrderReferenceSpecFromSettings:
         assert spec is not None
         assert spec.has_engine_reference is False
 
-    def test_is_complete(self) -> None:
-        settings = _order_settings(final_drive_ratio=3.08)
-        spec = order_reference_spec_from_mapping(settings)
-        assert spec is not None
-        assert spec.is_complete is True
-
-    def test_not_complete_without_drive_ratio(self) -> None:
-        settings = _order_settings()
-        spec = order_reference_spec_from_mapping(settings)
-        assert spec is not None
-        assert spec.is_complete is False
+    def test_driveshaft_reference_needs_final_drive(self) -> None:
+        with_drive = order_reference_spec_from_mapping(_order_settings(final_drive_ratio=3.08))
+        without_drive = order_reference_spec_from_mapping(_order_settings())
+        assert with_drive is not None and without_drive is not None
+        assert with_drive.supports_driveshaft_reference is True
+        assert without_drive.supports_driveshaft_reference is False
+        assert without_drive.supports_wheel_reference is True
 
 
 class TestCarOrderReferenceSpec:
@@ -278,8 +274,6 @@ class TestCarOrderReferenceSpec:
             "tire_width_mm": 275.0,
             "tire_aspect_pct": 35.0,
             "rim_in": 21.0,
-            "final_drive_ratio": 0.0,
-            "current_gear_ratio": 0.0,
             "speed_uncertainty_pct": 0.0,
             "tire_diameter_uncertainty_pct": 0.0,
             "final_drive_uncertainty_pct": 0.0,

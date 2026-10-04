@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
+from typing import Literal
 
 from vibesensor.analysis.constants import STEADY_SPEED_RANGE_KMH, STEADY_SPEED_STDDEV_KMH
 from vibesensor.domain.capture_readiness import (
+    CaptureCapabilities,
     CaptureReadiness,
     CaptureReadinessCheck,
     CaptureReadinessPolicy,
@@ -43,6 +45,49 @@ def evaluate_capture_readiness(
     return CaptureReadiness(
         is_ready=is_ready,
         checks=(*checks, overall_check),
+        capabilities=_capabilities(policy, observation),
+    )
+
+
+def _capabilities(
+    policy: CaptureReadinessPolicy,
+    observation: CaptureReadinessObservation,
+) -> CaptureCapabilities | None:
+    if not observation.run_context.has_car_context:
+        return None
+    spec = order_reference_spec_from_snapshot(observation.run_context.analysis_settings)
+    if spec is None:
+        driveline: Literal["ok", "missing_final_drive", "missing_tire"] = "missing_tire"
+    elif spec.supports_driveshaft_reference:
+        driveline = "ok"
+    else:
+        driveline = "missing_final_drive"
+    engine: Literal["measured", "estimated_top_gear", "missing"]
+    if _obd_rpm_fresh(policy, observation):
+        engine = "measured"
+    elif spec is not None and spec.supports_engine_reference:
+        engine = "estimated_top_gear"
+    else:
+        engine = "missing"
+    return CaptureCapabilities(
+        wheel="ok" if spec is not None else "missing_tire",
+        driveline=driveline,
+        engine=engine,
+    )
+
+
+def _obd_rpm_fresh(
+    policy: CaptureReadinessPolicy,
+    observation: CaptureReadinessObservation,
+) -> bool:
+    speed, obd = observation.speed, observation.obd
+    return (
+        speed is not None
+        and speed.source == "obd2"
+        and obd is not None
+        and _is_finite_number(obd.rpm)
+        and obd.rpm_age_s is not None
+        and obd.rpm_age_s <= policy.max_obd_rpm_age_s
     )
 
 
@@ -125,14 +170,6 @@ def _reference_check(
             reason_key="active_car_missing",
         )
 
-    order_reference = order_reference_spec_from_snapshot(run_context.analysis_settings)
-    if order_reference is None or not order_reference.is_complete:
-        return CaptureReadinessCheck(
-            check_key="reference_ready",
-            state="fail",
-            reason_key="order_reference_incomplete",
-        )
-
     if speed is None:
         return CaptureReadinessCheck(
             check_key="reference_ready",
@@ -209,13 +246,6 @@ def _reference_check(
         )
 
     if speed_source == "obd2":
-        if order_reference is None or not order_reference.supports_engine_reference:
-            return CaptureReadinessCheck(
-                check_key="reference_ready",
-                state="fail",
-                reason_key="order_reference_incomplete",
-                details=(("speed_source", speed_source),),
-            )
         if obd is None or not _is_finite_number(obd.rpm):
             return CaptureReadinessCheck(
                 check_key="reference_ready",

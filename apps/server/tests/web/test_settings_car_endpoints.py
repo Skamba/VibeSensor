@@ -61,3 +61,40 @@ def test_deleting_the_last_car_is_refused_but_others_can_go(car_client) -> None:
 
     assert response.status_code == 200
     assert [car["id"] for car in response.json()["cars"]] == [first["id"]]
+
+
+def test_ratios_are_optional_and_a_null_ratio_clears_the_stored_one(car_client) -> None:
+    tire = {"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 17.0}
+    car = _add(
+        car_client,
+        name="Tire only",
+        aspects={**tire, "final_drive_ratio": None, "current_gear_ratio": None},
+    )["cars"][0]
+    assert "final_drive_ratio" not in car["aspects"]
+    assert "current_gear_ratio" not in car["aspects"]
+
+    status = {
+        "selection_source_status": "exact_row",
+        "requires_manual_confirmation": False,
+        "final_drive_ratio_confidence": "official_exact",
+        "current_gear_ratio_confidence": "official_exact",
+    }
+    filled = car_client.put(
+        f"/api/settings/cars/{car['id']}",
+        json={
+            "aspects": {"final_drive_ratio": 3.2, "current_gear_ratio": 0.8},
+            "order_reference_status": status,
+        },
+    ).json()["cars"][0]
+    assert filled["aspects"]["final_drive_ratio"] == 3.2
+
+    cleared = car_client.put(
+        f"/api/settings/cars/{car['id']}",
+        json={"aspects": {"final_drive_ratio": None}, "order_reference_status": status},
+    ).json()["cars"][0]
+
+    assert "final_drive_ratio" not in cleared["aspects"]
+    assert cleared["aspects"]["current_gear_ratio"] == 0.8
+    assert cleared["aspects"]["tire_width_mm"] == 225.0
+    assert cleared["order_reference_status"].get("final_drive_ratio_confidence") is None
+    assert cleared["order_reference_status"]["current_gear_ratio_confidence"] == ("official_exact")

@@ -58,8 +58,15 @@ tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL * 
 `path_compliance` is 1.5 for wheel orders (tire, hub and bushings broaden the
 peak, about ±9.8%) and 1.0 for driveshaft and engine orders (±8%).
 
-`build_order_bands()` emits the live band payloads with
-`tolerance = tolerance_hz / center_hz`, so the UI draws
+Each order family needs only its own references: wheel orders need speed and
+the tire size, driveshaft orders add the final drive, and engine orders come
+from fresh measured OBD-II RPM or, without it, from the final drive and top gear
+(an estimate that assumes top gear). A car reference has no default: a missing
+one blanks only its own family live and makes that source "not testable" in the
+diagnosis.
+
+`build_order_bands()` emits the live band payloads for the families present,
+with `tolerance = tolerance_hz / center_hz`, so the UI draws
 `[center_hz * (1 - tolerance), center_hz * (1 + tolerance)]`:
 
 - `wheel_1x`

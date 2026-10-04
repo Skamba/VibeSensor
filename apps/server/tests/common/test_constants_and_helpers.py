@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from test_support.core import TEST_CAR_ASPECTS
 
 from vibesensor.analysis.constants import SILENCE_DB
 from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_mapping
@@ -37,7 +37,7 @@ def test_core_analysis_constants_have_expected_ranges() -> None:
 
 def _make_spec() -> OrderReferenceSpec:
     """Build a spec using default analysis settings."""
-    spec = order_reference_spec_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)
+    spec = order_reference_spec_from_mapping(TEST_CAR_ASPECTS)
     assert spec is not None
     return spec
 

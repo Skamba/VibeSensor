@@ -10,17 +10,19 @@ from functools import cache
 from typing import Any
 
 from vibesensor.common.units import KMH_TO_MPS
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
+from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_NUMERIC_FIELDS
+from vibesensor.simulator.profiles import SIMULATOR_CAR_ASPECTS
 
-_DEFAULT_TIRE = TireSpec.from_aspects(
-    AnalysisSettingsSnapshot.DEFAULTS,
-    deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
+# Tests use the simulated car's specs as their reference car.
+TEST_CAR_ASPECTS = SIMULATOR_CAR_ASPECTS
+_TEST_TIRE = TireSpec.from_aspects(
+    TEST_CAR_ASPECTS, deflection_factor=TEST_CAR_ASPECTS["tire_deflection_factor"]
 )
-assert _DEFAULT_TIRE is not None
-TIRE_CIRC = _DEFAULT_TIRE.circumference_m
-FINAL_DRIVE = AnalysisSettingsSnapshot.DEFAULTS["final_drive_ratio"]
-GEAR_RATIO = AnalysisSettingsSnapshot.DEFAULTS["current_gear_ratio"]
+assert _TEST_TIRE is not None
+TIRE_CIRC = _TEST_TIRE.circumference_m
+FINAL_DRIVE = TEST_CAR_ASPECTS["final_drive_ratio"]
+GEAR_RATIO = TEST_CAR_ASPECTS["current_gear_ratio"]
 
 # Canonical sensor names / corners
 SENSOR_FL = "front-left"
@@ -122,7 +124,7 @@ def canonicalize_run_context_metadata(metadata: dict[str, Any]) -> dict[str, Any
 
     raw_settings = normalized.get("analysis_settings_snapshot")
     settings_snapshot = dict(raw_settings) if isinstance(raw_settings, Mapping) else {}
-    for key in AnalysisSettingsSnapshot.DEFAULTS:
+    for key in ANALYSIS_SETTINGS_NUMERIC_FIELDS:
         value = normalized.pop(key, None)
         if value is not None:
             settings_snapshot[key] = value

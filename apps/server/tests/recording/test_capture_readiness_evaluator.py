@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
-from vibesensor.domain.capture_readiness import CaptureReadinessPolicy
+from vibesensor.domain.capture_readiness import CaptureCapabilities, CaptureReadinessPolicy
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.recording.capture_readiness_evaluator import evaluate_capture_readiness
 from vibesensor.recording.capture_readiness_observation import (
+    CaptureReadinessObdObservation,
     CaptureReadinessObservation,
     CaptureReadinessSensorObservation,
     CaptureReadinessSpeedObservation,
@@ -28,27 +31,20 @@ class _SpeedStatus:
     live_source_selected: bool = True
 
 
-def _run_context() -> RunContextSnapshot:
+_FULL_ASPECTS: dict[str, float] = {
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0,
+    "final_drive_ratio": 3.15,
+    "current_gear_ratio": 0.81,
+}
+_TIRE_ONLY = {"tire_width_mm": 255.0, "tire_aspect_pct": 40.0, "rim_in": 19.0}
+
+
+def _run_context(aspects: dict[str, float] = _FULL_ASPECTS) -> RunContextSnapshot:
     return RunContextSnapshot(
-        analysis_settings=AnalysisSettingsSnapshot(
-            tire_width_mm=255.0,
-            tire_aspect_pct=40.0,
-            rim_in=19.0,
-            final_drive_ratio=3.15,
-            current_gear_ratio=0.81,
-        ),
-        car=CarSnapshot(
-            car_id="car-1",
-            name="Primary",
-            car_type="sedan",
-            aspects={
-                "tire_width_mm": 255.0,
-                "tire_aspect_pct": 40.0,
-                "rim_in": 19.0,
-                "final_drive_ratio": 3.15,
-                "current_gear_ratio": 0.81,
-            },
-        ),
+        analysis_settings=AnalysisSettingsSnapshot(**aspects),
+        car=CarSnapshot(car_id="car-1", name="Primary", car_type="sedan", aspects=aspects),
     )
 
 
@@ -66,11 +62,13 @@ def _observation(
         ),
     ),
     now_mono: float = 108.0,
+    aspects: dict[str, float] = _FULL_ASPECTS,
+    obd: CaptureReadinessObdObservation | None = None,
 ) -> CaptureReadinessObservation:
     return CaptureReadinessObservation(
         observed_at_mono_s=now_mono,
         active_sensors=active_sensors,
-        run_context=_run_context(),
+        run_context=_run_context(aspects),
         speed=CaptureReadinessSpeedObservation(
             source=speed_status.source,
             speed_kmh=speed_status.speed_kmh,
@@ -78,7 +76,7 @@ def _observation(
             fallback_active=speed_status.fallback_active,
             live_source_selected=speed_status.live_source_selected,
         ),
-        obd=None,
+        obd=obd,
     )
 
 
@@ -249,3 +247,98 @@ def test_speed_older_than_two_seconds_is_stale() -> None:
     history = _steady(100.0, 108.0)
     assert _speed_check_for(speed_history=history, age_s=1.9)[0] == "reference_ready"
     assert _speed_check_for(speed_history=history, age_s=2.5)[0] == "speed_sample_stale"
+
+
+_QUIET_STATE = CaptureReadinessStateSnapshot(
+    integrity=IntegrityState(
+        active=False,
+        frames_dropped=0,
+        queue_overflow_drops=0,
+        server_queue_drops=0,
+        parse_errors=0,
+        quiet_period_remaining_s=None,
+    ),
+    speed_history=(),
+)
+
+
+@pytest.mark.parametrize(
+    ("aspects", "speed_source", "obd", "capabilities"),
+    [
+        pytest.param(
+            _TIRE_ONLY,
+            "manual",
+            None,
+            CaptureCapabilities(wheel="ok", driveline="missing_final_drive", engine="missing"),
+            id="tire-only",
+        ),
+        pytest.param(
+            {**_TIRE_ONLY, "final_drive_ratio": 3.15},
+            "manual",
+            None,
+            CaptureCapabilities(wheel="ok", driveline="ok", engine="missing"),
+            id="no-top-gear",
+        ),
+        pytest.param(
+            _FULL_ASPECTS,
+            "manual",
+            None,
+            CaptureCapabilities(wheel="ok", driveline="ok", engine="estimated_top_gear"),
+            id="full-specs",
+        ),
+        pytest.param(
+            _TIRE_ONLY,
+            "obd2",
+            CaptureReadinessObdObservation(rpm=2400.0, rpm_age_s=0.3),
+            CaptureCapabilities(wheel="ok", driveline="missing_final_drive", engine="measured"),
+            id="obd-without-ratios",
+        ),
+        pytest.param(
+            {},
+            "manual",
+            None,
+            CaptureCapabilities(wheel="missing_tire", driveline="missing_tire", engine="missing"),
+            id="no-tire",
+        ),
+    ],
+)
+def test_missing_references_never_block_capture_and_show_as_capabilities(
+    aspects: dict[str, float],
+    speed_source: str,
+    obd: CaptureReadinessObdObservation | None,
+    capabilities: CaptureCapabilities,
+) -> None:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_observation(
+            speed_status=_SpeedStatus(source=speed_source, speed_kmh=82.0),
+            aspects=aspects,
+            obd=obd,
+        ),
+        state=_QUIET_STATE,
+    )
+
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.reason_key == "reference_ready"
+    assert readiness.capabilities == capabilities
+
+
+def test_obd_speed_needs_fresh_rpm_but_no_ratios() -> None:
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_observation(
+            speed_status=_SpeedStatus(source="obd2", speed_kmh=82.0),
+            aspects=_TIRE_ONLY,
+            obd=CaptureReadinessObdObservation(rpm=2400.0, rpm_age_s=5.0),
+        ),
+        state=_QUIET_STATE,
+    )
+
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.reason_key == "obd_rpm_stale"
+    assert readiness.capabilities is not None
+    assert readiness.capabilities.engine == "missing"

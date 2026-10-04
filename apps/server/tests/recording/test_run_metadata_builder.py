@@ -10,13 +10,18 @@ import pytest
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus, CarSnapshot
 from vibesensor.ingest.registry import ClientRecord, ClientRegistry
-from vibesensor.recording.run_metadata import run_metadata_to_json_object
+from vibesensor.recording.run_metadata import (
+    run_metadata_from_mapping,
+    run_metadata_to_json_object,
+)
 from vibesensor.recording.run_metadata_builder import (
     build_run_metadata,
     create_run_metadata,
     firmware_version_for_run,
 )
 from vibesensor.recording.run_schema import RUN_METADATA_TYPE, RunCarMetadata
+from vibesensor.settings.car_config import car_from_persistence_dict
+from vibesensor.settings.settings_derivation import analysis_settings_snapshot_from_aspects
 
 
 def _default_run_metadata_kwargs(**overrides: object) -> dict[str, object]:
@@ -161,8 +166,7 @@ class TestBuildRunMetadata:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         class _FakeSpec:
-            is_complete = True
-            has_engine_reference = True
+            supports_engine_reference = True
             supports_wheel_reference = True
             tire_circumference_m = 2.345
 
@@ -216,3 +220,24 @@ def test_create_run_metadata_serializes_identity_firmware_and_utc_offset() -> No
     assert meta["sensor_model"] == "ADXL345"
     assert meta["firmware_version"] == "esp-fw-1.2.3"
     assert meta["recorded_utc_offset_seconds"] == 7200
+
+
+def test_a_tire_only_car_records_no_ratios_instead_of_defaults() -> None:
+    car = car_from_persistence_dict(
+        {"aspects": {"tire_width_mm": 245.0, "tire_aspect_pct": 40.0, "rim_in": 18.0}}
+    )
+    snapshot = analysis_settings_snapshot_from_aspects(car.aspects)
+
+    stored = run_metadata_to_json_object(
+        build_run_metadata(**_default_run_metadata_kwargs(analysis_settings_snapshot=snapshot))
+    )
+    restored = run_metadata_from_mapping(stored)
+
+    settings = stored["analysis_settings_snapshot"]
+    assert isinstance(settings, dict)
+    assert settings["tire_width_mm"] == 245.0
+    assert "final_drive_ratio" not in settings
+    assert "current_gear_ratio" not in settings
+    assert restored.tire_circumference_m is not None
+    assert restored.final_drive_ratio is None
+    assert restored.current_gear_ratio is None

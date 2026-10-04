@@ -319,6 +319,5 @@ class RunMetadata:
             self.raw_sample_rate_hz
             and self.tire_circumference_m
             and spec is not None
-            and spec.is_complete
-            and spec.has_engine_reference
+            and spec.supports_engine_reference
         )

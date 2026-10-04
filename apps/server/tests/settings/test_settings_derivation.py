@@ -7,7 +7,7 @@ from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.settings_derivation import SettingsDerivationService
 
 
-def test_derivation_service_returns_defaults_without_active_car() -> None:
+def test_derivation_service_has_no_references_without_active_car() -> None:
     service = SettingsDerivationService(
         active_car_aspects=lambda: None,
         active_car_snapshot=lambda: None,
@@ -15,8 +15,12 @@ def test_derivation_service_returns_defaults_without_active_car() -> None:
 
     snapshot = service.analysis_settings_snapshot()
 
-    assert snapshot.tire_width_mm == AnalysisSettingsSnapshot.DEFAULTS["tire_width_mm"]
-    assert snapshot.rim_in == AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
+    assert snapshot.tire_width_mm == 0.0
+    assert snapshot.final_drive_ratio == 0.0
+    assert (
+        snapshot.tire_deflection_factor
+        == AnalysisSettingsSnapshot.DEFAULTS["tire_deflection_factor"]
+    )
     assert service.active_car_snapshot() is None
 
 
@@ -31,7 +35,7 @@ def test_derivation_service_merges_active_car_aspects_with_defaults() -> None:
     snapshot = service.analysis_settings_snapshot()
 
     assert snapshot.tire_width_mm == 255.0
-    assert snapshot.rim_in == AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
+    assert snapshot.rim_in == 0.0
 
 
 def test_derivation_service_projects_active_car_snapshot() -> None:

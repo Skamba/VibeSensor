@@ -11,7 +11,7 @@ from vibesensor.settings.services import build_settings_services
 DEFAULT_CAR_ASPECTS = AnalysisSettingsSnapshot.DEFAULTS
 
 
-def test_validate_car_fills_defaults() -> None:
+def test_validate_car_fills_only_tuning_defaults() -> None:
     car = car_to_persistence_dict(car_from_persistence_dict({}))
     assert car["name"] == "Unnamed Car"
     assert car["type"] == "sedan"
@@ -22,7 +22,8 @@ def test_validate_car_fills_defaults() -> None:
 def test_validate_car_preserves_aspects() -> None:
     car = car_to_persistence_dict(car_from_persistence_dict({"aspects": {"tire_width_mm": 245.0}}))
     assert car["aspects"]["tire_width_mm"] == 245.0
-    assert car["aspects"]["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
+    assert "rim_in" not in car["aspects"]
+    assert "final_drive_ratio" not in car["aspects"]
 
 
 def test_validate_car_truncates_name() -> None:
@@ -71,7 +72,7 @@ def test_car_settings_update_car_aspects() -> None:
     services.car_settings.update_car(car_id, {"aspects": {"tire_width_mm": 245.0}})
     aspects = services.car_settings.active_car_aspects() or {}
     assert aspects["tire_width_mm"] == 245.0
-    assert aspects["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
+    assert "rim_in" not in aspects
 
 
 def test_car_settings_update_car_decodes_order_reference_status_payload() -> None:

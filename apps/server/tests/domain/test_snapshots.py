@@ -143,7 +143,7 @@ class TestAnalysisSettingsSnapshotFromDict:
         assert spec.final_drive_ratio == pytest.approx(3.08)
         assert spec.current_gear_ratio == pytest.approx(0.64)
         assert spec.has_engine_reference is True
-        assert spec.is_complete is True
+        assert spec.supports_engine_reference is True
         assert spec.tire_circumference_m > 0
 
     @pytest.mark.parametrize(

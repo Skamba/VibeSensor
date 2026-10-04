@@ -128,14 +128,14 @@ A picker variant offers the union of its rows' tire options, one option per
 tire size (front and rear). When several rows list the same size, the option
 with the best source confidence wins.
 
-A picker gearbox option needs a driven final-drive ratio, so only exact rows
-that carry one become gearbox options. Rows may leave the final drive
-unresolved on purpose (the manufacturer publishes none, or publishes split
-final-drive values that the single `final_drive_front`/`final_drive_rear`
-fields cannot encode faithfully; see the row's `unresolved` items). A variant
-or model built only from such rows is served with `gearboxes: []`, and the UI
-falls back to manual gearbox entry. Do not invent a final drive to fill the
-list. `apps/server/tests/web/test_car_library_bundled_contract.py`
+Every exact row becomes a picker gearbox option. Rows may leave the final
+drive unresolved on purpose (the manufacturer publishes none, or publishes
+split final-drive values that the single `final_drive_front`/`final_drive_rear`
+fields cannot encode faithfully; see the row's `unresolved` items). Such a
+gearbox is served with `final_drive_ratio: null` and no final-drive
+confidence; the UI shows the final drive as unknown, the car is saved without
+one, and the driveline order reports "not testable". Do not invent a final
+drive. `apps/server/tests/web/test_car_library_bundled_contract.py`
 checks that every bundled brand/type/model passes the HTTP response models.
 
 ## Confidence vocabulary

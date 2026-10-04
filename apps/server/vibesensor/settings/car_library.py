@@ -24,7 +24,8 @@ __all__ = [
 
 class CarLibraryGearbox(TypedDict):
     name: str
-    final_drive_ratio: float
+    final_drive_ratio: float | None
+    """``None`` when the library has no driven final drive for this row (unknown)."""
     top_gear_ratio: float
     gear_ratios: NotRequired[list[float]]
     source_status: NotRequired[Literal["exact_row"]]
@@ -175,20 +176,19 @@ def _union_tire_options(configs: list[VehicleConfiguration]) -> list[CarLibraryT
     return list(by_size.values())
 
 
-def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryGearbox | None:
+def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryGearbox:
     final_drive_ratio = config.driven_final_drive_ratio
-    if final_drive_ratio is None:
-        return None
     row: CarLibraryGearbox = {
         "name": config.transmission_name,
         "final_drive_ratio": final_drive_ratio,
         "top_gear_ratio": config.top_gear_ratio,
         "source_status": config.source_status,
-        "final_drive_ratio_confidence": config.order_reference_confidence("final_drive_ratio"),
         "top_gear_ratio_confidence": config.order_reference_confidence("current_gear_ratio"),
         "transmission_confidence": config.order_reference_confidence("transmission_name"),
         "requires_manual_confirmation": config.requires_manual_drivetrain_confirmation,
     }
+    if final_drive_ratio is not None:
+        row["final_drive_ratio_confidence"] = config.order_reference_confidence("final_drive_ratio")
     if config.gear_ratios is not None:
         row["gear_ratios"] = list(config.gear_ratios)
         row["gear_ratios_confidence"] = (
@@ -202,11 +202,7 @@ def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryG
 def _library_variant_from_configs(configs: list[VehicleConfiguration]) -> CarLibraryVariant:
     first = configs[0]
     tire_options = _union_tire_options(configs)
-    gearboxes = [
-        row
-        for row in (_gearbox_row_from_configuration(config) for config in configs)
-        if row is not None
-    ]
+    gearboxes = [_gearbox_row_from_configuration(config) for config in configs]
     variant: CarLibraryVariant = {
         "name": first.variant_name,
         "drivetrain": first.drivetrain,
@@ -249,11 +245,7 @@ def _build_grouped_library(configs: list[VehicleConfiguration]) -> list[CarLibra
         representative = grouped_configs[0]
         representative_tires = _tire_options_for_config(representative)
         representative_gearboxes = [
-            row
-            for row in (
-                _gearbox_row_from_configuration(config) for config in _sort_configs(grouped_configs)
-            )
-            if row is not None
+            _gearbox_row_from_configuration(config) for config in _sort_configs(grouped_configs)
         ]
         entries.append(
             {

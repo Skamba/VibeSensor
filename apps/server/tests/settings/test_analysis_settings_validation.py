@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.settings.analysis_settings_schema import sanitize_analysis_settings
 from vibesensor.settings.services import build_settings_services
@@ -32,7 +31,4 @@ def test_update_rejects_invalid_and_keeps_old(tmp_path: Path) -> None:
     initial = services.car_settings.add_car({"name": "Test"})
     services.car_settings.set_active_car(initial.cars[0]["id"])
     services.analysis_settings.update_active_car_aspects({"tire_width_mm": -5.0})
-    assert (
-        services.analysis_settings.analysis_settings_snapshot().tire_width_mm
-        == AnalysisSettingsSnapshot.DEFAULTS["tire_width_mm"]
-    )
+    assert services.analysis_settings.analysis_settings_snapshot().tire_width_mm == 0.0

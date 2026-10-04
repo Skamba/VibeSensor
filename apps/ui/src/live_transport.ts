@@ -17,10 +17,6 @@ import {
 import { createSelectionSender, mergeSpectra } from "./live_sync";
 import { adaptServerPayload } from "./server_payload";
 import { analysisTuning, applyCars } from "./settings_store";
-import {
-  composeVehicleSettings,
-  defaultCarAspectSettings,
-} from "./vehicle_settings";
 import { createWsClient } from "./ws";
 
 /** Applies at most one payload per frame and every 100 ms. */
@@ -89,10 +85,7 @@ export function startLive(): void {
       cars: [
         {
           ...DEMO_CAR,
-          aspects: composeVehicleSettings(
-            defaultCarAspectSettings,
-            analysisTuning.value,
-          ),
+          aspects: { ...DEMO_CAR.aspects, ...analysisTuning.value },
         },
       ],
       active_car_id: DEMO_CAR.id,

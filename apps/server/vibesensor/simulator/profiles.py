@@ -12,6 +12,17 @@ from vibesensor.settings.analysis_settings_codec import (
 DEFAULT_SPEED_KMH = 100.0
 
 
+SIMULATOR_CAR_ASPECTS: dict[str, float] = {
+    **ANALYSIS_SETTINGS_DEFAULTS,
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 21.0,
+    "final_drive_ratio": 3.08,
+    "current_gear_ratio": 0.64,
+}
+"""The simulated car's specs, used until the server's active car provides all of its own."""
+
+
 def calc_order_hz(
     settings: AnalysisSettingsSnapshot,
     *,
@@ -20,26 +31,28 @@ def calc_order_hz(
     """Return wheel/shaft/engine order frequencies for a car at ``speed_kmh``.
 
     Uses the same order-reference math as the analysis, so simulated order
-    tones land exactly on the orders the server tracks for that car.
+    tones land exactly on the orders the server tracks for that car. Returns
+    ``None`` unless the car has every reference (tire, final drive, gear).
     """
     orders = vehicle_orders_hz(speed_mps=speed_kmh * KMH_TO_MPS, settings=settings)
-    if orders is None:
+    wheel_1x = orders.get("wheel_hz")
+    shaft_1x = orders.get("drive_hz")
+    engine_1x = orders.get("engine_hz")
+    if wheel_1x is None or shaft_1x is None or engine_1x is None:
         return None
-    wheel_1x = float(orders["wheel_hz"])
-    engine_1x = float(orders["engine_hz"])
     return {
         "wheel_1x": wheel_1x,
         "wheel_2x": wheel_1x * 2.0,
-        "shaft_1x": float(orders["drive_hz"]),
+        "shaft_1x": shaft_1x,
         "engine_1x": engine_1x,
         "engine_2x": engine_1x * 2.0,
     }
 
 
 def calc_default_orders() -> dict[str, float]:
-    orders = calc_order_hz(analysis_settings_snapshot_from_mapping(ANALYSIS_SETTINGS_DEFAULTS))
+    orders = calc_order_hz(analysis_settings_snapshot_from_mapping(SIMULATOR_CAR_ASPECTS))
     if orders is None:
-        raise ValueError("Failed to compute order frequencies from default car specs")
+        raise ValueError("Failed to compute order frequencies from the simulator car specs")
     return orders
 
 

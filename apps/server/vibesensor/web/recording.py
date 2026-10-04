@@ -9,6 +9,7 @@ from fastapi import APIRouter
 
 from vibesensor.web.models.recording import (
     GuidedPhaseRequest,
+    RecordingCaptureCapabilitiesResponse,
     RecordingCaptureReadinessCheckResponse,
     RecordingCaptureReadinessResponse,
     RecordingStatusResponse,
@@ -38,6 +39,15 @@ def _capture_readiness_response(
             )
             for check in readiness.checks
         ],
+        capabilities=(
+            RecordingCaptureCapabilitiesResponse(
+                wheel=capabilities.wheel,
+                driveline=capabilities.driveline,
+                engine=capabilities.engine,
+            )
+            if (capabilities := readiness.capabilities) is not None
+            else None
+        ),
     )
 
 

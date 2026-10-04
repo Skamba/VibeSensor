@@ -147,12 +147,12 @@ describe("recording card", () => {
     expect(model.startDisabled).toBe(true);
   });
 
-  test("a missing car reference points at the car settings", () => {
+  test("a missing active car points at the car settings", () => {
     const model = recording({
       status: status({
         capture_readiness: readiness(false, [
           ["sensors_ready", "pass", "ready"],
-          ["reference_ready", "fail", "order_reference_incomplete"],
+          ["reference_ready", "fail", "active_car_missing"],
         ]),
       }),
     });

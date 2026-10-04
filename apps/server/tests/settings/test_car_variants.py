@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import pytest
 
 from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
@@ -36,8 +38,9 @@ def test_resolve_variant_no_variant() -> None:
 
 def test_resolve_variant_inherits_base_gearboxes() -> None:
     """Variant without gearbox override inherits base gearboxes."""
-    entry = next(entry for entry in _library_entries() if not entry["variants"][0].get("gearboxes"))
+    entry = copy.deepcopy(_library_entries()[0])
     first_variant = entry["variants"][0]
+    first_variant.pop("gearboxes", None)
 
     resolved = resolve_variant(entry, first_variant["name"])
 

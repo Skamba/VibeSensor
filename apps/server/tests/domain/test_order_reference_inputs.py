@@ -5,8 +5,8 @@ from __future__ import annotations
 from math import inf, nan
 
 import pytest
+from test_support.core import TEST_CAR_ASPECTS
 
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import Car
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
@@ -40,7 +40,7 @@ def test_car_tire_circumference_no_aspects_returns_none() -> None:
 
 
 def _default_spec() -> OrderReferenceSpec:
-    spec = order_reference_spec_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)
+    spec = order_reference_spec_from_mapping(TEST_CAR_ASPECTS)
     assert spec is not None
     return spec
 

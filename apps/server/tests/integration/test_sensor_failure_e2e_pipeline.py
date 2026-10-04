@@ -13,10 +13,10 @@ import anyio
 import numpy as np
 import pytest
 from pypdf import PdfReader
+from test_support.core import TEST_CAR_ASPECTS
 from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -200,8 +200,7 @@ def _run_pipeline(
         _register_sensor(registry, sensor)
 
     tire = TireSpec.from_aspects(
-        AnalysisSettingsSnapshot.DEFAULTS,
-        deflection_factor=AnalysisSettingsSnapshot.DEFAULTS.get("tire_deflection_factor", 1.0),
+        TEST_CAR_ASPECTS, deflection_factor=TEST_CAR_ASPECTS["tire_deflection_factor"]
     )
     assert tire is not None
     tire_circ = tire.circumference_m

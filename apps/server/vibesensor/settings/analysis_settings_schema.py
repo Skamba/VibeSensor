@@ -7,7 +7,10 @@ import math
 from collections.abc import Mapping
 
 from vibesensor.domain._numeric import coerce_float
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import (
+    ANALYSIS_SETTINGS_REFERENCE_KEYS,
+    AnalysisSettingsSnapshot,
+)
 from vibesensor.settings.settings_types import (
     AnalysisSettingsPayload,
     analysis_settings_axle_from_mapping,
@@ -29,8 +32,12 @@ ANALYSIS_SETTINGS_EXTRA_NUMERIC_FIELDS: tuple[str, ...] = (
     "rear_rim_in",
 )
 ANALYSIS_SETTINGS_AXLE_FIELDS: tuple[str, ...] = ("default_axle_for_speed",)
+ANALYSIS_SETTINGS_NUMERIC_FIELDS: tuple[str, ...] = (
+    *ANALYSIS_SETTINGS_REFERENCE_KEYS,
+    *ANALYSIS_SETTINGS_DEFAULTS,
+)
 ANALYSIS_SETTINGS_FIELDS: tuple[str, ...] = (
-    *tuple(ANALYSIS_SETTINGS_DEFAULTS),
+    *ANALYSIS_SETTINGS_NUMERIC_FIELDS,
     *ANALYSIS_SETTINGS_EXTRA_NUMERIC_FIELDS,
     *ANALYSIS_SETTINGS_AXLE_FIELDS,
 )
@@ -40,18 +47,16 @@ __all__ = [
     "ANALYSIS_SETTINGS_DEFAULTS",
     "ANALYSIS_SETTINGS_FIELDS",
     "ANALYSIS_SETTINGS_NON_NEGATIVE_KEYS",
+    "ANALYSIS_SETTINGS_NUMERIC_FIELDS",
     "ANALYSIS_SETTINGS_POSITIVE_REQUIRED_KEYS",
     "sanitize_analysis_settings",
 ]
 
 
-def sanitize_analysis_settings(
-    payload: Mapping[str, object],
-    allowed_keys: Mapping[str, float] | None = None,
-) -> AnalysisSettingsPayload:
-    """Validate and normalize flat analysis-settings payloads."""
+def sanitize_analysis_settings(payload: Mapping[str, object]) -> AnalysisSettingsPayload:
+    """Validate and normalize flat analysis-settings payloads; absent or null keys stay absent."""
 
-    allowed = allowed_keys if allowed_keys is not None else ANALYSIS_SETTINGS_DEFAULTS
+    allowed = ANALYSIS_SETTINGS_NUMERIC_FIELDS
     out: dict[str, float | str] = {}
     for key in (*allowed, *ANALYSIS_SETTINGS_EXTRA_NUMERIC_FIELDS):
         raw = payload.get(key)

@@ -31,8 +31,9 @@ class AnalysisSettingsPayload(TypedDict, total=False):
     rear_tire_aspect_pct: float
     rear_rim_in: float
     default_axle_for_speed: TireSpeedAxle
-    final_drive_ratio: float
-    current_gear_ratio: float
+    # Optional references: absent or null means unknown (a null on a car update clears it).
+    final_drive_ratio: float | None
+    current_gear_ratio: float | None
     speed_uncertainty_pct: float
     tire_diameter_uncertainty_pct: float
     final_drive_uncertainty_pct: float

@@ -342,7 +342,7 @@ function Steps() {
                 ? []
                 : gearboxOptions.value.map((gearbox, index) => ({
                     label: gearbox.name,
-                    detail: gearboxDetail(gearbox, fmt),
+                    detail: gearboxDetail(gearbox, fmt, t),
                     selected: gearbox === state.selectedGearbox,
                     attrs: { "data-idx": String(index) },
                     onSelect: () => selectGearbox(index),

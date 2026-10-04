@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 __all__ = [
+    "CaptureCapabilities",
     "CaptureReadiness",
     "CaptureReadinessCheck",
     "CaptureReadinessDetailValue",
@@ -38,11 +39,26 @@ class CaptureReadinessCheck:
 
 
 @dataclass(frozen=True, slots=True)
+class CaptureCapabilities:
+    """Which order families the active car's references can test (never blocks capture).
+
+    ``wheel`` needs the tire size, ``driveline`` also the final drive, and ``engine``
+    is ``measured`` with fresh OBD-II RPM, else ``estimated_top_gear`` from the ratios.
+    """
+
+    wheel: Literal["ok", "missing_tire"]
+    driveline: Literal["ok", "missing_final_drive", "missing_tire"]
+    engine: Literal["measured", "estimated_top_gear", "missing"]
+
+
+@dataclass(frozen=True, slots=True)
 class CaptureReadiness:
     """Full readiness result used by the recording status surface."""
 
     is_ready: bool
     checks: tuple[CaptureReadinessCheck, ...] = ()
+    capabilities: CaptureCapabilities | None = None
+    """``None`` without an active car."""
 
     @property
     def failed_checks(self) -> tuple[CaptureReadinessCheck, ...]:

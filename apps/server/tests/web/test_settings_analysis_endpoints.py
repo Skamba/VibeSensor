@@ -28,6 +28,9 @@ def test_get_returns_the_active_car_settings(analysis_client) -> None:
 
     for key, default in AnalysisSettingsSnapshot.DEFAULTS.items():
         assert result[key] == pytest.approx(default), key
+    # Tire size and ratios have no defaults: a new car leaves them unknown.
+    for key in ("tire_width_mm", "rim_in", "final_drive_ratio", "current_gear_ratio"):
+        assert result[key] is None, key
 
 
 def test_put_updates_only_the_sent_settings(analysis_client) -> None:
@@ -36,7 +39,7 @@ def test_put_updates_only_the_sent_settings(analysis_client) -> None:
     assert response.status_code == 200
     stored = analysis_client.get("/api/settings/analysis").json()
     assert stored["tire_width_mm"] == 265.0
-    assert stored["rim_in"] == AnalysisSettingsSnapshot.DEFAULTS["rim_in"]
+    assert stored["rim_in"] is None
 
 
 def test_empty_put_changes_nothing(analysis_client) -> None:

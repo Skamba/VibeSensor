@@ -24,7 +24,9 @@ from urllib.request import Request, urlopen
 import pytest
 import yaml
 
-from tests_e2e.e2e_helpers import CAPPED_RECORDING_S, ROOT
+from tests_e2e.e2e_helpers import CAPPED_RECORDING_S, ROOT, api_json
+from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_REFERENCE_KEYS
+from vibesensor.simulator.profiles import SIMULATOR_CAR_ASPECTS
 from vibesensor.updates.isolated_server_runtime import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
@@ -114,6 +116,23 @@ def _wait_ready(base_url: str, process: subprocess.Popen[str], log_path: Path) -
     raise RuntimeError(f"e2e server not ready after {_STARTUP_TIMEOUT_S}s; last={last!r}")
 
 
+def _activate_simulator_car(base_url: str) -> None:
+    """Give the fresh server an active car with the simulator's specs.
+
+    A server has no car (and so no order references) until one is added; the
+    simulated faults are placed with these specs.
+    """
+    aspects = {key: SIMULATOR_CAR_ASPECTS[key] for key in ANALYSIS_SETTINGS_REFERENCE_KEYS}
+    created = api_json(
+        base_url,
+        "/api/settings/cars",
+        method="POST",
+        body={"name": "Simulator car", "type": "sedan", "aspects": aspects},
+    )
+    car_id = created["cars"][-1]["id"]
+    api_json(base_url, "/api/settings/cars/active", method="PUT", body={"car_id": car_id})
+
+
 def _tail(path: Path, lines: int = 80) -> str:
     if not path.exists():
         return "<missing>"
@@ -164,6 +183,7 @@ def _running_server(
         )
     try:
         _wait_ready(server.base_url, process, log_path)
+        _activate_simulator_car(server.base_url)
         yield server
     finally:
         terminate_subprocess(process)

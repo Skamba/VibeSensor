@@ -17,13 +17,7 @@ import {
 } from "../../app_store";
 import { getCarCompleteness } from "../../car_selection";
 import { t } from "../../i18n";
-import {
-  activeCarAspects,
-  analysisTuning,
-  applyCars,
-  carSettings,
-} from "../../settings_store";
-import { composeVehicleSettings } from "../../vehicle_settings";
+import { analysisTuning, applyCars, carSettings } from "../../settings_store";
 
 /** The car just created by the wizard, highlighted until the user moves on. */
 export const highlighted = signal<{ carId: string; carName: string } | null>(
@@ -65,20 +59,15 @@ export async function createAndActivateCar(car: {
   name: string;
   type: string;
   variant?: string;
-  aspects: Record<string, number | string>;
+  aspects: Record<string, number | string | null>;
   status: CarOrderReferenceStatus;
 }): Promise<void> {
   let failureKey = "settings.car.create_failed";
   const started = await mutate(async () => {
     try {
       const request: CarUpsertRequest = {
-        aspects: {
-          ...composeVehicleSettings(
-            activeCarAspects.value,
-            analysisTuning.value,
-          ),
-          ...car.aspects,
-        },
+        // Only the tuning carries over; the new car's references are its own.
+        aspects: { ...analysisTuning.value, ...car.aspects },
         name: car.name,
         type: car.type,
         order_reference_status: car.status,

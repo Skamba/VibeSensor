@@ -95,6 +95,7 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
     from vibesensor.domain.car import Car
 
     raw_aspects = payload.get("aspects")
+    # Only tuning values have defaults; tire size and ratios stay absent when unknown.
     aspects: dict[str, float | str] = dict(ANALYSIS_SETTINGS_DEFAULTS)
     if isinstance(raw_aspects, Mapping):
         for key, value in sanitize_analysis_settings(raw_aspects).items():

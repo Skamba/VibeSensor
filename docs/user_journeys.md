@@ -205,11 +205,8 @@ its state in `wizard_store.ts`.
 - **Prefill:**
   - The model list shows the default tire size (`CarWizard.tsx`).
   - The tire options come from the variant (`resolveTireOptions` in
-    `wizard_model.ts`). **Today:** the picker shows only the *first* exact
-    row's options when a variant's rows differ
-    (`_library_variant_from_configs` in
-    `apps/server/vibesensor/settings/car_library.py`; this affects 21 of 334
-    variants) (J09).
+    `wizard_model.ts`): the union of its rows' options, one per size
+    (`_union_tire_options` in `apps/server/vibesensor/settings/car_library.py`).
   - Each gearbox row carries final drive, top gear and per-field confidence
     (`_gearbox_row_from_configuration` in `car_library.py`).
   - Choosing a tire also fills the manual tire fields, so the user can edit
@@ -226,14 +223,11 @@ its state in `wizard_store.ts`.
     hedged"). Overriding happens in the car editor. **Today:** no editor
     exists and the Analysis tab cannot edit car data (J04, J07).
 - **Branches:**
-  - The variant has no gearbox with a final drive (10 variants, 13 rows).
-    **Target:** the gearbox is still offered with "final drive unknown"; the
-    car saves and the driveline is "couldn't test" until the user adds the
-    value. **Today:** the picker serves `gearboxes: []`
-    (`_gearbox_row_from_configuration`) and the wizard forces the manual
-    branch with `settings.wizard.no_gearboxes` (`specBranch` in
-    `wizard_model.ts`), which makes the user invent a final drive and top gear
-    (J06 → J01).
+  - The library has no final drive for the gearbox (10 variants, 13 rows).
+    The gearbox is still offered with `final_drive_ratio: null`
+    (`_gearbox_row_from_configuration`) and shown as "FD: unknown"
+    (`gearboxDetail` in `wizard_model.ts`); the car saves without a final drive
+    and the driveline is "couldn't test" until the user adds the value.
   - Library load fails: an error with Retry and "Continue with manual specs"
     (`CarWizard.tsx`).
 
@@ -266,16 +260,9 @@ its state in `wizard_store.ts`.
   - OBD-II → engine without the ratios.
 - **Branches:**
   - The user enters only the tire size. **Target:** the car saves and the
-    driveline and engine show "couldn't test".
-  - **Today**, even if the UI allowed that, two places would fill the gap
-    silently:
-    - the create request spreads the active car's aspects, or the built-in
-      defaults, under the new values (`createAndActivateCar` in
-      `apps/ui/src/pages/cars/cars_store.ts`, `activeCarAspects` in
-      `apps/ui/src/settings_store.ts`) (J02);
-    - the server re-fills every missing aspect with defaults
-      (`car_from_persistence_dict` in
-      `apps/server/vibesensor/settings/car_config.py`) (J03).
+    driveline and engine show "couldn't test". The server and the create
+    request keep missing ratios missing (a `null` ratio means unknown);
+    **Today** only the manual form still requires them (J01).
 
 #### 3.3c Editing later
 
@@ -311,7 +298,7 @@ Entry point: *Settings → Speed Source*
 | Source | Hardware | What it enables | What it cannot do |
 |---|---|---|---|
 | GPS | A USB GPS receiver read through gpsd ([configuration_reference.md](configuration_reference.md)). It is **not in the BOM**, and the Pi 3 A+ has a single USB port ([Pishop](https://www.pishop.us/product/raspberry-pi-3-model-a-plus-512mb-ram/)) that USB internet also uses. | Live speed for wheel and driveline orders; sweeps; coast-down. | RPM is estimated from ratios, assuming top gear. |
-| OBD-II | A **Bluetooth** ELM327 adapter paired with the Pi (`settings.speed.obd_caption`). Wi-Fi dongles cannot be used (J17). | Live speed *and measured RPM*. With measured RPM the engine is testable without tire size or final drive (`_source_checks` in `apps/server/vibesensor/analysis/diagnosis.py`). | Nothing extra. **Today** readiness demands ratios (J18). |
+| OBD-II | A **Bluetooth** ELM327 adapter paired with the Pi (`settings.speed.obd_caption`). Wi-Fi dongles cannot be used (J17). | Live speed *and measured RPM*. With measured RPM the engine is testable without tire size or final drive (`_source_checks` in `apps/server/vibesensor/analysis/diagnosis.py`). | Nothing extra: readiness needs fresh RPM, not the ratios. |
 | Manual | None. | Only a test held at that one fixed speed (`apps/server/vibesensor/speed/speed_resolution.py`). | Sweeps, amplitude vs speed, and the coast-down check. Every sample is treated as being at the set speed. |
 
 - **Tell (target):** each choice explains what it enables, using the table
@@ -349,12 +336,13 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - Show the sensor layout consequence (J21).
   - Allow Start while parked, so the run covers pulling away and low speeds.
     The steady-speed dwell becomes advice for the steady-hold step.
+- `reference_ready` needs only an active car and a working live speed (OBD-II
+  also fresh RPM); missing references never block. The readiness payload
+  carries a non-blocking `capabilities` field (`_capabilities` in
+  `apps/server/vibesensor/recording/capture_readiness_evaluator.py`) for the
+  capability line.
 - **Today:**
-  - `reference_ready` fails `order_reference_incomplete` when the final drive
-    is missing (`_reference_check`, via `OrderReferenceSpec.is_complete` in
-    `apps/server/vibesensor/domain/order_reference.py`), and fails for OBD
-    without a gear ratio and final drive, even though OBD measures RPM (J18).
-    Both are masked by the silent defaults (J03).
+  - The capability line is not shown yet (J20).
   - Start Recording stays disabled until the car moves at ≥ 20 km/h at a
     steady speed for 8 s (`startDisabled` in
     `apps/ui/src/pages/dashboard/dashboard_model.ts`;
@@ -389,11 +377,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - The live band labels read "Engine 1× (est., top gear)", and use measured
     RPM when OBD supplies it.
   - For EVs the coast-down step is replaced: the motor cannot be decoupled.
-  - **Today:** none of this is said (J24, J12). The live bands use estimated
-    RPM even with OBD (`vehicle_orders_hz` in
-    `apps/server/vibesensor/dsp/order_bands.py`), and they vanish entirely
-    when a ratio is missing (`OrderReferenceSpec.orders_hz_from_speed_mps`)
-    (J25).
+  - The live bands use fresh measured OBD-II RPM for the engine, and a
+    missing reference blanks only its own family (`vehicle_orders_hz` in
+    `apps/server/vibesensor/dsp/order_bands.py`).
+  - **Today:** none of the wording above is said (J24, J12).
 - **Branches:**
   - A reload mid-run restores the guided panel ([run_lifecycle.md](run_lifecycle.md)).
   - Speed below 20 km/h or unstable before Start keeps Start disabled (J19).
@@ -570,20 +557,12 @@ Legend:
 
 **Today:**
 
-- **All rows:** a missing final drive, top gear or tire is silently replaced by
-  the defaults in `AnalysisSettingsSnapshot`
-  (`apps/server/vibesensor/domain/analysis_settings.py`), applied by
-  `car_from_persistence_dict` and `analysis_settings_snapshot_from_aspects`
-  (`apps/server/vibesensor/settings/settings_derivation.py`). The ✗ rows
-  therefore print as "ruled out" against fictitious ratios (J03). The wizard
-  cannot even create a car without them (J01).
-- **Readiness:** with OBD-II and no final drive or gear, readiness blocks
-  (`_reference_check`) (J18).
+- **Manual entry:** the wizard's manual form still requires final drive and
+  top gear (J01).
 - **Library-estimate row:** an unhedged "ruled out"; the stored confidence is
   ignored (J27).
 - **Engine with GPS:** the top-gear caveat is missing from the guided steps,
   the live bands and the report (J24).
-- **OBD-II rows:** live bands ignore the measured RPM (J24, J25).
 - **Manual speed:** an unhedged "ruled out". Readiness passes without
   measuring anything (`_speed_check`) (J15).
 

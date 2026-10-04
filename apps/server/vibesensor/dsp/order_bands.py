@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from math import isfinite
 from typing import Final
 
-from vibesensor.common.json_utils import as_float_or_none
+from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.order_reference import OrderFrequencies
 from vibesensor.live.payload_types import OrderBandPayload
-from vibesensor.settings.analysis_settings_codec import (
-    analysis_settings_snapshot_from_mapping,
-)
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 
 HARMONIC_2X: Final[float] = 2.0
@@ -40,26 +37,10 @@ RIGID_ORDER_PATH_COMPLIANCE: Final[float] = 1.0
 """Path compliance for stiffly coupled driveshaft and engine orders."""
 
 __all__ = [
-    "as_float_or_none",
-    "build_diagnostic_settings",
     "build_order_bands",
     "order_peak_tolerance_hz",
     "vehicle_orders_hz",
 ]
-
-
-def build_diagnostic_settings(
-    overrides: Mapping[str, object] | None = None,
-) -> AnalysisSettingsSnapshot:
-    """Return analysis settings merged with validated *overrides* as a snapshot."""
-    out = dict(AnalysisSettingsSnapshot.DEFAULTS)
-    if not overrides:
-        return analysis_settings_snapshot_from_mapping(out)
-    for key in AnalysisSettingsSnapshot.DEFAULTS:
-        parsed = as_float_or_none(overrides.get(key))
-        if parsed is not None:
-            out[key] = parsed
-    return analysis_settings_snapshot_from_mapping(out)
 
 
 def order_peak_tolerance_hz(*, predicted_hz: float, path_compliance: float) -> float:
@@ -87,55 +68,69 @@ def _relative_tolerance(center_hz: float, path_compliance: float) -> float:
     )
 
 
-def build_order_bands(
-    orders_hz: dict[str, float],
-    analysis_settings: AnalysisSettingsSnapshot,
-) -> list[OrderBandPayload]:
-    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math."""
-    order_reference_spec = order_reference_spec_from_snapshot(analysis_settings)
-    if order_reference_spec is None:
-        return []
-    wheel_hz = float(orders_hz["wheel_hz"])
-    drive_hz = float(orders_hz["drive_hz"])
-    engine_hz = float(orders_hz["engine_hz"])
-    wheel_2x_hz = wheel_hz * HARMONIC_2X
-    engine_2x_hz = engine_hz * HARMONIC_2X
-    drive_tol = _relative_tolerance(drive_hz, RIGID_ORDER_PATH_COMPLIANCE)
-    engine_tol = _relative_tolerance(engine_hz, RIGID_ORDER_PATH_COMPLIANCE)
-    bands: list[OrderBandPayload] = [
-        {
-            "key": "wheel_1x",
-            "center_hz": wheel_hz,
-            "tolerance": _relative_tolerance(wheel_hz, WHEEL_ORDER_PATH_COMPLIANCE),
-        },
-        {
-            "key": "wheel_2x",
-            "center_hz": wheel_2x_hz,
-            "tolerance": _relative_tolerance(wheel_2x_hz, WHEEL_ORDER_PATH_COMPLIANCE),
-        },
-    ]
-    overlap_tol = max(
-        MIN_OVERLAP_TOLERANCE,
-        orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
-    )
-    if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
+def build_order_bands(orders_hz: OrderFrequencies) -> list[OrderBandPayload]:
+    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
+
+    Only the order families present in *orders_hz* get bands.
+    """
+    bands: list[OrderBandPayload] = []
+    wheel_hz = orders_hz.get("wheel_hz")
+    drive_hz = orders_hz.get("drive_hz")
+    engine_hz = orders_hz.get("engine_hz")
+    if wheel_hz is not None:
+        wheel_2x_hz = wheel_hz * HARMONIC_2X
         bands.append(
             {
-                "key": "driveshaft_engine_1x",
-                "center_hz": drive_hz,
-                "tolerance": max(drive_tol, engine_tol),
+                "key": "wheel_1x",
+                "center_hz": wheel_hz,
+                "tolerance": _relative_tolerance(wheel_hz, WHEEL_ORDER_PATH_COMPLIANCE),
+            }
+        )
+        bands.append(
+            {
+                "key": "wheel_2x",
+                "center_hz": wheel_2x_hz,
+                "tolerance": _relative_tolerance(wheel_2x_hz, WHEEL_ORDER_PATH_COMPLIANCE),
+            }
+        )
+    drive_tol = (
+        _relative_tolerance(drive_hz, RIGID_ORDER_PATH_COMPLIANCE) if drive_hz is not None else 0.0
+    )
+    engine_tol = (
+        _relative_tolerance(engine_hz, RIGID_ORDER_PATH_COMPLIANCE)
+        if engine_hz is not None
+        else 0.0
+    )
+    if drive_hz is not None and engine_hz is not None:
+        overlap_tol = max(
+            MIN_OVERLAP_TOLERANCE,
+            orders_hz.get("drive_uncertainty_pct", 0.0)
+            + orders_hz.get("engine_uncertainty_pct", 0.0),
+        )
+        if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
+            bands.append(
+                {
+                    "key": "driveshaft_engine_1x",
+                    "center_hz": drive_hz,
+                    "tolerance": max(drive_tol, engine_tol),
+                },
+            )
+        else:
+            bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+            bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+    elif drive_hz is not None:
+        bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+    elif engine_hz is not None:
+        bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+    if engine_hz is not None:
+        engine_2x_hz = engine_hz * HARMONIC_2X
+        bands.append(
+            {
+                "key": "engine_2x",
+                "center_hz": engine_2x_hz,
+                "tolerance": _relative_tolerance(engine_2x_hz, RIGID_ORDER_PATH_COMPLIANCE),
             },
         )
-    else:
-        bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
-        bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
-    bands.append(
-        {
-            "key": "engine_2x",
-            "center_hz": engine_2x_hz,
-            "tolerance": _relative_tolerance(engine_2x_hz, RIGID_ORDER_PATH_COMPLIANCE),
-        },
-    )
     return bands
 
 
@@ -143,11 +138,24 @@ def vehicle_orders_hz(
     *,
     speed_mps: float | None,
     settings: AnalysisSettingsSnapshot,
-) -> dict[str, float] | None:
-    """Return per-order frequencies in Hz for the given speed and settings."""
-    if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
-        return None
-    order_reference_spec = order_reference_spec_from_snapshot(settings)
-    if order_reference_spec is None:
-        return None
-    return order_reference_spec.orders_hz_from_speed_mps(speed_mps)
+    measured_engine_rpm: float | None = None,
+) -> OrderFrequencies:
+    """Return the order frequencies (Hz) the car's references and live data support.
+
+    Wheel and driveshaft orders follow speed and the tire/final drive. Engine
+    orders come from a fresh measured RPM (OBD-II) when given, otherwise from
+    speed and the ratios (which assumes top gear).
+    """
+    orders: OrderFrequencies = {}
+    if speed_mps is not None and isfinite(speed_mps) and speed_mps > 0:
+        order_reference_spec = order_reference_spec_from_snapshot(settings)
+        if order_reference_spec is not None:
+            orders = order_reference_spec.orders_hz_from_speed_mps(speed_mps)
+    if (
+        measured_engine_rpm is not None
+        and isfinite(measured_engine_rpm)
+        and measured_engine_rpm > 0
+    ):
+        orders["engine_hz"] = measured_engine_rpm / SECONDS_PER_MINUTE
+        orders["engine_uncertainty_pct"] = 0.0
+    return orders

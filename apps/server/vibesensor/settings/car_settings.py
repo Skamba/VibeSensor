@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from threading import RLock
 from typing import Protocol, TypeVar
 
@@ -199,11 +199,20 @@ class CarSettingsService:
             new_aspects: AnalysisSettingsPayload = analysis_settings_payload_from_mapping(
                 car.aspects
             )
+            clear_final_drive = clear_gear = False
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
+                raw_aspects: Mapping[str, object] = car_data["aspects"]
                 new_aspects = _merge_aspects_with_tire_setup(
                     current=new_aspects,
-                    updates=sanitize_analysis_settings(car_data["aspects"]),
+                    updates=sanitize_analysis_settings(raw_aspects),
                 )
+                # An explicit null ratio means "unknown": drop the stored value.
+                clear_final_drive = _is_explicit_null(raw_aspects, "final_drive_ratio")
+                clear_gear = _is_explicit_null(raw_aspects, "current_gear_ratio")
+                if clear_final_drive:
+                    new_aspects.pop("final_drive_ratio", None)
+                if clear_gear:
+                    new_aspects.pop("current_gear_ratio", None)
             new_variant = car.variant
             if "variant" in car_data:
                 raw_variant = car_data["variant"]
@@ -218,6 +227,17 @@ class CarSettingsService:
                     new_order_reference_status = car_order_reference_status_from_mapping(
                         raw_order_reference_status
                     )
+            if new_order_reference_status is not None and (clear_final_drive or clear_gear):
+                status = new_order_reference_status
+                new_order_reference_status = replace(
+                    status,
+                    final_drive_ratio_confidence=(
+                        None if clear_final_drive else status.final_drive_ratio_confidence
+                    ),
+                    current_gear_ratio_confidence=(
+                        None if clear_gear else status.current_gear_ratio_confidence
+                    ),
+                )
             self._state.cars[idx] = Car(
                 id=car.id,
                 name=new_name,
@@ -320,6 +340,10 @@ class CarSettingsService:
             ),
             result=self.cars_snapshot_unlocked,
         )
+
+
+def _is_explicit_null(values: Mapping[str, object], key: str) -> bool:
+    return key in values and values[key] is None
 
 
 def _updated_order_reference_status(

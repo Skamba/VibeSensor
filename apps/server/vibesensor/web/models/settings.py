@@ -172,9 +172,9 @@ class SpeedUnitResponse(BaseModel):
 class AnalysisSettingsResponse(BaseModel):
     """Response body reflecting the current validated analysis settings."""
 
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
+    tire_width_mm: float | None = None
+    tire_aspect_pct: float | None = None
+    rim_in: float | None = None
     front_tire_width_mm: float | None = None
     front_tire_aspect_pct: float | None = None
     front_rim_in: float | None = None
@@ -182,8 +182,8 @@ class AnalysisSettingsResponse(BaseModel):
     rear_tire_aspect_pct: float | None = None
     rear_rim_in: float | None = None
     default_axle_for_speed: Literal["front", "rear", "average"] = "rear"
-    final_drive_ratio: float
-    current_gear_ratio: float
+    final_drive_ratio: float | None = None
+    current_gear_ratio: float | None = None
     speed_uncertainty_pct: float
     tire_diameter_uncertainty_pct: float
     final_drive_uncertainty_pct: float

@@ -41,7 +41,7 @@ def normalize_accel_scale_g_per_lsb(value: object) -> float | None:
 def analysis_settings_snapshot(
     settings_reader: SettingsDerivationService | None,
 ) -> AnalysisSettingsSnapshot:
-    """Load the current analysis settings snapshot or repo defaults."""
+    """Load the current analysis settings snapshot (tuning defaults only without a reader)."""
     if settings_reader is not None:
         return settings_reader.analysis_settings_snapshot()
     return analysis_settings_snapshot_from_mapping(AnalysisSettingsSnapshot.DEFAULTS)

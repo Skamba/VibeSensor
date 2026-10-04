@@ -20,11 +20,6 @@ export const defaultLocationCodes = [
 ] as const;
 
 export const defaultAnalysisSettings = {
-  "tire_width_mm": 285.0,
-  "tire_aspect_pct": 30.0,
-  "rim_in": 21.0,
-  "final_drive_ratio": 3.08,
-  "current_gear_ratio": 0.64,
   "speed_uncertainty_pct": 1.0,
   "tire_diameter_uncertainty_pct": 1.0,
   "final_drive_uncertainty_pct": 0.1,

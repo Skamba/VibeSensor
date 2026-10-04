@@ -9,7 +9,10 @@ from typing import Any, cast
 
 from vibesensor.common.json_types import JsonObject
 from vibesensor.common.scalars import float_or
-from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.analysis_settings import (
+    ANALYSIS_SETTINGS_REFERENCE_KEYS,
+    AnalysisSettingsSnapshot,
+)
 from vibesensor.settings.analysis_settings_schema import (
     ANALYSIS_SETTINGS_FIELDS,
     sanitize_analysis_settings,
@@ -23,6 +26,18 @@ type ScalarSettingValue = int | float | bool | str
 type ScalarSettings = tuple[tuple[str, ScalarSettingValue], ...]
 
 _AXLE_KEY = "default_axle_for_speed"
+# Car references that are left out of persisted metadata when unknown (0.0).
+_OPTIONAL_REFERENCE_KEYS = frozenset(
+    {
+        *ANALYSIS_SETTINGS_REFERENCE_KEYS,
+        "front_tire_width_mm",
+        "front_tire_aspect_pct",
+        "front_rim_in",
+        "rear_tire_width_mm",
+        "rear_tire_aspect_pct",
+        "rear_rim_in",
+    }
+)
 
 
 def analysis_settings_snapshot_from_mapping(payload: object) -> AnalysisSettingsSnapshot:
@@ -63,18 +78,7 @@ def analysis_settings_snapshot_to_metadata(snapshot: AnalysisSettingsSnapshot) -
             if has_axle_specific_tire_setup:
                 metadata[key] = value
             continue
-        if (
-            key
-            in {
-                "front_tire_width_mm",
-                "front_tire_aspect_pct",
-                "front_rim_in",
-                "rear_tire_width_mm",
-                "rear_tire_aspect_pct",
-                "rear_rim_in",
-            }
-            and value <= 0.0
-        ):
+        if key in _OPTIONAL_REFERENCE_KEYS and value <= 0.0:
             continue
         if math.isfinite(float(value)):
             metadata[key] = value

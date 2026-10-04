@@ -25,7 +25,9 @@ class CarLibraryGearboxEntry(_StrictBase):
     """A gearbox option from the car library (gear ratios)."""
 
     name: str = Field(min_length=1)
-    final_drive_ratio: float = Field(gt=0)
+    final_drive_ratio: float | None = Field(
+        gt=0, description="`null` when the library has no final drive for this gearbox."
+    )
     top_gear_ratio: float = Field(gt=0)
     gear_ratios: list[float] | None = Field(default=None, min_length=1)
     source_status: Literal["exact_row"] | None = None

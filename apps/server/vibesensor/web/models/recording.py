@@ -19,11 +19,22 @@ class RecordingCaptureReadinessCheckResponse(BaseModel):
     details: dict[str, int | float | str] = Field(default_factory=dict)
 
 
+class RecordingCaptureCapabilitiesResponse(BaseModel):
+    """Which order families the active car can test; informational, never blocks capture."""
+
+    wheel: Literal["ok", "missing_tire"]
+    driveline: Literal["ok", "missing_final_drive", "missing_tire"]
+    engine: Literal["measured", "estimated_top_gear", "missing"]
+
+
 class RecordingCaptureReadinessResponse(BaseModel):
     """Backend-owned live capture-readiness summary for idle/pre-record states."""
 
     is_ready: bool
     checks: list[RecordingCaptureReadinessCheckResponse]
+    capabilities: RecordingCaptureCapabilitiesResponse | None = Field(
+        default=None, description="`null` without an active car."
+    )
 
 
 class GuidedPhaseRequest(BaseModel):

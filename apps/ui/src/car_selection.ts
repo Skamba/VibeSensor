@@ -2,12 +2,11 @@ import type { CarRecord } from "./api/types";
 
 /** Pure car-selection derivations shared by the car, analysis, and live pages. */
 
+/** Tire size is the minimum; final drive and top gear are optional references. */
 const REQUIRED_CAR_ASPECT_KEYS = [
   "tire_width_mm",
   "tire_aspect_pct",
   "rim_in",
-  "final_drive_ratio",
-  "current_gear_ratio",
 ] as const;
 
 export type RequiredCarAspectKey = (typeof REQUIRED_CAR_ASPECT_KEYS)[number];
