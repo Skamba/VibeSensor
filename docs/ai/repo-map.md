@@ -46,7 +46,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client).
 - `cli/`: console entry points.
-- `apps/server/root-helpers/` (outside the package): the stdlib-only scripts root runs (privileged helper, update allowlist, OBD admin, `hotspot_nmcli.sh`, `vibesensor_hotspot.py` hotspot settings and watchdog). `install_systemd_units.sh` copies them to root-owned `/usr/local/lib/vibesensor`; they never import `vibesensor`, and constants they copy are pinned by parity tests in `tests/root_helpers/`.
+- `apps/server/root-helpers/` (outside the package): the stdlib-only scripts root runs (privileged helper, update allowlist, OBD admin, `hotspot_nmcli.sh`, `vibesensor_hotspot.py` hotspot settings and watchdog). `install_systemd_units.sh` copies them to root-owned `/usr/local/lib/vibesensor`; they never import `vibesensor`, constants they copy are pinned by parity tests in `tests/root_helpers/`, which also runs `hotspot_nmcli.sh` end to end against stub `nmcli`.
 - Report flow details: `docs/report_pipeline.md`.
 - User journeys and expectation-setting principles (car wizard, readiness, source checks, report wording): `docs/user_journeys.md`; open gaps: `docs/user_journey_gaps.md`.
 - Analysis/run/live ingest details: `docs/analysis_pipeline.md`, `docs/run_lifecycle.md`, `docs/intake_buffering.md`, `docs/order_tracking.md`.

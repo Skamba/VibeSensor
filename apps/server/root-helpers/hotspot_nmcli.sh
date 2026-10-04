@@ -59,13 +59,14 @@ dump_cmd() {
   local name="$1"
   shift
   local out_file="${LOG_DIR}/${name}.txt"
+  local rc=0
   echo "[dump] ${name}: $*"
-  set +e
-  "$@" >"${out_file}" 2>&1
-  local rc=$?
-  set -e
+  # Diagnostics are best-effort; collection failures should not mask the main
+  # error. "|| rc=$?" keeps a failing command from firing the ERR trap, which
+  # "set +e" would not (NetworkManager still starting at boot fails
+  # "nmcli general status" in the pre dump).
+  "$@" >"${out_file}" 2>&1 || rc=$?
   echo "[dump] ${name}: rc=${rc} file=${out_file}"
-  # Diagnostics are best-effort; collection failures should not mask the main error.
   return 0
 }
 
