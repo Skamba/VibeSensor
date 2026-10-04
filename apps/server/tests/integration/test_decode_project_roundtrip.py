@@ -121,19 +121,19 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
 
 def test_analysis_produces_wired_domain_aggregates() -> None:
     """Analysis must produce TestRun and DiagnosticCase with correct wiring."""
-    analysis, result = _run_analysis()
+    _analysis, result = _run_analysis()
 
-    assert isinstance(analysis.test_run, TestRun)
+    assert isinstance(result.test_run, TestRun)
     assert isinstance(result.diagnostic_case, DiagnosticCase)
 
     # diagnostic_case.primary_run is wired to the same TestRun
     assert result.diagnostic_case.primary_run is not None
-    assert result.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
+    assert result.diagnostic_case.primary_run.run_id == result.test_run.run_id
 
     # domain aggregates reflect summary content
-    assert len(analysis.test_run.top_causes) > 0
-    assert analysis.test_run.run_id == "run-roundtrip"
-    top = analysis.test_run.top_causes[0]
+    assert len(result.test_run.top_causes) > 0
+    assert result.test_run.run_id == "run-roundtrip"
+    top = result.test_run.top_causes[0]
     summary = analysis_result_to_summary(result)
     assert str(top.suspected_source) == summary["top_causes"][0]["suspected_source"]
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vibesensor.analysis._analysis_models import (
-    FindingsBuildRequest,
     PreparedAnalysisContext,
 )
 from vibesensor.analysis._types import AccelStatistics, Sample
@@ -15,31 +14,7 @@ from vibesensor.analysis.statistics import compute_frame_integrity_counts
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.recording.run_schema import RunMetadata
 
-__all__ = ["build_findings_request", "prepare_analysis_context"]
-
-
-def build_findings_request(
-    *,
-    context: RunMetadata,
-    samples: Sequence[Sample],
-    language: str,
-    prepared: PreparedRunData,
-) -> FindingsBuildRequest:
-    """Build the findings-specific projection from the canonical typed run context."""
-
-    typed_samples = tuple(samples)
-    return FindingsBuildRequest(
-        context=context,
-        samples=typed_samples,
-        speed_sufficient=prepared.speed_sufficient,
-        steady_speed=prepared.is_steady_speed,
-        speed_stddev_kmh=prepared.speed_stddev_kmh,
-        speed_non_null_pct=prepared.speed_non_null_pct,
-        raw_sample_rate_hz=prepared.raw_sample_rate_hz,
-        lang=language,
-        per_sample_phases=prepared.per_sample_phases,
-        run_noise_baseline_g=prepared.run_noise_baseline_g,
-    )
+__all__ = ["prepare_analysis_context"]
 
 
 def prepare_analysis_context(

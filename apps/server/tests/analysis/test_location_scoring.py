@@ -6,7 +6,19 @@ wheel order louder than the wheel sensor, and two corners within a near tie.
 
 from __future__ import annotations
 
+from typing import Any
+
+from test_support import (
+    ALL_SENSORS,
+    assert_summary_sections,
+    assert_top_cause_contract,
+    make_sample,
+    standard_metadata,
+    wheel_hz,
+)
+
 from vibesensor.analysis.location_analysis import summarize_order_match_locations
+from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.locations import is_wheel_location
 from vibesensor.domain.order_match import OrderMatchObservation
 
@@ -57,3 +69,40 @@ def test_near_tie_between_two_corners_is_reported_as_ambiguous() -> None:
     assert result.localization_confidence < 0.4
     assert isinstance(sentence, dict)
     assert "ambiguous location" in str(sentence.get("location", ""))
+
+
+def test_a_wheel_sensor_that_drops_out_and_rejoins_does_not_move_the_fault() -> None:
+    samples: list[dict[str, Any]] = []
+    whz = wheel_hz(80.0)
+    for i in range(40):
+        for sensor in ALL_SENSORS:
+            if sensor == "rear-left" and 10 <= i < 20:
+                continue
+            if sensor == "front-right":
+                peaks = [{"hz": whz, "amp": 0.06}, {"hz": whz * 2, "amp": 0.024}]
+                vib_db = 26.0
+            else:
+                peaks = [{"hz": 142.5, "amp": 0.003}]
+                vib_db = 8.0
+            samples.append(
+                make_sample(
+                    t_s=float(i),
+                    speed_kmh=80.0,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=vib_db,
+                    strength_floor_amp_g=0.003,
+                ),
+            )
+    summary = summarize_run_data(
+        standard_metadata(),
+        samples,
+        lang="en",
+        file_name="rejoin_test",
+    )
+    assert_summary_sections(summary, min_top_causes=1)
+    assert_top_cause_contract(
+        summary["top_causes"][0],
+        expected_source="wheel",
+        expected_location="front-right",
+    )

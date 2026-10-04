@@ -52,23 +52,6 @@ def _location_label(
     return "Unknown sensor"
 
 
-def client_locations_by_sensor(
-    samples: Sequence[Sample],
-    *,
-    metadata: RunMetadata | None = None,
-    lang: str = "en",
-) -> dict[str, str]:
-    """Return deterministic location labels keyed by client id."""
-
-    locations: dict[str, str] = {}
-    for sample in samples:
-        client_id = sample.client_id.strip()
-        if not client_id or client_id in locations:
-            continue
-        locations[client_id] = _location_label(sample, metadata=metadata, lang=lang)
-    return locations
-
-
 def fallback_location_label(client_id: str) -> str:
     """Return a stable fallback label when no explicit location is available."""
 

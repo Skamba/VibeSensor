@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.speed.gps_transport import GPSTransportState
 from vibesensor.speed.gps_transport_updates import (
     apply_tpv,
@@ -81,3 +83,20 @@ def test_ingest_message_uses_custom_readers_before_delegating_to_apply_tpv(
             device="/dev/ttyACM1",
         )
     ]
+
+
+@pytest.mark.parametrize(
+    "bad_speed",
+    [float("nan"), float("inf"), -5.0, None],
+    ids=["nan", "inf", "negative", "none"],
+)
+def test_an_implausible_speed_keeps_the_last_good_one(bad_speed: float | None) -> None:
+    transport = GPSTransportState(gps_enabled=True)
+
+    def tpv(speed: float | None) -> NormalizedTpvData:
+        return NormalizedTpvData(mode=3, speed=speed, epx=1.0, epy=1.0, epv=1.0, device=None)
+
+    apply_tpv(transport, tpv(10.0), monotonic=lambda: 1.0)
+    apply_tpv(transport, tpv(bad_speed), monotonic=lambda: 2.0)
+
+    assert transport.speed_mps == 10.0

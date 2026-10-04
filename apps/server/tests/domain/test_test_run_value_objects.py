@@ -172,12 +172,12 @@ class TestTestRunQueries:
         result = analysis.summarize()
         summary = analysis_result_to_summary(result)
 
-        assert isinstance(analysis.test_run, TestRun)
-        assert analysis.test_run.run_id == summary["run_id"] == "domain-case-guard"
-        assert len(analysis.test_run.findings) == len(summary["findings"])
+        assert isinstance(result.test_run, TestRun)
+        assert result.test_run.run_id == summary["run_id"] == "domain-case-guard"
+        assert len(result.test_run.findings) == len(summary["findings"])
         assert isinstance(result.diagnostic_case, DiagnosticCase)
         assert result.diagnostic_case.primary_run is not None
-        assert result.diagnostic_case.primary_run.run_id == analysis.test_run.run_id
+        assert result.diagnostic_case.primary_run.run_id == result.test_run.run_id
         assert result.diagnostic_case.car is not None
         assert result.diagnostic_case.car.name == "Guard Car"
 

@@ -94,20 +94,10 @@ class RunPersistenceWriter:
         with self._lock:
             return self._history_run_created
 
-    @history_run_created.setter
-    def history_run_created(self, value: bool) -> None:
-        with self._lock:
-            self._history_run_created = bool(value)
-
     @property
     def written_sample_count(self) -> int:
         with self._lock:
             return self._written_sample_count
-
-    @written_sample_count.setter
-    def written_sample_count(self, value: int) -> None:
-        with self._lock:
-            self._written_sample_count = int(value)
 
     @property
     def last_write_error(self) -> str | None:

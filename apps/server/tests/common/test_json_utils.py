@@ -357,6 +357,8 @@ class TestAsFloatOrNone:
             ("abc", None),
             (True, None),
             (False, None),
+            (object(), None),
+            ([1, 2], None),
         ],
     )
     def test_as_float_or_none(self, value: Any, expected: float | None) -> None:

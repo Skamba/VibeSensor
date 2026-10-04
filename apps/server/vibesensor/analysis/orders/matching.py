@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.analysis._sample_metrics import (
@@ -17,7 +17,6 @@ from vibesensor.analysis._types import (
     Sample,
 )
 from vibesensor.analysis.constants import (
-    MIN_ANALYSIS_FREQ_HZ,
     ORDER_MIN_COVERAGE_DURATION_S,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_DURATION_S,
@@ -141,25 +140,6 @@ def best_order_peak_match(
         amplitude_g=best_amp,
         relative_error=delta_hz / max(1e-9, predicted_hz),
     )
-
-
-def filtered_peak_pairs(
-    peaks: Sequence[Mapping[str, object]],
-) -> tuple[tuple[int, ...], tuple[tuple[float, float], ...]]:
-    """Return valid ``(hz, amp)`` peak pairs plus their source indexes."""
-
-    indexes: list[int] = []
-    filtered: list[tuple[float, float]] = []
-    for peak_index, peak in enumerate(peaks):
-        hz = peak.get("hz")
-        amp = peak.get("amp")
-        if not isinstance(hz, (int, float)) or not isinstance(amp, (int, float)):
-            continue
-        if hz <= 0 or amp <= 0 or hz < MIN_ANALYSIS_FREQ_HZ:
-            continue
-        indexes.append(peak_index)
-        filtered.append((float(hz), float(amp)))
-    return tuple(indexes), tuple(filtered)
 
 
 def match_samples_for_hypothesis(
