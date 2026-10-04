@@ -46,11 +46,13 @@ class SuitabilityCheck:
         """Return the i18n reference dict (or empty string) for this check."""
         details = self.details_dict
         if self.check_key == "SUITABILITY_CHECK_SPEED_VARIATION":
-            return _i18n_ref(
-                "SUITABILITY_SPEED_VARIATION_PASS"
-                if self.passed
-                else "SUITABILITY_SPEED_VARIATION_WARN",
-            )
+            if self.passed:
+                return _i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
+            if details.get("manual_speed"):
+                return _i18n_ref("SUITABILITY_SPEED_VARIATION_MANUAL", manual_speed=1)
+            if details.get("steady_speed"):
+                return _i18n_ref("SUITABILITY_SPEED_VARIATION_STEADY", steady_speed=1)
+            return _i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
         if self.check_key == "SUITABILITY_CHECK_SENSOR_COVERAGE":
             return _i18n_ref(
                 "SUITABILITY_SENSOR_COVERAGE_PASS"
@@ -73,6 +75,9 @@ class SuitabilityCheck:
         if self.check_key == "SUITABILITY_CHECK_FRAME_INTEGRITY":
             total_dropped = int(details.get("total_dropped", 0))
             total_overflow = int(details.get("total_overflow", 0))
+            frames_lost = total_dropped + total_overflow > 0
+            if not self.passed and details.get("replay_incomplete") and not frames_lost:
+                return _i18n_ref("SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN", **details)
             return (
                 _i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
                 if self.passed
@@ -152,26 +157,78 @@ class RunSuitability:
             for c in self.checks
         )
 
+    _REPLAY_COVERAGE_KEYS: ClassVar[tuple[str, ...]] = (
+        "replay_partial",
+        "replay_missing",
+        "replay_gaps",
+        "replay_overlaps",
+    )
+
+    def with_incomplete_raw_replay(
+        self, *, partial: int, missing: int, gaps: int, overlaps: int
+    ) -> RunSuitability:
+        """Fail the frame-integrity check when the raw capture did not cover the run.
+
+        Those moments were analysed from the stored summaries, so the report must
+        not also say that no sensor data was lost.
+        """
+        key = "SUITABILITY_CHECK_FRAME_INTEGRITY"
+        counts = (partial, missing, gaps, overlaps)
+        checks = tuple(
+            SuitabilityCheck(
+                check_key=key,
+                state="warn",
+                details=(
+                    *(item for item in check.details if not item[0].startswith("replay_")),
+                    ("replay_incomplete", 1),
+                    *zip(self._REPLAY_COVERAGE_KEYS, (max(0, n) for n in counts), strict=True),
+                ),
+            )
+            if check.check_key == key
+            else check
+            for check in self.checks
+        )
+        return RunSuitability(checks=checks)
+
+    @staticmethod
+    def _speed_variation(
+        *, steady_speed: bool, speed_sufficient: bool, manual_speed: bool
+    ) -> SuitabilityCheck:
+        key = "SUITABILITY_CHECK_SPEED_VARIATION"
+        if not speed_sufficient:
+            return SuitabilityCheck(check_key=key, state="warn")
+        if manual_speed:
+            return SuitabilityCheck(check_key=key, state="warn", details=(("manual_speed", 1),))
+        if steady_speed:
+            return SuitabilityCheck(check_key=key, state="warn", details=(("steady_speed", 1),))
+        return SuitabilityCheck(check_key=key, state="pass")
+
     @classmethod
     def evaluate(
         cls,
         *,
         steady_speed: bool,
         speed_sufficient: bool,
+        manual_speed: bool,
         sensor_count: int,
         reference_complete: bool,
         sat_count: int,
         total_dropped: int,
         total_overflow: int,
     ) -> RunSuitability:
-        """Evaluate run suitability from typed analysis inputs."""
-        speed_variation_ok = speed_sufficient
+        """Evaluate run suitability from typed analysis inputs.
+
+        Orders are told apart by how their frequency follows the speed, so the
+        speed check passes only for a live speed that varied: not for a speed
+        typed in by hand, nor for one held nearly constant.
+        """
         frame_issues = total_dropped + total_overflow
         return cls(
             checks=(
-                SuitabilityCheck(
-                    check_key="SUITABILITY_CHECK_SPEED_VARIATION",
-                    state="pass" if speed_variation_ok else "warn",
+                cls._speed_variation(
+                    steady_speed=steady_speed,
+                    speed_sufficient=speed_sufficient,
+                    manual_speed=manual_speed,
                 ),
                 SuitabilityCheck(
                     check_key="SUITABILITY_CHECK_SENSOR_COVERAGE",

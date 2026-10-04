@@ -51,6 +51,7 @@ from vibesensor.settings.analysis_settings_codec import (
 from vibesensor.settings.car_config import (
     car_order_reference_status_from_mapping,
     car_order_reference_status_payload_from_domain,
+    fuel_type_or_none,
 )
 
 __all__ = [
@@ -347,6 +348,7 @@ def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:
             )
             else None
         ),
+        fuel_type=fuel_type_or_none(payload.get("fuel_type")),
     )
     if (
         run_car.car_id is None
@@ -374,4 +376,6 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
             JsonObject,
             car_order_reference_status_payload_from_domain(run_car.order_reference_status),
         )
+    if run_car.fuel_type is not None:
+        payload["fuel_type"] = run_car.fuel_type
     return payload

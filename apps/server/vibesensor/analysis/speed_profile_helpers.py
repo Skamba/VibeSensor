@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Sequence
 from math import sqrt
 
@@ -17,6 +17,28 @@ from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.dsp.statistics_utils import _mean_variance
+
+# A speed typed in by hand is not a measurement: every sample carries the set value.
+_MANUAL_SPEED_SOURCES = frozenset({"manual", "fallback_manual"})
+
+
+def run_speed_source(samples: Sequence[Sample]) -> str | None:
+    """The most common speed source among the moving samples."""
+    counts = Counter(
+        sample.speed_source.strip().lower()
+        for sample in samples
+        if sample.speed_kmh is not None and sample.speed_kmh > 0 and sample.speed_source.strip()
+    )
+    return counts.most_common(1)[0][0] if counts else None
+
+
+def speed_typed_in(speed_source: str | None, *, simulated: bool) -> bool:
+    """The run speed was entered by hand, not measured live (GPS/OBD-II).
+
+    The simulator's manual speed is the simulated drive's true speed, so a
+    simulated run does not count.
+    """
+    return speed_source in _MANUAL_SPEED_SOURCES and not simulated
 
 
 def _amplitude_weighted_speed_window(

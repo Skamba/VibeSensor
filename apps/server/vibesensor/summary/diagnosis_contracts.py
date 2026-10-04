@@ -17,10 +17,12 @@ __all__ = [
     "DiagnosisPayload",
     "DiagnosisSpectrum",
     "DiagnosisVerdictValue",
+    "FuelTypeValue",
     "GuidedPhaseValue",
     "LocationAmplitudeRow",
     "OrderCodeValue",
     "OrderFindingRow",
+    "ReferenceProvenanceValue",
     "RpmSourceValue",
     "SourceCheck",
     "SourceCheckReason",
@@ -37,19 +39,35 @@ type DiagnosisVerdictValue = Literal["fault", "weak_evidence", "no_fault"]
 type ConfidenceLevelValue = Literal["strong", "moderate", "weak"]
 type OrderCodeValue = Literal["T1", "T2", "P1", "P2", "E1", "E2"]
 type AmplitudeBasis = Literal["order", "overall"]
-type SourceCheckStatus = Literal["candidate", "ruled_out", "not_testable"]
+# ``ruled_out_estimated``: no match, but the order rests on an estimate (a weak
+# library ratio, or engine RPM estimated from speed assuming top gear).
+type SourceCheckStatus = Literal["candidate", "ruled_out", "ruled_out_estimated", "not_testable"]
 type SourceCheckReason = Literal[
     "no_tire_reference",
     "no_drive_reference",
     "no_engine_reference",
-    "rpm_estimated",
+    "manual_speed",
+    "top_gear_assumed",
+    "estimated_final_drive",
+    "estimated_top_gear",
     "no_matching_order",
     "stayed_in_neutral",
     "stopped_in_neutral",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]
-type RpmSourceValue = Literal["measured", "estimated", "none"]
+type RpmSourceValue = Literal["measured", "estimated_top_gear", "none"]
+# Where a car reference came from: the user, a car-library confidence, or missing.
+type ReferenceProvenanceValue = Literal[
+    "user_confirmed",
+    "official_exact",
+    "official_derived",
+    "reputable_secondary_crosschecked",
+    "family_default",
+    "unverified",
+    "missing",
+]
+type FuelTypeValue = Literal["ICE", "PHEV", "EV"]
 
 
 @with_config(_FORBID_EXTRA)
@@ -120,13 +138,17 @@ class SourceCheck(TypedDict):
 
 @with_config(_FORBID_EXTRA)
 class TestConditions(TypedDict):
-    """Reference data the order analysis used."""
+    """Reference data the order analysis used, with where each reference came from."""
 
     speed_source: str | None
     rpm_source: RpmSourceValue
     tire_circumference_m: float | None
     final_drive_ratio: float | None
     gear_ratio: float | None
+    tire_provenance: ReferenceProvenanceValue
+    final_drive_provenance: ReferenceProvenanceValue
+    gear_ratio_provenance: ReferenceProvenanceValue
+    fuel_type: FuelTypeValue | None
 
 
 @with_config(_FORBID_EXTRA)

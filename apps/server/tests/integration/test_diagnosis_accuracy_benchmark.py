@@ -814,11 +814,20 @@ def _assert_case(
     if expected.speed_dependence is not None:
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
     _assert_spectrum_markers(diagnosis, car)
-    # The simulated car reports no engine RPM: the engine can only be judged from
-    # RPM estimated from speed and gear, never ruled out as if RPM were measured.
-    assert diagnosis["conditions"]["rpm_source"] != "measured"
-    engine_check = next(c for c in diagnosis["source_checks"] if c["source"] == "engine")
-    assert engine_check["reason"] != "no_matching_order", engine_check
+    # The simulated car reports no engine RPM: an engine no-match rests on RPM
+    # estimated from speed in top gear, never a plain "ruled out". The bench car's
+    # references are the user's own and the simulator's speed is the true speed,
+    # so wheels and driveline are ruled out outright.
+    assert diagnosis["conditions"]["rpm_source"] == "estimated_top_gear"
+    for check in diagnosis["source_checks"]:
+        if check["status"] == "candidate" or check["reason"] in _COAST_REASONS:
+            continue
+        expected_check = (
+            ("ruled_out_estimated", "top_gear_assumed")
+            if check["source"] == "engine"
+            else ("ruled_out", "no_matching_order")
+        )
+        assert (check["status"], check["reason"]) == expected_check, diagnosis["source_checks"]
     _assert_sensor_identity(result)
     _assert_speed_breakdown(result, case)
     _assert_raw_backed(result, case)
@@ -935,12 +944,21 @@ def _assert_speed_breakdown(result: SimPipelineResult, case: Case) -> None:
 
 
 def _assert_frame_integrity(result: SimPipelineResult, *, lossy: bool) -> None:
+    """Frame integrity warns on lost frames and on raw replay that did not cover the run.
+
+    It never reads "no sensor data was lost" next to the replay-coverage warning.
+    """
     checks = {check.label: check for check in result.report.quality.checks}
     frame_integrity = checks["Frame integrity"]
-    assert frame_integrity.passed is not lossy, frame_integrity
-    assert frame_integrity.state == ("Check" if lossy else "OK"), frame_integrity
+    codes = {warning["code"] for warning in result.analysis.payload["warnings"]}
+    incomplete = lossy or "raw_replay_coverage_incomplete" in codes
+    assert frame_integrity.passed is not incomplete, frame_integrity
+    assert frame_integrity.state == ("Check" if incomplete else "OK"), frame_integrity
     if lossy:
         assert "dropped frames" in frame_integrity.detail
+    elif incomplete:
+        assert "The raw capture did not cover the whole run" in frame_integrity.detail
+    if incomplete:
         assert not result.report.quality.all_passed
 
 
@@ -996,6 +1014,10 @@ def _assert_raw_backed(result: SimPipelineResult, case: Case) -> None:
     assert metadata["raw_replay_timing_fallback_count"] == 0
 
 
+_ENGINE_TOP_GEAR_LINE = (
+    "Engine: no match with the engine orders estimated for top gear; lower gears were not checked"
+)
+_COAST_REASONS = ("stayed_in_neutral", "stopped_in_neutral")
 _SPEED_SOURCE_TEXT = {"manual": "entered by hand", "obd2": "OBD"}
 _SOURCE_NAMES_EN = {"wheel/tire": "Wheels/tires", "driveline": "Driveline", "engine": "Engine"}
 
@@ -1015,6 +1037,10 @@ def _assert_report_view(
     assert owner.level == diagnosis["confidence_level"]
     conditions = {fact.label: fact.value for fact in result.report.mechanic.conditions}
     assert conditions["Speed source"] == _SPEED_SOURCE_TEXT[case.speed_source], conditions
+    engine_check = next(c for c in diagnosis["source_checks"] if c["source"] == "engine")
+    if engine_check["reason"] == "top_gear_assumed":
+        # The workshop is told the engine check assumed top gear.
+        assert _ENGINE_TOP_GEAR_LINE in result.report.mechanic.ruled_out
     if diagnosis["verdict"] == "no_fault":
         assert owner.headline == "No significant vibration found"
         assert owner.diagram.zone is None

@@ -295,6 +295,7 @@ class TestRunSuitability:
         rs = RunSuitability.evaluate(
             steady_speed=True,
             speed_sufficient=True,
+            manual_speed=False,
             sensor_count=2,
             reference_complete=False,
             sat_count=3,
@@ -303,18 +304,48 @@ class TestRunSuitability:
         )
         states = {check.check_key: check.state for check in rs.checks}
         assert states == {
-            "SUITABILITY_CHECK_SPEED_VARIATION": "pass",
+            "SUITABILITY_CHECK_SPEED_VARIATION": "warn",
             "SUITABILITY_CHECK_SENSOR_COVERAGE": "warn",
             "SUITABILITY_CHECK_REFERENCE_COMPLETENESS": "warn",
             "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS": "warn",
             "SUITABILITY_CHECK_FRAME_INTEGRITY": "warn",
         }
         details = {check.check_key: check.details_dict for check in rs.checks}
+        assert details["SUITABILITY_CHECK_SPEED_VARIATION"] == {"steady_speed": 1}
         assert details["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"] == {"sat_count": 3}
         assert details["SUITABILITY_CHECK_FRAME_INTEGRITY"] == {
             "total_dropped": 5,
             "total_overflow": 1,
         }
+
+    @pytest.mark.parametrize(
+        ("total_dropped", "expected_key"),
+        [
+            (0, "SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN"),
+            (4, "SUITABILITY_FRAME_INTEGRITY_WARN"),
+        ],
+    )
+    def test_incomplete_raw_replay_fails_frame_integrity(
+        self, total_dropped: int, expected_key: str
+    ) -> None:
+        rs = RunSuitability.evaluate(
+            steady_speed=False,
+            speed_sufficient=True,
+            manual_speed=False,
+            sensor_count=3,
+            reference_complete=True,
+            sat_count=0,
+            total_dropped=total_dropped,
+            total_overflow=0,
+        ).with_incomplete_raw_replay(partial=34, missing=0, gaps=2, overlaps=2)
+        (frame,) = (c for c in rs.checks if c.check_key == "SUITABILITY_CHECK_FRAME_INTEGRITY")
+        ref = frame.explanation_i18n_ref()
+
+        assert frame.is_warning
+        assert isinstance(ref, dict)
+        assert ref["_i18n_key"] == expected_key
+        assert ref["total_dropped"] == total_dropped
+        assert [c.state for c in rs.checks if c is not frame] == ["pass"] * 4
 
     def test_from_checks_empty(self) -> None:
         rs = run_suitability_from_payload([])

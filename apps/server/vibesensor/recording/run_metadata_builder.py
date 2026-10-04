@@ -185,6 +185,7 @@ def _run_car_metadata_for_run(
             car_type=active_car_snapshot.car_type,
             variant=active_car_snapshot.variant,
             order_reference_status=active_car_snapshot.order_reference_status,
+            fuel_type=active_car_snapshot.fuel_type,
         )
     tokens = [token.strip().lower() for token in str(firmware_version or "").split(",")]
     if any(token.startswith("sim-") for token in tokens if token):

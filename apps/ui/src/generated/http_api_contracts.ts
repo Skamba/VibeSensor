@@ -140,6 +140,7 @@ export interface components {
         /** One car profile as persisted in the settings snapshot and served over HTTP. */
         CarConfigPayload: {
             aspects: components["schemas"]["AnalysisSettingsPayload"];
+            fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             id: string;
             name: string;
             order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
@@ -149,6 +150,7 @@ export interface components {
         /** Create/update request body for one car profile; omitted or null fields stay unchanged. */
         CarConfigUpdatePayload: {
             aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
+            fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             name?: string | null;
             order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
             type?: string | null;
@@ -163,6 +165,7 @@ export interface components {
             /** `null` when the library has no final drive for this gearbox. */
             final_drive_ratio: number | null;
             final_drive_ratio_confidence?: string | null;
+            fuel_type: "ICE" | "PHEV" | "EV";
             gear_ratios?: number[] | null;
             gear_ratios_confidence?: string | null;
             name: string;
@@ -498,6 +501,7 @@ export interface components {
             suspected_source: string;
             weak_spatial_separation?: boolean | null;
         };
+        FuelTypeValue: "ICE" | "PHEV" | "EV";
         GuidedPhaseName: "sweep" | "hold" | "coast_down";
         /** Request body that marks the guided test-drive step the driver starts now. */
         GuidedPhaseRequest: {
@@ -1055,13 +1059,14 @@ export interface components {
             write_error: string | null;
         };
         RecordingStopReason: "manual" | "restart" | "shutdown" | "no_data_timeout" | "max_duration";
+        ReferenceProvenanceValue: "user_confirmed" | "official_exact" | "official_derived" | "reputable_secondary_crosschecked" | "family_default" | "unverified" | "missing";
         /** Response body confirming removal of a disconnected client. */
         RemoveClientResponse: {
             id: string;
             status: string;
         };
         ResolvedSpeedSource: "gps" | "obd2" | "manual" | "fallback_manual" | "none";
-        RpmSourceValue: "measured" | "estimated" | "none";
+        RpmSourceValue: "measured" | "estimated_top_gear" | "none";
         /** Typed HTTP contract for one run-suitability diagnostic check. */
         RunSuitabilityCheck: {
             check_key: string;
@@ -1085,8 +1090,8 @@ export interface components {
             source: string;
             status: components["schemas"]["SourceCheckStatus"];
         };
-        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "rpm_estimated" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral";
-        SourceCheckStatus: "candidate" | "ruled_out" | "not_testable";
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral";
+        SourceCheckStatus: "candidate" | "ruled_out" | "ruled_out_estimated" | "not_testable";
         /** One recurring spectral peak (0.5 Hz bin) and its median amplitude. */
         SpectrumPeak: {
             amplitude_mg: number;
@@ -1201,13 +1206,17 @@ export interface components {
             suspected_source?: string | null;
             weak_spatial_separation?: boolean | null;
         };
-        /** Reference data the order analysis used. */
+        /** Reference data the order analysis used, with where each reference came from. */
         TestConditions: {
+            final_drive_provenance: components["schemas"]["ReferenceProvenanceValue"];
             final_drive_ratio: number | null;
+            fuel_type: components["schemas"]["FuelTypeValue"] | null;
             gear_ratio: number | null;
+            gear_ratio_provenance: components["schemas"]["ReferenceProvenanceValue"];
             rpm_source: components["schemas"]["RpmSourceValue"];
             speed_source: string | null;
             tire_circumference_m: number | null;
+            tire_provenance: components["schemas"]["ReferenceProvenanceValue"];
         };
         /** Response body for one recommended next-step action. */
         TestPlanStepResponse: {

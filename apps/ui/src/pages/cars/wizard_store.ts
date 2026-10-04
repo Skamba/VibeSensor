@@ -394,6 +394,7 @@ export async function finishWizard(): Promise<void> {
       variant: state.selectedVariant?.name,
       aspects: request.aspects,
       status: request.status,
+      fuelType: request.fuelType,
     });
   } catch {
     focus("finish");

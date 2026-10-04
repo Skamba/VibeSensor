@@ -69,10 +69,11 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
                 transmission_name="8-speed automatic",
                 transmission_confidence="official_exact",
             ),
+            fuel_type="PHEV",
         ),
     )
 
-    assert metadata.car == RunCarMetadata(
+    expected_car = RunCarMetadata(
         car_id="car-1",
         name="Track Car",
         car_type="coupe",
@@ -84,7 +85,11 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
             transmission_name="8-speed automatic",
             transmission_confidence="official_exact",
         ),
+        fuel_type="PHEV",
     )
+    assert metadata.car == expected_car
+    # The provenance and powertrain survive the persisted run record.
+    assert run_metadata_from_mapping(run_metadata_to_json_object(metadata)).car == expected_car
 
 
 class TestFirmwareVersionForRun:

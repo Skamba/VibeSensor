@@ -21,7 +21,9 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     NEGLIGIBLE_STRENGTH_MAX_DB,
 )
+from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
+from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES, ReferenceProvenance, reference_provenance
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
@@ -101,8 +103,15 @@ def build_diagnosis(
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
     floors = _location_floors(located)
     presence = _presence_ratio(candidate, located, floors)
-    speed_dependence = _speed_dependence(candidate, located, metadata.guided_phases)
-    weak_reasons = _weak_reasons(candidate, presence, sensor_count=sensor_count)
+    refs = _references(metadata, samples)
+    # A hand-entered speed does not drop while coasting, so the coast-down
+    # comparison cannot tell road speed from engine speed.
+    speed_dependence = (
+        None if refs.manual_speed else _speed_dependence(candidate, located, metadata.guided_phases)
+    )
+    weak_reasons = _weak_reasons(
+        candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
+    )
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
         weak_reasons = ["coast_test_contradicts", *weak_reasons][:_MAX_WEAK_REASONS]
@@ -110,11 +119,6 @@ def build_diagnosis(
         level = None
     elif verdict is DiagnosisVerdict.WEAK_EVIDENCE:
         level = ConfidenceLevel.WEAK
-    refs = _References(
-        tire_circumference_m=metadata.tire_circumference_m,
-        final_drive_ratio=_positive(metadata.final_drive_ratio),
-        gear_ratio=_positive(metadata.current_gear_ratio),
-    )
     rows: list[LocationAmplitudeRow]
     basis: AmplitudeBasis
     if candidate is not None and candidate.matched_points:
@@ -168,7 +172,7 @@ def build_diagnosis(
         "source_checks": _source_checks(
             candidate, test_run.findings, refs, samples, speed_dependence
         ),
-        "conditions": _conditions(samples, refs),
+        "conditions": _conditions(samples, refs, metadata),
     }
 
 
@@ -190,11 +194,53 @@ def _verdict(candidate: Finding | None) -> DiagnosisVerdict:
 
 @dataclass(frozen=True, slots=True)
 class _References:
-    """Reference data the order analysis used for this run."""
+    """Reference data the order analysis used for this run, and where it came from."""
 
     tire_circumference_m: float | None
     final_drive_ratio: float | None
     gear_ratio: float | None
+    tire_provenance: ReferenceProvenance
+    final_drive_provenance: ReferenceProvenance
+    gear_ratio_provenance: ReferenceProvenance
+    speed_source: str | None
+    # The simulator's manual speed is the simulated drive's true speed.
+    simulated: bool
+
+    @property
+    def manual_speed(self) -> bool:
+        """The speed was typed in by hand, not measured live (GPS/OBD-II)."""
+        return speed_typed_in(self.speed_source, simulated=self.simulated)
+
+    @property
+    def estimated_final_drive(self) -> bool:
+        return self.final_drive_provenance in WEAK_FIELD_CONFIDENCES
+
+    @property
+    def estimated_top_gear(self) -> bool:
+        return self.gear_ratio_provenance in WEAK_FIELD_CONFIDENCES
+
+
+def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References:
+    status = metadata.car.order_reference_status if metadata.car is not None else None
+    tire = metadata.tire_circumference_m
+    final_drive = _positive(metadata.final_drive_ratio)
+    gear = _positive(metadata.current_gear_ratio)
+    return _References(
+        tire_circumference_m=tire,
+        final_drive_ratio=final_drive,
+        gear_ratio=gear,
+        tire_provenance=reference_provenance(
+            tire, status.tire_dimensions_confidence if status is not None else None
+        ),
+        final_drive_provenance=reference_provenance(
+            final_drive, status.final_drive_ratio_confidence if status is not None else None
+        ),
+        gear_ratio_provenance=reference_provenance(
+            gear, status.current_gear_ratio_confidence if status is not None else None
+        ),
+        speed_source=run_speed_source(samples),
+        simulated=metadata.simulated,
+    )
 
 
 def _positive(value: float | None) -> float | None:
@@ -546,10 +592,12 @@ def _weak_reasons(
     presence: float | None,
     *,
     sensor_count: int,
+    manual_speed: bool,
 ) -> list[str]:
     if candidate is None:
         return []
-    reasons: list[str] = []
+    # A hand-entered speed comes first: the order match holds only at that speed.
+    reasons: list[str] = ["manual_speed"] if manual_speed else []
     localized_source = candidate.suspected_source not in (
         VibrationSource.ENGINE,
         VibrationSource.DRIVELINE,
@@ -603,9 +651,10 @@ def _source_checks(
         if source in seen:
             checks.append({"source": str(source), "status": "candidate", "reason": None})
             continue
+        # Measured RPM places the engine orders without the speed, tire or drive ratios.
+        measured_engine = source is VibrationSource.ENGINE and rpm_source == "measured"
         reason: SourceCheckReason | None
-        if source is VibrationSource.ENGINE and rpm_source == "measured":
-            # Measured RPM places the engine orders without the tire or drive ratios.
+        if measured_engine:
             reason = None
         elif refs.tire_circumference_m is None:
             reason = "no_tire_reference"
@@ -613,20 +662,41 @@ def _source_checks(
             reason = "no_drive_reference"
         elif source is VibrationSource.ENGINE and rpm_source == "none":
             reason = "no_engine_reference"
+        elif refs.manual_speed:
+            # Every order was placed at the typed-in speed: no match proves nothing
+            # unless the car really held exactly that speed.
+            reason = "manual_speed"
         else:
             reason = None
         if reason is not None:
             checks.append({"source": str(source), "status": "not_testable", "reason": reason})
             continue
-        estimated = source is VibrationSource.ENGINE and rpm_source == "estimated"
+        estimate = None if measured_engine else _estimate_reason(source, refs)
         checks.append(
             {
                 "source": str(source),
-                "status": "ruled_out",
-                "reason": "rpm_estimated" if estimated else "no_matching_order",
+                "status": "ruled_out" if estimate is None else "ruled_out_estimated",
+                "reason": estimate or "no_matching_order",
             }
         )
     return checks
+
+
+def _estimate_reason(source: VibrationSource, refs: _References) -> SourceCheckReason | None:
+    """Why a no-match for *source* rests on an estimate, or ``None`` when it does not.
+
+    Weak library ratios hedge the driveline and the engine; engine RPM estimated
+    from speed always assumes top gear.
+    """
+    if source is VibrationSource.WHEEL_TIRE:
+        return None
+    if refs.estimated_final_drive:
+        return "estimated_final_drive"
+    if source is VibrationSource.DRIVELINE:
+        return None
+    if refs.estimated_top_gear:
+        return "estimated_top_gear"
+    return "top_gear_assumed"
 
 
 def _coast_ruled_out_reason(
@@ -758,25 +828,22 @@ def _rpm_source(samples: Sequence[Sample]) -> RpmSourceValue:
             measured += 1
     if measured and measured >= estimated:
         return "measured"
-    return "estimated" if estimated else "none"
+    return "estimated_top_gear" if estimated else "none"
 
 
-def _speed_source(samples: Sequence[Sample]) -> str | None:
-    counts = Counter(
-        sample.speed_source.strip().lower()
-        for sample in samples
-        if sample.speed_kmh is not None and sample.speed_kmh > 0 and sample.speed_source.strip()
-    )
-    return counts.most_common(1)[0][0] if counts else None
-
-
-def _conditions(samples: Sequence[Sample], refs: _References) -> TestConditions:
+def _conditions(
+    samples: Sequence[Sample], refs: _References, metadata: RunMetadata
+) -> TestConditions:
     return {
-        "speed_source": _speed_source(samples),
+        "speed_source": refs.speed_source,
         "rpm_source": _rpm_source(samples),
         "tire_circumference_m": refs.tire_circumference_m,
         "final_drive_ratio": refs.final_drive_ratio,
         "gear_ratio": refs.gear_ratio,
+        "tire_provenance": refs.tire_provenance,
+        "final_drive_provenance": refs.final_drive_provenance,
+        "gear_ratio_provenance": refs.gear_ratio_provenance,
+        "fuel_type": metadata.car.fuel_type if metadata.car is not None else None,
     }
 
 

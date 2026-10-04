@@ -16,6 +16,7 @@ from vibesensor.settings.car_config import (
     car_from_persistence_dict,
     car_order_reference_status_from_mapping,
     car_to_persistence_dict,
+    fuel_type_or_none,
     new_car_id,
 )
 from vibesensor.settings.settings_transaction import log_settings_change
@@ -122,6 +123,7 @@ class CarSettingsService:
                 variant=car.variant,
                 aspects=dict(car.aspects),
                 order_reference_status=car.order_reference_status,
+                fuel_type=car.fuel_type,
             )
 
     def _find_car(self, car_id: str | None) -> Car | None:
@@ -227,6 +229,7 @@ class CarSettingsService:
                     new_order_reference_status = car_order_reference_status_from_mapping(
                         raw_order_reference_status
                     )
+            new_fuel_type = fuel_type_or_none(car_data.get("fuel_type")) or car.fuel_type
             if new_order_reference_status is not None and (clear_final_drive or clear_gear):
                 status = new_order_reference_status
                 new_order_reference_status = replace(
@@ -245,6 +248,7 @@ class CarSettingsService:
                 aspects=new_aspects,
                 variant=new_variant,
                 order_reference_status=new_order_reference_status,
+                fuel_type=new_fuel_type,
             )
             return True
 
@@ -284,6 +288,7 @@ class CarSettingsService:
                     car.order_reference_status,
                     aspects,
                 ),
+                fuel_type=car.fuel_type,
             )
             return True
 

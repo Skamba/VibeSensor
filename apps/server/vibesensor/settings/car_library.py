@@ -27,6 +27,7 @@ class CarLibraryGearbox(TypedDict):
     final_drive_ratio: float | None
     """``None`` when the library has no driven final drive for this row (unknown)."""
     top_gear_ratio: float
+    fuel_type: Literal["ICE", "PHEV", "EV"]
     gear_ratios: NotRequired[list[float]]
     source_status: NotRequired[Literal["exact_row"]]
     final_drive_ratio_confidence: NotRequired[str]
@@ -182,6 +183,7 @@ def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryG
         "name": config.transmission_name,
         "final_drive_ratio": final_drive_ratio,
         "top_gear_ratio": config.top_gear_ratio,
+        "fuel_type": config.fuel_type,
         "source_status": config.source_status,
         "top_gear_ratio_confidence": config.order_reference_confidence("current_gear_ratio"),
         "transmission_confidence": config.order_reference_confidence("transmission_name"),

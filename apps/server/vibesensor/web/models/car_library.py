@@ -29,6 +29,7 @@ class CarLibraryGearboxEntry(_StrictBase):
         gt=0, description="`null` when the library has no final drive for this gearbox."
     )
     top_gear_ratio: float = Field(gt=0)
+    fuel_type: Literal["ICE", "PHEV", "EV"]
     gear_ratios: list[float] | None = Field(default=None, min_length=1)
     source_status: Literal["exact_row"] | None = None
     final_drive_ratio_confidence: str | None = None

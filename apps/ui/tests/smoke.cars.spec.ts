@@ -37,6 +37,7 @@ const GEARBOX: CarLibraryGearbox = {
   name: "6-speed manual",
   final_drive_ratio: 3.94,
   top_gear_ratio: 0.79,
+  fuel_type: "ICE",
   final_drive_ratio_confidence: "official_exact",
   top_gear_ratio_confidence: "reputable_secondary_crosschecked",
   transmission_confidence: "official_exact",
@@ -229,6 +230,7 @@ test("journey: the library path creates a car with its source confidence", async
     name: "VW Golf GTD",
     type: "Hatchback",
     variant: "GTD",
+    fuel_type: "ICE",
     aspects: {
       final_drive_ratio: 3.94,
       current_gear_ratio: 0.79,

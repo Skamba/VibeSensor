@@ -331,6 +331,8 @@ export type CarRequest =
       /** A `null` ratio is unknown: the car is saved without it. */
       aspects: Record<string, number | string | null>;
       status: CarOrderReferenceStatus;
+      /** The library row's powertrain; `null` for a car entered by hand. */
+      fuelType: CarLibraryGearbox["fuel_type"] | null;
     }
   | { ok: false; focus: "spec-selection" | "gearbox-option" | ManualField };
 
@@ -374,6 +376,7 @@ export function carRequest(
           gearbox.transmission_confidence ?? "unverified",
         transmission_name: gearbox.name,
       },
+      fuelType: gearbox.fuel_type,
     };
   }
   const missing = firstMissingManualField(inputs);
@@ -408,5 +411,6 @@ export function carRequest(
       requires_manual_confirmation: false,
       selection_source_status: "manual_entry",
     },
+    fuelType: null,
   };
 }

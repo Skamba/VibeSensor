@@ -72,6 +72,7 @@ _WEAK_REASON_KEYS = {
     "faint": "WEAK_FAINT",
     "single_sensor": "WEAK_SINGLE_SENSOR",
     "coast_test_contradicts": "WEAK_COAST_CONTRADICTS",
+    "manual_speed": "WEAK_MANUAL_SPEED",
 }
 _SPEED_DEPENDENCE_KEYS = {
     "vehicle_speed": "SPEED_DEPENDENCE_VEHICLE",
@@ -84,7 +85,11 @@ _SPEED_SOURCE_KEYS = {
     "fallback_manual": "SPEED_SOURCE_FALLBACK_MANUAL",
 }
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
-_RPM_KEYS = {"measured": "RPM_MEASURED", "estimated": "RPM_ESTIMATED", "none": "RPM_NONE"}
+_RPM_KEYS = {
+    "measured": "RPM_MEASURED",
+    "estimated_top_gear": "RPM_ESTIMATED_TOP_GEAR",
+    "none": "RPM_NONE",
+}
 _SHOP_KEYS = {
     "WHEEL": ("SHOP_TIRE_ROAD_FORCE", "SHOP_TIRE_MATCH", "SHOP_TIRE_RUNOUT"),
     "DRIVELINE": ("SHOP_DRIVELINE_RUNOUT", "SHOP_DRIVELINE_ANGLES", "SHOP_DRIVELINE_ORDERS"),
@@ -99,6 +104,12 @@ _NOT_TESTABLE_KEYS = {
     "no_tire_reference": "NOT_TESTABLE_TIRE",
     "no_drive_reference": "NOT_TESTABLE_DRIVE",
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
+    "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
+}
+_RULED_OUT_ESTIMATED_KEYS = {
+    "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
+    "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
+    "top_gear_assumed": "RULED_OUT_ENGINE_TOP_GEAR",
 }
 
 
@@ -817,11 +828,11 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
         key = _source_key(check["source"])
         if key is None or check["status"] == "candidate":
             continue
-        reason = check["reason"]
+        reason = check["reason"] or ""
         if check["status"] == "not_testable":
-            detail = ctx.t(_NOT_TESTABLE_KEYS.get(reason or "", "NOT_TESTABLE_TIRE"))
-        elif reason == "rpm_estimated":
-            detail = ctx.t("RULED_OUT_ENGINE_ESTIMATED")
+            detail = ctx.t(_NOT_TESTABLE_KEYS[reason])
+        elif check["status"] == "ruled_out_estimated":
+            detail = ctx.t(_RULED_OUT_ESTIMATED_KEYS[reason])
         elif reason in ("stayed_in_neutral", "stopped_in_neutral"):
             detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:

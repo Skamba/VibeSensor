@@ -471,6 +471,10 @@
     "en": "not testable: no RPM or gear ratio",
     "nl": "niet te testen: geen toerental of versnelling"
   },
+  "NOT_TESTABLE_MANUAL_SPEED": {
+    "en": "not testable: the speed was entered by hand, so order matching only holds at exactly that speed",
+    "nl": "niet te testen: de snelheid is handmatig ingevoerd, dus ordes kloppen alleen bij precies die snelheid"
+  },
   "NOT_TESTABLE_TIRE": {
     "en": "not testable: no tire size",
     "nl": "niet te testen: geen bandenmaat"
@@ -548,8 +552,8 @@
     "nl": "Er ging geen sensordata verloren."
   },
   "QUALITY_FRAME_INTEGRITY_WARN": {
-    "en": "Some sensor data was lost during recording.",
-    "nl": "Tijdens het meten ging wat sensordata verloren."
+    "en": "Some sensor data was lost or incomplete.",
+    "nl": "Een deel van de sensordata ging verloren of was onvolledig."
   },
   "QUALITY_HEADER_CHECK": {
     "en": "Check",
@@ -604,8 +608,8 @@
     "nl": "De snelheid was bruikbaar om wiel-, cardanas- en motororden te herkennen."
   },
   "QUALITY_SPEED_VARIATION_WARN": {
-    "en": "The speed never settled; repeat with a steady stretch above 20 km/h.",
-    "nl": "De snelheid werd nergens stabiel; herhaal met een constant stuk boven 20 km/h."
+    "en": "The speed could not tell wheel, propshaft and engine orders apart.",
+    "nl": "Met deze snelheid waren wiel-, cardanas- en motororden niet uit elkaar te houden."
   },
   "QUALITY_TITLE": {
     "en": "Data quality and traceability",
@@ -683,9 +687,9 @@
     "en": "VibeSensor vibration report",
     "nl": "VibeSensor-trillingsrapport"
   },
-  "RPM_ESTIMATED": {
-    "en": "not measured; estimated from gear ratio",
-    "nl": "niet gemeten; geschat uit versnelling"
+  "RPM_ESTIMATED_TOP_GEAR": {
+    "en": "not measured; estimated from speed assuming top gear",
+    "nl": "niet gemeten; geschat uit de snelheid, uitgaande van de hoogste versnelling"
   },
   "RPM_MEASURED": {
     "en": "measured (OBD)",
@@ -703,9 +707,17 @@
     "en": "no engine-order vibration found",
     "nl": "geen trilling op motororde gevonden"
   },
-  "RULED_OUT_ENGINE_ESTIMATED": {
-    "en": "no engine-order vibration found (RPM estimated from the gear ratio, not measured)",
-    "nl": "geen trilling op motororde gevonden (toerental geschat uit de versnelling, niet gemeten)"
+  "RULED_OUT_ENGINE_TOP_GEAR": {
+    "en": "no match with the engine orders estimated for top gear; lower gears were not checked",
+    "nl": "geen overeenkomst met de motorordes geschat voor de hoogste versnelling; lagere versnellingen zijn niet gecontroleerd"
+  },
+  "RULED_OUT_ESTIMATED_FINAL_DRIVE": {
+    "en": "no match with the estimated final drive (car-library estimate); not conclusive",
+    "nl": "geen overeenkomst met de geschatte eindoverbrenging (schatting uit de autobibliotheek); niet doorslaggevend"
+  },
+  "RULED_OUT_ESTIMATED_TOP_GEAR": {
+    "en": "no match with the estimated top-gear ratio (car-library estimate, top gear assumed); not conclusive",
+    "nl": "geen overeenkomst met de geschatte hoogste versnelling (schatting uit de autobibliotheek, hoogste versnelling aangenomen); niet doorslaggevend"
   },
   "RULED_OUT_STAYED_IN_NEUTRAL": {
     "en": "ruled out: the vibration kept going while coasting in neutral (it follows road speed)",
@@ -1039,6 +1051,10 @@
     "en": "No dropped frames or queue overflows detected.",
     "nl": "Geen verloren frames of wachtrijoverlopen gedetecteerd."
   },
+  "SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN": {
+    "en": "The raw capture did not cover the whole run ({replay_partial} partial and {replay_missing} missing windows, {replay_gaps} timing gaps, {replay_overlaps} overlaps); those moments were analysed from the stored summaries.",
+    "nl": "De ruwe opname dekte niet de hele meting ({replay_partial} gedeeltelijke en {replay_missing} ontbrekende vensters, {replay_gaps} timinggaten, {replay_overlaps} overlappingen); die momenten zijn uit de opgeslagen samenvattingen geanalyseerd."
+  },
   "SUITABILITY_FRAME_INTEGRITY_WARN": {
     "en": "{total_dropped} dropped frames, {total_overflow} queue overflows detected.",
     "nl": "{total_dropped} verloren frames, {total_overflow} wachtrijoverlopen gedetecteerd."
@@ -1075,13 +1091,21 @@
     "en": "Few active sensors; location ranking is weaker.",
     "nl": "Weinig actieve sensoren; locatievergelijking is minder betrouwbaar."
   },
+  "SUITABILITY_SPEED_VARIATION_MANUAL": {
+    "en": "The speed was entered by hand and does not follow the car; use GPS or OBD-II speed.",
+    "nl": "De snelheid is met de hand ingevoerd en volgt de auto niet; gebruik GPS- of OBD-II-snelheid."
+  },
   "SUITABILITY_SPEED_VARIATION_PASS": {
-    "en": "Speed range stayed in a usable diagnostic band for steady-state diagnosis and order tracking.",
-    "nl": "Snelheidsbereik bleef tijdens deze meting binnen een bruikbaar diagnostisch bereik voor diagnose bij constante snelheid en ordetracking."
+    "en": "The live speed varied enough to follow each order as the speed changed.",
+    "nl": "De gemeten snelheid varieerde genoeg om elke orde mee te volgen."
+  },
+  "SUITABILITY_SPEED_VARIATION_STEADY": {
+    "en": "The speed stayed almost constant; vary it, for example by slowly accelerating through the speed range, so the orders separate.",
+    "nl": "De snelheid bleef vrijwel gelijk; varieer hem, bijvoorbeeld door langzaam door het snelheidsbereik op te trekken, zodat de orden te scheiden zijn."
   },
   "SUITABILITY_SPEED_VARIATION_WARN": {
-    "en": "Speed range never settled into a usable diagnostic band; repeat at a steady cruise above 20 km/h.",
-    "nl": "Snelheidsbereik kwam niet in een bruikbaar diagnostisch bereik; herhaal bij een constante kruissnelheid boven 20 km/u."
+    "en": "Too little of the run had a known speed; record with GPS or OBD-II speed above 20 km/h.",
+    "nl": "Te weinig van de meting had een bekende snelheid; meet met GPS- of OBD-II-snelheid boven 20 km/u."
   },
   "SUITABILITY_SUMMARY_ROW_COUNT_WARNING": {
     "en": "Only {summary_rows} summary row(s) were available; at least {required_summary_rows} are needed to judge run duration confidently.",
@@ -1154,6 +1178,10 @@
   "WEAK_INTERMITTENT": {
     "en": "It came and went: it was there for less than half of the drive.",
     "nl": "Hij kwam en ging: hij was er minder dan de helft van de rit."
+  },
+  "WEAK_MANUAL_SPEED": {
+    "en": "The speed was entered by hand, not measured: the match only holds if you drove at exactly that speed.",
+    "nl": "De snelheid is handmatig ingevoerd, niet gemeten: de overeenkomst klopt alleen als je precies die snelheid reed."
   },
   "WEAK_NARROW_SPEED": {
     "en": "The speed hardly changed, so it can't be confirmed that the vibration follows the wheels, propshaft or engine.",

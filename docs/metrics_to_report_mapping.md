@@ -25,19 +25,19 @@ summary's `diagnosis` block (`d` below; contract in
 
 | Report element | Source | Format |
 |---|---|---|
-| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios; the provenance and `fuel_type` fields are not printed yet), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
 | Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level (the diagnosed row carries `d.confidence_level`, Weak when the coast-down contradicts it) |
 | Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
 | Spectrum | `d.spectrum` (recurring peaks in mg over the moving samples, floor, order markers at the window speed; E1/E2 from the median measured RPM when RPM was measured) | Stems + dashed floor + order lines |
 | Amplitude vs speed | `d.amplitude_vs_speed` | Lines per location; shown only for a ≥ 30 km/h sweep |
-| Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio`; `Engine: ruled out: the vibration kept going while coasting in neutral` |
+| Ruled out / not testable | `d.source_checks[]` | `Engine: not testable: no RPM or gear ratio`; `Engine: ruled out: the vibration kept going while coasting in neutral`; `Driveline: no match with the estimated final drive (car-library estimate); not conclusive`; `Engine: no match with the engine orders estimated for top gear; lower gears were not checked`; `Wheels/tires: not testable: the speed was entered by hand, …` |
 | Shop request | `d.verdict`, `d.source`, `d.order_code` | Tire (road force, match-mount, runout), driveline, engine, or other |
 
 ## Data quality (page 3 or footer)
 
 | Report element | Source |
 |---|---|
-| Checks | `run_suitability[]` (`check_key` label, `state`, plain meaning; a warning keeps its measured specifics) |
+| Checks | `run_suitability[]` (`check_key` label, `state`, plain meaning; a warning keeps its measured specifics). Frame integrity warns on dropped frames, queue overflows or incomplete raw-replay coverage, so it never reads "no data lost" next to the replay-coverage warning |
 | Warnings | `warnings[].code` → plain text, else the resolved `title` |
 | Traceability | `run_id`, `sensor_model`, `firmware_version`, `raw_sample_rate_hz`, VibeSensor version |
 

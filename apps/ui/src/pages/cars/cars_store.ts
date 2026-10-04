@@ -61,6 +61,7 @@ export async function createAndActivateCar(car: {
   variant?: string;
   aspects: Record<string, number | string | null>;
   status: CarOrderReferenceStatus;
+  fuelType?: CarUpsertRequest["fuel_type"];
 }): Promise<void> {
   let failureKey = "settings.car.create_failed";
   const started = await mutate(async () => {
@@ -74,6 +75,9 @@ export async function createAndActivateCar(car: {
       };
       if (car.variant) {
         request.variant = car.variant;
+      }
+      if (car.fuelType) {
+        request.fuel_type = car.fuelType;
       }
       const created = await addSettingsCar(request);
       applyCars(created);

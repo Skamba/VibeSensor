@@ -98,3 +98,15 @@ def test_ratios_are_optional_and_a_null_ratio_clears_the_stored_one(car_client) 
     assert cleared["aspects"]["tire_width_mm"] == 225.0
     assert cleared["order_reference_status"].get("final_drive_ratio_confidence") is None
     assert cleared["order_reference_status"]["current_gear_ratio_confidence"] == ("official_exact")
+
+
+def test_library_powertrain_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_state) -> None:
+    car = _add(car_client, name="i4 eDrive40", fuel_type="EV")["cars"][0]
+    assert car["fuel_type"] == "EV"
+
+    renamed = car_client.put(f"/api/settings/cars/{car['id']}", json={"name": "i4"}).json()
+    car_client.put("/api/settings/cars/active", json={"car_id": car["id"]})
+
+    assert renamed["cars"][0]["fuel_type"] == "EV"
+    snapshot = fake_state.car_settings.active_car_snapshot()
+    assert snapshot is not None and snapshot.fuel_type == "EV"

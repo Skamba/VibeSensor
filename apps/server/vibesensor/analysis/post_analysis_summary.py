@@ -21,6 +21,7 @@ from vibesensor.live.processing_profile import (
     ProcessingFilterId,
     processing_profile_row,
 )
+from vibesensor.recording.run_suitability_codec import run_suitability_payload
 from vibesensor.summary.analysis_metadata import (
     report_analysis_metadata_from_mapping,
 )
@@ -35,6 +36,7 @@ from vibesensor.summary.location_intensity_payload import (
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
+    WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
@@ -74,6 +76,18 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
             sensor_intensity,
         )
     summary_payload["case_id"] = result.diagnostic_case.case_id
+    replay = run.raw_replay
+    if result.run_suitability is not None and any(
+        warning.code == WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE for warning in replay.warnings
+    ):
+        summary_payload["run_suitability"] = run_suitability_payload(
+            result.run_suitability.with_incomplete_raw_replay(
+                partial=replay.partial_window_count,
+                missing=replay.missing_window_count,
+                gaps=replay.gap_count,
+                overlaps=replay.overlap_count,
+            )
+        )
 
     def append_run_suitability_warning(
         *,

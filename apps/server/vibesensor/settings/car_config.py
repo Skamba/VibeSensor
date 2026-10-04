@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Annotated, NotRequired, TypedDict, cast
 from pydantic import StringConstraints
 
 from vibesensor.domain.car import CarOrderReferenceSourceStatus, CarOrderReferenceStatus
-from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence
+from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence, VehicleFuelType
 from vibesensor.settings.analysis_settings_schema import (
     ANALYSIS_SETTINGS_DEFAULTS,
     sanitize_analysis_settings,
@@ -32,6 +32,7 @@ __all__ = [
     "car_order_reference_status_payload_from_domain",
     "car_order_reference_status_from_mapping",
     "car_to_persistence_dict",
+    "fuel_type_or_none",
     "new_car_id",
 ]
 
@@ -64,6 +65,7 @@ class CarConfigPayload(TypedDict):
     aspects: AnalysisSettingsPayload
     variant: NotRequired[str | None]
     order_reference_status: NotRequired[CarOrderReferenceStatusPayload | None]
+    fuel_type: NotRequired[VehicleFuelType | None]
 
 
 class CarConfigUpdatePayload(TypedDict, total=False):
@@ -74,6 +76,7 @@ class CarConfigUpdatePayload(TypedDict, total=False):
     aspects: AnalysisSettingsPayload | None
     variant: _CarText | None
     order_reference_status: CarOrderReferenceStatusPayload | None
+    fuel_type: VehicleFuelType | None
 
 
 @dataclass(slots=True)
@@ -113,7 +116,15 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
             if isinstance(raw_order_reference_status, Mapping)
             else None
         ),
+        fuel_type=fuel_type_or_none(payload.get("fuel_type")),
     )
+
+
+def fuel_type_or_none(value: object) -> VehicleFuelType | None:
+    """Keep only the known powertrain vocabulary (ICE/PHEV/EV)."""
+    if value in {"ICE", "PHEV", "EV"}:
+        return value
+    return None
 
 
 def car_to_persistence_dict(car: Car) -> CarConfigPayload:
@@ -130,6 +141,8 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
         payload["order_reference_status"] = car_order_reference_status_payload_from_domain(
             car.order_reference_status
         )
+    if car.fuel_type is not None:
+        payload["fuel_type"] = car.fuel_type
     return payload
 
 

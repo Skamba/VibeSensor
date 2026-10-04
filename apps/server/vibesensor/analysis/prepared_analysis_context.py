@@ -10,6 +10,7 @@ from vibesensor.analysis._analysis_models import (
 from vibesensor.analysis._types import AccelStatistics, Sample
 from vibesensor.analysis.run_analysis_projection import build_sensor_analysis
 from vibesensor.analysis.run_data_preparation import PreparedRunData
+from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.analysis.statistics import compute_frame_integrity_counts
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.recording.run_schema import RunMetadata
@@ -50,6 +51,7 @@ def prepare_analysis_context(
         run_suitability=RunSuitability.evaluate(
             steady_speed=prepared.is_steady_speed,
             speed_sufficient=prepared.speed_sufficient,
+            manual_speed=speed_typed_in(run_speed_source(samples), simulated=context.simulated),
             sensor_count=len(sensor_ids),
             reference_complete=context.reference_complete,
             sat_count=accel_stats["sat_count"],

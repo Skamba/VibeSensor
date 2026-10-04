@@ -14,7 +14,9 @@ target state) and the code.
 WP0 (diagnosis queued fixes: J16, J30, J31, J32, J33, J34) shipped in #4109.
 J09 (variant tire options) shipped in #4110. WP1a (references may be missing:
 J02, J03, J06, J18, J25, the backend half of J01 and the measured-RPM bands of
-J24) shipped in #4115.
+J24) shipped in #4115. WP1b (provenance-aware source checks: J27, the
+analysis half of J15, the report half of J24, and the provenance data for J35)
+shipped in #4117.
 
 Owner decisions that bound the fixes (settled):
 
@@ -174,25 +176,26 @@ Fix: add a three-row table on the page. Its text is in
 estimated in top gear; OBD-II: Bluetooth ELM327, measures RPM; Manual:
 fixed-speed test only).
 
-**J15 — A manual speed over-claims.**
+**J15 — A manual speed over-claims before the run.**
 
-Evidence:
+Analysis is fixed: with a manual speed every source check that is not a
+candidate is `not_testable(manual_speed)`, `manual_speed` is the first weak
+reason, and the report says so (`NOT_TESTABLE_MANUAL_SPEED`,
+`WEAK_MANUAL_SPEED`).
+
+Evidence (what remains):
 
 - `speed_stable` passes immediately at a set speed ≥ 20 km/h (`_speed_check`
   in the readiness evaluator).
 - `reference_ready` passes when the speed is > 0 (`_reference_check`).
-- Every sample is stamped with that speed (`speed/speed_resolution.py`).
-- `_source_checks` (`analysis/diagnosis.py`) ignores the speed source, so it
-  issues unhedged "ruled out" verdicts for driveline and engine at one assumed
-  speed.
+- Readiness `capabilities` report wheel, driveline and engine as testable with
+  a manual speed.
 
 Fix:
 
-- **Backend:** With a manual source, `ruled_out` becomes
-  `not_testable(reason=manual_speed)` unless the sample's speed was confirmed.
-  Add the weak reason `manual_speed`.
-- **UI and report:** "Speed was entered by hand (fixed {v} km/h); order
-  matching only holds if you drove at exactly that speed."
+- **UI:** "Speed was entered by hand (fixed {v} km/h); order matching only
+  holds if you drove at exactly that speed." The capability line (J20) shows
+  nothing as testable with a manual speed.
 
 **J20 — Readiness does not state what the run can test.**
 
@@ -216,42 +219,21 @@ Evidence:
 
 - The guided-drive strings `dashboard.guided.*` have no gear guidance.
 - The band labels `bands.*` are "Engine 1x".
-- `RPM_ESTIMATED` in `report_i18n.json` reads "RPM: not measured; estimated
-  from gear ratio"; the engine ruled-out string does not mention top gear.
-- Run samples label the source `estimated_from_speed_and_ratios`
-  (`recording/sample_speed_context.py`).
+
+The report half is fixed: `conditions.rpm_source` is `estimated_top_gear`,
+the engine check is `ruled_out_estimated(top_gear_assumed)`, and the report
+prints `RPM_ESTIMATED_TOP_GEAR` and `RULED_OUT_ENGINE_TOP_GEAR` ("no match
+with the engine orders estimated for top gear; lower gears were not
+checked").
 
 Fix:
 
 - **UI:** The sweep step reads "Drive in top gear (or D) — without OBD-II, the
   engine check assumes top gear." The band legend reads "Engine 1× (est., top
   gear)", or "(measured)" with OBD.
-- **Report:** `RPM_ESTIMATED` reads "not measured — estimated from speed
-  assuming top gear ({ratio})". The engine ruled-out reads "No match with
-  engine orders estimated for top gear; lower gears were not checked."
 - The live bands already use fresh OBD-II RPM, and a missing reference blanks
   only its own family; the legend should grey out the missing families with
   "needs final drive" / "needs top gear or OBD-II".
-
-**J27 [F1] — Library confidence is ignored in ruled-out verdicts.**
-
-Evidence:
-
-- `_source_checks` (`analysis/diagnosis.py`) gives `ruled_out` for any present
-  reference.
-- The run car stores `order_reference_status` and the confidences
-  (`recording/run_metadata_builder.py`), but analysis never reads them.
-- `order_analysis_car_data_confidence` (`domain/car.py`) is dead code.
-- Affects 216/467 rows with a weak final drive and 203 with a weak top gear.
-
-Fix:
-
-- **Backend:** Pass per-field provenance into `_References`. A family-default
-  or unverified final drive turns driveline `ruled_out` into
-  `ruled_out_estimated`. The same applies to the engine with a weak top gear,
-  combined with `rpm_estimated`.
-- **Report and History:** "No match with the estimated final drive (model
-  family default) — not conclusive."
 
 **J28 — History does not show what was tested, and the no-fault text
 over-claims.**
@@ -285,7 +267,8 @@ Evidence: `_conditions` (`report/view_model.py`) and `COND_RATIOS_VALUE`
 
 Fix: print "Final drive 3.15 (library: family default) · Top gear 0.67
 (library: official) · Tire 225/45 R18 (you)". A missing value prints "— not
-provided". Depends on WP1b's provenance plumbing.
+provided". The provenance is in `diagnosis.conditions`
+(`tire_provenance`, `final_drive_provenance`, `gear_ratio_provenance`).
 
 ### Friction
 
@@ -391,23 +374,9 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP1b and WP2 have no dependencies.
-- WP3's capability line needs WP1b.
-- WP4 depends on WP1b.
+- WP2, WP3 and WP4 have no dependencies.
 - WP5 and WP6 are independent.
 - WP7 depends on WP2 and WP4.
-
-### WP1b — Provenance-aware source checks (backend/analysis)
-
-- **Covers:** J27, J15, the backend half of J24 (top-gear wording keys), and
-  the provenance data that J35 needs.
-- **Changes:**
-  - Carry per-field provenance (`user`, library confidence, `missing`) and the
-    speed source into `_References`.
-  - Add the statuses `ruled_out_estimated` and `not_testable(manual_speed)`.
-  - Expose provenance in `conditions`.
-  - Retire or replace the dead `order_analysis_car_data_confidence`.
-  - Powertrain: plumb `fuel_type` through (prepares WP7).
 
 ### WP2 — Settings and car wizard UI
 
@@ -426,8 +395,8 @@ Dependency order:
 
 ### WP3 — Speed source, readiness and dashboard UI
 
-- **Covers:** J13, J14, J17, J19, J20, J21, and the live and guided half of
-  J24 (UI side).
+- **Covers:** J13, J14, J15 (readiness and UI), J17, J19, J20, J21, and the
+  live and guided half of J24 (UI side).
 - **Changes:**
   - Speed-source consequence table and a "no GPS receiver" hint.
   - Bluetooth-only caption.
@@ -437,19 +406,19 @@ Dependency order:
   - Guided step wording "top gear (or D)".
   - Band legend "est., top gear" / "measured".
 - **Validation:** UI tests plus the e2e suite (start gating).
-- **Depends on:** the capability line uses WP1b's statuses once it lands.
+- **Note:** the capability line should use the same statuses as the source
+  checks (`ruled_out_estimated`, `not_testable(manual_speed)`); readiness
+  `capabilities` do not yet reflect weak library ratios or a manual speed.
 
 ### WP4 — Report and History wording
 
-- **Covers:** J24 (report strings), J28, J29, J35.
+- **Covers:** J28, J29, J35.
 - **Changes:**
-  - Top-gear wording.
   - "Not covered" built from `source_checks`.
   - Ratios printed with provenance.
   - History "Checked / Couldn't check" block.
   - Honest no-fault text.
   - EN and NL in both `report_i18n.json` and the UI catalogs.
-- **Depends on:** WP1b.
 
 ### WP5 — Car-library data
 
@@ -482,13 +451,14 @@ Dependency order:
   - Replace or skip the EV coast-down step and treat the classification as not
     applicable.
   - PHEV caveat: the engine may be off during the run.
-- **Depends on:** WP1b (plumbing), WP2 (car profile), WP4 (wording).
+- **Depends on:** WP2 (car profile), WP4 (wording). `fuel_type` is already
+  carried on the car, the run snapshot and `conditions`.
 
 ---
 
 ## 3. Suggested order
 
-1. WP1b and WP2.
+1. WP2.
 2. WP3 and WP4.
 3. WP5 and WP6 at any time.
 4. WP7 last.

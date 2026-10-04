@@ -351,7 +351,9 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     passenger. The backend itself does not gate the start
     (`apps/server/vibesensor/web/recording.py`) (J19).
   - With a manual speed, `speed_stable` passes without any measurement
-    (`_speed_check`) (J15).
+    (`_speed_check`) (J15). Analysis does hedge it: every source that is not
+    the cause is `not_testable(manual_speed)`, and the report's speed check
+    warns.
 
 ### 3.6 Recording: free drive and guided drive
 
@@ -380,7 +382,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - The live bands use fresh measured OBD-II RPM for the engine, and a
     missing reference blanks only its own family (`vehicle_orders_hz` in
     `apps/server/vibesensor/dsp/order_bands.py`).
-  - **Today:** none of the wording above is said (J24, J12).
+  - **Today:** none of the wording above is said in the UI (J24, J12). The
+    report states it (`RPM_ESTIMATED_TOP_GEAR`, `RULED_OUT_ENGINE_TOP_GEAR`).
 - **Branches:**
   - A reload mid-run restores the guided panel ([run_lifecycle.md](run_lifecycle.md)).
   - Speed below 20 km/h or unstable before Start keeps Start disabled (J19).
@@ -438,14 +441,15 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - The "Not covered" list on page 1 names the sources that were untestable.
 - **Today:**
   - Ratios print as bare numbers (`_conditions` in
-    `apps/server/vibesensor/report/view_model.py`, `COND_RATIOS_VALUE`), even
-    when they are the silent defaults (J35).
-  - `RPM_ESTIMATED` ("RPM: not measured; estimated from gear ratio") does not
-    mention top gear (J24).
+    `apps/server/vibesensor/report/view_model.py`, `COND_RATIOS_VALUE`). The
+    provenance is in the diagnosis `conditions` (`tire_provenance`,
+    `final_drive_provenance`, `gear_ratio_provenance`) but not printed (J35).
   - Page 1's "Not covered" lists only the missing RPM (`_coverage` in
     `view_model.py`) (J29).
-  - Driveline and engine are "ruled out" unhedged on family-default or
-    unverified library ratios (J27).
+  - Hedged ruled-out lines work: a family-default or unverified library ratio
+    gives `ruled_out_estimated` ("not conclusive"), estimated RPM gives
+    "estimated for top gear; lower gears were not checked", and a manual
+    speed gives "not testable".
 
 ### 3.9 Re-test after a fix
 
@@ -507,8 +511,11 @@ changes and update this table.
 - `requires_manual_confirmation` adds the "review in Analysis" sentence. That
   points to a screen that cannot edit the car (J04).
 - The status is stored on the car and copied into run metadata
-  (`apps/server/vibesensor/recording/run_metadata_builder.py`), but nothing in
-  analysis or the report reads it (J27).
+  (`apps/server/vibesensor/recording/run_metadata_builder.py`). Analysis
+  reads it: a weak final drive or top gear hedges the source checks to
+  `ruled_out_estimated`, and the diagnosis `conditions` carry each
+  reference's provenance. The library powertrain (`fuel_type`) is kept on
+  the car and the run too.
 
 **What could be prefilled but isn't** (data gaps; WP5 in
 [user_journey_gaps.md](user_journey_gaps.md)):
@@ -553,18 +560,18 @@ Legend:
 | yes | yes (user or library-strong) | no | GPS | ✓ | ✓ | ✗ no gear ratio |
 | yes | yes | yes | GPS | ✓ | ✓ | ~ "RPM estimated assuming top gear" |
 | yes | yes | yes | OBD-II | ✓ | ✓ | ✓ measured RPM |
-| any | any | any | Manual (fixed) | ~ only at the set speed | ~ only at the set speed | ~ only at the set speed |
+| any | any | any | Manual (fixed) | ~ a found cause is hedged; never ruled out | ~ same | ~ same |
 
 **Today:**
 
 - **Manual entry:** the wizard's manual form still requires final drive and
   top gear (J01).
-- **Library-estimate row:** an unhedged "ruled out"; the stored confidence is
-  ignored (J27).
-- **Engine with GPS:** the top-gear caveat is missing from the guided steps,
-  the live bands and the report (J24).
-- **Manual speed:** an unhedged "ruled out". Readiness passes without
-  measuring anything (`_speed_check`) (J15).
+- **Library-estimate row** and **manual speed:** analysis and the report
+  match the table. Readiness `capabilities` do not yet reflect weak ratios or
+  a manual speed, and readiness passes a manual speed without measuring
+  anything (`_speed_check`) (J15, J20).
+- **Engine with GPS:** the top-gear caveat is in the report but missing from
+  the guided steps and the live bands (J24).
 
 ### 5.2 Sensor layout
 

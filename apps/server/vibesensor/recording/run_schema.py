@@ -10,6 +10,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.domain.order_reference import OrderReferenceSpec
+from vibesensor.domain.vehicle_configuration import VehicleFuelType
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 
@@ -55,6 +56,7 @@ class RunCarMetadata:
     car_type: str | None = None
     variant: str | None = None
     order_reference_status: CarOrderReferenceStatus | None = None
+    fuel_type: VehicleFuelType | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,6 +264,21 @@ class RunMetadata:
     @property
     def active_car_id(self) -> str | None:
         return self.car.car_id if self.car is not None else None
+
+    @property
+    def simulated(self) -> bool:
+        """Every sensor of the run is the simulator (firmware ``sim-*``).
+
+        The simulator generates its vibration from the speed it sets on the
+        server, so that speed is the drive's true speed even when it arrives
+        as a manual speed.
+        """
+        tokens = [
+            token.strip().lower()
+            for token in str(self.firmware_version or "").split(",")
+            if token.strip()
+        ]
+        return bool(tokens) and all(token.startswith("sim-") for token in tokens)
 
     def sensor_snapshot_for(self, sensor_id: str) -> RunSensorMetadata | None:
         normalized_sensor_id = str(sensor_id).strip()

@@ -113,7 +113,7 @@ run's persisted analysis.
 | 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `findings_bundle.py`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
 | 7 | Origin & test plan | `VibrationOrigin.from_ranked_findings`, `build_phase_timeline` | `findings_bundle.py`, run_data_preparation | Determine most likely vibration source, generate timeline |
 | 8 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
-| 9 | Run suitability | `RunSuitability.evaluate` | `prepared_analysis_context.py`, `domain/run_suitability.py` | Check reference completeness plus data-quality and run-condition checks |
+| 9 | Run suitability | `RunSuitability.evaluate` | `prepared_analysis_context.py`, `domain/run_suitability.py` | Check reference completeness plus data-quality and run-condition checks. The speed check passes only for a live speed that varied; a near-constant or typed-in speed warns. Post-analysis also warns frame integrity when the raw-capture replay coverage was incomplete (`with_incomplete_raw_replay`) |
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
@@ -210,10 +210,27 @@ the PDF both show:
   engine orders, and an axle or `driveshaft_tunnel` for driveline orders.
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
-  strongest location with order markers, `source_checks`
-  (candidate / ruled out / not testable, with a reason), and the reference
-  `conditions` (speed source, RPM measured or estimated, tire circumference,
-  ratios).
+  strongest location with order markers, `source_checks`, and the reference
+  `conditions` (speed source, RPM `measured` / `estimated_top_gear` / `none`,
+  tire circumference, ratios, each reference's provenance, and the car's
+  `fuel_type`).
+- `source_checks` give each order family (wheel/tire, driveline, engine) a
+  status and reason:
+  - `candidate`: the diagnosed source.
+  - `not_testable`: its reference is missing (`no_tire_reference`,
+    `no_drive_reference`, `no_engine_reference`), or the speed was typed in
+    by hand (`manual_speed`; every sample carries the set value, even on a
+    desk). Runs from the simulator (all firmware `sim-*`) are exempt: their
+    manual speed is the simulated drive's true speed.
+  - `ruled_out_estimated`: no match, but the check rests on an estimate. The
+    reason is `estimated_final_drive` or `estimated_top_gear` for a
+    car-library ratio with `family_default` / `unverified` confidence, else
+    `top_gear_assumed` for engine RPM estimated from speed.
+  - `ruled_out` (`no_matching_order`): no match on references the user gave
+    or the library verified, and for the engine only with measured RPM.
+  - Provenance is the car's recorded field confidence, `user_confirmed` when
+    none was recorded, or `missing`. A manual speed also adds the weak reason
+    `manual_speed` to a found cause.
 - `guided_phases` (the guided test-drive steps the driver marked) and
   `speed_dependence`: after a guided neutral coast-down, `vehicle_speed` when
   the diagnosed order stayed present while coasting (wheels or driveline) and
@@ -224,7 +241,8 @@ the PDF both show:
   otherwise unknown). Coast-down matches that stay at one frequency while the
   prediction falls (an idle tone the order's path crosses) do not count as the
   order (`frequency_tracking_slope`, judged when the coast-down speed really
-  fell; see `docs/order_tracking.md`). The coast-down rules out the other side in
+  fell; see `docs/order_tracking.md`). With a manual speed `speed_dependence` is
+  `null`: a typed-in speed does not fall while coasting. The coast-down rules out the other side in
   `source_checks` (`stayed_in_neutral` / `stopped_in_neutral`) even without an
   order reference. When it contradicts the order match (an engine order that
   stays in neutral, a wheel or driveline order that stops), the verdict drops

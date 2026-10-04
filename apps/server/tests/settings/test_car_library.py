@@ -159,3 +159,17 @@ def test_bundled_picker_offers_every_exact_row_tire_size() -> None:
                             f"{config.id}: {size}" for size in sizes if size not in offered
                         )
     assert not missing, "\n".join(missing)
+
+
+def test_bundled_picker_gearboxes_carry_their_row_powertrain() -> None:
+    """Each gearbox option names its row's ICE/PHEV/EV powertrain for the saved car."""
+    seen: set[str] = set()
+    for entry in load_car_library():
+        for variant in entry["variants"]:
+            configs = get_exact_configurations_for_variant(
+                entry["brand"], entry["type"], entry["model"], variant["name"]
+            )
+            offered = sorted(gearbox["fuel_type"] for gearbox in variant.get("gearboxes", []))
+            assert offered == sorted(config.fuel_type for config in configs), variant["name"]
+            seen.update(offered)
+    assert seen == {"ICE", "PHEV", "EV"}

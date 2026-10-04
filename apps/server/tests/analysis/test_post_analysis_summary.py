@@ -3,7 +3,8 @@
 The analysis itself runs for real on minimal inputs; the simulator benchmark
 covers it end to end. These cases cover run conditions the benchmark cannot
 produce: thinned long runs, a degraded raw-capture finalize, unaligned vehicle
-context, too-short recordings and rows without stored strength.
+context, too-short recordings, incomplete raw replay and rows without stored
+strength.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from test_support.raw_capture_fixtures import (
     sine_xyz_i16,
     verified_clock_sync,
 )
+from test_support.report_rendering import report_view_for
 
 from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput, build_post_analysis_input
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
@@ -24,6 +26,10 @@ from vibesensor.recording.raw_capture import (
     RawCaptureSensorData,
     RawCaptureSensorManifest,
     RawRunCapture,
+)
+from vibesensor.recording.run_suitability_codec import (
+    run_suitability_from_payload,
+    run_suitability_payload,
 )
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.report.i18n import tr
@@ -169,6 +175,44 @@ def test_a_raw_capture_shorter_than_a_second_fails_the_duration_check() -> None:
     # 160 raw samples at 800 Hz is 0.2 s; a second of raw data (800 samples) is needed.
     assert "only preserved 160 raw sample(s)" in check["explanation"]
     assert "at least 800 are needed" in check["explanation"]
+
+
+def _frame_integrity_line(summary: dict, lang: str = "en") -> tuple[bool, str]:
+    quality = report_view_for(summary, lang=lang).quality
+    label = tr(lang, "SUITABILITY_CHECK_FRAME_INTEGRITY")
+    (check,) = (check for check in quality.checks if check.label == label)
+    return check.passed, check.detail
+
+
+def test_incomplete_raw_replay_fails_frame_integrity_instead_of_claiming_nothing_was_lost() -> None:
+    """The report must not say "no sensor data was lost" above the replay-coverage warning."""
+    row = {
+        "client_id": "sensor-a",
+        "t_s": 2.0,
+        "sample_rate_hz": 800,
+        "vibration_strength_db": 0.0,
+        "dominant_freq_hz": 0.0,
+    }
+    # The raw chunk covers 0.1-0.3 s; the summary row at 2 s has no raw window.
+    run = _run("run-replay-gap", [row], raw_capture=_raw_capture("run-replay-gap"))
+    without_raw = build_post_analysis_summary(_run("run-no-raw", [row]))
+    summary = build_post_analysis_summary(run)
+
+    assert _frame_integrity_line(without_raw) == (True, "No sensor data was lost.")
+    assert run.raw_replay.missing_window_count == 1
+    assert (
+        "Part of the raw sensor data was missing; those moments were analysed from the stored"
+        " summaries." in report_view_for(summary).quality.warnings
+    )
+    assert _frame_integrity_line(summary) == (
+        False,
+        "Some sensor data was lost or incomplete. The raw capture did not cover the whole run"
+        " (0 partial and 1 missing windows, 0 timing gaps, 0 overlaps); those moments were"
+        " analysed from the stored summaries.",
+    )
+    assert "1 ontbrekende vensters" in _frame_integrity_line(summary, "nl")[1]
+    persisted = [_check(summary, "SUITABILITY_CHECK_FRAME_INTEGRITY")]
+    assert run_suitability_payload(run_suitability_from_payload(persisted)) == persisted
 
 
 def test_without_a_known_duration_too_few_summary_rows_fail_the_duration_check() -> None:

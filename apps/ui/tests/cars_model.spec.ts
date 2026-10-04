@@ -277,6 +277,7 @@ const GEARBOX: CarLibraryGearbox = {
   name: "6-speed manual",
   final_drive_ratio: 3.94,
   top_gear_ratio: 0.79,
+  fuel_type: "PHEV",
   final_drive_ratio_confidence: "family_default",
   top_gear_ratio_confidence: "family_default",
   requires_manual_confirmation: true,
@@ -390,6 +391,7 @@ test("the created car records where each spec came from", () => {
       selection_source_status: "exact_row",
       transmission_name: "6-speed manual",
     },
+    fuelType: "PHEV",
   });
   const manual = specs({ selectedTire: TIRE, specBranch: "manual" });
   const kept = {
@@ -407,6 +409,7 @@ test("the created car records where each spec came from", () => {
       final_drive_ratio_confidence: "user_confirmed",
       selection_source_status: "manual_entry",
     },
+    fuelType: null,
   });
   expect(carRequest(manual, { ...kept, tireWidth: "235" })).toMatchObject({
     ok: true,

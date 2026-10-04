@@ -98,6 +98,10 @@ export function makeDiagnosis(
       tire_circumference_m: null,
       final_drive_ratio: null,
       gear_ratio: null,
+      tire_provenance: "missing",
+      final_drive_provenance: "missing",
+      gear_ratio_provenance: "missing",
+      fuel_type: null,
     },
     ...overrides,
   };
