@@ -236,6 +236,7 @@ class LifecycleManager:
             processor=r.processor,
             raw_capture_sink=r.run_recorder.raw_capture,
             ingest_diagnostics=r.ingest_diagnostics,
+            sync_clock_now=r.control_plane.send_sync_clock,
         )
         if consumer is not None:
             await self._start_supervised(consumer.process_queue, "udp-data-consumer")

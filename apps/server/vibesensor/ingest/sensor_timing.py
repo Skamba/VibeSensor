@@ -16,6 +16,15 @@ The guard compares, per window of receive time:
 - the **effective rate**: samples delivered per second of receive time
   (frames lost in transit counted from sequence gaps), against the declared
   rate.
+
+Both measures hold only once the sensor's send queue is in its steady state.
+The sensor sends stop-and-wait and holds a frame up to 0.75 s
+(``kDataMaxFrameAgeMs``); right after it connects, reconnects or is synced, and
+after any interruption, its queue still holds frames that are drained faster
+than real time. A window anchored on a queued frame and closed on a fresh one
+counts up to 0.75 s too many samples (3.75 % of 20 s), so the guard starts a
+window only after the stream has run ``SENSOR_TIMING_SETTLE_S`` without an
+interruption.
 """
 
 from __future__ import annotations
@@ -26,6 +35,7 @@ from typing import Literal
 __all__ = [
     "SENSOR_TIMING_MAX_LAG_US",
     "SENSOR_TIMING_MAX_RATE_ERROR",
+    "SENSOR_TIMING_SETTLE_S",
     "SENSOR_TIMING_WINDOW_S",
     "SensorTimingGuard",
     "SensorTimingState",
@@ -41,6 +51,13 @@ SENSOR_TIMING_MAX_LAG_US = 1_000_000
 # Arrival jitter over a 20 s window is well under 1 %; an untrimmed sensor
 # oscillator is a few percent off.
 SENSOR_TIMING_MAX_RATE_ERROR = 0.02
+# A sensor's backlog ages out within 0.75 s once its frames are acknowledged
+# promptly; a server still starting acknowledges slowly for longer. The
+# registry's stream-start grace for frame loss is as long.
+SENSOR_TIMING_SETTLE_S = 5.0
+# No frame for longer than a frame may be held back: the stream was interrupted
+# and its queue drains again.
+_INTERRUPTION_S = 1.0
 # A frame stamped this far ahead of its arrival means a wrong clock offset.
 _MAX_LEAD_US = 250_000
 
@@ -52,6 +69,8 @@ class SensorTimingGuard:
     state: SensorTimingState = "unknown"
     min_lag_us: int | None = None
     effective_rate_hz: float | None = None
+    _settled_mono_s: float | None = None
+    _last_receive_mono_s: float | None = None
     _window_first_mono_s: float | None = None
     _window_samples: int = 0
     _window_min_lag_us: int | None = None
@@ -61,6 +80,8 @@ class SensorTimingGuard:
         self.state = "unknown"
         self.min_lag_us = None
         self.effective_rate_hz = None
+        self._settled_mono_s = None
+        self._last_receive_mono_s = None
         self._restart_window()
 
     @property
@@ -78,6 +99,13 @@ class SensorTimingGuard:
     ) -> None:
         """Account one accepted frame stamped on the server clock."""
         if sample_rate_hz <= 0 or sample_count <= 0:
+            return
+        last_receive_mono_s = self._last_receive_mono_s
+        self._last_receive_mono_s = receive_mono_s
+        if last_receive_mono_s is None or receive_mono_s - last_receive_mono_s > _INTERRUPTION_S:
+            self._settled_mono_s = receive_mono_s + SENSOR_TIMING_SETTLE_S
+            self._restart_window()
+        if self._settled_mono_s is not None and receive_mono_s < self._settled_mono_s:
             return
         frame_end_us = t0_us + (sample_count * 1_000_000) // sample_rate_hz
         lag_us = int(receive_mono_s * 1_000_000) - frame_end_us

@@ -12,6 +12,8 @@ from vibesensor.ingest.registry import ClientRegistry
 _CLIENT_ID = "aabbccddeeff"
 _FRAME_SAMPLES = 80
 _START_S = 1_000.0
+_BACKLOG_S = 0.7
+_DRAIN_S = 1.0
 
 
 def _registry() -> ClientRegistry:
@@ -39,12 +41,16 @@ def _stream(
     stamped_hz: float,
     duration_s: float,
     lost_every: int = 0,
+    outages: tuple[tuple[float, float], ...] = (),
 ) -> None:
     """Send frames a sensor delivering ``delivered_hz`` makes, stamped at ``stamped_hz``.
 
     A sensor that stamps right has ``stamped_hz == delivered_hz``; firmware
     cf117a43e stamped from the nominal 800 Hz schedule while delivering ~742.
     Each frame arrives 15-75 ms after its last sample (Wi-Fi and queueing).
+    During an outage (start, end), seconds into the stream, nothing arrives:
+    the sensor drops frames older than its 0.75 s hold, and the 0.7 s of frames
+    it still queues at the end drain faster than real time over the next second.
     """
     frame = 0
     while True:
@@ -53,7 +59,14 @@ def _stream(
         if arrival_s - _START_S > duration_s:
             return
         t0_us = int((_START_S + frame * _FRAME_SAMPLES / stamped_hz) * 1_000_000)
-        if not (lost_every and frame % lost_every == lost_every - 1):
+        aged_out = False
+        for outage_start_s, outage_end_s in outages:
+            since_queued_s = arrival_s - _START_S - (outage_end_s - _BACKLOG_S)
+            if outage_start_s <= arrival_s - _START_S and since_queued_s < 0:
+                aged_out = True
+            elif 0 <= since_queued_s < _BACKLOG_S + _DRAIN_S:
+                arrival_s += _BACKLOG_S * (1 - since_queued_s / (_BACKLOG_S + _DRAIN_S))
+        if not aged_out and not (lost_every and frame % lost_every == lost_every - 1):
             registry.update_from_data(
                 DataMessage(
                     client_id=bytes.fromhex(_CLIENT_ID),
@@ -92,7 +105,7 @@ def test_timing_guard_flags_sensors_whose_samples_cannot_be_placed_in_time(
         registry,
         delivered_hz=delivered_hz,
         stamped_hz=stamped_hz,
-        duration_s=45.0,
+        duration_s=50.0,
         lost_every=lost_every,
     )
 
@@ -116,6 +129,53 @@ def test_timing_guard_reports_nothing_before_a_full_window() -> None:
     record = registry.get(_CLIENT_ID)
     assert record is not None
     assert record.timing_guard.state == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("outages", "duration_s"),
+    [
+        # Synced while its queue still holds frames from before the server came
+        # up: a window anchored there counts 0.7 s too many samples (+3.5 %).
+        pytest.param(((0.0, 0.8),), 27.0, id="backlog-at-stream-start"),
+        # A Wi-Fi drop that ends just before the second window would close:
+        # closed there, it would miss the frames still queued (-2.8 %).
+        pytest.param(((0.0, 0.8), (44.0, 45.6)), 47.0, id="backlog-after-an-interruption"),
+    ],
+)
+def test_timing_guard_waits_for_a_drained_queue_before_judging_the_rate(
+    outages: tuple[tuple[float, float], ...],
+    duration_s: float,
+) -> None:
+    registry = _registry()
+
+    _stream(
+        registry,
+        delivered_hz=800.0,
+        stamped_hz=800.0,
+        duration_s=duration_s,
+        outages=outages,
+    )
+
+    record = registry.get(_CLIENT_ID)
+    assert record is not None
+    assert record.timing_guard.state == "ok"
+    assert record.timing_guard.effective_rate_hz == pytest.approx(800.0, rel=0.005)
+
+
+def test_timing_guard_still_flags_an_off_rate_sensor_with_a_backlog_at_stream_start() -> None:
+    registry = _registry()
+
+    _stream(
+        registry,
+        delivered_hz=823.0,
+        stamped_hz=823.0,
+        duration_s=27.0,
+        outages=((0.0, 0.8),),
+    )
+
+    record = registry.get(_CLIENT_ID)
+    assert record is not None
+    assert record.timing_guard.state == "rate_mismatch"
 
 
 def test_sensor_reboot_resets_its_timing_verdict() -> None:

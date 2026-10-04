@@ -30,7 +30,7 @@ server's monotonic time in microseconds.
 |-------|--------|
 | Protocol | New `CMD_SYNC_CLOCK = 2` command type with 8-byte `server_time_us` payload. |
 | Firmware (ESP) | On receipt, compute `offset = server_time_us − esp_timer_get_time()` and store.  Apply offset to every subsequent `t0_us` in DATA frames. |
-| Server control plane | `UDPControlPlane.broadcast_sync_clock()` sends the command to every active sensor; `send_sync_clock()` sends it to one. A HELLO from a sensor that is not on the server clock, or that was silent for over 1 s, starts an exchange at once, and the ACK of its first (measuring) exchange triggers the exchange that carries the offset. |
+| Server control plane | `UDPControlPlane.broadcast_sync_clock()` sends the command to every active sensor; `send_sync_clock()` sends it to one. A HELLO or DATA from a sensor that is not on the server clock, or a HELLO from one that was silent for over 1 s, starts an exchange at once, and the ACK of its first (measuring) exchange triggers the exchange that carries the offset. |
 | Processing loop | Calls `broadcast_sync_clock()` every `CLOCK_SYNC_INTERVAL_S` (2 s) of monotonic time, independent of the tick rate. |
 
 After synchronisation all sensors report `t0_us` relative to the
@@ -38,19 +38,23 @@ server's monotonic clock, making timestamps directly comparable across
 sensors.
 
 Sensors apply the offset from their second exchange. Both exchanges run as soon
-as a sensor says HELLO, so a newly connected sensor stamps on the server clock
-within two round trips, before its first frame; waiting for two broadcasts used
-to leave it unsynced for 2–4 s, which raw capture drops (a recording started
-right after the sensors, or a sensor that reconnected mid-run, lost that much
-raw-backed analysis plus one FFT window). A rebooted sensor is re-synced at its
-next HELLO or broadcast (≤ 2 s); a HELLO from a sensor that was silent for over
-1 s, longer than a streaming sensor ever is, starts an exchange at once. Until
-the server notices the reboot, that exchange still carries the previous boot's
-offset; the sensor applies it and stamps frames seconds in the past, which after
-a session shorter than 2 s do not rewind far enough to reveal the reboot. The
-acknowledgement measures an offset more than 2 s larger, which only a reboot
-explains, so the registry starts a new session and sends the fresh offset at
-once, before the sensor's first frame. The 2 s broadcast interval leaves room under the two age limits that depend on it: the registry's 8 s
+as a sensor that is not on the server clock says HELLO or sends DATA, so a newly
+connected sensor stamps on the server clock within two round trips, before its
+first frame; waiting for two broadcasts used to leave it unsynced for 2–4 s, which
+raw capture drops (a recording started right after the sensors, or a sensor that
+reconnected mid-run, lost that much raw-backed analysis plus one FFT window).
+DATA matters in two cases HELLO misses: a sensor keeps streaming across a server
+restart and says HELLO only every 2 s (the server predicts its control port from
+its MAC, see `docs/protocol.md`), and a reboot shows only in the first DATA after
+the sensor's HELLO. One exchange runs at a time per sensor; one unacknowledged
+for 0.5 s is presumed lost and the next HELLO or DATA starts another. A HELLO
+from a sensor that was silent for over 1 s, longer than a streaming sensor ever
+is, starts an exchange at once. Until the server notices the reboot, that
+exchange still carries the previous boot's offset; the sensor applies it and
+stamps frames seconds in the past, which after a session shorter than 2 s do not
+rewind far enough to reveal the reboot. The acknowledgement measures an offset
+more than 2 s larger, which only a reboot explains, so the registry starts a new
+session and sends the fresh offset at once, before the sensor's first frame. The 2 s broadcast interval leaves room under the two age limits that depend on it: the registry's 8 s
 slow-exchange hold (about three slow exchanges in a row are skipped before an
 old estimate is replaced) and the 15 s sync-age limit of the raw-capture proof
 (several lost exchanges in a row still leave a sensor `verified` at finalize).
@@ -213,6 +217,14 @@ receive time (`vibesensor/ingest/sensor_timing.py`):
 - **effective rate**: samples delivered per second of receive time, frames
   lost in transit counted from sequence gaps. More than 2 % off the declared
   rate is `rate_mismatch`.
+
+A window starts only after the stream has run 5 s without a gap of more than
+1 s, counted from the first synced frame. Right after the sensor connects,
+reconnects or is synced, and after any interruption, its stop-and-wait queue
+still holds up to 0.75 s of frames that drain faster than real time. A window
+anchored in that drain counted up to 3.75 % too many samples, and a server
+restart showed `sensor_rate_mismatch` for its first window. A sensor that
+really is off-rate is flagged 25 s after it is synced.
 
 A flagged sensor shows up as the health degradation reason
 `sensor_timestamp_lag` / `sensor_rate_mismatch` (with per-client

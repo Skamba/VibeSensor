@@ -27,6 +27,7 @@ import yaml
 from tests_e2e.e2e_helpers import CAPPED_RECORDING_S, ROOT, api_json
 from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_REFERENCE_KEYS
 from vibesensor.simulator.profiles import SIMULATOR_CAR_ASPECTS
+from vibesensor.updates.boot_check import not_working_reason
 from vibesensor.updates.isolated_server_runtime import (
     IsolatedRuntimePaths,
     build_isolated_server_config,
@@ -110,11 +111,9 @@ def _wait_ready(base_url: str, process: subprocess.Popen[str], log_path: Path) -
         else:
             if isinstance(last, dict) and last.get("background_task_failures"):
                 raise RuntimeError(f"e2e server startup task failed: {last}")
-            if (
-                isinstance(last, dict)
-                and last.get("status") in {"ok", "degraded"}
-                and last.get("startup_state") == "ready"
-            ):
+            # The post-update boot check's rule: the server works, whatever
+            # operational warnings (sensors, GPS, root side) its status carries.
+            if not_working_reason(last) is None:
                 return
         time.sleep(0.25)
     raise RuntimeError(f"e2e server not ready after {_STARTUP_TIMEOUT_S}s; last={last!r}")

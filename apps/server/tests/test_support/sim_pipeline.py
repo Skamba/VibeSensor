@@ -392,6 +392,7 @@ def _record(
         processor=lifecycle.processor,
         raw_capture_sink=recorder.raw_capture,
         ingest_diagnostics=lifecycle.ingest_diagnostics,
+        sync_clock_now=lifecycle.control_plane.send_sync_clock,
     )
     data_protocol.connection_made(_DiscardTransport())  # type: ignore[arg-type]
 

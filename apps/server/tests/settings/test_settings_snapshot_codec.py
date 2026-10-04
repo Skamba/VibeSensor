@@ -21,6 +21,7 @@ def test_settings_snapshot_json_round_trip_preserves_canonical_payload() -> None
         ],
         "activeCarId": "car-1",
         "speedSource": "obd2",
+        "speedSourceChosen": True,
         "manualSpeedKph": 60.0,
         "staleTimeoutS": 12.0,
         "obdDeviceMac": "02000000004d",
@@ -100,6 +101,8 @@ def test_settings_snapshot_from_json_decodes_snapshot_written_by_previous_encode
         }
     ]
     assert decoded["activeCarId"] == "car-1"
+    # No recorded choice: the speed-source config infers it (GPS was the default).
+    assert "speedSourceChosen" not in decoded
 
 
 def test_settings_snapshot_from_json_rejects_legacy_values() -> None:

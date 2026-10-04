@@ -45,15 +45,17 @@ __all__ = [
     "DedupWindow",
     "ExpectedFrameLoss",
     "apply_data_message_update",
+    "firmware_control_port",
     "project_client_snapshots",
 ]
 
 _DEFAULT_DEDUP_WINDOW_SIZE = 128
 _RESTART_SEQ_GAP = 1000
 # A sensor that reboots restarts its sequence counter and its device clock; until
-# the server's clock offset is re-applied (up to ~2 s, at its next HELLO or sync
-# broadcast) its t0_us is far behind the previous session. Genuine late/reordered UDP frames are
-# only milliseconds behind, so a rewind this large means a new session.
+# the server's clock offset is re-applied (two sync round trips after the first
+# DATA that shows the reboot) its t0_us is far behind the previous session.
+# Genuine late/reordered UDP frames are only milliseconds behind, so a rewind
+# this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000
 # A streaming sensor sends a frame every 250 ms and holds frames back at most
 # 0.75 s while it retransmits (``kDataMaxFrameAgeMs``); one silent for longer
@@ -81,6 +83,15 @@ _SYNC_MAX_SLEW_US = 200
 _SYNC_STEP_MIN_ERROR_US = 5_000
 _SEQ_MASK = 0xFFFFFFFF
 _SEQ_HALF = 0x80000000
+# A clock-sync command still unacknowledged after this is presumed lost, so the
+# next HELLO or DATA frame from a sensor that is not on the server clock starts
+# another exchange. Round trips are milliseconds; a Wi-Fi retry stays well under.
+_SYNC_EXCHANGE_TIMEOUT_US = 500_000
+# Firmware listens for commands on this base port plus the last client-id (MAC)
+# byte modulo 100 (``initialize_transport`` in firmware/esp/src/runtime_transport.cpp,
+# ``VS_FIRMWARE_CONTROL_PORT_BASE`` in firmware/esp/include/vibesensor_contracts.h).
+# Its HELLO announces the port; this predicts it for DATA that arrives first.
+FIRMWARE_CONTROL_PORT_BASE = 9010
 
 type ExpectedFrameLoss = Literal["stream_start", "bluetooth_scan", "bluetooth_pairing"]
 """Why a sequence gap is expected rather than a sensor or Wi-Fi fault.
@@ -164,6 +175,9 @@ class DataUpdateResult:
     # synced clock offset and this frame was stamped with it. Frames stamped on
     # the bare device clock (before the first applied sync) are not alignable.
     clock_synced: bool = False
+    # Whether the control plane should start a clock-sync exchange with the sensor
+    # now: it is not on the server clock and no exchange is in flight.
+    sync_due: bool = False
 
 
 @dataclass(slots=True)
@@ -569,6 +583,25 @@ def _forget_clock_sync(record: ClientRecord) -> None:
     record.pending_sync_applies_offset = False
 
 
+def _sync_exchange_due(record: ClientRecord, mono: float) -> bool:
+    """Whether a sensor that is not on the server clock awaits a new sync exchange.
+
+    One exchange runs at a time: a sensor streaming DATA (or saying HELLO) while
+    its exchange is in flight starts no other until that one is acknowledged or
+    presumed lost.
+    """
+    if record.clock_offset_applied or record.control_addr is None:
+        return False
+    if record.pending_sync_cmd_seq is None or record.pending_sync_send_us is None:
+        return True
+    return int(mono * 1_000_000) - record.pending_sync_send_us >= _SYNC_EXCHANGE_TIMEOUT_US
+
+
+def firmware_control_port(client_id: str) -> int:
+    """The control port the firmware binds for *client_id* (a normalized MAC hex)."""
+    return FIRMWARE_CONTROL_PORT_BASE + int(client_id[-2:], 16) % 100
+
+
 # The firmware holds back at most 0.75 s of frames (``kDataMaxFrameAgeMs``) while
 # it retransmits; frames further on were queued after the offset was applied.
 _MAX_HELD_BACK_FRAMES = 8
@@ -710,7 +743,8 @@ class ClientRegistry:
         the next periodic broadcast, so it streams few chunks raw capture must drop.
         So is a sensor that was silent for longer than a streaming one ever is: it
         may have rebooted unnoticed, and the exchange shows a restarted clock (see
-        ``_stamps_with_previous_boot_offset``) before its first frame.
+        ``_stamps_with_previous_boot_offset``) before its first frame. The announced
+        control port replaces one predicted from DATA.
         """
         with self._lock:
             now_ts = _resolve_now_wall(now)
@@ -743,9 +777,7 @@ class ClientRegistry:
             record.queue_overflow_drops = reported
             self._metadata.apply_advertised_name(record, hello.name)
             # An exchange still pending with a silent sensor was lost with it.
-            return was_silent or (
-                not record.clock_offset_applied and record.pending_sync_cmd_seq is None
-            )
+            return was_silent or _sync_exchange_due(record, mono)
 
     def update_from_data(
         self,
@@ -760,13 +792,21 @@ class ClientRegistry:
         Returns a :class:`DataUpdateResult` indicating whether a sensor reset
         was detected and whether this message is a duplicate retransmit.
         Duplicates are tracked but do not inflate counters or timing metrics.
+
+        DATA can arrive before a sensor's first HELLO (sensors keep streaming
+        across a server restart and say HELLO only every 2 s) and reveals a
+        sensor reboot; either way an unsynced sensor is flagged ``sync_due`` so
+        it is synced at once instead of losing up to its next HELLO of raw capture.
+        Until a HELLO announces the control port, the firmware's is predicted.
         """
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
             client_id = self._normalize_wire_client_id(data_msg.client_id)
             record = self._get_or_create(client_id)
-            return apply_data_message_update(
+            if record.control_addr is None:
+                record.control_addr = (addr[0], firmware_control_port(client_id))
+            result = apply_data_message_update(
                 record,
                 seq=data_msg.seq,
                 sample_count=data_msg.sample_count,
@@ -778,6 +818,8 @@ class ClientRegistry:
                     self._expected_loss if mono <= self._expected_loss_until_mono else None
                 ),
             )
+            result.sync_due = _sync_exchange_due(record, mono)
+            return result
 
     @contextmanager
     def expecting_frame_loss(self, reason: ExpectedFrameLoss) -> Iterator[None]:

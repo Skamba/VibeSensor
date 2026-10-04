@@ -20,14 +20,16 @@ from tests_e2e.e2e_helpers import (
     remove_all_clients,
     wait_export_ready,
     wait_for_stable,
-    wait_run_status,
     wait_report_pdf_ready,
+    wait_run_status,
 )
 
 pytestmark = pytest.mark.e2e
 
 
-def test_no_data_stop_records_a_failed_history_run_with_the_reason_e2e(e2e_env: dict[str, str]) -> None:
+def test_no_data_stop_records_a_failed_history_run_with_the_reason_e2e(
+    e2e_env: dict[str, str],
+) -> None:
     base = e2e_env["base_url"]
     remove_all_clients(base)
 

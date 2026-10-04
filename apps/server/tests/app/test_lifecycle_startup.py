@@ -167,6 +167,7 @@ class TestUdpTransport:
                 processor=runtime.processor,
                 raw_capture_sink=runtime.run_recorder.raw_capture,
                 ingest_diagnostics=runtime.ingest_diagnostics,
+                sync_clock_now=runtime.control_plane.send_sync_clock,
             )
         finally:
             await lifecycle.stop()

@@ -44,6 +44,11 @@ This document is generated from code and shared contract files.
 - Server replies to HELLO packets with `HELLO_ACK` on the sensor control port.
 - Firmware waits for `HELLO_ACK` before sending DATA frames, so the control path
   is validated before streaming starts.
+- Firmware binds its control port at `9010` (`VS_FIRMWARE_CONTROL_PORT_BASE`) plus
+  the last client-id (MAC) byte modulo 100, and announces it in HELLO. A sensor
+  keeps streaming across a server restart and says HELLO only every 2 s, so the
+  server predicts that port for DATA that arrives before the first HELLO (to
+  start clock sync at once); the announced port replaces the prediction.
 - HELLO `firmware_version` (at most 32 bytes) is the build version
   `<release version>+<12-char commit>`, stamped at build time by
   `tools/firmware/firmware_build_version.py`: a release build reports the server

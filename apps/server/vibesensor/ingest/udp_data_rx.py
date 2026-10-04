@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from vibesensor.common.exceptions import ProtocolError
@@ -58,10 +59,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         queue_maxsize: int = 1024,
         queue_drop_log_interval_s: float = _QUEUE_DROP_LOG_INTERVAL_S,
+        sync_clock_now: Callable[[str], object] | None = None,
     ):
         self.registry = registry
         self.processor = processor
         self._raw_capture_sink = raw_capture_sink
+        # Starts a clock-sync exchange with one sensor (``UDPControlPlane.send_sync_clock``).
+        self._sync_clock_now = sync_clock_now
         self._ingest_diagnostics = ingest_diagnostics
         self.transport: asyncio.DatagramTransport | None = None
         self._queue: asyncio.Queue[tuple[bytes, tuple[str, int], float]] = asyncio.Queue(
@@ -177,6 +181,8 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         )
         now_ts = time.time()
         result = registry.update_from_data(msg, addr, now_ts)
+        if result.sync_due and self._sync_clock_now is not None:
+            self._sync_clock_now(client_id)
         if not result.is_duplicate:
             if result.reset_detected:
                 LOGGER.warning(
@@ -255,6 +261,7 @@ async def start_udp_data_receiver(
     raw_capture_sink: RunRawCaptureWriter | None = None,
     ingest_diagnostics: IngestDiagnosticsCollector | None = None,
     queue_maxsize: int = 1024,
+    sync_clock_now: Callable[[str], object] | None = None,
 ) -> tuple[asyncio.DatagramTransport, DataDatagramProtocol]:
     """Bind the UDP data socket and start the background consumer task."""
     loop = asyncio.get_running_loop()
@@ -264,6 +271,7 @@ async def start_udp_data_receiver(
         raw_capture_sink=raw_capture_sink,
         ingest_diagnostics=ingest_diagnostics,
         queue_maxsize=queue_maxsize,
+        sync_clock_now=sync_clock_now,
     )
     transport, _ = await loop.create_datagram_endpoint(
         lambda: protocol,

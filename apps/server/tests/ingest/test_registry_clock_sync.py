@@ -81,11 +81,51 @@ def test_sensor_reboot_forgets_its_clock_sync() -> None:
 
     record = registry.get("aabbccddeeff")
     assert synced.clock_synced is True
+    assert synced.sync_due is False
     assert rebooted.reset_detected is True
     assert rebooted.clock_synced is False
+    # Its HELLO came before the reboot showed, so its first DATA starts the re-sync.
+    assert rebooted.sync_due is True
     assert record is not None
     assert record.clock_offset_applied is False
     assert record.sync_offset_us is None
+
+
+def test_data_before_the_first_hello_starts_one_sync_exchange_at_a_time() -> None:
+    """A sensor keeps streaming across a server restart and says HELLO only every 2 s;
+    waiting for that HELLO cost a recording started at once ~1.6 s of raw capture."""
+    registry = ClientRegistry()
+    addr = ("10.4.0.2", 50000)
+
+    first = registry.update_from_data(_data(1, 2_000_000), addr, now_mono=1_000.0)
+
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert first.sync_due is True
+    # The firmware's control port: 9010 + last MAC byte (0xff) % 100.
+    assert record.control_addr == ("10.4.0.2", 9065)
+
+    registry.mark_cmd_sent("aabbccddeeff", 7, sync_send_us=1_000_000_000)
+    in_flight = registry.update_from_data(_data(2, 2_250_000), addr, now_mono=1_000.25)
+    presumed_lost = registry.update_from_data(_data(3, 2_500_000), addr, now_mono=1_000.5)
+    assert in_flight.sync_due is False
+    assert presumed_lost.sync_due is True
+
+    registry.update_from_hello(
+        HelloMessage(
+            client_id=bytes.fromhex("aabbccddeeff"),
+            control_port=9123,
+            sample_rate_hz=800,
+            frame_samples=200,
+            name="node",
+            firmware_version="fw",
+        ),
+        ("10.4.0.2", 40000),
+        now_mono=1_000.6,
+    )
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert record.control_addr == ("10.4.0.2", 9123)
 
 
 def _sync_exchange(

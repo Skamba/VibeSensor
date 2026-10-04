@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from unittest.mock import MagicMock, create_autospec
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from vibesensor.common.operational_errors import ExternalCommandError
+from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.settings.services import build_settings_services
@@ -26,11 +28,12 @@ class _Harness:
     run_recorder: MagicMock
 
 
-def _build_client(*, recording: bool = False) -> _Harness:
+def _build_client(*, recording: bool = False, db: HistoryDB | None = None) -> _Harness:
     from vibesensor.speed.obd.service import ObdService
     from vibesensor.web.settings.obd import create_obd_admin_routes
+    from vibesensor.web.settings.speed_source import create_speed_source_routes
 
-    speed_source_service = build_settings_services().speed_source_service
+    speed_source_service = build_settings_services(db=db).speed_source_service
     speed_status_service = create_autospec(SpeedSourceObservationService, instance=True)
     speed_status_service.status_snapshot.return_value = SpeedSourceStatusSnapshot(
         gps_enabled=True,
@@ -65,6 +68,7 @@ def _build_client(*, recording: bool = False) -> _Harness:
             run_recorder=run_recorder,
         )
     )
+    app.include_router(create_speed_source_routes(speed_source_service, speed_status_service))
     return _Harness(
         client=TestClient(app),
         speed_source_service=speed_source_service,
@@ -256,3 +260,29 @@ def test_pairing_makes_the_adapter_the_speed_source_unless_one_was_chosen() -> N
     harness.speed_source_service.update_speed_source({"speedSource": "gps"})
     pair()
     assert harness.speed_source_service.get_speed_source()["speedSource"] == "gps"
+
+
+def test_a_chosen_speed_source_survives_a_restart_and_a_later_pairing(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    before_restart = _build_client(db=db)
+    chosen = before_restart.client.put("/api/settings/speed-source", json={"speed_source": "gps"})
+    assert chosen.status_code == 200
+
+    harness = _build_client(db=db)
+    harness.obd_admin_service.pair_obd_device.return_value = ObdDeviceSnapshot(
+        mac_address="02000000004d",
+        name="OBDLink MX+",
+        paired=True,
+        trusted=True,
+        connected=True,
+        rfcomm_channel=1,
+    )
+    paired = harness.client.post(
+        "/api/settings/obd/pair", json={"mac_address": "02:00:00:00:00:4D"}
+    )
+
+    assert paired.status_code == 200
+    saved = harness.client.get("/api/settings/speed-source").json()
+    assert (saved["speed_source"], saved["obd_device_mac"]) == ("gps", "02000000004d")
+    after_next_restart = _build_client(db=db).client.get("/api/settings/speed-source").json()
+    assert after_next_restart["speed_source"] == "gps"

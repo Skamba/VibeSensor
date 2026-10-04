@@ -31,6 +31,9 @@ class SettingsSnapshotRecord(msgspec.Struct, kw_only=True, frozen=True):
     cars: list[CarConfigPayload] = msgspec.field(default_factory=list)
     activeCarId: str | None = None
     speedSource: SpeedSourceKind = SpeedSourceKind.GPS
+    # Absent in snapshots saved before the choice was recorded (or dropped by an
+    # encoder that lacked it); the speed-source config then infers it.
+    speedSourceChosen: bool | None = None
     manualSpeedKph: float | None = None
     staleTimeoutS: float = 10.0
     obdDeviceMac: str | None = None
@@ -103,6 +106,8 @@ def _settings_snapshot_payload_from_record(
             for sensor_id, config in record.sensorsByMac.items()
         },
     }
+    if record.speedSourceChosen is not None:
+        snapshot_payload["speedSourceChosen"] = record.speedSourceChosen
     if record.obdDeviceMac is not None:
         snapshot_payload["obdDeviceMac"] = record.obdDeviceMac
     if record.obdDeviceName is not None:

@@ -67,6 +67,19 @@ def test_settings_snapshot_persists_and_loads(tmp_path: Path) -> None:
     assert snapshot["speedUnit"] == "mps"
 
 
+def test_an_explicit_speed_source_choice_survives_a_restart_and_pairing(tmp_path: Path) -> None:
+    """The choice was dropped on save, so after a restart a paired adapter took over."""
+    db = HistoryDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+    services.speed_source_settings.update_speed_source({"speedSource": "gps"})
+    services.speed_source_settings.update_speed_source({"obdDeviceMac": "02:00:00:00:00:4D"})
+
+    reloaded = build_settings_services(db=db).speed_source_settings.speed_source_config()
+
+    assert (reloaded.speed_source, reloaded.speed_source_chosen) == ("gps", True)
+    assert reloaded.obd_device_mac == "02000000004d"
+
+
 def test_settings_snapshot_reload_keeps_order_reference_status_and_axle_tires(
     tmp_path: Path,
 ) -> None:
