@@ -77,6 +77,15 @@ export function createHealthyUpdateStatus(
       server_queue_drops: 0,
       parse_errors: 0,
     },
+    recent_data_loss: {
+      window_s: 60,
+      frame_loss_clients: 0,
+      frames_dropped: 0,
+      buffer_overflow_drops: 0,
+      queue_overflow_drops: 0,
+      server_queue_drops: 0,
+      parse_errors: 0,
+    },
     ingest: {
       udp: {
         queue_depth: 0,

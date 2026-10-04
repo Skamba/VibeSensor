@@ -113,6 +113,7 @@ def _processor_mock() -> SignalProcessor:
         "last_ingest_duration_s": 0.0,
     }
     processor.buffer_overflow_drops.return_value = 0
+    processor.recent_buffer_overflow_drops.return_value = 0
     processor.all_latest_metrics.return_value = {}
     return processor
 
@@ -125,6 +126,14 @@ def _registry_mock() -> ClientRegistry:
     registry.data_loss_snapshot.return_value = {
         "tracked_clients": 0,
         "affected_clients": 0,
+        "frames_dropped": 0,
+        "queue_overflow_drops": 0,
+        "server_queue_drops": 0,
+        "parse_errors": 0,
+    }
+    registry.recent_data_loss_snapshot.return_value = {
+        "window_s": 60,
+        "frame_loss_clients": 0,
         "frames_dropped": 0,
         "queue_overflow_drops": 0,
         "server_queue_drops": 0,

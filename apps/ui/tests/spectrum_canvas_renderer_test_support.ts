@@ -65,6 +65,7 @@ export function makeClient(
     location_code: "front_right_wheel",
     last_seen_age_ms: 25,
     dropped_frames: 0,
+    frame_loss_recent: false,
     frames_total: 100,
     frame_samples: 200,
     sample_rate_hz: 400,

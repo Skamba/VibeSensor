@@ -77,6 +77,9 @@ class ClientApiRow(TypedDict, total=True):
     last_seen_age_ms: int | None
     frames_total: int
     dropped_frames: int
+    """Frames lost since the sensor was first seen (diagnostics; never resets)."""
+    frame_loss_recent: bool
+    """The sensor lost a significant share of its frames in the last minute."""
     frame_samples: int
     # API-only fields — omitted in lightweight WebSocket snapshots:
     latest_metrics: NotRequired[ClientMetrics]

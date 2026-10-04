@@ -89,6 +89,16 @@ const healthDataLossSchema = v.looseObject({
   tracked_clients: integerSchema,
 });
 
+const healthRecentDataLossSchema = v.looseObject({
+  window_s: integerSchema,
+  frame_loss_clients: integerSchema,
+  frames_dropped: integerSchema,
+  buffer_overflow_drops: integerSchema,
+  queue_overflow_drops: integerSchema,
+  server_queue_drops: integerSchema,
+  parse_errors: integerSchema,
+});
+
 const healthIntakeStatsSchema = v.looseObject({
   last_compute_all_duration_s: finiteNumberSchema,
   last_compute_duration_s: finiteNumberSchema,
@@ -187,6 +197,7 @@ const healthStatusPayloadSchema = v.looseObject({
   processing_failure_categories: integerMapSchema,
   processing_failures: integerSchema,
   processing_last_failure: nullableStringSchema,
+  recent_data_loss: healthRecentDataLossSchema,
   processing_state: v.string(),
   sample_rate_mismatch_count: integerSchema,
   startup_error: nullableStringSchema,

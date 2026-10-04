@@ -316,6 +316,7 @@ describe("shared freq optimization", () => {
       location_code: "front_left_wheel",
       last_seen_age_ms: 5,
       dropped_frames: 0,
+      frame_loss_recent: false,
       frames_total: 100,
       frame_samples: 512,
       sample_rate_hz: 1600,

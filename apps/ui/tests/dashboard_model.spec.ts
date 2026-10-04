@@ -38,6 +38,7 @@ function client(overrides: Partial<AdaptedClient> = {}): AdaptedClient {
     location_code: "front_left_wheel",
     last_seen_age_ms: 10,
     dropped_frames: 0,
+    frame_loss_recent: false,
     frames_total: 1,
     frame_samples: 200,
     sample_rate_hz: 400,
@@ -300,8 +301,12 @@ describe("run health", () => {
     expect(health([client()], {}, false).summary).toBe(
       "dashboard.logging.active_car_required",
     );
-    expect(health([client({ dropped_frames: 2 })]).summary).toBe(
+    expect(health([client({ frame_loss_recent: true })]).summary).toBe(
       'dashboard.logging.frame_loss:{"count":"1"}',
+    );
+    // Old loss (the never-resetting total) alone no longer needs attention.
+    expect(health([client({ dropped_frames: 2 })]).summary).not.toContain(
+      "frame_loss",
     );
     expect(health([client({ location_code: "" })]).summary).toBe(
       'dashboard.logging.unassigned:{"count":"1"}',

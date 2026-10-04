@@ -19,6 +19,19 @@ class HealthDataLossResponse(BaseModel):
     parse_errors: int
 
 
+class HealthRecentDataLossResponse(BaseModel):
+    """Data loss in the last ``window_s`` seconds; health warnings use only these."""
+
+    window_s: int
+    frame_loss_clients: int
+    """Clients that lost at least 1 % of their frames in the window."""
+    frames_dropped: int
+    buffer_overflow_drops: int
+    queue_overflow_drops: int
+    server_queue_drops: int
+    parse_errors: int
+
+
 class HealthPersistenceResponse(BaseModel):
     """Response body for persistence health details."""
 
@@ -126,6 +139,7 @@ class HealthResponse(BaseModel):
     degradation_reasons: list[str]
     subsystems: dict[str, HealthSubsystemResponse] = {}
     data_loss: HealthDataLossResponse
+    recent_data_loss: HealthRecentDataLossResponse
     persistence: HealthPersistenceResponse
     intake_stats: HealthIntakeStatsResponse
     ingest: HealthIngestResponse

@@ -57,7 +57,7 @@
   "dashboard.logging.waiting": "Connect sensors to begin a trustworthy run.",
   "dashboard.logging.active_car_required": "Recording is blocked until you select or create an active car.",
   "dashboard.logging.unassigned": "{count} live sensor(s) still need a location.",
-  "dashboard.logging.frame_loss": "Frame loss detected on {count} sensor(s).",
+  "dashboard.logging.frame_loss": "{count} sensor(s) lost frames in the last minute.",
   "dashboard.logging.offline": "{count} sensor(s) are offline, so coverage is incomplete.",
   "dashboard.logging.running": "Recording is active with {connected} online sensor(s) and {assigned} assigned location(s). Press Stop Recording to save the run and start analysis.",
   "dashboard.logging.run_id": "Run ID: {runId}",

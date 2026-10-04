@@ -18,6 +18,7 @@ const basePayload: Omit<LiveWsPayload, "spectra"> = {
       frames_total: 10,
       frame_samples: 1024,
       dropped_frames: 0,
+      frame_loss_recent: false,
     },
   ],
   selected_client_id: null,

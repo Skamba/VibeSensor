@@ -29,6 +29,7 @@ export type AdaptedClient = Pick<
   | "location_code"
   | "last_seen_age_ms"
   | "dropped_frames"
+  | "frame_loss_recent"
   | "frames_total"
   | "frame_samples"
   | "sample_rate_hz"

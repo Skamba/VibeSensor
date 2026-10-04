@@ -163,8 +163,10 @@ export function liveHealth(
   if (!input.carActive) {
     return attention(t("dashboard.logging.active_car_required"));
   }
+  // Only recent loss: the cumulative `dropped_frames` never resets, so a single
+  // lost frame used to keep this chip on "Needs attention" until a restart.
   const dropping = connected.filter(
-    (client) => (client.dropped_frames ?? 0) > 0,
+    (client) => client.frame_loss_recent,
   ).length;
   if (dropping > 0) {
     return attention(

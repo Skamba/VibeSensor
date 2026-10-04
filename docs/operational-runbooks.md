@@ -29,6 +29,15 @@ map. The response also includes operational metrics:
 - `tick_duration_s` / `max_tick_duration_s` / `tick_count` — processing loop timing
 - `db_last_write_duration_s` / `db_max_write_duration_s` — DB write latency
 
+Data-loss warnings (`frames_dropped`, `buffer_overflow_drops`,
+`queue_overflow_drops`, `server_queue_drops`, `parse_errors`) come from
+`recent_data_loss`, which covers the last 60 s (`window_s`). `frames_dropped`
+warns only when a sensor lost at least 1 % of its recent frames
+(`frame_loss_clients`), so an occasional lost Wi-Fi datagram does not warn.
+`data_loss` keeps the totals since start for diagnostics; they never reset and
+no longer keep `status` at `warn`. The dashboard's frame-loss chip uses the
+same per-sensor `frame_loss_recent` flag.
+
 Use `subsystems` for machine-readable triage. Each subsystem reports
 `status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
 top-level `status` and `degradation_reasons` for compatibility with older tools.
@@ -72,7 +81,9 @@ grep '"event": "post_analysis_step"' /path/to/app.log | tail -n 20
 
 ## Diagnose high dropped frames
 
-1. Confirm the health endpoint responds and inspect connected clients.
+1. Confirm the health endpoint responds and inspect connected clients. Compare
+   `recent_data_loss.frames_dropped` (last minute) with `data_loss.frames_dropped`
+   (since start) to tell ongoing loss from a past burst.
 2. Check whether the simulator or live devices reproduce the drop pattern consistently.
 3. Reduce Wi-Fi contention and confirm the Pi hotspot channel and proximity are reasonable.
 4. If the problem is local-only, inspect Docker logs:

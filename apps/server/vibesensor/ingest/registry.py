@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING, Literal
 
+from vibesensor.common.recent_counter import RECENT_WINDOW_S, RecentCounter
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.ingest.client_metadata import ClientMetadataManager
 from vibesensor.ingest.sensor_timing import SensorTimingGuard
@@ -172,6 +173,13 @@ class ClientRecord:
     timing_guard: SensorTimingGuard = field(default_factory=SensorTimingGuard)
     duplicates_received: int = 0
     dedup_window: DedupWindow = field(default_factory=DedupWindow)
+    # Last-minute counts behind the live and health warnings; the totals above
+    # never reset and stay for diagnostics.
+    recent_frames: RecentCounter = field(default_factory=RecentCounter)
+    recent_frames_dropped: RecentCounter = field(default_factory=RecentCounter)
+    recent_queue_overflow_drops: RecentCounter = field(default_factory=RecentCounter)
+    recent_server_queue_drops: RecentCounter = field(default_factory=RecentCounter)
+    recent_parse_errors: RecentCounter = field(default_factory=RecentCounter)
 
 
 @dataclass(slots=True)
@@ -188,6 +196,7 @@ class ClientSnapshot:
     last_seen_age_ms: int | None = None
     frames_total: int = 0
     dropped_frames: int = 0
+    frame_loss_recent: bool = False
     latest_metrics: ClientMetrics | None = None
     reset_count: int = 0
     last_reset_time: float | None = None
@@ -289,6 +298,23 @@ def _is_late_packet(
     )
 
 
+FRAME_LOSS_WARN_RATIO = 0.01
+"""Share of a sensor's frames lost in the recent window that raises a warning.
+
+Wi-Fi drops an occasional UDP datagram; a sensor that lost one frame an hour
+ago is healthy now.
+"""
+
+
+def recent_frame_loss(record: ClientRecord, now_mono: float) -> bool:
+    """Whether *record* lost at least ``FRAME_LOSS_WARN_RATIO`` of its recent frames."""
+    dropped = record.recent_frames_dropped.total(now_mono)
+    if dropped == 0:
+        return False
+    received = record.recent_frames.total(now_mono)
+    return dropped >= FRAME_LOSS_WARN_RATIO * (dropped + received)
+
+
 def apply_data_message_update(
     record: ClientRecord,
     *,
@@ -345,6 +371,7 @@ def apply_data_message_update(
         return DataUpdateResult(is_late=True, clock_synced=clock_synced)
 
     record.frames_total += 1
+    record.recent_frames.add(1, mono)
     reset_detected = rebooted
     missed_frames = 0
     if (
@@ -379,6 +406,7 @@ def apply_data_message_update(
                 gap = (seq - expected) & _SEQ_MASK
                 if gap < _SEQ_HALF:
                     record.frames_dropped += gap
+                    record.recent_frames_dropped.add(gap, mono)
                     missed_frames = gap
 
     if record.last_seq is None or ((seq - record.last_seq) & _SEQ_MASK) < _SEQ_HALF:
@@ -502,6 +530,7 @@ def project_client_snapshots(
                 last_seen_age_ms=age_ms,
                 frames_total=record.frames_total,
                 dropped_frames=record.frames_dropped,
+                frame_loss_recent=recent_frame_loss(record, now_mono),
                 latest_metrics=(
                     metrics_by_client.get(record.client_id)
                     if metrics_by_client is not None
@@ -574,7 +603,15 @@ class ClientRegistry:
                 record.last_reset_time = now_ts
                 record.dedup_window.clear()
             record.firmware_version = hello.firmware_version
-            record.queue_overflow_drops = hello.queue_overflow_drops
+            reported = hello.queue_overflow_drops
+            # The device counter restarts from zero when the sensor reboots.
+            new_drops = (
+                reported
+                if reported < record.queue_overflow_drops
+                else (reported - record.queue_overflow_drops)
+            )
+            record.recent_queue_overflow_drops.add(new_drops, mono)
+            record.queue_overflow_drops = reported
             self._metadata.apply_advertised_name(record, hello.name)
 
     def update_from_data(
@@ -665,6 +702,8 @@ class ClientRegistry:
         with self._lock:
             record = self._get_or_create(normalized)
             setattr(record, attr, getattr(record, attr) + 1)
+            recent: RecentCounter = getattr(record, f"recent_{attr}")
+            recent.add(1, _resolve_now_mono(None))
 
     def note_parse_error(self, client_id: str | None) -> None:
         self._note_client_counter(client_id, "parse_errors")
@@ -742,6 +781,30 @@ class ClientRegistry:
         with self._lock:
             mono_now = _resolve_now_mono(now_mono)
             return self._liveness_policy.active_client_ids(self._clients, mono_now)
+
+    def recent_data_loss_snapshot(self, *, now_mono: float | None = None) -> dict[str, int]:
+        """Data loss in the last ``RECENT_WINDOW_S`` seconds, summed over clients.
+
+        ``frame_loss_clients`` counts clients over ``FRAME_LOSS_WARN_RATIO``.
+        """
+        with self._lock:
+            mono = _resolve_now_mono(now_mono)
+            snapshot: dict[str, int] = {
+                "window_s": int(RECENT_WINDOW_S),
+                "frame_loss_clients": 0,
+                "frames_dropped": 0,
+                "queue_overflow_drops": 0,
+                "server_queue_drops": 0,
+                "parse_errors": 0,
+            }
+            for record in self._clients.values():
+                if recent_frame_loss(record, mono):
+                    snapshot["frame_loss_clients"] += 1
+                snapshot["frames_dropped"] += record.recent_frames_dropped.total(mono)
+                snapshot["queue_overflow_drops"] += record.recent_queue_overflow_drops.total(mono)
+                snapshot["server_queue_drops"] += record.recent_server_queue_drops.total(mono)
+                snapshot["parse_errors"] += record.recent_parse_errors.total(mono)
+            return snapshot
 
     def data_loss_snapshot(self) -> dict[str, int]:
         with self._lock:

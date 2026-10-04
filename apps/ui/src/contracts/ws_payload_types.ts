@@ -33,6 +33,7 @@ export interface components {
             connected: boolean;
             dropped_frames: number;
             firmware_version: string;
+            frame_loss_recent: boolean;
             frame_samples: number;
             frames_total: number;
             id: string;

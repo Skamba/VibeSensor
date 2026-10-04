@@ -29,6 +29,17 @@ def _clean_data_loss() -> dict:
     }
 
 
+def _clean_recent_data_loss() -> dict:
+    return {
+        "window_s": 60,
+        "frame_loss_clients": 0,
+        "frames_dropped": 0,
+        "queue_overflow_drops": 0,
+        "server_queue_drops": 0,
+        "parse_errors": 0,
+    }
+
+
 def _clean_persistence() -> dict:
     return {
         "write_error": False,
@@ -51,11 +62,13 @@ def _clean_intake_stats() -> IntakeStatsPayload:
 def _make_deps(
     *,
     data_loss: dict | None = None,
+    recent_data_loss: dict | None = None,
     persistence: dict | None = None,
 ) -> tuple[MagicMock, MagicMock]:
     """Return (registry, run_recorder) mocks with configurable snapshots."""
     registry = create_autospec(ClientRegistry, instance=True)
     registry.data_loss_snapshot.return_value = data_loss or _clean_data_loss()
+    registry.recent_data_loss_snapshot.return_value = recent_data_loss or _clean_recent_data_loss()
     registry.active_client_ids.return_value = []
     registry.get.return_value = None
     run_recorder = create_autospec(RunRecorder, instance=True)
@@ -69,6 +82,7 @@ def _make_processor(*, intake_stats: IntakeStatsPayload | None = None) -> MagicM
     proc = create_autospec(SignalProcessor, instance=True)
     proc.intake_stats.return_value = intake_stats or _clean_intake_stats()
     proc.buffer_overflow_drops.return_value = 0
+    proc.recent_buffer_overflow_drops.return_value = 0
     return proc
 
 
@@ -208,7 +222,7 @@ _HEALTH_MUTATIONS: dict[str, Callable[[RuntimeHealthState], None]] = {
 }
 
 # Each scenario may set: loop (ProcessingLoopState kwargs), health (mutation name),
-# data_loss / persistence (snapshot overrides), fields (extra expected result fields).
+# recent_data_loss / persistence (snapshot overrides), fields (extra expected result fields).
 _SINGLE_CONDITION_CASES = [
     pytest.param({"health": "startup_failed"}, "degraded", "startup_error", id="startup-error"),
     pytest.param(
@@ -255,7 +269,10 @@ _SINGLE_CONDITION_CASES = [
         id="last-failure-category",
     ),
     pytest.param(
-        {"data_loss": {"frames_dropped": 5}, "fields": {"ingest": ["degraded", "frames_dropped"]}},
+        {
+            "recent_data_loss": {"frame_loss_clients": 1, "frames_dropped": 5},
+            "fields": {"ingest": ["degraded", "frames_dropped"]},
+        },
         "warn",
         "frames_dropped",
         id="frames-dropped",
@@ -308,7 +325,10 @@ class TestBuildSystemHealthSnapshotSingleCondition:
         if "health" in scenario:
             _HEALTH_MUTATIONS[scenario["health"]](health_state)
         registry, run_recorder = _make_deps(
-            data_loss={**_clean_data_loss(), **scenario.get("data_loss", {})},
+            recent_data_loss={
+                **_clean_recent_data_loss(),
+                **scenario.get("recent_data_loss", {}),
+            },
             persistence={**_clean_persistence(), **scenario.get("persistence", {})},
         )
 
@@ -366,6 +386,7 @@ class TestBuildSystemHealthSnapshotSingleCondition:
         registry, run_recorder = _make_deps()
         processor = _make_processor()
         processor.buffer_overflow_drops.return_value = 3
+        processor.recent_buffer_overflow_drops.return_value = 3
 
         result = _snapshot(
             loop_state,
@@ -378,6 +399,54 @@ class TestBuildSystemHealthSnapshotSingleCondition:
         assert result["status"] == "warn"
         assert result["data_loss"]["buffer_overflow_drops"] == 3
         assert "buffer_overflow_drops" in result["degradation_reasons"]
+
+    def test_old_data_loss_keeps_totals_but_not_the_warning(self) -> None:
+        # The totals never reset; only loss in the recent window warns.
+        totals = {
+            "frames_dropped": 40,
+            "buffer_overflow_drops": 0,
+            "queue_overflow_drops": 2,
+            "server_queue_drops": 1,
+            "parse_errors": 3,
+        }
+        registry, run_recorder = _make_deps(data_loss=totals)
+        processor = _make_processor()
+        processor.buffer_overflow_drops.return_value = 7
+
+        result = _snapshot(
+            ProcessingLoopState(),
+            _ready_health_state(),
+            registry,
+            run_recorder,
+            processor=processor,
+        )
+
+        assert result["status"] == "ok"
+        assert result["degradation_reasons"] == []
+        assert result["subsystems"]["ingest"] == {"status": "ready", "reason_codes": []}
+        assert result["data_loss"] == {**totals, "buffer_overflow_drops": 7}
+        assert result["recent_data_loss"] == {
+            **_clean_recent_data_loss(),
+            "buffer_overflow_drops": 0,
+        }
+
+    @pytest.mark.parametrize("key", ["queue_overflow_drops", "server_queue_drops", "parse_errors"])
+    def test_recent_counter_loss_warns(self, key: str) -> None:
+        registry, run_recorder = _make_deps(recent_data_loss={**_clean_recent_data_loss(), key: 1})
+
+        result = _snapshot(ProcessingLoopState(), _ready_health_state(), registry, run_recorder)
+
+        assert result["status"] == "warn"
+        assert result["degradation_reasons"] == [key]
+
+    def test_dropped_frames_below_the_loss_ratio_do_not_warn(self) -> None:
+        registry, run_recorder = _make_deps(
+            recent_data_loss={**_clean_recent_data_loss(), "frames_dropped": 1}
+        )
+
+        result = _snapshot(ProcessingLoopState(), _ready_health_state(), registry, run_recorder)
+
+        assert result["status"] == "ok"
 
 
 class TestBuildSystemHealthSnapshotMultipleReasons:

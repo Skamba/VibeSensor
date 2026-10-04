@@ -62,6 +62,7 @@ const wsClientSchema = v.looseObject({
   last_seen_age_ms: nullableIntegerSchema,
   frames_total: integerSchema,
   dropped_frames: integerSchema,
+  frame_loss_recent: v.boolean(),
   frame_samples: integerSchema,
 });
 

@@ -1,0 +1,81 @@
+"""Live and health warnings follow recent frame loss; the totals never reset."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from test_support.runtime_lifecycle import build_registry_with_hello, make_data_message
+
+from vibesensor.ingest.client_payloads import snapshot_for_api
+from vibesensor.ingest.protocol_messages import HelloMessage
+
+_FRAME_S = 0.25  # 200 samples at 800 Hz
+
+
+def _feed(registry, client_id: bytes, seqs: range | list[int], start_mono: float) -> float:
+    mono = start_mono
+    for seq in seqs:
+        mono += _FRAME_S
+        registry.update_from_data(
+            make_data_message(client_id, seq, 10 + seq * 250_000, sample_count=200),
+            ("10.4.0.2", 50000),
+            now=mono,
+            now_mono=mono,
+        )
+    return mono
+
+
+def test_frame_loss_warning_clears_a_minute_after_the_loss(tmp_path: Path) -> None:
+    registry, client_id = build_registry_with_hello(tmp_path)
+    # Ten frames lost out of about thirty.
+    mono = _feed(registry, client_id, [*range(10), *range(20, 40)], start_mono=10.0)
+
+    row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
+    assert (row["dropped_frames"], row["frame_loss_recent"]) == (10, True)
+    recent = registry.recent_data_loss_snapshot(now_mono=mono)
+    assert (recent["frame_loss_clients"], recent["frames_dropped"]) == (1, 10)
+
+    # A clean minute later the warning is gone but the total remains.
+    mono = _feed(registry, client_id, range(40, 40 + 250), start_mono=mono)
+    row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
+    assert (row["dropped_frames"], row["frame_loss_recent"]) == (10, False)
+    assert registry.recent_data_loss_snapshot(now_mono=mono)["frames_dropped"] == 0
+    assert registry.data_loss_snapshot()["frames_dropped"] == 10
+
+
+def test_an_occasional_lost_frame_is_not_a_warning(tmp_path: Path) -> None:
+    registry, client_id = build_registry_with_hello(tmp_path)
+    # One frame lost among a minute of frames: well under 1 %.
+    mono = _feed(registry, client_id, [*range(120), *range(121, 240)], start_mono=10.0)
+
+    row = snapshot_for_api(registry, now=mono, now_mono=mono)[0]
+    assert (row["dropped_frames"], row["frame_loss_recent"]) == (1, False)
+    assert registry.recent_data_loss_snapshot(now_mono=mono)["frames_dropped"] == 1
+
+
+def test_device_queue_overflow_counts_only_new_drops_and_survives_reboots(
+    tmp_path: Path,
+) -> None:
+    registry, client_id = build_registry_with_hello(tmp_path)
+
+    def hello(drops: int, mono: float) -> None:
+        registry.update_from_hello(
+            HelloMessage(
+                client_id=client_id,
+                control_port=9010,
+                sample_rate_hz=800,
+                name="node",
+                firmware_version="fw",
+                queue_overflow_drops=drops,
+            ),
+            ("10.4.0.2", 9010),
+            now=mono,
+            now_mono=mono,
+        )
+
+    hello(5, 100.0)
+    hello(7, 101.0)
+    hello(2, 102.0)  # rebooted: the device counter restarted
+    assert registry.recent_data_loss_snapshot(now_mono=102.0)["queue_overflow_drops"] == 9
+    assert registry.recent_data_loss_snapshot(now_mono=200.0)["queue_overflow_drops"] == 0
+    assert registry.data_loss_snapshot()["queue_overflow_drops"] == 2

@@ -285,10 +285,12 @@ test("journey: a bad live payload is reported, a good one recovers, and the sele
   const sensorA = {
     ...client("aa0000000001", "Front Left", "front_left_wheel"),
     frame_samples: 200,
+    frame_loss_recent: false,
   };
   const sensorB = {
     ...client("bb0000000002", "Rear Right", "rear_right_wheel"),
     frame_samples: 200,
+    frame_loss_recent: false,
   };
 
   await emit({ ...valid([sensorA]), clients: "not a list" });

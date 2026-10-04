@@ -266,6 +266,7 @@ export interface components {
             connected: boolean;
             dropped_frames: number;
             firmware_version: string;
+            frame_loss_recent: boolean;
             frame_samples: number;
             frames_total: number;
             id: string;
@@ -589,6 +590,16 @@ export interface components {
             queue_max_depth: number;
             write_error_chunks: number;
         };
+        /** Data loss in the last ``window_s`` seconds; health warnings use only these. */
+        HealthRecentDataLossResponse: {
+            buffer_overflow_drops: number;
+            frame_loss_clients: number;
+            frames_dropped: number;
+            parse_errors: number;
+            queue_overflow_drops: number;
+            server_queue_drops: number;
+            window_s: number;
+        };
         /** Response body for the server health check endpoint. */
         HealthResponse: {
             background_task_failures: {
@@ -610,6 +621,7 @@ export interface components {
             processing_failures: number;
             processing_last_failure: string | null;
             processing_state: string;
+            recent_data_loss: components["schemas"]["HealthRecentDataLossResponse"];
             sample_rate_mismatch_count: number;
             startup_error: string | null;
             startup_phase: string;

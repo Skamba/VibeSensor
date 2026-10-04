@@ -57,7 +57,7 @@
   "dashboard.logging.waiting": "Verbind sensoren om een betrouwbare meetrun te starten.",
   "dashboard.logging.active_car_required": "Opnemen is geblokkeerd totdat je een actieve auto kiest of aanmaakt.",
   "dashboard.logging.unassigned": "{count} live sensor(en) hebben nog een locatie nodig.",
-  "dashboard.logging.frame_loss": "Frameverlies gedetecteerd op {count} sensor(en).",
+  "dashboard.logging.frame_loss": "{count} sensor(en) verloren frames in de afgelopen minuut.",
   "dashboard.logging.offline": "{count} sensor(en) zijn offline, dus de dekking is onvolledig.",
   "dashboard.logging.running": "Opname is actief met {connected} online sensor(en) en {assigned} toegewezen locatie(s). Druk op Opname stoppen om de meetrun op te slaan en de analyse te starten.",
   "dashboard.logging.run_id": "Meetrun-ID: {runId}",

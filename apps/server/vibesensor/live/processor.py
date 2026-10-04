@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from vibesensor.common.recent_counter import RecentCounter
 from vibesensor.live.buffers import ClientBuffer
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import (
@@ -63,6 +64,7 @@ class SignalProcessor:
         self._buffers: dict[str, ClientBuffer] = {}
         self._next_buffer_epoch = 0
         self._stats = ProcessorStats()
+        self._recent_buffer_overflow_drops = RecentCounter()
 
     # -- ingest --------------------------------------------------------------
 
@@ -123,6 +125,7 @@ class SignalProcessor:
             buf.append(chunk, t0_us=t0_us)
             self._stats.total_ingested_samples += int(chunk.shape[0])
             self._stats.buffer_overflow_drops += dropped
+            self._recent_buffer_overflow_drops.add(dropped, t_start)
             self._stats.last_ingest_duration_s = time.monotonic() - t_start
 
     def _create_buffer_locked(self, client_id: str) -> ClientBuffer:
@@ -298,3 +301,10 @@ class SignalProcessor:
     def buffer_overflow_drops(self) -> int:
         with self._lock:
             return self._stats.buffer_overflow_drops
+
+    def recent_buffer_overflow_drops(self, now_mono: float | None = None) -> int:
+        """Samples discarded for buffer overflow in the recent window."""
+        with self._lock:
+            return self._recent_buffer_overflow_drops.total(
+                time.monotonic() if now_mono is None else now_mono
+            )

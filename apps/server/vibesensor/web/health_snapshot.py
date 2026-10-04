@@ -99,6 +99,7 @@ class HealthSnapshotData(TypedDict):
     degradation_reasons: list[str]
     subsystems: dict[str, SubsystemHealthSnapshot]
     data_loss: dict[str, int]
+    recent_data_loss: dict[str, int]
     persistence: RunRecorderHealthSnapshot
     intake_stats: IntakeStatsPayload
     ingest: IngestHealthSnapshot
@@ -125,6 +126,9 @@ def build_system_health_snapshot(
     failures = loop_state.processing_failure_count
     data_loss = dict(registry.data_loss_snapshot())
     data_loss["buffer_overflow_drops"] = int(processor.buffer_overflow_drops())
+    recent_data_loss = dict(registry.recent_data_loss_snapshot())
+    recent_data_loss["buffer_overflow_drops"] = int(processor.recent_buffer_overflow_drops())
+    data_loss_reasons = _recent_data_loss_reasons(recent_data_loss)
     persistence = run_recorder.health_snapshot()
     failure_categories = dict(loop_state.processing_failure_categories)
     sample_rate_mismatch_count = len(loop_state.sample_rate_mismatch_logged)
@@ -156,15 +160,7 @@ def build_system_health_snapshot(
         degradation_reasons.append("sample_rate_mismatch")
     if frame_size_mismatch_count > 0:
         degradation_reasons.append("frame_size_mismatch")
-    for key in (
-        "frames_dropped",
-        "buffer_overflow_drops",
-        "queue_overflow_drops",
-        "server_queue_drops",
-        "parse_errors",
-    ):
-        if data_loss[key] > 0:
-            degradation_reasons.append(key)
+    degradation_reasons.extend(data_loss_reasons)
     if persistence["write_error"]:
         degradation_reasons.append("persistence_write_error")
         has_error = True
@@ -198,7 +194,7 @@ def build_system_health_snapshot(
     subsystems = _build_subsystem_health(
         health_state=health_state,
         loop_state=loop_state,
-        data_loss=data_loss,
+        data_loss_reasons=data_loss_reasons,
         persistence=persistence,
         raw_capture_snapshot=raw_capture_snapshot,
     )
@@ -288,6 +284,7 @@ def build_system_health_snapshot(
         "degradation_reasons": degradation_reasons,
         "subsystems": subsystems,
         "data_loss": data_loss,
+        "recent_data_loss": recent_data_loss,
         "persistence": persistence,
         "intake_stats": processor.intake_stats(),
         "ingest": {
@@ -325,6 +322,26 @@ def build_system_health_snapshot(
     }
 
 
+def _recent_data_loss_reasons(recent_data_loss: dict[str, int]) -> list[str]:
+    """Data-loss reasons from the recent window only.
+
+    The cumulative totals in ``data_loss`` never reset, so warning on them kept
+    health at "warn" forever after a single dropped frame.
+    """
+    reasons = ["frames_dropped"] if recent_data_loss["frame_loss_clients"] > 0 else []
+    reasons += [
+        key
+        for key in (
+            "buffer_overflow_drops",
+            "queue_overflow_drops",
+            "server_queue_drops",
+            "parse_errors",
+        )
+        if recent_data_loss[key] > 0
+    ]
+    return reasons
+
+
 def _subsystem(
     *,
     unhealthy: list[str] | None = None,
@@ -346,21 +363,10 @@ def _build_subsystem_health(
     *,
     health_state: RuntimeHealthState,
     loop_state: ProcessingLoopState,
-    data_loss: dict[str, int],
+    data_loss_reasons: list[str],
     persistence: RunRecorderHealthSnapshot,
     raw_capture_snapshot: RawCaptureRuntimeSnapshot,
 ) -> dict[str, SubsystemHealthSnapshot]:
-    data_loss_reasons = [
-        key
-        for key in (
-            "frames_dropped",
-            "buffer_overflow_drops",
-            "queue_overflow_drops",
-            "server_queue_drops",
-            "parse_errors",
-        )
-        if data_loss[key] > 0
-    ]
     raw_capture_degraded: list[str] = []
     if raw_capture_snapshot.dropped_chunks > 0:
         raw_capture_degraded.append("raw_capture_dropped_chunks")
