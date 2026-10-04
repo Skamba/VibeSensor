@@ -31,7 +31,10 @@ def _firmware_manifest(
     name: str | None = "m5stack_atom",
     segments: list[dict[str, str]] | None = None,
 ) -> dict[str, object]:
-    environment: dict[str, object] = {"chip": "esp32"}
+    environment: dict[str, object] = {
+        "chip": "esp32",
+        "firmware_version": "2026.10.5+0123456789ab",
+    }
     if name is not None:
         environment["name"] = name
     environment["segments"] = segments if segments is not None else []
@@ -133,11 +136,13 @@ def test_validate_firmware_dist_requires_the_sensor_build(tmp_path: Path) -> Non
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["environments"][0]["name"] = "esp32-c3-devkitm-1"
     del manifest["environments"][0]["chip"]
+    del manifest["environments"][0]["firmware_version"]
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
     errors = validate_firmware_dist(dist_dir)
 
     assert "environments[0].chip must name the esptool chip" in errors
+    assert "environments[0].firmware_version must name the version the image reports" in errors
     assert any("no 'm5stack_atom' environment" in error for error in errors)
 
 
@@ -270,6 +275,7 @@ def test_release_validation_cli_validate_firmware_manifest_does_not_require_opti
                     {
                         "name": "m5stack_atom",
                         "chip": "esp32",
+                        "firmware_version": "2026.10.5+0123456789ab",
                         "segments": [
                             {
                                 "file": "m5stack_atom/firmware.bin",

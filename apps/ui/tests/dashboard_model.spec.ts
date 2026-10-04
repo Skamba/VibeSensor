@@ -44,6 +44,7 @@ function client(overrides: Partial<AdaptedClient> = {}): AdaptedClient {
     frame_samples: 200,
     sample_rate_hz: 400,
     firmware_version: null,
+    firmware_status: "unknown",
     ...overrides,
   } as AdaptedClient;
 }

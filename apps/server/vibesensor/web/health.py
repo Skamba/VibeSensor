@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from vibesensor.live.processing_loop import ProcessingLoopState
     from vibesensor.live.processor import SignalProcessor
     from vibesensor.recording.recorder import RunRecorder
+    from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
     from vibesensor.web.health_state import RuntimeHealthState
 
 
@@ -26,6 +27,7 @@ def create_health_routes(
     registry: ClientRegistry,
     run_recorder: RunRecorder,
     ingest_diagnostics: IngestDiagnosticsCollector,
+    esp_flash_manager: EspFlashManager,
 ) -> APIRouter:
     """Create and return the health-check API routes."""
     router = APIRouter(tags=["health"])
@@ -42,6 +44,7 @@ def create_health_routes(
                 registry,
                 run_recorder,
                 ingest_diagnostics,
+                esp_flash_manager.bundled_firmware_version(),
             )
         )
 

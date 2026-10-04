@@ -17,23 +17,32 @@ from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.settings.sensor_settings import SensorSettingsService
 from vibesensor.settings.services import build_settings_services
+from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 
 
-def _client_routes_app(registry, control_plane, settings_store, processor) -> FastAPI:
+def _client_routes_app(
+    registry, control_plane, settings_store, processor, bundled_firmware_version: str = ""
+) -> FastAPI:
     from vibesensor.web.clients import create_client_routes
 
+    esp_flash_manager = create_autospec(EspFlashManager, instance=True, spec_set=True)
+    esp_flash_manager.bundled_firmware_version.return_value = bundled_firmware_version
     app = FastAPI()
-    app.include_router(create_client_routes(registry, control_plane, settings_store, processor))
+    app.include_router(
+        create_client_routes(registry, control_plane, settings_store, processor, esp_flash_manager)
+    )
     return app
 
 
-def _hello(client_hex: str, name: str = "advertised-name") -> HelloMessage:
+def _hello(
+    client_hex: str, name: str = "advertised-name", firmware_version: str = "fw"
+) -> HelloMessage:
     return HelloMessage(
         client_id=bytes.fromhex(client_hex),
         control_port=9010,
         sample_rate_hz=800,
         name=name,
-        firmware_version="fw",
+        firmware_version=firmware_version,
     )
 
 
@@ -45,8 +54,14 @@ class _ClientRig:
     control_plane: UDPControlPlane
     processor: SignalProcessor
 
-    def app(self) -> FastAPI:
-        return _client_routes_app(self.registry, self.control_plane, self.settings, self.processor)
+    def app(self, bundled_firmware_version: str = "") -> FastAPI:
+        return _client_routes_app(
+            self.registry,
+            self.control_plane,
+            self.settings,
+            self.processor,
+            bundled_firmware_version,
+        )
 
 
 @pytest.fixture
@@ -321,3 +336,29 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
         assert clients[0]["latest_metrics"] == {}
     finally:
         db.close()
+
+
+def test_get_clients_compares_each_sensor_firmware_with_the_bundled_build(
+    client_rig: _ClientRig,
+) -> None:
+    bundled = "2026.10.5+0123456789ab"
+    for client_hex, firmware_version in (
+        ("001122334455", bundled),
+        ("001122334466", "esp32-atom-0.1"),  # firmware from before version stamping
+        ("001122334477", "0.0.0-dev+fedcba987654"),
+    ):
+        client_rig.registry.update_from_hello(
+            _hello(client_hex, firmware_version=firmware_version),
+            ("10.4.0.2", 9010),
+            now=1.0,
+            now_mono=1.0,
+        )
+
+    with TestClient(client_rig.app(bundled)) as client:
+        rows = client.get("/api/clients").json()["clients"]
+
+    assert {row["id"]: (row["firmware_version"], row["firmware_status"]) for row in rows} == {
+        "001122334455": (bundled, "current"),
+        "001122334466": ("esp32-atom-0.1", "outdated"),
+        "001122334477": ("0.0.0-dev+fedcba987654", "unknown"),
+    }

@@ -265,6 +265,7 @@ export interface components {
         ClientApiRow: {
             connected: boolean;
             dropped_frames: number;
+            firmware_status: components["schemas"]["FirmwareStatus"];
             firmware_version: string;
             frame_loss_recent: boolean;
             frame_samples: number;
@@ -516,6 +517,7 @@ export interface components {
             suspected_source: string;
             weak_spatial_separation?: boolean | null;
         };
+        FirmwareStatus: "current" | "outdated" | "unknown";
         FuelTypeValue: "ICE" | "PHEV" | "EV";
         GuidedPhaseName: "sweep" | "hold" | "coast_down";
         /** Request body that marks the guided test-drive step the driver starts now. */
@@ -544,6 +546,8 @@ export interface components {
             effective_sample_rate_hz: number | null;
             estimated_ingest_hz: number;
             expected_frames_dropped: number;
+            firmware_status: components["schemas"]["FirmwareStatus"];
+            firmware_version: string;
             frames_dropped: number;
             last_ack_latency_ms: number;
             last_expected_loss_reason: components["schemas"]["ExpectedFrameLoss"] | null;

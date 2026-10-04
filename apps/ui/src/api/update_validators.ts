@@ -161,6 +161,8 @@ const healthIngestClientSchema = v.looseObject({
   duplicates_received: integerSchema,
   effective_sample_rate_hz: nullableFiniteNumberSchema,
   estimated_ingest_hz: finiteNumberSchema,
+  firmware_status: v.picklist(["current", "outdated", "unknown"]),
+  firmware_version: v.string(),
   expected_frames_dropped: integerSchema,
   frames_dropped: integerSchema,
   last_ack_latency_ms: finiteNumberSchema,

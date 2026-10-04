@@ -383,6 +383,7 @@ async def _build_smoke_health(ctx: _IngestSmokeContext) -> dict[str, object]:
         ctx.registry,
         ctx.recorder,
         ctx.ingest_diagnostics,
+        "",
     )
 
 

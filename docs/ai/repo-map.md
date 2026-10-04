@@ -73,6 +73,7 @@ Enforced by the import-linter contracts in `apps/server/pyproject.toml` (annotat
 
 - Firmware protocol contract: `docs/protocol.md`.
 - Firmware local guidance: `firmware/esp/AGENTS.md`, `.github/instructions/firmware.instructions.md`.
+- Firmware build version (HELLO `firmware_version`, `flash.json` stamp): `tools/firmware/firmware_build_version.py`; server-side status: `apps/server/vibesensor/domain/sensor_firmware.py`.
 - Pi image build/defaults: `infra/pi-image/pi-gen/README.md`.
 - Pi local guidance: `infra/pi-image/AGENTS.md`, `.github/instructions/pi-image.instructions.md`.
 

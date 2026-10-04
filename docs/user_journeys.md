@@ -186,6 +186,13 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     rules and the current layout's consequence (`apps/ui/src/sensor_layout.ts`);
     the Live capability line repeats the consequence.
 - **Branches:**
+  - A sensor runs older firmware than the Pi's bundle: each Sensors row shows
+    the firmware version the sensor reports and its `firmware_status` (up to
+    date / outdated / status unknown, from
+    `apps/server/vibesensor/domain/sensor_firmware.py`). While any sensor is
+    outdated, a notice says the update needs a USB cable into the Pi and its
+    *Update sensor firmware* button opens *Settings → ESP Flash*. Sensors
+    cannot be updated over Wi-Fi.
   - A sensor has no location: readiness fails `sensor_locations_missing`
     (`_sensors_check` in
     `apps/server/vibesensor/recording/capture_readiness_evaluator.py`).

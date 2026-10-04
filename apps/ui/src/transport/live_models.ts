@@ -34,6 +34,7 @@ export type AdaptedClient = Pick<
   | "frame_samples"
   | "sample_rate_hz"
   | "firmware_version"
+  | "firmware_status"
 >;
 
 export type RotationalSpeeds = WsRotationalSpeeds;

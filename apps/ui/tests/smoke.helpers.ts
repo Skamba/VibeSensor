@@ -15,12 +15,20 @@ import {
   type WsClientInfo,
 } from "../src/contracts/ws_payload_types";
 
-/** A live sensor row; `frame_samples` defaults to the canonical 200, `frame_loss_recent` to false. */
+/**
+ * A live sensor row; `frame_samples` defaults to the canonical 200,
+ * `frame_loss_recent` to false and `firmware_status` to "unknown".
+ */
 export type LiveClientFixture = Omit<
   WsClientInfo,
-  "frame_samples" | "frame_loss_recent"
+  "frame_samples" | "frame_loss_recent" | "firmware_status"
 > &
-  Partial<Pick<WsClientInfo, "frame_samples" | "frame_loss_recent">>;
+  Partial<
+    Pick<
+      WsClientInfo,
+      "frame_samples" | "frame_loss_recent" | "firmware_status"
+    >
+  >;
 
 /** Live WebSocket fields a journey sets; the rest get neutral defaults. */
 export type LivePayloadFixture = Partial<Omit<LiveWsPayload, "clients">> & {
@@ -49,6 +57,7 @@ function withCanonicalClientCadence(
         clients: payload.clients.map((client) => ({
           frame_samples: 200,
           frame_loss_recent: false,
+          firmware_status: "unknown" as const,
           ...client,
         })),
       }

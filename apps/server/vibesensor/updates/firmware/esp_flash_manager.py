@@ -89,6 +89,11 @@ class EspFlashManager:
         """The background task for the currently running flash job, or None."""
         return self._task
 
+    def bundled_firmware_version(self) -> str:
+        """Version of the sensor firmware this Pi flashes; "" when unknown."""
+
+        return self._firmware_cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV)
+
     async def list_ports(self) -> list[SerialPortInfoDict]:
         """List currently detected serial ports in API-response form."""
 

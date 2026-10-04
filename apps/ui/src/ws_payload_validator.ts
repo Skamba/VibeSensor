@@ -58,6 +58,7 @@ const wsClientSchema = v.looseObject({
   connected: v.boolean(),
   location_code: v.string(),
   firmware_version: v.string(),
+  firmware_status: v.picklist(["current", "outdated", "unknown"]),
   sample_rate_hz: integerSchema,
   last_seen_age_ms: nullableIntegerSchema,
   frames_total: integerSchema,

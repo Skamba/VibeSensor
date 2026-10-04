@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
@@ -26,6 +27,7 @@ class LiveWsPayloadProjector:
     """Project runtime state into the shared live WebSocket payload."""
 
     __slots__ = (
+        "_bundled_firmware_version",
         "_gps_enabled",
         "_gps_monitor",
         "_processor",
@@ -44,8 +46,10 @@ class LiveWsPayloadProjector:
         gps_enabled: bool,
         settings_reader: SettingsDerivationService,
         speed_source_reader: PersistedSpeedSourceSettingsService,
+        bundled_firmware_version: Callable[[], str],
         sensor_metadata_reader: SensorSettingsService | None = None,
     ) -> None:
+        self._bundled_firmware_version = bundled_firmware_version
         self._gps_enabled = gps_enabled
         self._registry = registry
         self._processor = processor
@@ -59,6 +63,7 @@ class LiveWsPayloadProjector:
 
         clients = snapshot_for_api(
             self._registry,
+            bundled_firmware_version=self._bundled_firmware_version(),
             include_metrics=False,
             sensor_metadata_reader=self._sensor_metadata_reader,
         )

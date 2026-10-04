@@ -34,8 +34,13 @@ def write_firmware_bundle(
     bundle_dir: Path,
     *,
     environments: tuple[tuple[str, str], ...] = (("m5stack_atom", "esp32"),),
+    firmware_version: str = "",
 ) -> None:
-    """Write a release-shaped bundle with one ``(env name, chip)`` build per entry."""
+    """Write a release-shaped bundle with one ``(env name, chip)`` build per entry.
+
+    ``firmware_version`` is left out of the manifest when empty, like bundles
+    built before firmware version stamping.
+    """
     manifest_envs = []
     for name, chip in environments:
         env_dir = bundle_dir / name
@@ -59,7 +64,10 @@ def write_firmware_bundle(
                     "sha256": hashlib.sha256(content).hexdigest(),
                 }
             )
-        manifest_envs.append({"name": name, "chip": chip, "segments": segments})
+        env: dict[str, object] = {"name": name, "chip": chip, "segments": segments}
+        if firmware_version:
+            env["firmware_version"] = firmware_version
+        manifest_envs.append(env)
 
     manifest = {"generated_from": "test", "environments": manifest_envs}
     (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

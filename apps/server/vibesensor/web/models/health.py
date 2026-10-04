@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.ingest.registry import ExpectedFrameLoss
 
 
@@ -96,6 +97,9 @@ class HealthWsPublishResponse(BaseModel):
 
 class HealthIngestClientResponse(BaseModel):
     client_id: str
+    firmware_version: str
+    firmware_status: FirmwareStatus
+    """The reported firmware against the firmware this Pi flashes."""
     advertised_sample_rate_hz: int
     estimated_ingest_hz: float
     processed_packets: int

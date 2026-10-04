@@ -103,6 +103,7 @@ def _build_projector(
         gps_enabled=True,
         settings_reader=_FakeSettingsReader(),
         speed_source_reader=_FakeSpeedSourceReader(),
+        bundled_firmware_version=lambda: "",
     )
     return projector, processor, gps_monitor
 
@@ -179,6 +180,7 @@ def test_build_shared_payload_marks_retained_stale_clients_disconnected(
             gps_enabled=True,
             settings_reader=_FakeSettingsReader(),
             speed_source_reader=_FakeSpeedSourceReader(),
+            bundled_firmware_version=lambda: "",
         )
 
         payload = projector.build_shared_payload(include_heavy=False)

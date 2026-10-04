@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, NotRequired, TypedDict
 
+from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.dsp.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 from vibesensor.live.processing_profile import ProcessingFilterId, ProcessingProfile
 
@@ -73,6 +74,8 @@ class ClientApiRow(TypedDict, total=True):
     connected: bool
     location_code: str
     firmware_version: str
+    firmware_status: FirmwareStatus
+    """The reported firmware against the firmware this Pi would flash."""
     sample_rate_hz: int
     last_seen_age_ms: int | None
     frames_total: int

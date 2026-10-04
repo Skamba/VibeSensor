@@ -197,9 +197,18 @@ def _partition_entry(subtype: int, offset: int, size: int, label: bytes) -> byte
     )
 
 
-def _app_image(chip_id: int) -> bytes:
-    """An ESP app image head: magic byte, then the chip ID in the extended header."""
-    return bytes([0xE9]) + bytes(11) + chip_id.to_bytes(2, "little") + b"app"
+_FIRMWARE_VERSION = "2026.10.5+0123456789ab"
+
+
+def _app_image(chip_id: int, *, version_stamp: bytes | None = None) -> bytes:
+    """An ESP app image: magic byte, the chip ID in the extended header, and the
+    version the firmware reports after its marker (runtime_config.h)."""
+    stamp = (
+        b"VIBESENSOR_FIRMWARE_VERSION=" + _FIRMWARE_VERSION.encode() + b"\0"
+        if version_stamp is None
+        else version_stamp
+    )
+    return bytes([0xE9]) + bytes(11) + chip_id.to_bytes(2, "little") + b"app\0" + stamp
 
 
 def _write_env_dist(dist_dir: Path, env_name: str, firmware: bytes, partitions: bytes) -> None:
@@ -307,6 +316,7 @@ def test_generate_firmware_manifest_takes_chip_and_offsets_from_each_build(
             {
                 "name": c3,
                 "chip": "esp32c3",
+                "firmware_version": _FIRMWARE_VERSION,
                 "segments": [
                     _segment(c3, "bootloader.bin", "0x0000", b"boot-" + c3.encode()),
                     _segment(c3, "partitions.bin", "0x8000", ota),
@@ -316,6 +326,7 @@ def test_generate_firmware_manifest_takes_chip_and_offsets_from_each_build(
             {
                 "name": atom,
                 "chip": "esp32",
+                "firmware_version": _FIRMWARE_VERSION,
                 "segments": [
                     _segment(atom, "bootloader.bin", "0x1000", b"boot-" + atom.encode()),
                     _segment(atom, "partitions.bin", "0x8000", factory),
@@ -324,6 +335,29 @@ def test_generate_firmware_manifest_takes_chip_and_offsets_from_each_build(
             },
         ],
     }
+
+
+def test_generate_firmware_manifest_refuses_an_image_without_a_version_stamp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    module = _load_main_release_module()
+    firmware_dir = tmp_path / "firmware"
+    _write_env_dist(
+        firmware_dir / "dist", "m5stack_atom", _app_image(0, version_stamp=b"esp32-atom-0.1\0"), b""
+    )
+    _fake_platformio_metadata(
+        monkeypatch,
+        module,
+        {
+            "m5stack_atom": [
+                {"offset": "0x1000", "path": "/build/bootloader.bin"},
+                {"offset": "0x8000", "path": "/build/partitions.bin"},
+            ]
+        },
+    )
+
+    with pytest.raises(SystemExit, match=r"carries no firmware version stamp"):
+        module.main(["generate-firmware-manifest", "--firmware-dir", str(firmware_dir)])
 
 
 def test_generate_firmware_manifest_refuses_an_image_the_build_does_not_place(

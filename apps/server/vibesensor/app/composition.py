@@ -164,6 +164,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         control_plane=control_plane,
     )
     ingest_diagnostics = IngestDiagnosticsCollector()
+    esp_flash_manager = EspFlashManager(wifi_ssid=config.ap.ssid, wifi_psk=config.ap.psk)
     ws_broadcaster = LiveBroadcaster(
         payload_source=LiveWsPayloadProjector(
             registry=registry,
@@ -172,6 +173,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             gps_enabled=config.gps.gps_enabled,
             settings_reader=settings.settings_reader,
             speed_source_reader=settings.speed_source_settings,
+            bundled_firmware_version=esp_flash_manager.bundled_firmware_version,
             sensor_metadata_reader=settings.sensor_settings,
         ),
         ingest_diagnostics=ingest_diagnostics,
@@ -210,8 +212,6 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         wifi_ifname=HOTSPOT_IFNAME,
         server_port=config.server.port,
     )
-    esp_flash_manager = EspFlashManager(wifi_ssid=config.ap.ssid, wifi_psk=config.ap.psk)
-
     lifecycle = LifecycleRuntime(
         health_state=health_state,
         history_db_path=config.logging.history_db_path,

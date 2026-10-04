@@ -61,6 +61,7 @@ function client(
     location_code: locationCode,
     mac_address: id,
     firmware_version: "fw-1.0.0",
+    firmware_status: "unknown",
   };
 }
 

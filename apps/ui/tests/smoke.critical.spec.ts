@@ -148,6 +148,7 @@ test("critical journey: live dashboard records and opens History", async ({
           location_code: "front_left_wheel",
           mac_address: "001122334455",
           firmware_version: "fw-1.0.0",
+          firmware_status: "unknown",
         },
       ],
       spectra: {

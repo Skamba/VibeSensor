@@ -25,9 +25,12 @@ import tempfile
 from pathlib import Path
 
 from vibesensor.updates.firmware.firmware_bundle import (
+    MANIFEST_FILE,
     dir_sha256,
     extract_bundle_archive,
+    read_manifest,
     read_meta,
+    select_environment,
     validate_bundle,
     write_meta,
 )
@@ -42,6 +45,16 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = ["FirmwareCache", "cache_info_cli", "refresh_cache_cli"]
 
+type _ManifestStamp = tuple[int, int, int] | None
+
+
+def _manifest_stamp(bundle_dir: Path) -> _ManifestStamp:
+    try:
+        stat = (bundle_dir / MANIFEST_FILE).stat()
+    except OSError:
+        return None
+    return (stat.st_ino, stat.st_mtime_ns, stat.st_size)
+
 
 class FirmwareCache:
     """Manage local firmware cache with downloaded and baseline bundles."""
@@ -49,6 +62,8 @@ class FirmwareCache:
     def __init__(self, config: FirmwareCacheConfig | None = None) -> None:
         self._config = config or FirmwareCacheConfig()
         self._cache_dir = Path(self._config.cache_dir)
+        self._bundled_version_key: tuple[str, _ManifestStamp, _ManifestStamp] | None = None
+        self._bundled_version = ""
 
     @property
     def current_dir(self) -> Path:
@@ -86,6 +101,29 @@ class FirmwareCache:
         if bundle is None:
             return None
         return read_meta(bundle)
+
+    def bundled_firmware_version(self, env_name: str) -> str:
+        """Version the active bundle's *env_name* image reports; "" when unknown.
+
+        Bundles built before firmware version stamping carry no version. The
+        result is re-read only when a bundle manifest changes on disk, so the
+        client list and the live feed can ask on every request.
+        """
+        key = (env_name, _manifest_stamp(self.current_dir), _manifest_stamp(self.baseline_dir))
+        if key != self._bundled_version_key:
+            self._bundled_version = self._read_bundled_firmware_version(env_name)
+            self._bundled_version_key = key
+        return self._bundled_version
+
+    def _read_bundled_firmware_version(self, env_name: str) -> str:
+        bundle = self.active_bundle_dir()
+        if bundle is None:
+            return ""
+        try:
+            return select_environment(read_manifest(bundle), env_name).firmware_version
+        except ValueError:
+            LOGGER.warning("Firmware bundle at %s has no %s build", bundle, env_name)
+            return ""
 
     def refresh(self, fetcher: GitHubReleaseFetcher | None = None) -> BundleMeta:
         """Download and activate the latest firmware bundle.

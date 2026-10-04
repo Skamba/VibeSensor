@@ -82,6 +82,7 @@ def _esp_flash_manager_mock() -> EspFlashManager:
     manager.logs_since.return_value = {"from_index": 0, "next_index": 0, "lines": []}
     manager.cancel.return_value = False
     manager.history.return_value = []
+    manager.bundled_firmware_version.return_value = ""
     return manager
 
 

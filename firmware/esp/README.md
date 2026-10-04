@@ -111,6 +111,28 @@ cd firmware/esp
 pio test -e native
 ```
 
+## Firmware version
+
+Every firmware env stamps a build version at compile time and sends it as the
+HELLO `firmware_version` (at most 32 bytes). The PlatformIO post script
+`tools/firmware/firmware_build_version.py` defines `VIBESENSOR_FIRMWARE_VERSION`
+as `<release>+<commit[:12]>`:
+
+- Release builds read both values from `apps/server/vibesensor/_version.py`. The
+  release workflow stamps that file before it runs `pio run`, so the firmware
+  reports the server release it ships with, e.g. `2026.10.4.1+0123456789ab`.
+- Local builds report `0.0.0-dev+<checkout commit>`. Builds that skip the script,
+  such as the native tests, report `0.0.0-dev`.
+
+`src/runtime_config.h` also embeds `VIBESENSOR_FIRMWARE_VERSION=<version>` in the
+image. `tools/release/main_release.py` reads that marker from each `firmware.bin`
+and records it as the environment's `firmware_version` in `flash.json`.
+The server compares each sensor's reported version with that value
+(`apps/server/vibesensor/domain/sensor_firmware.py`) and reports
+`firmware_status` as `current`, `outdated` or `unknown`. Sensors flashed before
+the stamp existed report `esp32-atom-0.1` and count as outdated. Sensors can only
+be updated over USB from *Settings → ESP Flash*.
+
 ## Configure
 
 Default network target already matches the Pi hotspot configuration:

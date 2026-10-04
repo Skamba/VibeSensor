@@ -256,6 +256,7 @@ def _run_pipeline(
         registry,
         logger,
         IngestDiagnosticsCollector(),
+        "",
     )
     return _PipelineArtifacts(
         analysis=analysis,

@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from vibesensor.ingest.udp_control_tx import UDPControlPlane
     from vibesensor.live.processor import SignalProcessor
     from vibesensor.settings.sensor_settings import SensorSettingsService
+    from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 
 _IDENTIFY_CLIENT_RESPONSES: OpenAPIResponses = {
     400: {"description": "Invalid sensor identifier."},
@@ -57,6 +58,7 @@ def create_client_routes(
     control_plane: UDPControlPlane,
     sensor_settings_store: SensorSettingsService,
     processor: SignalProcessor,
+    esp_flash_manager: EspFlashManager,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
     router = APIRouter(tags=["clients"])
@@ -69,6 +71,7 @@ def create_client_routes(
         return ClientsResponse(
             clients=snapshot_for_api(
                 registry,
+                bundled_firmware_version=esp_flash_manager.bundled_firmware_version(),
                 metrics_by_client=metrics,
                 sensor_metadata_reader=sensor_settings_store,
             ),

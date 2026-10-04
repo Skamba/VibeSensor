@@ -201,3 +201,58 @@ test("journey: Settings fits a phone and the sensor row stays usable", async ({
   }
   expect(await pageOverflow()).toBeLessThanOrEqual(0);
 });
+
+test("journey: an outdated sensor shows its firmware and the USB update path", async ({
+  page,
+}) => {
+  await installCommonRoutes(page);
+  const sensor = {
+    connected: true,
+    sample_rate_hz: 800,
+    last_seen_age_ms: 10,
+    dropped_frames: 0,
+    frames_total: 100,
+    location_code: "",
+  };
+  await installFakeWebSocket(page, {
+    payload: {
+      clients: [
+        {
+          ...sensor,
+          id: CONNECTED_ID,
+          name: "Front Left",
+          mac_address: CONNECTED_ID,
+          firmware_version: "esp32-atom-0.1",
+          firmware_status: "outdated",
+        },
+        {
+          ...sensor,
+          id: OFFLINE_ID,
+          name: "Rear Right",
+          mac_address: OFFLINE_ID,
+          firmware_version: "2026.10.5+0123456789ab",
+          firmware_status: "current",
+        },
+      ],
+      spectra: { clients: {} },
+    },
+  });
+  await page.goto("/");
+  await openSensorsTab(page);
+
+  await expect(
+    page.locator(`tr[data-client-id="${CONNECTED_ID}"] [data-firmware-status]`),
+  ).toHaveText(/Firmware esp32-atom-0\.1\s*outdated/);
+  await expect(
+    page.locator(`tr[data-client-id="${OFFLINE_ID}"] [data-firmware-status]`),
+  ).toHaveText(/Firmware 2026\.10\.5\+0123456789ab\s*up to date/);
+  const notice = page.locator("#sensorFirmwareNotice");
+  await expect(notice).toContainText(
+    "1 sensor runs older firmware than this Pi provides.",
+  );
+  await expect(notice).toContainText("needs a USB cable");
+
+  await page.locator("#sensorFirmwareUpdateBtn").click();
+  await expect(page.locator("#espFlashTab")).toBeVisible();
+  await expect(page.locator("#sensorsTab")).toBeHidden();
+});

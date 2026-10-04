@@ -24,6 +24,7 @@ from vibesensor.updates.firmware.firmware_types import (
 )
 
 __all__ = [
+    "MANIFEST_FILE",
     "bundle_meta_record_from_json",
     "bundle_meta_record_to_json",
     "dir_sha256",
@@ -31,6 +32,7 @@ __all__ = [
     "flash_manifest_record_from_json",
     "flash_manifest_record_to_json",
     "parse_manifest",
+    "read_manifest",
     "read_meta",
     "safe_extractall",
     "select_environment",
@@ -39,7 +41,7 @@ __all__ = [
 ]
 
 _META_FILE = "_meta.json"
-_MANIFEST_FILE = "flash.json"
+MANIFEST_FILE = "flash.json"
 
 
 def flash_manifest_record_from_json(raw: bytes | str) -> FlashManifestRecord:
@@ -103,6 +105,7 @@ def parse_manifest(data: FlashManifestRecord | object) -> FlashManifest:
             ManifestEnvironment(
                 name=env_record.name,
                 chip=env_record.chip,
+                firmware_version=env_record.firmware_version,
                 segments=[
                     ManifestSegment(
                         file=segment.file,
@@ -120,24 +123,31 @@ def parse_manifest(data: FlashManifestRecord | object) -> FlashManifest:
     )
 
 
-def validate_bundle(bundle_dir: Path) -> FlashManifest:
-    """Validate a firmware bundle directory.
+def read_manifest(bundle_dir: Path) -> FlashManifest:
+    """Parse a bundle's manifest without checking its binaries.
 
-    Raises ValueError with an actionable message if validation fails.
-    Returns the parsed manifest on success.
+    Raises ValueError with an actionable message if it is missing or corrupt.
     """
-    manifest_path = bundle_dir / _MANIFEST_FILE
+    manifest_path = bundle_dir / MANIFEST_FILE
     if not manifest_path.is_file():
         raise ValueError(
-            f"Firmware bundle is missing manifest ({_MANIFEST_FILE}) in {bundle_dir}. "
+            f"Firmware bundle is missing manifest ({MANIFEST_FILE}) in {bundle_dir}. "
             "Run the updater while online or reinstall the Pi image.",
         )
     try:
         manifest_record = flash_manifest_record_from_json(manifest_path.read_bytes())
     except (msgspec.DecodeError, OSError, ValueError) as exc:
         raise ValueError(f"Firmware manifest is corrupt in {bundle_dir}: {exc}") from exc
+    return parse_manifest(manifest_record)
 
-    manifest = parse_manifest(manifest_record)
+
+def validate_bundle(bundle_dir: Path) -> FlashManifest:
+    """Validate a firmware bundle directory.
+
+    Raises ValueError with an actionable message if validation fails.
+    Returns the parsed manifest on success.
+    """
+    manifest = read_manifest(bundle_dir)
     if not manifest.environments:
         raise ValueError(
             f"Firmware manifest in {bundle_dir} has no environments. The bundle may be incomplete.",
@@ -260,9 +270,11 @@ def _manifest_environment_record_from_object(
                 segments.append(ManifestSegmentRecord())
     name = payload.get("name")
     chip = payload.get("chip")
+    firmware_version = payload.get("firmware_version")
     return ManifestEnvironmentRecord(
         name=name if isinstance(name, str) else "",
         chip=chip if isinstance(chip, str) else "",
+        firmware_version=firmware_version if isinstance(firmware_version, str) else "",
         segments=segments,
     )
 

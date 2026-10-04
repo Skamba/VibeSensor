@@ -88,6 +88,7 @@ def create_router(services: WebServices) -> APIRouter:
             s.registry,
             s.run_recorder,
             s.ingest_diagnostics,
+            s.esp_flash_manager,
         ),
     )
     router.include_router(create_car_settings_routes(s.car_settings))
@@ -113,6 +114,7 @@ def create_router(services: WebServices) -> APIRouter:
             s.control_plane,
             s.sensor_metadata_store,
             s.processor,
+            s.esp_flash_manager,
         ),
     )
     router.include_router(create_recording_routes(s.run_recorder))

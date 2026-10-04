@@ -10,7 +10,21 @@
 namespace vibesensor::runtime {
 
 constexpr char kClientName[] = "vibe-node";
-constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
+
+// <release version>+<commit>, defined at build time by
+// tools/firmware/firmware_build_version.py (PlatformIO extra script).
+#ifndef VIBESENSOR_FIRMWARE_VERSION
+#define VIBESENSOR_FIRMWARE_VERSION "0.0.0-dev"
+#endif
+// The marker lets the release tooling read the version out of firmware.bin
+// (tools/release/main_release.py); HELLO sends only the part after it.
+#define VIBESENSOR_FIRMWARE_VERSION_MARKER "VIBESENSOR_FIRMWARE_VERSION="
+constexpr char kFirmwareVersionTag[] =
+    VIBESENSOR_FIRMWARE_VERSION_MARKER VIBESENSOR_FIRMWARE_VERSION;
+constexpr const char* kFirmwareVersion =
+    kFirmwareVersionTag + (sizeof(VIBESENSOR_FIRMWARE_VERSION_MARKER) - 1);
+static_assert(sizeof(VIBESENSOR_FIRMWARE_VERSION) - 1 <= 32,
+              "VIBESENSOR_FIRMWARE_VERSION must fit the 32-byte HELLO field");
 
 // Conservative UDP payload cap that avoids IP fragmentation on MTU-1500 paths.
 // 1500 (link MTU) - 20 (IP header) - 8 (UDP header) = 1472 safe payload bytes.

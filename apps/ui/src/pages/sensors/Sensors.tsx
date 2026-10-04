@@ -1,10 +1,74 @@
 import { memo } from "preact/compat";
 
+import { Note, Pill, type Variant } from "../../components/maintenance";
 import { t } from "../../i18n";
 import { clients, liveSensorLayout, locationChoices } from "../../live_store";
 import { layoutConsequence } from "../../sensor_layout";
 import type { LocationOption } from "../../sensor_locations";
-import { identify, remove, setLocation } from "./sensors_store";
+import type { AdaptedClient } from "../../transport/live_models";
+import {
+  identify,
+  openFirmwareUpdate,
+  outdatedFirmwareCount,
+  remove,
+  setLocation,
+} from "./sensors_store";
+
+type FirmwareStatus = AdaptedClient["firmware_status"];
+
+const FIRMWARE_STATUS_VARIANT: Record<FirmwareStatus, Variant> = {
+  current: "ok",
+  outdated: "warn",
+  unknown: "muted",
+};
+
+function FirmwareInfo(props: { version: string; status: FirmwareStatus }) {
+  return (
+    <span
+      class="settings-sensor-row__firmware"
+      data-firmware-status={props.status}
+    >
+      <span>
+        {props.version
+          ? t("settings.sensors.firmware.version", { version: props.version })
+          : t("settings.sensors.firmware.unreported")}
+      </span>
+      <Pill variant={FIRMWARE_STATUS_VARIANT[props.status]}>
+        {t(`settings.sensors.firmware.status.${props.status}`)}
+      </Pill>
+    </span>
+  );
+}
+
+/** Shown while any sensor runs older firmware than this Pi flashes. */
+function FirmwareUpdateNotice() {
+  const count = outdatedFirmwareCount.value;
+  if (count === 0) {
+    return null;
+  }
+  return (
+    <div id="sensorFirmwareNotice">
+      <Note>
+        <strong>
+          {count === 1
+            ? t("settings.sensors.firmware.notice_one")
+            : t("settings.sensors.firmware.notice_many", { count })}
+        </strong>{" "}
+        {t("settings.sensors.firmware.usb_required")}
+        <div class="maintenance-action-row">
+          <button
+            type="button"
+            id="sensorFirmwareUpdateBtn"
+            class="btn"
+            onClick={openFirmwareUpdate}
+          >
+            {t("settings.sensors.firmware.update")}
+          </button>
+        </div>
+      </Note>
+    </div>
+  );
+}
 
 /**
  * Memoized so live updates (several per second) leave unchanged rows alone;
@@ -16,6 +80,8 @@ const SensorRow = memo(function SensorRow(props: {
   mac: string;
   connected: boolean;
   locationCode: string;
+  firmwareVersion: string;
+  firmwareStatus: FirmwareStatus;
   options: readonly LocationOption[];
 }) {
   const { id, connected } = props;
@@ -34,6 +100,10 @@ const SensorRow = memo(function SensorRow(props: {
           </div>
           <div class="settings-sensor-row__meta">
             <code>{props.mac}</code>
+            <FirmwareInfo
+              version={props.firmwareVersion}
+              status={props.firmwareStatus}
+            />
           </div>
         </div>
       </td>
@@ -132,7 +202,7 @@ function MountingGuide() {
   );
 }
 
-/** Settings > Sensors: name, location, identify, and remove per sensor. */
+/** Settings > Sensors: name, firmware, location, identify, and remove per sensor. */
 export function Sensors() {
   const list = clients.value;
   return (
@@ -140,6 +210,7 @@ export function Sensors() {
       <div class="panel card">
         <strong>{t("settings.sensors.title")}</strong>
         <div class="subtle">{t("settings.sensors.hint")}</div>
+        <FirmwareUpdateNotice />
         <div class="settings-table-wrap">
           <table class="clients-table settings-entity-table settings-entity-table--sensors">
             <thead>
@@ -163,6 +234,8 @@ export function Sensors() {
                     mac={String(client.mac_address || client.id)}
                     connected={Boolean(client.connected)}
                     locationCode={String(client.location_code || "").trim()}
+                    firmwareVersion={client.firmware_version}
+                    firmwareStatus={client.firmware_status}
                     options={locationChoices.value}
                   />
                 ))

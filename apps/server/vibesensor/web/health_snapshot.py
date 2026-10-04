@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, TypedDict
 
+from vibesensor.domain.sensor_firmware import FirmwareStatus, firmware_status
 from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
     RawCaptureRuntimeSnapshot,
@@ -57,6 +58,8 @@ class SubsystemHealthSnapshot(TypedDict):
 
 class IngestClientHealthSnapshot(TypedDict):
     client_id: str
+    firmware_version: str
+    firmware_status: FirmwareStatus
     advertised_sample_rate_hz: int
     estimated_ingest_hz: float
     processed_packets: int
@@ -120,8 +123,15 @@ def build_system_health_snapshot(
     registry: ClientRegistry,
     run_recorder: RunRecorder,
     ingest_diagnostics: IngestDiagnosticsCollector,
+    bundled_firmware_version: str,
 ) -> HealthSnapshotData:
-    """Build the app-level health snapshot from runtime collaborators."""
+    """Build the app-level health snapshot from runtime collaborators.
+
+    ``bundled_firmware_version`` is the sensor firmware this Pi flashes ("" when
+    unknown). An outdated sensor degrades only the ``firmware`` subsystem: the
+    overall status stays out of it, because the updater's boot check reads it
+    and a server update must not be rolled back for a sensor still to be flashed.
+    """
 
     def _coerce_duration(value: float | None) -> float:
         return value if value is not None else 0.0
@@ -214,6 +224,10 @@ def build_system_health_snapshot(
         ingest_clients.append(
             {
                 "client_id": client_id,
+                "firmware_version": record.firmware_version,
+                "firmware_status": firmware_status(
+                    record.firmware_version, bundled_firmware_version
+                ),
                 "advertised_sample_rate_hz": int(getattr(record, "sample_rate_hz", 0)),
                 "estimated_ingest_hz": (
                     runtime_client.estimated_ingest_hz if runtime_client is not None else 0.0
@@ -254,6 +268,8 @@ def build_system_health_snapshot(
         ingest_clients.append(
             {
                 "client_id": client_id,
+                "firmware_version": "",
+                "firmware_status": "unknown",
                 "advertised_sample_rate_hz": 0,
                 "estimated_ingest_hz": runtime_client.estimated_ingest_hz,
                 "processed_packets": runtime_client.processed_packets,
@@ -274,6 +290,8 @@ def build_system_health_snapshot(
             }
         )
     ingest_clients.sort(key=lambda row: str(row["client_id"]))
+    if any(row["firmware_status"] == "outdated" for row in ingest_clients):
+        subsystems["firmware"] = _subsystem(degraded=["sensor_firmware_outdated"])
     return {
         "status": status,
         "startup_state": health_state.startup_state,

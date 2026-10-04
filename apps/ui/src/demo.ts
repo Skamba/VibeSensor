@@ -19,6 +19,7 @@ export function demoPayload(): Record<string, unknown> {
       frame_samples: 200,
       location_code: "front_left_wheel",
       firmware_version: "demo-1.0.0",
+      firmware_status: "current",
       sample_rate_hz: demoSampleRateHz,
     },
     {
@@ -33,6 +34,7 @@ export function demoPayload(): Record<string, unknown> {
       frame_samples: 200,
       location_code: "front_right_wheel",
       firmware_version: "demo-1.0.0",
+      firmware_status: "current",
       sample_rate_hz: demoSampleRateHz,
     },
     {
@@ -47,6 +49,7 @@ export function demoPayload(): Record<string, unknown> {
       frame_samples: 200,
       location_code: "rear_left_wheel",
       firmware_version: "demo-1.0.0",
+      firmware_status: "current",
       sample_rate_hz: demoSampleRateHz,
     },
     {
@@ -61,6 +64,7 @@ export function demoPayload(): Record<string, unknown> {
       frame_samples: 200,
       location_code: "rear_right_wheel",
       firmware_version: "demo-1.0.0",
+      firmware_status: "current",
       sample_rate_hz: demoSampleRateHz,
     },
     {
@@ -75,6 +79,7 @@ export function demoPayload(): Record<string, unknown> {
       frame_samples: 200,
       location_code: "engine_bay",
       firmware_version: "demo-1.0.0",
+      firmware_status: "current",
       sample_rate_hz: demoSampleRateHz,
     },
   ];

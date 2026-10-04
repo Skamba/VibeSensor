@@ -23,6 +23,17 @@
   font-size: 0.82rem;
   overflow-wrap: anywhere;
 }
+.settings-sensor-row__firmware {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+#sensorFirmwareNotice {
+  margin-top: var(--space-2);
+}
 .settings-sensor-row__location select {
   min-width: 12rem;
   max-width: 100%;

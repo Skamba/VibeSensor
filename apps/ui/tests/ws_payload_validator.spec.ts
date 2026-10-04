@@ -13,6 +13,7 @@ const basePayload: Omit<LiveWsPayload, "spectra"> = {
       connected: true,
       location_code: "front_left",
       firmware_version: "1.2.3",
+      firmware_status: "unknown",
       sample_rate_hz: 800,
       last_seen_age_ms: 0,
       frames_total: 10,

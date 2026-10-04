@@ -1,13 +1,30 @@
-import { batch } from "@preact/signals";
+import { batch, computed } from "@preact/signals";
 
 import {
   identifyClient,
   removeClient,
   setClientLocation,
 } from "../../api/clients";
-import { errorMessage, requestConfirmation, showError } from "../../app_store";
+import {
+  errorMessage,
+  navigate,
+  requestConfirmation,
+  showError,
+} from "../../app_store";
 import { t } from "../../i18n";
 import { clients, syncSelection } from "../../live_store";
+
+/** Sensors whose firmware is older than the build this Pi flashes. */
+export const outdatedFirmwareCount = computed(
+  () =>
+    clients.value.filter((client) => client.firmware_status === "outdated")
+      .length,
+);
+
+/** Sensor firmware is updated over USB with the ESP Flash tab. */
+export function openFirmwareUpdate(): void {
+  navigate("settingsView", "espFlashTab");
+}
 
 export async function setLocation(
   clientId: string,

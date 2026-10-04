@@ -40,6 +40,7 @@ class ManifestSegmentPayload(TypedDict, total=False):
 class ManifestEnvironmentPayload(TypedDict, total=False):
     name: str
     chip: str
+    firmware_version: str
     segments: list[ManifestSegmentPayload]
 
 
@@ -72,6 +73,7 @@ class ManifestSegmentRecord(msgspec.Struct, kw_only=True, frozen=True):
 class ManifestEnvironmentRecord(msgspec.Struct, kw_only=True, frozen=True):
     name: str = ""
     chip: str = ""
+    firmware_version: str = ""
     segments: list[ManifestSegmentRecord] = msgspec.field(default_factory=list)
 
 
@@ -126,11 +128,15 @@ class ManifestSegment:
 
 @dataclass
 class ManifestEnvironment:
-    """A PlatformIO build env: the esptool chip it targets and its flash segments."""
+    """A PlatformIO build env: its chip, the version its image reports, and its segments.
+
+    ``firmware_version`` is empty for bundles built before firmware version stamping.
+    """
 
     name: str
     chip: str
     segments: list[ManifestSegment] = field(default_factory=list)
+    firmware_version: str = ""
 
 
 @dataclass

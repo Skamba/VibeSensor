@@ -70,6 +70,7 @@ export function makeClient(
     frame_samples: 200,
     sample_rate_hz: 400,
     firmware_version: "fw-1.0.0",
+    firmware_status: "unknown",
     ...overrides,
   };
 }

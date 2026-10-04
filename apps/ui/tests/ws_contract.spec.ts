@@ -321,6 +321,7 @@ describe("shared freq optimization", () => {
       frame_samples: 512,
       sample_rate_hz: 1600,
       firmware_version: "fw-1.0.0",
+      firmware_status: "current",
     };
     const rotationalSpeeds = {
       basis_speed_source: "gps",

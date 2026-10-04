@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.sensor import normalize_sensor_id
+from vibesensor.domain.sensor_firmware import firmware_status
 from vibesensor.live.payload_types import ClientApiRow, ClientMetrics
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
@@ -23,10 +24,14 @@ __all__ = [
 def build_client_api_row(
     snapshot: ClientSnapshot,
     *,
+    bundled_firmware_version: str = "",
     include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> ClientApiRow:
-    """Build a single client row for HTTP and WebSocket payloads."""
+    """Build a single client row for HTTP and WebSocket payloads.
+
+    ``bundled_firmware_version`` is the firmware the Pi would flash ("" when unknown).
+    """
 
     normalized_client_id = normalize_sensor_id(snapshot.client_id)
     name = snapshot.name
@@ -47,6 +52,7 @@ def build_client_api_row(
         "connected": snapshot.connected,
         "location_code": location_code,
         "firmware_version": snapshot.firmware_version,
+        "firmware_status": firmware_status(snapshot.firmware_version, bundled_firmware_version),
         "sample_rate_hz": snapshot.sample_rate_hz,
         "last_seen_age_ms": snapshot.last_seen_age_ms,
         "frames_total": snapshot.frames_total,
@@ -66,6 +72,7 @@ def build_client_api_row(
 def build_client_api_rows(
     snapshots: Iterable[ClientSnapshot],
     *,
+    bundled_firmware_version: str = "",
     include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> list[ClientApiRow]:
@@ -74,6 +81,7 @@ def build_client_api_rows(
     return [
         build_client_api_row(
             snapshot,
+            bundled_firmware_version=bundled_firmware_version,
             include_metrics=include_metrics,
             sensor_metadata_reader=sensor_metadata_reader,
         )
@@ -85,6 +93,7 @@ def snapshot_for_api(
     registry: ClientRegistry,
     now: float | None = None,
     *,
+    bundled_firmware_version: str = "",
     now_mono: float | None = None,
     metrics_by_client: dict[str, ClientMetrics] | None = None,
     include_metrics: bool = True,
@@ -98,6 +107,7 @@ def snapshot_for_api(
             now_mono=now_mono,
             metrics_by_client=metrics_by_client,
         ),
+        bundled_firmware_version=bundled_firmware_version,
         include_metrics=include_metrics,
         sensor_metadata_reader=sensor_metadata_reader,
     )

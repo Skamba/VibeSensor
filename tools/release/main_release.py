@@ -38,6 +38,9 @@ _CHIP_BY_IMAGE_ID = {
     20: "esp32c61",
     23: "esp32c5",
 }
+# The firmware embeds its build version after this marker (kFirmwareVersionTag in
+# firmware/esp/src/runtime_config.h), so the image itself says what it reports.
+_FIRMWARE_VERSION_MARKER = b"VIBESENSOR_FIRMWARE_VERSION="
 _GITHUB_API_BASE = "https://api.github.com"
 GITHUB_API_TIMEOUT_S = 30
 
@@ -287,6 +290,16 @@ def _image_chip(firmware_bin: Path) -> str:
     return chip
 
 
+def _image_firmware_version(firmware_bin: Path) -> str:
+    """Return the version a built app image reports in its HELLO."""
+    image = firmware_bin.read_bytes()
+    start = image.find(_FIRMWARE_VERSION_MARKER)
+    end = image.find(b"\0", start)
+    if start < 0 or end < 0:
+        raise SystemExit(f"{firmware_bin} carries no firmware version stamp.")
+    return image[start + len(_FIRMWARE_VERSION_MARKER) : end].decode("ascii")
+
+
 def _platformio_flash_offsets(
     firmware_dir: Path, env_names: list[str]
 ) -> dict[str, dict[str, str]]:
@@ -323,7 +336,7 @@ def build_firmware_manifest(
     flash_offsets: dict[str, dict[str, str]],
     generated_from: str | None = None,
 ) -> dict[str, object]:
-    """Describe each packaged env: its chip and every image at its flash offset."""
+    """Describe each packaged env: its chip, its version and every image at its offset."""
     dist_dir = firmware_dir / "dist"
     environments: list[dict[str, object]] = []
     for env_dir in sorted(path for path in dist_dir.iterdir() if path.is_dir()):
@@ -352,6 +365,7 @@ def build_firmware_manifest(
             {
                 "name": env_name,
                 "chip": _image_chip(env_dir / "firmware.bin"),
+                "firmware_version": _image_firmware_version(env_dir / "firmware.bin"),
                 "segments": segments,
             }
         )

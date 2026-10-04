@@ -103,6 +103,14 @@ This document is generated from code and shared contract files.
 - Server replies to HELLO packets with `HELLO_ACK` on the sensor control port.
 - Firmware waits for `HELLO_ACK` before sending DATA frames, so the control path
   is validated before streaming starts.
+- HELLO `firmware_version` (at most 32 bytes) is the build version
+  `<release version>+<12-char commit>`, stamped at build time by
+  `tools/firmware/firmware_build_version.py`: a release build reports the server
+  release it ships with (`2026.10.4.1+0123456789ab`), a local build
+  `0.0.0-dev+<commit>`. Firmware from before the stamp sends `esp32-atom-0.1`.
+- The server compares it with the `firmware_version` of the bundled build it
+  flashes (`flash.json`) and reports `firmware_status` (`current` / `outdated` /
+  `unknown`) per client in `/api/clients`, the live feed and `/api/health`.
 
 ## Shared metric payload fields
 

@@ -32,6 +32,7 @@ export interface components {
         ClientApiRow: {
             connected: boolean;
             dropped_frames: number;
+            firmware_status: components["schemas"]["FirmwareStatus"];
             firmware_version: string;
             frame_loss_recent: boolean;
             frame_samples: number;
@@ -61,6 +62,7 @@ export interface components {
             vib_mag_rms?: number;
             window_quality?: components["schemas"]["WindowQualityPayload"];
         };
+        FirmwareStatus: "current" | "outdated" | "unknown";
         FrequencyWarningPayload: {
             client_ids: string[];
             code: string;

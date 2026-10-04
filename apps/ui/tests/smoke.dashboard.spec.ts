@@ -73,6 +73,7 @@ function sensor(locationCode: string): LiveClientFixture {
     location_code: locationCode,
     mac_address: SENSOR_ID,
     firmware_version: "fw-1.0.0",
+    firmware_status: "unknown",
   };
 }
 

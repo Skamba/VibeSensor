@@ -101,6 +101,7 @@ def _snapshot(
     *,
     processor: MagicMock | None = None,
     ingest_diagnostics: IngestDiagnosticsCollector | None = None,
+    bundled_firmware_version: str = "",
 ) -> dict:
     return build_system_health_snapshot(
         loop_state,
@@ -109,6 +110,7 @@ def _snapshot(
         registry,
         run_recorder,
         IngestDiagnosticsCollector() if ingest_diagnostics is None else ingest_diagnostics,
+        bundled_firmware_version,
     )
 
 
@@ -151,6 +153,7 @@ class TestBuildSystemHealthSnapshotOk:
         registry, run_recorder = _make_deps()
         registry.active_client_ids.return_value = ["sensor-a"]
         registry.get.return_value = SimpleNamespace(
+            firmware_version="2026.10.5+0123456789ab",
             sample_rate_hz=800,
             frames_dropped=5,
             expected_frames_dropped=3,
@@ -191,6 +194,7 @@ class TestBuildSystemHealthSnapshotOk:
             registry,
             run_recorder,
             ingest_diagnostics=ingest_diagnostics,
+            bundled_firmware_version="2026.10.5+0123456789ab",
         )
 
         assert result["ingest"]["udp"]["max_packet_queue_age_ms"] == 20.0
@@ -200,6 +204,8 @@ class TestBuildSystemHealthSnapshotOk:
         assert result["ingest"]["ws_publish"]["max_publish_duration_ms"] == 12.0
         [client] = result["ingest"]["clients"]
         assert client["client_id"] == "sensor-a"
+        assert client["firmware_version"] == "2026.10.5+0123456789ab"
+        assert client["firmware_status"] == "current"
         assert client["advertised_sample_rate_hz"] == 800
         assert client["estimated_ingest_hz"] == 400.0
         assert client["processed_packets"] == 2
@@ -217,6 +223,41 @@ class TestBuildSystemHealthSnapshotOk:
         assert client["effective_sample_rate_hz"] == 742.0
         assert "sensor_timestamp_lag" in result["degradation_reasons"]
         assert result["status"] == "warn"
+
+    def test_outdated_sensor_firmware_degrades_only_the_firmware_subsystem(self) -> None:
+        registry, run_recorder = _make_deps()
+        registry.active_client_ids.return_value = ["sensor-a"]
+        registry.get.return_value = SimpleNamespace(
+            firmware_version="esp32-atom-0.1",
+            sample_rate_hz=800,
+            frames_dropped=0,
+            expected_frames_dropped=0,
+            last_expected_loss_reason=None,
+            queue_overflow_drops=0,
+            server_queue_drops=0,
+            parse_errors=0,
+            duplicates_received=0,
+            timing_guard=SensorTimingGuard(),
+        )
+
+        result = _snapshot(
+            ProcessingLoopState(),
+            _ready_health_state(),
+            registry,
+            run_recorder,
+            bundled_firmware_version="2026.10.5+0123456789ab",
+        )
+
+        [client] = result["ingest"]["clients"]
+        assert client["firmware_status"] == "outdated"
+        assert result["subsystems"]["firmware"] == {
+            "status": "degraded",
+            "reason_codes": ["sensor_firmware_outdated"],
+        }
+        # The updater's boot check reads the overall status: a sensor still to
+        # be flashed must not roll back a server update.
+        assert result["status"] == "ok"
+        assert result["degradation_reasons"] == []
 
 
 _HEALTH_MUTATIONS: dict[str, Callable[[RuntimeHealthState], None]] = {
