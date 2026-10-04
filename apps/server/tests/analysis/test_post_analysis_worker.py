@@ -33,6 +33,7 @@ class _HistoryStore:
         self.stored: dict[str, object] = {}
         self.errors: list[tuple[str, str]] = []
         self.store_failure: Exception | None = None
+        self.transient_store_failures: list[Exception] = []
         self.iter_calls: list[tuple[int, int]] = []
 
     def get_run(self, run_id: str):
@@ -49,6 +50,8 @@ class _HistoryStore:
     def store_analysis(self, run_id: str, analysis) -> None:
         if self.store_failure is not None:
             raise self.store_failure
+        if self.transient_store_failures:
+            raise self.transient_store_failures.pop(0)
         self.stored[run_id] = analysis
 
     def store_analysis_error(self, run_id: str, message: str) -> bool:
@@ -151,6 +154,29 @@ def test_the_runner_gets_the_stored_run_and_its_result_is_stored() -> None:
     assert analysis_input.context.run_id == "run-ok"
     assert store.stored["run-ok"].payload["lang"] == "nl"
     assert store.errors == []
+
+
+def test_a_transient_store_failure_is_retried_and_the_analysis_is_stored() -> None:
+    # Runs on the production retry policy (first retry after 0.5 s): a database that
+    # is briefly locked must not cost the user the analysis of their run.
+    store = _HistoryStore()
+    store.transient_store_failures.append(sqlite3.OperationalError("database is locked"))
+    cleared: list[None] = []
+
+    worker = PostAnalysisWorker(
+        history_db=store,
+        analysis_runner=_runner(),
+        clear_error_callback=lambda: cleared.append(None),
+    )
+    worker.schedule("run-transient")
+
+    assert worker.wait(timeout_s=10.0)
+    assert "run-transient" in store.stored
+    assert store.errors == []
+    snapshot = worker.snapshot()
+    assert snapshot.last_completed_run_id == "run-transient"
+    assert snapshot.last_completed_error is None
+    assert cleared
 
 
 def test_a_store_that_keeps_failing_is_retried_then_recorded_as_the_error(

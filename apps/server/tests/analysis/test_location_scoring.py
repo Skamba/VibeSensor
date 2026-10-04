@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_support.analysis import summarize_mappings
 from test_support.core import (
     ALL_WHEEL_SENSORS,
     assert_summary_sections,
@@ -18,7 +19,6 @@ from test_support.core import (
 from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis.location_analysis import summarize_order_match_locations
-from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.locations import is_wheel_location
 from vibesensor.domain.order_match import OrderMatchObservation
 
@@ -94,7 +94,7 @@ def test_a_wheel_sensor_that_drops_out_and_rejoins_does_not_move_the_fault() -> 
                     strength_floor_amp_g=0.003,
                 ),
             )
-    summary = summarize_run_data(
+    summary = summarize_mappings(
         standard_metadata(),
         samples,
         lang="en",

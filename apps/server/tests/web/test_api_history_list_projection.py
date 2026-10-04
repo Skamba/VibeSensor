@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from _history_endpoint_helpers import make_app_and_state, make_metadata, sample
 from fastapi.testclient import TestClient
-
-from vibesensor.analysis.summarize import summarize_run_data
+from test_support.analysis import summarize_mappings
 
 
 def test_history_list_includes_recorded_car_name() -> None:
     metadata = make_metadata(active_car_snapshot={"name": "Track Car"})
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -29,7 +28,7 @@ def test_history_list_includes_degraded_raw_capture_finalize_state() -> None:
         }
     )
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -61,7 +60,7 @@ def test_history_list_uses_nested_active_car_snapshot_name() -> None:
         }
     )
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )

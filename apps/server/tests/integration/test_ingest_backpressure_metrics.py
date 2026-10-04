@@ -253,7 +253,10 @@ async def _flush_smoke_records(
     start_utc: str,
     start_mono: float,
 ) -> None:
-    ctx.processor.compute_all(
+    # Production runs compute_all off the event loop (processing_loop.py); doing it
+    # inline here would stall the loop and charge that stall to the ingest metrics.
+    await asyncio.to_thread(
+        ctx.processor.compute_all,
         ctx.registry.active_client_ids(),
         sample_rates_hz=_sample_rates(ctx.registry),
     )

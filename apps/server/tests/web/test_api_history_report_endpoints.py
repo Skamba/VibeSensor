@@ -15,8 +15,8 @@ from _history_endpoint_helpers import (
 )
 from fastapi.testclient import TestClient
 from pypdf import PdfReader
+from test_support.analysis import summarize_mappings
 
-from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.web.router import create_router
 
 
@@ -69,7 +69,7 @@ def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis() -> None:
 def test_report_pdf_cache_invalidates_when_analysis_completed_at_changes() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(20)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
 
     @dataclass
     class TimestampFlipDB(FakeHistoryDB):

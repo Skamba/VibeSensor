@@ -9,9 +9,10 @@ from typing import Any, cast
 from unittest.mock import MagicMock, create_autospec
 
 from fastapi import FastAPI
+from test_support.analysis import summarize_mappings
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.analysis.summarize import summarize_run_data
+from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.records import (
@@ -24,13 +25,11 @@ from vibesensor.history.runs import HistoryRunService
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
-    run_metadata_to_json_object,
 )
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import (
     sensor_frame_from_mapping,
-    sensor_frame_to_json_object,
 )
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.service import HistoryReportService, PdfRendererFn
@@ -106,10 +105,10 @@ def _coerce_analysis(
         return analysis
     if {"findings", "top_causes", "warnings"}.issubset(analysis):
         return make_persisted_analysis(cast(AnalysisSummary, analysis))
-    baseline = summarize_run_data(
-        run_metadata_to_json_object(metadata),
+    baseline = summarize_sensor_frames(
+        metadata,
         [
-            sensor_frame_to_json_object(row) if isinstance(row, SensorFrame) else row
+            row if isinstance(row, SensorFrame) else sensor_frame_from_mapping(row)
             for row in samples
         ],
         lang=metadata.language or "en",
@@ -415,7 +414,7 @@ def _build_app_router_and_state(
 ):
     metadata = metadata or make_metadata(language=language)
     samples = samples or [sample(i) for i in range(sample_count)]
-    analysis = analysis or summarize_run_data(
+    analysis = analysis or summarize_mappings(
         metadata,
         samples,
         lang=language,

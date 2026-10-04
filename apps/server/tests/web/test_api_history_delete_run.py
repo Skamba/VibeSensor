@@ -12,8 +12,7 @@ from _history_endpoint_helpers import (
     sample,
 )
 from fastapi.testclient import TestClient
-
-from vibesensor.analysis.summarize import summarize_run_data
+from test_support.analysis import summarize_mappings
 
 
 def test_delete_run_returns_deleted_status_for_safe_run() -> None:
@@ -39,7 +38,7 @@ def test_delete_active_run_returns_409() -> None:
 
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app = make_app_from_state(FakeState(ActiveDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:
@@ -61,7 +60,7 @@ def test_delete_analyzing_run_returns_409() -> None:
 
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app = make_app_from_state(FakeState(AnalyzingDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:
@@ -89,7 +88,7 @@ def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
 
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app = make_app_from_state(FakeState(LockedDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:

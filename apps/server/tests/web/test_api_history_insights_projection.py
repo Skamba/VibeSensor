@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from _history_endpoint_helpers import make_app_and_state, make_metadata, make_status_app, sample
 from fastapi.testclient import TestClient
+from test_support.analysis import summarize_mappings
 
-from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.domain.car import CarSnapshot
 
 
@@ -51,7 +51,7 @@ def test_history_insights_does_not_mutate_db_analysis() -> None:
 def test_history_insights_complete_response_includes_status_and_run_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     analysis.pop("status", None)
     analysis.pop("run_id", None)
     app, _ = make_app_and_state(
@@ -69,7 +69,7 @@ def test_history_insights_complete_response_includes_status_and_run_id() -> None
 def test_history_insights_preserves_analysis_case_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     analysis["case_id"] = "case-123"
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
@@ -104,7 +104,7 @@ def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
         incomplete_for_order_analysis=True,
     )
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
 
     app, state = make_app_and_state(
         language="en",

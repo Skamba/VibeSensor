@@ -32,7 +32,7 @@ The implementation lives in `apps/server/vibesensor/dsp/vibration_strength.py`:
 No other module may re-implement this formula. Use `bucket_for_strength()` for severity
 classification — never compare raw dB values against band thresholds inline.
 
-For post-stop persisted analysis/report artifacts (`summarize_run_data()` output,
+For post-stop persisted analysis/report artifacts (`summarize_sensor_frames()` output,
 persisted analysis envelopes, localized report-facing strength/intensity fields),
 expose strength values in dB. Raw ingest/sample fields may still carry g-based
 units.

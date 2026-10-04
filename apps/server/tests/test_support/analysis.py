@@ -2,12 +2,32 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from test_support.core import standard_metadata
 from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
+from vibesensor.summary.contracts import AnalysisSummary
+
+
+def summarize_mappings(
+    metadata: Mapping[str, object],
+    samples: Sequence[Mapping[str, object]],
+    *,
+    lang: str | None = None,
+    file_name: str = "run",
+    include_samples: bool = True,
+) -> AnalysisSummary:
+    """Decode JSON-shaped metadata and sample rows, then run the production summary."""
+    return summarize_sensor_frames(
+        run_metadata_from_mapping(metadata),
+        sensor_frames_from_mappings(samples),
+        lang=lang,
+        file_name=file_name,
+        include_samples=include_samples,
+    )
 
 
 def run_analysis(
@@ -17,11 +37,7 @@ def run_analysis(
 ) -> dict[str, Any]:
     """Run the full analysis pipeline on *samples* and return the summary."""
     meta = metadata or standard_metadata(**meta_overrides)
-    return summarize_sensor_frames(
-        run_metadata_from_mapping(meta),
-        sensor_frames_from_mappings(samples),
-        lang=meta.get("language", "en"),
-    )
+    return summarize_mappings(meta, samples, lang=meta.get("language", "en"))
 
 
 def extract_top(summary: dict[str, Any]) -> dict[str, Any] | None:

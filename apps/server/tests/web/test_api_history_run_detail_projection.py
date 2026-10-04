@@ -14,10 +14,10 @@ from _history_endpoint_helpers import (
     sample,
 )
 from fastapi.testclient import TestClient
+from test_support.analysis import summarize_mappings
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.routes import iter_api_routes
 
-from vibesensor.analysis.summarize import summarize_run_data
 from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.raw_capture import (
     RawCaptureLossStats,
@@ -30,7 +30,7 @@ from vibesensor.recording.raw_capture import (
 def test_history_run_includes_sample_count() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -74,7 +74,7 @@ def test_history_run_detail_includes_raw_capture_quality() -> None:
 
     metadata = make_metadata()
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app = make_app_from_state(FakeState(RawManifestDB(metadata, samples, analysis), FakeLiveWs()))
 
     with TestClient(app) as client:
@@ -89,7 +89,7 @@ def test_history_run_detail_includes_raw_capture_quality() -> None:
 def test_history_run_detail_preserves_analysis_case_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     analysis["case_id"] = "case-123"
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
@@ -110,7 +110,7 @@ def test_history_run_detail_includes_degraded_raw_capture_finalize_state() -> No
         }
     )
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -154,7 +154,7 @@ def test_history_run_detail_exposes_finalization_stage_metadata() -> None:
         ]
     )
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -199,7 +199,7 @@ def test_history_run_projects_canonical_nested_run_context() -> None:
         },
     )
     samples = [sample(i) for i in range(3)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
     )
@@ -267,7 +267,7 @@ def test_history_run_strips_internal_analysis_fields() -> None:
 def test_history_run_preserves_missing_optional_analysis_fields() -> None:
     metadata = make_metadata()
     samples = [sample(0)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     analysis.pop("plots", None)
     analysis.pop("analysis_metadata", None)
     db = FakeHistoryDB(metadata, samples, analysis)
@@ -293,7 +293,7 @@ def test_history_run_preserves_missing_optional_analysis_fields() -> None:
 def test_history_run_allows_nested_processing_profile_metadata() -> None:
     metadata = make_metadata()
     samples = [sample(0)]
-    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
     analysis["analysis_metadata"] = {
         "processing_profile": "diagnostic_filtered",
         "diagnostic_filter_chain": ["median_3_sample_time_domain"],
