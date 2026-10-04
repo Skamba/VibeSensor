@@ -17,7 +17,8 @@ J02, J03, J06, J18, J25, the backend half of J01 and the measured-RPM bands of
 J24) shipped in #4115. WP1b (provenance-aware source checks: J27, the
 analysis half of J15, the report half of J24, and the provenance data for J35)
 shipped in #4117. WP3 (speed source, readiness and dashboard UI: J14, J15,
-J17, J19, J20, J21, J24 and most of J13) shipped in #4125.
+J17, J19, J20, J21, J24 and most of J13) shipped in #4125. WP4 (report and
+History wording: J28, J29, J35) shipped in #4127.
 
 Owner decisions that bound the fixes (settled):
 
@@ -145,41 +146,6 @@ Fix:
 - **UI:** Replace the EV guided coast-down step with "Lift off and let the car
   coast; avoid regen if your car allows".
 
-**J28 — History does not show what was tested, and the no-fault text
-over-claims.**
-
-Evidence:
-
-- `apps/ui/src/pages/history/` reads neither `source_checks` nor
-  `conditions`.
-- `history.verdict.no_fault_body` "Nothing stood out above normal road and
-  engine vibration in the speeds you drove." shows even when the engine or
-  driveline was not testable.
-
-Fix:
-
-- **UI:** Add a "Checked / Couldn't check" block using the PDF strings.
-- The no-fault text reads "Nothing stood out in the checks we could run
-  ({list}). Not checked: {list} — {fix}."
-
-**J29 — Page 1 "Not covered" omits a missing final drive or tire.**
-
-Evidence: `_coverage` (`report/view_model.py`) adds only `NOT_COVERED_RPM`.
-
-Fix: build the list from `source_checks` entries with status `not_testable`
-(and the estimated variants), using the `NOT_TESTABLE_*` keys in
-`report_i18n.json`.
-
-**J35 — Report ratios have no provenance.**
-
-Evidence: `_conditions` (`report/view_model.py`) and `COND_RATIOS_VALUE`
-(`report_i18n.json`) print bare numbers.
-
-Fix: print "Final drive 3.15 (library: family default) · Top gear 0.67
-(library: official) · Tire 225/45 R18 (you)". A missing value prints "— not
-provided". The provenance is in `diagnosis.conditions`
-(`tire_provenance`, `final_drive_provenance`, `gear_ratio_provenance`).
-
 ### Friction
 
 **J05 — Typing a custom brand shows a false "library unavailable" error.**
@@ -260,9 +226,9 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP2 and WP4 have no dependencies.
+- WP2 has no dependencies.
 - WP5 and WP6 are independent.
-- WP7 depends on WP2 and WP4.
+- WP7 depends on WP2.
 
 ### WP2 — Settings and car wizard UI
 
@@ -278,16 +244,6 @@ Dependency order:
 - **Backend tweak in the same PR:** `requires_manual_confirmation` derived
   only from weak fields (`derive_order_analysis_policy` in
   `domain/vehicle_configuration.py`).
-
-### WP4 — Report and History wording
-
-- **Covers:** J28, J29, J35.
-- **Changes:**
-  - "Not covered" built from `source_checks`.
-  - Ratios printed with provenance.
-  - History "Checked / Couldn't check" block.
-  - Honest no-fault text.
-  - EN and NL in both `report_i18n.json` and the UI catalogs.
 
 ### WP5 — Car-library data
 
@@ -320,14 +276,15 @@ Dependency order:
   - Replace or skip the EV coast-down step and treat the classification as not
     applicable.
   - PHEV caveat: the engine may be off during the run.
-- **Depends on:** WP2 (car profile), WP4 (wording). `fuel_type` is already
-  carried on the car, the run snapshot and `conditions`.
+- **Depends on:** WP2 (car profile). `fuel_type` is already carried on the
+  car, the run snapshot and `conditions`; the report and History wording it
+  changes lives in `_coverage` / `_conditions` (`report/view_model.py`) and
+  `checksModel` (`apps/ui/src/pages/history/history_model.ts`).
 
 ---
 
 ## 3. Suggested order
 
 1. WP2.
-2. WP4.
-3. WP5 and WP6 at any time.
-4. WP7 last.
+2. WP5 and WP6 at any time.
+3. WP7 last.

@@ -105,7 +105,6 @@ def _all_text(view: ReportView) -> str:
             owner.description,
             owner.candidate,
             owner.covered,
-            owner.not_covered,
             owner.confirm,
             owner.next_step,
             owner.fallback_step,
@@ -113,7 +112,7 @@ def _all_text(view: ReportView) -> str:
         )
         if value
     ]
-    parts += [*owner.reasons, *owner.recapture]
+    parts += [*owner.reasons, *owner.recapture, *owner.not_covered]
     parts += [f"{f.label} {f.value}" for f in mechanic.conditions]
     parts += [
         " ".join((r.order, r.frequency, r.speeds, r.phases, r.location, r.level))
@@ -158,7 +157,14 @@ def test_healthy_run_says_no_significant_vibration_and_what_was_covered() -> Non
     assert owner.level is None and owner.level_word is None
     assert owner.covered is not None and "km/h" in owner.covered
     assert "front-left wheel" in owner.covered
-    assert owner.not_covered is not None and "no RPM was measured" in owner.not_covered
+    assert owner.description == (
+        "Nothing stood out in the checks this run could make: wheels/tires and driveline."
+        " Not checked, so not shown to be fine: engine."
+    )
+    assert owner.not_covered[0] == (
+        "Engine: no engine RPM — connect an OBD-II adapter,"
+        " or add the top-gear ratio to the car (optional)."
+    )
     assert owner.verify is None and owner.fallback_step is None
     assert view.mechanic.worksheet == ()
     assert view.mechanic.worksheet_empty == (
@@ -267,6 +273,135 @@ def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
 
 
 @pytest.mark.parametrize(
+    ("lang", "description", "not_covered"),
+    [
+        (
+            "en",
+            "Nothing stood out in the checks this run could make: wheels/tires."
+            " Not checked, so not shown to be fine: driveline and engine.",
+            (
+                "Driveline: no final-drive ratio — add it to the car in Settings"
+                " if you know it (optional).",
+                "Engine: no final-drive ratio — connect an OBD-II adapter to measure RPM,"
+                " or add the final drive and top-gear ratio to the car (optional).",
+            ),
+        ),
+        (
+            "nl",
+            "Niets viel op bij de controles die deze rit kon doen: wielen/banden."
+            " Niet gecontroleerd, dus niet aangetoond dat het in orde is: aandrijflijn en motor.",
+            (
+                "Aandrijflijn: geen eindoverbrenging — voeg die toe aan de auto in Instellingen"
+                " als je hem weet (optioneel).",
+                "Motor: geen eindoverbrenging — sluit een OBD-II-adapter aan om het toerental"
+                " te meten, of voeg eindoverbrenging en hoogste versnelling toe aan de auto"
+                " (optioneel).",
+            ),
+        ),
+    ],
+)
+def test_no_fault_names_what_was_checked_and_what_could_not_be(
+    lang: str, description: str, not_covered: tuple[str, ...]
+) -> None:
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
+    summary = run_analysis(
+        samples, standard_metadata(final_drive_ratio=None, current_gear_ratio=None)
+    )
+    owner = report_view_for(summary, lang=lang).owner
+
+    assert owner.verdict == "no_fault"
+    assert owner.description == description
+    # Each untested source comes first in "Not covered", with how to close the gap.
+    assert owner.not_covered[:2] == not_covered
+
+
+def test_no_fault_hedges_checks_that_rest_on_estimates() -> None:
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"]["source_checks"] = [
+        {"source": "wheel/tire", "status": "ruled_out", "reason": "no_matching_order"},
+        {"source": "driveline", "status": "ruled_out_estimated", "reason": "estimated_final_drive"},
+        {"source": "engine", "status": "ruled_out_estimated", "reason": "top_gear_assumed"},
+    ]
+    owner = report_view_for(summary).owner
+
+    assert owner.description == (
+        "Nothing stood out in the checks this run could make: wheels/tires,"
+        " driveline (against an estimated final drive) and engine (top gear only)."
+    )
+    assert owner.not_covered[:2] == (
+        "Driveline: checked only against a car-library estimate of the final drive,"
+        " so not conclusive — enter the exact ratio if you know it.",
+        "Engine: checked in top gear only: engine RPM was estimated from speed assuming"
+        " top gear, so lower gears were not checked — an OBD-II adapter measures RPM in"
+        " every gear.",
+    )
+
+
+def test_no_fault_without_any_reference_does_not_imply_the_car_is_fine() -> None:
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
+    summary = run_analysis(samples, standard_metadata(tire_circumference_m=None))
+    view = report_view_for(summary)
+    owner = view.owner
+
+    assert owner.headline == "No significant vibration found"
+    assert owner.description == (
+        "No vibration stood out, but this run could not check the wheels, driveline or"
+        " engine against their rhythms, so it does not show that they are fine."
+    )
+    assert owner.not_covered[:3] == (
+        "Wheels/tires: no tire size — add it to the car in Settings.",
+        "Driveline: no tire size — add it to the car in Settings.",
+        "Engine: no tire size — connect an OBD-II adapter to measure RPM,"
+        " or add the tire size to the car.",
+    )
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    assert conditions["Tire size"] == "not provided"
+
+
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        (
+            "en",
+            {
+                "Tire size": "circumference 1.984 m (entered by you)",
+                "Final drive": "3.15 (car library, model-family estimate)",
+                "Top gear ratio": "not provided",
+                "Engine RPM": "not available",
+            },
+        ),
+        (
+            "nl",
+            {
+                "Bandenmaat": "omtrek 1,984 m (door jou ingevoerd)",
+                "Eindoverbrenging": "3,15 (autobibliotheek, schatting voor de modelreeks)",
+                "Hoogste versnelling": "niet opgegeven",
+                "Motortoerental": "niet beschikbaar",
+            },
+        ),
+    ],
+)
+def test_conditions_print_each_car_reference_with_its_provenance(
+    lang: str, expected: dict[str, str]
+) -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["diagnosis"]["conditions"].update(
+        rpm_source="none",
+        tire_circumference_m=1.984,
+        tire_provenance="user_confirmed",
+        final_drive_ratio=3.15,
+        final_drive_provenance="family_default",
+        gear_ratio=None,
+        gear_ratio_provenance="missing",
+    )
+    conditions = {
+        fact.label: fact.value for fact in report_view_for(summary, lang=lang).mechanic.conditions
+    }
+
+    assert {label: conditions[label] for label in expected} == expected
+
+
+@pytest.mark.parametrize(
     ("lang", "text"),
     [
         ("en", "entered by hand (no live GPS/OBD speed)"),
@@ -279,7 +414,8 @@ def test_manual_fallback_speed_source_is_named_in_plain_words(lang: str, text: s
         sample["speed_source"] = "fallback_manual"
     view = report_view_for(run_analysis(samples), lang=lang)
 
-    assert view.mechanic.conditions[2].value == text
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    assert conditions["Speed source" if lang == "en" else "Snelheidsbron"] == text
 
 
 def test_measured_rpm_places_the_engine_markers_without_gear_ratios() -> None:

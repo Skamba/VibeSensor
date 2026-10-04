@@ -159,6 +159,42 @@
     "en": "a wheel or tire problem that could not be pinned to one wheel (felt strongest at the {zone})",
     "nl": "een wiel- of bandprobleem dat niet aan één wiel te koppelen is (het sterkst gevoeld bij {zone})"
   },
+  "CHECKED_HEDGED": {
+    "en": "{source} ({hedge})",
+    "nl": "{source} ({hedge})"
+  },
+  "CHECKED_HEDGE_ENGINE_FINAL_DRIVE": {
+    "en": "against an estimated final drive, top gear only",
+    "nl": "met een geschatte eindoverbrenging, alleen in de hoogste versnelling"
+  },
+  "CHECKED_HEDGE_ENGINE_TOP_GEAR": {
+    "en": "top gear only",
+    "nl": "alleen in de hoogste versnelling"
+  },
+  "CHECKED_HEDGE_FINAL_DRIVE": {
+    "en": "against an estimated final drive",
+    "nl": "met een geschatte eindoverbrenging"
+  },
+  "CHECKED_HEDGE_TOP_GEAR": {
+    "en": "against an estimated top-gear ratio, top gear only",
+    "nl": "met een geschatte hoogste versnelling, alleen in de hoogste versnelling"
+  },
+  "CHECKED_LIMITED_ENGINE_FINAL_DRIVE": {
+    "en": "checked only against a car-library estimate of the final drive, in top gear, so not conclusive — enter the exact ratio if you know it, or connect an OBD-II adapter to measure RPM.",
+    "nl": "alleen gecontroleerd met een schatting van de eindoverbrenging uit de autobibliotheek, in de hoogste versnelling, dus niet doorslaggevend — vul de exacte waarde in als je die weet, of sluit een OBD-II-adapter aan om het toerental te meten."
+  },
+  "CHECKED_LIMITED_ENGINE_TOP_GEAR": {
+    "en": "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
+    "nl": "alleen in de hoogste versnelling gecontroleerd: het toerental is uit de snelheid geschat, uitgaande van de hoogste versnelling, dus lagere versnellingen zijn niet gecontroleerd — een OBD-II-adapter meet het toerental in elke versnelling."
+  },
+  "CHECKED_LIMITED_FINAL_DRIVE": {
+    "en": "checked only against a car-library estimate of the final drive, so not conclusive — enter the exact ratio if you know it.",
+    "nl": "alleen gecontroleerd met een schatting van de eindoverbrenging uit de autobibliotheek, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
+  },
+  "CHECKED_LIMITED_TOP_GEAR": {
+    "en": "checked only against a car-library estimate of the top-gear ratio, in top gear, so not conclusive — enter the exact ratio if you know it.",
+    "nl": "alleen gecontroleerd met een schatting van de hoogste versnelling uit de autobibliotheek, in de hoogste versnelling, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
+  },
   "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS": {
     "en": "Collect a longer run with stable driving conditions.",
     "nl": "Neem een langere meting op met stabiele rijomstandigheden."
@@ -168,8 +204,12 @@
     "nl": "Testomstandigheden"
   },
   "COND_CIRCUMFERENCE": {
-    "en": "{size} (circumference {circumference} m)",
-    "nl": "{size} (omtrek {circumference} m)"
+    "en": "circumference {circumference} m",
+    "nl": "omtrek {circumference} m"
+  },
+  "COND_FINAL_DRIVE": {
+    "en": "Final drive",
+    "nl": "Eindoverbrenging"
   },
   "COND_GUIDED": {
     "en": "Guided test",
@@ -178,14 +218,6 @@
   "COND_PHASES": {
     "en": "Driving covered",
     "nl": "Gereden"
-  },
-  "COND_RATIOS": {
-    "en": "Ratios",
-    "nl": "Overbrengingen"
-  },
-  "COND_RATIOS_VALUE": {
-    "en": "final drive {final}, gear {gear}",
-    "nl": "eindoverbrenging {final}, versnelling {gear}"
   },
   "COND_RPM": {
     "en": "Engine RPM",
@@ -202,6 +234,14 @@
   "COND_TIRE": {
     "en": "Tire size",
     "nl": "Bandenmaat"
+  },
+  "COND_TOP_GEAR": {
+    "en": "Top gear ratio",
+    "nl": "Hoogste versnelling"
+  },
+  "COND_WITH_PROVENANCE": {
+    "en": "{value} ({provenance})",
+    "nl": "{value} ({provenance})"
   },
   "CONFIDENCE": {
     "en": "Confidence",
@@ -226,6 +266,30 @@
   "CONFIRM_WHEEL": {
     "en": "Swap {zone} to the other side of the car and record again. If the vibration moves with it, it is that wheel or tire.",
     "nl": "Wissel {zone} om naar de andere kant van de auto en meet opnieuw. Verhuist de trilling mee, dan is het dat wiel of die band."
+  },
+  "COULDNT_TEST_DRIVE": {
+    "en": "no final-drive ratio — add it to the car in Settings if you know it (optional).",
+    "nl": "geen eindoverbrenging — voeg die toe aan de auto in Instellingen als je hem weet (optioneel)."
+  },
+  "COULDNT_TEST_ENGINE": {
+    "en": "no engine RPM — connect an OBD-II adapter, or add the top-gear ratio to the car (optional).",
+    "nl": "geen motortoerental — sluit een OBD-II-adapter aan, of voeg de hoogste versnelling toe aan de auto (optioneel)."
+  },
+  "COULDNT_TEST_ENGINE_DRIVE": {
+    "en": "no final-drive ratio — connect an OBD-II adapter to measure RPM, or add the final drive and top-gear ratio to the car (optional).",
+    "nl": "geen eindoverbrenging — sluit een OBD-II-adapter aan om het toerental te meten, of voeg eindoverbrenging en hoogste versnelling toe aan de auto (optioneel)."
+  },
+  "COULDNT_TEST_ENGINE_TIRE": {
+    "en": "no tire size — connect an OBD-II adapter to measure RPM, or add the tire size to the car.",
+    "nl": "geen bandenmaat — sluit een OBD-II-adapter aan om het toerental te meten, of voeg de bandenmaat toe aan de auto."
+  },
+  "COULDNT_TEST_MANUAL_SPEED": {
+    "en": "the speed was entered by hand, so finding no match proves nothing — record again with GPS or OBD-II speed.",
+    "nl": "de snelheid is handmatig ingevoerd, dus geen overeenkomst vinden bewijst niets — meet opnieuw met GPS- of OBD-II-snelheid."
+  },
+  "COULDNT_TEST_TIRE": {
+    "en": "no tire size — add it to the car in Settings.",
+    "nl": "geen bandenmaat — voeg die toe aan de auto in Instellingen."
   },
   "COVERED": {
     "en": "What this test covered",
@@ -371,6 +435,10 @@
     "en": "don't buy parts; record the test again.",
     "nl": "koop geen onderdelen; meet opnieuw."
   },
+  "LIST_AND": {
+    "en": "{items} and {last}",
+    "nl": "{items} en {last}"
+  },
   "LOC_DRIVER_SEAT": {
     "en": "driver seat",
     "nl": "bestuurdersstoel"
@@ -459,9 +527,9 @@
     "en": "steady cruising",
     "nl": "constant rijden"
   },
-  "NOT_COVERED_RPM": {
-    "en": "engine speed (no RPM was measured)",
-    "nl": "motortoerental (geen toerental gemeten)"
+  "NOT_COVERED_SOURCE": {
+    "en": "{source}: {detail}",
+    "nl": "{source}: {detail}"
   },
   "NOT_TESTABLE_DRIVE": {
     "en": "not testable: no final-drive ratio",
@@ -534,6 +602,34 @@
   "PHASE_SHARE": {
     "en": "{phase} {share}",
     "nl": "{phase} {share}"
+  },
+  "PROVENANCE_FAMILY_DEFAULT": {
+    "en": "car library, model-family estimate",
+    "nl": "autobibliotheek, schatting voor de modelreeks"
+  },
+  "PROVENANCE_MISSING": {
+    "en": "not provided",
+    "nl": "niet opgegeven"
+  },
+  "PROVENANCE_OFFICIAL_DERIVED": {
+    "en": "car library, from official data",
+    "nl": "autobibliotheek, uit officiële gegevens"
+  },
+  "PROVENANCE_OFFICIAL_EXACT": {
+    "en": "car library, official",
+    "nl": "autobibliotheek, officieel"
+  },
+  "PROVENANCE_REPUTABLE_SECONDARY_CROSSCHECKED": {
+    "en": "car library, cross-checked",
+    "nl": "autobibliotheek, kruisgecontroleerd"
+  },
+  "PROVENANCE_UNVERIFIED": {
+    "en": "car library, unverified estimate",
+    "nl": "autobibliotheek, onbevestigde schatting"
+  },
+  "PROVENANCE_USER_CONFIRMED": {
+    "en": "entered by you",
+    "nl": "door jou ingevoerd"
   },
   "QUALITY_ALL_PASSED": {
     "en": "All data checks passed",
@@ -895,13 +991,25 @@
     "en": "Driveline",
     "nl": "Aandrijflijn"
   },
+  "SOURCE_DRIVELINE_NOUN": {
+    "en": "driveline",
+    "nl": "aandrijflijn"
+  },
   "SOURCE_ENGINE": {
     "en": "Engine",
     "nl": "Motor"
   },
+  "SOURCE_ENGINE_NOUN": {
+    "en": "engine",
+    "nl": "motor"
+  },
   "SOURCE_WHEEL": {
     "en": "Wheels/tires",
     "nl": "Wielen/banden"
+  },
+  "SOURCE_WHEEL_NOUN": {
+    "en": "wheels/tires",
+    "nl": "wielen/banden"
   },
   "SPECTRUM_FLOOR": {
     "en": "noise floor",
@@ -1144,8 +1252,16 @@
     "nl": "Geen noemenswaardige trilling gevonden"
   },
   "VERDICT_NO_FAULT_BODY": {
-    "en": "Nothing stood out above normal road and engine vibration at the speeds you drove.",
-    "nl": "Bij de gereden snelheden viel niets op boven de normale trilling van weg en motor."
+    "en": "Nothing stood out in the checks this run could make: {checked}.",
+    "nl": "Niets viel op bij de controles die deze rit kon doen: {checked}."
+  },
+  "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED": {
+    "en": "No vibration stood out, but this run could not check the wheels, driveline or engine against their rhythms, so it does not show that they are fine.",
+    "nl": "Er viel geen trilling op, maar deze rit kon wielen, aandrijflijn en motor niet aan hun ritme toetsen, dus hij laat niet zien dat ze in orde zijn."
+  },
+  "VERDICT_NO_FAULT_NOT_CHECKED": {
+    "en": "Not checked, so not shown to be fine: {sources}.",
+    "nl": "Niet gecontroleerd, dus niet aangetoond dat het in orde is: {sources}."
   },
   "VERDICT_WEAK": {
     "en": "Not enough evidence to name a cause",

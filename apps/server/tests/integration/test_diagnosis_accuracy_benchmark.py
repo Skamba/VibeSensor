@@ -1057,12 +1057,14 @@ def _assert_report_view(
     if diagnosis["verdict"] == "no_fault":
         assert owner.headline == "No significant vibration found"
         assert owner.diagram.zone is None
-        # What the drive did not cover: the simulator reports no engine RPM, and a
-        # drive that never went below 40 km/h says so.
-        not_covered = (owner.not_covered or "").lower()
-        assert "no rpm was measured" in not_covered
+        # What the drive did not cover: the simulator reports no engine RPM, so the
+        # engine was untested or checked in top gear only, and a drive that never
+        # went below 40 km/h says so.
+        not_covered = owner.not_covered
+        assert any(item.startswith("Engine: ") for item in not_covered), not_covered
         lowest_kmh = min(min(p.speed_start_kmh, p.speed_end_kmh) for p in case.phases)
-        assert ("speeds below" in not_covered) is (lowest_kmh >= 40.0), not_covered
+        below = any(item.startswith("Speeds below") for item in not_covered)
+        assert below is (lowest_kmh >= 40.0), not_covered
         return
     cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
     assert cause_text is not None

@@ -153,12 +153,19 @@ def _box(
 
 
 def _bullets(
-    canvas: Canvas, items: Sequence[str], x: float, y: float, width: float, *, size: float = 9
+    canvas: Canvas,
+    items: Sequence[str],
+    x: float,
+    y: float,
+    width: float,
+    *,
+    size: float = 9,
+    numbered: bool = True,
 ) -> float:
     for index, item in enumerate(items, start=1):
         canvas.setFont(BOLD, size)
         canvas.setFillColor(INK)
-        canvas.drawString(x, y, f"{index}.")
+        canvas.drawString(x, y, f"{index}." if numbered else "\u2022")
         y = _paragraph(canvas, item, x + 4.5 * MM, y, width - 4.5 * MM, size=size) - 0.8 * MM
     return y
 
@@ -373,7 +380,7 @@ def _owner_page(canvas: Canvas, owner: OwnerPage, y: float) -> None:
         y = _paragraph(canvas, owner.covered, x, y, text_w) - 1 * MM
     if owner.not_covered_title and owner.not_covered:
         y = _section_title(canvas, owner.not_covered_title, x, y - 2 * MM)
-        y = _paragraph(canvas, owner.not_covered, x, y, text_w) - 1 * MM
+        y = _bullets(canvas, owner.not_covered, x, y, text_w, numbered=False) - 1 * MM
     if owner.confirm_title and owner.confirm:
         y = _step_box(
             canvas, owner.confirm_title, owner.confirm, None, x, y - 2 * MM, text_w, WARN_SOFT

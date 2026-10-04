@@ -127,6 +127,25 @@ def test_report_names_the_estimate_behind_each_hedged_line() -> None:
     assert "niet doorslaggevend" in ruled_out_nl[1]
 
 
+def test_report_prints_each_library_ratio_with_its_provenance_and_hedges_page_one() -> None:
+    samples = _driven(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30))
+    view = report_view_for(run_analysis(samples, _library_car("family_default", "official_exact")))
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+
+    assert conditions["Tire size"].endswith("(car library, official)")
+    assert conditions["Final drive"] == "3.08 (car library, model-family estimate)"
+    assert conditions["Top gear ratio"] == "0.64 (car library, official)"
+    assert conditions["Engine RPM"] == "not measured; estimated from speed assuming top gear"
+    assert view.owner.description == (
+        "Nothing stood out in the checks this run could make: wheels/tires,"
+        " driveline (against an estimated final drive) and engine (against an"
+        " estimated final drive, top gear only)."
+    )
+    assert view.owner.not_covered[1].startswith(
+        "Engine: checked only against a car-library estimate of the final drive, in top gear"
+    )
+
+
 def test_measured_rpm_rules_the_engine_out_whatever_the_library_ratios() -> None:
     samples = _driven(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30), rpm="obd")
     summary = run_analysis(samples, _library_car("unverified", "family_default"))

@@ -108,5 +108,9 @@ NO_FAULT_DIAGNOSIS: DiagnosisPayload = {
         "tire_circumference_m": None,
         "final_drive_ratio": None,
         "gear_ratio": None,
+        "tire_provenance": "missing",
+        "final_drive_provenance": "missing",
+        "gear_ratio_provenance": "missing",
+        "fuel_type": None,
     },
 }

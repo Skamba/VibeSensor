@@ -72,6 +72,19 @@ function insights(runId: string, lang: string): HistoryInsightsPayload {
       reference_speed_kmh: 85,
       speed_min_kmh: 63,
       speed_max_kmh: 105,
+      source_checks: [
+        { source: "wheel/tire", status: "candidate", reason: null },
+        {
+          source: "driveline",
+          status: "ruled_out",
+          reason: "no_matching_order",
+        },
+        {
+          source: "engine",
+          status: "not_testable",
+          reason: "no_engine_reference",
+        },
+      ],
     }),
     speed_stats: {
       min_kmh: 60,
@@ -220,6 +233,16 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
     '.history-heatmap__zone[data-location-key="engine bay"]',
   );
   await expect(engineBay).toContainText("no sensor");
+  // What the run checked and what it couldn't, in the PDF's words.
+  const checks = details.locator(".history-checks");
+  await expect(checks.locator(".history-checks__group--checked")).toContainText(
+    "Driveline: no propshaft-order vibration found",
+  );
+  await expect(
+    checks.locator(".history-checks__group--not-checked"),
+  ).toContainText(
+    "Couldn't checkEngine: no engine RPM — connect an OBD-II adapter",
+  );
 
   await details.locator('[data-run-action="load-insights"]').click();
   await expect.poll(() => server.insightRequests.length).toBeGreaterThan(2);
@@ -227,6 +250,9 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   await page.locator("#languageSelect").selectOption("nl");
   await expect(details).toContainText("Weak motor-orde.");
   await expect(engineBay).toContainText("geen sensor");
+  await expect(checks).toContainText(
+    "Motor: geen motortoerental — sluit een OBD-II-adapter aan",
+  );
   expect(server.insightRequests).toContain("run-001:nl");
 
   // Clicking the open row again collapses it.

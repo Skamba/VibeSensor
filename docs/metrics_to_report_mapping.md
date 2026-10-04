@@ -16,7 +16,8 @@ summary's `diagnosis` block (`d` below; contract in
 | Confidence | `d.confidence_level` | Level word + action meaning; never a percentage |
 | Plain description | `d.order_code`, `d.frequency_hz`, `d.reference_speed_kmh`, the top two `d.location_amplitudes` (ratio), `d.speed_min_kmh`/`speed_max_kmh`, `d.speed_dependence` | One sentence, plus "It follows road/engine speed: …" after a guided coast-down |
 | Weak reasons | `d.weak_reasons` (`intermittent`: `d.presence_ratio`, the share of the moving drive in which the order was there, is under half) | Plain sentences, no percentages |
-| Covered / not covered (no fault) | `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations, `d.conditions.rpm_source` | Sentences |
+| No-fault sentence | `d.source_checks[]` | "Nothing stood out in the checks this run could make: wheels/tires, driveline and engine (top gear only)." plus "Not checked, so not shown to be fine: …" for `not_testable` sources; a run that could check nothing says so |
+| Covered / not covered (no fault) | Covered: `speed_stats`, `phase_info.phase_pcts`, `d.location_amplitudes` locations. Not covered: `d.source_checks[]` (`not_testable` and `ruled_out_estimated`, each with its fix), then `speed_stats` and `phase_info.phase_pcts` gaps | Sentence; bullet list |
 | Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source; a wheel fault on all four wheels gets the neutral coast check instead of an axle swap; a wheel/tire fault whose zone is not a wheel (cabin-only sensors) names no wheel and asks for a sensor at each wheel |
 | Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
 | Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle (wheel/tire: two corners of that axle near the top), engine bay, or centre tunnel |
@@ -25,7 +26,7 @@ summary's `diagnosis` block (`d` below; contract in
 
 | Report element | Source | Format |
 |---|---|---|
-| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, ratios; the provenance and `fuel_type` fields are not printed yet), `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, final drive and top gear with `tire_provenance` / `final_drive_provenance` / `gear_ratio_provenance`; `fuel_type` is not printed yet), `metadata.analysis_settings` tire size, `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; `3.15 (car library, model-family estimate)`, `not provided` for a missing reference; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
 | Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level (the diagnosed row carries `d.confidence_level`, Weak when the coast-down contradicts it) |
 | Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
 | Spectrum | `d.spectrum` (recurring peaks in mg over the moving samples, floor, order markers at the window speed; E1/E2 from the median measured RPM when RPM was measured) | Stems + dashed floor + order lines |

@@ -401,17 +401,18 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     record again);
   - the zone and the speeds driven;
   - a recapture recipe for weak runs.
-- **Target:**
-  - History also shows the ruled-out and couldn't-test list and the test
-    conditions, with provenance, as on PDF page 2.
-  - A no-fault run says what was *not* covered.
-- **Today:**
-  - History has no source checks and no conditions
-    (`apps/ui/src/pages/history/history_model.ts` reads neither
-    `source_checks` nor `conditions`).
-  - `history.verdict.no_fault_body` claims "Nothing stood out above normal
-    road and engine vibration in the speeds you drove.", even when the engine
-    or driveline was not testable (J28).
+- History also shows, for every run, a "Checked / Couldn't check" block built
+  from the diagnosis `source_checks` in the PDF's words (`history.checks.*`):
+  each source that was matched, ruled out, or checked only against an estimate
+  (with the estimate named), and each source that could not be tested with
+  what is missing and how to add it. Under it, "Car references" lists the
+  tire circumference, final drive, top gear ratio and engine RPM source with
+  their provenance, as on PDF page 2 (`history.references.*`).
+- A no-fault run says only what it could check and what it could not
+  (`history.verdict.no_fault_body`, `history.verdict.no_fault_not_checked`):
+  "Nothing stood out in the checks this run could make: wheels/tires. Not
+  checked, so not shown to be fine: driveline and engine." It never implies
+  the car is fine for a source that was not testable.
 
 ### 3.8 The PDF for owner and mechanic
 
@@ -434,23 +435,22 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     supplied it);
   - amplitude vs speed;
   - the shop request.
-- **Tell (target):**
-  - Every reference shows its provenance, e.g. "final drive 3.15 (library,
-    family default)", "top gear — (not provided)", "RPM estimated assuming top
-    gear".
-  - Ruled-out lines are hedged when they rest on estimates.
-  - The "Not covered" list on page 1 names the sources that were untestable.
-- **Today:**
-  - Ratios print as bare numbers (`_conditions` in
-    `apps/server/vibesensor/report/view_model.py`, `COND_RATIOS_VALUE`). The
-    provenance is in the diagnosis `conditions` (`tire_provenance`,
-    `final_drive_provenance`, `gear_ratio_provenance`) but not printed (J35).
-  - Page 1's "Not covered" lists only the missing RPM (`_coverage` in
-    `view_model.py`) (J29).
-  - Hedged ruled-out lines work: a family-default or unverified library ratio
-    gives `ruled_out_estimated` ("not conclusive"), estimated RPM gives
-    "estimated for top gear; lower gears were not checked", and a manual
-    speed gives "not testable".
+- **Tell:**
+  - Every reference shows its provenance (`_conditions` in
+    `apps/server/vibesensor/report/view_model.py`, `PROVENANCE_*`): "Final
+    drive 3.15 (car library, model-family estimate)", "Top gear ratio not
+    provided", "Tire size 225/45R18, circumference 1.984 m (entered by you)",
+    and "Engine RPM not measured; estimated from speed assuming top gear".
+  - Ruled-out lines are hedged when they rest on estimates: a family-default
+    or unverified library ratio gives `ruled_out_estimated` ("not
+    conclusive"), estimated RPM gives "estimated for top gear; lower gears
+    were not checked", and a manual speed gives "not testable".
+  - A no-fault page 1 names what was checked, hedged where it rests on an
+    estimate, and what was not. Its "Not covered" list comes from
+    `source_checks` (`_coverage` in `view_model.py`): each untested or
+    estimate-based source with how to close the gap ("Driveline: no
+    final-drive ratio — add it to the car in Settings if you know it
+    (optional)."), then the speeds and driving the run left out.
 
 ### 3.9 Re-test after a fix
 

@@ -96,11 +96,28 @@ export interface PrimaryFinding {
   nextStep: string | null;
 }
 
+export interface CheckLine {
+  label: string;
+  detail: string;
+}
+
+/** What this run could check, what it couldn't, and the car references it
+ * used with their provenance, in the PDF's wording. */
+export interface ChecksModel {
+  checkedTitle: string;
+  checked: CheckLine[];
+  notCheckedTitle: string;
+  notChecked: CheckLine[];
+  referencesTitle: string;
+  references: CheckLine[];
+}
+
 export type InsightsModel =
   | { kind: "state"; message: string }
   | {
       kind: "findings";
       primary: PrimaryFinding | null;
+      checks: ChecksModel;
       secondaryTitle: string | null;
       visibleSecondary: SecondaryFinding[];
       hiddenSecondary: SecondaryFinding[];
@@ -482,6 +499,189 @@ function secondaryFinding(
   };
 }
 
+type SourceCheck = Diagnosis["source_checks"][number];
+type CheckReason = NonNullable<SourceCheck["reason"]>;
+
+/** Source families in the analysis' `source_checks`, keyed for catalog lookups. */
+const CHECK_SOURCE_KEYS: Record<string, string> = {
+  "wheel/tire": "wheel_tire",
+  driveline: "driveline",
+  engine: "engine",
+};
+/** The engine's own wording (measured RPM needs no tire size or ratios; an
+ * estimated RPM always assumes top gear), as on page 1 of the PDF. */
+const ENGINE_CHECK_REASONS = new Set<CheckReason>([
+  "no_tire_reference",
+  "no_drive_reference",
+  "estimated_final_drive",
+]);
+
+function checkReasonKey(source: string, reason: CheckReason): string {
+  return source === "engine" && ENGINE_CHECK_REASONS.has(reason)
+    ? `engine_${reason}`
+    : reason;
+}
+
+function checkedDetail(
+  check: SourceCheck,
+  source: string,
+  t: Translate,
+): string {
+  if (check.status === "candidate") {
+    return t("history.checks.candidate");
+  }
+  if (check.status === "ruled_out_estimated" && check.reason) {
+    return t(`history.checks.limited.${checkReasonKey(source, check.reason)}`);
+  }
+  if (
+    check.reason === "stayed_in_neutral" ||
+    check.reason === "stopped_in_neutral"
+  ) {
+    return t(`history.checks.${check.reason}`);
+  }
+  return t(`history.checks.ruled_out.${source}`);
+}
+
+/** One car reference as on PDF page 2: the value and where it came from. */
+function referenceText(
+  value: string | null,
+  provenance: Diagnosis["conditions"]["tire_provenance"],
+  t: Translate,
+): string {
+  return value === null || provenance === "missing"
+    ? t("history.provenance.missing")
+    : t("history.references.with_provenance", {
+        value,
+        provenance: t(`history.provenance.${provenance}`),
+      });
+}
+
+function referenceLines(
+  conditions: Diagnosis["conditions"],
+  f: Pick<Formatters, "fmt" | "t">,
+): CheckLine[] {
+  const { t, fmt } = f;
+  const ratio = (value: number | null) =>
+    value === null ? null : fmt(value, 2);
+  const tire = conditions.tire_circumference_m;
+  return [
+    {
+      label: t("history.references.tire"),
+      detail: referenceText(
+        tire === null
+          ? null
+          : t("history.references.circumference", {
+              circumference: fmt(tire, 3),
+            }),
+        conditions.tire_provenance,
+        t,
+      ),
+    },
+    {
+      label: t("history.references.final_drive"),
+      detail: referenceText(
+        ratio(conditions.final_drive_ratio),
+        conditions.final_drive_provenance,
+        t,
+      ),
+    },
+    {
+      label: t("history.references.top_gear"),
+      detail: referenceText(
+        ratio(conditions.gear_ratio),
+        conditions.gear_ratio_provenance,
+        t,
+      ),
+    },
+    {
+      label: t("history.references.rpm"),
+      detail: t(`history.references.rpm_${conditions.rpm_source}`),
+    },
+  ];
+}
+
+/** The run's checked / couldn't-check lists, built only from `source_checks`,
+ * and the references behind them. */
+function checksModel(
+  diagnosis: Diagnosis,
+  f: Pick<Formatters, "fmt" | "t">,
+): ChecksModel {
+  const { t } = f;
+  const checked: CheckLine[] = [];
+  const notChecked: CheckLine[] = [];
+  for (const check of diagnosis.source_checks) {
+    const source = CHECK_SOURCE_KEYS[check.source];
+    if (!source) {
+      continue;
+    }
+    const label = t(`history.source.${source}`);
+    if (check.status === "not_testable" && check.reason) {
+      notChecked.push({
+        label,
+        detail: t(
+          `history.checks.couldnt.${checkReasonKey(source, check.reason)}`,
+        ),
+      });
+    } else {
+      checked.push({ label, detail: checkedDetail(check, source, t) });
+    }
+  }
+  return {
+    checkedTitle: t("history.checks.checked_title"),
+    checked,
+    notCheckedTitle: t("history.checks.not_checked_title"),
+    notChecked,
+    referencesTitle: t("history.references.title"),
+    references: referenceLines(diagnosis.conditions, f),
+  };
+}
+
+function joinList(items: string[], t: Translate): string {
+  return items.length < 2
+    ? items.join("")
+    : t("history.list_and", {
+        items: items.slice(0, -1).join(", "),
+        last: items[items.length - 1],
+      });
+}
+
+/** The no-fault sentence: only what was checked (hedged when estimated) and
+ * what was not, never "your car is fine". Same wording as the PDF. */
+function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
+  const checked: string[] = [];
+  const notChecked: string[] = [];
+  for (const check of diagnosis.source_checks) {
+    const source = CHECK_SOURCE_KEYS[check.source];
+    if (!source) {
+      continue;
+    }
+    const noun = t(`history.checks.noun.${source}`);
+    if (check.status === "not_testable") {
+      notChecked.push(noun);
+    } else if (check.status === "ruled_out_estimated" && check.reason) {
+      checked.push(
+        t("history.checks.hedged", {
+          source: noun,
+          hedge: t(
+            `history.checks.hedge.${checkReasonKey(source, check.reason)}`,
+          ),
+        }),
+      );
+    } else {
+      checked.push(noun);
+    }
+  }
+  if (checked.length === 0) {
+    return t("history.verdict.no_fault_nothing_checked");
+  }
+  const body = t("history.verdict.no_fault_body", {
+    checked: joinList(checked, t),
+  });
+  return notChecked.length
+    ? `${body} ${t("history.verdict.no_fault_not_checked", { sources: joinList(notChecked, t) })}`
+    : body;
+}
+
 function noFaultCard(
   summary: HistoryInsightsPayload,
   f: Formatters,
@@ -494,7 +694,7 @@ function noFaultCard(
     signature: "",
     confidence: "",
     tone: "success",
-    explanation: t("history.verdict.no_fault_body"),
+    explanation: noFaultExplanation(summary.diagnosis, t),
     chips: [
       {
         label: t("history.covered_speeds"),
@@ -601,6 +801,7 @@ function insightsModel(detail: RunDetail, f: Formatters): InsightsModel {
     return {
       kind: "findings",
       primary: noFaultCard(summary, f),
+      checks: checksModel(diagnosis, f),
       secondaryTitle: null,
       visibleSecondary: [],
       hiddenSecondary: [],
@@ -618,6 +819,7 @@ function insightsModel(detail: RunDetail, f: Formatters): InsightsModel {
   return {
     kind: "findings",
     primary: diagnosisCard(summary, diagnosis, f),
+    checks: checksModel(diagnosis, f),
     secondaryTitle: secondary.length
       ? t("history.secondary_candidates_title")
       : null,

@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import type { HistoryEntry, HistoryInsightsPayload } from "../src/api/types";
+import { type Lang, setLanguage, translate } from "../src/i18n";
 import {
   buildDetails,
   buildHeatmap,
@@ -328,6 +329,175 @@ test("a run without a fault says so and covers what was driven", () => {
     },
     visibleSecondary: [],
   });
+});
+
+type SourceChecks = HistoryInsightsPayload["diagnosis"]["source_checks"];
+
+/** The expanded diagnosis in real catalog text, so History reads like the PDF. */
+function checkedInsights(
+  verdict: "fault" | "no_fault",
+  sourceChecks: SourceChecks,
+  language: Lang = "en",
+  conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]> = {},
+) {
+  const insights = populatedInsights("run-010");
+  const base = makeDiagnosis();
+  insights.diagnosis = makeDiagnosis(
+    verdict === "fault"
+      ? {
+          verdict,
+          confidence_level: "strong",
+          finding_id: "finding-1",
+          source: "wheel/tire",
+          zone: "front_left_wheel",
+          source_checks: sourceChecks,
+        }
+      : { source_checks: sourceChecks },
+  );
+  insights.diagnosis.conditions = { ...base.conditions, ...conditions };
+  const details = buildDetails(
+    historyListRun("run-010"),
+    defaultDetail({ preview: insights }),
+    { ...f, t: (key, vars) => translate(language, key, vars) },
+  );
+  if (details.insights.kind !== "findings") {
+    throw new Error("expected findings");
+  }
+  return details.insights;
+}
+
+test("a no-fault run names only what it could check and lists what it couldn't, as the PDF does", async () => {
+  const sourceChecks: SourceChecks = [
+    { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
+    {
+      source: "driveline",
+      status: "ruled_out_estimated",
+      reason: "estimated_final_drive",
+    },
+    { source: "engine", status: "not_testable", reason: "no_engine_reference" },
+  ];
+  const insights = checkedInsights("no_fault", sourceChecks, "en", {
+    tire_circumference_m: 1.984,
+    tire_provenance: "user_confirmed",
+    final_drive_ratio: 3.15,
+    final_drive_provenance: "family_default",
+  });
+  expect(insights.primary?.explanation).toBe(
+    "Nothing stood out in the checks this run could make: wheels/tires and driveline (against an estimated final drive). Not checked, so not shown to be fine: engine.",
+  );
+  expect(insights.checks).toEqual({
+    checkedTitle: "Checked",
+    checked: [
+      {
+        label: "Wheel / Tire",
+        detail: "no once- or twice-per-wheel-turn vibration found",
+      },
+      {
+        label: "Driveline",
+        detail:
+          "checked only against a car-library estimate of the final drive, so not conclusive — enter the exact ratio if you know it.",
+      },
+    ],
+    notCheckedTitle: "Couldn't check",
+    notChecked: [
+      {
+        label: "Engine",
+        detail:
+          "no engine RPM — connect an OBD-II adapter, or add the top-gear ratio to the car (optional).",
+      },
+    ],
+    referencesTitle: "Car references",
+    references: [
+      {
+        label: "Tire size",
+        detail: "circumference 1.984 m (entered by you)",
+      },
+      {
+        label: "Final drive",
+        detail: "3.15 (car library, model-family estimate)",
+      },
+      { label: "Top gear ratio", detail: "not provided" },
+      { label: "Engine RPM", detail: "not available" },
+    ],
+  });
+
+  await setLanguage("nl");
+  try {
+    const dutch = checkedInsights("no_fault", sourceChecks, "nl", {
+      final_drive_ratio: 3.15,
+      final_drive_provenance: "family_default",
+    });
+    expect(dutch.primary?.explanation).toBe(
+      "Niets viel op bij de controles die deze rit kon doen: wielen/banden en aandrijflijn (met een geschatte eindoverbrenging). Niet gecontroleerd, dus niet aangetoond dat het in orde is: motor.",
+    );
+    expect(dutch.checks.notCheckedTitle).toBe("Niet te controleren");
+    expect(dutch.checks.references[1]).toEqual({
+      label: "Eindoverbrenging",
+      detail: "3.15 (autobibliotheek, schatting voor de modelreeks)",
+    });
+  } finally {
+    await setLanguage("en");
+  }
+});
+
+test("a no-fault run without a tire size does not suggest the car is fine", () => {
+  const insights = checkedInsights(
+    "no_fault",
+    ["wheel/tire", "driveline", "engine"].map((source) => ({
+      source,
+      status: "not_testable" as const,
+      reason: "no_tire_reference" as const,
+    })),
+  );
+  expect(insights.primary?.explanation).toBe(
+    "No vibration stood out, but this run could not check the wheels, driveline or engine against their rhythms, so it does not show that they are fine.",
+  );
+  expect(insights.checks.checked).toEqual([]);
+  expect(insights.checks.notChecked.map((line) => line.detail)).toEqual([
+    "no tire size — add it to the car in Settings.",
+    "no tire size — add it to the car in Settings.",
+    "no tire size — connect an OBD-II adapter to measure RPM, or add the tire size to the car.",
+  ]);
+});
+
+test("a fault run lists the matching source as checked and states the top-gear assumption", () => {
+  const insights = checkedInsights(
+    "fault",
+    [
+      { source: "wheel/tire", status: "candidate", reason: null },
+      {
+        source: "driveline",
+        status: "not_testable",
+        reason: "no_drive_reference",
+      },
+      {
+        source: "engine",
+        status: "ruled_out_estimated",
+        reason: "top_gear_assumed",
+      },
+    ],
+    "en",
+    { rpm_source: "estimated_top_gear" },
+  );
+  expect(insights.checks.checked).toEqual([
+    { label: "Wheel / Tire", detail: "a matching vibration was found" },
+    {
+      label: "Engine",
+      detail:
+        "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
+    },
+  ]);
+  expect(insights.checks.references[3]).toEqual({
+    label: "Engine RPM",
+    detail: "not measured; estimated from speed assuming top gear",
+  });
+  expect(insights.checks.notChecked).toEqual([
+    {
+      label: "Driveline",
+      detail:
+        "no final-drive ratio — add it to the car in Settings if you know it (optional).",
+    },
+  ]);
 });
 
 test("weak evidence hedges the best candidate and asks for a new recording", () => {

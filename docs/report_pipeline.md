@@ -63,12 +63,22 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        engine speed, and the neutral coast-down check is not suggested again.
      - Weak evidence: the hedged best candidate, 1–2 plain reasons, and a
        recapture recipe.
-     - No fault: what the test covered, what it did not cover, and what to do
-       if the vibration is still felt.
+     - No fault: a verdict sentence that names only the sources the run could
+       check (hedged when the check rests on an estimate, e.g. "engine (top
+       gear only)") and the ones it could not, never "your car is fine"; what
+       the test covered; "Not covered", built from `source_checks` (each
+       untested or estimate-based source with how to close the gap: add the
+       missing reference, enter the exact ratio, or connect OBD-II) and then
+       the speeds and driving the run left out; and what to do if the
+       vibration is still felt. History shows the same sentence and a
+       "Checked / Couldn't check" block in the same words.
 2. **Workshop page** (always included):
-   - Test conditions: tire size and circumference, ratios, speed source,
-     whether RPM was measured, driving phases, the guided test steps (or "not
-     used"), and sensor positions.
+   - Test conditions: tire size and circumference, final drive and top gear
+     ratio, each with its provenance ("entered by you", "car library,
+     official", "car library, model-family estimate", … or "not provided"),
+     speed source, whether RPM was measured or estimated assuming top gear,
+     driving phases, the guided test steps (or "not used"), and sensor
+     positions.
    - A GM-worksheet-style findings table, one row per order (an order found at
      several corners stays one row; the per-location table holds the corners),
      the diagnosed (dominant) order first and the diagnosed source's other

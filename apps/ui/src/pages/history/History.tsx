@@ -7,6 +7,8 @@ import { lang, t } from "../../i18n";
 import {
   buildDetails,
   buildRow,
+  type CheckLine,
+  type ChecksModel,
   type DetailsModel,
   EMPTY_RUN_DETAIL,
   type Formatters,
@@ -212,6 +214,48 @@ function SecondaryCard(props: { finding: SecondaryFinding }) {
   );
 }
 
+function CheckList(props: { title: string; lines: CheckLine[]; tone: string }) {
+  const { title, lines, tone } = props;
+  if (lines.length === 0) {
+    return null;
+  }
+  return (
+    <div class={`history-checks__group history-checks__group--${tone}`}>
+      <div class="history-checks__title">{title}</div>
+      <ul class="history-checks__list">
+        {lines.map((line) => (
+          <li key={line.label} class="history-checks__item">
+            <strong>{line.label}</strong>: {line.detail}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Checks(props: { checks: ChecksModel }) {
+  const { checks } = props;
+  return (
+    <div class="history-checks">
+      <CheckList
+        title={checks.checkedTitle}
+        lines={checks.checked}
+        tone="checked"
+      />
+      <CheckList
+        title={checks.notCheckedTitle}
+        lines={checks.notChecked}
+        tone="not-checked"
+      />
+      <CheckList
+        title={checks.referencesTitle}
+        lines={checks.references}
+        tone="references"
+      />
+    </div>
+  );
+}
+
 function Insights(props: { insights: InsightsModel }) {
   const { insights } = props;
   let body: JSX.Element;
@@ -279,6 +323,7 @@ function Insights(props: { insights: InsightsModel }) {
             </div>
           </div>
         ) : null}
+        <Checks checks={insights.checks} />
         {insights.secondaryTitle ? (
           <div class="history-secondary-findings">
             <div class="history-secondary-findings__title">

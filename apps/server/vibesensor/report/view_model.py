@@ -21,6 +21,7 @@ from vibesensor.summary.diagnosis_contracts import (
     DiagnosisPayload,
     LocationAmplitudeRow,
     OrderFindingRow,
+    ReferenceProvenanceValue,
 )
 from vibesensor.summary.phases import PHASE_I18N_KEYS
 
@@ -119,6 +120,32 @@ _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
     "top_gear_assumed": "RULED_OUT_ENGINE_TOP_GEAR",
 }
+# Page 1 of a no-fault run: what each untested or estimate-based check leaves open,
+# and how to close it; the short hedge names the estimate in the "checked" list.
+_COULDNT_TEST_KEYS = {
+    "no_tire_reference": "COULDNT_TEST_TIRE",
+    "no_drive_reference": "COULDNT_TEST_DRIVE",
+    "no_engine_reference": "COULDNT_TEST_ENGINE",
+    "manual_speed": "COULDNT_TEST_MANUAL_SPEED",
+}
+_CHECKED_LIMITED_KEYS = {
+    "estimated_final_drive": "CHECKED_LIMITED_FINAL_DRIVE",
+    "estimated_top_gear": "CHECKED_LIMITED_TOP_GEAR",
+    "top_gear_assumed": "CHECKED_LIMITED_ENGINE_TOP_GEAR",
+}
+_CHECKED_HEDGE_KEYS = {
+    "estimated_final_drive": "CHECKED_HEDGE_FINAL_DRIVE",
+    "estimated_top_gear": "CHECKED_HEDGE_TOP_GEAR",
+    "top_gear_assumed": "CHECKED_HEDGE_ENGINE_TOP_GEAR",
+}
+# The engine's own wording: measured RPM tests it without the tire size or ratios, and
+# an estimated RPM always assumes top gear.
+_ENGINE_CHECK_KEYS = {
+    "COULDNT_TEST_TIRE": "COULDNT_TEST_ENGINE_TIRE",
+    "COULDNT_TEST_DRIVE": "COULDNT_TEST_ENGINE_DRIVE",
+    "CHECKED_HEDGE_FINAL_DRIVE": "CHECKED_HEDGE_ENGINE_FINAL_DRIVE",
+    "CHECKED_LIMITED_FINAL_DRIVE": "CHECKED_LIMITED_ENGINE_FINAL_DRIVE",
+}
 
 
 # -- view types ----------------------------------------------------------------
@@ -165,7 +192,7 @@ class OwnerPage:
     covered_title: str | None
     covered: str | None
     not_covered_title: str | None
-    not_covered: str | None
+    not_covered: tuple[str, ...]
     next_step_title: str
     confirm_title: str | None
     confirm: str | None
@@ -364,6 +391,12 @@ class _Ctx:
         key = PHASE_I18N_KEYS.get(phase)
         return self.t(key) if key else phase.replace("_", " ")
 
+    def join(self, items: list[str]) -> str:
+        """``a, b and c`` in the report language."""
+        if len(items) < 2:
+            return "".join(items)
+        return self.t("LIST_AND", items=", ".join(items[:-1]), last=items[-1])
+
     def speed_range(self, low: float | None, high: float | None) -> str:
         if low is None or high is None:
             return self.t("VALUE_UNKNOWN")
@@ -442,15 +475,16 @@ def _owner_page(
     level = diagnosis["confidence_level"]
     zone = ctx.zone(diagnosis)
     headline = ctx.t("VERDICT_NO_FAULT")
-    description = ctx.t("VERDICT_NO_FAULT_BODY")
-    candidate = reasons_title = covered = not_covered = confirm = None
+    description = ""
+    candidate = reasons_title = covered = confirm = None
     fallback_step = verify = None
     level_meaning = ctx.t(f"LEVEL_{level.upper()}_MEANING") if level else None
     reasons: tuple[str, ...] = ()
     recapture: tuple[str, ...] = ()
+    not_covered: tuple[str, ...] = ()
     next_step = ctx.t("STEP_NO_FAULT")
     if verdict == "no_fault":
-        covered, not_covered = _coverage(ctx, analysis, diagnosis)
+        description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
     elif verdict == "weak_evidence":
         headline = ctx.t("VERDICT_WEAK")
         description = _description(ctx, diagnosis)
@@ -597,11 +631,55 @@ def _verify(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     return text
 
 
+def _check_text(ctx: _Ctx, table: Mapping[str, str], source_key: str, reason: str) -> str:
+    key = table[reason]
+    if source_key == "ENGINE":
+        key = _ENGINE_CHECK_KEYS.get(key, key)
+    return ctx.t(key)
+
+
 def _coverage(
     ctx: _Ctx,
     analysis: AnalysisSummary,
     diagnosis: DiagnosisPayload,
-) -> tuple[str, str | None]:
+) -> tuple[str, str, tuple[str, ...]]:
+    """A no-fault run's verdict sentence, what it covered, and what it did not.
+
+    The sentence names only the sources this run could check (hedged when the
+    check rests on an estimate) and says which it could not; "Not covered" gives
+    each untested or estimate-based source with how to close the gap, then the
+    speeds and driving the run left out.
+    """
+    checked: list[str] = []
+    not_checked: list[str] = []
+    gaps: list[str] = []
+    for check in diagnosis["source_checks"]:
+        key = _source_key(check["source"])
+        if key is None:
+            continue
+        name = ctx.t(f"SOURCE_{key}_NOUN")
+        reason = check["reason"] or ""
+        if check["status"] == "not_testable":
+            not_checked.append(name)
+            detail = _check_text(ctx, _COULDNT_TEST_KEYS, key, reason)
+        elif check["status"] == "ruled_out_estimated":
+            hedge = _check_text(ctx, _CHECKED_HEDGE_KEYS, key, reason)
+            checked.append(ctx.t("CHECKED_HEDGED", source=name, hedge=hedge))
+            detail = _check_text(ctx, _CHECKED_LIMITED_KEYS, key, reason)
+        else:
+            checked.append(name)
+            continue
+        gaps.append(ctx.t("NOT_COVERED_SOURCE", source=ctx.t(f"SOURCE_{key}"), detail=detail))
+    description = (
+        ctx.t("VERDICT_NO_FAULT_BODY", checked=ctx.join(checked))
+        if checked
+        else ctx.t("VERDICT_NO_FAULT_BODY_NOTHING_CHECKED")
+    )
+    if not_checked and checked:
+        description = (
+            f"{description} {ctx.t('VERDICT_NO_FAULT_NOT_CHECKED', sources=ctx.join(not_checked))}"
+        )
+
     speeds = analysis["speed_stats"]
     phases = analysis["phase_info"]["phase_pcts"]
     driven = [phase for phase, share in phases.items() if share >= 1.0 and phase != "speed_unknown"]
@@ -612,7 +690,6 @@ def _coverage(
         phases=", ".join(ctx.phase(phase) for phase in driven) or ctx.t("VALUE_UNKNOWN"),
         locations=", ".join(locations) or ctx.t("VALUE_UNKNOWN"),
     )
-    gaps: list[str] = []
     low, high = speeds["min_kmh"], speeds["max_kmh"]
     if low is not None and low > 30.0:
         gaps.append(ctx.t("NOT_COVERED_BELOW", speed=ctx.num(low)))
@@ -622,10 +699,7 @@ def _coverage(
         gaps.append(ctx.t("NOT_COVERED_CRUISE"))
     if not {"deceleration", "coast_down"} & set(driven):
         gaps.append(ctx.t("NOT_COVERED_COAST"))
-    if diagnosis["conditions"]["rpm_source"] != "measured":
-        gaps.append(ctx.t("NOT_COVERED_RPM"))
-    not_covered = "; ".join(gaps)
-    return covered, (f"{not_covered[:1].upper()}{not_covered[1:]}." if not_covered else None)
+    return description, covered, tuple(f"{gap[:1].upper()}{gap[1:]}" for gap in gaps)
 
 
 def _diagram(ctx: _Ctx, diagnosis: DiagnosisPayload) -> CarDiagram:
@@ -710,19 +784,12 @@ def _conditions(
 ) -> tuple[Fact, ...]:
     conditions = diagnosis["conditions"]
     unknown = ctx.t("VALUE_UNKNOWN")
-    size = _tire_size(metadata) or unknown
     circumference = conditions["tire_circumference_m"]
-    tire = (
-        ctx.t("COND_CIRCUMFERENCE", size=size, circumference=ctx.num(circumference, 3))
-        if circumference is not None
-        else size
-    )
+    tire = _tire_size(metadata)
+    if circumference is not None:
+        around = ctx.t("COND_CIRCUMFERENCE", circumference=ctx.num(circumference, 3))
+        tire = f"{tire}, {around}" if tire else around
     final_drive, gear = conditions["final_drive_ratio"], conditions["gear_ratio"]
-    ratios = ctx.t(
-        "COND_RATIOS_VALUE",
-        final=ctx.num(final_drive, 2) if final_drive is not None else unknown,
-        gear=ctx.num(gear, 2) if gear is not None else unknown,
-    )
     source = conditions["speed_source"]
     speed_key = _SPEED_SOURCE_KEYS.get(source or "")
     speed_source = ctx.t(speed_key) if speed_key else unknown
@@ -736,8 +803,23 @@ def _conditions(
     sensors = ", ".join(ctx.location(location) for location in analysis["sensor_locations"])
     speeds = analysis["speed_stats"]
     return (
-        Fact(ctx.t("COND_TIRE"), tire),
-        Fact(ctx.t("COND_RATIOS"), ratios),
+        Fact(ctx.t("COND_TIRE"), _with_provenance(ctx, tire, conditions["tire_provenance"])),
+        Fact(
+            ctx.t("COND_FINAL_DRIVE"),
+            _with_provenance(
+                ctx,
+                ctx.num(final_drive, 2) if final_drive is not None else None,
+                conditions["final_drive_provenance"],
+            ),
+        ),
+        Fact(
+            ctx.t("COND_TOP_GEAR"),
+            _with_provenance(
+                ctx,
+                ctx.num(gear, 2) if gear is not None else None,
+                conditions["gear_ratio_provenance"],
+            ),
+        ),
         Fact(ctx.t("COND_SPEED_SOURCE"), speed_source),
         Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])),
         Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
@@ -748,6 +830,15 @@ def _conditions(
             or ctx.t("GUIDED_NONE"),
         ),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
+    )
+
+
+def _with_provenance(ctx: _Ctx, value: str | None, provenance: ReferenceProvenanceValue) -> str:
+    """A car reference with where it came from; a missing one says it was not provided."""
+    if value is None or provenance == "missing":
+        return ctx.t("PROVENANCE_MISSING")
+    return ctx.t(
+        "COND_WITH_PROVENANCE", value=value, provenance=ctx.t(f"PROVENANCE_{provenance.upper()}")
     )
 
 
