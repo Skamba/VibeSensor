@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from vibesensor.common.operational_errors import ServiceUnavailableError
 from vibesensor.common.structured_logging import REQUEST_ID_HEADER, log_extra
 from vibesensor.web.error_boundary import install_http_exception_handlers
-from vibesensor.web.middleware import install_request_logging_middleware
+from vibesensor.web.middleware import _request_log_level, install_request_logging_middleware
 from vibesensor.web.settings.preferences import create_ui_preferences_routes
 
 
@@ -52,7 +52,7 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
     async def ping() -> dict[str, bool]:
         return {"ok": True}
 
-    with caplog.at_level(logging.INFO, logger="vibesensor.web.middleware"):
+    with caplog.at_level(logging.DEBUG, logger="vibesensor.web.middleware"):
         with TestClient(app) as client:
             response = client.get("/ping")
 
@@ -62,6 +62,26 @@ def test_request_logging_middleware_sets_response_header_and_logs_request(
     assert request_log.method == "GET"
     assert request_log.path == "/ping"
     assert request_log.status_code == 200
+    # Routine fast reads (UI polling, phone connectivity probes) stay out of the info log.
+    assert request_log.levelno == logging.DEBUG
+
+
+@pytest.mark.parametrize(
+    ("method", "status_code", "duration_ms", "level"),
+    [
+        pytest.param("GET", 200, 5.0, logging.DEBUG, id="fast-read"),
+        pytest.param("GET", 302, 1.0, logging.DEBUG, id="probe-redirect"),
+        pytest.param("GET", 200, 1500.0, logging.INFO, id="slow-read"),
+        pytest.param("GET", 404, 1.0, logging.INFO, id="client-error"),
+        pytest.param("GET", 503, 1.0, logging.INFO, id="server-error"),
+        pytest.param("PUT", 200, 1.0, logging.INFO, id="mutation"),
+        pytest.param("DELETE", 204, 1.0, logging.INFO, id="delete"),
+    ],
+)
+def test_request_log_level_keeps_mutations_errors_and_slow_requests(
+    method: str, status_code: int, duration_ms: float, level: int
+) -> None:
+    assert _request_log_level(method, status_code, duration_ms) == level
 
 
 def test_request_id_flows_into_settings_audit_logs(caplog: pytest.LogCaptureFixture) -> None:

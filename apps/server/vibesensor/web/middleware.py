@@ -23,6 +23,19 @@ from vibesensor.hotspot.captive_portal import PORTAL_URL, is_probe_host
 
 LOGGER = logging.getLogger(__name__)
 _UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_SLOW_REQUEST_MS = 1000.0
+"""Successful reads slower than this are logged at info; faster ones at debug."""
+
+
+def _request_log_level(method: str, status_code: int, duration_ms: float) -> int:
+    """Info for mutations, errors and slow requests; debug for routine reads.
+
+    The UI polls status endpoints every second or two and phones probe for
+    connectivity every 30 s, so logging every read at info floods the journal.
+    """
+    if method in _UNSAFE_METHODS or status_code >= 400 or duration_ms >= _SLOW_REQUEST_MS:
+        return logging.INFO
+    return logging.DEBUG
 
 
 def _same_origin_header_matches_host(value: str, host: str | None) -> bool:
@@ -126,7 +139,11 @@ def _log_request_failure(
 
 
 class RequestLoggingMiddleware:
-    """ASGI middleware that logs requests and preserves cancellation semantics."""
+    """ASGI middleware that logs requests and preserves cancellation semantics.
+
+    Every request gets an ``X-Request-ID``; see ``_request_log_level`` for which
+    completed requests reach the info log.
+    """
 
     __slots__ = ("app",)
 
@@ -168,7 +185,8 @@ class RequestLoggingMiddleware:
             duration_ms = round((perf_counter() - started_at) * 1000.0, 3)
             active_error = sys.exc_info()[1]
             if active_error is None and request_completed:
-                LOGGER.info(
+                LOGGER.log(
+                    _request_log_level(method.upper(), status_code, duration_ms),
                     "http_request",
                     extra=log_extra(
                         event="http_request",

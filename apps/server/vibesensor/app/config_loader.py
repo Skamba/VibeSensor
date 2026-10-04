@@ -32,11 +32,11 @@ def _require_config_section(raw: object, section_name: str) -> JsonObject:
     raise ValueError(f"config section {section_name!r} must be a YAML object")
 
 
-def _resolve_config_path(path_text: str, config_path: Path) -> Path:
+def _resolve_path(path_text: str, base_dir: Path) -> Path:
     path = Path(path_text)
     if path.is_absolute():
         return path
-    return config_path.resolve().parent / path
+    return base_dir / path
 
 
 def _coerce_int(value: object, field_name: str) -> int:
@@ -108,6 +108,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     gps_cfg = _require_config_section(merged.get("gps", {}), "gps")
     recording_cfg = _require_config_section(merged.get("recording", {}), "recording")
 
+    # The history DB path defines the data directory; a relative app log path
+    # follows it, so a read-only config directory (/etc on the Pi) never hosts logs.
+    history_db_path = _resolve_path(str(logging_cfg["history_db_path"]), path.parent)
     app_log_path_raw = logging_cfg.get("app_log_path")
     app_config = AppConfig(
         ap=APConfig(ssid=str(ap_cfg["ssid"]), psk=str(ap_cfg["psk"])),
@@ -122,11 +125,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             control_port=_coerce_port(udp_cfg["control_port"], "udp.control_port"),
         ),
         logging=LoggingConfig(
-            history_db_path=_resolve_config_path(str(logging_cfg["history_db_path"]), path),
+            history_db_path=history_db_path,
             app_log_path=(
                 None
                 if app_log_path_raw is None
-                else _resolve_config_path(str(app_log_path_raw), path)
+                else _resolve_path(str(app_log_path_raw), history_db_path.parent)
             ),
         ),
         gps=GPSConfig(gps_enabled=bool(gps_cfg["gps_enabled"])),

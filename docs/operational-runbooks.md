@@ -49,14 +49,16 @@ URL, proxy host, and request `Host` header before changing server config.
 
 The console (`docker compose logs`, `journalctl -u vibesensor.service`) shows one
 line per event: `<UTC timestamp> [level] message [logger] key=value ...`. When
-`logging.app_log_path` is set, the same events are written as one JSON object per
+`logging.app_log_path` is set (on the Pi: `/var/lib/vibesensor/app.log`), the same events are written as one JSON object per
 line with `timestamp`, `level`, `logger`, `message`, `event`, `request_id` (for
 request-scoped events), `exception` (when present), and the event's extra fields.
 
 Useful events:
 
 - `http_request` / `http_request_failed` with `method`, `path`, `status_code`,
-  `duration_ms`, and `request_id` (echoed in the `X-Request-ID` response header)
+  `duration_ms`, and `request_id` (echoed in the `X-Request-ID` response header).
+  Only mutations, `4xx`/`5xx` responses and requests slower than 1 s are logged
+  at info; routine reads (UI polling, phone connectivity probes) log at debug.
 - `settings_change` audit entries with `before` / `after`
 - `run_lifecycle` (`run_action` `started` / `stopped`) and
   `run_finalize_stage_result` (one per finalization stage)

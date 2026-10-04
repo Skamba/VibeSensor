@@ -430,7 +430,7 @@ async def test_ingest_metrics_report_backpressure_contracts_under_bounded_load(
     ctx = _build_smoke_context(history_db)
     websocket = AsyncMock()
     websocket.send_text = AsyncMock()
-    ctx.ws_broadcaster.add(websocket, None)
+    ctx.ws_broadcaster.add(websocket, None, on_drop=lambda: None)
 
     tire = TireSpec.from_aspects(
         TEST_CAR_ASPECTS, deflection_factor=TEST_CAR_ASPECTS["tire_deflection_factor"]

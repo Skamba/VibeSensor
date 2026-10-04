@@ -95,7 +95,7 @@ still set `ap.psk` and restrict who can join the local appliance network.
 | Key | Default | Notes |
 |-----|---------|-------|
 | `logging.history_db_path` | `data/history.db` | Persisted history/settings database path. Pi deployments override this to `/var/lib/vibesensor/history.db`. |
-| `logging.app_log_path` | `data/app.log` | Structured JSON application-log output path. Set to `null` if file logging is not wanted. |
+| `logging.app_log_path` | `app.log` | Structured JSON application-log output path. A relative path resolves against the data directory (the folder of `logging.history_db_path`), so the Pi writes `/var/lib/vibesensor/app.log`, never into the read-only `/etc/vibesensor`. Set to `null` if file logging is not wanted. |
 
 Terminal runs older than 7 days are pruned at startup (see
 `docs/history_db_schema.md`).

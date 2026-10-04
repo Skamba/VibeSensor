@@ -67,13 +67,16 @@ class TransportLifecycle:
         return self._current_delay
 
     def on_connected(self) -> LifecycleTransition:
-        """Successful connection established."""
-        self._current_delay = self._initial_delay
+        """Connection established.
+
+        Keeps the backoff: gpsd accepts connections even without a receiver, so
+        only received data (``reset_delay``) proves the source is healthy.
+        """
         return LifecycleTransition(
             changes={
                 "connection_state": "connected",
                 "last_error": None,
-                "current_reconnect_delay": self._initial_delay,
+                "current_reconnect_delay": self._current_delay,
             },
         )
 
@@ -101,5 +104,5 @@ class TransportLifecycle:
         return LifecycleTransition(changes=changes, sleep_before_retry=delay)
 
     def reset_delay(self) -> None:
-        """Reset delay after a successful read session (no error)."""
+        """Reset delay once the session delivered data."""
         self._current_delay = self._initial_delay

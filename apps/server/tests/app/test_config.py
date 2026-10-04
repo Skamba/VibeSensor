@@ -28,7 +28,9 @@ def cfg_path(tmp_path: Path) -> Path:
     return tmp_path / "config.yaml"
 
 
-def test_logging_paths_resolve_relative_to_config(cfg_path: Path) -> None:
+def test_history_db_resolves_relative_to_config_and_app_log_follows_data_dir(
+    cfg_path: Path,
+) -> None:
     cfg = _write_and_load(
         cfg_path,
         {
@@ -40,7 +42,20 @@ def test_logging_paths_resolve_relative_to_config(cfg_path: Path) -> None:
     )
 
     assert cfg.logging.history_db_path == cfg_path.parent / "db/history.db"
-    assert cfg.logging.app_log_path == cfg_path.parent / "logs/app.log"
+    assert cfg.logging.app_log_path == cfg_path.parent / "db/logs/app.log"
+
+
+def test_default_app_log_lives_in_data_dir_not_config_dir(tmp_path: Path) -> None:
+    """Pi layout: read-only /etc config, absolute data dir; the log must not land in /etc."""
+    etc_config = tmp_path / "etc" / "config.yaml"
+    etc_config.parent.mkdir()
+    data_dir = tmp_path / "var-lib"
+
+    cfg = _write_and_load(
+        etc_config, {"logging": {"history_db_path": str(data_dir / "history.db")}}
+    )
+
+    assert cfg.logging.app_log_path == data_dir / "app.log"
 
 
 def test_app_log_path_null_disables_file_logging(cfg_path: Path) -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from vibesensor.common.json_types import JsonObject, is_json_object
@@ -16,6 +17,52 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _WATCH_ENABLE_PAYLOAD = b'?WATCH={"enable":true,"json":true};\n'
+_OUTAGE_SUMMARY_INTERVAL_S = 600.0
+"""While GPS stays unavailable, repeat failures log one info summary per interval."""
+
+
+class _OutageLog:
+    """Log GPS outages on state change only, with a periodic summary.
+
+    Without a receiver, gpsd accepts the connection but never sends a fix, so
+    every read times out. Logging each retry flooded the journal.
+    """
+
+    __slots__ = ("_attempts", "_last_error", "_last_summary_s")
+
+    def __init__(self) -> None:
+        self._attempts = 0
+        self._last_error: str | None = None
+        self._last_summary_s = 0.0
+
+    def failed(self, error: str, retry_in_s: float) -> None:
+        self._attempts += 1
+        now = time.monotonic()
+        if error != self._last_error:
+            self._last_error = error
+            self._last_summary_s = now
+            LOGGER.warning(
+                "GPS unavailable (%s); retrying with backoff, further failures are logged "
+                "every %.0f min",
+                error,
+                _OUTAGE_SUMMARY_INTERVAL_S / 60,
+            )
+        elif now - self._last_summary_s >= _OUTAGE_SUMMARY_INTERVAL_S:
+            self._last_summary_s = now
+            LOGGER.info(
+                "GPS still unavailable after %d attempts (%s); next retry in %gs",
+                self._attempts,
+                error,
+                retry_in_s,
+            )
+        else:
+            LOGGER.debug("GPS retry %d failed (%s); next in %gs", self._attempts, error, retry_in_s)
+
+    def recovered(self) -> None:
+        if self._last_error is not None:
+            LOGGER.info("GPS data resumed after %d failed attempts", self._attempts)
+        self._attempts = 0
+        self._last_error = None
 
 
 class GPSTransportRunner:
@@ -49,6 +96,7 @@ class GPSTransportRunner:
             initial_delay=self._reconnect_delay_s,
             max_delay=self._reconnect_max_delay_s,
         )
+        outage = _OutageLog()
         while True:
             if not state.gps_enabled:
                 state.set_enabled(False)
@@ -73,10 +121,10 @@ class GPSTransportRunner:
                     state,
                     reader,
                     lifecycle,
+                    outage,
                     tpv_mode=tpv_mode,
                     read_metric=read_metric,
                 )
-                lifecycle.reset_delay()
             except asyncio.CancelledError:
                 if writer is not None:
                     writer.close()
@@ -93,11 +141,7 @@ class GPSTransportRunner:
             ) as exc:
                 transition = lifecycle.on_connection_error(exc)
                 state._apply_transition_changes(transition.changes)
-                LOGGER.warning(
-                    "GPS connection lost, retrying in %gs: %s",
-                    transition.sleep_before_retry,
-                    str(exc) or type(exc).__name__,
-                )
+                outage.failed(str(exc) or type(exc).__name__, transition.sleep_before_retry or 0.0)
                 LOGGER.debug(
                     "GPS reconnect exception detail",
                     exc_info=True,
@@ -115,11 +159,16 @@ class GPSTransportRunner:
         state: GPSTransportState,
         reader: asyncio.StreamReader,
         lifecycle: TransportLifecycle,
+        outage: _OutageLog,
         *,
         tpv_mode: TpvModeReader | None,
         read_metric: MetricReader | None,
     ) -> float | None:
-        """Read until disabled or the peer closes; return the delay before reconnecting."""
+        """Read until disabled or the peer closes; return the delay before reconnecting.
+
+        The reconnect backoff resets only once a TPV report arrives: gpsd without
+        a receiver accepts connections but never sends one.
+        """
         while True:
             if not state.gps_enabled:
                 state.set_enabled(False)
@@ -136,7 +185,9 @@ class GPSTransportRunner:
             payload = self._decode_json_line(line)
             if payload is None:
                 continue
-            state.ingest_message(payload, tpv_mode=tpv_mode, read_metric=read_metric)
+            if state.ingest_message(payload, tpv_mode=tpv_mode, read_metric=read_metric):
+                lifecycle.reset_delay()
+                outage.recovered()
 
     @staticmethod
     def _decode_json_line(line: bytes) -> JsonObject | None:

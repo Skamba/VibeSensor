@@ -266,18 +266,20 @@ class GPSTransportState:
         *,
         tpv_mode: TpvModeReader | None = None,
         read_metric: MetricReader | None = None,
-    ) -> None:
+    ) -> bool:
+        """Apply one gpsd message; return whether it was a TPV report."""
         message = _transport_updates.classify_transport_message(
             payload,
             tpv_mode=tpv_mode,
             read_metric=read_metric,
         )
         if message is None:
-            return
+            return False
         if isinstance(message, GpsdVersionInfo):
             self._replace_transport(device_info=f"gpsd {message.revision}")
-            return
+            return False
         self._apply_tpv(message)
+        return True
 
     def _apply_tpv(self, tpv: NormalizedTpvData) -> None:
         _transport_updates.apply_tpv(

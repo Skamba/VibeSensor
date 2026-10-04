@@ -59,7 +59,15 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
                     )
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
-                LOGGER.info("ACK from %s: cmd_seq=%s status=%s", addr, ack.cmd_seq, ack.status)
+                # Clock-sync commands are acknowledged every couple of seconds; only a
+                # rejected command is worth a journal line.
+                LOGGER.log(
+                    logging.DEBUG if ack.status == 0 else logging.WARNING,
+                    "ACK from %s: cmd_seq=%s status=%s",
+                    addr,
+                    ack.cmd_seq,
+                    ack.status,
+                )
                 registry.update_from_ack(ack, now_ts, now_mono=time.monotonic())
             elif msg_type == MSG_DATA_ACK:
                 return

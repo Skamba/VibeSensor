@@ -225,7 +225,7 @@ class FakeHistoryDB:
 class FakeLiveWs:
     selected_updates: list[str | None] = field(default_factory=list)
 
-    def add(self, websocket, selected_client_id: str | None) -> None:
+    def add(self, websocket, selected_client_id: str | None, *, on_drop) -> None:
         self.selected_updates.append(selected_client_id)
 
     def remove(self, websocket) -> None:

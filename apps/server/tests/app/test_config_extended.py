@@ -38,24 +38,6 @@ def test_load_config_preserves_absolute_paths(tmp_path: Path) -> None:
     assert result.logging.app_log_path == Path("/tmp/app.log")
 
 
-def test_load_config_resolves_relative_paths_from_config_parent(tmp_path: Path) -> None:
-    config_path = tmp_path / "configs" / "config.yaml"
-    _write_config(
-        config_path,
-        {
-            "logging": {
-                "history_db_path": "data/history.db",
-                "app_log_path": "logs/app.log",
-            },
-        },
-    )
-
-    result = load_config(config_path)
-
-    assert result.logging.history_db_path == config_path.parent / "data/history.db"
-    assert result.logging.app_log_path == config_path.parent / "logs/app.log"
-
-
 def test_load_config_preserves_parent_traversal_relative_to_config(tmp_path: Path) -> None:
     config_path = tmp_path / "configs" / "dev" / "config.yaml"
     _write_config(config_path, {"logging": {"history_db_path": "../shared/history.db"}})

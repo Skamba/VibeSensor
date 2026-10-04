@@ -83,3 +83,50 @@ class TestGPSReconnectBackoff:
 
         assert monitor.device_info is not None
         assert "3.25" in monitor.device_info
+
+
+@pytest.mark.asyncio
+async def test_gpsd_without_receiver_backs_off_and_logs_once(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """gpsd accepts and greets but never sends a TPV: back off, warn once, log the recovery."""
+    monkeypatch.setattr("vibesensor.speed.gps_transport_lifecycle.GPS_RECONNECT_DELAY_S", 0.01)
+    monkeypatch.setattr("vibesensor.speed.gps_transport_lifecycle.GPS_RECONNECT_MAX_DELAY_S", 0.04)
+    monkeypatch.setattr("vibesensor.speed.gps_transport_lifecycle.GPS_READ_TIMEOUT_S", 0.02)
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    sessions = 0
+    receiver_attached = asyncio.Event()
+    release = asyncio.Event()
+
+    async def _handler(reader, writer):
+        nonlocal sessions
+        sessions += 1
+        await reader.readline()
+        writer.write(b'{"class":"VERSION","rev":"3.25"}\n')
+        if receiver_attached.is_set():
+            writer.write(b'{"class":"TPV","mode":3,"speed":10.0}\n')
+        await writer.drain()
+        await release.wait()
+        writer.close()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    caplog.set_level("DEBUG", logger="vibesensor.speed.gps_transport_runner")
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    try:
+        assert await async_wait_until(lambda: sessions >= 5, timeout_s=3.0)
+        # Successful connects alone do not reset the backoff.
+        assert monitor.current_reconnect_delay == pytest.approx(0.04)
+        receiver_attached.set()
+        assert await async_wait_until(lambda: monitor.speed_mps == 10.0, timeout_s=3.0)
+    finally:
+        release.set()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        server.close()
+        await server.wait_closed()
+
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert [r.getMessage().split(";")[0] for r in warnings] == ["GPS unavailable (TimeoutError)"]
+    assert any(r.getMessage().startswith("GPS data resumed after") for r in caplog.records)

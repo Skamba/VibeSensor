@@ -2,19 +2,22 @@
 
 One task per app builds the live payload at the UI push rate and sends it to
 every connected browser. Spectra ("heavy" data) are included on a subset of
-ticks. A socket whose send fails or exceeds the send timeout is closed and
-dropped; the browser reconnects on its own.
+ticks. A socket whose send fails or exceeds the send timeout is dropped and its
+``on_drop`` callback ends the owning ``/ws`` endpoint, which closes it; the
+browser reconnects on its own. This send-side check is also how half-open
+(zombie) connections are found, so a silent passive viewer is never dropped.
 """
 
 from __future__ import annotations
 
-import contextlib
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import anyio
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect, WebSocketDisconnected
 
 from vibesensor.common.json_utils import json_text_dumps, sanitize_for_json
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -33,7 +36,9 @@ SEND_TIMEOUT_S = 0.5
 
 _SEND_ERROR_LOG_INTERVAL_S = 10.0
 _MAX_CONSECUTIVE_TICK_FAILURES = 10
-_SEND_FAILURE_EXCEPTIONS = (OSError, RuntimeError, TimeoutError)
+_SEND_FAILURE_EXCEPTIONS = (OSError, RuntimeError, TimeoutError, WebSocketDisconnect)
+_CLIENT_GONE_EXCEPTIONS = (OSError, TimeoutError, WebSocketDisconnect, WebSocketDisconnected)
+"""Send failures that just mean the browser went away or stalled."""
 _BUILD_FAILURE_EXCEPTIONS = (
     TypeError,
     ValueError,
@@ -50,6 +55,7 @@ ERROR_PAYLOAD_TEXT = json_text_dumps(_ERROR_PAYLOAD)
 class _Connection:
     websocket: WebSocket
     selected_client_id: str | None
+    on_drop: Callable[[], None]
 
 
 class LiveBroadcaster:
@@ -73,8 +79,15 @@ class LiveBroadcaster:
 
     # -- connections (called from the /ws route on the event loop) ------------
 
-    def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
-        self._connections[id(websocket)] = _Connection(websocket, selected_client_id)
+    def add(
+        self,
+        websocket: WebSocket,
+        selected_client_id: str | None,
+        *,
+        on_drop: Callable[[], None],
+    ) -> None:
+        """Register *websocket*; ``on_drop`` runs if a send to it fails."""
+        self._connections[id(websocket)] = _Connection(websocket, selected_client_id, on_drop)
 
     def remove(self, websocket: WebSocket) -> None:
         self._connections.pop(id(websocket), None)
@@ -134,19 +147,29 @@ class LiveBroadcaster:
         try:
             with anyio.fail_after(SEND_TIMEOUT_S):
                 await conn.websocket.send_text(text)
-        except _SEND_FAILURE_EXCEPTIONS:
-            now = anyio.current_time()
-            if now - self._last_send_error_log_s >= _SEND_ERROR_LOG_INTERVAL_S:
-                self._last_send_error_log_s = now
-                LOGGER.warning(
-                    "WebSocket send failed (selected_client=%r); dropping connection.",
-                    conn.selected_client_id,
-                    exc_info=True,
-                )
+        except _SEND_FAILURE_EXCEPTIONS as exc:
+            self._log_send_failure(conn, exc)
             if self._connections.get(id(conn.websocket)) is conn:
                 del self._connections[id(conn.websocket)]
-            with contextlib.suppress(OSError, RuntimeError):
-                await conn.websocket.close()
+            conn.on_drop()
+
+    def _log_send_failure(self, conn: _Connection, exc: BaseException) -> None:
+        now = anyio.current_time()
+        if now - self._last_send_error_log_s < _SEND_ERROR_LOG_INTERVAL_S:
+            return
+        self._last_send_error_log_s = now
+        if isinstance(exc, _CLIENT_GONE_EXCEPTIONS):
+            LOGGER.info(
+                "WebSocket client gone (selected_client=%r, %s); dropping connection.",
+                conn.selected_client_id,
+                type(exc).__name__,
+            )
+            return
+        LOGGER.warning(
+            "WebSocket send failed (selected_client=%r); dropping connection.",
+            conn.selected_client_id,
+            exc_info=exc,
+        )
 
     async def run(self) -> None:
         """Broadcast at ``push_hz`` until cancelled.

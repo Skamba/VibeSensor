@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 import anyio
 import numpy as np
 import pytest
+from starlette.websockets import WebSocketDisconnect, WebSocketDisconnected
 from test_support.ws_hub import build_broadcaster, sent_json, sent_json_sequence
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -213,20 +214,27 @@ async def test_serialization_replaces_non_finite_and_numpy_values(
 
 @pytest.mark.parametrize(
     "send_error",
-    [TimeoutError("slow"), ConnectionError("reset"), RuntimeError("closed")],
-    ids=["timeout", "os-error", "runtime-error"],
+    [
+        TimeoutError("slow"),
+        ConnectionError("reset"),
+        WebSocketDisconnect(1006),
+        RuntimeError("closed"),
+    ],
+    ids=["timeout", "os-error", "disconnect", "runtime-error"],
 )
-async def test_failed_send_drops_and_closes_only_that_connection(send_error: Exception) -> None:
+async def test_failed_send_drops_only_that_connection(send_error: Exception) -> None:
     broadcaster, [healthy, failing] = build_broadcaster(_StubPayloadSource(), None, None)
     failing.send_text = AsyncMock(side_effect=send_error)
-    failing.close = AsyncMock(side_effect=RuntimeError("already closed"))
 
     await broadcaster.broadcast(include_heavy=True)
     await broadcaster.broadcast(include_heavy=True)
 
     assert len(sent_json_sequence(healthy)) == 2
     failing.send_text.assert_awaited_once()
-    failing.close.assert_awaited_once()
+    failing.on_drop.assert_called_once_with()
+    healthy.on_drop.assert_not_called()
+    # The /ws endpoint owns closing; the broadcaster never closes a socket itself.
+    failing.close.assert_not_awaited()
     assert broadcaster.connection_count() == 1
 
 
@@ -245,20 +253,37 @@ async def test_slow_consumer_is_dropped_without_blocking_fast_clients(
         await broadcaster.broadcast(include_heavy=True)
 
     fast.send_text.assert_awaited_once()
-    slow.close.assert_awaited_once()
+    slow.on_drop.assert_called_once_with()
     assert broadcaster.connection_count() == 1
 
 
-async def test_send_failure_logging_is_rate_limited(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.parametrize(
+    ("send_error", "level", "has_traceback"),
+    [
+        (ConnectionError("reset"), logging.INFO, False),
+        (WebSocketDisconnected("closed"), logging.INFO, False),
+        (TimeoutError(), logging.INFO, False),
+        (RuntimeError("unexpected"), logging.WARNING, True),
+    ],
+    ids=["os-error", "already-closed", "timeout", "unexpected"],
+)
+async def test_send_failure_logging_is_one_line_for_gone_clients_and_rate_limited(
+    caplog: pytest.LogCaptureFixture,
+    send_error: Exception,
+    level: int,
+    has_traceback: bool,
+) -> None:
     broadcaster, websockets = build_broadcaster(_StubPayloadSource(), "c1", "c2")
     for ws in websockets:
-        ws.send_text = AsyncMock(side_effect=ConnectionError("boom"))
+        ws.send_text = AsyncMock(side_effect=send_error)
 
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.DEBUG, logger="vibesensor.live.broadcaster"):
         await broadcaster.broadcast(include_heavy=True)
 
-    assert [r for r in caplog.records if "send failed" in r.message][0].args == ("c1",)
-    assert len([r for r in caplog.records if "send failed" in r.message]) == 1
+    [record] = [r for r in caplog.records if "dropping connection" in r.message]
+    assert record.args is not None and record.args[0] == "c1"
+    assert record.levelno == level
+    assert (record.exc_info is not None) is has_traceback
 
 
 async def test_run_records_publish_metrics_and_escalates_repeated_tick_failures(

@@ -10,8 +10,10 @@ from vibesensor.live.broadcaster import LiveBroadcaster
 
 
 def make_websocket() -> AsyncMock:
+    """A mock socket; ``ws.on_drop`` records the broadcaster dropping it."""
     ws = AsyncMock()
     ws.send_text = AsyncMock()
+    ws.on_drop = MagicMock()
     return ws
 
 
@@ -39,6 +41,6 @@ def build_broadcaster(
     websockets: list[AsyncMock] = []
     for selected_client_id in selected_client_ids:
         ws = make_websocket()
-        broadcaster.add(ws, selected_client_id)
+        broadcaster.add(ws, selected_client_id, on_drop=ws.on_drop)
         websockets.append(ws)
     return broadcaster, websockets

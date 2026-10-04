@@ -10,20 +10,20 @@ from vibesensor.speed.gps_transport_lifecycle import (
 )
 
 
-def test_on_connected_returns_connected_state_and_resets_backoff() -> None:
+def test_on_connected_returns_connected_state_and_keeps_backoff() -> None:
+    """gpsd accepts connections without a receiver; only data resets the backoff."""
     lifecycle = TransportLifecycle(initial_delay=1.0)
     lifecycle.on_connection_error(RuntimeError("boom"))
-    assert lifecycle.reconnect_delay > 1.0
 
     transition = lifecycle.on_connected()
 
     assert transition.changes == {
         "connection_state": "connected",
         "last_error": None,
-        "current_reconnect_delay": 1.0,
+        "current_reconnect_delay": 2.0,
     }
     assert transition.sleep_before_retry is None
-    assert lifecycle.reconnect_delay == 1.0
+    assert lifecycle.reconnect_delay == 2.0
 
 
 def test_on_stream_disconnected_resets_backoff_and_waits_initial_delay() -> None:

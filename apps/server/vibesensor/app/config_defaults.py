@@ -26,7 +26,8 @@ DEFAULT_CONFIG: JsonObject = {
     },
     "logging": {
         "history_db_path": "data/history.db",
-        "app_log_path": "data/app.log",
+        # Relative to the directory of history_db_path (the data directory).
+        "app_log_path": "app.log",
     },
     "gps": {"gps_enabled": True},
     # Isolated test runtimes shorten the cap to exercise the auto-stop path.
