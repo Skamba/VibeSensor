@@ -4,8 +4,10 @@ import {
   type Capabilities,
   type CapabilityFamily,
   type CapabilityMark,
+  capabilityFamilyKey,
   capabilityMark,
   capabilityNoteKey,
+  type FuelType,
 } from "../../capabilities";
 import { formatSpeed, type SpeedUnit } from "../../format";
 
@@ -201,14 +203,17 @@ const CAPABILITY_FIX: Record<string, "cars" | "speed_source"> = {
   missing_top_gear: "cars",
   missing_ratios: "cars",
   estimated_top_gear: "speed_source",
+  hybrid_estimated: "speed_source",
 };
 
 /**
  * What the run can test with the active car's references and the speed
- * source (docs/user_journeys.md §5.1). Never blocks the start.
+ * source (docs/user_journeys.md §5.1). Never blocks the start. An EV's
+ * driveline is named its motor (§5.3).
  */
 export function capabilityModel(
   capabilities: Capabilities | null,
+  fuelType: FuelType,
   manualSpeedText: string,
   fallbackReason: string | null,
   t: Translate,
@@ -222,7 +227,7 @@ export function capabilityModel(
     const noteKey = capabilityNoteKey(family, value);
     return {
       family,
-      label: t(`capabilities.family.${family}`),
+      label: t(capabilityFamilyKey(family, fuelType)),
       mark: capabilityMark(value),
       note: noteKey ? t(noteKey) : null,
       fix: fix

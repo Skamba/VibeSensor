@@ -84,7 +84,9 @@ def _capabilities(
         else:
             driveline = "estimated_final_drive" if weak_final_drive else "ok"
     engine: EngineCapability
-    if _obd_rpm_fresh(policy, observation):
+    if car.fuel_type == "EV":
+        engine = "not_applicable"
+    elif _obd_rpm_fresh(policy, observation):
         engine = "measured"
     elif spec is None:
         engine = "missing_tire"
@@ -92,6 +94,8 @@ def _capabilities(
         engine = _missing_engine_ratios(spec)
     elif manual:
         engine = "manual_speed"
+    elif car.fuel_type == "PHEV":
+        engine = "hybrid_estimated"
     else:
         engine = "estimated_ratios" if weak_final_drive or weak_top_gear else "estimated_top_gear"
     return CaptureCapabilities(wheel=wheel, driveline=driveline, engine=engine)
@@ -289,7 +293,9 @@ def _reference_check(
             details=(("speed_source", speed_source),),
         )
 
-    if speed_source == "obd2":
+    # An EV has no engine RPM to wait for; many EVs do not report it at all.
+    electric = run_context.car is not None and run_context.car.fuel_type == "EV"
+    if speed_source == "obd2" and not electric:
         if obd is None or not _is_finite_number(obd.rpm):
             return CaptureReadinessCheck(
                 check_key="reference_ready",

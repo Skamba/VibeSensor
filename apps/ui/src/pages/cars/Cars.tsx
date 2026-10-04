@@ -149,7 +149,11 @@ function CarTableBody() {
               <span class="car-row__setup-label">
                 {t("capabilities.car_title")}
               </span>
-              <CapabilityList compact capabilities={row.capabilities} />
+              <CapabilityList
+                compact
+                capabilities={row.capabilities}
+                fuelType={row.fuelType}
+              />
             </div>
           </td>
           <td>

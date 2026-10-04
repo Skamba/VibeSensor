@@ -21,6 +21,7 @@ from vibesensor.analysis.constants import (
     LIGHT_STRENGTH_MAX_DB,
     MIN_ORDER_TRACKING_SLOPE,
     NEGLIGIBLE_STRENGTH_MAX_DB,
+    SPEED_COVERAGE_MIN_PCT,
 )
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
@@ -35,6 +36,7 @@ from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
     DiagnosisPayload,
     DiagnosisSpectrum,
+    FuelTypeValue,
     GuidedPhaseValue,
     LocationAmplitudeRow,
     OrderCodeValue,
@@ -106,9 +108,12 @@ def build_diagnosis(
     presence = _presence_ratio(candidate, located, floors)
     refs = _references(metadata, samples)
     # A hand-entered speed does not drop while coasting, so the coast-down
-    # comparison cannot tell road speed from engine speed.
+    # comparison cannot tell road speed from engine speed; an EV has no engine
+    # and no neutral that decouples its motor.
     speed_dependence = (
-        None if refs.manual_speed else _speed_dependence(candidate, located, metadata.guided_phases)
+        None
+        if refs.manual_speed or refs.electric
+        else _speed_dependence(candidate, located, metadata.guided_phases)
     )
     weak_reasons = _weak_reasons(
         candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
@@ -173,7 +178,7 @@ def build_diagnosis(
         "source_checks": _source_checks(
             candidate, test_run.findings, refs, samples, speed_dependence
         ),
-        "conditions": _conditions(samples, refs, metadata),
+        "conditions": _conditions(samples, refs),
     }
 
 
@@ -204,6 +209,17 @@ class _References:
     final_drive_provenance: ReferenceProvenance
     gear_ratio_provenance: ReferenceProvenance
     speed_source: str | None
+    fuel_type: FuelTypeValue | None
+
+    @property
+    def electric(self) -> bool:
+        """A battery-electric car: no engine; the motor turns at the driveshaft order."""
+        return self.fuel_type == "EV"
+
+    @property
+    def hybrid(self) -> bool:
+        """A plug-in hybrid: the engine may be off while it drives electrically."""
+        return self.fuel_type == "PHEV"
 
     @property
     def manual_speed(self) -> bool:
@@ -238,6 +254,7 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
             gear, status.current_gear_ratio_confidence if status is not None else None
         ),
         speed_source=run_speed_source(samples),
+        fuel_type=metadata.fuel_type,
     )
 
 
@@ -648,6 +665,11 @@ def _source_checks(
         seen.add(candidate.suspected_source)
     checks: list[SourceCheck] = []
     for source in _ORDER_SOURCES:
+        if source is VibrationSource.ENGINE and refs.electric:
+            checks.append(
+                {"source": str(source), "status": "not_applicable", "reason": "electric_car"}
+            )
+            continue
         # The neutral coast-down excludes a source whatever its order match says,
         # and without needing its order reference.
         coast_reason = _coast_ruled_out_reason(source, speed_dependence)
@@ -663,7 +685,9 @@ def _source_checks(
         measured_engine = source is VibrationSource.ENGINE and rpm_source == "measured"
         reason: SourceCheckReason | None
         if measured_engine:
-            reason = None
+            # Measured RPM also shows when the engine ran; with it off for most of
+            # the drive (a hybrid driving electrically) its orders were not tested.
+            reason = None if _engine_ran(samples) else "engine_not_running"
         elif refs.tire_circumference_m is None:
             reason = "no_tire_reference"
         elif source is not VibrationSource.WHEEL_TIRE and refs.final_drive_ratio is None:
@@ -694,10 +718,13 @@ def _estimate_reason(source: VibrationSource, refs: _References) -> SourceCheckR
     """Why a no-match for *source* rests on an estimate, or ``None`` when it does not.
 
     Weak library ratios hedge the driveline and the engine; engine RPM estimated
-    from speed always assumes top gear.
+    from speed always assumes top gear, and a plug-in hybrid's engine may have
+    been off while it drove electrically.
     """
     if source is VibrationSource.WHEEL_TIRE:
         return None
+    if source is VibrationSource.ENGINE and refs.hybrid:
+        return "engine_may_be_off"
     if refs.estimated_final_drive:
         return "estimated_final_drive"
     if source is VibrationSource.DRIVELINE:
@@ -825,23 +852,35 @@ def _contradicts_coast_test(
     )
 
 
+def _rpm_measured(sample: Sample) -> bool:
+    return (
+        sample.engine_rpm is not None
+        and sample.engine_rpm >= 0
+        and sample.engine_rpm_source.strip().lower() not in _MEASURED_RPM_EXCLUDED
+    )
+
+
 def _rpm_source(samples: Sequence[Sample]) -> RpmSourceValue:
+    # A measured 0 rpm (engine off) still counts as measured RPM.
     measured = estimated = 0
     for sample in samples:
-        if sample.engine_rpm is None or sample.engine_rpm <= 0:
-            continue
-        if sample.engine_rpm_source.strip().lower() in _MEASURED_RPM_EXCLUDED:
-            estimated += 1
-        else:
+        if _rpm_measured(sample):
             measured += 1
+        elif sample.engine_rpm is not None and sample.engine_rpm > 0:
+            estimated += 1
     if measured and measured >= estimated:
         return "measured"
     return "estimated_top_gear" if estimated else "none"
 
 
-def _conditions(
-    samples: Sequence[Sample], refs: _References, metadata: RunMetadata
-) -> TestConditions:
+def _engine_ran(samples: Sequence[Sample]) -> bool:
+    """Measured RPM shows the engine running for enough of the drive to test its orders."""
+    readings = [sample.engine_rpm for sample in samples if _rpm_measured(sample)]
+    running = sum(1 for rpm in readings if rpm is not None and rpm > 0)
+    return bool(readings) and 100.0 * running / len(readings) >= SPEED_COVERAGE_MIN_PCT
+
+
+def _conditions(samples: Sequence[Sample], refs: _References) -> TestConditions:
     return {
         "speed_source": refs.speed_source,
         "rpm_source": _rpm_source(samples),
@@ -851,7 +890,7 @@ def _conditions(
         "tire_provenance": refs.tire_provenance,
         "final_drive_provenance": refs.final_drive_provenance,
         "gear_ratio_provenance": refs.gear_ratio_provenance,
-        "fuel_type": metadata.car.fuel_type if metadata.car is not None else None,
+        "fuel_type": refs.fuel_type,
     }
 
 
@@ -884,7 +923,8 @@ def _order_markers(
             markers |= {"P1": shaft, "P2": 2 * shaft}
             if engine is None and refs.gear_ratio is not None:
                 engine = shaft * refs.gear_ratio
-    if engine is not None:
+    # An EV's motor is the driveshaft order (P1/P2); it has no engine orders.
+    if engine is not None and not refs.electric:
         markers |= {"E1": engine, "E2": 2 * engine}
     return markers
 

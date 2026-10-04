@@ -23,6 +23,7 @@ import {
 import { poll } from "../../poll";
 import { layoutConsequence } from "../../sensor_layout";
 import {
+  activeCar,
   carSelection,
   carSettings,
   speedSettings,
@@ -286,6 +287,7 @@ export const capabilities = computed(() => {
   }
   const model = capabilityModel(
     current.capture_readiness?.capabilities ?? null,
+    activeCar.value?.fuel_type ?? null,
     formatSpeed(speedSettings.manualSpeedKph.value, speedUnit.value, t, 0),
     fallbackReason.value,
     t,
@@ -305,6 +307,7 @@ export const guidedTest = computed(() =>
     status.value,
     speedUnit.value,
     guidedBusy.value || pending.value !== null,
+    activeCar.value?.fuel_type ?? null,
     t,
   ),
 );

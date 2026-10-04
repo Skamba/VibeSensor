@@ -60,12 +60,14 @@ def build_reference_findings(
             ),
         )
 
-    engine_ref_sufficient = has_engine_reference(
+    # An EV has no engine: its motor turns at the driveshaft order (the final
+    # drive is the motor-to-wheel reduction), so engine orders are not tested.
+    engine_ref_sufficient = not context.electric and has_engine_reference(
         samples,
         context=context,
         tire_circumference_m=tire_circumference_m,
     )
-    if not engine_ref_sufficient:
+    if not engine_ref_sufficient and not context.electric:
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",

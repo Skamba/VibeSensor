@@ -454,3 +454,52 @@ def test_obd_speed_needs_fresh_rpm_but_no_ratios() -> None:
     assert reference_check.reason_key == "obd_rpm_stale"
     assert readiness.capabilities is not None
     assert readiness.capabilities.engine == "missing_ratios"
+
+
+def _with_fuel_type(
+    observation: CaptureReadinessObservation, fuel_type: str
+) -> CaptureReadinessObservation:
+    car = observation.run_context.car
+    assert car is not None
+    run_context = replace(observation.run_context, car=replace(car, fuel_type=fuel_type))
+    return replace(observation, run_context=run_context)
+
+
+@pytest.mark.parametrize(
+    ("fuel_type", "speed_source", "obd", "engine"),
+    [
+        # An EV has no engine, so OBD-II speed need not wait for an RPM it may never report.
+        pytest.param("EV", "obd2", None, "not_applicable", id="ev-obd-without-rpm"),
+        pytest.param("EV", "gps", None, "not_applicable", id="ev-gps"),
+        # A plug-in hybrid's engine may be off: the speed-based estimate is hedged.
+        pytest.param("PHEV", "gps", None, "hybrid_estimated", id="phev-estimated"),
+        pytest.param(
+            "PHEV",
+            "obd2",
+            CaptureReadinessObdObservation(rpm=0.0, rpm_age_s=0.2),
+            "measured",
+            id="phev-measured",
+        ),
+    ],
+)
+def test_the_powertrain_decides_what_the_engine_check_can_do(
+    fuel_type: str,
+    speed_source: str,
+    obd: CaptureReadinessObdObservation | None,
+    engine: str,
+) -> None:
+    observation = _observation(
+        speed_status=_SpeedStatus(source=speed_source, speed_kmh=82.0), obd=obd
+    )
+
+    readiness = evaluate_capture_readiness(
+        policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
+        observation=_with_fuel_type(observation, fuel_type),
+        state=_QUIET_STATE,
+    )
+
+    assert readiness.capabilities == CaptureCapabilities(wheel="ok", driveline="ok", engine=engine)
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.state == "pass"

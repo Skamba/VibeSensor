@@ -71,7 +71,9 @@ No active run is recording:
   OBD-II RPM, `estimated_top_gear` from the ratios, `estimated_ratios` when the
   final drive or top gear is a weak library value, or what is missing:
   `missing_tire`, `missing_final_drive`, `missing_top_gear`, or
-  `missing_ratios` for both). A typed-in
+  `missing_ratios` for both; `not_applicable` for an EV, and
+  `hybrid_estimated` instead of an estimate for a plug-in hybrid, whose engine
+  may be off). An EV on OBD-II speed does not wait for RPM. A typed-in
   (manual) speed makes every family that has its references `manual_speed`.
   `capabilities` is `null` without an active car
 

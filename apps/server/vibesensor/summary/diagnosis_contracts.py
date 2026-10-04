@@ -40,8 +40,12 @@ type ConfidenceLevelValue = Literal["strong", "moderate", "weak"]
 type OrderCodeValue = Literal["T1", "T2", "P1", "P2", "E1", "E2"]
 type AmplitudeBasis = Literal["order", "overall"]
 # ``ruled_out_estimated``: no match, but the order rests on an estimate (a weak
-# library ratio, or engine RPM estimated from speed assuming top gear).
-type SourceCheckStatus = Literal["candidate", "ruled_out", "ruled_out_estimated", "not_testable"]
+# library ratio, engine RPM estimated from speed assuming top gear, or a plug-in
+# hybrid whose engine may have been off). ``not_applicable``: the car has no such
+# source (an EV's engine).
+type SourceCheckStatus = Literal[
+    "candidate", "ruled_out", "ruled_out_estimated", "not_testable", "not_applicable"
+]
 type SourceCheckReason = Literal[
     "no_tire_reference",
     "no_drive_reference",
@@ -53,6 +57,9 @@ type SourceCheckReason = Literal[
     "no_matching_order",
     "stayed_in_neutral",
     "stopped_in_neutral",
+    "engine_may_be_off",
+    "engine_not_running",
+    "electric_car",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]

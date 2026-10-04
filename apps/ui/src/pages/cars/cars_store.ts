@@ -120,16 +120,23 @@ export async function activateCar(carId: string): Promise<void> {
 }
 
 /**
- * Saves the editor's changes (only the changed aspects; a `null` ratio clears
- * it). The server marks each changed value user-confirmed. Throws on failure.
+ * Saves the editor's changes (only the changed aspects, a `null` ratio clears
+ * it; the powertrain when the user set one). The server marks each changed
+ * value user-confirmed. Throws on failure.
  */
 export async function saveCarEdits(
   carId: string,
   aspects: EditedAspects,
+  fuelType: CarUpsertRequest["fuel_type"] = null,
 ): Promise<void> {
   const started = await mutate(async () => {
     try {
-      applyCars(await updateSettingsCar(carId, { aspects }));
+      applyCars(
+        await updateSettingsCar(
+          carId,
+          fuelType ? { aspects, fuel_type: fuelType } : { aspects },
+        ),
+      );
       highlighted.value = null;
     } catch (error) {
       showError(t("settings.car.update_failed"));

@@ -598,7 +598,7 @@ def test_quality_warning_states_each_check_once_and_keeps_measured_counts() -> N
         "Some sensor data was lost or incomplete. 3 dropped frames, 1 queue overflows detected."
     )
     assert details["en"]["Speed variation"] == (
-        "The speed could not tell wheel, propshaft and engine orders apart. "
+        "The speed could not tell the wheel and drivetrain orders apart. "
         "Too little of the run had a known speed; record with GPS or OBD-II speed above 20 km/h."
     )
 

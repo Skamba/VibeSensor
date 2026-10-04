@@ -1,5 +1,9 @@
 import type { CarRecord } from "../../api/types";
-import { type Capabilities, carCapabilities } from "../../capabilities";
+import {
+  type Capabilities,
+  carCapabilities,
+  type FuelType,
+} from "../../capabilities";
 import {
   type ProvenanceTier,
   provenanceTier,
@@ -41,6 +45,7 @@ export interface CarRow {
     code?: boolean;
     tier: ProvenanceTier;
   }>;
+  fuelType: FuelType;
   capabilities: Capabilities;
   /** Activate a ready inactive car; `null` for the active one or an incomplete one. */
   activateLabel: string | null;
@@ -85,7 +90,10 @@ function rowDetail(car: CarRecord, isComplete: boolean, t: Translate) {
   if (!isComplete) {
     return t("settings.car.incomplete_detail");
   }
-  const estimate = estimateNoteKey(savedCarReferences(car));
+  const estimate = estimateNoteKey(
+    savedCarReferences(car),
+    car.fuel_type ?? null,
+  );
   return estimate
     ? `${t(estimate)} ${t("settings.car.confidence.review_detail")}`
     : null;
@@ -135,13 +143,19 @@ export function carRows(
           value: ratioText(car.aspects?.final_drive_ratio, fmt, t),
           tier: provenanceTier(refs.finalDrive),
         },
-        {
-          label: t("settings.car.col_gear"),
-          value: ratioText(car.aspects?.current_gear_ratio, fmt, t),
-          tier: provenanceTier(refs.topGear),
-        },
+        // An EV has one fixed reduction: no top gear to show.
+        ...(car.fuel_type === "EV"
+          ? []
+          : [
+              {
+                label: t("settings.car.col_gear"),
+                value: ratioText(car.aspects?.current_gear_ratio, fmt, t),
+                tier: provenanceTier(refs.topGear),
+              },
+            ]),
       ],
-      capabilities: carCapabilities(refs),
+      fuelType: car.fuel_type ?? null,
+      capabilities: carCapabilities(refs, car.fuel_type ?? null),
       activateLabel:
         isComplete && !isActive ? t("settings.car.activate") : null,
       editLabel: t(

@@ -109,6 +109,9 @@ export interface ChecksModel {
   checked: CheckLine[];
   notCheckedTitle: string;
   notChecked: CheckLine[];
+  /** Sources this car does not have (an EV's engine): neither checked nor missed. */
+  notApplicableTitle: string;
+  notApplicable: CheckLine[];
   referencesTitle: string;
   references: CheckLine[];
 }
@@ -270,7 +273,15 @@ function unlocatedWheel(diagnosis: Diagnosis): boolean {
   );
 }
 
+function electric(diagnosis: Diagnosis): boolean {
+  return diagnosis.conditions.fuel_type === "EV";
+}
+
 function zoneText(diagnosis: Diagnosis, t: Translate): string {
+  if (diagnosis.zone === "driveshaft_tunnel" && electric(diagnosis)) {
+    // An EV has no propshaft: a motor order no axle dominates is the drive unit.
+    return t("history.zone.drive_unit_ev");
+  }
   if (diagnosis.zone && ZONE_KEYS.has(diagnosis.zone)) {
     return t(`history.zone.${diagnosis.zone}`);
   }
@@ -474,6 +485,17 @@ export function buildRow(
   };
 }
 
+/** An EV's motor turns at the driveline order, so that source is its motor. */
+function carSourceLabel(
+  source: unknown,
+  diagnosis: Diagnosis,
+  t: Translate,
+): string {
+  return electric(diagnosis) && sourceKey(source) === "driveline"
+    ? t("history.source.motor")
+    : sourceLabel(source, t);
+}
+
 function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.verdict === "no_fault") {
     return t("history.verdict.no_fault");
@@ -481,7 +503,7 @@ function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.verdict === "weak_evidence") {
     return t("history.verdict.weak_evidence");
   }
-  return sourceLabel(diagnosis.source, t);
+  return carSourceLabel(diagnosis.source, diagnosis, t);
 }
 
 function secondaryFinding(
@@ -490,7 +512,7 @@ function secondaryFinding(
   f: Formatters,
 ): SecondaryFinding {
   return {
-    source: sourceLabel(finding.suspected_source, f.t),
+    source: carSourceLabel(finding.suspected_source, summary.diagnosis, f.t),
     confidence: confidenceText(finding.confidence_level, f.t),
     tone: levelTone(finding.confidence_level),
     signature: signatureText(finding, f.fmt),
@@ -509,6 +531,18 @@ const CHECK_SOURCE_KEYS: Record<string, string> = {
   driveline: "driveline",
   engine: "engine",
 };
+
+const EV_CHECK_SOURCE_KEYS: Record<string, string> = {
+  driveline: "motor",
+  engine: "combustion_engine",
+};
+
+/** The catalog key of a checked source: an EV's driveline is its motor, and
+ * the engine it lacks is named the combustion engine. */
+function checkSourceKey(check: SourceCheck, diagnosis: Diagnosis): string {
+  const source = CHECK_SOURCE_KEYS[check.source];
+  return (electric(diagnosis) && EV_CHECK_SOURCE_KEYS[source]) || source;
+}
 /** The engine's own wording (measured RPM needs no tire size or ratios; an
  * estimated RPM always assumes top gear), as on page 1 of the PDF. */
 const ENGINE_CHECK_REASONS = new Set<CheckReason>([
@@ -517,9 +551,18 @@ const ENGINE_CHECK_REASONS = new Set<CheckReason>([
   "estimated_final_drive",
 ]);
 
+/** An EV's motor wording names its reduction ratio instead of the final drive. */
+const MOTOR_CHECK_REASONS = new Set<CheckReason>([
+  "no_drive_reference",
+  "estimated_final_drive",
+]);
+
 function checkReasonKey(source: string, reason: CheckReason): string {
-  return source === "engine" && ENGINE_CHECK_REASONS.has(reason)
-    ? `engine_${reason}`
+  if (source === "engine" && ENGINE_CHECK_REASONS.has(reason)) {
+    return `engine_${reason}`;
+  }
+  return source === "motor" && MOTOR_CHECK_REASONS.has(reason)
+    ? `motor_${reason}`
     : reason;
 }
 
@@ -557,6 +600,22 @@ function referenceText(
       });
 }
 
+/** The powertrain line: what the run assumed and what that means for the engine. */
+function powertrainKey(conditions: Diagnosis["conditions"]): string {
+  switch (conditions.fuel_type) {
+    case "EV":
+      return "history.references.powertrain_ev";
+    case "PHEV":
+      return conditions.rpm_source === "measured"
+        ? "history.references.powertrain_phev_measured"
+        : "history.references.powertrain_phev_estimated";
+    case "ICE":
+      return "history.references.powertrain_ice";
+    default:
+      return "history.references.powertrain_unknown";
+  }
+}
+
 function referenceLines(
   conditions: Diagnosis["conditions"],
   f: Pick<Formatters, "fmt" | "t">,
@@ -565,27 +624,43 @@ function referenceLines(
   const ratio = (value: number | null) =>
     value === null ? null : fmt(value, 2);
   const tire = conditions.tire_circumference_m;
+  const ev = conditions.fuel_type === "EV";
+  const powertrain = {
+    label: t("history.references.powertrain"),
+    detail: t(powertrainKey(conditions)),
+  };
+  const finalDrive = {
+    label: t(
+      ev
+        ? "history.references.reduction_ratio"
+        : "history.references.final_drive",
+    ),
+    detail: referenceText(
+      ratio(conditions.final_drive_ratio),
+      conditions.final_drive_provenance,
+      t,
+    ),
+  };
+  const tireLine = {
+    label: t("history.references.tire"),
+    detail: referenceText(
+      tire === null
+        ? null
+        : t("history.references.circumference", {
+            circumference: fmt(tire, 3),
+          }),
+      conditions.tire_provenance,
+      t,
+    ),
+  };
+  if (ev) {
+    // No gearbox ratio and no engine RPM: an EV has neither.
+    return [powertrain, tireLine, finalDrive];
+  }
   return [
-    {
-      label: t("history.references.tire"),
-      detail: referenceText(
-        tire === null
-          ? null
-          : t("history.references.circumference", {
-              circumference: fmt(tire, 3),
-            }),
-        conditions.tire_provenance,
-        t,
-      ),
-    },
-    {
-      label: t("history.references.final_drive"),
-      detail: referenceText(
-        ratio(conditions.final_drive_ratio),
-        conditions.final_drive_provenance,
-        t,
-      ),
-    },
+    powertrain,
+    tireLine,
+    finalDrive,
     {
       label: t("history.references.top_gear"),
       detail: referenceText(
@@ -610,13 +685,19 @@ function checksModel(
   const { t } = f;
   const checked: CheckLine[] = [];
   const notChecked: CheckLine[] = [];
+  const notApplicable: CheckLine[] = [];
   for (const check of diagnosis.source_checks) {
-    const source = CHECK_SOURCE_KEYS[check.source];
-    if (!source) {
+    if (!CHECK_SOURCE_KEYS[check.source]) {
       continue;
     }
+    const source = checkSourceKey(check, diagnosis);
     const label = t(`history.source.${source}`);
-    if (check.status === "not_testable" && check.reason) {
+    if (check.status === "not_applicable") {
+      notApplicable.push({
+        label,
+        detail: t(`history.checks.not_applicable.${check.reason}`),
+      });
+    } else if (check.status === "not_testable" && check.reason) {
       notChecked.push({
         label,
         detail: t(
@@ -632,6 +713,8 @@ function checksModel(
     checked,
     notCheckedTitle: t("history.checks.not_checked_title"),
     notChecked,
+    notApplicableTitle: t("history.checks.not_applicable_title"),
+    notApplicable,
     referencesTitle: t("history.references.title"),
     references: referenceLines(diagnosis.conditions, f),
   };
@@ -652,10 +735,10 @@ function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
   const checked: string[] = [];
   const notChecked: string[] = [];
   for (const check of diagnosis.source_checks) {
-    const source = CHECK_SOURCE_KEYS[check.source];
-    if (!source) {
+    if (!CHECK_SOURCE_KEYS[check.source] || check.status === "not_applicable") {
       continue;
     }
+    const source = checkSourceKey(check, diagnosis);
     const noun = t(`history.checks.noun.${source}`);
     if (check.status === "not_testable") {
       notChecked.push(noun);
@@ -673,7 +756,11 @@ function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
     }
   }
   if (checked.length === 0) {
-    return t("history.verdict.no_fault_nothing_checked");
+    return t(
+      electric(diagnosis)
+        ? "history.verdict.no_fault_nothing_checked_ev"
+        : "history.verdict.no_fault_nothing_checked",
+    );
   }
   const body = t("history.verdict.no_fault_body", {
     checked: joinList(checked, t),
@@ -720,7 +807,8 @@ function diagnosisCard(
   const weak = diagnosis.verdict === "weak_evidence";
   const level = diagnosis.confidence_level;
   const zone = zoneText(diagnosis, t);
-  const source = sourceLabel(diagnosis.source, t);
+  const source = carSourceLabel(diagnosis.source, diagnosis, t);
+  const ev = electric(diagnosis);
   const unlocated = unlocatedWheel(diagnosis);
   const locateWheel = t("history.findings_next_step_locate_wheel");
   return {
@@ -766,19 +854,21 @@ function diagnosisCard(
     ),
     nextStep: unlocated
       ? weak
-        ? `${locateWheel} ${recaptureRecipe(f)}`
+        ? `${locateWheel} ${recaptureRecipe(f, ev)}`
         : locateWheel
       : weak
-        ? recaptureRecipe(f)
+        ? recaptureRecipe(f, ev)
         : t("history.findings_next_step", { location: zone }),
   };
 }
 
+/** How to record again; an EV cannot coast in neutral, so it skips that step. */
 function recaptureRecipe(
   f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
+  ev: boolean,
 ): string {
   const speed = (kmh: number) => f.fmt(kmhInUnit(kmh, f.speedUnit), 0);
-  return f.t("history.recapture_recipe", {
+  return f.t(ev ? "history.recapture_recipe_ev" : "history.recapture_recipe", {
     from: speed(GUIDED_SWEEP_FROM_KMH),
     to: speed(GUIDED_SWEEP_TO_KMH),
     unit: f.t(speedUnitKey(f.speedUnit)),

@@ -231,7 +231,7 @@ def _speed_steps(*speeds_kmh: float) -> list[dict[str, Any]]:
     return samples
 
 
-_ORDERS_APART = "The speed could not tell wheel, propshaft and engine orders apart."
+_ORDERS_APART = "The speed could not tell the wheel and drivetrain orders apart."
 
 
 @pytest.mark.parametrize(
@@ -279,7 +279,7 @@ def test_the_speed_check_passes_only_for_a_live_speed_that_varied(
 
     assert check.passed is (detail is None)
     assert check.detail == (
-        detail or "The speed was usable for matching wheel, propshaft and engine orders."
+        detail or "The speed was usable for matching the wheel and drivetrain orders."
     )
     assert run_suitability_payload(run_suitability_from_payload(persisted)) == persisted
 

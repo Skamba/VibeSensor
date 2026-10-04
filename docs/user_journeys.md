@@ -292,10 +292,17 @@ its state in `wizard_store.ts`.
 - Runs recorded under the old values keep them and History shows "car
   settings changed" (`add_current_context_warnings` in
   `apps/server/vibesensor/recording/run_context.py`).
-- **EVs and PHEVs:** the library has 17 EV and 25 PHEV rows, but `fuel_type`
-  is not carried into the car, the run or the analysis. An EV is therefore
-  diagnosed and worded as if it had an engine, and gets a neutral coast-down
-  instruction that cannot separate the motor from road speed (J12).
+- **EVs and PHEVs:** a library row carries its powertrain (`fuel_type`:
+  ICE, PHEV or EV). Where the library does not say (a car entered by hand, or
+  a saved car without one), the specs step asks "Powertrain" (*Petrol or
+  diesel*, *Plug-in hybrid*, *Electric*, or *Not sure*, which is analysed as a
+  combustion-engine car) and the editor sends it with `PUT` (`asksPowertrain`,
+  `wizardFuelType` in `wizard_model.ts`). For an EV the specs step hides the
+  top gear, labels the final drive "Reduction ratio", and names the driveline
+  family "Electric motor" and the engine "not applicable" in "This car can
+  test" (`carCapabilities`, `capabilityFamilyKey` in
+  `apps/ui/src/capabilities.ts`). See §5.3 for what the powertrain changes in
+  the analysis.
 
 ### 3.4 Choosing a speed source
 
@@ -398,7 +405,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     gear unless an OBD-II adapter measures RPM" (owner decision).
   - The live band labels read "Engine 1× (est., top gear)", and use measured
     RPM when OBD supplies it.
-  - For EVs the coast-down step is replaced: the motor cannot be decoupled.
+  - For EVs the coast-down step is skipped: the motor cannot be decoupled,
+    and regenerative braking makes a lift-off coast no cleaner.
   - The live bands use fresh measured OBD-II RPM for the engine, and a
     missing reference blanks only its own family (`vehicle_orders_hz` in
     `apps/server/vibesensor/dsp/order_bands.py`).
@@ -406,7 +414,11 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     top gear)" / "(measured)"), and the spectrum's band status names what a
     blank family needs ("needs final drive", "needs top gear or OBD-II"). The
     report states it too (`RPM_ESTIMATED_TOP_GEAR`,
-    `RULED_OUT_ENGINE_TOP_GEAR`). The EV wording is still missing (J12).
+    `RULED_OUT_ENGINE_TOP_GEAR`). For an EV the guided drive is the sweep and
+    the hold, without the top-gear sentence (`guidedTestModel` in
+    `apps/ui/src/pages/dashboard/dashboard_model.ts`); the live spectrum
+    labels the driveline band "Motor 1x" and draws no engine bands
+    (`orderBands`, `bandStatus` in `spectrum_model.ts`).
 - **Branches:**
   - A reload mid-run restores the guided panel ([run_lifecycle.md](run_lifecycle.md)).
   - Speed below 20 km/h or unstable before Start is only advice for the hold
@@ -545,8 +557,9 @@ changes and update this table.
   (`apps/server/vibesensor/recording/run_metadata_builder.py`). Analysis
   reads it: a weak final drive or top gear hedges the source checks to
   `ruled_out_estimated`, and the diagnosis `conditions` carry each
-  reference's provenance. The library powertrain (`fuel_type`) is kept on
-  the car and the run too.
+  reference's provenance. The powertrain (`fuel_type`, from the library or
+  asked in the wizard) is kept on the car, the run and `conditions`, and
+  decides how the engine is checked (§5.3).
 
 **What could be prefilled but isn't** (data gaps; WP5 in
 [user_journey_gaps.md](user_journey_gaps.md)):
@@ -563,8 +576,6 @@ changes and update this table.
   parts-catalogue lookup per transmission code upgrades many rows at once.
 - **Tire options:** usually present. The gap is the picker collapsing a
   variant's rows to the first row's tire set.
-- **Fuel type:** present in the data but not passed to the car profile, so EV
-  handling cannot use it (J12).
 
 ---
 
@@ -620,5 +631,25 @@ capability line state the current layout's consequence.
 | EV (single speed) | per §5.1 | motor-to-wheel reduction acts as the final drive | should read "motor order"; the motor stays coupled | invalid: neutral does not decouple the motor |
 | PHEV/hybrid | per §5.1 | per §5.1 | ~ the engine may be off; RPM estimate is unreliable | ~ |
 
-**Today:** an EV is offered the neutral coast-down and worded as "engine"
-(J12).
+**Today:**
+
+- **EV:** the engine check is `not_applicable` (reason `electric_car`), never
+  "couldn't test" or "ruled out". The driveline order (wheel speed ×
+  reduction ratio) is the motor's 1× and 2×, so that family is worded
+  "Electric motor" in the report, History, the car wizard, the Live
+  capability line and the spectrum. The coast-down judges nothing
+  (`speed_dependence` stays `null`), no engine markers are drawn, and the
+  confirm step is a repeat drive instead of a neutral coast. The report's
+  test conditions print "Powertrain: electric (EV)" and say plainly that the
+  motor's electrical and gear-mesh orders are not analysed
+  (`_source_checks`, `_order_markers` in `diagnosis.py`; `_conditions`,
+  `_Ctx.source_key` in `report/view_model.py`). Readiness reports the engine
+  as `not_applicable` and an EV on OBD-II speed does not wait for RPM
+  (`capture_readiness_evaluator.py`).
+- **PHEV:** without OBD-II RPM, an engine no-match is `ruled_out_estimated`
+  with reason `engine_may_be_off` ("not conclusive"), and readiness says
+  `hybrid_estimated`. With OBD-II, a measured 0 rpm means the engine was off
+  (it is never replaced by an estimate), and if the engine ran for less than
+  35% of the measured samples the engine check is `not_testable` with reason
+  `engine_not_running` (`_engine_ran` in `diagnosis.py`,
+  `_effective_engine_rpm` in `_reference_resolution.py`).

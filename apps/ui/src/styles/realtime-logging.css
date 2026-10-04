@@ -152,6 +152,11 @@
   color: var(--danger-700);
 }
 
+.capture-capabilities__item[data-capability-mark="na"]
+  .capture-capabilities__mark {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
 .capture-capabilities__label {
   font-weight: 600;
 }

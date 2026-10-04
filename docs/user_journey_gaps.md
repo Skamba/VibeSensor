@@ -21,7 +21,8 @@ J17, J19, J20, J21, J24 and most of J13) shipped in #4125. WP4 (report and
 History wording: J28, J29, J35) shipped in #4127. WP2 (settings and car wizard
 UI: J01, J04, J05, J07, J08) shipped in #4128. The rest of J13 (a paired
 OBD-II adapter is the speed source until the user picks one) shipped with the
-Pi-verification server fixes.
+Pi-verification server fixes. WP7 (EV and PHEV handling: J12) shipped in
+#4138.
 
 Owner decisions that bound the fixes (settled):
 
@@ -49,26 +50,7 @@ None open.
 
 ### Misleads
 
-**J12 — EV and PHEV cars are treated as engine cars.**
-
-Evidence:
-
-- The library has 17 EV and 25 PHEV rows, with EV top gear stored as `1.0`
-  "Single-speed fixed gear (EV)".
-- `fuel_type` is not carried into the car, the run, the analysis or the UI
-  (no reference in `domain/car.py`, `run_metadata_builder.py`, `diagnosis.py`).
-- The guided coast-down "shift to neutral"
-  (`dashboard.guided.coast_down.*`) is meaningless for an EV: the motor stays
-  coupled.
-- The report says "engine".
-
-Fix:
-
-- **Backend:** Carry `powertrain` (ice/phev/ev) on the car and the run. For an
-  EV, rename the engine source to "motor/reduction". Skip the coast-down
-  classification, or treat it as not applicable.
-- **UI:** Replace the EV guided coast-down step with "Lift off and let the car
-  coast; avoid regen if your car allows".
+None open.
 
 ### Friction
 
@@ -110,7 +92,7 @@ Fix: see WP5.
 
 Dependency order:
 
-- WP5, WP6 and WP7 are independent.
+- WP5 and WP6 are independent.
 
 ### WP5 — Car-library data
 
@@ -135,22 +117,8 @@ Dependency order:
 - **Changes:** QR card artwork in `hardware/`.
 - **Validation:** a manual phone test.
 
-### WP7 — EV and PHEV handling
-
-- **Covers:** J12.
-- **Changes:**
-  - Use the plumbed powertrain to rename "engine" to "motor" for EVs.
-  - Replace or skip the EV coast-down step and treat the classification as not
-    applicable.
-  - PHEV caveat: the engine may be off during the run.
-- **Depends on:** nothing (WP2 and WP4 shipped). `fuel_type` is already
-  carried on the car, the run snapshot and `conditions`; the report and
-  History wording it changes lives in `_coverage` / `_conditions` (`report/view_model.py`) and
-  `checksModel` (`apps/ui/src/pages/history/history_model.ts`).
-
 ---
 
 ## 3. Suggested order
 
-1. WP5 and WP6 at any time.
-2. WP7 last.
+WP5 and WP6 at any time.

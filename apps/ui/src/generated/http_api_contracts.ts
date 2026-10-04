@@ -387,7 +387,7 @@ export interface components {
         };
         DiagnosisVerdictValue: "fault" | "weak_evidence" | "no_fault";
         DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
-        EngineCapability: "measured" | "estimated_top_gear" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed";
+        EngineCapability: "measured" | "estimated_top_gear" | "hybrid_estimated" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed" | "not_applicable";
         /** Response body confirming whether an ESP32 flash job was cancelled. */
         EspFlashCancelResponse: {
             cancelled: boolean;
@@ -1122,8 +1122,8 @@ export interface components {
             source: string;
             status: components["schemas"]["SourceCheckStatus"];
         };
-        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral";
-        SourceCheckStatus: "candidate" | "ruled_out" | "ruled_out_estimated" | "not_testable";
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral" | "engine_may_be_off" | "engine_not_running" | "electric_car";
+        SourceCheckStatus: "candidate" | "ruled_out" | "ruled_out_estimated" | "not_testable" | "not_applicable";
         /** One recurring spectral peak (0.5 Hz bin) and its median amplitude. */
         SpectrumPeak: {
             amplitude_mg: number;

@@ -26,6 +26,7 @@ from vibesensor.summary.diagnosis_contracts import (
     LocationAmplitudeRow,
     OrderFindingRow,
     ReferenceProvenanceValue,
+    TestConditions,
 )
 from vibesensor.summary.phases import PHASE_I18N_KEYS
 
@@ -90,6 +91,11 @@ _SPEED_SOURCE_KEYS = {
     "fallback_manual": "SPEED_SOURCE_FALLBACK_MANUAL",
 }
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
+# An EV cannot coast in neutral: its motor stays coupled to the wheels.
+_RECAPTURE_KEYS_EV = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD")
+# An EV's motor turns at the driveshaft order (wheel speed x reduction ratio), so
+# the driveline family reads as the motor and P1/P2 as motor revolutions.
+_EV_ORDER_CODES = frozenset({"P1", "P2"})
 _RPM_KEYS = {
     "measured": "RPM_MEASURED",
     "estimated_top_gear": "RPM_ESTIMATED_TOP_GEAR",
@@ -99,22 +105,26 @@ _SHOP_KEYS = {
     "WHEEL": ("SHOP_TIRE_ROAD_FORCE", "SHOP_TIRE_MATCH", "SHOP_TIRE_RUNOUT"),
     "DRIVELINE": ("SHOP_DRIVELINE_RUNOUT", "SHOP_DRIVELINE_ANGLES", "SHOP_DRIVELINE_ORDERS"),
     "ENGINE": ("SHOP_ENGINE_MOUNTS", "SHOP_ENGINE_ORDERS", "SHOP_ENGINE_MISFIRE"),
+    "MOTOR": ("SHOP_MOTOR_MOUNTS", "SHOP_MOTOR_BALANCE", "SHOP_MOTOR_ORDERS"),
 }
 _RULED_OUT_KEYS = {
     "WHEEL": "RULED_OUT_WHEEL",
     "DRIVELINE": "RULED_OUT_DRIVELINE",
     "ENGINE": "RULED_OUT_ENGINE",
+    "MOTOR": "RULED_OUT_MOTOR",
 }
 _NOT_TESTABLE_KEYS = {
     "no_tire_reference": "NOT_TESTABLE_TIRE",
     "no_drive_reference": "NOT_TESTABLE_DRIVE",
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
+    "engine_not_running": "NOT_TESTABLE_ENGINE_NOT_RUNNING",
 }
 _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
     "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
     "top_gear_assumed": "RULED_OUT_ENGINE_TOP_GEAR",
+    "engine_may_be_off": "RULED_OUT_ENGINE_MAY_BE_OFF",
 }
 # Page 1 of a no-fault run: what each untested or estimate-based check leaves open,
 # and how to close it; the short hedge names the estimate in the "checked" list.
@@ -123,16 +133,19 @@ _COULDNT_TEST_KEYS = {
     "no_drive_reference": "COULDNT_TEST_DRIVE",
     "no_engine_reference": "COULDNT_TEST_ENGINE",
     "manual_speed": "COULDNT_TEST_MANUAL_SPEED",
+    "engine_not_running": "COULDNT_TEST_ENGINE_NOT_RUNNING",
 }
 _CHECKED_LIMITED_KEYS = {
     "estimated_final_drive": "CHECKED_LIMITED_FINAL_DRIVE",
     "estimated_top_gear": "CHECKED_LIMITED_TOP_GEAR",
     "top_gear_assumed": "CHECKED_LIMITED_ENGINE_TOP_GEAR",
+    "engine_may_be_off": "CHECKED_LIMITED_ENGINE_MAY_BE_OFF",
 }
 _CHECKED_HEDGE_KEYS = {
     "estimated_final_drive": "CHECKED_HEDGE_FINAL_DRIVE",
     "estimated_top_gear": "CHECKED_HEDGE_TOP_GEAR",
     "top_gear_assumed": "CHECKED_HEDGE_ENGINE_TOP_GEAR",
+    "engine_may_be_off": "CHECKED_HEDGE_ENGINE_MAY_BE_OFF",
 }
 # The engine's own wording: measured RPM tests it without the tire size or ratios, and
 # an estimated RPM always assumes top gear.
@@ -316,8 +329,11 @@ def build_report_view(
     Times show in IANA ``time_zone`` (the user's) when given, else in the offset
     recorded with the run.
     """
-    ctx = _Ctx(normalize_lang(lang or analysis.get("lang") or metadata.language))
     diagnosis = analysis["diagnosis"]
+    ctx = _Ctx(
+        normalize_lang(lang or analysis.get("lang") or metadata.language),
+        electric=diagnosis["conditions"]["fuel_type"] == "EV",
+    )
     return ReportView(
         lang=ctx.lang,
         title=ctx.t("REPORT_TITLE"),
@@ -334,6 +350,8 @@ def build_report_view(
 @dataclass(frozen=True, slots=True)
 class _Ctx:
     lang: str
+    # A battery-electric car: "motor" wording, no engine, no neutral coast-down.
+    electric: bool = False
 
     def t(self, key: str, **kwargs: object) -> str:
         return tr(self.lang, key, **{k: _text(v) for k, v in kwargs.items()})
@@ -376,12 +394,24 @@ class _Ctx:
         zone = diagnosis["zone"]
         if diagnosis["source"] == "wheel/tire" and zone in {"front_axle", "rear_axle"}:
             return self.t(f"WHEELS_{zone.upper()}")
+        if self.electric and zone == "driveshaft_tunnel":
+            # An EV has no propshaft: a motor order no axle dominates is the drive unit.
+            return self.t("ZONE_DRIVE_UNIT_EV")
         if zone in _ZONE_KEYS:
             return self.t(f"ZONE_{zone.upper()}")
         if zone:
             # Another mounting point (a seat, the boot): the location it names.
             return self.t_or(f"LOC_{zone.upper()}", self.location(diagnosis["location"]))
         return self.location(diagnosis["location"])
+
+    def source_key(self, source: str | None) -> str | None:
+        """Catalog stem of a source family; an EV's driveline order is its motor."""
+        key = _SOURCE_KEYS.get(source or "")
+        return "MOTOR" if self.electric and key == "DRIVELINE" else key
+
+    def order_key(self, code: str) -> str:
+        """Catalog key of an order code's plain wording (P1/P2 turn the motor on an EV)."""
+        return f"ORDER_{code}_EV" if self.electric and code in _EV_ORDER_CODES else f"ORDER_{code}"
 
     def phase(self, phase: str) -> str:
         key = PHASE_I18N_KEYS.get(phase)
@@ -404,10 +434,6 @@ class _Ctx:
 
 def _text(value: object) -> str:
     return value if isinstance(value, str) else str(value)
-
-
-def _source_key(source: str | None) -> str | None:
-    return _SOURCE_KEYS.get(source or "")
 
 
 # -- header ----------------------------------------------------------------------
@@ -487,12 +513,14 @@ def _owner_page(
         candidate = ctx.t("VERDICT_WEAK_CANDIDATE", cause=_cause(ctx, diagnosis))
         reasons = tuple(_weak_reason(ctx, reason) for reason in diagnosis["weak_reasons"])
         reasons_title = ctx.t("WEAK_REASONS_TITLE") if reasons else None
-        recapture = tuple(ctx.t(key) for key in _RECAPTURE_KEYS)
+        recapture = tuple(
+            ctx.t(key) for key in (_RECAPTURE_KEYS_EV if ctx.electric else _RECAPTURE_KEYS)
+        )
         if _unlocated_wheel(diagnosis):
             recapture = (ctx.t("STEP_WHEEL_UNLOCATED"), *recapture)
         next_step = ctx.t("RECAPTURE_TITLE")
     else:
-        step_key = _step_key(diagnosis)
+        step_key = _step_key(ctx, diagnosis)
         headline = ctx.t("VERDICT_LIKELY_CAUSE", cause=_cause(ctx, diagnosis))
         description = _description(ctx, diagnosis)
         if level == "moderate":
@@ -543,13 +571,15 @@ def _unlocated_wheel(diagnosis: DiagnosisPayload) -> bool:
 def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     if _unlocated_wheel(diagnosis):
         return ctx.t("CAUSE_WHEEL_UNLOCATED", zone=ctx.zone(diagnosis))
-    key = _source_key(diagnosis["source"]) or "OTHER"
+    key = ctx.source_key(diagnosis["source"]) or "OTHER"
     return ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
 
 
-def _step_key(diagnosis: DiagnosisPayload) -> str:
+def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     code = diagnosis["order_code"]
-    return f"STEP_{code}" if code else "STEP_OTHER"
+    if not code:
+        return "STEP_OTHER"
+    return f"STEP_{code}_EV" if ctx.electric and code in _EV_ORDER_CODES else f"STEP_{code}"
 
 
 def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
@@ -560,6 +590,9 @@ def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
         if diagnosis["zone"] != "all_wheels":
             return ctx.t("CONFIRM_AXLE")
         # On all four wheels a swap moves nothing; the coast-down still tells it from the engine.
+    if ctx.electric:
+        # No neutral decouples an EV's motor: a repeat of the same drive is the check.
+        return ctx.t("CONFIRM_REPEAT_EV")
     if diagnosis["speed_dependence"] is not None:
         return None
     return ctx.t("CONFIRM_NEUTRAL")
@@ -575,7 +608,7 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     hz = diagnosis["frequency_hz"]
     speed = diagnosis["reference_speed_kmh"]
     if code and hz is not None and speed is not None:
-        order = ctx.t(f"ORDER_{code}")
+        order = ctx.t(ctx.order_key(code))
         if code == "E2":
             order = f"{order} ({ctx.t('ORDER_E2_NOTE')})"
         parts = [ctx.t("DESC_ORDER", order=order, hz=ctx.hz(hz), speed=ctx.kmh(speed))]
@@ -650,8 +683,9 @@ def _coverage(
     not_checked: list[str] = []
     gaps: list[str] = []
     for check in diagnosis["source_checks"]:
-        key = _source_key(check["source"])
-        if key is None:
+        key = ctx.source_key(check["source"])
+        # A source the car does not have (an EV's engine) is neither checked nor a gap.
+        if key is None or check["status"] == "not_applicable":
             continue
         name = ctx.t(f"SOURCE_{key}_NOUN")
         reason = check["reason"] or ""
@@ -669,7 +703,11 @@ def _coverage(
     description = (
         ctx.t("VERDICT_NO_FAULT_BODY", checked=ctx.join(checked))
         if checked
-        else ctx.t("VERDICT_NO_FAULT_BODY_NOTHING_CHECKED")
+        else ctx.t(
+            "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED_EV"
+            if ctx.electric
+            else "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED"
+        )
     )
     if not_checked and checked:
         description = (
@@ -798,26 +836,35 @@ def _conditions(
     )
     sensors = ", ".join(ctx.location(location) for location in analysis["sensor_locations"])
     speeds = analysis["speed_stats"]
-    return (
+    references = [
+        Fact(ctx.t("COND_POWERTRAIN"), ctx.t(_powertrain_key(conditions))),
         Fact(ctx.t("COND_TIRE"), _with_provenance(ctx, tire, conditions["tire_provenance"])),
         Fact(
-            ctx.t("COND_FINAL_DRIVE"),
+            ctx.t("COND_FINAL_DRIVE_EV" if ctx.electric else "COND_FINAL_DRIVE"),
             _with_provenance(
                 ctx,
                 ctx.num(final_drive, 2) if final_drive is not None else None,
                 conditions["final_drive_provenance"],
             ),
         ),
-        Fact(
-            ctx.t("COND_TOP_GEAR"),
-            _with_provenance(
-                ctx,
-                ctx.num(gear, 2) if gear is not None else None,
-                conditions["gear_ratio_provenance"],
-            ),
-        ),
-        Fact(ctx.t("COND_SPEED_SOURCE"), speed_source),
-        Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])),
+    ]
+    # An EV has one fixed reduction and no engine: no top gear and no engine RPM.
+    if not ctx.electric:
+        references.append(
+            Fact(
+                ctx.t("COND_TOP_GEAR"),
+                _with_provenance(
+                    ctx,
+                    ctx.num(gear, 2) if gear is not None else None,
+                    conditions["gear_ratio_provenance"],
+                ),
+            )
+        )
+    references.append(Fact(ctx.t("COND_SPEED_SOURCE"), speed_source))
+    if not ctx.electric:
+        references.append(Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])))
+    return (
+        *references,
         Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
         Fact(ctx.t("COND_PHASES"), phases or unknown),
         Fact(
@@ -826,6 +873,17 @@ def _conditions(
             or ctx.t("GUIDED_NONE"),
         ),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
+    )
+
+
+def _powertrain_key(conditions: TestConditions) -> str:
+    """The car's powertrain with what it means for the checks (PHEV: was the engine on?)."""
+    fuel_type = conditions["fuel_type"]
+    if fuel_type == "PHEV":
+        measured = conditions["rpm_source"] == "measured"
+        return "POWERTRAIN_PHEV_MEASURED" if measured else "POWERTRAIN_PHEV_ESTIMATED"
+    return {"EV": "POWERTRAIN_EV", "ICE": "POWERTRAIN_ICE"}.get(
+        fuel_type or "", "POWERTRAIN_UNKNOWN"
     )
 
 
@@ -843,7 +901,7 @@ def _worksheet_row(ctx: _Ctx, row: OrderFindingRow, *, diagnosed: bool) -> Works
     hz, speed = row["frequency_hz"], row["reference_speed_kmh"]
     presence = row["presence_ratio"]
     return WorksheetRow(
-        order=f"{code} - {ctx.t(f'ORDER_{code}')}",
+        order=f"{code} - {ctx.t(ctx.order_key(code))}",
         frequency=(
             f"{ctx.hz(hz)} @ {ctx.kmh(speed)}"
             if hz is not None and speed is not None
@@ -863,7 +921,7 @@ def _worksheet_empty(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
         return None
     if diagnosis["verdict"] != "no_fault" and diagnosis["frequency_hz"] is not None:
         return ctx.t("WS_PEAK_ONLY", hz=ctx.hz(diagnosis["frequency_hz"]))
-    return ctx.t("WS_NONE")
+    return ctx.t("WS_NONE_EV" if ctx.electric else "WS_NONE")
 
 
 def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
@@ -934,10 +992,13 @@ def _speed_chart(ctx: _Ctx, diagnosis: DiagnosisPayload) -> SpeedChart | None:
 def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     lines: list[str] = []
     for check in diagnosis["source_checks"]:
-        key = _source_key(check["source"])
+        key = ctx.source_key(check["source"])
         if key is None or check["status"] == "candidate":
             continue
         reason = check["reason"] or ""
+        if check["status"] == "not_applicable":
+            lines.append(f"{ctx.t('SOURCE_COMBUSTION_ENGINE')}: {ctx.t('NOT_APPLICABLE_ELECTRIC')}")
+            continue
         if check["status"] == "not_testable":
             detail = ctx.t(_NOT_TESTABLE_KEYS[reason])
         elif check["status"] == "ruled_out_estimated":
@@ -956,7 +1017,7 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
         return (ctx.t("SHOP_NO_FAULT"),)
     if verdict == "weak_evidence":
         return (ctx.t("SHOP_WEAK"),)
-    key = _source_key(diagnosis["source"])
+    key = ctx.source_key(diagnosis["source"])
     if key is None:
         return (ctx.t("SHOP_OTHER", zone=ctx.zone(diagnosis)),)
     lines = [ctx.t(line) for line in _SHOP_KEYS[key]]

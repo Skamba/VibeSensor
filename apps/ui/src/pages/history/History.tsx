@@ -248,6 +248,11 @@ function Checks(props: { checks: ChecksModel }) {
         tone="not-checked"
       />
       <CheckList
+        title={checks.notApplicableTitle}
+        lines={checks.notApplicable}
+        tone="not-applicable"
+      />
+      <CheckList
         title={checks.referencesTitle}
         lines={checks.references}
         tone="references"

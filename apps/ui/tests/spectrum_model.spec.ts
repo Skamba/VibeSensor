@@ -40,6 +40,7 @@ const bands = orderBands(
       { key: "broken", center_hz: 0, tolerance: 0.1 },
     ],
   },
+  null,
   t,
 );
 
@@ -68,7 +69,7 @@ describe("order bands", () => {
         [engineLabel, 27, 33],
       ],
     );
-    expect(orderBands(null, t)).toEqual([]);
+    expect(orderBands(null, null, t)).toEqual([]);
   });
 
   test("engine bands say whether the RPM is measured or assumes top gear", () => {
@@ -83,6 +84,7 @@ describe("order bands", () => {
           { key: "driveshaft_1x", center_hz: 30, tolerance: 0.1 },
         ],
       },
+      "PHEV",
       t,
     );
     expect(measured.map((band) => band.label)).toEqual([
@@ -91,6 +93,28 @@ describe("order bands", () => {
         basis: "bands.basis.measured",
       }),
       "bands.driveshaft_1x",
+    ]);
+  });
+
+  test("an EV's driveline band is its motor and it has no engine bands", () => {
+    const ev = orderBands(
+      {
+        basis_speed_source: null,
+        wheel: { rpm: 600, mode: null, reason: null },
+        driveshaft: { rpm: 5400, mode: null, reason: null },
+        engine: { rpm: 5400, mode: "calculated", reason: null },
+        order_bands: [
+          { key: "wheel_1x", center_hz: 10, tolerance: 0.1 },
+          { key: "driveshaft_engine_1x", center_hz: 90, tolerance: 0.1 },
+          { key: "engine_2x", center_hz: 180, tolerance: 0.1 },
+        ],
+      },
+      "EV",
+      t,
+    );
+    expect(ev.map((band) => band.label)).toEqual([
+      "bands.wheel_1x",
+      "bands.motor_1x",
     ]);
   });
 
@@ -125,6 +149,7 @@ describe("band status", () => {
       bandStatus(
         {
           carActive: false,
+          fuelType: null,
           speeds: null,
           speedMps: 20,
           gpsReceiverMissing: false,
@@ -138,6 +163,7 @@ describe("band status", () => {
     const status = bandStatus(
       {
         carActive: true,
+        fuelType: null,
         speeds: speeds({
           wheel: { rpm: 600, mode: null, reason: null },
           driveshaft: { rpm: null, mode: null, reason: "missing_final_drive" },
@@ -160,13 +186,42 @@ describe("band status", () => {
     ]);
   });
 
+  test("an EV lists its motor and no engine family", () => {
+    const status = bandStatus(
+      {
+        carActive: true,
+        fuelType: "EV",
+        speeds: speeds({
+          wheel: { rpm: 600, mode: null, reason: null },
+          driveshaft: { rpm: 5400, mode: null, reason: null },
+          engine: { rpm: null, mode: null, reason: "missing_gear_ratio" },
+        }),
+        speedMps: 20,
+        gpsReceiverMissing: false,
+      },
+      t,
+    );
+    expect(status.families.map((family) => [family.key, family.label])).toEqual(
+      [
+        ["wheel", "spectrum.bands.family.wheel"],
+        ["driveline", "spectrum.bands.family.motor"],
+      ],
+    );
+  });
+
   test("without speed it says why: parked, no speed, or no GPS receiver", () => {
     const waiting = speeds({
       wheel: { rpm: null, mode: null, reason: "speed_unavailable" },
     });
     const message = (speedMps: number | null, gpsReceiverMissing: boolean) =>
       bandStatus(
-        { carActive: true, speeds: waiting, speedMps, gpsReceiverMissing },
+        {
+          carActive: true,
+          fuelType: null,
+          speeds: waiting,
+          speedMps,
+          gpsReceiverMissing,
+        },
         t,
       ).message;
     expect(message(0, false)).toBe("spectrum.bands.need_motion");
@@ -179,6 +234,7 @@ describe("band status", () => {
         bandStatus(
           {
             carActive: true,
+            fuelType: null,
             speeds: null,
             speedMps: null,
             gpsReceiverMissing: false,

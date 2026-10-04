@@ -509,7 +509,7 @@ describe("capability line", () => {
     ]);
 
   test("is absent without an active car", () => {
-    expect(capabilityModel(null, "80 km/h", null, t)).toBeNull();
+    expect(capabilityModel(null, null, "80 km/h", null, t)).toBeNull();
   });
 
   test("marks tested, estimated and untested families with their fix", () => {
@@ -519,6 +519,7 @@ describe("capability line", () => {
         driveline: "missing_final_drive",
         engine: "estimated_top_gear",
       },
+      null,
       "80 km/h",
       null,
       t,
@@ -538,12 +539,52 @@ describe("capability line", () => {
       marks(
         capabilityModel(
           { wheel: "ok", driveline: "ok", engine: "measured" },
+          null,
           "80 km/h",
           null,
           t,
         ),
       )?.map(([, mark]) => mark),
     ).toEqual(["ok", "ok", "ok"]);
+  });
+
+  test("an EV's driveline is its motor and its engine is not applicable", () => {
+    const model = capabilityModel(
+      { wheel: "ok", driveline: "ok", engine: "not_applicable" },
+      "EV",
+      "80 km/h",
+      null,
+      t,
+    );
+    expect(
+      model?.items.map((item) => [item.label, item.mark, item.note, item.fix]),
+    ).toEqual([
+      ["capabilities.family.wheel", "ok", null, null],
+      ["capabilities.family.motor", "ok", null, null],
+      [
+        "capabilities.family.combustion_engine",
+        "na",
+        "capabilities.engine.not_applicable",
+        null,
+      ],
+    ]);
+    // A plug-in hybrid's estimate points to OBD-II, which shows when it ran.
+    expect(
+      capabilityModel(
+        { wheel: "ok", driveline: "ok", engine: "hybrid_estimated" },
+        "PHEV",
+        "80 km/h",
+        null,
+        t,
+      )?.items[2],
+    ).toMatchObject({
+      label: "capabilities.family.engine",
+      mark: "caveat",
+      fix: {
+        target: "speed_source",
+        label: "dashboard.capabilities.fix.engine.hybrid_estimated",
+      },
+    });
   });
 
   test("a typed-in speed tests nothing for sure and says so once", () => {
@@ -553,6 +594,7 @@ describe("capability line", () => {
         driveline: "manual_speed",
         engine: "manual_speed",
       },
+      null,
       "80 km/h",
       null,
       t,
@@ -573,6 +615,7 @@ describe("capability line", () => {
           driveline: "manual_speed",
           engine: "manual_speed",
         },
+        null,
         "80 km/h",
         "No GPS receiver found",
         t,
@@ -593,12 +636,16 @@ describe("guidedTestModel", () => {
     model.steps.map((step) => step.state);
 
   test("only shows while a run records", () => {
-    expect(guidedTestModel(IDLE_STATUS, "kmh", false, t).visible).toBe(false);
-    expect(guidedTestModel(recordingRun, "kmh", false, t).visible).toBe(true);
+    expect(guidedTestModel(IDLE_STATUS, "kmh", false, null, t).visible).toBe(
+      false,
+    );
+    expect(guidedTestModel(recordingRun, "kmh", false, null, t).visible).toBe(
+      true,
+    );
   });
 
   test("offers to start with the sweep before any step", () => {
-    const model = guidedTestModel(recordingRun, "kmh", false, t);
+    const model = guidedTestModel(recordingRun, "kmh", false, null, t);
 
     expect(states(model)).toEqual(["todo", "todo", "todo"]);
     expect(model.action).toEqual({
@@ -617,6 +664,7 @@ describe("guidedTestModel", () => {
       },
       "kmh",
       false,
+      null,
       t,
     );
     expect(states(hold)).toEqual(["done", "current", "todo"]);
@@ -634,6 +682,7 @@ describe("guidedTestModel", () => {
       },
       "kmh",
       false,
+      null,
       t,
     );
     expect(states(coast)).toEqual(["done", "done", "current"]);
@@ -651,6 +700,7 @@ describe("guidedTestModel", () => {
       },
       "kmh",
       false,
+      null,
       t,
     );
 
@@ -664,6 +714,7 @@ describe("guidedTestModel", () => {
       { ...recordingRun, run_id: "run-2", guided_phases_completed: [] },
       "kmh",
       false,
+      null,
       t,
     );
 
@@ -671,8 +722,42 @@ describe("guidedTestModel", () => {
     expect(model.action?.phase).toBe("sweep");
   });
 
+  test("an EV skips the neutral coast-down and the top-gear advice", async () => {
+    const model = guidedTestModel(
+      {
+        ...recordingRun,
+        guided_phase: "hold",
+        guided_phases_completed: ["sweep"],
+      },
+      "kmh",
+      false,
+      "EV",
+      activeT,
+    );
+    expect(model.steps.map((step) => step.phase)).toEqual(["sweep", "hold"]);
+    expect(model.action).toEqual({
+      label: "Finish guided test",
+      phase: null,
+    });
+    expect(model.hint).toContain("no coast-down step");
+    for (const step of model.steps) {
+      expect(step.instruction).not.toMatch(/top gear|neutral|\{\w+\}/);
+    }
+    expect(
+      guidedTestModel(
+        { ...recordingRun, guided_phases_completed: ["sweep", "hold"] },
+        "kmh",
+        false,
+        "EV",
+        t,
+      ).finished,
+    ).toBe(true);
+  });
+
   test("disables the button while a request is in flight", () => {
-    expect(guidedTestModel(recordingRun, "kmh", true, t).disabled).toBe(true);
+    expect(guidedTestModel(recordingRun, "kmh", true, null, t).disabled).toBe(
+      true,
+    );
   });
 
   test.each([
@@ -705,7 +790,7 @@ describe("guidedTestModel", () => {
     async ({ language, unit, sweep, coast }) => {
       await setLanguage(language);
       try {
-        const model = guidedTestModel(recordingRun, unit, false, activeT);
+        const model = guidedTestModel(recordingRun, unit, false, null, activeT);
         const [sweepStep, holdStep, coastStep] = model.steps;
         expect(sweepStep.instruction).toContain(sweep);
         expect(coastStep.instruction).toContain(coast);

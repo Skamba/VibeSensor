@@ -228,7 +228,17 @@ the PDF both show:
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a
     car-library ratio with `family_default` / `unverified` confidence, else
-    `top_gear_assumed` for engine RPM estimated from speed.
+    `engine_may_be_off` for a plug-in hybrid (`fuel_type` `PHEV`) whose engine
+    RPM was estimated, else `top_gear_assumed` for engine RPM estimated from
+    speed.
+  - `not_applicable` (`electric_car`): the engine of an EV (`fuel_type`
+    `EV`). An EV's motor turns at the driveline order (wheel speed ×
+    reduction ratio), so the driveline check is its motor check; no E1/E2
+    markers are drawn and `speed_dependence` stays `null` (no neutral
+    decouples the motor).
+  - With measured RPM, a 0 rpm sample means the engine was off: it is not
+    replaced by an estimate. If the engine ran in fewer than 35 % of the
+    measured samples, the engine is `not_testable` with `engine_not_running`.
   - `ruled_out` (`no_matching_order`): no match on references the user gave
     or the library verified, and for the engine only with measured RPM.
   - Provenance is the car's recorded field confidence, `user_confirmed` when

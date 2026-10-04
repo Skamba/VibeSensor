@@ -21,12 +21,13 @@ summary's `diagnosis` block (`d` below; contract in
 | Next step, fallback, cheap check | `d.order_code`, `d.source`, `d.zone`, `d.confidence_level` (Moderate adds the cheap check), `d.speed_dependence` (a done coast-down replaces the neutral check) | Fixed texts per order or source; a wheel fault on all four wheels gets the neutral coast check instead of an axle swap; a wheel/tire fault whose zone is not a wheel (cabin-only sensors) names no wheel and asks for a sensor at each wheel |
 | Check the fix | `d.order_code`, strongest `d.location_amplitudes[0].amplitude_mg` | Re-run instruction + today's level |
 | Car diagram | `d.location_amplitudes` (ratio → dot size), `d.zone` | Corner, axle (wheel/tire: two corners of that axle near the top), engine bay, or centre tunnel |
+| EV wording | `d.conditions.fuel_type` `EV` | The driveline source reads "Electric motor" (P1/P2 are once/twice per motor revolution), a driveline zone no axle dominates reads "the drive unit", the engine reads "not applicable", and the cheap check is a repeat drive instead of a neutral coast |
 
 ## Page 2 (workshop)
 
 | Report element | Source | Format |
 |---|---|---|
-| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, final drive and top gear with `tire_provenance` / `final_drive_provenance` / `gear_ratio_provenance`; `fuel_type` is not printed yet), `metadata.analysis_settings` tire size, `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; `3.15 (car library, model-family estimate)`, `not provided` for a missing reference; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
+| Test conditions | `d.conditions` (speed source, RPM source, tire circumference, final drive and top gear with `tire_provenance` / `final_drive_provenance` / `gear_ratio_provenance`; `fuel_type` as the first "Powertrain" fact, which for an EV says the motor's electrical and gear-mesh orders are not analysed and replaces the final drive with "Reduction ratio" and drops top gear and engine RPM), `metadata.analysis_settings` tire size, `phase_info.phase_pcts`, `d.guided_phases`, `sensor_locations` | Facts grid; `3.15 (car library, model-family estimate)`, `not provided` for a missing reference; speed source as GPS, OBD, entered by hand, or entered by hand as the fallback (unknown slugs read "unknown") |
 | Findings table | `d.order_findings[]` | `T1 - once per wheel turn`, `12.1 Hz @ 85 km/h`, km/h range, phases, presence %, location, level (the diagnosed row carries `d.confidence_level`, Weak when the coast-down contradicts it) |
 | Amplitude per location | `d.location_amplitudes[]` | `250 mg (34 dB)`, ratio `1.0x`; "not detected" when absent |
 | Spectrum | `d.spectrum` (recurring peaks in mg over the moving samples, floor, order markers at the window speed; E1/E2 from the median measured RPM when RPM was measured) | Stems + dashed floor + order lines |

@@ -147,6 +147,10 @@
     "en": "the engine or its mounts ({zone})",
     "nl": "de motor of de motorsteunen ({zone})"
   },
+  "CAUSE_MOTOR": {
+    "en": "the electric motor or its reduction gear ({zone})",
+    "nl": "de elektromotor of de reductiekast ({zone})"
+  },
   "CAUSE_OTHER": {
     "en": "a vibration concentrated at {zone}",
     "nl": "een trilling rond {zone}"
@@ -167,6 +171,10 @@
     "en": "against an estimated final drive, top gear only",
     "nl": "met een geschatte eindoverbrenging, alleen in de hoogste versnelling"
   },
+  "CHECKED_HEDGE_ENGINE_MAY_BE_OFF": {
+    "en": "may have been off",
+    "nl": "kan uit hebben gestaan"
+  },
   "CHECKED_HEDGE_ENGINE_TOP_GEAR": {
     "en": "top gear only",
     "nl": "alleen in de hoogste versnelling"
@@ -182,6 +190,10 @@
   "CHECKED_LIMITED_ENGINE_FINAL_DRIVE": {
     "en": "checked only against a car-library estimate of the final drive, in top gear, so not conclusive — enter the exact ratio if you know it, or connect an OBD-II adapter to measure RPM.",
     "nl": "alleen gecontroleerd met een schatting van de eindoverbrenging uit de autobibliotheek, in de hoogste versnelling, dus niet doorslaggevend — vul de exacte waarde in als je die weet, of sluit een OBD-II-adapter aan om het toerental te meten."
+  },
+  "CHECKED_LIMITED_ENGINE_MAY_BE_OFF": {
+    "en": "a plug-in hybrid's engine may have been off while it drove electrically, and RPM was estimated for top gear, so not conclusive — an OBD-II adapter shows when the engine runs and measures its RPM.",
+    "nl": "de motor van een plug-in hybride kan uit hebben gestaan terwijl hij elektrisch reed, en het toerental is geschat voor de hoogste versnelling, dus niet doorslaggevend — een OBD-II-adapter laat zien wanneer de motor draait en meet het toerental."
   },
   "CHECKED_LIMITED_ENGINE_TOP_GEAR": {
     "en": "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
@@ -211,6 +223,10 @@
     "en": "Final drive",
     "nl": "Eindoverbrenging"
   },
+  "COND_FINAL_DRIVE_EV": {
+    "en": "Reduction ratio (final drive)",
+    "nl": "Reductieverhouding (eindoverbrenging)"
+  },
   "COND_GUIDED": {
     "en": "Guided test",
     "nl": "Begeleide test"
@@ -218,6 +234,10 @@
   "COND_PHASES": {
     "en": "Driving covered",
     "nl": "Gereden"
+  },
+  "COND_POWERTRAIN": {
+    "en": "Powertrain",
+    "nl": "Aandrijving"
   },
   "COND_RPM": {
     "en": "Engine RPM",
@@ -263,6 +283,10 @@
     "en": "At the speed where you feel it, shift to neutral and coast. If the vibration stays, it follows road speed (driveline or wheels); if it stops, it follows the engine.",
     "nl": "Schakel bij de snelheid waarop je het voelt naar neutraal en rol uit. Blijft de trilling, dan volgt hij de rijsnelheid (aandrijflijn of wielen); stopt hij, dan volgt hij de motor."
   },
+  "CONFIRM_REPEAT_EV": {
+    "en": "Record the same drive again. An electric car cannot coast in neutral, so a repeat that shows the same rhythm in the same place is the cheap check.",
+    "nl": "Meet dezelfde rit nog een keer. Een elektrische auto kan niet in neutraal uitrollen, dus een herhaling met hetzelfde ritme op dezelfde plek is de goedkope controle."
+  },
   "CONFIRM_WHEEL": {
     "en": "Swap {zone} to the other side of the car and record again. If the vibration moves with it, it is that wheel or tire.",
     "nl": "Wissel {zone} om naar de andere kant van de auto en meet opnieuw. Verhuist de trilling mee, dan is het dat wiel of die band."
@@ -278,6 +302,10 @@
   "COULDNT_TEST_ENGINE_DRIVE": {
     "en": "no final-drive ratio — connect an OBD-II adapter to measure RPM, or add the final drive and top-gear ratio to the car (optional).",
     "nl": "geen eindoverbrenging — sluit een OBD-II-adapter aan om het toerental te meten, of voeg eindoverbrenging en hoogste versnelling toe aan de auto (optioneel)."
+  },
+  "COULDNT_TEST_ENGINE_NOT_RUNNING": {
+    "en": "the engine was off for most of the drive (OBD-II RPM) — to check it, record again with the engine running, for example with the battery-hold or charge mode on.",
+    "nl": "de motor stond het grootste deel van de rit uit (OBD-II-toerental) — meet opnieuw met draaiende motor om hem te controleren, bijvoorbeeld met de stand voor accu vasthouden of opladen aan."
   },
   "COULDNT_TEST_ENGINE_TIRE": {
     "en": "no tire size — connect an OBD-II adapter to measure RPM, or add the tire size to the car.",
@@ -507,6 +535,10 @@
     "en": "Next step",
     "nl": "Volgende stap"
   },
+  "NOT_APPLICABLE_ELECTRIC": {
+    "en": "not applicable: an electric car has no combustion engine",
+    "nl": "niet van toepassing: een elektrische auto heeft geen verbrandingsmotor"
+  },
   "NOT_COVERED": {
     "en": "Not covered",
     "nl": "Niet gedekt"
@@ -539,6 +571,10 @@
     "en": "not testable: no RPM or gear ratio",
     "nl": "niet te testen: geen toerental of versnelling"
   },
+  "NOT_TESTABLE_ENGINE_NOT_RUNNING": {
+    "en": "not testable: OBD-II RPM shows the engine was off for most of the drive",
+    "nl": "niet te testen: het OBD-II-toerental laat zien dat de motor het grootste deel van de rit uit stond"
+  },
   "NOT_TESTABLE_MANUAL_SPEED": {
     "en": "not testable: the speed was entered by hand, so order matching only holds at exactly that speed",
     "nl": "niet te testen: de snelheid is handmatig ingevoerd, dus ordes kloppen alleen bij precies die snelheid"
@@ -567,9 +603,17 @@
     "en": "once per propshaft turn",
     "nl": "één keer per omwenteling van de cardanas"
   },
+  "ORDER_P1_EV": {
+    "en": "once per motor revolution",
+    "nl": "één keer per omwenteling van de elektromotor"
+  },
   "ORDER_P2": {
     "en": "twice per propshaft turn",
     "nl": "twee keer per omwenteling van de cardanas"
+  },
+  "ORDER_P2_EV": {
+    "en": "twice per motor revolution",
+    "nl": "twee keer per omwenteling van de elektromotor"
   },
   "ORDER_T1": {
     "en": "once per wheel turn",
@@ -602,6 +646,26 @@
   "PHASE_SHARE": {
     "en": "{phase} {share}",
     "nl": "{phase} {share}"
+  },
+  "POWERTRAIN_EV": {
+    "en": "electric (EV): the motor is checked at once and twice its speed (wheel speed × reduction ratio); its electrical and gear-mesh orders are not analysed",
+    "nl": "elektrisch (EV): de motor wordt gecontroleerd op één en twee keer zijn toerental (wielsnelheid × reductieverhouding); zijn elektrische en tandwielordes worden niet geanalyseerd"
+  },
+  "POWERTRAIN_ICE": {
+    "en": "combustion engine",
+    "nl": "verbrandingsmotor"
+  },
+  "POWERTRAIN_PHEV_ESTIMATED": {
+    "en": "plug-in hybrid (PHEV): the engine may be off while driving electrically; without OBD-II RPM the engine check is not conclusive",
+    "nl": "plug-in hybride (PHEV): de motor kan uit staan bij elektrisch rijden; zonder OBD-II-toerental is de motorcontrole niet doorslaggevend"
+  },
+  "POWERTRAIN_PHEV_MEASURED": {
+    "en": "plug-in hybrid (PHEV): the engine may be off while driving electrically, so engine orders were checked only while OBD-II RPM showed it running",
+    "nl": "plug-in hybride (PHEV): de motor kan uit staan bij elektrisch rijden, dus motorordes zijn alleen gecontroleerd terwijl het OBD-II-toerental liet zien dat hij draaide"
+  },
+  "POWERTRAIN_UNKNOWN": {
+    "en": "not provided; analysed as a car with a combustion engine",
+    "nl": "niet opgegeven; geanalyseerd als auto met verbrandingsmotor"
   },
   "PROVENANCE_FAMILY_DEFAULT": {
     "en": "car library, model-family estimate",
@@ -700,12 +764,12 @@
     "nl": "Er waren weinig sensoren actief, dus de locatie is minder zeker."
   },
   "QUALITY_SPEED_VARIATION_PASS": {
-    "en": "The speed was usable for matching wheel, propshaft and engine orders.",
-    "nl": "De snelheid was bruikbaar om wiel-, cardanas- en motororden te herkennen."
+    "en": "The speed was usable for matching the wheel and drivetrain orders.",
+    "nl": "De snelheid was bruikbaar om de ordes van wielen en aandrijving te herkennen."
   },
   "QUALITY_SPEED_VARIATION_WARN": {
-    "en": "The speed could not tell wheel, propshaft and engine orders apart.",
-    "nl": "Met deze snelheid waren wiel-, cardanas- en motororden niet uit elkaar te houden."
+    "en": "The speed could not tell the wheel and drivetrain orders apart.",
+    "nl": "Met deze snelheid waren de ordes van wielen en aandrijving niet uit elkaar te houden."
   },
   "QUALITY_TITLE": {
     "en": "Data quality and traceability",
@@ -803,6 +867,10 @@
     "en": "no engine-order vibration found",
     "nl": "geen trilling op motororde gevonden"
   },
+  "RULED_OUT_ENGINE_MAY_BE_OFF": {
+    "en": "no match with the engine orders estimated for top gear, but a plug-in hybrid's engine may have been off; not conclusive",
+    "nl": "geen overeenkomst met de motorordes geschat voor de hoogste versnelling, maar de motor van een plug-in hybride kan uit hebben gestaan; niet doorslaggevend"
+  },
   "RULED_OUT_ENGINE_TOP_GEAR": {
     "en": "no match with the engine orders estimated for top gear; lower gears were not checked",
     "nl": "geen overeenkomst met de motorordes geschat voor de hoogste versnelling; lagere versnellingen zijn niet gecontroleerd"
@@ -814,6 +882,10 @@
   "RULED_OUT_ESTIMATED_TOP_GEAR": {
     "en": "no match with the estimated top-gear ratio (car-library estimate, top gear assumed); not conclusive",
     "nl": "geen overeenkomst met de geschatte hoogste versnelling (schatting uit de autobibliotheek, hoogste versnelling aangenomen); niet doorslaggevend"
+  },
+  "RULED_OUT_MOTOR": {
+    "en": "no vibration found at once or twice per motor revolution",
+    "nl": "geen trilling gevonden van één of twee keer per omwenteling van de elektromotor"
   },
   "RULED_OUT_STAYED_IN_NEUTRAL": {
     "en": "ruled out: the vibration kept going while coasting in neutral (it follows road speed)",
@@ -955,6 +1027,18 @@
     "en": "Compare E1 and E2 under load: E1 points to a rotating imbalance (crank pulley, flywheel, torque converter); E2 to firing pulses and mounts on a 4-cylinder.",
     "nl": "Vergelijk E1 en E2 onder belasting: E1 wijst op een draaiende onbalans (krukaspoelie, vliegwiel, koppelomvormer); E2 op ontstekingspulsen en steunen bij een 4-cilinder."
   },
+  "SHOP_MOTOR_BALANCE": {
+    "en": "Check the motor rotor, the reduction gear bearings and the output shafts for imbalance or play.",
+    "nl": "Controleer de rotor, de lagers van de reductiekast en de uitgaande assen op onbalans of speling."
+  },
+  "SHOP_MOTOR_MOUNTS": {
+    "en": "Inspect the drive unit (motor) mounts and their bushings.",
+    "nl": "Controleer de steunen van de aandrijfeenheid (elektromotor) en hun rubbers."
+  },
+  "SHOP_MOTOR_ORDERS": {
+    "en": "P1 and P2 are once and twice per motor revolution (wheel speed × reduction ratio); the motor's electrical and gear-mesh orders were not analysed.",
+    "nl": "P1 en P2 zijn één en twee keer per omwenteling van de elektromotor (wielsnelheid × reductieverhouding); elektrische en tandwielordes van de motor zijn niet geanalyseerd."
+  },
   "SHOP_NO_FAULT": {
     "en": "No repair is indicated by this test.",
     "nl": "Deze test wijst niet op een reparatie."
@@ -987,6 +1071,10 @@
     "en": "Don't replace parts based on this report alone; record the test again first.",
     "nl": "Vervang geen onderdelen op basis van alleen dit rapport; meet eerst opnieuw."
   },
+  "SOURCE_COMBUSTION_ENGINE": {
+    "en": "Combustion engine",
+    "nl": "Verbrandingsmotor"
+  },
   "SOURCE_DRIVELINE": {
     "en": "Driveline",
     "nl": "Aandrijflijn"
@@ -1002,6 +1090,14 @@
   "SOURCE_ENGINE_NOUN": {
     "en": "engine",
     "nl": "motor"
+  },
+  "SOURCE_MOTOR": {
+    "en": "Electric motor",
+    "nl": "Elektromotor"
+  },
+  "SOURCE_MOTOR_NOUN": {
+    "en": "electric motor",
+    "nl": "elektromotor"
   },
   "SOURCE_WHEEL": {
     "en": "Wheels/tires",
@@ -1083,6 +1179,14 @@
     "en": "Have the propshaft checked for runout and balance, and the joints (U-joints or flex discs) for play.",
     "nl": "Laat de cardanas controleren op slingering en balans, en de koppelingen (kruiskoppelingen of hardyschijven) op speling."
   },
+  "STEP_P1_EV": {
+    "en": "Have the drive unit checked: the motor mounts for wear, and the motor rotor and output shafts for balance.",
+    "nl": "Laat de aandrijfeenheid controleren: de steunen van de elektromotor op slijtage, en de rotor en de uitgaande assen op balans."
+  },
+  "STEP_P1_EV_FALLBACK": {
+    "en": "have the reduction gear bearings checked.",
+    "nl": "laat de lagers van de reductiekast controleren."
+  },
   "STEP_P1_FALLBACK": {
     "en": "have the driveline working angles and the centre bearing checked.",
     "nl": "laat de werkhoeken van de aandrijflijn en het middenlager controleren."
@@ -1090,6 +1194,14 @@
   "STEP_P2": {
     "en": "Have the driveline joints and their working angles checked; a twice-per-turn shake points to joint angle.",
     "nl": "Laat de koppelingen van de aandrijflijn en hun werkhoeken controleren; twee keer per omwenteling wijst op de hoek van een koppeling."
+  },
+  "STEP_P2_EV": {
+    "en": "Have the motor mounts and the alignment of the drive unit checked.",
+    "nl": "Laat de steunen en de uitlijning van de aandrijfeenheid controleren."
+  },
+  "STEP_P2_EV_FALLBACK": {
+    "en": "have the motor rotor checked for balance.",
+    "nl": "laat de rotor van de elektromotor op balans controleren."
   },
   "STEP_P2_FALLBACK": {
     "en": "have the propshaft checked for runout and balance.",
@@ -1259,6 +1371,10 @@
     "en": "No vibration stood out, but this run could not check the wheels, driveline or engine against their rhythms, so it does not show that they are fine.",
     "nl": "Er viel geen trilling op, maar deze rit kon wielen, aandrijflijn en motor niet aan hun ritme toetsen, dus hij laat niet zien dat ze in orde zijn."
   },
+  "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED_EV": {
+    "en": "No vibration stood out, but this run could not check the wheels or the electric motor against their rhythms, so it does not show that they are fine.",
+    "nl": "Er viel geen trilling op, maar deze rit kon wielen en elektromotor niet aan hun ritme toetsen, dus hij laat niet zien dat ze in orde zijn."
+  },
   "VERDICT_NO_FAULT_NOT_CHECKED": {
     "en": "Not checked, so not shown to be fine: {sources}.",
     "nl": "Niet gecontroleerd, dus niet aangetoond dat het in orde is: {sources}."
@@ -1351,6 +1467,10 @@
     "en": "No vibration that follows wheel, propshaft or engine speed was found.",
     "nl": "Geen trilling gevonden die het toerental van wiel, cardanas of motor volgt."
   },
+  "WS_NONE_EV": {
+    "en": "No vibration that follows wheel or motor speed was found.",
+    "nl": "Geen trilling gevonden die het toerental van wiel of elektromotor volgt."
+  },
   "WS_ORDER": {
     "en": "Order",
     "nl": "Orde"
@@ -1378,6 +1498,10 @@
   "ZONE_DRIVESHAFT_TUNNEL": {
     "en": "the centre tunnel",
     "nl": "de middentunnel"
+  },
+  "ZONE_DRIVE_UNIT_EV": {
+    "en": "the drive unit",
+    "nl": "de aandrijfeenheid"
   },
   "ZONE_ENGINE_BAY": {
     "en": "the engine bay",

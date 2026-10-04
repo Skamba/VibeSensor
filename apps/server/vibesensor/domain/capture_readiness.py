@@ -24,12 +24,14 @@ type DrivelineCapability = Literal[
 type EngineCapability = Literal[
     "measured",
     "estimated_top_gear",
+    "hybrid_estimated",
     "estimated_ratios",
     "missing_tire",
     "missing_final_drive",
     "missing_top_gear",
     "missing_ratios",
     "manual_speed",
+    "not_applicable",
 ]
 
 
@@ -67,6 +69,9 @@ class CaptureCapabilities:
     reference is named: ``missing_tire`` first, then ``missing_final_drive``,
     ``missing_top_gear``, or ``missing_ratios`` for both. A typed-in speed makes
     every family ``manual_speed``: order matching then holds only at that speed.
+    An EV's engine is ``not_applicable`` (its motor is the driveline order); a
+    plug-in hybrid's estimated engine check is ``hybrid_estimated``, because the
+    engine may be off while it drives electrically.
     """
 
     wheel: WheelCapability

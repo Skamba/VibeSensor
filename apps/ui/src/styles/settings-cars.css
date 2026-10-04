@@ -215,7 +215,8 @@
 .car-capabilities li[data-mark="caveat"] .car-capabilities__mark {
   color: var(--pill-warn-text);
 }
-.car-capabilities li[data-mark="no"] .car-capabilities__mark {
+.car-capabilities li[data-mark="no"] .car-capabilities__mark,
+.car-capabilities li[data-mark="na"] .car-capabilities__mark {
   color: var(--md-sys-color-on-surface-variant);
 }
 .car-capabilities__text {

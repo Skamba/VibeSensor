@@ -521,6 +521,22 @@ test("journey: a custom brand skips the library; ratios stay optional", async ({
   expect(server.libraryPaths).not.toContain("/api/car-library/types");
   expect(server.libraryPaths).not.toContain("/api/car-library/models");
   await page.locator("#wizTireSize").fill("225/45 R18");
+  // The library does not know this car, so the wizard asks its powertrain.
+  // An EV has no top gear and no engine to check.
+  await expect(page.locator("#wizGearRatio")).toBeVisible();
+  await page.locator("#wizPowertrain").selectOption("EV");
+  await expect(page.locator("#wizGearRatio")).toHaveCount(0);
+  await expect(page.locator('label[for="wizFinalDrive"]')).toContainText(
+    "Reduction ratio",
+  );
+  const capabilities = page.locator("#wizardCapabilities");
+  await expect(capabilities.locator('[data-family="engine"]')).toHaveAttribute(
+    "data-mark",
+    "na",
+  );
+  await expect(capabilities.locator('[data-family="driveline"]')).toContainText(
+    "Electric motor",
+  );
   await page.locator("#wizardManualAddBtn").click();
   await expect(page.locator("#appErrorBanner")).toContainText(
     "Failed to activate",
@@ -531,6 +547,7 @@ test("journey: a custom brand skips the library; ratios stay optional", async ({
   expect(server.posts[0]).toMatchObject({
     name: "Track Demo",
     type: "Coupe",
+    fuel_type: "EV",
     aspects: {
       tire_width_mm: 225,
       final_drive_ratio: null,

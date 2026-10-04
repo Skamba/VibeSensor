@@ -407,8 +407,14 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
           "no engine RPM — connect an OBD-II adapter, or add the top-gear ratio to the car (optional).",
       },
     ],
+    notApplicableTitle: "Not applicable",
+    notApplicable: [],
     referencesTitle: "Car references",
     references: [
+      {
+        label: "Powertrain",
+        detail: "not provided; analysed as a car with a combustion engine",
+      },
       {
         label: "Tire size",
         detail: "circumference 1.984 m (entered by you)",
@@ -432,7 +438,7 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
       "Niets viel op bij de controles die deze rit kon doen: wielen/banden en aandrijflijn (met een geschatte eindoverbrenging). Niet gecontroleerd, dus niet aangetoond dat het in orde is: motor.",
     );
     expect(dutch.checks.notCheckedTitle).toBe("Niet te controleren");
-    expect(dutch.checks.references[1]).toEqual({
+    expect(dutch.checks.references[2]).toEqual({
       label: "Eindoverbrenging",
       detail: "3.15 (autobibliotheek, schatting voor de modelreeks)",
     });
@@ -488,7 +494,7 @@ test("a fault run lists the matching source as checked and states the top-gear a
         "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
     },
   ]);
-  expect(insights.checks.references[3]).toEqual({
+  expect(insights.checks.references[4]).toEqual({
     label: "Engine RPM",
     detail: "not measured; estimated from speed assuming top gear",
   });
@@ -499,6 +505,133 @@ test("a fault run lists the matching source as checked and states the top-gear a
         "no final-drive ratio — add it to the car in Settings if you know it (optional).",
     },
   ]);
+});
+
+test("an EV run names its motor, calls the engine not applicable and skips gearbox rows", async () => {
+  const sourceChecks: SourceChecks = [
+    { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
+    { source: "driveline", status: "ruled_out", reason: "no_matching_order" },
+    { source: "engine", status: "not_applicable", reason: "electric_car" },
+  ];
+  const ev = { fuel_type: "EV", final_drive_ratio: 9.05 } as const;
+  const insights = checkedInsights("no_fault", sourceChecks, "en", ev);
+  expect(insights.primary?.explanation).toBe(
+    "Nothing stood out in the checks this run could make: wheels/tires and electric motor.",
+  );
+  expect(insights.checks.checked[1]).toEqual({
+    label: "Electric motor",
+    detail: "no vibration found at once or twice per motor revolution",
+  });
+  expect(insights.checks.notChecked).toEqual([]);
+  expect(insights.checks.notApplicable).toEqual([
+    {
+      label: "Combustion engine",
+      detail: "an electric car has no combustion engine",
+    },
+  ]);
+  expect(insights.checks.references.map((line) => line.label)).toEqual([
+    "Powertrain",
+    "Tire size",
+    "Reduction ratio (final drive)",
+  ]);
+  expect(insights.checks.references[0].detail).toContain(
+    "electrical and gear-mesh orders are not analysed",
+  );
+  // A run that checked nothing still never says "engine".
+  const nothing = checkedInsights(
+    "no_fault",
+    [
+      ...sourceChecks.slice(0, 2).map((check) => ({
+        ...check,
+        status: "not_testable" as const,
+        reason: "no_tire_reference" as const,
+      })),
+      sourceChecks[2],
+    ],
+    "en",
+    ev,
+  );
+  expect(nothing.primary?.explanation).toBe(
+    "No vibration stood out, but this run could not check the wheels or the electric motor against their rhythms, so it does not show that they are fine.",
+  );
+
+  await setLanguage("nl");
+  try {
+    const dutch = checkedInsights("no_fault", sourceChecks, "nl", ev);
+    expect(dutch.checks.checked[1].label).toBe("Elektromotor");
+    expect(dutch.checks.notApplicable[0].label).toBe("Verbrandingsmotor");
+  } finally {
+    await setLanguage("en");
+  }
+});
+
+test("an EV motor fault names the motor and drive unit, and its recording advice skips neutral", () => {
+  const insights = populatedInsights("run-011");
+  insights.diagnosis = makeDiagnosis({
+    verdict: "weak_evidence",
+    confidence_level: "weak",
+    finding_id: "finding-1",
+    source: "driveline",
+    zone: "driveshaft_tunnel",
+  });
+  insights.diagnosis.conditions.fuel_type = "EV";
+  const run = historyListRun("run-011");
+  const details = buildDetails(run, defaultDetail({ preview: insights }), f);
+  expect(details.insights).toMatchObject({
+    primary: {
+      explanation:
+        'history.verdict.weak_body:{"source":"history.source.motor","location":"history.zone.drive_unit_ev"}',
+      nextStep:
+        'history.recapture_recipe_ev:{"from":"50","to":"120","unit":"km/h"}',
+    },
+  });
+});
+
+test("a plug-in hybrid's engine check is hedged without OBD and untested while it was off", () => {
+  const phev = checkedInsights(
+    "no_fault",
+    [
+      {
+        source: "wheel/tire",
+        status: "ruled_out",
+        reason: "no_matching_order",
+      },
+      {
+        source: "engine",
+        status: "ruled_out_estimated",
+        reason: "engine_may_be_off",
+      },
+    ],
+    "en",
+    { fuel_type: "PHEV", rpm_source: "estimated_top_gear" },
+  );
+  expect(phev.primary?.explanation).toBe(
+    "Nothing stood out in the checks this run could make: wheels/tires and engine (may have been off).",
+  );
+  expect(phev.checks.checked[1].detail).toContain(
+    "a plug-in hybrid's engine may have been off",
+  );
+  expect(phev.checks.references[0].detail).toContain(
+    "without OBD-II RPM the engine check is not conclusive",
+  );
+  const off = checkedInsights(
+    "no_fault",
+    [
+      {
+        source: "engine",
+        status: "not_testable",
+        reason: "engine_not_running",
+      },
+    ],
+    "en",
+    { fuel_type: "PHEV", rpm_source: "measured" },
+  );
+  expect(off.checks.notChecked[0].detail).toContain(
+    "the engine was off for most of the drive",
+  );
+  expect(off.checks.references[0].detail).toContain(
+    "checked only while OBD-II RPM showed it running",
+  );
 });
 
 test("weak evidence hedges the best candidate and asks for a new recording", () => {

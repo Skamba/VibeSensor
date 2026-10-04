@@ -2,7 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useLayoutEffect, useRef } from "preact/hooks";
 
 import { activeView } from "../../app_store";
-import { carCapabilities } from "../../capabilities";
+import { carCapabilities, type FuelType } from "../../capabilities";
 import { provenanceTier } from "../../car_references";
 import { fmt } from "../../format";
 import { t } from "../../i18n";
@@ -10,6 +10,7 @@ import { CapabilityList, ProvenanceChip } from "./CapabilityList";
 import { formatCarLibraryTireOption } from "./tires";
 import {
   actionHint,
+  asksPowertrain,
   canFinish,
   gearboxParts,
   type ManualField,
@@ -21,6 +22,7 @@ import {
   specProvenance,
   summary,
   variantDetail,
+  wizardFuelType,
 } from "./wizard_model";
 import {
   brandOptions,
@@ -43,6 +45,7 @@ import {
   selectBrand,
   selectGearbox,
   selectModel,
+  selectPowertrain,
   selectTire,
   selectType,
   selectVariant,
@@ -114,6 +117,47 @@ const TIRE_FIELDS: Array<{
     step: "0.5",
   },
 ];
+
+const POWERTRAINS: ReadonlyArray<NonNullable<FuelType>> = ["ICE", "PHEV", "EV"];
+
+/** An EV's single reduction is its final drive; it has no top gear. */
+const EV_RATIO_FIELD = {
+  field: "finalDrive",
+  id: "wizFinalDrive",
+  labelKey: "settings.car.reduction_optional",
+  helpKey: "settings.car.reduction_help",
+} as const;
+
+/** Asks the powertrain where the library does not say (or for a saved car). */
+function PowertrainField(props: { value: FuelType; canBeUnknown: boolean }) {
+  return (
+    <div class="field wizard-spec-field">
+      <label htmlFor="wizPowertrain" class="wizard-spec-label">
+        <span>{t("settings.car.powertrain")}</span>
+      </label>
+      <select
+        id="wizPowertrain"
+        value={props.value ?? ""}
+        aria-describedby="wizPowertrainHelp"
+        onChange={(event) =>
+          selectPowertrain((event.currentTarget.value || null) as FuelType)
+        }
+      >
+        {props.canBeUnknown ? (
+          <option value="">{t("settings.car.powertrain.unknown")}</option>
+        ) : null}
+        {POWERTRAINS.map((fuelType) => (
+          <option key={fuelType} value={fuelType}>
+            {t(`settings.car.powertrain.${fuelType.toLowerCase()}`)}
+          </option>
+        ))}
+      </select>
+      <div id="wizPowertrainHelp" class="subtle wizard-field-help">
+        {t("settings.car.powertrain_help")}
+      </div>
+    </div>
+  );
+}
 
 const RATIO_FIELDS: Array<{
   field: RatioField;
@@ -281,6 +325,8 @@ function SpecsForm() {
   const editing = state.editing;
   const fromLibrary =
     tireOptions.value.length > 0 || gearboxOptions.value.length > 0;
+  const fuelType = wizardFuelType(state);
+  const ratioFields = fuelType === "EV" ? [EV_RATIO_FIELD] : RATIO_FIELDS;
   return (
     <div class="wizard-branch-card wizard-custom-specs" id="wizardSpecsForm">
       <div class="wizard-branch-card__header">
@@ -297,6 +343,9 @@ function SpecsForm() {
           )}
         </div>
       </div>
+      {asksPowertrain(state) ? (
+        <PowertrainField value={fuelType} canBeUnknown={!editing?.fuelType} />
+      ) : null}
       <div class="field wizard-spec-field">
         <label htmlFor="wizTireSize" class="wizard-spec-label">
           <span>{t("settings.car.tire_size")}</span>
@@ -344,7 +393,7 @@ function SpecsForm() {
           </div>
         ))}
       </div>
-      {RATIO_FIELDS.map((input) => (
+      {ratioFields.map((input) => (
         <div class="field wizard-spec-field" key={input.field}>
           <label htmlFor={input.id} class="wizard-spec-label">
             <span>{t(input.labelKey)}</span>
@@ -567,7 +616,7 @@ export function CarWizard() {
   const view = summary(state, inputs, fmt, t);
   const capabilities =
     current === SPECS_STEP
-      ? carCapabilities(specProvenance(state, inputs))
+      ? carCapabilities(specProvenance(state, inputs), wizardFuelType(state))
       : null;
   return (
     <div class="wizard-modal-layer" hidden={!open}>
@@ -710,9 +759,14 @@ export function CarWizard() {
                 <CapabilityList
                   id="wizardCapabilities"
                   capabilities={capabilities}
+                  fuelType={wizardFuelType(state)}
                 />
                 <div class="subtle wizard-capabilities__obd">
-                  {t("capabilities.obd_hint")}
+                  {t(
+                    wizardFuelType(state) === "EV"
+                      ? "capabilities.obd_hint_ev"
+                      : "capabilities.obd_hint",
+                  )}
                 </div>
               </section>
             ) : (

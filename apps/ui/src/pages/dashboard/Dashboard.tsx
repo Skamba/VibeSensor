@@ -288,7 +288,7 @@ function GuidedTest() {
   return (
     <section id="guidedTest" class="guided-test" aria-live="polite">
       <div class="guided-test__title">{t("dashboard.guided.title")}</div>
-      <div class="guided-test__hint">{t("dashboard.guided.hint")}</div>
+      <div class="guided-test__hint">{model.hint}</div>
       <ol class="guided-test__steps">
         {model.steps.map((step) => (
           <li

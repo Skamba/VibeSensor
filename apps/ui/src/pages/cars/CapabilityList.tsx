@@ -2,8 +2,10 @@ import {
   CAPABILITY_FAMILIES,
   CAPABILITY_MARK_SYMBOL,
   type Capabilities,
+  capabilityFamilyKey,
   capabilityMark,
   capabilityNoteKey,
+  type FuelType,
 } from "../../capabilities";
 import type { ProvenanceTier } from "../../car_references";
 import { t } from "../../i18n";
@@ -11,6 +13,7 @@ import { t } from "../../i18n";
 /** What a car's references let a run test, one line per order family. */
 export function CapabilityList(props: {
   capabilities: Capabilities;
+  fuelType: FuelType;
   compact?: boolean;
   id?: string;
 }) {
@@ -37,7 +40,7 @@ export function CapabilityList(props: {
               {CAPABILITY_MARK_SYMBOL[mark]}
             </span>
             <span class="car-capabilities__text">
-              <strong>{t(`capabilities.family.${family}`)}</strong>
+              <strong>{t(capabilityFamilyKey(family, props.fuelType))}</strong>
               {noteKey ? (
                 <span class="car-capabilities__note">{t(noteKey)}</span>
               ) : null}

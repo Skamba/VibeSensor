@@ -6,6 +6,7 @@ import type {
   CarRecord,
 } from "../src/api/types";
 import {
+  capabilityFamilyKey,
   capabilityMark,
   capabilityNoteKey,
   carCapabilities,
@@ -19,6 +20,7 @@ import {
 } from "../src/pages/cars/tires";
 import {
   actionHint,
+  asksPowertrain,
   canFinish,
   carRequest,
   EMPTY_MANUAL_INPUTS,
@@ -32,6 +34,7 @@ import {
   specProvenance,
   summary,
   type WizardState,
+  wizardFuelType,
 } from "../src/pages/cars/wizard_model";
 
 function makeCar(overrides: Partial<CarRecord> = {}): CarRecord {
@@ -172,7 +175,7 @@ test("a car's capabilities follow its references like the server's readiness", (
     tire: ReferenceProvenance,
     finalDrive: ReferenceProvenance,
     topGear: ReferenceProvenance,
-  ) => carCapabilities({ tire, finalDrive, topGear });
+  ) => carCapabilities({ tire, finalDrive, topGear }, null);
   expect(refs("user_confirmed", "missing", "missing")).toEqual({
     wheel: "ok",
     driveline: "missing_final_drive",
@@ -216,6 +219,38 @@ test("a car's capabilities follow its references like the server's readiness", (
   expect(capabilityNoteKey("engine", "missing_top_gear")).toBe(
     "capabilities.engine.missing_top_gear",
   );
+});
+
+test("the powertrain decides what the engine check can do", () => {
+  const estimated = {
+    tire: "official_exact",
+    finalDrive: "official_exact",
+    topGear: "family_default",
+  } as const;
+  // An EV has no engine: its motor is the driveline order.
+  expect(carCapabilities(estimated, "EV")).toEqual({
+    wheel: "ok",
+    driveline: "ok",
+    engine: "not_applicable",
+  });
+  expect(capabilityMark("not_applicable")).toBe("na");
+  expect(capabilityFamilyKey("driveline", "EV")).toBe(
+    "capabilities.family.motor",
+  );
+  expect(capabilityFamilyKey("engine", "EV")).toBe(
+    "capabilities.family.combustion_engine",
+  );
+  expect(capabilityFamilyKey("driveline", "PHEV")).toBe(
+    "capabilities.family.driveline",
+  );
+  // A plug-in hybrid's estimate is hedged (its engine may be off); a missing
+  // reference still names what is missing.
+  expect(carCapabilities(estimated, "PHEV").engine).toBe("hybrid_estimated");
+  expect(capabilityMark("hybrid_estimated")).toBe("caveat");
+  expect(
+    carCapabilities({ ...estimated, topGear: "missing" }, "PHEV").engine,
+  ).toBe("missing_top_gear");
+  expect(carCapabilities(estimated, "ICE").engine).toBe("estimated_ratios");
 });
 
 test("staggered tires show front and rear sizes", () => {
@@ -446,6 +481,45 @@ test("each saved spec records where it came from", () => {
   });
 });
 
+test("the wizard asks the powertrain only where the library does not say", () => {
+  // A library gearbox carries its powertrain: nothing to ask.
+  const library = specs({ selectedTire: TIRE, selectedGearbox: GEARBOX });
+  expect(asksPowertrain(library)).toBe(false);
+  expect(wizardFuelType({ ...library, fuelType: "EV" })).toBe("PHEV");
+
+  // A car entered by hand: the user's pick is saved; unpicked stays unknown.
+  const custom = specs({ libraryMiss: "brand", selectedModel: null });
+  expect(asksPowertrain(custom)).toBe(true);
+  expect(carRequest(custom, TYPED)).toMatchObject({ fuelType: null });
+  const ev = { ...custom, fuelType: "EV" as const };
+  expect(carRequest(ev, TYPED)).toMatchObject({ ok: true, fuelType: "EV" });
+  // An EV has no top gear: the specs need only the tire size and reduction.
+  expect(actionHint(ev, TYPED, 0, t)).toBe("settings.car.finish_ready");
+  expect(
+    summary(ev, { ...TYPED, finalDrive: "9.05" }, fmt, t).rows.at(-1)?.value,
+  ).toBe('settings.car.wizard_summary_ev_gearbox:{"finalDrive":"9.05"}');
+  const evGearbox = {
+    ...GEARBOX,
+    fuel_type: "EV" as const,
+    final_drive_ratio: 9.05,
+    final_drive_ratio_confidence: "official_exact",
+    top_gear_ratio: 1,
+    top_gear_ratio_confidence: "family_default",
+  };
+  // A library EV's top gear (1.0) is no estimate the user needs to fix.
+  expect(
+    actionHint(
+      specs({ selectedTire: TIRE, selectedGearbox: evGearbox }),
+      { ...TYPED, finalDrive: "9.05", topGear: "1.00" },
+      1,
+      t,
+    ),
+  ).toBe("settings.car.finish_ready");
+  expect(gearboxParts(evGearbox, fmt, t)).toEqual([
+    { text: 'settings.car.gearbox_reduction:{"value":"9.05"}', tier: "exact" },
+  ]);
+});
+
 test("gearbox options carry a confidence chip per ratio", () => {
   expect(
     gearboxParts(
@@ -494,21 +568,33 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     finalDrive: "family_default",
     topGear: "family_default",
   });
-  expect(editRequest(target, inputs)).toEqual({ ok: true, aspects: {} });
+  expect(editRequest(editing, inputs)).toEqual({
+    ok: true,
+    aspects: {},
+    fuelType: null,
+  });
+  // The editor sets a powertrain the saved car lacks.
+  expect(editRequest({ ...editing, fuelType: "EV" }, inputs)).toEqual({
+    ok: true,
+    aspects: {},
+    fuelType: "EV",
+  });
   const changed = { ...inputs, finalDrive: "3.15", topGear: "" };
   expect(specProvenance(editing, changed)).toMatchObject({
     finalDrive: "user_confirmed",
     topGear: "missing",
   });
-  expect(editRequest(target, changed)).toEqual({
+  expect(editRequest(editing, changed)).toEqual({
     ok: true,
     aspects: { final_drive_ratio: 3.15, current_gear_ratio: null },
+    fuelType: null,
   });
-  expect(editRequest(target, { ...inputs, rim: "19" })).toEqual({
+  expect(editRequest(editing, { ...inputs, rim: "19" })).toEqual({
     ok: true,
     aspects: { tire_width_mm: 225, tire_aspect_pct: 45, rim_in: 19 },
+    fuelType: null,
   });
-  expect(editRequest(target, { ...inputs, tireWidth: "" })).toEqual({
+  expect(editRequest(editing, { ...inputs, tireWidth: "" })).toEqual({
     ok: false,
     focus: "tireWidth",
   });

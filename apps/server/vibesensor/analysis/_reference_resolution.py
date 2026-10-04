@@ -10,6 +10,8 @@ from vibesensor.recording.run_schema import RunMetadata
 # Engine RPM derived from vehicle speed, tire size and gear ratios: it moves in
 # lockstep with the wheels, so it cannot tell an engine order from a wheel order.
 ESTIMATED_RPM_SOURCE = "estimated_from_speed_and_ratios"
+ENGINE_OFF_RPM_SOURCE = "engine_off"
+_NOT_MEASURED_RPM_SOURCES = frozenset({"", ESTIMATED_RPM_SOURCE, "missing", "context_unaligned"})
 
 
 def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, str | None]:
@@ -41,6 +43,10 @@ def _effective_engine_rpm(
     measured = sample.engine_rpm
     if measured is not None and measured > 0:
         return measured, sample.engine_rpm_source or "measured"
+    if measured is not None and sample.engine_rpm_source not in _NOT_MEASURED_RPM_SOURCES:
+        # A measured 0 rpm: the engine is off (a hybrid driving electrically, or
+        # stop-start), so there is no engine order to estimate from speed.
+        return None, ENGINE_OFF_RPM_SOURCE
 
     speed_kmh = sample.speed_kmh
     spec = _order_reference_spec_from_context(context, sample)

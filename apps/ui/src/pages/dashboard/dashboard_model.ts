@@ -1,4 +1,5 @@
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
+import type { FuelType } from "../../capabilities";
 import type { CarSelectionState } from "../../car_selection";
 import {
   GUIDED_COAST_DROP_KMH,
@@ -602,6 +603,8 @@ export function withLoggingError(
 
 /** Sweep, hold, then a neutral coast-down: the order the driver does them in. */
 const GUIDED_STEPS: readonly GuidedPhase[] = ["sweep", "hold", "coast_down"];
+/** An EV has no neutral that decouples its motor, so it skips the coast-down. */
+const GUIDED_STEPS_EV: readonly GuidedPhase[] = ["sweep", "hold"];
 
 export interface GuidedStep {
   phase: GuidedPhase;
@@ -613,6 +616,7 @@ export interface GuidedStep {
 
 export interface GuidedTestModel {
   visible: boolean;
+  hint: string;
   finished: boolean;
   steps: GuidedStep[];
   /** What the button does next: a step to start, `null` to finish, absent when done. */
@@ -623,10 +627,12 @@ export interface GuidedTestModel {
 function guidedInstruction(
   phase: GuidedPhase,
   unit: SpeedUnit,
+  electric: boolean,
   t: Translate,
 ): string {
   const speed = (kmh: number) => fmt(kmhInUnit(kmh, unit), 0);
-  return t(`dashboard.guided.${phase}.instruction`, {
+  const suffix = electric ? "_ev" : "";
+  return t(`dashboard.guided.${phase}.instruction${suffix}`, {
     from: speed(GUIDED_SWEEP_FROM_KMH),
     to: speed(GUIDED_SWEEP_TO_KMH),
     drop: speed(GUIDED_COAST_DROP_KMH),
@@ -637,31 +643,31 @@ function guidedInstruction(
 /**
  * The optional guided test drive shown while a run records. The server
  * reports the step in progress and the steps completed so far, so the panel
- * survives a page reload mid-run.
+ * survives a page reload mid-run. An EV drives without top gear or neutral:
+ * its steps are the sweep and the hold (docs/user_journeys.md §5.3).
  */
 export function guidedTestModel(
   status: LoggingStatusPayload,
   unit: SpeedUnit,
   busy: boolean,
+  fuelType: FuelType,
   t: Translate,
 ): GuidedTestModel {
+  const electric = fuelType === "EV";
+  const order = electric ? GUIDED_STEPS_EV : GUIDED_STEPS;
   const current = status.guided_phase ?? null;
   const completed = status.guided_phases_completed ?? [];
   const finished =
-    current === null && GUIDED_STEPS.every((step) => completed.includes(step));
-  const index = current
-    ? GUIDED_STEPS.indexOf(current)
-    : finished
-      ? GUIDED_STEPS.length
-      : -1;
-  const steps = GUIDED_STEPS.map((phase, i) => ({
+    current === null && order.every((step) => completed.includes(step));
+  const index = current ? order.indexOf(current) : finished ? order.length : -1;
+  const steps = order.map((phase, i) => ({
     phase,
     label: t("dashboard.guided.step_label", {
       n: i + 1,
-      total: GUIDED_STEPS.length,
+      total: order.length,
     }),
     title: t(`dashboard.guided.${phase}.title`),
-    instruction: guidedInstruction(phase, unit, t),
+    instruction: guidedInstruction(phase, unit, electric, t),
     state: (i < index ? "done" : i === index ? "current" : "todo") as
       | "done"
       | "current"
@@ -669,20 +675,21 @@ export function guidedTestModel(
   }));
   let action: GuidedTestModel["action"] = null;
   if (index < 0) {
-    action = { label: t("dashboard.guided.start"), phase: GUIDED_STEPS[0] };
-  } else if (index < GUIDED_STEPS.length - 1) {
-    const next = GUIDED_STEPS[index + 1];
+    action = { label: t("dashboard.guided.start"), phase: order[0] };
+  } else if (index < order.length - 1) {
+    const next = order[index + 1];
     action = {
       label: t("dashboard.guided.next", {
         step: t(`dashboard.guided.${next}.title`),
       }),
       phase: next,
     };
-  } else if (index === GUIDED_STEPS.length - 1) {
+  } else if (index === order.length - 1) {
     action = { label: t("dashboard.guided.finish"), phase: null };
   }
   return {
     visible: status.enabled && Boolean(status.run_id),
+    hint: t(electric ? "dashboard.guided.hint_ev" : "dashboard.guided.hint"),
     finished,
     steps,
     action,

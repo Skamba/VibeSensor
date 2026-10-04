@@ -11,6 +11,7 @@ import type {
   CarLibraryTireOption,
   CarLibraryVariant,
 } from "../../api/types";
+import type { FuelType } from "../../capabilities";
 import { fmt } from "../../format";
 import { t } from "../../i18n";
 import { carSettings } from "../../settings_store";
@@ -459,6 +460,19 @@ export function editManualInput(field: ManualField, value: string): void {
   manualInputs.value = { ...manualInputs.value, [field]: value };
 }
 
+/**
+ * The powertrain where the library does not say. An EV has no gearbox ratio,
+ * so its (hidden) top gear is cleared rather than saved unseen.
+ */
+export function selectPowertrain(fuelType: FuelType): void {
+  batch(() => {
+    update({ fuelType });
+    if (fuelType === "EV") {
+      editManualInput("topGear", "");
+    }
+  });
+}
+
 /** "I don't know": the ratio stays unknown and its check shows "couldn't test". */
 export function clearRatio(field: RatioField): void {
   editManualInput(field, "");
@@ -480,13 +494,20 @@ export async function finishWizard(): Promise<void> {
   const state = wizard.value;
   try {
     if (state.editing) {
-      const request = editRequest(state.editing, manualInputs.value);
+      const request = editRequest(
+        { ...state, editing: state.editing },
+        manualInputs.value,
+      );
       if (!request.ok) {
         focus(request.focus);
         return;
       }
-      if (Object.keys(request.aspects).length) {
-        await saveCarEdits(state.editing.carId, request.aspects);
+      if (Object.keys(request.aspects).length || request.fuelType) {
+        await saveCarEdits(
+          state.editing.carId,
+          request.aspects,
+          request.fuelType,
+        );
       }
     } else {
       const request = carRequest(state, manualInputs.value);

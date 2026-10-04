@@ -6,6 +6,7 @@ import type {
   CarOrderReferenceStatus,
   CarRecord,
 } from "../../api/types";
+import type { FuelType } from "../../capabilities";
 import {
   type CarReferences,
   confidenceProvenance,
@@ -44,6 +45,8 @@ export interface EditTarget {
   provenance: CarReferences;
   /** The saved front/rear sizes when they differ; editing the tire sets one size. */
   staggeredTire: string | null;
+  /** The saved powertrain; `null` when it was never set. */
+  fuelType: FuelType;
 }
 
 export interface WizardState {
@@ -58,6 +61,8 @@ export interface WizardState {
   selectedGearbox: CarLibraryGearbox | null;
   selectedTire: CarLibraryTireOption | null;
   editing: EditTarget | null;
+  /** The powertrain the user picked where the library does not say. */
+  fuelType: FuelType;
 }
 
 export interface ManualInputs {
@@ -92,6 +97,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   selectedGearbox: null,
   selectedTire: null,
   editing: null,
+  fuelType: null,
 };
 
 export function resolveGearboxes(
@@ -268,6 +274,7 @@ export function editTarget(
       staggeredTire: staggered
         ? formatSavedCarTireSummary(aspects, fmt, "")
         : null,
+      fuelType: car.fuel_type ?? null,
     },
     inputs,
   };
@@ -336,9 +343,13 @@ export function canFinish(state: WizardState, inputs: ManualInputs): boolean {
 }
 
 /** The consequence of the library estimates in the specs, or `null` without any. */
-export function estimateNoteKey(refs: CarReferences): string | null {
+export function estimateNoteKey(
+  refs: CarReferences,
+  fuelType: FuelType,
+): string | null {
   const finalDrive = isWeak(refs.finalDrive);
-  const topGear = isWeak(refs.topGear);
+  // An EV has no gearbox ratio to estimate: its top gear is not used.
+  const topGear = fuelType !== "EV" && isWeak(refs.topGear);
   if (finalDrive && topGear) {
     return "settings.car.estimate.both";
   }
@@ -365,7 +376,7 @@ export function actionHint(
     return t("settings.car.finish_needs_tire");
   }
   const refs = specProvenance(state, inputs);
-  const estimate = estimateNoteKey(refs);
+  const estimate = estimateNoteKey(refs, wizardFuelType(state));
   if (estimate) {
     return `${t(estimate)} ${t("settings.car.estimate.edit_hint")}`;
   }
@@ -374,7 +385,7 @@ export function actionHint(
     gearboxCount > 0 &&
     !state.selectedGearbox &&
     refs.finalDrive === "missing" &&
-    refs.topGear === "missing"
+    (refs.topGear === "missing" || wizardFuelType(state) === "EV")
   ) {
     return t("settings.car.finish_pick_gearbox");
   }
@@ -436,10 +447,15 @@ function gearboxSummary(
   if (state.step < SPECS_STEP) {
     return null;
   }
-  const ratios = t("settings.car.wizard_summary_manual_gearbox", {
-    finalDrive: ratio("finalDrive"),
-    topGear: ratio("topGear"),
-  });
+  const ratios =
+    wizardFuelType(state) === "EV"
+      ? t("settings.car.wizard_summary_ev_gearbox", {
+          finalDrive: ratio("finalDrive"),
+        })
+      : t("settings.car.wizard_summary_manual_gearbox", {
+          finalDrive: ratio("finalDrive"),
+          topGear: ratio("topGear"),
+        });
   return state.selectedGearbox
     ? `${state.selectedGearbox.name} · ${ratios}`
     : ratios;
@@ -527,6 +543,16 @@ export function gearboxParts(
       tier: provenanceTier(provenance),
     };
   };
+  if (gearbox.fuel_type === "EV") {
+    // An EV's single reduction is its "final drive"; there is no top gear.
+    return [
+      part(
+        "settings.car.gearbox_reduction",
+        gearbox.final_drive_ratio,
+        gearbox.final_drive_ratio_confidence,
+      ),
+    ];
+  }
   return [
     part(
       "settings.car.gearbox_final_drive",
@@ -547,10 +573,23 @@ export function variantDetail(variant: CarLibraryVariant): string | null {
   );
 }
 
+/**
+ * The car's powertrain: the library's when it says, else the user's pick, else
+ * the saved car's; `null` when nobody said.
+ */
+export function wizardFuelType(state: WizardState): FuelType {
+  return (
+    libraryFuelType(state) ?? state.fuelType ?? state.editing?.fuelType ?? null
+  );
+}
+
+/** Whether the specs step asks for the powertrain: the library does not say. */
+export function asksPowertrain(state: WizardState): boolean {
+  return libraryFuelType(state) === null;
+}
+
 /** The powertrain all of the variant's gearboxes share, if any. */
-function libraryFuelType(
-  state: WizardState,
-): CarLibraryGearbox["fuel_type"] | null {
+function libraryFuelType(state: WizardState): FuelType {
   if (state.selectedGearbox) {
     return state.selectedGearbox.fuel_type;
   }
@@ -572,8 +611,8 @@ export type CarRequest =
       /** A `null` ratio is unknown: the car is saved without it. */
       aspects: Record<string, number | string | null>;
       status: CarOrderReferenceStatus;
-      /** The library row's powertrain; `null` for a car entered by hand. */
-      fuelType: CarLibraryGearbox["fuel_type"] | null;
+      /** The library row's or the user's powertrain; `null` when unknown. */
+      fuelType: FuelType;
     }
   | { ok: false; focus: ManualField };
 
@@ -612,7 +651,7 @@ export function carRequest(
     final_drive_ratio_confidence: confidenceOrNull(refs.finalDrive),
     current_gear_ratio_confidence: confidenceOrNull(refs.topGear),
     requires_manual_confirmation:
-      isWeak(refs.finalDrive) || isWeak(refs.topGear),
+      estimateNoteKey(refs, wizardFuelType(state)) !== null,
     selection_source_status: fromLibrary ? "exact_row" : "manual_entry",
   };
   if (gearbox) {
@@ -628,7 +667,7 @@ export function carRequest(
       ...tireAspects,
     },
     status,
-    fuelType: libraryFuelType(state),
+    fuelType: wizardFuelType(state),
   };
 }
 
@@ -642,7 +681,12 @@ export interface EditedAspects {
 }
 
 export type EditRequest =
-  | { ok: true; aspects: EditedAspects }
+  | {
+      ok: true;
+      aspects: EditedAspects;
+      /** The powertrain the user set; `null` when it did not change. */
+      fuelType: FuelType;
+    }
   | { ok: false; focus: ManualField };
 
 /**
@@ -650,9 +694,10 @@ export type EditRequest =
  * cleared ratio is `null`). The server marks each changed value user-confirmed.
  */
 export function editRequest(
-  editing: EditTarget,
+  state: WizardState & { editing: EditTarget },
   inputs: ManualInputs,
 ): EditRequest {
+  const { editing } = state;
   const invalid = firstInvalidField(inputs);
   if (invalid) {
     return { ok: false, focus: invalid };
@@ -674,5 +719,9 @@ export function editRequest(
         ? {}
         : { current_gear_ratio: positive(inputs.topGear) }),
     },
+    fuelType:
+      state.fuelType && state.fuelType !== editing.fuelType
+        ? state.fuelType
+        : null,
   };
 }

@@ -11,7 +11,12 @@ import {
   speedMps,
   wsState,
 } from "../../live_store";
-import { carSelection, speedSettings, speedStatus } from "../../settings_store";
+import {
+  activeCar,
+  carSelection,
+  speedSettings,
+  speedStatus,
+} from "../../settings_store";
 import { gpsReceiverMissing } from "../../speed_source";
 import {
   createSpectrumFramePreparer,
@@ -59,7 +64,9 @@ const levels: SensorLevels = {
     spectra.value.clients[id]?.strength_metrics?.top_peaks?.[0]?.hz ?? null,
 };
 
-const chartBands = computed(() => orderBands(rotationalSpeeds.value, t));
+const chartBands = computed(() =>
+  orderBands(rotationalSpeeds.value, activeCar.value?.fuel_type ?? null, t),
+);
 export const hasBands = computed(
   () => chartBands.value.length > 0 && prepared.value.entries.length > 0,
 );
@@ -69,6 +76,7 @@ export const bandCoverage = computed(() => {
   return bandStatus(
     {
       carActive: selection !== "no_cars" && selection !== "no_active_car",
+      fuelType: activeCar.value?.fuel_type ?? null,
       speeds: rotationalSpeeds.value,
       speedMps: speedMps.value,
       gpsReceiverMissing: gpsReceiverMissing(

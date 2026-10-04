@@ -1,3 +1,4 @@
+import type { FuelType } from "../../capabilities";
 import { fmt } from "../../format";
 import { orderBandFills } from "../../theme";
 import type { RotationalSpeeds } from "../../transport/live_models";
@@ -104,11 +105,22 @@ function engineBasis(speeds: RotationalSpeeds, t: Translate): string {
   );
 }
 
+/**
+ * An EV's motor turns at the driveline order (wheel speed × reduction ratio),
+ * so its driveline band is the motor's and it has no engine bands.
+ */
+const EV_BAND_NAME: Record<string, string> = {
+  driveshaft_1x: "bands.motor_1x",
+  driveshaft_engine_1x: "bands.motor_1x",
+};
+
 /** Order reference bands from the server's rotational speeds. */
 export function orderBands(
   speeds: RotationalSpeeds | null,
+  fuelType: FuelType,
   t: Translate,
 ): ChartBand[] {
+  const electric = fuelType === "EV";
   const bands = speeds?.order_bands;
   if (!speeds || !Array.isArray(bands)) {
     return [];
@@ -125,6 +137,18 @@ export function orderBands(
       continue;
     }
     const style = BAND_STYLE[band.key];
+    if (electric) {
+      if (ENGINE_BANDS.has(band.key) && !EV_BAND_NAME[band.key]) {
+        continue;
+      }
+      output.push({
+        label: t(EV_BAND_NAME[band.key] ?? style?.name ?? band.key),
+        min_hz: Math.max(0, center * (1 - tolerance)),
+        max_hz: center * (1 + tolerance),
+        color: style?.color ?? orderBandFills.wheel1,
+      });
+      continue;
+    }
     const name = t(style?.name ?? band.key);
     output.push({
       label: ENGINE_BANDS.has(band.key)
@@ -164,11 +188,13 @@ const MISSING_REFERENCES = new Set([
 /**
  * Which order families the live spectrum can draw, and what each one needs.
  * The spectrum itself always shows; only the bands need a car and a speed.
+ * An EV has no engine family and its driveline family is its motor.
  */
 export function bandStatus(
   input: {
     /** `false` once the cars have loaded and none is active. */
     carActive: boolean;
+    fuelType: FuelType;
     speeds: RotationalSpeeds | null;
     speedMps: number | null;
     gpsReceiverMissing: boolean;
@@ -179,31 +205,38 @@ export function bandStatus(
     return { message: t("spectrum.bands.need_car"), families: [] };
   }
   const { speeds } = input;
+  const electric = input.fuelType === "EV";
   const rows: Array<[BandFamilyKey, RotationalSpeeds["wheel"] | undefined]> = [
     ["wheel", speeds?.wheel],
     ["driveline", speeds?.driveshaft],
     ["engine", speeds?.engine],
   ];
-  const families = rows.map(([key, value]): BandFamily => {
-    const label = t(`spectrum.bands.family.${key}`);
-    if (value && value.rpm !== null) {
-      return {
-        key,
-        label,
-        state: "on",
-        note: key === "engine" && speeds ? engineBasis(speeds, t) : null,
-      };
-    }
-    const reason = value?.reason ?? "";
-    return MISSING_REFERENCES.has(reason)
-      ? {
+  const families = rows
+    .filter(([key]) => !(electric && key === "engine"))
+    .map(([key, value]): BandFamily => {
+      const label = t(
+        electric && key === "driveline"
+          ? "spectrum.bands.family.motor"
+          : `spectrum.bands.family.${key}`,
+      );
+      if (value && value.rpm !== null) {
+        return {
           key,
           label,
-          state: "missing",
-          note: t(`spectrum.bands.needs.${key}.${reason}`),
-        }
-      : { key, label, state: "waiting", note: null };
-  });
+          state: "on",
+          note: key === "engine" && speeds ? engineBasis(speeds, t) : null,
+        };
+      }
+      const reason = value?.reason ?? "";
+      return MISSING_REFERENCES.has(reason)
+        ? {
+            key,
+            label,
+            state: "missing",
+            note: t(`spectrum.bands.needs.${key}.${reason}`),
+          }
+        : { key, label, state: "waiting", note: null };
+    });
   if (!families.some((family) => family.state === "waiting")) {
     return { message: null, families };
   }

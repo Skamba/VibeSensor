@@ -265,6 +265,16 @@ class RunMetadata:
     def active_car_id(self) -> str | None:
         return self.car.car_id if self.car is not None else None
 
+    @property
+    def fuel_type(self) -> VehicleFuelType | None:
+        """The car's powertrain (ICE/PHEV/EV); ``None`` when it is not known."""
+        return self.car.fuel_type if self.car is not None else None
+
+    @property
+    def electric(self) -> bool:
+        """A battery-electric car: no engine, and the motor turns with the wheels."""
+        return self.fuel_type == "EV"
+
     def sensor_snapshot_for(self, sensor_id: str) -> RunSensorMetadata | None:
         normalized_sensor_id = str(sensor_id).strip()
         if not normalized_sensor_id:
@@ -321,5 +331,10 @@ class RunMetadata:
             self.raw_sample_rate_hz
             and self.tire_circumference_m
             and spec is not None
-            and spec.supports_engine_reference
+            # An EV's motor turns at the driveshaft order; it has no engine order.
+            and (
+                spec.supports_driveshaft_reference
+                if self.electric
+                else spec.supports_engine_reference
+            )
         )
