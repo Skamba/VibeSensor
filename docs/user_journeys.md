@@ -230,7 +230,10 @@ its state in `wizard_store.ts`.
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
-    gear is weak (216 of 467 rows, see §4).
+    gear is weak (216 of 467 rows, see §4). A saved car's flag follows the
+    same rule (`CarOrderReferenceStatus.requires_manual_confirmation`); it is
+    derived on every load, so cars saved under the older rule (which also
+    counted tire size and the gearbox name) no longer keep a stale `true`.
 - **Branches:**
   - The library has no final drive for the gearbox (13 rows). The gearbox is
     still offered with `final_drive_ratio: null`
@@ -430,6 +433,12 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   "Nothing stood out in the checks this run could make: wheels/tires. Not
   checked, so not shown to be fine: driveline and engine." It never implies
   the car is fine for a source that was not testable.
+- Each failing run-suitability check (speed variation, sensor coverage, frame
+  integrity, …) is a warning banner at the top of the run detail, titled with
+  the check and worded as its row on the PDF's data-quality page
+  (`apps/server/vibesensor/report/run_quality.py`, used by both). A run
+  warning that a failing check already states in full (the incomplete raw
+  capture) is shown once, on the PDF too.
 
 ### 3.8 The PDF for owner and mechanic
 

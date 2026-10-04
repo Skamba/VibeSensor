@@ -122,6 +122,54 @@ def test_a_quality_warning_adds_the_data_quality_page() -> None:
     assert "Page 3 of 3" in pages[2]
 
 
+@pytest.mark.parametrize(
+    ("lang", "check_text", "summaries_clause"),
+    [
+        (
+            "en",
+            "The raw capture did not cover the whole run",
+            "those moments were analysed from the stored summaries",
+        ),
+        (
+            "nl",
+            "De ruwe opname dekte niet de hele meting",
+            "die momenten zijn uit de opgeslagen samenvattingen geanalyseerd",
+        ),
+    ],
+)
+def test_incomplete_raw_capture_is_stated_once(
+    lang: str, check_text: str, summaries_clause: str
+) -> None:
+    """The frame-integrity row already says it; the matching warning line is not repeated."""
+    summary = _passing(_WHEEL)
+    for check in summary["run_suitability"]:
+        if check["check_key"] == "SUITABILITY_CHECK_FRAME_INTEGRITY":
+            check["state"] = "warn"
+            check["explanation"] = {
+                "_i18n_key": "SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN",
+                "total_dropped": 0,
+                "total_overflow": 0,
+                "replay_incomplete": 1,
+                "replay_partial": 152,
+                "replay_missing": 0,
+                "replay_gaps": 8,
+                "replay_overlaps": 11,
+            }
+    summary["warnings"] = [
+        {
+            "code": "raw_replay_coverage_incomplete",
+            "severity": "warn",
+            "applies_to": "raw_replay",
+            "title": {"_i18n_key": "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE"},
+        }
+    ]
+
+    quality_page = " ".join(_pages(report_pdf_for(summary, lang=lang))[2].split())
+
+    assert check_text in quality_page
+    assert quality_page.count(summaries_clause) == 1
+
+
 def test_dutch_pdf_is_dutch() -> None:
     pages = _pages(report_pdf_for(_WHEEL, lang="nl"))
     text = " ".join(" ".join(pages).split())

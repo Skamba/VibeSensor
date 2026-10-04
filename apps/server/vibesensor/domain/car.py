@@ -72,16 +72,17 @@ class CarOrderReferenceStatus:
 
     @property
     def requires_manual_confirmation(self) -> bool:
-        """Whether one selected drivetrain field should be confirmed manually."""
+        """Whether the final drive or top gear is an estimate the user should confirm.
 
-        return any(
-            confidence in WEAK_FIELD_CONFIDENCES
-            for confidence in (
-                self.tire_dimensions_confidence,
-                self.final_drive_ratio_confidence,
-                self.current_gear_ratio_confidence,
-                self.transmission_confidence,
-            )
+        Same rule as the car library (``derive_order_analysis_policy``): only the
+        ratios the order checks depend on count; tire size and gearbox name do not,
+        and a missing ratio is "couldn't test", not something to confirm. Derived on
+        every load, so cars saved under an older rule follow this one.
+        """
+
+        return (
+            self.final_drive_ratio_confidence in WEAK_FIELD_CONFIDENCES
+            or self.current_gear_ratio_confidence in WEAK_FIELD_CONFIDENCES
         )
 
     def with_user_confirmed_fields(

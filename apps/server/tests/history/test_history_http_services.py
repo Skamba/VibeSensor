@@ -268,7 +268,11 @@ async def test_projected_run_service_adds_current_context_overlay_explicitly() -
     payload = await service.get_insights("run-1", requested_lang="en")
 
     assert payload is not None
-    assert [warning["code"] for warning in payload["warnings"]] == [
+    assert [
+        warning["code"]
+        for warning in payload["warnings"]
+        if warning["applies_to"] != "run_suitability"
+    ] == [
         WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE,
         WARNING_CODE_CAR_SETTINGS_CHANGED,
     ]

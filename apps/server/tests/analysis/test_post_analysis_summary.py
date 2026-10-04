@@ -185,7 +185,7 @@ def _frame_integrity_line(summary: dict, lang: str = "en") -> tuple[bool, str]:
 
 
 def test_incomplete_raw_replay_fails_frame_integrity_instead_of_claiming_nothing_was_lost() -> None:
-    """The report must not say "no sensor data was lost" above the replay-coverage warning."""
+    """The report must not say "no sensor data was lost" when the raw capture had gaps."""
     row = {
         "client_id": "sensor-a",
         "t_s": 2.0,
@@ -200,9 +200,10 @@ def test_incomplete_raw_replay_fails_frame_integrity_instead_of_claiming_nothing
 
     assert _frame_integrity_line(without_raw) == (True, "No sensor data was lost.")
     assert run.raw_replay.missing_window_count == 1
-    assert (
-        "Part of the raw sensor data was missing; those moments were analysed from the stored"
-        " summaries." in report_view_for(summary).quality.warnings
+    # The failing check states it; the replay-coverage warning is not repeated below it.
+    assert not any(
+        "raw sensor data was missing" in warning
+        for warning in report_view_for(summary).quality.warnings
     )
     assert _frame_integrity_line(summary) == (
         False,

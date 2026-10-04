@@ -128,9 +128,94 @@ def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
     with TestClient(app) as client:
         payload = client.get("/api/history/run-1/insights", params={"lang": "nl"}).json()
 
-    warnings = payload.get("warnings")
-    assert isinstance(warnings, list)
+    warnings = [item for item in payload["warnings"] if item["applies_to"] != "run_suitability"]
     assert len(warnings) == 2
-    titles = {str(item.get("title")) for item in warnings if isinstance(item, dict)}
+    titles = {str(item.get("title")) for item in warnings}
     assert "De referentiecontext voor ordeanalyse was onvolledig voor deze meting" in titles
     assert "Voertuigprofielinstellingen zijn na deze meting gewijzigd" in titles
+
+
+_REPLAY_INCOMPLETE = {
+    "code": "raw_replay_coverage_incomplete",
+    "severity": "warn",
+    "applies_to": "raw_replay",
+    "title": {"_i18n_key": "RUN_CONTEXT_WARNING_RAW_REPLAY_INCOMPLETE_TITLE"},
+}
+# What the Pi's manual-speed runs with a short raw capture stored.
+_PI_RUN_SUITABILITY = [
+    {
+        "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+        "state": "warn",
+        "explanation": {"_i18n_key": "SUITABILITY_SPEED_VARIATION_MANUAL", "manual_speed": 1},
+    },
+    {
+        "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
+        "state": "warn",
+        "explanation": {"_i18n_key": "SUITABILITY_SENSOR_COVERAGE_WARN"},
+    },
+    {
+        "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+        "state": "pass",
+        "explanation": {"_i18n_key": "SUITABILITY_SATURATION_PASS"},
+    },
+    {
+        "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+        "state": "warn",
+        "explanation": {
+            "_i18n_key": "SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN",
+            "total_dropped": 0,
+            "total_overflow": 0,
+            "replay_incomplete": 1,
+            "replay_partial": 152,
+            "replay_missing": 0,
+            "replay_gaps": 8,
+            "replay_overlaps": 11,
+        },
+    },
+]
+
+
+@pytest.mark.parametrize(
+    ("lang", "frame_integrity", "summaries_clause"),
+    [
+        (
+            "en",
+            "Frame integrity",
+            "those moments were analysed from the stored summaries",
+        ),
+        (
+            "nl",
+            "Frame-integriteit",
+            "die momenten zijn uit de opgeslagen samenvattingen geanalyseerd",
+        ),
+    ],
+)
+def test_history_insights_lead_with_the_pdfs_run_suitability_warnings(
+    lang: str, frame_integrity: str, summaries_clause: str
+) -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis["run_suitability"] = _PI_RUN_SUITABILITY
+    analysis["warnings"] = [_REPLAY_INCOMPLETE]
+    app, _ = make_app_and_state(
+        language="en", metadata=metadata, samples=samples, analysis=analysis
+    )
+
+    with TestClient(app) as client:
+        warnings = client.get("/api/history/run-1/insights", params={"lang": lang}).json()[
+            "warnings"
+        ]
+
+    assert [warning["code"] for warning in warnings] == [
+        "suitability_speed_variation",
+        "suitability_sensor_coverage",
+        "suitability_frame_integrity",
+    ]
+    assert {warning["applies_to"] for warning in warnings} == {"run_suitability"}
+    frame = warnings[2]
+    assert frame["title"] == frame_integrity
+    assert "152" in frame["detail"]
+    # The replay warning says the same as the check, so it is stated once.
+    text = " ".join(f"{warning['title']} {warning['detail']}" for warning in warnings)
+    assert text.count(summaries_clause) == 1

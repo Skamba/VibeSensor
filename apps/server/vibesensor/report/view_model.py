@@ -16,6 +16,10 @@ from vibesensor.common.time_utils import format_run_timestamp
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.i18n import normalize_lang, resolve_i18n, tr
+from vibesensor.report.run_quality import (
+    suitability_check_detail,
+    warning_codes_stated_by_checks,
+)
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.diagnosis_contracts import (
     DiagnosisPayload,
@@ -107,14 +111,6 @@ _NOT_TESTABLE_KEYS = {
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
 }
-# Suitability explanations that say nothing beyond their plain QUALITY_* sentence.
-_RESTATING_EXPLANATIONS = frozenset(
-    {
-        "SUITABILITY_SENSOR_COVERAGE_WARN",
-        "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
-        "SUITABILITY_RUN_DURATION_WARNING",
-    }
-)
 _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
     "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
@@ -972,38 +968,24 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
 # -- quality ---------------------------------------------------------------------
 
 
-def _check_detail(ctx: _Ctx, check: Mapping[str, object]) -> str:
-    """Plain meaning of one suitability check; a warning keeps its cause and specifics.
-
-    The stored explanation is appended unless it only restates the plain sentence.
-    """
-    key = str(check["check_key"]).removeprefix("SUITABILITY_CHECK_")
-    passed = check["state"] == "pass"
-    raw = check.get("explanation")
-    explanation = resolve_i18n(ctx.lang, raw, tr=ctx.t).strip()
-    plain = ctx.t_or(f"QUALITY_{key}_{'PASS' if passed else 'WARN'}", explanation)
-    restates = isinstance(raw, Mapping) and raw.get("_i18n_key") in _RESTATING_EXPLANATIONS
-    if passed or restates or not explanation or explanation == plain:
-        return plain
-    return f"{plain} {explanation}"
-
-
 def _quality(ctx: _Ctx, analysis: AnalysisSummary, metadata: RunMetadata) -> QualitySection:
     checks = tuple(
         QualityCheck(
             label=ctx.t(check["check_key"]),
             state=ctx.t("QUALITY_PASS" if check["state"] == "pass" else "QUALITY_WARN"),
             passed=check["state"] == "pass",
-            detail=_check_detail(ctx, check),
+            detail=suitability_check_detail(ctx.lang, check),
         )
         for check in analysis["run_suitability"]
     )
+    stated = warning_codes_stated_by_checks(analysis["run_suitability"])
     warnings = tuple(
         ctx.t_or(
             f"QUALITY_WARNING_{warning['code'].upper()}",
             resolve_i18n(ctx.lang, warning["title"], tr=ctx.t),
         )
         for warning in analysis["warnings"]
+        if warning["code"] not in stated
     )
     rate = analysis["raw_sample_rate_hz"]
     traceability = (

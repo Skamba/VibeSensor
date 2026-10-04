@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, cast
 
 from pydantic import TypeAdapter
 
-from vibesensor.common.json_types import JsonValue, is_json_array, is_json_object
+from vibesensor.common.json_types import JsonObject, JsonValue, is_json_array, is_json_object
 from vibesensor.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,
@@ -25,6 +25,11 @@ from vibesensor.history.projection import (
 from vibesensor.history.runs import HistoryRunService
 from vibesensor.recording.run_context import add_current_context_warnings
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.report.run_quality import (
+    failing_suitability_warnings,
+    warning_codes_stated_by_checks,
+)
+from vibesensor.summary.run_context_warning import RunContextWarningsInput
 from vibesensor.summary.warning_fields import localize_warning_list
 from vibesensor.web.models.history import (
     DeleteHistoryRunResponse,
@@ -73,25 +78,28 @@ class ProjectedHistoryRunService:
         result = await self._service.get_insights(run_id, requested_lang=requested_lang)
         if result is None:
             return None
+        lang = str(requested_lang or result.get("lang") or "en")
         projected = project_history_insights(result)
+        raw_warnings = projected.get("warnings")
+        warnings: RunContextWarningsInput = raw_warnings if is_json_array(raw_warnings) else None
         if self._current_car_reader is not None:
-            raw_warnings = projected.get("warnings")
             raw_metadata = projected.get("metadata")
             typed_metadata = (
                 run_metadata_from_mapping(raw_metadata) if is_json_object(raw_metadata) else None
             )
-            overlay_warnings = add_current_context_warnings(
-                raw_warnings if is_json_array(raw_warnings) else None,
+            warnings = add_current_context_warnings(
+                warnings,
                 metadata=typed_metadata,
                 current_active_car_snapshot=self._current_car_reader.active_car_snapshot(),
             )
-            projected["warnings"] = cast(
-                JsonValue,
-                localize_warning_list(
-                    overlay_warnings,
-                    lang=str(requested_lang or projected.get("lang") or "en"),
-                ),
-            )
+        projected["warnings"] = cast(
+            JsonValue,
+            _with_suitability_warnings(
+                localize_warning_list(warnings, lang=lang),
+                projected.get("run_suitability"),
+                lang=lang,
+            ),
+        )
         validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(projected)
         return cast(
             HistoryInsightsResponse,
@@ -100,6 +108,22 @@ class ProjectedHistoryRunService:
 
     async def delete_run(self, run_id: str) -> DeleteHistoryRunResponse:
         return DeleteHistoryRunResponse.model_validate(await self._service.delete_run(run_id))
+
+
+def _with_suitability_warnings(
+    warnings: list[JsonObject], run_suitability: JsonValue, *, lang: str
+) -> list[JsonObject]:
+    """Lead with the failing run-suitability checks, worded as on the PDF quality page.
+
+    A warning that a failing check already states in full is dropped, as on the PDF.
+    """
+    rows = run_suitability if is_json_array(run_suitability) else []
+    checks = [check for check in rows if is_json_object(check)]
+    stated = warning_codes_stated_by_checks(checks)
+    return [
+        *cast(list[JsonObject], failing_suitability_warnings(lang, checks)),
+        *(warning for warning in warnings if warning.get("code") not in stated),
+    ]
 
 
 class ProjectedHistoryExportService:

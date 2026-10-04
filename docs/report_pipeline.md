@@ -33,6 +33,7 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
 | Module | Role |
 |---|---|
 | `report/view_model.py` | Pure translation of the stored analysis + `RunMetadata` into a `ReportView`: every localized string, number format (decimal comma in Dutch), and chart series the PDF draws. Never re-derives the verdict, level, order labels, amplitudes, or zones. |
+| `report/run_quality.py` | Wording of each suitability check (plain sentence plus its specifics) and which run warnings a failing check already states. The quality page and the History run detail's warning banners both use it, so they say the same thing. |
 | `report/pdf.py` | ReportLab canvas renderer with built-in Helvetica: one function per page (`_owner_page`, `_mechanic_page`, `_quality_page`), the car diagram, and the spectrum and amplitude-vs-speed charts. Layout only. |
 | `report/service.py` | `HistoryReportService`: loads the run, picks the language, caches PDFs, and calls the injected renderer (composition imports ReportLab lazily on first use). |
 | `report/cache.py` | LRU PDF cache with per-key build coordination. |
@@ -93,8 +94,8 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
    - Amplitude-vs-speed chart, shown only when the swept range is at least
      30 km/h.
    - Shop-request box for the fault type.
-3. **Data quality page**: suitability checks in plain words, warnings, and
-   traceability (run id, sensor, firmware, sample rate, VibeSensor version).
+3. **Data quality page**: suitability checks in plain words, warnings (minus
+   any a failing check already states), and traceability (run id, sensor, firmware, sample rate, VibeSensor version).
    When every check passes and there are no warnings, this collapses into one
    footer line on page 2.
 
