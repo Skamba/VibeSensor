@@ -198,20 +198,37 @@ def test_variable_speed_order_in_one_speed_bin_needs_broad_frequency_tracking() 
     assert match.is_eligible(feature_interval_s=0.25, steady_speed=False) is False
 
 
-def test_weaker_engine_alias_of_a_wheel_order_is_suppressed() -> None:
+# Next to a wheel order at confidence 0.60 and ranking 0.5, an engine order is
+# taken for its alias (confidence x 0.6) unless it is stronger by a measure the
+# two share: a better ranking score, or a confidence over 1.15 x the wheel's.
+@pytest.mark.parametrize(
+    ("engine_confidence", "engine_ranking", "expected_confidence"),
+    [
+        pytest.param(0.50, 0.4, 0.30, id="weaker-on-both-is-the-alias"),
+        # Only 8 % more confident, but better tracked: the engine is no alias.
+        pytest.param(0.65, 0.6, 0.65, id="better-ranked-is-kept"),
+        pytest.param(0.75, 0.4, 0.75, id="clearly-more-confident-is-kept"),
+    ],
+)
+def test_engine_order_is_a_wheel_alias_only_when_weaker(
+    engine_confidence: float, engine_ranking: float, expected_confidence: float
+) -> None:
     findings = [
+        (0.5, make_finding(suspected_source="wheel/tire", confidence=0.60, ranking_score=0.5)),
         (
-            0.5,
-            make_finding(suspected_source=" Wheel/Tire ", confidence=0.60, ranking_score=0.5),
+            engine_ranking,
+            make_finding(
+                suspected_source="engine",
+                confidence=engine_confidence,
+                ranking_score=engine_ranking,
+            ),
         ),
-        (0.4, make_finding(suspected_source=" ENGINE ", confidence=0.50, ranking_score=0.4)),
     ]
 
     result = suppress_engine_aliases(findings)
 
-    engine = [f for f in result if str(f.suspected_source).strip().lower() == "engine"]
-    assert len(engine) == 1
-    assert engine[0].effective_confidence == pytest.approx(0.30)
+    engine = next(f for f in result if f.suspected_source == "engine")
+    assert engine.effective_confidence == pytest.approx(expected_confidence)
 
 
 # A front-left wheel imbalance (T1 well above T2) with one wheel sensor and two
@@ -292,16 +309,27 @@ def test_engine_order_on_a_wheel_harmonic_is_the_wheel_only_with_estimated_rpm(
     )
 
 
-def test_engine_tone_off_the_wheel_orders_keeps_its_score_next_to_a_louder_wheel() -> None:
-    # E1 at 2.72 x T1 (between T2 and T3), 12 dB below the wheel's T1.
-    def engine_confidence(*, wheel_fault: bool) -> float:
-        samples = _drive(e1_per_t1=2.72, wheel_fault=wheel_fault, engine_tone_g=0.03)
-        findings = _analyse(samples, e1_per_t1=2.72)["findings"]
-        return next(f["confidence"] for f in findings if f["suspected_source"] == "engine")
+# E1 at 2.72 x T1 (between T2 and T3), an even tone with no dominant location.
+# Scoring spares it the spread penalty the wheel takes, so only its level at the
+# wheel's corner can weigh it against the wheel.
+@pytest.mark.parametrize(
+    ("engine_tone_g", "source", "order_code"),
+    [
+        # 12 dB under the wheel's T1 at the wheel's corner: the wheel is the vibration.
+        (0.03, "wheel/tire", "T1"),
+        # 6 dB under it: too close to call the engine tone incidental.
+        (0.06, "engine", "E1"),
+    ],
+    ids=["engine-12db-below", "engine-6db-below"],
+)
+def test_spread_engine_tone_loses_to_a_clearly_louder_wheel_at_its_corner(
+    engine_tone_g: float, source: str, order_code: str
+) -> None:
+    samples = _drive(e1_per_t1=2.72, engine_tone_g=engine_tone_g)
 
-    assert engine_confidence(wheel_fault=True) == pytest.approx(
-        engine_confidence(wheel_fault=False)
-    )
+    diagnosis = _analyse(samples, e1_per_t1=2.72)["diagnosis"]
+
+    assert (diagnosis["source"], diagnosis["order_code"]) == (source, order_code)
 
 
 def _context(overrides: dict | None = None):

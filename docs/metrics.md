@@ -133,7 +133,8 @@ the source:
 
 Because wheel and engine scores follow different location rules, a score
 comparison does not decide whether an engine order on a wheel harmonic belongs to
-the wheel when its RPM is estimated; their amplitudes do (step 8 in
+the wheel when its RPM is estimated, or whether an engine tone spread over the
+car outweighs a wheel order at a dominant corner; their amplitudes do (step 8 in
 `docs/order_tracking.md`).
 
 ## Processing profiles

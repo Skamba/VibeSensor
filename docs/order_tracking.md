@@ -137,7 +137,15 @@ coordinates the evidence flow:
    wheel order it coincides with is as loud as it is. Confidence cannot settle
    this case, because the wheel order is penalised for spreading into the
    cabin and the engine zone is not. With measured RPM the engine order keeps
-   its own frequency track and only the confidence rule applies.
+   its own frequency track and that rule does not apply.
+   The same holds for an engine order with no dominant location, at any
+   frequency: it is spared the spread penalty a wheel order takes, so it is
+   compared with each wheel order that has a dominant corner by level. When
+   that wheel order is at least 9 dB louder than it at the wheel's corner
+   (median over the windows both matched there), the engine tone the whole car
+   shares is demoted. The margin is wider than the 6 dB above because peak
+   levels read on a speed sweep favour the slower-moving lower order by a few
+   dB.
 
 If the effective match rate stays below the current threshold, the hypothesis
 does not produce a finding.

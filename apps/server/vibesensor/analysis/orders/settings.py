@@ -102,6 +102,7 @@ class OrderHeuristicSettings:
     harmonic_alias_ratio: float
     engine_alias_suppression: float
     wheel_locked_alias_margin_db: float
+    spread_engine_alias_margin_db: float
     dominant_single_location_base: float
     dominant_single_location_step: float
     fallback_single_location_base: float
@@ -120,6 +121,11 @@ ORDER_HEURISTIC_SETTINGS = OrderHeuristicSettings(
     # An engine order locked to a wheel order (estimated RPM, shared peaks) is
     # that wheel's harmonic when a wheel order is at least twice as strong.
     wheel_locked_alias_margin_db=6.0,
+    # An engine order with no dominant location is demoted next to a wheel
+    # order about three times as strong at its corner. Peak levels from a
+    # speed sweep favour the slower-moving (lower) order by a few dB, so this
+    # margin is wider than the one for a locked engine order.
+    spread_engine_alias_margin_db=9.0,
     dominant_single_location_base=0.50,
     dominant_single_location_step=0.15,
     fallback_single_location_base=0.40,

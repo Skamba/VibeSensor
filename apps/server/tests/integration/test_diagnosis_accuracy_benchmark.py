@@ -292,9 +292,33 @@ _IMBALANCED_OVAL_TIRE = Profile(
     modulation_depth=0.12,
     reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
+# An even engine tone (E2 over E1) that every sensor feels alike, 12 dB under a
+# front-left imbalance at that corner. Each sensor plays one profile, so the
+# tone rides on the road noise everywhere and on the imbalance at front-left,
+# scaled so the sensors read it at the same level after their override gains.
+_ENGINE_HUM_TONES = (("engine_2x", 1.0, (36.0, 25.0, 48.0)), ("engine_1x", 1.0, (12.0, 9.0, 18.0)))
+
+
+def _with_engine_hum(base: str, gain: float) -> Profile:
+    hum = tuple((key, mult, tuple(a / gain for a in amps)) for key, mult, amps in _ENGINE_HUM_TONES)
+    profile = PROFILE_LIBRARY[base]
+    return replace(
+        profile,
+        name=f"bench_{base}_engine_hum",
+        order_tones=profile.order_tones + hum,
+        reference_speed_kmh=DEFAULT_SPEED_KMH,
+    )
+
+
 _BENCH_PROFILES = {
     profile.name: profile
-    for profile in (_ENGINE_FIRST_ORDER, _TIRE_OUT_OF_ROUND, _IMBALANCED_OVAL_TIRE)
+    for profile in (
+        _ENGINE_FIRST_ORDER,
+        _TIRE_OUT_OF_ROUND,
+        _IMBALANCED_OVAL_TIRE,
+        _with_engine_hum("rough_road", 0.28 * 0.52),
+        _with_engine_hum("wheel_imbalance", 0.85),
+    )
 }
 
 
@@ -550,6 +574,24 @@ BENCH_CASES = (
         ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         layout=ONE_WHEEL_AND_CABIN,
+    ),
+    # A front-left imbalance with an even engine tone 12 dB under it at that
+    # corner. Scoring spares the engine tone the spread penalty the wheel takes
+    # (an engine is a zone), so the tone the whole car shares must not outrank
+    # the imbalance. On the other car the tone costs the wheel order part of its
+    # matches, so the verdict there is Moderate.
+    Case(
+        "bench-front-left-wheel-with-engine-hum-sweep",
+        _sweep(
+            _ov("all", "bench_rough_road_engine_hum", 0.28, 0.52),
+            _ov("front-left", "bench_wheel_imbalance_engine_hum", 0.85, 1.0),
+        ),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        {
+            "other": _fault(
+                "wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True, levels=MODERATE
+            )
+        },
     ),
     # A sensor on every mounting point: road noise everywhere is still no fault,
     # and a wheel fault still stands out at its corner.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import replace
 
 from vibesensor.analysis.constants import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
@@ -84,6 +85,14 @@ def suppress_engine_aliases(
     is), it is that wheel's harmonic and is suppressed whatever the ranking and
     confidence say: those are built under different location rules (a wheel
     order is penalised for spreading into the cabin, an engine zone is not).
+
+    The same holds for an engine order spread over the car (no dominant
+    location): scoring exempts it from the spread and diffuse penalties a wheel
+    order takes, because an engine is diagnosed as a zone, so neither its
+    confidence nor its ranking score can be weighed against a wheel order with
+    a dominant corner. When that wheel order is clearly louder than it at the
+    wheel's own corner (in the windows both matched), the wheel is the
+    vibration and the engine tone the whole car shares is suppressed.
     """
     wheels = [
         (score, finding)
@@ -100,6 +109,7 @@ def suppress_engine_aliases(
         ),
         default=None,
     )
+    located_wheels = [finding for _, finding in wheels if not finding.weak_spatial_separation]
     if best_wheel_conf > 0:
         settings = ORDER_HEURISTIC_SETTINGS
         for index, (ranking_score, finding) in enumerate(findings):
@@ -112,7 +122,11 @@ def suppress_engine_aliases(
                 and loudest_wheel_db - finding.vibration_strength_db
                 >= settings.wheel_locked_alias_margin_db
             )
-            if not wheel_harmonic:
+            spread_under_wheel = finding.weak_spatial_separation and any(
+                _level_at_wheel_corner_db(wheel, finding) >= settings.spread_engine_alias_margin_db
+                for wheel in located_wheels
+            )
+            if not (wheel_harmonic or spread_under_wheel):
                 if ranking_score >= best_wheel_ranking:
                     continue
                 if finding.effective_confidence > best_wheel_conf * settings.harmonic_alias_ratio:
@@ -129,6 +143,17 @@ def suppress_engine_aliases(
     findings.sort(key=lambda item: item[0], reverse=True)
     valid = [item[1] for item in findings if item[1].effective_confidence >= min_confidence]
     return valid[:5]
+
+
+def _level_at_wheel_corner_db(wheel: DomainFinding, other: DomainFinding) -> float:
+    """dB by which *wheel* exceeds *other* at the wheel's strongest corner (-inf if unknown)."""
+    location = (
+        wheel.location.strongest_location
+        if wheel.location is not None
+        else wheel.strongest_location
+    )
+    excess_db = wheel.level_over_db(other, location=location) if location else None
+    return -math.inf if excess_db is None else excess_db
 
 
 def apply_localization_override(
