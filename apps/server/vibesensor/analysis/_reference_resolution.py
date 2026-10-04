@@ -7,6 +7,10 @@ from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
 from vibesensor.recording.run_schema import RunMetadata
 
+# Engine RPM derived from vehicle speed, tire size and gear ratios: it moves in
+# lockstep with the wheels, so it cannot tell an engine order from a wheel order.
+ESTIMATED_RPM_SOURCE = "estimated_from_speed_and_ratios"
+
 
 def _tire_reference_from_context(context: RunMetadata) -> tuple[float | None, str | None]:
     """Return the wheel reference circumference and the metadata source name."""
@@ -48,7 +52,7 @@ def _effective_engine_rpm(
     ):
         rpm = spec.engine_rpm_from_speed_kmh(speed_kmh)
         if rpm is not None and rpm > 0:
-            return rpm, "estimated_from_speed_and_ratios"
+            return rpm, ESTIMATED_RPM_SOURCE
 
     drive_ratio = (
         sample.final_drive_ratio
@@ -73,4 +77,4 @@ def _effective_engine_rpm(
     if whz is None:
         return None, "missing"
     rpm = whz * drive_ratio * gear_ratio * SECONDS_PER_MINUTE
-    return float(rpm), "estimated_from_speed_and_ratios"
+    return float(rpm), ESTIMATED_RPM_SOURCE

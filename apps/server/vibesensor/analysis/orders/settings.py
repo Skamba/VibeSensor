@@ -101,6 +101,7 @@ class OrderHeuristicSettings:
     diffuse_penalty_floor: float
     harmonic_alias_ratio: float
     engine_alias_suppression: float
+    wheel_locked_alias_margin_db: float
     dominant_single_location_base: float
     dominant_single_location_step: float
     fallback_single_location_base: float
@@ -116,6 +117,9 @@ ORDER_HEURISTIC_SETTINGS = OrderHeuristicSettings(
     diffuse_penalty_floor=0.65,
     harmonic_alias_ratio=1.15,
     engine_alias_suppression=0.60,
+    # An engine order locked to a wheel order (estimated RPM, shared peaks) is
+    # that wheel's harmonic when a wheel order is at least twice as strong.
+    wheel_locked_alias_margin_db=6.0,
     dominant_single_location_base=0.50,
     dominant_single_location_step=0.15,
     fallback_single_location_base=0.40,
