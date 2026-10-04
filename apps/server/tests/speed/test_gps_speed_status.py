@@ -114,7 +114,7 @@ from vibesensor.speed.speed_source_config import SpeedSourceConfig
                 "fix_dimension": "none",
                 "speed_confidence": "low",
                 "speed_source": "none",
-                "fallback_active": True,
+                "fallback_active": False,
                 "reconnect_delay_s": 4.0,
                 "stale_timeout_s": DEFAULT_STALE_TIMEOUT_S,
             },
@@ -178,16 +178,16 @@ def _configure_disconnected(monitor: GPSSpeedMonitor) -> None:
 
 
 @pytest.mark.parametrize(
-    ("gps_age_s", "expected_speed_mps", "expected_fallback_active"),
+    ("gps_age_s", "expected_speed_mps", "expected_source"),
     [
-        pytest.param(4.0, 10.0, False, id="fresh-within-timeout"),
-        pytest.param(6.0, None, True, id="stale-over-timeout"),
+        pytest.param(4.0, 10.0, "gps", id="fresh-within-timeout"),
+        pytest.param(6.0, None, "none", id="stale-over-timeout"),
     ],
 )
 def test_stale_timeout_controls_public_speed_resolution(
     gps_age_s: float,
     expected_speed_mps: float | None,
-    expected_fallback_active: bool,
+    expected_source: str,
 ) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
     monitor.stale_timeout_s = 5.0
@@ -195,7 +195,7 @@ def test_stale_timeout_controls_public_speed_resolution(
     set_gps_snapshot_age(monitor, age_s=gps_age_s)
 
     assert monitor.effective_speed_mps == expected_speed_mps
-    assert monitor.fallback_active is expected_fallback_active
+    assert monitor.resolve_speed().source == expected_source
 
 
 @pytest.mark.parametrize(

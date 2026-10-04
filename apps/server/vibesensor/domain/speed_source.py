@@ -90,8 +90,7 @@ class SpeedSource:
         selected_source: str,
         *,
         gps_enabled: bool,
-        fallback_active: bool,
-        resolution_source: str | None = None,
+        resolution_source: str,
     ) -> str:
         """Resolve the basis speed-source label for rotational display.
 
@@ -100,16 +99,6 @@ class SpeedSource:
         src = selected_source.strip().lower()
         if resolution_source == "fallback_manual":
             return "fallback_manual"
-        if src == "manual":
-            return "manual"
-        if src == "obd2":
-            return "obd2"
-        if resolution_source is not None:
-            if gps_enabled:
-                return "gps"
-        else:
-            if fallback_active:
-                return "fallback_manual"
-            if gps_enabled:
-                return "gps"
-        return "unknown"
+        if src in ("manual", "obd2"):
+            return src
+        return "gps" if gps_enabled else "unknown"

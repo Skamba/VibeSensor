@@ -26,7 +26,7 @@ from vibesensor.speed.gps_speed import MAX_MANUAL_SPEED_KMH, GPSSpeedMonitor
         pytest.param(True, 12.0, 20.0, 0.0, "connected", None, 12.0, "manual", False),
         pytest.param(True, None, 30.0, 0.0, "connected", None, 30.0, "gps", False),
         pytest.param(True, 7.0, None, None, "disconnected", None, 7.0, "manual", False),
-        pytest.param(True, None, None, None, "connected", None, None, "none", True),
+        pytest.param(True, None, None, None, "connected", None, None, "none", False),
         pytest.param(False, 11.0, 22.0, 30.0, "connected", 5.0, 11.0, "fallback_manual", True),
         pytest.param(
             False,
@@ -37,10 +37,10 @@ from vibesensor.speed.gps_speed import MAX_MANUAL_SPEED_KMH, GPSSpeedMonitor
             5.0,
             None,
             "none",
-            True,
+            False,
             id="stale-gps-bool-fallback-override-is-ignored",
         ),
-        pytest.param(False, None, 22.0, 30.0, "connected", 5.0, None, "none", True),
+        pytest.param(False, None, 22.0, 30.0, "connected", 5.0, None, "none", False),
         pytest.param(
             True,
             True,
@@ -50,10 +50,10 @@ from vibesensor.speed.gps_speed import MAX_MANUAL_SPEED_KMH, GPSSpeedMonitor
             None,
             None,
             "none",
-            True,
+            False,
             id="manual-bool-override-is-ignored",
         ),
-        pytest.param(True, None, None, None, "disconnected", None, None, "none", True),
+        pytest.param(True, None, None, None, "disconnected", None, None, "none", False),
     ],
 )
 def test_resolve_speed_source_contract(

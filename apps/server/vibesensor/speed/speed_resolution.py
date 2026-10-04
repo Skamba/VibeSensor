@@ -26,8 +26,12 @@ class SpeedResolution(NamedTuple):
     """Immutable snapshot of the resolved speed state — no side effects."""
 
     speed_mps: float | None
-    fallback_active: bool
     source: ResolvedSpeedSource
+
+    @property
+    def fallback_active(self) -> bool:
+        """Whether the manual fallback speed stands in for a stale live source."""
+        return self.source == "fallback_manual"
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,7 +159,7 @@ class SpeedResolutionPolicy:
         if policy.manual_source_selected and isinstance(policy.override_speed_mps, NUMERIC_TYPES):
             override_speed = policy.override_speed_mps
             if override_speed is not None and not isinstance(override_speed, bool):
-                return SpeedResolution(float(override_speed), False, "manual")
+                return SpeedResolution(float(override_speed), "manual")
 
         gps_speed, _ = speed_snapshot
         if isinstance(gps_speed, NUMERIC_TYPES) and not isinstance(gps_speed, bool):
@@ -164,13 +168,8 @@ class SpeedResolutionPolicy:
                 snapshot=policy,
                 reference_time_s=reference_time_s,
             ):
-                fallback_speed = self.fallback_speed_value(snapshot=policy)
-                return SpeedResolution(
-                    fallback_speed,
-                    True,
-                    "fallback_manual" if fallback_speed is not None else "none",
-                )
-            return SpeedResolution(float(gps_speed), False, live_source)
+                return self._fallback_resolution(policy)
+            return SpeedResolution(float(gps_speed), live_source)
 
         effective_connection = self.effective_connection_state(
             gps_enabled=gps_enabled,
@@ -180,14 +179,16 @@ class SpeedResolutionPolicy:
             reference_time_s=reference_time_s,
         )
         if gps_enabled and effective_connection in ("disconnected", "stale"):
-            fallback_speed = self.fallback_speed_value(snapshot=policy)
-            return SpeedResolution(
-                fallback_speed,
-                True,
-                "fallback_manual" if fallback_speed is not None else "none",
-            )
+            return self._fallback_resolution(policy)
 
-        return SpeedResolution(None, False, "none")
+        return SpeedResolution(None, "none")
+
+    def _fallback_resolution(self, policy: SpeedResolutionPolicySnapshot) -> SpeedResolution:
+        """Resolve a stale or lost live source: the manual fallback speed, else no speed."""
+        fallback_speed = self.fallback_speed_value(snapshot=policy)
+        if fallback_speed is None:
+            return SpeedResolution(None, "none")
+        return SpeedResolution(fallback_speed, "fallback_manual")
 
     def effective_connection_state(
         self,

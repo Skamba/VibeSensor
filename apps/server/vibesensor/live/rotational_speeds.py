@@ -18,14 +18,12 @@ def rotational_basis_speed_source(
     selected_source: str,
     *,
     gps_enabled: bool,
-    fallback_active: bool = False,
-    resolution_source: ResolvedSpeedSource | None = None,
+    resolution_source: ResolvedSpeedSource,
 ) -> str:
     """Determine the basis speed source label for rotational RPM display."""
     return SpeedSource.resolve_basis_label(
         str(selected_source or "gps"),
         gps_enabled=gps_enabled,
-        fallback_active=fallback_active,
         resolution_source=resolution_source,
     )
 

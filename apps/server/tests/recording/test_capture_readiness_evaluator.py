@@ -25,6 +25,7 @@ class _SpeedStatus:
     speed_kmh: float | None = 80.0
     age_s: float | None = 0.2
     fallback_active: bool = False
+    live_source_selected: bool = True
 
 
 def _run_context() -> RunContextSnapshot:
@@ -75,6 +76,7 @@ def _observation(
             speed_kmh=speed_status.speed_kmh,
             age_s=speed_status.age_s,
             fallback_active=speed_status.fallback_active,
+            live_source_selected=speed_status.live_source_selected,
         ),
         obd=None,
     )
@@ -112,7 +114,9 @@ def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly()
     readiness = evaluate_capture_readiness(
         policy=CaptureReadinessPolicy(),
         observation=_observation(
-            speed_status=_SpeedStatus(source="none", speed_kmh=None, age_s=None)
+            speed_status=_SpeedStatus(
+                source="none", speed_kmh=None, age_s=None, live_source_selected=False
+            )
         ),
         state=CaptureReadinessStateSnapshot(
             integrity=IntegrityState(

@@ -121,6 +121,7 @@ def test_build_capture_readiness_state_input_filters_non_live_speed_samples() ->
             speed_kmh=80.0,
             age_s=0.1,
             fallback_active=False,
+            live_source_selected=False,
         ),
         obd=None,
     )

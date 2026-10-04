@@ -241,6 +241,42 @@ def test_capture_readiness_blocks_when_manual_fallback_is_active(
     assert not readiness.is_ready
 
 
+def test_gps_without_fix_or_manual_speed_waits_for_a_reading_without_claiming_fallback(
+    fake_registry,
+    speed_rig,
+    mutable_fake_settings,
+) -> None:
+    tracker = CaptureReadinessTracker()
+    mutable_fake_settings.active_car = _active_car_snapshot()
+    # GPS selected and enabled but it has no fix; no manual speed is configured.
+    speed_rig.services.control.apply_speed_source_settings(
+        effective_speed_kmh=None,
+        manual_source_selected=False,
+        selected_source="gps",
+    )
+    speed_rig.gps_speed(None)
+
+    status = speed_rig.observation.status_snapshot()
+    readiness = tracker.evaluate(
+        _observation(
+            fake_registry=fake_registry,
+            speed_rig=speed_rig,
+            mutable_fake_settings=mutable_fake_settings,
+            now_mono=330.0,
+        )
+    )
+
+    assert status.fallback_active is False
+    assert status.speed_source == "none"
+    assert status.effective_speed_kmh is None
+    reference_check = next(
+        check for check in readiness.checks if check.check_key == "reference_ready"
+    )
+    assert reference_check.state == "fail"
+    assert reference_check.reason_key == "speed_sample_missing"
+    assert not readiness.is_ready
+
+
 def test_run_recorder_status_includes_capture_readiness(
     make_logger,
     fake_registry,

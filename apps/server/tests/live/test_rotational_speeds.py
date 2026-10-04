@@ -17,8 +17,8 @@ from vibesensor.live.rotational_speeds import rotational_basis_speed_source
         ),
         (
             "gps",
-            {"gps_enabled": True, "fallback_active": True},
-            "fallback_manual",
+            {"gps_enabled": True, "resolution_source": "none"},
+            "gps",
         ),
         (
             "gps",
@@ -32,7 +32,7 @@ from vibesensor.live.rotational_speeds import rotational_basis_speed_source
         ),
         (
             "OBD2",
-            {"gps_enabled": False, "fallback_active": True},
+            {"gps_enabled": False, "resolution_source": "none"},
             "obd2",
         ),
     ],

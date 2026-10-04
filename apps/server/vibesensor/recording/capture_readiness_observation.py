@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from vibesensor.domain.run_context import RunContextSnapshot
+from vibesensor.domain.speed_source import SpeedSourceKind
 from vibesensor.settings.sensor_config import SensorConfigPayload
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
@@ -41,6 +42,9 @@ class CaptureReadinessSpeedObservation:
     speed_kmh: float | None
     age_s: float | None
     fallback_active: bool
+    live_source_selected: bool
+    """The user picked GPS or OBD-II and that source is enabled, so a missing
+    speed means the source is not delivering yet rather than not chosen."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,11 +120,14 @@ def _speed_observation(
     speed_provider: SpeedSourceObservationService,
 ) -> CaptureReadinessSpeedObservation:
     speed_status = speed_provider.status_snapshot()
+    selected_source = speed_provider.selected_source
     return CaptureReadinessSpeedObservation(
         source=str(speed_status.speed_source),
         speed_kmh=speed_status.effective_speed_kmh,
         age_s=speed_status.last_update_age_s,
         fallback_active=speed_status.fallback_active,
+        live_source_selected=selected_source is SpeedSourceKind.OBD2
+        or (selected_source is SpeedSourceKind.GPS and speed_status.gps_enabled),
     )
 
 

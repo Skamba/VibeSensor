@@ -173,10 +173,14 @@ def _reference_check(
         )
 
     if speed_source not in policy.live_speed_sources:
+        # A chosen, enabled live source that resolves to no speed (GPS without a fix,
+        # OBD-II without samples, no manual fallback) is waiting for a reading.
         return CaptureReadinessCheck(
             check_key="reference_ready",
             state="fail",
-            reason_key="speed_source_not_live",
+            reason_key=(
+                "speed_sample_missing" if speed.live_source_selected else "speed_source_not_live"
+            ),
             details=(("speed_source", speed_source),),
         )
 

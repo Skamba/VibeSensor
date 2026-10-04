@@ -56,6 +56,10 @@ class SpeedSourceObservationService:
         self._selected_source = selected_source
 
     @property
+    def selected_source(self) -> SpeedSourceKind:
+        return self._selected_source.get()
+
+    @property
     def speed_mps(self) -> float | None:
         if self._selected_source.get() is SpeedSourceKind.OBD2:
             return self._obd.speed_mps

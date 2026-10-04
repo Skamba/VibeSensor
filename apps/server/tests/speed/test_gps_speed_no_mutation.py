@@ -4,7 +4,7 @@ Verifies that:
 - resolve_speed() is pure (no side effects)
 - effective_speed_mps property does not mutate any instance state
 - status_snapshot() does not mutate connection_state
-- fallback_active is always consistent with the speed value returned
+- fallback_active is true only while a manual fallback speed is in use
 - Multiple reads per tick yield consistent results
 """
 
@@ -89,18 +89,17 @@ _ALL_MONITOR_STATES = [
 
 @pytest.mark.parametrize("factory", _ALL_MONITOR_STATES)
 def test_speed_reads_are_pure_and_repeatable(factory) -> None:
-    """resolve_speed()/effective_speed_mps/fallback_active never mutate and always agree."""
+    """resolve_speed()/effective_speed_mps never mutate and always agree."""
     m = factory()
     before = _snapshot(m)
 
     results = [m.resolve_speed() for _ in range(5)]
-    speed_first, fallback_first = m.effective_speed_mps, m.fallback_active
-    fallback_second, speed_second = m.fallback_active, m.effective_speed_mps
+    speed_first = m.effective_speed_mps
+    speed_second = m.effective_speed_mps
 
     assert _snapshot(m) == before
     assert all(r == results[0] for r in results)
-    assert speed_first == speed_second
-    assert fallback_first == fallback_second
+    assert speed_first == speed_second == results[0].speed_mps
 
 
 class TestStatusSnapshotNoMutation:
@@ -132,19 +131,17 @@ class TestStatusSnapshotNoMutation:
             _make_stale_gps_with_fallback, 25.0, True, "fallback_manual", id="stale_gps_fallback"
         ),
         pytest.param(_make_manual_disconnected, 25.0, False, "manual", id="manual_wins"),
-        pytest.param(_make_disconnected, None, True, None, id="disconnected_no_override"),
+        pytest.param(_make_disconnected, None, False, "none", id="disconnected_no_override"),
     ],
 )
 def test_fallback_active_consistent_with_resolved_speed(
-    factory, speed_mps: float | None, fallback_active: bool, source: str | None
+    factory, speed_mps: float | None, fallback_active: bool, source: str
 ) -> None:
     m = factory()
     r = m.resolve_speed()
     assert r.speed_mps == speed_mps
     assert r.fallback_active is fallback_active
-    if source is not None:
-        assert r.source == source
-    assert m.fallback_active is fallback_active
+    assert r.source == source
     assert m.effective_speed_mps == speed_mps
 
 

@@ -69,7 +69,7 @@ def test_observation_service_switches_to_obd_status_and_resolution() -> None:
     gps_monitor.apply_speed_source_settings.return_value = None
 
     obd = MagicMock()
-    obd.resolve_speed.return_value = SpeedResolution(12.0, False, "obd2")
+    obd.resolve_speed.return_value = SpeedResolution(12.0, "obd2")
     obd.status_snapshot.return_value = _obd_status_snapshot()
     obd.stale_timeout_s = 8.0
     services = build_speed_source_services(gps_monitor=gps_monitor, obd=obd)

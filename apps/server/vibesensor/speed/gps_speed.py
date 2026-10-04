@@ -196,10 +196,6 @@ class GPSSpeedMonitor:
         return None
 
     @property
-    def fallback_active(self) -> bool:
-        return self.resolve_speed().fallback_active
-
-    @property
     def last_update_ts(self) -> float | None:
         return self._transport.last_update_ts
 
