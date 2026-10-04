@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import type {
+  HealthStatusPayload,
   UpdateCancelPayload,
   UpdateStartPayload,
   UpdateStartRequestPayload,
@@ -27,6 +28,7 @@ type UpdateServer = {
   cancels: number;
   startDelayMs?: number;
   internet?: UsbInternetStatusPayload;
+  health?: HealthStatusPayload;
 };
 
 const USABLE_USB_INTERNET: UsbInternetStatusPayload = {
@@ -50,7 +52,7 @@ async function bootWithUpdateServer(
     await fulfillJson(route, server.internet ?? USABLE_USB_INTERNET);
   });
   await page.route("**/api/health", async (route) => {
-    await fulfillJson(route, createHealthyUpdateStatus());
+    await fulfillJson(route, server.health ?? createHealthyUpdateStatus());
   });
   await page.route("**/api/update/status", async (route) => {
     await fulfillJson(route, server.status);
@@ -244,4 +246,49 @@ test("journey: an invalid updater status is reported instead of shown", async ({
   await openUpdateTab(page);
   await expect(page.locator("#appErrorBanner")).toBeVisible();
   await expect(page.locator("#updateOverviewPanel")).toBeEmpty();
+});
+
+test("journey: an outdated root side explains the reinstall without blocking the update", async ({
+  page,
+}) => {
+  const healthy = createHealthyUpdateStatus();
+  const server: UpdateServer = {
+    status: createIdleUpdateStatus(),
+    starts: [],
+    cancels: 0,
+    health: {
+      ...healthy,
+      subsystems: {
+        ...healthy.subsystems,
+        root_side: { status: "degraded", reason_codes: ["root_side_outdated"] },
+      },
+      root_side: {
+        ...healthy.root_side,
+        state: "outdated",
+        installed_digest: null,
+      },
+    },
+  };
+  await bootWithUpdateServer(page, server);
+  await openUpdateTab(page);
+
+  const note = page.locator("#rootSideOutdatedNote");
+  await expect(note).toContainText("do not match this app (server-v1.2.3)");
+  await expect(note).toContainText(
+    "apps/server/scripts/push_root_side.sh pi@10.4.0.1",
+  );
+  await expect(note).toContainText(
+    "sudo apps/server/scripts/install_systemd_units.sh",
+  );
+  await expect(note.getByRole("link")).toHaveAttribute(
+    "href",
+    /operational-runbooks\.md#installing-a-releases-root-side$/,
+  );
+  await expect(page.locator("#updateOverviewPanel")).toContainText(
+    "root side: degraded (root_side_outdated)",
+  );
+  await openInternetTab(page);
+  await page.locator("#updateSsidInput").fill("Workshop");
+  await openUpdateTab(page);
+  await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });

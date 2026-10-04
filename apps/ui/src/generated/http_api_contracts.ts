@@ -632,6 +632,7 @@ export interface components {
             processing_last_failure: string | null;
             processing_state: string;
             recent_data_loss: components["schemas"]["HealthRecentDataLossResponse"];
+            root_side: components["schemas"]["HealthRootSideResponse"];
             sample_rate_mismatch_count: number;
             startup_error: string | null;
             startup_phase: string;
@@ -643,6 +644,12 @@ export interface components {
             };
             tick_count: number;
             tick_duration_s: number;
+        };
+        /** Whether the installed root-side helpers and units match this release. */
+        HealthRootSideResponse: {
+            expected_digest: string;
+            installed_digest: string | null;
+            state: "current" | "outdated" | "not_installed";
         };
         HealthSubsystemResponse: {
             reason_codes: string[];

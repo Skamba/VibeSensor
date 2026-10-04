@@ -282,9 +282,14 @@ is on the device, this README owns the backend-side service and config path.
 - `scripts/install_systemd_units.sh` renders and enables all of these units and
   copies `root-helpers/` into root-owned `/usr/local/lib/vibesensor`, the only
   place root units run code from (system `/usr/bin/python3 -I`, never the venv).
-  `install_pi.sh` runs it, and it doubles as the offline migration path. In-app
-  updates replace only the venv; see
-  [Root runs only root-owned code](../../docs/operational-runbooks.md#root-runs-only-root-owned-code).
+  `install_pi.sh` runs it, and it doubles as the offline migration path. It
+  also writes a manifest of the installed root side to
+  `/usr/local/lib/vibesensor/root-side.sha256`. In-app updates replace only the
+  venv, so `/api/health` (`root_side`) and the Update tab report when the
+  installed root side differs from the release's. Prebuilt-image devices take a
+  new root side with `scripts/push_root_side.sh pi@10.4.0.1`, run from a release
+  checkout; see
+  [Installing a release's root side](../../docs/operational-runbooks.md#installing-a-releases-root-side).
 
 - Common service operations:
 
@@ -412,8 +417,10 @@ fresh venv. Its dependencies come from the release's Pi wheelhouse asset
 `tools/release/main_release.py build-wheelhouse`) and are installed offline with
 `pip --no-index`, so releases can change dependencies without a reflash. The new
 slot's `bin/vibesensor-server` is the boot-check launcher
-(`updates/boot_check.py`): if the new version keeps crashing or is not healthy
-within 60 s, it flips `current` back and the previous version starts again.
+(`updates/boot_check.py`): if the new version keeps crashing or does not work
+within 60 s (startup, startup tasks, database, or processing loop failing;
+sensor and device warnings do not count), it flips `current` back and the
+previous version starts again.
 The previous slot is kept until the next update.
 
 Firmware update code lives under

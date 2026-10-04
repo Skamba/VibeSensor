@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, TypedDict
 
+from vibesensor.common.root_side import RootSideState, inspect_root_side
 from vibesensor.domain.sensor_firmware import FirmwareStatus, firmware_status
 from vibesensor.ingest.diagnostics import (
     IngestDiagnosticsCollector,
@@ -79,6 +80,12 @@ class IngestClientHealthSnapshot(TypedDict):
     effective_sample_rate_hz: float | None
 
 
+class RootSideHealthSnapshot(TypedDict):
+    state: RootSideState
+    installed_digest: str | None
+    expected_digest: str
+
+
 class IngestHealthSnapshot(TypedDict):
     udp: UdpIngestHealthSnapshot
     raw_capture: RawCaptureQueueHealthSnapshot
@@ -109,6 +116,7 @@ class HealthSnapshotData(TypedDict):
     persistence: RunRecorderHealthSnapshot
     intake_stats: IntakeStatsPayload
     ingest: IngestHealthSnapshot
+    root_side: RootSideHealthSnapshot
     tick_duration_s: float | None
     max_tick_duration_s: float | None
     tick_count: int
@@ -131,6 +139,10 @@ def build_system_health_snapshot(
     unknown). An outdated sensor degrades only the ``firmware`` subsystem: the
     overall status stays out of it, because the updater's boot check reads it
     and a server update must not be rolled back for a sensor still to be flashed.
+    An outdated root side (``root_side``) likewise degrades only its subsystem:
+    every device runs the root side of an older release until an operator
+    reinstalls it, and boot checks of earlier releases revert an update whose
+    status is ``warn``.
     """
 
     def _coerce_duration(value: float | None) -> float:
@@ -204,12 +216,17 @@ def build_system_health_snapshot(
     if raw_capture_snapshot.pressure_state != "ok":
         degradation_reasons.append(f"raw_capture_pressure:{raw_capture_snapshot.pressure_state}")
     ws_publish_snapshot = ingest_diagnostics.ws_publish_snapshot()
+    # Root-side helpers older (or newer) than this release: hotspot repair and
+    # Bluetooth OBD pairing may fail until an operator reinstalls them. Kept out
+    # of degradation_reasons and status (see the docstring).
+    root_side = inspect_root_side()
     subsystems = _build_subsystem_health(
         health_state=health_state,
         loop_state=loop_state,
         data_loss_reasons=data_loss_reasons,
         persistence=persistence,
         raw_capture_snapshot=raw_capture_snapshot,
+        root_side_outdated=root_side.state == "outdated",
     )
     status: Literal["ok", "warn", "degraded"] = "ok"
     if degradation_reasons:
@@ -339,6 +356,11 @@ def build_system_health_snapshot(
             },
             "clients": ingest_clients,
         },
+        "root_side": {
+            "state": root_side.state,
+            "installed_digest": root_side.installed_digest,
+            "expected_digest": root_side.expected_digest,
+        },
         "tick_duration_s": _coerce_duration(loop_state.last_tick_duration_s),
         "max_tick_duration_s": _coerce_duration(loop_state.max_tick_duration_s),
         "tick_count": loop_state.tick_count,
@@ -391,6 +413,7 @@ def _build_subsystem_health(
     data_loss_reasons: list[str],
     persistence: RunRecorderHealthSnapshot,
     raw_capture_snapshot: RawCaptureRuntimeSnapshot,
+    root_side_outdated: bool,
 ) -> dict[str, SubsystemHealthSnapshot]:
     raw_capture_degraded: list[str] = []
     if raw_capture_snapshot.dropped_chunks > 0:
@@ -451,4 +474,5 @@ def _build_subsystem_health(
         "updates": _subsystem(),
         "firmware": _subsystem(),
         "hotspot_network": _subsystem(),
+        "root_side": _subsystem(degraded=["root_side_outdated"] if root_side_outdated else []),
     }

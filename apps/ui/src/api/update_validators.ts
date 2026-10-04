@@ -190,6 +190,12 @@ const healthSubsystemSchema = v.looseObject({
   status: subsystemHealthStatusSchema,
 });
 
+const healthRootSideSchema = v.looseObject({
+  expected_digest: v.string(),
+  installed_digest: nullableStringSchema,
+  state: v.picklist(["current", "outdated", "not_installed"]),
+});
+
 const healthStatusPayloadSchema = v.looseObject({
   background_task_failures: stringMapSchema,
   data_loss: healthDataLossSchema,
@@ -207,6 +213,7 @@ const healthStatusPayloadSchema = v.looseObject({
   processing_last_failure: nullableStringSchema,
   recent_data_loss: healthRecentDataLossSchema,
   processing_state: v.string(),
+  root_side: healthRootSideSchema,
   sample_rate_mismatch_count: integerSchema,
   startup_error: nullableStringSchema,
   startup_phase: v.string(),

@@ -111,6 +111,11 @@ function makeHealthPayload() {
       last_compute_all_duration_s: 0,
       last_ingest_duration_s: 0,
     },
+    root_side: {
+      state: "not_installed",
+      installed_digest: null,
+      expected_digest: "a".repeat(64),
+    },
     tick_duration_s: 0,
     max_tick_duration_s: 0,
     tick_count: 0,

@@ -28,6 +28,10 @@ import {
   journeyStages,
   latestAttemptRows,
   logPlaceholder,
+  ROOT_SIDE_GIT_COMMAND,
+  ROOT_SIDE_IMAGE_COMMAND,
+  ROOT_SIDE_RUNBOOK_URL,
+  rootSideFix,
   startLabel,
   startReadiness,
   stateBadge,
@@ -373,6 +377,37 @@ function UpdateStatusCards() {
   );
 }
 
+/** Root-side helpers that do not match this app: what fails and how to fix it. */
+function RootSideNote() {
+  const fix = rootSideFix(updateView.value, t);
+  if (!fix) {
+    return null;
+  }
+  return (
+    <Note bad>
+      <div
+        id="rootSideOutdatedNote"
+        class="maintenance-stack maintenance-stack--tight"
+      >
+        <span>{fix.summary}</span>
+        <span>
+          {fix.imageStep} <code>{ROOT_SIDE_IMAGE_COMMAND}</code>
+        </span>
+        <span>
+          {fix.gitStep} <code>{ROOT_SIDE_GIT_COMMAND}</code>
+        </span>
+        <a
+          href={ROOT_SIDE_RUNBOOK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {fix.runbookLabel}
+        </a>
+      </div>
+    </Note>
+  );
+}
+
 function UpdateOverview() {
   const { status, health } = updateView.value;
   if (!status || !health) {
@@ -402,6 +437,7 @@ function UpdateOverview() {
         badge={<Pill variant={healthState.variant}>{healthState.text}</Pill>}
       >
         <div class="maintenance-card__body">
+          <RootSideNote />
           <StatusGrid rows={healthRows(health, t)} />
         </div>
       </Card>

@@ -12,8 +12,10 @@ While ``boot-pending.json`` names the active slot as the candidate:
 - each start increments ``starts``; on start number ``MAX_CANDIDATE_STARTS + 1``
   (the candidate kept crashing) it flips ``current`` back to ``previous`` and
   runs that slot instead,
-- a detached supervisor polls the health URL; when the server reports ready it
-  deletes the marker (confirmed), and when ``deadline_s`` passes first it flips
+- a detached supervisor polls the health URL; when the server works (see
+  :func:`not_working_reason`: started, no failed startup task, database intact,
+  processing loop running; sensor and device warnings do not count) it deletes
+  the marker (confirmed), and when ``deadline_s`` passes first it flips
   back, records ``boot-reverted.json``, and SIGKILLs the server so systemd
   (``Restart=on-failure``) restarts into the previous slot.
 """
@@ -132,19 +134,42 @@ def prepare_boot(root: Path, slot: str) -> tuple[str, PendingBoot | None]:
     return slot, started
 
 
+def not_working_reason(payload: object) -> str | None:
+    """Why an ``/api/health`` payload shows a server that does not work yet, or None.
+
+    Judges only the new version itself: it finished starting, no startup task
+    failed, its database is intact, and its processing loop runs. It ignores
+    the overall ``status``, because ``warn`` and ``degraded`` also cover sensors
+    and the device (dropped frames, no GPS receiver, a sensor still to be
+    flashed, an outdated root side), and going back to the previous version
+    fixes none of those. A field missing from the payload counts as fine, so a
+    later release can drop one without being reverted. The release smoke test
+    (``releases/release_validation.py``) uses the same rule.
+    """
+
+    if not isinstance(payload, dict):
+        return "the health response is not a JSON object"
+    if payload.get("startup_state") != "ready":
+        return f"startup_state is {payload.get('startup_state')!r}"
+    if payload.get("startup_error"):
+        return f"startup failed: {payload['startup_error']}"
+    if payload.get("background_task_failures"):
+        return f"startup tasks failed: {payload['background_task_failures']}"
+    if payload.get("db_corruption_detected"):
+        return "the history database is corrupt"
+    if payload.get("processing_state", "ok") != "ok":
+        return f"the processing loop is {payload['processing_state']}"
+    return None
+
+
 def is_healthy(url: str) -> bool:
-    """Same readiness rule as the release smoke test: ready, no failed startup tasks."""
+    """True when the server at *url* answers and :func:`not_working_reason` finds nothing."""
     try:
         with urlopen(url, timeout=3.0) as response:
             payload = json.load(response)
     except (OSError, ValueError):
         return False
-    return (
-        isinstance(payload, dict)
-        and payload.get("status") in {"ok", "degraded"}
-        and payload.get("startup_state") == "ready"
-        and not payload.get("background_task_failures")
-    )
+    return not_working_reason(payload) is None
 
 
 def _alive(pid: int, kill: Callable[[int, int], None]) -> bool:

@@ -20,6 +20,7 @@ from vibesensor.updates.boot_check import (
     SERVER_APP,
     PendingBoot,
     is_healthy,
+    not_working_reason,
     prepare_boot,
     read_pending,
     supervise,
@@ -196,25 +197,107 @@ def health_server() -> Iterator[tuple[str, dict[str, object]]]:
         server.shutdown()
 
 
-@pytest.mark.parametrize(
-    ("payload", "healthy"),
-    [
-        ({"status": "ok", "startup_state": "ready"}, True),
-        ({"status": "degraded", "startup_state": "ready", "background_task_failures": []}, True),
-        ({"status": "ok", "startup_state": "starting"}, False),
-        ({"status": "ok", "startup_state": "ready", "background_task_failures": ["x"]}, False),
-        ({"status": "error", "startup_state": "ready"}, False),
-    ],
-)
-def test_health_rule_matches_the_release_smoke_test(
-    health_server: tuple[str, dict[str, object]],
-    payload: dict[str, object],
-    healthy: bool,
+def _ready_payload(**changes: object) -> dict[str, object]:
+    """The /api/health fields the boot check reads, for a server that works."""
+    payload: dict[str, object] = {
+        "status": "ok",
+        "startup_state": "ready",
+        "startup_error": None,
+        "background_task_failures": {},
+        "db_corruption_detected": False,
+        "processing_state": "ok",
+        "degradation_reasons": [],
+    }
+    payload.update(changes)
+    return payload
+
+
+def _supervise_against(slots: VenvSlots, url: str) -> str:
+    clock = _Clock()
+    pending = PendingBoot(candidate="2.0", previous="1.0", health_url=url, starts=1)
+    return supervise(
+        slots.root,
+        pending,
+        4242,
+        probe=is_healthy,
+        sleep=clock.sleep,
+        clock=clock,
+        kill=lambda _pid, _sig: None,
+    )
+
+
+def test_update_that_works_is_confirmed_despite_sensor_warnings(
+    tmp_path: Path, health_server: tuple[str, dict[str, object]]
+) -> None:
+    """Sensor and device warnings are not the new version's fault; reverting fixes none."""
+    url, served = health_server
+    served.update(
+        _ready_payload(
+            status="warn",
+            degradation_reasons=["frames_dropped", "sensor_timestamp_lag"],
+            subsystems={
+                "ingest": {"status": "degraded", "reason_codes": ["frames_dropped"]},
+                "root_side": {"status": "degraded", "reason_codes": ["root_side_outdated"]},
+            },
+            root_side={"state": "outdated"},
+        )
+    )
+    slots = _slots_with_candidate(tmp_path)
+
+    assert _supervise_against(slots, url) == "confirmed"
+    assert slots.active_slot() == "2.0"
+
+
+def test_update_whose_startup_failed_is_reverted(
+    tmp_path: Path, health_server: tuple[str, dict[str, object]]
 ) -> None:
     url, served = health_server
-    served.update(payload)
+    served.update(
+        _ready_payload(
+            status="degraded",
+            startup_state="failed",
+            startup_error="RuntimeError: history schema migration failed",
+            degradation_reasons=["startup_state:failed", "startup_error"],
+        )
+    )
+    slots = _slots_with_candidate(tmp_path)
 
-    assert is_healthy(url) is healthy
+    assert _supervise_against(slots, url) == "reverted"
+    assert slots.active_slot() == "1.0"
+
+
+@pytest.mark.parametrize(
+    ("payload", "reason"),
+    [
+        pytest.param(_ready_payload(), None, id="works"),
+        pytest.param({"startup_state": "ready"}, None, id="fields-a-later-release-dropped"),
+        pytest.param(
+            _ready_payload(status="degraded", degradation_reasons=["persistence_write_error"]),
+            None,
+            id="device-disk-trouble",
+        ),
+        pytest.param(_ready_payload(startup_state="starting"), "startup_state", id="starting"),
+        pytest.param(
+            _ready_payload(background_task_failures={"ingest": "boom"}),
+            "startup tasks failed",
+            id="startup-task-failed",
+        ),
+        pytest.param(
+            _ready_payload(db_corruption_detected=True), "database is corrupt", id="db-corrupt"
+        ),
+        pytest.param(
+            _ready_payload(processing_state="fatal"), "processing loop", id="processing-fatal"
+        ),
+        pytest.param(["not", "a", "dict"], "not a JSON object", id="not-an-object"),
+    ],
+)
+def test_only_a_version_that_does_not_work_is_rejected(payload: object, reason: str | None) -> None:
+    found = not_working_reason(payload)
+
+    if reason is None:
+        assert found is None
+    else:
+        assert found is not None and reason in found
 
 
 def test_unreachable_server_is_not_healthy() -> None:

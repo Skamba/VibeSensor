@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from vibesensor.common.root_side import RootSideState
 from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.ingest.registry import ExpectedFrameLoss
 
@@ -132,6 +133,16 @@ class HealthSubsystemResponse(BaseModel):
     reason_codes: list[str] = []
 
 
+class HealthRootSideResponse(BaseModel):
+    """Whether the installed root-side helpers and units match this release."""
+
+    state: RootSideState
+    """``outdated``: reinstall the root side from this release's tree
+    (docs/operational-runbooks.md); ``not_installed``: no systemd install."""
+    installed_digest: str | None
+    expected_digest: str
+
+
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
@@ -156,6 +167,7 @@ class HealthResponse(BaseModel):
     persistence: HealthPersistenceResponse
     intake_stats: HealthIntakeStatsResponse
     ingest: HealthIngestResponse
+    root_side: HealthRootSideResponse
 
     tick_duration_s: float = 0.0
     max_tick_duration_s: float = 0.0

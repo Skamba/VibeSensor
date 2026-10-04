@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, create_autospec
 
 import pytest
 
+from vibesensor.common.root_side import ROOT_SIDE_DIGEST, RootSideStatus
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.sensor_timing import SensorTimingGuard
@@ -15,6 +16,7 @@ from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.recording.recorder import RunRecorder
+from vibesensor.updates.boot_check import not_working_reason
 from vibesensor.web.health_snapshot import build_system_health_snapshot
 from vibesensor.web.health_state import RuntimeHealthState
 
@@ -521,3 +523,26 @@ class TestBuildSystemHealthSnapshotMultipleReasons:
         assert "startup_warnings" in result["degradation_reasons"]
         assert "processing_failures" in result["degradation_reasons"]
         assert "background_task_failures" in result["degradation_reasons"]
+
+
+def test_outdated_root_side_degrades_only_its_subsystem(monkeypatch: pytest.MonkeyPatch) -> None:
+    status = RootSideStatus("outdated", None, ROOT_SIDE_DIGEST)
+    monkeypatch.setattr("vibesensor.web.health_snapshot.inspect_root_side", lambda: status)
+    registry, run_recorder = _make_deps()
+
+    result = _snapshot(ProcessingLoopState(), _ready_health_state(), registry, run_recorder)
+
+    # The overall status stays "ok": boot checks of earlier releases revert an
+    # update whose status is "warn", and every device starts out outdated.
+    assert result["status"] == "ok"
+    assert result["degradation_reasons"] == []
+    assert not_working_reason(result) is None
+    assert result["subsystems"]["root_side"] == {
+        "status": "degraded",
+        "reason_codes": ["root_side_outdated"],
+    }
+    assert result["root_side"] == {
+        "state": "outdated",
+        "installed_digest": None,
+        "expected_digest": ROOT_SIDE_DIGEST,
+    }

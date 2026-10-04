@@ -15,6 +15,7 @@ import {
   internetRows,
   journeyStages,
   logPlaceholder,
+  rootSideFix,
   startLabel,
   startReadiness,
   type UpdateView,
@@ -283,6 +284,72 @@ describe("update status", () => {
     expect(formatDuration(42.9)).toBe("42s");
     expect(formatDuration(125)).toBe("2m 5s");
     expect(formatDuration(3725)).toBe("1h 2m 5s");
+  });
+});
+
+describe("root-side helpers", () => {
+  function outdatedView(version: string): UpdateView {
+    const healthy = createHealthyUpdateStatus();
+    return makeView({
+      ssid: "Workshop",
+      status: createIdleUpdateStatus({
+        runtime: { ...createIdleUpdateStatus().runtime, version },
+      }),
+      health: {
+        ...healthy,
+        subsystems: {
+          ...healthy.subsystems,
+          root_side: {
+            status: "degraded",
+            reason_codes: ["root_side_outdated"],
+          },
+        },
+        root_side: { ...healthy.root_side, state: "outdated" },
+      },
+    });
+  }
+
+  test("an outdated root side names the release tag to reinstall from", () => {
+    const fix = rootSideFix(outdatedView("2026.10.4.32"), t);
+    const tag = { tag: "server-v2026.10.4.32" };
+    expect(fix).toEqual({
+      summary: `settings.update.root_side.summary:${JSON.stringify(tag)}`,
+      imageStep: `settings.update.root_side.image_step:${JSON.stringify(tag)}`,
+      gitStep: `settings.update.root_side.git_step:${JSON.stringify(tag)}`,
+      runbookLabel: "settings.update.root_side.runbook",
+    });
+    expect(rootSideFix(outdatedView("unknown"), t)?.gitStep).toContain(
+      "settings.update.root_side.this_release",
+    );
+  });
+
+  test("an outdated root side shows as its subsystem without blocking the update", () => {
+    const view = outdatedView("2026.10.4.32");
+    expect(canStart(view, t)).toBe(true);
+    if (!view.health) {
+      throw new Error("outdatedView always has health");
+    }
+    expect(healthRows(view.health, t)).toContainEqual({
+      label: "settings.update.health.subsystems",
+      value:
+        "root side: settings.update.health.subsystem_state.degraded (root_side_outdated)",
+    });
+  });
+
+  test("a current or unmanaged root side shows no fix", () => {
+    const healthy = createHealthyUpdateStatus();
+    expect(rootSideFix(makeView(), t)).toBeNull();
+    expect(
+      rootSideFix(
+        makeView({
+          health: {
+            ...healthy,
+            root_side: { ...healthy.root_side, state: "not_installed" },
+          },
+        }),
+        t,
+      ),
+    ).toBeNull();
   });
 });
 

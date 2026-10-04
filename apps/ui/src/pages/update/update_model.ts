@@ -483,6 +483,46 @@ export function currentStatusRows(
   return rows;
 }
 
+/** Where an operator reinstalls the root side; the steps name the release tag. */
+export const ROOT_SIDE_RUNBOOK_URL =
+  "https://github.com/Skamba/VibeSensor/blob/main/docs/operational-runbooks.md#installing-a-releases-root-side";
+export const ROOT_SIDE_IMAGE_COMMAND =
+  "apps/server/scripts/push_root_side.sh pi@10.4.0.1";
+export const ROOT_SIDE_GIT_COMMAND =
+  "sudo apps/server/scripts/install_systemd_units.sh";
+
+export interface RootSideFix {
+  summary: string;
+  imageStep: string;
+  gitStep: string;
+  runbookLabel: string;
+}
+
+/**
+ * The fix for root-side helpers and units that do not match the running app.
+ * In-app updates replace only the venv, so an operator reinstalls them from
+ * the release's tree (docs/operational-runbooks.md).
+ */
+export function rootSideFix(
+  view: UpdateView,
+  t: Translate,
+): RootSideFix | null {
+  if (view.health?.root_side.state !== "outdated") {
+    return null;
+  }
+  const version = view.status?.runtime.version;
+  const tag =
+    version && version !== "unknown"
+      ? `server-v${version}`
+      : t("settings.update.root_side.this_release");
+  return {
+    summary: t("settings.update.root_side.summary", { tag }),
+    imageStep: t("settings.update.root_side.image_step", { tag }),
+    gitStep: t("settings.update.root_side.git_step", { tag }),
+    runbookLabel: t("settings.update.root_side.runbook"),
+  };
+}
+
 export function healthBadge(health: HealthStatusPayload, t: Translate): Badge {
   return {
     text: t(`settings.update.health.state.${health.status}`),

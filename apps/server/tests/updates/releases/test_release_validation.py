@@ -438,6 +438,7 @@ def test_run_server_smoke_probes_health_and_static(monkeypatch, tmp_path: Path) 
 
 
 def test_run_server_smoke_retries_until_server_is_ready(monkeypatch, tmp_path: Path) -> None:
+    """Uses the boot check's rule: a sensor warning does not fail the release."""
     recorded: dict[str, object] = {}
     _patch_release_smoke_process(monkeypatch, tmp_path, recorded)
     responses = [
@@ -449,7 +450,8 @@ def test_run_server_smoke_retries_until_server_is_ready(monkeypatch, tmp_path: P
         (
             200,
             "application/json",
-            '{"status":"ok","startup_state":"ready","background_task_failures":{}}',
+            '{"status":"warn","startup_state":"ready","background_task_failures":{},'
+            '"degradation_reasons":["frames_dropped"]}',
         ),
         (200, "text/html; charset=utf-8", "<html><title>VibeSensor</title></html>"),
     ]

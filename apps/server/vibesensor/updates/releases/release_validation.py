@@ -15,6 +15,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from vibesensor.updates.artifact_validation import wheel_metadata_validation_errors
+from vibesensor.updates.boot_check import not_working_reason
 from vibesensor.updates.firmware.esp_flash_types import SENSOR_FIRMWARE_ENV
 
 _RELEASE_SMOKE_RETRY_WAIT_S = 0.5
@@ -259,14 +260,15 @@ def run_server_smoke(
                 payload = json.loads(body)
                 if not isinstance(payload, dict):
                     raise RuntimeError(f"Unexpected health payload: {payload}")
-                if payload.get("status") not in {"ok", "degraded"}:
-                    raise RuntimeError(f"Unexpected health payload: {payload}")
-                if payload.get("startup_state") != "ready":
-                    raise _RetryableReleaseSmokeReadinessError(
-                        f"Server not ready yet: {payload}",
-                    )
                 if payload.get("background_task_failures"):
                     raise RuntimeError(f"Managed startup task failed: {payload}")
+                # The boot check's rule, so a release that passes here is not
+                # reverted on the device for the same payload.
+                reason = not_working_reason(payload)
+                if reason is not None:
+                    raise _RetryableReleaseSmokeReadinessError(
+                        f"Server not working yet ({reason}): {payload}",
+                    )
                 index_status, index_type, index_body = _read_http(index_url)
                 if index_status != 200:
                     raise _RetryableReleaseSmokeReadinessError(

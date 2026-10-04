@@ -10,8 +10,8 @@
 # never runs anything from the install tree, the A/B venv, or a clone the
 # service user can write. OTA app updates replace only the venv, so a release
 # that changes root-helpers/ or systemd/ takes effect when this script runs
-# again from that release's tree (docs/operational-runbooks.md); it needs no
-# network. SERVICE_USER defaults to the User= of the installed
+# again from that release's tree (docs/operational-runbooks.md, "Installing a
+# release's root side"); it needs no network. SERVICE_USER defaults to the User= of the installed
 # vibesensor.service. VIBESENSOR_SKIP_SERVICE_START=1 only enables units
 # (image builds and chroots).
 set -euo pipefail
@@ -46,8 +46,9 @@ install -d -o root -g root -m 0755 "$(dirname "${ROOT_HELPER_DIR}")"
 rm -rf "${ROOT_HELPER_DIR}.new"
 install -d -o root -g root -m 0755 "${ROOT_HELPER_DIR}.new"
 for helper in "${ROOT_HELPER_SRC}"/*; do
-  # Regular files only (a dev checkout may hold a __pycache__ directory).
-  if [ -f "${helper}" ]; then
+  # Regular files only (a dev checkout may hold a __pycache__ directory), never
+  # symlinks: the manifest below covers exactly these files.
+  if [ -f "${helper}" ] && [ ! -L "${helper}" ]; then
     install -o root -g root -m 0755 "${helper}" "${ROOT_HELPER_DIR}.new/"
   fi
 done
@@ -85,6 +86,19 @@ for unit in \
   vibesensor-hotspot-self-heal.timer; do
   render_unit "${unit}"
 done
+
+# Record what is now installed: the manifest of the root side this ran from
+# (sha256sum lines for the regular files in root-helpers/, scripts/ and
+# systemd/, sorted bytewise). The server compares its digest with the one its
+# release ships and reports an outdated root side in /api/health
+# (vibesensor/common/root_side.py). Written last, so an install that stops
+# half way leaves no stamp and shows as outdated.
+(
+  cd "${PI_DIR}"
+  find root-helpers scripts systemd -maxdepth 1 -type f -exec sha256sum {} + | LC_ALL=C sort
+) >"${ROOT_HELPER_DIR}/root-side.sha256.new"
+chmod 0644 "${ROOT_HELPER_DIR}/root-side.sha256.new"
+mv -f "${ROOT_HELPER_DIR}/root-side.sha256.new" "${ROOT_HELPER_DIR}/root-side.sha256"
 
 enable_unit() {
   local unit="$1" target="$2"

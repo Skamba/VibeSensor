@@ -158,6 +158,7 @@ The image contains:
   - `vibesensor-hotspot-self-heal.timer` — hotspot watchdog (every 2 min): reactivates `VibeSensor-AP`, then re-provisions via `vibesensor-hotspot.service`
   - `vibesensor-privileged.socket` — root commands for the updater and Bluetooth OBD admin. `vibesensor.service` runs with `NoNewPrivileges=true`, so it cannot use sudo. Each connection runs `vibesensor-privileged@.service` as root, through the allowlist wrapper it names (`vibesensor_update_allowlist.sh`, `vibesensor_obd_admin.py`). There is no sudoers entry.
   - root units run only the root-owned helper copies in `/usr/local/lib/vibesensor` (installed from `apps/server/root-helpers/` by `install_systemd_units.sh`) under `/usr/bin/python3 -I`, never code from the service user's venv; image validation fails otherwise
+  - `/usr/local/lib/vibesensor/root-side.sha256`, the root-side manifest `install_systemd_units.sh` writes last; image validation fails unless its digest equals the installed app's `ROOT_SIDE_DIGEST`
 - Bluetooth OBD support prerequisites:
   - `bluez` / `pi-bluetooth` userspace packages in the image
   - root-side helper `/usr/local/lib/vibesensor/vibesensor_obd_admin.py` (stdlib only), reached through `vibesensor-privileged.socket` so the local UI can scan/pair adapters without SSH
@@ -238,6 +239,7 @@ to produce the image. The current flow is:
 3. copy those templates into the generated `pi-gen` stage tree,
 4. build an ARM wheelhouse, install the server from the prebuilt wheel (non-editable), and
    move the venv into its first A/B slot (`python -m vibesensor.updates.venv_slots adopt`),
-5. run `install_systemd_units.sh` in the chroot: install the root-side helpers and enable the
-   server, hotspot, hotspot watchdog timer and privileged socket units,
+5. run `install_systemd_units.sh` in the chroot: install the root-side helpers, render the
+   server, hotspot, hotspot watchdog timer and privileged socket units, write the root-side
+   stamp, and enable the units,
 6. run the standalone validator when post-build validation is enabled.

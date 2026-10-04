@@ -285,8 +285,15 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    longer need a reflash.
 5. After the restart, the boot check (the new slot's `bin/vibesensor-server`
    launcher) reverts automatically to the previous slot when the new version exits
-   twice before becoming healthy, or is not healthy (`/api/health` ready, no failed
-   startup tasks) within 60 s. The next startup reports this as a failed update:
+   twice before becoming healthy, or does not work within 60 s. "Works" means
+   `/api/health` answers with `startup_state: ready`, no `startup_error`, no failed
+   startup tasks, no database corruption, and `processing_state: ok`. The overall
+   `status` does not count: `warn` or `degraded` from sensors or the device
+   (dropped frames, no GPS receiver, a sensor still to be flashed, an outdated root
+   side) is not reverted, because the previous version would not fix it. The boot
+   check is the one from the release that installed the update, so updates started
+   from releases before this rule still revert on `warn`. The next startup reports
+   this as a failed update:
    "Version X did not start healthy; reverted to Y". While a boot check is pending,
    new updates are refused with "The previous update is still being verified".
 6. Inspect the slot state on the device:
@@ -306,7 +313,7 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    Devices flashed before A/B slots have a plain `.venv`. Their first slot update moves
    it into `slots/<running version>` once. Updates need about 600 MiB free on that
    filesystem (new slot plus the staged wheelhouse under `.venv/.staging-*`).
-7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
+7. The Update panel now shows operational health from `/api/health`; use its degradation reasons, data-loss counts, and persistence status as the first operator-facing signal before digging through logs. Key degradation reasons include `persistence_write_error` (DB write failures), `persistence_samples_dropped` (samples lost during recording), and `last_analysis_failed` (most recent post-analysis run errored). A `root_side` subsystem marked `root_side_outdated` means the installed root-side helpers and units are not the ones this release ships; the panel names the fix (see [Installing a release's root side](#installing-a-releases-root-side)). It does not block updates. The health response also exposes `samples_written`, `samples_dropped`, `last_completed_run_id`, and `last_completed_run_error` in its persistence section for detailed diagnostics.
 8. Root commands (Wi-Fi uplink and hotspot `nmcli` calls, the privilege probe,
    the post-update restart, Bluetooth OBD scan/pair) go through the privileged
    helper, never sudo. `vibesensor.service` runs with `NoNewPrivileges=true`,
@@ -354,29 +361,63 @@ vibesensor-hotspot.service vibesensor-hotspot-self-heal.service | grep Exec`.
 Image validation and `tests/hygiene/test_pi_image_static_guardrails.py` fail
 if a root unit runs anything the service user can write.
 
-**When a release changes root-side files.** In-app updates (Wi-Fi and USB)
-run as the service user and replace only the venv. They never touch
-`/usr/local/lib/vibesensor` or the unit files. A release that changes
-`root-helpers/` or `systemd/` takes effect only when an operator runs
-`install_systemd_units.sh` from that release's tree (works offline):
+### Installing a release's root side
 
-- **Manual installs:** `git pull`, then
-  `sudo ./apps/server/scripts/install_systemd_units.sh`. `install_pi.sh` also
-  runs it.
-- **Prebuilt image:** reflash, or copy the release's `apps/server/root-helpers`,
-  `apps/server/systemd`, and `apps/server/scripts` to the Pi and run the
-  installer, as in step 3 of the migration below.
+The root side is `apps/server/root-helpers/`, `scripts/`, and `systemd/`.
+In-app updates (Wi-Fi and USB) run as the service user and replace only the
+venv. They never touch `/usr/local/lib/vibesensor` or the unit files. A release
+that changes the root side takes effect only when an operator installs it from
+that release's tree (works offline).
+
+**How you notice.** `install_systemd_units.sh` writes a manifest of the tree it
+installed from to `/usr/local/lib/vibesensor/root-side.sha256`: one
+`sha256sum` line per regular file in the three directories, sorted. Every app
+release carries the digest of its own manifest (`ROOT_SIDE_DIGEST` in
+`vibesensor/common/root_side.py`). When the two differ, or the stamp is
+missing, `/api/health` reports `root_side.state: "outdated"` and marks the
+`root_side` subsystem degraded (`root_side_outdated`). The Update tab shows the
+fix with the release tag. The overall `status` stays out of it, so it neither
+blocks in-app updates nor makes the post-update boot check revert them. Until
+the root side matches, hotspot repair (`vibesensor-hotspot.service`, the
+self-heal timer) and Bluetooth OBD scan/pair can fail. A device installed before the stamp existed always shows
+as outdated until its root side is reinstalled once. Compare by hand with
+`sha256sum < /usr/local/lib/vibesensor/root-side.sha256` against
+`expected_digest` in `/api/health`.
+
+To install it:
+
+- **Git install (`install_pi.sh`):** in the clone, `git fetch --tags && git
+  checkout server-v<version>` (the version the Update tab shows), then
+  `sudo ./apps/server/scripts/install_systemd_units.sh`. Before you run `sudo`
+  from a clone the service user can write, check it with `git status` and
+  `git log` (or use a fresh clone): that run is the point where root trusts
+  the tree.
+- **Prebuilt image:** reflash, or from a checkout of `server-v<version>` on a
+  computer joined to the hotspot run
+  `apps/server/scripts/push_root_side.sh pi@10.4.0.1`. It asks for the `pi`
+  password and the `sudo` password.
+
+`push_root_side.sh` computes the manifest digest of your checkout before it
+copies anything. The files reach the Pi through `/tmp/vibesensor-root-side`,
+which `pi` (the service user) can write. So root first copies them into a
+private `mktemp -d` directory and checks that copy against the digest from your
+computer. Only then does it move them into the root-owned
+`/opt/VibeSensor/apps/server` and run `install_systemd_units.sh` from there. A
+file changed on the way stops the install before root runs anything from it.
+The script refuses to install if `/opt/VibeSensor/apps/server` or a parent can
+be written by anyone but root. Neither path protects a device whose `pi`
+account is already compromised, because that account sees your `sudo`
+password. Reflash such a device.
 
 This step is deliberately manual. Letting the updater install root-side files
 would mean root trusting a download that the service user fetched and staged,
 which reopens the same hole. Signing releases could close it, but that adds key
 management for a handful of rarely changed files. Until an operator installs
-the new root side, the old helpers keep working with the new server. Keep the
+the new root side, the old helpers keep running with the new server. Keep the
 socket request format and the allowlist arguments backward-compatible across
-releases. When that is not possible, the release notes must say that the root
-side has to be installed. Before you run `sudo` from a clone the service user
-can write, check it with `git status` and `git log` (or use a fresh clone):
-that run is the point where root trusts the tree.
+releases. Any change under the three directories changes `ROOT_SIDE_DIGEST`
+(`tests/hygiene/test_root_side.py` fails until you update it), so the release
+notes must tell operators to reinstall the root side.
 
 ## One-time migration to the privileged helper
 
@@ -409,27 +450,23 @@ Migrate each device once by hand. You need SSH and the `pi` password.
 
   2. In the UI, update to a release that has the privileged helper (Wi-Fi or
      USB). Wait until the server is back on the new version.
-  3. From a checkout of that release on a computer joined to the hotspot:
+  3. From a checkout of that release (`server-v<version>`) on a computer joined
+     to the hotspot:
 
      ```bash
-     ssh pi@10.4.0.1 'rm -rf /tmp/vs-migrate && mkdir /tmp/vs-migrate'
-     scp -r apps/server/root-helpers apps/server/scripts apps/server/systemd \
-       pi@10.4.0.1:/tmp/vs-migrate/
-     ssh -t pi@10.4.0.1 'sudo rm -rf /run/systemd/system/vibesensor.service.d &&
-       sudo cp -r /tmp/vs-migrate/root-helpers /tmp/vs-migrate/scripts \
-         /tmp/vs-migrate/systemd /opt/VibeSensor/apps/server/ &&
-       sudo chown -R root:root /opt/VibeSensor/apps/server/root-helpers \
-         /opt/VibeSensor/apps/server/scripts /opt/VibeSensor/apps/server/systemd &&
-       sudo /opt/VibeSensor/apps/server/scripts/install_systemd_units.sh &&
-       rm -rf /tmp/vs-migrate'
+     apps/server/scripts/push_root_side.sh pi@10.4.0.1
      ```
 
+  `push_root_side.sh` checks the files on the Pi against your checkout before
+  root uses them. It also removes the step-1 drop-in. See
+  [Installing a release's root side](#installing-a-releases-root-side).
   `install_systemd_units.sh` works offline. It installs the root-side helpers
   into `/usr/local/lib/vibesensor`, re-renders every unit, installs and starts
   `vibesensor-privileged.socket`, removes the stale sudoers entry and the old
-  helper copies under `apps/server/scripts/`, and restarts the server. The
-  files under `/tmp/vs-migrate` can be written by `pi` until root copies them,
-  so run the copy right after the `scp`.
+  helper copies under `apps/server/scripts/`, writes the root-side stamp, and
+  restarts the server. Releases from before `push_root_side.sh` do not ship
+  it. Run it from a newer checkout only if that release's root side is the
+  same, or reflash.
 
 Devices that already have the privileged helper but still run root code from
 the install tree or the venv (releases before root-owned helpers) need only
@@ -443,7 +480,8 @@ uplink keep working, so the device stays reachable for the migration.
 Afterwards, `systemctl is-active vibesensor-privileged.socket` prints `active`,
 `/etc/sudoers.d/vibesensor-update` is gone, `/usr/local/lib/vibesensor` holds
 the root-owned helpers, `systemctl start vibesensor-hotspot-self-heal.service`
-succeeds, and the Update panel can start an update.
+succeeds, `/api/health` reports `root_side.state: "current"`, and the Update
+panel can start an update.
 
 ## Local release readiness
 

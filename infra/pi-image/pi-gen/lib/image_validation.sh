@@ -265,6 +265,37 @@ assert_root_executes_only_root_owned_code() {
   done
 }
 
+# install_systemd_units.sh stamps the manifest of the root side it installed;
+# the server reports the root side as outdated unless its digest equals the
+# ROOT_SIDE_DIGEST of the installed app (vibesensor/common/root_side.py). A
+# fresh image must ship them matching.
+assert_root_side_stamp_matches_app() {
+  local root_mnt="$1"
+  local stamp="${root_mnt}${ROOT_HELPER_DIR}/root-side.sha256"
+  local candidate="" module="" expected="" actual=""
+
+  for candidate in "${root_mnt}"/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/vibesensor/common/root_side.py; do
+    if [ -f "${candidate}" ]; then
+      module="${candidate}"
+      break
+    fi
+  done
+  if [ -z "${module}" ]; then
+    echo "Validation failed: missing site-packages/vibesensor/common/root_side.py under ${root_mnt}/opt/VibeSensor/apps/server/.venv"
+    exit 1
+  fi
+  expected="$(sed -n 's/^ROOT_SIDE_DIGEST: Final = "\([0-9a-f]\{64\}\)"$/\1/p' "${module}")"
+  if [ ! -f "${stamp}" ]; then
+    echo "Validation failed: missing ${ROOT_HELPER_DIR}/root-side.sha256 (install_systemd_units.sh did not finish)"
+    exit 1
+  fi
+  actual="$(sha256sum <"${stamp}" | cut -c1-64)"
+  if [ -z "${expected}" ] || [ "${actual}" != "${expected}" ]; then
+    echo "Validation failed: installed root side digest ${actual} does not match the app's ROOT_SIDE_DIGEST ${expected:-(not found)}"
+    exit 1
+  fi
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -408,6 +439,7 @@ validate_image_artifact() {
 
   assert_privileged_helper_contract "${ROOT_MNT}"
   assert_root_executes_only_root_owned_code "${ROOT_MNT}"
+  assert_root_side_stamp_matches_app "${ROOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then
