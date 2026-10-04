@@ -18,6 +18,7 @@ This file is the canonical AI guidance entrypoint and short index. Preserve guar
 - Static config that does not change between deployments belongs in Python constants, not runtime file loaders.
 - Internal shared logic stays in the server package. Generated UI constants come from backend sources (`vibesensor.domain`, `vibesensor.dsp`).
 - Backend code lives in per-feature packages under `apps/server/vibesensor/`; `common/` holds only small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client). Runtime bootstrap/subprocess orchestration belongs in `app/` or the owning feature package.
+- Root on the Pi runs only root-owned code: the stdlib-only scripts in `apps/server/root-helpers/`, copied to `/usr/local/lib/vibesensor` and run with `/usr/bin/python3 -I`. They never import `vibesensor` or touch the service user's venv; constants they need are copied and pinned by parity tests.
 - Pi hotspot provisioning is offline-first; required packages are baked into the image. Pi image outputs must be deterministic and self-validated.
 
 ## Backend/domain boundaries

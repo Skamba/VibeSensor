@@ -95,7 +95,7 @@ SSH_FIRST_BOOT_DEBUG=1 ./infra/pi-image/pi-gen/build.sh
 Default access endpoints and SSH credentials in generated images:
 - hotspot address: `10.4.0.1`
 - HTTP UI and API: `http://10.4.0.1` (port `80` default); if the primary listener is unavailable, try `http://10.4.0.1:8000`
-- captive portal: the hotspot's shared-mode dnsmasq (AP interface only) resolves the OS connectivity-probe hosts (Android `generate_204`, Apple `hotspot-detect.html`, Windows `connecttest.txt`, ...) to `10.4.0.1`, and the server redirects them to the UI, so phones open it after joining. `hotspot_nmcli.sh` writes `/etc/NetworkManager/dnsmasq-shared.d/vibesensor-captive-portal.conf` from `vibesensor-hotspot-config`; `validate-image.sh` checks both. The Pi's own DNS is untouched, so Wi-Fi/USB uplink updates still reach the real hosts. Phones may still report "no internet"; users stay connected.
+- captive portal: the hotspot's shared-mode dnsmasq (AP interface only) resolves the OS connectivity-probe hosts (Android `generate_204`, Apple `hotspot-detect.html`, Windows `connecttest.txt`, ...) to `10.4.0.1`, and the server redirects them to the UI, so phones open it after joining. `hotspot_nmcli.sh` writes `/etc/NetworkManager/dnsmasq-shared.d/vibesensor-captive-portal.conf` from `vibesensor_hotspot.py config`; `validate-image.sh` checks both. The Pi's own DNS is untouched, so Wi-Fi/USB uplink updates still reach the real hosts. Phones may still report "no internet"; users stay connected.
 - user: `pi`
 - password: `vibesensor`
 - remote simulator quick run: `vibesensor-sim --count 5 --duration 60 --server-host 10.4.0.1 --server-http-port 80 --speed-kmh 0 --no-interactive --no-auto-server`
@@ -157,9 +157,10 @@ The image contains:
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
   - `vibesensor-hotspot-self-heal.timer` — hotspot watchdog (every 2 min): reactivates `VibeSensor-AP`, then re-provisions via `vibesensor-hotspot.service`
   - `vibesensor-privileged.socket` — root commands for the updater and Bluetooth OBD admin. `vibesensor.service` runs with `NoNewPrivileges=true`, so it cannot use sudo. Each connection runs `vibesensor-privileged@.service` as root, through the allowlist wrapper it names (`vibesensor_update_allowlist.sh`, `vibesensor_obd_admin.py`). There is no sudoers entry.
+  - root units run only the root-owned helper copies in `/usr/local/lib/vibesensor` (installed from `apps/server/root-helpers/` by `install_systemd_units.sh`) under `/usr/bin/python3 -I`, never code from the service user's venv; image validation fails otherwise
 - Bluetooth OBD support prerequisites:
   - `bluez` / `pi-bluetooth` userspace packages in the image
-  - root-side helper `apps/server/scripts/vibesensor_obd_admin.py`, reached through `vibesensor-privileged.socket` so the local UI can scan/pair adapters without SSH
+  - root-side helper `/usr/local/lib/vibesensor/vibesensor_obd_admin.py` (stdlib only), reached through `vibesensor-privileged.socket` so the local UI can scan/pair adapters without SSH
 
 ## Flash
 
@@ -237,5 +238,6 @@ to produce the image. The current flow is:
 3. copy those templates into the generated `pi-gen` stage tree,
 4. build an ARM wheelhouse, install the server from the prebuilt wheel (non-editable), and
    move the venv into its first A/B slot (`python -m vibesensor.updates.venv_slots adopt`),
-5. enable the hotspot service and hotspot watchdog timer,
+5. run `install_systemd_units.sh` in the chroot: install the root-side helpers and enable the
+   server, hotspot, hotspot watchdog timer and privileged socket units,
 6. run the standalone validator when post-build validation is enabled.

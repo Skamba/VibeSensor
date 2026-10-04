@@ -38,6 +38,7 @@ def _write_fake_sudo(bin_dir: Path) -> None:
         "\n".join(
             [
                 "#!/bin/sh",
+                'if [ "$1" = "-u" ]; then shift 2; fi',
                 'exec "$@"',
                 "",
             ]

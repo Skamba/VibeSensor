@@ -41,7 +41,7 @@ def make_legacy_venv(root: Path, *, server_script: str | None = None) -> Path:
     bin_dir = root / "bin"
     if server_script is not None:
         write_script(bin_dir / "vibesensor-server", server_script)
-    write_script(bin_dir / "vibesensor-hotspot-config", f"#!{root}/bin/python\nprint('hotspot')\n")
+    write_script(bin_dir / "vibesensor-config-preflight", f"#!{root}/bin/python\nprint('ok')\n")
     site_packages = next((root / "lib").glob("python*/site-packages"))
     (site_packages / "legacy_marker.py").write_text("LEGACY = True\n", encoding="utf-8")
     (root / "lib64").symlink_to("lib")

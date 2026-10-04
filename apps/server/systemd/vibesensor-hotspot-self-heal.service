@@ -6,5 +6,7 @@ Wants=NetworkManager.service
 [Service]
 Type=oneshot
 # The timer owns cadence; each run is a single check and, if needed, one recovery pass.
-ExecStart=__VENV_DIR__/bin/vibesensor-hotspot-self-heal
+# Runs as root from the root-owned helper directory, never from the service
+# user's venv (install_systemd_units.sh).
+ExecStart=/usr/bin/python3 -I /usr/local/lib/vibesensor/vibesensor_hotspot.py watchdog
 SyslogIdentifier=vibesensor-hotspot-selfheal

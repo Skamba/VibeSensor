@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Provision the VibeSensor hotspot (vibesensor-hotspot.service runs this as root).
+# It runs from the root-owned helper directory /usr/local/lib/vibesensor
+# (install_systemd_units.sh) and must never run code from the service user's
+# tree: settings come from vibesensor_hotspot.py next to it, under the system
+# python3 -I.
 set -Eeuo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -17,7 +22,6 @@ LOG_DIR=/var/log/wifi
 install -d -m 0755 "${LOG_DIR}"
 LOG_FILE="${LOG_DIR}/hotspot.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 touch "${LOG_FILE}"
 
@@ -119,35 +123,12 @@ ${final_status}
 EOF
 }
 
-resolve_hotspot_config_cli() {
-  local configured_cli="${VIBESENSOR_HOTSPOT_CONFIG_CLI:-}"
-  local bundled_cli="${SERVER_DIR}/.venv/bin/vibesensor-hotspot-config"
-
-  if [ -n "${configured_cli}" ] && [ -x "${configured_cli}" ]; then
-    printf '%s\n' "${configured_cli}"
-    return 0
-  fi
-  if [ -x "${bundled_cli}" ]; then
-    printf '%s\n' "${bundled_cli}"
-    return 0
-  fi
-  if command -v vibesensor-hotspot-config >/dev/null 2>&1; then
-    command -v vibesensor-hotspot-config
-    return 0
-  fi
-  return 1
-}
-
 # shellcheck disable=SC2154  # Bash expands BASH_LINENO/BASH_COMMAND inside the ERR trap at runtime.
 trap 'rc=$?; failed_line=${BASH_LINENO[0]:-0}; failed_cmd=${BASH_COMMAND:-unknown}; echo "ERROR rc=${rc} line=${failed_line} cmd=${failed_cmd}" >&2; dump_all error; write_summary FAILED "${rc}"; exit "${rc}"' ERR
 trap 'rc=$?; echo "EXIT rc=${rc}"' EXIT
 
-if ! HOTSPOT_CONFIG_CLI="$(resolve_hotspot_config_cli)"; then
-  echo "Could not find vibesensor-hotspot-config. Expected ${SERVER_DIR}/.venv/bin/vibesensor-hotspot-config or a PATH entry." >&2
-  exit 127
-fi
-
-HOTSPOT_CONFIG_EXPORTS="$("${HOTSPOT_CONFIG_CLI}" "${CONFIG_PATH}")"
+# vibesensor_hotspot.py shell-quotes every value it prints.
+HOTSPOT_CONFIG_EXPORTS="$(/usr/bin/python3 -I "${SCRIPT_DIR}/vibesensor_hotspot.py" config "${CONFIG_PATH}")"
 eval "${HOTSPOT_CONFIG_EXPORTS}"
 
 CONFIGURED_IFNAME="${IFNAME}"

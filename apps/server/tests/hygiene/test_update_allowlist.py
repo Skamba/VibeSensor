@@ -8,7 +8,7 @@ from pathlib import Path
 
 from tests._paths import SERVER_ROOT
 
-_WRAPPER = SERVER_ROOT / "scripts" / "vibesensor_update_allowlist.sh"
+_WRAPPER = SERVER_ROOT / "root-helpers" / "vibesensor_update_allowlist.sh"
 
 
 def _write_tool(bin_dir: Path, name: str) -> Path:

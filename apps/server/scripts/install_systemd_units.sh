@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-# Install VibeSensor's systemd units and the root-side privileged helper.
+# Install VibeSensor's systemd units and the root-side helpers.
 #
 # Usage (as root): install_systemd_units.sh [SERVICE_USER]
 #
-# install_pi.sh runs this. On a device installed before the privileged helper
-# existed, copy the new apps/server/scripts and apps/server/systemd onto the
-# device and run this once to migrate (docs/operational-runbooks.md). It needs
-# no network. SERVICE_USER defaults to the User= of the installed
+# install_pi.sh and the Pi image build run this. Root only ever executes
+# root-owned code: this script copies apps/server/root-helpers/ into
+# /usr/local/lib/vibesensor (root:root, 0755), and every root unit and the
+# privileged helper run from there under the system /usr/bin/python3 -I. Root
+# never runs anything from the install tree, the A/B venv, or a clone the
+# service user can write. OTA app updates replace only the venv, so a release
+# that changes root-helpers/ or systemd/ takes effect when this script runs
+# again from that release's tree (docs/operational-runbooks.md); it needs no
+# network. SERVICE_USER defaults to the User= of the installed
 # vibesensor.service. VIBESENSOR_SKIP_SERVICE_START=1 only enables units
 # (image builds and chroots).
 set -euo pipefail
@@ -29,22 +34,37 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# Root runs these for the server (vibesensor-privileged@.service); the
-# allowlist wrappers are the security boundary for every request.
-for privileged_script in \
-  "${SCRIPT_DIR}/vibesensor_privileged_helper.py" \
-  "${SCRIPT_DIR}/vibesensor_update_allowlist.sh" \
-  "${SCRIPT_DIR}/vibesensor_obd_admin.py"; do
-  if [ ! -f "${privileged_script}" ]; then
-    echo "ERROR: Missing privileged helper script ${privileged_script}." >&2
-    exit 1
+ROOT_HELPER_SRC="${PI_DIR}/root-helpers"
+ROOT_HELPER_DIR=/usr/local/lib/vibesensor
+if [ ! -f "${ROOT_HELPER_SRC}/vibesensor_privileged_helper.py" ]; then
+  echo "ERROR: Missing root-side helpers in ${ROOT_HELPER_SRC}." >&2
+  exit 1
+fi
+# Stage a complete root-owned copy, then swap it in, so a running helper never
+# sees a half-installed directory and files removed from root-helpers/ go away.
+install -d -o root -g root -m 0755 "$(dirname "${ROOT_HELPER_DIR}")"
+rm -rf "${ROOT_HELPER_DIR}.new"
+install -d -o root -g root -m 0755 "${ROOT_HELPER_DIR}.new"
+for helper in "${ROOT_HELPER_SRC}"/*; do
+  # Regular files only (a dev checkout may hold a __pycache__ directory).
+  if [ -f "${helper}" ]; then
+    install -o root -g root -m 0755 "${helper}" "${ROOT_HELPER_DIR}.new/"
   fi
-  chmod 0755 "${privileged_script}"
 done
-# Installs before the privileged helper granted the service user sudo on a
-# wrapper. The service runs with NoNewPrivileges=true, so sudo never worked
-# from it; remove the stale grant and wrapper.
-rm -f /etc/sudoers.d/vibesensor-update "${SCRIPT_DIR}/vibesensor_update_sudo.sh"
+rm -rf "${ROOT_HELPER_DIR}.old"
+if [ -d "${ROOT_HELPER_DIR}" ]; then
+  mv "${ROOT_HELPER_DIR}" "${ROOT_HELPER_DIR}.old"
+fi
+mv "${ROOT_HELPER_DIR}.new" "${ROOT_HELPER_DIR}"
+rm -rf "${ROOT_HELPER_DIR}.old"
+# Earlier installs ran root helpers from apps/server/scripts (and before that
+# granted sudo on a wrapper, which never worked under NoNewPrivileges=true).
+# Remove those copies so nothing root-side is left in the install tree.
+rm -f /etc/sudoers.d/vibesensor-update
+for stale in vibesensor_update_sudo.sh vibesensor_privileged_helper.py \
+  vibesensor_update_allowlist.sh vibesensor_obd_admin.py hotspot_nmcli.sh; do
+  rm -f "${SCRIPT_DIR}/${stale}"
+done
 
 render_unit() {
   local name="$1"

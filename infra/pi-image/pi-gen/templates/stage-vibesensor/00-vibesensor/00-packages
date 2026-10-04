@@ -11,3 +11,4 @@ libopenblas0-pthread
 libopenjp2-7
 libfftw3-double3
 libfftw3-single3
+python3-yaml

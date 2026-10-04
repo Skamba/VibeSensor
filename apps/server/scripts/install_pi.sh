@@ -75,6 +75,7 @@ run_as_root apt-get update
 run_as_root apt-get install -y \
   python3 \
   python3-venv \
+  python3-yaml \
   python3-pip \
   libopenblas0-pthread \
   network-manager \
@@ -91,12 +92,21 @@ if [ -z "${PYTHON_BIN}" ]; then
 fi
 validate_supported_python "${PYTHON_BIN}"
 
-"${PYTHON_BIN}" -m venv "${VENV_DIR}"
-"${VENV_DIR}/bin/pip" install --upgrade pip
-"${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
+# The venv belongs to the service user (the A/B updater installs slots into it
+# without root), so build and use it only as that user: root never runs code
+# from it, also on reruns where the service may have changed it.
+if [ -e "${VENV_DIR}" ]; then
+  # Older installs built the venv as root.
+  run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${VENV_DIR}"
+else
+  run_as_root install -d -o "${SERVICE_USER}" -g "${SERVICE_USER}" "${VENV_DIR}"
+fi
+run_as_service_user "${PYTHON_BIN}" -m venv "${VENV_DIR}"
+run_as_service_user "${VENV_DIR}/bin/pip" install --upgrade pip
+run_as_service_user "${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
 # Move the venv into an A/B slot so OTA updates can install beside it (no-op on reruns).
-"${VENV_DIR}/bin/python" -m vibesensor.updates.venv_slots adopt "${VENV_DIR}"
-"${VENV_DIR}/bin/vibesensor-config-preflight" "${PI_DIR}/config.pi.yaml" >/dev/null
+run_as_service_user "${VENV_DIR}/bin/python" -m vibesensor.updates.venv_slots adopt "${VENV_DIR}"
+run_as_service_user "${VENV_DIR}/bin/vibesensor-config-preflight" "${PI_DIR}/config.pi.yaml" >/dev/null
 
 run_as_root install -d /etc/vibesensor
 run_as_root install -d /etc/tmpfiles.d
@@ -104,7 +114,6 @@ run_as_root install -d -m 0755 /var/lib/vibesensor
 run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
-run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${VENV_DIR}"
 
 # Refresh ESP firmware cache from GitHub Releases (requires network).
 # This downloads the latest prebuilt firmware bundle so the device can flash
@@ -123,7 +132,7 @@ if [ ! -f /etc/vibesensor/config.yaml ]; then
   run_as_root cp "${PI_DIR}/config.pi.yaml" /etc/vibesensor/config.yaml
 fi
 
-# Units, the privileged helper, and service start-up (also the offline
-# migration path for devices installed before the privileged helper).
+# Units, the root-owned helper copies in /usr/local/lib/vibesensor, and
+# service start-up (also the offline migration path for existing devices).
 run_as_root env VIBESENSOR_SKIP_SERVICE_START="${SKIP_SERVICE_START}" \
   "${SCRIPT_DIR}/install_systemd_units.sh" "${SERVICE_USER}"

@@ -35,17 +35,15 @@ CAPTIVE_PROBE_HOSTS: Final[tuple[str, ...]] = (
     "connectivity-check.ubuntu.com",
     "network-test.debian.org",
 )
-"""Hostnames of the OS connectivity probes the hotspot answers as a portal."""
+"""Hostnames of the OS connectivity probes the hotspot answers as a portal.
+
+The root-side ``root-helpers/vibesensor_hotspot.py`` copies this list into the hotspot DNS entry.
+"""
 
 HOTSPOT_ADDRESS: Final[str] = HOTSPOT_IP.split("/", 1)[0]
 
 PORTAL_URL: Final[str] = f"http://{HOTSPOT_ADDRESS}/"
 """Where probe requests are redirected: the UI on the hotspot address."""
-
-
-def dnsmasq_probe_address() -> str:
-    """Return the dnsmasq ``address=`` value that points every probe host at the Pi."""
-    return "/" + "/".join(CAPTIVE_PROBE_HOSTS) + f"/{HOTSPOT_ADDRESS}"
 
 
 def is_probe_host(host_header: str | None) -> bool:

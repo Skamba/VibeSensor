@@ -1,6 +1,6 @@
 """Serve the real root-side privileged helper the way systemd's ``Accept=yes`` does.
 
-Each connection to the socket runs ``scripts/vibesensor_privileged_helper.py``
+Each connection to the socket runs ``root-helpers/vibesensor_privileged_helper.py``
 with the connection as stdin and stdout, exactly like
 ``vibesensor-privileged@.service``, but as the test user instead of root.
 """
@@ -18,11 +18,11 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from _paths import SERVER_ROOT
+from test_support.root_helpers import ROOT_HELPERS_DIR
 
 __all__ = ["HELPER_SCRIPT", "serve_privileged_helper"]
 
-HELPER_SCRIPT = SERVER_ROOT / "scripts" / "vibesensor_privileged_helper.py"
+HELPER_SCRIPT = ROOT_HELPERS_DIR / "vibesensor_privileged_helper.py"
 
 
 def _accept_loop(server: socket.socket, helper_script: Path) -> None:

@@ -2,23 +2,14 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
-from types import ModuleType
 
 import pytest
 from test_support.privileged_socket import HELPER_SCRIPT
-
-
-def _load_script_module() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("test_privileged_helper_script", HELPER_SCRIPT)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+from test_support.root_helpers import load_root_helper
 
 
 def _run_helper(stdin: bytes) -> dict[str, object]:
@@ -34,7 +25,7 @@ def _run_helper(stdin: bytes) -> dict[str, object]:
 
 
 def test_helpers_name_existing_wrappers_next_to_the_script() -> None:
-    module = _load_script_module()
+    module = load_root_helper("vibesensor_privileged_helper.py")
 
     assert set(module.HELPERS) == {"update", "obd"}
     for wrapper in module.HELPERS.values():
@@ -88,7 +79,7 @@ def test_oversized_request_is_refused() -> None:
 
 
 def test_run_request_enforces_the_timeout_and_keeps_output_tail(tmp_path: Path) -> None:
-    module = _load_script_module()
+    module = load_root_helper("vibesensor_privileged_helper.py")
     slow = tmp_path / "slow.sh"
     slow.write_text("#!/bin/sh\necho started\nexec sleep 30\n", encoding="utf-8")
     slow.chmod(0o755)
@@ -103,7 +94,7 @@ def test_run_request_enforces_the_timeout_and_keeps_output_tail(tmp_path: Path) 
 
 
 def test_run_request_reports_an_unrunnable_wrapper(tmp_path: Path) -> None:
-    module = _load_script_module()
+    module = load_root_helper("vibesensor_privileged_helper.py")
 
     response = module.run_request(tmp_path / "missing.sh", [], 1)
 

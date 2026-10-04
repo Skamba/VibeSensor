@@ -4,8 +4,10 @@ CollectMode=inactive-or-failed
 
 [Service]
 # Runs as root. The script reads one JSON request from the connection and
-# runs it only through the allowlist wrapper that the request names.
-ExecStart=/usr/bin/python3 -I __PI_DIR__/scripts/vibesensor_privileged_helper.py
+# runs it only through the allowlist wrapper that the request names. It and
+# the wrappers are root-owned copies in /usr/local/lib/vibesensor
+# (install_systemd_units.sh); the service user cannot change them.
+ExecStart=/usr/bin/python3 -I /usr/local/lib/vibesensor/vibesensor_privileged_helper.py
 StandardInput=socket
 StandardOutput=socket
 StandardError=journal

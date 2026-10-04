@@ -314,15 +314,69 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    `/run/vibesensor-privileged.sock` (`vibesensor-privileged.socket`, owned by
    the service user, mode 0600). For each connection systemd starts a
    `vibesensor-privileged@.service` instance as root. That instance runs
-   `apps/server/scripts/vibesensor_privileged_helper.py`, which passes the
-   request only to the allowlist wrapper it names:
+   `/usr/bin/python3 -I /usr/local/lib/vibesensor/vibesensor_privileged_helper.py`,
+   which passes the request only to the allowlist wrapper it names:
    `vibesensor_update_allowlist.sh` or `vibesensor_obd_admin.py`. Check it with
    `systemctl status vibesensor-privileged.socket` and
    `journalctl -t vibesensor-privileged`. "Privileged helper socket ... is
    unavailable" in the update log or OBD status means the socket units are
-   missing; see the migration below. Root runs these scripts, so keep the
-   install tree (`/opt/VibeSensor` on the image) root-owned.
+   missing; see the migration below. See
+   [Root runs only root-owned code](#root-runs-only-root-owned-code) for what
+   root executes and how releases change it.
 9. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
+
+## Root runs only root-owned code
+
+The service user (`pi`) owns the A/B venv, and on manual installs usually the
+git clone too. Anything root executes from there would let a compromised
+server become root. So root never does:
+
+- Every root-side helper lives in `apps/server/root-helpers/`:
+  `vibesensor_privileged_helper.py`, `vibesensor_update_allowlist.sh`,
+  `vibesensor_obd_admin.py`, `hotspot_nmcli.sh`, and `vibesensor_hotspot.py`.
+  They use only the standard library (plus Debian's `python3-yaml` for the
+  hotspot config) and never import the `vibesensor` package.
+- `apps/server/scripts/install_systemd_units.sh` copies them into
+  `/usr/local/lib/vibesensor` (`root:root`, mode 0755). `install_pi.sh` and
+  the image build run it.
+- The root units run those copies only: `vibesensor-privileged@.service`
+  (privileged helper), `vibesensor-hotspot.service` (`hotspot_nmcli.sh`), and
+  `vibesensor-hotspot-self-heal.service` (`vibesensor_hotspot.py watchdog`).
+  Python always runs as the system `/usr/bin/python3 -I`, so neither the venv
+  interpreter nor `PYTHONPATH`, the working directory, or user site-packages
+  can inject code.
+- The server itself stays on the venv as the service user and only talks to
+  root through the socket.
+
+Check a device with `ls -l /usr/local/lib/vibesensor` (all `root root`, no
+group or world write) and `systemctl cat vibesensor-privileged@.service
+vibesensor-hotspot.service vibesensor-hotspot-self-heal.service | grep Exec`.
+Image validation and `tests/hygiene/test_pi_image_static_guardrails.py` fail
+if a root unit runs anything the service user can write.
+
+**When a release changes root-side files.** In-app updates (Wi-Fi and USB)
+run as the service user and replace only the venv. They never touch
+`/usr/local/lib/vibesensor` or the unit files. A release that changes
+`root-helpers/` or `systemd/` takes effect only when an operator runs
+`install_systemd_units.sh` from that release's tree (works offline):
+
+- **Manual installs:** `git pull`, then
+  `sudo ./apps/server/scripts/install_systemd_units.sh`. `install_pi.sh` also
+  runs it.
+- **Prebuilt image:** reflash, or copy the release's `apps/server/root-helpers`,
+  `apps/server/systemd`, and `apps/server/scripts` to the Pi and run the
+  installer, as in step 3 of the migration below.
+
+This step is deliberately manual. Letting the updater install root-side files
+would mean root trusting a download that the service user fetched and staged,
+which reopens the same hole. Signing releases could close it, but that adds key
+management for a handful of rarely changed files. Until an operator installs
+the new root side, the old helpers keep working with the new server. Keep the
+socket request format and the allowlist arguments backward-compatible across
+releases. When that is not possible, the release notes must say that the root
+side has to be installed. Before you run `sudo` from a clone the service user
+can write, check it with `git status` and `git log` (or use a fresh clone):
+that run is the point where root trusts the tree.
 
 ## One-time migration to the privileged helper
 
@@ -359,19 +413,37 @@ Migrate each device once by hand. You need SSH and the `pi` password.
 
      ```bash
      ssh pi@10.4.0.1 'rm -rf /tmp/vs-migrate && mkdir /tmp/vs-migrate'
-     scp -r apps/server/scripts apps/server/systemd pi@10.4.0.1:/tmp/vs-migrate/
+     scp -r apps/server/root-helpers apps/server/scripts apps/server/systemd \
+       pi@10.4.0.1:/tmp/vs-migrate/
      ssh -t pi@10.4.0.1 'sudo rm -rf /run/systemd/system/vibesensor.service.d &&
-       sudo cp -r /tmp/vs-migrate/scripts /tmp/vs-migrate/systemd /opt/VibeSensor/apps/server/ &&
-       sudo /opt/VibeSensor/apps/server/scripts/install_systemd_units.sh'
+       sudo cp -r /tmp/vs-migrate/root-helpers /tmp/vs-migrate/scripts \
+         /tmp/vs-migrate/systemd /opt/VibeSensor/apps/server/ &&
+       sudo chown -R root:root /opt/VibeSensor/apps/server/root-helpers \
+         /opt/VibeSensor/apps/server/scripts /opt/VibeSensor/apps/server/systemd &&
+       sudo /opt/VibeSensor/apps/server/scripts/install_systemd_units.sh &&
+       rm -rf /tmp/vs-migrate'
      ```
 
-  `install_systemd_units.sh` works offline. It re-renders every unit, installs
-  and starts `vibesensor-privileged.socket`, removes the stale sudoers entry and
-  wrapper, and restarts the server.
+  `install_systemd_units.sh` works offline. It installs the root-side helpers
+  into `/usr/local/lib/vibesensor`, re-renders every unit, installs and starts
+  `vibesensor-privileged.socket`, removes the stale sudoers entry and the old
+  helper copies under `apps/server/scripts/`, and restarts the server. The
+  files under `/tmp/vs-migrate` can be written by `pi` until root copies them,
+  so run the copy right after the `scp`.
+
+Devices that already have the privileged helper but still run root code from
+the install tree or the venv (releases before root-owned helpers) need only
+step 3. Do not skip it. An in-app update leaves those devices on their old
+units, and the new venv no longer ships the modules those units ran. So
+`vibesensor-hotspot.service` (hotspot re-provisioning), the self-heal timer and
+OBD scan/pair fail until the device is migrated. The saved `VibeSensor-AP`
+connection still comes up through NetworkManager, and updates and the Wi-Fi
+uplink keep working, so the device stays reachable for the migration.
 
 Afterwards, `systemctl is-active vibesensor-privileged.socket` prints `active`,
-`/etc/sudoers.d/vibesensor-update` is gone, and the Update panel can start an
-update.
+`/etc/sudoers.d/vibesensor-update` is gone, `/usr/local/lib/vibesensor` holds
+the root-owned helpers, `systemctl start vibesensor-hotspot-self-heal.service`
+succeeds, and the Update panel can start an update.
 
 ## Local release readiness
 

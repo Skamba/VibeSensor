@@ -232,8 +232,11 @@ sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 sudo ./apps/server/scripts/install_pi.sh
-sudo ./apps/server/scripts/hotspot_nmcli.sh
 ```
+
+`install_pi.sh` also enables the hotspot (`vibesensor-hotspot.service`) and
+installs the root-side helpers into `/usr/local/lib/vibesensor`; see
+[Root runs only root-owned code](docs/operational-runbooks.md#root-runs-only-root-owned-code).
 
 `install_pi.sh` validates the Pi's `python3` before creating the virtualenv and
 fails fast when the interpreter is below the supported manual-install floor. See
@@ -340,7 +343,7 @@ scenarios live in `apps/server/tests/test_support/`.
 - **Need backend log correlation** — use `docker compose logs` for live
   structured console output, or match the `X-Request-ID` response header
   against the JSON file log configured by `logging.app_log_path`
-- **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
+- **Hotspot has no DHCP leases** — `sudo systemctl restart vibesensor-hotspot.service`
 - **Need config details** — check [apps/server/README.md](apps/server/README.md)
   and [firmware/esp/README.md](firmware/esp/README.md) for AP/firmware settings
 

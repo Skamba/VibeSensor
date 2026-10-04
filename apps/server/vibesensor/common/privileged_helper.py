@@ -4,10 +4,12 @@
 root through sudo or other setuid programs. Root commands go over a Unix
 socket instead. systemd owns the socket and starts one
 ``vibesensor-privileged@.service`` instance as root per connection. That
-instance runs ``apps/server/scripts/vibesensor_privileged_helper.py``, which
-passes the request to the allowlist wrapper the helper name selects
-(``update`` -> ``vibesensor_update_allowlist.sh``, ``obd`` ->
-``vibesensor_obd_admin.py``).
+instance runs ``/usr/local/lib/vibesensor/vibesensor_privileged_helper.py``
+(the root-owned copy of ``apps/server/root-helpers/`` that
+``install_systemd_units.sh`` installs), which passes the request to the
+allowlist wrapper the helper name selects (``update`` ->
+``vibesensor_update_allowlist.sh``, ``obd`` -> ``vibesensor_obd_admin.py``).
+Root never runs code from this package or its venv.
 
 Protocol: one JSON request line ``{"helper", "args", "timeout_s"}``, answered
 by one JSON response line ``{"returncode", "stdout", "stderr"}``.

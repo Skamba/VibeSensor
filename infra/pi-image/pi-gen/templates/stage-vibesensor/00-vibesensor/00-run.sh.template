@@ -217,51 +217,15 @@ if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/config.yaml" ]; then
     "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
 fi
 
-SYSTEMD_SRC="${ROOTFS_DIR}/opt/VibeSensor/apps/server/systemd"
-
-sed \
-  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
-  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
-  -e 's#__SERVICE_USER__#pi#g' \
-  "${SYSTEMD_SRC}/vibesensor-hotspot.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot.service"
-
-sed \
-  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
-  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
-
-install -m 0644 \
-  "${SYSTEMD_SRC}/vibesensor-hotspot-self-heal.timer" \
-  "${ROOTFS_DIR}/etc/systemd/system/vibesensor-hotspot-self-heal.timer"
-
-sed \
-  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
-  -e 's#__VENV_DIR__#/opt/VibeSensor/apps/server/.venv#g' \
-  -e 's#__SERVICE_USER__#pi#g' \
-  "${SYSTEMD_SRC}/vibesensor.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor.service"
-
-# Root commands for the updater and Bluetooth OBD admin: vibesensor.service
-# (NoNewPrivileges=true, so no sudo) connects to this socket, and systemd runs
-# each request as root through the allowlist wrapper it names.
-sed \
-  -e 's#__SERVICE_USER__#pi#g' \
-  "${SYSTEMD_SRC}/vibesensor-privileged.socket" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-privileged.socket"
-
-sed \
-  -e 's#__PI_DIR__#/opt/VibeSensor/apps/server#g' \
-  "${SYSTEMD_SRC}/vibesensor-privileged@.service" >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-privileged@.service"
-
-mkdir -p "${ROOTFS_DIR}/etc/systemd/system/sockets.target.wants"
-ln -sf /etc/systemd/system/vibesensor-privileged.socket \
-  "${ROOTFS_DIR}/etc/systemd/system/sockets.target.wants/vibesensor-privileged.socket"
-
-mkdir -p "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants"
-ln -sf /etc/systemd/system/vibesensor.service \
-  "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor.service"
-ln -sf /etc/systemd/system/vibesensor-hotspot.service \
-  "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor-hotspot.service"
-mkdir -p "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants"
-ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
-  "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer"
+# Units and root-side helpers, exactly as install_pi.sh installs them on a
+# manual install: root-helpers/ is copied into the root-owned
+# /usr/local/lib/vibesensor, every root unit runs only from there, and the
+# privileged helper socket (vibesensor.service runs with NoNewPrivileges=true,
+# so no sudo) and the hotspot units are enabled.
+on_chroot << 'CHROOT_EOF'
+set -e
+VIBESENSOR_SKIP_SERVICE_START=1 /opt/VibeSensor/apps/server/scripts/install_systemd_units.sh pi
+CHROOT_EOF
 
 # Force password SSH auth for the first user so hotspot-only deployments can
 # always recover the device without pre-provisioned SSH keys.
@@ -331,6 +295,7 @@ ExecStart=/usr/local/sbin/vibesensor-ssh-debug
 WantedBy=multi-user.target
 SSHDEBUGUNIT
 
+  mkdir -p "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants"
   ln -sf /etc/systemd/system/vibesensor-ssh-debug.service \
     "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor-ssh-debug.service"
 fi

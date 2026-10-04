@@ -90,6 +90,10 @@ assert_wheel_static_data_contract() {
   fi
 }
 
+# install_systemd_units.sh copies apps/server/root-helpers here; root units
+# and the privileged helper run only these root-owned copies.
+ROOT_HELPER_DIR=/usr/local/lib/vibesensor
+
 unit_value() {
   local unit_file="$1" key="$2"
   sed -n "s/^${key}=//p" "${unit_file}" | tail -n 1
@@ -101,7 +105,7 @@ unit_value() {
 assert_privileged_helper_contract() {
   local root_mnt="$1"
   local unit_dir="${root_mnt}/etc/systemd/system"
-  local scripts_dir="${root_mnt}/opt/VibeSensor/apps/server/scripts"
+  local scripts_dir="${root_mnt}${ROOT_HELPER_DIR}"
   local socket_unit="${unit_dir}/vibesensor-privileged.socket"
   local helper_unit="${unit_dir}/vibesensor-privileged@.service"
   local server_unit="${unit_dir}/vibesensor.service"
@@ -137,7 +141,7 @@ assert_privileged_helper_contract() {
     echo "Validation failed: vibesensor-privileged.socket SocketUser does not match the vibesensor.service User"
     exit 1
   fi
-  if [ "$(unit_value "${helper_unit}" ExecStart)" != "/usr/bin/python3 -I /opt/VibeSensor/apps/server/scripts/vibesensor_privileged_helper.py" ] || \
+  if [ "$(unit_value "${helper_unit}" ExecStart)" != "/usr/bin/python3 -I ${ROOT_HELPER_DIR}/vibesensor_privileged_helper.py" ] || \
     [ "$(unit_value "${helper_unit}" StandardInput)" != "socket" ]; then
     echo "Validation failed: vibesensor-privileged@.service must run the installed helper script on the socket"
     exit 1
@@ -146,6 +150,119 @@ assert_privileged_helper_contract() {
     echo "Validation failed: stale ${root_mnt}/etc/sudoers.d/vibesensor-update (sudo cannot work under NoNewPrivileges)"
     exit 1
   fi
+}
+
+# Fail when a path root executes could be changed by the service user: it (or
+# a directory above it) is not owned by the rootfs owner (root on an image) or
+# is group/world-writable, or it lives in the service user's venv.
+assert_root_owned_path() {
+  local root_mnt="$1" path="$2" what="$3"
+  local owner current hops=0 mode target
+  owner="$(stat -c '%u' "${root_mnt}/etc")"
+  case "${path}" in
+    /opt/VibeSensor/apps/server/.venv | /opt/VibeSensor/apps/server/.venv/*)
+      echo "Validation failed: ${what} runs ${path} from the service user's venv"
+      exit 1
+      ;;
+    /*) ;;
+    *)
+      echo "Validation failed: ${what} runs relative path ${path}"
+      exit 1
+      ;;
+  esac
+  current="${path}"
+  while true; do
+    if [ ! -e "${root_mnt}${current}" ] && [ ! -L "${root_mnt}${current}" ]; then
+      echo "Validation failed: ${what} runs missing ${current}"
+      exit 1
+    fi
+    local component="${current}"
+    while [ -n "${component}" ]; do
+      mode="$(stat -c '%u %a' "${root_mnt}${component}")"
+      if [ "${mode%% *}" != "${owner}" ] || \
+        { [ ! -L "${root_mnt}${component}" ] && [ $((8#${mode##* } & 8#022)) -ne 0 ]; }; then
+        echo "Validation failed: ${what} runs ${path}, but ${component} is writable by a non-root user (owner uid ${mode%% *}, mode ${mode##* })"
+        exit 1
+      fi
+      component="${component%/*}"
+    done
+    if [ ! -L "${root_mnt}${current}" ]; then
+      return 0
+    fi
+    hops=$((hops + 1))
+    if [ "${hops}" -gt 8 ]; then
+      echo "Validation failed: ${what} runs ${path} through too many symlinks"
+      exit 1
+    fi
+    target="$(readlink "${root_mnt}${current}")"
+    case "${target}" in
+      /*) current="${target}" ;;
+      *) current="${current%/*}/${target}" ;;
+    esac
+  done
+}
+
+# Root must only execute root-owned code (never the service user's venv, the
+# install tree, or a clone): check every command the root units run, the
+# script a shell or Python interpreter runs, and the installed helper copies.
+assert_root_executes_only_root_owned_code() {
+  local root_mnt="$1"
+  local unit_dir="${root_mnt}/etc/systemd/system"
+  local release_helpers="${root_mnt}/opt/VibeSensor/apps/server/root-helpers"
+  local unit="" line="" key="" prefix="" name="" helper="" interpreter="" user="" start_only=""
+  local -a words=()
+
+  for unit in "${unit_dir}"/vibesensor*.service; do
+    name="${unit##*/}"
+    user="$(unit_value "${unit}" User)"
+    start_only="$(unit_value "${unit}" PermissionsStartOnly)"
+    while IFS= read -r line; do
+      key="${line%%=*}"
+      line="${line#*=}"
+      prefix="${line%%[!@:+!-]*}"
+      line="${line#"${prefix}"}"
+      # A unit with User= runs as that user, except "+"/"!" commands and, with
+      # PermissionsStartOnly=true, everything but ExecStart.
+      if [ -n "${user}" ] && [ "${user}" != "root" ] && [[ "${prefix}" != *[+!]* ]] && \
+        { [ "${start_only}" != "true" ] || [ "${key}" = "ExecStart" ]; }; then
+        continue
+      fi
+      read -ra words <<<"${line}"
+      assert_root_owned_path "${root_mnt}" "${words[0]}" "${name}"
+      interpreter="${words[0]##*/}"
+      case "${interpreter}" in
+        python3*)
+          if [ "${words[1]:-}" != "-I" ]; then
+            echo "Validation failed: ${name} runs Python as root without -I (isolated mode)"
+            exit 1
+          fi
+          assert_root_owned_path "${root_mnt}" "${words[2]:-}" "${name}"
+          ;;
+        sh | bash)
+          if [ "${words[1]:-}" != "-c" ]; then
+            assert_root_owned_path "${root_mnt}" "${words[1]:-}" "${name}"
+          elif [[ "${line}" == *"/opt/VibeSensor/"* ]]; then
+            echo "Validation failed: ${name} runs an inline root shell command that uses the install tree"
+            exit 1
+          fi
+          ;;
+      esac
+    done < <(grep -E '^Exec[A-Za-z]*=' "${unit}")
+  done
+
+  if [ ! -d "${release_helpers}" ]; then
+    echo "Validation failed: missing ${release_helpers}"
+    exit 1
+  fi
+  for helper in "${release_helpers}"/*; do
+    if ! cmp -s "${helper}" "${root_mnt}${ROOT_HELPER_DIR}/${helper##*/}"; then
+      echo "Validation failed: ${ROOT_HELPER_DIR}/${helper##*/} is not an installed copy of root-helpers/${helper##*/}"
+      exit 1
+    fi
+  done
+  for helper in "${root_mnt}${ROOT_HELPER_DIR}"/*; do
+    assert_root_owned_path "${root_mnt}" "${ROOT_HELPER_DIR}/${helper##*/}" "${ROOT_HELPER_DIR}"
+  done
 }
 
 validate_image_artifact() {
@@ -290,6 +407,7 @@ validate_image_artifact() {
   fi
 
   assert_privileged_helper_contract "${ROOT_MNT}"
+  assert_root_executes_only_root_owned_code "${ROOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then
@@ -312,9 +430,9 @@ validate_image_artifact() {
     exit 1
   fi
 
-  if ! grep -Eq '^ExecStart=/opt/VibeSensor/apps/server/\.venv/bin/(python|vibesensor-hotspot-self-heal)([[:space:]]|$)' \
-    "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service"; then
-    echo "Validation failed: hotspot watchdog service ExecStart does not reference the apps/server venv bin dir"
+  if [ "$(unit_value "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service" ExecStart)" != \
+    "/usr/bin/python3 -I ${ROOT_HELPER_DIR}/vibesensor_hotspot.py watchdog" ]; then
+    echo "Validation failed: hotspot watchdog service must run ${ROOT_HELPER_DIR}/vibesensor_hotspot.py watchdog"
     exit 1
   fi
 
@@ -372,6 +490,7 @@ validate_image_artifact() {
   assert_rootfs_package libopenblas0-pthread
   assert_rootfs_package libgfortran5
   assert_rootfs_package usbmuxd
+  assert_rootfs_package python3-yaml
   assert_rootfs_package libimobiledevice-1.0-6
 
   if ! grep -R -n "ipheth" "${ROOT_MNT}/lib/modules"/*/modules.alias* "${ROOT_MNT}/lib/modules"/*/modules.builtin* >/dev/null 2>&1; then
@@ -549,12 +668,12 @@ echo "SSHD_FIRST_BOOT_READINESS_OK"
     exit 1
   fi
 
-  if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+  if grep -n "apt-get" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh" >/dev/null 2>&1; then
     echo "Validation failed: hotspot script still contains apt-get"
     exit 1
   fi
 
-  if ! grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+  if ! grep -n "/var/log/wifi" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh" >/dev/null 2>&1; then
     echo "Validation failed: hotspot script does not reference /var/log/wifi"
     exit 1
   fi
@@ -565,16 +684,16 @@ echo "SSHD_FIRST_BOOT_READINESS_OK"
   fi
 
   # Captive portal: the hotspot script writes the AP-only dnsmasq entry that
-  # the baked hotspot-config CLI exports for the OS connectivity-probe hosts.
+  # the root-side hotspot helper exports for the OS connectivity-probe hosts.
   if ! grep -n "dnsmasq-shared.d/vibesensor-captive-portal.conf" \
-    "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+    "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh" >/dev/null 2>&1; then
     echo "Validation failed: hotspot script does not write the captive-portal dnsmasq entry"
     exit 1
   fi
-  if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.cli.hotspot_config /etc/vibesensor/config.yaml \
-    | grep -E "^CAPTIVE_DNS_ADDRESS='/connectivitycheck\.gstatic\.com/.*/captive\.apple\.com/.*/10\.4\.0\.1'$" \
+  if ! run_qemu_chroot /usr/bin/python3 -I "${ROOT_HELPER_DIR}/vibesensor_hotspot.py" config /etc/vibesensor/config.yaml \
+    | grep -E "^CAPTIVE_DNS_ADDRESS=/connectivitycheck\.gstatic\.com/.*/captive\.apple\.com/.*/10\.4\.0\.1$" \
     >/dev/null; then
-    echo "Validation failed: vibesensor-hotspot-config does not export the captive-portal probe hosts"
+    echo "Validation failed: the root-side hotspot helper does not export the captive-portal probe hosts"
     exit 1
   fi
 
@@ -648,7 +767,7 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   ls -l "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" "${ROOT_MNT}/usr/lib/udev/rules.d/39-usbmuxd.rules"
 
   echo "=== Validation: privileged helper (updater + Bluetooth OBD) ==="
-  ls -l "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/vibesensor_privileged_helper.py" \
+  ls -l "${ROOT_MNT}${ROOT_HELPER_DIR}" \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-privileged.socket"
   grep -n '^ListenStream=\|^SocketUser=\|^SocketMode=' "${ROOT_MNT}/etc/systemd/system/vibesensor-privileged.socket"
 
@@ -693,7 +812,7 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   echo "${OPENBLAS_LIB}"
 
   echo "=== Validation: hotspot script has no apt-get ==="
-  if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
+  if grep -n "apt-get" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh"; then
     echo "ERROR: found apt-get in hotspot script"
     exit 1
   else
@@ -701,7 +820,7 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   fi
 
   echo "=== Validation: hotspot script references /var/log/wifi ==="
-  grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"
+  grep -n "/var/log/wifi" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh"
 
   cleanup_mounts
   trap - EXIT

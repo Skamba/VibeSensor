@@ -3,7 +3,7 @@
 
 SERVER_DIR := apps/server
 UI_DIR := apps/ui
-LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/tests tools
+LINT_TARGETS := $(SERVER_DIR)/vibesensor $(SERVER_DIR)/root-helpers $(SERVER_DIR)/tests tools
 PYTHON_VERSION := $(strip $(shell cat .python-version))
 PYTHON_MAJOR := $(word 1,$(subst ., ,$(PYTHON_VERSION)))
 PYTHON_MINOR := $(word 2,$(subst ., ,$(PYTHON_VERSION)))

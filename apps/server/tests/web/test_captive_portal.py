@@ -6,7 +6,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from vibesensor.hotspot.captive_portal import CAPTIVE_PROBE_HOSTS, dnsmasq_probe_address
 from vibesensor.web.middleware import install_captive_portal_middleware
 
 
@@ -52,10 +51,3 @@ def test_ui_and_other_hosts_pass_through(host: str) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"served": "generate_204"}
-
-
-def test_dnsmasq_entry_points_every_probe_host_at_the_hotspot() -> None:
-    *hosts, address = dnsmasq_probe_address().strip("/").split("/")
-
-    assert hosts == list(CAPTIVE_PROBE_HOSTS)
-    assert address == "10.4.0.1"

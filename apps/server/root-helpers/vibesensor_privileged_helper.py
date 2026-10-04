@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -I
 """Root side of the VibeSensor privileged helper (``vibesensor-privileged@.service``).
 
 ``vibesensor.service`` runs with ``NoNewPrivileges=true``, so it cannot gain
@@ -17,8 +17,11 @@ It runs the allowlist wrapper that ``helper`` names, from this directory, with
     {"returncode": 0, "stdout": "...", "stderr": "..."}
 
 The wrappers stay the security boundary. This script only chooses which
-wrapper runs, and never executes request arguments itself. It runs under the
-system ``python3 -I``, so it must stay stdlib-only. The server-side client is
+wrapper runs, and never executes request arguments itself. It and the wrappers
+run from the root-owned copy of ``apps/server/root-helpers/`` in
+``/usr/local/lib/vibesensor`` (``install_systemd_units.sh``) under the system
+``python3 -I``, so they must stay stdlib-only and never import ``vibesensor``
+or anything from the service user's venv. The server-side client is
 ``vibesensor/common/privileged_helper.py``; keep the protocol in sync with it.
 """
 

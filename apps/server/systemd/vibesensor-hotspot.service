@@ -8,7 +8,9 @@ Type=oneshot
 Environment=VIBESENSOR_CONFIG_PATH=/etc/vibesensor/config.yaml
 # Keep a local rfkill preflight so boot and manual restarts can recover.
 ExecStartPre=/bin/sh -c 'if command -v rfkill >/dev/null 2>&1; then rfkill unblock wifi || rfkill unblock all || true; fi'
-ExecStart=__PI_DIR__/scripts/hotspot_nmcli.sh --config /etc/vibesensor/config.yaml
+# Root runs only root-owned code: the helper copies that install_systemd_units.sh
+# puts in /usr/local/lib/vibesensor, never the install tree or the venv.
+ExecStart=/usr/local/lib/vibesensor/hotspot_nmcli.sh --config /etc/vibesensor/config.yaml
 TimeoutStartSec=300
 Restart=on-failure
 RestartSec=5

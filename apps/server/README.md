@@ -279,8 +279,12 @@ is on the device, this README owns the backend-side service and config path.
     OBD admin; `vibesensor.service` runs with `NoNewPrivileges=true` and never
     uses sudo; see
     [docs/operational-runbooks.md](../../docs/operational-runbooks.md#one-time-migration-to-the-privileged-helper))
-- `scripts/install_systemd_units.sh` renders and enables all of these units.
-  `install_pi.sh` runs it, and it doubles as the offline migration path.
+- `scripts/install_systemd_units.sh` renders and enables all of these units and
+  copies `root-helpers/` into root-owned `/usr/local/lib/vibesensor`, the only
+  place root units run code from (system `/usr/bin/python3 -I`, never the venv).
+  `install_pi.sh` runs it, and it doubles as the offline migration path. In-app
+  updates replace only the venv; see
+  [Root runs only root-owned code](../../docs/operational-runbooks.md#root-runs-only-root-owned-code).
 
 - Common service operations:
 
@@ -294,7 +298,8 @@ is on the device, this README owns the backend-side service and config path.
 
 - Hotspot diagnostics are written under `/var/log/wifi/`, including
   `hotspot.log` plus the latest `summary.txt`/dump files emitted by
-  `apps/server/scripts/hotspot_nmcli.sh`.
+  `/usr/local/lib/vibesensor/hotspot_nmcli.sh` (source:
+  `apps/server/root-helpers/hotspot_nmcli.sh`).
 - Backend runtime data lives under `/var/lib/vibesensor/` and `/var/log/vibesensor/`
   on Pi installs.
 - First verification after install/flash:

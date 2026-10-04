@@ -1,1 +1,1 @@
-"""Wi-Fi hotspot settings, captive-portal probe hosts, and the periodic hotspot watchdog."""
+"""Fixed Wi-Fi hotspot settings and the captive-portal probe hosts."""

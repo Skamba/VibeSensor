@@ -39,12 +39,14 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `settings/`: persisted car/sensor/speed-source/analysis/UI settings and the car library.
 - `speed/`: GPS (gpsd), Bluetooth OBD (`obd/`), selected-speed-source coordination.
 - `updates/`: wheel/firmware updater, releases, Wi-Fi uplink.
-- `hotspot/`: fixed hotspot settings, the captive-portal probe hosts (`captive_portal.py`, used by the hotspot DNS and `web/middleware.py`), and the periodic hotspot watchdog (`vibesensor-hotspot-self-heal` timer).
+- `hotspot/`: fixed hotspot settings and the captive-portal probe hosts (`captive_portal.py`, used by `web/middleware.py`). The root-side copies live in `apps/server/root-helpers/`.
+
 - `clock/`: steps the RTC-less Pi's unsynchronised wall clock to the browser clock the UI reports on connect (needs `CAP_SYS_TIME` from `vibesensor.service`).
 - `simulator/`: sensor simulator and WebSocket smoke client.
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client).
 - `cli/`: console entry points.
+- `apps/server/root-helpers/` (outside the package): the stdlib-only scripts root runs (privileged helper, update allowlist, OBD admin, `hotspot_nmcli.sh`, `vibesensor_hotspot.py` hotspot settings and watchdog). `install_systemd_units.sh` copies them to root-owned `/usr/local/lib/vibesensor`; they never import `vibesensor`, and constants they copy are pinned by parity tests in `tests/root_helpers/`.
 - Report flow details: `docs/report_pipeline.md`.
 - User journeys and expectation-setting principles (car wizard, readiness, source checks, report wording): `docs/user_journeys.md`; open gaps: `docs/user_journey_gaps.md`.
 - Analysis/run/live ingest details: `docs/analysis_pipeline.md`, `docs/run_lifecycle.md`, `docs/intake_buffering.md`, `docs/order_tracking.md`.

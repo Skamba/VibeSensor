@@ -8,17 +8,22 @@ from typing import Any, cast
 
 from vibesensor.common.operational_errors import ExternalCommandError
 from vibesensor.common.privileged_helper import OBD_HELPER, PrivilegedResult, run_privileged
-from vibesensor.speed.obd.admin_bluetooth import POWER_ON_WAIT_S
 from vibesensor.speed.obd.models import ObdDeviceSnapshot
 
 __all__ = ["ObdAdminClient"]
 
 _OBD_HELPER_LAUNCH_ERROR = (
     "Bluetooth OBD helper failed before returning structured output. "
-    "Verify the helper installation on the Pi and try again."
+    "Install the root-side helpers of this release on the Pi "
+    "(apps/server/scripts/install_systemd_units.sh, see docs/operational-runbooks.md) "
+    "and try again."
 )
 
 CommandRunner = Callable[[list[str], int], PrivilegedResult]
+
+POWER_ON_WAIT_S = 10
+"""How long the helper waits out a BlueZ "Busy" power-on (``POWER_ON_WAIT_S`` in
+``root-helpers/vibesensor_obd_admin.py``); every request timeout includes it."""
 
 
 def _default_runner(args: list[str], timeout_s: int) -> PrivilegedResult:

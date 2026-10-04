@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -14,6 +15,7 @@ from pathlib import Path
 import pytest
 from _paths import REPO_ROOT
 from test_support.privileged_socket import HELPER_SCRIPT, serve_privileged_helper
+from test_support.root_helpers import ROOT_HELPERS_DIR
 
 from vibesensor.common.process_settings import DEFAULT_PRIVILEGED_SOCKET
 
@@ -125,6 +127,8 @@ def test_image_validation_accepts_wheel_static_data_and_rejects_source_tree(
 _SYSTEMD_DIR = REPO_ROOT / "apps/server/systemd"
 _PRIVILEGED_SOCKET = _SYSTEMD_DIR / "vibesensor-privileged.socket"
 _PRIVILEGED_SERVICE = _SYSTEMD_DIR / "vibesensor-privileged@.service"
+_ROOT_HELPER_DIR = "/usr/local/lib/vibesensor"
+_SYSTEM_BIN_DIRS = ("/usr/bin/", "/bin/", "/usr/sbin/", "/sbin/")
 _IMAGE_PLACEHOLDERS = {
     "__PI_DIR__": "/opt/VibeSensor/apps/server",
     "__VENV_DIR__": "/opt/VibeSensor/apps/server/.venv",
@@ -148,8 +152,7 @@ def test_privileged_helper_units_line_up_with_the_server_and_its_client() -> Non
     assert _read_systemd_section(_PRIVILEGED_SOCKET, "Install")["WantedBy"] == ["sockets.target"]
 
     exec_start = shlex.split(_only_value(helper, "ExecStart"))
-    assert exec_start[:2] == ["/usr/bin/python3", "-I"]
-    assert exec_start[2:] == ["__PI_DIR__/scripts/vibesensor_privileged_helper.py"]
+    assert exec_start == ["/usr/bin/python3", "-I", f"{_ROOT_HELPER_DIR}/{HELPER_SCRIPT.name}"]
     assert HELPER_SCRIPT.is_file()
     assert _only_value(helper, "StandardInput") == "socket"
     assert _only_value(helper, "StandardOutput") == "socket"
@@ -207,24 +210,35 @@ def test_privileged_commands_work_under_the_server_unit_restrictions() -> None:
 
 
 def _render_image_rootfs(rootfs: Path) -> None:
+    """Lay out units and root helpers the way install_systemd_units.sh does on the image."""
+
     unit_dir = rootfs / "etc/systemd/system"
     (unit_dir / "sockets.target.wants").mkdir(parents=True)
-    for unit in ("vibesensor.service", _PRIVILEGED_SOCKET.name, _PRIVILEGED_SERVICE.name):
-        text = (_SYSTEMD_DIR / unit).read_text(encoding="utf-8")
+    for unit in _SYSTEMD_DIR.iterdir():
+        text = unit.read_text(encoding="utf-8")
         for placeholder, value in _IMAGE_PLACEHOLDERS.items():
             text = text.replace(placeholder, value)
-        (unit_dir / unit).write_text(text, encoding="utf-8")
+        (unit_dir / unit.name).write_text(text, encoding="utf-8")
     (unit_dir / "sockets.target.wants" / _PRIVILEGED_SOCKET.name).symlink_to(
         f"/etc/systemd/system/{_PRIVILEGED_SOCKET.name}"
     )
-    scripts_dir = rootfs / "opt/VibeSensor/apps/server/scripts"
-    scripts_dir.mkdir(parents=True)
-    for script in (
-        "vibesensor_privileged_helper.py",
-        "vibesensor_update_allowlist.sh",
-        "vibesensor_obd_admin.py",
-    ):
-        shutil.copy2(HELPER_SCRIPT.parent / script, scripts_dir / script)
+    release_helpers = rootfs / "opt/VibeSensor/apps/server/root-helpers"
+    installed_helpers = rootfs / _ROOT_HELPER_DIR.lstrip("/")
+    for helpers_dir in (release_helpers, installed_helpers):
+        helpers_dir.mkdir(parents=True)
+        for helper in ROOT_HELPERS_DIR.iterdir():
+            if helper.is_file():
+                shutil.copy2(helper, helpers_dir / helper.name)
+    (rootfs / "opt/VibeSensor/apps/server/.venv/bin").mkdir(parents=True)
+    (rootfs / "usr/bin").mkdir(parents=True)
+    (rootfs / "bin").symlink_to("usr/bin")
+    for tool in ("python3.13", "dash", "test", "chown"):
+        (rootfs / "usr/bin" / tool).write_text("#!/bin/true\n", encoding="utf-8")
+    (rootfs / "usr/bin/python3").symlink_to("python3.13")
+    (rootfs / "usr/bin/sh").symlink_to("dash")
+    for path in [rootfs, *rootfs.rglob("*")]:
+        if not path.is_symlink():
+            path.chmod(0o755)
 
 
 def _break_with_sudoers(rootfs: Path) -> None:
@@ -270,4 +284,178 @@ def test_image_validation_checks_the_privileged_helper_contract(
     )
 
     assert result.returncode == (0 if breakage is None else 1), result.stdout
+    assert message in result.stdout
+
+
+def _root_run_commands(unit_path: Path) -> list[list[str]]:
+    """Return the argv of every command systemd runs as root for *unit_path*."""
+
+    service = _read_systemd_section(unit_path, "Service")
+    user = service.get("User", ["root"])[-1]
+    start_only = service.get("PermissionsStartOnly", ["false"])[-1] == "true"
+    commands: list[list[str]] = []
+    for key, values in service.items():
+        if not key.startswith("Exec"):
+            continue
+        for value in values:
+            command = value.lstrip("-@:+!")
+            prefix = value[: len(value) - len(command)]
+            runs_as_root = (
+                user == "root"
+                or "+" in prefix
+                or "!" in prefix
+                or (start_only and key != "ExecStart")
+            )
+            if runs_as_root:
+                commands.append(shlex.split(command))
+    return commands
+
+
+def _executed_files(argv: list[str]) -> list[str]:
+    """The program and, for an interpreter, the script it runs (inline ``-c`` code excluded)."""
+
+    program = Path(argv[0]).name
+    if program.startswith("python"):
+        assert argv[1] == "-I", f"root runs Python without -I (isolated mode): {argv}"
+        return [argv[0], argv[2]]
+    if program in {"sh", "bash"} and argv[1] != "-c":
+        return [argv[0], argv[1]]
+    return [argv[0]]
+
+
+@pytest.mark.smoke
+def test_root_units_execute_only_the_root_owned_helper_copies() -> None:
+    """Root must never run code the service user can change (its venv, the install tree)."""
+
+    root_commands = {
+        unit.name: _root_run_commands(unit) for unit in sorted(_SYSTEMD_DIR.glob("*.service"))
+    }
+    executed = {
+        path
+        for commands in root_commands.values()
+        for argv in commands
+        for path in _executed_files(argv)
+    }
+
+    assert root_commands["vibesensor-hotspot-self-heal.service"] == [
+        ["/usr/bin/python3", "-I", f"{_ROOT_HELPER_DIR}/vibesensor_hotspot.py", "watchdog"]
+    ]
+    for path in executed:
+        assert "__PI_DIR__" not in path and "__VENV_DIR__" not in path, path
+        assert path.startswith((*_SYSTEM_BIN_DIRS, f"{_ROOT_HELPER_DIR}/")), path
+        if path.startswith(f"{_ROOT_HELPER_DIR}/"):
+            assert (ROOT_HELPERS_DIR / Path(path).name).is_file(), path
+    for commands in root_commands.values():
+        for argv in commands:
+            if argv[:2] in (["/bin/sh", "-c"], ["/bin/bash", "-c"]):
+                assert "__PI_DIR__" not in argv[2] and "__VENV_DIR__" not in argv[2], argv
+
+
+_IMPORT_AUDIT = """
+import runpy, sys, sysconfig, tempfile
+from pathlib import Path
+
+namespace = runpy.run_path(sys.argv[1], run_name="root_helper_audit")
+if "print_exports" in namespace:  # hotspot helper: also take the lazy YAML import path
+    config = Path(tempfile.mkdtemp()) / "config.yaml"
+    config.write_text("ap:\\n  ssid: Test\\n")
+    namespace["print_exports"](config)
+stdlib = {Path(sysconfig.get_paths()[key]).resolve() for key in ("stdlib", "platstdlib")}
+for name, module in list(sys.modules.items()):
+    origin = getattr(module, "__file__", None)
+    if origin and not any(root in Path(origin).resolve().parents for root in stdlib):
+        print(f"non-stdlib module {name} from {origin}", file=sys.stderr)
+        raise SystemExit(1)
+"""
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    "helper", sorted(p.name for p in ROOT_HELPERS_DIR.iterdir() if p.suffix == ".py")
+)
+def test_root_helpers_load_only_the_standard_library(helper: str) -> None:
+    """Root runs these with the system python3 -I: nothing from the venv may be imported."""
+
+    completed = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", _IMPORT_AUDIT, str(ROOT_HELPERS_DIR / helper)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    first_line = (ROOT_HELPERS_DIR / helper).read_text(encoding="utf-8").splitlines()[0]
+    assert first_line == "#!/usr/bin/python3 -I"
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("helper", sorted(p.name for p in ROOT_HELPERS_DIR.iterdir()))
+def test_root_helpers_never_reach_into_the_service_users_tree(helper: str) -> None:
+    text = (ROOT_HELPERS_DIR / helper).read_text(encoding="utf-8")
+
+    for marker in (r"\.venv\b", r"site-packages", r"\b(?:from|import|-m)\s+vibesensor(?:\.|\s|$)"):
+        assert re.search(marker, text, re.MULTILINE) is None, f"{helper} matches {marker!r}"
+
+
+def _venv_self_heal(rootfs: Path) -> None:
+    unit = rootfs / "etc/systemd/system/vibesensor-hotspot-self-heal.service"
+    (rootfs / "opt/VibeSensor/apps/server/.venv/bin/vibesensor-hotspot-self-heal").touch()
+    unit.write_text(
+        unit.read_text().replace(
+            f"/usr/bin/python3 -I {_ROOT_HELPER_DIR}/vibesensor_hotspot.py watchdog",
+            "/opt/VibeSensor/apps/server/.venv/bin/vibesensor-hotspot-self-heal",
+        )
+    )
+
+
+def _hotspot_from_install_tree(rootfs: Path) -> None:
+    unit = rootfs / "etc/systemd/system/vibesensor-hotspot.service"
+    unit.write_text(
+        unit.read_text().replace(
+            f"{_ROOT_HELPER_DIR}/hotspot_nmcli.sh",
+            "/opt/VibeSensor/apps/server/root-helpers/hotspot_nmcli.sh",
+        )
+    )
+    (rootfs / "opt").chmod(0o777)
+
+
+def _writable_helper(rootfs: Path) -> None:
+    (rootfs / _ROOT_HELPER_DIR.lstrip("/") / "vibesensor_obd_admin.py").chmod(0o775)
+
+
+def _python_without_isolation(rootfs: Path) -> None:
+    unit = rootfs / "etc/systemd/system/vibesensor-privileged@.service"
+    unit.write_text(unit.read_text().replace("/usr/bin/python3 -I ", "/usr/bin/python3 "))
+
+
+def _stale_helper_copy(rootfs: Path) -> None:
+    (rootfs / _ROOT_HELPER_DIR.lstrip("/") / "hotspot_nmcli.sh").write_text("#!/bin/sh\n")
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    ("breakage", "message"),
+    [
+        (None, ""),
+        (_venv_self_heal, "from the service user's venv"),
+        (_hotspot_from_install_tree, "/opt is writable by a non-root user"),
+        (_writable_helper, "vibesensor_obd_admin.py is writable by a non-root user"),
+        (_python_without_isolation, "without -I"),
+        (_stale_helper_copy, "is not an installed copy of root-helpers/hotspot_nmcli.sh"),
+    ],
+)
+def test_image_validation_rejects_root_running_code_the_service_user_can_change(
+    tmp_path: Path, breakage: Callable[[Path], None] | None, message: str
+) -> None:
+    rootfs = tmp_path / "rootfs"
+    _render_image_rootfs(rootfs)
+    if breakage is not None:
+        breakage(rootfs)
+
+    result = _run_image_validation_script(
+        f'assert_root_executes_only_root_owned_code "{rootfs}"', check=False
+    )
+
+    assert result.returncode == (0 if breakage is None else 1), result.stdout + result.stderr
     assert message in result.stdout

@@ -52,12 +52,15 @@ For local development examples, see `apps/server/config.dev.yaml`,
 
 The hotspot address (`10.4.0.1/24`), channel (`7`), interface (`wlan0`, with a
 detected-device fallback), and NetworkManager profile name (`VibeSensor-AP`)
-are fixed in `vibesensor/hotspot/constants.py`.
+are fixed in `apps/server/root-helpers/vibesensor_hotspot.py`, the root-side
+hotspot helper (`vibesensor/hotspot/constants.py` mirrors the values the server
+needs).
 
 The hotspot behaves as a captive portal with no setting: `hotspot_nmcli.sh`
 writes `/etc/NetworkManager/dnsmasq-shared.d/vibesensor-captive-portal.conf`,
 so the AP-only shared-mode dnsmasq resolves the OS connectivity-probe hosts
-(`vibesensor/hotspot/captive_portal.py`) to `10.4.0.1`, and the server
+(listed in `root-helpers/vibesensor_hotspot.py` and
+`vibesensor/hotspot/captive_portal.py`) to `10.4.0.1`, and the server
 redirects any request for those hosts to `http://10.4.0.1/`. Phones then offer
 to "sign in" and open the UI. Other names and the Pi's own resolver are
 unchanged, so uplink updates are unaffected. The hotspot watchdog
