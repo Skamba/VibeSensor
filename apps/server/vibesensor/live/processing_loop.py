@@ -55,8 +55,9 @@ _LOW_LOAD_MAX_DUTY_CYCLE = 0.5
 CLOCK_SYNC_INTERVAL_S = 2.0
 """Seconds between ``CMD_SYNC_CLOCK`` broadcasts, on the monotonic clock.
 
-Sensors apply the server offset from their second exchange, so a sensor that
-connects is raw-backed after 2-4 s. The interval stays well inside the
+A sensor that connects is synced at its HELLO (``UDPControlPlane`` runs both
+exchanges at once); the broadcast refreshes the offset and catches a sensor
+whose HELLO exchange was lost. The interval stays well inside the
 registry's 8 s slow-exchange hold and the 15 s raw-capture sync-age limit, so a
 few lost or rejected exchanges in a row neither keep a slow estimate nor make
 the finalize proof ``stale_sync``. Timed rather than counted in ticks, so the

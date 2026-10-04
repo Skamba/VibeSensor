@@ -48,8 +48,8 @@ __all__ = [
 _DEFAULT_DEDUP_WINDOW_SIZE = 128
 _RESTART_SEQ_GAP = 1000
 # A sensor that reboots restarts its sequence counter and its device clock; until
-# the server's clock offset is re-applied (second sync, 2-4 s after it reconnects) its
-# t0_us is far behind the previous session. Genuine late/reordered UDP frames are
+# the server's clock offset is re-applied (up to ~2 s, at its next HELLO or sync
+# broadcast) its t0_us is far behind the previous session. Genuine late/reordered UDP frames are
 # only milliseconds behind, so a rewind this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000
 _JITTER_EMA_ALPHA = 0.2
@@ -61,6 +61,17 @@ _JITTER_EMA_ALPHA = 0.2
 _SYNC_RTT_OUTLIER_FACTOR = 2
 _SYNC_RTT_OUTLIER_MARGIN_US = 1_000
 _SYNC_OUTLIER_MAX_HOLD_US = 8_000_000
+# Even an accepted exchange is off by up to half its round trip, and that error
+# changes from one exchange to the next (Wi-Fi, scheduling on either side). Once a
+# sensor stamps with an offset, a new estimate moves it by at most this much per
+# exchange, so its t0_us never steps by more than the raw-capture timeline
+# tolerance (0.75 sample, 234 us even at 3200 Hz) and FFT windows across a
+# re-sync stay usable. 200 us per 2 s exchange tracks 100 ppm of crystal drift.
+_SYNC_MAX_SLEW_US = 200
+# An offset that a new exchange proves wrong by more than this (beyond the half
+# round trip that exchange can be off) is replaced outright: a few ms of absolute
+# error does not matter to analysis, slewing out a large one would take minutes.
+_SYNC_STEP_MIN_ERROR_US = 5_000
 _SEQ_MASK = 0xFFFFFFFF
 _SEQ_HALF = 0x80000000
 
@@ -442,6 +453,23 @@ def _is_sync_rtt_outlier(
     )
 
 
+def _disciplined_sync_offset(
+    record: ClientRecord,
+    *,
+    estimate_us: int,
+    round_trip_us: int,
+) -> int:
+    """Return the offset to send next, given this exchange's estimate."""
+    current_us = record.sync_offset_us
+    if current_us is None or not record.clock_offset_applied:
+        # Nothing stamps with an offset yet: take the measurement as is.
+        return estimate_us
+    deviation_us = estimate_us - current_us
+    if abs(deviation_us) - (round_trip_us // 2) > _SYNC_STEP_MIN_ERROR_US:
+        return estimate_us
+    return current_us + max(-_SYNC_MAX_SLEW_US, min(_SYNC_MAX_SLEW_US, deviation_us))
+
+
 def _forget_clock_sync(record: ClientRecord) -> None:
     """A rebooted sensor restarts its device clock; its old offset no longer applies."""
     record.clock_offset_applied = False
@@ -586,7 +614,13 @@ class ClientRegistry:
         now: float | None = None,
         *,
         now_mono: float | None = None,
-    ) -> None:
+    ) -> bool:
+        """Record a HELLO; return whether the sensor needs a clock-sync exchange now.
+
+        A sensor that is not stamping on the server clock yet (it just connected or
+        rebooted) and has no exchange in flight is synced right away instead of at
+        the next periodic broadcast, so it streams few chunks raw capture must drop.
+        """
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
@@ -613,6 +647,7 @@ class ClientRegistry:
             record.recent_queue_overflow_drops.add(new_drops, mono)
             record.queue_overflow_drops = reported
             self._metadata.apply_advertised_name(record, hello.name)
+            return not record.clock_offset_applied and record.pending_sync_cmd_seq is None
 
     def update_from_data(
         self,
@@ -649,7 +684,13 @@ class ClientRegistry:
         now: float | None = None,
         *,
         now_mono: float | None = None,
-    ) -> None:
+    ) -> bool:
+        """Record an ACK; return whether a measured offset now awaits its applying exchange.
+
+        The first exchange with a sensor only measures the offset; sending the
+        exchange that carries it at once, rather than at the next broadcast, puts
+        the sensor on the server clock within two round trips of connecting.
+        """
         with self._lock:
             now_ts = _resolve_now_wall(now)
             mono = _resolve_now_mono(now_mono)
@@ -659,34 +700,41 @@ class ClientRegistry:
             record.last_seen_mono = mono
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
-            if record.pending_sync_cmd_seq == ack.cmd_seq:
-                if record.pending_sync_applies_offset:
-                    record.clock_offset_applied = True
-                if (
-                    ack.device_receive_us is not None
-                    and ack.device_send_us is not None
-                    and record.pending_sync_send_us is not None
+            if record.pending_sync_cmd_seq != ack.cmd_seq:
+                return False
+            if record.pending_sync_applies_offset:
+                record.clock_offset_applied = True
+            if (
+                ack.device_receive_us is not None
+                and ack.device_send_us is not None
+                and record.pending_sync_send_us is not None
+            ):
+                server_receive_us = int(mono * 1_000_000)
+                processing_us = max(0, ack.device_send_us - ack.device_receive_us)
+                round_trip_us = max(
+                    0,
+                    server_receive_us - record.pending_sync_send_us - processing_us,
+                )
+                if not _is_sync_rtt_outlier(
+                    record,
+                    round_trip_us=round_trip_us,
+                    server_receive_us=server_receive_us,
                 ):
-                    server_receive_us = int(mono * 1_000_000)
-                    processing_us = max(0, ack.device_send_us - ack.device_receive_us)
-                    round_trip_us = max(
-                        0,
-                        server_receive_us - record.pending_sync_send_us - processing_us,
-                    )
-                    if not _is_sync_rtt_outlier(
+                    record.sync_offset_us = _disciplined_sync_offset(
                         record,
-                        round_trip_us=round_trip_us,
-                        server_receive_us=server_receive_us,
-                    ):
-                        record.sync_offset_us = (
+                        estimate_us=(
                             (record.pending_sync_send_us - ack.device_receive_us)
                             + (server_receive_us - ack.device_send_us)
-                        ) // 2
-                        record.sync_rtt_us = round_trip_us
-                        record.last_sync_monotonic_us = server_receive_us
-                record.pending_sync_cmd_seq = None
-                record.pending_sync_send_us = None
-                record.pending_sync_applies_offset = False
+                        )
+                        // 2,
+                        round_trip_us=round_trip_us,
+                    )
+                    record.sync_rtt_us = round_trip_us
+                    record.last_sync_monotonic_us = server_receive_us
+            record.pending_sync_cmd_seq = None
+            record.pending_sync_send_us = None
+            record.pending_sync_applies_offset = False
+            return not record.clock_offset_applied and record.sync_offset_us is not None
 
     def _note_client_counter(
         self,

@@ -142,7 +142,8 @@ def test_a_slower_sync_exchange_is_adopted_once_the_current_offset_is_old() -> N
 
     record = registry.get("aabbccddeeff")
     assert record is not None
-    assert record.sync_offset_us == offset_us + 1_000
+    # Each 1 ms-skewed estimate moves the applied offset by the slew limit only.
+    assert record.sync_offset_us == offset_us + 400
     assert record.sync_rtt_us == 10_000
     assert record.last_sync_monotonic_us == 1_012_010_000
 
@@ -162,10 +163,117 @@ def test_sync_exchanges_beyond_twice_the_accepted_round_trip_are_skipped() -> No
     assert record is not None
     assert (record.sync_offset_us, record.sync_rtt_us) == (offset_us, 4_000)
 
-    # 1.5x the accepted round trip (6 ms, skewed by 1 ms): adopted.
+    # 1.5x the accepted round trip (6 ms, skewed by 1 ms): adopted, slewed.
     _sync_exchange(
         registry, 3, send_s=1_004.0, offset_us=offset_us, outbound_us=2_000, inbound_us=4_000
     )
     record = registry.get("aabbccddeeff")
     assert record is not None
-    assert (record.sync_offset_us, record.sync_rtt_us) == (offset_us + 1_000, 6_000)
+    assert (record.sync_offset_us, record.sync_rtt_us) == (offset_us + 200, 6_000)
+
+
+# The raw-capture timeline treats a jump of more than 0.75 sample between chunk
+# stamps as a gap or overlap; FFT windows across one are not raw-backed.
+_RAW_TIMELINE_TOLERANCE_US_800HZ = 0.75 * 1_000_000 / 800
+
+
+def _applied_offset(registry: ClientRegistry) -> int:
+    record = registry.get("aabbccddeeff")
+    assert record is not None
+    assert record.sync_offset_us is not None
+    return record.sync_offset_us
+
+
+def test_resync_noise_never_steps_sensor_timestamps_past_the_raw_timeline_tolerance() -> None:
+    """Asymmetric delays skew every estimate by ms; the stamps the sensor applies must not jump.
+
+    Sensors apply each offset the server sends, so a re-sync that adopted a fresh
+    estimate stepped their t0_us by the estimate's error: under load every 2 s
+    re-sync broke the raw timeline, and runs replayed no raw windows at all.
+    """
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    applied: list[int] = []
+    for cmd_seq in range(1, 31):
+        # A steady 4 ms round trip whose delay sits on alternating sides.
+        outbound_us, inbound_us = (3_800, 200) if cmd_seq % 2 else (200, 3_800)
+        _sync_exchange(
+            registry,
+            cmd_seq,
+            send_s=1_000.0 + 2.0 * cmd_seq,
+            offset_us=offset_us,
+            outbound_us=outbound_us,
+            inbound_us=inbound_us,
+        )
+        applied.append(_applied_offset(registry))
+
+    steps = [abs(b - a) for a, b in zip(applied, applied[1:], strict=False)]
+    assert max(steps) < _RAW_TIMELINE_TOLERANCE_US_800HZ
+    # Still within the 2 ms an exchange can be off by.
+    assert all(abs(value - offset_us) <= 2_000 for value in applied)
+
+
+# t0_us steps at each 2 s re-sync in real Pi run 27af310d (RTT ~8.8 ms, no lost
+# chunks): 19 of these 25 broke the raw timeline and most windows went partial.
+_PI_RUN_RESYNC_STEPS_US = (
+    -1359, -2180, 4009, -1416, -1412, 299, -984, -610, 1659, 2363, -2211, -1902, 898,
+    -73, 1189, -3384, 1932, 4100, 1439, -4207, 2012, 794, -2447, -1563, -68,
+)  # fmt: skip
+
+
+def test_real_pi_resync_jitter_no_longer_steps_sensor_timestamps() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    round_trip_us = 8_838
+    # Replay the estimate errors behind those steps, centred within +-RTT/2.
+    errors_us = [0]
+    for step_us in _PI_RUN_RESYNC_STEPS_US:
+        errors_us.append(errors_us[-1] + step_us)
+    centre_us = (max(errors_us) + min(errors_us)) // 2
+    applied: list[int] = []
+    for cmd_seq, error_us in enumerate(errors_us, start=1):
+        error_us -= centre_us
+        _sync_exchange(
+            registry,
+            cmd_seq,
+            send_s=1_000.0 + 2.0 * cmd_seq,
+            offset_us=offset_us,
+            outbound_us=round_trip_us // 2 - error_us,
+            inbound_us=round_trip_us // 2 + error_us,
+        )
+        applied.append(_applied_offset(registry))
+
+    steps = [abs(b - a) for a, b in zip(applied, applied[1:], strict=False)]
+    assert max(steps) < _RAW_TIMELINE_TOLERANCE_US_800HZ
+    assert all(abs(value - offset_us) <= round_trip_us // 2 for value in applied)
+
+
+def test_resync_tracks_sensor_crystal_drift() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    drift_us_per_exchange = 80  # 40 ppm over the 2 s sync interval
+    for cmd_seq in range(1, 21):
+        true_offset_us = offset_us - drift_us_per_exchange * cmd_seq
+        _sync_exchange(
+            registry,
+            cmd_seq,
+            send_s=1_000.0 + 2.0 * cmd_seq,
+            offset_us=true_offset_us,
+            outbound_us=300,
+            inbound_us=300,
+        )
+        assert abs(_applied_offset(registry) - true_offset_us) <= drift_us_per_exchange
+
+
+def test_an_offset_a_precise_exchange_proves_wrong_is_replaced_at_once() -> None:
+    registry = _registry_with_sensor()
+    offset_us = 500_000_000
+    # The first exchange stalls 30 ms on the way out: its estimate is 15 ms off.
+    _sync_exchange(
+        registry, 1, send_s=1_000.0, offset_us=offset_us, outbound_us=30_000, inbound_us=200
+    )
+    assert abs(_applied_offset(registry) - offset_us) > 14_000
+    _sync_exchange(
+        registry, 2, send_s=1_002.0, offset_us=offset_us, outbound_us=150, inbound_us=150
+    )
+    assert _applied_offset(registry) == offset_us

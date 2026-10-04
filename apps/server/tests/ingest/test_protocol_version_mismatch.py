@@ -86,7 +86,7 @@ def test_control_datagram_version_mismatch_logs_warning(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     registry = Mock()
-    protocol = ControlDatagramProtocol(registry)
+    protocol = ControlDatagramProtocol(registry, lambda _client_id: None)
     packet = bytearray(pack_hello(bytes.fromhex("aabbccddeeff"), 9010, 800, "node"))
     packet[1] = 2
 

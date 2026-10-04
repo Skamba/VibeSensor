@@ -9,8 +9,9 @@ from typing import cast
 import pytest
 
 from vibesensor.ingest.protocol_messages import HelloMessage
-from vibesensor.ingest.protocol_packing import pack_hello_ack
+from vibesensor.ingest.protocol_packing import pack_hello, pack_hello_ack
 from vibesensor.ingest.protocol_parsing import parse_ack, parse_data
+from vibesensor.ingest.protocol_wire import HELLO_CAP_EXPLICIT_ACK, MSG_HELLO_ACK
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.simulator.sim_client import SimClient, make_client_id
@@ -86,6 +87,57 @@ def test_sim_clock_sync_rounds_put_t0_in_the_server_clock_domain() -> None:
     assert sim.clock_offset_us != 0
     server_now_us = int(time.monotonic() * 1_000_000)
     assert abs((sim.device_time_us() + sim.clock_offset_us) - server_now_us) < 5_000
+
+
+def test_a_connecting_sensor_is_on_the_server_clock_right_after_its_hello() -> None:
+    """No wait for the periodic broadcast: raw capture drops a sensor's chunks until
+    its first frame stamped on the server clock, so each second spent unsynced after
+    connecting (or rebooting) mid-run is a second without raw-backed analysis."""
+    sim = _make_sim()
+    sim_control = _CapturingTransport()
+    sim.control_transport = cast(asyncio.DatagramTransport, sim_control)
+    sim_protocol = ClientProtocol(sim)
+    registry = ClientRegistry()
+    server_control = _CapturingTransport()
+    plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)
+    plane.transport = cast(asyncio.DatagramTransport, server_control)
+    plane.protocol.transport = plane.transport
+    hello = pack_hello(
+        client_id=sim.client_id,
+        control_port=sim.control_port,
+        sample_rate_hz=sim.sample_rate_hz,
+        name=sim.name,
+        frame_samples=sim.frame_samples,
+        firmware_version="sim",
+        capabilities=HELLO_CAP_EXPLICIT_ACK,
+    )
+
+    def deliver_until_quiet() -> None:
+        to_sim = to_server = 0
+        while to_sim < len(server_control.sent) or to_server < len(sim_control.sent):
+            for packet, _addr in server_control.sent[to_sim:]:
+                sim_protocol.datagram_received(packet, ("127.0.0.1", 9001))
+            to_sim = len(server_control.sent)
+            for packet, _addr in sim_control.sent[to_server:]:
+                plane.protocol.datagram_received(packet, ("127.0.0.1", sim.control_port))
+            to_server = len(sim_control.sent)
+
+    plane.protocol.datagram_received(hello, ("127.0.0.1", sim.control_port))
+    deliver_until_quiet()
+
+    record = registry.get(sim.client_id.hex())
+    assert record is not None
+    assert sim.handshake_complete is True
+    assert record.clock_offset_applied is True
+    server_now_us = int(time.monotonic() * 1_000_000)
+    assert abs((sim.device_time_us() + sim.clock_offset_us) - server_now_us) < 5_000
+    # HELLO_ACK, then the measuring and the applying exchange.
+    assert len(server_control.sent) == 3
+
+    # A synced sensor's periodic HELLO gets only its HELLO_ACK.
+    plane.protocol.datagram_received(hello, ("127.0.0.1", sim.control_port))
+    assert len(server_control.sent) == 4
+    assert server_control.sent[-1][0][0] == MSG_HELLO_ACK
 
 
 def test_sim_marks_handshake_complete_only_for_its_own_hello_ack() -> None:

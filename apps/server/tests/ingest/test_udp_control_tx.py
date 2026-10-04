@@ -73,7 +73,7 @@ def test_control_datagram_programming_bug_propagates(
 ) -> None:
     client_hex = "aabbccddeeff"
     registry = _make_registry(tmp_path)
-    protocol = ControlDatagramProtocol(registry)
+    protocol = ControlDatagramProtocol(registry, lambda _client_id: None)
     packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
 
     def boom(_: bytes) -> object:
@@ -105,7 +105,7 @@ def test_control_datagram_operational_error_is_logged_and_counted(
         ("127.0.0.1", 54000),
         now=1.0,
     )
-    protocol = ControlDatagramProtocol(registry)
+    protocol = ControlDatagramProtocol(registry, lambda _client_id: None)
     packet = pack_ack(bytes.fromhex(client_hex), cmd_seq=7, status=0)
 
     def raise_oserror(_ack: object, _now_ts: float, *, now_mono: float | None = None) -> None:
@@ -127,7 +127,9 @@ def test_control_datagram_sends_hello_ack_for_capable_firmware(
     fake_transport,
 ) -> None:
     registry = _make_registry(tmp_path)
-    protocol = ControlDatagramProtocol(registry)
+    plane = UDPControlPlane(registry=registry, bind_host="127.0.0.1", bind_port=9001)
+    plane.transport = fake_transport
+    protocol = plane.protocol
     protocol.transport = fake_transport
     packet = pack_hello(
         client_id=bytes.fromhex("aabbccddeeff"),
@@ -141,7 +143,6 @@ def test_control_datagram_sends_hello_ack_for_capable_firmware(
 
     protocol.datagram_received(packet, ("127.0.0.1", 54000))
 
-    assert len(fake_transport.sent) == 1
     payload, addr = fake_transport.sent[0]
     assert payload[0] == MSG_HELLO_ACK
     assert addr == ("127.0.0.1", 9010)

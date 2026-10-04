@@ -30,16 +30,20 @@ server's monotonic time in microseconds.
 |-------|--------|
 | Protocol | New `CMD_SYNC_CLOCK = 2` command type with 8-byte `server_time_us` payload. |
 | Firmware (ESP) | On receipt, compute `offset = server_time_us − esp_timer_get_time()` and store.  Apply offset to every subsequent `t0_us` in DATA frames. |
-| Server control plane | `UDPControlPlane.broadcast_sync_clock()` iterates active sensors and sends the command. |
+| Server control plane | `UDPControlPlane.broadcast_sync_clock()` sends the command to every active sensor; `send_sync_clock()` sends it to one. A HELLO from a sensor that is not on the server clock starts an exchange at once, and the ACK of its first (measuring) exchange triggers the exchange that carries the offset. |
 | Processing loop | Calls `broadcast_sync_clock()` every `CLOCK_SYNC_INTERVAL_S` (2 s) of monotonic time, independent of the tick rate. |
 
 After synchronisation all sensors report `t0_us` relative to the
 server's monotonic clock, making timestamps directly comparable across
 sensors.
 
-The 2 s interval is deliberate. Sensors apply the offset from their second
-exchange, so a newly connected sensor is synced after 2–4 s. It also leaves
-room under the two age limits that depend on it: the registry's 8 s
+Sensors apply the offset from their second exchange. Both exchanges run as soon
+as a sensor says HELLO, so a newly connected sensor stamps on the server clock
+within two round trips, before its first frame; waiting for two broadcasts used
+to leave it unsynced for 2–4 s, which raw capture drops (a recording started
+right after the sensors, or a sensor that reconnected mid-run, lost that much
+raw-backed analysis plus one FFT window). A rebooted sensor is re-synced at its
+next HELLO or broadcast (≤ 2 s). The 2 s broadcast interval leaves room under the two age limits that depend on it: the registry's 8 s
 slow-exchange hold (about three slow exchanges in a row are skipped before an
 old estimate is replaced) and the 15 s sync-age limit of the raw-capture proof
 (several lost exchanges in a row still leave a sensor `verified` at finalize).
@@ -138,12 +142,24 @@ clean network every recorded row of a sensor that synced before the start is
 raw-backed, so the report's data-quality checks all pass. A
 sensor reboot forgets its sync until it re-syncs.
 
-Sensors apply every offset the server sends, so a wrong estimate steps their
+Sensors apply every offset the server sends, so a changed estimate steps their
 `t0_us`. An exchange delayed on either side (a scheduling stall, a Wi-Fi retry)
 has an inflated round trip and an offset error of up to half of it, so the
 registry keeps its current offset when an exchange's round trip exceeds twice
 (and by more than 1 ms) the round trip behind that offset, unless that offset
-is older than 8 s.
+is older than 8 s. Accepted exchanges still differ by up to half their round
+trip in either direction, and a step beyond 0.75 sample breaks the raw timeline
+(see below); with a re-sync every 2 s and 2.56 s FFT windows, every window
+crosses one. So once a sensor stamps with an offset, each new estimate moves it
+by at most 200 µs (`_SYNC_MAX_SLEW_US`, under the timeline tolerance even at
+3200 Hz, and enough for 100 ppm of crystal drift). Only an offset that an
+exchange proves wrong by more than 5 ms beyond that exchange's half round trip
+(a first estimate from a stalled exchange) is replaced outright. Before this,
+the noise of each estimate went straight into the stamps: under CPU load
+re-syncs stepped them by milliseconds and short runs replayed no raw window at
+all (`raw_capture_mode: summary_only`). On the Pi, with a ~9 ms Wi-Fi round
+trip, re-syncs stepped them by 0.6–4.2 ms, so every run with zero loss still
+reported replay gaps and overlaps and the frame-integrity warning.
 
 The manifest's sample-rate proof takes the median rate of consecutive chunks in
 `t0_us` order. A dropped chunk or a remaining clock step breaks one of those
@@ -168,9 +184,10 @@ only after `HELLO_ACK`, answers `CMD_SYNC_CLOCK` with the sync-clock ACK
 carries a measured RTT, and stamps `t0_us` from a per-sensor sample clock
 (device timer with a few tens of ppm drift) rather than from send time.
 Simulator recordings are therefore raw-backed like real sensors. As with
-real hardware, the offset is applied from the second sync exchange (2–4 s
-after a sensor connects); a recording started earlier drops each
-sensor's pre-sync chunks and replays from its first synced chunk.
+real hardware, the offset is applied from the second sync exchange, which
+follows the first as soon as its ACK arrives (both start at the sensor's
+HELLO); a recording that catches a sensor before that drops its pre-sync
+chunks and replays from its first synced chunk.
 
 ### 7. Sensor Timing Guard
 

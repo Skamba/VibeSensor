@@ -12,6 +12,7 @@ import logging
 import random
 import threading
 import time
+from collections.abc import Callable
 from typing import cast
 
 from vibesensor.common.exceptions import ProtocolError
@@ -34,9 +35,11 @@ _US_PER_SEC: int = 1_000_000
 
 
 class ControlDatagramProtocol(asyncio.DatagramProtocol):
-    def __init__(self, registry: ClientRegistry):
+    def __init__(self, registry: ClientRegistry, sync_clock_now: Callable[[str], object]):
         self.registry = registry
         self.transport: asyncio.DatagramTransport | None = None
+        # Starts a clock-sync exchange with one sensor outside the periodic broadcast.
+        self._sync_clock_now = sync_clock_now
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self.transport = cast("asyncio.DatagramTransport", transport)
@@ -51,12 +54,14 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
         try:
             if msg_type == MSG_HELLO:
                 hello = parse_hello(data)
-                registry.update_from_hello(hello, addr, now_ts)
+                sync_due = registry.update_from_hello(hello, addr, now_ts)
                 if self.transport is not None:
                     self.transport.sendto(
                         pack_hello_ack(hello.client_id),
                         (addr[0], hello.control_port),
                     )
+                if sync_due:
+                    self._sync_clock_now(hello.client_id.hex())
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
                 # Clock-sync commands are acknowledged every couple of seconds; only a
@@ -68,7 +73,8 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
                     ack.cmd_seq,
                     ack.status,
                 )
-                registry.update_from_ack(ack, now_ts, now_mono=time.monotonic())
+                if registry.update_from_ack(ack, now_ts, now_mono=time.monotonic()):
+                    self._sync_clock_now(ack.client_id.hex())
             elif msg_type == MSG_DATA_ACK:
                 return
         except ProtocolVersionMismatch as exc:
@@ -103,7 +109,7 @@ class UDPControlPlane:
         self.registry = registry
         self.bind_host = bind_host
         self.bind_port = bind_port
-        self.protocol = ControlDatagramProtocol(registry)
+        self.protocol = ControlDatagramProtocol(registry, self.send_sync_clock)
         self.transport: asyncio.DatagramTransport | None = None
         self._cmd_seq = random.randint(1, 1_000_000)
         self._cmd_seq_lock = threading.Lock()
@@ -152,36 +158,33 @@ class UDPControlPlane:
 
         Returns the number of sensors that received the message.
         """
+        client_ids = self.registry.active_client_ids()
+        return sum(self.send_sync_clock(client_id) for client_id in client_ids)
+
+    def send_sync_clock(self, client_id: str) -> bool:
+        """Send one sensor a clock-sync command carrying the current offset estimate."""
         transport = self.transport
-        if transport is None:
-            return 0
+        record = self.registry.get(client_id)
+        if transport is None or record is None or record.control_addr is None:
+            return False
+        seq = self._next_cmd_seq()
         server_time_us = int(time.monotonic() * _US_PER_SEC)
-        registry = self.registry
-        _fromhex = bytes.fromhex
-        _next_seq = self._next_cmd_seq
-        _pack = pack_cmd_sync_clock
-        _sendto = transport.sendto
-        sent = 0
-        for client_id in registry.active_client_ids():
-            record = registry.get(client_id)
-            if record is None or record.control_addr is None:
-                continue
-            seq = _next_seq()
-            round_trip_us = record.sync_rtt_us or 0
-            payload = _pack(
-                _fromhex(record.client_id),
+        round_trip_us = record.sync_rtt_us or 0
+        transport.sendto(
+            pack_cmd_sync_clock(
+                bytes.fromhex(record.client_id),
                 seq,
                 server_time_us,
                 applied_offset_us=record.sync_offset_us or 0,
                 round_trip_us=round_trip_us,
-            )
-            _sendto(payload, record.control_addr)
-            # Sensors apply the carried offset only once it has a measured round trip.
-            registry.mark_cmd_sent(
-                client_id,
-                seq,
-                sync_send_us=server_time_us,
-                sync_applies_offset=record.sync_offset_us is not None and round_trip_us > 0,
-            )
-            sent += 1
-        return sent
+            ),
+            record.control_addr,
+        )
+        # Sensors apply the carried offset only once it has a measured round trip.
+        self.registry.mark_cmd_sent(
+            record.client_id,
+            seq,
+            sync_send_us=server_time_us,
+            sync_applies_offset=record.sync_offset_us is not None and round_trip_us > 0,
+        )
+        return True

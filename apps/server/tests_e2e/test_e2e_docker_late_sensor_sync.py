@@ -9,9 +9,9 @@ from tests_e2e.e2e_helpers import ANALYZABLE_SIM_DURATION_S, api_json, remove_al
 
 pytestmark = pytest.mark.e2e
 
-# Sensors apply the server clock offset on the second sync exchange (one every 2 s,
-# processing_loop.CLOCK_SYNC_INTERVAL_S), so they stream on their bare device clock
-# for up to ~4 s after connecting.
+# Sensors are synced at their HELLO, but one whose HELLO exchange is lost waits for
+# the 2 s broadcast (processing_loop.CLOCK_SYNC_INTERVAL_S) and streams on its bare
+# device clock meanwhile; leave room for that.
 _PRE_SYNC_S = 4.0
 
 
