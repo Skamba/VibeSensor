@@ -182,7 +182,11 @@ def build_sample_records(
                 strength_peak_amp_g=strength_peak_amp_g,
                 strength_floor_amp_g=strength_floor_amp_g,
                 frames_dropped_total=int(record.frames_dropped),
-                queue_overflow_drops=int(record.queue_overflow_drops),
+                # Expected drops (queued while the server restarted, a Bluetooth
+                # scan) are not run loss; frames lost in the run show as dropped.
+                queue_overflow_drops=(
+                    record.queue_overflow_drops - record.expected_queue_overflow_drops
+                ),
                 analysis_window_start_us=analysis_window_start_us,
                 analysis_window_end_us=analysis_window_end_us,
                 analysis_window_synced=analysis_window_synced,

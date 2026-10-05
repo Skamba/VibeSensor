@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import time
+from dataclasses import replace
 from pathlib import Path
 
-from test_support.runtime_lifecycle import build_registry_with_hello, make_data_message
+from test_support.runtime_lifecycle import (
+    build_history_db,
+    build_registry,
+    build_registry_with_hello,
+    make_data_message,
+    make_hello_message,
+)
 
 from vibesensor.ingest.client_payloads import snapshot_for_api
 from vibesensor.ingest.protocol_messages import HelloMessage
@@ -55,7 +62,7 @@ def test_an_occasional_lost_frame_is_not_a_warning(tmp_path: Path) -> None:
     assert registry.recent_data_loss_snapshot(now_mono=mono)["frames_dropped"] == 1
 
 
-def test_device_queue_overflow_counts_only_new_drops_and_survives_reboots(
+def test_queue_overflow_while_streaming_warns_and_its_total_survives_reboots(
     tmp_path: Path,
 ) -> None:
     registry, client_id = build_registry_with_hello(tmp_path)
@@ -75,12 +82,39 @@ def test_device_queue_overflow_counts_only_new_drops_and_survives_reboots(
             now_mono=mono,
         )
 
+    _feed(registry, client_id, range(4), start_mono=90.0)
     hello(5, 100.0)
     hello(7, 101.0)
     hello(2, 102.0)  # rebooted: the device counter restarted
     assert registry.recent_data_loss_snapshot(now_mono=102.0)["queue_overflow_drops"] == 9
     assert registry.recent_data_loss_snapshot(now_mono=200.0)["queue_overflow_drops"] == 0
-    assert registry.data_loss_snapshot()["queue_overflow_drops"] == 2
+    assert registry.data_loss_snapshot()["queue_overflow_drops"] == 9
+
+
+def test_queue_overflow_reported_after_a_server_restart_is_stream_start_loss(
+    tmp_path: Path,
+) -> None:
+    """The sensor kept streaming through a server update and its queue overflowed."""
+    registry = build_registry(db=build_history_db(tmp_path))
+    hello_msg = make_hello_message("aabbccddeeff", queue_overflow_drops=31)
+    client_id = hello_msg.client_id
+    # Its DATA can arrive first; its first HELLO here reports the overflow.
+    mono = _feed(registry, client_id, range(500, 504), start_mono=10.0)
+    registry.update_from_hello(hello_msg, ("10.4.0.2", 9010), now=mono, now_mono=mono)
+    mono = _feed(registry, client_id, range(504, 512), start_mono=mono)
+    # The next HELLO, while the backlog drains, reports one more.
+    registry.update_from_hello(
+        replace(hello_msg, queue_overflow_drops=32), ("10.4.0.2", 9010), now=mono, now_mono=mono
+    )
+
+    assert registry.recent_data_loss_snapshot(now_mono=mono)["queue_overflow_drops"] == 0
+    assert registry.data_loss_snapshot()["queue_overflow_drops"] == 32
+    record = registry.get(client_id.hex())
+    assert record is not None
+    assert (record.expected_queue_overflow_drops, record.last_expected_loss_reason) == (
+        32,
+        "stream_start",
+    )
 
 
 def test_frames_lost_as_a_stream_starts_are_kept_but_not_a_recent_warning(

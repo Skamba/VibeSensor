@@ -113,7 +113,7 @@ def _sensor_observation(
         # Loss from an expected interruption (a Bluetooth scan, the sensor's
         # first seconds after a server restart) is no reason to wait.
         frames_dropped=client.frames_dropped - client.expected_frames_dropped,
-        queue_overflow_drops=int(getattr(client, "queue_overflow_drops", 0)),
+        queue_overflow_drops=client.queue_overflow_drops - client.expected_queue_overflow_drops,
         server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
         parse_errors=int(getattr(client, "parse_errors", 0)),
         timing_degraded=client.timing_guard.degraded,

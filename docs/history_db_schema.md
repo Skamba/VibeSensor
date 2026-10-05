@@ -87,7 +87,7 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 | `strength_peak_amp_g` | REAL | Peak amplitude (g) |
 | `strength_floor_amp_g` | REAL | Noise floor amplitude (g) |
 | `frames_dropped_total` | INTEGER | Cumulative dropped frames |
-| `queue_overflow_drops` | INTEGER | Queue overflow drop count |
+| `queue_overflow_drops` | INTEGER | Cumulative sensor queue-overflow drops, without expected (server restart, Bluetooth scan) drops |
 | `top_peaks` | TEXT | JSON array of combined top peaks |
 
 **Indexes:**

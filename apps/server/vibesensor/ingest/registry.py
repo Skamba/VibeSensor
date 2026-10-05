@@ -94,13 +94,14 @@ _SYNC_EXCHANGE_TIMEOUT_US = 500_000
 FIRMWARE_CONTROL_PORT_BASE = 9010
 
 type ExpectedFrameLoss = Literal["stream_start", "bluetooth_scan", "bluetooth_pairing"]
-"""Why a sequence gap is expected rather than a sensor or Wi-Fi fault.
+"""Why frame loss is expected rather than a sensor or Wi-Fi fault.
 
 - ``stream_start``: the sensor sends stop-and-wait and drops a frame it could
   not deliver within 0.75 s (``kDataMaxFrameAgeMs``). Frames it queued while the
   server was down (a restart or update) or before its handshake age out while
   the first ones are acknowledged, so its first seconds at this server show a
-  gap of a few frames.
+  gap of a few frames. A longer outage also overflows its send queue; its first
+  HELLO here reports those drops.
 - ``bluetooth_scan`` / ``bluetooth_pairing``: the Pi 3's Wi-Fi and Bluetooth
   share one radio; a Bluetooth scan or pairing starves Wi-Fi for its duration.
 """
@@ -196,7 +197,13 @@ class ClientRecord:
     control_addr: tuple[str, int] | None = None
     frames_total: int = 0
     frames_dropped: int = 0
+    # Frames the sensor's send queue dropped, summed from the increments of its
+    # own counter (HELLO ``queue_overflow_drops``); never resets, like
+    # ``frames_dropped``. The sensor's counter itself restarts when it reboots.
     queue_overflow_drops: int = 0
+    # The sensor's counter in its latest HELLO; ``None`` until its first HELLO
+    # at this server.
+    reported_queue_overflow_drops: int | None = None
     server_queue_drops: int = 0
     parse_errors: int = 0
     last_seq: int | None = None
@@ -227,9 +234,11 @@ class ClientRecord:
     recent_frames: RecentCounter = field(default_factory=RecentCounter)
     recent_frames_dropped: RecentCounter = field(default_factory=RecentCounter)
     # Frames lost to an expected interruption (``ExpectedFrameLoss``): part of
-    # ``frames_dropped`` but kept out of the recent loss warnings.
+    # ``frames_dropped`` (``queue_overflow_drops``) but kept out of the recent
+    # loss warnings, capture readiness and a run's loss counts.
     expected_frames_dropped: int = 0
     recent_expected_frames_dropped: RecentCounter = field(default_factory=RecentCounter)
+    expected_queue_overflow_drops: int = 0
     last_expected_loss_reason: ExpectedFrameLoss | None = None
     # When the sensor's current stream started at this server (its first frame
     # after the server started, the sensor connected, or the sensor rebooted).
@@ -489,17 +498,59 @@ def _count_dropped_frames(
     expected_loss: ExpectedFrameLoss | None,
 ) -> None:
     record.frames_dropped += gap
-    stream_start = record.stream_start_mono
-    if expected_loss is None and (
-        stream_start is not None and mono - stream_start < STREAM_START_GRACE_S
-    ):
-        expected_loss = "stream_start"
+    expected_loss = _expected_loss_reason(record, mono=mono, expected_loss=expected_loss)
     if expected_loss is None:
         record.recent_frames_dropped.add(gap, mono)
         return
     record.expected_frames_dropped += gap
     record.recent_expected_frames_dropped.add(gap, mono)
     record.last_expected_loss_reason = expected_loss
+
+
+def _count_queue_overflow_drops(
+    record: ClientRecord,
+    reported: int,
+    *,
+    mono: float,
+    expected_loss: ExpectedFrameLoss | None,
+) -> None:
+    """Count the increase of the sensor's queue-overflow counter since its last HELLO.
+
+    The first HELLO at this server carries everything the sensor dropped before
+    the server knew it: the frames it queued while the server was down (a
+    restart or update) overflow its queue. That, and drops reported while its
+    stream is starting, is ``stream_start`` loss, in no run.
+    """
+    previous = record.reported_queue_overflow_drops
+    record.reported_queue_overflow_drops = reported
+    # The sensor's counter restarts from zero when it reboots.
+    new_drops = reported if previous is None or reported < previous else reported - previous
+    if new_drops <= 0:
+        return
+    record.queue_overflow_drops += new_drops
+    if previous is None:
+        expected_loss = "stream_start"
+    expected_loss = _expected_loss_reason(record, mono=mono, expected_loss=expected_loss)
+    if expected_loss is None:
+        record.recent_queue_overflow_drops.add(new_drops, mono)
+        return
+    record.expected_queue_overflow_drops += new_drops
+    record.last_expected_loss_reason = expected_loss
+
+
+def _expected_loss_reason(
+    record: ClientRecord,
+    *,
+    mono: float,
+    expected_loss: ExpectedFrameLoss | None,
+) -> ExpectedFrameLoss | None:
+    """*expected_loss*, else ``stream_start`` while the sensor's stream is starting."""
+    stream_start = record.stream_start_mono
+    if expected_loss is None and (
+        stream_start is not None and mono - stream_start < STREAM_START_GRACE_S
+    ):
+        return "stream_start"
+    return expected_loss
 
 
 def _is_sync_rtt_outlier(
@@ -766,15 +817,12 @@ class ClientRegistry:
                 record.last_reset_time = now_ts
                 record.dedup_window.clear()
             record.firmware_version = hello.firmware_version
-            reported = hello.queue_overflow_drops
-            # The device counter restarts from zero when the sensor reboots.
-            new_drops = (
-                reported
-                if reported < record.queue_overflow_drops
-                else (reported - record.queue_overflow_drops)
+            _count_queue_overflow_drops(
+                record,
+                hello.queue_overflow_drops,
+                mono=mono,
+                expected_loss=self._active_expected_loss(mono),
             )
-            record.recent_queue_overflow_drops.add(new_drops, mono)
-            record.queue_overflow_drops = reported
             self._metadata.apply_advertised_name(record, hello.name)
             # An exchange still pending with a silent sensor was lost with it.
             return was_silent or _sync_exchange_due(record, mono)
@@ -814,16 +862,14 @@ class ClientRegistry:
                 addr=addr,
                 now_ts=now_ts,
                 mono=mono,
-                expected_loss=(
-                    self._expected_loss if mono <= self._expected_loss_until_mono else None
-                ),
+                expected_loss=self._active_expected_loss(mono),
             )
             result.sync_due = _sync_exchange_due(record, mono)
             return result
 
     @contextmanager
     def expecting_frame_loss(self, reason: ExpectedFrameLoss) -> Iterator[None]:
-        """Attribute sequence gaps to *reason* while the block runs and briefly after."""
+        """Attribute frame loss to *reason* while the block runs and briefly after."""
         with self._lock:
             self._expected_loss = reason
             self._expected_loss_until_mono = math.inf
@@ -832,6 +878,9 @@ class ClientRegistry:
         finally:
             with self._lock:
                 self._expected_loss_until_mono = time.monotonic() + EXPECTED_LOSS_DRAIN_S
+
+    def _active_expected_loss(self, mono: float) -> ExpectedFrameLoss | None:
+        return self._expected_loss if mono <= self._expected_loss_until_mono else None
 
     def update_from_ack(
         self,

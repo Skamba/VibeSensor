@@ -52,6 +52,7 @@ class _FakeRecord:
     frames_dropped: int = 0
     expected_frames_dropped: int = 0
     queue_overflow_drops: int = 0
+    expected_queue_overflow_drops: int = 0
     server_queue_drops: int = 0
     parse_errors: int = 0
     timing_guard: SensorTimingGuard = field(default_factory=SensorTimingGuard)

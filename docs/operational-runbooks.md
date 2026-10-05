@@ -48,6 +48,15 @@ per-client `expected_frames_dropped` / `last_expected_loss_reason`
 (`stream_start`, `bluetooth_scan`, `bluetooth_pairing`) show them. Scans and
 pairing are refused with 409 while a recording runs.
 
+Sensor send-queue overflow (`queue_overflow_drops`, from each HELLO) follows the
+same rule. A sensor that streams on through a server restart or update fills its
+queue while the server is down, and its first HELLO at the new server reports
+those drops. They, drops reported in the stream's first 5 s, and drops during a
+Bluetooth scan or pairing are `stream_start` (or scan) loss: no `recent_data_loss`
+warning, no capture-readiness wait, and not in a run's overflow count. They
+still add to `data_loss.queue_overflow_drops`, which sums the sensor counter's
+increases and does not drop when a sensor reboots.
+
 Use `subsystems` for machine-readable triage. Each subsystem reports
 `status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
 top-level `status` and `degradation_reasons` for compatibility with older tools.

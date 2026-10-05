@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import math
+import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -22,7 +23,7 @@ from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol_packing import pack_data, pack_hello
 from vibesensor.ingest.protocol_parsing import parse_hello
-from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.registry import STREAM_START_GRACE_S, ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processing_loop import ProcessingLoopState, ProcessingTickRunner
 from vibesensor.live.processor import SignalProcessor
@@ -83,7 +84,12 @@ def history_db(tmp_path: Path) -> Iterator[HistoryDB]:
     db.close()
 
 
-def _register_sensor(registry: ClientRegistry, sensor: _SensorConfig) -> None:
+def _register_sensor(
+    registry: ClientRegistry,
+    sensor: _SensorConfig,
+    *,
+    now_mono: float | None = None,
+) -> None:
     hello = parse_hello(
         pack_hello(
             sensor.client_id,
@@ -95,7 +101,7 @@ def _register_sensor(registry: ClientRegistry, sensor: _SensorConfig) -> None:
             queue_overflow_drops=sensor.queue_overflow_drops,
         ),
     )
-    registry.update_from_hello(hello, ("127.0.0.1", 9001))
+    registry.update_from_hello(hello, ("127.0.0.1", 9001), now_mono=now_mono)
     registry.set_location(sensor.client_id.hex(), sensor.location)
 
 
@@ -273,10 +279,16 @@ def test_sensor_queue_overflow_counter_reaches_report_data_trust(
     overflow_sensor = next(sensor for sensor in SENSORS if sensor.location == "front-right")
 
     def _before_step(step: int, registry: ClientRegistry, _seq_by_sensor: dict[str, int]) -> None:
+        # Mid-run HELLOs, after the stream's startup grace.
+        mid_run_mono = time.monotonic() + STREAM_START_GRACE_S
         if step == 24:
-            _register_sensor(registry, replace(overflow_sensor, queue_overflow_drops=3))
+            _register_sensor(
+                registry, replace(overflow_sensor, queue_overflow_drops=3), now_mono=mid_run_mono
+            )
         if step == 48:
-            _register_sensor(registry, replace(overflow_sensor, queue_overflow_drops=7))
+            _register_sensor(
+                registry, replace(overflow_sensor, queue_overflow_drops=7), now_mono=mid_run_mono
+            )
 
     artifacts = _run_pipeline(history_db, before_step=_before_step)
 
@@ -295,3 +307,27 @@ def test_sensor_queue_overflow_counter_reaches_report_data_trust(
     assert "0 dropped frames" in frame_integrity.detail
     assert "7 queue overflows" in frame_integrity.detail
     assert "front-left" in artifacts.pdf_text
+
+
+def test_overflow_from_before_a_server_restart_is_no_warning_and_no_run_loss(
+    history_db: HistoryDB,
+) -> None:
+    """A sensor streams on through a server update; its queue overflowed meanwhile."""
+    overflow_sensor = next(sensor for sensor in SENSORS if sensor.location == "front-right")
+    sensors = tuple(
+        replace(sensor, queue_overflow_drops=31) if sensor is overflow_sensor else sensor
+        for sensor in SENSORS
+    )
+
+    def _before_step(step: int, registry: ClientRegistry, _seq_by_sensor: dict[str, int]) -> None:
+        if step == 2:
+            # Its next HELLO: one more drop while its backlog drained.
+            _register_sensor(registry, replace(overflow_sensor, queue_overflow_drops=32))
+
+    artifacts = _run_pipeline(history_db, sensors=sensors, before_step=_before_step)
+
+    assert artifacts.health["status"] == "ok"
+    assert artifacts.health["recent_data_loss"]["queue_overflow_drops"] == 0
+    assert artifacts.health["data_loss"]["queue_overflow_drops"] == 32
+    assert _run_suitability_state(artifacts.analysis, "SUITABILITY_CHECK_FRAME_INTEGRITY") == "pass"
+    assert _quality_check(artifacts.report_view, "Frame integrity").passed
