@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
-from math import floor
+from dataclasses import dataclass, replace
+from math import floor, log
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
@@ -39,6 +39,7 @@ from vibesensor.domain.order_match import (
     trend_moves,
 )
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
+from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
@@ -94,6 +95,8 @@ _ORDER_SOURCES: tuple[VibrationSource, ...] = (
     VibrationSource.ENGINE,
 )
 _ALL_WHEELS_MIN_CORNERS = 3
+# The engine orders (engine_<m>x) that can sit on a road-speed order in some gear.
+_ENGINE_ORDER_MULTIPLES = (1, 2)
 _DRIVELINE_ZONE_CODES = frozenset({"driveshaft_tunnel", "transmission"})
 
 
@@ -123,6 +126,28 @@ def build_diagnosis(
         if refs.manual_speed or refs.electric
         else _speed_dependence(candidate, located, metadata.guided_phases)
     )
+    findings = test_run.findings
+    # Road-speed orders the engine may have caused: never Strong unless the
+    # neutral coast-down kept them going (measured RPM leaves none).
+    engine_alike = (
+        frozenset()
+        if speed_dependence == "vehicle_speed"
+        else frozenset(
+            finding.finding_id
+            for finding in findings
+            if _engine_alias_gear(finding, refs) is not None
+        )
+    )
+    alias_gear = _engine_alias_gear(candidate, refs)
+    if candidate is not None and alias_gear is not None and speed_dependence == "engine_speed":
+        # The neutral coast-down says engine: the road-speed order is the engine's
+        # in the gear that puts it there.
+        source = candidate.suspected_source
+        findings = tuple(
+            _in_gear(finding, refs, alias_gear) if finding.suspected_source is source else finding
+            for finding in findings
+        )
+        candidate = _in_gear(candidate, refs, alias_gear)
     weak_reasons = _weak_reasons(
         candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
     )
@@ -133,6 +158,8 @@ def build_diagnosis(
         level = None
     elif verdict is DiagnosisVerdict.WEAK_EVIDENCE:
         level = ConfidenceLevel.WEAK
+    elif candidate.finding_id in engine_alike and level is not None:
+        level = _at_most_moderate(level)
     rows: list[LocationAmplitudeRow]
     basis: AmplitudeBasis
     if candidate is not None and candidate.matched_points:
@@ -173,7 +200,7 @@ def build_diagnosis(
         "weak_reasons": weak_reasons,
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
-        "order_findings": _order_findings(candidate, level, test_run.findings, located),
+        "order_findings": _order_findings(candidate, level, findings, located, engine_alike),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
@@ -184,10 +211,19 @@ def build_diagnosis(
             refs=refs,
         ),
         "source_checks": _source_checks(
-            candidate, test_run.findings, refs, samples, speed_dependence
+            candidate,
+            findings,
+            refs,
+            samples,
+            speed_dependence,
+            engine_alias=alias_gear is not None,
         ),
         "conditions": _conditions(refs),
     }
+
+
+def _at_most_moderate(level: ConfidenceLevel) -> ConfidenceLevel:
+    return ConfidenceLevel.MODERATE if level is ConfidenceLevel.STRONG else level
 
 
 def _verdict(candidate: Finding | None) -> DiagnosisVerdict:
@@ -270,6 +306,57 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
         rpm_source=rpm_source,
         engine_ran=engine_ran,
     )
+
+
+def _turns_per_wheel_turn(order_code: str | None, refs: _References) -> float | None:
+    """How often a wheel or propshaft order repeats per wheel turn."""
+    final_drive = refs.final_drive_ratio
+    if order_code in ("T1", "T2"):
+        return float(order_code[1])
+    if order_code in ("P1", "P2") and final_drive is not None:
+        return float(order_code[1]) * final_drive
+    return None
+
+
+def _engine_alias_gear(candidate: Finding | None, refs: _References) -> float | None:
+    """The gear ratio in which an engine order sits on the candidate's road-speed order.
+
+    RPM estimated from speed assumes top gear, but the drive may have been in
+    any gear: in gear ``g`` the engine's ``m``-th order repeats ``m * g * final
+    drive`` times per wheel turn. When that equals the candidate's wheel or
+    propshaft order for a ratio at or above the top gear's (a lower gear has a
+    higher ratio), only measured RPM or a neutral coast-down tells them apart.
+    Of the engine orders that fit, the gear closest to direct drive (1:1) is
+    returned; ``None`` when no gear puts an engine order there.
+    """
+    if candidate is None or refs.rpm_source != "estimated_top_gear" or refs.electric:
+        return None
+    turns = _turns_per_wheel_turn(candidate.order_code, refs)
+    final_drive, top_gear = refs.final_drive_ratio, refs.gear_ratio
+    if turns is None or final_drive is None or top_gear is None:
+        return None
+    gears = [
+        gear
+        for multiple in _ENGINE_ORDER_MULTIPLES
+        if (gear := turns / (multiple * final_drive)) >= top_gear * (1.0 - ORDER_TOLERANCE_REL)
+    ]
+    return min(gears, key=lambda gear: abs(log(gear)), default=None)
+
+
+def _in_gear(finding: Finding, refs: _References, gear: float) -> Finding:
+    """*finding* as the engine order it is in *gear*, or unchanged when it is none."""
+    turns = _turns_per_wheel_turn(finding.order_code, refs)
+    if turns is None or refs.final_drive_ratio is None:
+        return finding
+    multiple = turns / (refs.final_drive_ratio * gear)
+    for engine_multiple in _ENGINE_ORDER_MULTIPLES:
+        if abs(multiple - engine_multiple) <= engine_multiple * ORDER_TOLERANCE_REL:
+            return replace(
+                finding,
+                suspected_source=VibrationSource.ENGINE,
+                finding_key=f"engine_{engine_multiple}x",
+            )
+    return finding
 
 
 def _positive(value: float | None) -> float | None:
@@ -511,12 +598,15 @@ def _order_findings(
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
     located: Sequence[tuple[Sample, str]],
+    engine_alike: frozenset[str] = frozenset(),
 ) -> list[OrderFindingRow]:
     """Surfaced order-tracked findings, one per order, the diagnosed one first at its level.
 
     Orders are listed from Moderate up; a repeated order keeps its best-ranked
     finding. The diagnosed source's other order is listed once even when weak on
-    its own: a mechanic reads T1 with T2 present differently from T1 alone.
+    its own: a mechanic reads T1 with T2 present differently from T1 alone. An
+    order the engine may have caused in some gear (*engine_alike*) is never
+    listed as Strong.
     """
     surfaced = [
         finding for finding in findings if finding.order_code is not None and finding.should_surface
@@ -569,7 +659,13 @@ def _order_findings(
                 "phases": list(finding.phases_detected),
                 "presence_ratio": _presence_ratio(finding, located),
                 "confidence_level": (
-                    level if diagnosed and level is not None else finding.confidence_level
+                    level
+                    if diagnosed and level is not None
+                    else (
+                        _at_most_moderate(finding.confidence_level)
+                        if finding.finding_id in engine_alike
+                        else finding.confidence_level
+                    )
                 ).value,
             }
         )
@@ -663,6 +759,8 @@ def _source_checks(
     refs: _References,
     samples: Sequence[Sample],
     speed_dependence: SpeedDependenceValue | None,
+    *,
+    engine_alias: bool = False,
 ) -> list[SourceCheck]:
     rpm_source = refs.rpm_source
     seen = {
@@ -691,6 +789,16 @@ def _source_checks(
             continue
         if source in seen:
             checks.append({"source": str(source), "status": "candidate", "reason": None})
+            continue
+        if source is VibrationSource.ENGINE and engine_alias:
+            # In some gear the engine turns at the diagnosed order's rhythm.
+            checks.append(
+                {
+                    "source": str(source),
+                    "status": "not_testable",
+                    "reason": "same_rhythm_as_candidate",
+                }
+            )
             continue
         # Measured RPM places the engine orders without the speed, tire or drive ratios.
         measured_engine = source is VibrationSource.ENGINE and rpm_source == "measured"

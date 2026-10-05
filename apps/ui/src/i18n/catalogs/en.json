@@ -264,6 +264,7 @@
   "history.checks.couldnt.engine_no_drive_reference": "no final-drive ratio — connect an OBD-II adapter to measure RPM, or add the final drive and top-gear ratio to the car (optional).",
   "history.checks.couldnt.motor_no_drive_reference": "no reduction ratio — add it to the car in Settings if you know it (optional).",
   "history.checks.couldnt.engine_not_running": "the engine was off for most of the drive (OBD-II RPM) — to check it, record again with the engine running, for example with the battery-hold or charge mode on.",
+  "history.checks.couldnt.same_rhythm_as_candidate": "not told apart: without measured RPM, in some gear the engine turns at the diagnosed vibration's rhythm — connect an OBD-II adapter, or coast in neutral at that speed.",
   "history.checks.noun.wheel_tire": "wheels/tires",
   "history.checks.noun.driveline": "driveline",
   "history.checks.noun.engine": "engine",

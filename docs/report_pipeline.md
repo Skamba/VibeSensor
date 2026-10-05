@@ -62,6 +62,10 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        the fix (re-run the test; what pass means). After a guided neutral
        coast-down the description adds whether the vibration follows road or
        engine speed, and the neutral coast-down check is not suggested again.
+       When the engine turns at the diagnosed wheel or propshaft order's
+       rhythm in some gear (engine check `same_rhythm_as_candidate`, see
+       "Engine alias" in `docs/analysis_pipeline.md`), the description adds
+       that without measured RPM it can also be the engine.
      - Weak evidence: the hedged best candidate, 1–2 plain reasons, and a
        recapture recipe.
      - No fault: a verdict sentence that names only the sources the run could

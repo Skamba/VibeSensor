@@ -264,6 +264,7 @@
   "history.checks.couldnt.engine_no_drive_reference": "geen eindoverbrenging — sluit een OBD-II-adapter aan om het toerental te meten, of voeg eindoverbrenging en hoogste versnelling toe aan de auto (optioneel).",
   "history.checks.couldnt.motor_no_drive_reference": "geen reductieverhouding — voeg hem toe aan de auto in Instellingen als je hem weet (optioneel).",
   "history.checks.couldnt.engine_not_running": "de motor stond het grootste deel van de rit uit (OBD-II-toerental) — meet opnieuw met draaiende motor om hem te controleren, bijvoorbeeld met de stand voor accu vasthouden of opladen aan.",
+  "history.checks.couldnt.same_rhythm_as_candidate": "niet te onderscheiden: zonder gemeten toerental draait de motor in een van de versnellingen op het ritme van de gevonden trilling — sluit een OBD-II-adapter aan, of rol bij die snelheid uit in neutraal.",
   "history.checks.noun.wheel_tire": "wielen/banden",
   "history.checks.noun.driveline": "aandrijflijn",
   "history.checks.noun.engine": "motor",

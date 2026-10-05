@@ -42,7 +42,8 @@ type AmplitudeBasis = Literal["order", "overall"]
 # ``ruled_out_estimated``: no match, but the order rests on an estimate (a weak
 # library ratio, engine RPM estimated from speed assuming top gear, or a plug-in
 # hybrid whose engine may have been off). ``not_applicable``: the car has no such
-# source (an EV's engine).
+# source (an EV's engine). ``same_rhythm_as_candidate``: without measured RPM the
+# engine turns at the diagnosed wheel or propshaft order's rhythm in some gear.
 type SourceCheckStatus = Literal[
     "candidate", "ruled_out", "ruled_out_estimated", "not_testable", "not_applicable"
 ]
@@ -60,6 +61,7 @@ type SourceCheckReason = Literal[
     "engine_may_be_off",
     "engine_not_running",
     "electric_car",
+    "same_rhythm_as_candidate",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]

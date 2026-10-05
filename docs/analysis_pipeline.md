@@ -224,7 +224,8 @@ the PDF both show:
   - `not_testable`: its reference is missing (`no_tire_reference`,
     `no_drive_reference`, `no_engine_reference`), or the speed was typed in
     by hand (`manual_speed`; every sample carries the set value, even on a
-    desk).
+    desk), or, for the engine, `same_rhythm_as_candidate` (see "Engine
+    alias" below).
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a
     car-library ratio with `family_default` / `unverified` confidence, else
@@ -267,6 +268,21 @@ the PDF both show:
   order reference. When it contradicts the order match (an engine order that
   stays in neutral, a wheel or driveline order that stops), the verdict drops
   to `weak_evidence` with the weak reason `coast_test_contradicts`.
+- Engine alias: RPM estimated from speed assumes top gear, but the drive may
+  have been in any gear. In gear `g` the engine's `m`-th order (m = 1, 2)
+  repeats `m × g × final drive` times per wheel turn, so a wheel or propshaft
+  order sits on an engine order whenever that gives a ratio at or above the
+  top gear's (within the 8 % order tolerance): P1/P2 always do in a direct
+  1:1 gear, and T2 does on a car whose top gear is about 2 / final drive.
+  For such a diagnosed order the engine check is `not_testable` with
+  `same_rhythm_as_candidate` (unless a coast-down ruled it out), and no such
+  order, diagnosed or listed in `order_findings`, is Strong: Moderate at most
+  unless the coast-down showed `vehicle_speed`. When the coast-down shows
+  `engine_speed` instead, the diagnosis names the engine: the candidate and
+  the same source's orders that fit that gear become the engine orders they
+  are there (P2 → E2 and P1 → E1 in a direct gear, T2 → E1 in top gear), so
+  the verdict is an engine fault, not `coast_test_contradicts`. Measured RPM
+  and EVs (no gears) never alias.
 
 ## Adding a New Analysis Step
 

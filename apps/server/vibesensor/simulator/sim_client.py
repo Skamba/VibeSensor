@@ -66,6 +66,9 @@ class SimClient:
     # Order frequencies at DEFAULT_SPEED_KMH for the simulated car; the
     # simulator refreshes them from the server's active car when reachable.
     order_hz: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_ORDER_HZ))
+    # Gearbox ratio the engine drives through, when not the car's own (top) gear
+    # that ``order_hz`` assumes: engine orders follow it, wheels and driveshaft do not.
+    gear_ratio: float | None = None
     # Running phase (rad) of each tone at the start of the next frame, keyed by
     # tone identity, so a tone whose frequency follows the speed stays
     # phase-continuous across frames instead of jumping at every frame edge.
@@ -104,6 +107,14 @@ class SimClient:
     def monotonic_at_device_us(self, device_us: float) -> float:
         """Return the host monotonic time at which the device timer reads *device_us*."""
         return self.device_boot_mono_s + (device_us / (1_000_000.0 * self._device_clock_scale))
+
+    def order_tone_hz(self, order_key: str) -> float:
+        """Frequency of one order at the reference speed, in the gear the engine is in."""
+        hz = self.order_hz[order_key]
+        if self.gear_ratio is not None and order_key.startswith("engine_"):
+            top_gear_ratio = self.order_hz["engine_1x"] / self.order_hz["shaft_1x"]
+            hz *= self.gear_ratio / top_gear_ratio
+        return hz
 
     def pulse(self, strength: float) -> None:
         vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
@@ -144,13 +155,16 @@ class SimClient:
 
         _sin = np.sin
         _phase = self.phase_offsets
-        order_hz = self.order_hz
         local_tones: list[tuple[tuple[str, float], float, tuple[float, float, float]]] = [
             (("hz", freq_hz), freq_hz * speed_ratio, amps_xyz)
             for freq_hz, amps_xyz in profile.tones
         ]
         local_tones.extend(
-            ((order_key, multiple), order_hz[order_key] * multiple * speed_ratio, amps_xyz)
+            (
+                (order_key, multiple),
+                self.order_tone_hz(order_key) * multiple * speed_ratio,
+                amps_xyz,
+            )
             for order_key, multiple, amps_xyz in profile.order_tones
         )
         # Integrate each tone's phase from its previous frame: evaluating

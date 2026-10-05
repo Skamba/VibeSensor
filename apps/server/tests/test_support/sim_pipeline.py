@@ -92,6 +92,7 @@ _POST_ANALYSIS_TIMEOUT_S = 90.0
 _POST_ANALYSIS_S_PER_DRIVE_S = 0.5
 # A paired Bluetooth OBD adapter.
 _OBD_ADAPTER = {"obdDeviceMac": "00:1D:A5:68:98:8A", "obdDeviceName": "OBDII"}
+_IDLE_RPM = 800.0
 
 SpeedSource = Literal["gps", "obd2"]
 
@@ -107,6 +108,12 @@ class BenchCar:
     final_drive_ratio: float
     current_gear_ratio: float
     tire_deflection_factor: float = 0.97
+    # Powertrain as the car library records it (``ICE``/``PHEV``/``EV``); ``None``
+    # for a car entered by hand.
+    fuel_type: str | None = None
+    # Whether the owner entered the final drive (an EV's reduction ratio); the
+    # simulated car still turns its driveshaft (motor) at that ratio.
+    final_drive_entered: bool = True
 
     @property
     def tire_circumference_m(self) -> float:
@@ -129,8 +136,15 @@ class BenchCar:
             "engine_2x": 2.0 * engine,
         }
 
+    def engine_rpm(self, speed_kmh: float, gear_ratio: float | None) -> float:
+        """Engine RPM at *speed_kmh* in *gear_ratio* (the car's own gear when ``None``)."""
+        if speed_kmh <= 0:
+            return _IDLE_RPM
+        gear = self.current_gear_ratio if gear_ratio is None else gear_ratio
+        return self.order_hz(speed_kmh)["shaft_1x"] * gear * 60.0
+
     def aspects(self) -> dict[str, float]:
-        return {
+        aspects = {
             "tire_width_mm": self.tire_width_mm,
             "tire_aspect_pct": self.tire_aspect_pct,
             "rim_in": self.rim_in,
@@ -138,6 +152,9 @@ class BenchCar:
             "current_gear_ratio": self.current_gear_ratio,
             "tire_deflection_factor": self.tire_deflection_factor,
         }
+        if not self.final_drive_entered:
+            del aspects["final_drive_ratio"]
+        return aspects
 
 
 @dataclass(frozen=True, slots=True)
@@ -322,6 +339,7 @@ def run_sim_pipeline(
     trace_post_analysis_memory: bool = False,
     car_start: bool = False,
     speed_source: SpeedSource = "gps",
+    obd_rpm: bool = False,
     max_recording_duration_s: float | None = None,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
@@ -332,7 +350,8 @@ def run_sim_pipeline(
 
     The drive's speed reaches the server as a measured speed: from gpsd (a 3D fix,
     as the GPS receiver reports it) or, with *speed_source* ``"obd2"``, from a
-    connected OBD adapter (speed PID only).
+    connected OBD adapter: the speed PID, plus the engine RPM PID with *obd_rpm*
+    (the engine turning in the gear each phase drives in).
     *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
     """
     runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
@@ -348,6 +367,7 @@ def run_sim_pipeline(
             trace_post_analysis_memory=trace_post_analysis_memory,
             car_start=car_start,
             speed_source=speed_source,
+            obd_rpm=obd_rpm,
         )
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
@@ -365,6 +385,7 @@ def _record(
     trace_post_analysis_memory: bool,
     car_start: bool,
     speed_source: SpeedSource,
+    obd_rpm: bool,
 ) -> SimPipelineResult:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -373,7 +394,12 @@ def _record(
     history_db = lifecycle.history_db
 
     snapshot = web.car_settings.add_car(
-        {"name": car.name, "type": "sedan", "aspects": car.aspects()}  # type: ignore[typeddict-item]
+        {  # type: ignore[typeddict-item]
+            "name": car.name,
+            "type": "sedan",
+            "aspects": car.aspects(),
+            "fuel_type": car.fuel_type,
+        }
     )
     web.car_settings.set_active_car(snapshot.cars[-1]["id"])
 
@@ -470,8 +496,13 @@ def _record(
             web.speed_source_service.update_speed_source({"speedSource": "gps"})
             lifecycle.gps_monitor.gps_enabled = True
             lifecycle.gps_monitor.connection_state = "connected"
+        assert obd_rpm is False or speed_source == "obd2", "engine RPM comes from the OBD adapter"
         set_speed = _speed_setter(
-            lifecycle.gps_monitor, lifecycle.obd_runner, clients, speed_source
+            lifecycle.gps_monitor,
+            lifecycle.obd_runner,
+            clients,
+            speed_source,
+            car if obd_rpm else None,
         )
         apply_phase(clients, scenario_name, phases[0])
         set_speed(phases[0].speed_start_kmh)
@@ -655,23 +686,38 @@ def _flush_tick(recorder: RunRecorder) -> None:
     recorder.stop_recording(_only_if_run_id=run_id, reason=auto_stop_reason)
 
 
+def _pid_read(value: float) -> ObdPidPollResult:
+    """One completed PID read, as ``ObdConnectionExecutor`` polls it."""
+    return ObdPidPollResult(
+        value=value,
+        raw_response=None,
+        error=None,
+        duration_s=0.0,
+        executed=True,
+        started_at_s=time.monotonic(),
+    )
+
+
 def _speed_setter(
-    gps: GPSSpeedMonitor, obd: ObdService, clients: Sequence[SimClient], speed_source: SpeedSource
+    gps: GPSSpeedMonitor,
+    obd: ObdService,
+    clients: Sequence[SimClient],
+    speed_source: SpeedSource,
+    rpm_car: BenchCar | None,
 ) -> Callable[[float], None]:
+    """Feed the drive's speed (and, with *rpm_car*, its engine RPM) to the server."""
+
     def set_speed(speed_kmh: float) -> None:
         for client in clients:
             client.current_speed_kmh = speed_kmh
         if speed_source == "obd2":
-            # One completed speed PID read, as ``ObdConnectionExecutor`` polls it.
-            speed = ObdPidPollResult(
-                value=float(round(speed_kmh)),
-                raw_response=None,
-                error=None,
-                duration_s=0.0,
-                executed=True,
-                started_at_s=time.monotonic(),
+            rpm = (
+                _pid_read(float(round(rpm_car.engine_rpm(speed_kmh, clients[0].gear_ratio))))
+                if rpm_car is not None
+                else ObdPidPollResult.skipped()
             )
-            obd.apply_poll_cycle(ObdPollResult(rpm=ObdPidPollResult.skipped(), speed=speed))
+            speed = _pid_read(float(round(speed_kmh)))
+            obd.apply_poll_cycle(ObdPollResult(rpm=rpm, speed=speed))
             return
         # One gpsd TPV report with a 3D fix, as ``GPSTransportRunner`` reads it.
         gps._transport.ingest_message({"class": "TPV", "mode": 3, "speed": speed_kmh / 3.6})

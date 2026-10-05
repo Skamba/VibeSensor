@@ -119,6 +119,7 @@ _NOT_TESTABLE_KEYS = {
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
     "engine_not_running": "NOT_TESTABLE_ENGINE_NOT_RUNNING",
+    "same_rhythm_as_candidate": "NOT_TESTABLE_SAME_RHYTHM",
 }
 _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
@@ -651,6 +652,8 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     dependence = diagnosis["speed_dependence"]
     if dependence is not None:
         text = f"{text} {ctx.t(_SPEED_DEPENDENCE_KEYS[dependence])}".strip()
+    if any(check["reason"] == "same_rhythm_as_candidate" for check in diagnosis["source_checks"]):
+        text = f"{text} {ctx.t('DESC_ENGINE_SAME_RHYTHM')}".strip()
     return text
 
 

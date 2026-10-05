@@ -339,6 +339,10 @@
     "en": "{speeds} ({phases}) with sensors at {locations}.",
     "nl": "{speeds} ({phases}) met sensoren bij {locations}."
   },
+  "DESC_ENGINE_SAME_RHYTHM": {
+    "en": "Without measured engine RPM this can also be the engine: in some gear it turns at this same rhythm.",
+    "nl": "Zonder gemeten motortoerental kan dit ook de motor zijn: in een van de versnellingen draait die op hetzelfde ritme."
+  },
   "DESC_FREQUENCY": {
     "en": "A vibration at {hz}",
     "nl": "Een trilling van {hz}"
@@ -622,6 +626,10 @@
   "NOT_TESTABLE_MOTOR_DRIVE": {
     "en": "not testable: no reduction ratio",
     "nl": "niet te testen: geen reductieverhouding"
+  },
+  "NOT_TESTABLE_SAME_RHYTHM": {
+    "en": "not told apart: without measured RPM, in some gear the engine turns at this same rhythm; an OBD-II adapter or a neutral coast-down separates them",
+    "nl": "niet te onderscheiden: zonder gemeten toerental draait de motor in een van de versnellingen op hetzelfde ritme; een OBD-II-adapter of uitrollen in neutraal maakt het verschil"
   },
   "NOT_TESTABLE_TIRE": {
     "en": "not testable: no tire size",

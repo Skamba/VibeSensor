@@ -40,6 +40,9 @@ class ScenarioPhase:
     pulses: tuple[PhasePulse, ...] = ()
     # The guided test-drive step the driver would mark when this phase starts.
     guided_phase: GuidedPhaseName | None = None
+    # The gearbox ratio the engine drives through in this phase (a lower gear);
+    # ``None`` keeps the car's own gear, its top gear. Only engine orders follow it.
+    gear_ratio: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

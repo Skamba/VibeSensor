@@ -528,6 +528,12 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     "Never analysed: …" (`_never_analysed`): a misfiring engine's half
     order, a six-cylinder's firing rhythm, wheel-bearing hum and, without
     measured RPM, shaking at a standstill with the engine idling.
+  - Without measured RPM a propshaft order (and, on a car whose top gear is
+    about 2 / final drive, a T2 wheel order) is also an engine order in some
+    gear: page 1 says it can also be the engine, the level is Moderate at
+    most with the neutral coast-down as the confirming check, and page 2
+    lists the engine as "not told apart". A guided coast-down that stops it
+    names the engine.
 
 ### 3.9 Re-test after a fix
 
