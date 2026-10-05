@@ -261,7 +261,7 @@ class OrderAnalysisSession:
 
         effective_match_rate, focused_speed_band, per_location_dominant = (
             _compute_effective_match_rate(
-                match.match_rate,
+                match.observed_match_rate,
                 min_match_rate,
                 match.possible_by_speed_bin,
                 match.matched_by_speed_bin,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
@@ -27,6 +27,7 @@ from vibesensor.analysis.constants import (
 )
 from vibesensor.analysis.math_utils import _corr_abs_clamped
 from vibesensor.analysis.orders.physics import OrderHypothesis
+from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation
@@ -56,11 +57,51 @@ class OrderMatchAccumulator:
     has_phases: bool
     compliance: float
     matched_sample_indices: tuple[int, ...] = ()
+    clear_by_location: dict[str, int] = field(default_factory=dict)
 
     @property
     def match_rate(self) -> float:
         """Global match rate (matched / possible)."""
         return self.matched / max(1, self.possible)
+
+    @property
+    def observed_locations(self) -> frozenset[str]:
+        """The sensors that hear the order.
+
+        Those where its peak is clear of the floor at least half as often as at
+        the sensor where it is clearest. A vibration fades with distance from its
+        source, and a matcher that takes the nearest peak in the tolerance band
+        also lands on floor-level road noise at every sensor; neither should
+        count for or against the order.
+        """
+        rates = {
+            location: self.clear_by_location.get(location, 0) / possible
+            for location, possible in self.possible_by_location.items()
+            if possible > 0
+        }
+        best = max(rates.values(), default=0.0)
+        if best <= 0:
+            return frozenset()
+        min_rate = ORDER_CONFIDENCE_SETTINGS.observed_location_min_share * best
+        return frozenset(location for location, rate in rates.items() if rate >= min_rate)
+
+    @property
+    def observed_match_rate(self) -> float:
+        """Match rate over the sensors that hear the order (global when none does)."""
+        observed = self.observed_locations
+        if not observed:
+            return self.match_rate
+        possible = sum(self.possible_by_location[location] for location in observed)
+        matched = sum(self.matched_by_location.get(location, 0) for location in observed)
+        return matched / max(1, possible)
+
+    @property
+    def observed_clear_share(self) -> float:
+        """Share of the matches at the sensors that hear the order that are clear."""
+        observed = self.observed_locations
+        matched = sum(self.matched_by_location.get(location, 0) for location in observed)
+        clear = sum(self.clear_by_location.get(location, 0) for location in observed)
+        return clear / matched if matched else 0.0
 
     @property
     def unique_match_locations(self) -> set[str]:
@@ -168,6 +209,7 @@ def match_samples_for_hypothesis(
     matched_by_phase: dict[str, int] = defaultdict(int)
     possible_by_location: dict[str, int] = defaultdict(int)
     matched_by_location: dict[str, int] = defaultdict(int)
+    clear_by_location: dict[str, int] = defaultdict(int)
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
     compliance = getattr(hypothesis, "path_compliance", 1.0)
 
@@ -221,6 +263,11 @@ def match_samples_for_hypothesis(
         matched_amp.append(peak_match.amplitude_g)
         floor_amp = _estimate_strength_floor_amp_g(sample)
         matched_floor.append(max(0.0, floor_amp if floor_amp is not None else 0.0))
+        if sample_location and (
+            peak_match.amplitude_g
+            >= ORDER_CONFIDENCE_SETTINGS.clear_peak_over_floor * matched_floor[-1]
+        ):
+            clear_by_location[sample_location] += 1
         predicted_vals.append(predicted_hz)
         measured_vals.append(peak_match.matched_hz)
         matched_points.append(
@@ -259,4 +306,5 @@ def match_samples_for_hypothesis(
         has_phases=has_phases,
         compliance=compliance,
         matched_sample_indices=tuple(matched_sample_indices),
+        clear_by_location=dict(clear_by_location),
     )

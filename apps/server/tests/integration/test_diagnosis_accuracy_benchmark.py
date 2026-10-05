@@ -157,6 +157,8 @@ class Case:
     layout: tuple[BenchSensor, ...] = SENSORS
     # How the measured speed of the drive reaches the server.
     speed_source: SpeedSource = "gps"
+    # The other right answer when the drive carries two real faults.
+    second_fault: Expected | None = None
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -179,7 +181,9 @@ class Case:
             and not self.car_start
         )
 
-    def expected_for(self, car: str) -> Expected:
+    def expected_for(self, car: str, diagnosed_source: str | None) -> Expected:
+        if self.second_fault is not None and diagnosed_source == self.second_fault.source:
+            return self.second_fault
         return self.by_car.get(car, self.expected)
 
     @property
@@ -474,6 +478,22 @@ BENCH_CASES = (
         ),
         _fault("engine", {"engine_bay"}, "E2"),
     ),
+    # Two real faults: an engine tone the rear sensors do not hear, and a
+    # rear-left imbalance about four times the second one in the rear-right
+    # cases. Either is a right answer. On the default car the engine's E1 sits on T2, and the
+    # imbalance carries some T2 at rear-left; that must not add up to a wheel
+    # fault on the front axle, which has none. The engine is judged on the
+    # sensors that hear it, not diluted by the two that cannot.
+    Case(
+        "bench-engine-front-and-cabin-with-rear-left-imbalance-sweep",
+        _sweep(
+            _ov("front-axle", "engine_order", 0.74, 0.94),
+            _ov("body", "engine_order", 0.42, 0.94),
+            _ov("rear-left", "wheel_imbalance", 0.30, 1.0),
+        ),
+        _fault("engine", {"engine_bay"}, "E2"),
+        second_fault=_fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
+    ),
     # Guided test: the vibration stops when the engine drops to idle in neutral.
     # Whatever the frequency suggests, it must not be sent to the tire shop.
     Case(
@@ -587,11 +607,6 @@ BENCH_CASES = (
             _ov("front-left", "bench_wheel_imbalance_engine_hum", 0.85, 1.0),
         ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
-        {
-            "other": _fault(
-                "wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True, levels=MODERATE
-            )
-        },
     ),
     # A sensor on every mounting point: road noise everywhere is still no fault,
     # and a wheel fault still stands out at its corner.
@@ -633,15 +648,6 @@ BENCH_CASES = (
             levels=frozenset({"weak", "moderate"}),
             weak_reasons=_FAINT_ENGINE_REASONS,
         ),
-        # On the default car E1 sits on T2, so a faint engine tone may only be
-        # named as a hedged guess; the run must not read as an actionable fault.
-        {
-            "default": Expected(
-                verdicts=frozenset({"weak_evidence", "no_fault"}),
-                levels=WEAK_ONLY,
-                weak_reasons=_FAINT_ENGINE_REASONS,
-            )
-        },
     ),
 )
 
@@ -674,12 +680,9 @@ SCRIPTED_CASES = (
         "front-right-cruise-shimmy",
         _fault("wheel/tire", {"front_right_wheel"}, "T1", dominant_corner=True),
     ),
-    # The driveshaft tone is strongest on the rear-axle sensors; present in
-    # about 40 % of the drive, so the default car lands on Moderate.
-    _scripted(
-        "driveline-coastdown",
-        _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE),
-    ),
+    # The driveshaft tone is heard on the rear-axle and trunk sensors, clearly in
+    # about half the windows there (as long as the Strong launch-engine-flare).
+    _scripted("driveline-coastdown", _fault("driveline", DRIVELINE_ZONES, "P1")),
     # Front-left first, then rear-right: either corner is right.
     _scripted(
         "dual-fault-recovery",
@@ -811,7 +814,8 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
     )
     try:
         lossy = bool(case.frame_loss)
-        _assert_case(result, car, case.expected_for(car_key), case)
+        expected = case.expected_for(car_key, result.diagnosis["source"])
+        _assert_case(result, car, expected, case)
         if not case.wifi_retry_loss:
             # Congested Wi-Fi may or may not drop a frame for good.
             _assert_frame_integrity(result, lossy=lossy)

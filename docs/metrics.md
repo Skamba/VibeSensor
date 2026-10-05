@@ -122,12 +122,13 @@ the source:
   weak-separation penalty. Established means all of:
   - at least the moderate strength band (16 dB),
   - clearly present (its peak at least 6 dB over the window's floor) in at
-    least 40 % of the possible windows. Road noise that happens to sit on
+    least 40 % of the possible windows at the sensors that hear it (see
+    `docs/order_tracking.md`, step 3). Road noise that happens to sit on
     the order's frequency does not count; a measured speed predicts the order
     exactly in every window, so such chance matches are common on a rough
     road,
   - a close frequency match (error score at least 0.5),
-  - seen on at least two sensors,
+  - heard on at least two sensors,
   - and not an alias of a wheel order: fewer than half of its matched peaks
     were also matched by a wheel order.
 

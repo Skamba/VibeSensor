@@ -105,7 +105,15 @@ coordinates the evidence flow:
 2. Use `match_samples_for_hypothesis()` to compare predicted order bands against
    the stored sample peaks.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
-   the best speed band or dominant location.
+   the best speed band or dominant location. The match rate it starts from is
+   taken over the sensors that hear the order
+   (`OrderMatchAccumulator.observed_locations`): those where its peak is clear
+   of the window's floor (≥ 6 dB) at least half as often as at the sensor where
+   it is clearest. A vibration fades with distance from its source, so an
+   engine tone only the front sensors hear is not diluted by the rear ones.
+   The matcher takes the nearest peak in the tolerance band whatever its level,
+   so it also lands on floor-level road noise at every sensor. Those sensors
+   neither dilute the rate nor count as corroborating sensors in the score.
 4. Reject matches that do not follow the prediction. As speed changes, an
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays
