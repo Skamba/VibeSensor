@@ -1,0 +1,1019 @@
+{
+  "defaults": {
+    "brand": "BMW",
+    "type": "Wagon",
+    "market": "EU",
+    "model_code": "G31",
+    "body_code": "G31",
+    "model_name": "5 Series Touring (G31, 2017-2023)"
+  },
+  "configurations": [
+    {
+      "id": "bmw-g31-520i-eu-2017-zf8hp-rwd",
+      "production_start_year": 2017,
+      "production_end_year": 2018,
+      "variant_name": "520i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2017 technical-data PDFs list the 520i Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2017 technical-data PDFs list an eight-speed Steptronic transmission for the G31 520i Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 0.640 as eighth gear for the G31 520i Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list the full forward ratio set for the G31 520i Touring.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 2.929 as the final drive for the G31 520i Touring.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 07/2017 G31 sheet: 520i Touring, rear-wheel drive, eight-speed Steptronic with the 5.000-first-gear set, eighth gear 0.640, final drive 2.929, standard 225/55 R17 tyres. The 11/2018 sheet changes the final drive to 2.813, counted from model year 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 520i Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-520i-eu-2019-zf8hp-rwd",
+      "production_start_year": 2019,
+      "production_end_year": 2019,
+      "variant_name": "520i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 technical-data PDFs list the 520i Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 technical-data PDFs list an eight-speed Steptronic transmission for the G31 520i Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 technical-data PDFs list 0.640 as eighth gear for the G31 520i Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 technical-data PDFs list the full forward ratio set for the G31 520i Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 technical-data PDFs list 2.813 as the final drive for the G31 520i Touring.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2018 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2018 G31 sheet lists the 520i Touring with the 5.250-first-gear eight-speed set, eighth gear 0.640 and final drive 2.813; the 11/2020 LCI sheet returns to 2.929, so this state covers 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 520i Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-520i-eu-2020-zf8hp-rwd",
+      "production_start_year": 2020,
+      "production_end_year": 2023,
+      "variant_name": "520i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDFs list the 520i Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDFs list an eight-speed Steptronic transmission for the G31 520i Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 0.640 as eighth gear for the G31 520i Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list the full forward ratio set for the G31 520i Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 2.929 as the final drive for the G31 520i Touring.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 520i Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2020 LCI G31 sheet lists the 520i Touring with the 5.250-first-gear eight-speed set, eighth gear 0.640, final drive 2.929 and standard 225/55 R17 101Y XL tyres. The LCI went on sale from 07/2020.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 520i Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-530i-eu-2017-zf8hp-rwd",
+      "production_start_year": 2017,
+      "production_end_year": 2018,
+      "variant_name": "530i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2017 technical-data PDFs list the 530i Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2017 technical-data PDFs list an eight-speed Steptronic transmission for the G31 530i Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017 technical-data PDFs list 0.640 as eighth gear for the G31 530i Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017 technical-data PDFs list the full forward ratio set for the G31 530i Touring.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017 technical-data PDFs list 2.929 as the final drive for the G31 530i Touring.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 02/2017 G31 launch sheet: 530i Touring, rear-wheel drive, eight-speed Steptronic with the 5.000-first-gear set, eighth gear 0.640, final drive 2.929, standard 225/55 R17 97Y tyres. The 11/2018 sheet changes the final drive to 2.813, counted from model year 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 530i Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-530i-eu-2019-zf8hp-rwd",
+      "production_start_year": 2019,
+      "production_end_year": 2023,
+      "variant_name": "530i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list the 530i Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list an eight-speed Steptronic transmission for the G31 530i Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 0.640 as eighth gear for the G31 530i Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list the full forward ratio set for the G31 530i Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 2.813 as the final drive for the G31 530i Touring.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2018 and 11/2020 (LCI) G31 sheets both list the 530i Touring with the 5.250-first-gear eight-speed set, eighth gear 0.640 and final drive 2.813.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 530i Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-530i-xdrive-eu-2017-zf8hp-awd",
+      "production_start_year": 2017,
+      "production_end_year": 2018,
+      "variant_name": "530i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2017 technical-data PDFs list the 530i xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2017 technical-data PDFs list an eight-speed Steptronic transmission for the G31 530i xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 0.640 as eighth gear for the G31 530i xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list the full forward ratio set for the G31 530i xDrive Touring.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 2.929 as the final drive for the G31 530i xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2017 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 07/2017 G31 sheet: 530i xDrive Touring, all-wheel drive, eight-speed Steptronic with the 5.000-first-gear set, eighth gear 0.640, final drive 2.929, standard 225/55 R17 tyres. The 11/2018 sheet changes the final drive to 2.813, counted from model year 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 530i xDrive Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-530i-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2023,
+      "variant_name": "530i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list the 530i xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list an eight-speed Steptronic transmission for the G31 530i xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 0.640 as eighth gear for the G31 530i xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list the full forward ratio set for the G31 530i xDrive Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 2.813 as the final drive for the G31 530i xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 530i xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2018 and 11/2020 (LCI) G31 sheets both list the 530i xDrive Touring with the 5.250-first-gear eight-speed set, eighth gear 0.640 and final drive 2.813.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 530i xDrive Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-540i-xdrive-eu-2017-zf8hp-awd",
+      "production_start_year": 2017,
+      "production_end_year": 2023,
+      "variant_name": "540i xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list the 540i xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list an eight-speed Steptronic transmission for the G31 540i xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list 0.640 as eighth gear for the G31 540i xDrive Touring.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list 2.929 as the final drive for the G31 540i xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 540i xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+              "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2017, 11/2018 and 11/2020 technical-data PDFs list 225/55 R17 as the standard tyre for the G31 540i xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 02/2017, 11/2018 and 11/2020 (LCI) G31 sheets: 540i xDrive Touring, all-wheel drive, eight-speed Steptronic, eighth gear 0.640, final drive 2.929, standard 225/55 R17 tyres throughout. The forward gear set changes at the LCI (5.000-first-gear set before, 5.250 after), so no single full gear set is stored. No rear-wheel-drive 540i Touring appears in these sheets.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 540i xDrive Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g31-530e-eu-2020-zf8hp-rwd",
+      "production_start_year": 2020,
+      "production_end_year": 2023,
+      "variant_name": "530e",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDFs list the 530e Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020 technical-data PDFs list an eight-speed Steptronic transmission for the G31 530e Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic transmission"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 0.667 as eighth gear for the G31 530e Touring.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list the full forward ratio set for the G31 530e Touring.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 3.231 as the final drive for the G31 530e Touring.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 technical-data PDFs list 245/45 R18 as the standard tyre for the G31 530e Touring.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2020 technical-data PDFs list 245/45 R18 as the standard tyre for the G31 530e Touring.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 11/2020 LCI G31 sheet, the first G31 sheet with a 530e Touring: rear-wheel drive plug-in hybrid, eight-speed Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.231 and standard 245/45 R18 100Y XL tyres (the 530e Sedan has 225/55 R17).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G31 530e Touring",
+          "reason": "The checked official technical-data PDFs publish only the standard tyre, so optional wheel sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    }
+  ]
+}

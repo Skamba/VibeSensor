@@ -1456,6 +1456,174 @@
       "title": "BMW PressClub: F39 X2 multi-variant tech-data (T0286557EN/419617, 09/2018)",
       "note": "09/2018 BMW F39 X2 multi-variant ACEA technical-data PDF. Confirmed variants: sDrive18i (DCT7 Getrag 7DCI300), sDrive20i (DCT7), sDrive18d (Aisin AWF8F35 8AT), xDrive18d (6-speed manual GS6-17BG, gear ratios 3.539/1.923/1.219/0.881/0.810/0.674, reverse 3.831, FD 4.059), xDrive20d (Aisin AWF8F45 8AT, FD 2.851). All variants standard tyre 225/55 R17 97W. F39 platform is transverse UKL2; 'ZF8HP' code in repo is a misnomer - actual gearbox is Aisin AWF8F35 (FWD) or AWF8F45 (AWD).",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0143206EN/224274",
+      "title": "BMW PressClub F10 5 Series Sedan 520i/528i technical data PDF valid from 07/2013",
+      "note": "Official BMW 06/2013 media information, valid from 07/2013 (LCI), for the F10 520i and 528i Sedan: six-speed manual 3.683 / 2.062 / 1.313 / 1.000 / 0.809 / 0.677 with final drive 3.909, optional eight-speed automatic with Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231, standard 225/55 R17 tyres, 245/45 R18 square (winter) and staggered 245/45 R18 + 275/40 R18, 245/40 R19 + 275/35 R19 and 245/35 R20 + 275/30 R20 options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0143206EN/224277",
+      "title": "BMW PressClub F10 5 Series Sedan 535i/550i technical data PDF valid from 07/2013",
+      "note": "Official BMW 06/2013 media information, valid from 07/2013 (LCI), for the F10 535i and 550i Sedan: 535i six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.231 and optional eight-speed automatic (top gear 0.667) with final drive 3.077; 550i eight-speed automatic with Steptronic only, 350 kW, top gear 0.667, final drive 2.813; standard 225/55 R17 (535i) and 245/45 R18 (550i) tyres with the same 18/19/20-inch staggered options as 2011.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f10-2013-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0143206EN/specifications-of-the-bmw-5-series-sedan-valid-from-july-2013",
+      "title": "BMW PressClub article: Specifications of the BMW 5 Series Sedan, valid from July 2013",
+      "note": "Official BMW PressClub article listing the F10 LCI technical-data attachments valid from 07/2013 (518d/520d/525d, xDrive diesels, 520i/528i, 528i/535i/550i xDrive, 535i/550i, ActiveHybrid 5, M550d xDrive, 530d/535d); there is no 530i in the 07/2013 line-up.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119133EN/174112",
+      "title": "BMW PressClub F11 5 Series Touring 520i/528i technical data PDF 09/2011",
+      "note": "Official BMW 08/2011 media information, valid from 09/2011, for the F11 520i Touring and 528i Touring: six-speed manual 3.683 / 2.062 / 1.313 / 1.000 / 0.809 / 0.677 with final drive 3.909, optional eight-speed automatic with Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231, standard 225/55 R17 tyres, 245/45 R18 square (also winter) and 245/40 R19 square options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119133EN/174111",
+      "title": "BMW PressClub F11 5 Series Touring 530i/535i technical data PDF 09/2011",
+      "note": "Official BMW 08/2011 media information, valid from 09/2011, for the F11 530i Touring and 535i Touring: 530i six-speed manual 3.498 / 2.005 / 1.313 / 1.000 / 0.809 / 0.701 with final drive 4.100, 535i six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.231, optional eight-speed automatic (top gear 0.667) with final drive 3.385 (530i) / 3.077 (535i), standard 225/55 R17 tyres, 245/45 R18 square (also winter) and 245/40 R19 square options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0119133EN/174110",
+      "title": "BMW PressClub F11 5 Series Touring 550i technical data PDF 09/2011",
+      "note": "Official BMW 08/2011 media information, valid from 09/2011, for the F11 550i Touring: eight-speed automatic with Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.647 (the 550i Sedan uses 2.813), standard 245/45 R18 tyres and a 245/40 R19 square option.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0143391EN/224266",
+      "title": "BMW PressClub F11 5 Series Touring 520i/528i technical data PDF valid from 07/2013",
+      "note": "Official BMW 06/2013 media information, valid from 07/2013 (LCI), for the F11 520i Touring and 528i Touring with the same six-speed manual (final drive 3.909) and eight-speed automatic (final drive 3.231) ratio tables as 09/2011, standard 225/55 R17 tyres, 245/45 R18 square (also winter) and 245/40 R19 square options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0143391EN/224269",
+      "title": "BMW PressClub F11 5 Series Touring 535i/550i technical data PDF valid from 07/2013",
+      "note": "Official BMW 06/2013 media information, valid from 07/2013 (LCI), for the F11 535i Touring (six-speed manual top gear 0.846 / final drive 3.231, optional eight-speed automatic 0.667 / 3.077) and 550i Touring (eight-speed automatic only, 0.667 / 2.647), standard 225/55 R17 (535i) and 245/45 R18 (550i) tyres, 245/45 R18 square and 245/40 R19 square options.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-2013-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0143391EN/specifications-of-the-bmw-5-series-touring-valid-from-july-2013",
+      "title": "BMW PressClub article: Specifications of the BMW 5 Series Touring, valid from July 2013",
+      "note": "Official BMW PressClub article listing the F11 LCI technical-data attachments valid from 07/2013; the petrol Touring line-up is 520i, 528i, 528i xDrive, 535i, 535i xDrive and 550i (no 530i).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0180648EN/specifications-of-the-bmw-5-series-touring-518d-520d-520d-xdrive-valid-from-07/2014",
+      "title": "BMW PressClub article: Specifications of the BMW 5 Series Touring 518d, 520d, 520d xDrive, valid from 07/2014",
+      "note": "Official BMW PressClub article for the 07/2014 F10/F11 specification update; it re-issues sheets only for the 518d, 520d and 520d xDrive diesels, so the petrol drivetrains keep their 07/2013 tables.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0203606EN/specifications-bmw-5-series-touring-valid-from-march-2015",
+      "title": "BMW PressClub article: Specifications BMW 5 Series Touring, valid from March 2015",
+      "note": "Official BMW PressClub article for the 03/2015 F11 specification update; it re-issues a sheet only for the 520d xDrive Touring, so the petrol drivetrains keep their 07/2013 tables.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2017-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0264349EN/the-new-bmw-5-series-sedan",
+      "title": "BMW PressClub G30 5 Series Sedan launch article",
+      "note": "Official BMW launch article for the seventh-generation (G30) 5 Series Sedan, which reaches markets in 02/2017 and replaces the F10; used as the end of the F10/F11 production span (2016).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2018-09-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286565EN/419613",
+      "title": "BMW PressClub G30 5 Series Sedan specifications PDF valid from 09/2018",
+      "note": "Official BMW 09/2018 specifications for the G30 Sedan range: 520i, 530i and 530i xDrive with eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 and final drive 2.813; 540i and 540i xDrive 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with final drive 2.929; 530e 0.667 top gear with final drive 3.231; standard 225/55 R17 tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2018-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0292707EN/426035",
+      "title": "BMW PressClub G30 5 Series Sedan specifications PDF valid from 11/2018",
+      "note": "Official BMW 11/2018 specifications for the G30 Sedan range with the same tables as 09/2018: 520i, 530i and 530i xDrive top gear 0.640 / final drive 2.813, 540i and 540i xDrive 0.640 / 2.929, standard 225/55 R17 tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2020-05-de-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0314291DE/460630",
+      "title": "BMW PressClub Germany G30 5er Limousine technical data PDF 05/2020 (LCI)",
+      "note": "Official BMW Germany 05/2020 technical data for the facelifted (LCI) G30 Limousine range: 520i, 540i and 540i xDrive with Hinterachsuebersetzung 2.929, 530i and 530i xDrive with 2.813, eighth gear 0.640 on all of them; 530e / 530e xDrive top gear 0.667 with 3.231; standard 225/55 R17 101Y XL tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2020-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0308529EN/464009",
+      "title": "BMW PressClub G30 5 Series Sedan specifications PDF 11/2020 (LCI press kit)",
+      "note": "Official BMW 11/2020 specifications attached to the LCI press kit: 520i, 540i, 540i xDrive with eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 and final drive 2.929; 530i and 530i xDrive same gears with final drive 2.813; 530e, 530e xDrive and 545e xDrive 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231; standard 225/55 R17 101Y XL tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g31-2017-02-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0268189EN/379320",
+      "title": "BMW PressClub G31 5 Series Touring technical specifications PDF valid from 02/2017",
+      "note": "Official BMW 02/2017 technical specifications for the G31 Touring launch range: 530i Touring and 540i xDrive Touring with eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 and final drive 2.929, standard 225/55 R17 97Y tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g31-2017-07-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0270513EN/385112",
+      "title": "BMW PressClub G31 5er Touring technical data PDF valid from 07/2017 (520i, 530i xDrive, diesels)",
+      "note": "Official BMW 07/2017 technical data (German text) for the G31 520i Touring and 530i xDrive Touring: 8-Gang Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with Hinterachsuebersetzung 2.929 and standard 225/55 R17 tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g31-2018-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0292710EN/426040",
+      "title": "BMW PressClub G31 5 Series Touring specifications PDF valid from 11/2018",
+      "note": "Official BMW 11/2018 specifications for the G31 Touring range: 520i, 530i and 530i xDrive Touring with eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 and final drive 2.813; 540i xDrive Touring 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with final drive 2.929; standard 225/55 R17 97Y tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g31-2020-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0308529EN/464010",
+      "title": "BMW PressClub G31 5 Series Touring specifications PDF 11/2020 (LCI press kit)",
+      "note": "Official BMW 11/2020 specifications attached to the LCI press kit for the G31 Touring: 520i and 540i xDrive Touring with eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 and final drive 2.929; 530i and 530i xDrive Touring same gears with final drive 2.813; 530e and 530e xDrive Touring 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231; standard 225/55 R17 101Y XL tyres (530e Touring: 245/45 R18 100Y XL).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g30-2020-lci-press-kit",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0308529EN/the-new-bmw-5-series",
+      "title": "BMW PressClub G30/G31 LCI press kit: The new BMW 5 Series",
+      "note": "Official BMW press kit for the facelifted G30 Sedan and G31 Touring (production from 07/2020), carrying the Sedan and Touring specification attachments.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g61-2024-launch-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0439374EN/611826",
+      "title": "BMW PressClub G61 5 Series Touring launch specifications PDF (2024)",
+      "note": "Official BMW launch specifications for the G61 Touring: i5 eDrive40 Touring single-stage transmission with overall ratio 11.115 and standard 245/45 R19 front / 275/40 R19 rear tyres; i5 M60 xDrive Touring overall ratios 8.774 front / 9.374 rear with the same staggered 19-inch tyres.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g61-2025-03-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0443471EN/629036",
+      "title": "BMW PressClub G61 5 Series Touring specifications PDF valid from 03/2025",
+      "note": "Official BMW 03/2025 specifications for the G61 Touring range: 520i Touring eight-speed Steptronic (eighth gear 0.640, rear axle ratio 3.077, standard 225/55 R18 102Y XL tyres); i5 eDrive40 Touring 11.115 with 245/45 R19 / 275/40 R19 tyres; i5 M60 xDrive Touring 8.774 front / 9.374 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g61-520i-touring-autumn-2024-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0445245EN/bmw-model-update-measures-for-autumn-2024",
+      "title": "BMW PressClub article: BMW model update measures for autumn 2024",
+      "note": "Official BMW article stating that the 520i Touring (four-cylinder petrol) joins the G61 5 Series Touring line-up from 11/2024.",
+      "confidence": "high"
     }
   ]
 }

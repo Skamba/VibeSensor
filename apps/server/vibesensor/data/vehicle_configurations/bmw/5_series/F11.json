@@ -1,0 +1,958 @@
+{
+  "defaults": {
+    "brand": "BMW",
+    "type": "Wagon",
+    "market": "EU",
+    "model_code": "F11",
+    "body_code": "F11",
+    "model_name": "5 Series Touring (F11, 2011-2016)"
+  },
+  "configurations": [
+    {
+      "id": "bmw-f11-520i-eu-2011-mt6-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2016,
+      "variant_name": "520i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF is the non-xDrive 520i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the six-speed manual for the 520i Touring.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 0.677 as the top gear for the F11 520i Touring six-speed manual.",
+          "value": 0.677
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the full forward ratio set for the F11 520i Touring six-speed manual.",
+          "value": [
+            3.683,
+            2.062,
+            1.313,
+            1.0,
+            0.809,
+            0.677
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 3.909 as the final drive for the F11 520i Touring six-speed manual.",
+          "value": 3.909
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 520i Touring six-speed manual.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 520i Touring six-speed manual.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 520i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 520i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 and 07/2013 5 Series Touring technical-data sheets: rear-wheel drive, 6-speed manual, top gear 0.677, final drive 3.909, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2014 and 03/2015 updates re-issue diesel sheets only and the G31 Touring replaced the F11 in 2017, so the row covers 2011-2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-520i-eu-2011-zf8hp-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2016,
+      "variant_name": "520i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF is the non-xDrive 520i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the eight-speed automatic with Steptronic for the 520i Touring; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 0.667 as the top gear for the F11 520i Touring eight-speed automatic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the full forward ratio set for the F11 520i Touring eight-speed automatic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 3.231 as the final drive for the F11 520i Touring eight-speed automatic.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 520i Touring eight-speed automatic.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 520i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 520i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 520i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 and 07/2013 5 Series Touring technical-data sheets: rear-wheel drive, 8-speed automatic with steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2014 and 03/2015 updates re-issue diesel sheets only and the G31 Touring replaced the F11 in 2017, so the row covers 2011-2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-520i-528i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-520i-528i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-530i-eu-2011-mt6-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "variant_name": "530i",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF is the non-xDrive 530i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF lists the six-speed manual for the 530i Touring.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 0.701 as the top gear for the F11 530i Touring six-speed manual.",
+          "value": 0.701
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists the full forward ratio set for the F11 530i Touring six-speed manual.",
+          "value": [
+            3.498,
+            2.005,
+            1.313,
+            1.0,
+            0.809,
+            0.701
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 4.100 as the final drive for the F11 530i Touring six-speed manual.",
+          "value": 4.1
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 530i Touring six-speed manual.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 530i Touring six-speed manual.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 530i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 530i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 5 Series Touring technical-data sheets: rear-wheel drive, 6-speed manual, top gear 0.701, final drive 4.100, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2013 Touring line-up no longer lists a 530i, so the row stays at 2011.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-530i-eu-2011-zf8hp-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2011,
+      "variant_name": "530i",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF is the non-xDrive 530i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 technical-data PDF lists the eight-speed automatic with Steptronic for the 530i Touring; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 0.667 as the top gear for the F11 530i Touring eight-speed automatic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists the full forward ratio set for the F11 530i Touring eight-speed automatic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 3.385 as the final drive for the F11 530i Touring eight-speed automatic.",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 530i Touring eight-speed automatic.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 530i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 530i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 530i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 5 Series Touring technical-data sheets: rear-wheel drive, 8-speed automatic with steptronic, top gear 0.667, final drive 3.385, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2013 Touring line-up no longer lists a 530i, so the row stays at 2011.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-535i-eu-2011-mt6-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2016,
+      "variant_name": "535i",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF is the non-xDrive 535i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the six-speed manual for the 535i Touring.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 0.846 as the top gear for the F11 535i Touring six-speed manual.",
+          "value": 0.846
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the full forward ratio set for the F11 535i Touring six-speed manual.",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 3.231 as the final drive for the F11 535i Touring six-speed manual.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 535i Touring six-speed manual.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 535i Touring six-speed manual.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 535i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 535i Touring six-speed manual.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 and 07/2013 5 Series Touring technical-data sheets: rear-wheel drive, 6-speed manual, top gear 0.846, final drive 3.231, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2014 and 03/2015 updates re-issue diesel sheets only and the G31 Touring replaced the F11 in 2017, so the row covers 2011-2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-535i-eu-2011-zf8hp-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2016,
+      "variant_name": "535i",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF is the non-xDrive 535i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the eight-speed automatic with Steptronic for the 535i Touring; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 0.667 as the top gear for the F11 535i Touring eight-speed automatic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the full forward ratio set for the F11 535i Touring eight-speed automatic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 3.077 as the final drive for the F11 535i Touring eight-speed automatic.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 535i Touring eight-speed automatic.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 225/55 R17 as the standard tyre for the F11 535i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "18\" square / winter",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8J x 18 wheels with 245/45 R18 tyres (also for winter tyres) for the F11 535i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 535i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 and 07/2013 5 Series Touring technical-data sheets: rear-wheel drive, 8-speed automatic with steptronic, top gear 0.667, final drive 3.077, standard 225/55 R17 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The 07/2014 and 03/2015 updates re-issue diesel sheets only and the G31 Touring replaced the F11 in 2017, so the row covers 2011-2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-530i-535i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f11-550i-eu-2011-zf8hp-rwd",
+      "production_start_year": 2011,
+      "production_end_year": 2016,
+      "variant_name": "550i",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF is the non-xDrive 550i Touring sheet, so this row is the rear-wheel-drive Touring.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+          "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the eight-speed automatic with Steptronic for the 550i Touring; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic with Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 0.667 as the top gear for the F11 550i Touring eight-speed automatic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists the full forward ratio set for the F11 550i Touring eight-speed automatic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 2.647 as the final drive for the F11 550i Touring eight-speed automatic.",
+          "value": 2.647
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 245/45 R18 as the standard tyre for the F11 550i Touring eight-speed automatic.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 245/45 R18 as the standard tyre for the F11 550i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "19\" square",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+              "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2011 and 07/2013 technical-data PDF lists 8.5J x 19 wheels with 245/40 R19 tyres on both axles for the F11 550i Touring eight-speed automatic.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 09/2011 and 07/2013 5 Series Touring technical-data sheets: rear-wheel drive, 8-speed automatic with steptronic, top gear 0.667, final drive 2.647, standard 245/45 R18 tyres. The Touring sheets list square 18-inch and 19-inch options rather than the Sedan's staggered sets. The Touring 550i uses a 2.647 final drive where the Sedan uses 2.813. Output rose from 300 kW to 350 kW at the 07/2013 LCI without a ratio change; the 07/2014 and 03/2015 updates re-issue diesel sheets only, so the row covers 2011-2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f11-550i-2011-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f11-2013-spec-article"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    }
+  ]
+}

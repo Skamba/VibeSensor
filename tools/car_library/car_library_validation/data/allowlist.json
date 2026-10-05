@@ -1,3 +1,24 @@
 {
-  "allowances": []
+  "allowances": [
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g30-520i-eu-2017-zf8hp-rwd",
+      "reason": "The 520i returned to the launch top gear and final drive at the 2020 LCI, so the 2017-2018 and 2020-2023 rows share the order-analysis math while the 2019 row in between does not; the rows differ in production years and forward gear set."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g30-520i-eu-2020-zf8hp-rwd",
+      "reason": "The 520i returned to the launch top gear and final drive at the 2020 LCI, so the 2017-2018 and 2020-2023 rows share the order-analysis math while the 2019 row in between does not; the rows differ in production years and forward gear set."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g31-520i-eu-2017-zf8hp-rwd",
+      "reason": "The 520i Touring returned to the launch top gear and final drive at the 2020 LCI, so the 2017-2018 and 2020-2023 rows share the order-analysis math while the 2019 row in between does not; the rows differ in production years and forward gear set."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g31-520i-eu-2020-zf8hp-rwd",
+      "reason": "The 520i Touring returned to the launch top gear and final drive at the 2020 LCI, so the 2017-2018 and 2020-2023 rows share the order-analysis math while the 2019 row in between does not; the rows differ in production years and forward gear set."
+    }
+  ]
 }

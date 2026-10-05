@@ -159,7 +159,7 @@
   "configurations": [
     {
       "id": "bmw-f10-520i-eu-2011-mt6-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "520i",
       "engine_code": "N20",
       "engine_name": "N20 2.0L I4 Turbo",
@@ -172,27 +172,35 @@
       },
       "transmission": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
         "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 520i launch-state.",
         "code": "MT6",
-        "name": "6-speed manual"
+        "name": "6-speed manual",
+        "evidence_refs": [
+          "legacy_research_sources:52f10520a911",
+          "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.677 as sixth gear for the exact 520i manual launch-state.",
-          "value": 0.677
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.677 as sixth gear for the exact 520i manual launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 0.677,
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.909 as the final-drive ratio for the exact 520i manual launch-state.",
-          "value": 3.909
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.909 as the final-drive ratio for the exact 520i manual launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 3.909,
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
           "notes_ref": "n1",
           "value": [
             3.683,
@@ -201,6 +209,10 @@
             1.0,
             0.809,
             0.677
+          ],
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
           ]
         }
       },
@@ -280,6 +292,16 @@
         {
           "note": "Batch 12 narrows the broad 520i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with six-speed manual, top gear 0.677, final drive 3.909, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Year range extended to 2011-2016: the official BMW 07/2013 LCI technical-data PDF repeats the 09/2011 gearbox, top gear 0.677, final drive 3.909 and tyre table for this row. BMW's later F10/F11 specification updates (07/2014, 03/2015) re-issue sheets for diesel models only, and the G30 replaced the F10 from 02/2017, so 2016 is the last production year represented.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f10-2013-spec-article",
+            "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+            "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+            "bmw_pressclub_sources:g30-2017-launch-article"
+          ]
         }
       ],
       "unresolved": [],
@@ -287,11 +309,12 @@
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
-      }
+      },
+      "production_end_year": 2016
     },
     {
       "id": "bmw-f10-520i-eu-2011-zf8hp-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "520i",
       "engine_code": "N20",
       "engine_name": "N20 2.0L I4 Turbo",
@@ -304,27 +327,35 @@
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e2",
         "notes_ref": "n3",
         "code": "ZF8HP",
-        "name": "8-speed automatic with Steptronic"
+        "name": "8-speed automatic with Steptronic",
+        "evidence_refs": [
+          "legacy_research_sources:52f10520a911",
+          "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 520i values shown in parentheses.",
-          "value": 0.667
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 520i values shown in parentheses. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 0.667,
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the automatic 520i values shown in parentheses.",
-          "value": 3.231
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the automatic 520i values shown in parentheses. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 3.231,
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
           "notes_ref": "n1",
           "value": [
             4.714,
@@ -335,6 +366,10 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "legacy_research_sources:52f10520a911",
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf"
           ]
         }
       },
@@ -414,6 +449,16 @@
         {
           "note": "Batch 11 narrows the broad 520i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 520i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Year range extended to 2011-2016: the official BMW 07/2013 LCI technical-data PDF repeats the 09/2011 gearbox, top gear 0.667, final drive 3.231 and tyre table for this row. BMW's later F10/F11 specification updates (07/2014, 03/2015) re-issue sheets for diesel models only, and the G30 replaced the F10 from 02/2017, so 2016 is the last production year represented.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f10-520i-528i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f10-2013-spec-article",
+            "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+            "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+            "bmw_pressclub_sources:g30-2017-launch-article"
+          ]
         }
       ],
       "unresolved": [],
@@ -421,11 +466,12 @@
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
-      }
+      },
+      "production_end_year": 2016
     },
     {
       "id": "bmw-f10-530i-eu-2011-mt6-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "530i",
       "engine_code": "3.0L",
       "engine_name": "3.0L I6",
@@ -557,7 +603,7 @@
     },
     {
       "id": "bmw-f10-530i-eu-2011-zf8hp-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "530i",
       "engine_code": "3.0L",
       "engine_name": "3.0L I6",
@@ -691,7 +737,7 @@
     },
     {
       "id": "bmw-f10-535i-eu-2011-mt6-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "535i",
       "engine_code": "N55",
       "engine_name": "N55 3.0L I6 Turbo",
@@ -704,27 +750,35 @@
       },
       "transmission": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e1",
         "notes": "The official BMW 09/2011 technical-data PDF directly publishes the six-speed manual transmission for the exact 535i launch-state.",
         "code": "MT6",
-        "name": "6-speed manual"
+        "name": "6-speed manual",
+        "evidence_refs": [
+          "legacy_research_sources:53f10535a911",
+          "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.846 as sixth gear for the exact 535i manual launch-state.",
-          "value": 0.846
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.846 as sixth gear for the exact 535i manual launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 0.846,
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the exact 535i manual launch-state.",
-          "value": 3.231
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.231 as the final-drive ratio for the exact 535i manual launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 3.231,
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n1",
           "value": [
             4.11,
@@ -733,6 +787,10 @@
             1.179,
             1.0,
             0.846
+          ],
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
           ]
         }
       },
@@ -812,6 +870,16 @@
         {
           "note": "Batch 12 narrows the broad 535i manual row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with six-speed manual, top gear 0.846, final drive 3.231, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Year range extended to 2011-2016: the official BMW 07/2013 LCI technical-data PDF repeats the 09/2011 gearbox, top gear 0.846, final drive 3.231 and tyre table for this row. BMW's later F10/F11 specification updates (07/2014, 03/2015) re-issue sheets for diesel models only, and the G30 replaced the F10 from 02/2017, so 2016 is the last production year represented.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f10-2013-spec-article",
+            "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+            "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+            "bmw_pressclub_sources:g30-2017-launch-article"
+          ]
         }
       ],
       "unresolved": [],
@@ -819,11 +887,12 @@
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
-      }
+      },
+      "production_end_year": 2016
     },
     {
       "id": "bmw-f10-535i-eu-2011-zf8hp-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "535i",
       "engine_code": "N55",
       "engine_name": "N55 3.0L I6 Turbo",
@@ -836,27 +905,35 @@
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
         "notes_ref": "n3",
         "code": "ZF8HP",
-        "name": "8-speed automatic with Steptronic"
+        "name": "8-speed automatic with Steptronic",
+        "evidence_refs": [
+          "legacy_research_sources:53f10535a911",
+          "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 535i values shown in parentheses.",
-          "value": 0.667
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the automatic 535i values shown in parentheses. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 0.667,
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the final-drive ratio for the automatic 535i values shown in parentheses.",
-          "value": 3.077
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 3.077 as the final-drive ratio for the automatic 535i values shown in parentheses. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 3.077,
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n1",
           "value": [
             4.714,
@@ -867,6 +944,10 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "legacy_research_sources:53f10535a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
           ]
         }
       },
@@ -946,6 +1027,16 @@
         {
           "note": "Batch 11 narrows the broad 535i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 535i with optional eight-speed automatic with Steptronic, top gear 0.667, final drive 3.077, standard 225/55 R17 tires, an 18-inch square winter package, and staggered 18-inch, 19-inch, and 20-inch options.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Year range extended to 2011-2016: the official BMW 07/2013 LCI technical-data PDF repeats the 09/2011 gearbox, top gear 0.667, final drive 3.077 and tyre table for this row. BMW's later F10/F11 specification updates (07/2014, 03/2015) re-issue sheets for diesel models only, and the G30 replaced the F10 from 02/2017, so 2016 is the last production year represented.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f10-2013-spec-article",
+            "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+            "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+            "bmw_pressclub_sources:g30-2017-launch-article"
+          ]
         }
       ],
       "unresolved": [],
@@ -953,97 +1044,12 @@
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
-      }
-    },
-    {
-      "id": "bmw-f10-550i-eu-2011-mt6-rwd",
-      "model_name": "5 Series (F10, 2011)",
-      "variant_name": "550i",
-      "engine_code": "N63",
-      "engine_name": "N63 4.4L V8 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e4",
-        "notes": "The official BMW 09/2011 technical-data PDF is the dedicated non-xDrive 550i launch-state sheet, so this row represents the exact rear-wheel-drive launch-state family.",
-        "value": "RWD"
       },
-      "transmission": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e4",
-        "notes": "Contradicted placeholder. The official BMW 09/2011 5 Series Sedan specifications article separates the plain 550i attachment from the 550i xDrive sheet, and the dedicated 550i technical-data PDF then publishes only Eight-speed automatic with Steptronic. This represented MT6 row is therefore not a valid exact production state under its current transmission id.",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.812
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.231
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e6",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 40.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport Line 19\""
-          },
-          {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e6",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 35.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note": "This F10 research wave revalidates the official BMW 09/2011 5 Series Sedan specifications article and the dedicated 550i technical-data PDF. Together they confirm the plain rear-wheel-drive 550i launch-state as Eight-speed automatic with Steptronic only, final drive 2.813, and baseline 245/45 R18 tires. This represented MT6 row therefore remains an invalid advisory placeholder rather than a supported exact configuration.",
-          "evidence_refs_ref": "e4"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW F10 550i exact MT6 production row",
-          "reason": "The checked official BMW 09/2011 5 Series Sedan specifications article and dedicated 550i technical-data PDF publish only Eight-speed automatic with Steptronic for the exact launch-state, and this pass did not recover any official F10 550i MT6 row because that represented manual configuration does not exist in the checked source chain.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "BMW F10 550i exact 2011 automatic row replacement",
-          "reason": "The checked official BMW 09/2011 550i technical-data PDF is strong enough to seed the exact automatic row, but that valid sibling configuration is already represented by `bmw-f10-550i-eu-2011-zf8hp-rwd` and should not be silently conflated with this disproved MT6 id.",
-          "evidence_refs_ref": "e4"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "production_end_year": 2016
     },
     {
       "id": "bmw-f10-550i-eu-2011-zf8hp-rwd",
-      "model_name": "5 Series (F10, 2011)",
+      "model_name": "5 Series (F10, 2011-2016)",
       "variant_name": "550i",
       "engine_code": "N63",
       "engine_name": "N63 4.4L V8 Turbo",
@@ -1056,27 +1062,35 @@
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e3",
         "notes_ref": "n3",
         "code": "ZF8HP",
-        "name": "8-speed automatic with Steptronic"
+        "name": "8-speed automatic with Steptronic",
+        "evidence_refs": [
+          "legacy_research_sources:55f10550a911",
+          "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 550i launch-state.",
-          "value": 0.667
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 0.667 as the eighth gear for the exact 550i launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 0.667,
+          "evidence_refs": [
+            "legacy_research_sources:55f10550a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "Official BMW 09/2011 technical-data PDF publishes 2.813 as the final-drive ratio for the exact 550i launch-state.",
-          "value": 2.813
+          "notes": "Official BMW 09/2011 technical-data PDF publishes 2.813 as the final-drive ratio for the exact 550i launch-state. The official BMW 07/2013 (LCI) technical-data PDF publishes the same value.",
+          "value": 2.813,
+          "evidence_refs": [
+            "legacy_research_sources:55f10550a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
           "notes_ref": "n1",
           "value": [
             4.714,
@@ -1087,6 +1101,10 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "legacy_research_sources:55f10550a911",
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf"
           ]
         }
       },
@@ -1154,6 +1172,16 @@
         {
           "note": "Batch 11 narrows the broad 550i automatic row to the exact 09/2011 launch-state. The official BMW technical-data PDF confirms the non-xDrive 550i with Eight-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 2.813, standard 245/45 R18 tires, and staggered 18-inch, 19-inch, and 20-inch options.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Year range extended to 2011-2016: the official BMW 07/2013 LCI technical-data PDF repeats the 09/2011 gearbox, top gear 0.667, final drive 2.813 and tyre table for this row. Output rose from 300 kW (09/2011) to 350 kW (07/2013) with the updated V8, but the gearbox, gear ratios and final drive did not change. BMW's later F10/F11 specification updates (07/2014, 03/2015) re-issue sheets for diesel models only, and the G30 replaced the F10 from 02/2017, so 2016 is the last production year represented.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f10-535i-550i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f10-2013-spec-article",
+            "bmw_pressclub_sources:f11-2014-diesel-spec-article",
+            "bmw_pressclub_sources:f11-2015-diesel-spec-article",
+            "bmw_pressclub_sources:g30-2017-launch-article"
+          ]
         }
       ],
       "unresolved": [],
@@ -1161,14 +1189,15 @@
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "requires_manual_confirmation": false
-      }
+      },
+      "production_end_year": 2016
     },
     {
       "id": "bmw-f10-m5-eu-2011-dct7-rwd",
       "model_name": "M5 (F10, 2011)",
       "variant_name": "M5",
-      "engine_code": "S63B44TU",
-      "engine_name": "S63B44TU V8 Turbo",
+      "engine_code": "S63",
+      "engine_name": "S63 4.4L V8 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

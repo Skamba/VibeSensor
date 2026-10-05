@@ -91,6 +91,27 @@ re-introduce migration boilerplate at the field level; if a value is
 inherited from family-level data, encode that through `confidence` and
 `evidence_refs`, not through prose.
 
+### Data conventions
+
+- **Model years:** a row covers every model year in which its gearbox, top
+  gear, final drive and standard tyre stay the same. When an official sheet
+  changes one of them, the new state gets its own row: a change valid from
+  January–July counts from that year, a later one from the next year, and the
+  exact validity month goes in a verification note. Rows of one variant with
+  the same gearbox name must not overlap in years (the picker offers one
+  entry per model-year period).
+- **Bodies:** an estate body is its own model with its own generation code,
+  e.g. `5 Series Touring (G31, 2017-2023)` with `type` `Wagon`, because the
+  manufacturer's sheets give it its own tyres and sometimes its own final
+  drive.
+- **AWD axle ratios:** when the sheet publishes one axle ratio for an
+  all-wheel-drive car, the row stores it as `final_drive_rear` only; the
+  front ratio is not invented.
+- **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
+  [Turbo] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel`; the family code
+  is left out when no source names it, and EVs use `Electric Single Motor` /
+  `Electric Dual Motor`.
+
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:
 

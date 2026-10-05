@@ -62,9 +62,10 @@ None open.
 
 Evidence:
 
-- Generations with launch-year rows only: F10 2011, F20 2011–2012, G11 2016,
+- Generations with launch-year rows only: F20 2011–2012, G11 2016,
   F15 2014–2015. The picker shows a generation's years from its rows, so a
-  2015 F10 owner sees "5 Series (F10, 2011)".
+  2015 F20 owner sees "1 Series (F20, 2011-2012)". F10 (2011–2016) and G30
+  (2017–2023) are extended.
 
 Fix: **Data:** extend the year ranges where the drivetrain did not change
 (WP5).
@@ -74,9 +75,10 @@ Fix: **Data:** extend the year ranges where the drivetrain did not change
 Evidence ([user_journeys.md](user_journeys.md) §4):
 
 - Audi and BMW only.
-- No Touring bodies, and no Avant except RS 4/RS 6.
+- No 3 Series Touring (5 Series Touring F11/G31/G61 exists), and no Avant
+  except RS 4/RS 6.
 - No generation before about 2011.
-- 46% of rows have a weak final drive and 43% a weak top gear.
+- 44% of rows have a weak final drive and 41% a weak top gear.
 
 Fix: see WP5.
 
