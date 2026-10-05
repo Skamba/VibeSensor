@@ -189,6 +189,9 @@ export interface components {
         /**
          * A full car library entry with brand, model, tire options, and variants.
          *
+         * One entry per model generation; ``model`` names the generation code and
+         * its model years, e.g. ``"X1 (F48, 2016–2022)"``.
+         *
          * ``gearboxes`` may be empty: a gearbox option needs a driven final-drive
          * ratio, and some exact library rows deliberately leave it unresolved
          * (for example when the manufacturer publishes none, or only split
@@ -231,12 +234,21 @@ export interface components {
         CarLibraryTypesResponse: {
             types: string[];
         };
-        /** A specific variant/trim of a car library model entry. */
+        /**
+         * A specific variant/trim of a car library model entry.
+         *
+         * A variant whose rows differ only by model year is split into one entry
+         * per model-year period, named with its years (``"xDrive25d (2021)"``).
+         */
         CarLibraryVariantEntry: {
             drivetrain: "FWD" | "RWD" | "AWD";
             engine?: string | null;
             gearboxes?: components["schemas"]["CarLibraryGearboxEntry"][] | null;
             name: string;
+            /** Last model year of the variant's rows. */
+            production_end_year?: number | null;
+            /** First model year of the variant's rows. */
+            production_start_year?: number | null;
             rim_in?: number | null;
             tire_aspect_pct?: number | null;
             tire_options?: components["schemas"]["CarLibraryTireOptionEntry"][] | null;

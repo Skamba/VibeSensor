@@ -34,6 +34,7 @@ import {
   specProvenance,
   summary,
   type WizardState,
+  variantDetail,
   wizardFuelType,
 } from "../src/pages/cars/wizard_model";
 
@@ -682,4 +683,27 @@ test("the summary fills in as the wizard advances", () => {
   expect(progressText(4, t)).toBe(
     'settings.car.wizard_progress:{"current":5,"step":"settings.car.step_specs_short","total":5}',
   );
+});
+
+test("a variant names its drivetrain, engine and model years", () => {
+  const variant = {
+    name: "xDrive25d",
+    drivetrain: "AWD",
+    engine: "2.0 diesel",
+  } as const;
+  expect(
+    variantDetail({
+      ...variant,
+      production_start_year: 2016,
+      production_end_year: 2022,
+    }),
+  ).toBe("AWD · 2.0 diesel · 2016\u20132022");
+  expect(
+    variantDetail({
+      ...variant,
+      production_start_year: 2021,
+      production_end_year: 2021,
+    }),
+  ).toBe("AWD · 2.0 diesel · 2021");
+  expect(variantDetail(variant)).toBe("AWD · 2.0 diesel");
 });

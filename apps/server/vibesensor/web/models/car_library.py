@@ -61,7 +61,11 @@ class CarLibraryTireOptionEntry(_StrictBase):
 
 
 class CarLibraryVariantEntry(_StrictBase):
-    """A specific variant/trim of a car library model entry."""
+    """A specific variant/trim of a car library model entry.
+
+    A variant whose rows differ only by model year is split into one entry
+    per model-year period, named with its years (``"xDrive25d (2021)"``).
+    """
 
     name: str = Field(min_length=1)
     engine: str | None = None
@@ -71,10 +75,19 @@ class CarLibraryVariantEntry(_StrictBase):
     tire_width_mm: float | None = Field(default=None, gt=0)
     tire_aspect_pct: float | None = Field(default=None, gt=0)
     rim_in: float | None = Field(default=None, gt=0)
+    production_start_year: int | None = Field(
+        default=None, description="First model year of the variant's rows."
+    )
+    production_end_year: int | None = Field(
+        default=None, description="Last model year of the variant's rows."
+    )
 
 
 class CarLibraryModelEntry(_StrictBase):
     """A full car library entry with brand, model, tire options, and variants.
+
+    One entry per model generation; ``model`` names the generation code and
+    its model years, e.g. ``"X1 (F48, 2016–2022)"``.
 
     ``gearboxes`` may be empty: a gearbox option needs a driven final-drive
     ratio, and some exact library rows deliberately leave it unresolved

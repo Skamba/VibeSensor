@@ -210,8 +210,14 @@ its state in `wizard_store.ts`.
 
 #### 3.3a Library path (Audi or BMW, the brands included today)
 
-- **Know/do:** Pick brand, body type, model (generation code plus years),
-  variant (engine/drivetrain), then a tire option and a gearbox.
+- **Know/do:** Pick brand, body type, model (one entry per generation, with
+  its code and model years, e.g. "X1 (F48, 2016–2022)"), variant
+  (engine/drivetrain, with its model years), then a tire option and a
+  gearbox. Where an engine's gearbox data changed over the years, the
+  variant is listed once per model-year period ("xDrive25d (2021)"), so the
+  variant step resolves the year (`_variants_for_generation` in
+  `apps/server/vibesensor/settings/car_library.py`, `variantDetail` in
+  `wizard_model.ts`).
 - **Prefill:**
   - The model list shows the default tire size (`CarWizard.tsx`).
   - The tire options come from the variant (`resolveTireOptions` in
@@ -537,7 +543,7 @@ changes and update this table.
 |---|---|
 | Brands | Audi (161 rows), BMW (306 rows); market EU only |
 | Exact configuration rows | 467 (ICE 425, PHEV 25, EV 17) |
-| Picker models / generation codes / variants | 116 / 65 / 334 |
+| Picker models / generation codes / variants | 82 / 65 / 330 |
 | Production years | 2007–2026 |
 | Rows with tire options | 466 (1 has the default only) |
 | Rows with driven final drive | 454 (97%); 13 without, all Audi (8S TT/TTS/TT RS, 8V RS 3, 8Y) |
@@ -549,9 +555,9 @@ changes and update this table.
 | Weak (family_default or unverified) | final drive 216/467 (46%), top gear 203/467 (43%), tire 191/467 (41%) |
 | `order_reference_trust` | trusted 240 · approximate 107 · backlog_unverified 120 |
 | `requires_manual_confirmation` | true 216, false 251 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
-| Picker variants without any gearbox | 10 |
-| Variants whose rows differ in tire options | 21 (the picker shows the first row's only) |
-| Model families split into several picker entries by year label | 21 (e.g. X1 F48 ×6, Q5 FY ×5, X3 F25 ×4) |
+| Picker variants without any gearbox | 0 |
+| Variants whose rows differ in tire options | 21 (the picker offers the union) |
+| Model families split into several picker entries by year label | 0 (one entry per generation) |
 
 **How confidence is surfaced today:**
 
@@ -577,14 +583,13 @@ changes and update this table.
   and RS 6 Avant exist, and estate cars are a large share of the EU fleet.
 - **Generations:** none before ~2011 (no E90/E60/E84/E70, no Audi B7/8P/C6).
 - **Model years:** several generations only have launch-year rows (F10 2011,
-  F20 2011–2012, G11 2016, F15 2014–2015). A 2015 F10 owner sees
+  F20 2011–2012, G11 2016, F15 2014–2015). The picker takes a generation's
+  years from its rows, so a 2015 F10 owner still sees
   "5 Series (F10, 2011)".
 - **Final drive:** missing on 13 Audi TT/RS 3 rows. The `unresolved` notes say
   the manufacturer publishes split or no values; do not invent one. Weak
   (family_default or unverified) on 216 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
-- **Tire options:** usually present. The gap is the picker collapsing a
-  variant's rows to the first row's tire set.
 
 ---
 

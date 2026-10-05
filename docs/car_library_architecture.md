@@ -115,7 +115,30 @@ Runtime code loads canonical rows through
 `vibesensor.settings.vehicle_configurations.load_vehicle_configurations()`.
 Grouped picker payloads are derived at runtime in
 `vibesensor.settings.car_library` by grouping exact configurations by
-brand, type, model, and variant.
+brand, type, model generation, and variant:
+
+- **Model:** one picker entry per generation. Rows group by brand, type,
+  the model name without its trailing `(code, years)` label, and
+  `model_code`. The entry is labelled with the code and the generation's
+  model years taken from the rows' production years, e.g.
+  `X1 (F48, 2016–2022)`, so year-labelled `model_name` values such as
+  `X1 (F48, 2016)` and `X1 (F48, 2021)` land in one entry.
+- **Variant:** one picker entry per `variant_name`, carrying its
+  `production_start_year` / `production_end_year`. When two of a variant's
+  rows share a gearbox name (an xDrive25d sold in 2016 and again in 2021
+  with another final drive), the model year decides the row: the variant is
+  offered once per model-year period, named with its years
+  (`xDrive25d (2021)`). A row whose years span several periods appears in
+  each.
+- **Gearbox:** every exact row is one gearbox option, and a picker variant
+  never lists a gearbox name twice, so (model, variant, gearbox) names
+  exactly one row. `get_exact_configurations_for_variant` returns a
+  variant's rows. `apps/server/tests/settings/test_car_library.py` checks
+  that every bundled row is reachable this way.
+
+Saved cars keep a copy of the chosen values and the variant name; they are
+never re-resolved against the library, so regrouping the picker does not
+change an existing car.
 
 That means:
 

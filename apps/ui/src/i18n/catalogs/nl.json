@@ -386,6 +386,7 @@
   "settings.car.step_wheels": "Selecteer wielen",
   "settings.car.step_gearbox": "Selecteer versnellingsbak",
   "settings.car.step_variant": "Selecteer variant",
+  "settings.car.variant_years_note": "Elke variant toont de modeljaren die hij dekt. Kies de variant die past bij het bouwjaar van je auto.",
   "settings.car.step_brand_short": "Merk",
   "settings.car.step_type_short": "Type",
   "settings.car.step_model_short": "Model",

@@ -573,9 +573,26 @@ export function gearboxParts(
   ];
 }
 
+/** "2016–2022", or "2016" for a single model year; `null` when unknown. */
+function modelYears(
+  start: number | null | undefined,
+  end: number | null | undefined,
+): string | null {
+  if (start == null || end == null) {
+    const year = start ?? end;
+    return year == null ? null : String(year);
+  }
+  return start === end ? String(start) : `${start}\u2013${end}`;
+}
+
 export function variantDetail(variant: CarLibraryVariant): string | null {
+  const years = modelYears(
+    variant.production_start_year,
+    variant.production_end_year,
+  );
   return (
-    [variant.drivetrain, variant.engine].filter(Boolean).join(" · ") || null
+    [variant.drivetrain, variant.engine, years].filter(Boolean).join(" · ") ||
+    null
   );
 }
 

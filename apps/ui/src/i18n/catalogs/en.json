@@ -386,6 +386,7 @@
   "settings.car.step_wheels": "Select Wheels",
   "settings.car.step_gearbox": "Select Gearbox",
   "settings.car.step_variant": "Select Variant",
+  "settings.car.variant_years_note": "Each variant shows the model years it covers. Pick the one that matches your car's year.",
   "settings.car.step_brand_short": "Brand",
   "settings.car.step_type_short": "Type",
   "settings.car.step_model_short": "Model",

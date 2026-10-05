@@ -24,7 +24,9 @@ OBD-II adapter is the speed source until the user picks one) shipped with the
 Pi-verification server fixes. WP7 (EV and PHEV handling: J12) shipped in
 #4138. Its remaining EV wording (the car row's reduction ratio, the estimate
 note, the one-sensor hints and the speed-variation check) shipped with the
-second round of Pi-verification UI fixes. WP6 (the printable hotspot QR card: J23) shipped in #4139.
+second round of Pi-verification UI fixes. WP6 (the printable hotspot QR card:
+J23) shipped in #4139. The picker half of J10 (one picker model per
+generation, the model year resolved in the variant step) shipped in #4153.
 
 Owner decisions that bound the fixes (settled):
 
@@ -56,20 +58,16 @@ None open.
 
 ### Friction
 
-**J10 — Model fragmentation and launch-year-only rows.**
+**J10 — Launch-year-only rows (data gap).**
 
 Evidence:
 
-- 21 model families are split into several picker entries by year label
-  (e.g. X1 F48 ×6, Q5 FY ×5, X3 F25 ×4).
 - Generations with launch-year rows only: F10 2011, F20 2011–2012, G11 2016,
-  F15 2014–2015.
+  F15 2014–2015. The picker shows a generation's years from its rows, so a
+  2015 F10 owner sees "5 Series (F10, 2011)".
 
-Fix:
-
-- **Picker:** Group by generation code with a year range ("5 Series F10,
-  2010–2017") and resolve the year inside the variant step.
-- **Data:** Extend the year ranges where the drivetrain did not change (WP5).
+Fix: **Data:** extend the year ranges where the drivetrain did not change
+(WP5).
 
 **J11 — Coverage breadth and weak data (data gap).**
 
@@ -94,7 +92,6 @@ Dependency order:
 
 - **Covers:** J10, J11.
 - **Changes:**
-  - Group the picker by generation.
   - Extend year ranges where the drivetrain did not change.
   - Add Touring and Avant bodies for the 3/5 Series and A4/A6.
   - Upgrade the weak final drives by transmission code from official

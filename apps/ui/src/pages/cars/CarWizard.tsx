@@ -511,6 +511,9 @@ function Steps() {
       </div>
       <div id="wizardStep3" class="wizard-step" hidden={current !== 3}>
         <h3>{t("settings.car.step_variant")}</h3>
+        <div class="subtle wizard-branch-note">
+          {t("settings.car.variant_years_note")}
+        </div>
         <Options
           id="wizardVariantList"
           list

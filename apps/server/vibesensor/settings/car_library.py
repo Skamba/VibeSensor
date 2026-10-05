@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import copy
-from typing import Literal, NotRequired, TypedDict, cast
+import re
+from itertools import pairwise
+from typing import Literal, NotRequired, TypedDict
 
 from vibesensor.domain.tire_spec import AxleTireSetup
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
@@ -12,13 +14,10 @@ from vibesensor.settings.vehicle_configurations import load_vehicle_configuratio
 __all__ = [
     "CarLibraryEntry",
     "get_brands",
+    "get_exact_configurations_for_variant",
     "get_models_for_brand_type",
     "get_types_for_brand",
     "load_car_library",
-    "get_variants_for_model",
-    "get_exact_configurations_for_variant",
-    "resolve_variant",
-    "resolve_vehicle_configurations",
 ]
 
 
@@ -63,6 +62,8 @@ class CarLibraryVariant(TypedDict):
     tire_width_mm: NotRequired[float]
     tire_aspect_pct: NotRequired[float]
     rim_in: NotRequired[float]
+    production_start_year: NotRequired[int]
+    production_end_year: NotRequired[int]
 
 
 class CarLibraryEntry(TypedDict):
@@ -75,19 +76,6 @@ class CarLibraryEntry(TypedDict):
     tire_aspect_pct: float
     rim_in: float
     variants: list[CarLibraryVariant]
-
-
-class ResolvedCarLibraryEntry(CarLibraryEntry, total=False):
-    drivetrain: Literal["FWD", "RWD", "AWD"]
-    engine: str
-
-
-def _deep_copy_entry(entry: CarLibraryEntry) -> CarLibraryEntry:
-    return copy.deepcopy(entry)
-
-
-def _deep_copy_variants(variants: list[CarLibraryVariant]) -> list[CarLibraryVariant]:
-    return copy.deepcopy(variants)
 
 
 def _tire_payload_from_setup(name: str, setup: AxleTireSetup) -> CarLibraryTireOption:
@@ -201,23 +189,6 @@ def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryG
     return row
 
 
-def _library_variant_from_configs(configs: list[VehicleConfiguration]) -> CarLibraryVariant:
-    first = configs[0]
-    tire_options = _union_tire_options(configs)
-    gearboxes = [_gearbox_row_from_configuration(config) for config in configs]
-    variant: CarLibraryVariant = {
-        "name": first.variant_name,
-        "drivetrain": first.drivetrain,
-        "engine": first.engine_name or first.engine_code or "",
-        "gearboxes": gearboxes,
-        "tire_options": tire_options,
-        "tire_width_mm": first.default_tire.width_mm,
-        "tire_aspect_pct": first.default_tire.aspect_pct,
-        "rim_in": first.default_tire.rim_in,
-    }
-    return variant
-
-
 def _sort_configs(configs: list[VehicleConfiguration]) -> list[VehicleConfiguration]:
     return sorted(
         configs,
@@ -229,54 +200,176 @@ def _sort_configs(configs: list[VehicleConfiguration]) -> list[VehicleConfigurat
     )
 
 
-def _build_grouped_library(configs: list[VehicleConfiguration]) -> list[CarLibraryEntry]:
-    model_groups: dict[tuple[str, str, str], list[VehicleConfiguration]] = {}
+def _year_span(configs: list[VehicleConfiguration]) -> tuple[int | None, int | None]:
+    starts = [c.production_start_year for c in configs if c.production_start_year is not None]
+    ends = [c.production_end_year for c in configs if c.production_end_year is not None]
+    return min(starts, default=None), max(ends, default=None)
+
+
+def _year_label(start: int | None, end: int | None) -> str:
+    """``"2016"`` or ``"2016\u20132022"`` (en dash); ``""`` when no years are known."""
+
+    if start is None or end is None:
+        return str(start or end or "")
+    return str(start) if start == end else f"{start}\u2013{end}"
+
+
+def _library_variant_from_configs(
+    name: str,
+    configs: list[VehicleConfiguration],
+    years: tuple[int | None, int | None],
+) -> CarLibraryVariant:
+    first = configs[0]
+    variant: CarLibraryVariant = {
+        "name": name,
+        "drivetrain": first.drivetrain,
+        "engine": first.engine_name or first.engine_code or "",
+        "gearboxes": [_gearbox_row_from_configuration(config) for config in configs],
+        "tire_options": _union_tire_options(configs),
+        "tire_width_mm": first.default_tire.width_mm,
+        "tire_aspect_pct": first.default_tire.aspect_pct,
+        "rim_in": first.default_tire.rim_in,
+    }
+    start, end = years
+    if start is not None:
+        variant["production_start_year"] = start
+    if end is not None:
+        variant["production_end_year"] = end
+    return variant
+
+
+_Period = tuple[int, int, list[VehicleConfiguration]]
+
+
+def _model_year_periods(configs: list[VehicleConfiguration]) -> list[_Period]:
+    """Split one variant name's rows into model-year periods.
+
+    A period lists every row on sale throughout it, so a row whose years
+    cover several periods (a manual gearbox kept while the automatic
+    changed) appears in each. Adjacent years with the same rows merge;
+    years without rows are dropped.
+    """
+
+    bounds = sorted(
+        {c.production_start_year for c in configs if c.production_start_year is not None}
+        | {c.production_end_year + 1 for c in configs if c.production_end_year is not None}
+    )
+    periods: list[_Period] = []
+    for first, after in pairwise(bounds):
+        rows = [
+            c
+            for c in configs
+            if (c.production_start_year or first) <= first
+            and after - 1 <= (c.production_end_year or after - 1)
+        ]
+        if not rows:
+            continue
+        if periods and periods[-1][1] == first - 1 and periods[-1][2] == rows:
+            periods[-1] = (periods[-1][0], after - 1, rows)
+        else:
+            periods.append((first, after - 1, rows))
+    return periods
+
+
+_PickerVariant = tuple[CarLibraryVariant, tuple[VehicleConfiguration, ...]]
+
+
+def _variants_for_generation(configs: list[VehicleConfiguration]) -> list[_PickerVariant]:
+    """One picker variant per variant name, split by model year only when needed.
+
+    A variant name stays one picker entry while its gearbox names are
+    unique, so the gearbox choice picks the exact row. When a gearbox
+    repeats (an xDrive25d sold in 2016 and again in 2021 with another
+    final drive), the model year decides the row: the variant is offered
+    once per model-year period and named with its years
+    ("xDrive25d (2021)").
+    """
+
+    by_name: dict[str, list[VehicleConfiguration]] = {}
+    for config in _sort_configs(configs):
+        by_name.setdefault(config.variant_name, []).append(config)
+    variants: list[_PickerVariant] = []
+    for name, rows in by_name.items():
+        gearbox_names = [row.transmission_name for row in rows]
+        if len(set(gearbox_names)) == len(gearbox_names):
+            variant = _library_variant_from_configs(name, rows, _year_span(rows))
+            variants.append((variant, tuple(rows)))
+            continue
+        for first, last, period in _model_year_periods(rows):
+            label = f"{name} ({_year_label(first, last)})"
+            variant = _library_variant_from_configs(label, period, (first, last))
+            variants.append((variant, tuple(period)))
+    return variants
+
+
+# "X1 (F48, 2016-2019)" -> "X1": the label's generation and years are rebuilt
+# from the whole generation's rows.
+_LABEL_SUFFIX = re.compile(r" \([^()]*\)$")
+
+_GenerationKey = tuple[str, str, str, str | None]
+_VariantKey = tuple[str, str, str, str]
+
+
+def _generation_key(config: VehicleConfiguration) -> _GenerationKey:
+    base = _LABEL_SUFFIX.sub("", config.model_name) if config.model_code else config.model_name
+    return (config.brand, config.car_type, base, config.model_code)
+
+
+def _generation_label(base: str, code: str | None, configs: list[VehicleConfiguration]) -> str:
+    """``"X1 (F48, 2016\u20132022)"``: model, generation code and its years."""
+
+    if code is None:
+        return base
+    years = _year_label(*_year_span(configs))
+    return f"{base} ({code}, {years})" if years else f"{base} ({code})"
+
+
+def _build_grouped_library(
+    configs: list[VehicleConfiguration],
+) -> tuple[list[CarLibraryEntry], dict[_VariantKey, tuple[VehicleConfiguration, ...]]]:
+    """Group exact rows into picker models (one per generation) and variants.
+
+    Returns the picker entries, ordered by brand, type, model and then
+    generation start year, plus the exact rows behind every picker variant
+    keyed by ``(brand, type, model, variant)``.
+    """
+
+    generations: dict[_GenerationKey, list[VehicleConfiguration]] = {}
     for config in configs:
-        key = (config.brand, config.car_type, config.model_name)
-        model_groups.setdefault(key, []).append(config)
+        generations.setdefault(_generation_key(config), []).append(config)
 
-    entries: list[CarLibraryEntry] = []
-    for (brand, car_type, model_name), grouped_configs in sorted(model_groups.items()):
-        variant_groups: dict[str, list[VehicleConfiguration]] = {}
-        for config in _sort_configs(grouped_configs):
-            variant_groups.setdefault(config.variant_name, []).append(config)
-        variants = [
-            _library_variant_from_configs(configs_for_variant)
-            for _, configs_for_variant in sorted(variant_groups.items())
-        ]
-        representative = grouped_configs[0]
-        representative_tires = _tire_options_for_config(representative)
-        representative_gearboxes = [
-            _gearbox_row_from_configuration(config) for config in _sort_configs(grouped_configs)
-        ]
-        entries.append(
-            {
-                "brand": brand,
-                "type": car_type,
-                "model": model_name,
-                "gearboxes": representative_gearboxes[:1] or representative_gearboxes,
-                "tire_options": representative_tires,
-                "tire_width_mm": representative.default_tire.width_mm,
-                "tire_aspect_pct": representative.default_tire.aspect_pct,
-                "rim_in": representative.default_tire.rim_in,
-                "variants": variants,
-            }
-        )
-    return entries
+    ordered: list[tuple[tuple[object, ...], CarLibraryEntry]] = []
+    rows_by_variant: dict[_VariantKey, tuple[VehicleConfiguration, ...]] = {}
+    for (brand, car_type, base, code), grouped_configs in generations.items():
+        model = _generation_label(base, code, grouped_configs)
+        variants = _variants_for_generation(grouped_configs)
+        for variant, rows in variants:
+            rows_by_variant[(brand, car_type, model, variant["name"])] = rows
+        representative = _sort_configs(grouped_configs)[0]
+        entry: CarLibraryEntry = {
+            "brand": brand,
+            "type": car_type,
+            "model": model,
+            "gearboxes": [_gearbox_row_from_configuration(representative)],
+            "tire_options": _tire_options_for_config(representative),
+            "tire_width_mm": representative.default_tire.width_mm,
+            "tire_aspect_pct": representative.default_tire.aspect_pct,
+            "rim_in": representative.default_tire.rim_in,
+            "variants": [variant for variant, _ in variants],
+        }
+        start = _year_span(grouped_configs)[0]
+        ordered.append(((brand, car_type, base, start or 0, code or ""), entry))
+    ordered.sort(key=lambda item: item[0])
+    return [entry for _, entry in ordered], rows_by_variant
 
 
-def _load_grouped_library_snapshot() -> list[CarLibraryEntry]:
-    return _build_grouped_library(load_vehicle_configurations())
-
-
-_VEHICLE_CONFIGURATIONS: list[VehicleConfiguration] = load_vehicle_configurations()
-_CAR_LIBRARY: list[CarLibraryEntry] = _build_grouped_library(_VEHICLE_CONFIGURATIONS)
+_CAR_LIBRARY, _ROWS_BY_VARIANT = _build_grouped_library(load_vehicle_configurations())
 
 
 def load_car_library() -> list[CarLibraryEntry]:
     """Load and return a fresh grouped picker snapshot from canonical configs."""
 
-    return _load_grouped_library_snapshot()
+    return _build_grouped_library(load_vehicle_configurations())[0]
 
 
 def get_brands() -> list[str]:
@@ -295,19 +388,10 @@ def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry
     """Return all grouped picker entries matching *brand* and *car_type*."""
 
     return [
-        _deep_copy_entry(entry)
+        copy.deepcopy(entry)
         for entry in _CAR_LIBRARY
         if entry["brand"] == brand and entry["type"] == car_type
     ]
-
-
-def get_variants_for_model(brand: str, car_type: str, model: str) -> list[CarLibraryVariant]:
-    """Return grouped variants for a specific model, or [] if none."""
-
-    for entry in _CAR_LIBRARY:
-        if entry["brand"] == brand and entry["type"] == car_type and entry["model"] == model:
-            return _deep_copy_variants(entry["variants"])
-    return []
 
 
 def get_exact_configurations_for_variant(
@@ -316,62 +400,10 @@ def get_exact_configurations_for_variant(
     model: str,
     variant_name: str,
 ) -> tuple[VehicleConfiguration, ...]:
-    """Return canonical configuration rows for one selected variant."""
+    """Return the canonical configuration rows behind one picker variant.
 
-    return tuple(
-        config
-        for config in _VEHICLE_CONFIGURATIONS
-        if config.brand == brand
-        and config.car_type == car_type
-        and config.model_name == model
-        and config.variant_name == variant_name
-    )
-
-
-def resolve_variant(
-    base_entry: CarLibraryEntry,
-    variant_name: str | None,
-) -> ResolvedCarLibraryEntry:
-    """Merge a variant's overrides onto a base model entry.
-
-    Returns a new dict with the effective engine/drivetrain metadata,
-    gearboxes, tire_options, and default tire specs. Unknown
-    *variant_name* or ``None`` returns a deep copy of the base entry so
-    callers cannot corrupt the cached library data.
+    Within the result every gearbox name is unique, so a picker selection
+    (model, variant, gearbox) names exactly one configuration row.
     """
-    result = cast(ResolvedCarLibraryEntry, _deep_copy_entry(base_entry))
-    if not variant_name:
-        return result
-    for variant in base_entry["variants"]:
-        if variant["name"] == variant_name:
-            result["drivetrain"] = variant["drivetrain"]
-            if "engine" in variant:
-                result["engine"] = variant["engine"]
-            if variant.get("gearboxes"):
-                result["gearboxes"] = copy.deepcopy(variant["gearboxes"])
-            if variant.get("tire_options"):
-                result["tire_options"] = copy.deepcopy(variant["tire_options"])
-            if "tire_width_mm" in variant:
-                result["tire_width_mm"] = variant["tire_width_mm"]
-            if "tire_aspect_pct" in variant:
-                result["tire_aspect_pct"] = variant["tire_aspect_pct"]
-            if "rim_in" in variant:
-                result["rim_in"] = variant["rim_in"]
-            break
-    return result
 
-
-def resolve_vehicle_configurations(
-    base_entry: CarLibraryEntry,
-    variant_name: str | None,
-) -> tuple[VehicleConfiguration, ...]:
-    """Resolve one selected grouped variant to canonical exact rows."""
-
-    if not variant_name:
-        return ()
-    return get_exact_configurations_for_variant(
-        base_entry["brand"],
-        base_entry["type"],
-        base_entry["model"],
-        variant_name,
-    )
+    return _ROWS_BY_VARIANT.get((brand, car_type, model, variant_name), ())

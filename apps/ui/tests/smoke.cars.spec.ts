@@ -74,6 +74,38 @@ const GOLF: CarLibraryModel = {
   ],
 };
 
+/** One generation; the GTI's final drive changed, so the year picks the row. */
+const POLO: CarLibraryModel = {
+  ...GOLF,
+  model: "Polo (AW, 2018\u20132024)",
+  variants: [
+    {
+      name: "1.0 TSI",
+      drivetrain: "FWD",
+      engine: "1.0 petrol",
+      gearboxes: [GEARBOX],
+      production_start_year: 2018,
+      production_end_year: 2024,
+    },
+    {
+      name: "GTI (2018\u20132020)",
+      drivetrain: "FWD",
+      engine: "2.0 petrol",
+      gearboxes: [{ ...GEARBOX, name: "6-speed DSG", final_drive_ratio: 3.65 }],
+      production_start_year: 2018,
+      production_end_year: 2020,
+    },
+    {
+      name: "GTI (2021\u20132024)",
+      drivetrain: "FWD",
+      engine: "2.0 petrol",
+      gearboxes: [{ ...GEARBOX, name: "6-speed DSG", final_drive_ratio: 3.24 }],
+      production_start_year: 2021,
+      production_end_year: 2024,
+    },
+  ],
+};
+
 function completeCar(id: string, name: string): CarRecord {
   return {
     id,
@@ -205,7 +237,7 @@ async function bootWithCars(page: Page, server: CarsServer) {
         models:
           type === "Estate"
             ? [{ ...GOLF, type: "Estate", model: "Golf Variant", variants: [] }]
-            : [GOLF],
+            : [GOLF, POLO],
       });
     }
   });
@@ -329,6 +361,41 @@ test("journey: a failed library load recovers through manual specs and back", as
   await expect(
     wizard.locator('#wizardBrandList [data-value="VW"]'),
   ).toBeVisible();
+});
+
+test("journey: one model per generation; the variant step picks the model year", async ({
+  page,
+}) => {
+  const server = createServer();
+  await bootWithCars(page, server);
+  await openCarsTab(page);
+  await page.locator("#addCarBtn").click();
+  const wizard = page.locator("#addCarWizard");
+  await wizard.locator('#wizardBrandList [data-value="VW"]').click();
+  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
+  await expect(wizard.locator("#wizardModelList .wiz-opt")).toHaveCount(2);
+  await wizard.locator('#wizardModelList [data-idx="1"]').click();
+
+  const variants = wizard.locator("#wizardVariantList .wiz-opt");
+  await expect(variants).toHaveCount(3);
+  await expect(variants.nth(0)).toContainText(
+    "FWD · 1.0 petrol · 2018\u20132024",
+  );
+  await expect(variants.nth(2)).toContainText("GTI (2021\u20132024)");
+  await expect(wizard.locator("#wizardStep3")).toContainText(
+    "Pick the one that matches your car's year",
+  );
+  await variants.nth(2).click();
+
+  await expect(page.locator("#wizFinalDrive")).toHaveValue("3.24");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect(wizard).toBeHidden();
+  expect(server.posts[0]).toMatchObject({
+    name: "VW Polo (AW, 2018\u20132024) GTI (2021\u20132024)",
+    variant: "GTI (2021\u20132024)",
+    aspects: { final_drive_ratio: 3.24 },
+    order_reference_status: { transmission_name: "6-speed DSG" },
+  });
 });
 
 test("journey: a slow older model list never replaces the newer one", async ({

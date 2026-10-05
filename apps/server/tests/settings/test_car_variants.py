@@ -2,57 +2,9 @@
 
 from __future__ import annotations
 
-import copy
-
 import pytest
 
 from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
-from vibesensor.settings.car_library import (
-    get_variants_for_model,
-    load_car_library,
-    resolve_variant,
-)
-
-
-def _library_entries() -> list[dict[str, object]]:
-    return load_car_library()
-
-
-# ---------------------------------------------------------------------------
-# car_library.py helper tests
-# ---------------------------------------------------------------------------
-
-
-def test_get_variants_for_model_unknown_returns_empty() -> None:
-    """Unknown brand/type/model returns empty list."""
-    assert get_variants_for_model("Tesla", "Sedan", "Model S") == []
-
-
-def test_resolve_variant_no_variant() -> None:
-    """resolve_variant with None returns base entry."""
-    base = _library_entries()[0]
-    resolved = resolve_variant(base, None)
-    assert resolved["gearboxes"] == base["gearboxes"]
-    assert resolved["tire_options"] == base["tire_options"]
-
-
-def test_resolve_variant_inherits_base_gearboxes() -> None:
-    """Variant without gearbox override inherits base gearboxes."""
-    entry = copy.deepcopy(_library_entries()[0])
-    first_variant = entry["variants"][0]
-    first_variant.pop("gearboxes", None)
-
-    resolved = resolve_variant(entry, first_variant["name"])
-
-    assert resolved["gearboxes"] == entry["gearboxes"]
-
-
-def test_resolve_variant_unknown_name_returns_base() -> None:
-    """resolve_variant with unknown name returns base entry unchanged."""
-    base = _library_entries()[0]
-    resolved = resolve_variant(base, "nonexistent_variant")
-    assert resolved["gearboxes"] == base["gearboxes"]
-
 
 # ---------------------------------------------------------------------------
 # Pydantic model tests
