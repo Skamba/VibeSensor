@@ -47,6 +47,7 @@ def finalize_active_run(
     *,
     run_id: str | None,
     start_time_utc: str | None,
+    end_time_utc: str | None = None,
     stop_reason: str,
     ingest_drop_losses: Mapping[str, RawCaptureLossStats] | None,
     sample_flush: SampleFlushOrchestrator,
@@ -61,7 +62,8 @@ def finalize_active_run(
     Each step is recorded as a ``RunFinalizationStageResult`` (persisted into the
     run metadata, where report/history fallback reasons read it) and logged once
     as a ``run_finalize_stage_result`` event. A step that raises is logged as
-    ``failed`` and the exception propagates.
+    ``failed`` and the exception propagates. ``end_time_utc`` defaults to the
+    wall clock now; a run started on an unverified clock passes its monotonic end.
     """
     stages: list[RunFinalizationStageResult] = []
 
@@ -137,7 +139,7 @@ def finalize_active_run(
         )
 
     resolved_start_time_utc = start_time_utc or utc_now_iso()
-    resolved_end_time_utc = utc_now_iso()
+    resolved_end_time_utc = end_time_utc or utc_now_iso()
     persistence_snapshot = persistence.status_snapshot() if run_id is not None else None
 
     # 2. Close the raw-capture sidecar.

@@ -43,6 +43,7 @@ from vibesensor.recording.run_schema import (
     RUN_SCHEMA_VERSION,
     RunCarMetadata,
     RunMetadata,
+    RunStartClock,
 )
 from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
@@ -100,6 +101,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     reference_context: object = None
     recorded_utc_offset_seconds: object = None
     start_time_unverified: object = False
+    start_clock: object = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,6 +295,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         wheel_circumference_m=reference_tire_circumference(data.get("reference_context")),
         recorded_utc_offset_seconds=scalar_state.recorded_utc_offset_seconds,
         start_time_unverified=scalar_state.start_time_unverified,
+        start_clock=_run_start_clock_from_payload(data.get("start_clock")),
     )
 
 
@@ -325,7 +328,29 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
         reference_context := reference_context_to_json_object(metadata.wheel_circumference_m)
     ) is not None:
         payload["reference_context"] = reference_context
+    if (start_clock := metadata.start_clock) is not None:
+        payload["start_clock"] = {
+            "boot_id": start_clock.boot_id,
+            "monotonic_s": start_clock.monotonic_s,
+        }
     return payload
+
+
+def _run_start_clock_from_payload(payload: object) -> RunStartClock | None:
+    """Decode a persisted ``start_clock`` object; ``None`` when absent or malformed."""
+
+    if not isinstance(payload, Mapping):
+        return None
+    boot_id = payload.get("boot_id")
+    monotonic_s = payload.get("monotonic_s")
+    if (
+        not isinstance(boot_id, str)
+        or not boot_id
+        or isinstance(monotonic_s, bool)
+        or not isinstance(monotonic_s, int | float)
+    ):
+        return None
+    return RunStartClock(boot_id=boot_id, monotonic_s=float(monotonic_s))
 
 
 def run_metadata_to_json_bytes(metadata: RunMetadata) -> bytes:

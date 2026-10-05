@@ -122,7 +122,11 @@ During recording:
   before `POST /api/recording/start`, so an unset Pi clock is stepped first. A
   run that starts while the clock is not trusted (see
   `BrowserClockCorrector.clock_trusted`) still records, with
-  `start_time_unverified: true` in its metadata
+  `start_time_unverified: true` and its monotonic `start_clock` (boot id plus
+  `time.monotonic()` at start) in its metadata; its end is start plus monotonic
+  elapsed time. `RunTimeCorrector` (`vibesensor/clock/run_times.py`) re-dates
+  such runs from the same boot once the clock is trusted (startup, browser
+  report, after each post-analysis) and clears the flag
 
 ### 3. Final flush and finalize
 

@@ -64,6 +64,9 @@ class PostAnalysisWorker:
         Callable that builds the persisted analysis summary once metadata and
         samples have been loaded. `RunRecorder` injects the concrete
         diagnostics implementation.
+    after_run:
+        Called (no args) after each run's analysis or error is stored; it may
+        touch that run again (the run-time corrector re-dates it).
 
     Notes
     -----
@@ -78,11 +81,13 @@ class PostAnalysisWorker:
         error_callback: Callable[[str], None] | None = None,
         clear_error_callback: Callable[[], None] | None = None,
         analysis_runner: PostAnalysisRunner = build_post_analysis_summary,
+        after_run: Callable[[], object] | None = None,
     ) -> None:
         self._history_db = history_db
         self._error_cb = error_callback or (lambda _msg: None)
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._analysis_runner = analysis_runner
+        self._after_run = after_run or (lambda: None)
         self._unexpected_bug_recorder = UnexpectedPostAnalysisBugRecorder(
             history_db=history_db,
             error_callback=self._error_cb,
@@ -211,6 +216,7 @@ class PostAnalysisWorker:
                     return
             try:
                 self._run_post_analysis(run_id)
+                self._after_run()
             except Exception as exc:
                 self._handle_unexpected_run_bug(run_id, exc)
                 return

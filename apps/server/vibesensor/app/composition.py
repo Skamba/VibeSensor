@@ -12,10 +12,12 @@ import sqlite3
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 from vibesensor.app.config_schema import AppConfig
 from vibesensor.app.lifecycle import LifecycleRuntime
 from vibesensor.clock.browser_clock import BrowserClockCorrector
+from vibesensor.clock.run_times import RunTimeCorrector
 from vibesensor.dsp.constants import (
     FFT_N,
     FFT_UPDATE_HZ,
@@ -121,6 +123,14 @@ def create_history_db(
     return history
 
 
+def _clock_state_path(config: AppConfig) -> Path | None:
+    """The per-boot clock verdict lives next to the history DB (none for an in-memory DB)."""
+    db_path = config.logging.history_db_path
+    if str(db_path) == ":memory:":
+        return None
+    return Path(db_path).parent / "clock_state.json"
+
+
 def build_runtime(config: AppConfig) -> AppRuntime:
     """Construct all services and return the lifecycle and route services."""
     health_state = RuntimeHealthState()
@@ -180,7 +190,12 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         push_hz=UI_PUSH_HZ,
         heavy_push_hz=UI_HEAVY_PUSH_HZ,
     )
-    browser_clock = BrowserClockCorrector(recording=lambda: run_recorder.enabled)
+    browser_clock = BrowserClockCorrector(
+        recording=lambda: run_recorder.enabled,
+        state_path=_clock_state_path(config),
+        after_report=lambda: run_times.correct(),
+    )
+    run_times = RunTimeCorrector(history_db=history, clock_trusted=browser_clock.clock_trusted)
     run_recorder = RunRecorder(
         RunRecorderConfig(
             sensor_model=SENSOR_MODEL,
@@ -198,7 +213,9 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ui_preferences=settings.ui_preferences,
         ingest_diagnostics=ingest_diagnostics,
         clock_trusted=browser_clock.clock_trusted,
+        after_analysis=run_times.correct,
     )
+    run_times.correct()
     outdated = history.requeue_outdated_analyses()
     if outdated:
         LOGGER.info("Re-analysing %d run(s) stored under an older analysis schema", len(outdated))

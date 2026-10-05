@@ -9,7 +9,7 @@ on connect and this module steps the system clock when:
   ``TIME_ERROR``), so an NTP-synced clock is never overridden;
 * the clock is off by more than ``CLOCK_STEP_THRESHOLD_S``;
 * no run is recording, so one run never spans a clock step;
-* it has not stepped it before in this process.
+* it has not stepped it before in this boot.
 
 Stepping needs ``CAP_SYS_TIME``, which the systemd unit grants. Without it
 (dev machines, containers) the attempt is logged once and skipped. Sensor
@@ -18,19 +18,27 @@ timing runs on ``time.monotonic``, which a step does not move.
 ``clock_trusted`` says whether a run starting now gets a true start time: the
 kernel clock is NTP-synchronised, or the last browser report found it within
 the threshold (or stepped it). Until a browser reports, an unsynchronised Pi
-clock is not trusted.
+clock is not trusted. Stepping does not mark the kernel clock synchronised, so
+that verdict (and whether this boot was stepped) is kept in a small state file
+keyed by the boot id: a service restart, as after every update, keeps it and a
+reboot, which loses the time again, drops it.
 """
 
 from __future__ import annotations
 
 import ctypes
+import json
 import logging
+import os
 import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from threading import Lock
+
+from vibesensor.clock.boot import current_boot_id
 
 __all__ = [
     "CLOCK_STEP_THRESHOLD_S",
@@ -104,10 +112,13 @@ class BrowserClockCorrector:
     """Apply the stepping policy described in the module docstring."""
 
     __slots__ = (
+        "_after_report",
+        "_boot_id",
         "_lock",
         "_now",
         "_permission_denied",
         "_recording",
+        "_state_path",
         "_step",
         "_stepped",
         "_synchronized",
@@ -118,11 +129,15 @@ class BrowserClockCorrector:
         self,
         *,
         recording: Callable[[], bool],
+        state_path: Path | None = None,
+        after_report: Callable[[], object] = lambda: None,
         synchronized: Callable[[], bool | None] = kernel_clock_synchronized,
         step: Callable[[float], None] = _step_realtime_clock,
         now: Callable[[], float] = time.time,
+        boot_id: Callable[[], str | None] = current_boot_id,
     ) -> None:
         self._recording = recording
+        self._after_report = after_report
         self._synchronized = synchronized
         self._step = step
         self._now = now
@@ -132,6 +147,11 @@ class BrowserClockCorrector:
         # Whether the clock matched the last browser report (after any step);
         # ``None`` before the first report.
         self._browser_agrees: bool | None = None
+        current_boot = boot_id()
+        self._boot_id = current_boot
+        # No boot id (non-Linux) means no way to tell a restart from a reboot.
+        self._state_path = state_path if current_boot is not None else None
+        self._load_state()
 
     def report(self, browser_epoch_ms: int) -> ClockReportResult:
         """Handle the browser's clock reading taken just before it sent the report."""
@@ -141,11 +161,15 @@ class BrowserClockCorrector:
             action = self._decide(offset_s)
             if action is ClockAction.STEPPED:
                 action = self._try_step(browser_s, offset_s)
+            before = (self._browser_agrees, self._stepped)
             if action in _CLOCK_MATCHES_BROWSER:
                 self._browser_agrees = True
             elif action in _CLOCK_LEFT_WRONG:
                 self._browser_agrees = False
-            return ClockReportResult(action=action, offset_s=round(offset_s, 3))
+            if (self._browser_agrees, self._stepped) != before:
+                self._save_state()
+        self._after_report()
+        return ClockReportResult(action=action, offset_s=round(offset_s, 3))
 
     def clock_trusted(self) -> bool:
         """Whether the wall clock is right: NTP-synchronised or confirmed by a browser.
@@ -161,6 +185,38 @@ class BrowserClockCorrector:
         if browser_agrees is not None:
             return browser_agrees
         return synchronized is None
+
+    def _load_state(self) -> None:
+        if self._state_path is None:
+            return
+        try:
+            state = json.loads(self._state_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return
+        except (OSError, ValueError) as exc:
+            LOGGER.warning("Ignoring unreadable clock state %s: %s", self._state_path, exc)
+            return
+        if not isinstance(state, dict) or state.get("boot_id") != self._boot_id:
+            return
+        browser_agrees = state.get("browser_agrees")
+        if isinstance(browser_agrees, bool):
+            self._browser_agrees = browser_agrees
+        self._stepped = state.get("stepped") is True
+
+    def _save_state(self) -> None:
+        if self._state_path is None:
+            return
+        state = {
+            "boot_id": self._boot_id,
+            "browser_agrees": self._browser_agrees,
+            "stepped": self._stepped,
+        }
+        tmp_path = self._state_path.with_name(f".{self._state_path.name}.tmp")
+        try:
+            tmp_path.write_text(json.dumps(state), encoding="utf-8")
+            os.replace(tmp_path, self._state_path)
+        except OSError as exc:
+            LOGGER.warning("Could not save clock state to %s: %s", self._state_path, exc)
 
     def _decide(self, offset_s: float) -> ClockAction:
         if abs(offset_s) <= CLOCK_STEP_THRESHOLD_S:

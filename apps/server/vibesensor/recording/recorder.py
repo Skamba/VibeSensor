@@ -88,6 +88,7 @@ class RunRecorder:
         ui_preferences: UiPreferencesService | None = None,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         clock_trusted: Callable[[], bool] | None = None,
+        after_analysis: Callable[[], object] | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
@@ -133,6 +134,7 @@ class RunRecorder:
             error_callback=self._persistence.set_last_write_error,
             clear_error_callback=self._persistence.clear_last_write_error,
             analysis_runner=build_post_analysis_summary,
+            after_run=after_analysis,
         )
         self.raw_capture = RunRawCaptureWriter(
             history_db=history_db if config.persist_history_db else None,
@@ -278,6 +280,7 @@ class RunRecorder:
         return finalize_active_run(
             run_id=self._run_id,
             start_time_utc=self._lifecycle.start_time_utc,
+            end_time_utc=self._recording_session.unverified_end_time_utc(),
             stop_reason=reason,
             ingest_drop_losses=self._recording_session.ingest_drop_losses(),
             sample_flush=self._sample_flush,

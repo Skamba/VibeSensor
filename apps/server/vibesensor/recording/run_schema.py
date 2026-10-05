@@ -29,6 +29,7 @@ __all__ = [
     "RunMetadata",
     "RunCarMetadata",
     "RunSensorMetadata",
+    "RunStartClock",
 ]
 
 RUN_SCHEMA_VERSION = "v2-jsonl"
@@ -143,6 +144,14 @@ class RunGuidedPhase:
         return payload
 
 
+@dataclass(frozen=True, slots=True)
+class RunStartClock:
+    """A run's start on ``time.monotonic``, which is one clock only within one boot."""
+
+    boot_id: str
+    monotonic_s: float
+
+
 @dataclass(slots=True)
 class RunMetadata:
     """Typed persisted run metadata with explicit run-context ownership."""
@@ -182,6 +191,9 @@ class RunMetadata:
     # The run started before the Pi clock was set (no NTP, no browser report), so
     # its start and end times are wrong; its duration is not.
     start_time_unverified: bool = False
+    # Where such a run started on the monotonic clock, so its times can be corrected
+    # once the wall clock is set later in the same boot.
+    start_clock: RunStartClock | None = None
 
     @classmethod
     def create(

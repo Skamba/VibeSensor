@@ -217,7 +217,7 @@ The Pi has no RTC. Without internet, systemd-timesyncd restores the clock from
 the last saved time, so it can be days or months behind. Every time the UI
 connects it posts the browser clock and IANA time zone to
 `POST /api/system/browser-clock`. The server steps the system clock to the
-browser clock once per process, and only when all of these hold:
+browser clock once per boot, and only when all of these hold:
 
 - the kernel reports the clock as unsynchronised (no NTP sync; `adjtimex`
   returns `TIME_ERROR`);
@@ -227,9 +227,12 @@ browser clock once per process, and only when all of these hold:
 The step needs `CAP_SYS_TIME`, which `vibesensor.service` grants. Look for
 `Stepped the unsynchronised system clock` (warning) or `no CAP_SYS_TIME` (info)
 in the journal. The response's `action` says what happened. Sensor timing runs
-on the monotonic clock, so a step does not disturb sync. The step is not
-persisted, so after a reboot without internet the next UI connection corrects
-the clock again.
+on the monotonic clock, so a step does not disturb sync. Stepping does not mark
+the kernel clock synchronised, so the server keeps the browser verdict (and
+whether it stepped) in `clock_state.json` next to the history DB, keyed by
+`/proc/sys/kernel/random/boot_id`: a service restart, as after every update,
+keeps the clock trusted, and a reboot without internet drops the verdict until
+the next UI connection corrects the clock again.
 
 Starting a recording from the Live page posts the browser clock first, so a
 UI-started run is stamped after any step. A run that starts while the clock is
@@ -240,6 +243,17 @@ NTP-synchronised, or the last browser report found it within 10 s or stepped
 it. History and the report then show its times as unknown (Pi clock not set).
 Its duration and data are unaffected. Recording is not refused, so scripted or
 API-only recordings keep working.
+
+Such a run also stores where it started on the monotonic clock with the boot
+id (`start_clock`), and its end is start plus monotonic elapsed time, so an NTP
+step mid-run does not change its duration. Once the clock is trusted (a browser
+report, at startup, or after each post-analysis), runs from the same boot get
+their true times: start = now - (monotonic now - monotonic start), with end and
+the stored analysis's times moved by the same amount, and the flag cleared. The
+journal logs `Corrected the start and end times of N run(s)`. Runs still
+analysing are corrected once their analysis is stored. Runs from an earlier boot
+cannot be corrected and stay unknown. Sample rows keep their original
+`timestamp_utc` (only exports show it).
 
 Reports show run times in the stored browser time zone, at the run's own date
 (DST-correct). They fall back to the offset recorded with the run until a

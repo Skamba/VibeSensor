@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -7,10 +8,14 @@ import pytest
 from test_support.history_db_lifecycle import run_samples
 
 from tests.recording.test_metrics_log_helpers import _started_snapshot_with_sample
+from vibesensor.clock.boot import current_boot_id
+from vibesensor.common.time_utils import parse_iso8601
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.history.history_db import HistoryDB
+from vibesensor.recording import finalize_stages
 from vibesensor.recording._recorder_types import _build_run_metadata_record
+from vibesensor.recording.run_schema import RunStartClock
 
 
 def test_run_metadata_captures_active_car_snapshot(make_logger) -> None:
@@ -87,25 +92,49 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
 
 
 def test_a_run_started_before_the_pi_clock_was_set_is_marked_unverified(
-    make_logger, tmp_path: Path
+    make_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """No RTC, no NTP, no browser yet: the run's wall times are wrong and say so."""
+    """No RTC, no NTP, no browser yet: the run's wall times are wrong and say so.
+
+    It also keeps its start on the monotonic clock, and its end stays on the same
+    wrong clock base when NTP steps the clock mid-run, so a later correction can
+    shift both and the duration stays the monotonic one.
+    """
     history_db = HistoryDB(tmp_path / "history.db")
     clock = {"trusted": False}
     logger = make_logger(history_db=history_db, clock_trusted=lambda: clock["trusted"])
 
-    unverified = _started_snapshot_with_sample(logger).run_id
-    # A browser sets the clock mid-run: the run started on the wrong time all the same.
+    started = _started_snapshot_with_sample(logger)
+    # NTP sets the clock three days forward mid-run.
+    stepped_now = (parse_iso8601(started.start_time_utc) + timedelta(days=3)).isoformat()
+    monkeypatch.setattr(finalize_stages, "utc_now_iso", lambda: stepped_now)
     clock["trusted"] = True
     logger.stop_recording()
     verified = _started_snapshot_with_sample(logger).run_id
     logger.stop_recording()
 
-    def flags(run_id: str) -> tuple[bool, bool]:
+    def stored(run_id: str) -> tuple[bool, bool, RunStartClock | None]:
         run = history_db.get_run(run_id)
         assert run is not None
         entry = next(entry for entry in history_db.list_runs() if entry.run_id == run_id)
-        return run.metadata.start_time_unverified, entry.start_time_unverified
+        return (
+            run.metadata.start_time_unverified,
+            entry.start_time_unverified,
+            (run.metadata.start_clock),
+        )
 
-    assert flags(unverified) == (True, True)
-    assert flags(verified) == (False, False)
+    boot_id = current_boot_id()
+    assert stored(started.run_id) == (
+        True,
+        True,
+        RunStartClock(boot_id=boot_id, monotonic_s=started.start_mono_s) if boot_id else None,
+    )
+    assert stored(verified) == (False, False, None)
+    unverified_run = history_db.get_run(started.run_id)
+    verified_run = history_db.get_run(verified)
+    assert unverified_run is not None and verified_run is not None
+    duration = parse_iso8601(unverified_run.end_time_utc) - parse_iso8601(
+        unverified_run.start_time_utc
+    )
+    assert timedelta(0) <= duration < timedelta(seconds=30)
+    assert verified_run.end_time_utc == stepped_now

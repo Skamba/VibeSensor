@@ -75,6 +75,7 @@ def _build_run_metadata_record(
         sensor_snapshots=session.run_sensor_snapshots_for_run(run_id),
         guided_phases=session.guided_phases_for_run(run_id),
         start_time_unverified=session.start_time_unverified(run_id),
+        start_clock=session.unverified_start_clock(run_id),
     )
 
 

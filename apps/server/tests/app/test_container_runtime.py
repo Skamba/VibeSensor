@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import time
 from pathlib import Path
 
 import yaml
 
 from vibesensor.app.composition import build_runtime
 from vibesensor.app.config_loader import load_config
+from vibesensor.clock.boot import current_boot_id
 
 
 def test_build_runtime_projects_config_into_lifecycle_runtime(tmp_path: Path) -> None:
@@ -39,5 +42,10 @@ def test_build_runtime_projects_config_into_lifecycle_runtime(tmp_path: Path) ->
         assert runtime.web.ingest_diagnostics is lifecycle.ingest_diagnostics
         assert runtime.web.update_manager is lifecycle.update_manager
         assert runtime.web.esp_flash_manager is lifecycle.esp_flash_manager
+        # The browser's clock verdict outlives a service restart: it is kept next to the DB.
+        runtime.web.browser_clock.report(int(time.time() * 1000))
+        if (boot_id := current_boot_id()) is not None:
+            state = json.loads((tmp_path / "clock_state.json").read_text(encoding="utf-8"))
+            assert state == {"boot_id": boot_id, "browser_agrees": True, "stepped": False}
     finally:
         lifecycle.history_db.close()

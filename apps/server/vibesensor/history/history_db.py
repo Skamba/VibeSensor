@@ -37,6 +37,7 @@ from vibesensor.history.records import (
     HistoryRunListEntry,
     StoredHistoryRun,
 )
+from vibesensor.history.run_clock_correction import StoredRunTimes, correct_run_times
 from vibesensor.history.sample_store import (
     V2_INSERT_SQL,
     V2_SELECT_SQL_COLS,
@@ -596,6 +597,59 @@ class HistoryDB:
                 [(now, run_id) for run_id in run_ids],
             )
         return run_ids
+
+    def correct_unverified_run_times(
+        self,
+        *,
+        boot_id: str,
+        wall_now_s: float,
+        monotonic_now_s: float,
+    ) -> list[str]:
+        """Re-date finished runs that started on an unset clock earlier in this boot.
+
+        See ``run_clock_correction``. Recording and analyzing runs are left for
+        later: their metadata and analysis are still being written. Returns the
+        corrected run ids.
+        """
+        with self._write(immediate=True) as cur:
+            cur.execute(
+                "SELECT run_id, start_time_utc, end_time_utc, metadata_json, analysis_json "
+                "FROM runs WHERE status IN (?, ?) AND metadata_json LIKE ?",
+                (RunStatus.COMPLETE, RunStatus.ERROR, '%"start_clock"%'),
+            )
+            stored = [
+                StoredRunTimes(
+                    run_id=str(run_id),
+                    start_time_utc=str(start),
+                    end_time_utc=str(end) if end is not None else None,
+                    metadata_json=str(metadata_json),
+                    analysis_json=str(analysis_json) if analysis_json is not None else None,
+                )
+                for run_id, start, end, metadata_json, analysis_json in cur.fetchall()
+            ]
+            corrected: list[str] = []
+            for run in stored:
+                times = correct_run_times(
+                    run,
+                    boot_id=boot_id,
+                    wall_now_s=wall_now_s,
+                    monotonic_now_s=monotonic_now_s,
+                )
+                if times is None:
+                    continue
+                cur.execute(
+                    "UPDATE runs SET start_time_utc = ?, end_time_utc = ?, metadata_json = ?, "
+                    "analysis_json = ? WHERE run_id = ?",
+                    (
+                        times.start_time_utc,
+                        times.end_time_utc,
+                        times.metadata_json,
+                        times.analysis_json,
+                        run.run_id,
+                    ),
+                )
+                corrected.append(run.run_id)
+        return corrected
 
     def stale_analyzing_run_ids(self) -> list[str]:
         with self._read() as cur:

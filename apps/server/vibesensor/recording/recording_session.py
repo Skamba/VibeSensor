@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import replace
+from datetime import timedelta
 from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.clock.boot import current_boot_id
+from vibesensor.common.time_utils import parse_iso8601, utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
 from vibesensor.recording.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
@@ -16,7 +18,12 @@ from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.recording.raw_capture import RawCaptureLossStats
 from vibesensor.recording.raw_capture_writer import RunRawCaptureWriter
 from vibesensor.recording.run_context import build_run_context_snapshot
-from vibesensor.recording.run_schema import GuidedPhaseName, RunGuidedPhase, RunSensorMetadata
+from vibesensor.recording.run_schema import (
+    GuidedPhaseName,
+    RunGuidedPhase,
+    RunSensorMetadata,
+    RunStartClock,
+)
 from vibesensor.recording.run_sensor_snapshot import (
     build_run_sensor_snapshot,
     capture_run_sensor_snapshots,
@@ -66,6 +73,7 @@ class RunRecordingSessionService:
         self._uuid_factory = uuid_factory or (lambda: uuid4().hex)
         self._clock_trusted = clock_trusted or (lambda: True)
         self._start_time_trusted = True
+        self._start_boot_id: str | None = None
         self._live_start_mono_s = monotonic()
         self._active_run_context: RunContextSnapshot | None = None
         self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
@@ -145,6 +153,33 @@ class RunRecordingSessionService:
                 return False
             return not self._start_time_trusted
 
+    def unverified_start_clock(self, run_id: str) -> RunStartClock | None:
+        """Where an unverified *run_id* started on the monotonic clock, to correct it later."""
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if (
+                current_run is None
+                or current_run.run_id != run_id
+                or self._start_time_trusted
+                or self._start_boot_id is None
+            ):
+                return None
+            return RunStartClock(boot_id=self._start_boot_id, monotonic_s=self._live_start_mono_s)
+
+    def unverified_end_time_utc(self) -> str | None:
+        """The active unverified run's end on the clock its start was stamped with.
+
+        Start plus monotonic elapsed time, so an NTP step during the run cannot
+        stretch or shrink it, and a later correction shifts start and end alike.
+        ``None`` for a trusted start: its end is the wall clock now.
+        """
+        with self._lock:
+            start = parse_iso8601(self._lifecycle.start_time_utc)
+            if self._lifecycle.current_run is None or self._start_time_trusted or start is None:
+                return None
+            elapsed_s = max(0.0, self._monotonic() - self._live_start_mono_s)
+            return (start + timedelta(seconds=elapsed_s)).isoformat()
+
     def guided_phases_for_run(self, run_id: str) -> tuple[RunGuidedPhase, ...]:
         with self._lock:
             current_run = self._lifecycle.current_run
@@ -184,6 +219,7 @@ class RunRecordingSessionService:
             )
         run_context = self.live_run_context_snapshot()
         self._start_time_trusted = self._clock_trusted()
+        self._start_boot_id = None if self._start_time_trusted else current_boot_id()
         start_mono_s = self._monotonic()
         snapshot = self._lifecycle.start_new_run(
             run_id=self._uuid_factory(),
