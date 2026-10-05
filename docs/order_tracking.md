@@ -125,7 +125,7 @@ coordinates the evidence flow:
    amplitude in total (mean amplitude × matches), so a short stretch at
    speeds the rest of the drive did not reach cannot outvote the bins that
    hold most of the evidence. Location terms are source-aware: an engine/driveline order with no dominant corner is
-   not penalised for it once its own evidence is established, unless it
+   not penalised for it as its own evidence becomes established, unless it
    shares most of its peaks with a wheel order (see "Confidence levels" in
    `docs/metrics.md`).
 6. Assemble a domain `Finding` with `assemble_order_finding()`.
@@ -187,7 +187,7 @@ diagnosis.
 | Match rate the effective rate starts from (`pipeline.py`) | matches / possible windows at the heard sensors (`heard_match_rate`) |
 | Score strength, frequency error, tracking correlation, sample count (`scoring.py`, `compute_amplitude_and_error_stats()`) | heard matches only (`evidence`) |
 | Corroborating sensors (`scoring.py`) | the heard sensors |
-| Zone evidence rate (`_zone_evidence_established()`) | effective match rate × the share of matches at the heard sensors that are heard (`heard_share`) |
+| Zone evidence rate (`_zone_credit()`) | effective match rate × the share of matches at the heard sensors that are heard (`heard_share`) |
 | Tracking slope (step 4) | heard matches |
 | `presence_ratio`, per-location `presence` (`analysis/diagnosis.py`) | heard matches over the moving samples |
 | Coast-down `speed_dependence`: the order's main location and the matches counted during and outside the coast-down | heard matches |

@@ -100,3 +100,55 @@ class TestComputeOrderConfidence:
         "localization_confidence": 0.05,
         "dominance_ratio": 1.0,
     }
+    # An engine/driveline order with no dominant corner whose own evidence is
+    # established: heard often, on frequency, at several sensors.
+    _ZONE: dict[str, Any] = {
+        **_SPREAD,
+        "spread_zone_source": True,
+        "zone_match_rate": 0.9,
+        "error_score": 0.9,
+        "corroborating_locations": 3,
+    }
+
+    @pytest.mark.parametrize(
+        "profile",
+        [
+            pytest.param({}, id="wheel-at-a-corner"),
+            pytest.param(_SPREAD, id="spread-wheel"),
+            pytest.param(_ZONE, id="engine-zone"),
+        ],
+    )
+    def test_half_a_db_moves_confidence_only_a_little(self, profile: dict[str, Any]) -> None:
+        scores = [
+            self._call(**{**profile, "absolute_strength_db": tenths / 10})
+            for tenths in range(40, 300, 5)
+        ]
+        steps = [after - before for before, after in zip(scores, scores[1:], strict=False)]
+        assert min(steps) >= 0.0
+        assert max(steps) <= 0.08
+
+    def test_a_light_vibration_scores_no_higher_for_nearing_the_moderate_band(self) -> None:
+        # Under 16 dB nothing ramps: a wheel order there is not Strong on strength.
+        assert self._call(absolute_strength_db=15.9) == self._call(absolute_strength_db=12.5)
+
+    def test_an_established_zone_scores_like_a_clearly_dominant_corner(self) -> None:
+        located = {**self._ZONE, "spread_zone_source": False, "weak_spatial_separation": False}
+        located["localization_confidence"] = ORDER_CONFIDENCE_SETTINGS.zone_localization_confidence
+        assert self._call(**self._ZONE, absolute_strength_db=19.0) == pytest.approx(
+            self._call(**located, absolute_strength_db=19.0)
+        )
+
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            pytest.param({"absolute_strength_db": 13.0}, id="faint"),
+            pytest.param({"zone_match_rate": 0.3}, id="patchy"),
+            pytest.param({"error_score": 0.4}, id="off-frequency"),
+            pytest.param({"corroborating_locations": 1}, id="one-sensor"),
+        ],
+    )
+    def test_a_zone_without_its_own_evidence_keeps_the_corner_penalties(
+        self, overrides: dict[str, Any]
+    ) -> None:
+        zone = {**self._ZONE, "absolute_strength_db": 22.0, **overrides}
+        assert self._call(**zone) == self._call(**{**zone, "spread_zone_source": False})

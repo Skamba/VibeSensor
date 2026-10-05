@@ -178,7 +178,8 @@ def test_the_coast_down_is_judged_where_the_order_is_heard() -> None:
     # coast-down is judged at a sensor that hears the order, and the trunk's
     # per-location presence counts none of its floor-level matches.
     samples = []
-    for engine_sample in make_engine_order_samples(sensors=SENSORS, n_samples=40):
+    engine = make_engine_order_samples(sensors=SENSORS, n_samples=40, engine_amp=0.08)
+    for engine_sample in engine:
         if engine_sample["client_name"] == SENSORS[0]:
             samples.append(
                 make_sample(

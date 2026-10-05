@@ -23,7 +23,9 @@ class OrderConfidenceSettings:
     correlation_max_shift: float
     correlation_compliance_factor: float
     negligible_strength_confidence_cap: float
+    negligible_strength_ramp_db: float
     light_strength_penalty: float
+    light_strength_ramp_db: float
     localization_base: float
     localization_spread: float
     weak_separation_dominance_threshold: float
@@ -34,6 +36,7 @@ class OrderConfidenceSettings:
     no_wheel_sensor_penalty: float
     zone_localization_confidence: float
     zone_min_match_rate: float
+    zone_strength_ramp_db: float
     heard_peak_over_floor: float
     heard_location_min_share: float
     zone_min_error_score: float
@@ -64,7 +67,11 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     correlation_compliance_factor=0.10,
     # Just below Moderate (0.40): an order at road-noise level is at most Weak.
     negligible_strength_confidence_cap=0.39,
+    # Ramps over the band edges (docs/metrics.md, "Confidence levels"): the cap
+    # lifts over 8–12 dB, the light penalty eases out over 16–19 dB.
+    negligible_strength_ramp_db=4.0,
     light_strength_penalty=0.80,
+    light_strength_ramp_db=3.0,
     localization_base=0.70,
     localization_spread=0.30,
     weak_separation_dominance_threshold=1.5,
@@ -80,6 +87,8 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     # tone heard for under 40 % of the drive is not established evidence
     # however exactly a measured speed tracks it.
     zone_min_match_rate=0.40,
+    # Half-width of the zone credit's ramp around 16 dB (13–19 dB).
+    zone_strength_ramp_db=3.0,
     # A match is heard when its peak stands at least 6 dB over its window's
     # floor, at a sensor where that happens at least half as often as at the
     # sensor where it happens most (docs/order_tracking.md, "Heard matches").

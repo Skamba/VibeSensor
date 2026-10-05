@@ -249,7 +249,7 @@ def _drive(
             if wheel_fault:
                 peaks += [
                     {"hz": t1_hz, "amp": 0.12 * scale},
-                    {"hz": 2.0 * t1_hz, "amp": 0.04 * scale},
+                    {"hz": 2.0 * t1_hz, "amp": 0.05 * scale},
                 ]
             if engine_tone_g:
                 jitter = 1.0 + 0.03 * ((step * 3 + index) % 4)

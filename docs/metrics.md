@@ -99,15 +99,24 @@ Users see confidence only as one of three levels, defined by what to do
 | Moderate | ≥ 0.40 | Do the cheap confirming check first. |
 | Weak | < 0.40 | Don't buy parts; record the test again. |
 
-An order-tracked finding whose own amplitude is negligible (below
-8 dB above the floor, i.e. road noise near an order) is capped just below
-Moderate (0.39), after the corroboration and phase bonuses as well as before
-them: a noise-level order is at most Weak, so on its own it reads as no fault,
-and it cannot outrank a clearly louder order of another source. Only the
+An order-tracked finding's own amplitude bounds its score, by two ramps
+(`_strength_cap`, `_light_strength_factor` in `analysis/orders/statistics.py`):
+
+- Negligible (below 8 dB above the floor, i.e. road noise near an order): the
+  score is capped just below Moderate (0.39), after the corroboration and
+  phase bonuses as well as before them, so a noise-level order is at most
+  Weak, reads as no fault on its own, and cannot outrank a clearly louder
+  order of another source. The cap lifts linearly over 8–12 dB.
+- Light (below 16 dB): the score is scaled by 0.8. The penalty eases out
+  linearly over 16–19 dB.
+
+Both ramps start at their band's edge, so under 8 dB an order stays at most
+Weak and under 16 dB strength alone never makes it Strong, while half a dB
+over an edge moves the score a few hundredths rather than doubling it. Only the
 finding's own amplitude counts: the quiet sensors elsewhere on the car do not
-cap a fault that is loud at its own corner. That amplitude is the mean of the order's
-heard matches (see "Heard matches" in `docs/order_tracking.md`), not an
-average with the floor-level noise the matcher picks up elsewhere. The score itself stays internal
+cap a fault that is loud at its own corner. That amplitude is the mean of the
+order's heard matches (see "Heard matches" in `docs/order_tracking.md`), not
+an average with the floor-level noise the matcher picks up elsewhere. The score itself stays internal
 (ranking); no percentage is shown in the UI or the PDF.
 
 Where the vibration sits feeds the score of an order-tracked finding
@@ -122,18 +131,22 @@ the source:
   such an order shows no dominant corner and its own evidence is established,
   it scores like a wheel order at a clearly dominant corner, with no
   weak-separation penalty. Established means all of:
-  - at least the moderate strength band (16 dB),
   - heard (see "Heard matches" in `docs/order_tracking.md`) in at least
     40 % of the possible windows at the sensors that hear it. Road noise
-    that happens to sit on the order's frequency does not count; a measured speed predicts the order
-    exactly in every window, so such chance matches are common on a rough
-    road,
+    that happens to sit on the order's frequency does not count; a measured
+    speed predicts the order exactly in every window, so such chance matches
+    are common on a rough road,
   - a close frequency match (error score at least 0.5),
   - heard on at least two sensors,
   - and not an alias of a wheel order: fewer than half of its matched peaks
     were also matched by a wheel order.
 
-  A faint or patchy engine/driveline match keeps the corner-dominance
+  The credit (`_zone_credit`) then grows with the order's strength, linearly
+  from none at 13 dB to full at 19 dB, across the moderate band's edge
+  (16 dB). Together with the light ramp this replaces a step at 16 dB that
+  more than doubled a faint engine tone's score (0.40 at 15.9 dB, 0.91 at
+  16.0 dB on the faint-engine benchmark case; 0.55 and 0.91 at 16 and 19 dB
+  now). A faint or patchy engine/driveline match keeps the corner-dominance
   penalties. This is how a fault-free run's road noise near an engine order
   stays Weak (and so reads as no fault). The guards are tuned on the simulator.
 

@@ -91,6 +91,7 @@ DRIVELINE_ZONES = {"rear_axle", "driveshaft_tunnel"}
 STRONG = frozenset({"strong"})
 MODERATE = frozenset({"moderate"})
 WEAK_ONLY = frozenset({"weak"})
+MODERATE_OR_STRONG = frozenset({"strong", "moderate"})
 
 _ZONE_TEXT_EN = {
     "front_left_wheel": "front-left wheel",
@@ -480,12 +481,14 @@ BENCH_CASES = (
         _fault("engine", {"engine_bay"}, "E2"),
     ),
     # A faint engine tone only the front sensors hear, just over the moderate
-    # strength band there. Floor-level road noise the other sensors match near
-    # its frequency must not dilute its strength into "no fault".
+    # strength band there (16-17 dB). Floor-level road noise the other sensors
+    # match near its frequency must not dilute its strength into "no fault".
+    # That close to the band's edge it is Moderate or Strong: the score ramps
+    # across 16 dB rather than doubling at it.
     Case(
         "bench-faint-engine-front-wheels-sweep",
         _sweep(_ov("front-axle", "engine_order", 0.027, 0.94)),
-        _fault("engine", {"engine_bay"}, "E2"),
+        _fault("engine", {"engine_bay"}, "E2", levels=MODERATE_OR_STRONG),
     ),
     # The same with a sensor on every mounting point: the engine bay, subframe
     # and gearbox sensors hear a faint tone, the nine others do not.
@@ -496,7 +499,7 @@ BENCH_CASES = (
             _ov("VS-74 subframe", "engine_order", 0.03, 0.94),
             _ov("VS-72 gearbox", "engine_order", 0.025, 0.94),
         ),
-        _fault("engine", {"engine_bay"}, "E2"),
+        _fault("engine", {"engine_bay"}, "E2", levels=MODERATE_OR_STRONG),
         layout=EVERY_MOUNT,
     ),
     # Two real faults: an engine tone the rear sensors do not hear, and a
