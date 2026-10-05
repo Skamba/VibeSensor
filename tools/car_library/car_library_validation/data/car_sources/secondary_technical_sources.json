@@ -632,20 +632,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:q8-4m8-wikipedia",
-      "url": "https://en.wikipedia.org/wiki/Audi_Q8",
-      "title": "Wikipedia: Audi Q8 (4M8)",
-      "note": "Article confirms Q8 4M8 layout is exclusively 'front-engine, four-wheel-drive' (always quattro). Sole ICE petrol variant is '55 TFSI quattro' (3.0 V6 TFSI 340 PS / 500 Nm with 48V MHEV). PHEV variants are '55 TFSI e quattro' (381 PS) and '60 TFSI e quattro' (456 PS / 700 Nm). EU PHEV pre-sales started 2020. ZF 8-speed Tiptronic for all. There has never been a non-quattro Q8 variant.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:zf8hp-wikipedia",
-      "url": "https://en.wikipedia.org/wiki/ZF_8HP_transmission",
-      "title": "Wikipedia: ZF 8HP transmission family",
-      "note": "Generation/ratio reference: 8HP75/I (2014, 1st-iter) keeps original 8th-gear ratio 0.667 with 740 Nm capacity; 8HP75/II and 8HP76/I (2018 3rd-gen) use updated 0.640 8th-gear ratio with up to 760 Nm capacity. Q8 4M8 launched mid-2018 alongside 8HP76/I introduction, so the long-standing 0.667 family_default is likely a Q7 4M (2015) inheritance rather than the Q8's actual 0.640 spec; requires Audi MediaCenter PDF for official_exact confirmation.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:g01-x3-wikipedia",
       "url": "https://en.wikipedia.org/wiki/BMW_X3_(G01)",
       "title": "Wikipedia: BMW X3 (G01) third generation",
@@ -867,6 +853,41 @@
       "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a5/f5-facelift/",
       "title": "ADAC Autokatalog Audi A5 B9 / F5 facelift (01/2020-11/2024)",
       "note": "ADAC catalogue listing the Germany-market A5 B9 facelift variants with their sales periods: 35 TFSI manual 110 kW 11/20-07/23, 35 TFSI S tronic 110 kW from 07/20, 40 TFSI 140 kW 01/20-07/20 then 150 kW from 07/20, 40 TFSI quattro 150 kW from 07/20, 45 TFSI quattro 180 kW 01/20-07/20 then 195 kW from 07/20, 35 TDI 120 kW from 01/20, 40 TDI 140 kW 01/20-09/20 then 150 kW from 09/20, 40 TDI quattro 140 kW 01/20-06/20 then 150 kW from 08/20, 50 TDI quattro tiptronic 01/20-11/23; all S tronic variants end 11/24. Used for production spans only; the listing shows Sportback variants.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q7-4m-adac-prefacelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q7/4m/",
+      "title": "ADAC Autokatalog Audi Q7 4M (2015-2019)",
+      "note": "ADAC catalogue of the Germany-market pre-facelift Q7 4M variants and sales periods: 3.0 TDI quattro 06/15-08/18, 3.0 TDI ultra quattro 07/15-08/18, 3.0 TFSI quattro 06/15-02/17, 45 TDI quattro and 50 TDI quattro 08/18-06/19. No 2.0 TFSI (45 TFSI) is listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q7-4m-adac-facelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q7/4m-facelift/",
+      "title": "ADAC Autokatalog Audi Q7 4M facelift (2019-2023)",
+      "note": "ADAC catalogue of the Germany-market first-facelift Q7 4M variants and sales periods: 45 TDI and 50 TDI quattro 09/19-07/23, 55 TFSI quattro 09/19-12/22, 55 TFSI e and 60 TFSI e quattro 12/19-07/21. All are quattro tiptronic; no 45 TFSI is listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q7-4m-adac-facelift-2",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q7/4m-facelift-2/",
+      "title": "ADAC Autokatalog Audi Q7 4M second facelift (2024-2026)",
+      "note": "ADAC catalogue of the Germany-market second-facelift Q7 4M variants and sales periods: 45 TDI, 50 TDI, 55 TFSI, 55 TFSI e and 60 TFSI e quattro 04/24-05/25, then 3.0 TDI, 3.0 TFSI and 3.0 TFSI e quattro 05/25-04/26. All are quattro tiptronic; no 45 TFSI is listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q8-4m-adac-prefacelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q8/4m/",
+      "title": "ADAC Autokatalog Audi Q8 4M (2018-2022)",
+      "note": "ADAC catalogue of the Germany-market pre-facelift Q8 variants and sales periods: 50 TDI quattro 08/18-10/22, 45 TDI quattro 02/19-10/22, 55 TFSI quattro 02/19-12/22, 55 TFSI e and 60 TFSI e quattro 10/20-07/22. All are quattro tiptronic.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q8-4m-adac-facelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q8/4m-facelift/",
+      "title": "ADAC Autokatalog Audi Q8 4M facelift (2023-2025)",
+      "note": "ADAC catalogue of the Germany-market facelifted Q8 variants and sales periods: 45 TDI, 50 TDI and 55 TFSI quattro 09/23-05/25, 55 TFSI e and 60 TFSI e quattro 04/24-05/25, 3.0 TFSI e quattro 05/25-11/25. All are quattro tiptronic.",
       "confidence": "medium"
     }
   ]

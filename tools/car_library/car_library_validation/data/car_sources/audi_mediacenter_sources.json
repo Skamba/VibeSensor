@@ -338,31 +338,10 @@
       "confidence": "high"
     },
     {
-      "id": "audi_mediacenter_sources:4m8-q8-2024-tfsi-e-upgrade-release",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/maximum-efficiency-in-ample-space-the-new-audi-q7-tfsi-e-quattro-and-q8-tfsi-e-quattro-16001",
-      "title": "Audi MediaCenter 2024 Q7/Q8 TFSI e upgrade release",
-      "note": "Official Audi product-upgrade release for the refreshed Q7/Q8 plug-in hybrids, used to document the later 360 kW Q8 60 TFSI e quattro state and the facelift-era timing boundary.",
-      "confidence": "high"
-    },
-    {
       "id": "audi_mediacenter_sources:4m8-q8-60-tfsi-e-2025-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1384/file_en/f1a954e2e03e2ebd1c566912e4a315facc470b08/eTD-Audi-Q8-SUV-TFSIe-quattro-tiptronic-360kW_251215.pdf?1769102323&disposition=attachment",
       "title": "Audi MediaCenter Q8 60 TFSI e 2025 technical-data PDF",
       "note": "Official Audi MediaCenter technical-data PDF cross-checking the facelift-era Q8 60 TFSI e quattro tiptronic 360 kW state with the same 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 ratio block, final drive 3.204, and basic 265/55 R19 tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m8-q8-until-2023-model-page",
-      "url": "https://www.audi-mediacenter.com/en/audi-q8-audi-sq8-tfsi-until-2023-15508",
-      "title": "Audi MediaCenter Q8 / SQ8 TFSI until 2023 model page",
-      "note": "Official Audi MediaCenter predecessor model page used to bound the earlier Q8 55 TFSI quattro state as a distinct pre-upgrade lifecycle phase that ends with the 'until 2023' model page.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m8-q8-2023-upgrade-release",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/expressive-design-and-new-lighting-technology-the-upgraded-audi-q8-15555",
-      "title": "Audi MediaCenter 2023 upgraded Q8 release",
-      "note": "Official Audi 09/2023 upgrade release used to document the later Q8 55 TFSI quattro state, including 250 kW / 500 Nm, eight-speed tiptronic, quattro permanent four-wheel drive, standard 20-inch wheels, and September 2023 market launch timing for the upgraded Q8.",
       "confidence": "high"
     },
     {
@@ -373,41 +352,6 @@
       "confidence": "high"
     },
     {
-      "id": "audi_mediacenter_sources:4m8-q8-2026-austria-brochure-pdf",
-      "url": "https://gpt-live.porsche.co.at/at/brand/A/pricelist/2145_audi_q8_pa_katalog_inkl__preisliste.pdf",
-      "title": "Audi Austria Q8 2026 brochure and price list PDF",
-      "note": "Official Audi Austria brochure and price list confirming the exact Q8 55 TFSI quattro row with Tiptronic 8 Gang, permanent quattro with self-locking center differential, and current square Q8 wheel and tire packages including 275/50 R20, 285/45 R21, 285/40 R22, 285/35 R23, and winter 265/55 R19.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-45-tfsi-middle-east-brochure-pdf",
-      "url": "https://media.audi.com/is/content/audi/country/me/assets/brochures/en/q7.pdf",
-      "title": "Audi Middle East Q7 brochure PDF",
-      "note": "Official Audi Middle East brochure confirming the exact Q7 45 TFSI quattro identity with 1984 cc, 185 kW, 370 Nm, permanent quattro all-wheel drive with self-locking center differential, and 8-speed tiptronic, used only for exact trim identity because it is not an EU-market source.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-until-2023-model-page",
-      "url": "https://www.audi-mediacenter.com/en/audi-q7-until-2023-15735",
-      "title": "Audi MediaCenter Q7 (until 2023) model page",
-      "note": "Official Audi MediaCenter model hub scoping the earlier Q7 line as 'until 2023', used to bound the pre-revision 4M lifecycle phase.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-revised-2024-release",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/strong-in-design-comfort-and-technologythe-revised-audi-q7-15849",
-      "title": "Audi MediaCenter revised Q7 2024 release",
-      "note": "Official Audi MediaCenter release for the revised 2024 Q7 proving the model line continued after the 'until 2023' phase and explicitly naming the facelift-era Q7 55 TFSI quattro 250 kW state with 8-speed tiptronic, permanent quattro, first-quarter 2024 launch timing, and 19-inch standard wheels for the V6 combustion models.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-55-tfsi-2024-tech-data-pdf",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-55-TFSI-quattro-tiptronic-250kW-MHEV-5-Sitzer_240327.pdf?disposition=attachment",
-      "title": "Audi MediaCenter Q7 55 TFSI 2024 technical-data PDF",
-      "note": "Official Audi MediaCenter technical-data PDF for the exact facelift-era Q7 SUV 55 TFSI quattro tiptronic 250 kW MHEV 5-seat state showing permanent quattro AWD with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.204 / 1.000, and basic 255/60 R18 tires.",
-      "confidence": "high"
-    },
-    {
       "id": "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-5seat-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_260204.pdf?1770709676&disposition=attachment",
       "title": "Audi MediaCenter Q7 TFSI 250 kW 2026 5-seat technical-data PDF",
@@ -415,31 +359,10 @@
       "confidence": "high"
     },
     {
-      "id": "audi_mediacenter_sources:4m-q7-tfsi-250kw-2026-7seat-tech-data-pdf",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/937/file_en/ff4216fd5423de021f91ef537d491cb8eff57610/eTD-Audi-Q7-SUV-TFSI-quattro-tiptronic-250kW-MHEV-7-seats_260204.pdf?1770709676&disposition=attachment",
-      "title": "Audi MediaCenter Q7 TFSI 250 kW 2026 7-seat technical-data PDF",
-      "note": "Official Audi MediaCenter technical-data PDF for the exact current Q7 SUV TFSI quattro tiptronic 250 kW MHEV 7-seat configuration showing the same permanent quattro AWD, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final-drive field 3.204 / -, and basic 255/60 R18 tires while confirming the 7-seat body state.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-2024-tfsi-e-upgrade-release",
-      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/maximale-effizienz-auf-grossem-raum-die-neuen-audi-q7-tfsi-e-quattro-und-q8-tfsi-e-quattro-16001",
-      "title": "Audi MediaCenter 2024 Q7 TFSI e upgrade release",
-      "note": "Official Audi MediaCenter Germany release for the refreshed Q7 TFSI e quattro line stating the new Audi Q7 TFSI e quattro is available to order from the end of April 2024 and documenting the facelift-era 55 TFSI e quattro / 290 kW state.",
-      "confidence": "high"
-    },
-    {
       "id": "audi_mediacenter_sources:4m-q7-55-tfsi-e-2025-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1381/file_de/9d5c2e27a7ed95f3f0aa43f733f600509d33d4a4/TD-Audi-Q7-SUV-TFSIe-quattro-tiptronic-290kW_251215.pdf?1769111238&disposition=attachment",
       "title": "Audi MediaCenter Q7 55 TFSI e 2025 technical-data PDF",
       "note": "Official Audi MediaCenter technical-data PDF for the facelift-era Q7 55 TFSI e quattro tiptronic 290 kW state showing permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.204, and basic 255/55 R19 tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:4m-q7-2026-price-list-pdf",
-      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2026/preislisten/preisliste_q7-suv_q7-suv-tfsi-e_sq7-suv.pdf",
-      "title": "Audi Germany model-year 2026 Q7 price list",
-      "note": "Official Audi Germany MY2026 price list confirming continued sale of the facelift-era Q7 program, including the TFSI e quattro 290 kW state and the non-PHEV TFSI quattro 250 kW petrol row, while not surfacing any Germany-market 45 TFSI gasoline row. The same price list also publishes the current Q7 family square wheel packages such as 255/55 R19, 285/45 R20, 285/40 R21, and 285/35 R22.",
       "confidence": "high"
     },
     {
@@ -1182,6 +1105,132 @@
       "url": "https://media.audi.com/is/content/audi/nemo/ch/preislisten/mj25/Audi_Q5_SQ5_Preisliste_MJ25_ab_01.07.24_DE.pdf",
       "title": "Audi Switzerland Q5 / SQ5 / Q5 TFSI e price list, model year 2025, valid from 01.07.2024",
       "note": "Official Audi Switzerland price list for the last FY Q5 (40 TDI quattro, 50 TDI quattro, 40 TFSI quattro, 45 TFSI quattro, 50/55 TFSI e quattro). Standard wheels 8.0 J x 17 with 235/65 R17 (8.0 J x 18 with 235/60 R18 on the TFSI e); the wheel program offers 235/65 R17, 235/60 R18, 235/55 R19, 255/45 R20 and 255/40 R21. Used for the optional tire sizes; no Germany-market FY price list was found online.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-45-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/53/file_en/53a674e0c1697c476a264db4ee5a839bdb60545a/eTD-Audi-Q7-SUV-45-TDI-quattro-tiptronic-170kW-MHEV-5-seats_240613.pdf",
+      "title": "Audi MediaCenter Q7 45 TDI quattro tiptronic 170 kW MHEV (5 seats) technical data, status 06/13/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M 45 TDI quattro tiptronic 170 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.076, basic tire 255/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-45-tdi-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/53/file_en/53a674e0c1697c476a264db4ee5a839bdb60545a/eTD-Audi-Q7-SUV-TDI-quattro-tiptronic-170kW-MHEV-5-seats_260204.pdf",
+      "title": "Audi MediaCenter Q7 TDI quattro tiptronic 170 kW MHEV (5 seats) technical data, status 02/04/2026",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M TDI quattro tiptronic 170 kW MHEV (the former 45 TDI, renamed for model year 2026): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.076, basic tire 255/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-50-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/751/file_en/556d884a4da52a77f1c1e119f88a6d42eee23651/eTD-Audi-Q7-SUV-50-TDI-quattro-tiptronic-210kW-MHEV-5-seats_240613.pdf",
+      "title": "Audi MediaCenter Q7 50 TDI quattro tiptronic 210 kW MHEV (5 seats) technical data, status 06/13/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M 50 TDI quattro tiptronic 210 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.076, basic tire 255/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-50-tdi-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/751/file_en/556d884a4da52a77f1c1e119f88a6d42eee23651/eTD-Audi-Q7-SUV-TDI-quattro-tiptronic-210kW-MHEV-5-seats_260204.pdf",
+      "title": "Audi MediaCenter Q7 TDI quattro tiptronic 210 kW MHEV (5 seats) technical data, status 02/04/2026",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M TDI quattro tiptronic 210 kW MHEV (the former 50 TDI, renamed for model year 2026): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.076, basic tire 255/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-55-tfsi-2024-06-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/936/file_en/b9a2b988f92292c9fc34d688ac4ce69ed2ba412e/eTD-Audi-Q7-SUV-55-TFSI-quattro-tiptronic-250kW-MHEV-5-seats_240613.pdf",
+      "title": "Audi MediaCenter Q7 55 TFSI quattro tiptronic 250 kW MHEV (5 seats) technical data, status 06/13/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M 55 TFSI quattro tiptronic 250 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, basic tire 255/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-55-tfsi-e-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1381/file_en/9d5c2e27a7ed95f3f0aa43f733f600509d33d4a4/eTD-Audi-Q7-SUV-55-TFSIe-quattro-tiptronic-250kW_290kW_240906.pdf",
+      "title": "Audi MediaCenter Q7 55 TFSI e quattro tiptronic 250 kW / 290 kW technical data, status 09/06/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M 55 TFSI e quattro plug-in hybrid (290 kW system output): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, basic tire 255/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-60-tfsi-e-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1382/file_en/408bcd5fbb33edb941831b5479bd3f2c7e8d4719/eTD-Audi-Q7-SUV-60-TFSIe-quattro-tiptronic-250kW_360kW_240906.pdf",
+      "title": "Audi MediaCenter Q7 60 TFSI e quattro tiptronic 250 kW / 360 kW technical data, status 09/06/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M 60 TFSI e quattro plug-in hybrid (360 kW system output): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, basic tire 255/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-60-tfsi-e-2025-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1382/file_de/408bcd5fbb33edb941831b5479bd3f2c7e8d4719/TD-Audi-Q7-SUV-TFSIe-quattro-tiptronic-360kW_250528.pdf",
+      "title": "Audi MediaCenter Q7 TFSI e quattro tiptronic 360 kW technical data (German), status 28.05.2025",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q7 4M TFSI e quattro plug-in hybrid with 360 kW system output (the former 60 TFSI e): permanent quattro all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m-q7-de-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_q7-suv_q7-suv-tfsi-e_sq7-suv.pdf",
+      "title": "Audi Germany Q7 SUV / Q7 SUV TFSI e / SQ7 SUV price list, model year 2025",
+      "note": "Official Audi Germany price list for the second-facelift Q7 4M. Its EU tire-label table lists the summer tires offered: 255/55 R19, 285/45 R20, 285/40 R21 and 285/35 R22 (winter: 255/55 R19, 255/50 R20, 285/45 R20). Used for the optional tire sizes.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-45-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/838/file_en/d91ab5de6c645394fb00cd0094953cc53d4baa86/eTD-Audi-Q8-SUV-45-TDI-quattro-tiptronic-170kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter Q8 45 TDI quattro tiptronic 170 kW MHEV technical data, status 09/06/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted Q8 45 TDI quattro tiptronic 170 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-45-tdi-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/838/file_en/d91ab5de6c645394fb00cd0094953cc53d4baa86/eTD-Audi-Q8-SUV-TDI-quattro-tiptronic-170kW-MHEV_260204.pdf",
+      "title": "Audi MediaCenter Q8 TDI quattro tiptronic 170 kW MHEV technical data, status 02/04/2026",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q8 TDI quattro tiptronic 170 kW MHEV (the former 45 TDI, renamed for model year 2026): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-50-tdi-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/713/file_en/e4e876d47bc6484d5e4b30137c2d04221ce3b60d/eTD-Audi-Q8-50-TDI-quattro-tiptronic-210kW-MHEV_2309019.pdf",
+      "title": "Audi MediaCenter Q8 50 TDI quattro tiptronic 210 kW MHEV technical data, status 09/19/2023",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted Q8 50 TDI quattro tiptronic 210 kW MHEV at its launch: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-50-tdi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/713/file_en/e4e876d47bc6484d5e4b30137c2d04221ce3b60d/eTD-Audi-Q8-SUV-50-TDI-quattro-tiptronic-210kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter Q8 50 TDI quattro tiptronic 210 kW MHEV technical data, status 09/06/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted Q8 50 TDI quattro tiptronic 210 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, basic tire 265/55 R19. This sheet alone prints final drive 3.076 (the Q7 TDI value); the 09/2023, 05/2025 and 02/2026 Q8 50 TDI sheets and every Q8 45 TDI sheet print 3.204.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-50-tdi-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/713/file_en/e4e876d47bc6484d5e4b30137c2d04221ce3b60d/eTD-Audi-Q8-SUV-TDI-quattro-tiptronic-210kW-MHEV_260204.pdf",
+      "title": "Audi MediaCenter Q8 TDI quattro tiptronic 210 kW MHEV technical data, status 02/04/2026",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q8 TDI quattro tiptronic 210 kW MHEV (the former 50 TDI, renamed for model year 2026): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-55-tfsi-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/839/file_en/b5352391c2acb8ab92835f8662f8287ebdd45084/eTD-Audi-Q8-SUV-55-TFSI-quattro-tiptronic-250kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter Q8 55 TFSI quattro tiptronic 250 kW MHEV technical data, status 09/06/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted Q8 55 TFSI quattro tiptronic 250 kW MHEV: quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 3.504, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-55-tfsi-e-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1383/file_en/a9170e456e37d8ef89bf807dadeecacdbe6fe1d1/eTD-Audi-Q8-SUV-55-TFSIe-quattro-tiptronic-250kW_290kW_240410.pdf",
+      "title": "Audi MediaCenter Q8 55 TFSI e quattro tiptronic 250 kW / 290 kW technical data, date 04/10/24",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted Q8 55 TFSI e quattro plug-in hybrid (290 kW system output): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-55-tfsi-e-2025-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1383/file_en/a9170e456e37d8ef89bf807dadeecacdbe6fe1d1/eTD-Audi-Q8-SUV-TFSIe-quattro-tiptronic-290kW_251023.pdf",
+      "title": "Audi MediaCenter Q8 TFSI e quattro tiptronic 290 kW technical data, status 10/23/2025",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the Q8 TFSI e quattro plug-in hybrid with 290 kW system output (the former 55 TFSI e): quattro permanent all-wheel drive with self-locking center differential, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.204, basic tire 265/55 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:4m8-q8-de-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_q8-suv_q8-suv-tfsi-e_sq8-suv.pdf",
+      "title": "Audi Germany Q8 SUV / Q8 SUV TFSI e / SQ8 SUV price list, model year 2025",
+      "note": "Official Audi Germany price list for the facelifted Q8. Its EU tire-label table lists the summer tires offered: 275/50 R20, 285/45 R21, 285/40 R22 and 285/35 R23 (winter: 265/55 R19, 265/50 R20, 285/45 R21). Used for the optional tire sizes.",
       "confidence": "high"
     }
   ]
