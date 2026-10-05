@@ -2,9 +2,15 @@ from __future__ import annotations
 
 import logging
 import threading
+from unittest.mock import MagicMock
 
 import numpy as np
+from test_support.clock_sync import complete_clock_sync
 
+from vibesensor.ingest.protocol_messages import HelloMessage
+from vibesensor.ingest.protocol_packing import pack_data
+from vibesensor.ingest.registry import ClientRegistry
+from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureLossStats,
@@ -231,6 +237,104 @@ def test_raw_capture_writer_finalize_returns_manifest_with_persisted_loss_counts
     assert sensor_d_loss is not None
     assert sensor_d_loss.losses.udp_ingest_queue_drop_count == 2
 
+    assert writer.shutdown()
+
+
+class _StoringHistoryDb:
+    def __init__(self) -> None:
+        self.stored_chunks: dict[str, list[RawCaptureChunk]] = {}
+
+    def append_raw_capture_chunk(self, _run_id: str, chunk: RawCaptureChunk) -> None:
+        self.stored_chunks.setdefault(chunk.client_id, []).append(chunk)
+
+    def finalize_raw_capture(
+        self,
+        run_id: str,
+        *,
+        run_start_monotonic_us: int | None = None,
+        sensor_clock_sync=None,
+        sensor_losses=None,
+    ) -> RawCaptureManifest:
+        return _manifest_from_chunks(
+            run_id=run_id,
+            stored_chunks=self.stored_chunks,
+            run_start_monotonic_us=run_start_monotonic_us,
+            sensor_clock_sync=dict(sensor_clock_sync or {}),
+            sensor_losses=dict(sensor_losses or {}),
+        )
+
+
+def test_a_run_keeps_the_chunks_a_sensor_streams_before_its_hello() -> None:
+    """After a server restart a sensor keeps streaming and says HELLO, which carries
+    its sample rate, only every 2 s. Its DATA syncs its clock before that HELLO
+    (#4146); the chunks stamped in between are written once the rate is known,
+    not dropped as invalid (Pi, 2026.10.4.41: 9 of 356 chunks, a degraded run)."""
+    client_id = "aabbccddee41"
+    frame_samples = 200
+    history_db = _StoringHistoryDb()
+    writer = RunRawCaptureWriter(history_db=history_db, logger=logging.getLogger(__name__))
+    writer.start_run("run-restart")
+    registry = ClientRegistry()
+    data_rx = DataDatagramProtocol(
+        registry=registry, processor=MagicMock(), raw_capture_sink=writer
+    )
+    addr = ("10.4.0.2", 50123)
+    offset_us = 90_000_000
+    seq = 0
+
+    def stream(count: int, *, synced: bool = True) -> None:
+        nonlocal seq
+        for _ in range(count):
+            seq += 1
+            t0_us = seq * 250_000 + (offset_us if synced else 0)
+            samples = np.full((frame_samples, 3), seq, dtype=np.int16)
+            data_rx._process_datagram(
+                pack_data(bytes.fromhex(client_id), seq, t0_us, samples), addr
+            )
+
+    stream(1, synced=False)
+    complete_clock_sync(registry, client_id, offset_us=offset_us)
+    stream(7)
+    registry.update_from_hello(
+        HelloMessage(
+            client_id=bytes.fromhex(client_id),
+            control_port=9075,
+            sample_rate_hz=800,
+            frame_samples=frame_samples,
+            name="node",
+            firmware_version="fw",
+        ),
+        (addr[0], 9075),
+    )
+    stream(5)
+    result = writer.finalize_run("run-restart")
+
+    assert result.manifest is not None
+    assert result.manifest.sensor_loss(client_id) is None
+    chunks = history_db.stored_chunks[client_id]
+    assert [chunk.t0_us for chunk in chunks] == [
+        frame * 250_000 + offset_us for frame in range(2, 14)
+    ]
+    assert {chunk.sample_rate_hz for chunk in chunks} == {800}
+    assert writer.shutdown()
+
+
+def test_chunks_of_a_sensor_that_never_announces_its_rate_count_as_invalid() -> None:
+    history_db = _StoringHistoryDb()
+    writer = RunRawCaptureWriter(history_db=history_db, logger=logging.getLogger(__name__))
+    writer.start_run("run-unannounced")
+
+    for index in range(25):
+        writer.capture_raw_samples(
+            client_id="sensor-x", sample_rate_hz=None, t0_us=index, samples=_samples()
+        )
+    result = writer.finalize_run("run-unannounced")
+
+    assert result.manifest is not None
+    loss = result.manifest.sensor_loss("sensor-x")
+    assert loss is not None
+    assert loss.losses.invalid_chunk_count == 25
+    assert history_db.stored_chunks == {}
     assert writer.shutdown()
 
 

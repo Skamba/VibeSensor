@@ -29,6 +29,11 @@ __all__ = ["RawCaptureFinalizeResult", "RunRawCaptureWriter"]
 _QUEUE_MAXSIZE = 2048
 _FINALIZE_WAIT_TIMEOUT_S = 5.0
 _CONTROL_REQUEST_ENQUEUE_TIMEOUT_S = 1.0
+# Chunks held per sensor until its sample rate is known. The rate comes with the
+# sensor's HELLO, every 2 s; a sensor streaming across a server restart sends
+# its first DATA (one frame per 250 ms) before that HELLO. This covers one lost
+# HELLO.
+_MAX_HELD_CHUNKS_PER_SENSOR = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,11 +83,19 @@ class _MutableLossStats:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class _HeldChunk:
+    t0_us: int
+    sample_count: int
+    samples_i16le: bytes
+
+
 @dataclass(slots=True)
 class _RunCaptureStats:
     by_client: dict[str, _MutableLossStats] = field(default_factory=dict)
     seen_client_ids: set[str] = field(default_factory=set)
     presync_chunks_by_client: dict[str, int] = field(default_factory=dict)
+    held_by_client: dict[str, list[_HeldChunk]] = field(default_factory=dict)
 
     def _sensor(self, client_id: str) -> _MutableLossStats:
         return self.by_client.setdefault(client_id, _MutableLossStats())
@@ -110,6 +123,26 @@ class _RunCaptureStats:
         self.presync_chunks_by_client[client_id] = (
             self.presync_chunks_by_client.get(client_id, 0) + 1
         )
+
+    def hold_chunk(self, client_id: str, chunk: _HeldChunk) -> bool:
+        """Keep a chunk until its sensor's rate is known; False when its hold is full."""
+        held = self.held_by_client.setdefault(client_id, [])
+        if len(held) >= _MAX_HELD_CHUNKS_PER_SENSOR:
+            return False
+        self.seen_client_ids.add(client_id)
+        held.append(chunk)
+        return True
+
+    def take_held_chunks(self, client_id: str) -> list[_HeldChunk]:
+        return self.held_by_client.pop(client_id, [])
+
+    def drop_held_chunks(self) -> dict[str, int]:
+        """Count the chunks whose sensor never sent its rate as invalid."""
+        dropped = {client_id: len(held) for client_id, held in self.held_by_client.items()}
+        self.held_by_client.clear()
+        for client_id, count in dropped.items():
+            self._sensor(client_id).invalid_chunk_count += count
+        return dropped
 
     def freeze(self) -> dict[str, RawCaptureLossStats]:
         frozen: dict[str, RawCaptureLossStats] = {}
@@ -194,28 +227,54 @@ class RunRawCaptureWriter:
             run_stats = self._run_stats
         if run_id is None:
             return
-        normalized_rate = int(sample_rate_hz or 0)
-        if normalized_rate <= 0:
-            if run_stats is not None:
-                run_stats.record_invalid_chunk(client_id)
-            return
         samples_i16 = np.ascontiguousarray(samples, dtype=np.int16)
         if samples_i16.ndim != 2 or samples_i16.shape[1] != 3 or samples_i16.shape[0] <= 0:
             if run_stats is not None:
                 run_stats.record_invalid_chunk(client_id)
             return
+        chunk = _HeldChunk(
+            t0_us=int(t0_us),
+            sample_count=int(samples_i16.shape[0]),
+            samples_i16le=samples_i16.tobytes(order="C"),
+        )
+        normalized_rate = int(sample_rate_hz or 0)
+        if normalized_rate <= 0:
+            # Synced but not yet announced: its HELLO, which carries the rate,
+            # is still to come. Write the chunk with the rate that HELLO brings.
+            if run_stats is None:
+                return
+            # The lock keeps finalize from settling the held chunks meanwhile.
+            with self._lock:
+                held = self._run_stats is run_stats and run_stats.hold_chunk(client_id, chunk)
+            if not held:
+                run_stats.record_invalid_chunk(client_id)
+            return
         if run_stats is not None:
             run_stats.record_seen(client_id)
+            with self._lock:
+                held_chunks = run_stats.take_held_chunks(client_id)
+            for held_chunk in held_chunks:
+                self._enqueue_chunk(run_id, run_stats, client_id, normalized_rate, held_chunk)
+        self._enqueue_chunk(run_id, run_stats, client_id, normalized_rate, chunk)
+
+    def _enqueue_chunk(
+        self,
+        run_id: str,
+        run_stats: _RunCaptureStats | None,
+        client_id: str,
+        sample_rate_hz: int,
+        chunk: _HeldChunk,
+    ) -> None:
         try:
             self._queue.put_nowait(
                 (
                     run_id,
                     RawCaptureChunk(
                         client_id=client_id,
-                        sample_rate_hz=normalized_rate,
-                        t0_us=int(t0_us),
-                        sample_count=int(samples_i16.shape[0]),
-                        samples_i16le=samples_i16.tobytes(order="C"),
+                        sample_rate_hz=sample_rate_hz,
+                        t0_us=chunk.t0_us,
+                        sample_count=chunk.sample_count,
+                        samples_i16le=chunk.samples_i16le,
                     ),
                     run_stats,
                 )
@@ -249,7 +308,16 @@ class RunRawCaptureWriter:
             self._run_start_monotonic_us = None
             run_stats = self._run_stats
             self._run_stats = None
+            unannounced = run_stats.drop_held_chunks() if run_stats is not None else {}
         if run_stats is not None:
+            for client_id, chunk_count in sorted(unannounced.items()):
+                self._logger.warning(
+                    "Raw capture for run %s dropped %d chunk(s) from %s: it never "
+                    "announced its sample rate",
+                    run_id,
+                    chunk_count,
+                    client_id,
+                )
             for client_id, chunk_count in sorted(run_stats.presync_chunks_by_client.items()):
                 self._logger.info(
                     "Raw capture for run %s skipped %d chunk(s) from %s sent before its "

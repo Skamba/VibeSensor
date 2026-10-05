@@ -100,7 +100,11 @@ During recording:
   post-analysis within the Pi's memory budget
 - raw UDP chunks are only captured once their sensor is clock-synced (see
   `docs/time_alignment.md`); earlier chunks are dropped so raw replay aligns from
-  each sensor's first synced chunk
+  each sensor's first synced chunk. A synced chunk from a sensor whose HELLO
+  (which carries its sample rate) has not arrived yet is held, up to 20 per
+  sensor, and written once the rate is known. This happens after a server
+  restart, when DATA syncs the sensor before its next HELLO. Held chunks are
+  counted as invalid only if the run ends before that HELLO.
 - `GET /api/recording/status` reports `last_stop_reason` for the most recent run
   until the next run starts; the Live page shows a notice when it is
   `max_duration`
