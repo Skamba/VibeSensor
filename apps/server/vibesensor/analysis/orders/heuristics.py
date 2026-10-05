@@ -6,7 +6,7 @@ import math
 from dataclasses import replace
 
 from vibesensor.analysis.constants import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
-from vibesensor.analysis.math_utils import _mean
+from vibesensor.analysis.math_utils import _mean, _ramp
 from vibesensor.analysis.orders.settings import ORDER_HEURISTIC_SETTINGS
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
@@ -22,7 +22,14 @@ def detect_diffuse_excitation(
     *,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[bool, float]:
-    """Detect diffuse, non-localized excitation across multiple sensors."""
+    """Detect diffuse, non-localized excitation across multiple sensors.
+
+    Returns whether the order is diffuse (similar match rates and amplitudes at
+    every sensor that saw it) and the confidence factor for that. Past each
+    edge of the test (amplitude ratio, match-rate range, mean match rate) the
+    penalty eases out over a ramp rather than vanishing, so the flag is the
+    full-penalty region and the factor can sit just under 1 outside it.
+    """
     settings = ORDER_HEURISTIC_SETTINGS
     if len(connected_locations) < 2 or not possible_by_location:
         return False, 1.0
@@ -45,23 +52,32 @@ def detect_diffuse_excitation(
         return False, 1.0
     rate_range = max(loc_rates) - min(loc_rates)
     mean_rate = _mean(loc_rates)
-    amp_uniform = True
-    if loc_mean_amps and len(loc_mean_amps) >= 2:
+    amp_uniformity = 1.0
+    if len(loc_mean_amps) >= 2:
         max_amp = max(loc_mean_amps.values())
         min_amp = min(loc_mean_amps.values())
-        if min_amp > 0 and max_amp / min_amp > settings.diffuse_amplitude_dominance_ratio:
-            amp_uniform = False
-    if (
-        rate_range < settings.diffuse_match_rate_range_threshold
-        and mean_rate > settings.diffuse_min_mean_rate
-        and amp_uniform
-    ):
-        penalty = max(
-            settings.diffuse_penalty_floor,
-            settings.diffuse_penalty_base - settings.diffuse_penalty_per_sensor * len(loc_rates),
+        if min_amp > 0:
+            amp_ratio = settings.diffuse_amplitude_dominance_ratio
+            amp_uniformity = 1.0 - _ramp(
+                max_amp / min_amp, amp_ratio, amp_ratio + settings.diffuse_amplitude_ramp
+            )
+    range_limit = settings.diffuse_match_rate_range_threshold
+    min_mean_rate = settings.diffuse_min_mean_rate
+    diffuseness = (
+        amp_uniformity
+        * (
+            1.0
+            - _ramp(rate_range, range_limit, range_limit + settings.diffuse_match_rate_range_ramp)
         )
-        return True, penalty
-    return False, 1.0
+        * _ramp(mean_rate, min_mean_rate - settings.diffuse_mean_rate_ramp, min_mean_rate)
+    )
+    if diffuseness <= 0.0:
+        return False, 1.0
+    penalty = max(
+        settings.diffuse_penalty_floor,
+        settings.diffuse_penalty_base - settings.diffuse_penalty_per_sensor * len(loc_rates),
+    )
+    return diffuseness >= 1.0, 1.0 - diffuseness * (1.0 - penalty)
 
 
 def suppress_engine_aliases(

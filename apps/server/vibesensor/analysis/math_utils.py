@@ -13,6 +13,11 @@ def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values)
 
 
+def _ramp(value: float, low: float, high: float) -> float:
+    """0 at or below *low*, 1 at or above *high*, linear in between."""
+    return max(0.0, min(1.0, (value - low) / (high - low)))
+
+
 def _corr_abs(x_vals: Sequence[float], y_vals: Sequence[float]) -> float | None:
     """Absolute Pearson correlation for equal-length numeric sequences."""
     if len(x_vals) != len(y_vals) or len(x_vals) < 3:

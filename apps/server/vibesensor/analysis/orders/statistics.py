@@ -15,7 +15,7 @@ from vibesensor.analysis.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_MATCH_POINTS,
 )
-from vibesensor.analysis.math_utils import _corr_abs_clamped, _mean
+from vibesensor.analysis.math_utils import _corr_abs_clamped, _mean, _ramp
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.speed_profile_helpers import _speed_profile_from_points
@@ -29,6 +29,7 @@ from vibesensor.domain.order_match import OrderMatchObservation
 def compute_order_confidence(
     *,
     effective_match_rate: float,
+    min_match_rate: float,
     error_score: float,
     corr_val: float,
     snr_score: float,
@@ -36,42 +37,54 @@ def compute_order_confidence(
     localization_confidence: float,
     weak_spatial_separation: bool,
     dominance_ratio: float | None,
-    constant_speed: bool,
-    steady_speed: bool,
+    constancy: float,
+    steadiness: float,
     matched: int,
     corroborating_locations: int,
     phases_with_evidence: int,
-    is_diffuse_excitation: bool,
     diffuse_penalty: float,
     n_connected_locations: int,
+    weak_separation_edge: float | None = None,
     no_wheel_sensors: bool = False,
     path_compliance: float = 1.0,
-    spread_zone_source: bool = False,
+    zone_source: bool = False,
     zone_match_rate: float = 0.0,
+    wheel_shared_fraction: float = 0.0,
 ) -> float:
     """Compute calibrated confidence for an order-tracking finding.
 
-    ``spread_zone_source`` marks an engine/driveline order seen with no dominant
-    corner. Those sources are diagnosed as a zone, so the missing corner is
-    expected: as the source evidence itself becomes established (see
-    ``_zone_credit``), the zone counts as clearly located, like a wheel order at
-    a clearly dominant corner, and the weak-separation penalty lifts. Otherwise
-    (wheel orders, or poorly matched zone orders) the corner-dominance terms
-    apply unchanged.
+    ``zone_source`` marks an engine/driveline order not pinned to one sensor by
+    its per-location match rates. Those sources are diagnosed as a zone, so a
+    missing dominant corner is expected: as the source evidence itself becomes
+    established (see ``_zone_credit``), the zone counts as clearly located, like
+    a wheel order at a clearly dominant corner, and the weak-separation penalty
+    lifts. Otherwise (wheel orders, or poorly matched zone orders) the
+    corner-dominance terms apply unchanged.
 
-    Strength terms ramp rather than step, so half a dB moves the score a little:
-    see ``_strength_cap``, ``_light_strength_factor`` and ``_zone_credit``.
+    *weak_separation_edge* is the dominance at which the hotspot stopped
+    counting as weakly separated (``LocationAnalysisResult``); the spread
+    penalty eases out past it instead of vanishing there. *constancy* and
+    *steadiness* (0 to 1, ``speed_constancy`` / ``speed_steadiness``) grade how
+    close the drive came to one speed.
+
+    Every term ramps rather than steps, so a small change of any input moves
+    the score a little ("Confidence levels" in docs/metrics.md). The integer
+    gates (sensor counts, corroboration, phases) stay steps.
     """
     settings = ORDER_CONFIDENCE_SETTINGS
+    weakness = _spatial_weakness(weak_spatial_separation, dominance_ratio, weak_separation_edge)
     zone_credit = _zone_credit(
-        spread_zone_source=spread_zone_source,
+        zone_source=zone_source,
         zone_match_rate=zone_match_rate,
         error_score=error_score,
+        wheel_shared_fraction=wheel_shared_fraction,
         absolute_strength_db=absolute_strength_db,
         corroborating_locations=corroborating_locations,
     )
-    localization_confidence += zone_credit * max(
-        0.0, settings.zone_localization_confidence - localization_confidence
+    localization_confidence += (
+        weakness
+        * zone_credit
+        * max(0.0, settings.zone_localization_confidence - localization_confidence)
     )
     corr_shift = max(
         0.0,
@@ -81,7 +94,9 @@ def compute_order_confidence(
         ),
     )
     match_weight = settings.match_weight + corr_shift
-    corr_weight = settings.correlation_weight - corr_shift
+    # At one speed the predicted frequency barely moves, so correlating it with
+    # the matched one measures noise.
+    corr_weight = (settings.correlation_weight - corr_shift) * (1.0 - constancy)
     confidence = (
         settings.confidence_base
         + (match_weight * effective_match_rate)
@@ -94,28 +109,14 @@ def compute_order_confidence(
     confidence *= settings.localization_base + (
         settings.localization_spread * max(0.0, min(1.0, localization_confidence))
     )
-    separated = settings.no_wheel_sensor_penalty if no_wheel_sensors else 1.0
-    if weak_spatial_separation:
-        if (
-            no_wheel_sensors
-            and dominance_ratio is not None
-            and dominance_ratio >= settings.weak_separation_dominance_threshold
-        ):
-            spread = settings.weak_separation_strong_penalty
-        elif (
-            dominance_ratio is not None
-            and dominance_ratio < settings.weak_separation_uniform_dominance
-        ):
-            spread = settings.weak_separation_uniform_penalty
-        else:
-            spread = settings.weak_separation_mild_penalty
-        # An established zone needs no dominant corner: its credit lifts the penalty.
-        separated = spread + zone_credit * (separated - spread)
-    confidence *= separated
-    if constant_speed:
-        confidence *= settings.constant_speed_penalty
-    elif steady_speed:
-        confidence *= settings.steady_speed_penalty
+    spread = _spread_penalty(dominance_ratio, no_wheel_sensors=no_wheel_sensors)
+    # An established zone needs no dominant corner: its credit lifts the penalty.
+    spread += zone_credit * (1.0 - spread)
+    confidence *= 1.0 - weakness * (1.0 - spread)
+    confidence *= min(
+        1.0 - (1.0 - settings.steady_speed_penalty) * steadiness,
+        1.0 - (1.0 - settings.constant_speed_penalty) * constancy,
+    )
     sample_factor = min(1.0, matched / settings.sample_saturation_count)
     confidence = confidence * (
         settings.sample_weight_base + settings.sample_weight_range * sample_factor
@@ -128,38 +129,36 @@ def compute_order_confidence(
         confidence *= settings.phases_three_bonus
     elif phases_with_evidence >= 2:
         confidence *= settings.phases_two_bonus
-    if is_diffuse_excitation:
-        confidence *= diffuse_penalty
-    if (
-        n_connected_locations <= 1
-        and localization_confidence >= settings.localization_min_scale_threshold
-    ):
-        confidence *= settings.single_sensor_confidence_scale
-    elif (
-        n_connected_locations == 2
-        and localization_confidence >= settings.localization_min_scale_threshold
-    ):
-        confidence *= settings.dual_sensor_confidence_scale
+    confidence *= diffuse_penalty
+    confidence *= _few_sensor_scale(n_connected_locations, localization_confidence)
     # Again after the bonuses, so corroboration/phase bonuses cannot lift a
     # noise-level order over the cap and past a louder order of another source.
-    confidence = min(confidence, strength_cap)
+    confidence = min(confidence, strength_cap, _presence_cap(effective_match_rate, min_match_rate))
     return max(settings.confidence_floor, min(settings.confidence_ceiling, confidence))
-
-
-def _ramp(value: float, low: float, high: float) -> float:
-    """0 at or below *low*, 1 at or above *high*, linear in between."""
-    return max(0.0, min(1.0, (value - low) / (high - low)))
 
 
 def _strength_cap(absolute_strength_db: float) -> float:
     """The most a finding this strong may score: at most Weak under 8 dB, lifting above."""
     settings = ORDER_CONFIDENCE_SETTINGS
-    cap = settings.negligible_strength_confidence_cap
+    cap = settings.weak_confidence_cap
     lifted = _ramp(
         absolute_strength_db,
         NEGLIGIBLE_STRENGTH_MAX_DB,
         NEGLIGIBLE_STRENGTH_MAX_DB + settings.negligible_strength_ramp_db,
     )
+    return cap + lifted * (settings.confidence_ceiling - cap)
+
+
+def _presence_cap(effective_match_rate: float, min_match_rate: float) -> float:
+    """The most an order heard this often may score: at most Weak at the minimum rate.
+
+    Below *min_match_rate* there is no finding at all; the cap lifts over the
+    next ``presence_ramp`` of match rate, so passing the minimum adds a Weak
+    finding rather than a Strong one.
+    """
+    settings = ORDER_CONFIDENCE_SETTINGS
+    cap = settings.weak_confidence_cap
+    lifted = _ramp(effective_match_rate, min_match_rate, min_match_rate + settings.presence_ramp)
     return cap + lifted * (settings.confidence_ceiling - cap)
 
 
@@ -174,34 +173,123 @@ def _light_strength_factor(absolute_strength_db: float) -> float:
     )
 
 
+def _spatial_weakness(
+    weak_spatial_separation: bool,
+    dominance_ratio: float | None,
+    weak_separation_edge: float | None,
+) -> float:
+    """How fully the weak-separation terms apply, 0 to 1.
+
+    1 for a weakly separated hotspot; past the dominance edge where it stops
+    counting as weak, fading to 0 over ``weak_separation_edge_ramp``. A hotspot
+    declared separated by other evidence (below the edge, or with no edge)
+    takes none.
+    """
+    if weak_spatial_separation:
+        return 1.0
+    if weak_separation_edge is None or dominance_ratio is None:
+        return 0.0
+    if dominance_ratio < weak_separation_edge:
+        return 0.0
+    return 1.0 - _ramp(
+        dominance_ratio,
+        weak_separation_edge,
+        weak_separation_edge + ORDER_CONFIDENCE_SETTINGS.weak_separation_edge_ramp,
+    )
+
+
+def _spread_penalty(dominance_ratio: float | None, *, no_wheel_sensors: bool) -> float:
+    """Weak-separation penalty: 0.70 when uniform (dominance < 1.05), 0.80 above.
+
+    Without wheel sensors a clear cabin hotspot (dominance 1.5 and up) takes
+    0.90. Each step eases in over the dominance just past its edge.
+    """
+    settings = ORDER_CONFIDENCE_SETTINGS
+    if dominance_ratio is None:
+        return settings.weak_separation_mild_penalty
+    uniform_dominance = settings.weak_separation_uniform_dominance
+    penalty = settings.weak_separation_uniform_penalty + (
+        settings.weak_separation_mild_penalty - settings.weak_separation_uniform_penalty
+    ) * _ramp(
+        dominance_ratio,
+        uniform_dominance,
+        uniform_dominance + settings.weak_separation_uniform_ramp,
+    )
+    if no_wheel_sensors:
+        threshold = settings.weak_separation_dominance_threshold
+        penalty += (
+            settings.weak_separation_strong_penalty - settings.weak_separation_mild_penalty
+        ) * _ramp(
+            dominance_ratio,
+            threshold,
+            threshold + settings.weak_separation_edge_ramp,
+        )
+    return penalty
+
+
+def _few_sensor_scale(n_connected_locations: int, localization_confidence: float) -> float:
+    """Discount a localisation claim made with one or two sensors."""
+    settings = ORDER_CONFIDENCE_SETTINGS
+    if n_connected_locations <= 1:
+        scale = settings.single_sensor_confidence_scale
+    elif n_connected_locations == 2:
+        scale = settings.dual_sensor_confidence_scale
+    else:
+        return 1.0
+    return 1.0 - (1.0 - scale) * _ramp(
+        localization_confidence,
+        settings.few_sensor_scale_from_localization,
+        settings.few_sensor_scale_full_localization,
+    )
+
+
 def _zone_credit(
     *,
-    spread_zone_source: bool,
+    zone_source: bool,
     zone_match_rate: float,
     error_score: float,
+    wheel_shared_fraction: float,
     absolute_strength_db: float,
     corroborating_locations: int,
 ) -> float:
-    """How far a spread zone-source order stands on its own evidence, 0 to 1.
+    """How far a zone-source order stands on its own evidence, 0 to 1.
 
-    Requires the order heard (*zone_match_rate*) in enough of its windows, on
-    frequency, at more than one sensor; then grows with strength across 16 dB.
-    Road noise near an engine/driveline order is faint and patchy, so it fails
-    this and keeps the corner-dominance penalties ("Confidence levels" in
-    docs/metrics.md).
+    Needs the order heard at more than one sensor. It then grows with how
+    often it is heard (*zone_match_rate*, 0.40-0.50), how closely it is on
+    frequency (*error_score*, 0.50-0.60), how little of it is a wheel order's
+    peaks (*wheel_shared_fraction*, full under 0.40, none from 0.50) and its
+    strength (13-19 dB). Road noise near an engine/driveline order is faint
+    and patchy, so it fails this and keeps the corner-dominance penalties
+    ("Confidence levels" in docs/metrics.md).
     """
     settings = ORDER_CONFIDENCE_SETTINGS
-    if (
-        not spread_zone_source
-        or zone_match_rate < settings.zone_min_match_rate
-        or error_score < settings.zone_min_error_score
-        or corroborating_locations < settings.zone_min_corroborating_locations
-    ):
+    if not zone_source or corroborating_locations < settings.zone_min_corroborating_locations:
         return 0.0
-    return _ramp(
-        absolute_strength_db,
-        LIGHT_STRENGTH_MAX_DB - settings.zone_strength_ramp_db,
-        LIGHT_STRENGTH_MAX_DB + settings.zone_strength_ramp_db,
+    alias_fraction = settings.wheel_alias_shared_peak_fraction
+    return (
+        _ramp(
+            zone_match_rate,
+            settings.zone_min_match_rate,
+            settings.zone_min_match_rate + settings.zone_match_rate_ramp,
+        )
+        * _ramp(
+            error_score,
+            settings.zone_min_error_score,
+            settings.zone_min_error_score + settings.zone_error_score_ramp,
+        )
+        * (
+            1.0
+            - _ramp(
+                wheel_shared_fraction,
+                alias_fraction - settings.zone_wheel_alias_ramp,
+                alias_fraction,
+            )
+        )
+        * _ramp(
+            absolute_strength_db,
+            LIGHT_STRENGTH_MAX_DB - settings.zone_strength_ramp_db,
+            LIGHT_STRENGTH_MAX_DB + settings.zone_strength_ramp_db,
+        )
     )
 
 

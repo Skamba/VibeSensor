@@ -23,7 +23,8 @@ class FindingsBuildRequest:
     samples: Sequence[Sample]
     speed_sufficient: bool
     steady_speed: bool
-    speed_stddev_kmh: float | None
+    speed_steadiness: float
+    speed_constancy: float
     speed_non_null_pct: float
     raw_sample_rate_hz: float | None
     lang: str
@@ -66,7 +67,8 @@ class PreparedAnalysisContext:
             samples=self.samples,
             speed_sufficient=self.prepared.speed_sufficient,
             steady_speed=self.prepared.is_steady_speed,
-            speed_stddev_kmh=self.prepared.speed_stddev_kmh,
+            speed_steadiness=self.prepared.speed_steadiness,
+            speed_constancy=self.prepared.speed_constancy,
             speed_non_null_pct=self.prepared.speed_non_null_pct,
             raw_sample_rate_hz=self.prepared.raw_sample_rate_hz,
             lang=self.language,

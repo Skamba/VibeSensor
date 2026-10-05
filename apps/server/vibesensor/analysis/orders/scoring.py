@@ -35,11 +35,11 @@ class OrderFindingBuildContext:
     per_location_dominant: bool
     match_rate: float
     min_match_rate: float
-    constant_speed: bool
-    steady_speed: bool
+    constancy: float
+    steadiness: float
     connected_locations: set[str]
     lang: str
-    shares_wheel_order_peaks: bool = False
+    wheel_shared_fraction: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -98,7 +98,7 @@ def score_order_finding(
     )
     evidence = match.evidence
     mean_amp, mean_floor, mean_rel_err, corr_val, corr = compute_amplitude_and_error_stats(
-        evidence, constant_speed=context.constant_speed
+        evidence, constant_speed=context.constancy >= 1.0
     )
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
@@ -110,6 +110,7 @@ def score_order_finding(
         suspected_source=hypothesis.suspected_source,
     )
     domain_hotspot = _normalized_domain_hotspot(loc_result)
+    weak_separation_edge = loc_result.weak_spatial_threshold if loc_result is not None else None
     weak_spatial_separation = (
         domain_hotspot.weak_spatial_separation if domain_hotspot is not None else True
     )
@@ -161,6 +162,7 @@ def score_order_finding(
     effective_diffuse_penalty = 1.0 if zone_source else diffuse_penalty
     confidence = compute_order_confidence(
         effective_match_rate=context.effective_match_rate,
+        min_match_rate=context.min_match_rate,
         error_score=error_score,
         corr_val=corr_val,
         snr_score=snr_score,
@@ -168,23 +170,19 @@ def score_order_finding(
         localization_confidence=localization_confidence,
         weak_spatial_separation=weak_spatial_separation,
         dominance_ratio=dominance_ratio,
-        constant_speed=context.constant_speed,
-        steady_speed=context.steady_speed,
+        weak_separation_edge=weak_separation_edge,
+        constancy=context.constancy,
+        steadiness=context.steadiness,
         matched=len(evidence),
         corroborating_locations=corroborating_locations,
         phases_with_evidence=phases_with_evidence,
-        is_diffuse_excitation=diffuse_excitation,
         diffuse_penalty=effective_diffuse_penalty,
         n_connected_locations=len(context.connected_locations),
         no_wheel_sensors=no_wheel_override,
         path_compliance=match.compliance,
-        spread_zone_source=(
-            zone_source
-            and weak_spatial_separation
-            and not context.per_location_dominant
-            and not context.shares_wheel_order_peaks
-        ),
+        zone_source=zone_source and not context.per_location_dominant,
         zone_match_rate=context.effective_match_rate * match.heard_share,
+        wheel_shared_fraction=context.wheel_shared_fraction,
     )
 
     ranking_score = (

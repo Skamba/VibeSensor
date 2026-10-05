@@ -2,14 +2,30 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import pytest
 
+from vibesensor.analysis.orders.heuristics import detect_diffuse_excitation
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
+from vibesensor.analysis.speed_profile_helpers import speed_constancy, speed_steadiness
+from vibesensor.domain.order_match import OrderMatchObservation
+
+# The most one small step of any graded input may move the score
+# (0.01 of a rate, score or dominance; 0.05 km/h; 0.05 of an amplitude ratio).
+_MAX_STEP = 0.05
+
+
+def _steps(scores: list[float]) -> list[float]:
+    return [after - before for before, after in zip(scores, scores[1:], strict=False)]
+
+
+def _grid(low: float, high: float, step: float) -> list[float]:
+    return [low + i * step for i in range(round((high - low) / step) + 1)]
 
 
 class TestComputeOrderConfidence:
@@ -17,6 +33,7 @@ class TestComputeOrderConfidence:
 
     _DEFAULTS: dict[str, Any] = {
         "effective_match_rate": 0.60,
+        "min_match_rate": 0.25,
         "error_score": 0.80,
         "corr_val": 0.50,
         "snr_score": 0.60,
@@ -24,12 +41,11 @@ class TestComputeOrderConfidence:
         "localization_confidence": 0.70,
         "weak_spatial_separation": False,
         "dominance_ratio": 2.0,
-        "constant_speed": False,
-        "steady_speed": False,
+        "constancy": 0.0,
+        "steadiness": 0.0,
         "matched": 30,
         "corroborating_locations": 2,
         "phases_with_evidence": 2,
-        "is_diffuse_excitation": False,
         "diffuse_penalty": 1.0,
         "n_connected_locations": 3,
         "no_wheel_sensors": False,
@@ -42,7 +58,7 @@ class TestComputeOrderConfidence:
 
     def test_bonuses_do_not_lift_a_negligible_order_over_the_cap(self) -> None:
         """Road noise matched on every sensor in every phase stays at the cap."""
-        cap = ORDER_CONFIDENCE_SETTINGS.negligible_strength_confidence_cap
+        cap = ORDER_CONFIDENCE_SETTINGS.weak_confidence_cap
         noise = self._call(
             absolute_strength_db=6.4,
             effective_match_rate=0.9,
@@ -65,16 +81,9 @@ class TestComputeOrderConfidence:
                 {"weak_spatial_separation": True},
                 id="weak_spatial_separation",
             ),
-            pytest.param(
-                {"constant_speed": False},
-                {"constant_speed": True},
-                id="constant_speed",
-            ),
-            pytest.param(
-                {"is_diffuse_excitation": False},
-                {"is_diffuse_excitation": True, "diffuse_penalty": 0.75},
-                id="diffuse_excitation",
-            ),
+            pytest.param({"constancy": 0.0}, {"constancy": 1.0}, id="constant_speed"),
+            pytest.param({"steadiness": 0.0}, {"steadiness": 1.0}, id="steady_speed"),
+            pytest.param({"diffuse_penalty": 1.0}, {"diffuse_penalty": 0.75}, id="diffuse"),
             pytest.param(
                 {"n_connected_locations": 3},
                 {"n_connected_locations": 1},
@@ -104,7 +113,7 @@ class TestComputeOrderConfidence:
     # established: heard often, on frequency, at several sensors.
     _ZONE: dict[str, Any] = {
         **_SPREAD,
-        "spread_zone_source": True,
+        "zone_source": True,
         "zone_match_rate": 0.9,
         "error_score": 0.9,
         "corroborating_locations": 3,
@@ -123,7 +132,7 @@ class TestComputeOrderConfidence:
             self._call(**{**profile, "absolute_strength_db": tenths / 10})
             for tenths in range(40, 300, 5)
         ]
-        steps = [after - before for before, after in zip(scores, scores[1:], strict=False)]
+        steps = _steps(scores)
         assert min(steps) >= 0.0
         assert max(steps) <= 0.08
 
@@ -132,7 +141,7 @@ class TestComputeOrderConfidence:
         assert self._call(absolute_strength_db=15.9) == self._call(absolute_strength_db=12.5)
 
     def test_an_established_zone_scores_like_a_clearly_dominant_corner(self) -> None:
-        located = {**self._ZONE, "spread_zone_source": False, "weak_spatial_separation": False}
+        located = {**self._ZONE, "zone_source": False, "weak_spatial_separation": False}
         located["localization_confidence"] = ORDER_CONFIDENCE_SETTINGS.zone_localization_confidence
         assert self._call(**self._ZONE, absolute_strength_db=19.0) == pytest.approx(
             self._call(**located, absolute_strength_db=19.0)
@@ -142,13 +151,158 @@ class TestComputeOrderConfidence:
         "overrides",
         [
             pytest.param({"absolute_strength_db": 13.0}, id="faint"),
-            pytest.param({"zone_match_rate": 0.3}, id="patchy"),
-            pytest.param({"error_score": 0.4}, id="off-frequency"),
+            pytest.param({"zone_match_rate": 0.4}, id="patchy"),
+            pytest.param({"error_score": 0.5}, id="off-frequency"),
             pytest.param({"corroborating_locations": 1}, id="one-sensor"),
+            pytest.param({"wheel_shared_fraction": 0.5}, id="wheel-alias"),
         ],
     )
     def test_a_zone_without_its_own_evidence_keeps_the_corner_penalties(
         self, overrides: dict[str, Any]
     ) -> None:
         zone = {**self._ZONE, "absolute_strength_db": 22.0, **overrides}
-        assert self._call(**zone) == self._call(**{**zone, "spread_zone_source": False})
+        assert self._call(**zone) == self._call(**{**zone, "zone_source": False})
+
+    # Each graded input swept across its old step edge, in small steps: the
+    # score moves one way, by a little per step, and the full change is kept.
+    @pytest.mark.parametrize(
+        ("profile", "name", "values", "direction"),
+        [
+            pytest.param(_ZONE, "zone_match_rate", _grid(0.30, 0.60, 0.01), 1, id="zone-rate"),
+            pytest.param(_ZONE, "error_score", _grid(0.40, 0.70, 0.01), 1, id="zone-error"),
+            pytest.param(
+                _ZONE, "wheel_shared_fraction", _grid(0.30, 0.60, 0.01), -1, id="zone-alias"
+            ),
+            pytest.param(
+                {"n_connected_locations": 2},
+                "localization_confidence",
+                _grid(0.0, 0.70, 0.01),
+                1,
+                id="two-sensor-localisation",
+            ),
+            pytest.param({}, "effective_match_rate", _grid(0.25, 0.60, 0.01), 1, id="presence"),
+        ],
+    )
+    def test_a_graded_input_moves_confidence_a_little_per_step(
+        self, profile: dict[str, Any], name: str, values: list[float], direction: int
+    ) -> None:
+        scores = [self._call(**{**profile, name: value}) for value in values]
+        steps = [direction * step for step in _steps(scores)]
+        assert min(steps) >= -1e-12
+        assert max(steps) <= _MAX_STEP
+        assert direction * (scores[-1] - scores[0]) > 0.05
+
+    def test_an_order_heard_just_often_enough_is_at_most_weak(self) -> None:
+        cap = ORDER_CONFIDENCE_SETTINGS.weak_confidence_cap
+        assert self._call(effective_match_rate=0.25, error_score=1.0, corr_val=1.0) <= cap
+        # Once heard often enough, the minimum no longer limits the score.
+        settled = 0.25 + ORDER_CONFIDENCE_SETTINGS.presence_ramp
+        assert self._call(effective_match_rate=settled) == self._call(
+            effective_match_rate=settled, min_match_rate=0.0
+        )
+
+    @pytest.mark.parametrize(
+        ("edge", "no_wheel"),
+        [
+            pytest.param(1.20, False, id="two-locations"),
+            pytest.param(1.44, False, id="four-locations"),
+            pytest.param(None, True, id="no-wheel-sensors"),
+        ],
+    )
+    def test_dominance_moves_confidence_a_little_per_step(
+        self, edge: float | None, no_wheel: bool
+    ) -> None:
+        def score(dominance: float) -> float:
+            return self._call(
+                dominance_ratio=dominance,
+                weak_spatial_separation=no_wheel or dominance < (edge or 0.0),
+                weak_separation_edge=edge,
+                no_wheel_sensors=no_wheel,
+                localization_confidence=0.3,
+            )
+
+        scores = [score(dominance) for dominance in _grid(0.95, 2.0, 0.01)]
+        assert min(_steps(scores)) >= -1e-12
+        assert max(_steps(scores)) <= _MAX_STEP
+        # The full span of the old steps is kept: uniform 0.70 to none (or to
+        # 0.90 for a cabin hotspot without wheel sensors).
+        expected = 0.90 / 0.70 if no_wheel else 1.0 / 0.70
+        assert scores[-1] / scores[0] == pytest.approx(expected)
+
+    def test_a_hotspot_separated_by_other_evidence_takes_no_spread_penalty(self) -> None:
+        # Declared separated below the edge (a single matched sensor): no ramp.
+        assert self._call(dominance_ratio=1.1, weak_separation_edge=1.44) == self._call(
+            dominance_ratio=1.1, weak_separation_edge=None
+        )
+
+    @pytest.mark.parametrize("name", ["constancy", "steadiness"])
+    def test_speed_grades_scale_the_score_linearly(self, name: str) -> None:
+        scores = [self._call(**{name: grade}) for grade in _grid(0.0, 1.0, 0.05)]
+        assert max(abs(step) for step in _steps(scores)) <= _MAX_STEP
+        assert scores[-1] < scores[0]
+
+
+@pytest.mark.parametrize(
+    ("grade", "values", "make"),
+    [
+        pytest.param(
+            speed_steadiness, _grid(1.5, 3.5, 0.05), lambda v: (v, 5.0), id="steady-stddev"
+        ),
+        pytest.param(
+            speed_steadiness, _grid(6.0, 14.0, 0.05), lambda v: (1.0, v), id="steady-range"
+        ),
+        pytest.param(speed_constancy, _grid(0.3, 1.2, 0.05), lambda v: (v,), id="constant"),
+    ],
+)
+def test_speed_grades_ease_out_past_the_limits(
+    grade: Callable[..., float], values: list[float], make: Callable[[float], tuple]
+) -> None:
+    grades = [grade(*make(value)) for value in values]
+    assert grades[0] == 1.0
+    assert grades[-1] == 0.0
+    assert all(step <= 0.0 for step in _steps(grades))
+    assert max(-step for step in _steps(grades)) <= 0.1 + 1e-9
+
+
+_WHEELS = ("front_left_wheel", "front_right_wheel", "rear_left_wheel", "rear_right_wheel")
+
+
+def _diffuse(
+    *, amp_ratio: float = 1.0, rate_range: float = 0.0, mean_rate: float = 0.6
+) -> tuple[bool, float]:
+    rates = (mean_rate + rate_range / 2, mean_rate - rate_range / 2, mean_rate, mean_rate)
+    points = [
+        OrderMatchObservation(
+            predicted_hz=10.0,
+            matched_hz=10.0,
+            rel_error=0.0,
+            amp=amp_ratio if location == _WHEELS[0] else 1.0,
+            location=location,
+        )
+        for location in _WHEELS
+    ]
+    return detect_diffuse_excitation(
+        set(_WHEELS),
+        dict.fromkeys(_WHEELS, 1000),
+        {location: round(rate * 1000) for location, rate in zip(_WHEELS, rates, strict=True)},
+        points,
+    )
+
+
+@pytest.mark.parametrize(
+    ("knob", "values"),
+    [
+        pytest.param("amp_ratio", _grid(1.5, 3.5, 0.05), id="amplitude-ratio"),
+        pytest.param("rate_range", _grid(0.0, 0.40, 0.01), id="match-rate-range"),
+        pytest.param("mean_rate", _grid(0.25, 0.0, -0.01)[:-1], id="mean-match-rate"),
+    ],
+)
+def test_the_diffuse_penalty_eases_out_past_each_edge(knob: str, values: list[float]) -> None:
+    results = [_diffuse(**{knob: value}) for value in values]
+    penalties = [penalty for _flag, penalty in results]
+    full = 0.85 - 0.04 * len(_WHEELS)
+    assert results[0] == (True, pytest.approx(full))
+    assert results[-1] == (False, 1.0)
+    assert all(step >= -1e-12 for step in _steps(penalties))
+    # A penalty step of 0.035 is under 0.04 of a Strong score.
+    assert max(_steps(penalties)) <= 0.035

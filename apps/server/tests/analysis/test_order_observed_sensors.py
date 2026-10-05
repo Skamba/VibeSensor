@@ -419,8 +419,8 @@ def _wheel_score(match: OrderMatchAccumulator, *, match_rate: float = 1.0) -> Or
         per_location_dominant=False,
         match_rate=match_rate,
         min_match_rate=0.25,
-        constant_speed=False,
-        steady_speed=False,
+        constancy=0.0,
+        steadiness=0.0,
         connected_locations=set(_LOCATIONS),
         lang="en",
     )

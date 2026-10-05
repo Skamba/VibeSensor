@@ -2,8 +2,24 @@
 
 from __future__ import annotations
 
-from vibesensor.analysis.constants import ORDER_MIN_COVERAGE_POINTS, ORDER_MIN_MATCH_POINTS
+from vibesensor.analysis.constants import (
+    ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
+    ORDER_MIN_COVERAGE_POINTS,
+    ORDER_MIN_MATCH_POINTS,
+    ORDER_MIN_MATCH_RATE,
+)
 from vibesensor.domain.finding import speed_band_sort_key
+
+
+def order_min_match_rate(speed_constancy: float) -> float:
+    """The share of windows an order must match to count, by how constant the speed was.
+
+    At one speed every window tests the same frequency, so more of them must
+    match; the bar rises with *speed_constancy* (``speed_constancy``).
+    """
+    return ORDER_MIN_MATCH_RATE + speed_constancy * (
+        ORDER_CONSTANT_SPEED_MIN_MATCH_RATE - ORDER_MIN_MATCH_RATE
+    )
 
 
 def _compute_effective_match_rate(

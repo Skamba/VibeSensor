@@ -14,7 +14,10 @@ from test_support.synthetic_samples import make_sample
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
 from vibesensor.analysis._run_input import normalize_run_metadata
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
-from vibesensor.analysis.orders.match_rate import _compute_effective_match_rate
+from vibesensor.analysis.orders.match_rate import (
+    _compute_effective_match_rate,
+    order_min_match_rate,
+)
 from vibesensor.analysis.orders.matching import OrderMatchAccumulator
 from vibesensor.analysis.orders.physics import _driveshaft_hz
 from vibesensor.domain.order_match import OrderMatchObservation
@@ -134,6 +137,14 @@ def test_compute_effective_match_rate(
         )
         == expected
     )
+
+
+def test_the_minimum_match_rate_rises_with_how_constant_the_speed_was() -> None:
+    # 0.25 with the speed varying, 0.55 at one speed, in between for a speed
+    # just past the constant-speed limit rather than jumping there.
+    assert order_min_match_rate(0.0) == pytest.approx(0.25)
+    assert order_min_match_rate(0.5) == pytest.approx(0.40)
+    assert order_min_match_rate(1.0) == pytest.approx(0.55)
 
 
 def _make_accumulator(

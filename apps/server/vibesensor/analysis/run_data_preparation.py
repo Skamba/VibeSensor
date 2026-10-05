@@ -17,7 +17,11 @@ from vibesensor.analysis.signal_aggregation import (
     _phase_speed_breakdown,
     _speed_breakdown,
 )
-from vibesensor.analysis.speed_profile_helpers import _speed_stats_by_phase
+from vibesensor.analysis.speed_profile_helpers import (
+    _speed_stats_by_phase,
+    speed_constancy,
+    speed_steadiness,
+)
 from vibesensor.analysis.statistics import (
     compute_run_timing,
     prepare_speed_and_phases,
@@ -65,8 +69,17 @@ class PreparedRunData:
         return steady
 
     @property
-    def speed_stddev_kmh(self) -> float | None:
-        return self.speed_profile.stddev_kmh if self.speed_values else None
+    def speed_steadiness(self) -> float:
+        """How steady the speed was, 0 to 1 (``speed_steadiness``)."""
+        if not self.speed_values:
+            return 0.0
+        profile = self.speed_profile
+        return speed_steadiness(profile.stddev_kmh, profile.speed_range_kmh)
+
+    @property
+    def speed_constancy(self) -> float:
+        """How constant the speed was, 0 to 1 (``speed_constancy``)."""
+        return speed_constancy(self.speed_profile.stddev_kmh) if self.speed_values else 0.0
 
 
 def prepare_run_data(

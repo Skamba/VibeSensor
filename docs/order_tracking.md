@@ -106,7 +106,10 @@ coordinates the evidence flow:
    the stored sample peaks.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
    the best speed band or dominant location. It starts from the match rate at
-   the sensors that hear the order (see "Heard matches" below).
+   the sensors that hear the order (see "Heard matches" below). Below the
+   minimum match rate (`order_min_match_rate()`: 0.25, rising to 0.55 as the
+   speed stddev falls from 1.0 to 0.5 km/h) the hypothesis produces no
+   finding.
 4. Reject matches that do not follow the prediction. As speed changes, an
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays

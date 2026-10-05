@@ -12,9 +12,7 @@ from vibesensor.analysis._reference_resolution import (
 from vibesensor.analysis._sample_metrics import _sample_top_peaks
 from vibesensor.analysis._types import PhaseLabels, Sample
 from vibesensor.analysis.constants import (
-    CONSTANT_SPEED_STDDEV_KMH,
     MIN_ORDER_TRACKING_SLOPE,
-    ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
 )
 from vibesensor.analysis.orders.finding_builder import (
@@ -23,6 +21,7 @@ from vibesensor.analysis.orders.finding_builder import (
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import (
     _compute_effective_match_rate,
+    order_min_match_rate,
 )
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
@@ -33,6 +32,7 @@ from vibesensor.analysis.orders.scoring import (
     OrderFindingBuildContext,
     score_order_finding,
 )
+from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
@@ -44,11 +44,6 @@ _MULTI_LOCATION_SPLIT_DOMINANCE = 2.0
 # Floor for dominance ratio when computing the secondary-location confidence
 # scale factor. Prevents division by values at or below 1.0.
 _MIN_DOMINANCE_FOR_SCALE = 1.01
-
-
-# An engine/driveline order is an alias of a wheel order when at least this
-# share of its matched peaks are peaks a wheel order matched too.
-_WHEEL_ALIAS_SHARED_PEAK_FRACTION = 0.5
 
 
 def _shared_fraction(
@@ -66,7 +61,8 @@ class OrderAnalysisRequest:
     samples: Sequence[Sample]
     speed_sufficient: bool
     steady_speed: bool
-    speed_stddev_kmh: float | None
+    speed_steadiness: float
+    speed_constancy: float
     tire_circumference_m: float | None
     engine_ref_sufficient: bool
     raw_sample_rate_hz: float | None
@@ -127,7 +123,8 @@ class OrderAnalysisSession:
         "_samples",
         "_speed_sufficient",
         "_steady_speed",
-        "_speed_stddev_kmh",
+        "_speed_steadiness",
+        "_speed_constancy",
         "_tire_circumference_m",
         "_engine_ref_sufficient",
         "_raw_sample_rate_hz",
@@ -144,7 +141,8 @@ class OrderAnalysisSession:
         self._samples = list(request.samples)
         self._speed_sufficient = request.speed_sufficient
         self._steady_speed = request.steady_speed
-        self._speed_stddev_kmh = request.speed_stddev_kmh
+        self._speed_steadiness = request.speed_steadiness
+        self._speed_constancy = request.speed_constancy
         self._tire_circumference_m = request.tire_circumference_m
         self._engine_ref_sufficient = request.engine_ref_sufficient
         self._raw_sample_rate_hz = request.raw_sample_rate_hz
@@ -181,20 +179,21 @@ class OrderAnalysisSession:
         findings: list[tuple[float, DomainFinding]] = []
         wheel_locked_engine_keys: set[str] = set()
         for hypothesis, match in matches:
-            shares_wheel_order_peaks = (
-                hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
-                and _shared_fraction(match.matched_peaks, wheel_peaks)
-                >= _WHEEL_ALIAS_SHARED_PEAK_FRACTION
+            wheel_shared_fraction = (
+                _shared_fraction(match.matched_peaks, wheel_peaks)
+                if hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
+                else 0.0
             )
             result = self._evaluate_hypothesis(
-                hypothesis, match, shares_wheel_order_peaks=shares_wheel_order_peaks
+                hypothesis, match, wheel_shared_fraction=wheel_shared_fraction
             )
             if result is None:
                 continue
             findings.append(result)
             if (
                 hypothesis.suspected_source is VibrationSource.ENGINE
-                and shares_wheel_order_peaks
+                and wheel_shared_fraction
+                >= ORDER_CONFIDENCE_SETTINGS.wheel_alias_shared_peak_fraction
                 and match.ref_sources == {ESTIMATED_RPM_SOURCE}
             ):
                 wheel_locked_engine_keys.add(hypothesis.key)
@@ -239,13 +238,13 @@ class OrderAnalysisSession:
         hypothesis: OrderHypothesis,
         match: OrderMatchAccumulator,
         *,
-        shares_wheel_order_peaks: bool,
+        wheel_shared_fraction: float,
     ) -> tuple[float, DomainFinding] | None:
         """Evaluate and assemble a finding for one matched hypothesis.
 
-        *shares_wheel_order_peaks* marks an engine or driveline order that mostly
-        lands on peaks a wheel order matched too: its frequency cannot tell it
-        apart from that wheel order.
+        *wheel_shared_fraction* is the share of an engine or driveline order's
+        matched peaks a wheel order matched too: from half, its frequency cannot
+        tell it apart from that wheel order.
         """
         if not match.is_eligible(
             feature_interval_s=self._context.feature_interval_s,
@@ -253,11 +252,7 @@ class OrderAnalysisSession:
         ):
             return None
 
-        constant_speed = (
-            self._speed_stddev_kmh is not None
-            and self._speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
-        )
-        min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
+        min_match_rate = order_min_match_rate(self._speed_constancy)
 
         effective_match_rate, focused_speed_band, per_location_dominant = (
             _compute_effective_match_rate(
@@ -287,11 +282,11 @@ class OrderAnalysisSession:
             per_location_dominant=per_location_dominant,
             match_rate=match.match_rate,
             min_match_rate=min_match_rate,
-            constant_speed=constant_speed,
-            steady_speed=self._steady_speed,
+            constancy=self._speed_constancy,
+            steadiness=self._speed_steadiness,
             connected_locations=self._connected_locations,
             lang=self._lang,
-            shares_wheel_order_peaks=shares_wheel_order_peaks,
+            wheel_shared_fraction=wheel_shared_fraction,
         )
         score = score_order_finding(
             hypothesis,

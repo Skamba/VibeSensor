@@ -84,6 +84,13 @@ CONSTANT_SPEED_STDDEV_KMH: Final[float] = 0.5
 """Standard deviation threshold (km/h) below which speed is considered constant
 (stricter than steady-speed)."""
 
+STEADY_SPEED_STDDEV_RAMP_KMH: Final[float] = 1.0
+STEADY_SPEED_RANGE_RAMP_KMH: Final[float] = 4.0
+CONSTANT_SPEED_STDDEV_RAMP_KMH: Final[float] = 0.5
+"""How far past the steady/constant limits order confidence still treats the
+speed as partly steady/constant (``speed_steadiness``, ``speed_constancy``), so
+a drive a hair over a limit is scored almost as one just under it."""
+
 ORDER_MIN_MATCH_POINTS: Final[int] = 4
 """Minimum number of matched sample points for an order finding to be emitted."""
 
@@ -107,6 +114,9 @@ samples do not span enough speed bins."""
 
 ORDER_MIN_CONFIDENCE: Final[float] = 0.25
 """Minimum confidence score for an order-tracking finding to be retained."""
+
+ORDER_MIN_MATCH_RATE: Final[float] = 0.25
+"""Minimum effective match rate for an order finding with the speed varying."""
 
 ORDER_CONSTANT_SPEED_MIN_MATCH_RATE: Final[float] = 0.55
 """Minimum match rate for order findings under constant-speed conditions,

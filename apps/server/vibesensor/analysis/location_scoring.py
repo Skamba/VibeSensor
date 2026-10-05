@@ -29,6 +29,7 @@ class LocationAnalysisResult:
     dominance_ratio: float
     localization_confidence: float
     weak_spatial_separation: bool
+    weak_spatial_threshold: float
     top_location: str
     second_location: str | None
     partial_coverage: bool
@@ -136,7 +137,8 @@ def score_locations_in_bin(
         total_samples=total_samples,
     )
     loc_conf = min(raw_loc_conf, 0.30) if no_wheel_sensors else raw_loc_conf
-    raw_weak_spatial = dominance < LocationHotspot.weak_spatial_threshold(len(ranked_for_winner))
+    weak_spatial_threshold = LocationHotspot.weak_spatial_threshold(len(ranked_for_winner))
+    raw_weak_spatial = dominance < weak_spatial_threshold
     domain_hotspot = LocationHotspot.from_analysis_inputs(
         strongest_location=top_loc,
         dominance_ratio=dominance,
@@ -155,6 +157,7 @@ def score_locations_in_bin(
         dominance_ratio=dominance,
         localization_confidence=loc_conf,
         weak_spatial_separation=raw_weak_spatial or no_wheel_sensors,
+        weak_spatial_threshold=weak_spatial_threshold,
         top_location=top_loc,
         second_location=second_loc if len(ranked_for_winner) > 1 else None,
         partial_coverage=partial_coverage,

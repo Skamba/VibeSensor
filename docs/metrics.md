@@ -125,30 +125,74 @@ the source:
 
 - **Wheel/tire** orders are diagnosed at a corner. Evidence spread evenly over
   the corners (no dominant corner) lowers the score: the localisation factor
-  drops and the weak-separation penalty applies.
+  drops and the weak-separation penalty applies (×0.70 when the corners are
+  even, dominance under 1.05; ×0.80 above; ×0.90 for a clear cabin hotspot,
+  dominance 1.5 and up, when no wheel sensor is fitted).
 - **Engine and driveline** orders are diagnosed as a zone (engine bay, axle,
   centre tunnel), so the same order on the left and right is expected. When
   such an order shows no dominant corner and its own evidence is established,
   it scores like a wheel order at a clearly dominant corner, with no
-  weak-separation penalty. Established means all of:
-  - heard (see "Heard matches" in `docs/order_tracking.md`) in at least
-    40 % of the possible windows at the sensors that hear it. Road noise
-    that happens to sit on the order's frequency does not count; a measured
-    speed predicts the order exactly in every window, so such chance matches
-    are common on a rough road,
-  - a close frequency match (error score at least 0.5),
-  - heard on at least two sensors,
-  - and not an alias of a wheel order: fewer than half of its matched peaks
-    were also matched by a wheel order.
+  weak-separation penalty. The credit (`_zone_credit`) needs the order heard
+  on at least two sensors, and is then the product of four ramps:
+  - how often it is heard (see "Heard matches" in `docs/order_tracking.md`):
+    none at 40 % of the possible windows at the sensors that hear it, full
+    at 50 %. Road noise that happens to sit on the order's frequency does
+    not count; a measured speed predicts the order exactly in every window,
+    so such chance matches are common on a rough road,
+  - how closely it is on frequency: none at error score 0.5, full at 0.6,
+  - that it is not an alias of a wheel order: full while under 40 % of its
+    matched peaks were also matched by a wheel order, none from 50 %,
+  - its strength: none at 13 dB, full at 19 dB, across the moderate band's
+    edge (16 dB). Together with the light ramp this replaces a step at
+    16 dB that more than doubled a faint engine tone's score (0.40 at
+    15.9 dB, 0.91 at 16.0 dB on the faint-engine benchmark case; 0.55 and
+    0.91 at 16 and 19 dB now).
 
-  The credit (`_zone_credit`) then grows with the order's strength, linearly
-  from none at 13 dB to full at 19 dB, across the moderate band's edge
-  (16 dB). Together with the light ramp this replaces a step at 16 dB that
-  more than doubled a faint engine tone's score (0.40 at 15.9 dB, 0.91 at
-  16.0 dB on the faint-engine benchmark case; 0.55 and 0.91 at 16 and 19 dB
-  now). A faint or patchy engine/driveline match keeps the corner-dominance
-  penalties. This is how a fault-free run's road noise near an engine order
-  stays Weak (and so reads as no fault). The guards are tuned on the simulator.
+  A faint, patchy, off-frequency or wheel-aliased engine/driveline match
+  keeps the corner-dominance penalties. This is how a fault-free run's road
+  noise near an engine order stays Weak (and so reads as no fault). The
+  guards are tuned on the simulator.
+
+Every graded input of the score ramps over a short band past its old step
+edge instead of switching a penalty fully on or off there, so a small change
+of the input moves the score a few hundredths. Each ramp starts at the old
+edge on the cautious side: the old penalty region keeps its full penalty and
+the penalty eases out beyond it.
+
+| Input | Penalty or limit | Eases out over |
+|-------|------------------|----------------|
+| Dominance past the weak-separation threshold (1.2 × (1 + 0.1 × (locations − 2))) | the spread penalty above | the next 0.15 of dominance (`_spatial_weakness`) |
+| Dominance past 1.05 (even corners) | ×0.70 → ×0.80 | 1.05–1.15 |
+| Dominance past 1.5 without wheel sensors | ×0.80 → ×0.90 | 1.5–1.65 |
+| Speed stddev / range past the steady limits (2 km/h, 8 km/h) | ×0.82 | 2–3 km/h stddev, 8–12 km/h range (`speed_steadiness`) |
+| Speed stddev past the constant limit (0.5 km/h) | ×0.75, tracking correlation not counted, minimum match rate 0.55 instead of 0.25 | 0.5–1.0 km/h (`speed_constancy`, `order_min_match_rate`) |
+| Diffuse excitation (wheel orders: similar match rates and amplitudes at every sensor) | ×0.85 − 0.04 per sensor, at least ×0.65 | amplitude ratio 2–3, match-rate range 0.15–0.30, mean match rate 0.15 down to 0.05 (`detect_diffuse_excitation`) |
+| Localisation claimed with one or two sensors | ×0.85 / ×0.92 from localisation 0.30 | eases in from the 0.05 floor (`_few_sensor_scale`) |
+| Effective match rate just over the minimum | the finding is at most Weak (0.39) | the next 0.15 of match rate (`_presence_cap`) |
+
+Some gates stay steps, because their input is a count or a categorical
+judgement, or because no score depends on where they sit:
+
+- Below the minimum match rate, or with a tracking slope under 0.5 (step 4
+  in `docs/order_tracking.md`), there is no finding. The presence cap above
+  bounds what passing the minimum match rate adds (at most a Weak finding);
+  the slope needs no cap, because an order that barely tracks speed is
+  already off frequency and scores low on the frequency error.
+- Sensor counts: the zone credit's two heard sensors, the corroboration
+  bonus (×1.04 at two sensors, ×1.08 at three) and the phase bonus (×1.03,
+  ×1.06). One heard sensor is a point, not a zone; on the benchmark matrix
+  no zone-source order heard at one sensor has evidence that would earn
+  credit, so the step never acts there. The bonuses move a score by at most
+  0.04 per count.
+- Alias suppression (×0.6 for an engine order ranking below the best wheel
+  order, `suppress_engine_aliases`): a choice between two explanations of the
+  same peaks, so their ranking scores often tie to within a few per cent and
+  the side of the tie is the evidence. On the benchmark matrix all 18 engine
+  orders within 5 % of the tie in wheel-fault runs are suppressed, and 20 of
+  27 in engine-fault runs are kept (the other 7 runs still diagnose the
+  engine). A ramp there would leave the alias half-suppressed.
+- The sample count saturates (×0.70 + 0.30 × matched/20) and is already
+  continuous.
 
 Because wheel and engine scores follow different location rules, a score
 comparison does not decide whether an engine order on a wheel harmonic belongs to

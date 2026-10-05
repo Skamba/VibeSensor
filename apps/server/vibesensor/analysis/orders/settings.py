@@ -22,7 +22,7 @@ class OrderConfidenceSettings:
     snr_weight: float
     correlation_max_shift: float
     correlation_compliance_factor: float
-    negligible_strength_confidence_cap: float
+    weak_confidence_cap: float
     negligible_strength_ramp_db: float
     light_strength_penalty: float
     light_strength_ramp_db: float
@@ -33,14 +33,20 @@ class OrderConfidenceSettings:
     weak_separation_uniform_dominance: float
     weak_separation_uniform_penalty: float
     weak_separation_mild_penalty: float
-    no_wheel_sensor_penalty: float
+    weak_separation_uniform_ramp: float
+    weak_separation_edge_ramp: float
     zone_localization_confidence: float
     zone_min_match_rate: float
+    zone_match_rate_ramp: float
     zone_strength_ramp_db: float
     heard_peak_over_floor: float
     heard_location_min_share: float
     zone_min_error_score: float
+    zone_error_score_ramp: float
     zone_min_corroborating_locations: int
+    wheel_alias_shared_peak_fraction: float
+    zone_wheel_alias_ramp: float
+    presence_ramp: float
     constant_speed_penalty: float
     steady_speed_penalty: float
     sample_saturation_count: int
@@ -50,7 +56,8 @@ class OrderConfidenceSettings:
     corroborating_two_bonus: float
     phases_three_bonus: float
     phases_two_bonus: float
-    localization_min_scale_threshold: float
+    few_sensor_scale_from_localization: float
+    few_sensor_scale_full_localization: float
 
 
 ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
@@ -65,8 +72,9 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     snr_weight=0.20,
     correlation_max_shift=0.05,
     correlation_compliance_factor=0.10,
-    # Just below Moderate (0.40): an order at road-noise level is at most Weak.
-    negligible_strength_confidence_cap=0.39,
+    # Just below Moderate (0.40): an order at road-noise level, or one heard in
+    # barely enough windows to count, is at most Weak.
+    weak_confidence_cap=0.39,
     # Ramps over the band edges (docs/metrics.md, "Confidence levels"): the cap
     # lifts over 8–12 dB, the light penalty eases out over 16–19 dB.
     negligible_strength_ramp_db=4.0,
@@ -79,7 +87,12 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     weak_separation_uniform_dominance=1.05,
     weak_separation_uniform_penalty=0.70,
     weak_separation_mild_penalty=0.80,
-    no_wheel_sensor_penalty=0.75,
+    # The spread penalties ease out over the next 0.10 / 0.15 of dominance past
+    # each edge (uniform -> mild from 1.05, mild -> none from the location
+    # count's weak-separation threshold, mild -> strong from 1.5 without wheel
+    # sensors), so a dominance a hair over an edge moves the score a little.
+    weak_separation_uniform_ramp=0.10,
+    weak_separation_edge_ramp=0.15,
     # What a wheel order at a clearly dominant corner earns with four sensors.
     zone_localization_confidence=0.69,
     # Share of windows with the order heard, at the sensors that hear it. Road
@@ -87,6 +100,9 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     # tone heard for under 40 % of the drive is not established evidence
     # however exactly a measured speed tracks it.
     zone_min_match_rate=0.40,
+    # The zone credit's evidence terms ramp in over the step above each
+    # minimum: heard rate 0.40-0.50, error score 0.50-0.60.
+    zone_match_rate_ramp=0.10,
     # Half-width of the zone credit's ramp around 16 dB (13–19 dB).
     zone_strength_ramp_db=3.0,
     # A match is heard when its peak stands at least 6 dB over its window's
@@ -95,7 +111,16 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     heard_peak_over_floor=2.0,
     heard_location_min_share=0.5,
     zone_min_error_score=0.50,
+    zone_error_score_ramp=0.10,
     zone_min_corroborating_locations=2,
+    # An engine/driveline order is an alias of a wheel order when at least this
+    # share of its matched peaks are peaks a wheel order matched too; the zone
+    # credit fades out over the 0.10 below it.
+    wheel_alias_shared_peak_fraction=0.50,
+    zone_wheel_alias_ramp=0.10,
+    # An order heard in just enough windows to count is at most Weak; the cap
+    # lifts over the next 0.15 of effective match rate.
+    presence_ramp=0.15,
     constant_speed_penalty=0.75,
     steady_speed_penalty=0.82,
     sample_saturation_count=20,
@@ -105,7 +130,10 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     corroborating_two_bonus=1.04,
     phases_three_bonus=1.06,
     phases_two_bonus=1.03,
-    localization_min_scale_threshold=0.30,
+    # With one or two sensors a localisation claim is discounted, fully from
+    # localisation 0.30 and easing in from the 0.05 floor.
+    few_sensor_scale_from_localization=0.05,
+    few_sensor_scale_full_localization=0.30,
 )
 
 
@@ -116,6 +144,9 @@ class OrderHeuristicSettings:
     diffuse_amplitude_dominance_ratio: float
     diffuse_match_rate_range_threshold: float
     diffuse_min_mean_rate: float
+    diffuse_amplitude_ramp: float
+    diffuse_match_rate_range_ramp: float
+    diffuse_mean_rate_ramp: float
     diffuse_penalty_base: float
     diffuse_penalty_per_sensor: float
     diffuse_penalty_floor: float
@@ -133,6 +164,11 @@ ORDER_HEURISTIC_SETTINGS = OrderHeuristicSettings(
     diffuse_amplitude_dominance_ratio=2.0,
     diffuse_match_rate_range_threshold=0.15,
     diffuse_min_mean_rate=0.15,
+    # Past each edge the penalty eases out instead of vanishing: amplitude
+    # ratio 2.0-3.0, match-rate range 0.15-0.30, mean match rate 0.15-0.05.
+    diffuse_amplitude_ramp=1.0,
+    diffuse_match_rate_range_ramp=0.15,
+    diffuse_mean_rate_ramp=0.10,
     diffuse_penalty_base=0.85,
     diffuse_penalty_per_sensor=0.04,
     diffuse_penalty_floor=0.65,

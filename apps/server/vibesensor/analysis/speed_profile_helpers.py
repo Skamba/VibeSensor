@@ -8,11 +8,15 @@ from math import sqrt
 
 from vibesensor.analysis._types import PhaseLabel, Sample
 from vibesensor.analysis.constants import (
+    CONSTANT_SPEED_STDDEV_KMH,
+    CONSTANT_SPEED_STDDEV_RAMP_KMH,
     SPEED_BIN_WIDTH_KMH,
     STEADY_SPEED_RANGE_KMH,
+    STEADY_SPEED_RANGE_RAMP_KMH,
     STEADY_SPEED_STDDEV_KMH,
+    STEADY_SPEED_STDDEV_RAMP_KMH,
 )
-from vibesensor.analysis.math_utils import _weighted_percentile
+from vibesensor.analysis.math_utils import _ramp, _weighted_percentile
 from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
@@ -20,6 +24,41 @@ from vibesensor.dsp.statistics_utils import _mean_variance
 
 # A speed typed in by hand is not a measurement: every sample carries the set value.
 _MANUAL_SPEED_SOURCES = frozenset({"manual", "fallback_manual"})
+
+
+def speed_steadiness(stddev_kmh: float | None, range_kmh: float | None) -> float:
+    """How steady the speed was, 0 to 1, for order confidence.
+
+    1 within the steady-speed limits (stddev under 2 km/h and range under
+    8 km/h), easing to 0 over the next 1 km/h of stddev and 4 km/h of range.
+    """
+    if stddev_kmh is None or range_kmh is None:
+        return 0.0
+    return min(
+        1.0
+        - _ramp(
+            stddev_kmh,
+            STEADY_SPEED_STDDEV_KMH,
+            STEADY_SPEED_STDDEV_KMH + STEADY_SPEED_STDDEV_RAMP_KMH,
+        ),
+        1.0
+        - _ramp(
+            range_kmh,
+            STEADY_SPEED_RANGE_KMH,
+            STEADY_SPEED_RANGE_KMH + STEADY_SPEED_RANGE_RAMP_KMH,
+        ),
+    )
+
+
+def speed_constancy(stddev_kmh: float | None) -> float:
+    """How constant the speed was, 0 to 1: 1 under 0.5 km/h stddev, 0 from 1.0 km/h."""
+    if stddev_kmh is None:
+        return 0.0
+    return 1.0 - _ramp(
+        stddev_kmh,
+        CONSTANT_SPEED_STDDEV_KMH,
+        CONSTANT_SPEED_STDDEV_KMH + CONSTANT_SPEED_STDDEV_RAMP_KMH,
+    )
 
 
 def run_speed_source(samples: Sequence[Sample]) -> str | None:
