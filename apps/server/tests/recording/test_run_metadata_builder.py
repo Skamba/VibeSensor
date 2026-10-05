@@ -70,6 +70,8 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
                 transmission_confidence="official_exact",
             ),
             fuel_type="PHEV",
+            drive_layout="AWD",
+            final_drive_axle="front",
         ),
     )
 
@@ -86,9 +88,13 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
             transmission_confidence="official_exact",
         ),
         fuel_type="PHEV",
+        drive_layout="AWD",
+        final_drive_axle="front",
     )
     assert metadata.car == expected_car
-    # The provenance and powertrain survive the persisted run record.
+    # An e-AWD hybrid: the engine drives the front axle, so there is no propshaft.
+    assert (metadata.drive_layout, metadata.propshaft) == ("AWD", False)
+    # The provenance, powertrain and drive layout survive the persisted run record.
     assert run_metadata_from_mapping(run_metadata_to_json_object(metadata)).car == expected_car
 
 

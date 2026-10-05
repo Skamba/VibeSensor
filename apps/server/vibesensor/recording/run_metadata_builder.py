@@ -193,6 +193,8 @@ def _run_car_metadata_for_run(
             variant=active_car_snapshot.variant,
             order_reference_status=active_car_snapshot.order_reference_status,
             fuel_type=active_car_snapshot.fuel_type,
+            drive_layout=active_car_snapshot.drive_layout,
+            final_drive_axle=active_car_snapshot.final_drive_axle,
         )
     tokens = [token.strip().lower() for token in str(firmware_version or "").split(",")]
     if any(token.startswith("sim-") for token in tokens if token):

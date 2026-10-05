@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
+from test_support.report_rendering import propshaft_mentions, report_view_texts
 from test_support.sim_pipeline import (
     BenchCar,
     BenchSensor,
@@ -47,7 +48,20 @@ OTHER_CAR = BenchCar("Hatchback", 205.0, 55.0, 16.0, 3.4, 0.8)
 EV_CAR = BenchCar("Electric hatchback", 215.0, 50.0, 18.0, 9.0, 1.0, fuel_type="EV")
 # The same EV entered without its reduction ratio.
 EV_NO_RATIO_CAR = replace(EV_CAR, final_drive_entered=False)
-CARS = {"default": DEFAULT_CAR, "other": OTHER_CAR, "ev": EV_CAR, "ev_no_ratio": EV_NO_RATIO_CAR}
+# The same cars with their drive layout given: a front-wheel-drive hatchback has
+# no propshaft; the rear- and all-wheel-drive saloons carry one to the rear axle.
+FWD_CAR = replace(OTHER_CAR, name="FWD hatchback", drive_layout="FWD")
+RWD_CAR = replace(DEFAULT_CAR, name="RWD saloon", drive_layout="RWD")
+AWD_CAR = replace(DEFAULT_CAR, name="AWD saloon", drive_layout="AWD")
+CARS = {
+    "default": DEFAULT_CAR,
+    "other": OTHER_CAR,
+    "ev": EV_CAR,
+    "ev_no_ratio": EV_NO_RATIO_CAR,
+    "fwd": FWD_CAR,
+    "rwd": RWD_CAR,
+    "awd": AWD_CAR,
+}
 # Every case runs on these two cars unless it names its own.
 BOTH_CARS = ("default", "other")
 
@@ -532,7 +546,7 @@ EV_CASES = (
 )
 
 BENCH_CASES = (
-    Case("bench-healthy-sweep", _sweep(), NO_FAULT),
+    Case("bench-healthy-sweep", _sweep(), NO_FAULT, cars=(*BOTH_CARS, "fwd")),
     # Brake judder from warped front discs: felt in the steering wheel every time
     # the car brakes from motorway speed, gone while cruising and speeding up.
     # It is the brakes, not a wheel to balance.
@@ -685,6 +699,31 @@ BENCH_CASES = (
             _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
         ),
         _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE),
+        cars=(*BOTH_CARS, "rwd"),
+    ),
+    # A front-wheel-drive hatchback whose front drive shaft is out of balance:
+    # the same propshaft-order tone, strongest at the front wheels. It has no
+    # propshaft, so the front axle is the place to look and the drive shafts,
+    # CV joints and gearbox output what to check.
+    Case(
+        "bench-fwd-front-driveline-sweep",
+        _sweep(
+            _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
+            _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+        ),
+        _fault("driveline", {"front_axle"}, "P1", levels=MODERATE),
+        cars=("fwd",),
+    ),
+    # An all-wheel-drive car with the same front-axle shake: both axles are driven,
+    # so the front drive shafts come first and the propshaft still gets checked.
+    Case(
+        "bench-awd-front-driveline-sweep",
+        _sweep(
+            _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
+            _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+        ),
+        _fault("driveline", {"front_axle", "driveshaft_tunnel"}, "P1", levels=MODERATE),
+        cars=("awd",),
     ),
     Case(
         "bench-engine-sweep",
@@ -956,6 +995,8 @@ PDF_CASES = frozenset(
         ("bench-rear-right-wheel-sweep", "default"),
         ("bench-cabin-only-wheel-sweep", "default"),
         ("bench-front-brake-judder-stops", "default"),
+        ("bench-fwd-front-driveline-sweep", "fwd"),
+        ("bench-healthy-sweep", "fwd"),
     }
 )
 _PDF_HEADLINES = {
@@ -1068,7 +1109,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
             # Congested Wi-Fi may or may not drop a frame for good.
             _assert_frame_integrity(result, lossy=lossy)
         if (case.case_id, car_key) in PDF_CASES:
-            _assert_pdf_text(result, case)
+            _assert_pdf_text(result, case, car)
     finally:
         result.history_db.close()
 
@@ -1443,8 +1484,23 @@ _BRAKE_DISCS = {
 }
 
 # What the owner is told to have checked, per diagnosed order.
-_NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "P1": "propshaft", "E2": "mounts"}
+_NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "E2": "mounts"}
 _EV_NEXT_STEP_KEYWORDS = {**_NEXT_STEP_KEYWORDS, "P1": "drive unit"}
+# A driveline fault's advice follows the drive layout: a car without a propshaft
+# is sent to its drive shafts; without a layout the propshaft advice stays and
+# the report says the layout was not given.
+_DRIVELINE_NEXT_STEP = {
+    "FWD": ("CV joints",),
+    "RWD": ("propshaft",),
+    "AWD": ("CV joints", "propshaft"),
+    None: ("propshaft", "drive layout was not given"),
+}
+_DRIVE_LAYOUT_TEXT = {
+    "FWD": "front-wheel drive",
+    "RWD": "rear-wheel drive",
+    "AWD": "all-wheel drive",
+    None: "not provided",
+}
 
 
 def _assert_report_view(
@@ -1461,6 +1517,11 @@ def _assert_report_view(
     assert conditions["Speed source"] == _SPEED_SOURCE_TEXT[case.speed_source], conditions
     engine_check = next(c for c in diagnosis["source_checks"] if c["source"] == "engine")
     electric = car.fuel_type == "EV"
+    if not electric:
+        layout_text = _DRIVE_LAYOUT_TEXT[car.drive_layout]
+        assert conditions["Drive layout"].startswith(layout_text), conditions
+    if car.drive_layout == "FWD":
+        assert propshaft_mentions(report_view_texts(result.report)) == []
     if electric and not car.final_drive_entered:
         # The motor's own ratio is missing, not a final drive.
         assert _MOTOR_NO_RATIO_LINE in result.report.mechanic.ruled_out
@@ -1528,6 +1589,10 @@ def _assert_report_view(
             # The brake discs, not a wheel to balance.
             assert _BRAKE_DISCS[diagnosis["zone"]][0] in owner.next_step, owner.next_step
             assert "balance" not in owner.next_step, owner.next_step
+        elif diagnosis["source"] == "driveline" and not electric:
+            # The parts to check follow the drive layout.
+            for keyword in _DRIVELINE_NEXT_STEP[car.drive_layout]:
+                assert keyword in owner.next_step, owner.next_step
         else:
             keyword = (_EV_NEXT_STEP_KEYWORDS if electric else _NEXT_STEP_KEYWORDS).get(
                 diagnosis["order_code"]
@@ -1541,7 +1606,7 @@ def _assert_report_view(
         )
 
 
-def _assert_pdf_text(result: SimPipelineResult, case: Case) -> None:
+def _assert_pdf_text(result: SimPipelineResult, case: Case, car: BenchCar) -> None:
     verdict = result.diagnosis["verdict"]
     unlocated_wheel = result.diagnosis["source"] == "wheel/tire" and not case.wheel_sensors
     for lang, headline in zip(("en", "nl"), _PDF_HEADLINES[verdict], strict=True):
@@ -1568,6 +1633,8 @@ def _assert_pdf_text(result: SimPipelineResult, case: Case) -> None:
         if result.diagnosis["source"] == "brakes":
             discs = _BRAKE_DISCS[result.diagnosis["zone"]][lang == "nl"]
             assert discs in pages[0], pages[0][:400]
+        if car.drive_layout == "FWD":
+            assert propshaft_mentions(pages) == []
         workshop = " ".join(pages[1:])
         for chart in (view.mechanic.spectrum, view.mechanic.speed_chart):
             if chart is not None:

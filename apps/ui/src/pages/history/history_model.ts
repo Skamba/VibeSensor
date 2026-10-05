@@ -281,6 +281,11 @@ function electric(diagnosis: Diagnosis): boolean {
   return diagnosis.conditions.fuel_type === "EV";
 }
 
+/** An engined car without a propshaft (front-wheel drive, e-AWD hybrid). */
+function noPropshaft(diagnosis: Diagnosis): boolean {
+  return !electric(diagnosis) && diagnosis.conditions.propshaft === false;
+}
+
 function zoneText(diagnosis: Diagnosis, t: Translate): string {
   if (
     diagnosis.source === "brakes" &&
@@ -292,6 +297,10 @@ function zoneText(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.zone === "driveshaft_tunnel" && electric(diagnosis)) {
     // An EV has no propshaft: a motor order no axle dominates is the drive unit.
     return t("history.zone.drive_unit_ev");
+  }
+  if (diagnosis.zone === "driveshaft_tunnel" && noPropshaft(diagnosis)) {
+    // No propshaft runs through the tunnel of a front-wheel-drive car.
+    return t("history.zone.centre_tunnel");
   }
   if (diagnosis.zone && ZONE_KEYS.has(diagnosis.zone)) {
     return t(`history.zone.${diagnosis.zone}`);
@@ -586,6 +595,7 @@ function checkReasonKey(source: string, reason: CheckReason): string {
 function checkedDetail(
   check: SourceCheck,
   source: string,
+  diagnosis: Diagnosis,
   t: Translate,
 ): string {
   if (check.status === "candidate") {
@@ -601,7 +611,9 @@ function checkedDetail(
   ) {
     return t(`history.checks.${check.reason}`);
   }
-  return t(`history.checks.ruled_out.${source}`);
+  return source === "driveline" && noPropshaft(diagnosis)
+    ? t("history.checks.ruled_out.driveline_no_propshaft")
+    : t(`history.checks.ruled_out.${source}`);
 }
 
 /** One car reference as on PDF page 2: the value and where it came from. */
@@ -634,6 +646,20 @@ function powertrainKey(conditions: Diagnosis["conditions"]): string {
   }
 }
 
+/** The drive layout line, as on PDF page 2; an EV without one has none. */
+function driveLayoutKey(conditions: Diagnosis["conditions"]): string | null {
+  const layout = conditions.drive_layout ?? null;
+  if (conditions.fuel_type === "EV") {
+    return layout ? `history.references.drive_layout_ev_${layout}` : null;
+  }
+  if (layout === null) {
+    return "history.references.drive_layout_unknown";
+  }
+  return layout === "AWD" && conditions.propshaft === false
+    ? "history.references.drive_layout_AWD_no_propshaft"
+    : `history.references.drive_layout_${layout}`;
+}
+
 function referenceLines(
   conditions: Diagnosis["conditions"],
   f: Pick<Formatters, "fmt" | "t">,
@@ -643,10 +669,16 @@ function referenceLines(
     value === null ? null : fmt(value, 2);
   const tire = conditions.tire_circumference_m;
   const ev = conditions.fuel_type === "EV";
-  const powertrain = {
-    label: t("history.references.powertrain"),
-    detail: t(powertrainKey(conditions)),
-  };
+  const layoutKey = driveLayoutKey(conditions);
+  const powertrain = [
+    {
+      label: t("history.references.powertrain"),
+      detail: t(powertrainKey(conditions)),
+    },
+    ...(layoutKey
+      ? [{ label: t("history.references.drive_layout"), detail: t(layoutKey) }]
+      : []),
+  ];
   const finalDrive = {
     label: t(
       ev
@@ -673,10 +705,10 @@ function referenceLines(
   };
   if (ev) {
     // No gearbox ratio and no engine RPM: an EV has neither.
-    return [powertrain, tireLine, finalDrive];
+    return [...powertrain, tireLine, finalDrive];
   }
   return [
-    powertrain,
+    ...powertrain,
     tireLine,
     finalDrive,
     {
@@ -723,7 +755,10 @@ function checksModel(
         ),
       });
     } else {
-      checked.push({ label, detail: checkedDetail(check, source, t) });
+      checked.push({
+        label,
+        detail: checkedDetail(check, source, diagnosis, t),
+      });
     }
   }
   return {
@@ -876,8 +911,33 @@ function diagnosisCard(
         : locateWheel
       : weak
         ? recaptureRecipe(f, ev, diagnosis)
-        : t("history.findings_next_step", { location: zone }),
+        : drivelineNextStep(diagnosis, zone, t),
   };
+}
+
+/** Where to look; a driveline fault on a car with a known layout also names
+ * the parts to have checked, the axle the sensors point to first. */
+function drivelineNextStep(
+  diagnosis: Diagnosis,
+  zone: string,
+  t: Translate,
+): string {
+  const parts = (
+    diagnosis.source === "driveline" ? (diagnosis.driveline_parts ?? []) : []
+  ).map((part) => t(`history.driveline_parts.${part}`));
+  if (parts.length === 0) {
+    return t("history.findings_next_step", { location: zone });
+  }
+  return parts.length === 1
+    ? t("history.findings_next_step_driveline", {
+        location: zone,
+        parts: parts[0],
+      })
+    : t("history.findings_next_step_driveline_then", {
+        location: zone,
+        first: parts[0],
+        second: parts[1],
+      });
 }
 
 /** How to record again; an EV cannot coast in neutral, so it skips that step,

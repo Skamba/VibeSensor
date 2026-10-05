@@ -107,6 +107,34 @@ _RPM_KEYS = {
     "estimated_top_gear": "RPM_ESTIMATED_TOP_GEAR",
     "none": "RPM_NONE",
 }
+# A car without a propshaft (front-wheel drive, e-AWD hybrid) has its own
+# driveline wording: the gearbox output and drive shafts turn at P1/P2.
+_NO_PROPSHAFT_KEYS = frozenset(
+    {
+        "ORDER_P1",
+        "ORDER_P2",
+        "RULED_OUT_DRIVELINE",
+        "WS_NONE",
+        "WS_PEAK_ONLY",
+        "WEAK_NARROW_SPEED",
+    }
+)
+# The catalog suffix of a driveline fault's cause and step, per the parts to check
+# (``driveline_parts``); a rear-wheel-drive car, or one without a layout, keeps
+# the propshaft wording.
+_DRIVELINE_PARTS_SUFFIX = {
+    ("front_drive",): "_FRONT",
+    ("front_drive", "propshaft_rear"): "_FRONT_REAR",
+    ("propshaft_rear", "front_drive"): "_REAR_FRONT",
+}
+_DRIVELINE_SHOP_KEYS = {
+    "front_drive": ("SHOP_DRIVELINE_FRONT_SHAFTS", "SHOP_DRIVELINE_FRONT_DIFF"),
+    "propshaft_rear": (
+        "SHOP_DRIVELINE_RUNOUT",
+        "SHOP_DRIVELINE_ANGLES",
+        "SHOP_DRIVELINE_REAR_DIFF",
+    ),
+}
 _SHOP_KEYS = {
     "WHEEL": ("SHOP_TIRE_ROAD_FORCE", "SHOP_TIRE_MATCH", "SHOP_TIRE_RUNOUT"),
     "DRIVELINE": ("SHOP_DRIVELINE_RUNOUT", "SHOP_DRIVELINE_ANGLES", "SHOP_DRIVELINE_ORDERS"),
@@ -351,9 +379,13 @@ def build_report_view(
     recorded with the run.
     """
     diagnosis = analysis["diagnosis"]
+    conditions = diagnosis["conditions"]
+    electric = conditions["fuel_type"] == "EV"
     ctx = _Ctx(
         normalize_lang(lang or analysis.get("lang") or metadata.language),
-        electric=diagnosis["conditions"]["fuel_type"] == "EV",
+        electric=electric,
+        no_propshaft=not electric and conditions.get("propshaft") is False,
+        layout_unknown=not electric and conditions.get("drive_layout") is None,
     )
     return ReportView(
         lang=ctx.lang,
@@ -373,6 +405,10 @@ class _Ctx:
     lang: str
     # A battery-electric car: "motor" wording, no engine, no neutral coast-down.
     electric: bool = False
+    # An engined car without a propshaft: drive-shaft wording for the driveline.
+    no_propshaft: bool = False
+    # An engined car whose drive layout was not given: the propshaft wording, hedged.
+    layout_unknown: bool = False
 
     def t(self, key: str, **kwargs: object) -> str:
         return tr(self.lang, key, **{k: _text(v) for k, v in kwargs.items()})
@@ -435,7 +471,13 @@ class _Ctx:
 
     def order_key(self, code: str) -> str:
         """Catalog key of an order code's plain wording (P1/P2 turn the motor on an EV)."""
-        return f"ORDER_{code}_EV" if self.electric and code in _EV_ORDER_CODES else f"ORDER_{code}"
+        if self.electric and code in _EV_ORDER_CODES:
+            return f"ORDER_{code}_EV"
+        return self.driveline_key(f"ORDER_{code}")
+
+    def driveline_key(self, key: str) -> str:
+        """``key``, or its own wording for a car without a propshaft."""
+        return f"{key}_NO_PROPSHAFT" if self.no_propshaft and key in _NO_PROPSHAFT_KEYS else key
 
     def phase(self, phase: str) -> str:
         key = PHASE_I18N_KEYS.get(phase)
@@ -557,6 +599,8 @@ def _owner_page(
             fallback_step = ctx.t("STEP_WHEEL_UNLOCATED_ALTERNATIVE")
         else:
             next_step = ctx.t(step_key, zone=zone)
+            if _propshaft_assumed(ctx, diagnosis):
+                next_step = f"{next_step} {ctx.t('STEP_LAYOUT_UNKNOWN')}"
             fallback_step = ctx.t("FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone))
         verify = _verify(ctx, diagnosis)
     return OwnerPage(
@@ -609,7 +653,23 @@ def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             return ctx.t("CAUSE_BRAKES", zone=ctx.t(f"ZONE_{zone.upper()}"))
         return ctx.t("CAUSE_BRAKES_UNLOCATED", zone=ctx.location(diagnosis["location"]))
     key = ctx.source_key(diagnosis["source"]) or "OTHER"
+    if key == "DRIVELINE":
+        key += _driveline_suffix(diagnosis)
     return ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
+
+
+def _driveline_suffix(diagnosis: DiagnosisPayload) -> str:
+    """Catalog suffix for the driveline parts to check (none: the propshaft wording)."""
+    return _DRIVELINE_PARTS_SUFFIX.get(tuple(diagnosis.get("driveline_parts", ())), "")
+
+
+def _propshaft_assumed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> bool:
+    """A driveline-order fault on an engined car whose drive layout was not given."""
+    return (
+        ctx.layout_unknown
+        and diagnosis["source"] == "driveline"
+        and diagnosis["order_code"] in _EV_ORDER_CODES
+    )
 
 
 def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
@@ -619,7 +679,12 @@ def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
         return "STEP_BRAKES"
     if not code:
         return "STEP_OTHER"
-    return f"STEP_{code}_EV" if ctx.electric and code in _EV_ORDER_CODES else f"STEP_{code}"
+    if code in _EV_ORDER_CODES:
+        if ctx.electric:
+            return f"STEP_{code}_EV"
+        if diagnosis["source"] == "driveline":
+            return f"STEP_{code}{_driveline_suffix(diagnosis)}"
+    return f"STEP_{code}"
 
 
 def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
@@ -690,7 +755,7 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 
 def _weak_reason(ctx: _Ctx, reason: str) -> str:
     key = _WEAK_REASON_KEYS.get(reason)
-    return ctx.t(key) if key is not None else reason
+    return ctx.t(ctx.driveline_key(key)) if key is not None else reason
 
 
 def _verify(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
@@ -902,16 +967,23 @@ def _conditions(
     )
     sensors = ", ".join(ctx.location(location) for location in analysis["sensor_locations"])
     speeds = analysis["speed_stats"]
-    references = [
-        Fact(ctx.t("COND_POWERTRAIN"), ctx.t(_powertrain_key(conditions))),
+    references = [Fact(ctx.t("COND_POWERTRAIN"), ctx.t(_powertrain_key(conditions)))]
+    layout_key = _drive_layout_key(conditions)
+    if layout_key is not None:
+        references.append(Fact(ctx.t("COND_DRIVE_LAYOUT"), ctx.t(layout_key)))
+    final_drive_text = _with_provenance(
+        ctx,
+        ctx.num(final_drive, 2) if final_drive is not None else None,
+        conditions["final_drive_provenance"],
+    )
+    axle = conditions.get("final_drive_axle")
+    if axle is not None and final_drive is not None:
+        final_drive_text = f"{final_drive_text}, {ctx.t(f'FINAL_DRIVE_AXLE_{axle.upper()}')}"
+    references += [
         Fact(ctx.t("COND_TIRE"), _with_provenance(ctx, tire, conditions["tire_provenance"])),
         Fact(
             ctx.t("COND_FINAL_DRIVE_EV" if ctx.electric else "COND_FINAL_DRIVE"),
-            _with_provenance(
-                ctx,
-                ctx.num(final_drive, 2) if final_drive is not None else None,
-                conditions["final_drive_provenance"],
-            ),
+            final_drive_text,
         ),
     ]
     # An EV has one fixed reduction and no engine: no top gear and no engine RPM.
@@ -953,6 +1025,18 @@ def _powertrain_key(conditions: TestConditions) -> str:
     )
 
 
+def _drive_layout_key(conditions: TestConditions) -> str | None:
+    """The drive layout line; an EV without one has no propshaft to assume, so none."""
+    layout = conditions.get("drive_layout")
+    if conditions["fuel_type"] == "EV":
+        return f"DRIVE_LAYOUT_EV_{layout}" if layout is not None else None
+    if layout is None:
+        return "DRIVE_LAYOUT_UNKNOWN"
+    if layout == "AWD" and conditions.get("propshaft") is False:
+        return "DRIVE_LAYOUT_AWD_NO_PROPSHAFT"
+    return f"DRIVE_LAYOUT_{layout}"
+
+
 def _with_provenance(ctx: _Ctx, value: str | None, provenance: ReferenceProvenanceValue) -> str:
     """A car reference with where it came from; a missing one says it was not provided."""
     if value is None or provenance == "missing":
@@ -986,8 +1070,8 @@ def _worksheet_empty(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     if diagnosis["order_findings"]:
         return None
     if diagnosis["verdict"] != "no_fault" and diagnosis["frequency_hz"] is not None:
-        return ctx.t("WS_PEAK_ONLY", hz=ctx.hz(diagnosis["frequency_hz"]))
-    return ctx.t("WS_NONE_EV" if ctx.electric else "WS_NONE")
+        return ctx.t(ctx.driveline_key("WS_PEAK_ONLY"), hz=ctx.hz(diagnosis["frequency_hz"]))
+    return ctx.t("WS_NONE_EV" if ctx.electric else ctx.driveline_key("WS_NONE"))
 
 
 def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
@@ -1072,7 +1156,7 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
         elif reason in ("stayed_in_neutral", "stopped_in_neutral", "only_while_braking"):
             detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:
-            detail = ctx.t(_RULED_OUT_KEYS[key])
+            detail = ctx.t(ctx.driveline_key(_RULED_OUT_KEYS[key]))
         lines.append(f"{ctx.t(f'SOURCE_{key}')}: {detail}")
     return tuple(lines)
 
@@ -1086,10 +1170,23 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     key = ctx.source_key(diagnosis["source"])
     if key is None:
         return (ctx.t("SHOP_OTHER", zone=ctx.zone(diagnosis)),)
-    lines = [ctx.t(line) for line in _SHOP_KEYS[key]]
+    lines = [ctx.t(line) for line in _shop_keys(key, diagnosis)]
     if diagnosis["order_code"] == "T2":
         lines.append(ctx.t("SHOP_TIRE_T2"))
     return tuple(lines)
+
+
+def _shop_keys(key: str, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
+    """The shop lines; a driveline fault's follow its parts, the likelier first."""
+    parts = diagnosis.get("driveline_parts", ())
+    if key != "DRIVELINE" or not parts:
+        return _SHOP_KEYS[key]
+    orders = (
+        "SHOP_DRIVELINE_ORDERS"
+        if "propshaft_rear" in parts
+        else "SHOP_DRIVELINE_ORDERS_NO_PROPSHAFT"
+    )
+    return (*(line for part in parts for line in _DRIVELINE_SHOP_KEYS[part]), orders)
 
 
 # -- quality ---------------------------------------------------------------------

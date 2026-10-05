@@ -240,7 +240,7 @@ the PDF both show:
   transient.
 - `confidence_level`: the action-defined level (see `docs/metrics.md`); no
   percentage is exposed anywhere.
-- `order_code` (T1/T2 tire, P1/P2 propshaft, E1/E2 engine), `frequency_hz` at
+- `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E1/E2 engine), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and
   `weak_reasons` codes; `order_findings` repeats those facts once per surfaced
   order (its best-ranked finding; diagnosed one first) as workshop worksheet rows.
@@ -256,14 +256,23 @@ the PDF both show:
   `all_wheels` when three or more are). The amplitudes are medians over the
   whole drive, so they understate a fault that was there for only part of
   it. `engine_bay` for
-  engine orders, and an axle or `driveshaft_tunnel` for driveline orders.
-  An axle for brakes (see "Brake judder" above).
+  engine orders, and an axle or `driveshaft_tunnel` for driveline orders
+  (on an engined car without a propshaft, the final drive's axle instead of
+  the tunnel when no axle dominates). An axle for brakes (see "Brake
+  judder" above).
+- `driveline_parts`: for a driveline fault on an engined car with a known
+  drive layout, the parts to check, likelier first: `["front_drive"]`
+  without a propshaft, `["propshaft_rear"]` for RWD, and both for AWD with
+  the front first when the zone is the front axle. Empty for an EV, without
+  a layout, or for another source (`_driveline_parts` in `diagnosis.py`).
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
   strongest location with order markers, `source_checks`, and the reference
   `conditions` (speed source, RPM `measured` / `estimated_top_gear` / `none`,
-  tire circumference, ratios, each reference's provenance, and the car's
-  `fuel_type`).
+  tire circumference, ratios, each reference's provenance, the car's
+  `fuel_type`, `drive_layout`, `final_drive_axle` and `propshaft`; the last
+  three are absent on runs analysed before the layout existed, read as not
+  given).
 - `source_checks` give each order family (wheel/tire, driveline, engine,
   brakes) a status and reason:
   - `candidate`: the diagnosed source.

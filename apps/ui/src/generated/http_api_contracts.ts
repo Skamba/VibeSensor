@@ -369,6 +369,7 @@ export interface components {
             conditions: components["schemas"]["TestConditions"];
             confidence_level: components["schemas"]["ConfidenceLevelValue"] | null;
             dominant_phase: string | null;
+            driveline_parts?: components["schemas"]["DrivelinePart"][];
             finding_id: string | null;
             frequency_hz: number | null;
             guided_phases: components["schemas"]["GuidedPhaseValue"][];
@@ -400,7 +401,9 @@ export interface components {
             speed_min_kmh: number;
         };
         DiagnosisVerdictValue: "fault" | "weak_evidence" | "no_fault";
+        DriveLayoutValue: "FWD" | "RWD" | "AWD";
         DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
+        DrivelinePart: "front_drive" | "propshaft_rear";
         EngineCapability: "measured" | "estimated_top_gear" | "hybrid_estimated" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed" | "not_applicable";
         /** Response body confirming whether an ESP32 flash job was cancelled. */
         EspFlashCancelResponse: {
@@ -464,6 +467,7 @@ export interface components {
             vid?: number | null;
         };
         ExpectedFrameLoss: "stream_start" | "bluetooth_scan" | "bluetooth_pairing";
+        FinalDriveAxleValue: "front" | "rear";
         /** HTTP contract for serialized evidence metrics attached to a finding. */
         FindingEvidenceMetrics: {
             burstiness?: number | null;
@@ -1269,11 +1273,14 @@ export interface components {
         };
         /** Reference data the order analysis used, with where each reference came from. */
         TestConditions: {
+            drive_layout?: components["schemas"]["DriveLayoutValue"] | null;
+            final_drive_axle?: components["schemas"]["FinalDriveAxleValue"] | null;
             final_drive_provenance: components["schemas"]["ReferenceProvenanceValue"];
             final_drive_ratio: number | null;
             fuel_type: components["schemas"]["FuelTypeValue"] | null;
             gear_ratio: number | null;
             gear_ratio_provenance: components["schemas"]["ReferenceProvenanceValue"];
+            propshaft?: boolean | null;
             rpm_source: components["schemas"]["RpmSourceValue"];
             speed_source: string | null;
             tire_circumference_m: number | null;

@@ -7,7 +7,7 @@ order labels, amplitudes, or zones.
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from pydantic import ConfigDict, with_config
 
@@ -17,6 +17,9 @@ __all__ = [
     "DiagnosisPayload",
     "DiagnosisSpectrum",
     "DiagnosisVerdictValue",
+    "DriveLayoutValue",
+    "DrivelinePart",
+    "FinalDriveAxleValue",
     "FuelTypeValue",
     "GuidedPhaseValue",
     "LocationAmplitudeRow",
@@ -79,6 +82,13 @@ type ReferenceProvenanceValue = Literal[
     "missing",
 ]
 type FuelTypeValue = Literal["ICE", "PHEV", "EV"]
+type DriveLayoutValue = Literal["FWD", "RWD", "AWD"]
+type FinalDriveAxleValue = Literal["front", "rear"]
+# The driveline parts a driveline-order fault points to, in the order to check
+# them: the front axle's drive (gearbox output, front differential, drive shafts,
+# CV joints), or the propshaft and the rear axle's drive (joints, centre
+# bearing, rear differential).
+type DrivelinePart = Literal["front_drive", "propshaft_rear"]
 
 
 @with_config(_FORBID_EXTRA)
@@ -160,6 +170,13 @@ class TestConditions(TypedDict):
     final_drive_provenance: ReferenceProvenanceValue
     gear_ratio_provenance: ReferenceProvenanceValue
     fuel_type: FuelTypeValue | None
+    # The driven wheels; ``None`` (or absent, on runs analysed before it was
+    # asked) when the owner did not say.
+    drive_layout: NotRequired[DriveLayoutValue | None]
+    # The axle the final drive belongs to (the driven one; AWD from the library).
+    final_drive_axle: NotRequired[FinalDriveAxleValue | None]
+    # Whether a propshaft drives the rear axle; ``None`` without a drive layout.
+    propshaft: NotRequired[bool | None]
 
 
 @with_config(_FORBID_EXTRA)
@@ -190,3 +207,7 @@ class DiagnosisPayload(TypedDict):
     spectrum: DiagnosisSpectrum | None
     source_checks: list[SourceCheck]
     conditions: TestConditions
+    # A driveline-order fault on a car with a known drive layout: the parts to
+    # check, the axle the sensors point to first. Empty for an EV (its motor is
+    # the driveline order), without a layout, or for another source.
+    driveline_parts: NotRequired[list[DrivelinePart]]

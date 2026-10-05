@@ -347,6 +347,7 @@ the form.
   when unknown). Cars saved before the layout existed get it from their
   library row on the next start (`with_library_drive_layout` in
   `apps/server/vibesensor/settings/car_library.py`); others stay unknown.
+  See §5.3 for what the layout changes in the advice.
 
 ### 3.4 Choosing a speed source
 
@@ -738,3 +739,22 @@ capability line state the current layout's consequence.
   (or an unknown powertrain) a 0 rpm reading while driving is a bad reading,
   not an engine off: the RPM is estimated from speed as without OBD-II, and no
   hybrid wording is used.
+- **Drive layout:** the run keeps the car's drive layout, and from it whether
+  a propshaft drives the rear axle (FWD: none; RWD and AWD: one; an EV: none;
+  an AWD plug-in hybrid whose final drive is on the front axle is e-AWD: none;
+  `has_propshaft` in `apps/server/vibesensor/domain/drive_layout.py`). A
+  driveline-order (P1/P2) fault then names the parts that turn at that order
+  (`driveline_parts`): front-wheel drive gets the gearbox output, front
+  differential, drive shafts and CV joints and never a propshaft, centre
+  bearing or rear differential (and P1/P2 read "per gearbox output-shaft
+  turn"; a driveline order no axle dominates points at the driven axle, not
+  the centre tunnel); rear-wheel drive keeps the propshaft advice and adds
+  the rear differential to the shop request; all-wheel drive names both, the
+  axle the sensors point to first. Without a layout the propshaft advice
+  stays, the next step adds that on a front-wheel-drive car the drive shafts
+  and CV joints are checked instead, and the test conditions say the layout
+  was not provided. An EV keeps its motor wording whatever its layout; a
+  dual-motor EV is AWD and only the motor whose reduction ratio is entered
+  (the library's rear one) is analysed. History shows the same layout line,
+  parts and wording (`drivelineNextStep`, `driveLayoutKey` in
+  `history_model.ts`).

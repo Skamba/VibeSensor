@@ -111,6 +111,8 @@ class BenchCar:
     # Powertrain as the car library records it (``ICE``/``PHEV``/``EV``); ``None``
     # for a car entered by hand.
     fuel_type: str | None = None
+    # Driven wheels (``FWD``/``RWD``/``AWD``); ``None`` when the owner did not say.
+    drive_layout: str | None = None
     # Whether the owner entered the final drive (an EV's reduction ratio); the
     # simulated car still turns its driveshaft (motor) at that ratio.
     final_drive_entered: bool = True
@@ -399,6 +401,7 @@ def _record(
             "type": "sedan",
             "aspects": car.aspects(),
             "fuel_type": car.fuel_type,
+            "drive_layout": car.drive_layout,
         }
     )
     web.car_settings.set_active_car(snapshot.cars[-1]["id"])

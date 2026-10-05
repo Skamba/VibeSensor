@@ -9,8 +9,9 @@ from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.domain.diagnostic_case import Symptom
+from vibesensor.domain.drive_layout import Axle, final_drive_axle_for, has_propshaft
 from vibesensor.domain.order_reference import OrderReferenceSpec
-from vibesensor.domain.vehicle_configuration import VehicleFuelType
+from vibesensor.domain.vehicle_configuration import VehicleDrivetrain, VehicleFuelType
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 
@@ -58,6 +59,8 @@ class RunCarMetadata:
     variant: str | None = None
     order_reference_status: CarOrderReferenceStatus | None = None
     fuel_type: VehicleFuelType | None = None
+    drive_layout: VehicleDrivetrain | None = None
+    final_drive_axle: Axle | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -292,6 +295,22 @@ class RunMetadata:
     def electric(self) -> bool:
         """A battery-electric car: no engine, and the motor turns with the wheels."""
         return self.fuel_type == "EV"
+
+    @property
+    def drive_layout(self) -> VehicleDrivetrain | None:
+        """The driven wheels (FWD/RWD/AWD); ``None`` when the owner did not say."""
+        return self.car.drive_layout if self.car is not None else None
+
+    @property
+    def final_drive_axle(self) -> Axle | None:
+        """The axle the final drive belongs to; ``None`` when it is not known."""
+        car_axle = self.car.final_drive_axle if self.car is not None else None
+        return final_drive_axle_for(self.drive_layout, car_axle)
+
+    @property
+    def propshaft(self) -> bool | None:
+        """Whether a propshaft drives the rear axle; ``None`` without a drive layout."""
+        return has_propshaft(self.drive_layout, self.fuel_type, self.final_drive_axle)
 
     def sensor_snapshot_for(self, sensor_id: str) -> RunSensorMetadata | None:
         normalized_sensor_id = str(sensor_id).strip()

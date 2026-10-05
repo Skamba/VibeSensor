@@ -52,6 +52,8 @@ from vibesensor.settings.analysis_settings_codec import (
 from vibesensor.settings.car_config import (
     car_order_reference_status_from_mapping,
     car_order_reference_status_payload_from_domain,
+    drive_layout_or_none,
+    final_drive_axle_or_none,
     fuel_type_or_none,
 )
 
@@ -392,6 +394,8 @@ def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:
             else None
         ),
         fuel_type=fuel_type_or_none(payload.get("fuel_type")),
+        drive_layout=drive_layout_or_none(payload.get("drive_layout")),
+        final_drive_axle=final_drive_axle_or_none(payload.get("final_drive_axle")),
     )
     if (
         run_car.car_id is None
@@ -421,4 +425,8 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
         )
     if run_car.fuel_type is not None:
         payload["fuel_type"] = run_car.fuel_type
+    if run_car.drive_layout is not None:
+        payload["drive_layout"] = run_car.drive_layout
+    if run_car.final_drive_axle is not None:
+        payload["final_drive_axle"] = run_car.final_drive_axle
     return payload

@@ -436,6 +436,11 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
         detail: "not provided; analysed as a car with a combustion engine",
       },
       {
+        label: "Drive layout",
+        detail:
+          "not provided; driveline advice assumes a propshaft to the rear axle",
+      },
+      {
         label: "Tire size",
         detail: "circumference 1.984 m (entered by you)",
       },
@@ -458,7 +463,7 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
       "Niets viel op bij de controles die deze rit kon doen: wielen/banden en aandrijflijn (met een geschatte eindoverbrenging). Niet gecontroleerd, dus niet aangetoond dat het in orde is: motor.",
     );
     expect(dutch.checks.notCheckedTitle).toBe("Niet te controleren");
-    expect(dutch.checks.references[2]).toEqual({
+    expect(dutch.checks.references[3]).toEqual({
       label: "Eindoverbrenging",
       detail: "3.15 (autobibliotheek, schatting voor de modelreeks)",
     });
@@ -514,7 +519,7 @@ test("a fault run lists the matching source as checked and states the top-gear a
         "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
     },
   ]);
-  expect(insights.checks.references[4]).toEqual({
+  expect(insights.checks.references[5]).toEqual({
     label: "Engine RPM",
     detail: "not measured; estimated from speed assuming top gear",
   });
@@ -604,6 +609,138 @@ test("an EV motor fault names the motor and drive unit, and its recording advice
       nextStep:
         'history.recapture_recipe_ev:{"from":"50","to":"120","unit":"km/h"}',
     },
+  });
+});
+
+/** A driveline (P1) diagnosis in real catalog text, for a car with `conditions`. */
+function drivelineInsights(
+  verdict: "fault" | "no_fault",
+  diagnosis: Partial<HistoryInsightsPayload["diagnosis"]>,
+  conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]>,
+  language: Lang = "en",
+) {
+  const insights = populatedInsights("run-013");
+  const base = makeDiagnosis();
+  insights.diagnosis = makeDiagnosis({
+    ...(verdict === "fault"
+      ? {
+          verdict,
+          confidence_level: "strong",
+          finding_id: "finding-1",
+          source: "driveline",
+          order_code: "P1",
+        }
+      : {}),
+    source_checks: [
+      {
+        source: "driveline",
+        status: verdict === "fault" ? "candidate" : "ruled_out",
+        reason: verdict === "fault" ? null : "no_matching_order",
+      },
+    ],
+    ...diagnosis,
+  });
+  insights.diagnosis.conditions = {
+    ...base.conditions,
+    fuel_type: "ICE",
+    ...conditions,
+  };
+  const details = buildDetails(
+    historyListRun("run-013"),
+    defaultDetail({ preview: insights }),
+    { ...f, t: (key, vars) => translate(language, key, vars) },
+  );
+  if (details.insights.kind !== "findings") {
+    throw new Error("expected findings");
+  }
+  return details.insights;
+}
+
+const FWD = {
+  drive_layout: "FWD",
+  final_drive_axle: "front",
+  propshaft: false,
+} as const;
+
+test("a front-wheel-drive car's driveline fault names its drive shafts, never a propshaft", async () => {
+  const fault = drivelineInsights(
+    "fault",
+    { zone: "front_axle", driveline_parts: ["front_drive"] },
+    FWD,
+  );
+  expect(fault.primary?.nextStep).toBe(
+    "Front axle: have the gearbox output, front differential, drive shafts and CV joints checked",
+  );
+  expect(fault.checks.references[1]).toEqual({
+    label: "Drive layout",
+    detail:
+      "front-wheel drive: the driveline is the gearbox output, front differential and drive shafts",
+  });
+  expect(JSON.stringify(fault)).not.toMatch(/propshaft\)|centre bearing/i);
+
+  // No axle standing out: a centre-tunnel location is not a propshaft.
+  const tunnel = drivelineInsights(
+    "fault",
+    { zone: "driveshaft_tunnel", driveline_parts: ["front_drive"] },
+    FWD,
+  );
+  expect(tunnel.primary?.chips[0].value).toBe("Centre tunnel");
+
+  const healthy = drivelineInsights("no_fault", {}, FWD);
+  expect(healthy.checks.checked).toEqual([
+    { label: "Driveline", detail: "no driveline-order vibration found" },
+  ]);
+
+  await setLanguage("nl");
+  try {
+    const dutch = drivelineInsights(
+      "fault",
+      { zone: "front_axle", driveline_parts: ["front_drive"] },
+      FWD,
+      "nl",
+    );
+    expect(dutch.primary?.nextStep).toBe(
+      "Vooras: laat de uitgaande as van de versnellingsbak, het voordifferentieel, de aandrijfassen en homokineten controleren",
+    );
+    expect(JSON.stringify(dutch)).not.toMatch(/cardanas|middenlager/i);
+  } finally {
+    await setLanguage("en");
+  }
+});
+
+test("an all-wheel-drive car checks the axle the sensors point to first, then the other", () => {
+  const rear = drivelineInsights(
+    "fault",
+    { zone: "rear_axle", driveline_parts: ["propshaft_rear", "front_drive"] },
+    { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
+  );
+  expect(rear.primary?.nextStep).toBe(
+    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked; then the gearbox output, front differential, drive shafts and CV joints",
+  );
+  const rwd = drivelineInsights(
+    "fault",
+    { zone: "rear_axle", driveline_parts: ["propshaft_rear"] },
+    { drive_layout: "RWD", final_drive_axle: "rear", propshaft: true },
+  );
+  expect(rwd.primary?.nextStep).toBe(
+    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked",
+  );
+  expect(rwd.checks.references[1].detail).toBe(
+    "rear-wheel drive: propshaft to the rear axle",
+  );
+});
+
+test("a run without a drive layout keeps the propshaft wording and says the layout was not given", () => {
+  const insights = drivelineInsights(
+    "fault",
+    { zone: "driveshaft_tunnel" },
+    {},
+  );
+  expect(insights.primary?.nextStep).toBe("Centre tunnel (propshaft)");
+  expect(insights.checks.references[1]).toEqual({
+    label: "Drive layout",
+    detail:
+      "not provided; driveline advice assumes a propshaft to the rear axle",
   });
 });
 

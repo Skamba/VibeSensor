@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Mapping
 from typing import cast
 
@@ -25,3 +26,36 @@ def report_view_for(summary: Mapping[str, object], *, lang: str = "en") -> Repor
 
 def report_pdf_for(summary: Mapping[str, object], *, lang: str = "en") -> bytes:
     return render_report_pdf(report_view_for(summary, lang=lang))
+
+
+# Parts a front-wheel-drive car does not have, in English and Dutch.
+PROPSHAFT_WORDS = (
+    "propshaft",
+    "centre bearing",
+    "u-joint",
+    "rear differential",
+    "cardanas",
+    "middenlager",
+    "kruiskoppeling",
+    "achterdifferentieel",
+)
+
+
+def report_view_texts(view: object) -> list[str]:
+    """Every string a report view (or any part of it) shows."""
+    if isinstance(view, str):
+        return [view]
+    if dataclasses.is_dataclass(view) and not isinstance(view, type):
+        return [
+            text
+            for item in dataclasses.fields(view)
+            for text in report_view_texts(getattr(view, item.name))
+        ]
+    if isinstance(view, tuple | list):
+        return [text for item in view for text in report_view_texts(item)]
+    return []
+
+
+def propshaft_mentions(texts: list[str]) -> list[str]:
+    """The texts that name a propshaft or rear-axle drive part."""
+    return [text for text in texts if any(word in text.lower() for word in PROPSHAFT_WORDS)]

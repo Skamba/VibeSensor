@@ -47,6 +47,9 @@ from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
     DiagnosisPayload,
     DiagnosisSpectrum,
+    DriveLayoutValue,
+    DrivelinePart,
+    FinalDriveAxleValue,
     FuelTypeValue,
     GuidedPhaseValue,
     LocationAmplitudeRow,
@@ -163,7 +166,7 @@ def build_diagnosis(
     else:
         rows = _overall_location_amplitudes(located, floors)
         basis = "overall"
-    zone = _zone(candidate, rows) if candidate is not None else None
+    zone = _zone(candidate, rows, refs) if candidate is not None else None
     weak_reasons = _weak_reasons(
         candidate,
         presence,
@@ -233,6 +236,7 @@ def build_diagnosis(
             engine_alias=alias_gear is not None,
         ),
         "conditions": _conditions(refs),
+        "driveline_parts": _driveline_parts(candidate, zone, refs),
     }
 
 
@@ -271,6 +275,10 @@ class _References:
     rpm_source: RpmSourceValue
     # Measured RPM shows the engine running for enough of the drive to test it.
     engine_ran: bool
+    drive_layout: DriveLayoutValue | None
+    final_drive_axle: FinalDriveAxleValue | None
+    # Whether a propshaft drives the rear axle; ``None`` without a drive layout.
+    propshaft: bool | None
 
     @property
     def electric(self) -> bool:
@@ -319,6 +327,9 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
         fuel_type=metadata.fuel_type,
         rpm_source=rpm_source,
         engine_ran=engine_ran,
+        drive_layout=metadata.drive_layout,
+        final_drive_axle=metadata.final_drive_axle,
+        propshaft=metadata.propshaft,
     )
 
 
@@ -725,7 +736,9 @@ def _axle_zone(codes: Iterable[str]) -> str | None:
     return f"{axles.pop()}_axle" if len(axles) == 1 else None
 
 
-def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | None:
+def _zone(
+    candidate: Finding, rows: Sequence[LocationAmplitudeRow], refs: _References
+) -> str | None:
     """Map the diagnosed source and its evidence to a corner or a car zone."""
     source = candidate.suspected_source
     if source is VibrationSource.ENGINE:
@@ -746,7 +759,7 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
     if source is VibrationSource.DRIVELINE:
         if top_codes and top_codes[0] in _DRIVELINE_ZONE_CODES:
             return top_codes[0]
-        return _axle_zone(top_codes) or "driveshaft_tunnel"
+        return _axle_zone(top_codes) or _no_propshaft_axle_zone(refs) or "driveshaft_tunnel"
     if source is VibrationSource.WHEEL_TIRE and not candidate.weak_spatial_separation:
         # A clearly dominant corner names the zone, as it names the location:
         # the per-location medians over the whole drive dilute a fault that was
@@ -1087,6 +1100,44 @@ def _rpm_readings(metadata: RunMetadata, samples: Sequence[Sample]) -> tuple[Rpm
     return ("estimated_top_gear" if estimated else "none"), engine_ran
 
 
+def _no_propshaft_axle_zone(refs: _References) -> str | None:
+    """Where a driveline order no axle dominates comes from on a car without a propshaft.
+
+    On an engined car without a propshaft (front-wheel drive, or an e-AWD hybrid)
+    the order is the final drive's, on its axle; there is no tunnel shaft to blame.
+    An EV's motor order keeps the tunnel (its drive unit).
+    """
+    if refs.electric or refs.propshaft is not False or refs.final_drive_axle is None:
+        return None
+    return f"{refs.final_drive_axle}_axle"
+
+
+def _driveline_parts(
+    candidate: Finding | None, zone: str | None, refs: _References
+) -> list[DrivelinePart]:
+    """The driveline parts a driveline-order fault points to, the likelier first.
+
+    Without a propshaft only the front axle's drive turns at the order; a
+    rear-wheel-drive car's is the propshaft and rear axle. An all-wheel-drive car
+    has both: the axle the sensors point to comes first. An EV's motor is the
+    driveline order, and without a layout the parts are not known.
+    """
+    if (
+        candidate is None
+        or candidate.suspected_source is not VibrationSource.DRIVELINE
+        or refs.electric
+        or refs.propshaft is None
+    ):
+        return []
+    if refs.propshaft is False:
+        return ["front_drive"]
+    if refs.drive_layout == "RWD":
+        return ["propshaft_rear"]
+    if zone == "front_axle":
+        return ["front_drive", "propshaft_rear"]
+    return ["propshaft_rear", "front_drive"]
+
+
 def _conditions(refs: _References) -> TestConditions:
     return {
         "speed_source": refs.speed_source,
@@ -1098,6 +1149,9 @@ def _conditions(refs: _References) -> TestConditions:
         "final_drive_provenance": refs.final_drive_provenance,
         "gear_ratio_provenance": refs.gear_ratio_provenance,
         "fuel_type": refs.fuel_type,
+        "drive_layout": refs.drive_layout,
+        "final_drive_axle": refs.final_drive_axle,
+        "propshaft": refs.propshaft,
     }
 
 
