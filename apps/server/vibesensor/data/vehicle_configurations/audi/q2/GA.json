@@ -1,77 +1,98 @@
 {
   "definitions": {
-    "notes": {
-      "n3": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state."
-    },
     "evidence_ref_sets": {
       "e1": [
-        "legacy_research_sources:3c0c0aa886bf",
-        "legacy_research_sources:3ff9cb8ff793",
-        "legacy_research_sources:44937c13793f",
-        "legacy_research_sources:4b4b833b364a",
-        "legacy_research_sources:4b8ab423f879",
-        "legacy_research_sources:5e252f7f436b",
-        "legacy_research_sources:891a3906d052",
-        "legacy_research_sources:a24edcc340c2",
-        "legacy_research_sources:ae186108fea8",
-        "legacy_research_sources:e4d20bd4419f"
+        "secondary_technical_sources:q2-ga-adac-prefacelift"
       ],
       "e2": [
-        "secondary_technical_sources:q2-ga-wikipedia"
+        "audi_mediacenter_sources:ga-q2-30-tfsi-81kw-2023-tech-data-pdf",
+        "legacy_research_sources:4f1a7d2b9c0e"
       ],
       "e3": [
+        "audi_mediacenter_sources:ga-q2-30-tfsi-81kw-2023-tech-data-pdf",
         "legacy_research_sources:4f1a7d2b9c0e",
-        "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf"
+        "secondary_technical_sources:q2-ga-adac-facelift"
       ],
       "e4": [
-        "secondary_technical_sources:q2-ga-wikipedia",
-        "secondary_technical_sources:vwgroup-dsg-wikipedia"
+        "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-03-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-07-tech-data-pdf"
       ],
       "e5": [
-        "audi_mediacenter_sources:ga-q2-model-page",
-        "legacy_research_sources:4f1a7d2b9c0e",
-        "legacy_research_sources:9a7c1e5d4b62"
+        "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-03-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-07-tech-data-pdf",
+        "secondary_technical_sources:q2-ga-adac-facelift"
       ],
       "e6": [
-        "legacy_research_sources:4f1a7d2b9c0e",
-        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
-        "legacy_research_sources:9a7c1e5d4b62"
+        "legacy_research_sources:4f1a7d2b9c0e"
       ],
       "e7": [
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-manual-tech-data-pdf",
         "legacy_research_sources:4f1a7d2b9c0e",
+        "secondary_technical_sources:q2-ga-adac-facelift"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+        "secondary_technical_sources:q2-ga-adac-facelift"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-s-tronic-tech-data-pdf",
         "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
-        "legacy_research_sources:9a7c1e5d4b62"
+        "legacy_research_sources:4f1a7d2b9c0e"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-s-tronic-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "secondary_technical_sources:q2-ga-adac-facelift"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:ga-q2-30-tfsi-2026-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-81kw-2023-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-03-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2023-s-tronic-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf",
+        "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf",
+        "legacy_research_sources:4f1a7d2b9c0e"
+      ],
+      "e13": [
+        "legacy_research_sources:4f1a7d2b9c0e",
+        "secondary_technical_sources:q2-ga-adac-prefacelift"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:ga-q2-model-page",
+        "secondary_technical_sources:q2-ga-adac-facelift"
       ]
     },
     "tire_setups": {
-      "setup_235_19": {
-        "confidence": "family_default",
+      "setup_205_60r16": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e12",
+        "notes": "Basic tire 205/60 R16 on every official facelift Q2 GA technical-data sheet (Spain 12/2020, Germany 09/2023 to 02/2026).",
         "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 19.0,
-          "width_mm": 235.0
+          "aspect_pct": 60.0,
+          "rim_in": 16.0,
+          "width_mm": 205.0
         }
       },
-      "setup_225_18": {
-        "confidence": "family_default",
+      "setup_205_60r16_prefacelift": {
+        "confidence": "reputable_secondary_crosschecked",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e13",
+        "notes": "ADAC lists tire size 205/60 R16 for every pre-facelift 1.0 / 30 / 35 TFSI variant page; the official facelift sheets keep 205/60 R16 on 6J x 16 as the basic tire. No official pre-facelift sheet was found.",
         "front": {
-          "aspect_pct": 45.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        }
-      },
-      "setup_215_17": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
-          "aspect_pct": 50.0,
-          "rim_in": 17.0,
-          "width_mm": 215.0
+          "aspect_pct": 60.0,
+          "rim_in": 16.0,
+          "width_mm": 205.0
         }
       }
     }
@@ -82,263 +103,598 @@
     "market": "EU",
     "model_code": "GA",
     "body_code": "GA",
-    "model_name": "Q2 (GA, 2017-2024)",
-    "production_start_year": 2017,
-    "production_end_year": 2024
+    "model_name": "Q2 (GA, 2017-2026)"
   },
   "configurations": [
     {
       "id": "audi-ga-30-tfsi-eu-2017-mt6-fwd",
+      "production_start_year": 2017,
+      "production_end_year": 2020,
       "variant_name": "30 TFSI",
       "engine_code": "1.0L",
       "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Q2 GA all variants FWD as standard, AWD optional only on quattro derivatives (not in this scope).",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists front-wheel drive (Vorderrad) for every pre-facelift 1.0 / 30 / 35 TFSI variant; the official facelift sheets show the same layout.",
+        "value": "FWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table.",
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists a 6-speed manual (Schaltgetriebe, 6 Gaenge) for this pre-facelift variant.",
         "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e2"
+        "name": "6-speed manual"
       },
       "ratios": {},
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_215_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "S line 19\""
+            "setup_ref": "setup_205_60r16_prefacelift",
+            "name": "Basic 16\""
           }
         ],
-        "default_ref": "setup_215_17"
+        "default_ref": "setup_205_60r16_prefacelift"
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 30 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 30 TFSI state, but they publish materially different ratio and final-drive packages while both use 205/60 R16 baseline tires. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e3"
+          "note": "Pre-facelift Q2 with the 1.0 TFSI three-cylinder (85 kW, engine DKR, 999 cc), badged '1.0 TFSI ultra' until 08/2018 and '30 TFSI' from 10/2018. ADAC lists the manual 02/2017-08/2018 and 10/2018-08/2020, so the row covers 2017-2020; the facelifted 30 TFSI (81 kW) is a separate row from 2021.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi Q2 30 TFSI manual applicability across the represented EU 2017-2024 row span",
-          "reason": "The checked 2020 Spain and 2026 Germany official sheets both prove exact manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-          "evidence_refs_ref": "e3"
+          "item": "Q2 30 TFSI (2017-2020) 6-speed manual final drive",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 (2016-2020) was found, and the facelift sheets cannot be carried back: the 30 TFSI engine and the 35 TFSI manual ratios changed during production, so no final drive is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Represented-row manual ratio, final-drive, and tire applicability",
-          "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
-          "evidence_refs_ref": "e3"
+          "item": "Q2 30 TFSI (2017-2020) 6-speed manual top gear",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 was found, so no top gear is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Q2 GA 30 TFSI 6-speed manual top gear",
-          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+          "item": "Q2 30 TFSI (2017-2020) 6-speed manual optional tire sizes",
+          "reason": "Only the basic 205/60 R16 size is known (ADAC); the optional wheel program was not found.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
     },
     {
+      "id": "audi-ga-30-tfsi-eu-2021-mt6-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official Spain 12/2020 and Germany 09/19/2023 technical-data sheets lists front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "6-speed manual gearbox per the official technical-data sheet.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Top (last forward) gear 0.642 per the official Spain 12/2020 and Germany 09/19/2023 technical-data sheets.",
+          "value": 0.642
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Forward ratios 3.769 / 1.947 / 1.281 / 0.973 / 0.778 / 0.642 per the official Germany 09/19/2023 technical-data sheet (the Spain 12/2020 sheet prints 2nd gear as 1.955, all other gears the same).",
+          "value": [
+            3.769,
+            1.947,
+            1.281,
+            0.973,
+            0.778,
+            0.642
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Final drive 4.688 per the official Spain 12/2020 and Germany 09/19/2023 technical-data sheets (one output; the 2-3 column is '-').",
+          "value": 4.688
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "Facelifted Q2 30 TFSI 81 kW (110 PS, 999 cc) manual: the official Spain 12/2020 and Germany 09/19/2023 sheets give the same gearbox data apart from 2nd gear (1.955 vs 1.947). ADAC lists this engine from 11/2020 to 02/2024, and the 85 kW engine's first sheet is dated 03/14/2024, so the row covers 2021-2023.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q2 30 TFSI 81 kW optional tire sizes",
+          "reason": "The technical-data sheets list only the basic 205/60 R16 tire; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-ga-30-tfsi-eu-2024-mt6-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "30 TFSI",
+      "engine_code": "1.0L",
+      "engine_name": "1.0L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official 03/2024, 07/2024 and 02/2026 technical-data sheets lists front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "6-speed manual gearbox per the official technical-data sheet.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Top (last forward) gear 0.554 per the official 03/2024, 07/2024 and 02/2026 technical-data sheets.",
+          "value": 0.554
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Forward ratios 3.615 / 2.111 / 1.387 / 0.973 / 0.739 / 0.554 per the official 03/2024, 07/2024 and 02/2026 technical-data sheets.",
+          "value": [
+            3.615,
+            2.111,
+            1.387,
+            0.973,
+            0.739,
+            0.554
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Final drive 5.067 per the official Germany technical-data sheets of 03/14/2024, 07/25/2024 and 02/04/2026 (one output; the 2-3 column is '-').",
+          "value": 5.067
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "Q2 30 TFSI 85 kW (116 PS) manual, Euro 6e: the official Germany sheets of 03/14/2024, 07/25/2024 and 02/04/2026 print identical gearbox data. ADAC lists it from 02/2024 to 04/2026, so the row covers 2024-2026.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q2 30 TFSI 85 kW optional tire sizes",
+          "reason": "The technical-data sheets list only the basic 205/60 R16 tire; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
       "id": "audi-ga-30-tfsi-eu-2017-dct7-fwd",
+      "production_start_year": 2017,
+      "production_end_year": 2019,
       "variant_name": "30 TFSI",
       "engine_code": "1.0L",
       "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n3",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists front-wheel drive (Vorderrad) for every pre-facelift 1.0 / 30 / 35 TFSI variant; the official facelift sheets show the same layout.",
+        "value": "FWD"
       },
       "transmission": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic, 0AM/0CW) per VW Group engineering norms: 1.0 TFSI EA211 at 200 Nm is well within DQ200 250 Nm limit and is the textbook DQ200 application across MQB-A small-car platforms (Polo, Ibiza, A1, Q2). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect: DQ381 is used only above the DQ200 torque limit and replaced DQ250, not DQ200. Existing top_gear_ratio 0.725 and final_drive_front 4.769 are consistent with documented DQ200 1.0-TFSI ratios, so they remain plausible but require Audi MediaCenter tech-data PDF for official_exact confirmation.",
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists a 7-speed dual-clutch gearbox (Doppelkupplung, 7 Gaenge) for this pre-facelift variant (Audi: S tronic).",
         "code": "DCT7",
-        "name": "7-speed S tronic (DQ200)",
-        "evidence_refs_ref": "e4"
+        "name": "7-speed S tronic"
       },
       "ratios": {},
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_215_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "S line 19\""
+            "setup_ref": "setup_205_60r16_prefacelift",
+            "name": "Basic 16\""
           }
         ],
-        "default_ref": "setup_215_17"
+        "default_ref": "setup_205_60r16_prefacelift"
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi source-gap evidence for the broad Q2 30 TFSI S tronic placeholder. The recovered official packet closes Spain 2020 and Germany 2026 manual 30 TFSI states, but it does not recover any official 30 TFSI S tronic technical-data sheet. The checked Audi MediaCenter model page and the recovered Switzerland MY25 price list also do not safely close this broad automatic EU row, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e5"
+          "note": "Pre-facelift Q2 1.0 TFSI (85 kW, engine DKR) with S tronic, badged '1.0 TFSI ultra' (02/2017-08/2018) and then '30 TFSI' (10/2018-02/2019) per ADAC, so the row covers 2017-2019. ADAC lists no front-wheel-drive 30 TFSI S tronic after 02/2019 or after the facelift, and the official facelift sheet sets (Spain 12/2020, Audi MediaCenter Germany) contain none.",
+          "evidence_refs_ref": "e14"
         }
       ],
       "unresolved": [
         {
-          "item": "Exact Audi Q2 30 TFSI S tronic applicability across the represented EU 2017-2024 row span",
-          "reason": "The recovered official packet does not safely close a 30 TFSI S tronic row: the checked Audi MediaCenter model page does not expose a 30 TFSI S tronic sheet, the Spain 2020 technical packet does not include one, and the recovered Switzerland MY25 price list omits 30 TFSI entirely.",
-          "evidence_refs_ref": "e5"
+          "item": "Q2 30 TFSI (2017-2019) 7-speed S tronic final drive",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 (2016-2020) was found, and the facelift sheets cannot be carried back: the 30 TFSI engine and the 35 TFSI manual ratios changed during production, so no final drive is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Represented-row DCT7 ratio, final-drive, and tire applicability",
-          "reason": "Because no checked official 30 TFSI S tronic technical-data sheet was recovered for this row, the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 tire mapping remain unsupported broad-row carryover values.",
-          "evidence_refs": [
-            "audi_mediacenter_sources:ga-q2-model-page",
-            "legacy_research_sources:4f1a7d2b9c0e"
-          ]
+          "item": "Q2 30 TFSI (2017-2019) 7-speed S tronic top gear",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 was found, so no top gear is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Q2 GA 30 TFSI 7-speed S tronic (DQ200) top gear",
-          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+          "item": "Q2 30 TFSI (2017-2019) 7-speed S tronic optional tire sizes",
+          "reason": "Only the basic 205/60 R16 size is known (ADAC); the optional wheel program was not found.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-ga-35-tfsi-eu-2017-mt6-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2020,
       "variant_name": "35 TFSI",
       "engine_code": "1.5L",
       "engine_name": "1.5L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n3",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists front-wheel drive (Vorderrad) for every pre-facelift 1.0 / 30 / 35 TFSI variant; the official facelift sheets show the same layout.",
+        "value": "FWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. 6-speed manual confirmed by Wikipedia Q2 powertrain table for both 1.4 TFSI COD (pre-facelift) and 1.5 TFSI evo (post-facelift) variants.",
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists a 6-speed manual (Schaltgetriebe, 6 Gaenge) for this pre-facelift variant.",
         "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e2"
+        "name": "6-speed manual"
       },
       "ratios": {},
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_215_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "S line 19\""
+            "setup_ref": "setup_205_60r16_prefacelift",
+            "name": "Basic 16\""
           }
         ],
-        "default_ref": "setup_215_17"
+        "default_ref": "setup_205_60r16_prefacelift"
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI manual placeholder. The checked Spain 2020 technical sheet and the 02/04/2026 Audi MediaCenter Germany technical-data PDF both prove a front-wheel-drive 6-speed manual 35 TFSI state, and the recovered Switzerland MY25 price list confirms late-cycle manual coexistence, but the exact 2020 Spain and 2026 Germany ratio packages differ materially while the official baseline tire program stays at 205/60 R16. Those official states contradict the inherited 0.840, 3.462, and 215/50 R17 carryover values and show that the broad EU 2017-2024 row overlaps multiple exact states, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e6"
+          "note": "Pre-facelift Q2 35 TFSI (110 kW, engine DPC, 1498 cc) manual: ADAC lists it from 11/2018 to 08/2020, so the row covers 2019-2020. Before it the Q2 had the 1.4 TFSI cod (10/2016-08/2018), a different engine that the library does not list.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi Q2 35 TFSI manual applicability across the represented EU 2017-2024 row span",
-          "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI manual states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-          "evidence_refs_ref": "e6"
+          "item": "Q2 35 TFSI (2019-2020) 6-speed manual final drive",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 (2016-2020) was found, and the facelift sheets cannot be carried back: the 30 TFSI engine and the 35 TFSI manual ratios changed during production, so no final drive is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Represented-row manual ratio, final-drive, and tire applicability",
-          "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
-          "evidence_refs": [
-            "legacy_research_sources:4f1a7d2b9c0e",
-            "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
-          ]
+          "item": "Q2 35 TFSI (2019-2020) 6-speed manual top gear",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 was found, so no top gear is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Q2 GA 35 TFSI 6-speed manual top gear",
-          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+          "item": "Q2 35 TFSI (2019-2020) 6-speed manual optional tire sizes",
+          "reason": "Only the basic 205/60 R16 size is known (ADAC); the optional wheel program was not found.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
     },
     {
+      "id": "audi-ga-35-tfsi-eu-2021-mt6-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official Spain 12/2020 technical-data sheet lists front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "6-speed manual gearbox per the official technical-data sheet.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Top (last forward) gear 0.652 per the official Spain 12/2020 technical-data sheet.",
+          "value": 0.652
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Forward ratios 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652 per the official Spain 12/2020 technical-data sheet.",
+          "value": [
+            3.75,
+            1.952,
+            1.2,
+            0.925,
+            0.767,
+            0.652
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Final drive 3.944 per the official Spain 12/2020 technical-data sheet, which prints the same value for both outputs (1-2 / 2-3 3.944 / 3.944).",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "Facelifted Q2 35 TFSI 110 kW manual as sold from late 2020: the official Spain 12/2020 sheet gives 3.750 / 1.952 / 1.200 / 0.925 / 0.767 / 0.652 with final drive 3.944. The first Germany sheet (09/19/2023) prints a different gearbox (top gear 0.510, final drive 4.563), so the row covers 2021-2023 and the Germany state starts in 2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q2 35 TFSI manual ratios 2022-2023",
+          "reason": "Only the Spain 12/2020 sheet documents this gearbox and only the Germany 09/2023 sheet the later one; when the change happened between those dates, or whether the two were market variants sold side by side, was not found.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Q2 35 TFSI manual (2021-2023) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic 205/60 R16 tire; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-ga-35-tfsi-eu-2024-mt6-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "The official Germany 09/2023 and 02/2026 technical-data sheets lists front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "6-speed manual gearbox per the official technical-data sheet.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Top (last forward) gear 0.510 per the official Germany 09/19/2023 and 02/04/2026 technical-data sheets.",
+          "value": 0.51
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510 per the official Germany 09/19/2023 and 02/04/2026 technical-data sheets.",
+          "value": [
+            3.75,
+            2.1,
+            1.276,
+            0.878,
+            0.674,
+            0.51
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Final drive 4.563 per the official Germany 09/19/2023 and 02/04/2026 technical-data sheets, which print the same value for both outputs (1-2 / 2-3 4.563 / 4.563).",
+          "value": 4.563
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "Q2 35 TFSI 110 kW manual: the official Germany sheets of 09/19/2023 and 02/04/2026 print identical gearbox data (3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, final drive 4.563). A September sheet counts from the next model year, so the row covers 2024-2026; ADAC lists the 35 TFSI manual until 04/2026.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q2 35 TFSI manual (2024-2026) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic 205/60 R16 tire; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
       "id": "audi-ga-35-tfsi-eu-2017-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2020,
       "variant_name": "35 TFSI",
       "engine_code": "1.5L",
       "engine_name": "1.5L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n3",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists front-wheel drive (Vorderrad) for every pre-facelift 1.0 / 30 / 35 TFSI variant; the official facelift sheets show the same layout.",
+        "value": "FWD"
       },
       "transmission": {
-        "confidence": "official_derived",
-        "notes": "Sonnet redo research (2026-04 v2): Audi badge naming '30 TFSI' / '35 TFSI' was introduced group-wide in October 2018 (MY2019); the Q2 GA went on sale November 2016 (MY2017) under the older '1.0 TFSI' / '1.4 TFSI COD' badges. The repo's production_start_year=2017 reflects the powertrain availability window; the variant_name field uses the post-2018 nomenclature. Both are correct under different conventions, but readers should treat '30/35 TFSI' as the post-rename badge for a row that spans 2017-onwards production. Engine code for 35 TFSI rows should be read as 1.4L EA211 COD (2017-2020) then 1.5L EA211 evo (2020+) - the repo's single 1.5L tag does not capture the pre-facelift state. Transmission code DQ200 (7-speed dry-clutch S tronic) per VW Group engineering norms: 1.4 TFSI COD / 1.5 TFSI evo at 250 Nm sits exactly at DQ200 torque limit and is the standard pairing for MQB FWD 250-Nm applications (Golf 1.5 TSI 130 PS, A3 1.4 TFSI 150 PS). DQ381 (420-430 Nm wet-clutch) was prior repo label and is incorrect for this torque level. Existing top_gear_ratio 0.725 and final_drive_front 4.769 retained pending Audi MediaCenter tech-data PDF confirmation.",
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e1",
+        "notes": "ADAC lists a 7-speed dual-clutch gearbox (Doppelkupplung, 7 Gaenge) for this pre-facelift variant (Audi: S tronic).",
         "code": "DCT7",
-        "name": "7-speed S tronic (DQ200)",
-        "evidence_refs_ref": "e4"
+        "name": "7-speed S tronic"
       },
       "ratios": {},
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_215_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "S line 19\""
+            "setup_ref": "setup_205_60r16_prefacelift",
+            "name": "Basic 16\""
           }
         ],
-        "default_ref": "setup_215_17"
+        "default_ref": "setup_205_60r16_prefacelift"
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific official Audi evidence for the broad Q2 35 TFSI S tronic placeholder. The checked Spain 2020 technical sheet, the 02/04/2026 Audi MediaCenter Germany technical-data PDF, and the recovered Switzerland MY25 price list all support a real front-wheel-drive 35 TFSI S tronic state, but they still represent late market-specific exact states rather than one unchanged EU 2017-2024 row. Those official states contradict the inherited 0.725, 4.769, and 215/50 R17 carryover values, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e7"
+          "note": "Pre-facelift Q2 35 TFSI (110 kW, engine DPC, 1498 cc) S tronic: ADAC lists it from 11/2018 to 08/2020, so the row covers 2019-2020. The facelifted 35 TFSI S tronic is a separate row from 2021.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi Q2 35 TFSI S tronic applicability across the represented EU 2017-2024 row span",
-          "reason": "The checked 2020 Spain and 2026 Germany official sheets plus the late Switzerland price list prove real 35 TFSI S tronic states, but they do not prove the full represented EU 2017-2024 row as one unchanged mapping.",
-          "evidence_refs_ref": "e7"
+          "item": "Q2 35 TFSI (2019-2020) 7-speed S tronic final drive",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 (2016-2020) was found, and the facelift sheets cannot be carried back: the 30 TFSI engine and the 35 TFSI manual ratios changed during production, so no final drive is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Represented-row S tronic ratio, final-drive, and tire applicability",
-          "reason": "The checked official 2020 Spain and 2026 Germany S tronic sheets contradict the inherited 0.725 top gear, 4.769 final drive, and 215/50 R17 broad-row carryover values, even though they remain too market- and era-specific for a direct broad-row rewrite.",
-          "evidence_refs": [
-            "legacy_research_sources:4f1a7d2b9c0e",
-            "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf"
-          ]
+          "item": "Q2 35 TFSI (2019-2020) 7-speed S tronic top gear",
+          "reason": "No official technical-data sheet for the pre-facelift Q2 was found, so no top gear is stored.",
+          "evidence_refs_ref": "e13"
         },
         {
-          "item": "Q2 GA 35 TFSI 7-speed S tronic (DQ200) top gear",
-          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+          "item": "Q2 35 TFSI (2019-2020) 7-speed S tronic optional tire sizes",
+          "reason": "Only the basic 205/60 R16 size is known (ADAC); the optional wheel program was not found.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
+    },
+    {
+      "id": "audi-ga-35-tfsi-eu-2021-dct7-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2026,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "The official Spain 12/2020 and Germany 09/2023 and 02/2026 technical-data sheets lists front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "7-speed S tronic per the official technical-data sheet.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Top (last forward) gear 0.653 per the official Spain 12/2020 and Germany 09/19/2023 and 02/04/2026 technical-data sheets.",
+          "value": 0.653
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 per the official Germany 09/19/2023 and 02/04/2026 technical-data sheets (the Spain 12/2020 sheet prints 4th 0.933 and 6th 0.778, all other gears the same).",
+          "value": [
+            3.5,
+            2.087,
+            1.343,
+            0.94,
+            0.974,
+            0.78,
+            0.653
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e10",
+          "notes": "The official sheets print two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3), not front and rear axle ratios. Only one assignment of the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 keeps the overall ratios falling gear by gear: 1st-4th on 4.800 (4th 0.940 x 4.800 = 4.512) and 5th-7th on 3.429 (5th 0.974 x 3.429 = 3.340, 6th 2.675, 7th 0.653 x 3.429 = 2.239; 7th on 4.800 would give 3.134). So 3.429 is the final drive behind the top gear and is stored as final_drive_front; 4.800 drives only lower gears.",
+          "value": 3.429
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "Facelifted Q2 35 TFSI 110 kW S tronic: the official Spain 12/2020, Germany 09/19/2023 and Germany 02/04/2026 sheets give the same final drives 4.800 / 3.429 and top gear 0.653. ADAC lists it from 10/2020 to 04/2026, so the row covers 2021-2026.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q2 35 TFSI S tronic optional tire sizes",
+          "reason": "The technical-data sheets list only the basic 205/60 R16 tire; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

@@ -569,20 +569,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:q2-ga-wikipedia",
-      "url": "https://en.wikipedia.org/wiki/Audi_Q2",
-      "title": "Wikipedia: Audi Q2 (GA)",
-      "note": "Article confirms launch lineup at 2016/2017 used '1.0 TFSI' / '1.4 TFSI COD' badge naming; Audi group-wide rename to '30 TFSI' / '35 TFSI' was October 2018 (MY2019). 1.4 TFSI EA211 COD was replaced by 1.5 TFSI EA211 evo at the GA facelift (~2020) which dropped cylinder deactivation. All four ICE rows are FWD with optional 6-speed manual or 7-speed S tronic.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:vwgroup-dsg-wikipedia",
-      "url": "https://en.wikipedia.org/wiki/Direct-shift_gearbox",
-      "title": "Wikipedia: Direct-shift gearbox (DSG / S tronic)",
-      "note": "Canonical VW Group DCT variant table. DQ200 (0AM/0CW) 7-speed dry-clutch, max 250 Nm, FWD only, used with 1.0-1.6 L engines. DQ381 (0GC) 7-speed wet-clutch, max 420-430 Nm, replaces DQ250 from 2017. The Q2 GA 30 TFSI (1.0 TFSI 200 Nm FWD) is a textbook DQ200 application; the 35 TFSI (1.4/1.5 TFSI 250 Nm FWD) at exactly the DQ200 torque limit is also typically DQ200 in MQB FWD applications.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:g01-x3-wikipedia",
       "url": "https://en.wikipedia.org/wiki/BMW_X3_(G01)",
       "title": "Wikipedia: BMW X3 (G01) third generation",
@@ -902,6 +888,20 @@
       "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q3/8u-facelift/",
       "title": "ADAC Autokatalog Audi Q3 8U (2011-2014) and 8U facelift (2014-2018)",
       "note": "ADAC catalogue of the Germany-market Q3 8U variants: 2.0 TDI front-wheel drive manual 10/11-06/18; 2.0 TDI S tronic (7 gears) front-wheel drive 06/16-06/18 (88 kW, engine DFT, dual clutch; page /q3/8u-facelift/257148/); 2.0 TDI quattro manual and S tronic throughout.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q2-ga-adac-prefacelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q2/ga/",
+      "title": "ADAC Autokatalog Audi Q2 GA (2016-2020)",
+      "note": "ADAC catalogue of the Germany-market pre-facelift Q2 GA variants with their sales periods: 1.0 TFSI ultra (85 kW) manual and S tronic 02/17-08/18, 1.4 TFSI cod (110 kW) manual and S tronic 10/16-08/18, 30 TFSI (85 kW) manual 10/18-08/20, 30 TFSI S tronic 10/18-02/19, 35 TFSI (110 kW) manual and S tronic 11/18-08/20. The per-variant pages (/268419/ 1.0 TFSI ultra, /268420/ 1.0 TFSI ultra S tronic, /295427/ and /302855/ 30 TFSI, /295428/ 30 TFSI S tronic, /295927/ and /303417/ 35 TFSI, /295928/ and /303418/ 35 TFSI S tronic) list front-wheel drive, engine DKR 999 ccm for the 1.0 / 30 TFSI and DPC 1498 ccm for the 35 TFSI, a 6-speed manual or 7-speed dual-clutch gearbox, and tire size 205/60 R16.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q2-ga-adac-facelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q2/ga-facelift/",
+      "title": "ADAC Autokatalog Audi Q2 GA facelift (2020-2026)",
+      "note": "ADAC catalogue of the Germany-market facelifted Q2 GA variants with their sales periods: 30 TFSI manual 11/20-02/24 (81 kW), then 02/24-06/25 and 06/25-04/26 (85 kW); 35 TFSI manual and 35 TFSI S tronic 10/20-02/24, 02/24-06/25 and 06/25-04/26. No front-wheel-drive 30 TFSI S tronic is listed after the facelift.",
       "confidence": "medium"
     }
   ]

@@ -1484,6 +1484,41 @@
       "title": "Audi technical data e-tron GT quattro 370 kW, Program for Germany, status 02/02/26",
       "note": "Official technical-data sheet for the facelift e-tron GT quattro: all-wheel drive, electric motors front / rear 1 / 1, top speed 245 km/h, basic tires 225/55 R19 front | 275/45 R19 rear, as in the 05/2025 sheet. Prints no transmission or reduction ratio.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-30-tfsi-81kw-2023-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240517192838/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1142/file_en/911760336865510155de5ec137c252f01514edc5/eTD-Audi-Q2-30-TFSI-81kW_230919.pdf",
+      "title": "Audi technical data Q2 30 TFSI 81 kW, Program for Germany, status 09/19/2023 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: 6-speed manual gearbox, ratios 3.769 / 1.947 / 1.281 / 0.973 / 0.778 / 0.642, reverse 3.182, final drive ratio 1-2 / 2-3 4.688 / -, basic tires 205/60 R16, Euro 6d-ISC-FCM.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-03-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240831233605/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1142/file_de/911760336865510155de5ec137c252f01514edc5/TD-Audi-Q2-30-TFSI-85kW_240314.pdf",
+      "title": "Audi Technische Daten Q2 30 TFSI 85 kW, Angebot in Deutschland, Stand 14.03.2024 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet (German), the first one for the 85 kW (116 PS) 30 TFSI that replaced the 81 kW engine: 6-stufiges Schaltgetriebe, ratios 3.615 / 2.111 / 1.387 / 0.973 / 0.739 / 0.554, reverse 3.182, Achsuebersetzung 1-2 / 2-3 5.067 / -, basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-30-tfsi-85kw-2024-07-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240906093453/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1142/file_en/911760336865510155de5ec137c252f01514edc5/eTD-Audi-Q2-30-TFSI-85kW_240725.pdf",
+      "title": "Audi technical data Q2 30 TFSI 85 kW, Program for Germany, status 07/25/2024 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: 6-speed manual gearbox, ratios 3.615 / 2.111 / 1.387 / 0.973 / 0.739 / 0.554, final drive ratio 1-2 / 2-3 5.067 / -, basic tires 205/60 R16, Euro 6e. Same gearbox data as the 03/2024 and 02/2026 sheets.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-35-tfsi-2023-manual-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240602090828/https://uploads.audi-mediacenter.com/system/production/car_motorizations/834/file_en/e1ca9c9578434c70c128c2b1635601cad96ddcdf/eTD-Audi-Q2-35-TFSI-110kW_230919.pdf",
+      "title": "Audi technical data Q2 35 TFSI 110 kW, Program for Germany, status 09/19/2023 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: 6-speed manual gearbox, ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drive ratio 1-2 / 2-3 4.563 / 4.563, basic tires 205/60 R16. The 02/2026 sheet prints the same gearbox data.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:ga-q2-35-tfsi-2023-s-tronic-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240526225133/https://uploads.audi-mediacenter.com/system/production/car_motorizations/835/file_en/710b346dcb4bd1b8b83519932fc935d5c535bd35/eTD-Audi-Q2-35-TFSI-S_tronic-110kW_230919.pdf",
+      "title": "Audi technical data Q2 35 TFSI S tronic 110 kW, Program for Germany, status 09/19/2023 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: 7-speed S tronic, ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drive ratio 1-2 / 2-3 4.800 / 3.429, basic tires 205/60 R16. The 02/2026 sheet prints the same gearbox data.",
+      "confidence": "high"
     }
   ]
 }
