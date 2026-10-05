@@ -20,15 +20,15 @@ from car_library_validation._common import (
 )
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 
-# `<family code> <litres>L <layout> [Turbo] [Diesel] [PHEV]`, or an EV motor
-# count; see docs/car_library_architecture.md "Data conventions".
+# `<family code> <litres>L <layout> [Turbo|Supercharged] [Diesel] [PHEV]`, or
+# an EV motor count; see docs/car_library_architecture.md "Data conventions".
 ENGINE_TEXT_PATTERN = re.compile(
     r"^(?:(?P<code>[A-Z][A-Z0-9]{1,7}) )?(?P<litres>\d\.\d)L "
-    r"(?:I3|I4|I5|I6|V6|V8|V10|V12)(?: Turbo)?(?: Diesel)?(?P<phev> PHEV)?$"
+    r"(?:I3|I4|I5|I6|V6|V8|V10|V12)(?: Turbo| Supercharged)?(?: Diesel)?(?P<phev> PHEV)?$"
     r"|^(?P<ev>Electric (?:Single|Dual) Motor)$"
 )
 # Brands whose rows already follow the engine-text format.
-ENGINE_TEXT_BRANDS = frozenset({"BMW"})
+ENGINE_TEXT_BRANDS = frozenset({"Audi", "BMW"})
 
 
 def validate_gearboxes(
@@ -284,7 +284,7 @@ def validate_engine_text(
                 entity=entity,
                 message=(
                     f"{label} engine {engine_name!r} does not read "
-                    "'<code> <litres>L <layout> [Turbo] [Diesel] [PHEV]'"
+                    "'<code> <litres>L <layout> [Turbo|Supercharged] [Diesel] [PHEV]'"
                 ),
             )
         )

@@ -109,9 +109,10 @@ inherited from family-level data, encode that through `confidence` and
   all-wheel-drive car, the row stores it as `final_drive_rear` only; the
   front ratio is not invented.
 - **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
-  [Turbo] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel`. Litres, layout,
-  turbo and fuel come from the technical-data sheet; the family code is left
-  out when it is not known for the row. All rows of one generation use the
+  [Turbo|Supercharged] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel` or
+  `3.0L V6 Supercharged` (Audi's mechanically supercharged 3.0 TFSI).
+  Litres, layout, charging and fuel come from the technical-data sheet; the
+  family code is left out when it is not known for the row. All rows of one generation use the
   same text for the same engine. EVs use `Electric Single Motor` /
   `Electric Dual Motor`. `engine_code` repeats the family code, or reads
   `<litres>L` (`Electric` for EVs) when there is none. The validator

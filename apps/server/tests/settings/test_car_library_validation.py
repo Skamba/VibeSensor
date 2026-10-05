@@ -195,7 +195,10 @@ def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
         issues = validate_vehicle_configurations([broken], allowlist={})
         assert [issue.rule for issue in issues] == [rule]
 
-    unchecked_brand = replace(config, brand="Audi", engine_name="2.0L I4 TFSI Turbo")
+    supercharged = replace(config, engine_code="3.0L", engine_name="3.0L V6 Supercharged")
+    assert not validate_vehicle_configurations([supercharged], allowlist={})
+
+    unchecked_brand = replace(config, brand="Unlisted", engine_name="2.0L I4 TFSI Turbo")
     assert not validate_vehicle_configurations([unchecked_brand], allowlist={})
 
 
