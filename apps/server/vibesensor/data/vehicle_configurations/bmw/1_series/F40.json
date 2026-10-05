@@ -446,10 +446,6 @@
           "confidence": "family_default",
           "value": 0.71
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.684
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 3.684
@@ -538,12 +534,6 @@
           "confidence": "unverified",
           "notes_ref": "n1",
           "value": 0.673,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.075,
           "evidence_refs_ref": "e1"
         },
         "final_drive_rear": {

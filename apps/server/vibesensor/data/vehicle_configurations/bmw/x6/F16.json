@@ -1,7 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW 06/2014 launch technical-data pages publish a single 3.154 final-drive ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n2": "The official BMW 06/2014 launch technical-data pages publish a single 3.154 final-drive ratio for the exact X6 xDrive50i state represented by this narrowed 2015-only row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n3": "The official BMW 06/2014 launch technical-data pages list 255/50 R19 as the baseline tire for the exact X6 xDrive50i state represented by this narrowed 2015-only row."
     },
     "evidence_ref_sets": {
@@ -112,12 +112,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
-          "value": 3.154
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e1",
@@ -153,11 +147,6 @@
           "item": "BMW X6 xDrive50i exact optional wheel/tire matrix beyond the narrowed 2015 row",
           "reason": "The checked official BMW 06/2014 launch technical-data pages close the 19-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X6 xDrive50i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "high_confidence"
@@ -183,10 +172,6 @@
         "top_gear_ratio": {
           "confidence": "family_default",
           "value": 0.667
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.154
         },
         "final_drive_rear": {
           "confidence": "family_default",

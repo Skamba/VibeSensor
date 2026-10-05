@@ -12,7 +12,7 @@
       "n16": "The official BMW 11/2015 technical-data PDF lists 225/60 R17 baseline tires for the exact 7 Series Sedan 740Li state represented by this narrowed 2016-only row.",
       "n17": "The official BMW 11/2015 technical-data PDF lists 225/60 R17 baseline tires for the exact 7 Series Sedan 740i state represented by this narrowed 2016-only row.",
       "n18": "The official BMW 11/2015 technical-data PDF lists 245/50 R18 baseline tires for the exact 7 Series Sedan 750i state represented by this narrowed 2016-only row.",
-      "n19": "The official BMW 11/2015 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n19": "The official BMW 11/2015 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n20": "The official BMW 11/2015 technical-data PDF lists 245/50 R18 as the baseline tire for the exact 750i xDrive state represented by this row.",
       "n21": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745Le rear-wheel-drive row.",
       "n22": "The official BMW 01/2019 facelift technical-data PDF lists 245/50 R18 as the baseline tire for the exact 745e rear-wheel-drive row."
@@ -1239,16 +1239,6 @@
             "bmw_pressclub_sources:g11-ca-2018my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n19",
-          "value": 2.813,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g11-750i-xdrive-2015-spec-pdf",
-            "bmw_pressclub_sources:g11-ca-2017my-product-guide",
-            "bmw_pressclub_sources:g11-ca-2018my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n19",
@@ -1287,11 +1277,6 @@
         {
           "item": "BMW 7 Series 750i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW 11/2015 technical-data PDF closes the 18-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "item": "BMW 7 Series 750i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e11"
         },
         {

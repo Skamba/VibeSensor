@@ -397,17 +397,11 @@
           "evidence_refs_ref": "e2",
           "notes": "The official BMW 11/2016 technical-data PDF lists the full forward gear-ratio set for the exact 5 Series Sedan 530i xDrive state represented by this row."
         },
-        "final_drive_front": {
-          "value": 2.929,
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-        },
         "final_drive_rear": {
           "value": 2.929,
           "confidence": "official_derived",
           "evidence_refs_ref": "e2",
-          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
+          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 530i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only."
         }
       },
       "tires": {
@@ -421,7 +415,7 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires.",
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 530i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio as the rear final drive, and 225/55 R17 baseline tires.",
           "evidence_refs_ref": "e2"
         },
         {
@@ -436,11 +430,6 @@
         {
           "item": "BMW 5 Series Sedan 530i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW 5 Series Sedan 530i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e2"
         }
       ],
@@ -562,16 +551,10 @@
             "bmw_pressclub_sources:g30-2020-11-tech-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "value": 2.929,
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
-          "notes": "The official BMW 11/2016 technical-data PDF publishes only a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation."
-        },
         "final_drive_rear": {
           "value": 2.929,
           "confidence": "official_derived",
-          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this row. The repo duplicates that exact published rear-axle ratio across the front and rear final-drive fields for the canonical AWD representation. The 09/2018, 11/2018, 05/2020 (LCI) and 11/2020 sheets publish the same value, so it holds for 2017-2023.",
+          "notes": "The official BMW 11/2016 technical-data PDF publishes a 2.929 rear-axle ratio for the exact 5 Series Sedan 540i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only. The 09/2018, 11/2018, 05/2020 (LCI) and 11/2020 sheets publish the same value, so it holds for 2017-2023.",
           "evidence_refs": [
             "bmw_pressclub_sources:g30-540i-and-xdrive-2016-tech-spec-pdf",
             "bmw_pressclub_sources:g30-2018-09-tech-spec-pdf",
@@ -592,7 +575,7 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio duplicated across the front and rear axle fields, and 225/55 R17 baseline tires.",
+          "note": "The official BMW 11/2016 technical-data PDF closes the exact 5 Series Sedan 540i xDrive launch-state mapping: AWD, 8-Gang Steptronic/ZF8HP mapping, full forward ratios, the published 2.929 rear-axle ratio as the rear final drive, and 225/55 R17 baseline tires.",
           "evidence_refs_ref": "e3"
         },
         {
@@ -609,11 +592,6 @@
         {
           "item": "BMW 5 Series Sedan 540i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW 11/2016 technical-data PDF closes the 225/55 R17 baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW 5 Series Sedan 540i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes only a rear-axle ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e3"
         }
       ],

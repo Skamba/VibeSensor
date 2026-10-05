@@ -72,10 +72,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 8.698
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 8.698

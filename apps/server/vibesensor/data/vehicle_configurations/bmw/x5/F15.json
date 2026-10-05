@@ -1,11 +1,11 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW 12/2013 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive35i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n2": "The official BMW 12/2013 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive35i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n3": "The official BMW 12/2013 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive35i state represented by this row.",
-      "n4": "The official BMW 08/2014 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive50i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n4": "The official BMW 08/2014 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive50i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n5": "The official BMW 08/2014 technical-data PDF lists 255/50 R19 as the baseline tire for the exact X5 xDrive50i state represented by this row.",
-      "n6": "The official BMW 05/2015 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive40e state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n6": "The official BMW 05/2015 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive40e state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n7": "The official BMW 05/2015 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive40e state represented by this row."
     },
     "evidence_ref_sets": {
@@ -154,17 +154,6 @@
             "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 3.154,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
-            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
-            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
-            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n2",
@@ -212,11 +201,6 @@
         {
           "item": "BMW X5 xDrive35i exact optional wheel/tire matrix",
           "reason": "The checked official BMW 12/2013 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X5 xDrive35i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {
@@ -290,16 +274,6 @@
             "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n4",
-          "value": 3.154,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
-            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
-            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n4",
@@ -345,11 +319,6 @@
         {
           "item": "BMW X5 xDrive50i exact optional wheel/tire matrix",
           "reason": "The checked official BMW 08/2014 technical-data PDF closes the 19-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW X5 xDrive50i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e2"
         },
         {
@@ -426,15 +395,6 @@
             "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n6",
-          "value": 3.154,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
-            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n6",
@@ -478,11 +438,6 @@
         {
           "item": "BMW X5 xDrive40e exact optional wheel/tire matrix",
           "reason": "The checked official BMW 05/2015 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW X5 xDrive40e separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e3"
         },
         {

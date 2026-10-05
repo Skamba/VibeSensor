@@ -111,7 +111,8 @@ inherited from family-level data, encode that through `confidence` and
   sheet lists separate front and rear ratios (electric cars with one motor
   per axle). A plug-in hybrid whose engine drives only the front axle, with
   an electric motor on the rear axle, stores the gearbox final drive as
-  `final_drive_front`.
+  `final_drive_front`. The validator rejects a non-EV AWD row whose front
+  and rear values are equal (`drivetrain_final_drive_layout`).
 - **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
   [Turbo|Supercharged] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel` or
   `3.0L V6 Supercharged` (Audi's mechanically supercharged 3.0 TFSI).

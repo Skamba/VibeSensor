@@ -253,12 +253,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n6",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e2",
@@ -501,12 +495,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n7",
-          "value": 3.231
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e3",
@@ -736,12 +724,6 @@
             0.839,
             0.667
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n8",
-          "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "official_derived",

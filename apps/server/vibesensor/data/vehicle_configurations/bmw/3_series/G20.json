@@ -1538,10 +1538,6 @@
           "evidence_refs_ref": "e4",
           "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0299451EN/437354 (03/2019), T0325531EN/471537 (03/2021), and T0442333EN/620072 (2024) ACEA tech-data PDFs all confirm G20 330i xDrive ZF 8HP ratios I 5.250 / II 3.360 / III 2.172 / IV 1.720 / V 1.316 / VI 1.000 / VII 0.822 / VIII 0.640, R 3.712, published final drive 2.813 (BMW lists a single FD value identical to the RWD variant). Standard tire 225/50 R17 98Y XL. Forward gear ratios I..VIII per ACEA tech-data PDF."
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "notes_ref": "n28",

@@ -2,7 +2,7 @@
   "definitions": {
     "notes": {
       "n1": "The official BMW 11/2020 technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Gran Coupe 840i state represented by this row.",
-      "n2": "The official BMW 11/2020 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Gran Coupe M850i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n2": "The official BMW 11/2020 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Gran Coupe M850i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n3": "The official BMW 11/2020 technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Gran Coupe M850i xDrive state represented by this row."
     },
     "evidence_ref_sets": {
@@ -208,15 +208,6 @@
             "bmw_pressclub_sources:g16-8-series-gran-coupe-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 2.813,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g16-8-series-gran-coupe-2020-spec-pdf",
-            "bmw_pressclub_sources:g16-8-series-gran-coupe-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n2",
@@ -238,7 +229,7 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 11/2020 technical-data article and PDF close the exact M850i xDrive Gran Coupe launch state: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio duplicated across the front and rear axle fields, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires.",
+          "note": "The official BMW 11/2020 technical-data article and PDF close the exact M850i xDrive Gran Coupe launch state: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio as the rear final drive, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires.",
           "evidence_refs_ref": "e2"
         },
         {
@@ -252,11 +243,6 @@
         {
           "item": "BMW 8 Series Gran Coupe M850i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW 11/2020 technical-data PDF closes the staggered 20-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW 8 Series Gran Coupe M850i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         }
       ],

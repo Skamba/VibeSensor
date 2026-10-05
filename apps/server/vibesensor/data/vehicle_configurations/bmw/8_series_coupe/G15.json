@@ -4,7 +4,7 @@
       "n2": "Sonnet redo research (2026-04 v2): M8 (G15/F92) uses ZF M Steptronic (BMW GS8D45BG, 8HP45-family programming) with the same forward gear set as G80 M3 Competition / G82 M4 Competition / F90 M5 Competition: [5.000, 3.200, 2.143, 1.720, 1.313, 1.000, 0.823, 0.640]. Top gear 0.640 supersedes prior family_default 0.667. Final drive 3.154 (rounded 3.15 in MotorTrend, Car and Driver, UltimateSpecs LCI) supersedes prior family_default 3.077. BMW USA press release T0296777EN_US explicitly publishes default tires 275/35R20 front and 285/35R20 rear (staggered, larger fronts than the rest of the 8 Series family). Reverse gear ratio 3.456 per ZF M Steptronic spec; UltimateSpecs G15 LCI M8 shows 3.48 rounded.",
       "n4": "Reverse gear ratio (research note): 3.993",
       "n5": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupe 840i state represented by this row.",
-      "n6": "The official BMW launch technical-data PDF publishes a single 2.929 final-drive ratio for the exact 8 Series Coupé 840i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n6": "The official BMW launch technical-data PDF publishes a single 2.929 final-drive ratio for the exact 8 Series Coupé 840i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n7": "The official BMW launch technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Coupé 840i xDrive state represented by this row.",
       "n8": "Wave 18 added official BMW G15 and M8 technical-data evidence proving that M850i xDrive uses an 8HP76 Sport ratio set with top gear 0.640 and final drive 2.813, and that M8/M8 Competition Coupe are M xDrive all-wheel-drive configurations rather than rear-wheel-drive. Production now applies a variant-level gearbox override for M850i xDrive and corrects M8 drivetrain mapping to AWD.",
       "n9": "Reverse gear ratio (research note): 3.456",
@@ -313,15 +313,6 @@
             "bmw_pressclub_sources:g15-8-series-coupe-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n6",
-          "value": 2.929,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g15-840i-coupe-2018-spec-pdf",
-            "bmw_pressclub_sources:g15-8-series-coupe-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n6",
@@ -389,11 +380,6 @@
           "item": "BMW 8 Series Coupé 840i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW launch technical-data PDF closes the staggered 18-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW 8 Series Coupé 840i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
-          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "high_confidence",
@@ -428,12 +414,6 @@
           "confidence": "reputable_secondary_crosschecked",
           "notes_ref": "n2",
           "value": 3.154,
-          "evidence_refs_ref": "e6"
-        },
-        "final_drive_front": {
-          "value": 3.154,
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n2",
           "evidence_refs_ref": "e6"
         },
         "gear_ratios": {
@@ -695,21 +675,10 @@
             "bmw_pressclub_sources:g15-8-series-coupe-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "value": 2.813,
-          "confidence": "official_derived",
-          "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation. Sonnet redo research (2026-04 v2): EU 2.813 retained per BMW xDrive single-FD convention; US-market spec 3.40 noted as separate market variant.",
-          "evidence_refs": [
-            "secondary_technical_sources:motortrend-2019-m850i",
-            "secondary_technical_sources:ultimatespecs-g15-m850i-lci",
-            "bmw_pressclub_sources:g15-m850i-coupe-2018-spec-pdf",
-            "bmw_pressclub_sources:g15-8-series-coupe-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "value": 2.813,
           "confidence": "official_derived",
-          "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation. Sonnet redo research (2026-04 v2): EU press value 2.813 retained; US consumer sources (MotorTrend 2019, Car and Driver 2019) cite 3.40 axle ratio for the US-spec M850i, suggesting an EU/US market FD difference. UltimateSpecs G15 LCI M850i xDrive confirms 2.81 (rounded EU value).",
+          "notes": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Coupe M850i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only. Sonnet redo research (2026-04 v2): EU press value 2.813 retained; US consumer sources (MotorTrend 2019, Car and Driver 2019) cite 3.40 axle ratio for the US-spec M850i, suggesting an EU/US market FD difference. UltimateSpecs G15 LCI M850i xDrive confirms 2.81 (rounded EU value).",
           "evidence_refs": [
             "secondary_technical_sources:motortrend-2019-m850i",
             "secondary_technical_sources:ultimatespecs-g15-m850i-lci",
@@ -729,7 +698,7 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW launch article and technical-data PDF close the exact 8 Series Coupe M850i xDrive launch-state mapping: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio duplicated across the front and rear axle fields, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires.",
+          "note": "The official BMW launch article and technical-data PDF close the exact 8 Series Coupe M850i xDrive launch-state mapping: AWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, the single published 2.813 final-drive ratio as the rear final drive, and staggered 245/35 R20 front plus 275/30 R20 rear baseline tires.",
           "evidence_refs_ref": "e13"
         },
         {
@@ -747,11 +716,6 @@
         {
           "item": "BMW 8 Series Coupe M850i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW launch technical-data PDF closes the staggered 20-inch baseline fitment, but it does not prove one full optional wheel/tire matrix for this exact row.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW 8 Series Coupe M850i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e3"
         }
       ],

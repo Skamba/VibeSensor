@@ -1,9 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n3": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this row.",
-      "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n5": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this row."
     },
     "evidence_ref_sets": {
@@ -127,15 +127,6 @@
             "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 3.154,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
-            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n2",
@@ -180,11 +171,6 @@
         {
           "item": "BMW X6 M50i exact optional wheel/tire matrix",
           "reason": "The checked official BMW launch technical-data PDF closes the staggered 21-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X6 M50i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {
@@ -236,15 +222,6 @@
             "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n4",
-          "value": 3.385,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
-            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n4",
@@ -289,11 +266,6 @@
         {
           "item": "BMW X6 xDrive40i exact optional wheel/tire matrix",
           "reason": "The checked official BMW launch technical-data PDF closes the 19-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X6 xDrive40i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {

@@ -4,10 +4,10 @@
       "n3": "Sonnet redo (2026-04 v2): The 418i nameplate is LCI-only (introduced in 03/2016 with the F32 mid-cycle refresh). production_start_year corrected from 2014 to 2016: this badge did not exist in pre-LCI F32 (2013-2015). Engine code clarification per Wikipedia F32 article. Detail-level transmission/ratio values (gear array, FD) not directly extracted from a BMW PressClub spec PDF in this research run; held at no_confidence.",
       "n4": "No BMW PressClub spec PDF for the 418i was located in this run; family_default values held at no_confidence pending direct verification.",
       "n7": "Official BMW 03/2014 F82 M4 technical-data PDF lists the standard staggered 255/40 ZR18 front and 275/40 ZR18 rear setup.",
-      "n8": "The official BMW launch-era technical-data PDF publishes a single 3.154 final-drive ratio for the exact F32 420i xDrive automatic configuration represented by the 2014-2015 launch-state row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n8": "The official BMW launch-era technical-data PDF publishes a single 3.154 final-drive ratio for the exact F32 420i xDrive automatic configuration represented by the 2014-2015 launch-state row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n9": "The official BMW launch-era technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 420i xDrive automatic configuration represented by the 2014-2015 launch-state row.",
       "n12": "Sonnet redo (2026-04 v2): This row carries engine_code B48, but the B48 was introduced at the F32 LCI in 03/2016 (the pre-LCI 420i used the N20). production_start_year corrected from 2014 to 2016. The pre-LCI N20 era of the 420i RWD is a separate configuration that is not represented in this row and remains a coverage gap. transmission/ratio values were not directly extracted from a BMW PressClub spec PDF in this research run.",
-      "n13": "The official BMW launch-era and 03/2016 technical-data PDFs agree on a single 3.385 final-drive ratio for the exact F32 420i xDrive manual configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n13": "The official BMW launch-era and 03/2016 technical-data PDFs agree on a single 3.385 final-drive ratio for the exact F32 420i xDrive manual configuration. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n14": "The official BMW launch-era and 03/2016 technical-data PDFs agree on 225/50 R17 as the baseline tire for the exact F32 420i xDrive manual configuration.",
       "n15": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe manual row.",
       "n16": "The official BMW 11/2013 launch technical-data PDF lists 225/50 R17 94W as the standard tyre package for the exact F32 428i Coupe automatic row.",
@@ -20,13 +20,13 @@
       "n24": "Official BMW 03/2014 F82 M4 technical-data PDF lists final drive 3.462.",
       "n25": "Official BMW 03/2014 F82 M4 technical-data PDF directly publishes this full forward gear-ratio set.",
       "n26": "This run encoded the official staggered rear tire and full transmission ratio set from the BMW 03/2014 F82 M4 technical-data PDF.",
-      "n27": "The official BMW 03/2016 technical-data PDF publishes a single 3.231 final-drive ratio for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n27": "The official BMW 03/2016 technical-data PDF publishes a single 3.231 final-drive ratio for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n28": "The official BMW 03/2016 technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row.",
-      "n29": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n29": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n30": "The official BMW 03/2016 technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row.",
-      "n31": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 420i xDrive automatic configuration represented by the narrowed 2016-2020 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n31": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 420i xDrive automatic configuration represented by the narrowed 2016-2020 row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n32": "The official BMW 03/2016 technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 420i xDrive automatic configuration represented by the narrowed 2016-2020 row.",
-      "n33": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 430i xDrive automatic configuration represented by the narrowed 2016-2020 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n33": "The official BMW 03/2016 technical-data PDF publishes a single 2.813 final-drive ratio for the exact F32 430i xDrive automatic configuration represented by the narrowed 2016-2020 row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n34": "The official BMW 03/2016 technical-data PDF lists 225/50 R17 as the baseline tire for the exact F32 430i xDrive automatic configuration represented by the narrowed 2016-2020 row."
     },
     "evidence_ref_sets": {
@@ -341,12 +341,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n8",
-          "value": 3.154
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e7",
@@ -381,11 +375,6 @@
         {
           "item": "F32 420i xDrive automatic optional wheel/tire matrix for 2014-2015 row",
           "reason": "The checked official BMW launch-era technical-data PDF closes the baseline 17-inch fitment but does not prove one exact optional wheel/tire matrix for the represented 2014-2015 launch-state row.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "F32 420i xDrive automatic separate front/rear final-drive publication for 2014-2015 row",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic launch-state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e7"
         }
       ],
@@ -691,12 +680,6 @@
             0.846
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n13",
-          "value": 3.385
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e8",
@@ -731,11 +714,6 @@
         {
           "item": "F32 420i xDrive manual optional wheel/tire matrix",
           "reason": "The checked official BMW technical-data PDFs close the baseline 17-inch fitment but do not prove one exact optional wheel/tire matrix across the broader represented row.",
-          "evidence_refs_ref": "e8"
-        },
-        {
-          "item": "F32 420i xDrive manual separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD manual state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e8"
         }
       ],
@@ -1644,12 +1622,6 @@
           "notes": "The official BMW 03/2016 technical-data PDF lists 0.846 as the top-gear ratio for the exact F32 440i xDrive manual configuration represented by this retimed 2016-only row.",
           "value": 0.846
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e6",
-          "notes_ref": "n27",
-          "value": 3.231
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e6",
@@ -1722,12 +1694,6 @@
           "evidence_refs_ref": "e6",
           "notes": "The official BMW 03/2016 technical-data PDF lists 0.640 as the top-gear ratio for the exact F32 440i xDrive automatic configuration represented by this retimed 2016-only row.",
           "value": 0.64
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e6",
-          "notes_ref": "n29",
-          "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -1817,12 +1783,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n31",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e4",
@@ -1857,11 +1817,6 @@
         {
           "item": "F32 420i xDrive automatic continuity beyond the checked 03/2016 state",
           "reason": "The row was narrowed to the 2016+ state to avoid mixing the official launch-era automatic ratios with the official 03/2016 update, but this pass did not recover a second later official table proving one unchanged 2016-2020 package.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "F32 420i xDrive automatic separate front/rear final-drive publication for 2016-2020 row",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e4"
         }
       ],
@@ -1911,12 +1866,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n33",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e4",
@@ -1951,11 +1900,6 @@
         {
           "item": "F32 430i xDrive automatic continuity beyond the checked 03/2016 state",
           "reason": "The row was narrowed to the 2016+ state because the checked official evidence begins at 03/2016, but this pass did not recover a second later official table proving one unchanged 2016-2020 package.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "F32 430i xDrive automatic separate front/rear final-drive publication for 2016-2020 row",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e4"
         }
       ],

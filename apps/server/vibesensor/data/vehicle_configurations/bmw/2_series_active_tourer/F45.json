@@ -727,10 +727,6 @@
           "notes_ref": "n20",
           "value": 3.944,
           "evidence_refs_ref": "e3"
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.944
         }
       },
       "tires": {

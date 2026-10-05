@@ -336,12 +336,6 @@
           "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 630d xDrive Gran Turismo.",
           "value": 0.64
         },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n3",
-          "value": 2.563
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e1",
@@ -528,10 +522,6 @@
           "confidence": "family_default",
           "value": 0.667
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 2.813
@@ -620,12 +610,6 @@
           "evidence_refs_ref": "e3",
           "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
           "value": 0.64
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n4",
-          "value": 2.563
         },
         "final_drive_rear": {
           "confidence": "official_exact",
@@ -719,10 +703,6 @@
         "top_gear_ratio": {
           "confidence": "family_default",
           "value": 0.64
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.077
         },
         "final_drive_rear": {
           "confidence": "family_default",

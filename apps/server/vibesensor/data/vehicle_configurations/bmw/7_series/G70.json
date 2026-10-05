@@ -272,12 +272,6 @@
           "value": 0.64,
           "evidence_refs_ref": "e4"
         },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "notes_ref": "n1",
-          "value": 2.647,
-          "evidence_refs_ref": "e4"
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "notes_ref": "n1",
@@ -375,12 +369,6 @@
           "value": 0.64,
           "evidence_refs_ref": "e1"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 2.813,
-          "evidence_refs_ref": "e1"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n2",
@@ -451,12 +439,6 @@
           "confidence": "unverified",
           "notes_ref": "n3",
           "value": 0.64,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 2.813,
           "evidence_refs_ref": "e1"
         },
         "final_drive_rear": {

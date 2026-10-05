@@ -1650,12 +1650,6 @@
           "value": 0.71,
           "evidence_refs_ref": "e2"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.636,
-          "evidence_refs_ref": "e2"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n2",
@@ -1735,12 +1729,6 @@
           "confidence": "unverified",
           "notes_ref": "n2",
           "value": 0.674,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.294,
           "evidence_refs_ref": "e2"
         },
         "final_drive_rear": {

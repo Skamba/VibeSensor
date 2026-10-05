@@ -6,30 +6,30 @@
       "n3": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive20i.",
       "n4": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive28i.",
       "n5": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 sDrive18d.",
-      "n6": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n6": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive20d 6-speed manual configuration represented by this narrowed row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n7": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20d family.",
       "n8": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20d family.",
       "n9": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20d family.",
       "n10": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20d family.",
-      "n11": "The official BMW 03/2011 technical-data PDF publishes a single 3.077 final-drive ratio for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n12": "The official BMW 09/2011 technical-data PDF publishes a single 3.636 final-drive ratio for the exact X3 xDrive20i 6-speed manual configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n11": "The official BMW 03/2011 technical-data PDF publishes a single 3.077 final-drive ratio for the exact X3 xDrive20d 8-speed automatic configuration represented by this narrowed row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
+      "n12": "The official BMW 09/2011 technical-data PDF publishes a single 3.636 final-drive ratio for the exact X3 xDrive20i 6-speed manual configuration. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n13": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive20i family.",
       "n14": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive20i family.",
       "n15": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive20i family.",
       "n16": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive20i family.",
       "n17": "Official BMW 04/2014 F25/F26 EU wheel/tire approval sheet lists this staggered 21-inch accessory package for the X3 xDrive20i family.",
-      "n19": "The official BMW 09/2011 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive20i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n20": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n19": "The official BMW 09/2011 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive20i automatic configuration. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
+      "n20": "The official BMW 03/2011 technical-data PDF publishes a single 3.727 final-drive ratio for the exact X3 xDrive28i automatic configuration. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n21": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 xDrive28i family.",
       "n22": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 xDrive28i family.",
       "n23": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 19-inch package for the X3 xDrive28i family.",
       "n24": "Official BMW F25 EU wheel/tire approval sheet lists this staggered 20-inch package for the X3 xDrive28i family.",
-      "n25": "The official BMW 03/2012 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n26": "The official BMW 03/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n25": "The official BMW 03/2012 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X3 xDrive28i 8-speed automatic configuration represented by this narrowed row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
+      "n26": "The official BMW 03/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive30d 8-speed automatic configuration represented by this narrowed row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n27": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive30d.",
-      "n28": "The official BMW 09/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n28": "The official BMW 09/2011 technical-data PDF publishes a single 2.813 final-drive ratio for the exact X3 xDrive35d 8-speed automatic configuration represented by this narrowed row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n29": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35d.",
-      "n30": "The official BMW 09/2011 and 04/2014 technical-data PDFs agree on a single 3.385 final-drive ratio for the exact X3 xDrive35i automatic configuration. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n30": "The official BMW 09/2011 and 04/2014 technical-data PDFs agree on a single 3.385 final-drive ratio for the exact X3 xDrive35i automatic configuration. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n31": "Official BMW PressClub technical-data PDF lists this as the baseline tire for the F25 X3 xDrive35i.",
       "n32": "Official BMW F25 EU wheel/tire approval sheet lists this 17-inch optional package for the X3 sDrive18d family.",
       "n33": "Official BMW F25 EU wheel/tire approval sheet lists this 18-inch optional package for the X3 sDrive18d family.",
@@ -413,12 +413,6 @@
             0.659
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n6",
-          "value": 3.727
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e1",
@@ -508,12 +502,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n11",
-          "value": 3.077
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e1",
@@ -600,12 +588,6 @@
             1.0,
             0.846
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n12",
-          "value": 3.636
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -706,12 +688,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n19",
-          "value": 3.385
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e3",
@@ -810,12 +786,6 @@
             0.839,
             0.667
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e11",
-          "notes_ref": "n20",
-          "value": 3.727
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -951,12 +921,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n25",
-          "value": 3.385
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e8",
@@ -1087,12 +1051,6 @@
             0.839,
             0.667
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n26",
-          "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -1225,12 +1183,6 @@
             0.667
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n28",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e9",
@@ -1337,12 +1289,6 @@
             0.839,
             0.667
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e10",
-          "notes_ref": "n30",
-          "value": 3.385
         },
         "final_drive_rear": {
           "confidence": "official_derived",

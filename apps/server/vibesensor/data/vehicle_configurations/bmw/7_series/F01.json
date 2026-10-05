@@ -697,12 +697,6 @@
           "evidence_refs_ref": "e5",
           "notes": "Sonnet redo research (2026-04 v2): BMW PressClub T0131447EN attachment 207819 (valid from 7/2012) confirms F01 SWB 750i xDrive (V8, 330 kW, AWD): ZF 8HP, ratios I 4.714 ... VIII 0.667, R 3.317, final drive 2.813 (exact, not derived); tires 245/50 R18 100Y RSC on 8Jx18. Forward gear ratios I..VIII per ACEA tech-data PDF."
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e6",
-          "notes": "The official BMW 07/2012 technical-data PDF publishes a single 2.813 final-drive ratio for the exact 750i xDrive state represented by this narrowed 2012-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-          "value": 2.813
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e5",
@@ -751,11 +745,6 @@
         {
           "item": "BMW 7 Series 750i xDrive exact optional wheel/tire matrix beyond the narrowed 2012 row",
           "reason": "The checked official BMW 07/2012 technical-data PDF closes the 18-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "item": "BMW 7 Series 750i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e6"
         }
       ],

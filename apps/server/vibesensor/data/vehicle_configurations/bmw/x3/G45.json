@@ -1,9 +1,9 @@
 {
   "definitions": {
     "notes": {
-      "n2": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 M50 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
+      "n2": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 M50 xDrive row. The row stores the single published value as the rear final drive only.",
       "n3": "Official BMW 06/2024 specification PDF lists the exact standard staggered 20-inch tire package for the G45 X3 M50 xDrive row: 255/45 R20 front and 285/40 R20 rear on 9J x 20 / 10.5J x 20 wheels.",
-      "n4": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 20 xDrive row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+      "n4": "Official BMW 06/2024 specification PDF publishes one final-drive value 3.385 for the exact G45 X3 20 xDrive row. The row stores the single published value as the rear final drive only."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -144,12 +144,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n2",
-          "value": 3.385
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e1",
@@ -239,12 +233,6 @@
             0.822,
             0.64
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n4",
-          "value": 3.385
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -367,10 +355,6 @@
         "top_gear_ratio": {
           "confidence": "family_default",
           "value": 0.64
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 2.813
         },
         "final_drive_rear": {
           "confidence": "family_default",

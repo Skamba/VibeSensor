@@ -568,7 +568,7 @@ changes and update this table.
 | Rows with top gear | 554 (every non-EV row); the 17 EVs have none: the reduction ratio is the final drive |
 | Rows with full gear sets | 341 (60%) |
 | Tire confidence | official_exact 390 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
-| Driven final-drive confidence | official_exact 297 · official_derived 87 · reputable_secondary 22 · family_default 75 · unverified 73 · none 17 |
+| Driven final-drive confidence | official_exact 297 · official_derived 87 · reputable_secondary 22 · family_default 74 · unverified 74 · none 17 |
 | Top-gear confidence | official_exact 379 · official_derived 15 · reputable_secondary 28 · family_default 64 · unverified 68 · none 17 (EVs) |
 | Weak (family_default or unverified) | final drive 148/571 (26%), top gear 132/571 (23%), tire 132/571 (23%) |
 | `order_reference_trust` | trusted 411 · approximate 85 · backlog_unverified 75 |

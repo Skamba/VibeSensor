@@ -254,6 +254,22 @@ def validate_final_drive_layout(
                 message=f"{label} is RWD but still sets final_drive_front",
             )
         )
+    if (
+        config.drivetrain == "AWD"
+        and config.fuel_type != "EV"
+        and config.final_drive_front is not None
+        and config.final_drive_front == config.final_drive_rear
+    ):
+        issues.append(
+            CarLibraryValidationIssue(
+                rule="drivetrain_final_drive_layout",
+                entity=entity,
+                message=(
+                    f"{label} copies one final drive into final_drive_front and "
+                    "final_drive_rear; store a single published ratio as final_drive_rear"
+                ),
+            )
+        )
     if config.driven_final_drive_ratio is None and not _unresolved_names(
         config, "final drive"
     ):

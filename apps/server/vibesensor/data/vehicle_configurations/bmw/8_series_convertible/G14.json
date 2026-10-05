@@ -1,7 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Convertible M850i xDrive state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n1": "The official BMW launch technical-data PDF publishes a single 2.813 final-drive ratio for the exact 8 Series Convertible M850i xDrive state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n2": "The official BMW launch technical-data PDF lists staggered 245/35 R20 front and 275/30 R20 rear baseline tires for the exact 8 Series Convertible M850i xDrive state represented by this row.",
       "n4": "The official BMW 02/2020 technical-data PDF lists staggered 245/45 R18 front and 275/40 R18 rear baseline tires for the exact 8 Series Convertible 840i state represented by this row."
     },
@@ -106,15 +106,6 @@
             "bmw_pressclub_sources:g14-8-series-convertible-2021-03-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n1",
-          "value": 2.813,
-          "evidence_refs": [
-            "bmw_pressclub_sources:g14-8-series-convertible-2018-spec-pdf",
-            "bmw_pressclub_sources:g14-8-series-convertible-2021-03-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n1",
@@ -172,11 +163,6 @@
         {
           "item": "BMW 8 Series Convertible M850i xDrive exact optional wheel/tire matrix",
           "reason": "The checked official BMW launch technical-data PDF closes the staggered 20-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW 8 Series Convertible M850i xDrive separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         }
       ],

@@ -1,11 +1,11 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive20i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n2": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive20i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n3": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive20i state represented by this row.",
-      "n4": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive28i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n4": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive28i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n5": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive28i state represented by this row.",
-      "n6": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive35i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n6": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive35i state represented by this row. One axle ratio is published for the all-wheel-drive car, so the row stores it as the rear final drive only.",
       "n7": "The official BMW 03/2014 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X4 xDrive35i state represented by this row."
     },
     "evidence_ref_sets": {
@@ -134,14 +134,6 @@
             "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 3.385,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n2",
@@ -190,11 +182,6 @@
         {
           "item": "BMW X4 xDrive20i exact optional wheel/tire matrix",
           "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X4 xDrive20i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {
@@ -262,15 +249,6 @@
             "bmw_pressclub_sources:f26-ca-2016my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n4",
-          "value": 3.385,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
-            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n4",
@@ -314,11 +292,6 @@
         {
           "item": "BMW X4 xDrive28i exact optional wheel/tire matrix",
           "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X4 xDrive28i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {
@@ -393,15 +366,6 @@
             "bmw_pressclub_sources:f26-ca-2016my-product-guide"
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes_ref": "n6",
-          "value": 3.385,
-          "evidence_refs": [
-            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
-            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
-          ]
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "notes_ref": "n6",
@@ -445,11 +409,6 @@
         {
           "item": "BMW X4 xDrive35i exact optional wheel/tire matrix",
           "reason": "The checked official BMW 03/2014 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X4 xDrive35i separate front/rear final-drive publication",
-          "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
         },
         {

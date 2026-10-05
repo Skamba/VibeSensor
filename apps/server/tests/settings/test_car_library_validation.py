@@ -105,13 +105,11 @@ def _make_valid_vehicle_configuration() -> VehicleConfiguration:
         fuel_type="ICE",
         engine_code="B48",
         engine_name="B48 2.0L I4 Turbo",
-        final_drive_front=3.15,
         final_drive_rear=3.15,
         drivetrain_metadata=_metadata("official_exact"),
         tire_metadata=_metadata("family_default"),
         transmission_metadata=_metadata("official_exact"),
         top_gear_ratio_metadata=_metadata("official_exact"),
-        final_drive_front_metadata=_metadata("official_exact"),
         final_drive_rear_metadata=_metadata("official_exact"),
     )
 
@@ -174,6 +172,15 @@ def test_validate_vehicle_configurations_flags_layout_mismatch() -> None:
     assert {issue.rule for issue in issues} == {"drivetrain_final_drive_layout"}
     assert any("final_drive_front" in issue.message for issue in issues)
     assert any("does not expose any driven final-drive ratio" in issue.message for issue in issues)
+
+    copied = replace(
+        config, final_drive_front=3.15, final_drive_front_metadata=_metadata("official_exact")
+    )
+    issues = validate_vehicle_configurations([copied], allowlist={})
+    assert [issue.rule for issue in issues] == ["drivetrain_final_drive_layout"]
+    assert "copies one final drive" in issues[0].message
+    separate = replace(copied, final_drive_front=3.0)
+    assert not validate_vehicle_configurations([separate], allowlist={})
 
 
 def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
@@ -274,7 +281,6 @@ def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:
         config,
         transmission_name="7-speed S tronic",
         top_gear_ratio=0.386,
-        final_drive_front=5.302,
         final_drive_rear=5.302,
     )
 

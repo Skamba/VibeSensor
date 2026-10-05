@@ -384,10 +384,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.154
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 3.154
