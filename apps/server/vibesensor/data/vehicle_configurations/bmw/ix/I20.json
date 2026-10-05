@@ -1,20 +1,6 @@
 {
   "definitions": {
-    "notes": {
-      "n2": "Official BMW Germany launch-era documentation now confirms the exact iX M60 DE mapping for drivetrain context, single-speed wording, and tire fitment: AWD, 1-speed transmission wording, standard 255/50 R21 tires, and optional 275/40 R22 wheels. The broad iX row remains unchanged because the exact M60 front/rear ratio values and numeric top-gear data were not resolved from exact official sources in this pass."
-    },
     "evidence_ref_sets": {
-      "e1": [
-        "legacy_research_sources:037a64fa5220",
-        "legacy_research_sources:393d7682b19e",
-        "legacy_research_sources:4e23ce55b301",
-        "legacy_research_sources:5a588b230474",
-        "legacy_research_sources:6c3f77a91318",
-        "legacy_research_sources:95b9bf2bf0cf",
-        "legacy_research_sources:97624cf593b1",
-        "legacy_research_sources:99ade101fb93",
-        "legacy_research_sources:a011f712276d"
-      ],
       "e2": [
         "legacy_research_sources:4e23ce55b301",
         "legacy_research_sources:6c3f77a91318"
@@ -24,7 +10,7 @@
       "setup_265_21": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e2",
         "front": {
           "aspect_pct": 40.0,
           "rim_in": 21.0,
@@ -34,7 +20,7 @@
       "setup_255_20": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e2",
         "front": {
           "aspect_pct": 45.0,
           "rim_in": 20.0,
@@ -66,48 +52,78 @@
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+        ],
+        "notes": "The official BMW M 05/2022 iX M60 technical data list an automatic single-speed transmission with fixed ratio for the iX M60. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
-      "ratios": {
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 9.079
-        }
-      },
+      "ratios": {},
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+          ],
+          "notes": "The official BMW M 05/2022 technical data list 255/50 R21 on 9J x 21 rims as the standard tyres for the iX M60.",
+          "front": {
+            "width_mm": 255.0,
+            "aspect_pct": 50.0,
+            "rim_in": 21.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
-            "setup_ref": "setup_255_20",
-            "name": "Standard 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "Sport 21\""
+            "name": "Standard 21\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+            ],
+            "notes": "The official BMW M 05/2022 technical data list 255/50 R21 on 9J x 21 rims as the standard tyres for the iX M60.",
+            "front": {
+              "width_mm": 255.0,
+              "aspect_pct": 50.0,
+              "rim_in": 21.0
+            },
+            "default_axle_for_speed": "rear"
           }
-        ],
-        "default_ref": "setup_255_20"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW M 05/2022 technical data list the iX M60 with a 190 kW front and 360 kW rear motor, a single-speed transmission with fixed ratio and 255/50 R21 tyres. The sheet is dated 05/2022, so the row starts in 2022.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+          ]
+        },
+        {
+          "note": "BMW Canada's article on the facelifted iX states that production of the new iX xDrive45, xDrive60 and M70 xDrive starts in March 2025, so the pre-facelift rows end with 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW iX M60 exact front/rear overall ratios or final-drive ratio values",
-          "reason": "Exact official M60 sources checked in this pass confirmed drivetrain context and tire sizes, but they did not yield machine-readable exact front/rear or overall reduction ratios for the M60.",
-          "evidence_refs_ref": "e1"
+          "item": "iX M60 front and rear final-drive (motor gear) ratios",
+          "reason": "The 05/2022 iX M60 sheet does not print gear ratios, and no other official M60 sheet was found. The earlier 9.079 front and rear values had no source, so both axle ratios stay empty.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+          ]
         },
         {
-          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional wheel/tyre sizes for the iX M60",
+          "reason": "The checked sheet publishes only the standard 255/50 R21 tyre.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "medium_confidence",
+      "production_end_year": 2025
     },
     {
       "id": "bmw-i20-xdrive40-eu-2022-ss1-awd",
@@ -121,48 +137,97 @@
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2021 iX technical data list an automatic transmission, single-speed with fixed ratio, for the iX xDrive40. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 9.079
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 11.115 as the rear electric-motor gear ratio for the iX xDrive40.",
+          "value": 11.115
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 8.774 as the front electric-motor gear ratio for the iX xDrive40.",
+          "value": 8.774
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive40.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 60.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
+            "name": "Standard 20\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+            ],
+            "notes": "The official BMW 06/2021 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive40.",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 60.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
             "setup_ref": "setup_255_20",
-            "name": "Standard 20\""
+            "name": "20\" package"
           },
           {
             "setup_ref": "setup_265_21",
-            "name": "Sport 21\""
+            "name": "21\" package"
           }
-        ],
-        "default_ref": "setup_255_20"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW 06/2021 iX technical data list the iX xDrive40 with one motor per axle, front gear ratio 8.774, rear 11.115, and 235/60 R20 tyres. The earlier 9.079 front and rear values had no source and are replaced. The facelift xDrive45 and xDrive60 keep the same 8.774 / 11.115 ratios on the 01/2025 sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf",
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ]
+        },
+        {
+          "note": "BMW Canada's article on the facelifted iX states that production of the new iX xDrive45, xDrive60 and M70 xDrive starts in March 2025, so the pre-facelift rows end with 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW iX M60 exact front/rear overall ratios or final-drive ratio values",
-          "reason": "Exact official M60 sources checked in this pass confirmed drivetrain context and tire sizes, but they did not yield machine-readable exact front/rear or overall reduction ratios for the M60.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional wheel/tyre sizes for the the iX xDrive40",
+          "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_end_year": 2025
     },
     {
       "id": "bmw-i20-xdrive50-eu-2022-ss1-awd",
@@ -176,48 +241,386 @@
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2021 iX technical data list an automatic transmission, single-speed with fixed ratio, for the iX xDrive50. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 9.079
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 11.115 as the rear electric-motor gear ratio for the iX xDrive50.",
+          "value": 11.115
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 8.774 as the front electric-motor gear ratio for the iX xDrive50.",
+          "value": 8.774
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2021 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive50.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 60.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
+            "name": "Standard 20\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+            ],
+            "notes": "The official BMW 06/2021 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive50.",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 60.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
             "setup_ref": "setup_255_20",
-            "name": "Standard 20\""
+            "name": "20\" package"
           },
           {
             "setup_ref": "setup_265_21",
-            "name": "Sport 21\""
+            "name": "21\" package"
           }
-        ],
-        "default_ref": "setup_255_20"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW 06/2021 iX technical data list the iX xDrive50 with one motor per axle, front gear ratio 8.774, rear 11.115, and 235/60 R20 tyres. The earlier 9.079 front and rear values had no source and are replaced. The facelift xDrive45 and xDrive60 keep the same 8.774 / 11.115 ratios on the 01/2025 sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf",
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ]
+        },
+        {
+          "note": "BMW Canada's article on the facelifted iX states that production of the new iX xDrive45, xDrive60 and M70 xDrive starts in March 2025, so the pre-facelift rows end with 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW iX M60 exact front/rear overall ratios or final-drive ratio values",
-          "reason": "Exact official M60 sources checked in this pass confirmed drivetrain context and tire sizes, but they did not yield machine-readable exact front/rear or overall reduction ratios for the M60.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional wheel/tyre sizes for the the iX xDrive50",
+          "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ]
         },
         {
-          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
-          "evidence_refs_ref": "e1"
+          "item": "iX xDrive50 motor table on the 06/2021 sheet",
+          "reason": "The xDrive50 page repeats the xDrive40 motor outputs (200 kW front, 250 kW rear) word for word, so the per-motor table may be copied from the xDrive40 page. The ratios are kept as printed; no second pre-facelift xDrive50 sheet was found to confirm them.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_end_year": 2025
+    },
+    {
+      "id": "bmw-i20-xdrive45-eu-2025-ss1-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "xDrive45",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list the iX xDrive45 with electric all-wheel drive, one motor at the front and one at the rear axle.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list an automatic transmission, single-stage with fixed ratio, for the iX xDrive45. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 8.774 as the front overall ratio for the iX xDrive45.",
+          "value": 8.774
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 11.115 as the rear overall ratio for the iX xDrive45.",
+          "value": 11.115
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive45.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 60.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 20\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2025 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive45.",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 60.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2025 iX technical data list the iX xDrive45 (300 kW system output) with front overall ratio 8.774, rear 11.115 and 235/60 R20 tyres. BMW Canada's launch article puts the start of production in March 2025, so the row starts in 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf",
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the iX xDrive45",
+          "reason": "The checked 01/2025 sheet publishes only the standard tyre.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-i20-xdrive60-eu-2025-ss1-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "xDrive60",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list the iX xDrive60 with electric all-wheel drive, one motor at the front and one at the rear axle.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list an automatic transmission, single-stage with fixed ratio, for the iX xDrive60. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 8.774 as the front overall ratio for the iX xDrive60.",
+          "value": 8.774
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 11.115 as the rear overall ratio for the iX xDrive60.",
+          "value": 11.115
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive60.",
+          "front": {
+            "width_mm": 235.0,
+            "aspect_pct": 60.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 20\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2025 iX technical data list 235/60 R20 on 8.5J x 20 rims as the standard tyres for the iX xDrive60.",
+            "front": {
+              "width_mm": 235.0,
+              "aspect_pct": 60.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2025 iX technical data list the iX xDrive60 (400 kW system output) with front overall ratio 8.774, rear 11.115 and 235/60 R20 tyres. BMW Canada's launch article puts the start of production in March 2025, so the row starts in 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf",
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the iX xDrive60",
+          "reason": "The checked 01/2025 sheet publishes only the standard tyre.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-i20-m70-xdrive-eu-2025-ss1-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "M70 xDrive",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list the iX M70 xDrive with electric all-wheel drive, one motor at the front and one at the rear axle.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2025 iX technical data list an automatic transmission, single-stage with fixed ratio, for the iX M70 xDrive. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 8.774 as the front overall ratio for the iX M70 xDrive.",
+          "value": 8.774
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 8.765 as the rear overall ratio for the iX M70 xDrive.",
+          "value": 8.765
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2025 iX technical data list 275/40 R22 on 9.5J x 22 rims as the standard tyres for the iX M70 xDrive.",
+          "front": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 22.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 22\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2025 iX technical data list 275/40 R22 on 9.5J x 22 rims as the standard tyres for the iX M70 xDrive.",
+            "front": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 22.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2025 iX technical data list the iX M70 xDrive (485 kW system output) with front overall ratio 8.774, rear 8.765 and 275/40 R22 tyres. BMW Canada's launch article puts the start of production in March 2025, so the row starts in 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf",
+            "bmw_pressclub_sources:i20-ix-2025-ca-launch-article"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the iX M70 xDrive",
+          "reason": "The checked 01/2025 sheet publishes only the standard tyre.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:i20-ix-2025-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

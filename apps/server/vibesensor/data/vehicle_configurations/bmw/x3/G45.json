@@ -103,8 +103,8 @@
   "configurations": [
     {
       "id": "bmw-g45-m50-xdrive-eu-2024-zf8hp-awd",
-      "production_start_year": 2024,
-      "model_name": "X3 (G45, 2024-2026)",
+      "production_start_year": 2025,
+      "model_name": "X3 (G45, 2025-2026)",
       "variant_name": "M50 xDrive",
       "engine_code": "S58",
       "engine_name": "S58 3.0L I6 Turbo",
@@ -172,6 +172,12 @@
         {
           "note": "Batch 4 validation closes the exact launch-state numeric mapping for the G45 X3 M50 xDrive row. The official BMW 06/2024 launch article confirms Europe launch from Q4 2024 with xDrive AWD and Eight-speed Steptronic Sport wording, while the official specification PDF for the exact ACEA-market X3 M50 xDrive row proves forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, a single published final-drive value 3.385, top speed 250 km/h, and the standard staggered 255/45 R20 front plus 285/40 R20 rear tire package. The row now promotes that exact launch-state package while keeping explicit gearbox-subtype naming and hard 2026 end-of-production proof unresolved.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "The official BMW 06/2024 launch article puts the Europe market launch in Q4 2024, after July, so the row starts with the 2025 model year (repo convention).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g45-x3-global-launch-article"
+          ]
         }
       ],
       "unresolved": [
@@ -190,8 +196,8 @@
     },
     {
       "id": "bmw-g45-xdrive20-eu-2024-zf8hp-awd",
-      "production_start_year": 2024,
-      "model_name": "X3 (G45, 2024-2026)",
+      "production_start_year": 2025,
+      "model_name": "X3 (G45, 2025-2026)",
       "variant_name": "xDrive20",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -318,6 +324,12 @@
         {
           "note": "Batch 5 validation closes the exact launch-state numeric mapping for the G45 X3 20 xDrive row. Official BMW Germany model-page metadata surfaces the exact BMW X3 20 xDrive with model-range G45 and productionYear 2024, the 06/2024 launch-book places Europe launch in Q4 2024 and states that 18-inch wheels are standard on the X3 20 xDrive, the 06/2024 specification PDF proves Eight-speed Steptronic transmission, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, top speed 215 km/h, and standard 225/60 R18 tires, and the April 2026 BMW Germany price list confirms continued sale of the exact X3 20 xDrive plus the current square 19-inch and staggered 20-inch and 21-inch wheel packages. One selected-equipment text block in that same 2026 price list prints 225/60 R19, but the direct specification PDF, launch-book 18-inch statement, and wheel-matrix pages all support 225/60 R18 instead, so production data now follows that stronger three-source convergence.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "The official BMW 06/2024 launch article puts the Europe market launch in Q4 2024, after July, so the row starts with the 2025 model year (repo convention).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g45-x3-global-launch-article"
+          ]
         }
       ],
       "unresolved": [

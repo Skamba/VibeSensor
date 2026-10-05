@@ -1682,6 +1682,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325532EN/471539",
+      "title": "BMW PressClub G21 3 Series Touring specifications PDF valid from 03/2021",
+      "note": "Official BMW 03/2021 specifications for the G21 Touring range (ACEA markets). 318d Touring: six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154, optional eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive (2.813); standard 225/50 R17 tyres. 318i, 320i, 330i, 330i xDrive, M340i xDrive, 320d and 320d xDrive Touring: eight-speed Steptronic, eighth gear 0.640, final drive 2.813. 330d, 330d xDrive and M340d xDrive Touring: eighth gear 0.640, final drive 2.563. 320e, 320e xDrive, 330e and 330e xDrive Touring: final drive 3.231.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555363",
       "title": "BMW PressClub G20 3 Series Sedan technical data PDF 05/2022 (LCI)",
@@ -1833,6 +1840,69 @@
       "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0195810EN/285267",
       "title": "BMW Canada 7 Series MY2015 specifications and features",
       "note": "BMW Canada product guide for the 2015 model year (North American market). It lists 740Li xDrive, 740Ld xDrive, 750i xDrive, 750Li xDrive, 760Li and ActiveHybrid 7 L only, all with third gear 2.106 (EU 07/2012 sheets: 2.208). Its only diesel is the long-wheelbase 740Ld xDrive (255 hp, final drive 2.563).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0333329EN/491358",
+      "title": "BMW PressClub G26 i4 09/2021 specifications PDF",
+      "note": "Official BMW 09/2021 i4 specifications (T0333329EN). i4 eDrive40: single rear motor, single-speed transmission with fixed ratio, gear ratio 11.115, tyres 225/55 R17. i4 M50: one motor per axle, front gear ratio 8.774, rear 9.374, tyres 245/45 R18 front and 255/45 R18 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0442767DE/617123",
+      "title": "BMW PressClub G26 i4 technical data valid from July 2024 (DE)",
+      "note": "Official BMW Germany technical data for the i4, valid from July 2024 (T0442767DE). eDrive40: rear gear ratio 11.115, tyres 225/55 R17. M50: front gear ratio 8.774, rear 9.374, tyres 245/45 R18 front and 255/45 R18 rear. Same values as the 09/2021 sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:bmw-model-updates-summer-2025-de",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0450434DE",
+      "title": "BMW PressClub: BMW model updates for summer 2025 (DE, 28.05.2025)",
+      "note": "Official BMW Germany article on the summer 2025 model updates (T0450434DE). From July 2025 the i4 M60 xDrive replaces the i4 M50 as the top i4.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:i20-ix-2021-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/asia/article/attachment/T0334029EN/481303",
+      "title": "BMW PressClub I20 iX xDrive40 and xDrive50 06/2021 technical data PDF",
+      "note": "Official BMW 06/2021 technical data for the iX xDrive40 and iX xDrive50 (T0334029EN). Both pages list a single-speed automatic transmission with fixed ratio, front motor gear ratio 8.774, rear motor gear ratio 11.115, and 235/60 R20 tyres on 8.5J x 20 rims. The xDrive50 page repeats the xDrive40 motor output table (200 kW front, 250 kW rear).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:i20-ix-m60-2022-de-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0348394DE/559002",
+      "title": "BMW PressClub I20 iX M60 05/2022 technical data PDF (DE)",
+      "note": "Official BMW M Germany 05/2022 technical data for the iX M60 (T0348394DE). It lists an automatic single-speed transmission with fixed ratio, front motor 190 kW, rear motor 360 kW, and 255/50 R21 tyres on 9J x 21 rims. It does not print the motor gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:i20-ix-2025-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0447642EN/630684",
+      "title": "BMW PressClub I20 iX 01/2025 facelift technical data PDF",
+      "note": "Official BMW 01/2025 technical data for the facelifted iX (T0447642EN). iX xDrive45 and iX xDrive60: single-stage automatic with fixed ratio, front overall ratio 8.774, rear 11.115, tyres 235/60 R20. iX M70 xDrive: front 8.774, rear 8.765, tyres 275/40 R22.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:i20-ix-2025-ca-launch-article",
+      "url": "https://www.press.bmwgroup.com/canada/article/detail/T0447768EN/the-new-2026-bmw-ix?language=en",
+      "title": "BMW Canada article: The new 2026 BMW iX",
+      "note": "Official BMW Canada article on the facelifted iX (T0447768EN). Production at Plant Dingolfing starts in March 2025, with deliveries expected in Q2 2025.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:u11-x1-2022-launch-article",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0393974EN/the-all-new-bmw-x1-and-the-first-ever-bmw-ix1?language=en",
+      "title": "BMW PressClub U11 X1 and iX1 launch article (06/2022)",
+      "note": "Official BMW launch article for the third-generation X1 (U11): market launch in October 2022 with two petrol and two diesel engines at first, the X1 xDrive23i with 48V mild hybrid and seven-speed Steptronic dual-clutch transmission. Used for the model-year start of the U11 xDrive23i row.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:bmw-model-updates-summer-2023",
+      "url": "https://www.press.bmwgroup.com/global/article/detail/T0418860EN/bmw-model-update-measures-for-summer-2023",
+      "title": "BMW PressClub: BMW model update measures for summer 2023 (05/2023)",
+      "note": "Official BMW 05/2023 article: the BMW i7 eDrive50 (335 kW, rear-wheel drive) is available from July 2023. Used for the model-year start of the G70 i7 eDrive50 row.",
       "confidence": "high"
     }
   ]

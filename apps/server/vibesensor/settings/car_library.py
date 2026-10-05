@@ -281,10 +281,10 @@ def _variants_for_generation(configs: list[VehicleConfiguration]) -> list[_Picke
 
     A variant name stays one picker entry while its gearbox names are
     unique, so the gearbox choice picks the exact row. When a gearbox
-    repeats (an xDrive25d sold in 2016 and again in 2021 with another
-    final drive), the model year decides the row: the variant is offered
+    repeats (an xDrive25d sold in 2015-2020 and again in 2021-2022
+    with another final drive), the model year decides the row: the variant is offered
     once per model-year period and named with its years
-    ("xDrive25d (2021)").
+    ("xDrive25d (2021\u20132022)").
     """
 
     by_name: dict[str, list[VehicleConfiguration]] = {}
@@ -304,7 +304,7 @@ def _variants_for_generation(configs: list[VehicleConfiguration]) -> list[_Picke
     return variants
 
 
-# "X1 (F48, 2016-2019)" -> "X1": the label's generation and years are rebuilt
+# "X1 (F48, 2015-2022)" -> "X1": the label's generation and years are rebuilt
 # from the whole generation's rows.
 _LABEL_SUFFIX = re.compile(r" \([^()]*\)$")
 
@@ -318,7 +318,7 @@ def _generation_key(config: VehicleConfiguration) -> _GenerationKey:
 
 
 def _generation_label(base: str, code: str | None, configs: list[VehicleConfiguration]) -> str:
-    """``"X1 (F48, 2016\u20132022)"``: model, generation code and its years."""
+    """``"X1 (F48, 2015\u20132022)"``: model, generation code and its years."""
 
     if code is None:
         return base

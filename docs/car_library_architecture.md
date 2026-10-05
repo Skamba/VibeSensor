@@ -182,14 +182,16 @@ brand, type, model generation, and variant:
   the model name without its trailing `(code, years)` label, and
   `model_code`. The entry is labelled with the code and the generation's
   model years taken from the rows' production years, e.g.
-  `X1 (F48, 2016–2022)`, so year-labelled `model_name` values such as
-  `X1 (F48, 2016)` and `X1 (F48, 2021)` land in one entry.
+  `X1 (F48, 2015–2022)`. Each row's `model_name` uses the same
+  `Base (CODE, first-last)` form (one year when the rows cover one model
+  year); a row whose label carries other years still lands in the same
+  entry, since the label is rebuilt from the rows.
 - **Variant:** one picker entry per `variant_name`, carrying its
   `production_start_year` / `production_end_year`. When two of a variant's
-  rows share a gearbox name (an xDrive25d sold in 2016 and again in 2021
-  with another final drive), the model year decides the row: the variant is
+  rows share a gearbox name (an xDrive25d sold in 2015–2020 and again in
+  2021–2022 with another final drive), the model year decides the row: the variant is
   offered once per model-year period, named with its years
-  (`xDrive25d (2021)`). A row whose years span several periods appears in
+  (`xDrive25d (2021–2022)`). A row whose years span several periods appears in
   each.
 - **Gearbox:** every exact row is one gearbox option, and a picker variant
   never lists a gearbox name twice, so (model, variant, gearbox) names

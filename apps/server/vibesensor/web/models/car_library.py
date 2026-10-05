@@ -66,7 +66,7 @@ class CarLibraryVariantEntry(_StrictBase):
     """A specific variant/trim of a car library model entry.
 
     A variant whose rows differ only by model year is split into one entry
-    per model-year period, named with its years (``"xDrive25d (2021)"``).
+    per model-year period, named with its years (``"xDrive25d (2021–2022)"``).
     """
 
     name: str = Field(min_length=1)
@@ -89,7 +89,7 @@ class CarLibraryModelEntry(_StrictBase):
     """A full car library entry with brand, model, tire options, and variants.
 
     One entry per model generation; ``model`` names the generation code and
-    its model years, e.g. ``"X1 (F48, 2016–2022)"``.
+    its model years, e.g. ``"X1 (F48, 2015–2022)"``.
     """
 
     brand: str

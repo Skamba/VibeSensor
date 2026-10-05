@@ -622,7 +622,7 @@ function modelYears(
 
 /**
  * "AWD · 2.0 diesel · 2016–2022". The years are left out when the name already
- * carries them: a variant split by model year is named "xDrive25d (2021)".
+ * carries them: a variant split by model year is named "xDrive25d (2021–2022)".
  */
 export function variantDetail(variant: CarLibraryVariant): string | null {
   const span = modelYears(

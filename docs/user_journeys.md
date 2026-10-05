@@ -207,7 +207,7 @@ Entry point: *Settings → Car → + Add Car*. This opens the five-step wizard
 (Brand → Type → Model → Variant → Specs) in
 `apps/ui/src/pages/cars/CarWizard.tsx`, with its rules in `wizard_model.ts` and
 its state in `wizard_store.ts`. The header shows the step and the picks so far
-on one line, e.g. "BMW · SUV · X1 (F48, 2016–2022)" (`selectionTrail`); only
+on one line, e.g. "BMW · SUV · X1 (F48, 2015–2022)" (`selectionTrail`); only
 the step content scrolls, and each step starts at its top. On a phone the
 "This car can test" and "Your car" card shows only on the specs step, below
 the form.
@@ -215,10 +215,10 @@ the form.
 #### 3.3a Library path (Audi or BMW, the brands included today)
 
 - **Know/do:** Pick brand, body type, model (one entry per generation, with
-  its code and model years, e.g. "X1 (F48, 2016–2022)"), variant
+  its code and model years, e.g. "X1 (F48, 2015–2022)"), variant
   (engine/drivetrain, with its model years), then a tire option and a
   gearbox. Where an engine's gearbox data changed over the years, the
-  variant is listed once per model-year period ("xDrive25d (2021)"), so the
+  variant is listed once per model-year period ("xDrive25d (2021–2022)"), so the
   variant step resolves the year (`_variants_for_generation` in
   `apps/server/vibesensor/settings/car_library.py`, `variantDetail` in
   `wizard_model.ts`, which leaves the years out of the detail line when the
@@ -559,20 +559,20 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (221 rows), BMW (359 rows); market EU only |
-| Exact configuration rows | 580 (ICE 531, PHEV 32, EV 17) |
-| Picker models / generation codes / variants | 93 / 71 / 450 |
+| Brands | Audi (221 rows), BMW (361 rows); market EU only |
+| Exact configuration rows | 582 (ICE 530, PHEV 32, EV 20) |
+| Picker models / generation codes / variants | 93 / 71 / 452 |
 | Production years | 2007–2026 |
-| Rows with tire options | 579 (1 has the default only) |
-| Rows with driven final drive | 503 (87%); 77 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, 8R 6, 4S 2, 8J 4, 8S 3; BMW G21 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
-| Rows with top gear | 496 of 563 non-EV rows (88%); the 17 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
-| Rows with full gear sets | 354 (61%) |
-| Tire confidence | official_exact 399 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
-| Driven final-drive confidence | official_exact 302 · official_derived 100 · reputable_secondary 22 · family_default 46 · unverified 33 · none 77 |
-| Top-gear confidence | official_exact 388 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 84 (17 EVs, 67 unsourced) |
-| Weak (family_default or unverified) | final drive 79/580 (14%), top gear 67/580 (12%), tire 132/580 (23%) |
-| `order_reference_trust` | trusted 436 · approximate 85 · backlog_unverified 59 |
-| `requires_manual_confirmation` | true 79, false 501 (true exactly when the driven final drive or top gear is weak) |
+| Rows with tire options | 581 (1 has the default only) |
+| Rows with driven final drive | 505 (87%); 77 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with top gear | 495 of 562 non-EV rows (88%); the 20 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
+| Rows with full gear sets | 353 (61%) |
+| Tire confidence | official_exact 406 · reputable_secondary 42 · official_derived 7 · family_default 77 · unverified 50 |
+| Driven final-drive confidence | official_exact 309 · official_derived 100 · reputable_secondary 22 · family_default 41 · unverified 33 · none 77 |
+| Top-gear confidence | official_exact 387 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 87 (20 EVs, 67 unsourced) |
+| Weak (family_default or unverified) | final drive 74/582 (13%), top gear 67/582 (12%), tire 127/582 (22%) |
+| `order_reference_trust` | trusted 443 · approximate 80 · backlog_unverified 59 |
+| `requires_manual_confirmation` | true 74, false 508 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 18 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
@@ -611,7 +611,7 @@ changes and update this table.
 - **Final drive:** missing on 13 Audi TT/RS 3 rows and the 2019–2021 G21 318d
   automatic. The `unresolved` notes say the manufacturer publishes split,
   conflicting or no values; do not invent one. Weak
-  (family_default or unverified) on 79 rows. Those rows are where a single
+  (family_default or unverified) on 74 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---

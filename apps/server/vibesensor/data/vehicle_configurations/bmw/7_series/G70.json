@@ -193,8 +193,8 @@
   "configurations": [
     {
       "id": "bmw-g70-i7-edrive50-eu-2022-ss1-rwd",
-      "production_start_year": 2022,
-      "model_name": "7 Series (G70, 2022-2026)",
+      "production_start_year": 2023,
+      "model_name": "7 Series (G70, 2023-2026)",
       "variant_name": "i7 eDrive50",
       "engine_code": "Electric",
       "engine_name": "Electric Single Motor",
@@ -233,6 +233,12 @@
         {
           "note": "Direct validation of BMW's 04/2022 G70 launch article, the current BMW Germany technical-data page, Germany-market catalog attachments, and the current BMW Germany price list now confirms the exact i7 eDrive50 as the Europe-launch rear-wheel-drive 1-Gang EV with 245/50 R19 standard tires, so this row is retimed from 2023 to a 2022 Europe start.",
           "evidence_refs_ref": "e9"
+        },
+        {
+          "note": "The official BMW 05/2023 summer model-update article launches the i7 eDrive50 from July 2023, so the row starts with the 2023 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:bmw-model-updates-summer-2023"
+          ]
         }
       ],
       "unresolved": [

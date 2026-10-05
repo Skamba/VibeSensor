@@ -231,6 +231,12 @@
           "evidence_refs": [
             "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
           ]
+        },
+        {
+          "note": "The official BMW 03/2021 G21 sheet still lists the 318d Touring six-speed manual with 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601, final drive 3.154 and standard 225/50 R17 tyres, which supports the 2021 end year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -255,118 +261,6 @@
     {
       "id": "bmw-g21-318d-eu-2019-zf8hp-rwd",
       "production_start_year": 2019,
-      "production_end_year": 2021,
-      "variant_name": "318d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2019 technical data list the G21 318d Touring eight-speed Steptronic as rear-wheel drive.",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "official_derived",
-        "evidence_refs": [
-          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 11/2019 technical data list an eight-speed Steptronic transmission for the G21 318d Touring eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (ZF 8HP)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2019 technical data list 0.640 as top gear for the G21 318d Touring eight-speed Steptronic.",
-          "value": 0.64
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2019 technical data list the full forward ratio set for the G21 318d Touring eight-speed Steptronic.",
-          "value": [
-            5.25,
-            3.36,
-            2.172,
-            1.72,
-            1.316,
-            1.0,
-            0.822,
-            0.64
-          ]
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 11/2019 technical data list 225/50 R17 as the standard tyre for the G21 318d Touring eight-speed Steptronic.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "name": "Standard 17\"",
-            "confidence": "official_exact",
-            "evidence_refs": [
-              "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-            ],
-            "notes": "The official BMW 11/2019 technical data list 225/50 R17 as the standard tyre for the G21 318d Touring eight-speed Steptronic.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear"
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Touring body added from the official BMW 11/2019 G21 sheet: 318d Touring eight-speed Steptronic, eighth gear 0.640, standard 225/50 R17 tyres. The final drive is left empty because the official sources disagree (see unresolved).",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Final drive of the 2019-2021 318d Touring automatic",
-          "reason": "The official 11/2019 G21 sheet prints 3.154 for both the manual and the automatic column, while the 03/2019 and 03/2021 G20 sheets list 2.813 for the same 318d automatic drivetrain and the 05/2022 G21 sheet lists 2.813 for the Touring; the 2019-2021 Touring value cannot be confirmed, so it is not stored.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
-            "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
-            "bmw_pressclub_sources:g20-3series-2021-techdata",
-            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
-          ]
-        },
-        {
-          "item": "Optional wheel/tyre sizes for the G21 318d Touring eight-speed Steptronic",
-          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
-          ]
-        }
-      ],
-      "configuration_confidence": "high_confidence"
-    },
-    {
-      "id": "bmw-g21-318d-eu-2022-zf8hp-rwd",
-      "production_start_year": 2022,
       "production_end_year": 2025,
       "variant_name": "318d",
       "engine_code": "B47",
@@ -375,19 +269,23 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
           "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
           "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2022 and 05/2024 technical data list the G21 318d Touring as rear-wheel drive.",
+        "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list the 318d Touring eight-speed Steptronic as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "official_derived",
         "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
           "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
           "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2022 and 05/2024 technical data list an eight-speed Steptronic transmission for the G21 318d Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list an eight-speed Steptronic transmission for the 318d Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
         "code": "ZF8HP",
         "name": "8-speed Steptronic (ZF 8HP)"
       },
@@ -395,19 +293,23 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2022 and 05/2024 technical data list 0.640 as top gear for the G21 318d Touring.",
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 0.640 as eighth gear for the 318d Touring eight-speed Steptronic.",
           "value": 0.64
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2022 and 05/2024 technical data list the full forward ratio set for the G21 318d Touring.",
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the 318d Touring eight-speed Steptronic.",
           "value": [
             5.25,
             3.36,
@@ -422,10 +324,14 @@
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
-            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2022 and 05/2024 technical data list 2.813 as the final drive for the G21 318d Touring.",
+          "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets print 2.813 as the final drive for the 318d Touring eight-speed Steptronic, and the 03/2019 and 03/2021 G20 sheets print 2.813 for the same 318d automatic drivetrain. Only the 11/2019 G21 sheet differs (see unresolved).",
           "value": 2.813
         }
       },
@@ -433,10 +339,12 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2022 and 05/2024 technical data list 225/50 R17 as the standard tyre for the G21 318d Touring.",
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 318d Touring eight-speed Steptronic.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -449,10 +357,12 @@
             "name": "Standard 17\"",
             "confidence": "official_exact",
             "evidence_refs": [
+              "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
               "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
               "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2022 and 05/2024 technical data list 225/50 R17 as the standard tyre for the G21 318d Touring.",
+            "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 318d Touring eight-speed Steptronic.",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -464,18 +374,47 @@
       },
       "verification_notes": [
         {
+          "note": "Touring body added from the official BMW 11/2019 G21 sheet: 318d Touring eight-speed Steptronic, eighth gear 0.640, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "note": "The official BMW 03/2021 G21 sheet lists the 318d Touring eight-speed Steptronic with 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 2.813 and standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf"
+          ]
+        },
+        {
           "note": "The official BMW 05/2022 (LCI) and 05/2024 G21 sheets list the 318d Touring with eight-speed Steptronic, eighth gear 0.640, final drive 2.813 and 225/50 R17 tyres.",
           "evidence_refs": [
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ]
+        },
+        {
+          "note": "The 05/2022 LCI row (bmw-g21-318d-eu-2022-zf8hp-rwd) had the same gear set, final drive and tyres as this row, so the two rows are one 2019-2025 row, as on the G20 318d automatic.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "Optional wheel/tyre sizes for the G21 318d Touring",
+          "item": "11/2019 G21 sheet final drive for the 318d Touring automatic",
+          "reason": "The 11/2019 G21 sheet prints (3.154) for the automatic, the same value as the manual column, while the 03/2021, 05/2022 and 05/2024 G21 sheets and the 03/2019 and 03/2021 G20 sheets print 2.813 for the 318d automatic. No other source for the 2019-2020 Touring was found; the row stores 2.813.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the G21 318d Touring eight-speed Steptronic",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ]

@@ -432,6 +432,15 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
+        },
+        {
+          "note": "The BMW Canada 2018MY guide prints first gear 4.174 where the EU 05/2015 sheet prints 4.714, with the other seven gears equal. The 06/2016 G11 740e and 01/2019 G11 745e sheets for the same hybrid 8-speed print 4.714 with the same other seven gears, so 4.174 is a transposition in the guide and the row keeps 4.714.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide",
+            "bmw_pressclub_sources:g11-740e-2016-spec-pdf",
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -439,14 +448,6 @@
           "item": "BMW X5 xDrive40e exact optional wheel/tire matrix",
           "reason": "The checked official BMW 05/2015 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW X5 xDrive40e first gear in the 2018MY guide",
-          "reason": "The BMW Canada 2018MY guide prints first gear 4.174 where the EU 05/2015 sheet prints 4.714 (the other seven gears agree); the row keeps the EU value.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
-            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
-          ]
         },
         {
           "item": "BMW X5 xDrive40e EU standard tyre after 2015",

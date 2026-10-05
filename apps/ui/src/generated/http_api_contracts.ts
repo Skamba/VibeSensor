@@ -191,7 +191,7 @@ export interface components {
          * A full car library entry with brand, model, tire options, and variants.
          *
          * One entry per model generation; ``model`` names the generation code and
-         * its model years, e.g. ``"X1 (F48, 2016–2022)"``.
+         * its model years, e.g. ``"X1 (F48, 2015–2022)"``.
          */
         CarLibraryModelEntry: {
             brand: string;
@@ -233,7 +233,7 @@ export interface components {
          * A specific variant/trim of a car library model entry.
          *
          * A variant whose rows differ only by model year is split into one entry
-         * per model-year period, named with its years (``"xDrive25d (2021)"``).
+         * per model-year period, named with its years (``"xDrive25d (2021–2022)"``).
          */
         CarLibraryVariantEntry: {
             drivetrain: "FWD" | "RWD" | "AWD";

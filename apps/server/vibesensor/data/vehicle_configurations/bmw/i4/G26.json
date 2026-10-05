@@ -1,21 +1,6 @@
 {
   "definitions": {
-    "notes": {
-      "n2": "Official BMW launch and 2024 DE technical-data sheets now confirm that the exact i4 M50/M50 xDrive uses dual-motor AWD with axle-specific single-speed reduction ratios and staggered tire packages, but the published values differ between launch-era and later DE documents. The broad 2022-2026 row therefore stays unchanged because one exact M50 ratio/tire set would be unsafe to project across the full represented span, especially after BMW renamed the range-topper to M60 xDrive from July 2025."
-    },
     "evidence_ref_sets": {
-      "e1": [
-        "legacy_research_sources:01210c7a71f1",
-        "legacy_research_sources:29a89fc89c3f",
-        "legacy_research_sources:393d7682b19e",
-        "legacy_research_sources:3cc96631762a",
-        "legacy_research_sources:3d6342c4594f",
-        "legacy_research_sources:44aa64d36517",
-        "legacy_research_sources:51439c900c55",
-        "legacy_research_sources:95b9bf2bf0cf",
-        "legacy_research_sources:97624cf593b1",
-        "legacy_research_sources:af3332d3612c"
-      ],
       "e2": [
         "legacy_research_sources:44aa64d36517",
         "legacy_research_sources:af3332d3612c"
@@ -25,7 +10,7 @@
       "setup_255_20": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e2",
         "front": {
           "aspect_pct": 35.0,
           "rim_in": 20.0,
@@ -35,7 +20,7 @@
       "setup_245_19": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e2",
         "front": {
           "aspect_pct": 40.0,
           "rim_in": 19.0,
@@ -67,48 +52,113 @@
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+          "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list a single-speed transmission with fixed ratio for the i4 M50. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 8.698
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2021 and 07/2024 i4 sheets both list 9.374 as the rear electric-motor gear ratio for the i4 M50.",
+          "value": 9.374
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2021 and 07/2024 i4 sheets both list 8.774 as the front electric-motor gear ratio for the i4 M50.",
+          "value": 8.774
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list 245/45 R18 front and 255/45 R18 rear as the standard tyres for the i4 M50.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
+            "name": "Standard 18\" staggered",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+              "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list 245/45 R18 front and 255/45 R18 rear as the standard tyres for the i4 M50.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 255.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
             "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
+            "name": "19\" package"
           },
           {
             "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
+            "name": "20\" package"
           }
-        ],
-        "default_ref": "setup_245_19"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW 09/2021 i4 specifications and the German technical data valid from July 2024 agree for the i4 M50: one motor per axle, front gear ratio 8.774, rear 9.374, and 245/45 R18 front / 255/45 R18 rear tyres. The earlier 8.698 front and rear values had no source and are replaced; the old unresolved claims of 9.053 or 9.744 / 8.776 do not match either sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ]
+        },
+        {
+          "note": "BMW's summer 2025 model-update article states that the i4 M60 xDrive replaces the i4 M50 from July 2025, so the M50 row ends with 2025.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:bmw-model-updates-summer-2025-de"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW i4 M50 exact axle-ratio applicability across the represented 2022-2026 span",
-          "reason": "Official BMW launch specs show axle ratios 9.053 / 9.053 for the exact i4 M50, while official DE July 2024 technical data shows front 9.744 and rear 8.776 for the exact i4 M50 xDrive, so this pass did not choose one exact ratio set for the broad row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW i4 M50 broad-row tire mapping and post-2025 naming continuity",
-          "reason": "Official BMW sources prove staggered M50 tire packages and also show that M60 xDrive replaces the predecessor from July 2025, so the current broad 2022-2026 M50 row should not absorb one exact tire or ratio set without a row split.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional wheel/tyre sizes for the the i4 M50",
+          "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_end_year": 2025
     },
     {
       "id": "bmw-g26-edrive40-eu-2022-ss1-rwd",
@@ -122,48 +172,95 @@
         "value": "RWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+          "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list a single-speed transmission with fixed ratio for the i4 eDrive40. The repo maps that to the canonical SS1 single-speed EV transmission; the fixed reduction is stored as the axle ratio and an EV has no top gear.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 8.698
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2021 and 07/2024 i4 sheets both list 11.115 as the rear electric-motor gear ratio for the i4 eDrive40.",
+          "value": 11.115
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list 225/55 R17 as the standard tyres for the i4 eDrive40.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+              "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2021 and 07/2024 i4 sheets list 225/55 R17 as the standard tyres for the i4 eDrive40.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
             "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
+            "name": "19\" package"
           },
           {
             "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
+            "name": "20\" package"
           }
-        ],
-        "default_ref": "setup_245_19"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW 09/2021 i4 specifications and the German technical data valid from July 2024 agree for the i4 eDrive40: one rear motor, gear ratio 11.115, and 225/55 R17 tyres. The earlier 8.698 value had no source and is replaced.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW i4 M50 exact axle-ratio applicability across the represented 2022-2026 span",
-          "reason": "Official BMW launch specs show axle ratios 9.053 / 9.053 for the exact i4 M50, while official DE July 2024 technical data shows front 9.744 and rear 8.776 for the exact i4 M50 xDrive, so this pass did not choose one exact ratio set for the broad row.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional wheel/tyre sizes for the the i4 eDrive40",
+          "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf"
+          ]
         },
         {
-          "item": "BMW i4 M50 broad-row tire mapping and post-2025 naming continuity",
-          "reason": "Official BMW sources prove staggered M50 tire packages and also show that M60 xDrive replaces the predecessor from July 2025, so the current broad 2022-2026 M50 row should not absorb one exact tire or ratio set without a row split.",
-          "evidence_refs_ref": "e1"
+          "item": "i4 eDrive40 ratio after the summer 2025 update",
+          "reason": "No official i4 sheet from July 2025 onwards was checked, so the 2026 end year relies on the July 2024 data.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf",
+            "bmw_pressclub_sources:bmw-model-updates-summer-2025-de"
+          ]
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

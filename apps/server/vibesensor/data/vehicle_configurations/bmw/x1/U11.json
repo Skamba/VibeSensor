@@ -71,8 +71,8 @@
   "configurations": [
     {
       "id": "bmw-u11-xdrive23i-eu-2022-dct7-awd",
-      "production_start_year": 2022,
-      "model_name": "X1 (U11, 2022-2026)",
+      "production_start_year": 2023,
+      "model_name": "X1 (U11, 2023-2026)",
       "variant_name": "xDrive23i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -119,6 +119,12 @@
         {
           "note": "Direct validation of current BMW Germany overview and technical-data pages plus the BMW UK technical-data page now confirms that the exact U11 xDrive23i is a live first-party product surface and that BMW's embedded product metadata marks this variant with productionYear 2022. That is strong enough to retime the row to a 2022 start and replace the copied iX1 EV advisory block, but not strong enough to promote the inherited transmission or tire data.",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "note": "The official BMW 06/2022 launch article for the new X1 puts the market launch in October 2022, after July, so the row starts with the 2023 model year (repo convention); the productionYear 2022 in BMW page metadata is the production start, not the model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:u11-x1-2022-launch-article"
+          ]
         }
       ],
       "unresolved": [
