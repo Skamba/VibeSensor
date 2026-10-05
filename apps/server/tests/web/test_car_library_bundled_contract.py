@@ -81,8 +81,9 @@ def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_
 
     Canonical rows keep an unpublished or unencodable final drive unresolved
     instead of guessing it. The gearbox is served with ``final_drive_ratio:
-    null`` (and no final-drive confidence) next to its top gear, so the car
-    can be saved and the driveline order reports "not testable".
+    null`` (and no final-drive confidence), so the car can be saved and the
+    driveline order reports "not testable". A missing top gear is served the
+    same way.
     """
     unknown_fd_models: list[str] = []
     for brand, car_type in _bundled_brand_types():
@@ -94,9 +95,11 @@ def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_
             for variant in model["variants"]:
                 assert variant["gearboxes"], (model["model"], variant["name"])
                 for gearbox in variant["gearboxes"]:
-                    assert gearbox["top_gear_ratio"] > 0
+                    # An unknown ratio is served as null, never with a confidence.
+                    for ratio in ("final_drive_ratio", "top_gear_ratio"):
+                        if gearbox[ratio] is None:
+                            assert gearbox[f"{ratio}_confidence"] is None
                     if gearbox["final_drive_ratio"] is None:
-                        assert gearbox["final_drive_ratio_confidence"] is None
                         unknown_fd_models.append(model["model"])
 
     # Audi TT RS Coupe (8S) is one of the rows whose final drive Audi does not publish.

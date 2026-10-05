@@ -78,7 +78,7 @@ class VehicleTiresRow(TypedDict):
 
 @with_config(_STRICT_TYPEDDICT_CONFIG)
 class VehicleRatiosRow(TypedDict):
-    top_gear_ratio: VehicleNumericFieldRow
+    top_gear_ratio: NotRequired[VehicleNumericFieldRow]
     gear_ratios: NotRequired[VehicleNumericSequenceFieldRow]
     final_drive_front: NotRequired[VehicleNumericFieldRow]
     final_drive_rear: NotRequired[VehicleNumericFieldRow]
@@ -160,8 +160,10 @@ def vehicle_configuration_from_row(row: VehicleConfigurationRow) -> VehicleConfi
         transmission_code=row["transmission"].get("code"),
         transmission_name=row["transmission"]["name"],
         transmission_metadata=_metadata_from_row(row["transmission"]),
-        top_gear_ratio=ratios["top_gear_ratio"]["value"],
-        top_gear_ratio_metadata=_metadata_from_row(ratios["top_gear_ratio"]),
+        top_gear_ratio=(ratios["top_gear_ratio"]["value"] if "top_gear_ratio" in ratios else None),
+        top_gear_ratio_metadata=(
+            _metadata_from_row(ratios["top_gear_ratio"]) if "top_gear_ratio" in ratios else None
+        ),
         gear_ratios=(tuple(ratios["gear_ratios"]["value"]) if "gear_ratios" in ratios else None),
         gear_ratios_metadata=(
             _metadata_from_row(ratios["gear_ratios"]) if "gear_ratios" in ratios else None

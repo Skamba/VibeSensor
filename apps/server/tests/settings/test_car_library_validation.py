@@ -222,6 +222,30 @@ def test_validate_vehicle_configurations_allows_unresolved_final_drive() -> None
     assert not validate_vehicle_configurations([explained], allowlist={})
 
 
+def test_validate_vehicle_configurations_allows_unresolved_top_gear() -> None:
+    """A missing top gear is allowed, never filled in, but the row must say why."""
+    partial = replace(
+        _make_valid_vehicle_configuration(),
+        top_gear_ratio=None,
+        top_gear_ratio_metadata=None,
+        unresolved=(VehicleConfigurationIssue(item="Final drive check", reason="unrelated item"),),
+    )
+
+    issues = validate_vehicle_configurations([partial], allowlist={})
+    assert [issue.rule for issue in issues] == ["missing_top_gear"]
+    assert "no unresolved top-gear item" in issues[0].message
+    explained = replace(
+        partial,
+        unresolved=(
+            VehicleConfigurationIssue(
+                item="8HP top_gear_ratio for this variant",
+                reason="no official gear-ratio sheet found",
+            ),
+        ),
+    )
+    assert not validate_vehicle_configurations([explained], allowlist={})
+
+
 def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:
     config = _make_valid_vehicle_configuration()
     low_top_gear = replace(

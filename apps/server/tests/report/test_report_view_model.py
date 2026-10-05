@@ -237,17 +237,54 @@ def test_missing_final_drive_leaves_only_what_it_needs_untested(measured_rpm: bo
         assert "Engine: not testable: no final-drive ratio" in ruled_out
 
 
-def test_missing_top_gear_leaves_only_the_engine_untested() -> None:
-    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
-    summary = run_analysis(samples, standard_metadata(current_gear_ratio=None))
+@pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])
+def test_library_car_without_top_gear_leaves_only_the_speed_based_engine_check_untested(
+    measured_rpm: bool,
+) -> None:
+    """A library row without a top gear is saved without one: never a default."""
+    samples = make_fault_samples(fault_sensor="front-left", sensors=ALL_WHEEL_SENSORS)
+    for sample in samples:
+        sample["speed_source"] = "gps"
+        if measured_rpm:
+            sample.update(engine_rpm=2400.0, engine_rpm_source="obd2")
+    metadata = standard_metadata(
+        current_gear_ratio=None,
+        active_car_snapshot={
+            "fuel_type": "ICE",
+            "order_reference_status": {
+                "selection_source_status": "exact_row",
+                "tire_dimensions_confidence": "official_exact",
+                "final_drive_ratio_confidence": "official_exact",
+            },
+        },
+    )
+    summary = run_analysis(samples, metadata)
+    diagnosis = summary["diagnosis"]
     checks = {
-        check["source"]: (check["status"], check["reason"])
-        for check in summary["diagnosis"]["source_checks"]
+        check["source"]: (check["status"], check["reason"]) for check in diagnosis["source_checks"]
     }
+    view = report_view_for(summary)
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
 
-    assert checks["wheel/tire"] == ("ruled_out", "no_matching_order")
+    # Speed, tire size and final drive still place the wheel and driveline orders.
+    assert (diagnosis["verdict"], diagnosis["source"], diagnosis["zone"]) == (
+        "fault",
+        "wheel/tire",
+        "front_left_wheel",
+    )
     assert checks["driveline"] == ("ruled_out", "no_matching_order")
-    assert checks["engine"] == ("not_testable", "no_engine_reference")
+    assert diagnosis["conditions"]["gear_ratio_provenance"] == "missing"
+    assert conditions["Top gear ratio"] == "not provided"
+    if measured_rpm:
+        assert checks["engine"] == ("ruled_out", "no_matching_order")
+        assert "Engine: no engine-order vibration found" in view.mechanic.ruled_out
+        assert conditions["Engine RPM"] == "measured (OBD)"
+    else:
+        assert checks["engine"] == ("not_testable", "no_engine_reference")
+        assert "Engine: not testable: no RPM or gear ratio" in view.mechanic.ruled_out
+        assert "Motor: niet te testen: geen toerental of versnelling" in (
+            report_view_for(summary, lang="nl").mechanic.ruled_out
+        )
 
 
 @pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])

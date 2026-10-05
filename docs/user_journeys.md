@@ -229,7 +229,9 @@ the form.
     `wizard_model.ts`): the union of its rows' options, one per size
     (`_union_tire_options` in `apps/server/vibesensor/settings/car_library.py`).
   - Each gearbox row carries final drive, top gear and per-field confidence
-    (`_gearbox_row_from_configuration` in `car_library.py`).
+    (`_gearbox_row_from_configuration` in `car_library.py`). A ratio the
+    library row leaves unresolved is served as `null` without a confidence;
+    the wizard leaves that field empty ("unknown"), never a default.
   - The first tire option, and the gearbox when there is only one, are
     preselected (`loadSpecs` in `wizard_store.ts`). Choosing a tire or a
     gearbox fills the specs form, so the user can change any value, for

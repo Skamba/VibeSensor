@@ -54,6 +54,18 @@ const GEARBOX: CarLibraryGearbox = {
   source_status: "exact_row",
 };
 
+/** A library row that leaves its top gear unresolved: served as null. */
+const NO_TOP_GEAR: CarLibraryGearbox = {
+  name: "7-speed DSG",
+  final_drive_ratio: 3.94,
+  top_gear_ratio: null,
+  fuel_type: "ICE",
+  final_drive_ratio_confidence: "official_exact",
+  transmission_confidence: "official_exact",
+  requires_manual_confirmation: false,
+  source_status: "exact_row",
+};
+
 const TIRE: CarLibraryTireOption = {
   name: "Standard",
   default_axle_for_speed: "rear",
@@ -258,7 +270,22 @@ async function bootWithCars(page: Page, server: CarsServer) {
       await fulfillJson<CarLibraryModelsPayload>(route, {
         models:
           type === "Estate"
-            ? [{ ...GOLF, type: "Estate", model: "Golf Variant", variants: [] }]
+            ? [
+                {
+                  ...GOLF,
+                  type: "Estate",
+                  model: "Golf Variant",
+                  gearboxes: [NO_TOP_GEAR],
+                  variants: [
+                    {
+                      name: "1.5 TSI",
+                      drivetrain: "FWD",
+                      engine: "1.5 petrol",
+                      gearboxes: [NO_TOP_GEAR],
+                    },
+                  ],
+                },
+              ]
             : [GOLF, POLO],
       });
     }
@@ -351,6 +378,60 @@ test("journey: the library path prefills the car and shows what it can test", as
   await openAnalysisTab(page);
   await openCarsTab(page);
   await expect(row.locator(".car-created-pill")).toHaveCount(0);
+});
+
+test("journey: a library gearbox without a top gear is saved without one", async ({
+  page,
+}) => {
+  const server = createServer();
+  await bootWithCars(page, server);
+  await openCarsTab(page);
+  await page.locator("#addCarBtn").click();
+  const wizard = page.locator("#addCarWizard");
+  await wizard.locator('#wizardBrandList [data-value="VW"]').click();
+  await wizard.locator('#wizardTypeList [data-value="Estate"]').click();
+  await wizard.locator('#wizardModelList [data-idx="0"]').click();
+  await wizard.locator('#wizardVariantList [data-idx="0"]').click();
+
+  // The gearbox says its top gear is unknown; the field stays empty, not a default.
+  const gearbox = wizard.locator('#wizardGearboxList [data-idx="0"]');
+  await expect(gearbox).toHaveAttribute("aria-pressed", "true");
+  await expect(gearbox).toContainText("Top gear unknown");
+  await expect(gearbox.locator(".ref-chip")).toHaveText(["exact", "unknown"]);
+  await expect(page.locator("#wizFinalDrive")).toHaveValue("3.94");
+  await expect(page.locator("#wizGearRatio")).toHaveValue("");
+  // Wheel and driveline checks run; the engine needs a top gear or OBD-II.
+  const capabilities = page.locator("#wizardCapabilities");
+  await expect(capabilities.locator('[data-family="wheel"]')).toHaveAttribute(
+    "data-mark",
+    "ok",
+  );
+  await expect(
+    capabilities.locator('[data-family="driveline"]'),
+  ).toHaveAttribute("data-mark", "ok");
+  await expect(capabilities.locator('[data-family="engine"]')).toContainText(
+    "Needs the top gear ratio, or OBD-II.",
+  );
+  await expect(page.locator("#wizardActionHint")).toContainText("Ready to add");
+  await page.locator("#wizardManualAddBtn").click();
+
+  await expect(wizard).toBeHidden();
+  expect(server.posts[0]).toMatchObject({
+    variant: "1.5 TSI",
+    fuel_type: "ICE",
+    aspects: { final_drive_ratio: 3.94, current_gear_ratio: null },
+    order_reference_status: {
+      final_drive_ratio_confidence: "official_exact",
+      current_gear_ratio_confidence: null,
+      requires_manual_confirmation: false,
+      selection_source_status: "exact_row",
+      transmission_name: "7-speed DSG",
+    },
+  });
+  const row = page.locator('#carListBody tr[data-car-id="car-1"]');
+  await expect(row.locator('[data-family="engine"]')).toContainText(
+    "Needs the top gear ratio, or OBD-II.",
+  );
 });
 
 test("journey: a failed library load recovers through manual specs and back", async ({

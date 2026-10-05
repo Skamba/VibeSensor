@@ -182,7 +182,8 @@ export interface components {
             name: string;
             requires_manual_confirmation?: boolean | null;
             source_status?: "exact_row" | null;
-            top_gear_ratio: number;
+            /** `null` when the library has no top gear for this gearbox. */
+            top_gear_ratio: number | null;
             top_gear_ratio_confidence?: string | null;
             transmission_confidence?: string | null;
         };
@@ -191,12 +192,6 @@ export interface components {
          *
          * One entry per model generation; ``model`` names the generation code and
          * its model years, e.g. ``"X1 (F48, 2016–2022)"``.
-         *
-         * ``gearboxes`` may be empty: a gearbox option needs a driven final-drive
-         * ratio, and some exact library rows deliberately leave it unresolved
-         * (for example when the manufacturer publishes none, or only split
-         * final-drive values the canonical row cannot encode). Clients then fall
-         * back to manual gearbox entry.
          */
         CarLibraryModelEntry: {
             brand: string;

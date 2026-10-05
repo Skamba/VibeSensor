@@ -251,7 +251,6 @@
     "ratios": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["top_gear_ratio"],
       "properties": {
         "top_gear_ratio": { "$ref": "#/$defs/numeric_field" },
         "gear_ratios": { "$ref": "#/$defs/numeric_sequence_field" },

@@ -156,3 +156,16 @@ def test_missing_final_drive_is_not_a_value_to_confirm() -> None:
 
     assert config.requires_manual_drivetrain_confirmation is False
     assert config.order_reference_trust_for("driveshaft_order") == "backlog_unverified"
+
+
+def test_missing_top_gear_is_not_a_value_to_confirm() -> None:
+    config = replace(
+        _make_exact_configuration(top_gear_confidence="family_default"),
+        top_gear_ratio=None,
+        top_gear_ratio_metadata=None,
+    )
+
+    assert config.requires_manual_drivetrain_confirmation is False
+    assert config.research_completeness == "trusted"
+    assert config.order_reference_trust_for("engine_order") == "backlog_unverified"
+    assert config.order_reference_trust_for("driveshaft_order") == "trusted"

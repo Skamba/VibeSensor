@@ -5,8 +5,10 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import cast
+from unittest.mock import patch
 
 import pytest
+from car_library_validation import validate_vehicle_configurations
 from car_library_validation.source_evidence import (
     load_car_source_registry,
     validate_vehicle_configuration_source_evidence,
@@ -16,7 +18,9 @@ from test_support.vehicle_configuration_shards import (
     write_vehicle_configuration_shard,
 )
 
+from vibesensor.settings.car_library import load_car_library
 from vibesensor.settings.vehicle_configurations import load_vehicle_configurations
+from vibesensor.web.models.car_library import CarLibraryModelsResponse
 
 
 def _load_configs_from_data_dir(data_dir: Path):
@@ -229,6 +233,47 @@ def test_load_vehicle_configurations_expands_option_setup_ref(tmp_path: Path) ->
     assert len(matched) == 1
     assert matched[0].tire_setup.front.width_mm == 245.0
     assert matched[0].tire_setup.rear.rim_in == 19.0
+
+
+def test_row_without_top_gear_loads_and_serves_an_unknown_top_gear(tmp_path: Path) -> None:
+    """A library row may leave its top gear out; it reaches the picker as unknown."""
+
+    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    row = _first_row(fixture)
+    ratios = cast(dict[str, dict[str, object]], row["ratios"])
+    # A checked final drive next to the row's unverified top gear asks for confirmation.
+    ratios["final_drive_front"]["confidence"] = "official_exact"
+    del ratios["top_gear_ratio"]
+    row["unresolved"] = [{"item": "Top gear", "reason": "no official ratio sheet found"}]
+    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
+
+    loaded = _load_configs_from_data_dir(tmp_path)
+    config = next(config for config in loaded if config.id == row["id"])
+    assert (config.top_gear_ratio, config.top_gear_ratio_metadata) == (None, None)
+    assert config.order_reference_trust_for("engine_order") == "backlog_unverified"
+    assert config.requires_manual_drivetrain_confirmation is False
+    assert not [
+        issue
+        for issue in validate_vehicle_configurations([config], allowlist={})
+        if issue.rule in {"missing_top_gear", "missing_field_metadata"}
+    ]
+
+    with patch(
+        "vibesensor.settings.car_library.load_vehicle_configurations", return_value=[config]
+    ):
+        [entry] = load_car_library()
+    [model] = CarLibraryModelsResponse.model_validate({"models": [entry]}).models
+    [gearbox] = [gearbox for variant in model.variants for gearbox in variant.gearboxes or []]
+    assert gearbox.model_dump(exclude_none=True) == {
+        "name": config.transmission_name,
+        "final_drive_ratio": 3.652,
+        "final_drive_ratio_confidence": "official_exact",
+        "fuel_type": "ICE",
+        "source_status": "exact_row",
+        "transmission_confidence": config.order_reference_confidence("transmission_name"),
+        "requires_manual_confirmation": False,
+    }
 
 
 def _first_row(shard: dict[str, object]) -> dict[str, object]:

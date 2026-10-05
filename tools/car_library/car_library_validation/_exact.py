@@ -14,6 +14,7 @@ from car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_engine_text,
     validate_final_drive_layout,
+    validate_missing_top_gear,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
 )
@@ -61,6 +62,7 @@ def validate_vehicle_configuration(
     )
     validate_engine_text(config, entity=entity, label=label, issues=issues)
     validate_final_drive_layout(config, entity=entity, label=label, issues=issues)
+    validate_missing_top_gear(config, entity=entity, label=label, issues=issues)
     validate_tire_spec(
         config.default_tire,
         entity=entity,
@@ -85,11 +87,12 @@ def validate_exact_row_metadata(
     issues: list[CarLibraryValidationIssue],
 ) -> None:
     required_fields: set[VehicleConfigurationField] = {
-        "top_gear_ratio",
         "transmission_name",
         "drivetrain",
         "tire_dimensions",
     }
+    if config.top_gear_ratio is not None:
+        required_fields.add("top_gear_ratio")
     if config.final_drive_front is not None:
         required_fields.add("final_drive_front")
     if config.final_drive_rear is not None:

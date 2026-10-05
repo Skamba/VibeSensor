@@ -132,9 +132,16 @@ order-analysis fields inline with their own metadata:
   (`requires_manual_confirmation`) is derived from the row: true exactly when
   the driven final drive or the top gear is `family_default` or `unverified`
   (`VehicleConfiguration.requires_manual_drivetrain_confirmation`). A missing
-  final drive is "couldn't test", not a value to confirm; the row must carry
-  an `unresolved` item about its final drive saying why (the validator
-  enforces this). Rows carry no per-row policy flags.
+  final drive or top gear is "couldn't test", not a value to confirm.
+- the driven final drive and `ratios.top_gear_ratio` are optional: leave a
+  value out rather than enter a weak or unsourced one. A row without one must
+  carry an `unresolved` item naming it ("final drive" / "top gear") and saying
+  why; the validator enforces this (`drivetrain_final_drive_layout`,
+  `missing_top_gear`). The picker serves the missing ratio as `null`, the
+  wizard shows it as unknown and saves the car without it, and the analysis
+  reports the checks that need it as not testable: without a top gear the
+  engine is checked only from measured OBD-II RPM; wheel and driveline checks
+  are unaffected. Rows carry no per-row policy flags.
 
 `tools/car_library/car_library_validation/data/car_sources/*.json` contains only reusable
 source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through

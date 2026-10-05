@@ -73,7 +73,10 @@ def main() -> int:
         for row in rows
     )
     gear_conf = Counter(
-        row.order_reference_confidence("current_gear_ratio") for row in rows
+        row.order_reference_confidence("current_gear_ratio")
+        if row.top_gear_ratio is not None
+        else "none"
+        for row in rows
     )
     _line("Tire confidence", _counts(tire_conf))
     _line("Driven final-drive confidence", _counts(fd_conf))

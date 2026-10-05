@@ -28,7 +28,9 @@ class CarLibraryGearboxEntry(_StrictBase):
     final_drive_ratio: float | None = Field(
         gt=0, description="`null` when the library has no final drive for this gearbox."
     )
-    top_gear_ratio: float = Field(gt=0)
+    top_gear_ratio: float | None = Field(
+        gt=0, description="`null` when the library has no top gear for this gearbox."
+    )
     fuel_type: Literal["ICE", "PHEV", "EV"]
     gear_ratios: list[float] | None = Field(default=None, min_length=1)
     source_status: Literal["exact_row"] | None = None
@@ -88,12 +90,6 @@ class CarLibraryModelEntry(_StrictBase):
 
     One entry per model generation; ``model`` names the generation code and
     its model years, e.g. ``"X1 (F48, 2016–2022)"``.
-
-    ``gearboxes`` may be empty: a gearbox option needs a driven final-drive
-    ratio, and some exact library rows deliberately leave it unresolved
-    (for example when the manufacturer publishes none, or only split
-    final-drive values the canonical row cannot encode). Clients then fall
-    back to manual gearbox entry.
     """
 
     brand: str

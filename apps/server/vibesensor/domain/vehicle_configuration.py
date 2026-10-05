@@ -122,7 +122,8 @@ class VehicleConfiguration:
     variant_name: str
     drivetrain: VehicleDrivetrain
     transmission_name: str
-    top_gear_ratio: float
+    top_gear_ratio: float | None
+    """``None`` when the library has no top gear for the row (unknown)."""
     default_tire: TireSpec
     tire_options: tuple[VehicleConfigurationTireOption, ...]
     fuel_type: VehicleFuelType = "ICE"
@@ -215,8 +216,9 @@ class VehicleConfiguration:
             "drivetrain",
             "tire_dimensions",
             "transmission_name",
-            "top_gear_ratio",
         ]
+        if self.top_gear_ratio is not None:
+            fields.append("top_gear_ratio")
         if self.final_drive_front is not None:
             fields.append("final_drive_front")
         if self.final_drive_rear is not None:
@@ -337,11 +339,14 @@ class VehicleConfiguration:
 
         Only the ratios the order checks depend on count, each at its own field
         confidence (``family_default`` or ``unverified`` is weak). A missing final
-        drive is "couldn't test", not something to confirm. Saved cars follow the
-        same rule in ``CarOrderReferenceStatus.requires_manual_confirmation``.
+        drive or top gear is "couldn't test", not something to confirm. Saved
+        cars follow the same rule in
+        ``CarOrderReferenceStatus.requires_manual_confirmation``.
         """
 
-        confidences = [self.order_reference_confidence("current_gear_ratio")]
+        confidences: list[VehicleFieldConfidence] = []
+        if self.top_gear_ratio is not None:
+            confidences.append(self.order_reference_confidence("current_gear_ratio"))
         if self.driven_final_drive_ratio is not None:
             confidences.append(self.order_reference_confidence("final_drive_ratio"))
         return _classify_confidences(tuple(confidences)) != "trusted"

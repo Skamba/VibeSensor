@@ -29,6 +29,8 @@ ENGINE_TEXT_PATTERN = re.compile(
 )
 # A row without a driven final drive must say why in an `unresolved` item.
 FINAL_DRIVE_ITEM_PATTERN = re.compile(r"final[- ]drive", re.IGNORECASE)
+# Likewise a row without a top gear ("Top gear", "top-gear", "top_gear_ratio").
+TOP_GEAR_ITEM_PATTERN = re.compile(r"top[-_ ]gear", re.IGNORECASE)
 # Brands whose rows already follow the engine-text format.
 ENGINE_TEXT_BRANDS = frozenset({"Audi", "BMW"})
 
@@ -266,6 +268,25 @@ def validate_final_drive_layout(
                     f"{label} does not expose any driven final-drive ratio "
                     "and has no unresolved final-drive item saying why"
                 ),
+            )
+        )
+
+
+def validate_missing_top_gear(
+    config: VehicleConfiguration,
+    *,
+    entity: str,
+    label: str,
+    issues: list[CarLibraryValidationIssue],
+) -> None:
+    if config.top_gear_ratio is None and not any(
+        TOP_GEAR_ITEM_PATTERN.search(issue.item) for issue in config.unresolved
+    ):
+        issues.append(
+            CarLibraryValidationIssue(
+                rule="missing_top_gear",
+                entity=entity,
+                message=f"{label} has no top_gear_ratio and no unresolved top-gear item saying why",
             )
         )
 
