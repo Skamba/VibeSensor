@@ -1019,8 +1019,8 @@
     {
       "id": "bmw_pressclub_sources:g11-745e-2019-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0289615EN/426493",
-      "title": "BMW PressClub G11 7 Series 2019 technical data PDF",
-      "note": "Official BMW 01/2019 facelift-era technical-data PDF used for the exact 745e and 745Le rear-wheel-drive mappings, including 8-speed Steptronic/ZF8HP transmission-family applicability, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.077, and 245/50 R18 baseline tires.",
+      "title": "BMW PressClub G11 7 Series 2019 facelift technical data PDF",
+      "note": "Official BMW technical-data PDF for the G11/G12 7 Series facelift (correct as at 16.01.2019). Used for the exact 745e and 745Le rear-wheel-drive mappings (8-speed Steptronic/ZF8HP, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.077, 245/50 R18 baseline tires) and for the 2019-2022 diesel rows: 730d, 730Ld, 730d xDrive and 730Ld xDrive (final drive 2.563, 225/60 R17), 740d xDrive and 740Ld xDrive (2.563, 245/50 R18) and 750d xDrive and 750Ld xDrive (2.647, 245/50 R18), all with 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 and reverse 3.993. Also used for the 2019-2022 750i xDrive and 750Li xDrive (5.500 gear set, final drive 2.813, 245/45 R19), M760Li xDrive (5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.813, 245/40 ZR20 front and 275/35 ZR20 rear) and 745Le xDrive (745e gear set, final drive 3.231, 245/50 R18) rows. It also marks the end of the pre-facelift ratio sets on the 2016-2018 rows.",
       "confidence": "high"
     },
     {

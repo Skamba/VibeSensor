@@ -19,6 +19,46 @@
       "rule": "duplicate_vehicle_configuration",
       "entity": "bmw-g31-520i-eu-2020-zf8hp-rwd",
       "reason": "The 520i Touring returned to the launch top gear and final drive at the 2020 LCI, so the 2017-2018 and 2020-2023 rows share the order-analysis math while the 2019 row in between does not; the rows differ in production years and forward gear set."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730d-eu-2016-zf8hp-rwd",
+      "reason": "The 7 Series 730d keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730d-eu-2019-zf8hp-rwd",
+      "reason": "The 7 Series 730d keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730ld-eu-2016-zf8hp-rwd",
+      "reason": "The 7 Series 730Ld keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730ld-eu-2019-zf8hp-rwd",
+      "reason": "The 7 Series 730Ld keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730d-xdrive-eu-2016-zf8hp-awd",
+      "reason": "The 7 Series 730d xDrive keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730d-xdrive-eu-2019-zf8hp-awd",
+      "reason": "The 7 Series 730d xDrive keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730ld-xdrive-eu-2016-zf8hp-awd",
+      "reason": "The 7 Series 730Ld xDrive keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-g11-730ld-xdrive-eu-2019-zf8hp-awd",
+      "reason": "The 7 Series 730Ld xDrive keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
     }
   ]
 }

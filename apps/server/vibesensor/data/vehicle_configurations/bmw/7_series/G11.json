@@ -2284,6 +2284,1408 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-730d-eu-2019-zf8hp-rwd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "730d",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730d with rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 730d. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 730d.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 730d.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 730d.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730d (195 kW) with rear-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 225/60 R17 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 730d 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 225/60 R17 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-730ld-eu-2019-zf8hp-rwd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "730Ld",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730Ld with rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 730Ld. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 730Ld.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 730Ld.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 730Ld.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730Ld.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730Ld.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730Ld (195 kW) with rear-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 225/60 R17 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 730Ld 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 225/60 R17 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-730d-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "730d xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730d xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 730d xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 730d xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 730d xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 730d xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730d xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730d xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730d xDrive (195 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 225/60 R17 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 730d xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 225/60 R17 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-730ld-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "730Ld xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730Ld xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 730Ld xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 730Ld xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 730Ld xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 730Ld xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730Ld xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 225/60 R17 as the standard tyres for the 7 Series Sedan 730Ld xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 730Ld xDrive (195 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 225/60 R17 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 730Ld xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 225/60 R17 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-740d-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "740d xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 740d xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 740d xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 740d xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 740d xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 740d xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 740d xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 740d xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 740d xDrive (235 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 245/50 R18 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 740d xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/50 R18 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-740ld-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "740Ld xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 740Ld xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 740Ld xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 740Ld xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 740Ld xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.563 as the final drive for the 7 Series Sedan 740Ld xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 740Ld xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 740Ld xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 740Ld xDrive (235 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.563 and 245/50 R18 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 740Ld xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/50 R18 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-750d-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "750d xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750d xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 750d xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 750d xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 750d xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.647 as the final drive for the 7 Series Sedan 750d xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.647
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 750d xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 750d xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750d xDrive (294 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.647 and 245/50 R18 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 750d xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/50 R18 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-750ld-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "750Ld xDrive",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750Ld xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 750Ld xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 750Ld xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 750Ld xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.647 as the final drive for the 7 Series Sedan 750Ld xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.647
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 750Ld xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 750Ld xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750Ld xDrive (294 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.647 and 245/50 R18 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the 745e facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 750Ld xDrive 2019-2022 optional wheel/tire matrix and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/50 R18 standard fitment; optional wheel packages and any later (2020-2022) ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-750i-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "750i xDrive",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750i xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 750i xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 750i xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 750i xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.813 as the final drive for the 7 Series Sedan 750i xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/45 R19 as the standard tyres for the 7 Series Sedan 750i xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 19\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/45 R19 as the standard tyres for the 7 Series Sedan 750i xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750i xDrive (390 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.813 and 245/45 R19 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the other facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: V8, 4395 cc, BMW TwinPower Turbo with two TwinScroll turbochargers, petrol. The N63 family code matches the pre-facelift 750i xDrive row (BMW Canada guides print N63B44).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 750i xDrive 2019-2022 optional wheel/tire matrix, market availability and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/45 R19 standard fitment; optional wheel packages, how long the variant stayed on sale in the EU and any later ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-750li-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "750Li xDrive",
+      "engine_code": "N63",
+      "engine_name": "N63 4.4L V8 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750Li xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 750Li xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan 750Li xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan 750Li xDrive.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.813 as the final drive for the 7 Series Sedan 750Li xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/45 R19 as the standard tyres for the 7 Series Sedan 750Li xDrive. The same sheet prints 8.5J x 18 rims next to the R19 tyre; the tyre size is used.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 19\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/45 R19 as the standard tyres for the 7 Series Sedan 750Li xDrive. The same sheet prints 8.5J x 18 rims next to the R19 tyre; the tyre size is used.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 750Li xDrive (390 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, reverse 3.993, final drive 2.813 and 245/45 R19 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the other facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: V8, 4395 cc, BMW TwinPower Turbo with two TwinScroll turbochargers, petrol. The N63 family code matches the pre-facelift 750i xDrive row (BMW Canada guides print N63B44).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 750Li xDrive 2019-2022 optional wheel/tire matrix, market availability and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/45 R19 standard fitment; optional wheel packages, how long the variant stayed on sale in the EU and any later ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-m760li-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "M760Li xDrive",
+      "engine_code": "6.6L",
+      "engine_name": "6.6L V12 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan M760Li xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan M760Li xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.640 as eighth gear for the 7 Series Sedan M760Li xDrive.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 for the 7 Series Sedan M760Li xDrive.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 2.813 as the final drive for the 7 Series Sedan M760Li xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/40 R20 front and 275/35 R20 rear as the standard tyres for the 7 Series Sedan M760Li xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 35.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 20\" staggered",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/40 R20 front and 275/35 R20 rear as the standard tyres for the 7 Series Sedan M760Li xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 35.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan M760Li xDrive (430 kW) with xDrive all-wheel drive, 8-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.813 and 245/40 R20 front and 275/35 R20 rear standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the other facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: V12, 6592 cc, BMW TwinPower Turbo with two mono-scroll turbochargers, petrol.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series M760Li xDrive 2019-2022 optional wheel/tire matrix, market availability and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/40 R20 front and 275/35 R20 rear standard fitment; optional wheel packages, how long the variant stayed on sale in the EU and any later ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g11-745le-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "745Le xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 745Le xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+        ],
+        "notes": "The official BMW 01/2019 facelift technical data list an 8-speed Steptronic transmission for the 7 Series Sedan 745Le xDrive. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 0.667 as eighth gear for the 7 Series Sedan 745Le xDrive.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the 7 Series Sedan 745Le xDrive.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 3.231 as the final drive for the 7 Series Sedan 745Le xDrive; one axle ratio is published for the all-wheel-drive car.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 745Le xDrive.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 50.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+            ],
+            "notes": "The official BMW 01/2019 facelift technical data list 245/50 R18 as the standard tyres for the 7 Series Sedan 745Le xDrive.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 50.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 01/2019 facelift technical data list the 7 Series Sedan 745Le xDrive (210 kW) with xDrive all-wheel drive, 8-speed Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.231 and 245/50 R18 standard tyres. The sheet is dated 16.01.2019, so the row starts with the 2019 model year and runs to the end of G11/G12 production in 2022 like the other facelift rows.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 01/2019 technical data: in-line 6, 2998 cc, BMW TwinPower Turbo with a TwinScroll turbocharger, plus BMW eDrive.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW 7 Series 745Le xDrive 2019-2022 optional wheel/tire matrix, market availability and mid-cycle ratio changes",
+          "reason": "The 01/2019 facelift sheet closes only the 245/50 R18 standard fitment; optional wheel packages, how long the variant stayed on sale in the EU and any later ratio revisions were not checked against a newer official sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }
