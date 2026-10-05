@@ -658,6 +658,279 @@
       "title": "Audi MediaCenter A4 3.0 TDI clean diesel quattro press release",
       "note": "Official Audi MediaCenter press release for the Germany-market A4 3.0 TDI clean diesel quattro family stating that it combines six-speed tiptronic with quattro permanent all-wheel drive. Used to contradict the broad B8 ZF8HP automatic row and to document the pre-facelift tiptronic versus facelift S tronic split pressure on the broad 3.0 TDI automatic family.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline%20info%20A4%20Limousine_1.pdf",
+      "title": "Audi Estonia A4 Sedan technical-data compilation (Germany program, status 06-09/2019)",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia) for the facelifted B9 A4 Sedan, Germany program, status dates 06/10/2019 to 09/25/2019. Lists drive type, transmission, every forward gear ratio, reverse / final-drive ratio and basic tires for 30 TDI, 35 TDI, 35 TFSI, 40 TDI, 40 TDI quattro, 40 TFSI, 45 TDI quattro tiptronic and 45 TFSI quattro. Used as the launch-year (2019) anchor of the B9 facelift rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline%20info%20A4%20Avant_1.pdf",
+      "title": "Audi Estonia A4 Avant technical-data compilation (Germany program, status 06-09/2019)",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia) for the facelifted B9 A4 Avant, Germany program, status dates 06/08/2019 to 09/25/2019, with the same per-variant drivetrain, gear-ratio, final-drive and basic-tire data as the sedan compilation. Launch-year (2019) anchor of the A4 Avant B9 rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_A6_Avant.pdf",
+      "title": "Audi Estonia A6 Avant technical-data compilation (Germany program, status 06/2018-03/2019)",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia) for the C8 A6 Avant, Germany program, status dates 6/12/2018 to 03/04/2019: 35 TDI, 40 TDI, 40 TDI quattro, 45 TDI quattro tiptronic 170 kW, 50 TDI quattro tiptronic, 45 TFSI and 45 TFSI quattro 180 kW with drive type, all forward gear ratios, reverse / final-drive ratio, basic tires and the 2018 tire-package designations (225/60 R17, 225/55 R18, 245/45 R19). Launch-era anchor of the C8 A6 and A6 Avant rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-2018-ee-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline%20info%20A7%20Sportback.pdf",
+      "title": "Audi Estonia A7 Sportback technical-data compilation (Germany program, 2018)",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia) for the C8 A7 Sportback, Germany program, including the 55 TFSI quattro S tronic 250 kW (published 01/02/2018) with 7-speed S tronic ratios ending 0.508 / 0.386, final drive 4.410 and quattro ultra drive. Used only as a launch-era cross-check of the shared C8 55 TFSI quattro driveline on the A6 rows.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a4-24",
+      "title": "Audi MediaCenter A4 Sedan (until 2024) model page",
+      "note": "Official Audi MediaCenter model page for the outgoing B9 A4 Sedan; links the Germany-program eTD technical-data PDFs (status 06/13/2024) used as the late-B9 anchors.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a4-avant-25",
+      "title": "Audi MediaCenter A4 Avant (until 2024) model page",
+      "note": "Official Audi MediaCenter model page for the outgoing B9 A4 Avant; links the Germany-program eTD technical-data PDFs (status 06/13/2024) used as the late-B9 Avant anchors.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-until-2025-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a6-avant-until-2025-16545",
+      "title": "Audi MediaCenter A6 Avant (until 2025) model page",
+      "note": "Official Audi MediaCenter model page for the outgoing C8 A6 Avant; links the Germany-program eTD technical-data PDFs (status 08/29/2024 and 09/11/2024) used as the late-C8 Avant anchors.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-de-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_a4-limousine_a4-avant.pdf",
+      "title": "Audi Germany A4 Limousine / A4 Avant model-year 2025 price list",
+      "note": "Official Audi Germany price list for the last B9 A4 Limousine and Avant. Its wheel program lists 7.0 J x 16 with 205/60 R16 (up to 120 kW), 7.5 J x 17 with 225/50 R17, 8.0 J x 18 with 245/40 R18 and 8.5 J x 19 with 245/35 R19 for both bodies. 225/45 R18 appears only as a winter tire.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-de-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_a6-limousine_a6limousine-tfsi-e_a6-avant_a6-avant-tfsi-e_s6.pdf",
+      "title": "Audi Germany A6 / S6 Limousine and Avant model-year 2025 price list",
+      "note": "Official Audi Germany price list for the last C8 A6 Limousine and Avant. Its wheel program lists 8.0 J x 18 with 225/55 R18, 8.5 J x 19 with 245/45 R19, 8.5 J x 20 with 255/40 R20 and 8.5 J x 21 with 255/35 R21 for both bodies; 225/60 R17 appears as the 7.5 J x 17 winter wheel (not for 55 TFSI).",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-30-tdi-100kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/927/file_en/a2fc32c372a4ea13a5ccf32e567317dee02e0991/eTD-Audi-A4-Sedan-30-TDI-S_tronic-100kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 30 TDI 7-speed S tronic 100 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 30 TDI 7-speed S tronic 100 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/928/file_en/56a29fe0bfc7faaac389a2fbafbd094de5e3ad84/eTD-Audi-A4-Sedan-35-TDI-S_tronic-120kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 35 TDI 7-speed S tronic 120 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 35 TDI 7-speed S tronic 120 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-35-tfsi-110kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/816/file_en/cd22704fc6ea58ac2814dabc5a480bbf42a32691/eTD-Audi-A4-Sedan-35-TFSI-S_tronic-110kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 35 TFSI 7-speed S tronic 110 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 35 TFSI 7-speed S tronic 110 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/943/file_en/efeb0598ef3a99011f93f84aedf91ca492dc038c/eTD-Audi-A4-Sedan-40-TDI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 40 TDI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 40 TDI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/818/file_en/fffc493e2134c00cc79e6b7030ab5b05a0b8601d/eTD-Audi-A4-Sedan-40-TFSI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 40 TFSI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 40 TFSI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/929/file_en/c2ecc50bacf894cf82be4a694d47026f298998c5/eTD-Audi-A4-Sedan-40-TDI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 40 TDI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 40 TDI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1064/file_en/d86efbc1b5bc6aa826455de1fb3242c7fbb82fc0/eTD-Audi-A4-Sedan-40-TFSI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 40 TFSI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 40 TFSI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-sedan-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/930/file_en/b54efbc79b4cb52e6b91dffee6593c055c5d0e8c/eTD-Audi-A4-Sedan-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Sedan 45 TFSI quattro 7-speed S tronic 195 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Sedan 45 TFSI quattro 7-speed S tronic 195 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-30-tdi-100kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/921/file_en/6761efb37ce6a3a81d1737bb72b0c9859aac9ee7/eTD-Audi-A4-Avant-30-TDI-S_tronic-100kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 30 TDI 7-speed S tronic 100 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 30 TDI 7-speed S tronic 100 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/922/file_en/58dcc9e4af24b62823f5a825ccb59b84aa2b0e5b/eTD-Audi-A4-Avant-35-TDI-S_tronic-120kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 35 TDI 7-speed S tronic 120 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 35 TDI 7-speed S tronic 120 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-35-tfsi-110kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/923/file_en/d185fee5de0e83440b6fe2e19ac9268e85619480/eTD-Audi-A4-Avant-35-TFSI-S_tronic-110kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 35 TFSI 7-speed S tronic 110 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 35 TFSI 7-speed S tronic 110 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/945/file_en/5e587ec65606b30fd4247553650e621de8c1be5c/eTD-Audi-A4-Avant-40-TDI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 40 TDI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 40 TDI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-40-tfsi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/824/file_en/3f589d520f519e4e87ab62653e37f2edf5f5167d/eTD-Audi-A4-Avant-40-TFSI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 40 TFSI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 40 TFSI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/820/file_en/63bd2b6f220a72316068f1c5d69a7b8fba613ded/eTD-Audi-A4-Avant-40-TDI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 40 TDI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 40 TDI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1065/file_en/1269bed89476fdacc4aa99f4d29c8358399423f3/eTD-Audi-A4-Avant-40-TFSI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 40 TFSI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 40 TFSI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 205/60 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a4-avant-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/925/file_en/1f6702c56cdd9834cf38e013853ad72eb4c87f7c/eTD-Audi-A4-Avant-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A4 Avant 45 TFSI quattro 7-speed S tronic 195 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A4 Avant 45 TFSI quattro 7-speed S tronic 195 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/845/file_en/ae38b62498a199480a77706c91374e73fbcb88b9/eTD-Audi-A6-Sedan-35-TDI-S_tronic-120kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Sedan 35 TDI 7-speed S tronic 120 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Sedan 35 TDI 7-speed S tronic 120 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.234; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1133/file_en/227859ac1c4e791eef61fb926e5ffd060356ea6c/eTD-Audi-A6-Sedan-40-TDI-S_tronic-150kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Sedan 40 TDI 7-speed S tronic 150 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Sedan 40 TDI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.234; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/825/file_en/e8f97084df1d052eeafbe98357f51fc91dd11620/eTD-Audi-A6-Sedan-40-TDI-quattro-S_tronic-150kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Sedan 40 TDI quattro 7-speed S tronic 150 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Sedan 40 TDI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-45-tfsi-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/827/file_en/bbd0345a3337c92c23ff91229cf57df36894c7a3/eTD-Audi-A6-Sedan-45-TFSI-S_tronic-195kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Sedan 45 TFSI 7-speed S tronic 195 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Sedan 45 TFSI 7-speed S tronic 195 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-45-tdi-quattro-180kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1197/file_en/1622dcc5eeb82dc724cf02303b4211c31b5ff958/eTD-Audi-A6-Sedan-45-TDI-quattro-S_tronic-180kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A6 Sedan 45 TDI quattro 7-speed S tronic 180 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A6 Sedan 45 TDI quattro 7-speed S tronic 180 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-sedan-50-tdi-quattro-210kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/747/file_en/86dc212dfb58ecc0c63b0edf3afbb43b21d381b2/eTD-Audi-A6-Sedan-50-TDI-quattro-tiptronic-210kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Sedan 50 TDI quattro 8-speed tiptronic 210 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Sedan 50 TDI quattro 8-speed tiptronic 210 kW (MHEV): quattro permanent all-wheel drive with self-locking center differential; forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640; reverse / final drive 3.478 / 2.624; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/844/file_en/6be667f438cbb55c8d43d667c3069181981a78d4/eTD-Audi-A6-Avant-35-TDI-S_tronic-120kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 35 TDI 7-speed S tronic 120 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 35 TDI 7-speed S tronic 120 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.234; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/307/file_en/6cef1887137d6b9847d66c4409ac00809ac12971/eTD-Audi-A6-Avant-40-TDI-S_tronic-150kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 40 TDI 7-speed S tronic 150 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 40 TDI 7-speed S tronic 150 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.234; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/828/file_en/6671ce8867ad8b952a23b450932d7c19d1102fce/eTD-Audi-A6-Avant-40-TDI-quattro-S_tronic-150kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 40 TDI quattro 7-speed S tronic 150 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 40 TDI quattro 7-speed S tronic 150 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-45-tfsi-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/830/file_en/e3c857b68937eee58fb68691d3640ec376b5f1c5/eTD-Audi-A6-Avant-45-TFSI-S_tronic-195kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 45 TFSI 7-speed S tronic 195 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 45 TFSI 7-speed S tronic 195 kW (MHEV): Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/829/file_en/0896f9fd81a9437d4c8d0955d60d81aab37ae17d/eTD-Audi-A6-Avant-45-TFSI-quattro-S_tronic-195kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 45 TFSI quattro 7-speed S tronic 195 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 45 TFSI quattro 7-speed S tronic 195 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-45-tdi-quattro-180kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1196/file_en/ba2c11656ff8a75ed4de7e9b09417738f9ce3da8/eTD-Audi-A6-Avant-45-TDI-quattro-S_tronic-180kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 45 TDI quattro 7-speed S tronic 180 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 45 TDI quattro 7-speed S tronic 180 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-50-tdi-quattro-210kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/309/file_en/9f25efe722c95ac1ca4ac291956b054ac02d7ee5/eTD-Audi-A6-Avant-50-TDI-quattro-tiptronic-210kW-MHEV_240829.pdf",
+      "title": "Audi MediaCenter A6 Avant 50 TDI quattro 8-speed tiptronic 210 kW technical data (08/29/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 08/29/2024, for the A6 Avant 50 TDI quattro 8-speed tiptronic 210 kW (MHEV): quattro permanent all-wheel drive with self-locking center differential; forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640; reverse / final drive 3.478 / 2.624; basic tires 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a6-avant-55-tfsi-quattro-250kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1021/file_en/fe191de92936d6a6e9846955d783609435b87b24/eTD-Audi-A6-Avant-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf",
+      "title": "Audi MediaCenter A6 Avant 55 TFSI quattro 7-speed S tronic 250 kW technical data (09/11/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/11/2024, for the A6 Avant 55 TFSI quattro 7-speed S tronic 250 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
+      "confidence": "high"
     }
   ]
 }

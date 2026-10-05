@@ -1,5 +1,8 @@
 {
   "definitions": {
+    "notes": {
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+    },
     "evidence_ref_sets": {
       "e1": [
         "legacy_research_sources:01c00967f62a",
@@ -20,14 +23,107 @@
         "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf"
       ],
       "e4": [
-        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
-        "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
-        "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
+        "audi_mediacenter_sources:c8-a6-sedan-35-tdi-120kw-2024-tech-data-pdf"
       ],
       "e5": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-35-tdi-120kw-2024-tech-data-pdf",
         "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-150kw-2024-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:c8-a6-sedan-45-tfsi-195kw-2024-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-45-tfsi-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:c8-a6-sedan-45-tdi-quattro-180kw-2024-tech-data-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:c8-a6-sedan-45-tdi-quattro-180kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e17": [
+        "audi_mediacenter_sources:c8-a6-sedan-50-tdi-quattro-210kw-2024-tech-data-pdf"
+      ],
+      "e18": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-50-tdi-quattro-210kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e19": [
         "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf",
-        "audi_mediacenter_sources:c8-a6-2025-new-sedan-release"
+        "audi_mediacenter_sources:c8-a6-until-2025-model-page",
+        "audi_mediacenter_sources:c8-a7-sportback-2018-ee-tech-data-pdf",
+        "secondary_technical_sources:a6-c8-adac-catalogue",
+        "secondary_technical_sources:a6-c8-facelift-adac-catalogue"
+      ],
+      "e20": [
+        "audi_mediacenter_sources:c8-a6-45-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-45-tdi-quattro-180kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-45-tfsi-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-sedan-50-tdi-quattro-210kw-2024-tech-data-pdf"
+      ],
+      "e21": [
+        "audi_mediacenter_sources:c8-a6-55-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-de-my2025-price-list-pdf"
+      ],
+      "e22": [
+        "audi_mediacenter_sources:c8-a6-avant-2018-ee-tech-data-pdf",
+        "audi_mediacenter_sources:c8-a6-de-my2025-price-list-pdf"
+      ],
+      "e23": [
+        "audi_mediacenter_sources:c8-a6-de-my2025-price-list-pdf"
       ]
     },
     "tire_setups": {
@@ -60,6 +156,56 @@
           "rim_in": 19.0,
           "width_mm": 245.0
         }
+      },
+      "setup_225_60r17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e20",
+        "front": {
+          "aspect_pct": 60.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_225_55r18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e21",
+        "front": {
+          "aspect_pct": 55.0,
+          "rim_in": 18.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_45r19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e22",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_255_40r20": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e23",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 20.0,
+          "width_mm": 255.0
+        }
+      },
+      "setup_255_35r21": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e23",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 21.0,
+          "width_mm": 255.0
+        }
       }
     }
   },
@@ -69,8 +215,8 @@
     "market": "EU",
     "model_code": "C8",
     "body_code": "C8",
-    "model_name": "A6 (C8, 2019-2025)",
-    "production_start_year": 2019,
+    "model_name": "A6 (C8, 2018-2025)",
+    "production_start_year": 2018,
     "production_end_year": 2025
   },
   "configurations": [
@@ -139,10 +285,375 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2019
     },
     {
-      "id": "audi-c8-45-tfsi-quattro-eu-2019-dct7-awd",
+      "id": "audi-c8-35-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Final drive 4.234 per official Audi technical data: A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 35 TDI 7-speed S tronic FWD: official Audi technical data (A6 Avant 35 TDI S tronic (120 kW) (status 03/04/2019); A6 Sedan 35 TDI S tronic 120kW MHEV (status 08/29/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.234, identical on every checked sheet (120 kW). Production span 2019-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 35 TDI launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-40-tdi-eu-2018-dct7-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
+      "variant_name": "40 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Final drive 4.234 per official Audi technical data: A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 40 TDI 7-speed S tronic FWD: official Audi technical data (A6 Avant 40 TDI (2.0) S tronic 150 kW (MHEV) (status 8/6/2018); A6 Sedan 40 TDI S tronic 150kW MHEV (status 08/29/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.234, identical on every checked sheet (150 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 40 TDI launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-40-tdi-quattro-eu-2018-dct7-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
+      "variant_name": "40 TDI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A6 Avant 40 TDI quattro S tronic (150 kW) (status 12/11/2018); A6 Sedan 40 TDI quattro S tronic 150kW MHEV (status 08/29/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A6 Avant 40 TDI quattro S tronic (150 kW) (status 12/11/2018); A6 Sedan 40 TDI quattro S tronic 150kW MHEV (status 08/29/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A6 Avant 40 TDI quattro S tronic (150 kW) (status 12/11/2018); A6 Sedan 40 TDI quattro S tronic 150kW MHEV (status 08/29/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A6 Avant 40 TDI quattro S tronic (150 kW) (status 12/11/2018); A6 Sedan 40 TDI quattro S tronic 150kW MHEV (status 08/29/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 40 TDI quattro 7-speed S tronic AWD: official Audi technical data (A6 Avant 40 TDI quattro S tronic (150 kW) (status 12/11/2018); A6 Sedan 40 TDI quattro S tronic 150kW MHEV (status 08/29/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410, identical on every checked sheet (150 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 40 TDI quattro launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-45-tfsi-eu-2018-dct7-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
+      "variant_name": "45 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Final drive 4.410 per official Audi technical data: A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024).",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 45 TFSI 7-speed S tronic FWD: official Audi technical data (A6 Avant 45 TFSI S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI S tronic 195kW MHEV (status 08/29/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410, identical on every checked sheet (180 kW and 195 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 45 TFSI launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-45-tfsi-quattro-eu-2018-dct7-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
       "engine_name": "2.0L I4 TFSI Turbo",
@@ -150,69 +661,374 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "notes": "Official Audi technical data (A6 Avant 45 TFSI quattro S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 08/29/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 45 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 195 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "notes": "Official Audi technical data (A6 Avant 45 TFSI quattro S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 08/29/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
         "code": "DCT7",
-        "name": "7-speed S tronic (DL382)"
+        "name": "7-speed S tronic"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A6 Avant 45 TFSI quattro S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 08/29/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A6 Avant 45 TFSI quattro S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 08/29/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
         },
         "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.564
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "awd_fd",
+          "value": 4.41
         },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.564
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes_ref": "awd_fd",
+          "value": 4.41
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
           },
           {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
           },
           {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
           }
         ],
-        "default_ref": "setup_245_19"
+        "default_ref": "setup_225_60r17"
       },
       "verification_notes": [
         {
-          "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 45 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 195 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 ratio set, and 225/60 R17 basic tires, but this pass did not recover an earlier exact 180 kW or launch-era sheet proving one unchanged numeric package across the full retimed row.",
-          "evidence_refs_ref": "e4"
+          "note": "A6 C8 45 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A6 Avant 45 TFSI quattro S tronic (180 kW) (status 12/13/2018); A6 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 08/29/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410, identical on every checked sheet (180 kW and 195 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e12"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi A6 45 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
-          "reason": "The checked 2024 technical-data sheet resolves the late-cycle 195 kW 45 TFSI quattro package, but this pass did not recover an earlier exact 180 kW or launch-era A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "Audi A6 45 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
-          "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/60 R17 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
-          "evidence_refs_ref": "e2"
+          "item": "A6 Sedan 45 TFSI quattro launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e12"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "medium_confidence"
     },
     {
-      "id": "audi-c8-55-tfsi-quattro-eu-2019-dct7-awd",
+      "id": "audi-c8-45-tdi-quattro-eu-2018-at8-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2020,
+      "variant_name": "45 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A6 Avant 45 TDI (3.0) quattro tiptronic 170 kW (MHEV) (status 6/12/2018)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A6 Avant 45 TDI (3.0) quattro tiptronic 170 kW (MHEV) (status 6/12/2018)) name the transmission '8-speed tiptronic / automatic'. Audi does not publish a gearbox-family code on these sheets.",
+        "name": "8-speed tiptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Top (8th) gear 0.640 per official Audi technical data: A6 Avant 45 TDI (3.0) quattro tiptronic 170 kW (MHEV) (status 6/12/2018).",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 per official Audi technical data: A6 Avant 45 TDI (3.0) quattro tiptronic 170 kW (MHEV) (status 6/12/2018).",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 2.624
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 2.624
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Basic 18\""
+          },
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_55r18"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 45 TDI quattro 8-speed tiptronic AWD: official Audi technical data (A6 Avant 45 TDI (3.0) quattro tiptronic 170 kW (MHEV) (status 6/12/2018)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 and final drive 2.624 (170 kW). Production span 2018-2020 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/55 R18 from the latest checked sheet; optional sizes from the 2018 tire-package designations on the same compilation.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 45 TDI quattro launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e14"
+        },
+        {
+          "item": "A6 Sedan 45 TDI quattro values between 2018 and 2020 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2018 only; the 2018-2020 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e14"
+        },
+        {
+          "item": "A6 45 TDI quattro tiptronic 180 kW (12/2020-04/2023)",
+          "reason": "ADAC lists a 180 kW 45 TDI quattro tiptronic between the checked 170 kW tiptronic and the 2023 S tronic variant; no official sheet for it was checked, so it has no row.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-45-tdi-quattro-eu-2023-dct7-awd",
+      "production_start_year": 2023,
+      "production_end_year": 2025,
+      "variant_name": "45 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e15",
+        "notes": "Official Audi technical data (A6 Sedan 45 TDI quattro S tronic 180kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e15",
+        "notes": "Official Audi technical data (A6 Sedan 45 TDI quattro S tronic 180kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e15",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A6 Sedan 45 TDI quattro S tronic 180kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e15",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A6 Sedan 45 TDI quattro S tronic 180kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e15",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e15",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 45 TDI quattro 7-speed S tronic AWD: official Audi technical data (A6 Sedan 45 TDI quattro S tronic 180kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410 (180 kW). Production span 2023-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e16"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-50-tdi-quattro-eu-2018-at8-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
+      "variant_name": "50 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e17",
+        "notes": "Official Audi technical data (A6 Avant 50 TDI (3.0) quattro tiptronic 210 kW (MHEV) (status 6/12/2018); A6 Sedan 50 TDI quattro tiptronic 210kW MHEV (status 08/29/2024)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e17",
+        "notes": "Official Audi technical data (A6 Avant 50 TDI (3.0) quattro tiptronic 210 kW (MHEV) (status 6/12/2018); A6 Sedan 50 TDI quattro tiptronic 210kW MHEV (status 08/29/2024)) name the transmission '8-speed tiptronic' and '8-speed tiptronic / automatic'. Audi does not publish a gearbox-family code on these sheets.",
+        "name": "8-speed tiptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e17",
+          "notes": "Top (8th) gear 0.640 per official Audi technical data: A6 Avant 50 TDI (3.0) quattro tiptronic 210 kW (MHEV) (status 6/12/2018); A6 Sedan 50 TDI quattro tiptronic 210kW MHEV (status 08/29/2024).",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e17",
+          "notes": "Forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 per official Audi technical data: A6 Avant 50 TDI (3.0) quattro tiptronic 210 kW (MHEV) (status 6/12/2018); A6 Sedan 50 TDI quattro tiptronic 210kW MHEV (status 08/29/2024).",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e17",
+          "notes_ref": "awd_fd",
+          "value": 2.624
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e17",
+          "notes_ref": "awd_fd",
+          "value": 2.624
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_60r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_225_55r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
+          }
+        ],
+        "default_ref": "setup_225_60r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A6 C8 50 TDI quattro 8-speed tiptronic AWD: official Audi technical data (A6 Avant 50 TDI (3.0) quattro tiptronic 210 kW (MHEV) (status 6/12/2018); A6 Sedan 50 TDI quattro tiptronic 210kW MHEV (status 08/29/2024)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 and final drive 2.624, identical on every checked sheet (210 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/60 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e18"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A6 Sedan 50 TDI quattro launch-era anchor comes from a sibling body",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A6 Avant compilation; no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e18"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-c8-55-tfsi-quattro-eu-2018-dct7-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2025,
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
       "engine_name": "3.0L V6 TFSI Turbo",
@@ -220,66 +1036,85 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms quattro ultra AWD for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "notes": "Official Audi technical data (A7 Sportback 55 TFSI (3.0) quattro S tronic 250 kW (MHEV) (published 01/02/2018); A6 Sedan 55 TFSI quattro S tronic 250kW MHEV (status 09/11/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes": "Exact official Audi MediaCenter 2024 A6 Sedan 55 TFSI quattro technical-data material confirms the 7-speed S tronic transmission wording for the checked late-C8 250 kW sedan state, while earlier numeric continuity remains unresolved across the retimed 2019-2025 old-line row.",
+        "notes": "Official Audi technical data (A7 Sportback 55 TFSI (3.0) quattro S tronic 250 kW (MHEV) (published 01/02/2018); A6 Sedan 55 TFSI quattro S tronic 250kW MHEV (status 09/11/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
         "code": "DCT7",
-        "name": "7-speed S tronic (DL382)"
+        "name": "7-speed S tronic"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A7 Sportback 55 TFSI (3.0) quattro S tronic 250 kW (MHEV) (published 01/02/2018); A6 Sedan 55 TFSI quattro S tronic 250kW MHEV (status 09/11/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A7 Sportback 55 TFSI (3.0) quattro S tronic 250 kW (MHEV) (published 01/02/2018); A6 Sedan 55 TFSI quattro S tronic 250kW MHEV (status 09/11/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
         },
         "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.564
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "awd_fd",
+          "value": 4.41
         },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.564
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes_ref": "awd_fd",
+          "value": 4.41
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
+            "setup_ref": "setup_225_55r18",
+            "name": "Basic 18\""
           },
           {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
+            "setup_ref": "setup_245_45r19",
+            "name": "Option 19\""
           },
           {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
+            "setup_ref": "setup_255_40r20",
+            "name": "Option 20\""
+          },
+          {
+            "setup_ref": "setup_255_35r21",
+            "name": "Option 21\""
           }
         ],
-        "default_ref": "setup_245_19"
+        "default_ref": "setup_225_55r18"
       },
       "verification_notes": [
         {
-          "note": "Official Audi MediaCenter old-line A6 Sedan material scopes this exact 55 TFSI quattro row to the 2019-2025 pre-successor sedan. The 2024 exact technical-data sheet confirms the checked late-cycle 250 kW state uses quattro ultra AWD, 7-speed S tronic, 4.410 final drive, the 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 ratio set, and 225/55 R18 basic tires, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric package across the full retimed row.",
-          "evidence_refs_ref": "e5"
+          "note": "A6 C8 55 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A7 Sportback 55 TFSI (3.0) quattro S tronic 250 kW (MHEV) (published 01/02/2018); A6 Sedan 55 TFSI quattro S tronic 250kW MHEV (status 09/11/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410, identical on every checked sheet (250 kW). Production span 2018-2025 from ADAC's C8 and C8-facelift catalogues (07/2018-03/2025). Basic tire 225/55 R18 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e19"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi A6 55 TFSI quattro exact ratio, final-drive, and tire applicability across the retimed 2019-2025 row",
-          "reason": "The checked 2024 technical-data sheet resolves the late-cycle 250 kW 55 TFSI quattro package, but this pass did not recover an earlier exact A6 Sedan sheet proving one unchanged numeric mapping across the full old-line row.",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "item": "Audi A6 55 TFSI quattro exact transmission-code and optional tire-matrix confirmation",
-          "reason": "Official Audi exact material proves the 7-speed S tronic wording and 225/55 R18 basic tires for the checked late-cycle sedan state, but it does not publish the transmission family code or a full optional wheel/tire matrix.",
-          "evidence_refs_ref": "e3"
+          "item": "A6 Sedan 55 TFSI quattro launch-era anchor comes from a sibling model",
+          "reason": "The launch-era sheet that agrees with the late-cycle values is the A7 Sportback compilation (same C8 platform and 55 TFSI quattro driveline); no launch-era A6 Sedan sheet for this variant was checked.",
+          "evidence_refs_ref": "e19"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

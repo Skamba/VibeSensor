@@ -1,0 +1,963 @@
+{
+  "definitions": {
+    "notes": {
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-30-tdi-100kw-2024-tech-data-pdf"
+      ],
+      "e2": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-30-tdi-100kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tdi-120kw-2024-tech-data-pdf"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tfsi-110kw-2024-tech-data-pdf"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-150kw-2024-tech-data-pdf"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-150kw-2024-tech-data-pdf"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e17": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-45-tfsi-quattro-195kw-2024-tech-data-pdf"
+      ],
+      "e18": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e19": [
+        "audi_mediacenter_sources:b9-a4-avant-30-tdi-100kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e20": [
+        "audi_mediacenter_sources:b9-a4-avant-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-avant-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-de-my2025-price-list-pdf"
+      ],
+      "e21": [
+        "audi_mediacenter_sources:b9-a4-de-my2025-price-list-pdf"
+      ]
+    },
+    "tire_setups": {
+      "setup_205_60r16": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e19",
+        "front": {
+          "aspect_pct": 60.0,
+          "rim_in": 16.0,
+          "width_mm": 205.0
+        }
+      },
+      "setup_225_50r17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e20",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_40r18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e21",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_245_35r19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e21",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        }
+      }
+    }
+  },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Wagon",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "model_name": "A4 Avant (B9, 2019-2024)"
+  },
+  "configurations": [
+    {
+      "id": "audi-b9-avant-30-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 30 TDI 7-speed S tronic FWD: official Audi technical data (A4 Avant 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Avant 30 TDI S tronic 100kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (100 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-35-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official Audi technical data (A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official Audi technical data (A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 35 TDI 7-speed S tronic FWD: official Audi technical data (A4 Avant 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Avant 35 TDI S tronic 120kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (120 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-35-tfsi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official Audi technical data (A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official Audi technical data (A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Final drive 4.234 per official Audi technical data: A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 35 TFSI 7-speed S tronic FWD: official Audi technical data (A4 Avant 35 TFSI S tronic (110 kW) (status 06/08/2019); A4 Avant 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234, identical on every checked sheet (110 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-40-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 40 TDI 7-speed S tronic FWD: official Audi technical data (A4 Avant 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Avant 40 TDI S tronic 150kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (140 kW and 150 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-40-tfsi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "Official Audi technical data (A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "Official Audi technical data (A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Final drive 4.234 per official Audi technical data: A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 40 TFSI 7-speed S tronic FWD: official Audi technical data (A4 Avant 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Avant 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234, identical on every checked sheet (140 kW and 150 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-40-tdi-quattro-140-kw-eu-2019-dct7-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2020,
+      "variant_name": "40 TDI quattro (140 kW)",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) name the transmission '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Avant 40 TDI quattro S tronic (140 kW) (status 06/10/2019).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Avant 40 TDI quattro S tronic (140 kW) (status 06/10/2019).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 4.27
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 4.27
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 40 TDI quattro (140 kW) 7-speed S tronic AWD: official Audi technical data (A4 Avant 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.270 (140 kW). Production span 2019-2020 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Avant 40 TDI quattro (140 kW) optional wheel and tire sizes",
+          "reason": "The checked sheet gives only the basic tire, and this variant is not in the model-year 2025 price list, so no optional size is recorded.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-40-tdi-quattro-150-kw-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI quattro (150 kW)",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A4 Avant 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Avant 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Avant 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 40 TDI quattro (150 kW) 7-speed S tronic AWD: official Audi technical data (A4 Avant 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Avant 40 TDI quattro (150 kW) values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-avant-40-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e15",
+        "notes": "Official Audi technical data (A4 Avant 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e15",
+        "notes": "Official Audi technical data (A4 Avant 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e15",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Avant 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e15",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Avant 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e15",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e15",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 40 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A4 Avant 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e16"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Avant 40 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e16"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-avant-45-tfsi-quattro-eu-2019-dct7-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e17",
+        "notes": "Official Audi technical data (A4 Avant 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Avant 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e17",
+        "notes": "Official Audi technical data (A4 Avant 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Avant 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e17",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Avant 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Avant 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e17",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Avant 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Avant 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e17",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e17",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 45 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A4 Avant 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Avant 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410, identical on every checked sheet (180 kW and 195 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e18"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-avant-45-tdi-quattro-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2019,
+      "variant_name": "45 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A4 Avant 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A4 Avant 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) name the transmission '8-speed tiptronic / automatic'. Audi does not publish a gearbox-family code on these sheets.",
+        "name": "8-speed tiptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Top (8th) gear 0.667 per official Audi technical data: A4 Avant 45 TDI quattro tiptronic (170 kW) (status 06/10/2019).",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 per official Audi technical data: A4 Avant 45 TDI quattro tiptronic (170 kW) (status 06/10/2019).",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 2.411
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 2.411
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 Avant B9 45 TDI quattro 8-speed tiptronic AWD: official Audi technical data (A4 Avant 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 and final drive 2.411 (170 kW). Production span 2019-2019 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Avant 45 TDI quattro optional wheel and tire sizes",
+          "reason": "The checked sheet gives only the basic tire, and this variant is not in the model-year 2025 price list, so no optional size is recorded.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    }
+  ]
+}

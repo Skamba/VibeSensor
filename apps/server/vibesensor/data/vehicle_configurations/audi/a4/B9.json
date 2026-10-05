@@ -1,7 +1,8 @@
 {
   "definitions": {
     "notes": {
-      "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state."
+      "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -15,8 +16,104 @@
         "legacy_research_sources:f3928778422d"
       ],
       "e2": [
-        "legacy_research_sources:7ac3af4db956",
-        "legacy_research_sources:e6a149e4a747"
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-30-tdi-100kw-2024-tech-data-pdf"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-30-tdi-100kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tdi-120kw-2024-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tfsi-110kw-2024-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-150kw-2024-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-150kw-2024-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e17": [
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e18": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-45-tfsi-quattro-195kw-2024-tech-data-pdf"
+      ],
+      "e19": [
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-until-2024-model-page",
+        "secondary_technical_sources:a4-b9-facelift-2-adac-catalogue"
+      ],
+      "e20": [
+        "audi_mediacenter_sources:b9-a4-sedan-30-tdi-100kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e21": [
+        "audi_mediacenter_sources:b9-a4-de-my2025-price-list-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a4-sedan-45-tfsi-quattro-195kw-2024-tech-data-pdf"
+      ],
+      "e22": [
+        "audi_mediacenter_sources:b9-a4-de-my2025-price-list-pdf"
       ]
     },
     "tire_setups": {
@@ -47,6 +144,46 @@
         "front": {
           "aspect_pct": 40.0,
           "rim_in": 18.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_205_60r16": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e20",
+        "front": {
+          "aspect_pct": 60.0,
+          "rim_in": 16.0,
+          "width_mm": 205.0
+        }
+      },
+      "setup_225_50r17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e21",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_40r18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e22",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_245_35r19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e22",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
           "width_mm": 245.0
         }
       }
@@ -141,464 +278,6 @@
       }
     },
     {
-      "id": "audi-b9-30-tdi-eu-2016-dct7-fwd",
-      "variant_name": "30 TDI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL382)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.234
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-b9-35-tdi-eu-2016-mt6-fwd",
-      "variant_name": "35 TDI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Variant '35 TDI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-          "reason": "Same official late-B9 evidence (2019 launch article + current MediaCenter A4 until-2024 page) supports 35 TDI only as 7-speed S tronic FWD. No saved official source supports a 35 TDI manual A4 sedan in any B9 year. Marked no_confidence."
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-b9-35-tdi-eu-2016-dct7-fwd",
-      "variant_name": "35 TDI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL382)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.234
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-b9-35-tfsi-eu-2016-dct7-fwd",
-      "variant_name": "35 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.734
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.234
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-b9-40-tfsi-eu-2016-dct7-fwd",
-      "variant_name": "40 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.734
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.234
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-b9-45-tfsi-eu-2016-mt6-fwd",
-      "variant_name": "45 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Variant '45 TFSI' transmission/drivetrain combination is not supported by any saved official A4 B9 source",
-          "reason": "Official Audi 2019 launch article documents 45 TFSI as quattro drive only and gasoline non-entry variants automatic only; current MediaCenter A4 page lists only 45 TFSI quattro S tronic. No saved official source supports an FWD or manual 45 TFSI A4 sedan. Marked no_confidence."
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "audi-b9-45-tfsi-eu-2016-dct7-fwd",
       "variant_name": "45 TFSI",
       "engine_code": "2.0L",
@@ -676,88 +355,806 @@
       }
     },
     {
-      "id": "audi-b9-45-tfsi-quattro-eu-2016-dct7-awd",
-      "variant_name": "45 TFSI quattro",
+      "id": "audi-b9-30-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "30 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 TDI Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm quattro ultra AWD for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
-        "value": "AWD"
+        "notes": "Official Audi technical data (A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
       },
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Exact official Audi MediaCenter A4 Sedan 45 TFSI quattro technical-data PDFs confirm the 7-speed S tronic gearbox for the checked late-B9 195 kW sedan state, while earlier-year continuity across the inherited row remains unresolved.",
+        "notes": "Official Audi technical data (A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.734
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
         },
         "final_drive_front": {
-          "confidence": "family_default",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 30 TDI 7-speed S tronic FWD: official Audi technical data (A4 Sedan 30 TDI S tronic (100 kW) (status 06/18/2019); A4 Sedan 30 TDI S tronic 100kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (100 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-35-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 35 TDI 7-speed S tronic FWD: official Audi technical data (A4 Sedan 35 TDI S tronic (120 kW) (status 06/18/2019); A4 Sedan 35 TDI S tronic 120kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (120 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-35-tfsi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Final drive 4.234 per official Audi technical data: A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 35 TFSI 7-speed S tronic FWD: official Audi technical data (A4 Sedan 35 TFSI S tronic (110 kW) (status 06/10/2019); A4 Sedan 35 TFSI S tronic 110kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234, identical on every checked sheet (110 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-40-tdi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Final drive 4.048 per official Audi technical data: A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 40 TDI 7-speed S tronic FWD: official Audi technical data (A4 Sedan 40 TDI S tronic (140 kW) (status 09/25/2019); A4 Sedan 40 TDI S tronic 150kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048, identical on every checked sheet (140 kW and 150 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-40-tfsi-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Final drive 4.234 per official Audi technical data: A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 40 TFSI 7-speed S tronic FWD: official Audi technical data (A4 Sedan 40 TFSI S tronic (140 kW) (status 06/10/2019); A4 Sedan 40 TFSI S tronic 150kW MHEV (status 06/13/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234, identical on every checked sheet (140 kW and 150 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-40-tdi-quattro-140-kw-eu-2019-dct7-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2020,
+      "variant_name": "40 TDI quattro (140 kW)",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) name the transmission '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Sedan 40 TDI quattro S tronic (140 kW) (status 06/10/2019).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Sedan 40 TDI quattro S tronic (140 kW) (status 06/10/2019).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
+          "value": 4.27
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
+          "value": 4.27
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 40 TDI quattro (140 kW) 7-speed S tronic AWD: official Audi technical data (A4 Sedan 40 TDI quattro S tronic (140 kW) (status 06/10/2019)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.270 (140 kW). Production span 2019-2020 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet.",
+          "evidence_refs_ref": "e13"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Sedan 40 TDI quattro (140 kW) optional wheel and tire sizes",
+          "reason": "The checked sheet gives only the basic tire, and this variant is not in the model-year 2025 price list, so no optional size is recorded.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-40-tdi-quattro-150-kw-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI quattro (150 kW)",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e14",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e14",
+        "notes": "Official Audi technical data (A4 Sedan 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e14",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A4 Sedan 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e14",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A4 Sedan 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e14",
+          "notes_ref": "awd_fd",
           "value": 4.41
         },
         "final_drive_rear": {
-          "confidence": "family_default",
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e14",
+          "notes_ref": "awd_fd",
           "value": 4.41
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
           },
           {
-            "setup_ref": "setup_255_19",
-            "name": "Sport 19\""
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
           },
           {
-            "setup_ref": "setup_265_20",
-            "name": "S line 20\""
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
           }
         ],
-        "default_ref": "setup_245_18"
+        "default_ref": "setup_225_50r17"
       },
       "verification_notes": [
         {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
+          "note": "A4 B9 40 TDI quattro (150 kW) 7-speed S tronic AWD: official Audi technical data (A4 Sedan 40 TDI quattro S tronic 150kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e15"
         }
       ],
       "unresolved": [
         {
-          "item": "Broad-row Audi A4 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW DE sedan, but this pass did not verify whether the earlier 180 kW years use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A4 B9 35 TDI production-data applicability across the represented span",
-          "reason": "Checked exact late-B9 Germany 35 TDI sedan PDFs resolve a 120 kW S tronic ratio package with final drive 4.048 and basic tire 205/60 R16, but this pass did not recover year-spanning official sheets proving the same package across the full represented 2019-2025 state.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 B9 35 TDI gearbox-family code, optional tire matrix, and 2025 Germany continuity",
-          "reason": "Official Audi exact material proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 205/60 R16 basic tire, but it does not publish a gearbox-family code, a full optional wheel/tire matrix, or an exact checked Germany 2025 carry-over document.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad 2016-2025 EU continuity remains unproven for the inherited row",
-          "reason": "This source pass exercised the official Audi MediaCenter A4 (until 2024) page and exact Germany 06/13/2024 status eTD PDFs. Audi's model page is labelled 'until 2024', the available eTDs are dated 2024, and earlier-year/market continuity for engine, transmission, ratio, and tire fields was not verified. Driveshaft and wheel-order analysis are disabled until the row is split or new dated official evidence is recovered."
+          "item": "A4 Sedan 40 TDI quattro (150 kW) values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e15"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-40-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e16",
+        "notes": "Official Audi technical data (A4 Sedan 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e16",
+        "notes": "Official Audi technical data (A4 Sedan 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e16",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Sedan 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e16",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Sedan 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e16",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e16",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_205_60r16",
+            "name": "Basic 16\""
+          },
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Option 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_205_60r16"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 40 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A4 Sedan 40 TFSI quattro S tronic 150kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 205/60 R16 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e17"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Sedan 40 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e17"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-45-tfsi-quattro-eu-2019-dct7-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 TFSI Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e18",
+        "notes": "Official Audi technical data (A4 Sedan 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e18",
+        "notes": "Official Audi technical data (A4 Sedan 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) name the transmission '7-speed S tronic' and '7-speed S tronic / dual clutch'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e18",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A4 Sedan 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e18",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A4 Sedan 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e18",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e18",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_245_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 45 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A4 Sedan 45 TFSI quattro S tronic (180 kW) (status 06/10/2019); A4 Sedan 45 TFSI quattro S tronic 195kW MHEV (status 06/13/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410, identical on every checked sheet (180 kW and 195 kW). Production span 2019-2024 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2025 Germany price list wheel program.",
+          "evidence_refs_ref": "e19"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-b9-45-tdi-quattro-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2019,
+      "variant_name": "45 TDI quattro",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L V6 TDI Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A4 Sedan 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) list drive type 'quattro permanent all-wheel drive with self-locking center differential'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A4 Sedan 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) name the transmission '8-speed tiptronic / automatic'. Audi does not publish a gearbox-family code on these sheets.",
+        "name": "8-speed tiptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Top (8th) gear 0.667 per official Audi technical data: A4 Sedan 45 TDI quattro tiptronic (170 kW) (status 06/10/2019).",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 per official Audi technical data: A4 Sedan 45 TDI quattro tiptronic (170 kW) (status 06/10/2019).",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
+          "value": 2.411
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
+          "value": 2.411
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A4 B9 45 TDI quattro 8-speed tiptronic AWD: official Audi technical data (A4 Sedan 45 TDI quattro tiptronic (170 kW) (status 06/10/2019)) give quattro permanent all-wheel drive with self-locking center differential, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 and final drive 2.411 (170 kW). Production span 2019-2019 from ADAC's catalogue of the facelifted B9 (10/2019-11/2024). Basic tire 225/50 R17 from the latest checked sheet.",
+          "evidence_refs_ref": "e13"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A4 Sedan 45 TDI quattro optional wheel and tire sizes",
+          "reason": "The checked sheet gives only the basic tire, and this variant is not in the model-year 2025 price list, so no optional size is recorded.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }
