@@ -343,12 +343,7 @@
           "evidence_refs_ref": "e10"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8s-40-tfsi-eu-2023-dct7-fwd",
@@ -444,12 +439,7 @@
           "evidence_refs_ref": "e17"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-45-tfsi-eu-2023-dct7-fwd",
@@ -532,12 +522,7 @@
           "evidence_refs_ref": "e18"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-45-tfsi-quattro-eu-2023-dct7-awd",
@@ -620,12 +605,7 @@
           "evidence_refs_ref": "e19"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-40-tfsi-roadster-eu-2023-dct7-fwd",
@@ -708,12 +688,7 @@
           "evidence_refs_ref": "e20"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-45-tfsi-roadster-eu-2022-dct7-fwd",
@@ -796,12 +771,7 @@
           "evidence_refs_ref": "e21"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-45-tfsi-quattro-roadster-eu-2023-dct7-awd",
@@ -884,12 +854,7 @@
           "evidence_refs_ref": "e22"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-tts-coupe-eu-2023-dct7-awd",
@@ -972,12 +937,7 @@
           "evidence_refs_ref": "e23"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-tts-roadster-eu-2023-dct7-awd",
@@ -1060,12 +1020,7 @@
           "evidence_refs_ref": "e24"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-tt-rs-coupe-eu-2022-dct7-awd",
@@ -1155,11 +1110,7 @@
           "evidence_refs_ref": "e25"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-8s-tt-rs-roadster-eu-2022-dct7-awd",
@@ -1249,11 +1200,7 @@
           "evidence_refs_ref": "e26"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

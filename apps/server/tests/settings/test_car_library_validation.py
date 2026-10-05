@@ -17,10 +17,10 @@ from car_library_validation.source_evidence import (
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
+    VehicleConfigurationIssue,
     VehicleConfigurationTireOption,
     VehicleFieldConfidence,
     VehicleFieldMetadata,
-    VehicleOrderAnalysisPolicy,
 )
 from vibesensor.settings.car_library import load_car_library
 from vibesensor.settings.vehicle_configurations import load_vehicle_configurations
@@ -112,12 +112,6 @@ def _make_valid_vehicle_configuration() -> VehicleConfiguration:
         top_gear_ratio_metadata=_metadata("official_exact"),
         final_drive_front_metadata=_metadata("official_exact"),
         final_drive_rear_metadata=_metadata("official_exact"),
-        order_analysis_policy=VehicleOrderAnalysisPolicy(
-            usable_for_engine_order=True,
-            usable_for_driveshaft_order=True,
-            usable_for_wheel_order=True,
-            requires_manual_confirmation=False,
-        ),
     )
 
 
@@ -202,7 +196,7 @@ def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
     assert not validate_vehicle_configurations([unchecked_brand], allowlist={})
 
 
-def test_validate_vehicle_configurations_allows_manual_only_partial_final_drive() -> None:
+def test_validate_vehicle_configurations_allows_unresolved_final_drive() -> None:
     config = _make_valid_vehicle_configuration()
     partial = replace(
         config,
@@ -211,17 +205,21 @@ def test_validate_vehicle_configurations_allows_manual_only_partial_final_drive(
         final_drive_front_metadata=None,
         final_drive_rear=None,
         final_drive_rear_metadata=None,
-        order_analysis_policy=VehicleOrderAnalysisPolicy(
-            usable_for_engine_order=True,
-            usable_for_driveshaft_order=False,
-            usable_for_wheel_order=False,
-            requires_manual_confirmation=True,
-        ),
     )
 
-    issues = validate_vehicle_configurations([partial], allowlist={})
-
-    assert not issues
+    assert [issue.rule for issue in validate_vehicle_configurations([partial], allowlist={})] == [
+        "drivetrain_final_drive_layout"
+    ]
+    explained = replace(
+        partial,
+        unresolved=(
+            VehicleConfigurationIssue(
+                item="Final drive of the test variant",
+                reason="the official sheets disagree",
+            ),
+        ),
+    )
+    assert not validate_vehicle_configurations([explained], allowlist={})
 
 
 def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:

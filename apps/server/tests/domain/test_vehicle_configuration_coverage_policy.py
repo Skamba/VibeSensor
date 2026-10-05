@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
+import pytest
+
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.domain.vehicle_configuration import (
     VehicleConfiguration,
+    VehicleDrivetrain,
     VehicleFieldConfidence,
     VehicleFieldMetadata,
 )
@@ -111,3 +116,43 @@ def test_weak_drivetrain_label_does_not_drop_order_reference_trust() -> None:
 
     assert config.research_completeness == "approximate"
     assert config.order_reference_trust == "trusted"
+
+
+@pytest.mark.parametrize(
+    ("drivetrain", "front", "rear", "top_gear", "expected"),
+    [
+        # Only the driven final drive and the top gear count.
+        ("FWD", "official_exact", "family_default", "official_derived", False),
+        ("FWD", "unverified", "official_exact", "official_exact", True),
+        ("RWD", "official_exact", "family_default", "official_exact", True),
+        ("AWD", "family_default", "reputable_secondary_crosschecked", "official_exact", False),
+        ("AWD", "official_exact", "official_exact", "family_default", True),
+        ("RWD", "official_exact", "user_confirmed", "user_confirmed", False),
+    ],
+)
+def test_manual_confirmation_only_for_weak_driven_ratios(
+    drivetrain: VehicleDrivetrain,
+    front: VehicleFieldConfidence,
+    rear: VehicleFieldConfidence,
+    top_gear: VehicleFieldConfidence,
+    expected: bool,
+) -> None:
+    config = replace(
+        _make_exact_configuration(top_gear_confidence=top_gear, final_drive_confidence=rear),
+        drivetrain=drivetrain,
+        final_drive_front=3.5,
+        final_drive_front_metadata=_metadata(front),
+    )
+
+    assert config.requires_manual_drivetrain_confirmation is expected
+
+
+def test_missing_final_drive_is_not_a_value_to_confirm() -> None:
+    config = replace(
+        _make_exact_configuration(final_drive_confidence="unverified"),
+        final_drive_rear=None,
+        final_drive_rear_metadata=None,
+    )
+
+    assert config.requires_manual_drivetrain_confirmation is False
+    assert config.order_reference_trust_for("driveshaft_order") == "backlog_unverified"

@@ -455,11 +455,7 @@
           "reason": "The saved official F32 packet still does not include an exact 418i source, so this row cannot safely be rewritten yet and keeps its inherited engine, ratio, and tyre metadata."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-418i-eu-2014-zf8hp-rwd",
@@ -525,11 +521,7 @@
           "reason": "The saved official F32 packet still does not include an exact 418i source, so this row cannot safely be rewritten yet and keeps its inherited engine, ratio, and tyre metadata."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f32-420i-eu-2014-mt6-rwd",

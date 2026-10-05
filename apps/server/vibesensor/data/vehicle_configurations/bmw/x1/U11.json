@@ -137,11 +137,7 @@
           "evidence_refs_ref": "e4"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-u11-ix1-xdrive30-eu-2023-ss1-awd",
@@ -224,11 +220,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-u11-sdrive18i-eu-2023-dct7-fwd",
@@ -296,11 +288,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

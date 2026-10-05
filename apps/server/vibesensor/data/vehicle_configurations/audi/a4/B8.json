@@ -406,12 +406,7 @@
           "evidence_refs_ref": "e11"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-1-8-tfsi-eu-2008-zf8hp-fwd",
@@ -491,12 +486,7 @@
           "evidence_refs_ref": "e11"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-eu-2008-mt6-fwd",
@@ -586,11 +576,7 @@
           "evidence_refs_ref": "e15"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-eu-2008-dct7-fwd",
@@ -670,12 +656,7 @@
           "evidence_refs_ref": "e12"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-eu-2008-zf8hp-fwd",
@@ -755,12 +736,7 @@
           "evidence_refs_ref": "e12"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-quattro-eu-2008-mt6-awd",
@@ -937,11 +913,7 @@
           "evidence_refs_ref": "e23"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-quattro-eu-2008-zf8hp-awd",
@@ -1027,12 +999,7 @@
           "evidence_refs_ref": "e24"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-eu-2008-mt6-fwd",
@@ -1113,11 +1080,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-eu-2008-dct7-fwd",
@@ -1197,12 +1160,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-eu-2008-zf8hp-fwd",
@@ -1282,12 +1240,7 @@
           "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-quattro-eu-2008-mt6-awd",
@@ -1386,11 +1339,7 @@
           "evidence_refs_ref": "e26"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-quattro-eu-2008-dct7-awd",
@@ -1486,11 +1435,7 @@
           "evidence_refs_ref": "e28"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-quattro-eu-2008-zf8hp-awd",
@@ -1576,12 +1521,7 @@
           "evidence_refs_ref": "e29"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-3-0-tdi-quattro-eu-2008-mt6-awd",
@@ -1883,12 +1823,7 @@
           "evidence_refs_ref": "e32"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-3-0-tfsi-quattro-eu-2008-mt6-awd",
@@ -1975,12 +1910,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-b8-3-0-tfsi-quattro-eu-2008-dct7-awd",
@@ -2172,12 +2102,7 @@
           "evidence_refs_ref": "e35"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     }
   ]
 }

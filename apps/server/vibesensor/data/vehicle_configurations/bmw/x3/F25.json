@@ -462,11 +462,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive20d-eu-2011-zf8hp-awd",
@@ -561,11 +557,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive20i-eu-2011-mt6-awd",
@@ -913,11 +905,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive28i-eu-2012-zf8hp-awd",
@@ -1054,11 +1042,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive30d-eu-2011-zf8hp-awd",
@@ -1195,11 +1179,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive35d-eu-2011-zf8hp-awd",
@@ -1312,11 +1292,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-xdrive35i-eu-2011-zf8hp-awd",
@@ -1544,11 +1520,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-sdrive18d-eu-2012-zf8hp-rwd",
@@ -1637,11 +1609,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f25-sdrive20i-eu-2014-zf8hp-rwd",
@@ -1789,11 +1757,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

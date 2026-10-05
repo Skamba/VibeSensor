@@ -231,39 +231,6 @@ def test_load_vehicle_configurations_expands_option_setup_ref(tmp_path: Path) ->
     assert matched[0].tire_setup.rear.rim_in == 19.0
 
 
-def test_load_vehicle_configurations_derives_order_analysis_policy_when_no_override(
-    tmp_path: Path,
-) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    rows[0].pop("order_analysis_policy_override", None)
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    loaded = _load_configs_from_data_dir(tmp_path)
-    assert loaded
-    config = loaded[0]
-    assert config.order_analysis_policy.usable_for_wheel_order is True
-    assert config.order_analysis_policy.requires_manual_confirmation is True
-
-
-def test_load_vehicle_configurations_applies_order_analysis_policy_override(
-    tmp_path: Path,
-) -> None:
-    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
-    fixture = copy.deepcopy(shard)
-    rows = cast(list[dict[str, object]], fixture["configurations"])
-    rows[0]["order_analysis_policy_override"] = {
-        "reason": "row-marked-not-ready-for-wheel-order",
-        "usable_for_wheel_order": False,
-    }
-    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
-
-    loaded = _load_configs_from_data_dir(tmp_path)
-    assert loaded
-    assert loaded[0].order_analysis_policy.usable_for_wheel_order is False
-
-
 def _first_row(shard: dict[str, object]) -> dict[str, object]:
     return cast(list[dict[str, object]], shard["configurations"])[0]
 
@@ -325,16 +292,8 @@ def _unknown_setup_ref(shard: dict[str, object]) -> None:
             id="bad-drivetrain-value",
         ),
         pytest.param(
-            lambda shard: _first_row(shard).__setitem__(
-                "order_analysis_policy_override", {"reason": "broken", "bogus_field": True}
-            ),
-            id="unknown-override-field",
-        ),
-        pytest.param(
-            lambda shard: _first_row(shard).__setitem__(
-                "order_analysis_policy_override", {"usable_for_wheel_order": False}
-            ),
-            id="override-without-reason",
+            lambda shard: _first_row(shard).__setitem__("unexpected_row_key", True),
+            id="unknown-row-key",
         ),
     ],
 )

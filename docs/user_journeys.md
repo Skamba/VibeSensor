@@ -567,7 +567,7 @@ changes and update this table.
 | Top-gear confidence | official_exact 354 · official_derived 23 · reputable_secondary 28 · family_default 73 · unverified 72 |
 | Weak (family_default or unverified) | final drive 153/550 (28%), top gear 145/550 (26%), tire 137/550 (25%) |
 | `order_reference_trust` | trusted 385 · approximate 86 · backlog_unverified 79 |
-| `requires_manual_confirmation` | true 153, false 397 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
+| `requires_manual_confirmation` | true 153, false 397 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 14 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |

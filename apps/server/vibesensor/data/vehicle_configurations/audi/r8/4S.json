@@ -105,11 +105,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-4s-v10-quattro-eu-2015-dct7-awd",
@@ -171,11 +167,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

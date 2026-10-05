@@ -370,11 +370,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g42-230i-xdrive-eu-2022-mt6-awd",
@@ -525,12 +521,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     }
   ]
 }

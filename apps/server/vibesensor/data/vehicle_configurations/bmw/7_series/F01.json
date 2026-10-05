@@ -242,11 +242,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f01-740d-xdrive-eu-2012-zf8hp-awd",
@@ -449,11 +445,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f01-750d-xdrive-eu-2012-zf8hp-awd",
@@ -662,11 +654,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f01-750i-xdrive-eu-2012-zf8hp-awd",
@@ -771,11 +759,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f01-760i-eu-2012-zf8hp-rwd",
@@ -869,11 +853,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

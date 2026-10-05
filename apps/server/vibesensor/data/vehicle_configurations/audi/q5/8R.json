@@ -163,12 +163,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8r-2-0-tfsi-eu-2011-zf8hp-fwd",
@@ -234,12 +229,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8r-2-0-tfsi-quattro-eu-2011-dct7-awd",
@@ -322,12 +312,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8r-2-0-tfsi-quattro-eu-2011-zf8hp-awd",
@@ -410,12 +395,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8r-3-0-tdi-quattro-eu-2011-dct7-awd",
@@ -498,12 +478,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8r-3-0-tdi-quattro-eu-2011-zf8hp-awd",
@@ -586,12 +561,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

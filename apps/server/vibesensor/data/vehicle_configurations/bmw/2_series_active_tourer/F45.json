@@ -242,12 +242,7 @@
           "reason": "Official BMW PressClub 03/2015 214d specifications PDF (T0203608EN/325505) documents the 214d only as FWD six-speed manual with top gear 0.683, final drive 3.632, and 205/60 R16 default tire, introduced in March 2015. No saved official 214d 8-speed automatic source exists; this row's automatic transmission is contradicted. Driveshaft and wheel-order analysis remain disabled."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f45-216d-eu-2014-zf8hp-fwd",
@@ -355,12 +350,7 @@
           "reason": "Official 03/2014 launch packet (T0165875EN/312197) lists only 218i, 225i, and 218d, not 216d. Official 01/2018 LCI spec (T0277458EN/401747) and 11/2020 spec (T0322634EN/468203) document 216d as six-speed manual with optional 7-speed dual-clutch Steptronic, never an 8-speed automatic. This row's broad 2014-2021 8-speed automatic claim is contradicted across all saved official F45 specifications."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f45-216i-eu-2014-zf8hp-fwd",
@@ -468,12 +458,7 @@
           "reason": "Official 03/2014 launch packet excludes 216i. Official 01/2018 and 11/2020 specifications list 216i as six-speed manual only with 205/60 R16. No 8-speed automatic 216i row appears in any saved official F45 source; current row is contradicted across the lifecycle."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f45-218i-eu-2014-zf8hp-fwd",
@@ -580,12 +565,7 @@
           "reason": "Official 2014/2015 specifications document 218i as six-speed manual with optional six-speed Steptronic; 01/2018 and 11/2020 LCI specs document 218i as manual with optional seven-speed dual-clutch. No saved official source documents an 8-speed automatic 218i in any F45 year. Current row's transmission claim is contradicted."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f45-225i-eu-2014-zf8hp-fwd",
@@ -711,12 +691,7 @@
           "reason": "Official 03/2014 (T0165875EN/312197) and 03/2015 (T0203608EN/325506) specs document plain-FWD 225i with 8-speed Steptronic, top gear 0.673, final drive 3.075, and 205/55 R17 default. Official 01/2018 (T0277458EN/401747) and 11/2020 (T0322634EN/468203) specs document 225i only as 225i xDrive (AWD), not plain-FWD 225i. Therefore the broad 2014-2021 FWD scope is unsupported beyond the 2014-2015 launch slice. Top-gear, final-drive, and default-tire values match official launch evidence; ZF8HP is `official_derived` from BMW's 8-speed Steptronic wording."
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f45-225xe-eu-2014-6-speed-step-awd",
@@ -812,12 +787,7 @@
           "reason": "Official BMW PressClub Asia 225xe iPerformance specifications PDF (T0274617EN/394439) and the 2019 update launch article (T0299792EN) plus 2019 spec PDF (T0299792EN/436732) and 11/2020 spec (T0322634EN/468203) all document the 225xe as a plug-in hybrid xDrive with combustion engine driving the front wheels through a six-speed Steptronic and electric motor on the rear axle, with top gear 0.672, final drive 3.944, and 205/55 R17 default tire. None of these saved official sources document a 2014 launch availability; production start at 2014 is unproven. Powertrain/tire values match official evidence; production-year scope remains unresolved."
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f45-218d-eu-2018-zf8hp-fwd",
@@ -918,12 +888,7 @@
           "reason": "Official 01/2018 LCI spec (T0277458EN/401747) supports FWD, optional 8-speed Steptronic, top gear 0.673, and 205/60 R16 default. 11/2020 spec (T0322634EN/468203) documents the same 218d FWD with 8-speed Steptronic, top 0.673, final drive 2.774, and same default tire. Final drive remains unresolved as an exact 2018-only value because the 01/2018 PDF extraction did not surface that line; optional tire matrix is not exhaustively documented."
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f45-220d-eu-2018-zf8hp-fwd",
@@ -1043,12 +1008,7 @@
           "reason": "Official 01/2018 LCI spec supports FWD, 8-speed Steptronic, top gear 0.673, and 205/60 R16. 11/2020 spec confirms top 0.673 and final drive 2.774 for 220d. Final drive remains unresolved as an exact 2018-only value; optional tire matrix is not exhaustively documented."
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f45-220i-eu-2018-dct7-fwd",
@@ -1154,12 +1114,7 @@
           "reason": "Official 01/2018 LCI press kit (T0277458EN) and spec PDF (T0277458EN/401747) document the 220i LCI as FWD with seven-speed dual-clutch Steptronic standard and 205/60 R16 default tire. The official PDF publishes DCT overall-ratio values but the saved extraction did not surface a separated top-gear/final-drive pair. Secondary mirrors (Auto-Data, Carfolio) confirm body/drivetrain/transmission identity but their saved pages have blank ratio cells. Driveshaft order analysis remains disabled until separated top-gear and final-drive values are sourced."
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

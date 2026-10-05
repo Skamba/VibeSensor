@@ -196,12 +196,7 @@
           "reason": "Broad 2014-2021 220i MT6 row spans at least two distinct exact technical states: 03/2014 ACEA packet (T0165234EN/250293) shows MT6 with top gear 0.830, final drive 3.077, standard 205/55 R16, and 270 Nm; 07/2016 ACEA packet (T0260233EN/359752) shows the B48 220i MT6 with top gear 0.668, final drive 3.385, standard 205/55 R16, and 290 Nm. The 2021 packet (T0327248EN/473311) is automatic-only, so broad MT6 continuity to 2021 is unsupported. Default tire 225/40 R18 is contradicted by official 205/55 R16 standard."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-220i-eu-2014-zf8hp-rwd",
@@ -311,12 +306,7 @@
           "reason": "Broad 2014-2021 220i 8-speed Steptronic row spans three official exact states with different ratio/final-drive sets: 03/2014 (top 0.667, FD 3.077), 07/2016 (top 0.640, FD 2.813), 03/2021 (top 0.640, FD 2.813). One row cannot be exact across this span. Default tire 225/40 R18 is contradicted; official standard is 205/55 R16. ZF8HP transmission code is `official_derived` because BMW publishes only `8-speed Steptronic` wording, not the supplier code."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-228i-eu-2014-mt6-rwd",
@@ -402,12 +392,7 @@
           "reason": "Official 07/2014 ACEA 228i packet (T0179544EN/267610) supports MT6 with 180 kW/245 hp, 350 Nm, top gear 0.701, final drive 3.909, and standard 205/50 R17. No saved official source supports 228i continuity into 2021; the 2016/2021 packets do not include 228i. Broad 2014-2021 row should be narrowed; default 225/40 R18 contradicted."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-228i-eu-2014-zf8hp-rwd",
@@ -512,12 +497,7 @@
           "reason": "Official 07/2014 228i packet supports the optional 8-speed Steptronic with top gear 0.667, final drive 3.077, and standard 205/50 R17. No saved official source documents 228i continuity past the 07/2014 ACEA window. Broad 2014-2021 span is unsupported; default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-230i-eu-2014-mt6-rwd",
@@ -603,12 +583,7 @@
           "reason": "230i MT6 is not supported as a 2014 launch row: the official 230i packet (T0260233EN/359752) starts in 07/2016 with MT6, top gear 0.677, final drive 3.909, standard 205/50 R17, and 252 hp. The 2021 packet (T0327248EN/473311) is automatic-only, so manual continuity to 2021 is unsupported. Production start year should be 2016 if the row is retained, and end year for MT6 is unresolved. Default 225/40 R18 contradicted by official 205/50 R17 standard."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-230i-eu-2014-zf8hp-rwd",
@@ -713,12 +688,7 @@
           "reason": "230i 8-speed Steptronic is not supported as a 2014 launch row: 07/2016 ACEA packet supports top gear 0.640, final drive 2.813, standard 205/50 R17; 03/2021 packet (8-speed Steptronic Sport) supports the same top gear/final drive and standard 205/50 R17. Production start year should be 2016 if the row is retained. Default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-f22-m2-eu-2014-mt6-rwd",
@@ -815,13 +785,7 @@
           "reason": "Official BMW PressClub article (T0238042EN) and 2016 press kit (T0238042EN/368917) document the M2 Coupe as F87 (not F22), launched in 2016 with the N55-era 272 kW/370 hp 3.0L straight-six, MT6 standard. Current row places M2 in F22 with 2014 start year and B58 engine; both metadata facts are contradicted. Marked no_confidence pending shard relocation to F87."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f22-m2-eu-2014-zf8hp-rwd",
@@ -918,13 +882,7 @@
           "reason": "Official BMW PressClub M2 launch press kit confirms the optional automatic for the M2 Coupe is a 7-speed M Double Clutch Transmission with Drivelogic (M-DCT/DCT7), not ZF8HP. The launch model is also F87, not F22. Current row's transmission code and shard placement are contradicted. Marked no_confidence pending replacement with an F87 DCT7 row."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f22-m2-competition-eu-2014-mt6-rwd",
@@ -1015,13 +973,7 @@
           "reason": "Official BMW PressClub M2 Competition article (T0279885EN) and 2018 technical-data PDF (415275) document the M2 Competition as F87, 2018-era, S55-family 2979 cc 302 kW/410 hp, with standard 245/35 ZR19 front and 265/35 ZR19 rear. Current row's 2014 start, F22 placement, and inherited 18-inch default are contradicted. Marked no_confidence pending shard relocation to F87."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-f22-m2-competition-eu-2014-zf8hp-rwd",
@@ -1112,13 +1064,7 @@
           "reason": "Same official M2 Competition technical-data PDF documents the optional automatic as 7-speed M DCT, not ZF8HP. Shard placement and transmission family are contradicted. Marked no_confidence pending replacement with an F87 DCT7 row."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     }
   ]
 }

@@ -306,10 +306,6 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      },
       "production_end_year": 2016
     },
     {
@@ -463,10 +459,6 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      },
       "production_end_year": 2016
     },
     {
@@ -595,11 +587,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f10-530i-eu-2011-zf8hp-rwd",
@@ -729,11 +717,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f10-535i-eu-2011-mt6-rwd",
@@ -884,10 +868,6 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      },
       "production_end_year": 2016
     },
     {
@@ -1041,10 +1021,6 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      },
       "production_end_year": 2016
     },
     {
@@ -1186,10 +1162,6 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      },
       "production_end_year": 2016
     },
     {
@@ -1256,11 +1228,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

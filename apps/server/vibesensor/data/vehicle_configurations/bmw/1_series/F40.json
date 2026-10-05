@@ -191,12 +191,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f40-118i-eu-2019-zf8hp-fwd",
@@ -271,12 +266,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f40-120i-eu-2019-dct7-fwd",
@@ -349,12 +339,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f40-120i-eu-2019-zf8hp-fwd",
@@ -429,12 +414,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f40-m135i-xdrive-eu-2019-dct7-awd",
@@ -532,12 +512,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f40-m135i-xdrive-eu-2019-zf8hp-awd",
@@ -618,12 +593,7 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

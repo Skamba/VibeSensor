@@ -128,12 +128,13 @@ order-analysis fields inline with their own metadata:
   and tire setup values live next to their confidence, evidence refs,
   verification notes, and unresolved items
 - `configuration_confidence` summarizes whole-row confidence
-- the order-analysis policy is derived at load time from the row math inputs
-  (top-gear ratio, driven final-drive, drivetrain) by
-  `derive_order_analysis_policy`. Rows that need to deviate from the derivation
-  carry a sparse `order_analysis_policy_override` block with an explicit
-  `reason` and only the differing flags. Rows that match the derivation omit
-  the block entirely.
+- whether a gearbox asks the user to confirm its ratios
+  (`requires_manual_confirmation`) is derived from the row: true exactly when
+  the driven final drive or the top gear is `family_default` or `unverified`
+  (`VehicleConfiguration.requires_manual_drivetrain_confirmation`). A missing
+  final drive is "couldn't test", not a value to confirm; the row must carry
+  an `unresolved` item about its final drive saying why (the validator
+  enforces this). Rows carry no per-row policy flags.
 
 `tools/car_library/car_library_validation/data/car_sources/*.json` contains only reusable
 source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through

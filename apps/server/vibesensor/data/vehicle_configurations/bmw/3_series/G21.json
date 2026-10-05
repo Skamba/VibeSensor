@@ -362,12 +362,7 @@
           ]
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "final-drive-unresolved-official-sources-conflict",
-        "usable_for_wheel_order": false,
-        "usable_for_driveshaft_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g21-318d-eu-2022-zf8hp-rwd",

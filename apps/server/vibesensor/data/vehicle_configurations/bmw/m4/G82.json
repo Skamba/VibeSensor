@@ -190,12 +190,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g82-m4-eu-2021-zf8hp-rwd",
@@ -269,12 +264,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g82-m4-competition-eu-2021-mt6-rwd",
@@ -348,12 +338,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g82-m4-competition-eu-2021-zf8hp-rwd",
@@ -453,12 +438,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "bmw-g82-m4-competition-xdrive-eu-2021-zf8hp-awd",
@@ -563,12 +543,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

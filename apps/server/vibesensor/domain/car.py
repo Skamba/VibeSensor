@@ -74,7 +74,8 @@ class CarOrderReferenceStatus:
     def requires_manual_confirmation(self) -> bool:
         """Whether the final drive or top gear is an estimate the user should confirm.
 
-        Same rule as the car library (``derive_order_analysis_policy``): only the
+        Same rule as the car library
+        (``VehicleConfiguration.requires_manual_drivetrain_confirmation``): only the
         ratios the order checks depend on count; tire size and gearbox name do not,
         and a missing ratio is "couldn't test", not something to confirm. Derived on
         every load, so cars saved under an older rule follow this one.

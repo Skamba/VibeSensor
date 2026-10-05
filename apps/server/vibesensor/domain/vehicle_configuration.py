@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
@@ -21,10 +21,6 @@ __all__ = [
     "VehicleFieldMetadata",
     "VehicleFuelType",
     "VehicleOrderAnalysisKind",
-    "VehicleOrderAnalysisPolicy",
-    "VehicleOrderAnalysisPolicyOverride",
-    "apply_order_analysis_policy_override",
-    "derive_order_analysis_policy",
 ]
 
 VehicleFuelType = Literal["ICE", "PHEV", "EV"]
@@ -108,115 +104,6 @@ class VehicleConfigurationIssue:
 
 
 @dataclass(frozen=True, slots=True)
-class VehicleOrderAnalysisPolicy:
-    """Policy flags derived from canonical car-data confidence."""
-
-    usable_for_engine_order: bool
-    usable_for_driveshaft_order: bool
-    usable_for_wheel_order: bool
-    requires_manual_confirmation: bool
-
-
-@dataclass(frozen=True, slots=True)
-class VehicleOrderAnalysisPolicyOverride:
-    """Sparse override applied on top of the derived order-analysis policy.
-
-    Each non-``None`` field replaces the corresponding derived flag. ``reason``
-    documents why the row deviates from the derivation.
-    """
-
-    reason: str
-    usable_for_engine_order: bool | None = None
-    usable_for_driveshaft_order: bool | None = None
-    usable_for_wheel_order: bool | None = None
-    requires_manual_confirmation: bool | None = None
-
-
-def derive_order_analysis_policy(
-    *,
-    top_gear_ratio: float | None,
-    top_gear_confidence: VehicleFieldConfidence | None,
-    final_drive_front: float | None,
-    final_drive_front_confidence: VehicleFieldConfidence | None,
-    final_drive_rear: float | None,
-    final_drive_rear_confidence: VehicleFieldConfidence | None,
-    drivetrain: VehicleDrivetrain | None,
-) -> VehicleOrderAnalysisPolicy:
-    """Compute the default order-analysis policy from row math inputs.
-
-    A row is *feasible* for an analysis kind when its math inputs are present:
-
-    - ``wheel_order``: tire dimensions (always present on canonical rows).
-    - ``driveshaft_order``: driven final-drive ratio.
-    - ``engine_order``: driven final-drive ratio + top-gear ratio.
-
-    ``requires_manual_confirmation`` is set only when the driven final drive or
-    the top gear is a weak (``family_default`` or ``unverified``) value; a
-    missing ratio is "couldn't test", not something to confirm. Specific rows
-    can override individual flags via :class:`VehicleOrderAnalysisPolicyOverride`.
-    """
-
-    if drivetrain == "FWD":
-        driven: tuple[float | None, VehicleFieldConfidence | None] = (
-            final_drive_front,
-            final_drive_front_confidence,
-        )
-    elif drivetrain == "RWD" or final_drive_rear is not None:
-        driven = (final_drive_rear, final_drive_rear_confidence)
-    else:
-        driven = (final_drive_front, final_drive_front_confidence)
-    driven_final_drive, driven_confidence = driven
-    has_driven = driven_final_drive is not None
-    has_top_gear = top_gear_ratio is not None
-    present_confidences = tuple(
-        confidence or "unverified"
-        for value, confidence in (
-            (driven_final_drive, driven_confidence),
-            (top_gear_ratio, top_gear_confidence),
-        )
-        if value is not None
-    )
-    return VehicleOrderAnalysisPolicy(
-        usable_for_engine_order=has_top_gear and has_driven,
-        usable_for_driveshaft_order=has_driven,
-        usable_for_wheel_order=True,
-        requires_manual_confirmation=_classify_confidences(present_confidences) != "trusted",
-    )
-
-
-def apply_order_analysis_policy_override(
-    derived: VehicleOrderAnalysisPolicy,
-    override: VehicleOrderAnalysisPolicyOverride | None,
-) -> VehicleOrderAnalysisPolicy:
-    """Return a policy with *override* fields replacing matching *derived* fields."""
-
-    if override is None:
-        return derived
-    return VehicleOrderAnalysisPolicy(
-        usable_for_engine_order=(
-            derived.usable_for_engine_order
-            if override.usable_for_engine_order is None
-            else override.usable_for_engine_order
-        ),
-        usable_for_driveshaft_order=(
-            derived.usable_for_driveshaft_order
-            if override.usable_for_driveshaft_order is None
-            else override.usable_for_driveshaft_order
-        ),
-        usable_for_wheel_order=(
-            derived.usable_for_wheel_order
-            if override.usable_for_wheel_order is None
-            else override.usable_for_wheel_order
-        ),
-        requires_manual_confirmation=(
-            derived.requires_manual_confirmation
-            if override.requires_manual_confirmation is None
-            else override.requires_manual_confirmation
-        ),
-    )
-
-
-@dataclass(frozen=True, slots=True)
 class VehicleConfigurationTireOption:
     """Named tire option attached to one canonical vehicle configuration."""
 
@@ -261,14 +148,6 @@ class VehicleConfiguration:
     final_drive_rear_metadata: VehicleFieldMetadata | None = None
     tire_metadata: VehicleFieldMetadata | None = None
     configuration_confidence: VehicleConfigurationConfidence = "not_applicable"
-    order_analysis_policy: VehicleOrderAnalysisPolicy = field(
-        default_factory=lambda: VehicleOrderAnalysisPolicy(
-            usable_for_engine_order=False,
-            usable_for_driveshaft_order=False,
-            usable_for_wheel_order=False,
-            requires_manual_confirmation=True,
-        )
-    )
     verification_notes: tuple[VehicleConfigurationNote, ...] = ()
     unresolved: tuple[VehicleConfigurationIssue, ...] = ()
 
@@ -454,6 +333,15 @@ class VehicleConfiguration:
 
     @property
     def requires_manual_drivetrain_confirmation(self) -> bool:
-        """Whether selected drivetrain ratios should be treated as approximate."""
+        """Whether the driven final drive or the top gear is a weak value to confirm.
 
-        return self.order_analysis_policy.requires_manual_confirmation
+        Only the ratios the order checks depend on count, each at its own field
+        confidence (``family_default`` or ``unverified`` is weak). A missing final
+        drive is "couldn't test", not something to confirm. Saved cars follow the
+        same rule in ``CarOrderReferenceStatus.requires_manual_confirmation``.
+        """
+
+        confidences = [self.order_reference_confidence("current_gear_ratio")]
+        if self.driven_final_drive_ratio is not None:
+            confidences.append(self.order_reference_confidence("final_drive_ratio"))
+        return _classify_confidences(tuple(confidences)) != "trusted"

@@ -272,12 +272,7 @@
           "evidence_refs_ref": "e5"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-30-tdi-eu-2021-dct7-fwd",
@@ -339,12 +334,7 @@
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-8y-30-tfsi-eu-2021-mt6-fwd",
@@ -449,12 +439,7 @@
           "evidence_refs_ref": "e11"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-30-tfsi-eu-2021-dct7-fwd",
@@ -516,12 +501,7 @@
           "evidence_refs_ref": "e12"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-35-tdi-eu-2021-mt6-fwd",
@@ -583,12 +563,7 @@
           "evidence_refs_ref": "e17"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-8y-35-tdi-eu-2021-dct7-fwd",
@@ -693,12 +668,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-35-tfsi-eu-2021-mt6-fwd",
@@ -806,12 +776,7 @@
           ]
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-35-tfsi-eu-2021-dct7-fwd",
@@ -920,12 +885,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8y-40-tfsi-quattro-eu-2021-mt6-awd",
@@ -991,12 +951,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-8y-40-tfsi-quattro-eu-2021-dct7-awd",
@@ -1101,12 +1056,7 @@
           "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": true,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

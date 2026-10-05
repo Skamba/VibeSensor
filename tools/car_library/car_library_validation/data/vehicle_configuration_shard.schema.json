@@ -285,19 +285,6 @@
         "evidence_refs_ref": { "$ref": "#/$defs/evidence_refs_ref" }
       }
     },
-    "order_analysis_policy_override": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["reason"],
-      "minProperties": 2,
-      "properties": {
-        "reason": { "type": "string", "minLength": 1 },
-        "usable_for_engine_order": { "type": "boolean" },
-        "usable_for_driveshaft_order": { "type": "boolean" },
-        "usable_for_wheel_order": { "type": "boolean" },
-        "requires_manual_confirmation": { "type": "boolean" }
-      }
-    },
     "configuration_row": {
       "type": "object",
       "additionalProperties": false,
@@ -337,9 +324,6 @@
         "unresolved": {
           "type": "array",
           "items": { "$ref": "#/$defs/unresolved_item" }
-        },
-        "order_analysis_policy_override": {
-          "$ref": "#/$defs/order_analysis_policy_override"
         }
       }
     },

@@ -210,11 +210,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f06-640d-xdrive-eu-2013-zf8hp-awd",
@@ -354,11 +350,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f06-640i-eu-2013-zf8hp-rwd",
@@ -466,11 +458,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f06-640i-xdrive-eu-2013-zf8hp-awd",
@@ -610,11 +598,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f06-650i-eu-2013-zf8hp-rwd",
@@ -710,11 +694,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f06-650i-xdrive-eu-2013-zf8hp-awd",
@@ -842,11 +822,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

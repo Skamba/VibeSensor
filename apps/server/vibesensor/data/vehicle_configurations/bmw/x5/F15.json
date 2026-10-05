@@ -229,11 +229,7 @@
           ]
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f15-xdrive50i-eu-2015-zf8hp-awd",

@@ -269,13 +269,7 @@
           "reason": "Late-B9 official Audi 2019 launch article states four-cylinder TDI engines are offered exclusively with dual-clutch S tronic for the A4 sedan, and the current Audi MediaCenter A4 (until 2024) page lists 30 TDI only as S tronic. No saved official source supports a 30 TDI manual A4 sedan in any B9 year. Marked no_confidence."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b9-45-tfsi-eu-2016-dct7-fwd",
@@ -346,13 +340,7 @@
           "reason": "Same official late-B9 evidence: 45 TFSI is quattro-only on current Audi MediaCenter pages and 2019 launch article. No saved official source supports an FWD 45 TFSI A4 sedan. Marked no_confidence."
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_engine_order": false,
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b9-30-tdi-eu-2019-dct7-fwd",

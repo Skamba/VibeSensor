@@ -27,6 +27,8 @@ ENGINE_TEXT_PATTERN = re.compile(
     r"(?:I3|I4|I5|I6|V6|V8|V10|V12)(?: Turbo| Supercharged)?(?: Diesel)?(?P<phev> PHEV)?$"
     r"|^(?P<ev>Electric (?:Single|Dual) Motor)$"
 )
+# A row without a driven final drive must say why in an `unresolved` item.
+FINAL_DRIVE_ITEM_PATTERN = re.compile(r"final[- ]drive", re.IGNORECASE)
 # Brands whose rows already follow the engine-text format.
 ENGINE_TEXT_BRANDS = frozenset({"Audi", "BMW"})
 
@@ -253,15 +255,17 @@ def validate_final_drive_layout(
                 message=f"{label} is RWD but still sets final_drive_front",
             )
         )
-    if config.driven_final_drive_ratio is None and (
-        config.order_analysis_policy.usable_for_driveshaft_order
-        or config.order_analysis_policy.usable_for_wheel_order
+    if config.driven_final_drive_ratio is None and not any(
+        FINAL_DRIVE_ITEM_PATTERN.search(issue.item) for issue in config.unresolved
     ):
         issues.append(
             CarLibraryValidationIssue(
                 rule="drivetrain_final_drive_layout",
                 entity=entity,
-                message=f"{label} does not expose any driven final-drive ratio",
+                message=(
+                    f"{label} does not expose any driven final-drive ratio "
+                    "and has no unresolved final-drive item saying why"
+                ),
             )
         )
 

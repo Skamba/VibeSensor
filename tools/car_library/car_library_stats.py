@@ -97,10 +97,7 @@ def main() -> int:
     _line(
         "requires_manual_confirmation",
         _counts(
-            Counter(
-                str(row.order_analysis_policy.requires_manual_confirmation)
-                for row in rows
-            )
+            Counter(str(row.requires_manual_drivetrain_confirmation) for row in rows)
         ),
     )
 

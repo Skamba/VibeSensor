@@ -226,12 +226,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-1-4-tfsi-eu-2012-dct7-fwd",
@@ -305,12 +300,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tdi-eu-2012-mt6-fwd",
@@ -384,12 +374,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tdi-eu-2012-dct7-fwd",
@@ -473,12 +458,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tdi-quattro-eu-2012-mt6-awd",
@@ -579,12 +559,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tdi-quattro-eu-2012-dct7-awd",
@@ -674,12 +649,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tfsi-quattro-eu-2012-mt6-awd",
@@ -761,12 +731,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     },
     {
       "id": "audi-8u-2-0-tfsi-quattro-eu-2012-dct7-awd",
@@ -848,12 +813,7 @@
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
         }
       ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "low_confidence"
     }
   ]
 }

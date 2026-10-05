@@ -190,11 +190,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-116d-eu-2012-mt6-rwd",
@@ -245,11 +241,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-116d-eu-2012-zf8hp-rwd",
@@ -300,11 +292,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-116d-efficientdynamics-edition-eu-2012-mt6-rwd",
@@ -355,11 +343,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-116i-eu-2012-mt6-rwd",
@@ -410,11 +394,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-116i-eu-2012-zf8hp-rwd",
@@ -465,11 +445,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-118d-eu-2012-mt6-rwd",
@@ -520,11 +496,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-118d-eu-2012-zf8hp-rwd",
@@ -575,11 +547,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-125d-eu-2012-mt6-rwd",
@@ -630,11 +598,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-125d-eu-2012-zf8hp-rwd",
@@ -685,11 +649,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-125i-eu-2012-mt6-rwd",
@@ -740,11 +700,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-125i-eu-2012-zf8hp-rwd",
@@ -795,11 +751,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-m135i-eu-2012-mt6-rwd",
@@ -850,11 +802,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f21-m135i-eu-2012-zf8hp-rwd",
@@ -905,11 +853,7 @@
         }
       ],
       "unresolved": [],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "requires_manual_confirmation": false
-      }
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

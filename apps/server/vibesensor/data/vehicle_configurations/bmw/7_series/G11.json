@@ -309,12 +309,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-g11-725d-eu-2016-zf8hp-rwd",
@@ -386,12 +381,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-g11-730ld-eu-2016-zf8hp-rwd",
@@ -493,11 +483,7 @@
           "evidence_refs_ref": "e5"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-730li-eu-2016-zf8hp-rwd",
@@ -579,12 +565,7 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-g11-730d-eu-2016-zf8hp-rwd",
@@ -686,11 +667,7 @@
           "evidence_refs_ref": "e5"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-730i-eu-2016-zf8hp-rwd",
@@ -772,12 +749,7 @@
           "evidence_refs_ref": "e17"
         }
       ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "no_confidence"
     },
     {
       "id": "bmw-g11-740le-eu-2016-zf8hp-rwd",
@@ -880,11 +852,7 @@
           ]
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g11-740li-eu-2016-zf8hp-rwd",
@@ -958,11 +926,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-740e-eu-2016-zf8hp-rwd",
@@ -1065,11 +1029,7 @@
           ]
         }
       ],
-      "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g11-740i-eu-2016-zf8hp-rwd",
@@ -1143,11 +1103,7 @@
           "evidence_refs_ref": "e6"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-750i-eu-2016-zf8hp-rwd",
@@ -1221,11 +1177,7 @@
           "evidence_refs_ref": "e10"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-750i-xdrive-eu-2016-zf8hp-awd",
@@ -1352,11 +1304,7 @@
           ]
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-745le-eu-2019-zf8hp-rwd",
@@ -1436,11 +1384,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-745e-eu-2019-zf8hp-rwd",
@@ -1514,11 +1458,7 @@
           "evidence_refs_ref": "e7"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g11-730d-xdrive-eu-2016-zf8hp-awd",
