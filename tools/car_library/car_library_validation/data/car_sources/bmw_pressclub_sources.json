@@ -1304,13 +1304,6 @@
       "confidence": "high"
     },
     {
-      "id": "bmw_pressclub_sources:f01-750d-xdrive-diesels-2012-spec-pdf",
-      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207816",
-      "title": "BMW PressClub F01 730d/740d/750d xDrive diesel tech-data PDF (T0131447EN attachment 207816)",
-      "note": "Official BMW Group ACEA tech-data PDF valid from 7/2012 \u2014 covers ALL F01 SWB diesel variants and shows that every diesel is xDrive-only. Negative evidence: no RWD 750d exists. 750d xDrive: N57S tri-turbo 280 kW/381 hp; FD 2.813.",
-      "confidence": "high"
-    },
-    {
       "id": "bmw_pressclub_sources:f01-750i-xdrive-2012-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0131447EN/207819",
       "title": "BMW PressClub F01 750i xDrive / 750Li xDrive tech-data PDF (T0131447EN attachment 207819)",
@@ -1798,6 +1791,13 @@
       "url": "https://www.press.bmwgroup.com/south-africa/article/attachment/T0261812EN/363046",
       "title": "BMW South Africa X4 price list 07/2016",
       "note": "Official BMW South Africa X4 price list, July 2016: lists the xDrive20i (4 cylinders, 1997 cc), xDrive20d, xDrive28i (1997 cc), xDrive30d and xDrive35i with the 8-speed Steptronic. Prints no gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f01-ca-2015my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0195810EN/285267",
+      "title": "BMW Canada 7 Series MY2015 specifications and features",
+      "note": "BMW Canada product guide for the 2015 model year (North American market). It lists 740Li xDrive, 740Ld xDrive, 750i xDrive, 750Li xDrive, 760Li and ActiveHybrid 7 L only, all with third gear 2.106 (EU 07/2012 sheets: 2.208). Its only diesel is the long-wheelbase 740Ld xDrive (255 hp, final drive 2.563).",
       "confidence": "high"
     }
   ]

@@ -66,7 +66,10 @@ Evidence:
   2012. The picker shows a generation's years from its rows, so a 2015 F20
   owner sees "1 Series (F20, 2011-2012)". F10 (2011–2016), G30 (2017–2023),
   G11 (2016–2022), F15 (2014–2018), F26 (2014–2016), G06 (2020–2022) and the
-  8 Series G14/G15/G16 (to 2021) are extended.
+  8 Series G14/G15/G16 (to 2021) are extended. No continuity source was
+  found for the three that remain: the 01/2015 F20/F21 sheets list new
+  engines, and the only later F01 source (BMW Canada 2015MY guide) prints a
+  different third gear and no SWB diesel.
 
 Fix: **Data:** extend the year ranges where the drivetrain did not change
 (WP5).
