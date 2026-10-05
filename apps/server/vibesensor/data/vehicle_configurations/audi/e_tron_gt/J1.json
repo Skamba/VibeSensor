@@ -1,44 +1,107 @@
 {
   "definitions": {
-    "notes": {
-      "n3": "Issue #975 official-source review confirmed the EU BEV variant mapping for Audi e-tron GT J1: the supported base variant is `e-tron GT quattro`, and the standalone `e-tron GT` alias was removed from the car library. This pass adds exact Germany-market technical-data evidence for both the base e-tron GT quattro and the RS e-tron GT: base-car documents confirm AWD, 2-speed automatic wording, top speed 245 km/h, and basic staggered 225/55 R19 front + 275/45 R19 rear tires; RS documents confirm AWD, rear 2-speed architecture context, top speed 250 km/h, and basic staggered 245/45 R20 front + 285/40 R20 rear tires. The broad row remains unchanged because exact EV ratio mapping is axle-split or year-split and the current schema cannot safely encode those details."
-    },
     "evidence_ref_sets": {
       "e1": [
-        "legacy_research_sources:06e51bca96e0",
-        "legacy_research_sources:2a4116fbafbf",
-        "legacy_research_sources:48491b2f1f4e",
-        "legacy_research_sources:50f644eb8086",
-        "legacy_research_sources:9082383f872a",
-        "legacy_research_sources:ae91c7109615",
-        "legacy_research_sources:af6ef0d8b15a",
-        "legacy_research_sources:e6959b573c42"
+        "audi_mediacenter_sources:j1-e-tron-gt-2022-press-information-pdf"
       ],
       "e2": [
-        "legacy_research_sources:2a4116fbafbf",
-        "legacy_research_sources:50f644eb8086",
-        "legacy_research_sources:9082383f872a"
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-350kw-2023-tech-data-pdf"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2022-press-information-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-350kw-2023-tech-data-pdf",
+        "secondary_technical_sources:e-tron-gt-fw-adac"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-440kw-2024-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2022-press-information-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-440kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2024-tech-data-pdf"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2025-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2025-tech-data-pdf"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:j1-s-e-tron-gt-435kw-2025-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-2024-press-release",
+        "audi_mediacenter_sources:j1-s-e-tron-gt-435kw-2025-tech-data-pdf"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-550kw-2024-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-2024-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-550kw-2024-tech-data-pdf"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2025-tech-data-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2026-tech-data-pdf"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2025-tech-data-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2026-tech-data-pdf",
+        "secondary_technical_sources:e-tron-gt-fw-adac"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:j1-e-tron-gt-2022-press-information-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-2024-press-release"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-350kw-2023-tech-data-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2025-tech-data-pdf",
+        "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2026-tech-data-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-440kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2025-tech-data-pdf",
+        "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-550kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:j1-s-e-tron-gt-435kw-2025-tech-data-pdf"
       ]
     },
     "tire_setups": {
-      "setup_275_21": {
-        "confidence": "family_default",
+      "setup_225_55r19_275_45r19": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e15",
         "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 21.0,
+          "aspect_pct": 55.0,
+          "rim_in": 19.0,
+          "width_mm": 225.0
+        },
+        "rear": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
           "width_mm": 275.0
         }
       },
-      "setup_265_20": {
-        "confidence": "family_default",
+      "setup_245_45r20_285_40r20": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e16",
         "front": {
-          "aspect_pct": 35.0,
+          "aspect_pct": 45.0,
           "rim_in": 20.0,
-          "width_mm": 265.0
+          "width_mm": 245.0
+        },
+        "rear": {
+          "aspect_pct": 40.0,
+          "rim_in": 20.0,
+          "width_mm": 285.0
         }
       }
     }
@@ -49,68 +112,77 @@
     "market": "EU",
     "model_code": "J1",
     "body_code": "J1",
-    "model_name": "e-tron GT (J1, 2022-2026)",
-    "production_start_year": 2022,
-    "production_end_year": 2026
+    "model_name": "e-tron GT (J1, 2021-2026)"
   },
   "configurations": [
     {
       "id": "audi-j1-rs-e-tron-gt-eu-2022-ss1-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
       "variant_name": "RS e-tron GT",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
       "fuel_type": "EV",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
+        "evidence_refs_ref": "e4",
+        "notes": "The official 05/02/24 technical-data sheet lists drive type 'All-wheel drive'.",
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
-        "code": "SS1",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official 05/02/24 RS e-tron GT technical-data sheet lists transmission type '2-speed / automatic'; the press information gives the front motor a single ratio and the rear motor a two-speed transmission.",
+        "code": "AT2",
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Front motor ratio 8.1:1 per the official Audi press information (November 2022).",
+          "value": 8.1
+        },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 8.057
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Rear two-speed transmission second gear 8.2:1 per the official Audi press information (November 2022); the analysis models this one rear ratio. First gear (15.6:1) is not encoded.",
+          "value": 8.2
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_265_20",
-            "name": "Standard 20\""
-          },
-          {
-            "setup_ref": "setup_275_21",
-            "name": "Sport 21\""
+            "setup_ref": "setup_245_45r20_285_40r20",
+            "name": "Basic 20\""
           }
         ],
-        "default_ref": "setup_265_20"
+        "default_ref": "setup_245_45r20_285_40r20"
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
+          "note": "RS e-tron GT (pre-facelift, 440 kW): the official press information gives the front motor 8.1:1 and the rear two-speed transmission 15.6:1 (first) and 8.2:1 (second gear); the 8.057 this row carried had no source. The 05/02/24 technical-data sheet gives all-wheel drive, '2-speed / automatic' and basic tires 245/45 R20 | 285/40 R20. Presales began in mid-February 2021; the facelift RS e-tron GT (500 kW) was orderable from 06/18/2024, so this row covers 2021-2023.",
+          "evidence_refs_ref": "e5"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi e-tron GT quattro exact axle reduction ratios, including both ratios of the rear 2-speed gearbox",
-          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe reduction ratio per axle for the base e-tron GT quattro; the rear motor's 2-speed gearbox has two, and the row stores one.",
+          "item": "Rear two-speed transmission first gear (15.6:1)",
+          "reason": "The row stores one rear reduction ratio, the second gear (8.2:1) the car normally drives in; in first gear (launch starts, or held in the dynamic driving mode) the rear motor turns 15.6 / 8.2 = 1.9 times faster than the modelled motor order, which the analysis does not model.",
           "evidence_refs_ref": "e1"
         },
         {
-          "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
-          "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic tires; no official wheel program with the optional 20- and 21-inch sizes was found.",
+          "evidence_refs_ref": "e4"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "audi-j1-e-tron-gt-quattro-eu-2022-ss1-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
       "variant_name": "e-tron GT quattro",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
@@ -118,48 +190,259 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
+        "notes": "The official 10/16/23 technical-data sheet lists drive type 'All-wheel drive'.",
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
-        "code": "SS1",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official 10/16/23 e-tron GT quattro technical-data sheet lists transmission type '2-speed / automatic'; the press information gives the front motor a single ratio and the rear motor a two-speed transmission.",
+        "code": "AT2",
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Front motor ratio 8.1:1 per the official Audi press information (November 2022).",
+          "value": 8.1
+        },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 8.057
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Rear two-speed transmission second gear 8.2:1 per the official Audi press information (November 2022); the analysis models this one rear ratio. First gear (15.6:1) is not encoded.",
+          "value": 8.2
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_265_20",
-            "name": "Standard 20\""
-          },
-          {
-            "setup_ref": "setup_275_21",
-            "name": "Sport 21\""
+            "setup_ref": "setup_225_55r19_275_45r19",
+            "name": "Basic 19\""
           }
         ],
-        "default_ref": "setup_265_20"
+        "default_ref": "setup_225_55r19_275_45r19"
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
+          "note": "e-tron GT quattro (pre-facelift, 350 kW): the official press information gives the front motor 8.1:1 and the rear two-speed transmission 15.6:1 (first) and 8.2:1 (second gear); the 8.057 this row carried had no source. The 10/16/23 technical-data sheet gives all-wheel drive, '2-speed / automatic' and basic tires 225/55 R19 | 275/45 R19. ADAC lists it from 04/2021 to 06/2024 and the facelift e-tron GT quattro from 05/2025, so this row covers 2021-2024.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi e-tron GT quattro exact axle reduction ratios, including both ratios of the rear 2-speed gearbox",
-          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe reduction ratio per axle for the base e-tron GT quattro; the rear motor's 2-speed gearbox has two, and the row stores one.",
+          "item": "Rear two-speed transmission first gear (15.6:1)",
+          "reason": "The row stores one rear reduction ratio, the second gear (8.2:1) the car normally drives in; in first gear (launch starts, or held in the dynamic driving mode) the rear motor turns 15.6 / 8.2 = 1.9 times faster than the modelled motor order, which the analysis does not model.",
           "evidence_refs_ref": "e1"
         },
         {
-          "item": "Audi RS e-tron GT axle-split ratio continuity and exact optional tire dimensions",
-          "reason": "Official Audi sources show the RS e-tron GT uses axle-split and rear-two-speed hardware, but the checked facelift/current technical sheets do not publish the same reduction-ratio detail as the 2022 launch material, and this pass did not recover exact official 21-inch tire dimensions.",
-          "evidence_refs_ref": "e1"
+          "item": "Optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic tires; no official wheel program with the optional 20- and 21-inch sizes was found.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-j1-s-e-tron-gt-eu-2024-at2-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "S e-tron GT",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "The official 05/15/2025 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e14",
+        "notes": "The facelift technical-data sheets print no transmission; Audi's press material describes the e-tron GT family's rear two-speed transmission (the 09/2024 RS e-tron GT performance release names it), so the facelift keeps the pre-facelift layout.",
+        "code": "AT2",
+        "name": "2-speed automatic (rear) / single-speed (front)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_245_45r20_285_40r20",
+            "name": "Basic 20\""
+          }
+        ],
+        "default_ref": "setup_245_45r20_285_40r20"
+      },
+      "verification_notes": [
+        {
+          "note": "S e-tron GT (435 kW): the official technical-data sheet (05/15/2025) gives all-wheel drive and basic tires 245/45 R20 | 285/40 R20. The 06/18/2024 facelift release introduced it, orderable from that date, so the row covers 2024-2026.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "S e-tron GT final drive (rear and front reduction ratios)",
+          "reason": "The facelift has a newly developed rear motor, and neither its technical-data sheets nor the 2024 press releases publish a reduction ratio, so no final drive is stored.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "S e-tron GT optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-j1-rs-e-tron-gt-eu-2024-at2-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "RS e-tron GT",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official 06/18/2024 and 10/22/2025 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e14",
+        "notes": "The facelift technical-data sheets print no transmission; Audi's press material describes the e-tron GT family's rear two-speed transmission (the 09/2024 RS e-tron GT performance release names it), so the facelift keeps the pre-facelift layout.",
+        "code": "AT2",
+        "name": "2-speed automatic (rear) / single-speed (front)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_245_45r20_285_40r20",
+            "name": "Basic 20\""
+          }
+        ],
+        "default_ref": "setup_245_45r20_285_40r20"
+      },
+      "verification_notes": [
+        {
+          "note": "RS e-tron GT (facelift, 500 kW): the official technical-data sheet (06/18/2024 and 10/22/2025) gives all-wheel drive and basic tires 245/45 R20 | 285/40 R20. The 06/18/2024 facelift release made it orderable from that date, so the row covers 2024-2026.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "RS e-tron GT final drive (rear and front reduction ratios)",
+          "reason": "The facelift has a newly developed rear motor, and neither its technical-data sheets nor the 2024 press releases publish a reduction ratio, so no final drive is stored.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "RS e-tron GT optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-j1-rs-e-tron-gt-performance-eu-2024-at2-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "RS e-tron GT performance",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "The official 07/25/2024 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e14",
+        "notes": "The facelift technical-data sheets print no transmission; Audi's press material describes the e-tron GT family's rear two-speed transmission (the 09/2024 RS e-tron GT performance release names it), so the facelift keeps the pre-facelift layout.",
+        "code": "AT2",
+        "name": "2-speed automatic (rear) / single-speed (front)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_245_45r20_285_40r20",
+            "name": "Basic 20\""
+          }
+        ],
+        "default_ref": "setup_245_45r20_285_40r20"
+      },
+      "verification_notes": [
+        {
+          "note": "RS e-tron GT performance (550 kW): the official technical-data sheet (07/25/2024) gives all-wheel drive and basic tires 245/45 R20 | 285/40 R20. The 06/18/2024 facelift release introduced it, orderable from that date, so the row covers 2024-2026.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "RS e-tron GT performance final drive (rear and front reduction ratios)",
+          "reason": "The facelift has a newly developed rear motor, and neither its technical-data sheets nor the 2024 press releases publish a reduction ratio, so no final drive is stored.",
+          "evidence_refs_ref": "e11"
+        },
+        {
+          "item": "RS e-tron GT performance optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-j1-e-tron-gt-quattro-eu-2025-at2-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "e-tron GT quattro",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "The official 05/13/2025 and 02/02/26 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e14",
+        "notes": "The facelift technical-data sheets print no transmission; Audi's press material describes the e-tron GT family's rear two-speed transmission (the 09/2024 RS e-tron GT performance release names it), so the facelift keeps the pre-facelift layout.",
+        "code": "AT2",
+        "name": "2-speed automatic (rear) / single-speed (front)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_55r19_275_45r19",
+            "name": "Basic 19\""
+          }
+        ],
+        "default_ref": "setup_225_55r19_275_45r19"
+      },
+      "verification_notes": [
+        {
+          "note": "e-tron GT quattro (facelift, 370 kW): the official technical-data sheet (05/13/2025 and 02/02/26) gives all-wheel drive and basic tires 225/55 R19 | 275/45 R19. ADAC lists it from 05/2025, so the row covers 2025-2026.",
+          "evidence_refs_ref": "e13"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "e-tron GT quattro final drive (rear and front reduction ratios)",
+          "reason": "The facelift has a newly developed rear motor, and neither its technical-data sheets nor the 2024 press releases publish a reduction ratio, so no final drive is stored.",
+          "evidence_refs_ref": "e13"
+        },
+        {
+          "item": "e-tron GT quattro optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e13"
         }
       ],
       "configuration_confidence": "medium_confidence"

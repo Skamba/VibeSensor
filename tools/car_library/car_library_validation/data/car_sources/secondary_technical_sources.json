@@ -917,6 +917,13 @@
       "title": "ADAC Autokatalog Audi Q4 e-tron FZ (2021-2026)",
       "note": "ADAC catalogue listing the Germany-market Q4 e-tron variants with their sales periods: 35 e-tron 06/21-09/22 and 07/24-12/24, 40 e-tron 06/21-09/23 and again 02/25-04/26, launch 45 e-tron quattro 07/21-09/23, 50 e-tron quattro 06/21-09/23, updated 45 e-tron and 45 e-tron quattro 09/23-04/26, 55 e-tron quattro 09/23-04/26.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:e-tron-gt-fw-adac",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/e-tron-gt/fw/",
+      "title": "ADAC Autokatalog Audi e-tron GT FW and FW facelift",
+      "note": "ADAC catalogue: the pre-facelift e-tron GT quattro was sold from 04/21 to 06/24; the facelift e-tron GT quattro (FW facelift page) from 05/25.",
+      "confidence": "medium"
     }
   ]
 }

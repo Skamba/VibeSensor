@@ -1407,6 +1407,83 @@
       "title": "Audi Technische Daten Q4 40 e-tron 150 kW, Angebot in Deutschland, Stand 02.02.26",
       "note": "Official Audi MediaCenter technical-data sheet (German): Heckantrieb, electric motors front / rear 0 / 1, torque - / 310 Nm, top speed 160 km/h, battery 63 / 59 kWh, basic tires 235/55 R19 | 255/50 R19. Same drive and tires as the 05/2025 sheet; prints no transmission or reduction ratio.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-e-tron-gt-2022-press-information-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/uploaded_files/22693/file/26cc2c3ff6cc9d4d117beee0b97081276e44a8a9/221125_Presse-Information_Audi_etron-GT_Fahrveranstaltung_EN.pdf?disposition=attachment",
+      "title": "Audi MediaCenter press information 'Electric, sporty, and progressive: the Audi e-tron GT', November 2022",
+      "note": "Official press information for the e-tron GT quattro (350 kW) and RS e-tron GT (440 kW): presales in Europe began in mid-February 2021; one PSM on each axle; 'The front motor is installed coaxially and has a ratio of 8.1:1. The rear electric motor ... sends its torque to a two-speed transmission with three shafts. The second gear (ratio of 8.2:1) provides excellent efficiency ... The first gear, which has a very short ratio of 15.6:1, ensures spirited acceleration right from the start.'",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-e-tron-gt-quattro-350kw-2023-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1236/file_en/6d6ceb7f7cd108885f3c22d6922b5cad38407103/eTD_Audi_e-tron_GT_quattro_350kW_231016.pdf",
+      "title": "Audi technical data e-tron GT quattro 350 kW, Program for Germany, date 10/16/23",
+      "note": "Official technical-data sheet for the pre-facelift e-tron GT quattro: all-wheel drive, transmission type '2-speed / automatic', top speed 245 km/h, basic tires 225/55 R19 front | 275/45 R19 rear. Prints no reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-rs-e-tron-gt-440kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD_Audi_RS_e-tron_GT_quattro_440kW_240502.pdf",
+      "title": "Audi technical data RS e-tron GT 440 kW, Program for Germany, date 05/02/24",
+      "note": "Official technical-data sheet for the pre-facelift RS e-tron GT: all-wheel drive, transmission type '2-speed / automatic', top speed 250 km/h, basic tires 245/45 R20 front | 285/40 R20 rear. Prints no reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-e-tron-gt-2024-facelift-press-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/the-new-audi-e-tron-gtan-electrifying-masterpiece-16054",
+      "title": "Audi MediaCenter media release 'The new Audi e-tron GT: An electrifying masterpiece', 06/18/2024",
+      "note": "Official facelift release: the new family is the S e-tron GT, RS e-tron GT and RS e-tron GT performance, available to order now; a newly developed rear PSM. Publishes no reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-2024-press-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/audis-most-powerful-production-vehicle-the-new-rs-e-tron-gt-performance-16222",
+      "title": "Audi MediaCenter media release 'Audi's most powerful production vehicle: The new RS e-tron GT performance', 09/17/2024",
+      "note": "Official release: in performance mode the RS e-tron GT performance uses the dynamic-mode switching strategy and 'stays in the first gear of its two-speed gear as long as possible'; names the S e-tron GT and RS e-tron GT as the other variants. Publishes no reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2024-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240624091140/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD-Audi-RS-e-tron-GT-500kW_240618.pdf",
+      "title": "Audi technical data RS e-tron GT 500 kW, Program for Germany, status 06/18/2024 (Wayback Machine copy)",
+      "note": "Official technical-data sheet for the facelift RS e-tron GT: all-wheel drive, electric motors front / rear 1 / 1, top speed 250 km/h, basic tires 245/45 R20 front | 285/40 R20 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-rs-e-tron-gt-500kw-2025-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1237/file_en/1bc6c25d021edf80ecf5289e69fe15cc1e5351ec/eTD-Audi-RS-e-tron-GT-500kW_251022.pdf?disposition=attachment",
+      "title": "Audi technical data RS e-tron GT 500 kW, Program for Germany, status 10/22/2025",
+      "note": "Official technical-data sheet for the facelift RS e-tron GT: all-wheel drive, electric motors front / rear 1 / 1, basic tires 245/45 R20 front | 285/40 R20 rear, as in the 06/2024 sheet. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-s-e-tron-gt-435kw-2025-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250723062107/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1391/file_en/086ccaba000dff5b2356c64762667387000f86a3/eTD-Audi-S-e-tron-GT-435kW_250515.pdf",
+      "title": "Audi technical data S e-tron GT 435 kW, Program for Germany, status 05/15/2025 (Wayback Machine copy)",
+      "note": "Official technical-data sheet for the S e-tron GT: all-wheel drive, electric motors front / rear 1 / 1, top speed 245 km/h, basic tires 245/45 R20 front | 285/40 R20 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-rs-e-tron-gt-performance-550kw-2024-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250809104912/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1392/file_en/91bfc69ec55530e277b5023245b77c1c82772920/eTD-Audi-RS-e-tron-GT-performance-550kW_240725.pdf",
+      "title": "Audi technical data RS e-tron GT performance 550 kW, Program for Germany, status 07/25/2024 (Wayback Machine copy)",
+      "note": "Official technical-data sheet for the RS e-tron GT performance: all-wheel drive, electric motors front / rear 1 / 1, top speed 250 km/h, basic tires 245/45 R20 front | 285/40 R20 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2025-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250723062133/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1544/file_en/99b3ba2115bf1328f670ae087320f1022152ddcc/eTD-Audi-e-tron-GT-quattro-370kW_250513.pdf",
+      "title": "Audi technical data e-tron GT quattro 370 kW, Program for Germany, status 05/13/2025 (Wayback Machine copy)",
+      "note": "Official technical-data sheet for the facelift e-tron GT quattro: all-wheel drive, electric motors front / rear 1 / 1, basic tires 225/55 R19 front | 275/45 R19 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:j1-e-tron-gt-quattro-370kw-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1544/file_en/99b3ba2115bf1328f670ae087320f1022152ddcc/eTD-Audi-e-tron-GT-quattro-370kW_260202.pdf?1770133321&disposition=attachment",
+      "title": "Audi technical data e-tron GT quattro 370 kW, Program for Germany, status 02/02/26",
+      "note": "Official technical-data sheet for the facelift e-tron GT quattro: all-wheel drive, electric motors front / rear 1 / 1, top speed 245 km/h, basic tires 225/55 R19 front | 275/45 R19 rear, as in the 05/2025 sheet. Prints no transmission or reduction ratio.",
+      "confidence": "high"
     }
   ]
 }

@@ -161,10 +161,12 @@ order-analysis fields inline with their own metadata:
   at wheel speed × reduction ratio. The validator rejects a stored one
   (`ev_top_gear`), so an EV's confirmation and research completeness follow
   its reduction ratio alone, and a saved EV car keeps no top gear either
-  (`Car`). The Audi e-tron GT's rear motor has a 2-speed gearbox; its row
-  stores one rear reduction ratio (`family_default`), so the car asks for
-  confirmation, motor results are marked as estimated, and an `unresolved`
-  item records that the second ratio is not encoded.
+  (`Car`). The Audi e-tron GT's rear motor has a 2-speed gearbox
+  (transmission code `AT2`); its pre-facelift rows store the official
+  second-gear ratio (8.2:1) as the one rear reduction ratio, the gear the car
+  normally drives in, and an `unresolved` item records that first gear
+  (15.6:1) is not encoded. Audi publishes no ratio for the facelift, so those
+  rows have no final drive.
 
 `tools/car_library/car_library_validation/data/car_sources/*.json` contains only reusable
 source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through

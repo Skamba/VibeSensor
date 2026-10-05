@@ -559,20 +559,20 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (225 rows), BMW (361 rows); market EU only |
-| Exact configuration rows | 586 (ICE 530, PHEV 32, EV 24) |
-| Picker models / generation codes / variants | 93 / 71 / 456 |
+| Brands | Audi (229 rows), BMW (361 rows); market EU only |
+| Exact configuration rows | 590 (ICE 530, PHEV 32, EV 28) |
+| Picker models / generation codes / variants | 93 / 71 / 460 |
 | Production years | 2007–2026 |
-| Rows with tire options | 585 (1 has the default only) |
-| Rows with driven final drive | 505 (86%); 81 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, FZ 4, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
-| Rows with top gear | 495 of 562 non-EV rows (88%); the 24 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
+| Rows with tire options | 589 (1 has the default only) |
+| Rows with driven final drive | 505 (86%); 85 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, J1 4, GA 4, 8U 8, FZ 4, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with top gear | 495 of 562 non-EV rows (88%); the 28 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
 | Rows with full gear sets | 353 (60%) |
-| Tire confidence | official_exact 410 · reputable_secondary 42 · official_derived 7 · family_default 77 · unverified 50 |
-| Driven final-drive confidence | official_exact 311 · official_derived 100 · reputable_secondary 22 · family_default 39 · unverified 33 · none 81 |
-| Top-gear confidence | official_exact 387 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 91 (24 EVs, 67 unsourced) |
-| Weak (family_default or unverified) | final drive 72/586 (12%), top gear 67/586 (11%), tire 127/586 (22%) |
-| `order_reference_trust` | trusted 447 · approximate 80 · backlog_unverified 59 |
-| `requires_manual_confirmation` | true 72, false 514 (true exactly when the driven final drive or top gear is weak) |
+| Tire confidence | official_exact 416 · reputable_secondary 42 · official_derived 7 · family_default 75 · unverified 50 |
+| Driven final-drive confidence | official_exact 313 · official_derived 100 · reputable_secondary 22 · family_default 37 · unverified 33 · none 85 |
+| Top-gear confidence | official_exact 387 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 95 (28 EVs, 67 unsourced) |
+| Weak (family_default or unverified) | final drive 70/590 (12%), top gear 67/590 (11%), tire 125/590 (21%) |
+| `order_reference_trust` | trusted 453 · approximate 78 · backlog_unverified 59 |
+| `requires_manual_confirmation` | true 70, false 520 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 20 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
@@ -610,9 +610,9 @@ changes and update this table.
   final-drive change.
 - **Final drive:** missing on the rows counted in the table above. The
   `unresolved` notes say the manufacturer publishes split, conflicting or no
-  values (the Q4 e-tron sheets from 2024 on print no reduction ratio); do not
-  invent one. Weak
-  (family_default or unverified) on 72 rows. Those rows are where a single
+  values (the Q4 e-tron sheets from 2024 on and the facelifted e-tron GT
+  sheets print no reduction ratio); do not invent one. Weak
+  (family_default or unverified) on 70 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---
@@ -678,10 +678,11 @@ capability line state the current layout's consequence.
   capability line and the spectrum. An EV has no top gear: library EV rows
   carry none and a saved EV car keeps none, so nothing (confirmation, the
   motor check, an RPM estimate) depends on one. The Audi e-tron GT's rear
-  motor has a 2-speed gearbox; the library stores one rear reduction ratio
-  as a family estimate, so the car asks for confirmation and motor results
-  are marked as estimated; in its other (launch) gear the rear motor turns
-  at an order the analysis does not model. The coast-down judges nothing
+  motor has a 2-speed gearbox; the library stores its official second-gear
+  ratio (8.2:1), the gear the car normally drives in, as the one rear
+  reduction ratio. In first gear (15.6:1: launch starts, or held in the
+  dynamic driving mode) the rear motor turns 1.9 times faster, at an order
+  the analysis does not model. The coast-down judges nothing
   (`speed_dependence` stays `null`), no engine markers are drawn, and the
   confirm step is a repeat drive instead of a neutral coast. The report's
   test conditions print "Powertrain: electric (EV)" and say plainly that the
