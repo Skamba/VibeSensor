@@ -102,6 +102,8 @@ def _make_valid_vehicle_configuration() -> VehicleConfiguration:
             ),
         ),
         fuel_type="ICE",
+        engine_code="B48",
+        engine_name="B48 2.0L I4 Turbo",
         final_drive_front=3.15,
         final_drive_rear=3.15,
         drivetrain_metadata=_metadata("official_exact"),
@@ -177,6 +179,24 @@ def test_validate_vehicle_configurations_flags_layout_mismatch() -> None:
     assert {issue.rule for issue in issues} == {"drivetrain_final_drive_layout"}
     assert any("final_drive_front" in issue.message for issue in issues)
     assert any("does not expose any driven final-drive ratio" in issue.message for issue in issues)
+
+
+def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
+    config = _make_valid_vehicle_configuration()
+    cases = {
+        "engine_text_format": replace(config, engine_name="1.5L B38 turbo + electric motor (PHEV)"),
+        "engine_text_fuel_type": replace(
+            config, engine_code="B38", engine_name="B38 1.5L I3 Turbo PHEV", fuel_type="EV"
+        ),
+        "engine_code_mismatch": replace(config, engine_code="2.0L"),
+    }
+
+    for rule, broken in cases.items():
+        issues = validate_vehicle_configurations([broken], allowlist={})
+        assert [issue.rule for issue in issues] == [rule]
+
+    unchecked_brand = replace(config, brand="Audi", engine_name="2.0L I4 TFSI Turbo")
+    assert not validate_vehicle_configurations([unchecked_brand], allowlist={})
 
 
 def test_validate_vehicle_configurations_allows_manual_only_partial_final_drive() -> None:

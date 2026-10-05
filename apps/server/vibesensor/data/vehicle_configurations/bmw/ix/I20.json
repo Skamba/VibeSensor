@@ -58,7 +58,7 @@
       "id": "bmw-i20-m60-eu-2022-ss1-awd",
       "variant_name": "M60",
       "engine_code": "Electric",
-      "engine_name": "Electric Dual Motor (Performance)",
+      "engine_name": "Electric Dual Motor",
       "fuel_type": "EV",
       "drivetrain": {
         "confidence": "official_exact",

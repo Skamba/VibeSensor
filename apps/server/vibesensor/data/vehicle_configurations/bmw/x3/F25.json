@@ -377,7 +377,7 @@
       "production_end_year": 2011,
       "model_name": "X3 (F25, 2011)",
       "variant_name": "xDrive20d",
-      "engine_code": "2.0D",
+      "engine_code": "2.0L",
       "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
@@ -474,7 +474,7 @@
       "production_end_year": 2011,
       "model_name": "X3 (F25, 2011)",
       "variant_name": "xDrive20d",
-      "engine_code": "2.0D",
+      "engine_code": "2.0L",
       "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
@@ -1066,7 +1066,7 @@
       "production_end_year": 2011,
       "model_name": "X3 (F25, 2011)",
       "variant_name": "xDrive30d",
-      "engine_code": "3.0D",
+      "engine_code": "3.0L",
       "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
@@ -1207,7 +1207,7 @@
       "production_end_year": 2011,
       "model_name": "X3 (F25, 2011)",
       "variant_name": "xDrive35d",
-      "engine_code": "3.0D",
+      "engine_code": "3.0L",
       "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
@@ -1465,7 +1465,7 @@
       "production_end_year": 2012,
       "model_name": "X3 (F25, 2012)",
       "variant_name": "sDrive18d",
-      "engine_code": "2.0D",
+      "engine_code": "2.0L",
       "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
@@ -1556,7 +1556,7 @@
       "production_end_year": 2012,
       "model_name": "X3 (F25, 2012)",
       "variant_name": "sDrive18d",
-      "engine_code": "2.0D",
+      "engine_code": "2.0L",
       "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {

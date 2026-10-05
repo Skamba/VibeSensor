@@ -12,6 +12,7 @@ from car_library_validation._common import (
 )
 from car_library_validation._powertrain import (
     validate_drivetrain_badges,
+    validate_engine_text,
     validate_final_drive_layout,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
@@ -58,6 +59,7 @@ def validate_vehicle_configuration(
         label=label,
         issues=issues,
     )
+    validate_engine_text(config, entity=entity, label=label, issues=issues)
     validate_final_drive_layout(config, entity=entity, label=label, issues=issues)
     validate_tire_spec(
         config.default_tire,

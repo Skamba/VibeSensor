@@ -82,7 +82,7 @@
       "id": "bmw-f06-640d-eu-2013-zf8hp-rwd",
       "variant_name": "640d",
       "engine_code": "N57",
-      "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
+      "engine_name": "N57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",
@@ -220,7 +220,7 @@
       "id": "bmw-f06-640d-xdrive-eu-2013-zf8hp-awd",
       "variant_name": "640d xDrive",
       "engine_code": "N57",
-      "engine_name": "N57 3.0L I6 Twin-Turbo Diesel",
+      "engine_name": "N57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

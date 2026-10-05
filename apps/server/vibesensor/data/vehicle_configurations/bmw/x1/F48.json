@@ -200,8 +200,8 @@
       "production_end_year": 2016,
       "model_name": "X1 (F48, 2016)",
       "variant_name": "xDrive25d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -299,6 +299,12 @@
         {
           "note_ref": "n9",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "Engine text from the 03/2021 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; the same 1995 cc diesel as the sDrive18d.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -570,7 +576,7 @@
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive16d",
       "engine_code": "B37",
-      "engine_name": "B37 1.5L I3 Turbo",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -659,6 +665,12 @@
         {
           "note_ref": "n5",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "note": "Engine text from the 11/2015 sDrive16d technical data: in-line 3 cylinders, 1496 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -682,7 +694,7 @@
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive16d",
       "engine_code": "B37",
-      "engine_name": "B37 1.5L I3 Turbo",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -746,6 +758,12 @@
         {
           "note": "Checked official F48 sDrive16d material supports a manual launch state and does not recover an exact EU/ACEA sDrive16d automatic row; keep the current ZF8HP placeholder out of driveshaft/wheel order analysis until an exact market source is found.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "note": "Engine text from the 11/2015 sDrive16d technical data: in-line 3 cylinders, 1496 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive16d-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -774,7 +792,7 @@
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive18d",
       "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -863,6 +881,12 @@
         {
           "note_ref": "n5",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text from the 06/2015 sDrive18d technical data: in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -896,7 +920,7 @@
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive18d",
       "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -987,6 +1011,12 @@
         {
           "note_ref": "n9",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text from the 06/2015 sDrive18d technical data: in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive18d-xdrive18d-xdrive20d-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1226,8 +1256,8 @@
       "production_end_year": 2022,
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive20d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1316,6 +1346,12 @@
         {
           "note_ref": "n5",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "note": "Engine text from the 07/2016 sDrive20d technical data: in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; the same 1995 cc diesel as the sDrive18d.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1343,8 +1379,8 @@
       "production_end_year": 2022,
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive20d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1435,6 +1471,12 @@
         {
           "note_ref": "n14",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "note": "Engine text from the 07/2016 sDrive20d technical data: in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; the same 1995 cc diesel as the sDrive18d.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1467,8 +1509,8 @@
       "production_end_year": 2022,
       "model_name": "X1 (F48, 2016-2022)",
       "variant_name": "sDrive20i",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1532,6 +1574,12 @@
         {
           "note": "Checked official F48 sDrive20i technical-data packets show automatic states only: 2015 8-speed Steptronic and later 7-speed DCT. No exact manual sDrive20i row was recovered, so this manual placeholder is not safe for driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e7"
+        },
+        {
+          "note": "Engine text from the 06/2015 sDrive20i technical data: in-line 4 cylinders, 1998 cc, TwinScroll turbocharger (the earlier `1.5L` text was wrong).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1632,6 +1680,12 @@
         {
           "note": "Official F48 sDrive20i automatic sources support an early 8-speed Steptronic state but later 2018/2021 sources switch to 7-speed DCT; keep this broad ZF8HP row out of driveshaft/wheel order analysis until the automatic cutover is split.",
           "evidence_refs_ref": "e7"
+        },
+        {
+          "note": "Engine text from the 06/2015 sDrive20i technical data: in-line 4 cylinders, 1998 cc, TwinScroll turbocharger (the earlier `1.5L` text was wrong).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive20i-xdrive20i-2015-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1665,7 +1719,7 @@
       "model_name": "X1 (F48, 2020)",
       "variant_name": "xDrive25e",
       "engine_code": "B38",
-      "engine_name": "1.5L B38 turbo + electric motor (PHEV)",
+      "engine_name": "B38 1.5L I3 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1761,6 +1815,12 @@
         {
           "note_ref": "n37",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "note": "Engine text from the 03/2021 technical data: xDrive25e in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1783,8 +1843,8 @@
       "production_end_year": 2021,
       "model_name": "X1 (F48, 2021)",
       "variant_name": "xDrive25d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1877,6 +1937,12 @@
         {
           "note_ref": "n9",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Engine text from the 03/2021 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; the same 1995 cc diesel as the sDrive18d.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1900,7 +1966,7 @@
       "model_name": "X1 (F48, 2021)",
       "variant_name": "xDrive25e",
       "engine_code": "B38",
-      "engine_name": "B38 1.5L I3 Turbo (PHEV)",
+      "engine_name": "B38 1.5L I3 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1991,6 +2057,12 @@
         {
           "note_ref": "n37",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Engine text from the 03/2021 technical data: xDrive25e in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [

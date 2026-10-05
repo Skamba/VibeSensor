@@ -113,7 +113,12 @@ inherited from family-level data, encode that through `confidence` and
   turbo and fuel come from the technical-data sheet; the family code is left
   out when it is not known for the row. All rows of one generation use the
   same text for the same engine. EVs use `Electric Single Motor` /
-  `Electric Dual Motor`.
+  `Electric Dual Motor`. `engine_code` repeats the family code, or reads
+  `<litres>L` (`Electric` for EVs) when there is none. The validator
+  enforces the format, the code and the fuel type (`PHEV` text ⇔ fuel type
+  `PHEV`, `Electric` ⇔ `EV`) for the brands listed in `ENGINE_TEXT_BRANDS`
+  (`tools/car_library/car_library_validation/_powertrain.py`); a brand joins
+  that list once its rows follow the format.
 
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:

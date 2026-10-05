@@ -182,7 +182,7 @@
       "id": "bmw-g07-xdrive40d-eu-2019-zf8hp-awd",
       "variant_name": "xDrive40d",
       "engine_code": "B57",
-      "engine_name": "B57 3.0L I6 Diesel",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -243,6 +243,12 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Engine text from the X7 technical data: xDrive40d in-line 6 cylinders, 2993 cc, multi-stage turbocharging, diesel.",
+          "evidence_refs": [
+            "legacy_research_sources:936c0c69490c"
+          ]
         }
       ],
       "unresolved": [

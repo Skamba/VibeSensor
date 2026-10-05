@@ -261,7 +261,7 @@
       "id": "bmw-f01-750d-eu-2012-zf8hp-rwd",
       "variant_name": "750d",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -327,6 +327,12 @@
         {
           "note": "Batch 19 directly revalidated the official BMW 07/2012 F01 diesel technical-data PDF. That checked official BMW sheet publishes an exact 750d xDrive state, but it does not publish an exact 750d RWD row, so this represented 2012 750d RWD configuration remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "Engine text from the 07/2012 diesel technical data: 750d xDrive in-line six, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f01-750d-xdrive-2012-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [

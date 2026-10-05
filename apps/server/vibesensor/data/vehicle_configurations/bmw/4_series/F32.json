@@ -892,7 +892,7 @@
       "model_name": "4 Series (F32, 2014-2020)",
       "variant_name": "430d",
       "engine_code": "N57",
-      "engine_name": "N57 3.0L I6 Diesel Turbo",
+      "engine_name": "N57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1102,8 +1102,8 @@
       "production_end_year": 2020,
       "model_name": "4 Series (F32, 2014-2020)",
       "variant_name": "435d xDrive",
-      "engine_code": "N57T",
-      "engine_name": "N57T 3.0L I6 Twin-Turbo Diesel",
+      "engine_code": "N57",
+      "engine_name": "N57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1465,7 +1465,7 @@
       "model_name": "4 Series (F32, 2014-2020)",
       "variant_name": "M4",
       "engine_code": "S55",
-      "engine_name": "S55 3.0L I6 Twin-Turbo",
+      "engine_name": "S55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1547,7 +1547,7 @@
       "model_name": "4 Series (F32, 2014-2020)",
       "variant_name": "M4",
       "engine_code": "S55",
-      "engine_name": "S55 3.0L I6 Twin-Turbo",
+      "engine_name": "S55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

@@ -123,8 +123,8 @@
       "production_end_year": 2024,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "620d",
-      "engine_code": "B47D20",
-      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -225,8 +225,8 @@
       "production_end_year": 2024,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "630d",
-      "engine_code": "B57D30",
-      "engine_name": "B57D30 3.0L I6 Turbo",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -286,6 +286,12 @@
         {
           "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d uses rear-wheel drive, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 630d in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g32-2018-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -317,8 +323,8 @@
       "production_end_year": 2024,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "630d xDrive",
-      "engine_code": "B57D30",
-      "engine_name": "B57D30 3.0L I6 Turbo",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -384,6 +390,12 @@
         {
           "note": "Batch 15 directly revalidated official BMW 09/2018 and 11/2020 technical-data PDFs and confirmed that the G32 630d xDrive uses AWD, 8-speed Steptronic wording, 0.640 top gear, 2.563 final drive, and 225/60 R17 baseline tires across the represented row span. The row remains a stable-field pass because the checked PDFs publish different forward and reverse ratio sets: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 with reverse 3.478 in 09/2018 versus 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with reverse 3.993 in 11/2020.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 630d xDrive in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g32-2018-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -611,8 +623,8 @@
       "production_end_year": 2024,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "640d xDrive",
-      "engine_code": "B57D30",
-      "engine_name": "B57D30 3.0L I6 Turbo",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -678,6 +690,12 @@
         {
           "note": "Batch 10 adds exact official BMW 09/2018 and 11/2020 technical-data evidence that the G32 640d xDrive uses xDrive AWD, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive. Production JSON promotes those stable exact drivetrain and gearbox-ratio fields; the repo keeps ZF8HP as an official-derived gearbox-family mapping, and the inherited default-tire value stays unresolved because the exact BMW baseline tire changes from 225/60 R17 in 09/2018 to 245/50 R18 in 11/2020.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 640d xDrive in-line 6 cylinders, 2993 cc, multi-stage charging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g32-2018-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [

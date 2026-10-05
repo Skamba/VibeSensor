@@ -191,8 +191,8 @@
     {
       "id": "bmw-f39-sdrive16d-eu-2018-dct7-fwd",
       "variant_name": "sDrive16d",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -256,6 +256,12 @@
         {
           "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact DCT7 automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
           "evidence_refs_ref": "e13"
+        },
+        {
+          "note": "Engine text from the cited X2 (F39) reference: sDrive16d 1.5 L B37 in-line 3-cylinder turbo diesel. No BMW sheet for the sDrive16d was found.",
+          "evidence_refs": [
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -280,8 +286,8 @@
     {
       "id": "bmw-f39-sdrive16d-eu-2018-zf8hp-fwd",
       "variant_name": "sDrive16d",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -345,6 +351,12 @@
         {
           "note": "Official F39 brochures prove EU-family sDrive16d front-wheel-drive existence and base tire context but do not confirm an exact 8-speed automatic row; keep this placeholder out of driveshaft/wheel order analysis until an exact official automatic or manual replacement row is built.",
           "evidence_refs_ref": "e13"
+        },
+        {
+          "note": "Engine text from the cited X2 (F39) reference: sDrive16d 1.5 L B37 in-line 3-cylinder turbo diesel. No BMW sheet for the sDrive16d was found.",
+          "evidence_refs": [
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -369,8 +381,8 @@
     {
       "id": "bmw-f39-sdrive18d-eu-2018-dct7-fwd",
       "variant_name": "sDrive18d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -434,6 +446,14 @@
         {
           "note": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e16"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive18d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -463,8 +483,8 @@
     {
       "id": "bmw-f39-sdrive18d-eu-2018-zf8hp-fwd",
       "variant_name": "sDrive18d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -554,6 +574,14 @@
         {
           "note_ref": "n17",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive18d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -769,8 +797,8 @@
     {
       "id": "bmw-f39-sdrive20i-eu-2018-dct7-fwd",
       "variant_name": "sDrive20i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -852,6 +880,13 @@
         {
           "note": "Official BMW 10/2017 and 03/2021 technical-data PDFs agree on the broad F39 sDrive20i automatic row: front-wheel drive, 7-speed Steptronic dual-clutch, 0.547 top gear, 3.789 final drive, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders.",
           "evidence_refs_ref": "e20"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive20i in-line 4 cylinders, 1998 cc, BMW TwinPower Turbo - the same engine as the xDrive20i row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -871,8 +906,8 @@
     {
       "id": "bmw-f39-sdrive20i-eu-2018-zf8hp-fwd",
       "variant_name": "sDrive20i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -936,6 +971,13 @@
         {
           "note": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e19"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive20i in-line 4 cylinders, 1998 cc, BMW TwinPower Turbo - the same engine as the xDrive20i row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -960,8 +1002,8 @@
     {
       "id": "bmw-f39-sdrive28i-eu-2018-dct7-fwd",
       "variant_name": "sDrive28i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1015,6 +1057,14 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text: BMW USA states a 2.0-litre BMW TwinPower Turbo 4-cylinder (1998 cc) for the X2 28i; layout and family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+            "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1039,8 +1089,8 @@
     {
       "id": "bmw-f39-sdrive28i-eu-2018-zf8hp-fwd",
       "variant_name": "sDrive28i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1094,6 +1144,14 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text: BMW USA states a 2.0-litre BMW TwinPower Turbo 4-cylinder (1998 cc) for the X2 28i; layout and family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+            "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1118,8 +1176,8 @@
     {
       "id": "bmw-f39-xdrive20d-eu-2018-dct7-awd",
       "variant_name": "xDrive20d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1189,6 +1247,14 @@
         {
           "note": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: xDrive20d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1218,8 +1284,8 @@
     {
       "id": "bmw-f39-xdrive20d-eu-2018-zf8hp-awd",
       "variant_name": "xDrive20d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1312,6 +1378,14 @@
         {
           "note_ref": "n17",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "note": "Engine text from the 2018 and 2021 X2 technical data: xDrive20d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1539,8 +1613,8 @@
     {
       "id": "bmw-f39-xdrive25d-eu-2018-dct7-awd",
       "variant_name": "xDrive25d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1610,6 +1684,13 @@
         {
           "note": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2021 X2 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1634,8 +1715,8 @@
     {
       "id": "bmw-f39-xdrive25d-eu-2018-zf8hp-awd",
       "variant_name": "xDrive25d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1724,6 +1805,13 @@
         {
           "note_ref": "n17",
           "evidence_refs_ref": "e17"
+        },
+        {
+          "note": "Engine text from the 2021 X2 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -1743,9 +1831,9 @@
     {
       "id": "bmw-f39-xdrive25e-eu-2018-dct7-awd",
       "variant_name": "xDrive25e",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L B38 turbo + electric motor (PHEV)",
-      "fuel_type": "EV",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo PHEV",
+      "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "unverified",
         "notes_ref": "n12",
@@ -1814,6 +1902,13 @@
         {
           "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
           "evidence_refs_ref": "e22"
+        },
+        {
+          "note": "Engine text from the 2020 xDrive25e and 2021 X2 technical data: in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive (plug-in hybrid, so fuel type PHEV, not EV).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1838,9 +1933,9 @@
     {
       "id": "bmw-f39-xdrive25e-eu-2018-zf8hp-awd",
       "variant_name": "xDrive25e",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L B38 turbo + electric motor (PHEV)",
-      "fuel_type": "EV",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo PHEV",
+      "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "unverified",
         "notes_ref": "n13",
@@ -1909,6 +2004,13 @@
         {
           "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
           "evidence_refs_ref": "e22"
+        },
+        {
+          "note": "Engine text from the 2020 xDrive25e and 2021 X2 technical data: in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive (plug-in hybrid, so fuel type PHEV, not EV).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1933,8 +2035,8 @@
     {
       "id": "bmw-f39-xdrive28i-eu-2018-dct7-awd",
       "variant_name": "xDrive28i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1994,6 +2096,13 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not an EU DCT7 row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text: BMW USA states a 2.0-litre BMW TwinPower Turbo 4-cylinder (1998 cc) for the X2 xDrive28i; layout and family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [
@@ -2018,8 +2127,8 @@
     {
       "id": "bmw-f39-xdrive28i-eu-2018-zf8hp-awd",
       "variant_name": "xDrive28i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -2079,6 +2188,13 @@
         {
           "note": "Official 28i evidence recovered in this run is USA-market only; it supports xDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
+        },
+        {
+          "note": "Engine text: BMW USA states a 2.0-litre BMW TwinPower Turbo 4-cylinder (1998 cc) for the X2 xDrive28i; layout and family code from the cited X2 (F39) reference.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
+            "secondary_technical_sources:bmw-x2-f39-wikipedia"
+          ]
         }
       ],
       "unresolved": [

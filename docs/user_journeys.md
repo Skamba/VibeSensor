@@ -555,7 +555,7 @@ changes and update this table.
 | Metric | Value |
 |---|---|
 | Brands | Audi (212 rows), BMW (330 rows); market EU only |
-| Exact configuration rows | 542 (ICE 495, PHEV 28, EV 19) |
+| Exact configuration rows | 542 (ICE 495, PHEV 30, EV 17) |
 | Picker models / generation codes / variants | 91 / 70 / 411 |
 | Production years | 2007–2026 |
 | Rows with tire options | 541 (1 has the default only) |

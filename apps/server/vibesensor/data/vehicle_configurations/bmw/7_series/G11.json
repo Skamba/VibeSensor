@@ -273,8 +273,8 @@
       "production_end_year": 2016,
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "725Ld",
-      "engine_code": "B47D20",
-      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -351,8 +351,8 @@
       "production_end_year": 2016,
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "725d",
-      "engine_code": "B47D20",
-      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -430,7 +430,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "730Ld",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -487,6 +487,12 @@
         {
           "note": "The official BMW 11/2015 technical-data PDF closes the exact 7 Series Sedan 730Ld launch-state mapping: RWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, reverse 3.478, 2.563 rear final drive, and 225/60 R17 baseline tires. This row is narrowed to the supported 2016-only state because later exact numeric continuity was not recovered in this pass.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "note": "Engine text from the 11/2015 730d/730Ld technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-730d-2015-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -597,7 +603,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "730d",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -654,6 +660,12 @@
         {
           "note": "The official BMW 11/2015 technical-data PDF closes the exact 7 Series Sedan 730d launch-state mapping: RWD, 8-speed Steptronic/ZF8HP mapping, full forward ratios, reverse 3.478, 2.563 rear final drive, and 225/60 R17 baseline tires. This row is narrowed to the supported 2016-only state because later exact numeric continuity was not recovered in this pass.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "note": "Engine text from the 11/2015 730d technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-730d-2015-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -764,7 +776,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "740Ld",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -818,6 +830,12 @@
         {
           "note": "Official G11/G12 sources found in this run support 740Ld as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e14"
+        },
+        {
+          "note": "Engine text from the 11/2015 740d/740Ld xDrive technical data: in-line 6 cylinders, 2993 cc, multi-stage charging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -851,7 +869,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "740Le",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo + electric motor (PHEV)",
+      "engine_name": "2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1023,7 +1041,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "740d",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1077,6 +1095,12 @@
         {
           "note": "Official G11/G12 sources found in this run support 740d as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e14"
+        },
+        {
+          "note": "Engine text from the 11/2015 740d xDrive technical data: in-line 6 cylinders, 2993 cc, multi-stage charging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-740d-xdrive-2015-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1110,7 +1134,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "740e",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo + electric motor (PHEV)",
+      "engine_name": "2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1282,7 +1306,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "750Ld",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1336,6 +1360,12 @@
         {
           "note": "Official Germany catalog and later BMW technical-data evidence found in this run support 750Ld as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "Engine text from the 2019 7 Series technical data: 750Ld xDrive in-line 6 cylinders, 2993 cc, multi-stage turbocharging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1364,7 +1394,7 @@
       "model_name": "7 Series (G11, 2016)",
       "variant_name": "750d",
       "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_name": "3.0L I6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1418,6 +1448,12 @@
         {
           "note": "Official Germany catalog and later BMW technical-data evidence found in this run support 750d as xDrive/AWD, not the current rear-wheel-drive placeholder. Keep the RWD row no-confidence and unavailable for driveshaft/wheel order analysis until it is converted or replaced with an exact xDrive row.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "Engine text from the 2019 7 Series technical data: 750d xDrive in-line 6 cylinders, 2993 cc, multi-stage turbocharging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -1614,8 +1650,8 @@
       "production_end_year": 2022,
       "model_name": "7 Series (G11, 2019-2022)",
       "variant_name": "745Le",
-      "engine_code": "3.0L",
-      "engine_name": "3.0L I6 Turbo",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1672,6 +1708,12 @@
         {
           "note": "The official BMW 01/2019 facelift press kit and paired technical-data PDF close the exact 745Le rear-wheel-drive plug-in-hybrid mapping: 2019-on facelift timing, RWD, 8-speed Steptronic/ZF8HP mapping, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, rear final drive 3.077, and 245/50 R18 baseline tires. This row keeps only the baseline wheel package because the broader optional wheel matrix was not recovered from a direct official source in this pass.",
           "evidence_refs_ref": "e19"
+        },
+        {
+          "note": "Engine text from the 2019 7 Series technical data: 745Le in-line 6 cylinders, 2998 cc, TwinScroll turbocharger, plus BMW eDrive - the same engine as the 745e row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g11-745e-2019-spec-pdf"
+          ]
         }
       ],
       "unresolved": [

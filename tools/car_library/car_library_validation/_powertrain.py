@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 
 from car_library_validation._common import (
@@ -18,6 +19,16 @@ from car_library_validation._common import (
     text,
 )
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
+
+# `<family code> <litres>L <layout> [Turbo] [Diesel] [PHEV]`, or an EV motor
+# count; see docs/car_library_architecture.md "Data conventions".
+ENGINE_TEXT_PATTERN = re.compile(
+    r"^(?:(?P<code>[A-Z][A-Z0-9]{1,7}) )?(?P<litres>\d\.\d)L "
+    r"(?:I3|I4|I5|I6|V6|V8|V10|V12)(?: Turbo)?(?: Diesel)?(?P<phev> PHEV)?$"
+    r"|^(?P<ev>Electric (?:Single|Dual) Motor)$"
+)
+# Brands whose rows already follow the engine-text format.
+ENGINE_TEXT_BRANDS = frozenset({"BMW"})
 
 
 def validate_gearboxes(
@@ -251,5 +262,58 @@ def validate_final_drive_layout(
                 rule="drivetrain_final_drive_layout",
                 entity=entity,
                 message=f"{label} does not expose any driven final-drive ratio",
+            )
+        )
+
+
+def validate_engine_text(
+    config: VehicleConfiguration,
+    *,
+    entity: str,
+    label: str,
+    issues: list[CarLibraryValidationIssue],
+) -> None:
+    if config.brand not in ENGINE_TEXT_BRANDS:
+        return
+    engine_name = config.engine_name or ""
+    match = ENGINE_TEXT_PATTERN.match(engine_name)
+    if match is None:
+        issues.append(
+            CarLibraryValidationIssue(
+                rule="engine_text_format",
+                entity=entity,
+                message=(
+                    f"{label} engine {engine_name!r} does not read "
+                    "'<code> <litres>L <layout> [Turbo] [Diesel] [PHEV]'"
+                ),
+            )
+        )
+        return
+    text_fuel = "EV" if match.group("ev") else "PHEV" if match.group("phev") else "ICE"
+    if text_fuel != config.fuel_type:
+        issues.append(
+            CarLibraryValidationIssue(
+                rule="engine_text_fuel_type",
+                entity=entity,
+                message=(
+                    f"{label} engine {engine_name!r} implies {text_fuel} "
+                    f"but fuel_type={config.fuel_type!r}"
+                ),
+            )
+        )
+    expected_code = (
+        "Electric"
+        if match.group("ev")
+        else match.group("code") or f"{match.group('litres')}L"
+    )
+    if config.engine_code != expected_code:
+        issues.append(
+            CarLibraryValidationIssue(
+                rule="engine_code_mismatch",
+                entity=entity,
+                message=(
+                    f"{label} engine_code={config.engine_code!r} "
+                    f"does not match engine {engine_name!r} (expected {expected_code!r})"
+                ),
             )
         )

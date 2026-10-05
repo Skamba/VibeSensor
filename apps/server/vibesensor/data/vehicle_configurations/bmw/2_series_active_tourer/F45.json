@@ -140,8 +140,8 @@
       "production_end_year": 2015,
       "model_name": "2 Series Active Tourer (F45, 2014-2015)",
       "variant_name": "214d",
-      "engine_code": "B37C15",
-      "engine_name": "B37C15 I3 Turbo",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -216,6 +216,12 @@
         {
           "note": "Checked official BMW spring 2015 launch material and the exact 03/2015 214d specifications PDF directly. That exact F45 sheet introduces the 214d from 03/2015 and publishes only a six-speed manual state with forward ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, final drive 3.632, and 205/60 R16 baseline tires. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "note": "Engine text from the 214d technical data (2015): in-line 3 cylinders, 1496 cc, variable-geometry turbocharger, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-214d-2015-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -249,8 +255,8 @@
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
       "variant_name": "216d",
-      "engine_code": "B37C15",
-      "engine_name": "B37C15 I3 Turbo",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -325,6 +331,12 @@
         {
           "note": "This research wave extends the earlier contradiction note with start-year evidence from the official 02/2014 BMW F45 launch article. That launch article lists only 218i, 225i, and 218d as the launch engine set, so it does not support a 2014 216d row. The checked 01/2018 and 11/2020 specifications PDFs then publish the later 216d only with six-speed manual or optional seven-speed Steptronic with double clutch and 205/60 R16 baseline tires, never with eight-speed Steptronic. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e11"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 216d in-line 3 cylinders, 1496 cc, variable-geometry turbocharger, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -356,8 +368,8 @@
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
       "variant_name": "216i",
-      "engine_code": "B38A15U0",
-      "engine_name": "B38A15U0 I3 Turbo",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -432,6 +444,12 @@
         {
           "note": "This research wave extends the earlier contradiction note with start-year evidence from the official 02/2014 BMW F45 launch article. That launch article lists only 218i, 225i, and 218d as the launch engine set, so it does not support a 2014 216i row. The checked 01/2018 and 11/2020 specifications PDFs then publish the later 216i only with six-speed manual and 205/60 R16 baseline tires, with no automatic row at all. This represented 2014 ZF8HP configuration therefore remains an unsupported advisory row rather than a validated exact state.",
           "evidence_refs_ref": "e11"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 216i in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -575,8 +593,8 @@
       "production_end_year": 2017,
       "model_name": "2 Series Active Tourer (F45, 2014-2021)",
       "variant_name": "225i",
-      "engine_code": "B48A20O0",
-      "engine_name": "B48A20O0 I4 Turbo",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -660,6 +678,12 @@
         {
           "note": "Reverse gear ratio (research note): 4.015",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 225i xDrive in-line 4 cylinders, 1998 cc, TwinScroll turbocharger.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -801,8 +825,8 @@
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2018)",
       "variant_name": "218d",
-      "engine_code": "B47C20",
-      "engine_name": "B47C20 I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -870,6 +894,12 @@
         {
           "note": "Official BMW 01/2018 specifications PDF now confirms the exact 218d Active Tourer automatic state with front-wheel drive, optional Eight-speed Steptronic wording, bracketed automatic forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, reverse 4.221, and 205/60 R16 baseline tires. Production JSON narrows the broad row to the supported 2018-only state because this pass did not recover a year-by-year official source chain proving the same package across the original 2014-2021 span.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 218d in-line 4 cylinders, 1995 cc, variable-geometry turbocharger, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -901,8 +931,8 @@
       "production_end_year": 2021,
       "model_name": "2 Series Active Tourer (F45, 2018)",
       "variant_name": "220d",
-      "engine_code": "B47C20",
-      "engine_name": "B47C20 I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -989,6 +1019,12 @@
         {
           "note": "Reverse gear ratio (research note): 4.221",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 220d in-line 4 cylinders, 1995 cc, multi-stage charging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "unresolved": [

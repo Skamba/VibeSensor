@@ -323,8 +323,8 @@
       "production_start_year": 2014,
       "production_end_year": 2016,
       "variant_name": "228i",
-      "engine_code": "B48B20",
-      "engine_name": "B48B20 2.0L I4 Turbo",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -414,8 +414,8 @@
       "production_start_year": 2014,
       "production_end_year": 2016,
       "variant_name": "228i",
-      "engine_code": "B48B20",
-      "engine_name": "B48B20 2.0L I4 Turbo",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -725,8 +725,8 @@
       "production_start_year": 2014,
       "production_end_year": 2021,
       "variant_name": "M2",
-      "engine_code": "B58B30O0",
-      "engine_name": "B58B30O0 3.0L I6 Turbo",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -786,6 +786,12 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Engine text: the cited M2 launch material states a three-litre six-cylinder in-line engine with M TwinPower Turbo and names no B58; the earlier B58 code is dropped.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -822,8 +828,8 @@
       "production_start_year": 2014,
       "production_end_year": 2021,
       "variant_name": "M2",
-      "engine_code": "B58B30O0",
-      "engine_name": "B58B30O0 3.0L I6 Turbo",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -883,6 +889,12 @@
         {
           "note_ref": "n3",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "Engine text: the cited M2 launch material states a three-litre six-cylinder in-line engine with M TwinPower Turbo and names no B58; the earlier B58 code is dropped.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+          ]
         }
       ],
       "unresolved": [
@@ -919,8 +931,8 @@
       "production_start_year": 2014,
       "production_end_year": 2021,
       "variant_name": "M2 Competition",
-      "engine_code": "S55B30T0",
-      "engine_name": "S55B30T0 3.0L I6 Turbo",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1016,8 +1028,8 @@
       "production_start_year": 2014,
       "production_end_year": 2021,
       "variant_name": "M2 Competition",
-      "engine_code": "S55B30T0",
-      "engine_name": "S55B30T0 3.0L I6 Turbo",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
