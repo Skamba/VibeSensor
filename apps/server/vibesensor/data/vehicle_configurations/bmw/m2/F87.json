@@ -1,0 +1,341 @@
+{
+  "definitions": {
+    "notes": {
+      "n_m2": "Official BMW 10/2015 M2 Coupe technical data: in-line six 2979 cc M TwinPower Turbo (N55B30T0), rear-wheel drive, 6-speed manual I-VI 4.110/2.315/1.542/1.179/1.000/0.846 and optional 7-speed M DCT I-VII 4.806/2.593/1.701/1.277/1.000/0.844/0.671, final drive 3.462 for both, tyres 245/35 ZR19 front and 265/35 ZR19 rear.",
+      "n_m2c": "Official BMW 06/2018 M2 Competition technical data prints the same gear ratios, final drive 3.462 and 245/35 ZR19 / 265/35 ZR19 tyres as the M2, with the 302 kW engine; BMW's 2020MY M2 product guide (Canada) prints the identical ratios, final drive and tyres for the M2 Competition and names the engine S55B30T0."
+    },
+    "evidence_ref_sets": {
+      "e_m2": [
+        "bmw_pressclub_sources:f87-m2-2016-launch-pdf"
+      ],
+      "e_m2c": [
+        "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf",
+        "bmw_pressclub_sources:f87-m2-2020my-canada-product-guide-pdf"
+      ]
+    },
+    "tire_setups": {
+      "std_19": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2",
+        "notes_ref": "n_m2",
+        "front": {
+          "width_mm": 245.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 265.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      }
+    }
+  },
+  "defaults": {
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F87",
+    "body_code": "F87",
+    "model_name": "M2 (F87, 2016-2020)"
+  },
+  "configurations": [
+    {
+      "id": "bmw-f87-m2-eu-2016-mt6-rwd",
+      "production_start_year": 2016,
+      "production_end_year": 2018,
+      "variant_name": "M2",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2",
+        "notes_ref": "n_m2",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2",
+        "notes_ref": "n_m2",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": 0.846
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": 3.462
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        }
+      },
+      "tires": {
+        "default_ref": "std_19",
+        "options": [
+          {
+            "name": "Standard 19\" staggered",
+            "setup_ref": "std_19"
+          }
+        ]
+      },
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the F87 M2",
+          "reason": "The checked official sheets publish only the standard tyres.",
+          "evidence_refs_ref": "e_m2"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Years: the 10/2015 sheet is the launch state (sales from 2016); the 07/2018 BMW M2 Competition press kit says the M2 Competition replaces the M2 Coupe, so the M2 ends in 2018.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f87-m2-2016-launch-pdf",
+            "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmw-f87-m2-eu-2016-dct7-rwd",
+      "production_start_year": 2016,
+      "production_end_year": 2018,
+      "variant_name": "M2",
+      "engine_code": "N55",
+      "engine_name": "N55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2",
+        "notes_ref": "n_m2",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2",
+        "notes_ref": "n_m2",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (M-DCT)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": 0.671
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": 3.462
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2",
+          "notes_ref": "n_m2",
+          "value": [
+            4.806,
+            2.593,
+            1.701,
+            1.277,
+            1.0,
+            0.844,
+            0.671
+          ]
+        }
+      },
+      "tires": {
+        "default_ref": "std_19",
+        "options": [
+          {
+            "name": "Standard 19\" staggered",
+            "setup_ref": "std_19"
+          }
+        ]
+      },
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the F87 M2",
+          "reason": "The checked official sheets publish only the standard tyres.",
+          "evidence_refs_ref": "e_m2"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Years: the 10/2015 sheet is the launch state (sales from 2016); the 07/2018 BMW M2 Competition press kit says the M2 Competition replaces the M2 Coupe, so the M2 ends in 2018.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f87-m2-2016-launch-pdf",
+            "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bmw-f87-m2-competition-eu-2018-mt6-rwd",
+      "production_start_year": 2018,
+      "production_end_year": 2020,
+      "variant_name": "M2 Competition",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2c",
+        "notes_ref": "n_m2c",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2c",
+        "notes_ref": "n_m2c",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": 0.846
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": 3.462
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        }
+      },
+      "tires": {
+        "default_ref": "std_19",
+        "options": [
+          {
+            "name": "Standard 19\" staggered",
+            "setup_ref": "std_19"
+          }
+        ]
+      },
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the F87 M2 Competition",
+          "reason": "The checked official sheets publish only the standard tyres.",
+          "evidence_refs_ref": "e_m2c"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Years: the 06/2018 sheet starts the M2 Competition in 2018 (valid from mid-2018); BMW's 2020MY product guide prints the same drivetrain, so the row runs to 2020. That guide is for Canada; no EU sheet after 06/2018 was checked.",
+          "evidence_refs_ref": "e_m2c"
+        }
+      ]
+    },
+    {
+      "id": "bmw-f87-m2-competition-eu-2018-dct7-rwd",
+      "production_start_year": 2018,
+      "production_end_year": 2020,
+      "variant_name": "M2 Competition",
+      "engine_code": "S55",
+      "engine_name": "S55 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2c",
+        "notes_ref": "n_m2c",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_m2c",
+        "notes_ref": "n_m2c",
+        "code": "DCT7",
+        "name": "7-speed dual-clutch (M-DCT)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": 0.671
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": 3.462
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e_m2c",
+          "notes_ref": "n_m2c",
+          "value": [
+            4.806,
+            2.593,
+            1.701,
+            1.277,
+            1.0,
+            0.844,
+            0.671
+          ]
+        }
+      },
+      "tires": {
+        "default_ref": "std_19",
+        "options": [
+          {
+            "name": "Standard 19\" staggered",
+            "setup_ref": "std_19"
+          }
+        ]
+      },
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the F87 M2 Competition",
+          "reason": "The checked official sheets publish only the standard tyres.",
+          "evidence_refs_ref": "e_m2c"
+        }
+      ],
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Years: the 06/2018 sheet starts the M2 Competition in 2018 (valid from mid-2018); BMW's 2020MY product guide prints the same drivetrain, so the row runs to 2020. That guide is for Canada; no EU sheet after 06/2018 was checked.",
+          "evidence_refs_ref": "e_m2c"
+        }
+      ]
+    }
+  ]
+}

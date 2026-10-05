@@ -108,35 +108,71 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
-          "notes": "The official BMW UK iX2 technical-data page lists a 1-speed automatic transmission. The repo's EV ratio model represents that single-speed gearbox with a normalized top-gear value of 1.0 while reducer and final-drive details remain unresolved.",
-          "value": 1.0
+          "notes": "The official BMW UK iX2 technical-data page lists a 1-speed automatic transmission and the 10/2023 X2 technical-data PDF a single-speed automatic with fixed ratio. The repo's EV ratio model represents that gearbox with a normalized top-gear value of 1.0.",
+          "value": 1.0,
+          "evidence_refs": [
+            "bmw_market_pages:u10-ix2-technical-data-uk",
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+          ]
         },
         "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.636
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2023 X2 technical-data PDF publishes the front electric-motor (eDrive 5.0 M170SF) gear ratio for the iX2 xDrive30 as 11.190.",
+          "value": 11.19
         },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.636
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2023 X2 technical-data PDF publishes the rear electric-motor (eDrive 5.0 M170SR) gear ratio for the iX2 xDrive30 as 10.050.",
+          "value": 10.05
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2023 X2 technical-data PDF publishes 205/65 R17 100Y XL front and rear for the iX2 xDrive30.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+            ],
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
             "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
+            "name": "18\" package"
           },
           {
             "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
+            "name": "19\" package"
           },
           {
             "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
+            "name": "20\" package"
           }
-        ],
-        "default_ref": "setup_225_18"
+        ]
       },
       "verification_notes": [
         {
@@ -146,24 +182,24 @@
         {
           "note": "The official BMW UK technical-data page for the exact IX25 iX2 xDrive30 page identity lists a 1-speed automatic transmission. This pass therefore normalizes the row to the repo's SS1 single-speed EV transmission while leaving reducer ratios, final drives, and exact tire dimensions unresolved until a fuller technical sheet is recovered.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "The official BMW 10/2023 X2 technical-data PDF lists the iX2 xDrive30 with one motor per axle, front gear ratio 11.190, rear gear ratio 10.050 (the same as the iX1 xDrive30) and 205/65 R17 tyres. The earlier 3.636 front and rear values were copied from the petrol dual-clutch rows without a source and are replaced.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW iX2 xDrive30 exact reducer and final-drive mapping",
-          "reason": "The checked official BMW sources prove the AWD EV identity and 1-speed transmission shape, but this pass did not recover a technical-data sheet with the exact reducer or final-drive values for the U10 iX2 xDrive30 row.",
+          "item": "Optional wheel/tyre sizes for the U10 iX2 xDrive30",
+          "reason": "The checked official sheet publishes only the standard 205/65 R17 tyre; the 18-20 inch options are inherited family defaults.",
           "evidence_refs": [
-            "bmw_pressclub_sources:u10-ix2-launch-article",
-            "bmw_market_pages:u10-ix2-technical-data-uk"
+            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
           ]
-        },
-        {
-          "item": "BMW iX2 xDrive30 exact 17-inch baseline tire size and full wheel matrix",
-          "reason": "The official BMW launch article proves the exact iX2 xDrive30 rides on 17-inch wheels as standard, which contradicts the inherited 18-inch default stored on the row today, but this pass did not recover an official sheet with the precise baseline tire dimensions or the full optional wheel/tire matrix.",
-          "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-u10-sdrive20i-eu-2024-dct7-fwd",

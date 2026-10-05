@@ -1048,7 +1048,7 @@
       "id": "bmw_pressclub_sources:u10-x2-2023-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0437451EN/608982",
       "title": "BMW PressClub U10 X2 2023 technical specifications PDF",
-      "note": "Official BMW 10/2023 technical-data PDF for the new X2 range used for the exact X2 sDrive20i launch-standard 225/55 R18 tires and the published seven-speed dual-clutch overall-ratio table.",
+      "note": "Official BMW 10/2023 technical-data PDF for the new X2 range (iX2 xDrive30, sDrive20i, M35i xDrive, sDrive18d). It gives the iX2 xDrive30 front and rear motor gear ratios 11.190 / 10.050 with 205/65 R17 100Y XL tyres, the sDrive20i 225/55 R18 102Y XL launch-standard tyres, and the seven-speed dual-clutch ratios of the combustion models only as overall (gear x final drive) ratios.",
       "confidence": "high"
     },
     {
@@ -1432,15 +1432,22 @@
     {
       "id": "bmw_pressclub_sources:f87-m2-2016-launch-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0238042EN/368917",
-      "title": "BMW PressClub: F87 M2 2016 launch tech-data PDF (T0238042EN/368917)",
-      "note": "F87 M2 (2016 launch) technical-data PDF. Confirms F87 chassis code (NOT F22), N55B30T0 inline-six engine, MT6 standard (Getrag GS6-45BZ) and M-DCT 7 (Getrag GS7D36BG / 7DCI600) optional, RWD, staggered 245/35 ZR19 front + 265/35 ZR19 rear default tyres, FD 3.462. Contradicts the F22 shard's M2 rows which incorrectly placed M2 in F22 with ZF8HP and B58 engine.",
+      "title": "BMW PressClub: F87 M2 Coupe 10/2015 press kit with technical data (T0238042EN/368917)",
+      "note": "Official BMW 10/2015 M2 Coupe press kit. Its specifications list rear-wheel drive, an in-line six of 2979 cc with M TwinPower Turbo (power curve labelled N55B30T0), a 6-speed manual I-VI 4.110/2.315/1.542/1.179/1.000/0.846 and an optional 7-speed M DCT I-VII 4.806/2.593/1.701/1.277/1.000/0.844/0.671, final drive 3.462 for both, and 245/35 ZR19 front with 265/35 ZR19 rear tyres. The M2 is chassis F87, not F22.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:f87-m2-competition-2018-launch-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0279885EN/415275",
-      "title": "BMW PressClub: F87 M2 Competition 2018 launch tech-data PDF (T0279885EN/415275)",
-      "note": "F87 M2 Competition (2018 launch) technical-data PDF. Confirms F87 chassis code (NOT F22), S55B30T0 inline-six engine (carried over from F80 M3 / F82 M4 architecture), MT6 standard (Getrag GS6-45BZ) and M-DCT 7 (Getrag GS7D36BG / 7DCI600) optional, RWD, staggered 245/35 ZR19 front + 265/35 ZR19 rear default tyres. M2 Competition has no 8-speed Steptronic / ZF8HP option.",
+      "title": "BMW PressClub: F87 M2 Competition 06/2018 technical data PDF (T0279885EN/415275)",
+      "note": "Official BMW 06/2018 M2 Competition technical data: 302 kW in-line six of 2979 cc, the same 6-speed manual and 7-speed M DCT ratios as the M2, final drive 3.462, and 245/35 ZR19 front with 265/35 ZR19 rear tyres. The accompanying 07/2018 press kit (article T0279885EN) says the M2 Competition replaces the M2 Coupe.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f87-m2-2020my-canada-product-guide-pdf",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0304262EN/444924",
+      "title": "BMW PressClub Canada: BMW M2 2020MY product guide PDF (T0304262EN/444924)",
+      "note": "Official BMW Canada 2020MY product guide for the M2 Competition and M2 CS: S55B30T0 engine, rear-wheel drive, 6-speed manual I-VI 4.11/2.315/1.542/1.179/1/0.846 and 7-speed DCT I-VII 4.806/2.593/1.701/1.277/1/0.844/0.671, final drive 3.462, and 245/35 ZR19 front with 265/35 ZR19 rear tyres. Used as the continuity source that the M2 Competition drivetrain was unchanged through 2020.",
       "confidence": "high"
     },
     {
