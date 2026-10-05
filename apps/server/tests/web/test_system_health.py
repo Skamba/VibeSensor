@@ -155,7 +155,7 @@ class TestBuildSystemHealthSnapshotOk:
         registry, run_recorder = _make_deps()
         registry.active_client_ids.return_value = ["sensor-a"]
         registry.get.return_value = SimpleNamespace(
-            firmware_version="2026.10.5+0123456789ab",
+            firmware_version="fw-20261005.1200+0123456789ab",
             sample_rate_hz=800,
             frames_dropped=5,
             expected_frames_dropped=3,
@@ -196,7 +196,7 @@ class TestBuildSystemHealthSnapshotOk:
             registry,
             run_recorder,
             ingest_diagnostics=ingest_diagnostics,
-            bundled_firmware_version="2026.10.5+0123456789ab",
+            bundled_firmware_version="fw-20261005.1200+0123456789ab",
         )
 
         assert result["ingest"]["udp"]["max_packet_queue_age_ms"] == 20.0
@@ -206,7 +206,7 @@ class TestBuildSystemHealthSnapshotOk:
         assert result["ingest"]["ws_publish"]["max_publish_duration_ms"] == 12.0
         [client] = result["ingest"]["clients"]
         assert client["client_id"] == "sensor-a"
-        assert client["firmware_version"] == "2026.10.5+0123456789ab"
+        assert client["firmware_version"] == "fw-20261005.1200+0123456789ab"
         assert client["firmware_status"] == "current"
         assert client["advertised_sample_rate_hz"] == 800
         assert client["estimated_ingest_hz"] == 400.0
@@ -247,7 +247,7 @@ class TestBuildSystemHealthSnapshotOk:
             _ready_health_state(),
             registry,
             run_recorder,
-            bundled_firmware_version="2026.10.5+0123456789ab",
+            bundled_firmware_version="fw-20261005.1200+0123456789ab",
         )
 
         [client] = result["ingest"]["clients"]

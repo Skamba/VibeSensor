@@ -341,11 +341,11 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
 def test_get_clients_compares_each_sensor_firmware_with_the_bundled_build(
     client_rig: _ClientRig,
 ) -> None:
-    bundled = "2026.10.5+0123456789ab"
+    bundled = "fw-20261005.1200+0123456789ab"
     for client_hex, firmware_version in (
         ("001122334455", bundled),
         ("001122334466", "esp32-atom-0.1"),  # firmware from before version stamping
-        ("001122334477", "0.0.0-dev+fedcba987654"),
+        ("001122334477", "fw-20261006.0900+fedcba987654"),  # newer than the bundle
     ):
         client_rig.registry.update_from_hello(
             _hello(client_hex, firmware_version=firmware_version),
@@ -360,5 +360,5 @@ def test_get_clients_compares_each_sensor_firmware_with_the_bundled_build(
     assert {row["id"]: (row["firmware_version"], row["firmware_status"]) for row in rows} == {
         "001122334455": (bundled, "current"),
         "001122334466": ("esp32-atom-0.1", "outdated"),
-        "001122334477": ("0.0.0-dev+fedcba987654", "unknown"),
+        "001122334477": ("fw-20261006.0900+fedcba987654", "unknown"),
     }

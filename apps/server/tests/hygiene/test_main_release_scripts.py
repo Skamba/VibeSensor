@@ -197,7 +197,7 @@ def _partition_entry(subtype: int, offset: int, size: int, label: bytes) -> byte
     )
 
 
-_FIRMWARE_VERSION = "2026.10.5+0123456789ab"
+_FIRMWARE_VERSION = "fw-20261005.1200+0123456789ab"
 
 
 def _app_image(chip_id: int, *, version_stamp: bytes | None = None) -> bytes:

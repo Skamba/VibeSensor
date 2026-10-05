@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from vibesensor.domain.sensor_firmware import is_firmware_identity
 from vibesensor.updates.artifact_validation import wheel_metadata_validation_errors
 from vibesensor.updates.boot_check import not_working_reason
 from vibesensor.updates.firmware.esp_flash_types import SENSOR_FIRMWARE_ENV
@@ -103,8 +104,11 @@ def validate_firmware_dist(dist_dir: Path) -> list[str]:
             errors.append(f"{prefix}.chip must name the esptool chip")
 
         firmware_version = environment.get("firmware_version", "")
-        if not isinstance(firmware_version, str) or not firmware_version:
-            errors.append(f"{prefix}.firmware_version must name the version the image reports")
+        if not isinstance(firmware_version, str) or not is_firmware_identity(firmware_version):
+            errors.append(
+                f"{prefix}.firmware_version must be the build identity the image reports "
+                "(fw-<date>+<digest>)"
+            )
 
         segments = environment.get("segments", [])
         if not isinstance(segments, list) or not segments:

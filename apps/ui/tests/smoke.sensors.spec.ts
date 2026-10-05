@@ -230,7 +230,7 @@ test("journey: an outdated sensor shows its firmware and the USB update path", a
           id: OFFLINE_ID,
           name: "Rear Right",
           mac_address: OFFLINE_ID,
-          firmware_version: "2026.10.5+0123456789ab",
+          firmware_version: "fw-20261005.1200+0123456789ab",
           firmware_status: "current",
         },
       ],
@@ -245,7 +245,7 @@ test("journey: an outdated sensor shows its firmware and the USB update path", a
   ).toHaveText(/Firmware esp32-atom-0\.1\s*outdated/);
   await expect(
     page.locator(`tr[data-client-id="${OFFLINE_ID}"] [data-firmware-status]`),
-  ).toHaveText(/Firmware 2026\.10\.5\+0123456789ab\s*up to date/);
+  ).toHaveText(/Firmware fw-20261005\.1200\+0123456789ab\s*up to date/);
   const notice = page.locator("#sensorFirmwareNotice");
   await expect(notice).toContainText(
     "1 sensor runs older firmware than this Pi provides.",

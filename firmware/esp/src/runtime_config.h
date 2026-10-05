@@ -11,7 +11,7 @@ namespace vibesensor::runtime {
 
 constexpr char kClientName[] = "vibe-node";
 
-// <release version>+<commit>, defined at build time by
+// Build identity fw-<date>+<digest of the build inputs>, defined at build time by
 // tools/firmware/firmware_build_version.py (PlatformIO extra script).
 #ifndef VIBESENSOR_FIRMWARE_VERSION
 #define VIBESENSOR_FIRMWARE_VERSION "0.0.0-dev"

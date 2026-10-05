@@ -19,17 +19,17 @@ def test_bundled_version_follows_the_bundle_the_flasher_uses(tmp_path: Path) -> 
     cache = _cache(tmp_path)
     assert cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV) == ""
 
-    write_firmware_bundle(cache.baseline_dir, firmware_version="2026.10.4+aaaaaaaaaaaa")
-    assert cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV) == "2026.10.4+aaaaaaaaaaaa"
+    write_firmware_bundle(cache.baseline_dir, firmware_version="fw-20261004.1200+aaaaaaaaaaaa")
+    assert cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV) == "fw-20261004.1200+aaaaaaaaaaaa"
 
     # A refresh activates a downloaded bundle, which takes precedence.
-    write_firmware_bundle(cache.current_dir, firmware_version="2026.10.5+bbbbbbbbbbbb")
-    assert cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV) == "2026.10.5+bbbbbbbbbbbb"
+    write_firmware_bundle(cache.current_dir, firmware_version="fw-20261005.1200+bbbbbbbbbbbb")
+    assert cache.bundled_firmware_version(SENSOR_FIRMWARE_ENV) == "fw-20261005.1200+bbbbbbbbbbbb"
 
     # A corrupt download falls back to the baseline, as flashing does.
     (cache.current_dir / SENSOR_FIRMWARE_ENV / "firmware.bin").write_bytes(b"truncated")
     assert _cache(tmp_path).bundled_firmware_version(SENSOR_FIRMWARE_ENV) == (
-        "2026.10.4+aaaaaaaaaaaa"
+        "fw-20261004.1200+aaaaaaaaaaaa"
     )
 
 

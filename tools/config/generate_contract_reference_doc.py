@@ -108,11 +108,12 @@ This document is generated from code and shared contract files.
   keeps streaming across a server restart and says HELLO only every 2 s, so the
   server predicts that port for DATA that arrives before the first HELLO (to
   start clock sync at once); the announced port replaces the prediction.
-- HELLO `firmware_version` (at most 32 bytes) is the build version
-  `<release version>+<12-char commit>`, stamped at build time by
-  `tools/firmware/firmware_build_version.py`: a release build reports the server
-  release it ships with (`2026.10.4.1+0123456789ab`), a local build
-  `0.0.0-dev+<commit>`. Firmware from before the stamp sends `esp32-atom-0.1`.
+- HELLO `firmware_version` (at most 32 bytes) is the firmware build identity
+  `fw-<YYYYMMDD.HHMM>+<12-hex digest>`, stamped at build time by
+  `tools/firmware/firmware_build_version.py`: a digest of the firmware build
+  inputs plus the date of the newest commit touching them. It does not change
+  with the server release. Older firmware sends a server-release stamp
+  (`2026.10.4.36+<commit>`), `0.0.0-dev+<commit>` or `esp32-atom-0.1`.
 - The server compares it with the `firmware_version` of the bundled build it
   flashes (`flash.json`) and reports `firmware_status` (`current` / `outdated` /
   `unknown`) per client in `/api/clients`, the live feed and `/api/health`.

@@ -113,25 +113,39 @@ pio test -e native
 
 ## Firmware version
 
-Every firmware env stamps a build version at compile time and sends it as the
+Every firmware env stamps a build identity at compile time and sends it as the
 HELLO `firmware_version` (at most 32 bytes). The PlatformIO post script
 `tools/firmware/firmware_build_version.py` defines `VIBESENSOR_FIRMWARE_VERSION`
-as `<release>+<commit[:12]>`:
+as `fw-<date>+<digest>`, e.g. `fw-20261004.1803+0967e5236416`:
 
-- Release builds read both values from `apps/server/vibesensor/_version.py`. The
-  release workflow stamps that file before it runs `pio run`, so the firmware
-  reports the server release it ships with, e.g. `2026.10.4.1+0123456789ab`.
-- Local builds report `0.0.0-dev+<checkout commit>`. Builds that skip the script,
-  such as the native tests, report `0.0.0-dev`.
+- `<digest>`: 12 hex characters of a SHA-256 over the build inputs:
+  `platformio.ini` (platform, libraries, flags) and every file under `src/`,
+  `lib/` and `include/` (including a local `vibesensor_network.local.h`).
+  Equal digests mean the same firmware.
+- `<date>`: the UTC committer date (`YYYYMMDD.HHMM`) of the newest commit that
+  touched those inputs, so a later identity is newer firmware. A build without
+  git history reports `00000000.0000`.
 
-`src/runtime_config.h` also embeds `VIBESENSOR_FIRMWARE_VERSION=<version>` in the
-image. `tools/release/main_release.py` reads that marker from each `firmware.bin`
-and records it as the environment's `firmware_version` in `flash.json`.
-The server compares each sensor's reported version with that value
-(`apps/server/vibesensor/domain/sensor_firmware.py`) and reports
-`firmware_status` as `current`, `outdated` or `unknown`. Sensors flashed before
-the stamp existed report `esp32-atom-0.1` and count as outdated. Sensors can only
-be updated over USB from *Settings → ESP Flash*.
+Nothing else feeds in. A server release that leaves the firmware alone ships the
+same identity, so its sensors stay up to date. A local build with uncommitted
+changes keeps the date and gets a new digest. Builds that skip the script, such
+as the native tests, report `0.0.0-dev`.
+
+`src/runtime_config.h` also embeds `VIBESENSOR_FIRMWARE_VERSION=<identity>` in
+the image. `tools/release/main_release.py` reads that marker from each
+`firmware.bin` and records it as the environment's `firmware_version` in
+`flash.json`, so the bundle on the Pi names exactly what the flashed sensor
+reports. The server compares the two (`apps/server/vibesensor/domain/sensor_firmware.py`)
+and reports `firmware_status`:
+
+- `current`: same identity, or the same digest with another date;
+- `outdated`: an older date, or firmware from before build identities (the
+  server-release stamp `2026.10.4.36+<commit>`, `0.0.0-dev+<commit>` or
+  `esp32-atom-0.1`);
+- `unknown`: a newer date or an uncommitted local build, a bundle without an
+  identity, or no HELLO yet.
+
+Sensors can only be updated over USB from *Settings → ESP Flash*.
 
 ## Configure
 
