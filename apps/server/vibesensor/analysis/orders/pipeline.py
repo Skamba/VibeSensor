@@ -261,7 +261,7 @@ class OrderAnalysisSession:
 
         effective_match_rate, focused_speed_band, per_location_dominant = (
             _compute_effective_match_rate(
-                match.observed_match_rate,
+                match.heard_match_rate,
                 min_match_rate,
                 match.possible_by_speed_bin,
                 match.matched_by_speed_bin,
@@ -271,7 +271,11 @@ class OrderAnalysisSession:
         )
         if effective_match_rate < min_match_rate:
             return None
-        slope = frequency_tracking_slope(match.matched_points) if self._speed_moves else None
+        slope = (
+            frequency_tracking_slope([point for point, _floor in match.evidence])
+            if self._speed_moves
+            else None
+        )
         if slope is not None and slope < MIN_ORDER_TRACKING_SLOPE:
             # The matches sit on a fixed-frequency tone the prediction swept
             # past; that tone stays a (persistent) peak finding of its own.

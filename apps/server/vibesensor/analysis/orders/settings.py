@@ -34,8 +34,8 @@ class OrderConfidenceSettings:
     no_wheel_sensor_penalty: float
     zone_localization_confidence: float
     zone_min_match_rate: float
-    clear_peak_over_floor: float
-    observed_location_min_share: float
+    heard_peak_over_floor: float
+    heard_location_min_share: float
     zone_min_error_score: float
     zone_min_corroborating_locations: int
     constant_speed_penalty: float
@@ -75,17 +75,16 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     no_wheel_sensor_penalty=0.75,
     # What a wheel order at a clearly dominant corner earns with four sensors.
     zone_localization_confidence=0.69,
-    # Share of windows with the order clearly present, at the sensors that hear
-    # it. Road noise sitting on the order's frequency by chance does not count,
-    # so a tone heard for under 40 % of the drive is not established evidence
+    # Share of windows with the order heard, at the sensors that hear it. Road
+    # noise sitting on the order's frequency by chance does not count, so a
+    # tone heard for under 40 % of the drive is not established evidence
     # however exactly a measured speed tracks it.
     zone_min_match_rate=0.40,
-    # A matched peak is clear when it stands at least 6 dB over its window's
-    # floor; below that it is road noise near the predicted frequency.
-    clear_peak_over_floor=2.0,
-    # The sensors that hear an order: those where it is clear at least half as
-    # often as at the sensor where it is clearest.
-    observed_location_min_share=0.5,
+    # A match is heard when its peak stands at least 6 dB over its window's
+    # floor, at a sensor where that happens at least half as often as at the
+    # sensor where it happens most (docs/order_tracking.md, "Heard matches").
+    heard_peak_over_floor=2.0,
+    heard_location_min_share=0.5,
     zone_min_error_score=0.50,
     zone_min_corroborating_locations=2,
     constant_speed_penalty=0.75,

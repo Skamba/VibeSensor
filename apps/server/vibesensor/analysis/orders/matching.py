@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, replace
 
 from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
@@ -37,16 +37,19 @@ from vibesensor.recording.run_schema import RunMetadata
 
 @dataclass(frozen=True)
 class OrderMatchAccumulator:
-    """Accumulated statistics from matching one hypothesis across samples."""
+    """Accumulated statistics from matching one hypothesis across samples.
+
+    Every match is classified once, while matching, as heard or not
+    (``OrderMatchObservation.heard``), and the sensors that hear the order
+    (``heard_locations``) are derived once from those verdicts. Every metric
+    that weighs the order's evidence reads them; none re-filters the raw
+    matches. See "Heard matches" in ``docs/order_tracking.md``.
+    """
 
     possible: int
-    matched: int
-    matched_amp: list[float]
-    matched_floor: list[float]
-    rel_errors: list[float]
-    predicted_vals: list[float]
-    measured_vals: list[float]
     matched_points: list[OrderMatchObservation]
+    # The floor of each match's window, parallel to ``matched_points``.
+    matched_floor: list[float]
     ref_sources: set[str]
     possible_by_speed_bin: dict[str, int]
     matched_by_speed_bin: dict[str, int]
@@ -56,8 +59,12 @@ class OrderMatchAccumulator:
     matched_by_location: dict[str, int]
     has_phases: bool
     compliance: float
+    heard_locations: frozenset[str] = frozenset()
     matched_sample_indices: tuple[int, ...] = ()
-    clear_by_location: dict[str, int] = field(default_factory=dict)
+
+    @property
+    def matched(self) -> int:
+        return len(self.matched_points)
 
     @property
     def match_rate(self) -> float:
@@ -65,65 +72,34 @@ class OrderMatchAccumulator:
         return self.matched / max(1, self.possible)
 
     @property
-    def observed_locations(self) -> frozenset[str]:
-        """The sensors that hear the order.
-
-        Those where its peak is clear of the floor at least half as often as at
-        the sensor where it is clearest. A vibration fades with distance from its
-        source, and a matcher that takes the nearest peak in the tolerance band
-        also lands on floor-level road noise at every sensor; neither should
-        count for or against the order.
-        """
-        rates = {
-            location: self.clear_by_location.get(location, 0) / possible
-            for location, possible in self.possible_by_location.items()
-            if possible > 0
-        }
-        best = max(rates.values(), default=0.0)
-        if best <= 0:
-            return frozenset()
-        min_rate = ORDER_CONFIDENCE_SETTINGS.observed_location_min_share * best
-        return frozenset(location for location, rate in rates.items() if rate >= min_rate)
-
-    @property
-    def observed_match_rate(self) -> float:
+    def heard_match_rate(self) -> float:
         """Match rate over the sensors that hear the order (global when none does)."""
-        observed = self.observed_locations
-        if not observed:
+        if not self.heard_locations:
             return self.match_rate
-        possible = sum(self.possible_by_location[location] for location in observed)
-        matched = sum(self.matched_by_location.get(location, 0) for location in observed)
-        return matched / max(1, possible)
+        possible = self._at_heard_locations(self.possible_by_location)
+        return self._at_heard_locations(self.matched_by_location) / max(1, possible)
 
     @property
-    def observed_clear_share(self) -> float:
-        """Share of the matches at the sensors that hear the order that are clear."""
-        observed = self.observed_locations
-        matched = sum(self.matched_by_location.get(location, 0) for location in observed)
-        clear = sum(self.clear_by_location.get(location, 0) for location in observed)
-        return clear / matched if matched else 0.0
+    def heard_share(self) -> float:
+        """Share of the matches at the sensors that hear the order that are heard."""
+        matched = self._at_heard_locations(self.matched_by_location)
+        heard = sum(1 for point in self.matched_points if point.heard)
+        return heard / matched if matched else 0.0
+
+    def _at_heard_locations(self, counts: dict[str, int]) -> int:
+        return sum(counts.get(location, 0) for location in self.heard_locations)
 
     @property
-    def evidence_match_indices(self) -> list[int]:
-        """The matches that show the order: clear of the floor where it is heard.
+    def evidence(self) -> list[tuple[OrderMatchObservation, float]]:
+        """The heard matches with their window floors; all matches when none is heard.
 
-        Indices into the matched lists of the matches clear of their window's
-        floor at the sensors that hear the order. Elsewhere, and in the windows
-        it is absent, the matcher lands on floor-level road noise near the
-        predicted frequency, which says nothing about how strong the order is
-        or how closely it follows its prediction. All matches when the order is
-        clear at no sensor.
+        The order's level, frequency error and tracking, and sample count come
+        from these: floor-level matches say nothing about how strong an order is
+        or how closely it follows its prediction. An order heard nowhere has
+        nothing better than its floor-level matches.
         """
-        observed = self.observed_locations
-        ratio = ORDER_CONFIDENCE_SETTINGS.clear_peak_over_floor
-        indices = [
-            index
-            for index, (amp, floor, point) in enumerate(
-                zip(self.matched_amp, self.matched_floor, self.matched_points, strict=True)
-            )
-            if point.location in observed and amp >= ratio * floor
-        ]
-        return indices or list(range(len(self.matched_amp)))
+        pairs = list(zip(self.matched_points, self.matched_floor, strict=True))
+        return [(point, floor) for point, floor in pairs if point.heard] or pairs
 
     @property
     def unique_match_locations(self) -> set[str]:
@@ -157,13 +133,22 @@ class OrderMatchAccumulator:
         matched_speed_bins = sum(1 for count in self.matched_by_speed_bin.values() if count > 0)
         if matched_speed_bins >= ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS:
             return True
-        corr = _corr_abs_clamped(self.predicted_vals, self.measured_vals)
+        corr = _corr_abs_clamped(
+            [point.predicted_hz for point in self.matched_points],
+            [point.matched_hz for point in self.matched_points],
+        )
         return corr is not None and corr >= ORDER_VARIABLE_MIN_CORRELATION
 
     @property
     def matched_peaks(self) -> frozenset[tuple[int, float]]:
         """The spectral peaks this hypothesis matched, as ``(sample index, peak Hz)``."""
-        return frozenset(zip(self.matched_sample_indices, self.measured_vals, strict=True))
+        return frozenset(
+            zip(
+                self.matched_sample_indices,
+                (point.matched_hz for point in self.matched_points),
+                strict=True,
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -205,6 +190,26 @@ def best_order_peak_match(
     )
 
 
+def _sensors_that_hear(
+    possible_by_location: dict[str, int], clear_by_location: dict[str, int]
+) -> frozenset[str]:
+    """The sensors where the order is clear at least half as often as where it is clearest.
+
+    A vibration fades with distance from its source, so the far sensors see it
+    rarely or never.
+    """
+    rates = {
+        location: clear_by_location.get(location, 0) / possible
+        for location, possible in possible_by_location.items()
+        if possible > 0
+    }
+    best = max(rates.values(), default=0.0)
+    if best <= 0:
+        return frozenset()
+    min_rate = ORDER_CONFIDENCE_SETTINGS.heard_location_min_share * best
+    return frozenset(location for location, rate in rates.items() if rate >= min_rate)
+
+
 def match_samples_for_hypothesis(
     samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
@@ -214,15 +219,17 @@ def match_samples_for_hypothesis(
     per_sample_phases: PhaseLabels | None,
     lang: str,
 ) -> OrderMatchAccumulator:
-    """Match one hypothesis against all samples and accumulate evidence."""
+    """Match one hypothesis against all samples, then classify each match as heard or not.
+
+    A match is heard when its peak stands at least ``heard_peak_over_floor``
+    (6 dB) over its own window's floor at a sensor that hears the order (see
+    ``_sensors_that_hear``). The matcher takes the nearest peak in the tolerance
+    band whatever its level, so it also lands on floor-level road noise near
+    the predicted frequency at every sensor; such a match is not heard.
+    """
     possible = 0
-    matched = 0
-    matched_amp: list[float] = []
+    matches: list[tuple[OrderMatchObservation, bool]] = []
     matched_floor: list[float] = []
-    rel_errors: list[float] = []
-    predicted_vals: list[float] = []
-    measured_vals: list[float] = []
-    matched_points: list[OrderMatchObservation] = []
     matched_sample_indices: list[int] = []
     ref_sources: set[str] = set()
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -272,7 +279,6 @@ def match_samples_for_hypothesis(
         if peak_match is None:
             continue
 
-        matched += 1
         matched_sample_indices.append(sample_idx)
         if sample_location:
             matched_by_location[sample_location] += 1
@@ -281,43 +287,42 @@ def match_samples_for_hypothesis(
         if has_phases and phase_key is not None:
             matched_by_phase[phase_key] += 1
 
-        rel_errors.append(peak_match.relative_error)
-        matched_amp.append(peak_match.amplitude_g)
         floor_amp = _estimate_strength_floor_amp_g(sample)
         matched_floor.append(max(0.0, floor_amp if floor_amp is not None else 0.0))
-        if sample_location and (
+        clear = bool(sample_location) and (
             peak_match.amplitude_g
-            >= ORDER_CONFIDENCE_SETTINGS.clear_peak_over_floor * matched_floor[-1]
-        ):
+            >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * matched_floor[-1]
+        )
+        if clear:
             clear_by_location[sample_location] += 1
-        predicted_vals.append(predicted_hz)
-        measured_vals.append(peak_match.matched_hz)
-        matched_points.append(
-            OrderMatchObservation(
-                t_s=sample.t_s,
-                speed_kmh=sample.speed_kmh,
-                predicted_hz=predicted_hz,
-                matched_hz=peak_match.matched_hz,
-                rel_error=peak_match.relative_error,
-                amp=peak_match.amplitude_g,
-                location=sample_location,
-                phase=(
-                    _phase_to_str(per_sample_phases[sample_idx])
-                    if has_phases and per_sample_phases is not None
-                    else None
+        matches.append(
+            (
+                OrderMatchObservation(
+                    t_s=sample.t_s,
+                    speed_kmh=sample.speed_kmh,
+                    predicted_hz=predicted_hz,
+                    matched_hz=peak_match.matched_hz,
+                    rel_error=peak_match.relative_error,
+                    amp=peak_match.amplitude_g,
+                    location=sample_location,
+                    phase=(
+                        _phase_to_str(per_sample_phases[sample_idx])
+                        if has_phases and per_sample_phases is not None
+                        else None
+                    ),
                 ),
-            ),
+                clear,
+            )
         )
 
+    heard_locations = _sensors_that_hear(possible_by_location, clear_by_location)
     return OrderMatchAccumulator(
         possible=possible,
-        matched=matched,
-        matched_amp=matched_amp,
+        matched_points=[
+            replace(point, heard=True) if clear and point.location in heard_locations else point
+            for point, clear in matches
+        ],
         matched_floor=matched_floor,
-        rel_errors=rel_errors,
-        predicted_vals=predicted_vals,
-        measured_vals=measured_vals,
-        matched_points=matched_points,
         ref_sources=ref_sources,
         possible_by_speed_bin=dict(possible_by_speed_bin),
         matched_by_speed_bin=dict(matched_by_speed_bin),
@@ -327,6 +332,6 @@ def match_samples_for_hypothesis(
         matched_by_location=dict(matched_by_location),
         has_phases=has_phases,
         compliance=compliance,
+        heard_locations=heard_locations,
         matched_sample_indices=tuple(matched_sample_indices),
-        clear_by_location=dict(clear_by_location),
     )

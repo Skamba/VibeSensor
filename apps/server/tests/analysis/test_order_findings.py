@@ -165,12 +165,7 @@ def _make_accumulator(
     speed_bins = matched_speed_bins or {"60-70": matched}
     return OrderMatchAccumulator(
         possible=possible,
-        matched=matched,
-        matched_amp=[0.05] * matched,
         matched_floor=[0.005] * matched,
-        rel_errors=[0.01] * matched,
-        predicted_vals=predicted_vals,
-        measured_vals=measured_vals,
         matched_points=matched_points,
         ref_sources={"speed+tire"},
         possible_by_speed_bin={"60-70": possible},

@@ -7,6 +7,7 @@ amplitude/error aggregation, and speed-phase evidence derivation.
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.analysis.constants import (
@@ -14,7 +15,7 @@ from vibesensor.analysis.constants import (
     NEGLIGIBLE_STRENGTH_MAX_DB,
     ORDER_MIN_MATCH_POINTS,
 )
-from vibesensor.analysis.math_utils import _corr_abs_clamped
+from vibesensor.analysis.math_utils import _corr_abs_clamped, _mean
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.speed_profile_helpers import _speed_profile_from_points
@@ -157,8 +158,8 @@ def _zone_evidence_established(
     """Whether a zone-source order stands on its own evidence, without a dominant corner.
 
     Requires a vibration of at least the moderate strength band, a tracked order
-    clearly present (*zone_match_rate*: peaks well over the floor) in enough of
-    its windows that matches its predicted frequency well, and more than one
+    heard (*zone_match_rate*, see "Heard matches" in docs/order_tracking.md) in
+    enough of its windows that matches its predicted frequency well, and more than one
     sensor seeing it. A fault-free run's road noise lands
     near engine/driveline orders by chance, but faint and patchy, so it fails
     this check and keeps the corner-dominance penalties.
@@ -279,20 +280,22 @@ def compute_phase_stats(
 
 
 def compute_amplitude_and_error_stats(
-    matched_amp: list[float],
-    matched_floor: list[float],
-    rel_errors: list[float],
-    predicted_vals: list[float],
-    measured_vals: list[float],
+    evidence: Sequence[tuple[OrderMatchObservation, float]],
     *,
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
-    """Compute amplitude, floor, relative-error, and correlation statistics."""
-    mean_amp = (sum(matched_amp) / len(matched_amp)) if matched_amp else 0.0
-    mean_floor = (sum(matched_floor) / len(matched_floor)) if matched_floor else 0.0
-    mean_rel_err = (sum(rel_errors) / len(rel_errors)) if rel_errors else 1.0
-    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(predicted_vals) >= 3 else None
-    if constant_speed:
-        corr = None
+    """Amplitude, floor, relative-error and correlation statistics of (match, floor) pairs."""
+    points = [point for point, _floor in evidence]
+    floors = [floor for _point, floor in evidence]
+    mean_amp = _mean([point.amp for point in points])
+    mean_floor = _mean(floors)
+    mean_rel_err = _mean([point.rel_error for point in points]) if points else 1.0
+    corr = (
+        _corr_abs_clamped(
+            [point.predicted_hz for point in points], [point.matched_hz for point in points]
+        )
+        if len(points) >= 3 and not constant_speed
+        else None
+    )
     corr_val = corr if corr is not None else 0.0
     return mean_amp, mean_floor, mean_rel_err, corr_val, corr

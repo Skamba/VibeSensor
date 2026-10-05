@@ -105,27 +105,14 @@ coordinates the evidence flow:
 2. Use `match_samples_for_hypothesis()` to compare predicted order bands against
    the stored sample peaks.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
-   the best speed band or dominant location. The match rate it starts from is
-   taken over the sensors that hear the order
-   (`OrderMatchAccumulator.observed_locations`): those where its peak is clear
-   of the window's floor (≥ 6 dB) at least half as often as at the sensor where
-   it is clearest. A vibration fades with distance from its source, so an
-   engine tone only the front sensors hear is not diluted by the rear ones.
-   The matcher takes the nearest peak in the tolerance band whatever its level,
-   so it also lands on floor-level road noise at every sensor. Those sensors
-   neither dilute the rate nor count as corroborating sensors in the score.
-   The score's strength (mean peak over the floor), frequency error and
-   tracking, and sample count come from the order's clear matches at those
-   sensors only (`OrderMatchAccumulator.evidence_match_indices`), so a faint
-   tone some sensors hear is not averaged down by floor noise at the others or
-   in the windows it is absent. An order clear at no sensor keeps all its
-   matches.
+   the best speed band or dominant location. It starts from the match rate at
+   the sensors that hear the order (see "Heard matches" below).
 4. Reject matches that do not follow the prediction. As speed changes, an
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays
    at one frequency, yet falls inside the tolerance band over a speed range.
    `frequency_tracking_slope()` (`domain/order_match.py`) takes the robust
-   (Theil–Sen) slope of matched vs predicted Hz; below
+   (Theil–Sen) slope of matched vs predicted Hz over the heard matches; below
    `MIN_ORDER_TRACKING_SLOPE` (0.5) the hypothesis produces no finding. On
    the simulator real orders score 0.8–1.3 and a 13 Hz body resonance crossed
    by T1 scores 0.0. It is only judged when the run's speed really changed
@@ -172,6 +159,51 @@ source's orders the diagnosis names. `TestRun.diagnosis_order_finding` labels
 the source's louder order, comparing 1x and 2x amplitudes in the windows both
 matched (see "Diagnosed order" in `docs/metrics.md`).
 
+## Heard matches
+
+The matcher (`match_samples_for_hypothesis()`) takes the nearest peak in the
+tolerance band whatever its level, so it also lands on floor-level road noise
+at every sensor and in the windows an order is absent. It classifies each match
+once, and every metric below reads that classification
+(`OrderMatchObservation.heard`) instead of applying its own floor filter.
+
+A match is **heard** when both hold:
+
+- its peak is at least 6 dB (2×, `heard_peak_over_floor`) over the floor of
+  the window it was read from (`strength_floor_amp_g`, the same spectrum), and
+- it is at a sensor that hears the order: one where the order's peak clears
+  that bar at least half as often (`heard_location_min_share`) as at the
+  sensor where it clears it most often (`OrderMatchAccumulator.heard_locations`).
+  A vibration fades with distance from its source, so an engine tone only the
+  front sensors hear is not diluted by the rear ones.
+
+An order heard nowhere keeps all its matches as evidence (`evidence`,
+`heard_match_rate`), so a faint order is judged on what there is rather than
+dropped. The persisted `matched_points[].heard` carries the flag to the
+diagnosis.
+
+| Consumer | Reads |
+|----------|-------|
+| Match rate the effective rate starts from (`pipeline.py`) | matches / possible windows at the heard sensors (`heard_match_rate`) |
+| Score strength, frequency error, tracking correlation, sample count (`scoring.py`, `compute_amplitude_and_error_stats()`) | heard matches only (`evidence`) |
+| Corroborating sensors (`scoring.py`) | the heard sensors |
+| Zone evidence rate (`_zone_evidence_established()`) | effective match rate × the share of matches at the heard sensors that are heard (`heard_share`) |
+| Tracking slope (step 4) | heard matches |
+| `presence_ratio`, per-location `presence` (`analysis/diagnosis.py`) | heard matches over the moving samples |
+| Coast-down `speed_dependence`: the order's main location and the matches counted during and outside the coast-down | heard matches |
+| Matched speed range (`speed_min_kmh` / `speed_max_kmh`) | heard matches (all, when none is heard) |
+
+Why 6 dB over the window's floor: on the full benchmark matrix (40 cases, both
+cars, seeds 1–6, and the healthy cases on seeds 7–26) this one rule gives the
+same verdicts as the per-metric filters it replaced, which were 6 dB over the
+window floor for the score and 8 dB over the run's median floor for presence and
+the coast-down. Raising the shared bar to 8 dB over the window floor turned the
+every-mount healthy sweep into a Moderate wheel fault on two seeds. The window
+floor is measured on the same spectrum as the peak, so it follows road and
+speed changes the run median does not. The 8 dB negligible cap in
+`docs/metrics.md` is a different role: it caps a finding whose heard level is
+noise-like, not which matches count.
+
 ## Live vs post-stop reuse
 
 The same reference math serves both runtime and diagnostics:
@@ -198,7 +230,7 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
-| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks. |
+| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks and classify each match as heard. |
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |

@@ -895,6 +895,7 @@ export interface components {
         /** HTTP contract for one serialized finding matched-point observation. */
         MatchedPoint: {
             amp?: number | null;
+            heard?: boolean;
             location?: string | null;
             matched_hz?: number | null;
             phase?: string | null;

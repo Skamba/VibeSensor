@@ -25,7 +25,6 @@ from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import (
     LIGHT_STRENGTH_MAX_DB,
     MIN_ORDER_TRACKING_SLOPE,
-    NEGLIGIBLE_STRENGTH_MAX_DB,
     SPEED_COVERAGE_MIN_PCT,
 )
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
@@ -114,7 +113,7 @@ def build_diagnosis(
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
     floors = _location_floors(located)
-    presence = _presence_ratio(candidate, located, floors)
+    presence = _presence_ratio(candidate, located)
     refs = _references(metadata, samples)
     # A hand-entered speed does not drop while coasting, so the coast-down
     # comparison cannot tell road speed from engine speed; an EV has no engine
@@ -122,7 +121,7 @@ def build_diagnosis(
     speed_dependence = (
         None
         if refs.manual_speed or refs.electric
-        else _speed_dependence(candidate, located, floors, metadata.guided_phases)
+        else _speed_dependence(candidate, located, metadata.guided_phases)
     )
     weak_reasons = _weak_reasons(
         candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
@@ -174,7 +173,7 @@ def build_diagnosis(
         "weak_reasons": weak_reasons,
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
-        "order_findings": _order_findings(candidate, level, test_run.findings, located, floors),
+        "order_findings": _order_findings(candidate, level, test_run.findings, located),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
@@ -326,9 +325,11 @@ def _order_location_amplitudes(
     floors: dict[str, float],
 ) -> list[LocationAmplitudeRow]:
     amps: dict[str, list[float]] = defaultdict(list)
+    heard: Counter[str] = Counter()
     for point in candidate.matched_points:
         if point.amp > 0 and point.location:
             amps[point.location].append(point.amp)
+            heard[point.location] += point.heard
     speed_samples: Counter[str] = Counter(
         location
         for sample, location in located
@@ -340,9 +341,7 @@ def _order_location_amplitudes(
     }
     presence: dict[str, float | None] = {
         location: (
-            min(1.0, len(amps.get(location, ())) / speed_samples[location])
-            if speed_samples[location]
-            else None
+            min(1.0, heard[location] / speed_samples[location]) if speed_samples[location] else None
         )
         for location in locations
     }
@@ -435,12 +434,17 @@ def _matched_speed_range(candidate: Finding | None) -> tuple[float | None, float
         return None, None
     speeds = sorted(
         point.speed_kmh
-        for point in candidate.matched_points
+        for point in _heard_points(candidate)
         if point.speed_kmh is not None and point.speed_kmh > 0
     )
     if not speeds:
         return None, None
     return percentile(speeds, 0.05), percentile(speeds, 0.95)
+
+
+def _heard_points(finding: Finding) -> Sequence[OrderMatchObservation]:
+    """The finding's heard matches; all of them when none is heard."""
+    return [point for point in finding.matched_points if point.heard] or finding.matched_points
 
 
 def _peak_frequency_hz(candidate: Finding | None) -> float | None:
@@ -458,17 +462,14 @@ def _peak_frequency_hz(candidate: Finding | None) -> float | None:
 def _presence_ratio(
     candidate: Finding | None,
     located: Sequence[tuple[Sample, str]],
-    floors: dict[str, float],
 ) -> float | None:
-    """Share of the moving drive in which the order was there, at any sensor.
+    """Share of the moving drive in which the order was there, at a sensor that hears it.
 
-    Counted over the whole drive in short time slots. Neither the finding's
-    match rate (rescued to its best location or speed band) nor its raw
-    matches say this: the matcher also lands on floor-level noise near the
-    predicted frequency, and each spectrum spans a few seconds, so it still
-    shows a vibration that stopped seconds ago. A match counts when it stands
-    out of the sensor's noise floor and reaches half the order's usual level
-    there at that speed, i.e. the vibration filled most of that spectrum.
+    Counted over the whole drive in short time slots. The finding's match rate
+    (rescued to its best location or speed band) does not say this, and each
+    spectrum spans a few seconds, so it still shows a vibration that stopped
+    seconds ago. A heard match counts when it reaches half the order's usual
+    level there at that speed, i.e. the vibration filled most of that spectrum.
     """
     if candidate is None or candidate.evidence is None:
         return None
@@ -481,17 +482,17 @@ def _presence_ratio(
     }
     if not moving:
         return candidate.evidence.match_rate
-    standing_out: dict[tuple[str, float], list[tuple[float, float]]] = defaultdict(list)
+    heard: dict[tuple[str, float], list[tuple[float, float]]] = defaultdict(list)
     for point in candidate.matched_points:
         location = point.location or ""
         if point.t_s is None or point.speed_kmh is None or point.speed_kmh <= 0:
             continue
-        if not _stands_out(point, floors):
+        if not point.heard:
             continue
         speed_bin = floor(point.speed_kmh / _SPEED_BIN_KMH)
-        standing_out[(location, speed_bin)].append((point.t_s, point.amp))
+        heard[(location, speed_bin)].append((point.t_s, point.amp))
     present: set[int] = set()
-    for points in standing_out.values():
+    for points in heard.values():
         usual = median(amp for _t_s, amp in points)
         present.update(
             floor(t_s / _PRESENCE_SLOT_S)
@@ -499,19 +500,6 @@ def _presence_ratio(
             if amp >= _PRESENT_LEVEL_RATIO * usual
         )
     return len(present & moving) / len(moving)
-
-
-def _stands_out(point: OrderMatchObservation, floors: dict[str, float]) -> bool:
-    """Whether a matched peak stands out of its sensor's noise floor.
-
-    A peak below that is road noise that happened to sit near the predicted
-    frequency, not the order.
-    """
-    floor_amp = floors.get(point.location or "")
-    return floor_amp is None or (
-        vibration_strength_db_scalar(peak_band_rms_amp_g=point.amp, floor_amp_g=floor_amp)
-        >= NEGLIGIBLE_STRENGTH_MAX_DB
-    )
 
 
 def _is_candidate(finding: Finding, candidate: Finding | None) -> bool:
@@ -523,7 +511,6 @@ def _order_findings(
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
     located: Sequence[tuple[Sample, str]],
-    floors: dict[str, float],
 ) -> list[OrderFindingRow]:
     """Surfaced order-tracked findings, one per order, the diagnosed one first at its level.
 
@@ -580,7 +567,7 @@ def _order_findings(
                 "speed_min_kmh": speed_min,
                 "speed_max_kmh": speed_max,
                 "phases": list(finding.phases_detected),
-                "presence_ratio": _presence_ratio(finding, located, floors),
+                "presence_ratio": _presence_ratio(finding, located),
                 "confidence_level": (
                     level if diagnosed and level is not None else finding.confidence_level
                 ).value,
@@ -783,7 +770,6 @@ def _guided_phase_names(phases: Sequence[RunGuidedPhase]) -> list[GuidedPhaseVal
 def _speed_dependence(
     candidate: Finding | None,
     located: Sequence[tuple[Sample, str]],
-    floors: dict[str, float],
     phases: Sequence[RunGuidedPhase],
 ) -> SpeedDependenceValue | None:
     """Whether the diagnosed order kept going while coasting in neutral (guided test).
@@ -792,9 +778,8 @@ def _speed_dependence(
     wheel or driveline order stays present and an engine order disappears.
     Compares the order's presence at its strongest location inside the guided
     coast-down window (after it settles) with its presence during the rest of
-    the run. Only matches that stand out of the sensor's noise floor count:
-    once an engine order is gone, road noise still lands near its predicted
-    path from time to time.
+    the run. Only heard matches count: once an engine order is gone, road
+    noise still lands near its predicted path from time to time.
     """
     if candidate is None or not candidate.matched_points:
         return None
@@ -806,7 +791,7 @@ def _speed_dependence(
     settled = [(start + _COAST_SETTLE_S, end) for start, end in windows]
     if not windows:
         return None
-    by_location = Counter(point.location for point in candidate.matched_points if point.location)
+    by_location = Counter(point.location for point in candidate.matched_points if point.heard)
     if not by_location:
         return None
     location = by_location.most_common(1)[0][0]
@@ -835,7 +820,7 @@ def _speed_dependence(
     timed = [
         (point.t_s, point)
         for point in candidate.matched_points
-        if point.location == location and point.t_s is not None and _stands_out(point, floors)
+        if point.location == location and point.t_s is not None and point.heard
     ]
     matched_inside, matched_outside = split([t_s for t_s, _point in timed])
     coast_points = [point for t_s, point in timed if in_window(t_s, settled)]

@@ -1,10 +1,10 @@
-"""Orders are judged on the sensors that clearly hear them.
+"""The evidence stage: each order match is classified once as heard or not.
 
 A vibration fades with distance from its source, and the matcher, which takes
 the nearest peak in the tolerance band, also lands on floor-level road noise
 near the predicted frequency at every sensor. Neither may count for or against
-an order. Hand-placed peaks, because the simulator benchmark cannot isolate
-these rules.
+an order, in any metric. Hand-placed peaks, because the simulator benchmark
+cannot isolate these rules.
 """
 
 from __future__ import annotations
@@ -17,9 +17,13 @@ from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
-from vibesensor.analysis.orders.matching import OrderMatchAccumulator
+from vibesensor.analysis.orders.matching import OrderMatchAccumulator, _sensors_that_hear
 from vibesensor.analysis.orders.physics import _order_hypotheses
-from vibesensor.analysis.orders.scoring import OrderFindingBuildContext, score_order_finding
+from vibesensor.analysis.orders.scoring import (
+    OrderFindingBuildContext,
+    OrderFindingScore,
+    score_order_finding,
+)
 from vibesensor.domain.order_match import OrderMatchObservation
 
 # E1 at 2.72 x T1 in top gear (ratio 0.8): engine orders fall between wheel orders.
@@ -68,13 +72,16 @@ def _drive(tones: Tones, *, steps: int = 60) -> list[dict]:
     return samples
 
 
-def _analyse(tones: Tones) -> dict:
-    metadata = standard_metadata(
+def _metadata() -> dict:
+    return standard_metadata(
         run_id="run-1",
         final_drive_ratio=_E1_PER_T1 / _TOP_GEAR,
         current_gear_ratio=_TOP_GEAR,
     )
-    return run_analysis(_drive(tones), metadata)
+
+
+def _analyse(tones: Tones) -> dict:
+    return run_analysis(_drive(tones), _metadata())
 
 
 def _engine_finding(summary: dict) -> dict:
@@ -199,48 +206,126 @@ def test_windows_an_order_is_absent_do_not_dilute_its_strength() -> None:
     assert _engine_strength_db(patchy) == pytest.approx(_engine_strength_db(steady), abs=0.3)
 
 
+def test_floor_level_matches_do_not_establish_an_orders_zone() -> None:
+    # The front sensors hear the tone in 30 % of the windows and match road
+    # noise at the floor in the rest. The matcher finds a peak every window,
+    # but the order is there under half the time: not an established zone.
+    def present(step: int) -> bool:
+        return step % 10 < 3
+
+    def absent(step: int) -> bool:
+        return not present(step)
+
+    summary = _analyse(
+        {
+            location: [(_E2_PER_T1, 0.05, present), (_E2_PER_T1, _NOISE_G, absent)]
+            for location in ("front_left_wheel", "front_right_wheel")
+        }
+    )
+
+    assert summary["diagnosis"]["confidence_level"] == "moderate"
+
+
+def _heard_by_location(summary: dict, key: str) -> dict[str, set[bool]]:
+    finding = next(f for f in summary["findings"] if f.get("finding_key") == key)
+    heard: dict[str, set[bool]] = {}
+    for point in finding["matched_points"]:
+        heard.setdefault(point["location"], set()).add(point["heard"])
+    return heard
+
+
+def test_each_match_is_classified_once_as_heard_or_not() -> None:
+    # The front sensors hear E2 clearly in every window. In the trunk the matcher
+    # lands on floor-level noise, and every seventh window on a bump clear of the
+    # floor: clear there far less often than at the front, so the trunk does not
+    # hear the order and none of its matches is heard.
+    def bump(step: int) -> bool:
+        return step % 7 == 0
+
+    summary = _analyse(
+        {
+            "front_left_wheel": [(_E2_PER_T1, 0.05, _always)],
+            "front_right_wheel": [(_E2_PER_T1, 0.05, _always)],
+            "trunk": [
+                (_E2_PER_T1, _NOISE_G, lambda step: not bump(step)),
+                (_E2_PER_T1, 0.012, bump),
+            ],
+        }
+    )
+
+    assert _heard_by_location(summary, "engine_2x") == {
+        "Front Left Wheel": {True},
+        "Front Right Wheel": {True},
+        "Trunk": {False},
+    }
+
+
+def test_presence_counts_only_heard_matches() -> None:
+    # The front sensors hear the tone in the first half of the drive; after that
+    # the matcher lands on floor-level noise on its frequency.
+    def first_half(step: int) -> bool:
+        return step < 30
+
+    summary = _analyse(
+        {
+            location: [
+                (_E2_PER_T1, 0.05, first_half),
+                (_E2_PER_T1, _NOISE_G, lambda step: not first_half(step)),
+            ]
+            for location in ("front_left_wheel", "front_right_wheel")
+        }
+    )
+
+    assert summary["diagnosis"]["presence_ratio"] == pytest.approx(0.5, abs=0.05)
+
+
+def test_the_speed_range_is_where_the_order_is_heard() -> None:
+    # The front sensors hear the tone only around 80-90 km/h of a 50-115 km/h
+    # sweep; elsewhere the matcher lands on floor-level noise on its frequency.
+    def heard_band(step: int) -> bool:
+        return 80.0 <= 50.0 + 65.0 * step / 59 <= 90.0
+
+    summary = _analyse(
+        {
+            location: [
+                (_E2_PER_T1, 0.05, heard_band),
+                (_E2_PER_T1, _NOISE_G, lambda step: not heard_band(step)),
+            ]
+            for location in ("front_left_wheel", "front_right_wheel")
+        }
+    )
+
+    diagnosis = summary["diagnosis"]
+    assert diagnosis["source"] == "engine"
+    assert 79.0 <= diagnosis["speed_min_kmh"] <= diagnosis["speed_max_kmh"] <= 91.0
+    assert "narrow_speed_range" in diagnosis["weak_reasons"]
+
+
+def test_a_fixed_tone_is_not_tracked_by_the_floor_noise_around_it() -> None:
+    # A resonance at one frequency, clear of the floor at every sensor, which the
+    # E2 path crosses around 82 km/h. In the rest of the sweep the matcher lands
+    # on floor-level noise exactly on E2's predicted frequency: that follows the
+    # prediction, but it is not the order. The heard matches stay at one
+    # frequency while the prediction moves, so E2 is not an order finding.
+    resonance_hz = _E2_PER_T1 * wheel_hz(82.0)
+
+    def crossing(step: int) -> bool:
+        predicted = _E2_PER_T1 * wheel_hz(50.0 + 65.0 * step / 59)
+        return abs(predicted - resonance_hz) <= 0.08 * predicted
+
+    noise = [(_E2_PER_T1, _NOISE_G, lambda step: not crossing(step))]
+    sensors = ("front_left_wheel", "front_right_wheel", *_REAR, "trunk")
+    samples = _drive(dict.fromkeys(sensors, noise))
+    for sample in samples:
+        sample["top_peaks"].append({"hz": resonance_hz, "amp": 0.05})
+
+    summary = run_analysis(samples, _metadata())
+
+    assert not any(f.get("finding_key") == "engine_2x" for f in summary["findings"])
+
+
 _LOCATIONS = ("Front Left Wheel", "Front Right Wheel", "Rear Left Wheel", "Rear Right Wheel")
 _WINDOWS = 20
-
-
-def _accumulator(
-    clear: dict[str, int], matched: dict[str, int] | None = None
-) -> OrderMatchAccumulator:
-    """A wheel order matched at four sensors: loud at front-left, quiet elsewhere."""
-    matched = matched or dict.fromkeys(_LOCATIONS, _WINDOWS)
-    points = [
-        OrderMatchObservation(
-            predicted_hz=10.0 + 0.5 * window,
-            matched_hz=10.0 + 0.5 * window,
-            rel_error=0.0,
-            amp=0.03 if location == _LOCATIONS[0] else _NOISE_G,
-            location=location,
-            t_s=float(window),
-            speed_kmh=50.0 + 3.0 * window,
-        )
-        for location in _LOCATIONS
-        for window in range(matched[location])
-    ]
-    return OrderMatchAccumulator(
-        possible=_WINDOWS * len(_LOCATIONS),
-        matched=len(points),
-        matched_amp=[point.amp for point in points],
-        matched_floor=[_FLOOR_G] * len(points),
-        rel_errors=[0.0] * len(points),
-        predicted_vals=[point.predicted_hz for point in points],
-        measured_vals=[point.matched_hz for point in points],
-        matched_points=points,
-        ref_sources={"speed+tire"},
-        possible_by_speed_bin={},
-        matched_by_speed_bin={},
-        possible_by_phase={},
-        matched_by_phase={},
-        possible_by_location=dict.fromkeys(_LOCATIONS, _WINDOWS),
-        matched_by_location=matched,
-        has_phases=False,
-        compliance=1.0,
-        clear_by_location=clear,
-    )
 
 
 # A sensor hears the order when it is clear of the floor there at least half as
@@ -256,37 +341,83 @@ def _accumulator(
 def test_a_sensor_hears_an_order_when_clear_half_as_often_as_the_best(
     clear: list[int], heard_at: tuple[str, ...]
 ) -> None:
-    match = _accumulator(dict(zip(_LOCATIONS, clear, strict=True)))
+    sensors = _sensors_that_hear(
+        dict.fromkeys(_LOCATIONS, _WINDOWS), dict(zip(_LOCATIONS, clear, strict=True))
+    )
 
-    assert match.observed_locations == frozenset(heard_at)
+    assert sensors == frozenset(heard_at)
 
 
-def test_an_order_clear_at_no_sensor_is_judged_on_all_its_matches() -> None:
+def _accumulator(
+    heard: dict[str, int],
+    matched: dict[str, int] | None = None,
+    *,
+    heard_locations: frozenset[str] | None = None,
+) -> OrderMatchAccumulator:
+    """A wheel order matched at four sensors, loud at front-left, quiet elsewhere.
+
+    *heard* is how many of each sensor's matches the evidence stage heard.
+    """
+    matched = matched or dict.fromkeys(_LOCATIONS, _WINDOWS)
+    points = [
+        OrderMatchObservation(
+            predicted_hz=10.0 + 0.5 * window,
+            matched_hz=10.0 + 0.5 * window,
+            rel_error=0.0,
+            amp=0.03 if location == _LOCATIONS[0] else _NOISE_G,
+            location=location,
+            t_s=float(window),
+            speed_kmh=50.0 + 3.0 * window,
+            heard=window < heard.get(location, 0),
+        )
+        for location in _LOCATIONS
+        for window in range(matched[location])
+    ]
+    return OrderMatchAccumulator(
+        possible=_WINDOWS * len(_LOCATIONS),
+        matched_points=points,
+        matched_floor=[_FLOOR_G] * len(points),
+        ref_sources={"speed+tire"},
+        possible_by_speed_bin={},
+        matched_by_speed_bin={},
+        possible_by_phase={},
+        matched_by_phase={},
+        possible_by_location=dict.fromkeys(_LOCATIONS, _WINDOWS),
+        matched_by_location=matched,
+        has_phases=False,
+        compliance=1.0,
+        heard_locations=(
+            frozenset(location for location, count in heard.items() if count)
+            if heard_locations is None
+            else heard_locations
+        ),
+    )
+
+
+def test_an_order_heard_nowhere_is_judged_on_all_its_matches() -> None:
     # Nothing stands out of the floor: its floor-level matches are all there is.
-    match = _accumulator(dict.fromkeys(_LOCATIONS, 0))
+    match = _accumulator({})
 
-    assert match.evidence_match_indices == list(range(match.matched))
+    assert [point for point, _floor in match.evidence] == match.matched_points
 
 
 def test_the_match_rate_is_taken_where_the_order_is_heard() -> None:
     # Heard at the front (matched 18 and 16 of 20 windows); the rear sensors
     # matched floor noise in 4 windows each.
     matched = dict(zip(_LOCATIONS, (18, 16, 4, 4), strict=True))
-    match = _accumulator(dict(zip(_LOCATIONS, (18, 16, 0, 0), strict=True)), matched)
+    match = _accumulator(dict(zip(_LOCATIONS, (18, 8, 0, 0), strict=True)), matched)
 
     assert match.match_rate == pytest.approx(42 / 80)
-    assert match.observed_match_rate == pytest.approx(34 / 40)
-    assert match.observed_clear_share == pytest.approx(1.0)
+    assert match.heard_match_rate == pytest.approx(34 / 40)
+    assert match.heard_share == pytest.approx(26 / 34)
 
 
-def test_only_sensors_that_clearly_hear_an_order_corroborate_it() -> None:
-    # The same matches, scored once with the quiet sensors hearing the order and
-    # once with their matches at the floor: floor noise adds no corroboration.
+def _wheel_score(match: OrderMatchAccumulator, *, match_rate: float = 1.0) -> OrderFindingScore:
     context = OrderFindingBuildContext(
-        effective_match_rate=1.0,
+        effective_match_rate=match_rate,
         focused_speed_band=None,
         per_location_dominant=False,
-        match_rate=1.0,
+        match_rate=match_rate,
         min_match_rate=0.25,
         constant_speed=False,
         steady_speed=False,
@@ -294,13 +425,18 @@ def test_only_sensors_that_clearly_hear_an_order_corroborate_it() -> None:
         lang="en",
     )
     wheel_1x = next(h for h in _order_hypotheses() if h.key == "wheel_1x")
+    return score_order_finding(wheel_1x, match, context=context)
 
-    def confidence(clear_elsewhere: int) -> float:
-        clear = {location: clear_elsewhere for location in _LOCATIONS[1:]}
-        match = _accumulator({_LOCATIONS[0]: _WINDOWS, **clear})
-        return score_order_finding(wheel_1x, match, context=context).confidence
 
-    assert confidence(clear_elsewhere=0) < confidence(clear_elsewhere=_WINDOWS)
+def test_only_sensors_that_hear_an_order_corroborate_it() -> None:
+    # The same matches, scored once with the quiet sensors among those that hear
+    # the order and once without: the sensors that only matched floor noise add
+    # no corroboration.
+    def confidence(heard_locations: tuple[str, ...]) -> float:
+        match = _accumulator({_LOCATIONS[0]: _WINDOWS}, heard_locations=frozenset(heard_locations))
+        return _wheel_score(match).confidence
+
+    assert confidence(_LOCATIONS[:1]) < confidence(_LOCATIONS)
 
 
 def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
@@ -326,17 +462,13 @@ def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
                 location=_LOCATIONS[0],
                 t_s=float(window),
                 speed_kmh=50.0 + 3.0 * window,
+                heard=heard,
             )
         )
     return OrderMatchAccumulator(
         possible=_WINDOWS * len(_LOCATIONS),
-        matched=len(points),
-        matched_amp=[point.amp for point in points],
-        matched_floor=[_FLOOR_G if point.amp > _NOISE_G else 0.003 for point in points],
-        rel_errors=[point.rel_error for point in points],
-        predicted_vals=[point.predicted_hz for point in points],
-        measured_vals=[point.matched_hz for point in points],
         matched_points=points,
+        matched_floor=[_FLOOR_G if point.heard else 0.003 for point in points],
         ref_sources={"speed+tire"},
         possible_by_speed_bin={},
         matched_by_speed_bin={},
@@ -346,31 +478,16 @@ def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
         matched_by_location={_LOCATIONS[0]: len(points)},
         has_phases=False,
         compliance=1.0,
-        clear_by_location={_LOCATIONS[0]: _WINDOWS // 2},
+        heard_locations=frozenset({_LOCATIONS[0]}),
     )
 
 
 def test_floor_level_matches_add_nothing_to_an_orders_score() -> None:
     # Level, frequency error and tracking, and the sample count come from the
-    # matches that show the order; how often it is there is the match rate's
-    # business, which the context fixes here.
-    context = OrderFindingBuildContext(
-        effective_match_rate=0.5,
-        focused_speed_band=None,
-        per_location_dominant=False,
-        match_rate=0.5,
-        min_match_rate=0.25,
-        constant_speed=False,
-        steady_speed=False,
-        connected_locations=set(_LOCATIONS),
-        lang="en",
-    )
-    wheel_1x = next(h for h in _order_hypotheses() if h.key == "wheel_1x")
-
+    # heard matches; how often it is there is the match rate's business, which
+    # the context fixes here.
     def score(*, floor_matches: bool) -> tuple[float, ...]:
-        result = score_order_finding(
-            wheel_1x, _heard_half_the_drive(floor_matches=floor_matches), context=context
-        )
+        result = _wheel_score(_heard_half_the_drive(floor_matches=floor_matches), match_rate=0.5)
         return (
             result.confidence,
             result.absolute_strength_db,

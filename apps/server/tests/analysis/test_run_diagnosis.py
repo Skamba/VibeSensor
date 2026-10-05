@@ -8,7 +8,7 @@ import pytest
 from test_support.analysis import run_analysis
 from test_support.core import engine_hz, standard_metadata, wheel_hz
 from test_support.findings import make_finding
-from test_support.synthetic_samples import make_engine_order_samples
+from test_support.synthetic_samples import make_engine_order_samples, make_sample
 
 from vibesensor.analysis.diagnosis import build_diagnosis
 from vibesensor.domain.finding import Finding
@@ -170,3 +170,32 @@ def test_engine_tone_that_stops_in_neutral_follows_engine_speed(neutral_peaks: t
     assert "coast_test_contradicts" not in diagnosis["weak_reasons"]
     checks = {check["source"]: check for check in diagnosis["source_checks"]}
     assert checks["wheel/tire"]["reason"] == "stopped_in_neutral"
+
+
+def test_the_coast_down_is_judged_where_the_order_is_heard() -> None:
+    # A trunk sensor that does not hear the engine matches floor-level noise on
+    # its frequency in every window, as often as the sensors that hear it. The
+    # coast-down is judged at a sensor that hears the order, and the trunk's
+    # per-location presence counts none of its floor-level matches.
+    samples = []
+    for engine_sample in make_engine_order_samples(sensors=SENSORS, n_samples=40):
+        if engine_sample["client_name"] == SENSORS[0]:
+            samples.append(
+                make_sample(
+                    t_s=engine_sample["t_s"],
+                    speed_kmh=80.0,
+                    client_name="trunk",
+                    top_peaks=[{"hz": engine_hz(80.0), "amp": 0.004}, {"hz": 200.0, "amp": 0.004}],
+                    strength_floor_amp_g=0.004,
+                    engine_rpm=engine_hz(80.0) * 60.0,
+                )
+            )
+        samples.append(engine_sample)
+
+    diagnosis = _guided_analysis(samples, stops_in_neutral=True)
+
+    assert diagnosis["source"] == "engine"
+    assert diagnosis["speed_dependence"] == "engine_speed"
+    presence = {row["location"]: row["presence_ratio"] for row in diagnosis["location_amplitudes"]}
+    assert presence["trunk"] == 0.0
+    assert presence["front-left"] > 0.5

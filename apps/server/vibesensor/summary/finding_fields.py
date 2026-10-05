@@ -98,6 +98,7 @@ def matched_point_from_observation(obs: OrderMatchObservation) -> MatchedPoint:
         rel_error=obs.rel_error,
         amp=obs.amp,
         location=obs.location,
+        heard=obs.heard,
         phase=obs.phase,
     )
 
@@ -399,6 +400,7 @@ def order_match_observation_from_mapping(raw: Mapping[str, object]) -> OrderMatc
         t_s=_opt_float("t_s"),
         speed_kmh=_opt_float("speed_kmh"),
         phase=str(raw["phase"]) if raw.get("phase") is not None else None,
+        heard=raw.get("heard") is True,
     )
 
 

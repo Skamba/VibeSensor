@@ -255,10 +255,10 @@ the PDF both show:
   are skipped while the revs drop and the spectrum window clears. Presence at
   the order's main location inside the coast-down is compared with presence
   during the rest of the run (≥ 60 % of it: road speed, ≤ 30 %: engine,
-  otherwise unknown). Only matches that stand out of the sensor's noise floor
-  (at least 8 dB over it, as for `presence_ratio`) count: once an engine tone
-  is gone, road noise at the floor still lands near its predicted frequency
-  in some windows. Coast-down matches that stay at one frequency while the
+  otherwise unknown). The main location and both presences count heard
+  matches only (see "Heard matches" in `docs/order_tracking.md`): once an
+  engine tone is gone, road noise at the floor still lands near its predicted
+  frequency in some windows. Coast-down matches that stay at one frequency while the
   prediction falls (an idle tone the order's path crosses) do not count as the
   order (`frequency_tracking_slope`, judged when the coast-down speed really
   fell; see `docs/order_tracking.md`). With a manual speed `speed_dependence` is

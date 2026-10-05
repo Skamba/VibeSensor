@@ -105,9 +105,8 @@ Moderate (0.39), after the corroboration and phase bonuses as well as before
 them: a noise-level order is at most Weak, so on its own it reads as no fault,
 and it cannot outrank a clearly louder order of another source. Only the
 finding's own amplitude counts: the quiet sensors elsewhere on the car do not
-cap a fault that is loud at its own corner. That amplitude is the order's level
-where it is heard: the mean of its peaks at least 6 dB over their window's
-floor at the sensors that hear it (`docs/order_tracking.md`, step 3), not an
+cap a fault that is loud at its own corner. That amplitude is the mean of the order's
+heard matches (see "Heard matches" in `docs/order_tracking.md`), not an
 average with the floor-level noise the matcher picks up elsewhere. The score itself stays internal
 (ranking); no percentage is shown in the UI or the PDF.
 
@@ -124,10 +123,9 @@ the source:
   it scores like a wheel order at a clearly dominant corner, with no
   weak-separation penalty. Established means all of:
   - at least the moderate strength band (16 dB),
-  - clearly present (its peak at least 6 dB over the window's floor) in at
-    least 40 % of the possible windows at the sensors that hear it (see
-    `docs/order_tracking.md`, step 3). Road noise that happens to sit on
-    the order's frequency does not count; a measured speed predicts the order
+  - heard (see "Heard matches" in `docs/order_tracking.md`) in at least
+    40 % of the possible windows at the sensors that hear it. Road noise
+    that happens to sit on the order's frequency does not count; a measured speed predicts the order
     exactly in every window, so such chance matches are common on a rough
     road,
   - a close frequency match (error score at least 0.5),

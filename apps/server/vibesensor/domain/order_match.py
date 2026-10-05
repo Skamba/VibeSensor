@@ -27,7 +27,10 @@ class OrderMatchObservation:
     """A single frequency-domain order/reference match observation.
 
     Records the predicted vs observed frequency at a given time and speed,
-    with amplitude and spatial location context.
+    with amplitude and spatial location context. ``heard`` is the order
+    analysis's one verdict on the match: the order itself, not floor-level road
+    noise the matcher landed on near its predicted frequency (see "Heard
+    matches" in ``docs/order_tracking.md``).
     """
 
     predicted_hz: float
@@ -38,6 +41,7 @@ class OrderMatchObservation:
     t_s: float | None = None
     speed_kmh: float | None = None
     phase: str | None = None
+    heard: bool = False
 
     def __post_init__(self) -> None:
         if self.predicted_hz <= 0:

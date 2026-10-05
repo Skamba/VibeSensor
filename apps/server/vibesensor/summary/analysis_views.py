@@ -60,6 +60,7 @@ class MatchedPoint(TypedDict, total=False):
     amp: float | None
     location: str | None
     phase: str | None
+    heard: bool
 
 
 @with_config(_IGNORE_EXTRA)

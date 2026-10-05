@@ -96,17 +96,9 @@ def score_order_finding(
         match.matched_by_phase,
         min_match_rate=context.min_match_rate,
     )
-    # Level, frequency tracking and sample count come from the matches that show
-    # the order: floor-level matches would dilute a faint tone that only some
-    # sensors hear.
-    evidence = match.evidence_match_indices
+    evidence = match.evidence
     mean_amp, mean_floor, mean_rel_err, corr_val, corr = compute_amplitude_and_error_stats(
-        [match.matched_amp[index] for index in evidence],
-        [match.matched_floor[index] for index in evidence],
-        [match.rel_errors[index] for index in evidence],
-        [match.predicted_vals[index] for index in evidence],
-        [match.measured_vals[index] for index in evidence],
-        constant_speed=context.constant_speed,
+        evidence, constant_speed=context.constant_speed
     )
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
@@ -145,9 +137,7 @@ def score_order_finding(
             weak_spatial_separation=weak_spatial_separation,
         )
 
-    # Only sensors that clearly hear the order corroborate it: elsewhere the
-    # matcher still lands on floor-level noise near the predicted frequency.
-    corroborating_locations = len(match.observed_locations)
+    corroborating_locations = len(match.heard_locations)
     error_denominator = 0.25 * match.compliance
     error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
     snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / SNR_LOG_DIVISOR)
@@ -194,7 +184,7 @@ def score_order_finding(
             and not context.per_location_dominant
             and not context.shares_wheel_order_peaks
         ),
-        zone_match_rate=context.effective_match_rate * match.observed_clear_share,
+        zone_match_rate=context.effective_match_rate * match.heard_share,
     )
 
     ranking_score = (
