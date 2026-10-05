@@ -154,7 +154,7 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",
-          "notes": "Audi A1 GB 25 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
+          "notes": "Audi A1 GB 25 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J \u00d7 15 steel.",
           "front": {
             "width_mm": 185.0,
             "aspect_pct": 65.0,
@@ -252,7 +252,7 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e3",
-          "notes": "Audi A1 GB 25 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
+          "notes": "Audi A1 GB 25 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J \u00d7 15 steel.",
           "front": {
             "width_mm": 185.0,
             "aspect_pct": 65.0,
@@ -333,7 +333,7 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e6",
-          "notes": "Audi A1 GB 30 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
+          "notes": "Audi A1 GB 30 TFSI manual basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J \u00d7 15 steel.",
           "front": {
             "width_mm": 185.0,
             "aspect_pct": 65.0,
@@ -374,7 +374,7 @@
           "evidence_refs_ref": "e6"
         },
         {
-          "item": "30 TFSI MT6 mid-life ratio refresh and 85→81 kW power re-rating",
+          "item": "30 TFSI MT6 mid-life ratio refresh and 85\u219281 kW power re-rating",
           "reason": "An earlier 2022-12 Audi MediaCenter eTD for the same motorization (443) listed forward gear ratios 3.769/1.947/1.281/0.973/0.778/0.642, top gear 0.642, and final drive 4.056. The late 2026 eTD currently cited records top gear 0.554 and final drive 4.353, indicating a mid-life gearbox/final-drive refresh. The launch (Jan 2019) press kit also rated the 30 TFSI at 85 kW (116 PS) before the 2021+ 81 kW (110 PS) WLTP re-rating. The broad 2019-2024 row collapses both states into one mapping.",
           "evidence_refs_ref": "e12"
         }
@@ -433,7 +433,7 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Audi A1 GB 30 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J × 15 steel.",
+          "notes": "Audi A1 GB 30 TFSI S tronic basic tire per official eTD. Audi MediaCenter Germany-program eTD lists basic tire/wheel as 185/65 R15 on 5.5 J \u00d7 15 steel.",
           "front": {
             "width_mm": 185.0,
             "aspect_pct": 65.0,
@@ -475,69 +475,6 @@
         }
       ],
       "configuration_confidence": "high_confidence"
-    },
-    {
-      "id": "audi-gb-35-tfsi-eu-2019-mt6-fwd",
-      "production_start_year": 2019,
-      "variant_name": "35 TFSI",
-      "engine_code": "1.5L",
-      "engine_name": "1.5L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_215_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "S line 19\""
-          }
-        ],
-        "default_ref": "setup_215_17"
-      },
-      "verification_notes": [
-        {
-          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI manual placeholder. The 06/20/2018 launch release says non-top engines could launch with manual or 7-speed S tronic transmissions, but the current Audi MediaCenter A1 Sportback model page and the checked 02/03/2026 exact technical-data set expose only a 35 TFSI S tronic late-program sheet. No checked official source closes a 35 TFSI manual ratio or tire package, so the inherited MT6, 0.840, 3.462, and 215/45 R17 carryover values remain unsupported and production JSON stays unchanged.",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Exact Audi A1 Sportback 35 TFSI manual applicability across the represented EU 2019-2024 row span",
-          "reason": "The checked official chain leaves room for an early manual launch-era state, but the current official model page and recovered late exact sheets expose only 35 TFSI S tronic. No checked official manual technical-data sheet was recovered for the represented 35 TFSI row.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "Represented-row manual gearbox, top gear, final drive, and tire applicability",
-          "reason": "Because no checked official 35 TFSI manual technical-data sheet was recovered, the inherited MT6, 0.840, 3.462, and 215/45 R17 values remain unsupported broad-row carryover data rather than an exact manual mapping.",
-          "evidence_refs_ref": "e14"
-        },
-        {
-          "item": "A1 GB 35 TFSI 6-speed manual is a phantom configuration; never offered for sale",
-          "reason": "Audi MediaCenter A1 Sportback model-page snapshots from March 2019, June 2020, October 2021, and October 2022 list 35 TFSI only as a 7-speed S tronic motorization (810); no 35 TFSI manual motorization was ever published. Only the pre-launch Jan 2019 press kit (with 'subject to change without notice' caveat) mentioned a manual variant for the 35 TFSI. The Audi MediaCenter 'until 2026' model hub also lists the 35 TFSI only as S tronic.",
-          "evidence_refs_ref": "e10"
-        },
-        {
-          "item": "A1 GB 35 TFSI 6-speed manual top gear",
-          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-gb-35-tfsi-eu-2019-dct7-fwd",
@@ -591,7 +528,7 @@
         "default": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e5",
-          "notes": "Audi MediaCenter Germany-program eTD lists basic tire/wheel for the 35 TFSI as 195/55 R16 on 6.5 J × 16 cast aluminum (different basic tire from the 1.0 TFSI variants).",
+          "notes": "Audi MediaCenter Germany-program eTD lists basic tire/wheel for the 35 TFSI as 195/55 R16 on 6.5 J \u00d7 16 cast aluminum (different basic tire from the 1.0 TFSI variants).",
           "front": {
             "width_mm": 195.0,
             "aspect_pct": 55.0,

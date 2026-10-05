@@ -3,9 +3,7 @@
     "notes": {
       "n1": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The ZF 8HP 8-speed automatic was NOT used in any EU Audi A4 B8 variant. First Audi 8HP applications were A8 D4 (2010) and A6 C7 (2011); A4 did not adopt ZF 8HP until the B9 generation (2015+). B8 AWD automatic variants used ZF 6HP Tiptronic (pre-facelift) or DL501 7-speed S tronic (B8.5 facelift). Confirmed by Auto-Data B8 and B8.5 variant catalogues plus Audi MediaCenter 3.0 TDI quattro press release explicitly naming 'six-speed tiptronic' for that variant. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "n4": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
-      "n7": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 is a longitudinal MLB platform; the FWD versions never received the DL501 7-speed S tronic. FWD automatics across the entire B8 generation used the Multitronic CVT instead. Confirmed by Auto-Data B8 pre-facelift variant list and B8.5 facelift listings (no DL501 entry for any FWD A4) plus Carfolio FWD pages consistently showing 8-step Multitronic. Drivetrain, transmission, ratios, and tires set to no_confidence; safety gates require manual confirmation.",
       "n14": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass.",
-      "n15": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A4 B8 3.0 TFSI (272 hp supercharged V6, A4-only - distinct from S4 with the same engine block) was offered exclusively in the B8.5 facelift (2012-2014) with the DL501 7-speed S tronic. No 6-speed manual A4 3.0 TFSI is documented in any Auto-Data, Carfolio, or Audi MediaCenter source. Drivetrain, transmission, ratios, and tires set to no_confidence.",
       "n16": "Audi A4 B8 1.8 TFSI 6-speed manual FWD. Auto-Data B8 generation list confirms FWD MT6 1.8 TFSI as real pre-facelift variant. Carfolio 2011 page (URL slug misnamed but content matches) supplies ratios top 0.69 / FD 3.30 and standard tyre 205/60 R16 on 7Jx16 wheel. Repo placeholder 0.84/3.462 and 225/45 R18 contradicted; Sport-trim 18-inch was an option, not catalogue baseline.",
       "n17": "Audi A4 B8 2.0 TDI (143 PS) 6-speed manual FWD. Auto-Data B8 generation list confirms 2007/2008 production start. No exact ratio source for FWD MT6 recovered; ratios remain no_confidence. Tyre default corrected to 205/55 R16 (Carfolio FWD 2.0 TDI auto pages baseline range 205/60 R16 to 225/55 R16).",
       "n19": "Audi A4 B8 2.0 TDI quattro 6-speed manual AWD. Carfolio 2008 page + Auto-Data B8 listing confirm. Carfolio reputable_secondary ratios: top 0.63 / single combined final drive 4.49 (front/rear split not published in secondary). Standard tyre 225/55 R16. Repo placeholder values contradicted.",
@@ -26,15 +24,6 @@
         "legacy_research_sources:4d505818df53",
         "legacy_research_sources:5e252f7f436b"
       ],
-      "e2": [
-        "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
-        "secondary_technical_sources:a4-b8-wikipedia"
-      ],
-      "e3": [
-        "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
-        "secondary_technical_sources:a4-b8-wikipedia",
-        "secondary_technical_sources:dl501-stronic-wikipedia"
-      ],
       "e4": [
         "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
         "secondary_technical_sources:a4-b8-wikipedia",
@@ -42,16 +31,6 @@
       ],
       "e5": [
         "secondary_technical_sources:a4-b8-generation-autodata-2007-2011"
-      ],
-      "e6": [
-        "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
-        "secondary_technical_sources:a4-b8-wikipedia",
-        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
-      ],
-      "e7": [
-        "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
-        "secondary_technical_sources:a4-b8-wikipedia",
-        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
       ],
       "e8": [
         "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
@@ -61,17 +40,6 @@
       ],
       "e10": [
         "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata"
-      ],
-      "e11": [
-        "secondary_technical_sources:a4-b8-1-8-tfsi-multitronic-carfolio"
-      ],
-      "e12": [
-        "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2007",
-        "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2011"
-      ],
-      "e13": [
-        "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2011",
-        "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2013"
       ],
       "e14": [
         "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
@@ -110,11 +78,6 @@
         "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-carfolio",
         "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
       ],
-      "e24": [
-        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
-        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-autodata",
-        "secondary_technical_sources:a4-b8-2-0-tdi-quattro-dct7-autodata"
-      ],
       "e25": [
         "secondary_technical_sources:a4-b8-generation-autodata-2007-2011",
         "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-autodata",
@@ -133,9 +96,6 @@
         "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-carfolio",
         "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-dct7-autodata"
       ],
-      "e29": [
-        "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata"
-      ],
       "e30": [
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-autodata"
@@ -144,10 +104,6 @@
         "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-carfolio",
         "secondary_technical_sources:a4-b8-3-0-tdi-quattro-dct7-autodata"
-      ],
-      "e32": [
-        "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
-        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata"
       ],
       "e33": [
         "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
@@ -159,9 +115,10 @@
         "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio",
         "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata"
       ],
-      "e35": [
-        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-autodata",
-        "secondary_technical_sources:a4-b8-3-0-tfsi-quattro-dct7-carfolio"
+      "e_adac": [
+        "audi_mediacenter_sources:b8-a4-3-0-tdi-clean-diesel-quattro-press-release",
+        "secondary_technical_sources:a4-b8-3-0-tdi-quattro-zf8hp-autodata",
+        "secondary_technical_sources:a4-b8-adac-catalogue"
       ]
     },
     "tire_setups": {
@@ -194,28 +151,6 @@
           "rim_in": 18.0,
           "width_mm": 225.0
         }
-      },
-      "setup_225_18_3": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 45.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_225_18_2": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e3",
-        "front": {
-          "aspect_pct": 45.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n7"
       },
       "setup_225_18_4": {
         "confidence": "unverified",
@@ -325,160 +260,6 @@
       "configuration_confidence": "low_confidence"
     },
     {
-      "id": "audi-b8-1-8-tfsi-eu-2008-dct7-fwd",
-      "production_start_year": 2008,
-      "variant_name": "1.8 TFSI",
-      "engine_code": "1.8L",
-      "engine_name": "1.8L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "value": "FWD",
-        "evidence_refs_ref": "e3"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL501)",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_2"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e11"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "item": "A4 B8 1.8 TFSI 7-speed S tronic (DL501) top gear",
-          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "A4 B8 1.8 TFSI 7-speed S tronic (DL501) final drive",
-          "reason": "The 3.444 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
-      "id": "audi-b8-1-8-tfsi-eu-2008-zf8hp-fwd",
-      "production_start_year": 2008,
-      "variant_name": "1.8 TFSI",
-      "engine_code": "1.8L",
-      "engine_name": "1.8L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e2"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_3"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e11"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 1.8 TFSI FWD automatic evidence identifies 8-step multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e11"
-        },
-        {
-          "item": "A4 B8 1.8 TFSI 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "A4 B8 1.8 TFSI 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
       "id": "audi-b8-2-0-tdi-eu-2008-mt6-fwd",
       "production_start_year": 2008,
       "variant_name": "2.0 TDI",
@@ -564,160 +345,6 @@
         }
       ],
       "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-b8-2-0-tdi-eu-2008-dct7-fwd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TDI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "value": "FWD",
-        "evidence_refs_ref": "e3"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL501)",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_2"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e12"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "item": "A4 B8 2.0 TDI 7-speed S tronic (DL501) top gear",
-          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "A4 B8 2.0 TDI 7-speed S tronic (DL501) final drive",
-          "reason": "The 3.444 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
-      "id": "audi-b8-2-0-tdi-eu-2008-zf8hp-fwd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TDI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e2"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_3"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e12"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 2.0 TDI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "item": "A4 B8 2.0 TDI 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "A4 B8 2.0 TDI 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tdi-quattro-eu-2008-mt6-awd",
@@ -888,83 +515,6 @@
       "configuration_confidence": "low_confidence"
     },
     {
-      "id": "audi-b8-2-0-tdi-quattro-eu-2008-zf8hp-awd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TDI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "AWD",
-        "evidence_refs_ref": "e4"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e4"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 2.0 TDI quattro evidence supports exact MT6 and facelift S tronic slices, not an 8-speed ZF8HP row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e24"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 2.0 TDI quattro evidence supports exact MT6 and facelift S tronic slices, not an 8-speed ZF8HP row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e24"
-        },
-        {
-          "item": "A4 B8 2.0 TDI quattro 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "A4 B8 2.0 TDI quattro 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
       "id": "audi-b8-2-0-tfsi-eu-2008-mt6-fwd",
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI",
@@ -1041,160 +591,6 @@
         }
       ],
       "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-b8-2-0-tfsi-eu-2008-dct7-fwd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "value": "FWD",
-        "evidence_refs_ref": "e3"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n7",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL501)",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_2"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e13"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a 7-speed S tronic/DCT exact row; the current DCT7 row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e13"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI 7-speed S tronic (DL501) top gear",
-          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI 7-speed S tronic (DL501) final drive",
-          "reason": "The 3.444 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
-      "id": "audi-b8-2-0-tfsi-eu-2008-zf8hp-fwd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "FWD",
-        "evidence_refs_ref": "e2"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e2"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_3"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e13"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact transmission mapping",
-          "reason": "Saved A4 B8 2.0 TFSI FWD automatic evidence identifies multitronic/CVT, not a ZF8HP exact row; the current ZF8HP row carries no ratios until an exact official split is built.",
-          "evidence_refs_ref": "e13"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-2-0-tfsi-quattro-eu-2008-mt6-awd",
@@ -1372,83 +768,6 @@
         }
       ],
       "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-b8-2-0-tfsi-quattro-eu-2008-zf8hp-awd",
-      "production_start_year": 2008,
-      "variant_name": "2.0 TFSI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "AWD",
-        "evidence_refs_ref": "e2"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e2"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_3"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Follow-up review found that the exact 2008-2011 Auto-Data sedan row identifies this pre-facelift Tiptronic configuration as 6-speed automatic, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps the transmission field unresolved.",
-          "evidence_refs_ref": "e29"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 2.0 TFSI quattro Tiptronic pre-facelift evidence conflicts with the broad 2008-2016 ZF8HP row",
-          "reason": "The exact 2008-2011 Auto-Data sedan row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad ZF8HP row likely conflates distinct transmission eras, so the row carries no ratios without a split or later-year proof.",
-          "evidence_refs_ref": "e29"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "A4 B8 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-b8-3-0-tdi-quattro-eu-2008-mt6-awd",
@@ -1662,17 +981,17 @@
       "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "AWD",
-        "evidence_refs_ref": "e4"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac",
+        "notes": "Official Audi MediaCenter clean-diesel material and ADAC give the 3.0 TDI quattro tiptronic permanent all-wheel drive.",
+        "value": "AWD"
       },
       "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e4"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac",
+        "notes": "Official Audi MediaCenter clean-diesel material names a six-speed tiptronic, and ADAC lists the 3.0 TDI quattro tiptronic with 6 gears (06/2008-10/2011). The row carried an 8-speed ZF 8HP label, which no A4 B8 had.",
+        "code": "AT6",
+        "name": "6-speed tiptronic"
       },
       "ratios": {},
       "tires": {
@@ -1694,120 +1013,19 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Official Audi MediaCenter clean-diesel material states that the Germany-market 3.0 TDI clean diesel quattro family combines six-speed tiptronic with quattro permanent all-wheel drive, and the exact 2007-2011 Auto-Data sedan row matches that Tiptronic family. That directly contradicts the broad-row 8-speed ZF8HP mapping and leaves the stored automatic code unresolved without a split.",
-          "evidence_refs_ref": "e32"
+          "note": "The pre-facelift A4 3.0 TDI quattro tiptronic (176 kW, engine CCW) was a 6-speed automatic, sold 06/2008-10/2011 per ADAC; from 10/2009 the 7-speed S tronic row takes over. The row was flagged as a phantom for its 8-speed label and is relabelled and limited to 2008-2011; its row id keeps the old name because row ids are stable.",
+          "evidence_refs_ref": "e_adac"
         }
       ],
       "unresolved": [
         {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 3.0 TDI quattro official pre-facelift Tiptronic evidence conflicts with the broad 2008-2016 ZF8HP row",
-          "reason": "Official Audi MediaCenter clean-diesel material and the exact 2007-2011 Auto-Data sedan row both identify the pre-facelift automatic family as six-speed tiptronic, so the broad ZF8HP row conflates distinct transmission eras, so the row carries no ratios without a split or later-year proof.",
-          "evidence_refs_ref": "e32"
-        },
-        {
-          "item": "A4 B8 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "A4 B8 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
+          "item": "A4 B8 3.0 TDI quattro 6-speed tiptronic top gear and final drive",
+          "reason": "No official technical-data sheet with the tiptronic ratios was found, so none are stored.",
+          "evidence_refs_ref": "e_adac"
         }
       ],
-      "configuration_confidence": "no_confidence"
-    },
-    {
-      "id": "audi-b8-3-0-tfsi-quattro-eu-2008-mt6-awd",
-      "production_start_year": 2008,
-      "variant_name": "3.0 TFSI quattro",
-      "engine_code": "3.0L",
-      "engine_name": "3.0L V6 Supercharged",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n15",
-        "value": "AWD",
-        "evidence_refs_ref": "e6"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n15",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e6"
-      },
-      "ratios": {},
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e6",
-          "notes_ref": "n15",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "A4 B8 3.0 TFSI quattro 6-speed manual top gear",
-          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "item": "A4 B8 3.0 TFSI quattro 6-speed manual final drive",
-          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e6"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "no_confidence",
+      "production_end_year": 2011
     },
     {
       "id": "audi-b8-3-0-tfsi-quattro-eu-2008-dct7-awd",
@@ -1898,93 +1116,6 @@
         }
       ],
       "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-b8-3-0-tfsi-quattro-eu-2008-zf8hp-awd",
-      "production_start_year": 2008,
-      "variant_name": "3.0 TFSI quattro",
-      "engine_code": "3.0L",
-      "engine_name": "3.0L V6 Supercharged",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "value": "AWD",
-        "evidence_refs_ref": "e7"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)",
-        "evidence_refs_ref": "e7"
-      },
-      "ratios": {},
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "S line 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Follow-up review found that exact 2012-2014 and 2012 secondary A4 3.0 TFSI quattro sedan pages identify the checked configuration as AWD with a 7-speed S tronic gearbox, which conflicts with the broad-row 8-speed ZF8HP mapping and keeps this Tiptronic row unresolved.",
-          "evidence_refs_ref": "e35"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A4 (B8, 2011-2016) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 (B8, 2011-2016) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A4 3.0 TFSI quattro Tiptronic evidence conflicts with the broad 2008-2016 ZF8HP row",
-          "reason": "Exact 2012-2014 Auto-Data and 2012 Carfolio sedan pages identify the checked 3.0 TFSI quattro state as AWD with 7-speed S tronic, so the broad ZF8HP row likely conflates distinct transmission states, so the row carries no ratios without a split or exact later-year proof.",
-          "evidence_refs_ref": "e35"
-        },
-        {
-          "item": "A4 B8 3.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "A4 B8 3.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
-          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     }
   ]
 }

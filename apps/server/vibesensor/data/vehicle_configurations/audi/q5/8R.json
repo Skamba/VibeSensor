@@ -1,7 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n2": "Sonnet redo research (2026-04 v2) found no FWD 2.0 TFSI variant of Q5 8R in either the pre-facelift (auto-data gen 1121) or facelift (auto-data gen 4176) inventory. Only diesel 2.0 TDI is offered FWD. Marked no_confidence as a phantom EU configuration; row should be considered for removal.",
       "n4": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference."
     },
     "evidence_ref_sets": {
@@ -11,15 +10,6 @@
         "legacy_research_sources:4b8ab423f879",
         "legacy_research_sources:5e252f7f436b",
         "legacy_research_sources:753cf52ddd21"
-      ],
-      "e2": [
-        "secondary_technical_sources:q5-8r-pre-facelift-gen-autodata",
-        "secondary_technical_sources:q5-8r-facelift-gen-autodata"
-      ],
-      "e3": [
-        "legacy_research_sources:5c2e1a7d8f4b",
-        "legacy_research_sources:6e9b3d4a1c2f",
-        "legacy_research_sources:7d0c4e1b9a6f"
       ]
     },
     "tire_setups": {
@@ -52,39 +42,6 @@
           "rim_in": 18.0,
           "width_mm": 235.0
         }
-      },
-      "setup_255_20": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 45.0,
-          "rim_in": 20.0,
-          "width_mm": 255.0
-        },
-        "notes_ref": "n2"
-      },
-      "setup_245_19": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 50.0,
-          "rim_in": 19.0,
-          "width_mm": 245.0
-        },
-        "notes_ref": "n2"
-      },
-      "setup_235_18": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 55.0,
-          "rim_in": 18.0,
-          "width_mm": 235.0
-        },
-        "notes_ref": "n2"
       }
     }
   },
@@ -99,124 +56,6 @@
     "production_end_year": 2017
   },
   "configurations": [
-    {
-      "id": "audi-8r-2-0-tfsi-eu-2011-dct7-fwd",
-      "variant_name": "2.0 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL501)"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_235_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_235_18"
-      },
-      "verification_notes": [
-        {
-          "note": "This research wave replaces the stale generic backlog note with row-specific contradiction evidence for the broad Q5 8R 2.0 TFSI front-wheel-drive S tronic placeholder. The recovered early Germany-market lineup article names only 2.0 TFSI quattro petrol states, and the stronger secondary facelift tables recovered in this packet also split 2.0 TFSI only into quattro exact slices. That means the broad 2011-2017 FWD DCT7 row is unsupported by the recovered packet and cannot inherit AWD petrol evidence, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Exact Audi Q5 8R 2.0 TFSI front-wheel-drive S tronic applicability across the represented EU 2011-2017 row span",
-          "reason": "The recovered packet does not close any front-wheel-drive 2.0 TFSI Q5 state. The checked early official article names only quattro petrol states, and the stronger secondary facelift tables likewise recover only quattro exact slices.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Represented-row front-wheel-drive DCT7 ratio, final-drive, and tire applicability",
-          "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited DCT7 gearbox family, 0.680 top gear, 3.444 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Q5 8R 2.0 TFSI 7-speed S tronic (DL501) top gear",
-          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one."
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-8r-2-0-tfsi-eu-2011-zf8hp-fwd",
-      "variant_name": "2.0 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "code": "ZF8HP",
-        "name": "8-speed tiptronic (ZF 8HP)"
-      },
-      "ratios": {},
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_235_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Sport 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_235_18"
-      },
-      "verification_notes": [
-        {
-          "note": "This research wave replaces the stale generic backlog note with row-specific contradiction evidence for the broad Q5 8R 2.0 TFSI front-wheel-drive tiptronic placeholder. The recovered early Germany-market lineup article names only 2.0 TFSI quattro petrol states, and the stronger secondary facelift tables recovered in this packet also split 2.0 TFSI only into quattro exact slices. That means the broad 2011-2017 FWD ZF8HP row is unsupported by the recovered packet and cannot inherit AWD petrol evidence, so production JSON remains unchanged.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Exact Audi Q5 8R 2.0 TFSI front-wheel-drive tiptronic applicability across the represented EU 2011-2017 row span",
-          "reason": "The recovered packet does not close any front-wheel-drive 2.0 TFSI Q5 state. The checked early official article names only quattro petrol states, and the stronger secondary facelift tables likewise recover only quattro exact slices.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Represented-row front-wheel-drive ZF8HP ratio, final-drive, and tire applicability",
-          "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited ZF8HP gearbox family, 0.667 top gear, 3.077 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Q5 8R 2.0 TFSI 8-speed tiptronic (ZF 8HP) top gear",
-          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one."
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
     {
       "id": "audi-8r-2-0-tfsi-quattro-eu-2011-dct7-awd",
       "variant_name": "2.0 TFSI quattro",

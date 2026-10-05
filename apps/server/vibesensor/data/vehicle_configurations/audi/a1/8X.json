@@ -1,8 +1,6 @@
 {
   "definitions": {
     "notes": {
-      "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.0 TFSI three-cylinder petrol engine (CHZB 999cc) was introduced with the November 2014 facelift, on sale from spring 2015 (Audi MediaCenter press release: 'first three-cylinder gasoline engine in the history of Audi'). No 1.0 TFSI variant existed at the 2010 launch or in any 2011-2014 production year. The repo row's production_start_year=2011 with 1.0 TFSI engine_code is a non-existent combination. Drivetrain, transmission, ratios, and tires downgraded to no_confidence with safety gates set to require manual confirmation. Authoritative replacement would be a 2015-start row.",
-      "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A1 8X 1.4 TFSI 122 PS engine was offered exclusively with a 6-speed manual or 7-speed S tronic (DQ200); a 5-speed manual was NEVER paired with the 1.4 TFSI engine. Audi UK official tech sheet (legacy_research_sources:d3ced68412f8, Status Sep 2011) lists 6-speed manual ratios I 3.615 / II 1.955 / III 1.281 / IV 0.973 / V 0.778 / VI 0.646, R 3.182, FD 3.625 - no 5-speed variant was ever produced for this engine. The 5-speed manual was paired only with the lower-output 1.2 TFSI 86 PS. Drivetrain, transmission, ratios, and tires downgraded to no_confidence.",
       "n5": "Audi UK 1.4 TFSI 122 PS S tronic technical data sheet (legacy_research_sources:d36a12aece1e, status September 2011; the PDF is no longer served) gives the 7-speed S tronic (DQ200) gear set 3.500 / 2.087 / 1.343 / 0.933 / 0.974 / 0.778 / 0.653, reverse 3.988, and two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3); 3.429 is the one behind the top gear (see the final-drive note) and is the only one stored. Production start 2010 (UK Q4 2010 launch); the row's 2011 follows the model-year convention. The earlier 0.680 top gear and 3.786 final drive were placeholders."
     },
     "evidence_ref_sets": {
@@ -20,17 +18,13 @@
       ],
       "e3": [
         "legacy_research_sources:d3ced68412f8",
+        "secondary_technical_sources:a1-8x-adac-catalogue",
         "secondary_technical_sources:a1-8x-wikipedia"
       ],
       "e4": [
         "secondary_technical_sources:a1-8x-wikipedia",
         "secondary_technical_sources:audi-mediacenter-a1-1-0-tfsi-launch-2014",
         "legacy_research_sources:0cd20821c4bc"
-      ],
-      "e5": [
-        "legacy_research_sources:0cd20821c4bc",
-        "legacy_research_sources:cfd6a6b47886",
-        "legacy_research_sources:092a3f271f19"
       ],
       "e6": [
         "legacy_research_sources:d36a12aece1e"
@@ -56,6 +50,12 @@
         "legacy_research_sources:d36a12aece1e",
         "legacy_research_sources:5709c957ea25",
         "legacy_research_sources:cfd6a6b47886"
+      ],
+      "e_adac_off": [
+        "legacy_research_sources:092a3f271f19",
+        "legacy_research_sources:0cd20821c4bc",
+        "legacy_research_sources:cfd6a6b47886",
+        "secondary_technical_sources:a1-8x-adac-catalogue"
       ]
     },
     "tire_setups": {
@@ -98,7 +98,7 @@
           "rim_in": 17.0,
           "width_mm": 215.0
         },
-        "notes_ref": "n2"
+        "notes": "Tire size carried from the earlier broad A1 rows; not checked against an official wheel program."
       }
     }
   },
@@ -120,17 +120,17 @@
       "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "value": "FWD",
-        "evidence_refs_ref": "e1"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac_off",
+        "notes": "Official Audi facelift material and ADAC both list the 1.0 TFSI A1 as front-wheel drive.",
+        "value": "FWD"
       },
       "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac_off",
+        "notes": "ADAC lists the 1.0 TFSI ultra manual with 5 gears (pages /a1/8x-facelift/245341/ and /245342/); the official facelift brochures name the same gearbox.",
         "code": "5-SPEED-MANU",
-        "name": "5-speed manual",
-        "evidence_refs_ref": "e1"
+        "name": "5-speed manual"
       },
       "ratios": {},
       "tires": {
@@ -152,8 +152,8 @@
       },
       "verification_notes": [
         {
-          "note": "Checked exact official Audi launch and facelift sources. Official Audi material places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 5-speed manual FWD state and a lower 15-inch baseline wheel package. This represented 2011 manual row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
-          "evidence_refs_ref": "e5"
+          "note": "The 1.0 TFSI three-cylinder (70 kW, engine DKL) arrived with the facelift: official Audi material places it in the spring-2015 refresh, and ADAC lists the 1.0 TFSI ultra manual from 02/2015 to 04/2018. The row, earlier flagged as a phantom because it started in 2011, now covers 2015-2018.",
+          "evidence_refs_ref": "e_adac_off"
         }
       ],
       "unresolved": [
@@ -163,17 +163,14 @@
           "evidence_refs_ref": "e7"
         },
         {
-          "item": "Audi A1 1.0 TFSI placeholder replacement for the contradicted 2011 row",
-          "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ manual rows.",
-          "evidence_refs_ref": "e5"
-        },
-        {
           "item": "A1 8X 1.0 TFSI 5-speed manual top gear",
           "reason": "The 0.854 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2015,
+      "production_end_year": 2018
     },
     {
       "id": "audi-8x-1-0-tfsi-eu-2011-dct7-fwd",
@@ -182,17 +179,17 @@
       "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "value": "FWD",
-        "evidence_refs_ref": "e1"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac_off",
+        "notes": "Official Audi facelift material and ADAC both list the 1.0 TFSI A1 as front-wheel drive.",
+        "value": "FWD"
       },
       "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e_adac_off",
+        "notes": "ADAC lists the 1.0 TFSI ultra S tronic with 7 gears (pages /a1/8x-facelift/245341/ and /245342/); the official facelift brochures name the same gearbox.",
         "code": "DCT7",
-        "name": "7-speed S tronic (DQ200)",
-        "evidence_refs_ref": "e1"
+        "name": "7-speed S tronic"
       },
       "ratios": {},
       "tires": {
@@ -214,8 +211,8 @@
       },
       "verification_notes": [
         {
-          "note": "Checked exact official Audi launch and facelift sources. Official Audi material again places the 1.0 TFSI only in the spring-2015 facelift window, while facelift brochures confirm the 1.0 TFSI 7-speed S tronic FWD state and a lower 15-inch baseline wheel package. This represented 2011 S tronic row therefore remains a contradicted advisory placeholder rather than a validated launch-era exact state.",
-          "evidence_refs_ref": "e5"
+          "note": "The 1.0 TFSI three-cylinder (70 kW, engine DKL) arrived with the facelift: official Audi material places it in the spring-2015 refresh, and ADAC lists the 1.0 TFSI ultra S tronic from 02/2015 to 04/2018. The row, earlier flagged as a phantom because it started in 2011, now covers 2015-2018.",
+          "evidence_refs_ref": "e_adac_off"
         }
       ],
       "unresolved": [
@@ -225,17 +222,14 @@
           "evidence_refs_ref": "e7"
         },
         {
-          "item": "Audi A1 1.0 TFSI S tronic placeholder replacement for the contradicted 2011 row",
-          "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ S tronic rows.",
-          "evidence_refs_ref": "e5"
-        },
-        {
           "item": "A1 8X 1.0 TFSI 7-speed S tronic (DQ200) top gear",
           "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
           "evidence_refs_ref": "e1"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2015,
+      "production_end_year": 2018
     },
     {
       "id": "audi-8x-1-4-tfsi-eu-2011-5-speed-manu-fwd",
@@ -244,30 +238,30 @@
       "engine_name": "1.4L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "value": "FWD",
-        "evidence_refs_ref": "e3"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi UK 1.4 TFSI technical sheet and ADAC list front-wheel drive.",
+        "value": "FWD"
       },
       "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "code": "5-SPEED-MANU",
-        "name": "5-speed manual",
-        "evidence_refs_ref": "e3"
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi UK 1.4 TFSI 122 PS technical sheet (status 09/2011) and ADAC (6 gears for both the 90 kW and the 92 kW facelift engine) give a 6-speed manual; the row carried a 5-speed label, which no 1.4 TFSI A1 had.",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
       "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
           "evidence_refs_ref": "e8",
-          "notes_ref": "n3",
           "front": {
             "width_mm": 215.0,
             "aspect_pct": 45.0,
             "rim_in": 17.0
           },
-          "default_axle_for_speed": "rear"
+          "default_axle_for_speed": "rear",
+          "notes": "Tire size carried from the earlier broad row; no official A1 1.4 TFSI wheel program was checked."
         },
         "options": [
           {
@@ -286,8 +280,8 @@
       },
       "verification_notes": [
         {
-          "note": "Checked exact official Audi launch and facelift sources. Official Audi launch-era 1.4 TFSI 122 PS technical data and later facelift brochures both show a 6-speed manual rather than a 5-speed, so this represented 2011 5-speed row remains a contradicted advisory placeholder rather than a validated exact state.",
-          "evidence_refs_ref": "e9"
+          "note": "The 1.4 TFSI A1 manual was always a 6-speed (official Audi UK sheet 09/2011; ADAC 07/2010-11/2014 for the 90 kW and 11/2014-04/2018 for the 92 kW engine). The row was flagged as a phantom for its 5-speed label and is relabelled; its row id keeps the old name because row ids are stable.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
@@ -304,8 +298,8 @@
           ]
         },
         {
-          "item": "A1 8X 1.4 TFSI 5-speed manual top gear",
-          "reason": "The 0.854 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "item": "A1 8X 1.4 TFSI 6-speed manual top gear",
+          "reason": "The Audi UK sheet's 6th gear (0.646) is for the 2010-2014 90 kW engine only and the row also covers the 2015-2018 92 kW engine, so no top gear is stored.",
           "evidence_refs_ref": "e3"
         }
       ],

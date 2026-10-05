@@ -1,12 +1,11 @@
 {
   "definitions": {
     "notes": {
-      "n5": "PHANTOM ROW. The Audi Q3 (8U) 2.0 TDI FWD with automatic transmission does not exist in any market. Confirmed by Audi UK Q3 2014 brochure (Edition 6.2): variant table lists only '2.0 TDI 140 PS / 6-speed manual' and '2.0 TDI 177 PS / 6-speed manual' for FWD TDI - no FWD TDI automatic. Audi UK Q3 2016 brochure (ATL post-LCI): lists only '2.0 TDI 150 PS / 6-speed manual' for FWD TDI. The S tronic in the Q3 8U is reserved for the quattro AWD drivetrain only - the DQ500 transmission is integrated with the Haldex transfer case. FWD TDI cannot use the same DQ500+Haldex assembly. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates set.",
       "n8": "Value from prior-session Audi UK Q3 TFSI quattro S tronic technical-data PDF (cited file is now a SPA shell). Cross-corroborated by auto-data.net 211 PS variant entry. Confidence reduced from 'official_derived' to 'reputable_secondary' to reflect that the saved evidence file is not auditable.",
       "n9": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL): 1.4 TFSI 150 PS / 6-speed manual is a purchasable EU/UK variant across the entire pre-LCI and post-LCI span. Engine code CZDA. PQ35 platform, transverse FWD-only (no quattro variant of 1.4 TFSI exists). Default tyre per Audi UK SE-spec brochure is 235/55 R17 (NOT the 235/50 R18 family-default - that is the S line option). Gear ratios remain unverified; no official Audi UK technical-data PDF has been recovered for the 1.4 TFSI manual.",
       "n10": "Audi Q3 (8U) 1.4 TFSI 150 PS FWD AUTOMATIC: gearbox CORRECTED from '7-speed S tronic (DQ500)' to '6-speed S tronic (DQ250)'. Audi UK Q3 brochures (2014 Edition 6.2 and 2016 ATL) explicitly describe this variant as '6-speed S tronic' - NOT 7-speed. The DQ500 (7-speed wet clutch) is reserved for high-torque quattro applications on this platform; the DQ200 (7-speed dry clutch) is an MQB-era unit not available on PQ35-based Q3 8U. The DQ250 (6-speed wet clutch, 0AM/02E family) is the correct unit for FWD 1.4 TFSI Q3 8U. Drivetrain FWD confirmed; PQ35 platform. Default tyre 235/55 R17 per Audi UK SE-spec.",
       "n11": "Audi UK Q3 SE-spec 235/55 R17 confirmed by 2014 and 2016 UK brochures.",
-      "n12": "Audi Q3 (8U) 2.0 TDI FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 and 2016 ATL): pre-LCI 140 PS and 177 PS variants and post-LCI 150 PS variant all available with 6-speed manual FWD. Gearbox is the 02Q (VW Group 6MT for FWD petrol/diesel). The 2.0 TDI FWD is exclusively manual in both pre-LCI and post-LCI Q3 8U lineups - no automatic FWD TDI variant is offered (see Row 3 phantom). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default).",
+      "n12": "Audi Q3 (8U) 2.0 TDI FWD 6-speed manual confirmed by Audi UK Q3 brochures (2014 and 2016 ATL): pre-LCI 140 PS and 177 PS variants and post-LCI 150 PS variant all available with 6-speed manual FWD. Gearbox is the 02Q (VW Group 6MT for FWD petrol/diesel). (A front-wheel-drive 2.0 TDI S tronic was added in 06/2016; see that row.) Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default).",
       "n13": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
       "n14": "Audi Q3 (8U) 2.0 TDI quattro 6-speed manual AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS variants) and corroborated by two independent secondary sources (auto-data.net and car-specs.net). 6-speed manual is the 0AJ (quattro version of 02Q). Default tyre 235/55 R17 cross-checked across UK brochure SE-spec and both secondary sources. Gear ratios remain unverified.",
       "n16": "Audi Q3 (8U) 2.0 TDI quattro 7-speed S tronic AWD confirmed by Audi UK Q3 2014 brochure (140/177 PS) and 2016 brochure (150/184 PS). Gearbox is DQ500 (Audi 0BH) wet-clutch 7-speed DCT, which integrates the Haldex transfer-case output for the rear axle on PQ35 quattro applications. DCT7 transmission code is correct. DQ500 family designation is correct (DQ250 6-speed has no Haldex-integrated variant for Q3 8U). Default tyre 235/55 R17 per Audi UK SE-spec (NOT 235/50 R18 family-default). Gear ratios unverified.",
@@ -65,6 +64,9 @@
         "secondary_technical_sources:audi-q3-8u-2014-uk-brochure",
         "secondary_technical_sources:audi-q3-8u-2016-uk-brochure",
         "secondary_technical_sources:q3-8u-2-0-tfsi-quattro-dct7-autodata"
+      ],
+      "e_adac": [
+        "secondary_technical_sources:q3-8u-adac-catalogue"
       ]
     },
     "tire_setups": {
@@ -375,29 +377,29 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
-        "notes_ref": "n5",
-        "value": "FWD",
-        "evidence_refs_ref": "e1"
+        "evidence_refs_ref": "e_adac",
+        "notes": "ADAC lists the 2.0 TDI S tronic with front-wheel drive (page /q3/8u-facelift/257148/).",
+        "value": "FWD"
       },
       "transmission": {
         "confidence": "unverified",
-        "notes_ref": "n5",
+        "evidence_refs_ref": "e_adac",
+        "notes": "ADAC lists a 7-speed dual-clutch gearbox for the front-wheel-drive 2.0 TDI S tronic (06/2016-06/2018). The gearbox family is not published.",
         "code": "DCT7",
-        "name": "7-speed S tronic (DQ500)",
-        "evidence_refs_ref": "e1"
+        "name": "7-speed S tronic"
       },
       "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
           "evidence_refs_ref": "e1",
-          "notes_ref": "n5",
           "front": {
             "width_mm": 235.0,
             "aspect_pct": 50.0,
             "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear"
+          "default_axle_for_speed": "rear",
+          "notes": "Tire sizes carried from the earlier broad row; ADAC lists 215/65 R16 for this variant, which is not yet an option here."
         },
         "options": [
           {
@@ -416,37 +418,24 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n13",
-          "evidence_refs_ref": "e2"
+          "note": "A front-wheel-drive Q3 2.0 TDI S tronic did exist late in the facelift: ADAC lists it (88 kW, engine DFT) from 06/2016 to 06/2018, so the row covers 2016-2018. It was earlier flagged as a phantom from UK brochures that list only the manual.",
+          "evidence_refs_ref": "e_adac"
         }
       ],
       "unresolved": [
-        {
-          "item": "Audi Q3 (8U, 2012-2018) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Audi Q3 (8U, 2012-2018) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e2"
-        },
         {
           "item": "Q3 8U source-finding pass status",
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
         },
         {
-          "item": "Q3 8U 2.0 TDI 7-speed S tronic (DQ500) top gear",
-          "reason": "The 0.725 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Q3 8U 2.0 TDI 7-speed S tronic (DQ500) final drive",
-          "reason": "The 4.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e1"
+          "item": "Q3 8U 2.0 TDI 7-speed S tronic top gear and final drive",
+          "reason": "No official technical-data sheet for the front-wheel-drive 2.0 TDI S tronic was found, so no ratios are stored.",
+          "evidence_refs_ref": "e_adac"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2016,
+      "production_end_year": 2018
     },
     {
       "id": "audi-8u-2-0-tdi-quattro-eu-2012-mt6-awd",

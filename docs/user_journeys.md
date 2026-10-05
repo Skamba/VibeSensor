@@ -559,20 +559,20 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (229 rows), BMW (368 rows); market EU only |
-| Exact configuration rows | 597 (ICE 537, PHEV 32, EV 28) |
-| Picker models / generation codes / variants | 93 / 71 / 467 |
-| Production years | 2007–2026 |
-| Rows with tire options | 596 (1 has the default only) |
-| Rows with driven final drive | 512 (86%); 85 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, J1 4, GA 4, 8U 8, FZ 4, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
-| Rows with top gear | 502 of 569 non-EV rows (88%); the 28 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
-| Rows with full gear sets | 360 (60%) |
-| Tire confidence | official_exact 423 · reputable_secondary 42 · official_derived 7 · family_default 75 · unverified 50 |
-| Driven final-drive confidence | official_exact 320 · official_derived 100 · reputable_secondary 22 · family_default 37 · unverified 33 · none 85 |
-| Top-gear confidence | official_exact 394 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 95 (28 EVs, 67 unsourced) |
-| Weak (family_default or unverified) | final drive 70/597 (12%), top gear 67/597 (11%), tire 125/597 (21%) |
-| `order_reference_trust` | trusted 460 · approximate 78 · backlog_unverified 59 |
-| `requires_manual_confirmation` | true 70, false 527 (true exactly when the driven final drive or top gear is weak) |
+| Brands | Audi (210 rows), BMW (368 rows); market EU only |
+| Exact configuration rows | 578 (ICE 518, PHEV 32, EV 28) |
+| Picker models / generation codes / variants | 93 / 71 / 465 |
+| Production years | 2008–2026 |
+| Rows with tire options | 577 (1 has the default only) |
+| Rows with driven final drive | 512 (89%); 66 without: Audi 8X 3, 8V 2, 8Y 4, B8 9, B9 3, C7 4, C8 3, D4 2, J1 4, GA 4, 8U 8, FZ 4, 8R 4, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with top gear | 502 of 550 non-EV rows (91%); the 28 EVs have none: the reduction ratio is the final drive; 48 non-EV rows without, each with an `unresolved` top-gear note |
+| Rows with full gear sets | 360 (62%) |
+| Tire confidence | official_exact 423 · reputable_secondary 42 · official_derived 7 · family_default 74 · unverified 32 |
+| Driven final-drive confidence | official_exact 320 · official_derived 100 · reputable_secondary 22 · family_default 37 · unverified 33 · none 66 |
+| Top-gear confidence | official_exact 394 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 76 (28 EVs, 48 unsourced) |
+| Weak (family_default or unverified) | final drive 70/578 (12%), top gear 67/578 (12%), tire 106/578 (18%) |
+| `order_reference_trust` | trusted 460 · approximate 77 · backlog_unverified 41 |
+| `requires_manual_confirmation` | true 70, false 508 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 20 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |

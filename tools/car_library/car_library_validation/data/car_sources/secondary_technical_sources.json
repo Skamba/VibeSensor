@@ -135,41 +135,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:a4-b8-1-8-tfsi-multitronic-carfolio",
-      "url": "https://www.carfolio.com/audi-a4-1.8-tfsi-multitronic-355377",
-      "title": "Carfolio A4 B8 1.8 TFSI multitronic specification entry",
-      "note": "Exact-ish secondary 2012 A4 1.8 TFSI multitronic sedan page used to document that the recovered FWD automatic evidence is 8-step continuously variable multitronic rather than DCT7 or ZF8HP.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2007",
-      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-multitronic-161414",
-      "title": "Carfolio A4 B8 2.0 TDI multitronic pre-2010 specification entry",
-      "note": "Secondary B8-relevant 2.0 TDI multitronic page used only as adjacent evidence that front-wheel-drive B8 diesel automatics used multitronic/CVT rather than DCT7 or ZF8HP; the model year is outside the 2010+ research target, so it is not promoted to exact production data.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:a4-b8-2-0-tdi-multitronic-carfolio-2011",
-      "url": "https://www.carfolio.com/audi-a4-2.0-tdi-multitronic-355531",
-      "title": "Carfolio A4 B8 2.0 TDI multitronic specification entry",
-      "note": "Exact-ish secondary 2011 A4 2.0 TDI multitronic sedan page used to document that the recovered FWD automatic evidence is 8-step CVT/multitronic rather than DCT7 or ZF8HP.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2011",
-      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-355410",
-      "title": "Carfolio A4 B8 2.0 TFSI multitronic specification entry",
-      "note": "Exact-ish secondary 2011 A4 2.0 TFSI multitronic sedan page used to document that the recovered FWD automatic evidence is multitronic/CVT rather than DCT7 or ZF8HP.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:a4-b8-2-0-tfsi-multitronic-carfolio-2013",
-      "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-multitronic-354794",
-      "title": "Carfolio A4 B8 2.0 TFSI facelift multitronic specification entry",
-      "note": "Exact-ish secondary 2013 A4 2.0 TFSI multitronic sedan page used to cross-check that the recovered FWD automatic evidence is multitronic/CVT; ratio cells were blank and must not be promoted.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:a4-b8-2-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-2.0-tdi-quattro-192203",
       "title": "Carfolio A4 B8 2.0 TDI quattro manual specification entry",
@@ -205,13 +170,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:a5-b8-2-0-tfsi-quattro-zf8hp-autodata",
-      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-2.0-tfsi-211hp-quattro-tiptronic-53519",
-      "title": "Auto-Data A5 B8 2.0 TFSI quattro Tiptronic specification entry",
-      "note": "Exact secondary 2009-2011 A5 Coupe 2.0 TFSI quattro Tiptronic entry used to document AWD, Tiptronic transmission, and 245/40 R18 plus 255/35 R19 tire fitments for the broad B8 coupe row.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-2.0-tfsi-quattro-354772",
       "title": "Carfolio A4 B8 2.0 TFSI quattro manual specification entry",
@@ -237,13 +195,6 @@
       "url": "https://www.auto-data.net/en/audi-a4-b8-8k-facelift-2011-2.0-tfsi-211hp-quattro-s-tronic-26560",
       "title": "Auto-Data A4 B8 2.0 TFSI quattro S tronic specification entry",
       "note": "Exact secondary 2012-2015 facelift A4 2.0 TFSI 211 hp quattro S tronic sedan entry used to cross-check AWD and 7-speed S tronic transmission for the broad B8 row.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:a4-b8-2-0-tfsi-quattro-zf8hp-autodata",
-      "url": "https://www.auto-data.net/en/audi-a4-b8-8k-2.0-tfsi-211hp-quattro-tiptronic-53527",
-      "title": "Auto-Data A4 B8 2.0 TFSI quattro Tiptronic specification entry",
-      "note": "Exact secondary 2008-2011 A4 2.0 TFSI 211 hp quattro Tiptronic sedan entry used to document that the pre-facelift row is Tiptronic with 6 gears, which conflicts with the broad-row 8-speed ZF8HP mapping.",
       "confidence": "medium"
     },
     {
@@ -786,13 +737,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:a5-b8-2-0-tfsi-fwd-multitronic-autodata",
-      "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-2.0-tfsi-180hp-multitronic-4510",
-      "title": "Auto-Data A5 B8 Coupe 2.0 TFSI 180 PS Multitronic specification",
-      "note": "Audi A5 B8 Coupe 2.0 TFSI 180 hp Multitronic CVT (engine codes CAEA/CDNB, auto-data.net ID 4510): FWD, Multitronic CVT, 225/50 R17 standard tyre, production 11/2008-2011. A5-specific positive evidence that FWD A5 B8 automatics use multitronic - directly contradicts any DCT7-FWD or ZF8HP-FWD configurations.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:a5-b8-3-0-tdi-quattro-dct7-autodata",
       "url": "https://www.auto-data.net/en/audi-a5-coupe-8t3-facelift-2011-3.0-tdi-v6-245hp-quattro-s-tronic-19050",
       "title": "Auto-Data A5 B8.5 facelift 3.0 TDI 245 PS quattro 7-speed S tronic specification",
@@ -923,6 +867,41 @@
       "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/e-tron-gt/fw/",
       "title": "ADAC Autokatalog Audi e-tron GT FW and FW facelift",
       "note": "ADAC catalogue: the pre-facelift e-tron GT quattro was sold from 04/21 to 06/24; the facelift e-tron GT quattro (FW facelift page) from 05/25.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a1-8x-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a1/8x-facelift/",
+      "title": "ADAC Autokatalog Audi A1 8X (2010-2014) and 8X facelift (2014-2018)",
+      "note": "ADAC catalogue of the Germany-market A1 (three-door) variants: 1.4 TFSI 90 kW (engine CAX) manual, 6 gears, and S tronic (7 gears) 07/10-11/14; facelift 1.0 TFSI ultra 70 kW (engine DKL) manual, 5 gears, and S tronic, 7 gears, 02/15-04/18 (60 kW manual 02/16-02/18); facelift 1.4 TFSI 92 kW (engine CZC) manual, 6 gears, and S tronic 11/14-04/18. Per-variant pages: /a1/8x/225289/ (1.4 TFSI manual), /a1/8x-facelift/245341/ (1.0 TFSI ultra manual), /245342/ (1.0 TFSI ultra S tronic), /243743/ (1.4 TFSI manual). All front-wheel drive.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a4-b8-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a4/b8/",
+      "title": "ADAC Autokatalog Audi A4 B8 (2007-2011) and B8 facelift (2011-2015)",
+      "note": "ADAC catalogue of the Germany-market A4 B8 sedan variants. Front-wheel-drive automatics are multitronic only (1.8 TFSI, 2.0 TFSI, 2.0 TDI, 2.7 TDI, 3.0 TDI). quattro automatics: 2.0 TFSI quattro S tronic 03/09-08/15, 2.0 TDI quattro S tronic 08/12-04/15, 3.0 TDI quattro tiptronic 06/08-10/11 (6 gears, engine CCW; page /a4/b8/216405/), 3.0 TDI quattro S tronic 10/09-08/15, 3.0 TFSI quattro S tronic 02/12-08/15. No 8-speed gearbox and no manual 3.0 TFSI quattro are listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b8-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a5/8f-8t/",
+      "title": "ADAC Autokatalog Audi A5 8F/8T (2007-2011) and facelift (2011-2016)",
+      "note": "ADAC catalogue of the Germany-market A5 Coupe variants. Front-wheel-drive automatics are multitronic only (2.0 TFSI, 3.0 TDI). quattro automatics: 2.0 TFSI quattro S tronic 10/08-07/16, 3.0 TDI quattro tiptronic 04/08-08/09 (6 gears, engine CCW; page /a5/8f-8t/216419/), 3.0 TDI quattro S tronic 08/09-07/16. No 8-speed gearbox is listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a6-c7-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a6/c7-facelift/",
+      "title": "ADAC Autokatalog Audi A6 C7 (2011-2014) and C7 facelift (2014-2018)",
+      "note": "ADAC catalogue of the Germany-market A6 C7 sedan variants: 2.0 TFSI front-wheel drive manual and multitronic 10/11-09/14; facelift 2.0 TFSI S tronic 10/14-05/16 (front-wheel drive, 7 gears, dual clutch, engine CYP, 185 kW; page /a6/c7-facelift/242966/); 3.0 TFSI quattro S tronic only (01/11-05/16); tiptronic only for the 3.0 TDI quattro (including the competition).",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q3-8u-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q3/8u-facelift/",
+      "title": "ADAC Autokatalog Audi Q3 8U (2011-2014) and 8U facelift (2014-2018)",
+      "note": "ADAC catalogue of the Germany-market Q3 8U variants: 2.0 TDI front-wheel drive manual 10/11-06/18; 2.0 TDI S tronic (7 gears) front-wheel drive 06/16-06/18 (88 kW, engine DFT, dual clutch; page /q3/8u-facelift/257148/); 2.0 TDI quattro manual and S tronic throughout.",
       "confidence": "medium"
     }
   ]

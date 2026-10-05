@@ -2,7 +2,6 @@
   "definitions": {
     "notes": {
       "n3": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table.",
-      "n6": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Audi A3 8V Saloon 2.0 TFSI quattro (40 TFSI quattro, 190 PS) was offered exclusively with the S tronic DCT (6-speed DQ250 pre-2017, 7-speed DQ381 from 2017). No 6-speed manual 2.0 TFSI quattro Saloon variant is documented in the UK MY2018 price list, ADAC Autokatalog, Auto-Data, or Carfolio. The stored row appears to be a mechanically-generated combination that was never produced. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
       "n9": "Audi A3 8V Saloon 1.6 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia 8V powertrain section confirm FWD MQ350 6MT for 1.6 TDI. Production_start_year 2013 retained per Audi MediaCenter 1.6 TDI ultra press release (Sedan availability mid-2014; first deliveries entering MY2013 model designation). Carfolio reputable_secondary ratios: top 0.59 / FD 3.39 / tire baseline 205/55 R16. Repo placeholder 0.84/3.462/225/45-17 contradicted by every saved exact page.",
       "n10": "Audi A3 8V Saloon 1.6 TDI 7-speed S tronic FWD. CRITICAL CORRECTION: transmission name was '7-speed S tronic (DQ381)' which is wrong. 1.6 TDI peak torque (~250 Nm at 110 PS) sits at the DQ200 limit, not the DQ381 wet-clutch range. ADAC catalogue lists this entry as 'S tronic (7-Gang)' = DQ200; Wikipedia A3 8V section explicitly lists DQ200 for 1.6 TDI. Corrected to DQ200. Ratios from Carfolio reputable_secondary: top 0.64 / FD 3.43; tire baseline 205/55 R16.",
       "n11": "Audi A3 8V Saloon 2.0 TDI 6-speed manual FWD (MQ350). ADAC catalogue + Wikipedia confirm FWD MQ350 6MT for 2.0 TDI 150 PS variant. No exact Saloon ratio page recovered for the 2.0 TDI manual; ratios remain no_confidence pending official 8V technical-data PDF. Tire baseline 205/55 R16 from auto-data exact secondary; 225/45 R17 was UK Sport-trim option, not universal default.",
@@ -31,11 +30,6 @@
       "e3": [
         "secondary_technical_sources:a3-8v-adac-catalogue",
         "secondary_technical_sources:audi-a3-8v-wikipedia"
-      ],
-      "e4": [
-        "secondary_technical_sources:a3-8v-adac-catalogue",
-        "secondary_technical_sources:audi-a3-8v-wikipedia",
-        "secondary_technical_sources:carfolio-audi-a3-saloon-8v"
       ],
       "e5": [
         "secondary_technical_sources:carfolio-audi-a3-saloon-8v",
@@ -1025,89 +1019,6 @@
         }
       ],
       "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-8v-40-tfsi-quattro-eu-2013-mt6-awd",
-      "production_start_year": 2013,
-      "variant_name": "40 TFSI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n6",
-        "value": "AWD",
-        "evidence_refs_ref": "e4"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n6",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e4"
-      },
-      "ratios": {},
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n6",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_17",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_18",
-            "name": "Sport 18\""
-          },
-          {
-            "setup_ref": "setup_245_19",
-            "name": "S line 19\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "New official brochure timing anchors tighten the late-8V scope but still do not rescue this row: recovered public official material only anchors the facelift and badge-era windows, while the exact AWD sedan evidence recovered in this run is automatic-only in both checked eras. With only a pre-facelift 2013-2016 1.8 TFSI quattro S tronic sedan and a facelift 2016-2018 2.0 TFSI quattro S tronic sedan recovered, the broad manual placeholder should be treated as unsupported rather than as an inherited exact configuration.",
-          "evidence_refs_ref": "e6"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi A3 Sedan 40 TFSI quattro exact manual applicability across the represented row",
-          "reason": "Recovered public official brochure timing anchors do not add any exact AWD manual sedan state, and the exact recovered AWD sedan evidence is automatic-only in both the 2013-2016 1.8 TFSI quattro state and the 2016-2018 2.0 TFSI quattro state.",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "item": "Audi A3 Sedan 40 TFSI quattro exact ratio and tire mapping for any manual state",
-          "reason": "The recovered public official brochure timing anchors still do not produce any exact AWD manual sedan state, so this pass does not prove any ratio or baseline-tire package for a manual 40 TFSI quattro sedan row.",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "item": "Schema-safe representation of exact 8V quattro powertrain-era splits",
-          "reason": "The recovered public official brochure timing anchors only reinforce that the 8V AWD sedan evidence spans multiple later eras, while the exact recovered states still split into pre-facelift 1.8 TFSI quattro S tronic and facelift 2.0 TFSI quattro S tronic slices that the current broad row does not represent explicitly.",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "item": "A3 8V 40 TFSI quattro 6-speed manual top gear",
-          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "A3 8V 40 TFSI quattro 6-speed manual final drive",
-          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
-          "evidence_refs_ref": "e4"
-        }
-      ],
-      "configuration_confidence": "no_confidence"
     },
     {
       "id": "audi-8v-40-tfsi-quattro-eu-2013-dct7-awd",

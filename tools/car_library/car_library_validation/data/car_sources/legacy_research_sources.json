@@ -16,27 +16,6 @@
       "confidence": "high"
     },
     {
-      "id": "legacy_research_sources:5c2e1a7d8f4b",
-      "url": "https://en.audiclub.eu/article/the-audi-q5-and-audi-q5-hybrid-quattro-38",
-      "title": "Audi Q5 and Q5 hybrid quattro article mirror",
-      "note": "Mirrored Audi-origin Q5 lineup article used in the Q5 8R packet to show that the recovered early Germany-market petrol lineup names 2.0 TFSI quattro states and does not close a front-wheel-drive 2.0 TFSI row.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:6e9b3d4a1c2f",
-      "url": "https://www.engineindetail.com/cars/audi/q5/q5-8r-2012-2016",
-      "title": "Engine in Detail Audi Q5 8R 2012-2016 generation page",
-      "note": "Reputable secondary Q5 8R generation page used to show that the recovered stronger facelift 2.0 TFSI variant tables split into quattro exact slices rather than closing any front-wheel-drive 2.0 TFSI broad row.",
-      "confidence": "medium"
-    },
-    {
-      "id": "legacy_research_sources:7d0c4e1b9a6f",
-      "url": "https://www.auto-data.net/en/audi-q5-i-8r-facelift-2012-generation-4176",
-      "title": "Auto-Data Audi Q5 8R facelift generation page",
-      "note": "Reputable secondary facelift generation table used to confirm that the recovered 2.0 TFSI petrol exact slices are quattro-specific and therefore cannot be used to validate the broad front-wheel-drive Q5 8R petrol rows.",
-      "confidence": "medium"
-    },
-    {
       "id": "legacy_research_sources:002d355a3a6c",
       "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+TT+%288S%2C+2015-2023%29+technical+data+Europe",
       "title": "Search",
