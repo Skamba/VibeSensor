@@ -94,8 +94,9 @@ inherited from family-level data, encode that through `confidence` and
 ### Data conventions
 
 - **Model years:** a row covers every model year in which its gearbox, top
-  gear, final drive and standard tyre stay the same. When an official sheet
-  changes one of them, the new state gets its own row: a change valid from
+  gear and final drive stay the same. When an official sheet changes one of
+  them, the new state gets its own row; a later standard tyre is added as a
+  tyre option instead. A new state starts as follows: a change valid from
   January–July counts from that year, a later one from the next year, and the
   exact validity month goes in a verification note. Rows of one variant with
   the same gearbox name must not overlap in years (the picker offers one
@@ -108,8 +109,10 @@ inherited from family-level data, encode that through `confidence` and
   all-wheel-drive car, the row stores it as `final_drive_rear` only; the
   front ratio is not invented.
 - **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
-  [Turbo] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel`; the family code
-  is left out when no source names it, and EVs use `Electric Single Motor` /
+  [Turbo] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel`. Litres, layout,
+  turbo and fuel come from the technical-data sheet; the family code is left
+  out when it is not known for the row. All rows of one generation use the
+  same text for the same engine. EVs use `Electric Single Motor` /
   `Electric Dual Motor`.
 
 Each row represents one exact vehicle configuration and keeps the qualified

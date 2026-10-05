@@ -1,15 +1,15 @@
 {
   "defaults": {
     "brand": "BMW",
-    "type": "Sedan",
+    "type": "Wagon",
     "market": "EU",
-    "model_code": "F30",
-    "body_code": "F30",
-    "model_name": "3 Series (F30, 2015-2019)"
+    "model_code": "F31",
+    "body_code": "F31",
+    "model_name": "3 Series Touring (F31, 2015-2019)"
   },
   "configurations": [
     {
-      "id": "bmw-f30-320i-eu-2012-mt6-rwd",
+      "id": "bmw-f31-320i-eu-2015-mt6-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "320i",
@@ -21,7 +21,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 320i Sedan six-speed manual as rear-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 320i Touring six-speed manual as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
@@ -29,7 +29,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F30 320i Sedan six-speed manual.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F31 320i Touring six-speed manual.",
         "code": "MT6",
         "name": "6-speed manual"
       },
@@ -39,7 +39,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.830 as top gear for the F30 320i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.830 as top gear for the F31 320i Touring six-speed manual.",
           "value": 0.83
         },
         "gear_ratios": {
@@ -47,7 +47,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 320i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 320i Touring six-speed manual.",
           "value": [
             4.551,
             2.548,
@@ -62,7 +62,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 3.385 as the final drive for the F30 320i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 3.385 as the final drive for the F31 320i Touring six-speed manual.",
           "value": 3.385
         }
       },
@@ -72,7 +72,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F31 320i Touring six-speed manual.",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 60.0,
@@ -87,7 +87,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan six-speed manual.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F31 320i Touring six-speed manual.",
             "front": {
               "width_mm": 205.0,
               "aspect_pct": 60.0,
@@ -99,7 +99,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 320i Sedan six-speed manual, top gear 0.830, final drive 3.385, standard 205/60 R16 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 320i Touring six-speed manual, top gear 0.830, final drive 3.385, standard 205/60 R16 tyres, the same drivetrain values as the Sedan. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -114,7 +114,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 320i Sedan six-speed manual",
+          "item": "Optional wheel/tyre sizes for the F31 320i Touring six-speed manual",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
@@ -124,7 +124,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
+      "id": "bmw-f31-320i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "320i",
@@ -136,7 +136,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 320i Sedan eight-speed Steptronic as rear-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 320i Touring eight-speed Steptronic as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
@@ -144,7 +144,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F30 320i Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F31 320i Touring eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
         "code": "ZF8HP",
         "name": "8-speed Steptronic (ZF 8HP)"
       },
@@ -154,7 +154,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F30 320i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F31 320i Touring eight-speed Steptronic.",
           "value": 0.64
         },
         "gear_ratios": {
@@ -162,7 +162,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 320i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 320i Touring eight-speed Steptronic.",
           "value": [
             5.0,
             3.2,
@@ -179,7 +179,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F30 320i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F31 320i Touring eight-speed Steptronic.",
           "value": 2.813
         }
       },
@@ -189,7 +189,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F31 320i Touring eight-speed Steptronic.",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 60.0,
@@ -204,7 +204,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan eight-speed Steptronic.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F31 320i Touring eight-speed Steptronic.",
             "front": {
               "width_mm": 205.0,
               "aspect_pct": 60.0,
@@ -216,7 +216,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 320i Sedan eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 205/60 R16 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 320i Touring eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 205/60 R16 tyres, the same drivetrain values as the Sedan. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -231,7 +231,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 320i Sedan eight-speed Steptronic",
+          "item": "Optional wheel/tyre sizes for the F31 320i Touring eight-speed Steptronic",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
@@ -241,7 +241,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-eu-2012-mt6-rwd",
+      "id": "bmw-f31-330i-eu-2015-mt6-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i",
@@ -253,7 +253,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 330i Sedan six-speed manual as rear-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 330i Touring six-speed manual as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
@@ -261,7 +261,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F30 330i Sedan six-speed manual.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F31 330i Touring six-speed manual.",
         "code": "MT6",
         "name": "6-speed manual"
       },
@@ -271,7 +271,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.677 as top gear for the F30 330i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.677 as top gear for the F31 330i Touring six-speed manual.",
           "value": 0.677
         },
         "gear_ratios": {
@@ -279,7 +279,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 330i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 330i Touring six-speed manual.",
           "value": [
             3.683,
             2.062,
@@ -294,7 +294,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 3.909 as the final drive for the F30 330i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 3.909 as the final drive for the F31 330i Touring six-speed manual.",
           "value": 3.909
         }
       },
@@ -304,7 +304,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i Sedan six-speed manual.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i Touring six-speed manual.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -319,7 +319,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i Sedan six-speed manual.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i Touring six-speed manual.",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -331,7 +331,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 330i Sedan six-speed manual, top gear 0.677, final drive 3.909, standard 225/50 R17 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 330i Touring six-speed manual, top gear 0.677, final drive 3.909, standard 225/50 R17 tyres, the same drivetrain values as the Sedan. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -346,7 +346,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 330i Sedan six-speed manual",
+          "item": "Optional wheel/tyre sizes for the F31 330i Touring six-speed manual",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
@@ -356,7 +356,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-eu-2012-zf8hp-rwd",
+      "id": "bmw-f31-330i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i",
@@ -368,7 +368,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 330i Sedan eight-speed Steptronic as rear-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 330i Touring eight-speed Steptronic as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
@@ -376,7 +376,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F30 330i Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F31 330i Touring eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
         "code": "ZF8HP",
         "name": "8-speed Steptronic (ZF 8HP)"
       },
@@ -386,7 +386,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F30 330i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F31 330i Touring eight-speed Steptronic.",
           "value": 0.64
         },
         "gear_ratios": {
@@ -394,7 +394,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 330i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 330i Touring eight-speed Steptronic.",
           "value": [
             5.0,
             3.2,
@@ -411,7 +411,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F30 330i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F31 330i Touring eight-speed Steptronic.",
           "value": 2.813
         }
       },
@@ -421,7 +421,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i Touring eight-speed Steptronic.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -436,7 +436,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i Sedan eight-speed Steptronic.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i Touring eight-speed Steptronic.",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -448,7 +448,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 330i Sedan eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 330i Touring eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres, the same drivetrain values as the Sedan. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -463,7 +463,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 330i Sedan eight-speed Steptronic",
+          "item": "Optional wheel/tyre sizes for the F31 330i Touring eight-speed Steptronic",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
@@ -473,7 +473,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-xdrive-eu-2012-zf8hp-awd",
+      "id": "bmw-f31-330i-xdrive-eu-2015-zf8hp-awd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i xDrive",
@@ -485,7 +485,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 330i xDrive Sedan eight-speed Steptronic as xDrive all-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 330i xDrive Touring eight-speed Steptronic as xDrive all-wheel drive.",
         "value": "AWD"
       },
       "transmission": {
@@ -493,7 +493,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F30 330i xDrive Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F31 330i xDrive Touring eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
         "code": "ZF8HP",
         "name": "8-speed Steptronic (ZF 8HP)"
       },
@@ -503,7 +503,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F30 330i xDrive Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F31 330i xDrive Touring eight-speed Steptronic.",
           "value": 0.64
         },
         "gear_ratios": {
@@ -511,7 +511,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 330i xDrive Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 330i xDrive Touring eight-speed Steptronic.",
           "value": [
             5.0,
             3.2,
@@ -528,7 +528,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F30 330i xDrive Sedan eight-speed Steptronic; no separate front-axle ratio is published.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F31 330i xDrive Touring eight-speed Steptronic; no separate front-axle ratio is published.",
           "value": 2.813
         }
       },
@@ -538,7 +538,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i xDrive Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i xDrive Touring eight-speed Steptronic.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -553,7 +553,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 330i xDrive Sedan eight-speed Steptronic.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 330i xDrive Touring eight-speed Steptronic.",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -565,7 +565,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 330i xDrive Sedan eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 330i xDrive Touring eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres, the same drivetrain values as the Sedan. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -580,7 +580,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 330i xDrive Sedan eight-speed Steptronic",
+          "item": "Optional wheel/tyre sizes for the F31 330i xDrive Touring eight-speed Steptronic",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
@@ -590,7 +590,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-340i-eu-2012-mt6-rwd",
+      "id": "bmw-f31-340i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "340i",
@@ -602,122 +602,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 340i Sedan six-speed manual as rear-wheel drive.",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F30 340i Sedan six-speed manual.",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.846 as top gear for the F30 340i Sedan six-speed manual.",
-          "value": 0.846
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 340i Sedan six-speed manual.",
-          "value": [
-            4.11,
-            2.315,
-            1.542,
-            1.179,
-            1.0,
-            0.846
-          ]
-        },
-        "final_drive_rear": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 3.231 as the final drive for the F30 340i Sedan six-speed manual.",
-          "value": 3.231
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 340i Sedan six-speed manual.",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 50.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "name": "Standard 17\"",
-            "confidence": "official_exact",
-            "evidence_refs": [
-              "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-            ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 340i Sedan six-speed manual.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 50.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear"
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 340i Sedan six-speed manual, top gear 0.846, final drive 3.231, standard 225/50 R17 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Later-year F30/F31 drivetrain continuity",
-          "reason": "No EU technical-data sheet after 05/2015 was recovered, so a later mid-cycle change to these ratios would not be visible here.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ]
-        },
-        {
-          "item": "Optional wheel/tyre sizes for the F30 340i Sedan six-speed manual",
-          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ]
-        }
-      ],
-      "configuration_confidence": "high_confidence"
-    },
-    {
-      "id": "bmw-f30-340i-eu-2012-zf8hp-rwd",
-      "production_start_year": 2015,
-      "production_end_year": 2019,
-      "variant_name": "340i",
-      "engine_code": "B58",
-      "engine_name": "B58 3.0L I6 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs": [
-          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-        ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 340i Sedan eight-speed Steptronic as rear-wheel drive.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F31 340i Touring eight-speed Steptronic as rear-wheel drive.",
         "value": "RWD"
       },
       "transmission": {
@@ -725,7 +610,7 @@
         "evidence_refs": [
           "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
         ],
-        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F30 340i Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed Steptronic transmission for the F31 340i Touring eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
         "code": "ZF8HP",
         "name": "8-speed Steptronic (ZF 8HP)"
       },
@@ -735,7 +620,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F30 340i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F31 340i Touring eight-speed Steptronic.",
           "value": 0.64
         },
         "gear_ratios": {
@@ -743,7 +628,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F30 340i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list the full forward ratio set for the F31 340i Touring eight-speed Steptronic.",
           "value": [
             5.0,
             3.2,
@@ -760,7 +645,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F30 340i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F31 340i Touring eight-speed Steptronic.",
           "value": 2.813
         }
       },
@@ -770,7 +655,7 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ],
-          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 340i Sedan eight-speed Steptronic.",
+          "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 340i Touring eight-speed Steptronic.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 50.0,
@@ -785,7 +670,7 @@
             "evidence_refs": [
               "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
             ],
-            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F30 340i Sedan eight-speed Steptronic.",
+            "notes": "The official BMW 05/2015 (LCI) technical data list 225/50 R17 as the standard tyre for the F31 340i Touring eight-speed Steptronic.",
             "front": {
               "width_mm": 225.0,
               "aspect_pct": 50.0,
@@ -797,7 +682,7 @@
       },
       "verification_notes": [
         {
-          "note": "Rebuilt from the official BMW 05/2015 F30/F31 LCI technical data: F30 340i Sedan eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres. This replaces the earlier secondary-source values (manual 0.812 / 3.231, automatic 0.640 / 3.077) and the secondary 18/19/20-inch tyre matrix. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
+          "note": "Touring body added from the official BMW 05/2015 F30/F31 LCI technical data: F31 340i Touring eight-speed Steptronic, top gear 0.640, final drive 2.813, standard 225/50 R17 tyres, the same drivetrain values as the Sedan. The 340i Touring is listed with the eight-speed Steptronic only. BMW's 05/2015 LCI sheet is the latest EU F30/F31 technical-data sheet recovered; the G20 replaced the F30 from 03/2019 and the G21 replaced the F31 from 09/2019, so the row spans 2015-2019.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -812,7 +697,7 @@
           ]
         },
         {
-          "item": "Optional wheel/tyre sizes for the F30 340i Sedan eight-speed Steptronic",
+          "item": "Optional wheel/tyre sizes for the F31 340i Touring eight-speed Steptronic",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"

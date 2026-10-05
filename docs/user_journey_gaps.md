@@ -75,10 +75,10 @@ Fix: **Data:** extend the year ranges where the drivetrain did not change
 Evidence ([user_journeys.md](user_journeys.md) §4):
 
 - Audi and BMW only.
-- No 3 Series Touring (5 Series Touring F11/G31/G61 exists), and no Avant
-  except RS 4/RS 6.
+- 3 and 5 Series Touring exist (F31, G21, F11, G31, G61); no Avant except
+  RS 4/RS 6.
 - No generation before about 2011.
-- 44% of rows have a weak final drive and 41% a weak top gear.
+- 40% of rows have a weak final drive and 38% a weak top gear.
 
 Fix: see WP5.
 

@@ -131,21 +131,6 @@
         "bmw_pressclub_sources:g20-318i-2021-spec-pdf",
         "bmw_market_pages:g20-3-series-price-list-2024"
       ],
-      "e22": [
-        "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
-        "bmw_pressclub_sources:g28-in-320ld-diesel-launch-page"
-      ],
-      "e23": [
-        "bmw_market_pages:g28-th-320li-overview-2024",
-        "bmw_market_pages:g28-in-long-wheelbase-overview"
-      ],
-      "e24": [
-        "bmw_market_pages:g28-cn-2024-specsheet"
-      ],
-      "e25": [
-        "bmw_pressclub_sources:g28-in-320ld-330li-2023-spec-pdf",
-        "bmw_market_pages:g28-cn-2024-specsheet"
-      ],
       "e26": [
         "bmw_pressclub_sources:g20-330e-2019-tech-spec-pdf",
         "bmw_pressclub_sources:g20-330e-2024-tech-spec-pdf"
@@ -158,11 +143,6 @@
       "e28": [
         "bmw_pressclub_sources:g20-320d-2019-spec-pdf",
         "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-        "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
-      ],
-      "e29": [
-        "bmw_pressclub_sources:g20-318i-2020-spec-pdf",
-        "bmw_pressclub_sources:g20-318i-2021-spec-pdf",
         "bmw_pressclub_sources:g20-318i-318d-320d-2024-spec-pdf"
       ]
     },
@@ -197,72 +177,6 @@
           "width_mm": 225.0
         }
       },
-      "setup_245_20_2": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 20.0,
-          "width_mm": 245.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_235_19_2": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
-          "aspect_pct": 35.0,
-          "rim_in": 19.0,
-          "width_mm": 235.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_225_18_4": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_245_20_3": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e3",
-        "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 20.0,
-          "width_mm": 245.0
-        },
-        "notes_ref": "n2"
-      },
-      "setup_235_19_3": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e3",
-        "front": {
-          "aspect_pct": 35.0,
-          "rim_in": 19.0,
-          "width_mm": 235.0
-        },
-        "notes_ref": "n2"
-      },
-      "setup_225_18_5": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e3",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n2"
-      },
       "setup_225_18": {
         "confidence": "unverified",
         "default_axle_for_speed": "rear",
@@ -273,39 +187,6 @@
           "width_mm": 225.0
         },
         "notes_ref": "n12"
-      },
-      "setup_225_18_3": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e6",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n13"
-      },
-      "setup_225_18_6": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e7",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n14"
-      },
-      "setup_225_18_7": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e8",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n15"
       }
     }
   },
@@ -323,8 +204,8 @@
     {
       "id": "bmw-g20-316d-eu-2019-mt6-rwd",
       "variant_name": "316d",
-      "engine_code": "B47D20",
-      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -418,8 +299,8 @@
     {
       "id": "bmw-g20-316d-eu-2019-zf8hp-rwd",
       "variant_name": "316d",
-      "engine_code": "B47D20",
-      "engine_name": "B47D20 2.0L I4 Turbo Diesel",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",
@@ -535,8 +416,8 @@
     {
       "id": "bmw-g20-318d-eu-2019-mt6-rwd",
       "variant_name": "318d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -613,6 +494,15 @@
         {
           "note_ref": "n31",
           "evidence_refs_ref": "e11"
+        },
+        {
+          "note": "Year range set to 2019-2021: the official 03/2019 and 03/2021 G20 sheets list the 318d six-speed manual, the 05/2022 LCI and 05/2024 sheets list the 318d with the eight-speed Steptronic only.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -622,13 +512,15 @@
           "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2019,
+      "production_end_year": 2021
     },
     {
       "id": "bmw-g20-318d-eu-2019-zf8hp-rwd",
       "variant_name": "318d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -696,6 +588,36 @@
           {
             "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
+          },
+          {
+            "name": "LCI standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g20-3series-2024-techdata"
+            ],
+            "notes": "The official BMW 05/2022 (LCI) and 05/2024 G20 sheets list 225/50 R17 as the standard tyre for the 318d Sedan (205/60 R16 before the LCI).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "Launch standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+              "bmw_pressclub_sources:g20-3series-2021-techdata"
+            ],
+            "notes": "The official BMW 03/2019 and 03/2021 G20 sheets list 205/60 R16 as the standard tyre.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
           }
         ]
       },
@@ -707,6 +629,13 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "note": "The 05/2022 (LCI) and 05/2024 sheets repeat eighth gear 0.640 and final drive 2.813 for this variant; the LCI standard tyre 225/50 R17 is offered as an option next to the 205/60 R16 launch standard.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -719,110 +648,10 @@
       "configuration_confidence": "low_confidence"
     },
     {
-      "id": "bmw-g20-318i-eu-2019-mt6-rwd",
-      "variant_name": "318i",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e6",
-        "notes_ref": "n13",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n13",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e6"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n13",
-          "value": 0.812,
-          "evidence_refs_ref": "e6"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n13",
-          "value": 3.077,
-          "evidence_refs_ref": "e6"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_3",
-            "name": "Standard 18\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e6",
-            "notes_ref": "n13",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport Line 19\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e6",
-            "notes_ref": "n13",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_3"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2019, 03/2021, and 05/2024 technical-data PDFs all support the broad G20 318d Sedan automatic row as rear-wheel drive with Eight-speed Steptronic, 0.640 top gear, and 2.813 final drive. This follow-up promotes those stable powertrain values while leaving the tire fields unresolved because the checked official sheets move from 205/60 R16 early in the run to 225/50 R17 later in the run.",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "note": "Official BMW 2020, 2021, and 2024 G20 318i technical-data PDFs found in this run show the 318i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e29"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW G20 318d exact default tire across the full represented 2019-2025 row span",
-          "reason": "The checked official BMW technical-data PDFs move the standard tire from early 205/60 R16 to later 225/50 R17, so the current single default-tire field remains a placeholder until the broad row is time-split or gains explicit year-aware wheel encoding.",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "item": "BMW G20 318d exact public gearbox subtype and full optional wheel matrix",
-          "reason": "The checked official BMW sources prove market-facing Eight-speed Steptronic wording and the stable 0.640 / 2.813 powertrain package, but they do not publish a gearbox subtype code or one full optional wheel/tire matrix that safely closes the broad row.",
-          "evidence_refs_ref": "e9"
-        },
-        {
-          "item": "Unsupported exact manual configuration",
-          "reason": "Official BMW 2020, 2021, and 2024 G20 318i technical-data PDFs found in this run show the 318i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e29"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "bmw-g20-318i-eu-2019-zf8hp-rwd",
       "variant_name": "318i",
-      "engine_code": "I3",
-      "engine_name": "I3",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -893,6 +722,21 @@
             },
             "default_axle_for_speed": "rear",
             "name": "Official standard"
+          },
+          {
+            "name": "LCI standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g20-3series-2024-techdata"
+            ],
+            "notes": "The official BMW 05/2022 (LCI) and 05/2024 G20 sheets list 225/50 R17 as the standard tyre for the 318i Sedan (205/60 R16 before the LCI).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
           }
         ]
       },
@@ -904,6 +748,22 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e12"
+        },
+        {
+          "note": "Year range set to 2020-2025: the 318i joined the G20 range with the 01/2020 sheet; the 03/2021, 05/2022 and 05/2024 sheets repeat eighth gear 0.640 and final drive 2.813.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-3series-2020-318i-techdata",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
+        },
+        {
+          "note": "The 05/2022 (LCI) and 05/2024 sheets repeat eighth gear 0.640 and final drive 2.813 for this variant; the LCI standard tyre 225/50 R17 is offered as an option next to the 205/60 R16 launch standard.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -923,311 +783,15 @@
           "evidence_refs_ref": "e21"
         }
       ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-g20-320ld-eu-2019-mt6-rwd",
-      "variant_name": "320Ld",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.812,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW India press material places the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family and supports only an 8-speed Steptronic Sport automatic state. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
-          "evidence_refs_ref": "e22"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Move the 320Ld family into a dedicated G28 / non-EU shard",
-          "reason": "The saved official BMW India sources place 320Ld in the G28 long-wheelbase family and do not support a manual row, so this G20 EU placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e22"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-320ld-eu-2019-zf8hp-rwd",
-      "variant_name": "320Ld",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "value": 0.64
-        },
-        "gear_ratios": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g20-320d-2021-spec-pdf",
-            "bmw_pressclub_sources:g20-320d-2022-spec-pdf"
-          ],
-          "notes": "Checked official BMW 03/2021 and 05/2022 technical-data for the exact G20 320d Sedan automatic state both list the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640. Applied as official-derived evidence while full 2019-2025 continuity remains unresolved.",
-          "value": [
-            5.25,
-            3.36,
-            2.172,
-            1.72,
-            1.316,
-            1.0,
-            0.822,
-            0.64
-          ]
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "value": 2.813
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW India sources place the 320Ld inside the 3 Series Gran Limousine / G28 long-wheelbase family, not the EU-market G20 shard. The automatic transmission is real only on that non-EU G28 row, which also carries a mixed 18-inch tyre package rather than the inherited G20 square default.",
-          "evidence_refs_ref": "e22"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Rebuild 320Ld from exact G28 market-specific sources",
-          "reason": "The saved official BMW India packet proves a non-EU G28 automatic row with different body/market scope and tyre shape, so this G20 EU placeholder should be replaced only after a dedicated G28 shard exists.",
-          "evidence_refs_ref": "e22"
-        }
-      ],
       "configuration_confidence": "medium_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-320li-eu-2019-mt6-rwd",
-      "variant_name": "320Li",
-      "engine_code": "I3",
-      "engine_name": "I3",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.812,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope, not the EU-market G20 shard, and no saved official manual evidence was recovered. This G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
-          "evidence_refs_ref": "e23"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Move 320Li into a dedicated G28 / non-EU shard",
-          "reason": "The saved official BMW long-wheelbase sources place 320Li in the G28 family and do not provide manual support, so this G20 EU manual placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e23"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-320li-eu-2019-zf8hp-rwd",
-      "variant_name": "320Li",
-      "engine_code": "I3",
-      "engine_name": "I3",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "value": 0.64
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "value": 2.813
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW Thailand and India long-wheelbase pages place the 320Li family in G28 Gran Limousine scope rather than the EU-market G20 shard. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
-          "evidence_refs_ref": "e23"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Rebuild 320Li from exact G28 market-specific sources",
-          "reason": "The saved official BMW long-wheelbase sources prove the family scope mismatch, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
-          "evidence_refs_ref": "e23"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "production_start_year": 2020,
+      "production_end_year": 2025
     },
     {
       "id": "bmw-g20-320d-eu-2019-mt6-rwd",
       "variant_name": "320d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1304,6 +868,15 @@
         {
           "note_ref": "n31",
           "evidence_refs_ref": "e13"
+        },
+        {
+          "note": "Year range set to 2019-2020: the official 03/2019 G20 sheet lists the 320d six-speed manual, the 03/2021, 05/2022 and 05/2024 sheets list the 320d with the eight-speed Steptronic only.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -1328,13 +901,15 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "low_confidence",
+      "production_start_year": 2019,
+      "production_end_year": 2020
     },
     {
       "id": "bmw-g20-320d-eu-2019-zf8hp-rwd",
       "variant_name": "320d",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1402,6 +977,36 @@
           {
             "setup_ref": "setup_245_20",
             "name": "M Sport 20\""
+          },
+          {
+            "name": "LCI standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g20-3series-2024-techdata"
+            ],
+            "notes": "The official BMW 05/2022 (LCI) and 05/2024 G20 sheets list 225/50 R17 as the standard tyre for the 320d Sedan (205/60 R16 before the LCI).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "Launch standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+              "bmw_pressclub_sources:g20-3series-2021-techdata"
+            ],
+            "notes": "The official BMW 03/2019 and 03/2021 G20 sheets list 205/60 R16 as the standard tyre.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
           }
         ]
       },
@@ -1413,6 +1018,13 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "note": "The 05/2022 (LCI) and 05/2024 sheets repeat eighth gear 0.640 and final drive 2.813 for this variant; the LCI standard tyre 225/50 R17 is offered as an option next to the 205/60 R16 launch standard.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -1440,88 +1052,9 @@
       "configuration_confidence": "low_confidence"
     },
     {
-      "id": "bmw-g20-320e-eu-2019-mt6-rwd",
-      "variant_name": "320e",
-      "engine_code": "1.6L",
-      "engine_name": "1.6L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e3",
-        "notes_ref": "n2",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.812,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.077,
-          "evidence_refs_ref": "e3"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_5",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_3",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_3",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_5"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2021 technical-data PDF shows the G20 320e Sedan only as a rear-wheel-drive full-hybrid row with 8-speed Steptronic transmission, not a 6-speed manual, and the saved packet also places the variant later than the current 2019 start year. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
-          "evidence_refs_ref": "e18"
-        },
-        {
-          "note": "Official BMW 2021 G20 320e technical-data PDF shows the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
-          "evidence_refs_ref": "e18"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Whether this contradicted G20 320e manual row should be replaced by a 2021-on hybrid automatic row",
-          "reason": "Official BMW technical-data material in the saved packet supports the G20 320e only as a 2021-on rear-wheel-drive full-hybrid row with 8-speed Steptronic transmission, but this pass did not split the broad 2019-2025 row model.",
-          "evidence_refs_ref": "e18"
-        },
-        {
-          "item": "Unsupported exact manual configuration",
-          "reason": "Official BMW 2021 G20 320e technical-data PDF shows the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
-          "evidence_refs_ref": "e18"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "bmw-g20-320e-eu-2019-zf8hp-rwd",
       "variant_name": "320e",
-      "engine_code": "B48 PHEV",
+      "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
@@ -1601,6 +1134,15 @@
         {
           "note_ref": "n32",
           "evidence_refs_ref": "e14"
+        },
+        {
+          "note": "Year range set to 2021-2023: BMW launched the 320e from 03/2021 and the 03/2021 and 05/2022 sheets list it (eighth gear 0.667, final drive 3.231); the 05/2024 sheet no longer lists a 320e.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g30-520e-2021-launch-article",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -1610,102 +1152,9 @@
           "evidence_refs_ref": "e19"
         }
       ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-g20-320i-eu-2019-mt6-rwd",
-      "variant_name": "320i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e7",
-        "notes_ref": "n14",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n14",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e7"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n14",
-          "value": 0.812,
-          "evidence_refs_ref": "e7"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n14",
-          "value": 3.077,
-          "evidence_refs_ref": "e7"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_6",
-            "name": "Standard 18\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e7",
-            "notes_ref": "n14",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport Line 19\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e7",
-            "notes_ref": "n14",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_6"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 08/2019 launch and 05/2024 technical-data material shows the EU-market G20 330e Sedan as an 8-speed Steptronic full-hybrid row with the electric motor integrated into the transmission, not a 6-speed manual. This MT6 row remains only as a contradicted placeholder until the broader G20 shard is reshaped.",
-          "evidence_refs_ref": "e27"
-        },
-        {
-          "note": "Official BMW 2019 and 2021 G20 320i technical-data PDFs found in this run show the 320i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e19"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Whether this contradicted G20 330e manual row should be deleted or replaced by the exact hybrid automatic row already evidenced elsewhere in the shard",
-          "reason": "Official BMW launch and technical-data material supports the G20 330e only as an 8-speed Steptronic full-hybrid row and does not support a 6-speed manual state, but this pass did not remove or merge the placeholder row.",
-          "evidence_refs_ref": "e27"
-        },
-        {
-          "item": "Unsupported exact manual configuration",
-          "reason": "Official BMW 2019 and 2021 G20 320i technical-data PDFs found in this run show the 320i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e19"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence",
+      "production_start_year": 2021,
+      "production_end_year": 2023
     },
     {
       "id": "bmw-g20-320i-eu-2019-zf8hp-rwd",
@@ -1779,6 +1228,21 @@
             },
             "default_axle_for_speed": "rear",
             "name": "Official standard"
+          },
+          {
+            "name": "LCI standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g20-3series-2024-techdata"
+            ],
+            "notes": "The official BMW 05/2022 (LCI) and 05/2024 G20 sheets list 225/50 R17 as the standard tyre for the 320i Sedan (205/60 R16 before the LCI).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
           }
         ]
       },
@@ -1790,6 +1254,13 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "note": "The 05/2022 (LCI) and 05/2024 sheets repeat eighth gear 0.640 and final drive 2.813 for this variant; the LCI standard tyre 225/50 R17 is offered as an option next to the 205/60 R16 launch standard.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -1802,384 +1273,10 @@
       "configuration_confidence": "medium_confidence"
     },
     {
-      "id": "bmw-g20-325li-eu-2019-mt6-rwd",
-      "variant_name": "325Li",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.812,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. No saved official manual evidence was recovered, so this G20 EU manual row remains wrong-shard spillover with unsupported gearbox identity.",
-          "evidence_refs_ref": "e24"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Move 325Li into a dedicated G28 / non-EU shard",
-          "reason": "The saved official BMW China source places 325Li in the G28 long-wheelbase family and does not support a manual row, so this G20 EU placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e24"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-325li-eu-2019-zf8hp-rwd",
-      "variant_name": "325Li",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 2.813,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW China spec data distinguishes G28 long-wheelbase from G20 standard-wheelbase and lists 325Li under the G28 family. This automatic row therefore remains a wrong-shard placeholder and should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
-          "evidence_refs_ref": "e24"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Rebuild 325Li from exact G28 market-specific sources",
-          "reason": "The saved official BMW China source proves the family-scope mismatch, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
-          "evidence_refs_ref": "e24"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-330li-eu-2019-mt6-rwd",
-      "variant_name": "330Li",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.812,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family and supports an 8-speed automatic state rather than a manual one. This G20 EU manual row is therefore wrong-shard spillover, not a production-backed G20 manual mapping.",
-          "evidence_refs_ref": "e25"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Move 330Li into a dedicated G28 / non-EU shard",
-          "reason": "The saved official BMW India and China sources place 330Li in the G28 long-wheelbase family and support automatic-only non-EU rows, so this G20 EU manual placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e25"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-330li-eu-2019-zf8hp-rwd",
-      "variant_name": "330Li",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 2.813,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_4",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_4"
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW India and China material places the 330Li inside the G28 long-wheelbase family rather than the EU-market G20 shard. The saved India technical-data PDF also shows a mixed 18-inch tyre package, so this G20 EU automatic row should be rebuilt from exact G28 market sources instead of inheriting G20 defaults.",
-          "evidence_refs_ref": "e25"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Rebuild 330Li from exact G28 market-specific sources",
-          "reason": "The saved official BMW India and China sources prove the family-scope mismatch and non-G20 tyre package, so this G20 EU automatic placeholder should move to a dedicated G28 shard before any numeric rewrite is attempted.",
-          "evidence_refs_ref": "e25"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-g20-330e-eu-2019-mt6-rwd",
-      "variant_name": "330e",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e3",
-        "notes_ref": "n2",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n2",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.812,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.077,
-          "evidence_refs_ref": "e3"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_5",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_3",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_3",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_5"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n18",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Official BMW 2019 and 2024 G20 330e technical-data PDFs show the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
-          "evidence_refs_ref": "e26"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-          "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-          "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-          "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-          "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Unsupported exact manual configuration",
-          "reason": "Official BMW 2019 and 2024 G20 330e technical-data PDFs show the PHEV row as Eight-speed Steptronic only; no manual PHEV row was recovered.",
-          "evidence_refs_ref": "e26"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "bmw-g20-330e-eu-2019-zf8hp-rwd",
       "variant_name": "330e",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo PHEV",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -2295,116 +1392,6 @@
       }
     },
     {
-      "id": "bmw-g20-330i-eu-2019-mt6-rwd",
-      "variant_name": "330i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e8",
-        "notes_ref": "n15",
-        "value": "RWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n15",
-        "code": "MT6",
-        "name": "6-speed manual",
-        "evidence_refs_ref": "e8"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n15",
-          "value": 0.812,
-          "evidence_refs_ref": "e8"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n15",
-          "value": 3.077,
-          "evidence_refs_ref": "e8"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_7",
-            "name": "Standard 18\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e8",
-            "notes_ref": "n15",
-            "front": {
-              "width_mm": 235.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport Line 19\""
-          },
-          {
-            "confidence": "unverified",
-            "evidence_refs_ref": "e8",
-            "notes_ref": "n15",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_7"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n18",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "note": "Official BMW 2019 and 2021 G20 330i technical-data PDFs show the 330i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e20"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "EU availability and applicability of 6-speed manual specifically for listed petrol variants",
-          "reason": "Accessible official pages still do not provide one authoritative 2019-2025 matrix covering every listed petrol variant's historical manual-versus-automatic availability.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact public gearbox code and full tire-option matrix for 330i xDrive",
-          "reason": "The checked official BMW PressClub sheets prove the exact 8-speed ratios and the standard 225/50 R17 setup, but they do not publish a gearbox subtype code or the full official optional wheel/tire matrix for this exact variant.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G20 320i production-data applicability across the full 2019-2025 row span",
-          "reason": "Official 03/2021 and 07/2022 BMW technical-data sheets now prove one exact 320i RWD ratio package and show the baseline tire moving from 205/60 R16 to 225/50 R17, while the checked 2024 Germany price list confirms later automatic-only RWD continuity, but this pass did not recover a current exact numeric table proving one unchanged production mapping across the full represented span.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G20 330i RWD Germany-market continuity and exact tire-option coverage",
-          "reason": "Official 03/2021 BMW technical-data now proves the exact 330i RWD ratio package and 225/50 R17 baseline tire, but checked current Germany material is split between a 330i technical-data page and an xDrive-led overview, and this pass did not recover an extracted later official price-list or technical-data table closing plain-RWD continuity and wheel options across the full represented span.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Unsupported exact manual configuration",
-          "reason": "Official BMW 2019 and 2021 G20 330i technical-data PDFs show the 330i Sedan as Eight-speed Steptronic automatic; no exact manual row was recovered.",
-          "evidence_refs_ref": "e20"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "bmw-g20-330i-eu-2019-zf8hp-rwd",
       "variant_name": "330i",
       "engine_code": "B48",
@@ -2487,6 +1474,15 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e16"
+        },
+        {
+          "note": "Year range set to 2019-2023: the official 03/2019, 03/2021 and 05/2022 G20 sheets list the 330i Sedan (eighth gear 0.640, final drive 2.813); the 05/2024 sheet lists only the 330i xDrive.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g20-3series-2019-launch-techdata",
+            "bmw_pressclub_sources:g20-3series-2021-techdata",
+            "bmw_pressclub_sources:g20-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g20-3series-2024-techdata"
+          ]
         }
       ],
       "unresolved": [
@@ -2511,7 +1507,9 @@
           "evidence_refs_ref": "e2"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "medium_confidence",
+      "production_start_year": 2019,
+      "production_end_year": 2023
     },
     {
       "id": "bmw-g20-330i-xdrive-eu-2019-zf8hp-awd",

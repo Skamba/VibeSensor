@@ -250,7 +250,7 @@ the form.
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
-    gear is weak (213 of 488 rows, see §4). A saved car's flag follows the
+    gear is weak (194 of 491 rows, see §4). A saved car's flag follows the
     same rule (`CarOrderReferenceStatus.requires_manual_confirmation`); it is
     derived on every load, so cars saved under the older rule (which also
     counted tire size and the gearbox name) no longer keep a stale `true`.
@@ -546,22 +546,22 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (161 rows), BMW (327 rows); market EU only |
-| Exact configuration rows | 488 (ICE 443, PHEV 26, EV 19) |
-| Picker models / generation codes / variants | 85 / 68 / 349 |
+| Brands | Audi (161 rows), BMW (330 rows); market EU only |
+| Exact configuration rows | 491 (ICE 444, PHEV 28, EV 19) |
+| Picker models / generation codes / variants | 87 / 70 / 358 |
 | Production years | 2007–2026 |
-| Rows with tire options | 487 (1 has the default only) |
-| Rows with driven final drive | 475 (97%); 13 without, all Audi (8S TT/TTS/TT RS, 8V RS 3, 8Y) |
-| Rows with top gear | 488 (100%; EVs store 1.0 for the single speed) |
-| Rows with full gear sets | 196 (40%) |
-| Tire confidence | official_exact 240 · reputable_secondary 51 · official_derived 8 · family_default 104 · unverified 85 |
-| Driven final-drive confidence | official_exact 178 · official_derived 58 · reputable_secondary 26 · family_default 97 · unverified 116 · none 13 |
-| Top-gear confidence | official_exact 233 · official_derived 19 · reputable_secondary 36 · family_default 92 · unverified 108 |
-| Weak (family_default or unverified) | final drive 213/488 (44%), top gear 200/488 (41%), tire 189/488 (39%) |
-| `order_reference_trust` | trusted 263 · approximate 105 · backlog_unverified 120 |
-| `requires_manual_confirmation` | true 213, false 275 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
+| Rows with tire options | 490 (1 has the default only) |
+| Rows with driven final drive | 477 (97%); 14 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
+| Rows with top gear | 491 (100%; EVs store 1.0 for the single speed) |
+| Rows with full gear sets | 218 (44%) |
+| Tire confidence | official_exact 264 · reputable_secondary 43 · official_derived 8 · family_default 104 · unverified 72 |
+| Driven final-drive confidence | official_exact 201 · official_derived 58 · reputable_secondary 24 · family_default 97 · unverified 97 · none 14 |
+| Top-gear confidence | official_exact 257 · official_derived 19 · reputable_secondary 29 · family_default 92 · unverified 94 |
+| Weak (family_default or unverified) | final drive 194/491 (40%), top gear 186/491 (38%), tire 176/491 (36%) |
+| `order_reference_trust` | trusted 285 · approximate 105 · backlog_unverified 101 |
+| `requires_manual_confirmation` | true 194, false 297 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
 | Picker variants without any gearbox | 0 |
-| Variants whose rows differ in tire options | 20 (the picker offers the union) |
+| Variants whose rows differ in tire options | 17 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
 
 **How confidence is surfaced today:**
@@ -584,8 +584,8 @@ changes and update this table.
 **What could be prefilled but isn't** (data gaps; WP5 in
 [user_journey_gaps.md](user_journey_gaps.md)):
 
-- **Bodies:** 5 Series Touring exists (F11, G31, G61); no 3 Series Touring
-  and no A4/A6 Avant. Only the RS 4
+- **Bodies:** 3 and 5 Series Touring exist (F31, G21; F11, G31, G61); no
+  A4/A6 Avant. Only the RS 4
   and RS 6 Avant exist, and estate cars are a large share of the EU fleet.
 - **Generations:** none before ~2011 (no E90/E60/E84/E70, no Audi B7/8P/C6).
 - **Model years:** several generations only have launch-year rows (F20
@@ -593,9 +593,10 @@ changes and update this table.
   from its rows, so a 2015 F20 owner still sees "1 Series (F20, 2011-2012)".
   F10 and G30 now span 2011–2016 and 2017–2023, with a separate row per
   final-drive change.
-- **Final drive:** missing on 13 Audi TT/RS 3 rows. The `unresolved` notes say
-  the manufacturer publishes split or no values; do not invent one. Weak
-  (family_default or unverified) on 213 rows. Those rows are where a single
+- **Final drive:** missing on 13 Audi TT/RS 3 rows and the 2019–2021 G21 318d
+  automatic. The `unresolved` notes say the manufacturer publishes split,
+  conflicting or no values; do not invent one. Weak
+  (family_default or unverified) on 194 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---
