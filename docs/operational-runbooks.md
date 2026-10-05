@@ -231,6 +231,16 @@ on the monotonic clock, so a step does not disturb sync. The step is not
 persisted, so after a reboot without internet the next UI connection corrects
 the clock again.
 
+Starting a recording from the Live page posts the browser clock first, so a
+UI-started run is stamped after any step. A run that starts while the clock is
+not trusted is recorded anyway, with `start_time_unverified: true` in its
+metadata and History list row. That happens when the API starts it before any
+browser connected, or when the clock could not be stepped. A trusted clock is
+NTP-synchronised, or the last browser report found it within 10 s or stepped
+it. History and the report then show its times as unknown (Pi clock not set).
+Its duration and data are unaffected. Recording is not refused, so scripted or
+API-only recordings keep working.
+
 Reports show run times in the stored browser time zone, at the run's own date
 (DST-correct). They fall back to the offset recorded with the run until a
 browser has reported a zone. The History list formats times in the viewing

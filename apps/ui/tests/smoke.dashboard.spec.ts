@@ -238,6 +238,16 @@ test("journey: a failed start shows the server's reason and a retry records", as
 }) => {
   let status = idleStatus();
   let startCalls = 0;
+  const posts: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      path === "/api/system/browser-clock" ||
+      path === "/api/recording/start"
+    ) {
+      posts.push(path);
+    }
+  });
   await bootWithStatus(page, (route) => fulfillJson(route, status));
   await page.route("**/api/recording/start", async (route) => {
     startCalls += 1;
@@ -273,6 +283,13 @@ test("journey: a failed start shows the server's reason and a retry records", as
   );
   await expect(page.locator("#stopLoggingBtn")).toBeEnabled();
   await expect(start).toBeHidden();
+  // Each start sets an unset Pi clock from the browser first.
+  expect(posts.slice(-4)).toEqual([
+    "/api/system/browser-clock",
+    "/api/recording/start",
+    "/api/system/browser-clock",
+    "/api/recording/start",
+  ]);
   expect(startCalls).toBe(2);
 });
 
@@ -288,6 +305,7 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       run_id: "run-001",
       status: "complete",
       start_time_utc: "2026-01-01T00:00:00Z",
+      start_time_unverified: false,
       created_at: "2026-01-01T00:00:00Z",
       raw_sample_count: 12080,
     },
@@ -313,6 +331,7 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       run_id: "run-002",
       status: "complete",
       start_time_utc: "2026-01-02T00:00:00Z",
+      start_time_unverified: false,
       created_at: "2026-01-02T00:00:00Z",
       raw_sample_count: 12080,
     },

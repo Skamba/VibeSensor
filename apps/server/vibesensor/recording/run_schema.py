@@ -179,6 +179,9 @@ class RunMetadata:
     wheel_circumference_m: float | None = None
     recorded_utc_offset_seconds: int | None = None
     guided_phases: tuple[RunGuidedPhase, ...] = field(default_factory=tuple)
+    # The run started before the Pi clock was set (no NTP, no browser report), so
+    # its start and end times are wrong; its duration is not.
+    start_time_unverified: bool = False
 
     @classmethod
     def create(

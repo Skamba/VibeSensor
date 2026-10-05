@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
-import { browserTimeZone, createClockReporter } from "../src/clock_report";
+import {
+  browserTimeZone,
+  createClockReporter,
+  reportClock,
+} from "../src/clock_report";
 
 describe("createClockReporter", () => {
   afterEach(() => {
@@ -46,6 +50,36 @@ describe("createClockReporter", () => {
     });
     warn.mockRestore();
   });
+});
+
+test("reportClock waits for the report and swallows its failure", async () => {
+  let resolveReport: () => void = () => undefined;
+  const report = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveReport = resolve;
+      }),
+  );
+  let done = false;
+  const pending = reportClock(report).then(() => {
+    done = true;
+  });
+  await Promise.resolve();
+  expect(report).toHaveBeenCalledWith(expect.any(Number), browserTimeZone());
+  expect(done).toBe(false);
+  resolveReport();
+  await pending;
+  expect(done).toBe(true);
+
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  await expect(
+    reportClock(() => Promise.reject(new Error("offline"))),
+  ).resolves.toBeUndefined();
+  expect(warn).toHaveBeenCalledWith(
+    "Browser clock report failed",
+    expect.any(Error),
+  );
+  warn.mockRestore();
 });
 
 test("browserTimeZone names an IANA zone", () => {

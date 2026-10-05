@@ -81,6 +81,11 @@ class HistoryListEntryResponse(BaseModel):
     status: str
     start_time_utc: str
     end_time_utc: str | None = None
+    start_time_unverified: bool = Field(
+        default=False,
+        description="The run started before the Pi clock was set (no NTP, no browser "
+        "report), so start_time_utc and end_time_utc are wrong; the duration is right.",
+    )
     created_at: str
     raw_sample_count: int | None = Field(
         default=None,

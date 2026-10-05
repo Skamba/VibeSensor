@@ -14,6 +14,11 @@ on connect and this module steps the system clock when:
 Stepping needs ``CAP_SYS_TIME``, which the systemd unit grants. Without it
 (dev machines, containers) the attempt is logged once and skipped. Sensor
 timing runs on ``time.monotonic``, which a step does not move.
+
+``clock_trusted`` says whether a run starting now gets a true start time: the
+kernel clock is NTP-synchronised, or the last browser report found it within
+the threshold (or stepped it). Until a browser reports, an unsynchronised Pi
+clock is not trusted.
 """
 
 from __future__ import annotations
@@ -65,6 +70,14 @@ class ClockReportResult:
     """Browser clock minus server clock when the report arrived."""
 
 
+_CLOCK_MATCHES_BROWSER = frozenset({ClockAction.STEPPED, ClockAction.WITHIN_THRESHOLD})
+# Far off the browser and not stepped. ``ALREADY_STEPPED`` keeps the earlier verdict:
+# the step set the clock, so a later far-off report is a browser with a wrong clock.
+_CLOCK_LEFT_WRONG = frozenset(
+    {ClockAction.RECORDING, ClockAction.NOT_PERMITTED, ClockAction.SYNC_STATE_UNKNOWN}
+)
+
+
 def kernel_clock_synchronized() -> bool | None:
     """Return whether an NTP client has synchronised the kernel clock.
 
@@ -98,6 +111,7 @@ class BrowserClockCorrector:
         "_step",
         "_stepped",
         "_synchronized",
+        "_browser_agrees",
     )
 
     def __init__(
@@ -115,6 +129,9 @@ class BrowserClockCorrector:
         self._lock = Lock()
         self._stepped = False
         self._permission_denied = False
+        # Whether the clock matched the last browser report (after any step);
+        # ``None`` before the first report.
+        self._browser_agrees: bool | None = None
 
     def report(self, browser_epoch_ms: int) -> ClockReportResult:
         """Handle the browser's clock reading taken just before it sent the report."""
@@ -124,7 +141,26 @@ class BrowserClockCorrector:
             action = self._decide(offset_s)
             if action is ClockAction.STEPPED:
                 action = self._try_step(browser_s, offset_s)
+            if action in _CLOCK_MATCHES_BROWSER:
+                self._browser_agrees = True
+            elif action in _CLOCK_LEFT_WRONG:
+                self._browser_agrees = False
             return ClockReportResult(action=action, offset_s=round(offset_s, 3))
+
+    def clock_trusted(self) -> bool:
+        """Whether the wall clock is right: NTP-synchronised or confirmed by a browser.
+
+        On a platform whose sync state is unknown it is trusted unless a browser
+        found it off and it could not be stepped.
+        """
+        synchronized = self._synchronized()
+        if synchronized:
+            return True
+        # One attribute read, without the lock: the recorder asks while holding its own.
+        browser_agrees = self._browser_agrees
+        if browser_agrees is not None:
+            return browser_agrees
+        return synchronized is None
 
     def _decide(self, offset_s: float) -> ClockAction:
         if abs(offset_s) <= CLOCK_STEP_THRESHOLD_S:

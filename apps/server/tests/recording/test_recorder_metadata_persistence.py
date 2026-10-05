@@ -84,3 +84,28 @@ def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
 
     assert history_db.get_run(run_id) is not None
     assert run_samples(history_db, run_id)
+
+
+def test_a_run_started_before_the_pi_clock_was_set_is_marked_unverified(
+    make_logger, tmp_path: Path
+) -> None:
+    """No RTC, no NTP, no browser yet: the run's wall times are wrong and say so."""
+    history_db = HistoryDB(tmp_path / "history.db")
+    clock = {"trusted": False}
+    logger = make_logger(history_db=history_db, clock_trusted=lambda: clock["trusted"])
+
+    unverified = _started_snapshot_with_sample(logger).run_id
+    # A browser sets the clock mid-run: the run started on the wrong time all the same.
+    clock["trusted"] = True
+    logger.stop_recording()
+    verified = _started_snapshot_with_sample(logger).run_id
+    logger.stop_recording()
+
+    def flags(run_id: str) -> tuple[bool, bool]:
+        run = history_db.get_run(run_id)
+        assert run is not None
+        entry = next(entry for entry in history_db.list_runs() if entry.run_id == run_id)
+        return run.metadata.start_time_unverified, entry.start_time_unverified
+
+    assert flags(unverified) == (True, True)
+    assert flags(verified) == (False, False)

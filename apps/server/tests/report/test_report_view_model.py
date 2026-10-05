@@ -584,6 +584,21 @@ def test_report_date_shows_in_the_users_time_zone_not_the_recorded_offset() -> N
     assert dates(None) == ["2025-07-01 10:00:00 UTC"]
 
 
+def test_report_date_is_unknown_when_the_run_started_before_the_pi_clock_was_set() -> None:
+    summary = deepcopy(_wheel_summary())
+    summary["start_time_utc"] = "2025-07-01T10:00:00Z"
+    metadata = run_metadata_from_mapping(
+        {**summary["metadata"], "run_id": "run", "start_time_unverified": True}
+    )
+
+    def date(lang: str) -> str:
+        view = build_report_view(summary, metadata, lang=lang, time_zone=None)
+        return view.header[2].value
+
+    assert date("en") == "unknown (the Pi clock was not set)"
+    assert date("nl") == "onbekend (de klok van de Pi was niet gezet)"
+
+
 def test_quality_collapses_to_one_footer_line_only_when_everything_passed() -> None:
     summary = deepcopy(_wheel_summary())
     summary["warnings"] = []

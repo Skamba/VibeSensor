@@ -768,6 +768,8 @@ export interface components {
             /** Accelerometer samples in the raw capture across all sensors; null when the run has no raw capture. */
             raw_sample_count?: number | null;
             run_id: string;
+            /** The run started before the Pi clock was set (no NTP, no browser report), so start_time_utc and end_time_utc are wrong; the duration is right. */
+            start_time_unverified: boolean;
             start_time_utc: string;
             status: string;
         };

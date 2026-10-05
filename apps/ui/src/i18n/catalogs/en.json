@@ -166,6 +166,7 @@
   "history.table.actions": "Actions",
   "history.car_label": "Car",
   "history.car_missing": "Not recorded",
+  "history.time_unknown": "Unknown (Pi clock not set)",
   "history.quick_report": "Quick report",
   "history.none": "No runs yet.",
   "history.empty.title": "Capture the first run from Live.",

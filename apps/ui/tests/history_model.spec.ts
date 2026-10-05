@@ -224,6 +224,23 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
   expect(details.heatmap.extras).toEqual(["custom bracket · 21.1 dB"]);
 });
 
+test("a run started before the Pi clock was set shows no wall times", () => {
+  const run = historyListRun("run-clock");
+  const detail = defaultDetail({ preview: populatedInsights("run-clock") });
+  expect(buildRow(run, detail, false, f).startedAt).toBe(
+    "2026-01-01T00:00:00Z",
+  );
+
+  const unset = { ...run, start_time_unverified: true };
+  expect(buildRow(unset, detail, false, f).startedAt).toBe(
+    "history.time_unknown",
+  );
+  const summary = buildDetails(unset, detail, f).runSummary ?? "";
+  expect(summary).toContain("history.summary_created: history.time_unknown");
+  expect(summary).toContain("history.summary_updated: history.time_unknown");
+  expect(summary).toContain("history.summary_size: 12.3 s");
+});
+
 test("keeps loading and error state in the models", () => {
   const run = historyListRun("run-002");
   const detail = defaultDetail({

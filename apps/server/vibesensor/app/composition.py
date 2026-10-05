@@ -180,6 +180,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         push_hz=UI_PUSH_HZ,
         heavy_push_hz=UI_HEAVY_PUSH_HZ,
     )
+    browser_clock = BrowserClockCorrector(recording=lambda: run_recorder.enabled)
     run_recorder = RunRecorder(
         RunRecorderConfig(
             sensor_model=SENSOR_MODEL,
@@ -196,6 +197,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         sensor_metadata_reader=settings.sensor_settings,
         ui_preferences=settings.ui_preferences,
         ingest_diagnostics=ingest_diagnostics,
+        clock_trusted=browser_clock.clock_trusted,
     )
     outdated = history.requeue_outdated_analyses()
     if outdated:
@@ -259,7 +261,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         export_service=ProjectedHistoryExportService(HistoryExportService(history)),
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
-        browser_clock=BrowserClockCorrector(recording=lambda: run_recorder.enabled),
+        browser_clock=browser_clock,
     )
     settings.speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, web=web)

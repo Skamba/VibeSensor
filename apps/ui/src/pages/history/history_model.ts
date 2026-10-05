@@ -402,6 +402,11 @@ function durationSeconds(run: HistoryEntry, detail: RunDetail): number | null {
     : null;
 }
 
+/** A run started before the Pi clock was set has wrong wall times; say so instead. */
+function runTime(run: HistoryEntry, iso: string, f: Formatters): string {
+  return run.start_time_unverified ? f.t("history.time_unknown") : f.fmtTs(iso);
+}
+
 function carName(run: HistoryEntry, t: Translate): string {
   const name = typeof run.car_name === "string" ? run.car_name.trim() : "";
   return name || t("history.car_missing");
@@ -471,7 +476,7 @@ export function buildRow(
         : "history.open_diagnosis_for_run",
       { runId: run.run_id },
     ),
-    startedAt: f.fmtTs(run.start_time_utc),
+    startedAt: runTime(run, run.start_time_utc, f),
     rawSampleCount:
       run.raw_sample_count == null ? "--" : formatInt(run.raw_sample_count),
     reportPendingHint: reportReady(run)
@@ -1100,7 +1105,7 @@ export function buildDetails(
   detail: RunDetail,
   f: Formatters,
 ): DetailsModel {
-  const { t, fmt, fmtTs, formatInt } = f;
+  const { t, fmt, formatInt } = f;
   const summary = rowSummary(detail);
   const showReload = summary !== null || Boolean(detail.insightsError);
   const name = carName(run, t);
@@ -1109,8 +1114,8 @@ export function buildDetails(
     runSummary: summary
       ? [
           `${t("report.run_id")}: ${run.run_id}`,
-          `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc ?? "")}`,
-          `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc ?? "")}`,
+          `${t("history.summary_created")}: ${runTime(run, summary.start_time_utc ?? "", f)}`,
+          `${t("history.summary_updated")}: ${runTime(run, run.end_time_utc ?? "", f)}`,
           `${t("history.summary_size")}: ${fmt(summary.duration_s, 1)} s`,
           `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
         ].join(" · ")

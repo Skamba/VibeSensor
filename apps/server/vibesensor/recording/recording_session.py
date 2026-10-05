@@ -50,6 +50,7 @@ class RunRecordingSessionService:
         active_frames_total: Callable[[], int],
         monotonic: Callable[[], float],
         uuid_factory: Callable[[], str] | None = None,
+        clock_trusted: Callable[[], bool] | None = None,
     ) -> None:
         self._lock = lock
         self._registry = registry
@@ -63,6 +64,8 @@ class RunRecordingSessionService:
         self._active_frames_total = active_frames_total
         self._monotonic = monotonic
         self._uuid_factory = uuid_factory or (lambda: uuid4().hex)
+        self._clock_trusted = clock_trusted or (lambda: True)
+        self._start_time_trusted = True
         self._live_start_mono_s = monotonic()
         self._active_run_context: RunContextSnapshot | None = None
         self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
@@ -134,6 +137,14 @@ class RunRecordingSessionService:
             done = (step.phase for step in self._guided_phases if step.end_t_s is not None)
             return tuple(dict.fromkeys(done))
 
+    def start_time_unverified(self, run_id: str) -> bool:
+        """Whether *run_id* started before the Pi clock was set (by NTP or a browser)."""
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if current_run is None or current_run.run_id != run_id:
+                return False
+            return not self._start_time_trusted
+
     def guided_phases_for_run(self, run_id: str) -> tuple[RunGuidedPhase, ...]:
         with self._lock:
             current_run = self._lifecycle.current_run
@@ -172,6 +183,7 @@ class RunRecordingSessionService:
                 reason="recording run start",
             )
         run_context = self.live_run_context_snapshot()
+        self._start_time_trusted = self._clock_trusted()
         start_mono_s = self._monotonic()
         snapshot = self._lifecycle.start_new_run(
             run_id=self._uuid_factory(),

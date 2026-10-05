@@ -472,7 +472,9 @@ def _header(
         Fact(ctx.t("HEADER_TIRES"), _tire_size(metadata) or unknown),
         Fact(
             ctx.t("HEADER_DATE"),
-            format_run_timestamp(
+            ctx.t("HEADER_DATE_CLOCK_NOT_SET")
+            if metadata.start_time_unverified
+            else format_run_timestamp(
                 analysis.get("start_time_utc") or metadata.start_time_utc,
                 time_zone=time_zone,
                 recorded_utc_offset_seconds=metadata.recorded_utc_offset_seconds,

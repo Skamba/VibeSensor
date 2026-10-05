@@ -419,6 +419,10 @@
     "en": "Date",
     "nl": "Datum"
   },
+  "HEADER_DATE_CLOCK_NOT_SET": {
+    "en": "unknown (the Pi clock was not set)",
+    "nl": "onbekend (de klok van de Pi was niet gezet)"
+  },
   "HEADER_DURATION": {
     "en": "Duration",
     "nl": "Duur"

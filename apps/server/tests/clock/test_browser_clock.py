@@ -105,6 +105,44 @@ def test_missing_cap_sys_time_is_logged_once_and_not_retried(
     assert caplog.text.count("no CAP_SYS_TIME") == 1
 
 
+_WITHIN_MS = int(_SERVER_NOW_S * 1000)
+
+
+@pytest.mark.parametrize(
+    ("clock", "reports_ms", "trusted"),
+    [
+        (_Clock(synchronized=True), [], True),
+        (_Clock(), [], False),
+        (_Clock(), [_WITHIN_MS], True),
+        (_Clock(), [_HOUR_AHEAD_MS], True),
+        (_Clock(), [_HOUR_AHEAD_MS, _HOUR_AHEAD_MS], True),
+        (_Clock(recording=True), [_HOUR_AHEAD_MS], False),
+        (_Clock(error=PermissionError(1, "Operation not permitted")), [_HOUR_AHEAD_MS], False),
+        (_Clock(synchronized=None), [], True),
+        (_Clock(synchronized=None), [_HOUR_AHEAD_MS], False),
+    ],
+    ids=[
+        "ntp-synced",
+        "unsynced-no-browser-yet",
+        "browser-agrees",
+        "stepped",
+        "stepped-then-a-far-off-browser",
+        "far-off-while-recording",
+        "far-off-not-permitted",
+        "sync-unknown-no-browser",
+        "sync-unknown-far-off",
+    ],
+)
+def test_clock_is_trusted_once_ntp_or_a_browser_vouches_for_it(
+    clock: _Clock, reports_ms: list[int], trusted: bool
+) -> None:
+    corrector = clock.corrector()
+    for report_ms in reports_ms:
+        corrector.report(report_ms)
+
+    assert corrector.clock_trusted() is trusted
+
+
 def test_kernel_sync_state_is_read_without_privileges() -> None:
     assert kernel_clock_synchronized() in (True, False, None)
 

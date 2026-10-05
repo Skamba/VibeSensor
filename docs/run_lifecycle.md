@@ -118,6 +118,11 @@ During recording:
   distinct steps finished so far as `guided_phases_completed`, so a Live page
   reloaded mid-run restores the guided panel (including a finished test). The
   step texts name their speeds in the UI's speed unit.
+- the Live page posts the browser clock (`POST /api/system/browser-clock`)
+  before `POST /api/recording/start`, so an unset Pi clock is stepped first. A
+  run that starts while the clock is not trusted (see
+  `BrowserClockCorrector.clock_trusted`) still records, with
+  `start_time_unverified: true` in its metadata
 
 ### 3. Final flush and finalize
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from threading import RLock
 from typing import TYPE_CHECKING
 
@@ -86,6 +87,7 @@ class RunRecorder:
         sensor_metadata_reader: SensorSettingsService | None = None,
         ui_preferences: UiPreferencesService | None = None,
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
+        clock_trusted: Callable[[], bool] | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
@@ -155,6 +157,7 @@ class RunRecorder:
             analysis_settings_snapshot=self._analysis_settings_snapshot,
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
             monotonic=lambda: time.monotonic(),
+            clock_trusted=clock_trusted,
         )
 
         self._sample_flush = SampleFlushOrchestrator(

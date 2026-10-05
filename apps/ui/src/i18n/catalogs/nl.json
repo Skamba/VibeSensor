@@ -166,6 +166,7 @@
   "history.table.actions": "Acties",
   "history.car_label": "Auto",
   "history.car_missing": "Niet vastgelegd",
+  "history.time_unknown": "Onbekend (klok van de Pi niet gezet)",
   "history.quick_report": "Snel rapport",
   "history.none": "Nog geen meetruns.",
   "history.empty.title": "Leg de eerste meetrun vast vanuit Live.",

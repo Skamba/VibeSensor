@@ -10,24 +10,35 @@ export function browserTimeZone(): string | null {
   }
 }
 
+type ClockReport = (
+  epochMs: number,
+  timeZone: string | null,
+) => Promise<unknown>;
+
 /**
- * Returns a callback fed with the live-connection state. On every
- * (re)connect it reports the browser clock and time zone: the Pi has no RTC,
- * so the server steps its clock when it is unsynchronised, and reports show
- * run times in the user's zone instead of the image default.
+ * Reports the browser clock and time zone now. The Pi has no RTC, so the
+ * server steps its clock when it is unsynchronised, and reports show run
+ * times in the user's zone instead of the image default. A failed report is
+ * logged, never thrown.
  */
+export async function reportClock(
+  report: ClockReport = reportBrowserClock,
+): Promise<void> {
+  try {
+    await report(Date.now(), browserTimeZone());
+  } catch (error: unknown) {
+    uiLogger.warn("Browser clock report failed", error);
+  }
+}
+
+/** Returns a callback fed with the live-connection state; reports the clock on every (re)connect. */
 export function createClockReporter(
-  report: (
-    epochMs: number,
-    timeZone: string | null,
-  ) => Promise<unknown> = reportBrowserClock,
+  report: ClockReport = reportBrowserClock,
 ): (connected: boolean) => void {
   let wasConnected = false;
   return (connected) => {
     if (connected && !wasConnected) {
-      report(Date.now(), browserTimeZone()).catch((error: unknown) => {
-        uiLogger.warn("Browser clock report failed", error);
-      });
+      void reportClock(report);
     }
     wasConnected = connected;
   };

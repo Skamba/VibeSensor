@@ -138,23 +138,6 @@ def coerce_raw_capture_manifest(
         return None
 
 
-def _coerce_raw_capture_finalize(
-    *,
-    run_id: str,
-    metadata_json: str | None,
-    source: str,
-) -> RunRawCaptureFinalize | None:
-    metadata = coerce_run_metadata(
-        run_id=run_id,
-        start_time_utc="",
-        end_time_utc=None,
-        metadata_json=metadata_json,
-        source=source,
-        allow_fallback=False,
-    )
-    return None if metadata is None else metadata.raw_capture_finalize
-
-
 def _coerce_analysis(
     *,
     run_id: str,
@@ -227,11 +210,15 @@ def project_run_list_entry(
     normalized_run_id = str(run_id)
     normalized_start = str(start)
     normalized_end = str(end) if end is not None else None
-    raw_capture_finalize = _coerce_raw_capture_finalize(
+    metadata = coerce_run_metadata(
         run_id=normalized_run_id,
+        start_time_utc="",
+        end_time_utc=None,
         metadata_json=str(metadata_json) if metadata_json is not None else None,
         source="list_runs",
+        allow_fallback=False,
     )
+    raw_capture_finalize = None if metadata is None else metadata.raw_capture_finalize
     status = RunStatus(str(status_raw))
     analysis, analysis_corrupt = _coerce_analysis(
         run_id=normalized_run_id,
@@ -269,6 +256,7 @@ def project_run_list_entry(
         raw_sample_count=(
             raw_capture_manifest.total_samples if raw_capture_manifest is not None else None
         ),
+        start_time_unverified=metadata is not None and metadata.start_time_unverified,
     )
 
 

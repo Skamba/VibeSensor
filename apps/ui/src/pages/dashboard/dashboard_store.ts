@@ -8,6 +8,7 @@ import {
 } from "../../api/logging";
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import { errorMessage, isDemoMode, navigate, speedUnit } from "../../app_store";
+import { reportClock } from "../../clock_report";
 import { fmt, formatIntLocale, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
 import {
@@ -174,8 +175,15 @@ async function runAction(
   }
 }
 
+/**
+ * Starts a run. The browser clock goes first, so a Pi clock that no browser
+ * has set yet (it has no RTC) is set before the run is stamped.
+ */
 export function startRecording(): Promise<void> {
-  return runAction("starting", startLoggingRun);
+  return runAction("starting", async () => {
+    await reportClock();
+    return await startLoggingRun();
+  });
 }
 
 export function stopRecording(): Promise<void> {

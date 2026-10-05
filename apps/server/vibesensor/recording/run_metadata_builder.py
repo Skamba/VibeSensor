@@ -106,6 +106,7 @@ def build_run_metadata(
     ui_preferences: UiPreferencesService | None = None,
     sensor_snapshots: tuple[RunSensorMetadata, ...] = (),
     guided_phases: tuple[RunGuidedPhase, ...] = (),
+    start_time_unverified: bool = False,
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
@@ -141,6 +142,7 @@ def build_run_metadata(
     metadata.analysis_settings = analysis_settings_snapshot
     metadata.car = run_car_metadata
     metadata.guided_phases = guided_phases
+    metadata.start_time_unverified = start_time_unverified
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
     if ui_preferences is not None:
         metadata.language = str(ui_preferences.language).strip().lower() or "en"

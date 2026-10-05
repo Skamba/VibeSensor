@@ -39,6 +39,7 @@ function run(
     run_id: runId,
     status: "complete",
     start_time_utc: "2026-01-01T00:00:00Z",
+    start_time_unverified: false,
     end_time_utc: "2026-01-01T00:00:12Z",
     created_at: "2026-01-01T00:00:00Z",
     raw_sample_count: 12080,
