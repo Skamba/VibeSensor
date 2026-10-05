@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 from test_support.update_status import build_update_status_harness
-from test_support.venv_slots import add_slot, make_legacy_venv, simulate_slot_command
+from test_support.venv_slots import (
+    PIP_CONSOLE_SCRIPT,
+    add_slot,
+    make_legacy_venv,
+    simulate_slot_command,
+)
 
 from vibesensor.common.exceptions import UpdateReleaseError
 from vibesensor.updates.artifact_validation import wheel_artifact_problem
@@ -136,7 +141,7 @@ async def test_install_builds_and_smoke_tests_a_new_slot_beside_the_live_one(
         ],
     ]
     new_bin = slots.slot_dir(NEW) / "bin"
-    assert (new_bin / SERVER_APP).read_text() == f"#!{python}\n# installed\n"
+    assert (new_bin / SERVER_APP).read_text() == PIP_CONSOLE_SCRIPT
     assert (new_bin / "vibesensor-server").read_text().startswith(f"#!{python} -IS\n")
 
 

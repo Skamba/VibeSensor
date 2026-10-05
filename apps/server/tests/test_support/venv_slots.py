@@ -9,6 +9,11 @@ from pathlib import Path
 
 from vibesensor.updates.venv_slots import VenvSlots
 
+# What the fake ``pip install`` leaves as ``bin/vibesensor-server``. It is a fixed
+# marker, never built from the command line: fake runners pass every command here,
+# including ``nmcli ... wifi-sec.psk <password>``, and nothing from argv is written.
+PIP_CONSOLE_SCRIPT = "#!/usr/bin/env python3\n# installed by pip\n"
+
 
 def make_venv(root: Path, *, server_shebang: str | None = None) -> Path:
     """Create a venv-shaped directory the way ``venv`` and pip lay it out.
@@ -62,8 +67,7 @@ def simulate_slot_command(args: Sequence[str]) -> None:
     if list(args[1:3]) == ["-m", "venv"]:
         make_venv(Path(args[3]))
     elif list(args[1:4]) == ["-m", "pip", "install"]:
-        python = Path(args[0])
-        write_script(python.parent / "vibesensor-server", f"#!{python}\n# installed\n")
+        write_script(Path(args[0]).parent / "vibesensor-server", PIP_CONSOLE_SCRIPT)
 
 
 def write_script(path: Path, text: str) -> None:
