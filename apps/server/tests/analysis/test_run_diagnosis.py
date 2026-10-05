@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from test_support.analysis import run_analysis
-from test_support.core import standard_metadata, wheel_hz
+from test_support.core import engine_hz, standard_metadata, wheel_hz
 from test_support.findings import make_finding
 from test_support.synthetic_samples import make_engine_order_samples
 
@@ -140,18 +140,29 @@ _GUIDED = [
 ]
 
 
-def _guided_analysis(samples: list[dict[str, Any]], *, stops_in_neutral: bool) -> Any:
+def _guided_analysis(
+    samples: list[dict[str, Any]], *, stops_in_neutral: bool, neutral_peaks: list[dict] = ()
+) -> Any:
     if stops_in_neutral:
         for sample in samples:
             if sample["t_s"] >= _COAST_START_S:
-                sample["top_peaks"] = [{"hz": 200.0, "amp": 0.004}]
+                sample["top_peaks"] = [*neutral_peaks, {"hz": 200.0, "amp": 0.004}]
                 sample["vibration_strength_db"] = 8.0
     return run_analysis(samples, standard_metadata(guided_phases=_GUIDED))["diagnosis"]
 
 
-def test_engine_tone_that_stops_in_neutral_follows_engine_speed() -> None:
+# Once the engine tone is gone, road noise at the floor (0.004 g) may still sit
+# on its predicted frequency: a match, but no vibration.
+@pytest.mark.parametrize(
+    "neutral_peaks",
+    [(), ({"hz": engine_hz(80.0), "amp": 0.004},)],
+    ids=["silent", "floor-noise-on-the-engine-order"],
+)
+def test_engine_tone_that_stops_in_neutral_follows_engine_speed(neutral_peaks: tuple) -> None:
     diagnosis = _guided_analysis(
-        make_engine_order_samples(sensors=SENSORS, n_samples=40), stops_in_neutral=True
+        make_engine_order_samples(sensors=SENSORS, n_samples=40),
+        stops_in_neutral=True,
+        neutral_peaks=list(neutral_peaks),
     )
 
     assert diagnosis["source"] == "engine"

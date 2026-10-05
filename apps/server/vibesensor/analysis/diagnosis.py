@@ -34,7 +34,11 @@ from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES, ReferenceProvenance, r
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
-from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
+from vibesensor.domain.order_match import (
+    OrderMatchObservation,
+    frequency_tracking_slope,
+    trend_moves,
+)
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.summary.diagnosis_contracts import (
@@ -118,7 +122,7 @@ def build_diagnosis(
     speed_dependence = (
         None
         if refs.manual_speed or refs.electric
-        else _speed_dependence(candidate, located, metadata.guided_phases)
+        else _speed_dependence(candidate, located, floors, metadata.guided_phases)
     )
     weak_reasons = _weak_reasons(
         candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
@@ -482,11 +486,7 @@ def _presence_ratio(
         location = point.location or ""
         if point.t_s is None or point.speed_kmh is None or point.speed_kmh <= 0:
             continue
-        floor_amp = floors.get(location)
-        if floor_amp is not None and (
-            vibration_strength_db_scalar(peak_band_rms_amp_g=point.amp, floor_amp_g=floor_amp)
-            < NEGLIGIBLE_STRENGTH_MAX_DB
-        ):
+        if not _stands_out(point, floors):
             continue
         speed_bin = floor(point.speed_kmh / _SPEED_BIN_KMH)
         standing_out[(location, speed_bin)].append((point.t_s, point.amp))
@@ -499,6 +499,19 @@ def _presence_ratio(
             if amp >= _PRESENT_LEVEL_RATIO * usual
         )
     return len(present & moving) / len(moving)
+
+
+def _stands_out(point: OrderMatchObservation, floors: dict[str, float]) -> bool:
+    """Whether a matched peak stands out of its sensor's noise floor.
+
+    A peak below that is road noise that happened to sit near the predicted
+    frequency, not the order.
+    """
+    floor_amp = floors.get(point.location or "")
+    return floor_amp is None or (
+        vibration_strength_db_scalar(peak_band_rms_amp_g=point.amp, floor_amp_g=floor_amp)
+        >= NEGLIGIBLE_STRENGTH_MAX_DB
+    )
 
 
 def _is_candidate(finding: Finding, candidate: Finding | None) -> bool:
@@ -770,6 +783,7 @@ def _guided_phase_names(phases: Sequence[RunGuidedPhase]) -> list[GuidedPhaseVal
 def _speed_dependence(
     candidate: Finding | None,
     located: Sequence[tuple[Sample, str]],
+    floors: dict[str, float],
     phases: Sequence[RunGuidedPhase],
 ) -> SpeedDependenceValue | None:
     """Whether the diagnosed order kept going while coasting in neutral (guided test).
@@ -778,7 +792,9 @@ def _speed_dependence(
     wheel or driveline order stays present and an engine order disappears.
     Compares the order's presence at its strongest location inside the guided
     coast-down window (after it settles) with its presence during the rest of
-    the run.
+    the run. Only matches that stand out of the sensor's noise floor count:
+    once an engine order is gone, road noise still lands near its predicted
+    path from time to time.
     """
     if candidate is None or not candidate.matched_points:
         return None
@@ -819,7 +835,7 @@ def _speed_dependence(
     timed = [
         (point.t_s, point)
         for point in candidate.matched_points
-        if point.location == location and point.t_s is not None
+        if point.location == location and point.t_s is not None and _stands_out(point, floors)
     ]
     matched_inside, matched_outside = split([t_s for t_s, _point in timed])
     coast_points = [point for t_s, point in timed if in_window(t_s, settled)]
