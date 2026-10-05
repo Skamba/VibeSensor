@@ -206,7 +206,11 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
 Entry point: *Settings → Car → + Add Car*. This opens the five-step wizard
 (Brand → Type → Model → Variant → Specs) in
 `apps/ui/src/pages/cars/CarWizard.tsx`, with its rules in `wizard_model.ts` and
-its state in `wizard_store.ts`.
+its state in `wizard_store.ts`. The header shows the step and the picks so far
+on one line, e.g. "BMW · SUV · X1 (F48, 2016–2022)" (`selectionTrail`); only
+the step content scrolls, and each step starts at its top. On a phone the
+"This car can test" and "Your car" card shows only on the specs step, below
+the form.
 
 #### 3.3a Library path (Audi or BMW, the brands included today)
 
@@ -241,7 +245,8 @@ its state in `wizard_store.ts`.
     the result, e.g. "Final drive is an estimate for this model family:
     driveline results will be marked as estimated" (`estimateNoteKey`,
     `settings.car.estimate.*`).
-  - The sidebar shows "This car can test" for the values on the form
+  - The side card (below the form on a phone) shows "This car can test" for
+    the values on the form
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
@@ -280,7 +285,7 @@ its state in `wizard_store.ts`.
   a positive number (`firstInvalidField` / `canFinish`). Typed values are
   saved as `user_confirmed`, empty ratios as `null` with no confidence
   (`carRequest` in `wizard_model.ts`).
-- **Tell:** the "This car can test" sidebar updates as the user types:
+- **Tell:** the "This car can test" card updates as the user types:
   - tire only → wheel/tire;
   - plus final drive → driveline;
   - plus top gear → engine (RPM estimated from speed, assuming top gear);

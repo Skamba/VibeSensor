@@ -1,4 +1,10 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Route,
+  test,
+} from "@playwright/test";
 
 import type {
   CarLibraryBrandsPayload,
@@ -98,7 +104,8 @@ const POLO: CarLibraryModel = {
     {
       name: "GTI (2021\u20132024)",
       drivetrain: "FWD",
-      engine: "2.0 petrol",
+      // Long enough to wrap under the name on a phone.
+      engine: "2.0 TSI EA888 evo4 turbo petrol",
       gearboxes: [{ ...GEARBOX, name: "6-speed DSG", final_drive_ratio: 3.24 }],
       production_start_year: 2021,
       production_end_year: 2024,
@@ -396,6 +403,93 @@ test("journey: one model per generation; the variant step picks the model year",
     aspects: { final_drive_ratio: 3.24 },
     order_reference_status: { transmission_name: "6-speed DSG" },
   });
+});
+
+test("journey: on a phone the header carries the picks and no option is covered", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const server = createServer();
+  await bootWithCars(page, server);
+  // Enough variants that the variant step scrolls.
+  const fillers = [55, 60, 63, 66, 70, 75, 81, 85, 90, 95, 110, 125].map(
+    (kw) => ({
+      name: `1.0 TSI ${kw} kW`,
+      drivetrain: "FWD" as const,
+      engine: "1.0 petrol",
+    }),
+  );
+  await page.route("**/api/car-library/models?*", (route) =>
+    fulfillJson<CarLibraryModelsPayload>(route, {
+      models: [
+        GOLF,
+        { ...POLO, variants: [...(POLO.variants ?? []), ...fillers] },
+      ],
+    }),
+  );
+  await openCarsTab(page);
+  await page.locator("#addCarBtn").click();
+  const wizard = page.locator("#addCarWizard");
+  const body = wizard.locator(".wizard-shell");
+  const trail = page.locator("#wizardTrail");
+  await wizard.locator('#wizardBrandList [data-value="VW"]').click();
+  await expect(trail).toHaveText("VW");
+  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
+  await wizard.locator('#wizardModelList [data-idx="1"]').click();
+  await expect(trail).toHaveText("VW · Hatchback · Polo (AW, 2018\u20132024)");
+  // The picks live in the header; the side card waits for the specs step.
+  await expect(wizard.locator(".wizard-summary-card")).toBeHidden();
+  await expect(wizard.locator(".wizard-step-indicators")).toBeHidden();
+
+  const variants = wizard.locator("#wizardVariantList .wiz-opt");
+  await variants.nth(2).click();
+  await expect(trail).toHaveText(
+    "VW · Hatchback · Polo (AW, 2018\u20132024) · GTI (2021\u20132024)",
+  );
+  // On the specs step the card follows the form, inside the scroll area,
+  // while the buttons stay on screen.
+  await page.locator("#wizardSummaryPanel").scrollIntoViewIfNeeded();
+  await expect(page.locator("#wizardSummaryPanel")).toBeInViewport();
+  await expect(page.locator("#wizardManualAddBtn")).toBeInViewport({
+    ratio: 1,
+  });
+  expect(await body.evaluate((element) => element.scrollTop)).toBeGreaterThan(
+    0,
+  );
+
+  // Back starts the variant step at its top and drops the variant from the
+  // trail.
+  await page.locator("#wizardBackBtn").click();
+  await expect(trail).toHaveText("VW · Hatchback · Polo (AW, 2018\u20132024)");
+  await expect(
+    wizard.getByText("Pick the one that matches your car's year"),
+  ).toBeInViewport({ ratio: 1 });
+  const box = async (locator: Locator) => {
+    const rect = await locator.boundingBox();
+    if (!rect) throw new Error("not rendered");
+    return rect;
+  };
+  const header = await box(wizard.locator(".wizard-header"));
+  const scrollArea = await box(body);
+  const first = await box(variants.first());
+  expect(first.y).toBeGreaterThanOrEqual(header.y + header.height);
+  expect(first.y).toBeGreaterThanOrEqual(scrollArea.y);
+  expect(first.y + first.height).toBeLessThanOrEqual(
+    scrollArea.y + scrollArea.height,
+  );
+  // Nothing is painted over the first option.
+  const hit = await page.evaluate(
+    ([x, y]) =>
+      document.elementFromPoint(x, y)?.closest(".wiz-opt")?.textContent,
+    [first.x + first.width / 2, first.y + first.height / 2],
+  );
+  expect(hit).toContain("1.0 TSI");
+  // A long detail wraps under the name and stays inside its option.
+  const row = await box(variants.nth(2));
+  const detail = await box(variants.nth(2).locator(".wiz-opt-detail"));
+  expect(detail.y).toBeGreaterThan(row.y + 10);
+  expect(detail.y + detail.height).toBeLessThanOrEqual(row.y + row.height);
+  expect(detail.x + detail.width).toBeLessThanOrEqual(row.x + row.width);
 });
 
 test("journey: a slow older model list never replaces the newer one", async ({

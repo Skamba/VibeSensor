@@ -19,6 +19,7 @@ import {
   type RatioPart,
   SPECS_STEP,
   STEP_LABEL_KEYS,
+  selectionTrail,
   specProvenance,
   summary,
   variantDetail,
@@ -574,6 +575,7 @@ export function CarWizard() {
   const current = state.step;
   const editing = state.editing;
   const card = useRef<HTMLDivElement | null>(null);
+  const body = useRef<HTMLDivElement | null>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(open);
   const request = focusRequest.value;
@@ -585,9 +587,6 @@ export function CarWizard() {
         active instanceof HTMLElement && active !== document.body
           ? active
           : null;
-      if (card.current) {
-        card.current.scrollTop = 0;
-      }
     }
     if (!open && wasOpen.current) {
       const target = returnFocus.current?.isConnected
@@ -598,6 +597,13 @@ export function CarWizard() {
     }
     wasOpen.current = open;
   }, [open]);
+
+  // Each step starts at its top, not at the previous step's scroll offset.
+  useLayoutEffect(() => {
+    if (open && body.current) {
+      body.current.scrollTop = 0;
+    }
+  }, [open, current]);
 
   // A request made while Settings is still opening waits until it is visible.
   const appliedFocus = useRef(0);
@@ -617,6 +623,7 @@ export function CarWizard() {
   }, [request, viewVisible]);
 
   const view = summary(state, inputs, fmt, t);
+  const trail = selectionTrail(state).join(" · ");
   const capabilities =
     current === SPECS_STEP
       ? carCapabilities(specProvenance(state, inputs), wizardFuelType(state))
@@ -649,96 +656,67 @@ export function CarWizard() {
         ref={card}
       >
         <div class="wizard-header">
-          <div class="wizard-header__text">
+          <div class="wizard-header__top">
             <strong id="wizardTitle">
               {editing
                 ? t("settings.car.edit_title", { name: editing.name })
                 : t("settings.car.add_title")}
             </strong>
-            <div class="subtle">
+            <button
+              id="wizardCloseBtn"
+              type="button"
+              class="btn btn--muted wizard-close"
+              aria-label={t("settings.car.wizard_close")}
+              onClick={closeWizard}
+            >
+              {"×"}
+            </button>
+          </div>
+          {editing || current === 0 ? (
+            <div class="subtle wizard-header__intro">
               {t(
                 editing
                   ? "settings.car.edit_intro"
                   : "settings.car.wizard_intro",
               )}
             </div>
-            {editing ? null : (
+          ) : null}
+          {editing ? null : (
+            <div class="wizard-progress">
               <div id="wizardProgressText" class="wizard-progress-text">
                 {progressText(current, t)}
               </div>
-            )}
-          </div>
-          <button
-            id="wizardCloseBtn"
-            type="button"
-            class="btn btn--muted wizard-close"
-            aria-label="Close wizard"
-            onClick={closeWizard}
-          >
-            {"×"}
-          </button>
+              {trail ? (
+                <div id="wizardTrail" class="wizard-trail" title={trail}>
+                  {trail}
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
-        <div class="wizard-shell">
+        <div class="wizard-shell" ref={body}>
           <div class="wizard-main">
-            <div class="wizard-steps">
-              <div class="wizard-step-indicators" hidden={Boolean(editing)}>
-                {STEP_LABEL_KEYS.map((key, index) => (
-                  <span
-                    key={key}
-                    class="wizard-step-dot"
-                    data-step={String(index)}
-                    data-step-state={
-                      index === current
-                        ? "active"
-                        : index < current
-                          ? "done"
-                          : "upcoming"
-                    }
-                    aria-current={index === current ? "step" : undefined}
-                  >
-                    <span class="wizard-step-dot__number">{index + 1}</span>
-                    <span class="wizard-step-dot__label">{t(key)}</span>
-                  </span>
-                ))}
-              </div>
-              <Steps />
-            </div>
-            <div class="wizard-nav">
-              <div
-                id="wizardActionHint"
-                class="subtle wizard-nav__status"
-                aria-live="polite"
-              >
-                {actionHint(state, inputs, gearboxOptions.value.length, t)}
-              </div>
-              <div class="wizard-nav__actions">
-                <button
-                  id="wizardBackBtn"
-                  type="button"
-                  class="btn btn--muted"
-                  hidden={current === 0 || Boolean(editing)}
-                  onClick={() => void goBack()}
-                >
-                  {t("settings.car.back")}
-                </button>
-                <button
-                  id="wizardManualAddBtn"
-                  type="button"
-                  class="btn btn--success"
-                  hidden={current !== SPECS_STEP}
-                  disabled={
-                    !(current === SPECS_STEP && canFinish(state, inputs))
+            <div class="wizard-step-indicators" hidden={Boolean(editing)}>
+              {STEP_LABEL_KEYS.map((key, index) => (
+                <span
+                  key={key}
+                  class="wizard-step-dot"
+                  data-step={String(index)}
+                  data-step-state={
+                    index === current
+                      ? "active"
+                      : index < current
+                        ? "done"
+                        : "upcoming"
                   }
-                  onClick={() => void finishWizard()}
+                  aria-current={index === current ? "step" : undefined}
                 >
-                  {t(
-                    editing
-                      ? "settings.car.finish_save"
-                      : "settings.car.finish_add",
-                  )}
-                </button>
-              </div>
+                  <span class="wizard-step-dot__number">{index + 1}</span>
+                  <span class="wizard-step-dot__label">{t(key)}</span>
+                </span>
+              ))}
             </div>
+            <Steps />
           </div>
           <aside
             class={
@@ -772,16 +750,10 @@ export function CarWizard() {
                   )}
                 </div>
               </section>
-            ) : (
-              <div class="wizard-task-callout">
-                <strong>{t("settings.car.wizard_task_title")}</strong>
-                <div class="subtle">{t("settings.car.wizard_task_intro")}</div>
-              </div>
-            )}
+            ) : null}
             <div class="wizard-summary-card__title">
               {t("settings.car.wizard_summary_title")}
             </div>
-            <div class="subtle">{t("settings.car.wizard_summary_intro")}</div>
             <div id="wizardSummaryPanel">
               <div class="wizard-summary-preview">
                 <div class="wizard-summary-preview__label">
@@ -801,6 +773,41 @@ export function CarWizard() {
               </dl>
             </div>
           </aside>
+        </div>
+        {/* The first step has no button to show; picking an option moves on. */}
+        <div class="wizard-nav" hidden={current === 0 && !editing}>
+          <div
+            id="wizardActionHint"
+            class="subtle wizard-nav__status"
+            aria-live="polite"
+          >
+            {actionHint(state, inputs, gearboxOptions.value.length, t)}
+          </div>
+          <div class="wizard-nav__actions">
+            <button
+              id="wizardBackBtn"
+              type="button"
+              class="btn btn--muted"
+              hidden={current === 0 || Boolean(editing)}
+              onClick={() => void goBack()}
+            >
+              {t("settings.car.back")}
+            </button>
+            <button
+              id="wizardManualAddBtn"
+              type="button"
+              class="btn btn--success"
+              hidden={current !== SPECS_STEP}
+              disabled={!(current === SPECS_STEP && canFinish(state, inputs))}
+              onClick={() => void finishWizard()}
+            >
+              {t(
+                editing
+                  ? "settings.car.finish_save"
+                  : "settings.car.finish_add",
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

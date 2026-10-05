@@ -402,6 +402,20 @@ export function actionHint(
   );
 }
 
+/**
+ * What was picked on the steps before this one (brand, type, model, variant),
+ * for the header trail; a pick left over from a later step after Back is not
+ * shown.
+ */
+export function selectionTrail(state: WizardState): string[] {
+  return [
+    state.brand,
+    state.carType,
+    state.model,
+    state.selectedVariant?.name ?? "",
+  ].filter((value, stepIndex) => value && stepIndex < state.step);
+}
+
 export function progressText(step: number, t: Translate): string {
   return t("settings.car.wizard_progress", {
     current: step + 1,

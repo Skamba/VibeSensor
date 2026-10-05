@@ -17,29 +17,53 @@
   position: relative;
   z-index: 1;
   width: min(1120px, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   margin: clamp(1rem, 3vw, 2rem) auto;
-  overflow: auto;
   border: 1px solid var(--md-sys-color-outline);
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
 }
-.wizard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+/* Header and buttons stay put; only the step content between them scrolls. */
+.add-car-wizard:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
 }
-.wizard-header__text {
-  min-width: 0;
+.wizard-header {
   display: grid;
   gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+.wizard-header__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+.wizard-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+}
+/* The picks so far: one line, a second only when a long variant name does not
+   fit on a narrow phone; the full text is in the tooltip. */
+.wizard-trail {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
 }
 .wizard-progress-text {
   display: inline-flex;
   align-items: center;
-  justify-self: start;
-  padding: 0.35rem 0.7rem;
+  flex: none;
+  padding: 0.25rem 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(139, 92, 246, 0.2);
   background: rgba(139, 92, 246, 0.08);
@@ -57,6 +81,7 @@
   color: var(--md-sys-color-on-surface-variant);
   min-width: 2.5rem;
   min-height: 2.5rem;
+  margin: -0.5rem -0.5rem -0.5rem 0;
 }
 @media (hover: hover) {
   .wizard-close:hover {
@@ -69,17 +94,14 @@
   grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
   gap: var(--space-4);
   align-items: start;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for the focus ring of a full-width option. */
+  padding: 0 0.25rem 0.25rem;
 }
 .wizard-main {
   min-width: 0;
-  display: grid;
-  align-content: start;
-}
-.wizard-steps {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
 }
 .wizard-step-indicators {
   display: grid;
@@ -227,6 +249,9 @@
   align-items: flex-start;
   gap: 0.15rem;
   min-width: min(260px, 100%);
+  /* Grow past the global 38px button height when a name or detail wraps. */
+  height: auto;
+  min-height: 38px;
   padding: var(--space-2) var(--space-3);
   border: 2px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-sm);
@@ -259,23 +284,22 @@
 .wizard-options--list {
   flex-direction: column;
 }
+/* Name and detail share a row when they fit; else the detail wraps below. */
 .wizard-options--list .wiz-opt {
   width: 100%;
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-2);
+  gap: 0.15rem var(--space-3);
 }
 .wizard-options .wiz-opt .wiz-opt-detail {
   display: block;
   font-size: 0.8rem;
   color: var(--md-sys-color-on-surface-variant);
 }
-.wizard-options--list .wiz-opt .wiz-opt-detail {
-  font-size: 0.8rem;
-  color: var(--md-sys-color-on-surface-variant);
-}
+
 .wizard-load-error {
   display: grid;
   gap: var(--space-2);
@@ -354,22 +378,16 @@
   margin-top: 0;
 }
 .wizard-nav {
-  position: sticky;
-  bottom: 0;
   display: grid;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--md-sys-color-outline-variant);
-  background: linear-gradient(
-    180deg,
-    rgba(248, 250, 252, 0) 0%,
-    var(--md-sys-color-surface-container) 28%
-  );
-  z-index: 2;
 }
-.wizard-nav__status {
-  min-height: 1.3rem;
+.wizard-nav[hidden] {
+  display: none;
+}
+.wizard-nav__status:not(:empty) {
+  margin-bottom: var(--space-2);
 }
 .wizard-nav__actions {
   display: flex;
@@ -395,14 +413,6 @@
   letter-spacing: 0.05em;
   color: var(--md-sys-color-on-surface-variant);
   font-weight: 700;
-}
-.wizard-task-callout {
-  display: grid;
-  gap: 0.35rem;
-  padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(139, 92, 246, 0.18);
-  background: rgba(139, 92, 246, 0.08);
 }
 .wizard-summary-preview {
   display: grid;
@@ -453,7 +463,7 @@
 @media (max-width: 980px) {
   .add-car-wizard {
     width: calc(100vw - 1.5rem);
-    max-height: calc(100vh - 1.5rem);
+    max-height: calc(100dvh - 1.5rem);
     margin: 0.75rem auto;
   }
   .wizard-shell {
@@ -461,6 +471,11 @@
   }
   .wizard-summary-card {
     position: static;
+  }
+  /* Single column: the header trail shows the picks, so the card waits for
+     the specs step, where it follows the form. */
+  .wizard-summary-card:not(.wizard-summary-card--capabilities) {
+    display: none;
   }
 }
 
@@ -473,43 +488,11 @@
     border-radius: 0;
     border-width: 0;
     box-shadow: none;
-    overflow: hidden;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
     padding: var(--space-3);
   }
-  .wizard-header {
-    flex-direction: column;
-  }
-  .wizard-close {
-    align-self: flex-end;
-  }
-  .wizard-shell {
-    min-height: 0;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-    /* Stretch so the steps scroll inside the screen and the buttons stay on it. */
-    align-items: stretch;
-    gap: var(--space-3);
-    overflow: hidden;
-  }
-  .wizard-main {
-    min-height: 0;
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-  .wizard-steps {
-    min-height: 0;
-    overflow-y: auto;
-    padding-right: 0.1rem;
-  }
-  .wizard-step-dot {
-    min-width: 120px;
-  }
-  .wizard-nav {
-    position: static;
-    margin-top: var(--space-3);
-    padding-top: var(--space-2);
-    background: var(--md-sys-color-surface-container);
+  /* The step chip in the header says where the user is. */
+  .wizard-step-indicators {
+    display: none;
   }
   .wizard-options .wiz-opt,
   .wizard-custom input,
@@ -517,20 +500,12 @@
     width: 100%;
     min-width: 0;
   }
-  .wizard-summary-card {
-    order: -1;
-    max-height: min(26vh, 11rem);
-    overflow-y: auto;
-  }
-  /* On the specs step the card leads with what the car can test. */
-  .wizard-summary-card--capabilities {
-    max-height: min(36vh, 15rem);
-  }
-  .wizard-tire-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
   .wiz-opt-parts {
     justify-content: flex-start;
+  }
+  .wizard-nav {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
   }
   .wizard-nav__actions {
     flex-direction: column-reverse;

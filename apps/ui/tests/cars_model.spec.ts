@@ -31,6 +31,7 @@ import {
   INITIAL_WIZARD_STATE,
   parseTireSize,
   progressText,
+  selectionTrail,
   specProvenance,
   summary,
   type WizardState,
@@ -683,6 +684,21 @@ test("the summary fills in as the wizard advances", () => {
   expect(progressText(4, t)).toBe(
     'settings.car.wizard_progress:{"current":5,"step":"settings.car.step_specs_short","total":5}',
   );
+  // The header trail shows the picks before the current step, so a model
+  // left over after Back is not shown on the model step.
+  const variant = {
+    name: "GTD",
+    drivetrain: "FWD",
+    engine: "2.0 diesel",
+  } as const;
+  expect(selectionTrail(specs({ selectedVariant: variant }))).toEqual([
+    "VW",
+    "Hatchback",
+    "Golf",
+    "GTD",
+  ]);
+  expect(selectionTrail(specs({ step: 2 }))).toEqual(["VW", "Hatchback"]);
+  expect(selectionTrail(INITIAL_WIZARD_STATE)).toEqual([]);
 });
 
 test("a variant names its drivetrain, engine and model years", () => {
