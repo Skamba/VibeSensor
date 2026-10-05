@@ -24,6 +24,8 @@ class DrivingPhase(StrEnum):
     ACCELERATION = "acceleration"
     CRUISE = "cruise"
     DECELERATION = "deceleration"
+    # Slowing too fast for a car coasting in gear: on the brakes.
+    BRAKING = "braking"
     COAST_DOWN = "coast_down"
     SPEED_UNKNOWN = "speed_unknown"
 

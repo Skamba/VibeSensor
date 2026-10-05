@@ -1,4 +1,20 @@
 {
+  "ACTION_BRAKE_DISCS_CONFIRM": {
+    "en": "Disc runout or thickness variation is over the limit, and the judder is gone after skimming or replacing the discs.",
+    "nl": "De slingering of diktevariatie van de schijven ligt boven de grens, en het trillen is weg na afdraaien of vervangen van de schijven."
+  },
+  "ACTION_BRAKE_DISCS_FALSIFY": {
+    "en": "Disc runout and thickness variation are within spec and the car still shakes only while braking (look at the hubs, caliper slides and suspension bushes).",
+    "nl": "Slingering en diktevariatie van de schijven zijn binnen specificatie en de auto trilt nog steeds alleen tijdens het remmen (kijk naar naven, geleidingen van de remklauw en ophangingsrubbers)."
+  },
+  "ACTION_BRAKE_DISCS_WHAT": {
+    "en": "Measure the brake discs on the juddering axle for lateral runout and thickness variation; skim or replace them with the pads if out of spec.",
+    "nl": "Meet de remschijven van de as die trilt op laterale slingering en diktevariatie; draai ze af of vervang ze met de remblokken als ze buiten specificatie zijn."
+  },
+  "ACTION_BRAKE_DISCS_WHY": {
+    "en": "A wheel-order vibration that appears only while braking comes from the brake discs (thickness variation or runout), not from the wheels or tires.",
+    "nl": "Een trilling op wielorde die alleen tijdens het remmen optreedt komt van de remschijven (diktevariatie of slingering), niet van de wielen of banden."
+  },
   "ACTION_DRIVELINE_INSPECTION_CONFIRM": {
     "en": "Mechanical defect or out-of-spec runout/play is found in driveline components.",
     "nl": "Er is een mechanisch defect of te veel slingering/speling gevonden in de aandrijflijn."
@@ -138,6 +154,26 @@
   "AMP_RATIO": {
     "en": "vs strongest",
     "nl": "t.o.v. sterkste"
+  },
+  "BRAKE_DISCS": {
+    "en": "the brake discs",
+    "nl": "de remschijven"
+  },
+  "BRAKE_DISCS_FRONT_AXLE": {
+    "en": "the front brake discs",
+    "nl": "de remschijven voor"
+  },
+  "BRAKE_DISCS_REAR_AXLE": {
+    "en": "the rear brake discs",
+    "nl": "de remschijven achter"
+  },
+  "CAUSE_BRAKES": {
+    "en": "brake judder from the brake discs on {zone}",
+    "nl": "remtrillingen van de remschijven op {zone}"
+  },
+  "CAUSE_BRAKES_UNLOCATED": {
+    "en": "brake judder from the brake discs (felt strongest at the {zone})",
+    "nl": "remtrillingen van de remschijven (het sterkst gevoeld bij {zone})"
   },
   "CAUSE_DRIVELINE": {
     "en": "the driveline (propshaft or its joints), near {zone}",
@@ -279,6 +315,10 @@
     "en": "Swap the front and rear wheels and record again. If the vibration moves to the other axle, it is in those wheels or tires.",
     "nl": "Wissel de voor- en achterwielen en meet opnieuw. Verhuist de trilling naar de andere as, dan zit hij in die wielen of banden."
   },
+  "CONFIRM_BRAKES": {
+    "en": "On a quiet road, brake firmly from about 100 km/h a few times. If the steering wheel (front discs) or the seat and brake pedal (rear discs) shake only while braking, it is the brakes.",
+    "nl": "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 100 km/h. Trillen het stuur (schijven voor) of de stoel en het rempedaal (schijven achter) alleen tijdens het remmen, dan zijn het de remmen."
+  },
   "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED": {
     "en": "A concrete mechanical issue is identified.",
     "nl": "Een concrete mechanische afwijking wordt vastgesteld."
@@ -327,6 +367,10 @@
     "en": "no reduction ratio — add it to the car in Settings if you know it (optional).",
     "nl": "geen reductieverhouding — voeg hem toe aan de auto in Instellingen als je hem weet (optioneel)."
   },
+  "COULDNT_TEST_NO_BRAKING": {
+    "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — brake firmly from about 100 km/h a few times during the drive.",
+    "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — rem tijdens de rit een paar keer stevig af vanaf ongeveer 100 km/h."
+  },
   "COULDNT_TEST_TIRE": {
     "en": "no tire size — add it to the car in Settings.",
     "nl": "geen bandenmaat — voeg die toe aan de auto in Instellingen."
@@ -346,6 +390,10 @@
   "DESC_FREQUENCY": {
     "en": "A vibration at {hz}",
     "nl": "Een trilling van {hz}"
+  },
+  "DESC_ONLY_WHILE_BRAKING": {
+    "en": "only while braking",
+    "nl": "alleen tijdens het remmen"
   },
   "DESC_ORDER": {
     "en": "A shake that repeats {order} ({hz} at {speed})",
@@ -378,6 +426,10 @@
   "DRIVING_PHASE_ACCELERATION": {
     "en": "acceleration",
     "nl": "acceleratie"
+  },
+  "DRIVING_PHASE_BRAKING": {
+    "en": "braking",
+    "nl": "remmen"
   },
   "DRIVING_PHASE_COAST_DOWN": {
     "en": "coast-down",
@@ -592,8 +644,8 @@
     "nl": "snelheden onder {speed} km/h"
   },
   "NOT_COVERED_COAST": {
-    "en": "coasting or braking",
-    "nl": "uitrollen of remmen"
+    "en": "coasting",
+    "nl": "uitrollen"
   },
   "NOT_COVERED_CRUISE": {
     "en": "steady cruising",
@@ -626,6 +678,10 @@
   "NOT_TESTABLE_MOTOR_DRIVE": {
     "en": "not testable: no reduction ratio",
     "nl": "niet te testen: geen reductieverhouding"
+  },
+  "NOT_TESTABLE_NO_BRAKING": {
+    "en": "not testable: the drive did not brake firmly from speed",
+    "nl": "niet te testen: de rit remde niet stevig af vanaf snelheid"
   },
   "NOT_TESTABLE_SAME_RHYTHM": {
     "en": "not told apart: without measured RPM, in some gear the engine turns at this same rhythm; an OBD-II adapter or a neutral coast-down separates them",
@@ -883,6 +939,10 @@
     "en": "Speed or RPM could not be matched to some measurement windows.",
     "nl": "Snelheid of toerental kon niet aan alle meetvensters worden gekoppeld."
   },
+  "RECAPTURE_BRAKE": {
+    "en": "From about 100 km/h, brake firmly down to 40 km/h a few times, with steady driving in between.",
+    "nl": "Rem vanaf ongeveer 100 km/h een paar keer stevig af tot 40 km/h, met constant rijden daartussen."
+  },
   "RECAPTURE_COAST": {
     "en": "From that speed, shift to neutral and coast down.",
     "nl": "Schakel vanaf die snelheid naar neutraal en rol uit."
@@ -919,6 +979,10 @@
     "en": "not available",
     "nl": "niet beschikbaar"
   },
+  "RULED_OUT_BRAKES": {
+    "en": "no once- or twice-per-wheel-turn vibration that comes only while braking",
+    "nl": "geen trilling van één of twee keer per wielomwenteling die alleen tijdens het remmen optreedt"
+  },
   "RULED_OUT_DRIVELINE": {
     "en": "no propshaft-order vibration found",
     "nl": "geen trilling op cardanasorde gevonden"
@@ -950,6 +1014,10 @@
   "RULED_OUT_MOTOR": {
     "en": "no vibration found at once or twice per motor revolution",
     "nl": "geen trilling gevonden van één of twee keer per omwenteling van de elektromotor"
+  },
+  "RULED_OUT_ONLY_WHILE_BRAKING": {
+    "en": "the vibration at the wheel's rhythm came only while braking: the brakes, not a wheel or tire",
+    "nl": "de trilling op het ritme van het wiel kwam alleen tijdens het remmen: de remmen, niet een wiel of band"
   },
   "RULED_OUT_STAYED_IN_NEUTRAL": {
     "en": "ruled out: the vibration kept going while coasting in neutral (it follows road speed)",
@@ -1067,6 +1135,18 @@
     "en": "Sensor Model",
     "nl": "Sensormodel"
   },
+  "SHOP_BRAKES_HUB": {
+    "en": "Before fitting new discs, check the hub flange runout and the caliper slides, and tighten the wheel bolts crosswise to the specified torque.",
+    "nl": "Controleer voor het monteren van nieuwe schijven de slingering van de naafflens en de geleidingen van de remklauw, en zet de wielbouten kruiselings vast op het voorgeschreven moment."
+  },
+  "SHOP_BRAKES_RUNOUT": {
+    "en": "Measure the lateral runout of each brake disc on its hub with a dial gauge (typically at most 0.05 mm; use the car maker's limit).",
+    "nl": "Meet de laterale slingering van elke remschijf op de naaf met een meetklok (meestal hoogstens 0,05 mm; houd de grens van de fabrikant aan)."
+  },
+  "SHOP_BRAKES_THICKNESS": {
+    "en": "Measure each disc's thickness variation with a micrometer at 6–8 points around it (typically at most 0.015 mm).",
+    "nl": "Meet de diktevariatie van elke schijf met een micrometer op 6–8 punten rondom (meestal hoogstens 0,015 mm)."
+  },
   "SHOP_DRIVELINE_ANGLES": {
     "en": "Measure the driveline working angles.",
     "nl": "Meet de werkhoeken van de aandrijflijn."
@@ -1134,6 +1214,14 @@
   "SHOP_WEAK": {
     "en": "Don't replace parts based on this report alone; record the test again first.",
     "nl": "Vervang geen onderdelen op basis van alleen dit rapport; meet eerst opnieuw."
+  },
+  "SOURCE_BRAKES": {
+    "en": "Brakes",
+    "nl": "Remmen"
+  },
+  "SOURCE_BRAKES_NOUN": {
+    "en": "brakes",
+    "nl": "remmen"
   },
   "SOURCE_COMBUSTION_ENGINE": {
     "en": "Combustion engine",
@@ -1210,6 +1298,14 @@
   "SPEED_SOURCE_OBD": {
     "en": "OBD",
     "nl": "OBD"
+  },
+  "STEP_BRAKES": {
+    "en": "Have {zone} checked for runout and thickness variation, and skimmed or replaced together with the pads if they are out of limits.",
+    "nl": "Laat {zone} controleren op slingering en diktevariatie, en laat ze afdraaien of samen met de remblokken vervangen als ze buiten de grens vallen."
+  },
+  "STEP_BRAKES_FALLBACK": {
+    "en": "have the hub runout and the brake caliper slides checked: a sticking caliper or a hub that runs out warps new discs again.",
+    "nl": "laat de slingering van de naaf en de geleidingen van de remklauw controleren: een vastzittende remklauw of een slingerende naaf vervormt nieuwe schijven opnieuw."
   },
   "STEP_E1": {
     "en": "Have the engine mounts checked, and the crank pulley and flywheel for imbalance.",

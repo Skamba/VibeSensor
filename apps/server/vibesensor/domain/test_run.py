@@ -181,6 +181,7 @@ class TestRun:
             if fid == "REF_WHEEL" and source_str in {
                 str(VibrationSource.WHEEL_TIRE),
                 str(VibrationSource.DRIVELINE),
+                str(VibrationSource.BRAKES),
             }:
                 return True
             if fid == "REF_ENGINE" and source_str == str(VibrationSource.ENGINE):

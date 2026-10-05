@@ -6,10 +6,10 @@ import pytest
 
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
-    _estimate_speed_derivative,
     classify_sample_phase,
     diagnostic_sample_mask,
     segment_run_phases,
+    speed_slopes_kmh_s,
 )
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
@@ -18,45 +18,116 @@ def _typed(samples: list[dict]) -> list:
     return sensor_frames_from_mappings(samples)
 
 
+def _drive(
+    profile: list[tuple[float, float, float]],
+    *,
+    step_s: float = 0.25,
+    sensors: int = 1,
+    gps_hz: float | None = None,
+) -> list:
+    """Rows every *step_s* through ``(duration_s, start_kmh, end_kmh)`` legs.
+
+    Each moment has one row per sensor (same timestamp). With *gps_hz* the speed
+    is held between fixes, as a GPS or OBD-II staircase.
+    """
+    rows: list[dict] = []
+    t_s = 0.0
+    for duration_s, start_kmh, end_kmh in profile:
+        steps = round(duration_s / step_s)
+        for i in range(steps):
+            frac = i / steps
+            fix_t = t_s + i * step_s
+            if gps_hz is not None:
+                frac = (int(i * step_s * gps_hz) / gps_hz) / duration_s
+            speed = start_kmh + (end_kmh - start_kmh) * frac
+            rows.extend({"speed_kmh": speed, "t_s": fix_t} for _ in range(sensors))
+        t_s += duration_s
+    return _typed(rows)
+
+
+def _braking_seconds(samples: list) -> float:
+    phases, segments = segment_run_phases(samples)
+    return sum(seg.end_t_s - seg.start_t_s for seg in segments if seg.phase is DrivingPhase.BRAKING)
+
+
 # ---------------------------------------------------------------------------
-# _estimate_speed_derivative
+# speed_slopes_kmh_s
 # ---------------------------------------------------------------------------
 
 
-class TestEstimateSpeedDerivative:
+class TestSpeedSlopes:
     @pytest.mark.parametrize(
-        ("speeds", "index", "sign"),
+        ("speeds", "sign"),
         [
-            pytest.param([80.0, 80.0, 80.0, 80.0, 80.0], 2, 0, id="steady-near-zero"),
-            pytest.param([60.0, 65.0, 70.0, 75.0, 80.0], 2, 1, id="accelerating"),
-            pytest.param([80.0, 75.0, 70.0, 65.0, 60.0], 2, -1, id="decelerating"),
-            # Central difference: at the top of a speed peak the car is not accelerating.
-            pytest.param([50.0, 54.0, 56.0, 54.0, 50.0], 2, 0, id="speed-peak-is-level"),
-            pytest.param([60.0, 70.0, 80.0], 0, 1, id="first-index-forward-difference"),
-            pytest.param([60.0, 70.0, 80.0], 2, 1, id="last-index-backward-difference"),
+            pytest.param([80.0] * 9, 0, id="steady"),
+            pytest.param([60.0 + 2.0 * i for i in range(9)], 1, id="accelerating"),
+            pytest.param([80.0 - 2.0 * i for i in range(9)], -1, id="decelerating"),
+            # At the top of a speed peak the car is not accelerating.
+            pytest.param([50.0, 52.0, 54.0, 56.0, 58.0, 56.0, 54.0, 52.0, 50.0], 0, id="peak"),
         ],
     )
-    def test_derivative_sign(self, speeds: list[float], index: int, sign: int) -> None:
-        times = [float(i) for i in range(len(speeds))]
-        deriv = _estimate_speed_derivative(speeds, times, index)
-        assert deriv is not None
-        if sign == 0:
-            assert abs(deriv) < 0.01
-        else:
-            assert deriv * sign > 0
+    def test_slope_sign_at_centre(self, speeds: list[float], sign: int) -> None:
+        series = [(0.5 * i, speed) for i, speed in enumerate(speeds)]
+        slope = speed_slopes_kmh_s(series)[4]
+        assert slope is not None
+        assert slope == pytest.approx(0.0, abs=0.01) if sign == 0 else slope * sign > 0
 
-    @pytest.mark.parametrize(
-        ("speeds", "times", "index"),
-        [
-            pytest.param([80.0], [0.0], 5, id="index-past-end"),
-            pytest.param([80.0], [0.0], -1, id="negative-index"),
-            pytest.param([None, 80.0, None], [0.0, 1.0, 2.0], 1, id="no-valid-neighbors"),
-        ],
-    )
-    def test_derivative_unavailable(
-        self, speeds: list[float | None], times: list[float | None], index: int
-    ) -> None:
-        assert _estimate_speed_derivative(speeds, times, index) is None
+    def test_too_few_readings_have_no_slope(self) -> None:
+        assert speed_slopes_kmh_s([(0.0, 80.0), (0.5, 82.0)]) == [None, None]
+
+    def test_rows_sharing_a_timestamp_still_give_a_slope(self) -> None:
+        """Four sensors report at the same moment: the slope is taken over time, not rows."""
+        samples = _drive([(10.0, 120.0, 90.0)], sensors=4)
+        phases, _segments = segment_run_phases(samples)
+        middle = phases[len(phases) // 3 : 2 * len(phases) // 3]
+        assert set(middle) == {DrivingPhase.DECELERATION}
+
+
+# ---------------------------------------------------------------------------
+# Braking
+# ---------------------------------------------------------------------------
+
+
+class TestBraking:
+    def test_firm_stop_is_braking(self) -> None:
+        # 120 -> 40 km/h in 6 s sheds 0.38 g.
+        samples = _drive([(10.0, 120.0, 120.0), (6.0, 120.0, 40.0), (10.0, 40.0, 40.0)])
+        assert 5.0 <= _braking_seconds(samples) <= 6.5
+
+    def test_coasting_is_not_braking(self) -> None:
+        # Lifting off at motorway speed: 120 -> 90 km/h in 10 s is 0.085 g.
+        samples = _drive([(10.0, 120.0, 120.0), (10.0, 120.0, 90.0), (10.0, 90.0, 90.0)])
+        phases, _segments = segment_run_phases(samples)
+        assert DrivingPhase.BRAKING not in phases
+        assert DrivingPhase.DECELERATION in phases
+
+    def test_engine_braking_just_under_the_threshold_is_not_braking(self) -> None:
+        # 0.18 g sustained (6.4 km/h per second) is still a lift-off in a low gear.
+        samples = _drive([(5.0, 90.0, 90.0), (5.0, 90.0, 58.0), (5.0, 58.0, 58.0)])
+        assert _braking_seconds(samples) == 0.0
+
+    def test_one_hz_gps_staircase_from_four_sensors_is_braking(self) -> None:
+        samples = _drive(
+            [(10.0, 110.0, 110.0), (8.0, 110.0, 30.0), (10.0, 30.0, 30.0)],
+            sensors=4,
+            gps_hz=1.0,
+        )
+        assert _braking_seconds(samples) >= 6.0
+
+    def test_a_speed_jump_is_not_braking(self) -> None:
+        """A reading that drops 25 km/h at once (a GPS glitch) is not a stop."""
+        samples = _drive([(10.0, 115.0, 115.0), (10.0, 90.0, 90.0)])
+        assert _braking_seconds(samples) == 0.0
+
+    def test_a_short_dab_is_not_braking(self) -> None:
+        # 2 s at 0.4 g: shorter than one spectrum.
+        samples = _drive([(10.0, 100.0, 100.0), (2.0, 100.0, 72.0), (10.0, 72.0, 72.0)])
+        assert _braking_seconds(samples) == 0.0
+
+    def test_braking_below_coast_down_speed_is_a_coast_down(self) -> None:
+        samples = _drive([(5.0, 14.0, 14.0), (3.0, 14.0, 4.0), (5.0, 4.0, 4.0)])
+        phases, _segments = segment_run_phases(samples)
+        assert DrivingPhase.BRAKING not in phases
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +155,9 @@ class TestClassifySamplePhase:
         expected: DrivingPhase,
     ) -> None:
         assert classify_sample_phase(speed, deriv) == expected
+
+    def test_braking_spell(self) -> None:
+        assert classify_sample_phase(80.0, -12.0, braking=True) == DrivingPhase.BRAKING
 
 
 # ---------------------------------------------------------------------------

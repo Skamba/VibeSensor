@@ -102,6 +102,8 @@ def test_a_no_match_resting_on_an_estimate_is_hedged(
         "wheel/tire": ("ruled_out", "no_matching_order"),
         "driveline": driveline,
         "engine": engine,
+        # A steady drive never brakes: brake judder is not tested.
+        "brakes": ("not_testable", "no_braking"),
     }
     assert conditions["rpm_source"] == "estimated_top_gear"
     assert (
@@ -123,6 +125,7 @@ def test_report_names_the_estimate_behind_each_hedged_line() -> None:
         "Wheels/tires: no once- or twice-per-wheel-turn vibration found",
         "Driveline: no match with the estimated final drive (car-library estimate); not conclusive",
         "Engine: no match with the estimated final drive (car-library estimate); not conclusive",
+        "Brakes: not testable: the drive did not brake firmly from speed",
     )
     assert "niet doorslaggevend" in ruled_out_nl[1]
 
@@ -139,7 +142,7 @@ def test_report_prints_each_library_ratio_with_its_provenance_and_hedges_page_on
     assert view.owner.description == (
         "Nothing stood out in the checks this run could make: wheels/tires,"
         " driveline (against an estimated final drive) and engine (against an"
-        " estimated final drive, top gear only)."
+        " estimated final drive, top gear only). Not checked, so not shown to be fine: brakes."
     )
     assert view.owner.not_covered[1].startswith(
         "Engine: checked only against a car-library estimate of the final drive, in top gear"

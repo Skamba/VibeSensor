@@ -15,6 +15,7 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     ORDER_MIN_CONFIDENCE,
 )
+from vibesensor.analysis.orders.brake_attribution import as_brake_finding, only_while_braking
 from vibesensor.analysis.orders.finding_builder import (
     assemble_order_finding,
 )
@@ -294,12 +295,17 @@ class OrderAnalysisSession:
             context=build_context,
         )
 
-        return assemble_order_finding(
+        ranking_score, finding = assemble_order_finding(
             hypothesis,
             match,
             context=build_context,
             score=score,
         )
+        if hypothesis.suspected_source is VibrationSource.WHEEL_TIRE and only_while_braking(
+            match, self._samples, self._per_sample_phases
+        ):
+            finding = as_brake_finding(finding)
+        return ranking_score, finding
 
 
 def _build_order_findings(request: OrderAnalysisRequest) -> list[DomainFinding]:

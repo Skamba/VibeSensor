@@ -86,6 +86,22 @@ Evidence ([user_journeys.md](user_journeys.md) §4):
 
 Fix: see WP5.
 
+**J36 — No guided braking step.**
+
+Evidence:
+
+- Brake judder is detected only from firm stops (≥ 0.2 g for ≥ 2.5 s from
+  15 km/h up; `braking_intervals` in
+  `apps/server/vibesensor/analysis/phase_segmentation.py`). The guided drive
+  (`guidedTestModel` in `apps/ui/src/pages/dashboard/dashboard_model.ts`) has
+  sweep, hold and coast-down steps only, so a guided drive without extra stops
+  reports the brakes as not checked (`no_braking`).
+- Lighter braking (below 0.2 g) cannot be told from coasting and is not
+  analysed for judder.
+
+Fix: add an optional guided step "brake firmly from about 100 km/h to 40 km/h,
+three times" posted as a guided phase. Not part of a WP yet.
+
 ---
 
 ## 2. Work packages (one PR each)

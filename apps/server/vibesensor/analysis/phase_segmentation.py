@@ -1,7 +1,11 @@
 """Driving-phase segmentation for diagnostic runs.
 
 Classifies each sample in a run into one of:
-  IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN, SPEED_UNKNOWN
+  IDLE, ACCELERATION, CRUISE, DECELERATION, BRAKING, COAST_DOWN, SPEED_UNKNOWN
+
+The speed slope comes from the run's speed readings on the time axis, so rows
+from several sensors and a GPS/OBD speed staircase do not upset it. BRAKING is
+deceleration too firm for a car coasting in gear (see ``BRAKING_MIN_DECEL_G``).
 
 Phase information helps the findings engine decide which samples are
 diagnostically meaningful and which should be down-weighted.
@@ -27,6 +31,31 @@ _IDLE_SPEED_KMH = 3.0  # below this → IDLE
 _ACCEL_THRESHOLD_KMH_S = 1.5  # positive speed derivative
 _DECEL_THRESHOLD_KMH_S = -1.5  # negative speed derivative
 _COAST_DOWN_MAX_KMH = 15.0  # deceleration below this speed → coast-down
+# The speed slope is a least-squares fit over the speed readings within this
+# many seconds of each reading, on the time axis rather than row by row: rows
+# from several sensors share or interleave timestamps, and GPS/OBD speed
+# arrives as a staircase that holds each reading for up to a second.
+_SLOPE_HALF_WINDOW_S = 1.5
+_SLOPE_MIN_POINTS = 3
+
+# Braking (see "Braking" in docs/analysis_pipeline.md). Neither GPS nor OBD-II
+# reports the brake pedal, so braking is told from coasting by how fast the car
+# sheds speed. Rolling resistance, aerodynamic drag and engine drag in gear slow
+# a car at about 0.05-0.1 g (0.15 g at most in a low gear at high revs); a stop
+# on the brakes sheds 0.2-0.4 g. From 0.2 g (7.1 km/h per second), sustained,
+# the car is on the brakes.
+_STANDARD_GRAVITY_KMH_PER_S = 9.80665 * 3.6
+BRAKING_MIN_DECEL_G = 0.2
+_BRAKING_THRESHOLD_KMH_S = -BRAKING_MIN_DECEL_G * _STANDARD_GRAVITY_KMH_PER_S
+# A braking spell must last one analysis spectrum (2.56 s at 800 Hz) to show
+# in one, and a jump between two speed readings (a GPS glitch) is not braking:
+# the slope fit smears a jump over less than this.
+BRAKING_MIN_DURATION_S = 2.5
+# Real braking lowers the speed reading again and again (a 1 Hz GPS fix at
+# least twice in 2.5 s); a jump lowers it once.
+_BRAKING_MIN_SPEED_DROPS = 2
+# Readings of one braking spell lie this close together in time.
+_BRAKING_MAX_GAP_S = 1.0
 
 
 @dataclass(slots=True)
@@ -43,65 +72,94 @@ class PhaseSegment:
     sample_count: int = 0
 
 
-def _find_nearest_valid(
-    speeds: list[float | None],
-    times: list[float | None],
-    rng: range,
-) -> tuple[float | None, float | None]:
-    """Return the first (speed, time) pair where both are non-None in *rng*."""
-    for j in rng:
-        if speeds[j] is not None and times[j] is not None:
-            return speeds[j], times[j]
-    return None, None
+def _speed_series(samples: Sequence[Sample]) -> list[tuple[float, float]]:
+    """The run's speed readings on the time axis: one ``(t_s, speed)`` per timestamp.
+
+    Rows from several sensors at one timestamp read the same speed source; their
+    mean stands for that moment.
+    """
+    by_time: dict[float, list[float]] = {}
+    for sample in samples:
+        if sample.t_s is None or sample.speed_kmh is None:
+            continue
+        if not (math.isfinite(sample.t_s) and math.isfinite(sample.speed_kmh)):
+            continue
+        by_time.setdefault(sample.t_s, []).append(sample.speed_kmh)
+    return [(t_s, sum(speeds) / len(speeds)) for t_s, speeds in sorted(by_time.items())]
 
 
-def _estimate_speed_derivative(
-    speeds: list[float | None],
-    times: list[float | None],
-    idx: int,
+def speed_slopes_kmh_s(
+    series: Sequence[tuple[float, float]],
     *,
-    window: int = 2,
-) -> float | None:
-    """Central-difference speed derivative (km/h per second) at *idx*."""
-    n = len(speeds)
-    if idx < 0 or idx >= n:
-        return None
-    # Look backward and forward for valid speed+time pairs
-    prev_speed, prev_time = _find_nearest_valid(
-        speeds,
-        times,
-        range(idx - 1, max(-1, idx - window - 1), -1),
-    )
-    next_speed, next_time = _find_nearest_valid(
-        speeds,
-        times,
-        range(idx + 1, min(n, idx + window + 1)),
-    )
+    half_window_s: float = _SLOPE_HALF_WINDOW_S,
+) -> list[float | None]:
+    """Least-squares speed slope (km/h per second) around each reading of *series*.
 
-    if (
-        prev_speed is not None
-        and prev_time is not None
-        and next_speed is not None
-        and next_time is not None
-    ):
-        dt = next_time - prev_time
-        if dt > 0.01:
-            return (next_speed - prev_speed) / dt
+    *series* is sorted by time. A reading with fewer than three readings, or
+    less than one second of readings, around it has no slope.
+    """
+    slopes: list[float | None] = []
+    lo = 0
+    hi = 0
+    n = len(series)
+    for t_s, _speed in series:
+        while series[lo][0] < t_s - half_window_s:
+            lo += 1
+        while hi < n and series[hi][0] <= t_s + half_window_s:
+            hi += 1
+        window = series[lo:hi]
+        span = window[-1][0] - window[0][0]
+        if len(window) < _SLOPE_MIN_POINTS or span < half_window_s * (2.0 / 3.0):
+            slopes.append(None)
+            continue
+        mean_t = sum(t for t, _v in window) / len(window)
+        mean_v = sum(v for _t, v in window) / len(window)
+        var_t = sum((t - mean_t) ** 2 for t, _v in window)
+        cov = sum((t - mean_t) * (v - mean_v) for t, v in window)
+        slopes.append(cov / var_t if var_t > 0 else None)
+    return slopes
 
-    # Fallback: one-sided derivative
-    cur_speed = speeds[idx]
-    cur_time = times[idx]
-    if cur_speed is None or cur_time is None:
-        return None
-    if prev_speed is not None and prev_time is not None:
-        dt = cur_time - prev_time
-        if dt > 0.01:
-            return (cur_speed - prev_speed) / dt
-    if next_speed is not None and next_time is not None:
-        dt = next_time - cur_time
-        if dt > 0.01:
-            return (next_speed - cur_speed) / dt
-    return None
+
+def braking_intervals(
+    series: Sequence[tuple[float, float]],
+    slopes: Sequence[float | None],
+) -> list[tuple[float, float]]:
+    """Time spans ``(start_t_s, end_t_s)`` where the car was on the brakes.
+
+    The speed falls at ``BRAKING_MIN_DECEL_G`` or more, above coast-down speed,
+    for ``BRAKING_MIN_DURATION_S`` or more, the speed reading dropping again and
+    again.
+    """
+    intervals: list[tuple[float, float]] = []
+    run: list[tuple[float, float]] = []
+
+    def close_run() -> None:
+        if not run or run[-1][0] - run[0][0] < BRAKING_MIN_DURATION_S:
+            return
+        drops = 0
+        last = run[0][1]
+        for _t_s, speed in run[1:]:
+            if speed < last:
+                drops += 1
+            if speed != last:
+                last = speed
+        if drops >= _BRAKING_MIN_SPEED_DROPS:
+            intervals.append((run[0][0], run[-1][0]))
+
+    for (t_s, speed), slope in zip(series, slopes, strict=True):
+        braking = (
+            slope is not None and slope <= _BRAKING_THRESHOLD_KMH_S and speed >= _COAST_DOWN_MAX_KMH
+        )
+        if braking and run and t_s - run[-1][0] > _BRAKING_MAX_GAP_S:
+            close_run()
+            run = []
+        if braking:
+            run.append((t_s, speed))
+        elif run:
+            close_run()
+            run = []
+    close_run()
+    return intervals
 
 
 def _segment_duration_s(segment: PhaseSegment) -> float:
@@ -113,12 +171,19 @@ def _segment_duration_s(segment: PhaseSegment) -> float:
 def classify_sample_phase(
     speed_kmh: float | None,
     speed_deriv_kmh_s: float | None,
+    *,
+    braking: bool = False,
 ) -> DrivingPhase:
-    """Classify a single sample into a driving phase."""
+    """Classify a single sample into a driving phase.
+
+    *braking* says the sample lies in a braking spell (``braking_intervals``).
+    """
     if speed_kmh is None:
         return DrivingPhase.SPEED_UNKNOWN
     if speed_kmh < _IDLE_SPEED_KMH:
         return DrivingPhase.IDLE
+    if braking and speed_kmh >= _COAST_DOWN_MAX_KMH:
+        return DrivingPhase.BRAKING
 
     if speed_deriv_kmh_s is not None:
         if speed_deriv_kmh_s > _ACCEL_THRESHOLD_KMH_S:
@@ -140,6 +205,7 @@ _MOVING_PHASES = frozenset(
         DrivingPhase.ACCELERATION,
         DrivingPhase.CRUISE,
         DrivingPhase.DECELERATION,
+        DrivingPhase.BRAKING,
         DrivingPhase.COAST_DOWN,
     },
 )
@@ -215,16 +281,19 @@ def segment_run_phases(
     if n == 0:
         return [], []
 
-    # Extract speeds and times (preserve order)
     speeds: list[float | None] = [sample.speed_kmh for sample in samples]
     times: list[float | None] = [sample.t_s for sample in samples]
 
-    # Classify each sample
+    series = _speed_series(samples)
+    slopes = speed_slopes_kmh_s(series)
+    slope_at = {t_s: slope for (t_s, _speed), slope in zip(series, slopes, strict=True)}
+    braking = braking_intervals(series, slopes)
+
     per_sample: list[DrivingPhase] = []
-    for i in range(n):
-        deriv = _estimate_speed_derivative(speeds, times, i)
-        phase = classify_sample_phase(speeds[i], deriv)
-        per_sample.append(phase)
+    for speed, t_s in zip(speeds, times, strict=True):
+        slope = slope_at.get(t_s) if t_s is not None else None
+        in_braking = t_s is not None and any(start <= t_s <= end for start, end in braking)
+        per_sample.append(classify_sample_phase(speed, slope, braking=in_braking))
 
     # Interpolate SPEED_UNKNOWN gaps: if a contiguous block of SPEED_UNKNOWN
     # samples is surrounded on both sides by the same moving phase (anything

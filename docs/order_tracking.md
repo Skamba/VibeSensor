@@ -207,6 +207,22 @@ speed changes the run median does not. The 8 dB negligible cap in
 `docs/metrics.md` is a different role: it caps a finding whose heard level is
 noise-like, not which matches count.
 
+## Brake judder
+
+After a wheel/tire hypothesis becomes a finding, `pipeline.py` asks
+`brake_attribution.only_while_braking()` whether the order was there only while
+the car braked (`BRAKING` phase; see "Braking" in `docs/analysis_pipeline.md`).
+The matcher records every possible window with its sensor
+(`OrderMatchAccumulator.possible_samples`), so the check compares, at the heard
+sensors, the share of braking windows that heard the order with the share of
+non-braking windows at the same speeds that heard it within 12 dB of its
+braking level. Windows within half an analysis window of a braking sample are
+left out, because their spectrum spans part of the stop. When the order is in
+at least half of the braking windows and at most 10 % of the others (at least
+8 windows on each side), `as_brake_finding()` relabels the finding to the
+`brakes` source and keeps only its braking matched points. An unbalanced wheel
+stays a wheel/tire finding.
+
 ## Live vs post-stop reuse
 
 The same reference math serves both runtime and diagnostics:
@@ -237,3 +253,4 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |
+| `apps/server/vibesensor/analysis/orders/brake_attribution.py` | Put a wheel order heard only while braking down to the brakes (brake judder). |

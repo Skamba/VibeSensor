@@ -108,7 +108,7 @@ run's persisted analysis.
 | 1 | Validation | `_validate_required_strength_metrics` | `run_analysis.py` | Validate samples contain required strength metrics |
 | 2 | Context preparation | `prepare_analysis_context` | `prepared_analysis_context.py` | Assemble the canonical typed `PreparedAnalysisContext` (sensor analysis, run suitability) from run metadata and prepared run data |
 | 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, `_sample_metrics.py` | Extract timing, speed stats, phase segmentation, and speed context |
-| 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / COAST_DOWN / SPEED_UNKNOWN) |
+| 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / BRAKING / COAST_DOWN / SPEED_UNKNOWN); see "Braking" below |
 | 5 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
 | 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `findings_bundle.py`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
 | 7 | Origin & test plan | `VibrationOrigin.from_ranked_findings`, `build_phase_timeline` | `findings_bundle.py`, run_data_preparation | Determine most likely vibration source, generate timeline |
@@ -181,6 +181,51 @@ amplitude at the diagnosed order in mg next to its dB above the location's
 noise floor (see `docs/metrics.md`). Raw ingest/sample acceleration fields may
 still be expressed in g.
 
+### Braking
+
+`segment_run_phases()` reads the speed trend as a least-squares slope over the
+speed readings within ±1.5 s of each sample on the time axis (one reading per
+timestamp, so several sensors reporting the same moment do not count as a
+flat stretch). A spell is **braking** when all of these hold:
+
+- the speed falls at **0.2 g or more** (7.1 km/h/s,
+  `BRAKING_MIN_DECEL_G`). Physical basis: a car coasting in gear slows at
+  about 0.05–0.1 g (rolling resistance, aero drag and engine braking; up to
+  about 0.15 g in a low gear at high speed), while an ordinary stop on the
+  brakes is 0.2–0.4 g. Below 0.2 g the run cannot tell light braking from
+  coasting, so it counts as `DECEL`;
+- it lasts at least 2.5 s (`BRAKING_MIN_DURATION_S`, about one spectrum
+  window), with gaps of at most 1 s;
+- the speed reading drops at least twice inside it, so one GPS jump or glitch
+  is not braking;
+- the speed is at least 15 km/h; below that the sample is `COAST_DOWN` or
+  `IDLE` as before.
+
+The same rule applies to OBD speed: OBD-II has no standard brake-pedal PID,
+so braking is inferred from the speed trend whatever the speed source. A
+typed-in speed never brakes.
+
+### Brake judder
+
+Brake judder (disc thickness variation or runout) shakes the car at the
+wheel's own order, mainly 1x and sometimes 2x, but only while the brakes are
+on. `analysis/orders/brake_attribution.py` relabels a wheel/tire order finding
+as `brakes` when, at the sensors that hear it:
+
+- it is heard in at least half of at least 8 braking spectra, and
+- at least 8 spectra clear of braking (not within half an analysis window of a
+  braking sample, so spectra that straddle the start or end of a stop count
+  for neither side) fall in the speed band the car braked through, and at
+  most 10 % of them hear the order within 12 dB of its median braking level.
+
+An unbalanced or out-of-round wheel fails the second test: it is there at the
+same speeds without braking. The brake finding keeps only its braking matched
+points, with `dominant_phase` `braking`. Its `presence_ratio` and per-location
+`presence` count braking samples only, `speed_dependence` is `null`, and its
+`zone` is the axle (`front_axle` / `rear_axle`) of its corner: front discs
+are felt in the steering wheel, rear discs in the seat and pedal. Without an
+axle it is reported unlocated.
+
 ### The diagnosis block
 
 `analysis/diagnosis.py:build_diagnosis()` runs once per run, after findings and
@@ -212,14 +257,15 @@ the PDF both show:
   whole drive, so they understate a fault that was there for only part of
   it. `engine_bay` for
   engine orders, and an axle or `driveshaft_tunnel` for driveline orders.
+  An axle for brakes (see "Brake judder" above).
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
   strongest location with order markers, `source_checks`, and the reference
   `conditions` (speed source, RPM `measured` / `estimated_top_gear` / `none`,
   tire circumference, ratios, each reference's provenance, and the car's
   `fuel_type`).
-- `source_checks` give each order family (wheel/tire, driveline, engine) a
-  status and reason:
+- `source_checks` give each order family (wheel/tire, driveline, engine,
+  brakes) a status and reason:
   - `candidate`: the diagnosed source.
   - `not_testable`: its reference is missing (`no_tire_reference`,
     `no_drive_reference`, `no_engine_reference`), or the speed was typed in
@@ -246,6 +292,12 @@ the PDF both show:
     measured, and the engine check is hedged the same way.
   - `ruled_out` (`no_matching_order`): no match on references the user gave
     or the library verified, and for the engine only with measured RPM.
+  - Brakes are `not_testable` with `no_tire_reference` or `manual_speed` as
+    for the wheels, else `no_braking` when the run had less than 2.5 s of
+    braking (see "Braking"), else `ruled_out` (`no_matching_order`). When
+    brakes are the candidate, the wheel/tire check is `ruled_out` with
+    `only_while_braking`: the same order was absent while driving at the same
+    speeds.
   - Provenance is the car's recorded field confidence, `user_confirmed` when
     none was recorded, or `missing`. A manual speed also adds the weak reason
     `manual_speed` to a found cause.

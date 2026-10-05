@@ -159,6 +159,7 @@ const SOURCE_LABEL_KEYS = new Set([
   "wheel_tire",
   "driveline",
   "engine",
+  "brakes",
   "body_resonance",
   "transient_impact",
   "baseline_noise",
@@ -190,6 +191,9 @@ const WHEEL_ZONE_KEYS = new Set([
   "all_wheels",
 ]);
 const NON_FAULT_SOURCES = new Set(["baseline_noise", "transient_impact"]);
+// Brake judder shows when braking firmly from speed (the report's recapture step).
+const BRAKE_TEST_FROM_KMH = 100;
+const BRAKE_TEST_TO_KMH = 40;
 
 function findings(summary: HistoryInsightsPayload | null): Finding[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
@@ -278,6 +282,13 @@ function electric(diagnosis: Diagnosis): boolean {
 }
 
 function zoneText(diagnosis: Diagnosis, t: Translate): string {
+  if (
+    diagnosis.source === "brakes" &&
+    (diagnosis.zone === "front_axle" || diagnosis.zone === "rear_axle")
+  ) {
+    // Brake judder: the discs on that axle, not its wheels.
+    return t(`history.zone.brake_discs_${diagnosis.zone}`);
+  }
   if (diagnosis.zone === "driveshaft_tunnel" && electric(diagnosis)) {
     // An EV has no propshaft: a motor order no axle dominates is the drive unit.
     return t("history.zone.drive_unit_ev");
@@ -535,6 +546,7 @@ const CHECK_SOURCE_KEYS: Record<string, string> = {
   "wheel/tire": "wheel_tire",
   driveline: "driveline",
   engine: "engine",
+  brakes: "brakes",
 };
 
 const EV_CHECK_SOURCE_KEYS: Record<string, string> = {
@@ -584,7 +596,8 @@ function checkedDetail(
   }
   if (
     check.reason === "stayed_in_neutral" ||
-    check.reason === "stopped_in_neutral"
+    check.reason === "stopped_in_neutral" ||
+    check.reason === "only_while_braking"
   ) {
     return t(`history.checks.${check.reason}`);
   }
@@ -859,20 +872,29 @@ function diagnosisCard(
     ),
     nextStep: unlocated
       ? weak
-        ? `${locateWheel} ${recaptureRecipe(f, ev)}`
+        ? `${locateWheel} ${recaptureRecipe(f, ev, diagnosis)}`
         : locateWheel
       : weak
-        ? recaptureRecipe(f, ev)
+        ? recaptureRecipe(f, ev, diagnosis)
         : t("history.findings_next_step", { location: zone }),
   };
 }
 
-/** How to record again; an EV cannot coast in neutral, so it skips that step. */
+/** How to record again; an EV cannot coast in neutral, so it skips that step,
+ * and brake judder needs firm braking from speed instead. */
 function recaptureRecipe(
   f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
   ev: boolean,
+  diagnosis: Diagnosis,
 ): string {
   const speed = (kmh: number) => f.fmt(kmhInUnit(kmh, f.speedUnit), 0);
+  if (diagnosis.source === "brakes") {
+    return f.t("history.recapture_recipe_brakes", {
+      from: speed(BRAKE_TEST_FROM_KMH),
+      to: speed(BRAKE_TEST_TO_KMH),
+      unit: f.t(speedUnitKey(f.speedUnit)),
+    });
+  }
   return f.t(ev ? "history.recapture_recipe_ev" : "history.recapture_recipe", {
     from: speed(GUIDED_SWEEP_FROM_KMH),
     to: speed(GUIDED_SWEEP_TO_KMH),

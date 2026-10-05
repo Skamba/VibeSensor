@@ -27,9 +27,11 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     SPEED_COVERAGE_MIN_PCT,
 )
+from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES, ReferenceProvenance, reference_provenance
+from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
@@ -93,6 +95,7 @@ _ORDER_SOURCES: tuple[VibrationSource, ...] = (
     VibrationSource.WHEEL_TIRE,
     VibrationSource.DRIVELINE,
     VibrationSource.ENGINE,
+    VibrationSource.BRAKES,
 )
 _ALL_WHEELS_MIN_CORNERS = 3
 # The engine orders (engine_<m>x) that can sit on a road-speed order in some gear.
@@ -116,14 +119,18 @@ def build_diagnosis(
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
     floors = _location_floors(located)
-    presence = _presence_ratio(candidate, located)
+    braking = _braking_spans(test_run)
+    presence = _presence_ratio(candidate, located, braking)
     refs = _references(metadata, samples)
     # A hand-entered speed does not drop while coasting, so the coast-down
     # comparison cannot tell road speed from engine speed; an EV has no engine
-    # and no neutral that decouples its motor.
+    # and no neutral that decouples its motor. Brake judder stops whenever the
+    # brakes are off, coasting in neutral included.
     speed_dependence = (
         None
-        if refs.manual_speed or refs.electric
+        if refs.manual_speed
+        or refs.electric
+        or (candidate is not None and candidate.suspected_source is VibrationSource.BRAKES)
         else _speed_dependence(candidate, located, metadata.guided_phases)
     )
     findings = test_run.findings
@@ -148,8 +155,21 @@ def build_diagnosis(
             for finding in findings
         )
         candidate = _in_gear(candidate, refs, alias_gear)
+    rows: list[LocationAmplitudeRow]
+    basis: AmplitudeBasis
+    if candidate is not None and candidate.matched_points:
+        rows = _order_location_amplitudes(candidate, located, floors, braking)
+        basis = "order"
+    else:
+        rows = _overall_location_amplitudes(located, floors)
+        basis = "overall"
+    zone = _zone(candidate, rows) if candidate is not None else None
     weak_reasons = _weak_reasons(
-        candidate, presence, sensor_count=sensor_count, manual_speed=refs.manual_speed
+        candidate,
+        presence,
+        zone=zone,
+        sensor_count=sensor_count,
+        manual_speed=refs.manual_speed,
     )
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
@@ -160,14 +180,6 @@ def build_diagnosis(
         level = ConfidenceLevel.WEAK
     elif candidate.finding_id in engine_alike and level is not None:
         level = _at_most_moderate(level)
-    rows: list[LocationAmplitudeRow]
-    basis: AmplitudeBasis
-    if candidate is not None and candidate.matched_points:
-        rows = _order_location_amplitudes(candidate, located, floors)
-        basis = "order"
-    else:
-        rows = _overall_location_amplitudes(located, floors)
-        basis = "overall"
     location = candidate.strongest_location if candidate is not None else None
     if candidate is not None and candidate.location is not None:
         location = candidate.location.strongest_location or location
@@ -181,7 +193,7 @@ def build_diagnosis(
         "finding_id": candidate.finding_id if candidate is not None else None,
         "source": str(candidate.suspected_source) if candidate is not None else None,
         "location": location,
-        "zone": _zone(candidate, rows) if candidate is not None else None,
+        "zone": zone,
         "order_code": (
             cast(OrderCodeValue, candidate.order_code)
             if candidate is not None and candidate.order_code is not None
@@ -200,7 +212,9 @@ def build_diagnosis(
         "weak_reasons": weak_reasons,
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
-        "order_findings": _order_findings(candidate, level, findings, located, engine_alike),
+        "order_findings": _order_findings(
+            candidate, level, findings, located, braking, engine_alike
+        ),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
@@ -214,8 +228,8 @@ def build_diagnosis(
             candidate,
             findings,
             refs,
-            samples,
             speed_dependence,
+            braked=_braked(braking),
             engine_alias=alias_gear is not None,
         ),
         "conditions": _conditions(refs),
@@ -410,6 +424,7 @@ def _order_location_amplitudes(
     candidate: Finding,
     located: Sequence[tuple[Sample, str]],
     floors: dict[str, float],
+    braking: Sequence[tuple[float, float]],
 ) -> list[LocationAmplitudeRow]:
     amps: dict[str, list[float]] = defaultdict(list)
     heard: Counter[str] = Counter()
@@ -417,10 +432,13 @@ def _order_location_amplitudes(
         if point.amp > 0 and point.location:
             amps[point.location].append(point.amp)
             heard[point.location] += point.heard
+    brakes = candidate.suspected_source is VibrationSource.BRAKES
     speed_samples: Counter[str] = Counter(
         location
         for sample, location in located
-        if sample.speed_kmh is not None and sample.speed_kmh > 0
+        if sample.speed_kmh is not None
+        and sample.speed_kmh > 0
+        and (not brakes or _in_spans(sample.t_s, braking))
     )
     locations = sorted({location for _sample, location in located} | set(amps))
     medians: dict[str, float | None] = {
@@ -546,13 +564,35 @@ def _peak_frequency_hz(candidate: Finding | None) -> float | None:
         return None
 
 
+def _braking_spans(test_run: TestRun) -> list[tuple[float, float]]:
+    """The time spans ``(start_t_s, end_t_s)`` the car spent on the brakes."""
+    return [
+        (segment.start_t_s, segment.end_t_s)
+        for segment in test_run.driving_segments
+        if segment.phase is DrivingPhase.BRAKING
+        and segment.start_t_s is not None
+        and segment.end_t_s is not None
+    ]
+
+
+def _in_spans(t_s: float | None, spans: Sequence[tuple[float, float]]) -> bool:
+    return t_s is not None and any(start <= t_s <= end for start, end in spans)
+
+
+def _braked(braking: Sequence[tuple[float, float]]) -> bool:
+    """The drive braked firmly from speed for long enough to show brake judder."""
+    return sum(end - start for start, end in braking) >= BRAKING_MIN_DURATION_S
+
+
 def _presence_ratio(
     candidate: Finding | None,
     located: Sequence[tuple[Sample, str]],
+    braking: Sequence[tuple[float, float]] = (),
 ) -> float | None:
     """Share of the moving drive in which the order was there, at a sensor that hears it.
 
-    Counted over the whole drive in short time slots. The finding's match rate
+    Counted over the whole drive in short time slots; brake judder over the
+    time spent braking, the only time it can be there. The finding's match rate
     (rescued to its best location or speed band) does not say this, and each
     spectrum spans a few seconds, so it still shows a vibration that stopped
     seconds ago. A heard match counts when it reaches half the order's usual
@@ -562,10 +602,14 @@ def _presence_ratio(
         return None
     if not candidate.matched_points:
         return candidate.evidence.presence_ratio
+    brakes = candidate.suspected_source is VibrationSource.BRAKES
     moving = {
         floor(sample.t_s / _PRESENCE_SLOT_S)
         for sample, _location in located
-        if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
+        if sample.t_s is not None
+        and sample.speed_kmh is not None
+        and sample.speed_kmh > 0
+        and (not brakes or _in_spans(sample.t_s, braking))
     }
     if not moving:
         return candidate.evidence.match_rate
@@ -598,6 +642,7 @@ def _order_findings(
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
     located: Sequence[tuple[Sample, str]],
+    braking: Sequence[tuple[float, float]],
     engine_alike: frozenset[str] = frozenset(),
 ) -> list[OrderFindingRow]:
     """Surfaced order-tracked findings, one per order, the diagnosed one first at its level.
@@ -657,7 +702,7 @@ def _order_findings(
                 "speed_min_kmh": speed_min,
                 "speed_max_kmh": speed_max,
                 "phases": list(finding.phases_detected),
-                "presence_ratio": _presence_ratio(finding, located),
+                "presence_ratio": _presence_ratio(finding, located, braking),
                 "confidence_level": (
                     level
                     if diagnosed and level is not None
@@ -692,6 +737,12 @@ def _zone(candidate: Finding, rows: Sequence[LocationAmplitudeRow]) -> str | Non
         and (row["ratio_to_strongest"] or 0.0) >= 1 / 1.5
         and (code := location_code_for_label(row["location"])) is not None
     ]
+    if source is VibrationSource.BRAKES:
+        # Judder comes from an axle's brake discs, felt through the steering
+        # (front) or the seat and pedal (rear): the axle the wheel sensors near
+        # the top share, else the strongest wheel sensor's axle.
+        wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
+        return _axle_zone(wheels) or (_axle_zone(wheels[:1]) if wheels else None)
     if source is VibrationSource.DRIVELINE:
         if top_codes and top_codes[0] in _DRIVELINE_ZONE_CODES:
             return top_codes[0]
@@ -723,6 +774,7 @@ def _weak_reasons(
     candidate: Finding | None,
     presence: float | None,
     *,
+    zone: str | None,
     sensor_count: int,
     manual_speed: bool,
 ) -> list[str]:
@@ -730,11 +782,15 @@ def _weak_reasons(
         return []
     # A hand-entered speed comes first: the order match holds only at that speed.
     reasons: list[str] = ["manual_speed"] if manual_speed else []
-    localized_source = candidate.suspected_source not in (
-        VibrationSource.ENGINE,
-        VibrationSource.DRIVELINE,
-    )
-    if localized_source and candidate.weak_spatial_separation:
+    source = candidate.suspected_source
+    if source is VibrationSource.BRAKES:
+        # Brake judder names an axle: spread over its two wheels is expected.
+        if zone is None:
+            reasons.append("spread_across_locations")
+    elif (
+        source not in (VibrationSource.ENGINE, VibrationSource.DRIVELINE)
+        and candidate.weak_spatial_separation
+    ):
         reasons.append("spread_across_locations")
     speed_min, speed_max = _matched_speed_range(candidate)
     if (
@@ -757,9 +813,9 @@ def _source_checks(
     candidate: Finding | None,
     findings: Sequence[Finding],
     refs: _References,
-    samples: Sequence[Sample],
     speed_dependence: SpeedDependenceValue | None,
     *,
+    braked: bool,
     engine_alias: bool = False,
 ) -> list[SourceCheck]:
     rpm_source = refs.rpm_source
@@ -800,6 +856,19 @@ def _source_checks(
                 }
             )
             continue
+        if source is VibrationSource.BRAKES:
+            checks.append(_brakes_check(refs, braked=braked))
+            continue
+        if (
+            source is VibrationSource.WHEEL_TIRE
+            and candidate is not None
+            and candidate.suspected_source is VibrationSource.BRAKES
+        ):
+            # The wheel order was there, but only while braking: not a wheel or tire.
+            checks.append(
+                {"source": str(source), "status": "ruled_out", "reason": "only_while_braking"}
+            )
+            continue
         # Measured RPM places the engine orders without the speed, tire or drive ratios.
         measured_engine = source is VibrationSource.ENGINE and rpm_source == "measured"
         reason: SourceCheckReason | None
@@ -831,6 +900,26 @@ def _source_checks(
             }
         )
     return checks
+
+
+def _brakes_check(refs: _References, *, braked: bool) -> SourceCheck:
+    """Brake judder is a wheel order while braking: it needs the tire size and real braking."""
+    reason: SourceCheckReason | None
+    if refs.tire_circumference_m is None:
+        reason = "no_tire_reference"
+    elif refs.manual_speed:
+        # A typed-in speed never drops, so braking cannot be seen.
+        reason = "manual_speed"
+    elif not braked:
+        # Coasting is not braking: judder shows only with the brakes on.
+        reason = "no_braking"
+    else:
+        return {
+            "source": str(VibrationSource.BRAKES),
+            "status": "ruled_out",
+            "reason": "no_matching_order",
+        }
+    return {"source": str(VibrationSource.BRAKES), "status": "not_testable", "reason": reason}
 
 
 def _estimate_reason(source: VibrationSource, refs: _References) -> SourceCheckReason | None:

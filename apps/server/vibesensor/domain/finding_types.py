@@ -22,6 +22,9 @@ class VibrationSource(StrEnum):
     WHEEL_TIRE = "wheel/tire"
     DRIVELINE = "driveline"
     ENGINE = "engine"
+    # Brake judder: a wheel order there only while braking (disc thickness
+    # variation or runout).
+    BRAKES = "brakes"
     BODY_RESONANCE = "body resonance"
     TRANSIENT_IMPACT = "transient_impact"
     BASELINE_NOISE = "baseline_noise"

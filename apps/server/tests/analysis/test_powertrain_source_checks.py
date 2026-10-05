@@ -55,12 +55,15 @@ def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> Non
     assert view.mechanic.ruled_out[1:] == (
         "Electric motor: no vibration found at once or twice per motor revolution",
         "Combustion engine: not applicable: an electric car has no combustion engine",
+        # Brake judder needs firm braking from speed, which this drive never did.
+        "Brakes: not testable: the drive did not brake firmly from speed",
     )
     assert (
         view.mechanic.worksheet_empty == "No vibration that follows wheel or motor speed was found."
     )
     assert view.owner.description == (
         "Nothing stood out in the checks this run could make: wheels/tires and electric motor."
+        " Not checked, so not shown to be fine: brakes."
     )
     # The motor check needs no top gear: the motor turns at wheel speed x reduction ratio.
     assert conditions["Powertrain"].startswith("electric (EV): the motor is checked at once")
@@ -149,7 +152,9 @@ def test_obd_rpm_showing_the_engine_off_leaves_the_engine_untested() -> None:
     assert view.mechanic.ruled_out[2] == (
         "Engine: not testable: OBD-II RPM shows the engine was off for most of the drive"
     )
-    assert view.owner.description.endswith("Not checked, so not shown to be fine: engine.")
+    assert view.owner.description.endswith(
+        "Not checked, so not shown to be fine: engine and brakes."
+    )
 
 
 def test_obd_rpm_showing_the_engine_running_checks_a_hybrid_engine() -> None:

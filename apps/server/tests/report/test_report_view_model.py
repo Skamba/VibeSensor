@@ -162,7 +162,7 @@ def test_healthy_run_says_no_significant_vibration_and_what_was_covered() -> Non
     assert "front-left wheel" in owner.covered
     assert owner.description == (
         "Nothing stood out in the checks this run could make: wheels/tires and driveline."
-        " Not checked, so not shown to be fine: engine."
+        " Not checked, so not shown to be fine: engine and brakes."
     )
     assert owner.not_covered[0] == (
         "Engine: no engine RPM — connect an OBD-II adapter,"
@@ -318,7 +318,7 @@ def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
         (
             "en",
             "Nothing stood out in the checks this run could make: wheels/tires."
-            " Not checked, so not shown to be fine: driveline and engine.",
+            " Not checked, so not shown to be fine: driveline, engine and brakes.",
             (
                 "Driveline: no final-drive ratio — add it to the car in Settings"
                 " if you know it (optional).",
@@ -329,7 +329,8 @@ def test_missing_tire_size_leaves_the_engine_testable_from_measured_rpm(
         (
             "nl",
             "Niets viel op bij de controles die deze rit kon doen: wielen/banden."
-            " Niet gecontroleerd, dus niet aangetoond dat het in orde is: aandrijflijn en motor.",
+            " Niet gecontroleerd, dus niet aangetoond dat het in orde is: aandrijflijn, motor"
+            " en remmen.",
             (
                 "Aandrijflijn: geen eindoverbrenging — voeg die toe aan de auto in Instellingen"
                 " als je hem weet (optioneel).",
@@ -461,6 +462,24 @@ def test_ev_motor_checks_name_the_reduction_ratio(
 
     assert view.owner.not_covered[0] == owner_line
     assert mechanic_line in view.mechanic.ruled_out
+
+
+def test_braking_and_coasting_are_covered_separately() -> None:
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"]["source_checks"] = [
+        {"source": "wheel/tire", "status": "ruled_out", "reason": "no_matching_order"},
+        {"source": "brakes", "status": "ruled_out", "reason": "no_matching_order"},
+    ]
+    summary["phase_info"]["phase_pcts"] = {"cruise": 40.0, "braking": 20.0, "acceleration": 40.0}
+    owner = report_view_for(summary).owner
+
+    # Firm stops checked the brakes, but the drive never coasted.
+    assert owner.description == (
+        "Nothing stood out in the checks this run could make: wheels/tires and brakes."
+    )
+    assert owner.covered is not None and "braking" in owner.covered
+    assert "Coasting" in owner.not_covered
+    assert not [gap for gap in owner.not_covered if "brak" in gap.lower()], owner.not_covered
 
 
 def test_no_fault_without_any_reference_does_not_imply_the_car_is_fine() -> None:

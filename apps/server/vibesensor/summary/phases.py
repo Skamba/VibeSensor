@@ -10,6 +10,7 @@ PHASE_I18N_KEYS: Final[dict[str, str]] = {
     "cruise": "DRIVING_PHASE_CRUISE",
     "steady": "DRIVING_PHASE_CRUISE",
     "deceleration": "DRIVING_PHASE_DECELERATION",
+    "braking": "DRIVING_PHASE_BRAKING",
     "coast_down": "DRIVING_PHASE_COAST_DOWN",
     "speed_unknown": "DRIVING_PHASE_SPEED_UNKNOWN",
 }

@@ -52,7 +52,12 @@ _SPEED_SWEEP_MIN_KMH = 30.0
 _DOMINANT_RATIO = 1.5
 _MAX_SPEED_SERIES = 4
 _MAX_AMPLITUDE_ROWS = 8  # strongest first; keeps the workshop page on one sheet
-_SOURCE_KEYS = {"wheel/tire": "WHEEL", "driveline": "DRIVELINE", "engine": "ENGINE"}
+_SOURCE_KEYS = {
+    "wheel/tire": "WHEEL",
+    "driveline": "DRIVELINE",
+    "engine": "ENGINE",
+    "brakes": "BRAKES",
+}
 _ZONE_KEYS = frozenset(
     {
         "front_left_wheel",
@@ -93,6 +98,7 @@ _SPEED_SOURCE_KEYS = {
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
 # An EV cannot coast in neutral: its motor stays coupled to the wheels.
 _RECAPTURE_KEYS_EV = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD")
+_RECAPTURE_KEYS_BRAKES = ("RECAPTURE_ROAD", "RECAPTURE_BRAKE")
 # An EV's motor turns at the driveshaft order (wheel speed x reduction ratio), so
 # the driveline family reads as the motor and P1/P2 as motor revolutions.
 _EV_ORDER_CODES = frozenset({"P1", "P2"})
@@ -106,12 +112,14 @@ _SHOP_KEYS = {
     "DRIVELINE": ("SHOP_DRIVELINE_RUNOUT", "SHOP_DRIVELINE_ANGLES", "SHOP_DRIVELINE_ORDERS"),
     "ENGINE": ("SHOP_ENGINE_MOUNTS", "SHOP_ENGINE_ORDERS", "SHOP_ENGINE_MISFIRE"),
     "MOTOR": ("SHOP_MOTOR_MOUNTS", "SHOP_MOTOR_BALANCE", "SHOP_MOTOR_ORDERS"),
+    "BRAKES": ("SHOP_BRAKES_RUNOUT", "SHOP_BRAKES_THICKNESS", "SHOP_BRAKES_HUB"),
 }
 _RULED_OUT_KEYS = {
     "WHEEL": "RULED_OUT_WHEEL",
     "DRIVELINE": "RULED_OUT_DRIVELINE",
     "ENGINE": "RULED_OUT_ENGINE",
     "MOTOR": "RULED_OUT_MOTOR",
+    "BRAKES": "RULED_OUT_BRAKES",
 }
 _NOT_TESTABLE_KEYS = {
     "no_tire_reference": "NOT_TESTABLE_TIRE",
@@ -120,6 +128,7 @@ _NOT_TESTABLE_KEYS = {
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
     "engine_not_running": "NOT_TESTABLE_ENGINE_NOT_RUNNING",
     "same_rhythm_as_candidate": "NOT_TESTABLE_SAME_RHYTHM",
+    "no_braking": "NOT_TESTABLE_NO_BRAKING",
 }
 _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_final_drive": "RULED_OUT_ESTIMATED_FINAL_DRIVE",
@@ -135,6 +144,7 @@ _COULDNT_TEST_KEYS = {
     "no_engine_reference": "COULDNT_TEST_ENGINE",
     "manual_speed": "COULDNT_TEST_MANUAL_SPEED",
     "engine_not_running": "COULDNT_TEST_ENGINE_NOT_RUNNING",
+    "no_braking": "COULDNT_TEST_NO_BRAKING",
 }
 _CHECKED_LIMITED_KEYS = {
     "estimated_final_drive": "CHECKED_LIMITED_FINAL_DRIVE",
@@ -405,6 +415,9 @@ class _Ctx:
         zone = diagnosis["zone"]
         if diagnosis["source"] == "wheel/tire" and zone in {"front_axle", "rear_axle"}:
             return self.t(f"WHEELS_{zone.upper()}")
+        if diagnosis["source"] == "brakes":
+            axle = zone in {"front_axle", "rear_axle"}
+            return self.t(f"BRAKE_DISCS_{zone.upper()}" if axle and zone else "BRAKE_DISCS")
         if self.electric and zone == "driveshaft_tunnel":
             # An EV has no propshaft: a motor order no axle dominates is the drive unit.
             return self.t("ZONE_DRIVE_UNIT_EV")
@@ -526,9 +539,7 @@ def _owner_page(
         candidate = ctx.t("VERDICT_WEAK_CANDIDATE", cause=_cause(ctx, diagnosis))
         reasons = tuple(_weak_reason(ctx, reason) for reason in diagnosis["weak_reasons"])
         reasons_title = ctx.t("WEAK_REASONS_TITLE") if reasons else None
-        recapture = tuple(
-            ctx.t(key) for key in (_RECAPTURE_KEYS_EV if ctx.electric else _RECAPTURE_KEYS)
-        )
+        recapture = tuple(ctx.t(key) for key in _recapture_keys(ctx, diagnosis))
         if _unlocated_wheel(diagnosis):
             recapture = (ctx.t("STEP_WHEEL_UNLOCATED"), *recapture)
         next_step = ctx.t("RECAPTURE_TITLE")
@@ -576,6 +587,13 @@ def _owner_page(
     )
 
 
+def _recapture_keys(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
+    if diagnosis["source"] == "brakes":
+        # Brake judder needs braking from speed, not a sweep or a coast-down.
+        return _RECAPTURE_KEYS_BRAKES
+    return _RECAPTURE_KEYS_EV if ctx.electric else _RECAPTURE_KEYS
+
+
 def _unlocated_wheel(diagnosis: DiagnosisPayload) -> bool:
     """A wheel/tire fault felt strongest away from the wheels (no wheel sensor near it)."""
     return diagnosis["source"] == "wheel/tire" and diagnosis["zone"] not in _WHEEL_ZONES
@@ -584,12 +602,21 @@ def _unlocated_wheel(diagnosis: DiagnosisPayload) -> bool:
 def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     if _unlocated_wheel(diagnosis):
         return ctx.t("CAUSE_WHEEL_UNLOCATED", zone=ctx.zone(diagnosis))
+    if diagnosis["source"] == "brakes":
+        # The axle whose discs judder; without one, where it was felt.
+        zone = diagnosis["zone"]
+        if zone in {"front_axle", "rear_axle"}:
+            return ctx.t("CAUSE_BRAKES", zone=ctx.t(f"ZONE_{zone.upper()}"))
+        return ctx.t("CAUSE_BRAKES_UNLOCATED", zone=ctx.location(diagnosis["location"]))
     key = ctx.source_key(diagnosis["source"]) or "OTHER"
     return ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
 
 
 def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     code = diagnosis["order_code"]
+    if diagnosis["source"] == "brakes":
+        # Judder at the wheel order while braking: the discs, not the wheels.
+        return "STEP_BRAKES"
     if not code:
         return "STEP_OTHER"
     return f"STEP_{code}_EV" if ctx.electric and code in _EV_ORDER_CODES else f"STEP_{code}"
@@ -597,6 +624,8 @@ def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 
 def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     """The cheap check for a Moderate fault; ``None`` when the guided coast-down already did it."""
+    if diagnosis["source"] == "brakes":
+        return ctx.t("CONFIRM_BRAKES")
     if diagnosis["source"] == "wheel/tire":
         if diagnosis["zone"] in _WHEEL_CORNERS:
             return ctx.t("CONFIRM_WHEEL", zone=ctx.zone(diagnosis))
@@ -647,6 +676,8 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             parts.append(ctx.t("DESC_PRESENT_RANGE", low=ctx.num(low), high=ctx.num(high)))
         else:
             parts.append(ctx.t("DESC_PRESENT_AT", speeds=ctx.speed_range(low, high)))
+    if diagnosis["dominant_phase"] == "braking" and diagnosis["source"] == "brakes":
+        parts.append(ctx.t("DESC_ONLY_WHILE_BRAKING"))
     sentence = ", ".join(parts)
     text = f"{sentence[:1].upper()}{sentence[1:]}." if sentence else ""
     dependence = diagnosis["speed_dependence"]
@@ -745,6 +776,8 @@ def _coverage(
         gaps.append(ctx.t("NOT_COVERED_ABOVE", speed=ctx.num(high)))
     if "cruise" not in driven:
         gaps.append(ctx.t("NOT_COVERED_CRUISE"))
+    # Braking is not coasting, nor the other way round: the brakes check above
+    # says whether the drive braked.
     if not {"deceleration", "coast_down"} & set(driven):
         gaps.append(ctx.t("NOT_COVERED_COAST"))
     gaps.append(ctx.t("NOT_COVERED_NEVER", items=ctx.join(_never_analysed(ctx, diagnosis))))
@@ -1036,7 +1069,7 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
             detail = _check_text(ctx, _NOT_TESTABLE_KEYS, key, reason)
         elif check["status"] == "ruled_out_estimated":
             detail = _check_text(ctx, _RULED_OUT_ESTIMATED_KEYS, key, reason)
-        elif reason in ("stayed_in_neutral", "stopped_in_neutral"):
+        elif reason in ("stayed_in_neutral", "stopped_in_neutral", "only_while_braking"):
             detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:
             detail = ctx.t(_RULED_OUT_KEYS[key])

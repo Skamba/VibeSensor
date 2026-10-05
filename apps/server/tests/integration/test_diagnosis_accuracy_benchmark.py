@@ -144,6 +144,8 @@ class Expected:
     speed_dependence: str | None = None
     # One corner carries the fault well above the others (single-wheel faults).
     dominant_corner: bool = False
+    # The driving phase the fault shows up in (brake judder: only while braking).
+    dominant_phase: str | None = None
     # What a weak-evidence report must say made the run hard to judge.
     weak_reasons: frozenset[str] = frozenset()
 
@@ -207,6 +209,19 @@ class Case:
     def stands_still(self) -> bool:
         return any(phase.speed_start_kmh == 0 == phase.speed_end_kmh for phase in self.phases)
 
+    @property
+    def brakes_firmly(self) -> bool:
+        """The drive brakes from speed: a phase of 3 s or more sheds 0.25 g or more.
+
+        A car coasting without the brakes slows at well under 0.15 g.
+        """
+        return any(
+            phase.duration_s >= 3.0
+            and (phase.speed_start_kmh - phase.speed_end_kmh) / 3.6 / phase.duration_s
+            >= _FIRM_BRAKING_MPS2
+            for phase in self.phases
+        )
+
 
 def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expected:
     return Expected(
@@ -219,6 +234,7 @@ def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expect
 
 
 NO_FAULT = Expected(verdicts=frozenset({"no_fault"}), levels=frozenset())
+_FIRM_BRAKING_MPS2 = 0.25 * 9.81
 
 
 def _scripted(name: str, expected: Expected, **by_car: Expected) -> Case:
@@ -329,10 +345,27 @@ def _with_engine_hum(base: str, gain: float) -> Profile:
     )
 
 
+# Brake judder: a brake disc with thickness variation or runout pulses the brake
+# torque once per wheel turn, so the wheel's first order shows up while braking
+# and only then.
+_BRAKE_JUDDER = Profile(
+    name="bench_brake_judder",
+    tones=(),
+    order_tones=(("wheel_1x", 1.0, (220.0, 125.0, 170.0)),),
+    noise_std=24.0,
+    bump_probability=0.004,
+    bump_decay=0.94,
+    bump_strength=(30.0, 24.0, 45.0),
+    modulation_hz=0.22,
+    modulation_depth=0.12,
+    reference_speed_kmh=DEFAULT_SPEED_KMH,
+)
+
 _BENCH_PROFILES = {
     profile.name: profile
     for profile in (
         _ENGINE_FIRST_ORDER,
+        _BRAKE_JUDDER,
         _TIRE_OUT_OF_ROUND,
         _IMBALANCED_OVAL_TIRE,
         _with_engine_hum("rough_road", 0.28 * 0.52),
@@ -370,6 +403,30 @@ def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
         _phase("hold", 6.0, 90.0, 90.0, *faults),
         _phase("coast", 4.0, 90.0, 70.0, *faults),
     )
+
+
+def _motorway_stops(
+    *,
+    braking: tuple[PhaseOverride, ...] = (),
+    always: tuple[PhaseOverride, ...] = (),
+    coast: bool = False,
+) -> tuple[ScenarioPhase, ...]:
+    """Three motorway stops: cruise at 120 km/h, brake firmly to 40 and speed up again.
+
+    Braking 120->40 km/h in 6 s sheds 3.7 m/s^2 (0.38 g); *braking* faults play
+    only then. With *coast* the driver lifts off instead and the car rolls from
+    120 to 90 km/h in 10 s (0.08 g), the way a car coasts without the brakes.
+    """
+    phases: list[ScenarioPhase] = []
+    for stop in range(3):
+        phases.append(_phase(f"cruise-{stop}", 10.0, 120.0, 120.0, *always))
+        if coast:
+            phases.append(_phase(f"coast-{stop}", 10.0, 120.0, 90.0, *always))
+            phases.append(_phase(f"speed-up-{stop}", 8.0, 90.0, 120.0, *always))
+        else:
+            phases.append(_phase(f"brake-{stop}", 6.0, 120.0, 40.0, *always, *braking))
+            phases.append(_phase(f"speed-up-{stop}", 12.0, 40.0, 120.0, *always))
+    return tuple(phases)
 
 
 # Held at 75-76 km/h, and the tone is there for 12 s of the 28 s drive.
@@ -476,6 +533,42 @@ EV_CASES = (
 
 BENCH_CASES = (
     Case("bench-healthy-sweep", _sweep(), NO_FAULT),
+    # Brake judder from warped front discs: felt in the steering wheel every time
+    # the car brakes from motorway speed, gone while cruising and speeding up.
+    # It is the brakes, not a wheel to balance.
+    Case(
+        "bench-front-brake-judder-stops",
+        _motorway_stops(braking=(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0),)),
+        _fault(
+            "brakes",
+            {"front_axle"},
+            "T1",
+            levels=MODERATE_OR_STRONG,
+            dominant_phase="braking",
+        ),
+    ),
+    # Rear discs judder more faintly (the rear axle brakes less): felt in the seat.
+    Case(
+        "bench-rear-brake-judder-stops",
+        _motorway_stops(braking=(_ov("rear-axle", _BRAKE_JUDDER.name, 0.4, 1.0),)),
+        _fault(
+            "brakes",
+            {"rear_axle"},
+            "T1",
+            levels=MODERATE_OR_STRONG,
+            dominant_phase="braking",
+        ),
+    ),
+    # A healthy car on the same drive, once with firm stops and once only coasting.
+    Case("bench-healthy-brake-stops", _motorway_stops(), NO_FAULT),
+    Case("bench-healthy-coast-downs", _motorway_stops(coast=True), NO_FAULT),
+    # An imbalance shakes in every phase, braking included: a wheel to balance,
+    # not the brakes.
+    Case(
+        "bench-front-left-wheel-brake-stops",
+        _motorway_stops(always=(_ov("front-left", "wheel_imbalance", 0.85, 1.0),)),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+    ),
     # Fixed-frequency body resonances (13/26/39 Hz) that the orders sweep through:
     # brief crossings are not an order-tracked fault.
     # At most a hedged guess, never an actionable fault.
@@ -862,6 +955,7 @@ PDF_CASES = frozenset(
         ("bench-healthy-sweep", "other"),
         ("bench-rear-right-wheel-sweep", "default"),
         ("bench-cabin-only-wheel-sweep", "default"),
+        ("bench-front-brake-judder-stops", "default"),
     }
 )
 _PDF_HEADLINES = {
@@ -1024,6 +1118,8 @@ def _assert_case(
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, case, summary)
         _assert_order_amplitude_mg(diagnosis, case)
+    if expected.dominant_phase is not None:
+        assert diagnosis["dominant_phase"] == expected.dominant_phase, summary
     if expected.speed_dependence is not None:
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
     _assert_spectrum_markers(diagnosis, car, case)
@@ -1039,10 +1135,15 @@ def _assert_case(
             if row["confidence_level"] == "strong" and _engine_alike(car, case, row["order_code"])
         ]
         assert not strong_alike, diagnosis["order_findings"]
+    # Brake judder can only be judged on a drive that braked from speed.
+    checked = [check["source"] for check in diagnosis["source_checks"]]
+    assert checked == ["wheel/tire", "driveline", "engine", "brakes"], checked
     for check in diagnosis["source_checks"]:
         if check["status"] == "candidate" or check["reason"] in _COAST_REASONS:
             continue
-        expected_check = _expected_check(check["source"], car, case, engine_alike=engine_alike)
+        expected_check = _expected_check(
+            check["source"], car, case, engine_alike=engine_alike, candidate=diagnosis["source"]
+        )
         assert (check["status"], check["reason"]) == expected_check, diagnosis["source_checks"]
     _assert_sensor_identity(result)
     _assert_speed_breakdown(result, case)
@@ -1082,7 +1183,7 @@ def _engine_alike(car: BenchCar, case: Case, order_code: str | None) -> bool:
 
 
 def _expected_check(
-    source: str, car: BenchCar, case: Case, *, engine_alike: bool
+    source: str, car: BenchCar, case: Case, *, engine_alike: bool, candidate: str
 ) -> tuple[str, str]:
     """How a source the run did not blame is checked off.
 
@@ -1091,8 +1192,13 @@ def _expected_check(
     car has no final drive to place the driveline orders. An engine no-match on
     RPM estimated in top gear is never a plain "ruled out", and is no test at
     all when some gear puts an engine order on the diagnosed one; an EV has no
-    engine.
+    engine. Brake judder can only be judged on a drive that braked from speed,
+    and a wheel order heard only while braking is the brakes, not a wheel.
     """
+    if source == "brakes" and not case.brakes_firmly:
+        return ("not_testable", "no_braking")
+    if source == "wheel/tire" and candidate == "brakes":
+        return ("ruled_out", "only_while_braking")
     if source == "engine":
         if car.fuel_type == "EV":
             return ("not_applicable", "electric_car")
@@ -1322,9 +1428,19 @@ _ENGINE_SAME_RHYTHM_TEXT = (
 )
 _COAST_REASONS = ("stayed_in_neutral", "stopped_in_neutral")
 _SPEED_SOURCE_TEXT = {"gps": "GPS", "obd2": "OBD"}
-_SOURCE_NAMES_EN = {"wheel/tire": "Wheels/tires", "driveline": "Driveline", "engine": "Engine"}
+_SOURCE_NAMES_EN = {
+    "wheel/tire": "Wheels/tires",
+    "driveline": "Driveline",
+    "engine": "Engine",
+    "brakes": "Brakes",
+}
 # An EV's driveline is its electric drive unit.
 _EV_SOURCE_NAMES_EN = {**_SOURCE_NAMES_EN, "driveline": "Electric motor"}
+# Brake judder sends the owner to the brake discs on the axle that judders.
+_BRAKE_DISCS = {
+    "front_axle": ("front brake discs", "remschijven voor"),
+    "rear_axle": ("rear brake discs", "remschijven achter"),
+}
 
 # What the owner is told to have checked, per diagnosed order.
 _NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "P1": "propshaft", "E2": "mounts"}
@@ -1366,6 +1482,10 @@ def _assert_report_view(
         lowest_kmh = min(min(p.speed_start_kmh, p.speed_end_kmh) for p in case.phases)
         below = any(item.startswith("Speeds below") for item in not_covered)
         assert below is (lowest_kmh >= 40.0), not_covered
+        # A coast-down is not braking: without firm braking from speed the report
+        # says brake judder was not checked.
+        braking_gap = [item for item in not_covered if "brak" in item.lower()]
+        assert bool(braking_gap) is not case.brakes_firmly, not_covered
         return
     cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
     assert cause_text is not None
@@ -1404,11 +1524,16 @@ def _assert_report_view(
         assert owner.verify is not None
         assert f"{diagnosis['order_code']} " in owner.verify
         assert owner.verify.rstrip(".").endswith("mg today")
-        keyword = (_EV_NEXT_STEP_KEYWORDS if electric else _NEXT_STEP_KEYWORDS).get(
-            diagnosis["order_code"]
-        )
-        if keyword is not None and not unlocated_wheel:
-            assert keyword in owner.next_step, owner.next_step
+        if diagnosis["source"] == "brakes":
+            # The brake discs, not a wheel to balance.
+            assert _BRAKE_DISCS[diagnosis["zone"]][0] in owner.next_step, owner.next_step
+            assert "balance" not in owner.next_step, owner.next_step
+        else:
+            keyword = (_EV_NEXT_STEP_KEYWORDS if electric else _NEXT_STEP_KEYWORDS).get(
+                diagnosis["order_code"]
+            )
+            if keyword is not None and not unlocated_wheel:
+                assert keyword in owner.next_step, owner.next_step
     if expected.dominant_corner and diagnosis["verdict"] == "fault":
         corner = _ZONE_TEXT_EN[diagnosis["zone"]]
         assert f"stronger at the {corner} than at the next sensor" in owner.description, (
@@ -1440,6 +1565,9 @@ def _assert_pdf_text(result: SimPipelineResult, case: Case) -> None:
         if verdict == "fault":
             assert view.owner.next_step.lower()[:40] in pages[0]
             assert view.owner.verify is not None
+        if result.diagnosis["source"] == "brakes":
+            discs = _BRAKE_DISCS[result.diagnosis["zone"]][lang == "nl"]
+            assert discs in pages[0], pages[0][:400]
         workshop = " ".join(pages[1:])
         for chart in (view.mechanic.spectrum, view.mechanic.speed_chart):
             if chart is not None:

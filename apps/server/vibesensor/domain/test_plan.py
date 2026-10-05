@@ -112,6 +112,7 @@ class TestPlan:
 _ACTION_PRIORITY: dict[str, int] = {
     "wheel_tire_condition": 1,
     "wheel_balance_and_runout": 2,
+    "brake_discs": 2,
     "engine_mounts_and_accessories": 3,
     "driveline_mounts_and_fasteners": 3,
     "driveline_inspection": 4,
@@ -158,6 +159,17 @@ def _actions_for_finding(finding: Finding) -> tuple[RecommendedAction, ...]:
                 confirm="ACTION_TIRE_CONDITION_CONFIRM",
                 falsify="ACTION_TIRE_CONDITION_FALSIFY",
                 eta="10-20 min",
+            ),
+        )
+    if source == "brakes":
+        return (
+            RecommendedAction(
+                action_id="brake_discs",
+                what="ACTION_BRAKE_DISCS_WHAT",
+                why="ACTION_BRAKE_DISCS_WHY",
+                confirm="ACTION_BRAKE_DISCS_CONFIRM",
+                falsify="ACTION_BRAKE_DISCS_FALSIFY",
+                eta="30-60 min",
             ),
         )
     if source == "driveline":

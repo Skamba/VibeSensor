@@ -683,6 +683,54 @@ test("weak evidence hedges the best candidate and asks for a new recording", () 
   });
 });
 
+test("brake judder names the axle's brake discs and asks for firm stops, not a sweep", () => {
+  const insights = populatedInsights("run-012");
+  insights.diagnosis = makeDiagnosis({
+    verdict: "weak_evidence",
+    confidence_level: "weak",
+    finding_id: "finding-1",
+    source: "brakes",
+    zone: "front_axle",
+  });
+  const details = buildDetails(
+    historyListRun("run-012"),
+    defaultDetail({ preview: insights }),
+    f,
+  );
+  expect(details.insights).toMatchObject({
+    primary: {
+      explanation:
+        'history.verdict.weak_body:{"source":"history.source.brakes","location":"history.zone.brake_discs_front_axle"}',
+      nextStep:
+        'history.recapture_recipe_brakes:{"from":"100","to":"40","unit":"km/h"}',
+    },
+  });
+
+  const noBraking = checkedInsights("no_fault", [
+    { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
+    { source: "brakes", status: "not_testable", reason: "no_braking" },
+  ]);
+  expect(noBraking.primary?.explanation).toBe(
+    "Nothing stood out in the checks this run could make: wheels/tires. Not checked, so not shown to be fine: brakes.",
+  );
+  expect(noBraking.checks.notChecked).toEqual([
+    {
+      label: "Brakes",
+      detail:
+        "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — brake firmly from about 100 km/h a few times during the drive.",
+    },
+  ]);
+  const judder = checkedInsights("fault", [
+    { source: "wheel/tire", status: "ruled_out", reason: "only_while_braking" },
+    { source: "brakes", status: "candidate", reason: null },
+  ]);
+  expect(judder.checks.checked[0]).toEqual({
+    label: "Wheel / Tire",
+    detail:
+      "ruled out: the vibration at the wheel's rhythm came only while braking (the brakes, not a wheel or tire)",
+  });
+});
+
 test("a wheel fault felt only in the cabin names no wheel and asks for wheel sensors", () => {
   const cabinOnly = (verdict: "fault" | "weak_evidence") => {
     const insights = populatedInsights("run-008");

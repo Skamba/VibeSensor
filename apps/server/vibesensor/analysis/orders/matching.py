@@ -61,6 +61,8 @@ class OrderMatchAccumulator:
     compliance: float
     heard_locations: frozenset[str] = frozenset()
     matched_sample_indices: tuple[int, ...] = ()
+    # The samples the order could be looked for in, with their sensor location.
+    possible_samples: tuple[tuple[int, str], ...] = ()
 
     @property
     def matched(self) -> int:
@@ -228,6 +230,7 @@ def match_samples_for_hypothesis(
     the predicted frequency at every sensor; such a match is not heard.
     """
     possible = 0
+    possible_samples: list[tuple[int, str]] = []
     matches: list[tuple[OrderMatchObservation, bool]] = []
     matched_floor: list[float] = []
     matched_sample_indices: list[int] = []
@@ -253,6 +256,7 @@ def match_samples_for_hypothesis(
         ref_sources.add(ref_source)
 
         sample_location = _location_label(sample, lang=lang)
+        possible_samples.append((sample_idx, sample_location))
         if sample_location:
             possible_by_location[sample_location] += 1
         sample_speed = sample.speed_kmh
@@ -334,4 +338,5 @@ def match_samples_for_hypothesis(
         compliance=compliance,
         heard_locations=heard_locations,
         matched_sample_indices=tuple(matched_sample_indices),
+        possible_samples=tuple(possible_samples),
     )

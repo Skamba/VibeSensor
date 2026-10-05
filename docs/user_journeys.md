@@ -433,6 +433,11 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   The coast-down classifies the vibration as following road speed or engine
   speed (`_speed_dependence` in `diagnosis.py`), and a contradicting coast-down
   downgrades the verdict (`_contradicts_coast_test`).
+
+  There is no guided braking step (gap J36). Brake judder is found from the
+  firm stops of any drive: braking at 0.2 g or more for at least 2.5 s from
+  15 km/h up (see "Braking" in [analysis_pipeline.md](analysis_pipeline.md)).
+  A drive without one says the brakes were not checked.
 - **Tell (target):**
   - The sweep and hold steps say "in top gear (or D) — engine checks assume top
     gear unless an OBD-II adapter measures RPM" (owner decision).
@@ -479,8 +484,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - A no-fault run says only what it could check and what it could not
   (`history.verdict.no_fault_body`, `history.verdict.no_fault_not_checked`):
   "Nothing stood out in the checks this run could make: wheels/tires. Not
-  checked, so not shown to be fine: driveline and engine." It never implies
-  the car is fine for a source that was not testable.
+  checked, so not shown to be fine: driveline, engine and brakes." It never
+  implies the car is fine for a source that was not testable. Brakes are
+  checked only when the drive braked firmly from speed; coasting does not
+  count.
 - Each failing run-suitability check (speed variation, sensor coverage, frame
   integrity, …) is a warning banner at the top of the run detail, titled with
   the check and worded as its row on the PDF's data-quality page
@@ -515,6 +522,14 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     drive 3.15 (car library, model-family estimate)", "Top gear ratio not
     provided", "Tire size 225/45R18, circumference 1.984 m (entered by you)",
     and "Engine RPM not measured; estimated from speed assuming top gear".
+  - Brake judder (a wheel-rhythm vibration heard only while braking; see
+    "Brake judder" in [analysis_pipeline.md](analysis_pipeline.md)) reads
+    "brake judder from the brake discs on the front axle" (steering wheel)
+    or "… rear axle" (seat and brake pedal). Its next step is to have those
+    discs checked for runout and thickness variation, its cheap check is a few
+    firm stops from about 100 km/h, and the shop request asks for disc runout
+    on the hub, thickness variation, hub flange runout and the caliper slides.
+    Wheels/tires are then ruled out "only while braking".
   - Ruled-out lines are hedged when they rest on estimates: a family-default
     or unverified library ratio gives `ruled_out_estimated` ("not
     conclusive"), estimated RPM gives "estimated for top gear; lower gears

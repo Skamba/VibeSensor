@@ -62,6 +62,8 @@ type SourceCheckReason = Literal[
     "engine_not_running",
     "electric_car",
     "same_rhythm_as_candidate",
+    "no_braking",
+    "only_while_braking",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]

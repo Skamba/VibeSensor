@@ -66,6 +66,9 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        rhythm in some gear (engine check `same_rhythm_as_candidate`, see
        "Engine alias" in `docs/analysis_pipeline.md`), the description adds
        that without measured RPM it can also be the engine.
+       Brake judder names the front or rear brake discs, says the vibration
+       came only while braking, and its cheap check is a few firm stops from
+       about 100 km/h.
      - Weak evidence: the hedged best candidate, 1–2 plain reasons, and a
        recapture recipe.
      - No fault: a verdict sentence that names only the sources the run could
