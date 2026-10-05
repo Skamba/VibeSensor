@@ -1853,6 +1853,14 @@
             "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
             "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf"
           ]
+        },
+        {
+          "item": "Split final drive of the X1 sDrive20d 6-speed manual",
+          "reason": "The 07/2016 sheet prints per-gear ratios 3.538 / 1.923 / 1.219 / 0.881 / 0.810 / 0.674 with one final drive, 3.778, and the row stores them as printed. The xDrive18d manual has the same gear set, and its 07/2019 and 03/2021 overall ratios show a second final drive for gears V-VI; no sheet printing overall ratios for the sDrive20d manual was recovered, so whether 3.778 also drives V-VI is not confirmed.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-sdrive20d-2016-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence"
@@ -2389,6 +2397,15 @@
             0.81,
             0.674
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 03/2021 X1 sheets print the xDrive18d six-speed manual as overall ratios 14.362 / 7.805 / 4.947 / 3.576 / 2.793 / 2.325. Gears I-IV equal the gear ratio times the printed final drive 4.059, but V and VI run through a second final drive that no sheet prints: 2.325 / 0.674 = 3.450 (and 2.793 / 0.810 = 3.448). The row stores 3.450, the final drive behind the top gear, so top gear x final drive matches the printed overall top ratio 2.325.",
+          "value": 3.45
         }
       },
       "tires": {
@@ -2442,15 +2459,21 @@
             "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
             "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ]
+        },
+        {
+          "note": "Final drive 3.450 added from the printed overall ratios of the 07/2019 and 03/2021 X1 sheets; the same per-gear ratios and printed final drive 4.059 appear in every earlier sheet for this row, so the gearbox is unchanged across the row's years.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "Final drive of the X1 xDrive18d 6-speed manual",
-          "reason": "The sheets print one final drive, 4.059, beside per-gear ratios ending in 0.674. The 03/2021 sheet prints overall ratios instead: gears I-IV equal ratio x 4.059 (14.362, 7.805, 4.947, 3.576), but V and VI give 2.793 and 2.325, i.e. about 3.448 x 0.810 / 0.674. The gearbox therefore drives V-VI through a second final drive that no checked sheet prints, and the single final-drive field cannot hold both; the row keeps the final drive empty instead of an engine-order reference that would be about 18% off in top gear.",
+          "item": "Final drive of gears I-IV of the X1 xDrive18d 6-speed manual",
+          "reason": "The gearbox has two final drives: 4.059 for gears I-IV (printed) and 3.450 for V-VI (derived from the printed overall ratios). The single final-drive field holds the one behind the top gear, so engine-order references in gears I-IV are not modelled.",
           "evidence_refs": [
-            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
-            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf",
             "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
           ]
         }

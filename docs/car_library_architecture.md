@@ -131,6 +131,15 @@ inherited from family-level data, encode that through `confidence` and
   the top gear in the driven axle field only when the sheet's forward ratios
   show which one that is; otherwise it stores neither and records an
   `unresolved` note.
+- **Manual gearboxes with a second final drive:** the same rule applies to a
+  manual with two output shafts. BMW's sheets for the X1/X2 xDrive18d six-speed
+  manual print one final drive (4.059) but, from 07/2019, overall ratios
+  (gear × final drive) whose gears V–VI do not match it. The row stores the
+  final drive behind the top gear, derived as overall top ratio ÷ top-gear
+  ratio (`official_derived`), and an `unresolved` note says the gears I–IV
+  final drive is not modelled. A sheet that prints only per-gear ratios and
+  one final drive is stored as printed; a row whose gear set matches a known
+  split gearbox gets an `unresolved` note instead of a guessed second value.
 
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:

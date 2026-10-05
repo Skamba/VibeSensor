@@ -149,7 +149,7 @@
       ],
       "unresolved": [
         {
-          "item": "Optional wheel/tyre sizes for the the i4 M50",
+          "item": "Optional wheel/tyre sizes for the i4 M50",
           "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
           "evidence_refs": [
             "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
@@ -244,7 +244,7 @@
       ],
       "unresolved": [
         {
-          "item": "Optional wheel/tyre sizes for the the i4 eDrive40",
+          "item": "Optional wheel/tyre sizes for the i4 eDrive40",
           "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
           "evidence_refs": [
             "bmw_pressclub_sources:g26-i4-2021-spec-pdf",
@@ -253,7 +253,7 @@
         },
         {
           "item": "i4 eDrive40 ratio after the summer 2025 update",
-          "reason": "No official i4 sheet from July 2025 onwards was checked, so the 2026 end year relies on the July 2024 data.",
+          "reason": "BMW's summer 2025 model-update release says only that the eDrive40 gets a silicon-carbide inverter from July 2025 and prints no ratio; no technical-data sheet from July 2025 onwards was recovered, so the 2026 end year relies on the July 2024 data.",
           "evidence_refs": [
             "bmw_pressclub_sources:g26-i4-2024-de-spec-pdf",
             "bmw_pressclub_sources:bmw-model-updates-summer-2025-de"

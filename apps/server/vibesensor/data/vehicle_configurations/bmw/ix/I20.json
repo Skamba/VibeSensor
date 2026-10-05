@@ -219,7 +219,7 @@
       ],
       "unresolved": [
         {
-          "item": "Optional wheel/tyre sizes for the the iX xDrive40",
+          "item": "Optional wheel/tyre sizes for the iX xDrive40",
           "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
           "evidence_refs": [
             "bmw_pressclub_sources:i20-ix-2021-spec-pdf"
@@ -323,7 +323,7 @@
       ],
       "unresolved": [
         {
-          "item": "Optional wheel/tyre sizes for the the iX xDrive50",
+          "item": "Optional wheel/tyre sizes for the iX xDrive50",
           "reason": "The checked official sheets publish only the standard tyre; the other wheel packages listed on this row are inherited family defaults.",
           "evidence_refs": [
             "bmw_pressclub_sources:i20-ix-2021-spec-pdf"

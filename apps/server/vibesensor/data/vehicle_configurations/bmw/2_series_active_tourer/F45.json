@@ -9,9 +9,7 @@
       "n15": "BMW 2AT F45 218d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF): engine B47C20 110 kW, optional Aisin AWF8F35 8AT, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (was a data entry error - this row is the LCI 8AT state which ran from 03/2018 to F45 production end 03/2021). Final drive 4.398 was a family_default and was not directly extracted from the spec PDF in this research run; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35 (transverse 8AT). Code retained; transmission.name corrected.",
       "n16": "BMW 2AT F45 220d FWD with 8-speed Aisin Steptronic (AWF8F35). Confirmed by BMW PressClub T0277458EN/401747 (01/2018 LCI spec PDF) and T0277458EN press kit ('220d with the eight-speed Steptronic' as standard fit): engine B47C20 140 kW, Aisin AWF8F35 8AT standard, gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, default tyre 205/60 R16. production_end_year corrected: 2018 -> 2021 (data entry error). Final drive 4.398 family_default not directly extracted; left at no_confidence. NOTE: shard's transmission code 'ZF8HP' is a misnomer - actual unit is Aisin AWF8F35.",
       "n17": "BMW 2AT F45 220i FWD with 7-speed dual-clutch Steptronic (Magna 7DCT300). Confirmed by BMW PressClub T0277458EN press kit ('the 220i is fitted as standard with the seven-speed dual-clutch Steptronic transmission') and T0277458EN/401747 (01/2018 LCI spec PDF). Engine B48A20M0 141 kW (192 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final drive) values; FD 3.231 published separately as family_default but not directly extracted from the spec PDF in this research run, so the per-gear individual ratios remain unset and FD remains at no_confidence. production_end_year corrected: 2018 -> 2021 (data entry error). DCT7 = Magna 7DCT300 (also called Getrag 7DCI300 in some Borg-Warner / Magna PT documents).",
-      "n18": "BMW 2AT F45 225xe iPerformance plug-in hybrid: B38A15M0 1.5L turbo petrol driving front axle via 6-speed Aisin TF-60SN Steptronic; 65 kW electric motor driving rear axle (through-the-road AWD). Confirmed by BMW PressClub T0299792EN release (225xe drivetrain layout) and T0299792EN/436732 (225xe 2019 spec PDF). Production START year corrected: 2014 -> 2016 (225xe entered production in 03/2016, not at 2014 launch). Wikipedia and BMW PressClub confirm Aisin TF-60SN as the 6AT unit (NOT a ZF gearbox; '6-SPEED-STEP' code retained as shard label). Per-gear ratios and individual final drive not exposed in the BMW PressClub spec PDFs cross-checked in this run and remain at no_confidence pending direct text extraction; transmission identity, drivetrain, and configuration are well-evidenced.",
-      "n19": "225xe per-gear ratios and final drive not extracted from BMW PressClub T0299792EN/436732 in this run; remain unverified pending direct PDF text extraction.",
-      "n20": "Final drive value 4.398 was a family_default; the 218d-specific FD was not directly extracted from BMW PressClub T0277458EN/401747 in this research run."
+      "n18": "BMW 2AT F45 225xe iPerformance plug-in hybrid: B38A15M0 1.5L turbo petrol driving front axle via 6-speed Aisin TF-60SN Steptronic; 65 kW electric motor driving rear axle (through-the-road AWD). Confirmed by BMW PressClub T0299792EN release (225xe drivetrain layout) and T0299792EN/436732 (225xe 2019 spec PDF). Production START year corrected: 2014 -> 2016 (225xe entered production in 03/2016, not at 2014 launch). Wikipedia and BMW PressClub confirm Aisin TF-60SN as the 6AT unit (NOT a ZF gearbox; '6-SPEED-STEP' code retained as shard label). Per-gear ratios and individual final drive not exposed in the BMW PressClub spec PDFs cross-checked in this run and remain at no_confidence pending direct text extraction; transmission identity, drivetrain, and configuration are well-evidenced."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -56,10 +54,6 @@
         "bmw_pressclub_sources:f45-2018-spec-pdf",
         "bmw_pressclub_sources:f45-2020-spec-pdf"
       ],
-      "e8": [
-        "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
-        "secondary_technical_sources:bmw-f45-2at-wikipedia"
-      ],
       "e9": [
         "bmw_pressclub_sources:f45-2018-spec-pdf",
         "bmw_pressclub_sources:f45-220i-2018-press-kit"
@@ -84,9 +78,6 @@
         "bmw_pressclub_sources:f45-225xe-launch-release",
         "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
         "secondary_technical_sources:bmw-f45-2at-wikipedia"
-      ],
-      "e15": [
-        "bmw_pressclub_sources:f45-225xe-2019-spec-pdf"
       ],
       "e16": [
         "bmw_pressclub_sources:f45-220i-2018-spec-pdf",
@@ -717,23 +708,51 @@
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n19",
-          "value": 0.672,
-          "evidence_refs_ref": "e8"
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2018, 07/2019 and 11/2020 F45 sheets list 0.672 as sixth gear of the 225xe six-speed Steptronic.",
+          "value": 0.672
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2018, 07/2019 and 11/2020 F45 sheets list 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672 for the 225xe six-speed Steptronic.",
+          "value": [
+            4.459,
+            2.508,
+            1.556,
+            1.142,
+            0.851,
+            0.672
+          ]
         },
         "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n20",
-          "value": 3.944,
-          "evidence_refs_ref": "e3"
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 11/2020 F45 sheets list 3.944 as the final drive of the 225xe six-speed Steptronic, which drives the front axle (the electric motor drives the rear axle). The 01/2018 sheet prints the same gear ratios but no final-drive line.",
+          "value": 3.944
         }
       },
       "tires": {
         "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e15",
-          "notes": "225xe default tyre size not extracted from BMW PressClub T0299792EN/436732 in this run; family_default 205/55 R17 unverified - pending direct PDF text extraction.",
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2018, 07/2019 and 11/2020 F45 sheets list 205/55 R17 as the standard tyre for the 225xe.",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
@@ -781,6 +800,13 @@
         {
           "item": "F45 official-source assessment for '225xe'",
           "reason": "Official BMW PressClub Asia 225xe iPerformance specifications PDF (T0274617EN/394439) and the 2019 update launch article (T0299792EN) plus 2019 spec PDF (T0299792EN/436732) and 11/2020 spec (T0322634EN/468203) all document the 225xe as a plug-in hybrid xDrive with combustion engine driving the front wheels through a six-speed Steptronic and electric motor on the rear axle, with top gear 0.672, final drive 3.944, and 205/55 R17 default tire. None of these saved official sources document a 2014 launch availability; production start at 2014 is unproven. Powertrain/tire values match official evidence; production-year scope remains unresolved."
+        },
+        {
+          "item": "225xe final drive before 07/2019",
+          "reason": "The 01/2018 sheet prints the same six gear ratios as the 07/2019 and 11/2020 sheets but no final-drive line, so 3.944 is printed only from 07/2019 on.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf"
+          ]
         }
       ],
       "configuration_confidence": "medium_confidence"
@@ -809,16 +835,39 @@
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n19",
-          "value": 0.672,
-          "evidence_refs_ref": "e8"
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2018 and 11/2020 F45 sheets list 0.673 as eighth gear of the 218d optional eight-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 01/2018 and 11/2020 F45 sheets list 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 218d eight-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
         },
         "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n20",
-          "value": 3.944,
-          "evidence_refs_ref": "e3"
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020 F45 sheet lists 2.774 as the final drive of the 218d eight-speed Steptronic. The 01/2018 sheet prints no final-drive line.",
+          "value": 2.774
         }
       },
       "tires": {
@@ -866,14 +915,16 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f45-2018-spec-pdf"
           ]
+        },
+        {
+          "note": "Ratios corrected: the row previously carried the 225xe six-speed Steptronic values (top gear 0.672, final drive 3.944) as unverified placeholders. The official 01/2018 and 11/2020 sheets list the 218d eight-speed Steptronic with eighth gear 0.673, and the 11/2020 sheet its final drive 2.774.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f45-2018-spec-pdf",
+            "bmw_pressclub_sources:f45-2020-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
-        {
-          "item": "BMW F45 218d exact standalone final-drive value",
-          "reason": "The official BMW 01/2018 specifications PDF closes the bracketed automatic gear ratios for the exact 218d state but does not expose a standalone final-drive field.",
-          "evidence_refs_ref": "e3"
-        },
         {
           "item": "BMW F45 218d exact optional wheel-package coverage beyond the baseline tire",
           "reason": "The official BMW 01/2018 specifications PDF closes the 205/60 R16 baseline tire for the exact 218d automatic state, but this pass did not recover a row-specific optional wheel matrix for the narrowed 2018-only row.",
@@ -881,10 +932,10 @@
         },
         {
           "item": "F45 official-source assessment for '218d'",
-          "reason": "Official 01/2018 LCI spec (T0277458EN/401747) supports FWD, optional 8-speed Steptronic, top gear 0.673, and 205/60 R16 default. 11/2020 spec (T0322634EN/468203) documents the same 218d FWD with 8-speed Steptronic, top 0.673, final drive 2.774, and same default tire. Final drive remains unresolved as an exact 2018-only value because the 01/2018 PDF extraction did not surface that line; optional tire matrix is not exhaustively documented."
+          "reason": "Official 01/2018 LCI spec (T0277458EN/401747) supports FWD, optional 8-speed Steptronic, top gear 0.673, and 205/60 R16 default. 11/2020 spec (T0322634EN/468203) documents the same 218d FWD with 8-speed Steptronic, top 0.673, final drive 2.774, and same default tire. The 01/2018 sheet prints no final-drive line, so 2.774 is printed only from 11/2020 on; optional tire matrix is not exhaustively documented."
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f45-220d-eu-2018-zf8hp-fwd",

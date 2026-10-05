@@ -61,7 +61,7 @@
       "id": "bmw_pressclub_sources:f45-225xe-2019-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0299792EN/436732",
       "title": "BMW PressClub 225xe Active Tourer 2019 specifications PDF",
-      "note": "Official BMW 225xe specifications PDF with the documented top-gear and final-drive values used in the exact row.",
+      "note": "Official BMW 07/2019 specifications for the 225xe Active Tourer: six-speed Steptronic 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672, final drive 3.944, standard 205/55 R17 tyres.",
       "confidence": "high"
     },
     {
@@ -131,7 +131,7 @@
       "id": "bmw_pressclub_sources:f45-2020-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0322634EN/468203",
       "title": "BMW PressClub F45 Active Tourer 2020 specifications PDF",
-      "note": "Official BMW 11/2020 technical-data PDF for the late F45 Active Tourer ACEA-market range. The checked 218i row shows six-speed manual or optional seven-speed Steptronic with double clutch, 205/60 R16 baseline tires, and no eight-speed automatic state.",
+      "note": "Official BMW 11/2020 technical-data PDF for the late F45 Active Tourer ACEA-market range. 218i: six-speed manual or optional seven-speed Steptronic with double clutch, 205/60 R16 baseline tires, no eight-speed automatic state. 225xe: six-speed Steptronic 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672, final drive 3.944, 205/55 R17. 218d: six-speed manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 with final drive 3.389, or eight-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 2.774.",
       "confidence": "high"
     },
     {
@@ -1727,7 +1727,7 @@
       "id": "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/france/article/attachment/T0296225FR/431938",
       "title": "BMW PressClub France F48 X1 technical data PDF 07/2019 (LCI, English-language sheet)",
-      "note": "Official BMW 07/2019 media information (English technical data, published by BMW France) for the facelifted F48 X1 range. sDrive18i: six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 with final drive 3.882, or 7-speed Steptronic with double clutch (overall ratios, seventh 2.285, final drive 4.176). sDrive20i: 7-speed Steptronic with double clutch only (overall seventh 2.073, final drive 3.789). xDrive20i and xDrive25i: 8-speed Steptronic, eighth 0.673, final drive 3.200. sDrive16d: six-speed manual top 0.628 with final drive 3.588, or 7-speed double clutch (overall seventh 2.285, final drive 4.176). sDrive18d: six-speed manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 with final drive 3.389, or 8-speed Steptronic eighth 0.673 with final drive 2.851. sDrive20d and xDrive20d: 8-speed Steptronic, eighth 0.673, final drive 2.851. Standard tyres 225/55 R17 throughout.",
+      "note": "Official BMW 07/2019 media information (English technical data, published by BMW France) for the facelifted F48 X1 range. sDrive18i: six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 with final drive 3.882, or 7-speed Steptronic with double clutch (overall ratios, seventh 2.285, final drive 4.176). sDrive20i: 7-speed Steptronic with double clutch only (overall seventh 2.073, final drive 3.789). xDrive20i and xDrive25i: 8-speed Steptronic, eighth 0.673, final drive 3.200. sDrive16d: six-speed manual top 0.628 with final drive 3.588, or 7-speed double clutch (overall seventh 2.285, final drive 4.176). sDrive18d: six-speed manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 with final drive 3.389, or 8-speed Steptronic eighth 0.673 with final drive 2.851. xDrive18d: six-speed manual printed as overall ratios 14.362 / 7.805 / 4.947 / 3.576 / 2.793 / 2.325 with final drive 4.059, or 8-speed Steptronic with final drive 2.851. sDrive20d and xDrive20d: 8-speed Steptronic, eighth 0.673, final drive 2.851. Standard tyres 225/55 R17 throughout.",
       "confidence": "high"
     },
     {
@@ -1867,7 +1867,7 @@
       "id": "bmw_pressclub_sources:bmw-model-updates-summer-2025-de",
       "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0450434DE",
       "title": "BMW PressClub: BMW model updates for summer 2025 (DE, 28.05.2025)",
-      "note": "Official BMW Germany article on the summer 2025 model updates (T0450434DE). From July 2025 the i4 M60 xDrive replaces the i4 M50 as the top i4.",
+      "note": "Official BMW Germany article on the summer 2025 model updates (T0450434DE). From July 2025 the i4 M60 xDrive (442 kW) replaces the i4 M50 as the top i4, and the i4 eDrive35 and eDrive40 get a silicon-carbide inverter. The release and its PDF print no gear ratios.",
       "confidence": "high"
     },
     {

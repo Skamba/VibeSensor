@@ -564,15 +564,15 @@ changes and update this table.
 | Picker models / generation codes / variants | 93 / 71 / 465 |
 | Production years | 2008–2026 |
 | Rows with tire options | 577 (1 has the default only) |
-| Rows with driven final drive | 512 (89%); 66 without: Audi 8X 3, 8V 2, 8Y 4, B8 9, B9 3, C7 4, C8 3, D4 2, J1 4, GA 4, 8U 8, FZ 4, 8R 4, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with driven final drive | 514 (89%); 64 without: Audi 8X 3, 8V 2, 8Y 4, B8 9, B9 3, C7 4, C8 3, D4 2, J1 4, GA 4, 8U 8, FZ 4, 8R 4, 4S 2, 8J 4, 8S 3; BMW I20 1 (each carries an `unresolved` final-drive note) |
 | Rows with top gear | 502 of 550 non-EV rows (91%); the 28 EVs have none: the reduction ratio is the final drive; 48 non-EV rows without, each with an `unresolved` top-gear note |
-| Rows with full gear sets | 360 (62%) |
-| Tire confidence | official_exact 423 · reputable_secondary 42 · official_derived 7 · family_default 74 · unverified 32 |
-| Driven final-drive confidence | official_exact 320 · official_derived 100 · reputable_secondary 22 · family_default 37 · unverified 33 · none 66 |
-| Top-gear confidence | official_exact 394 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 76 (28 EVs, 48 unsourced) |
-| Weak (family_default or unverified) | final drive 70/578 (12%), top gear 67/578 (12%), tire 106/578 (18%) |
-| `order_reference_trust` | trusted 460 · approximate 77 · backlog_unverified 41 |
-| `requires_manual_confirmation` | true 70, false 508 (true exactly when the driven final drive or top gear is weak) |
+| Rows with full gear sets | 362 (63%) |
+| Tire confidence | official_exact 424 · reputable_secondary 42 · official_derived 7 · family_default 74 · unverified 31 |
+| Driven final-drive confidence | official_exact 322 · official_derived 102 · reputable_secondary 22 · family_default 37 · unverified 31 · none 64 |
+| Top-gear confidence | official_exact 396 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 27 · none 76 (28 EVs, 48 unsourced) |
+| Weak (family_default or unverified) | final drive 68/578 (12%), top gear 65/578 (11%), tire 105/578 (18%) |
+| `order_reference_trust` | trusted 462 · approximate 77 · backlog_unverified 39 |
+| `requires_manual_confirmation` | true 68, false 510 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 20 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
@@ -612,7 +612,7 @@ changes and update this table.
   `unresolved` notes say the manufacturer publishes split, conflicting or no
   values (the Q4 e-tron sheets from 2024 on and the facelifted e-tron GT
   sheets print no reduction ratio); do not invent one. Weak
-  (family_default or unverified) on 70 rows. Those rows are where a single
+  (family_default or unverified) on 68 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---
