@@ -1094,6 +1094,8 @@ export interface components {
         RecordingStatusResponse: {
             analysis_in_progress: boolean;
             capture_readiness?: components["schemas"]["RecordingCaptureReadinessResponse"] | null;
+            /** Seconds the current run has been recording, on the Pi's monotonic clock; right even when the Pi wall clock (and so `start_time_utc`) is wrong. `null` when not recording. */
+            elapsed_s?: number | null;
             enabled: boolean;
             /** The guided test-drive step in progress (sweep, hold, coast_down), if any. */
             guided_phase?: components["schemas"]["GuidedPhaseName"] | null;

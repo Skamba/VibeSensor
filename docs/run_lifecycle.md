@@ -108,6 +108,9 @@ During recording:
 - `GET /api/recording/status` reports `last_stop_reason` for the most recent run
   until the next run starts; the Live page shows a notice when it is
   `max_duration`
+- status reports `elapsed_s`, the active run's time on the monotonic clock; the
+  Live page's elapsed timer counts on from it with the browser clock, never
+  from `start_time_utc`, which is wrong while the Pi clock is unset
 - the optional guided test drive on the Live page posts each step to
   `POST /api/recording/guided-phase` (`sweep`, `hold`, `coast_down`, or `null`
   to end the test). `RunRecordingSessionService` closes the open step and starts

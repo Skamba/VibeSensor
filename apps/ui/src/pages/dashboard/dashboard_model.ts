@@ -84,16 +84,23 @@ export const IDLE_STATUS: LoggingStatusPayload = {
   capture_readiness: null,
 };
 
-/** "m:ss" or "h:mm:ss" since `startTimeUtc`. */
+/**
+ * "m:ss" or "h:mm:ss" a run has recorded: the server's monotonic `elapsedS`
+ * when its status arrived (`receivedAtMs`), plus browser time since then.
+ * Never `start_time_utc`: the Pi wall clock is wrong until it is set.
+ */
 export function formatElapsed(
-  startTimeUtc: string | null | undefined,
+  elapsedS: number | null | undefined,
+  receivedAtMs: number,
   nowMs: number,
 ): string {
-  const startMs = startTimeUtc ? Date.parse(startTimeUtc) : Number.NaN;
-  if (!Number.isFinite(startMs)) {
+  if (elapsedS == null || !Number.isFinite(elapsedS)) {
     return "--";
   }
-  const total = Math.max(0, Math.floor((nowMs - startMs) / 1000));
+  const total = Math.max(
+    0,
+    Math.floor(elapsedS + Math.max(0, nowMs - receivedAtMs) / 1000),
+  );
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = String(total % 60).padStart(2, "0");

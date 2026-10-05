@@ -62,6 +62,8 @@ const status = signal<LoggingStatusPayload>(IDLE_STATUS);
 const pending = signal<PendingAction>(null);
 const loggingError = signal<LoggingError | null>(null);
 const nowMs = signal(Date.now());
+/** When `status` arrived, by the browser clock: its `elapsed_s` was true then. */
+const statusReceivedAtMs = signal(Date.now());
 /** Elapsed time of the current run, kept once it stops until the next idle. */
 const lastRunElapsed = signal("--");
 const guidedBusy = signal(false);
@@ -71,6 +73,7 @@ const formatInt = (value: number) => formatIntLocale(value, lang.value);
 function applyStatus(next: LoggingStatusPayload): void {
   const previous = status.peek();
   status.value = next;
+  statusReceivedAtMs.value = Date.now();
   if (runsAffected(previous, next)) {
     runsChanged.value += 1;
   }
@@ -122,11 +125,11 @@ effect(() => {
   }
 });
 
-const runningSince = computed(() =>
-  status.value.enabled ? (status.value.start_time_utc ?? null) : null,
+const runningRunId = computed(() =>
+  status.value.enabled ? status.value.run_id : null,
 );
 effect(() => {
-  if (!runningSince.value) {
+  if (!runningRunId.value) {
     return;
   }
   nowMs.value = Date.now();
@@ -138,7 +141,11 @@ effect(() => {
 effect(() => {
   const current = status.value;
   if (current.enabled) {
-    lastRunElapsed.value = formatElapsed(current.start_time_utc, nowMs.value);
+    lastRunElapsed.value = formatElapsed(
+      current.elapsed_s,
+      statusReceivedAtMs.value,
+      nowMs.value,
+    );
   } else if (isIdle(current)) {
     lastRunElapsed.value = "--";
   }
@@ -272,7 +279,11 @@ const baseRecording = computed(() => {
         clients.value.filter((client) => locationOf(client)).length,
       ),
       elapsedText: current.enabled
-        ? formatElapsed(current.start_time_utc, nowMs.value)
+        ? formatElapsed(
+            current.elapsed_s,
+            statusReceivedAtMs.value,
+            nowMs.value,
+          )
         : lastRunElapsed.value,
       lastRunElapsedText: lastRunElapsed.value,
     },

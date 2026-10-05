@@ -424,12 +424,14 @@ describe("live overview helpers", () => {
     expect(strongestSensor([client()], { clients: {} })).toBeNull();
   });
 
-  test("elapsed time formats minutes and hours", () => {
-    const start = "2026-01-01T00:00:00Z";
-    const at = (seconds: number) => Date.parse(start) + seconds * 1000;
-    expect(formatElapsed(start, at(65))).toBe("1:05");
-    expect(formatElapsed(start, at(3725))).toBe("1:02:05");
-    expect(formatElapsed(null, at(1))).toBe("--");
+  test("elapsed time counts on from the server's monotonic elapsed time", () => {
+    const receivedAt = 1_000_000;
+    const at = (seconds: number) => receivedAt + seconds * 1000;
+    expect(formatElapsed(60, receivedAt, at(5))).toBe("1:05");
+    expect(formatElapsed(3720, receivedAt, at(5.9))).toBe("1:02:05");
+    // A browser clock that steps back never counts down.
+    expect(formatElapsed(10, receivedAt, at(-30))).toBe("0:10");
+    expect(formatElapsed(null, receivedAt, at(1))).toBe("--");
   });
 
   test("speed shows in the chosen unit, or a placeholder without a reading", () => {

@@ -210,6 +210,12 @@ class RunRecorder:
             enabled = self._lifecycle.enabled
             run_id = self._lifecycle.run_id
             start_time_utc = self._lifecycle.start_time_utc
+            start_mono_s = self._lifecycle.start_mono_s
+            elapsed_s = (
+                max(0.0, time.monotonic() - start_mono_s)
+                if enabled and start_mono_s is not None
+                else None
+            )
             last_stop_reason = self._lifecycle.last_stop_reason
             last_run_id = self._lifecycle.last_run_id
             capture_readiness = None
@@ -227,6 +233,7 @@ class RunRecorder:
             enabled=enabled,
             run_id=run_id,
             start_time_utc=start_time_utc,
+            elapsed_s=elapsed_s,
             persistence=self._persistence,
             post_analysis=self.post_analysis,
             capture_readiness=capture_readiness,

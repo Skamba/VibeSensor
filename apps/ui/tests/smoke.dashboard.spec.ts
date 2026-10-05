@@ -259,10 +259,13 @@ test("journey: a failed start shows the server's reason and a retry records", as
       });
       return;
     }
+    // The Pi clock is months behind and was not set (no RTC, no network): the
+    // run's start_time_utc is wrong, its monotonic elapsed_s is not.
     status = idleStatus({
       enabled: true,
       run_id: "run-9",
-      start_time_utc: new Date(Date.now() - 65_000).toISOString(),
+      start_time_utc: "2026-01-01T00:00:00Z",
+      elapsed_s: 65,
     });
     await fulfillJson(route, status);
   });

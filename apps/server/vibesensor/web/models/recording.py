@@ -58,6 +58,14 @@ class RecordingStatusResponse(BaseModel):
     write_error: str | None
     analysis_in_progress: bool
     start_time_utc: str | None = None
+    elapsed_s: float | None = Field(
+        default=None,
+        description=(
+            "Seconds the current run has been recording, on the Pi's monotonic clock; "
+            "right even when the Pi wall clock (and so `start_time_utc`) is wrong. "
+            "`null` when not recording."
+        ),
+    )
     samples_written: int = 0
     samples_dropped: int = 0
     last_completed_run_id: str | None = None

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 
 import pytest
 
@@ -111,17 +112,28 @@ class TestQueueDepthWarning:
 
 
 class TestLoggingStatusEnrichment:
-    def test_status_includes_active_run_start_time(self, make_logger, tmp_path) -> None:
-        """Status response includes the active run start time when recording."""
+    def test_status_includes_active_run_start_time(
+        self, make_logger, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Status has the run's start time and its monotonic elapsed time.
+
+        The Live page's elapsed timer uses ``elapsed_s``: ``start_time_utc`` is
+        wrong while the Pi clock is unset, the monotonic clock never is.
+        """
+        mono = {"now": 1000.0}
+        monkeypatch.setattr(time, "monotonic", lambda: mono["now"])
         logger = make_logger()
 
-        assert logger.status().start_time_utc is None
+        assert (logger.status().start_time_utc, logger.status().elapsed_s) == (None, None)
 
         started = logger.start_recording()
+        mono["now"] += 42.0
         status = logger.status()
 
         assert started.start_time_utc is not None
         assert status.start_time_utc == started.start_time_utc
+        assert status.elapsed_s == pytest.approx(42.0)
+        assert logger.stop_recording().elapsed_s is None
 
 
 # ---------------------------------------------------------------------------
