@@ -216,7 +216,7 @@
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 25 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; DQ200 sub-transmission final drives 4.438 (odd gears 1/3/5/7) and 3.227 (even gears 2/4/6).",
+        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 25 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; two gearbox output final drives, 4.438 (1-2) and 3.227 (2-3); 3.227 is the one behind the top gear (see the final-drive note) and is the only one stored.",
         "code": "DCT7",
         "name": "7-speed S tronic (DQ200)"
       },
@@ -242,10 +242,10 @@
           "value": 0.795
         },
         "final_drive_front": {
-          "confidence": "official_exact",
+          "confidence": "official_derived",
           "evidence_refs_ref": "e3",
-          "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. Note: this is a DCT sub-transmission ratio, NOT a front-axle ratio (the A1 GB is FWD-only, single front axle).",
-          "value": 4.438
+          "notes": "The official Audi technical-data sheet (A1 Sportback 25 TFSI S tronic 70 kW, status 02/03/2026) prints two gearbox output final drives, 4.438 (1-2) and 3.227 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.765 / 2.273 / 1.531 / 1.133 / 1.176 / 0.956 / 0.795 through the two outputs, only those with the top gear on 3.227 keep the overall ratios falling gear by gear (for example 4th 1.133 x 4.438 = 5.028, 5th 1.176 x 3.227 = 3.795, 6th 0.956 x 3.227 = 3.085, 7th 0.795 x 3.227 = 2.565; 7th on 4.438 would give 3.528), so 3.227 is the final drive behind the top gear and is stored as final_drive_front; 4.438 drives only lower gears and is not stored as an axle ratio. The row previously stored 4.438, the output behind the lower gears.",
+          "value": 3.227
         }
       },
       "tires": {
@@ -277,7 +277,7 @@
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
+          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 25 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 25 TFSI S tronic sheet closes a later exact state with 0.795 top gear, gearbox output final drives 4.438 / 3.227 (3.227 behind the top gear), and 185/65 R15 tires. Those late official values replaced the inherited 0.680, 3.786, and 215/45 R17 carryover values; the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e9"
         }
       ],
@@ -286,11 +286,6 @@
           "item": "Audi A1 Sportback 25 TFSI S tronic applicability across the represented EU 2019-2024 row span",
           "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
           "evidence_refs_ref": "e9"
-        },
-        {
-          "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
-          "reason": "The checked late official 25 TFSI S tronic sheet documents 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
-          "evidence_refs_ref": "e3"
         },
         {
           "item": "A1 25 TFSI S tronic was added in MY2021; pre-2021 production span is unsupported",
@@ -402,7 +397,7 @@
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 30 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; DQ200 sub-transmission final drives 4.438 (odd gears) / 3.227 (even gears) — same DQ200 calibration as the 25 TFSI S tronic.",
+        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 30 TFSI S tronic. Forward gear ratios 3.765/2.273/1.531/1.133/1.176/0.956/0.795; reverse 4.169; two gearbox output final drives, 4.438 (1-2) and 3.227 (2-3); 3.227 is the one behind the top gear (see the final-drive note) and is the only one stored; same DQ200 calibration as the 25 TFSI S tronic.",
         "code": "DCT7",
         "name": "7-speed S tronic (DQ200)"
       },
@@ -428,10 +423,10 @@
           "value": 0.795
         },
         "final_drive_front": {
-          "confidence": "official_exact",
+          "confidence": "official_derived",
           "evidence_refs_ref": "e4",
-          "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.438. NOT a front-axle ratio; the A1 GB is FWD-only.",
-          "value": 4.438
+          "notes": "The official Audi technical-data sheet (A1 Sportback 30 TFSI S tronic 85 kW, status 02/03/2026) prints two gearbox output final drives, 4.438 (1-2) and 3.227 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.765 / 2.273 / 1.531 / 1.133 / 1.176 / 0.956 / 0.795 through the two outputs, only those with the top gear on 3.227 keep the overall ratios falling gear by gear (for example 4th 1.133 x 4.438 = 5.028, 5th 1.176 x 3.227 = 3.795, 6th 0.956 x 3.227 = 3.085, 7th 0.795 x 3.227 = 2.565; 7th on 4.438 would give 3.528), so 3.227 is the final drive behind the top gear and is stored as final_drive_front; 4.438 drives only lower gears and is not stored as an axle ratio. The row previously stored 4.438, the output behind the lower gears.",
+          "value": 3.227
         }
       },
       "tires": {
@@ -463,7 +458,7 @@
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 30 TFSI S tronic sheet closes a later exact state with 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
+          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 30 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, but the checked 02/03/2026 Germany-program 30 TFSI S tronic sheet closes a later exact state with 0.795 top gear, gearbox output final drives 4.438 / 3.227 (3.227 behind the top gear), and 185/65 R15 tires. Those late official values replaced the inherited 0.680, 3.786, and 215/45 R17 carryover values; the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e13"
         }
       ],
@@ -472,11 +467,6 @@
           "item": "Audi A1 Sportback 30 TFSI S tronic applicability across the represented EU 2019-2024 row span",
           "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
           "evidence_refs_ref": "e13"
-        },
-        {
-          "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
-          "reason": "The checked late official 30 TFSI S tronic sheet documents 0.795 top gear, split final drives 4.438 / 3.227, and 185/65 R15 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
-          "evidence_refs_ref": "e4"
         },
         {
           "item": "30 TFSI launch power 85 kW re-rated to 81 kW from MY2021",
@@ -565,7 +555,7 @@
       "transmission": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e5",
-        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 35 TFSI S tronic (110 kW 1.5 TFSI COD). Forward gear ratios 3.500/2.087/1.343/0.933/0.974/0.788/0.653; reverse 3.722; DQ200 sub-transmission final drives 4.800 (odd) / 3.429 (even) — different gearing pair from the 1.0 TFSI S tronic variants.",
+        "notes": "Confirmed by Audi MediaCenter Germany-program eTD for the A1 Sportback 35 TFSI S tronic (110 kW 1.5 TFSI COD). Forward gear ratios 3.500/2.087/1.343/0.940/0.974/0.780/0.653; reverse 3.722; two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3); 3.429 is the one behind the top gear (see the final-drive note) and is the only one stored; a different gearing pair from the 1.0 TFSI S tronic variants.",
         "code": "DCT7",
         "name": "7-speed S tronic (DQ200)"
       },
@@ -573,14 +563,14 @@
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e5",
-          "notes": "Audi eTD 35 TFSI S tronic forward gear ratios; tuned for the 1.5 TFSI COD engine and distinct from the 1.0 TFSI S tronic ratios.",
+          "notes": "Forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 per the official Audi MediaCenter technical-data sheet (A1 Sportback 35 TFSI S tronic 110 kW, status 02/03/2026).",
           "value": [
             3.5,
             2.087,
             1.343,
-            0.933,
+            0.94,
             0.974,
-            0.788,
+            0.78,
             0.653
           ]
         },
@@ -591,10 +581,10 @@
           "value": 0.653
         },
         "final_drive_front": {
-          "confidence": "official_exact",
+          "confidence": "official_derived",
           "evidence_refs_ref": "e5",
-          "notes": "DQ200 sub-transmission final drive for odd gears (1/3/5/7) is 4.800. NOT a front-axle ratio; the A1 GB is FWD-only.",
-          "value": 4.8
+          "notes": "The official Audi technical-data sheet (A1 Sportback 35 TFSI S tronic 110 kW, status 02/03/2026) prints two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 through the two outputs, only those with the top gear on 3.429 keep the overall ratios falling gear by gear (for example 4th 0.940 x 4.800 = 4.512, 5th 0.974 x 3.429 = 3.340, 6th 0.780 x 3.429 = 2.675, 7th 0.653 x 3.429 = 2.239; 7th on 4.800 would give 3.134), so 3.429 is the final drive behind the top gear and is stored as final_drive_front; 4.800 drives only lower gears and is not stored as an axle ratio. The row previously stored 4.800, the output behind the lower gears.",
+          "value": 3.429
         }
       },
       "tires": {
@@ -626,7 +616,7 @@
       },
       "verification_notes": [
         {
-          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, while the current Audi MediaCenter model page and the checked 02/03/2026 35 TFSI S tronic sheet close a later exact state with 0.653 top gear, split final drives 4.800 / 3.429, and 195/55 R16 tires. Those late official values contradict the inherited 0.680, 3.786, and 215/45 R17 carryover values, so production JSON remains unchanged and the broad EU 2019-2024 row stays split-sensitive rather than exact.",
+          "note": "This research wave replaces the stale generic backlog note with row-specific Audi MediaCenter evidence for the broad A1 Sportback 35 TFSI S tronic placeholder. The 06/20/2018 launch release supports 7-speed S tronic availability for non-top engines at Europe launch, while the current Audi MediaCenter model page and the checked 02/03/2026 35 TFSI S tronic sheet close a later exact state with 0.653 top gear, gearbox output final drives 4.800 / 3.429 (3.429 behind the top gear), and 195/55 R16 tires. Those late official values replaced the inherited 0.680, 3.786, and 215/45 R17 carryover values; the broad EU 2019-2024 row stays split-sensitive rather than exact.",
           "evidence_refs_ref": "e7"
         }
       ],
@@ -635,11 +625,6 @@
           "item": "Audi A1 Sportback 35 TFSI S tronic applicability across the represented EU 2019-2024 row span",
           "reason": "The checked 2026 Germany-program technical-data sheet proves a later exact S tronic state, but this pass did not recover an official year-by-year source chain proving the full represented EU 2019-2024 row as one unchanged mapping.",
           "evidence_refs_ref": "e14"
-        },
-        {
-          "item": "Represented-row S tronic top gear, split final-drive, and tire applicability",
-          "reason": "The checked late official 35 TFSI S tronic sheet documents 0.653 top gear, split final drives 4.800 / 3.429, and 195/55 R16 tires rather than the inherited 0.680, single 3.786 final drive, and 215/45 R17 broad-row carryover values.",
-          "evidence_refs_ref": "e5"
         }
       ],
       "configuration_confidence": "high_confidence"

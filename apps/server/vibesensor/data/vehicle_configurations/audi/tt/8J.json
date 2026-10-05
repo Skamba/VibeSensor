@@ -1,10 +1,10 @@
 {
   "definitions": {
     "notes": {
-      "n2": "Sonnet redo research (2026-04 v2): 8J quattro DQ250 internal gear ratios match the FWD Coupe (same DQ250 box). Top gear 0.921 retained from FWD analogy. Final drive for the quattro Coupe is not directly published in any source recovered this run; the closest proxy is the Audi UK TT Roadster 2.0 TFSI quattro Technical sheet (legacy_research_sources:ac68dd8bebb2). Quattro uses a Haldex coupling on the rear axle - the front-axle FD likely follows the FWD split (4.059/3.136) but the published quattro-specific value is not yet confirmed. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "n3": "Sonnet redo research (2026-04 v2): 8J quattro 6-speed manual internal gear ratios match the FWD Coupe (same MQ250 box). Top gear 0.975 retained from FWD analogy. Quattro Coupe-specific FD values are not directly confirmed in this run; FWD split-FD 3.944/3.087 is the best proxy. Single-FD placeholder values retained at no_confidence pending Coupe-quattro-specific tech sheet.",
-      "n5": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921.",
-      "n6": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded."
+      "n2": "8J quattro 6-speed S tronic (DQ250) with Haldex rear coupling. No quattro-specific technical sheet was found: the closest official document is the Audi UK TT Roadster 2.0 TFSI quattro sheet (legacy_research_sources:ac68dd8bebb2), which gives top gear 0.686 and gearbox output final drives 3.264 / 4.769 for the Roadster quattro but is not a Coupé sheet. The row carries no ratios until a Coupé quattro sheet is found.",
+      "n3": "8J quattro 6-speed manual (MQ250 / GQQ) with Haldex rear coupling. No quattro-specific technical sheet was found, so the row carries no ratios until one is.",
+      "n5": "Audi UK TT Coupé 2.0 TFSI technical sheet (legacy_research_sources:fa2ecfeb2ce9, read from a search-index extract; the PDF is no longer served) gives the facelift front-wheel-drive 6-speed S tronic (DQ250) top gear 0.921 and two gearbox output final drives, 4.059 and 3.136. The extract has no full gear set, so which output carries the top gear cannot be shown and no final drive is stored (see the row's unresolved item). The earlier 0.742 top gear and 3.444 final drive were placeholders.",
+      "n6": "Audi UK TT Coupé 2.0 TFSI technical sheet (legacy_research_sources:fa2ecfeb2ce9, read from a search-index extract; the PDF is no longer served) gives the facelift front-wheel-drive 6-speed manual (MQ250 / GQQ) top gear 0.975 and two gearbox output final drives, 3.944 and 3.087. The extract has no full gear set, so which output carries the top gear cannot be shown and no final drive is stored (see the row's unresolved item). The earlier 0.840 top gear and 3.462 final drive were placeholders."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -117,12 +117,6 @@
           "notes_ref": "n5",
           "value": 0.921,
           "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD S tronic (DQ250) ratios: top gear 0.921; split final drive 4.059 (sub-trans 1, odd gears 1/3/5) / 3.136 (sub-trans 2, even gears 2/4/6). Both feed the same FWD axle. Repo schema convention: final_drive_front encodes sub-trans 1 (odd) ratio, final_drive_rear encodes sub-trans 2 (even) ratio (NOT a physical rear axle on FWD cars). Prior single-FD 3.444 placeholder superseded. Top gear 0.742 was incorrect (likely DQ200-style placeholder); DQ250 8J 6th gear is 0.921. Encodes sub-trans 1 (odd gears 1/3/5) output ratio.",
-          "value": 4.059,
-          "evidence_refs_ref": "e2"
         }
       },
       "tires": {
@@ -144,14 +138,14 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed S tronic mapping for this row. The indexed official technical-sheet extract also reports top gear 0.921 with split final drives 4.059 / 3.136, which contradicts the inherited 0.742 and single 3.444 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
+          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed S tronic mapping for this row. The indexed official technical-sheet extract also reports top gear 0.921 (stored) and gearbox output final drives 4.059 / 3.136; without the gear set neither final drive can be tied to the top gear, so none is stored.",
           "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
         {
-          "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI S tronic split final-drive values",
-          "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.921 and split final drives 4.059 / 3.136 for the exact FWD S tronic slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
+          "item": "TT 8J 2.0 TFSI 6-speed S tronic final drive",
+          "reason": "The Audi UK TT Coupé 2.0 TFSI sheet (legacy_research_sources:fa2ecfeb2ce9, read from a search-index extract; the PDF is no longer served) gives two gearbox output final drives, 4.059 / 3.136. Without the forward gear set it cannot be shown which one carries the top gear, so neither is stored; the row previously stored 4.059.",
           "evidence_refs_ref": "e2"
         },
         {
@@ -187,12 +181,6 @@
           "notes_ref": "n6",
           "value": 0.975,
           "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "notes": "Sonnet redo research (2026-04 v2): Audi UK TT Coupe 2.0 TFSI Technical sheet (legacy_research_sources:fa2ecfeb2ce9) confirms 8J facelift FWD 6-speed manual (MQ250 / GQQ) ratios: top gear 0.975; split final drive 3.944 (sub-trans 1) / 3.087 (sub-trans 2). The MQ250 manual gearbox uses two output pinions feeding the differential, similar to the DCT split-FD architecture. Repo schema convention: final_drive_front = first FD ratio, final_drive_rear = second FD ratio (NOT a physical rear axle on FWD). Prior single-FD 3.462 and top gear 0.840 are placeholders inherited from a generic family default and are superseded. Encodes first MQ250 output FD ratio.",
-          "value": 3.944,
-          "evidence_refs_ref": "e2"
         }
       },
       "tires": {
@@ -214,14 +202,14 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed manual mapping for this row. The indexed official technical-sheet extract also reports top gear 0.975 with split final drives 3.944 / 3.087, which contradicts the inherited 0.84 and single 3.462 placeholders, so those numeric fields remain advisory until the repo can encode them from a directly captured or schema-safe official artifact.",
+          "note": "Official Audi UK TT Coupé pricing/specification and technical-sheet URLs now close the FWD 6-speed manual mapping for this row. The indexed official technical-sheet extract also reports top gear 0.975 (stored) and gearbox output final drives 3.944 / 3.087; without the gear set neither final drive can be tied to the top gear, so none is stored.",
           "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
         {
-          "item": "Schema-safe encoding of official Audi TT Coupé 2.0 TFSI manual split final-drive values",
-          "reason": "The checked official TT Coupé technical-sheet extract reports top gear 0.975 and split final drives 3.944 / 3.087 for the exact FWD manual slice, but the current row has only one final_drive_front field and this pass did not promote indexed-extract ratio data into production values without a directly captured official artifact.",
+          "item": "TT 8J 2.0 TFSI 6-speed manual final drive",
+          "reason": "The Audi UK TT Coupé 2.0 TFSI sheet (legacy_research_sources:fa2ecfeb2ce9, read from a search-index extract; the PDF is no longer served) gives two gearbox output final drives, 3.944 / 3.087. Without the forward gear set it cannot be shown which one carries the top gear, so neither is stored; the row previously stored 3.944.",
           "evidence_refs_ref": "e2"
         },
         {
@@ -271,7 +259,7 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed S tronic availability for this row. A nearby official TT Roadster quattro technical-sheet extract gives close AWD S tronic powertrain evidence with top gear 0.686 and split final drives 3.264 / 4.769, but because that numeric sheet is Roadster-based rather than exact Coupé proof, the inherited AWD S tronic numeric fields remain advisory placeholders in this pass.",
+          "note": "Official Audi UK TT Coupé pricing/specification material now closes TT Coupé 2.0 TFSI quattro plus 6-speed S tronic availability for this row. A nearby official TT Roadster quattro technical-sheet extract gives close AWD S tronic powertrain evidence with top gear 0.686 and gearbox output final drives 3.264 / 4.769, but because that numeric sheet is Roadster-based rather than exact Coupé proof, the row carries no ratios until a Coupé quattro sheet is found.",
           "evidence_refs_ref": "e9"
         }
       ],

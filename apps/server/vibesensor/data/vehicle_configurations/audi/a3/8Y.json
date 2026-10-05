@@ -597,6 +597,12 @@
             0.722,
             0.561
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi technical-data sheet (A3 Limousine 35 TDI S tronic 110 kW, status 04/02/2024) prints two gearbox output final drives, 4.167 (1-2) and 3.125 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 through the two outputs, only those with the top gear on 3.125 keep the overall ratios falling gear by gear (for example 4th 0.889 x 4.167 = 3.704, 5th 0.677 x 4.167 = 2.821, 6th 0.722 x 3.125 = 2.256, 7th 0.561 x 3.125 = 1.753; 7th on 4.167 would give 2.338), so 3.125 is the final drive behind the top gear and is stored as final_drive_front; 4.167 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.125
         }
       },
       "tires": {
@@ -640,7 +646,7 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi 2024 A3 Limousine 35 TDI technical-data material replaces the inherited family defaults for the checked S tronic state: FWD, 7-speed S tronic, complete forward ratios ending in 0.561, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
+          "note": "Official Audi 2024 A3 Limousine 35 TDI technical-data material replaces the inherited family defaults for the checked S tronic state: FWD, 7-speed S tronic, complete forward ratios ending in 0.561, and 205/55 R16 basic tires. The final drive behind the top gear (3.125) is derived from the split final-drive pair.",
           "evidence_refs_ref": "e10"
         }
       ],
@@ -649,11 +655,6 @@
           "item": "Audi A3 8Y 35 TDI S tronic continuity across 2021-2026",
           "reason": "The exact official PDF proves a 2024 state and the MY2026 price list confirms later 110 kW S tronic availability, but this pass did not recover a year-by-year technical-data chain proving one unchanged package across the full represented row span.",
           "evidence_refs_ref": "e17"
-        },
-        {
-          "item": "35 TDI split final-drive representation",
-          "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-          "evidence_refs_ref": "e10"
         },
         {
           "item": "Audi A3 8Y 35 TDI gearbox-family code",
@@ -810,6 +811,12 @@
             0.78,
             0.653
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi technical-data sheet (A3 Limousine TFSI S tronic 110 kW MHEV, 04/2026) prints two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 through the two outputs, only those with the top gear on 3.429 keep the overall ratios falling gear by gear (for example 4th 0.940 x 4.800 = 4.512, 5th 0.974 x 3.429 = 3.340, 6th 0.780 x 3.429 = 2.675, 7th 0.653 x 3.429 = 2.239; 7th on 4.800 would give 3.134), so 3.429 is the final drive behind the top gear and is stored as final_drive_front; 4.800 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.429
         }
       },
       "tires": {
@@ -853,7 +860,7 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi launch material supports the 35 TFSI S tronic MHEV sedan, and the 2026 A3 Limousine TFSI S tronic 110 kW MHEV technical-data PDF replaces inherited family defaults for the checked S tronic state: FWD, complete forward ratios ending in 0.653, and 205/55 R16 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields.",
+          "note": "Official Audi launch material supports the 35 TFSI S tronic MHEV sedan, and the 2026 A3 Limousine TFSI S tronic 110 kW MHEV technical-data PDF replaces inherited family defaults for the checked S tronic state: FWD, complete forward ratios ending in 0.653, and 205/55 R16 basic tires. The final drive behind the top gear (3.429) is derived from the split final-drive pair.",
           "evidence_refs_ref": "e14"
         }
       ],
@@ -866,11 +873,6 @@
             "audi_mediacenter_sources:8y-a3-sedan-35-tfsi-stronic-mhev-2026-tech-data-pdf",
             "audi_mediacenter_sources:8y-a3-my2026-price-list-pdf"
           ]
-        },
-        {
-          "item": "35 TFSI split final-drive representation",
-          "reason": "Official Audi publishes split final-drive values 4.800 / 3.429; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-          "evidence_refs_ref": "e14"
         },
         {
           "item": "Audi A3 8Y 35 TFSI gearbox-family code",
@@ -980,6 +982,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi technical-data sheet (A3 Sedan 40 TFSI quattro S tronic, status 09/19/2023, and TFSI quattro S tronic, status 06/05/2025) prints two gearbox output final drives, 4.167 (1-2) and 3.125 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.125 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.167 = 3.854, 5th 0.705 x 4.167 = 2.938, 6th 0.755 x 3.125 = 2.359, 7th 0.635 x 3.125 = 1.984; 7th on 4.167 would give 2.646), so 3.125 is the final drive behind the top gear and is stored as final_drive_rear; 4.167 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.125
         }
       },
       "tires": {
@@ -1023,7 +1031,7 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi 2023 and 2025 A3 Sedan/Limousine AWD technical-data PDFs support the checked S tronic quattro mechanical package, including AWD, 7-speed S tronic, complete forward ratios ending in 0.635, and 225/45 R17 basic tires. The split final-drive pair is retained as an unresolved schema issue rather than mapped into axle fields, and the 2025 source shows a later 150 kW badging/output transition.",
+          "note": "Official Audi 2023 and 2025 A3 Sedan/Limousine AWD technical-data PDFs support the checked S tronic quattro mechanical package, including AWD, 7-speed S tronic, complete forward ratios ending in 0.635, and 225/45 R17 basic tires. The final drive behind the top gear (3.125) is derived from the split final-drive pair, and the 2025 source shows a later 150 kW badging/output transition.",
           "evidence_refs_ref": "e16"
         }
       ],
@@ -1032,11 +1040,6 @@
           "item": "Audi A3 8Y 40 TFSI quattro badging/output continuity across 2021-2026",
           "reason": "The 2023 source proves a 140 kW 40 TFSI quattro state, while the 2025 source and MY2026 price list show a later TFSI quattro 150 kW state; this pass did not recover the exact split point for the broad row.",
           "evidence_refs_ref": "e15"
-        },
-        {
-          "item": "40 TFSI quattro split final-drive representation",
-          "reason": "Official Audi publishes split final-drive values 4.167 / 3.125; these are gearbox-path values rather than front/rear axle values in the current canonical schema, so this pass stores the full gear ratios but does not map the split final-drive pair into axle fields.",
-          "evidence_refs_ref": "e16"
         },
         {
           "item": "Audi A3 8Y 40 TFSI quattro gearbox-family code",

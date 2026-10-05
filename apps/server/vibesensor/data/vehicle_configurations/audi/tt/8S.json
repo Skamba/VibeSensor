@@ -383,6 +383,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi technical-data sheet (TT Coupé 40 TFSI S tronic 145 kW, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_front; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -413,11 +419,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 40 TFSI dual final-drive values",
-          "reason": "The checked exact Audi MediaCenter 01/2023 technical-data PDF publishes two final-drive values 4.471 / 3.304 for the exact TT Coupé 40 TFSI S tronic state, but the current row stores only one final_drive_front field.",
-          "evidence_refs_ref": "e3"
-        },
         {
           "item": "Audi TT 40 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi MediaCenter sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -474,6 +475,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi technical-data sheet (TT Coupé 45 TFSI S tronic 180 kW, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_front; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -496,11 +503,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e4"
-        },
         {
           "item": "Audi TT 45 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -557,6 +559,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi technical-data sheet (TT Coupé 45 TFSI quattro S tronic 180 kW, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_rear; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -579,11 +587,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e2"
-        },
         {
           "item": "Audi TT 45 TFSI quattro exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -640,6 +643,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi technical-data sheet (TT Roadster 40 TFSI S tronic 145 kW, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_front; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -662,11 +671,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT Roadster 40 TFSI dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e5"
-        },
         {
           "item": "Audi TT Roadster 40 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -723,6 +727,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi technical-data sheet (TT Roadster 45 TFSI S tronic 180 kW, status 11/04/2022) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_front; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -745,11 +755,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT Roadster 45 TFSI dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e6"
-        },
         {
           "item": "Audi TT Roadster 45 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2022 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -806,6 +811,12 @@
             0.755,
             0.635
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi technical-data sheet (TT Roadster 45 TFSI quattro S tronic 180 kW, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 0.925 x 4.471 = 4.136, 5th 0.705 x 4.471 = 3.152, 6th 0.755 x 3.304 = 2.495, 7th 0.635 x 3.304 = 2.098; 7th on 4.471 would give 2.839), so 3.304 is the final drive behind the top gear and is stored as final_drive_rear; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -828,11 +839,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT Roadster 45 TFSI quattro dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e7"
-        },
         {
           "item": "Audi TT Roadster 45 TFSI quattro exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -889,6 +895,12 @@
             0.86,
             0.661
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes": "The official Audi technical-data sheet (TTS Coupé, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 1.040 x 4.471 = 4.650, 5th 0.793 x 4.471 = 3.546, 6th 0.860 x 3.304 = 2.841, 7th 0.661 x 3.304 = 2.184; 7th on 4.471 would give 2.955), so 3.304 is the final drive behind the top gear and is stored as final_drive_rear; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -911,11 +923,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TTS dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e8"
-        },
         {
           "item": "Audi TTS exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 245/40 R18 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
@@ -972,6 +979,12 @@
             0.86,
             0.661
           ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi technical-data sheet (TTS Roadster, status 01/13/2023) prints two gearbox output final drives, 4.471 (1-2) and 3.304 (2-3), not separate front and rear axle ratios. Of every way to run the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 through the two outputs, only those with the top gear on 3.304 keep the overall ratios falling gear by gear (for example 4th 1.040 x 4.471 = 4.650, 5th 0.793 x 4.471 = 3.546, 6th 0.860 x 3.304 = 2.841, 7th 0.661 x 3.304 = 2.184; 7th on 4.471 would give 2.955), so 3.304 is the final drive behind the top gear and is stored as final_drive_rear; 4.471 drives only lower gears and is not stored as an axle ratio.",
+          "value": 3.304
         }
       },
       "tires": {
@@ -994,11 +1007,6 @@
         }
       ],
       "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TTS Roadster dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 under Audi's 'final drive ratio 1-2 / 2-3' label, and this pass does not assume those map cleanly to the canonical front/rear final-drive fields.",
-          "evidence_refs_ref": "e9"
-        },
         {
           "item": "Audi TTS Roadster exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 245/40 R18 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
