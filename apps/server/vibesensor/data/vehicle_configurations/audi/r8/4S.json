@@ -64,16 +64,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL800)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.714
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.538
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -103,6 +94,14 @@
           "item": "Schema-safe encoding of exact Audi R8 V10 RWD ratio and tire continuity",
           "reason": "The checked official 01/2023 RWD technical-data sheet publishes Audi-form ratio/final-drive data and later-program staggered base tires, but this pass did not recover a matching early-span source that would let the current broad row encode one exact cross-span mapping without interpretation.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "R8 4S V10 RWD 7-speed S tronic (DL800) top gear",
+          "reason": "The 0.714 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "R8 4S V10 RWD 7-speed S tronic (DL800) final drive",
+          "reason": "The 3.538 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -122,16 +121,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL800)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.714
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.538
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -161,6 +151,10 @@
           "item": "Schema-safe encoding of exact Audi R8 V10 quattro final-drive and ratio data",
           "reason": "The checked official 2019+ V10 quattro technical-data sheet publishes dual final-drive values 1.848 / 1.488 and Audi-form ratio data that do not map safely into the current single final_drive_ratio and top_gear_ratio fields without interpretation.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "R8 4S V10 quattro 7-speed S tronic (DL800) top gear",
+          "reason": "The 0.714 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"

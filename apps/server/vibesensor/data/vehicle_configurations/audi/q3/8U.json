@@ -163,20 +163,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.84 is plausible for VW Group 6-speed manual MQ200/MQ250-class but unverified - no official Audi tech-data PDF recovered for Q3 8U 1.4 TFSI manual. Downgraded from family_default to no_confidence pending source.",
-          "value": 0.84,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.462 is family-default inherited; not verified from Q3 8U 1.4 TFSI specific tech data.",
-          "value": 3.462,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -223,7 +210,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 1.4 TFSI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 8U 1.4 TFSI 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -247,20 +244,7 @@
         "name": "6-speed S tronic (DQ250)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Stored top gear 0.725 was associated with DQ500 7-speed gear sets; for the corrected DQ250 6-speed gearbox, the value is plausible-but-unverified (DQ250 6th typically 0.650-0.750). Downgraded to no_confidence pending official Audi DQ250 spec.",
-          "value": 0.725,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 4.077 is family-default inherited; DQ250 final drives for PQ35 FWD 1.4 TFSI applications are typically 3.9-4.1 - value plausible but unverified for this exact variant.",
-          "value": 4.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -297,7 +281,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 1.4 TFSI 6-speed S tronic (DQ250) top gear",
+          "reason": "The 0.725 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 8U 1.4 TFSI 6-speed S tronic (DQ250) final drive",
+          "reason": "The 4.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -321,20 +315,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.84 plausible for 02Q (range 0.775-0.84) but unverified for this specific Q3 8U 2.0 TDI application.",
-          "value": 0.84,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.462 inherited family-default; within typical Q3 TDI FWD range but unverified for this variant.",
-          "value": 3.462,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -371,7 +352,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TDI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 8U 2.0 TDI 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -395,20 +386,7 @@
         "name": "7-speed S tronic (DQ500)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n5",
-          "value": 0.725,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n5",
-          "value": 4.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -455,7 +433,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TDI 7-speed S tronic (DQ500) top gear",
+          "reason": "The 0.725 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 8U 2.0 TDI 7-speed S tronic (DQ500) final drive",
+          "reason": "The 4.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -479,20 +467,7 @@
         "code": "MT6",
         "name": "6-speed manual"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.84 plausible for 0AJ (range 0.756-0.840) but unverified for this Q3 8U 2.0 TDI quattro variant.",
-          "value": 0.84,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.462 plausible for 0AJ in this torque application but unverified.",
-          "value": 3.462,
-          "evidence_refs_ref": "e4"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -550,7 +525,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TDI quattro 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "Q3 8U 2.0 TDI quattro 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -574,20 +559,7 @@
         "name": "7-speed S tronic (DQ500)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.725 plausible for DQ500 7th gear but unverified for this specific Q3 8U variant.",
-          "value": 0.725,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes": "Final drive 4.077 plausible but unverified for Q3 8U 2.0 TDI quattro DCT7.",
-          "value": 4.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -634,7 +606,17 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TDI quattro 7-speed S tronic (DQ500) top gear",
+          "reason": "The 0.725 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 8U 2.0 TDI quattro 7-speed S tronic (DQ500) final drive",
+          "reason": "The 4.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -668,10 +650,6 @@
           ],
           "notes": "Top gear 0.813 from prior-session Audi UK Q3 TFSI quattro technical-data PDF (cited file is now a 2,450-byte SPA shell; value plausible for 0AJ at upper end of 0.756-0.813 range). Confidence reduced from 'official_derived' to 'reputable_secondary' to reflect that the saved evidence file is not auditable.",
           "value": 0.813
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.462
         }
       },
       "tires": {
@@ -712,7 +690,11 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TFSI quattro 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -782,7 +764,7 @@
         },
         {
           "item": "Q3 8U source-finding pass status",
-          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+          "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence until a per-variant exact technical PDF is parsed and added to the source pack."
         },
         {
           "item": "Q3 8U 2.0 TFSI quattro S tronic final drive behind the top gear",

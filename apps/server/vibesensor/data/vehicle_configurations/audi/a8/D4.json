@@ -86,16 +86,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 2.848
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -129,6 +120,14 @@
           "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
           "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A8 D4 3.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "A8 D4 3.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 2.848 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "medium_confidence"
@@ -149,16 +148,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 2.848
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -192,6 +182,14 @@
           "item": "Audi A8 D4 4.0 TFSI quattro exact tire-baseline and year-split continuity",
           "reason": "Reputable secondary exact pages distinguish at least two 4.0 TFSI quattro states with 235/60 R17 and 235/55 R18 baseline tires, contradicting the current 255/40 R20 default, but this pass did not recover an exact official Germany-market tire matrix that proves one safe production baseline.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A8 D4 4.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "A8 D4 4.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 2.848 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "medium_confidence"

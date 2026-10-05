@@ -106,16 +106,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e2"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -149,6 +140,10 @@
           "item": "Represented-row manual ratio, final-drive, and tire applicability",
           "reason": "The checked 2020 Spain and 2026 Germany official manual sheets disagree with each other and both contradict the inherited 0.840 top gear, 3.462 final drive, and 215/50 R17 broad-row carryover values.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Q2 GA 30 TFSI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -172,16 +167,7 @@
         "name": "7-speed S tronic (DQ200)",
         "evidence_refs_ref": "e4"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -218,6 +204,10 @@
             "audi_mediacenter_sources:ga-q2-model-page",
             "legacy_research_sources:4f1a7d2b9c0e"
           ]
+        },
+        {
+          "item": "Q2 GA 30 TFSI 7-speed S tronic (DQ200) top gear",
+          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -241,16 +231,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e2"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -287,6 +268,10 @@
             "legacy_research_sources:4f1a7d2b9c0e",
             "audi_mediacenter_sources:ga-q2-35-tfsi-2026-manual-tech-data-pdf"
           ]
+        },
+        {
+          "item": "Q2 GA 35 TFSI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -310,16 +295,7 @@
         "name": "7-speed S tronic (DQ200)",
         "evidence_refs_ref": "e4"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -356,6 +332,10 @@
             "legacy_research_sources:4f1a7d2b9c0e",
             "audi_mediacenter_sources:ga-q2-35-tfsi-2026-s-tronic-tech-data-pdf"
           ]
+        },
+        {
+          "item": "Q2 GA 35 TFSI 7-speed S tronic (DQ200) top gear",
+          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"

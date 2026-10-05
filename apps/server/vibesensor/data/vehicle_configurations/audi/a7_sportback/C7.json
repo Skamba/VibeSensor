@@ -95,16 +95,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.68
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.444
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -153,6 +144,10 @@
           "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
           "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A7 Sportback C7 3.0 TDI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "medium_confidence"
@@ -173,16 +168,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.68
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.444
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -231,6 +217,10 @@
           "item": "Audi A7 Sportback C7 3.0 TDI quattro exact tire-baseline and year-split continuity",
           "reason": "Launch-era official Audi evidence only closes the wheel-size policy, not the exact tire dimensions, and reputable secondary exact pages still disagree between 235/55 R17 and 255/45 R18 baseline tires across early and facelift diesel states.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A7 Sportback C7 3.0 TFSI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "medium_confidence"

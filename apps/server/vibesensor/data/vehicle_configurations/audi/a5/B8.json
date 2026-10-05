@@ -105,20 +105,7 @@
         "name": "7-speed S tronic (DL501)",
         "evidence_refs_ref": "e3"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n8",
-          "value": 0.68,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n8",
-          "value": 3.444,
-          "evidence_refs_ref": "e3"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -167,6 +154,16 @@
           "item": "DCT7 (7-speed S tronic) is not the EU FWD automatic for the A5 B8 2.0 TFSI",
           "reason": "On the MLB-platform A5 B8 / B8.5 (2007-2016), the FWD 2.0 TFSI automatic is the multitronic CVT, not the 7-speed S tronic DCT. S tronic on the A5 B8 platform is restricted to the quattro drivetrain. The broad EU FWD DCT7 row therefore does not represent a real Audi A5 B8 EU configuration.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI 7-speed S tronic (DL501) final drive",
+          "reason": "The 3.444 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -191,20 +188,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e3"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 0.667,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 3.077,
-          "evidence_refs_ref": "e3"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -253,6 +237,16 @@
           "item": "ZF 8HP (8-speed tiptronic) is not used on the A5 B8",
           "reason": "The A5 B8 / B8.5 MLB platform never adopted the longitudinal ZF 8HP. Audi A5 B8 automatics are the multitronic CVT (FWD) or the 7-speed S tronic DCT (quattro 2.0 TFSI / quattro 3.0 TFSI / quattro 3.0 TDI facelift). No checked official Audi material places ZF 8HP into any A5 B8 EU configuration.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -277,20 +271,7 @@
         "name": "7-speed S tronic (DL501)",
         "evidence_refs_ref": "e2"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.68 inherited family-default; not verified from A5 B8 specific Audi tech-data PDF. Note: A6 C7 DL501 (same gearbox family) is documented at 0.519 per Audi 0B5 workshop manual - 0.68 may be incorrect; needs A5 B8 specific verification.",
-          "value": 0.68,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.444 inherited family-default. A6 C7 DL501 uses split AWD 4.093/4.111 - A5 B8 may differ; needs A5 B8 specific verification.",
-          "value": 3.444,
-          "evidence_refs_ref": "e2"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -348,6 +329,11 @@
           "item": "A5 B8 quattro 2.0 TFSI 7-speed S tronic full forward gear ratio set, final drive, and exact Audi Germany-market technical-data sheet",
           "reason": "The 7-speed S tronic transmission is plausible across the A5 B8 quattro 2.0 TFSI EU lifespan, but no exact Audi MediaCenter Germany-market technical-data PDF for the B8/B8.5 was recoverable in this run; the gear ratios, final drive and tire defaults are still inherited family defaults rather than per-variant verified values.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e2"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -372,20 +358,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e2"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 0.667,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 3.077,
-          "evidence_refs_ref": "e2"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -440,13 +413,23 @@
         },
         {
           "item": "Audi A5 Coupe 2.0 TFSI quattro Tiptronic pre-facelift evidence is not safe for the broad 2007-2016 row",
-          "reason": "The exact 2009-2011 Auto-Data coupe row supports AWD and 245/40 R18 tires, but it also identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad 2007-2016 ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+          "reason": "The exact 2009-2011 Auto-Data coupe row supports AWD and 245/40 R18 tires, but it also identifies the pre-facelift Tiptronic configuration as 6-speed automatic, so the broad 2007-2016 ZF8HP row likely conflates distinct transmission eras, so the row carries no ratios without a split or later-year proof.",
           "evidence_refs_ref": "e6"
         },
         {
           "item": "ZF 8HP (8-speed tiptronic) is not used on the A5 B8 quattro 2.0 TFSI",
           "reason": "The A5 B8 quattro 2.0 TFSI EU automatic is the 7-speed S tronic DCT, not the ZF 8HP. The ZF 8HP did not enter the A5/A4 B8 platform for the 2.0 TFSI; the broad ZF 8HP row therefore does not represent a real Audi A5 B8 EU configuration.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "A5 B8 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e2"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -471,20 +454,7 @@
         "name": "7-speed S tronic (DL501)",
         "evidence_refs_ref": "e4"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.68 inherited family-default; A6 C7 DL501 documented at 0.519 - 0.68 may be incorrect for A5 B8.5 3.0 TDI quattro DCT7. Needs A5 B8.5 specific verification.",
-          "value": 0.68,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.444 inherited family-default; A6 C7 DL501 uses split 4.093/4.111 - A5 B8.5 may differ; unverified.",
-          "value": 3.444,
-          "evidence_refs_ref": "e4"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -533,6 +503,16 @@
           "item": "A5 B8 3.0 TDI quattro pre-facelift transmission was 6-speed tiptronic (ZF 6HP), not 7-speed S tronic",
           "reason": "The Audi A4 3.0 TDI clean diesel quattro press release confirms the pre-facelift V6 TDI quattro family on the MLB platform paired the engine with the six-speed tiptronic (ZF 6HP26). The 7-speed S tronic only became the standard 3.0 TDI quattro automatic from the B8.5 facelift (≈2011). The current broad row covers 2007 onward; its DCT7 mapping is only valid for the late B8.5 facelift portion of the production span.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 3.0 TDI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "A5 B8 3.0 TDI quattro 7-speed S tronic (DL501) final drive",
+          "reason": "The 3.444 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -557,20 +537,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e2"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n7",
-          "value": 0.667,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n7",
-          "value": 3.077,
-          "evidence_refs_ref": "e2"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -621,13 +588,23 @@
         },
         {
           "item": "Audi A5 Coupe 3.0 TDI quattro Tiptronic pre-facelift evidence conflicts with the broad 2007-2016 ZF8HP row",
-          "reason": "The exact 2007-2011 Auto-Data coupe row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, and Ultimate Specs independently corroborates the 2007-2011 quattro Tiptronic identity, so the broad ZF8HP row likely conflates distinct transmission eras and is not safe for order analysis without a split or later-year proof.",
+          "reason": "The exact 2007-2011 Auto-Data coupe row identifies the pre-facelift Tiptronic configuration as 6-speed automatic, and Ultimate Specs independently corroborates the 2007-2011 quattro Tiptronic identity, so the broad ZF8HP row likely conflates distinct transmission eras, so the row carries no ratios without a split or later-year proof.",
           "evidence_refs_ref": "e8"
         },
         {
           "item": "ZF 8HP (8-speed tiptronic) is not used on the A5 B8 3.0 TDI quattro",
           "reason": "The A4/A5 B8 platform's 3.0 TDI quattro automatic was the 6-speed tiptronic (ZF 6HP) pre-facelift and the 7-speed S tronic from the B8.5 facelift. No checked official Audi material maps the ZF 8HP onto the A5 B8 3.0 TDI quattro family in any market.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A5 B8 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "A5 B8 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e2"
         }
       ],
       "configuration_confidence": "no_confidence"

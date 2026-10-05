@@ -116,18 +116,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.68
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.444
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -161,6 +150,10 @@
           "item": "Represented-row front-wheel-drive DCT7 ratio, final-drive, and tire applicability",
           "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited DCT7 gearbox family, 0.680 top gear, 3.444 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -182,18 +175,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.667
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.077
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -227,6 +209,10 @@
           "item": "Represented-row front-wheel-drive ZF8HP ratio, final-drive, and tire applicability",
           "reason": "Because no checked exact front-wheel-drive 2.0 TFSI Q5 state was recovered in this packet, the inherited ZF8HP gearbox family, 0.667 top gear, 3.077 final drive, and 235/55 R18 tire mapping remain unsupported broad-row carryover values.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -246,16 +232,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.68
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.444
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "family_default",
@@ -306,6 +283,14 @@
           "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
           "reason": "Official source links logged, but values not programmatically verified in this pass.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI quattro 7-speed S tronic (DL501) final drive",
+          "reason": "The 3.444 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -325,16 +310,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.077
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "family_default",
@@ -385,6 +361,14 @@
           "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
           "reason": "Official source links logged, but values not programmatically verified in this pass.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "Q5 8R 2.0 TFSI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -404,16 +388,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DL501)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.68
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.444
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "family_default",
@@ -464,6 +439,14 @@
           "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
           "reason": "Official source links logged, but values not programmatically verified in this pass.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q5 8R 3.0 TDI quattro 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "Q5 8R 3.0 TDI quattro 7-speed S tronic (DL501) final drive",
+          "reason": "The 3.444 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -483,16 +466,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.077
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "family_default",
@@ -543,6 +517,14 @@
           "item": "Audi Q5 (8R, 2011-2017) variant-level final_drive_ratio and top_gear_ratio confirmation",
           "reason": "Official source links logged, but values not programmatically verified in this pass.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q5 8R 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "Q5 8R 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"

@@ -99,20 +99,7 @@
         "name": "7-speed S tronic (DL501)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n5",
-          "value": 0.68,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n5",
-          "value": 3.444,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -166,6 +153,11 @@
           "item": "DCT7 (7-speed S tronic) is not standard for the EU A6 C7 2.0 TFSI",
           "reason": "Audi A6 C7 (2011-2018) EU 2.0 TFSI was sold with 6-speed manual or multitronic CVT for the 132 kW and 155 kW states; the 7-speed S tronic only appeared with the late C7.5 facelift 2.0 45 TFSI ultra (≈2016+). The broad 2011 row does not capture an EU-standard DCT7 2.0 TFSI.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A6 C7 2.0 TFSI 7-speed S tronic (DL501) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -189,20 +181,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -256,6 +235,11 @@
           "item": "ZF 8HP (8-speed tiptronic) is not an EU-market option on the A6 C7 2.0 TFSI",
           "reason": "The 8-speed tiptronic 2.0 TFSI A6 C7 is associated with the China-market A6L (long-wheelbase) allocation, not with the EU-DE Sedan/Avant. No checked official Audi material places the ZF 8HP into the EU FWD 2.0 TFSI A6 C7 lineup.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A6 C7 2.0 TFSI 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -375,20 +359,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Top gear 0.667 plausible for ZF8HP50 8th gear standard HP50 ratio set, but unverified for A6 C7 BiTDI specific application.",
-          "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.077 plausible for ZF 8HP on MLB A6/A7/A8 family but unverified for A6 C7 BiTDI specific.",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -442,6 +413,11 @@
           "item": "ZF 8HP (8-speed tiptronic) is not standard for the EU A6 C7 3.0 TDI quattro (150-200 kW)",
           "reason": "Audi allocated the 8-speed tiptronic only to the high-power 3.0 BiTDI quattro (313-326 PS / 230-240 kW) sold in the UK as 3.0 BiTDI; the standard EU 3.0 TDI quattro (150/180 kW pre-facelift, 140/160/200 kW post-facelift) ran the 0B5 7-speed S tronic across the full C7 production span. The broad ZF 8HP row does not match any standard EU 3.0 TDI quattro variant.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A6 C7 3.0 TDI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -561,20 +537,7 @@
         "name": "8-speed tiptronic (ZF 8HP)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n4",
-          "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n4",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -628,6 +591,11 @@
           "item": "ZF 8HP (8-speed tiptronic) is a US/Canada/South Korea allocation for the A6 C7 3.0 TFSI quattro, not EU-DE",
           "reason": "Wave 17 official Audi workshop-manual material in C7.json verification_notes records that the only checked 0BK 8-speed automatic allocation for the 228 kW A6 sedan is marked USA/Canada/South Korea, while the EU-DE 220 kW and 228 kW states ran 0B5 7-speed S tronic. The broad EU ZF 8HP 3.0 TFSI quattro row is therefore unsupported.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A6 C7 3.0 TFSI quattro 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "no_confidence"

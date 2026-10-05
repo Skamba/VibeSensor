@@ -57,16 +57,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.077
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -103,6 +94,14 @@
           "item": "Audi RS 7 Sportback production-data applicability across the full 2020-2026 row span",
           "reason": "This pass found matching launch-era 2020 and later 2024 Germany-market ratio documents, but the current Audi MediaCenter model hub labels the model family through 2025, so the repo's full 2020-2026 span still is not fully closed.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "RS 7 Sportback C8 RS 7 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "RS 7 Sportback C8 RS 7 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "medium_confidence"

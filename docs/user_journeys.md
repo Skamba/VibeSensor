@@ -256,7 +256,7 @@ the form.
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
-    gear is weak (148 of 550 rows, see §4). A saved car's flag follows the
+    gear is weak (79 of 573 rows, see §4). A saved car's flag follows the
     same rule (`CarOrderReferenceStatus.requires_manual_confirmation`); it is
     derived on every load, so cars saved under the older rule (which also
     counted tire size and the gearbox name) no longer keep a stale `true`.
@@ -564,17 +564,17 @@ changes and update this table.
 | Picker models / generation codes / variants | 92 / 71 / 443 |
 | Production years | 2007–2026 |
 | Rows with tire options | 572 (1 has the default only) |
-| Rows with driven final drive | 556 (97%); 17 without: Audi 8S TT/TTS/TT RS, Audi 8U Q3, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021, BMW F48 X1 and F39 X2 xDrive18d manual |
-| Rows with top gear | 556 (every non-EV row); the 17 EVs have none: the reduction ratio is the final drive |
+| Rows with driven final drive | 487 (85%); 86 without: Audi 8X 3, GB 1, 8V 3, 8Y 7, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, 8R 6, 4S 2, 8J 2, 8S 11; BMW G21 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with top gear | 489 of 556 non-EV rows (88%); the 17 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
 | Rows with full gear sets | 346 (60%) |
 | Tire confidence | official_exact 392 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
-| Driven final-drive confidence | official_exact 299 · official_derived 87 · reputable_secondary 22 · family_default 74 · unverified 74 · none 17 |
-| Top-gear confidence | official_exact 381 · official_derived 15 · reputable_secondary 28 · family_default 64 · unverified 68 · none 17 (EVs) |
-| Weak (family_default or unverified) | final drive 148/573 (26%), top gear 132/573 (23%), tire 132/573 (23%) |
-| `order_reference_trust` | trusted 413 · approximate 85 · backlog_unverified 75 |
-| `requires_manual_confirmation` | true 148, false 425 (true exactly when the driven final drive or top gear is weak) |
+| Driven final-drive confidence | official_exact 299 · official_derived 87 · reputable_secondary 22 · family_default 46 · unverified 33 · none 86 |
+| Top-gear confidence | official_exact 381 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 84 (17 EVs, 67 unsourced) |
+| Weak (family_default or unverified) | final drive 79/573 (14%), top gear 67/573 (12%), tire 132/573 (23%) |
+| `order_reference_trust` | trusted 429 · approximate 85 · backlog_unverified 59 |
+| `requires_manual_confirmation` | true 79, false 494 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
-| Variants whose rows differ in tire options | 14 (the picker offers the union) |
+| Variants whose rows differ in tire options | 18 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
 
 **How confidence is surfaced today:**
@@ -611,7 +611,7 @@ changes and update this table.
 - **Final drive:** missing on 13 Audi TT/RS 3 rows and the 2019–2021 G21 318d
   automatic. The `unresolved` notes say the manufacturer publishes split,
   conflicting or no values; do not invent one. Weak
-  (family_default or unverified) on 148 rows. Those rows are where a single
+  (family_default or unverified) on 79 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---

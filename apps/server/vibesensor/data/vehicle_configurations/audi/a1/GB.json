@@ -502,16 +502,7 @@
         "code": "MT6",
         "name": "6-speed manual"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -550,6 +541,10 @@
           "item": "A1 GB 35 TFSI 6-speed manual is a phantom configuration; never offered for sale",
           "reason": "Audi MediaCenter A1 Sportback model-page snapshots from March 2019, June 2020, October 2021, and October 2022 list 35 TFSI only as a 7-speed S tronic motorization (810); no 35 TFSI manual motorization was ever published. Only the pre-launch Jan 2019 press kit (with 'subject to change without notice' caveat) mentioned a manual variant for the 35 TFSI. The Audi MediaCenter 'until 2026' model hub also lists the 35 TFSI only as S tronic.",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "A1 GB 35 TFSI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "no_confidence"

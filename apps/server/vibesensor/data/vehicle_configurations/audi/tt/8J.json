@@ -30,9 +30,6 @@
         "legacy_research_sources:ac68dd8bebb2",
         "legacy_research_sources:b3806add936a"
       ],
-      "e6": [
-        "legacy_research_sources:ac68dd8bebb2"
-      ],
       "e7": [
         "legacy_research_sources:fa2ecfeb2ce9",
         "legacy_research_sources:efeaede27b61"
@@ -254,24 +251,7 @@
         "code": "DCT6",
         "name": "6-speed S tronic (DQ250) with Haldex"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n2",
-          "value": 0.921,
-          "evidence_refs": [
-            "legacy_research_sources:fa2ecfeb2ce9",
-            "legacy_research_sources:ac68dd8bebb2",
-            "secondary_technical_sources:tt-8j-wikipedia"
-          ]
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.444,
-          "evidence_refs_ref": "e6"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -305,6 +285,15 @@
           "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
           "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "TT 8J 2.0 TFSI quattro 6-speed S tronic (DQ250) with Haldex top gear",
+          "reason": "The 0.921 top gear this row carried was copied from the front-wheel-drive Coupé sheet on the assumption that the quattro gearbox is the same, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs": [
+            "legacy_research_sources:fa2ecfeb2ce9",
+            "legacy_research_sources:ac68dd8bebb2",
+            "secondary_technical_sources:tt-8j-wikipedia"
+          ]
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -328,23 +317,7 @@
         "code": "MT6",
         "name": "6-speed manual (MQ250 / GQQ) with Haldex"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n3",
-          "value": 0.975,
-          "evidence_refs": [
-            "legacy_research_sources:fa2ecfeb2ce9",
-            "secondary_technical_sources:tt-8j-wikipedia"
-          ]
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.462,
-          "evidence_refs_ref": "e3"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -378,6 +351,14 @@
           "item": "Audi TT 2.0 TFSI quattro generic EU Coupé baseline tire mapping",
           "reason": "Checked official Audi UK slices disagree between 225/55 R16, 245/45 R17, and 245/40 R18 depending on trim, body, and year context, so the current 245/40 R18 placeholder was not treated as a proven generic EU Coupé baseline.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "TT 8J 2.0 TFSI quattro 6-speed manual (MQ250 / GQQ) with Haldex top gear",
+          "reason": "The 0.975 top gear this row carried was copied from the front-wheel-drive Coupé sheet on the assumption that the quattro gearbox is the same, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs": [
+            "legacy_research_sources:fa2ecfeb2ce9",
+            "secondary_technical_sources:tt-8j-wikipedia"
+          ]
         }
       ],
       "configuration_confidence": "low_confidence"

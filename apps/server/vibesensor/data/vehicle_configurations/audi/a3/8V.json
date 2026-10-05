@@ -361,20 +361,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e3"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes": "Sonnet redo: no exact Saloon source for 2.0 TDI MT6 ratio. Repo placeholder 0.84 was a family_default carryover.",
-          "value": 0.84,
-          "evidence_refs_ref": "e7"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Sonnet redo: no exact Saloon source for 2.0 TDI MT6 final drive. Repo placeholder 3.462 was a family_default carryover.",
-          "value": 3.462,
-          "evidence_refs_ref": "e7"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "reputable_secondary_crosschecked",
@@ -423,6 +410,16 @@
           "item": "Schema-safe representation of exact 8V 2.0 TDI facelift-era splits",
           "reason": "The recovered evidence places the sedan-specific 2.0 TDI manual state in the facelift-era program only, but the current broad row does not represent that later-only scope explicitly.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "item": "A3 8V 2.0 TDI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "A3 8V 2.0 TDI 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e7"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -1049,20 +1046,7 @@
         "name": "6-speed manual",
         "evidence_refs_ref": "e4"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 0.84,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 3.462,
-          "evidence_refs_ref": "e4"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -1111,6 +1095,16 @@
           "item": "Schema-safe representation of exact 8V quattro powertrain-era splits",
           "reason": "The recovered public official brochure timing anchors only reinforce that the 8V AWD sedan evidence spans multiple later eras, while the exact recovered states still split into pre-facelift 1.8 TFSI quattro S tronic and facelift 2.0 TFSI quattro S tronic slices that the current broad row does not represent explicitly.",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "A3 8V 40 TFSI quattro 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "A3 8V 40 TFSI quattro 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e4"
         }
       ],
       "configuration_confidence": "no_confidence"

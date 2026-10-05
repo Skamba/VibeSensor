@@ -241,10 +241,9 @@ def test_row_without_top_gear_loads_and_serves_an_unknown_top_gear(tmp_path: Pat
     relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
     fixture = copy.deepcopy(shard)
     row = _first_row(fixture)
-    ratios = cast(dict[str, dict[str, object]], row["ratios"])
-    # A checked final drive next to the row's unverified top gear asks for confirmation.
-    ratios["final_drive_front"]["confidence"] = "official_exact"
-    del ratios["top_gear_ratio"]
+    assert cast(dict[str, object], row["drivetrain"])["value"] == "FWD"
+    # A checked final drive and no top gear: nothing left to confirm.
+    row["ratios"] = {"final_drive_front": {"confidence": "official_exact", "value": 3.652}}
     row["unresolved"] = [{"item": "Top gear", "reason": "no official ratio sheet found"}]
     write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
 
@@ -289,9 +288,8 @@ def test_an_ev_row_has_no_top_gear_and_its_reduction_ratio_decides_confirmation(
     row = _first_row(fixture)
     row.update(fuel_type="EV", engine_code="Electric", engine_name="Electric Single Motor")
     cast(dict[str, object], row["transmission"])["name"] = "Single-speed fixed gear (EV)"
-    ratios = cast(dict[str, dict[str, object]], row["ratios"])
-    del ratios["top_gear_ratio"]
-    ratios["final_drive_front"]["confidence"] = reduction_confidence
+    row["ratios"] = {"final_drive_front": {"confidence": reduction_confidence, "value": 3.652}}
+    row.pop("unresolved", None)
     write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
 
     config = next(c for c in _load_configs_from_data_dir(tmp_path) if c.id == row["id"])

@@ -132,20 +132,7 @@
         "name": "5-speed manual",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.854,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.652,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -179,6 +166,11 @@
           "item": "Audi A1 1.0 TFSI placeholder replacement for the contradicted 2011 row",
           "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ manual rows.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A1 8X 1.0 TFSI 5-speed manual top gear",
+          "reason": "The 0.854 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -202,20 +194,7 @@
         "name": "7-speed S tronic (DQ200)",
         "evidence_refs_ref": "e1"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 0.68,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.786,
-          "evidence_refs_ref": "e1"
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -249,6 +228,11 @@
           "item": "Audi A1 1.0 TFSI S tronic placeholder replacement for the contradicted 2011 row",
           "reason": "Official Audi launch and facelift material shows that 1.0 TFSI belongs to the spring-2015 refresh window rather than the 2011 launch window, but this pass did not split the stored placeholder into exact 2015+ S tronic rows.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "A1 8X 1.0 TFSI 7-speed S tronic (DQ200) top gear",
+          "reason": "The 0.680 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e1"
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -272,20 +256,7 @@
         "name": "5-speed manual",
         "evidence_refs_ref": "e3"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 0.854,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.652,
-          "evidence_refs_ref": "e3"
-        }
-      },
+      "ratios": {},
       "tires": {
         "default": {
           "confidence": "unverified",
@@ -331,6 +302,11 @@
           "evidence_refs": [
             "legacy_research_sources:d3ced68412f8"
           ]
+        },
+        {
+          "item": "A1 8X 1.4 TFSI 5-speed manual top gear",
+          "reason": "The 0.854 top gear this row carried was a carried-over placeholder marked unverified, with no source for this row, so it was removed: a missing value is better than an unsourced one.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "configuration_confidence": "low_confidence"

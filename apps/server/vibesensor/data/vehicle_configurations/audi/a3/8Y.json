@@ -289,16 +289,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DQ381)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -332,6 +323,14 @@
           "item": "Replacement strategy for the represented 30 TDI automatic row",
           "reason": "The current broad row may need deletion, re-keying to a higher-output 35 TDI/TDI 110 kW state, or an exact market/year split if future official evidence proves a 30 TDI S tronic variant.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A3 8Y 30 TDI 7-speed S tronic (DQ381) top gear",
+          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "A3 8Y 30 TDI 7-speed S tronic (DQ381) final drive",
+          "reason": "The 4.769 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -456,16 +455,7 @@
         "code": "DCT7",
         "name": "7-speed S tronic (DQ381)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -499,6 +489,10 @@
           "item": "Audi A3 8Y 30 TFSI S tronic engine/program continuity",
           "reason": "The captured official sources point from an early entry gasoline context to a later 1.5-liter TFSI 85 kW S tronic program, but the current row stores one 1.0-liter 2021-2026 state.",
           "evidence_refs_ref": "e12"
+        },
+        {
+          "item": "A3 8Y 30 TFSI 7-speed S tronic (DQ381) top gear",
+          "reason": "The 0.725 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -518,16 +512,7 @@
         "code": "MT6",
         "name": "6-speed manual"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -561,6 +546,14 @@
           "item": "Replacement strategy for the represented 35 TDI manual row",
           "reason": "The current broad row may need deletion or body/market splitting if future official evidence proves a manual sedan state; current official sedan evidence contradicts it.",
           "evidence_refs_ref": "e17"
+        },
+        {
+          "item": "A3 8Y 35 TDI 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "A3 8Y 35 TDI 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "no_confidence"
@@ -902,16 +895,7 @@
         "code": "MT6",
         "name": "6-speed manual"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -945,6 +929,14 @@
           "item": "Replacement strategy for the represented 40 TFSI quattro manual row",
           "reason": "The current broad manual AWD row may need deletion or replacement with exact S tronic states; current official evidence contradicts it.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A3 8Y 40 TFSI quattro 6-speed manual top gear",
+          "reason": "The 0.840 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "A3 8Y 40 TFSI quattro 6-speed manual final drive",
+          "reason": "The 3.462 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "no_confidence"

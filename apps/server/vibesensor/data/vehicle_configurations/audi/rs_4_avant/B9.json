@@ -50,16 +50,7 @@
         "code": "ZF8HP",
         "name": "8-speed tiptronic (ZF 8HP)"
       },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.667
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.077
-        }
-      },
+      "ratios": {},
       "tires": {
         "options": [
           {
@@ -96,6 +87,14 @@
           "item": "Audi RS 4 Avant exact transmission-code and non-basic tire-option coverage",
           "reason": "Official Audi exact material proves 8-speed tiptronic wording, the full ratio set, final drive 3.204, and the 265/35 R19 basic tire, but it does not publish a gearbox-family code or a full optional wheel/tire matrix for the plain RS 4 Avant.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "RS 4 Avant B9 RS 4 8-speed tiptronic (ZF 8HP) top gear",
+          "reason": "The 0.667 top gear this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
+        },
+        {
+          "item": "RS 4 Avant B9 RS 4 8-speed tiptronic (ZF 8HP) final drive",
+          "reason": "The 3.077 final drive this row carried was a family-default placeholder, with no source for this row, so it was removed: a missing value is better than an unsourced one."
         }
       ],
       "configuration_confidence": "low_confidence"
