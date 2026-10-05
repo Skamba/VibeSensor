@@ -595,8 +595,8 @@ def test_report_date_is_unknown_when_the_run_started_before_the_pi_clock_was_set
         view = build_report_view(summary, metadata, lang=lang, time_zone=None)
         return view.header[2].value
 
-    assert date("en") == "unknown (the Pi clock was not set)"
-    assert date("nl") == "onbekend (de klok van de Pi was niet gezet)"
+    assert date("en") == "not verified (the Pi clock was not set)"
+    assert date("nl") == "niet geverifieerd (de klok van de Pi was niet gezet)"
 
 
 def test_quality_collapses_to_one_footer_line_only_when_everything_passed() -> None:

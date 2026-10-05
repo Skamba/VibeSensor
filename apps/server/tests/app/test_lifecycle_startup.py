@@ -49,6 +49,7 @@ def _make_runtime(started: list[str]) -> LifecycleRuntime:
         update_manager=MagicMock(startup_recover=AsyncMock(side_effect=_recover), job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         history_db=MagicMock(),
+        run_times=MagicMock(watch=_parking("clock-watch")),
     )
 
 
@@ -74,7 +75,7 @@ class TestStartupPhases:
         )
         await lifecycle.start()
         try:
-            await _settle(started, 6)
+            await _settle(started, 7)
             assert runtime.health_state.startup_state == "ready"
             assert started == [
                 "processing-loop",
@@ -82,6 +83,7 @@ class TestStartupPhases:
                 "metrics-log",
                 "gps-speed",
                 "obd-speed",
+                "clock-watch",
                 "update-startup-recover",
             ]
         finally:

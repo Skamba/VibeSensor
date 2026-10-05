@@ -102,6 +102,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     recorded_utc_offset_seconds: object = None
     start_time_unverified: object = False
     start_clock: object = None
+    start_time_corrected_by_s: object = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +132,7 @@ class _RunMetadataScalarState:
     language: str
     recorded_utc_offset_seconds: int | None
     start_time_unverified: bool
+    start_time_corrected_by_s: float | None
 
 
 _RUN_METADATA_SCALAR_FIELD_SPECS: tuple[PayloadFieldSpec, ...] = (
@@ -229,6 +231,12 @@ _RUN_METADATA_SCALAR_FIELD_SPECS: tuple[PayloadFieldSpec, ...] = (
         bool_decoder("start_time_unverified"),
         include=bool,
     ),
+    PayloadFieldSpec(
+        "start_time_corrected_by_s",
+        "start_time_corrected_by_s",
+        float_decoder("start_time_corrected_by_s"),
+        include=include_if_not_none,
+    ),
 )
 _RUN_METADATA_SCALAR_STATE_FACTORY: Callable[..., _RunMetadataScalarState] = _RunMetadataScalarState
 
@@ -296,6 +304,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         recorded_utc_offset_seconds=scalar_state.recorded_utc_offset_seconds,
         start_time_unverified=scalar_state.start_time_unverified,
         start_clock=_run_start_clock_from_payload(data.get("start_clock")),
+        start_time_corrected_by_s=scalar_state.start_time_corrected_by_s,
     )
 
 

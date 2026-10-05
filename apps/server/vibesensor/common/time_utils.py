@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone, tzinfo
 from math import isfinite
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -13,6 +13,20 @@ _MAX_UTC_OFFSET_SECONDS = 14 * 60 * 60
 def utc_now_iso() -> str:
     """Return the current UTC time as an ISO 8601 string."""
     return datetime.now(UTC).isoformat()
+
+
+def now_in_time_zone(time_zone: str | None) -> datetime:
+    """Return the current time in IANA *time_zone* (the user's), else in UTC.
+
+    Never the server's local zone: the Pi image's default zone is not the user's.
+    """
+    zone: tzinfo = UTC
+    if time_zone is not None:
+        try:
+            zone = ZoneInfo(time_zone)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return datetime.now(zone)
 
 
 def parse_iso8601(value: object) -> datetime | None:

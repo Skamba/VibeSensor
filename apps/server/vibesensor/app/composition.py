@@ -195,7 +195,11 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         state_path=_clock_state_path(config),
         after_report=lambda: run_times.correct(),
     )
-    run_times = RunTimeCorrector(history_db=history, clock_trusted=browser_clock.clock_trusted)
+    run_times = RunTimeCorrector(
+        history_db=history,
+        clock_trusted=browser_clock.clock_trusted,
+        time_zone=lambda: settings.ui_preferences.time_zone,
+    )
     run_recorder = RunRecorder(
         RunRecorderConfig(
             sensor_model=SENSOR_MODEL,
@@ -249,6 +253,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         history_db=history,
+        run_times=run_times,
     )
     web = WebServices(
         health_state=health_state,
@@ -275,7 +280,10 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             pdf_renderer=_render_report_pdf,
             time_zone=lambda: settings.ui_preferences.time_zone,
         ),
-        export_service=ProjectedHistoryExportService(HistoryExportService(history)),
+        export_service=ProjectedHistoryExportService(
+            HistoryExportService(history),
+            time_zone=lambda: settings.ui_preferences.time_zone,
+        ),
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         browser_clock=browser_clock,

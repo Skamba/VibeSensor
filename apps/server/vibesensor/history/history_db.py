@@ -604,16 +604,19 @@ class HistoryDB:
         boot_id: str,
         wall_now_s: float,
         monotonic_now_s: float,
+        time_zone: str | None,
     ) -> list[str]:
         """Re-date finished runs that started on an unset clock earlier in this boot.
 
-        See ``run_clock_correction``. Recording and analyzing runs are left for
-        later: their metadata and analysis are still being written. Returns the
+        See ``run_clock_correction``; *time_zone* is the browser's, for the
+        fallback UTC offset. Recording and analyzing runs are left for later:
+        their metadata and analysis are still being written. Returns the
         corrected run ids.
         """
         with self._write(immediate=True) as cur:
             cur.execute(
-                "SELECT run_id, start_time_utc, end_time_utc, metadata_json, analysis_json "
+                "SELECT run_id, start_time_utc, end_time_utc, created_at, analysis_started_at, "
+                "analysis_completed_at, metadata_json, analysis_json "
                 "FROM runs WHERE status IN (?, ?) AND metadata_json LIKE ?",
                 (RunStatus.COMPLETE, RunStatus.ERROR, '%"start_clock"%'),
             )
@@ -621,11 +624,23 @@ class HistoryDB:
                 StoredRunTimes(
                     run_id=str(run_id),
                     start_time_utc=str(start),
-                    end_time_utc=str(end) if end is not None else None,
+                    end_time_utc=_str_or_none(end),
+                    created_at=str(created_at),
+                    analysis_started_at=_str_or_none(analysis_started_at),
+                    analysis_completed_at=_str_or_none(analysis_completed_at),
                     metadata_json=str(metadata_json),
-                    analysis_json=str(analysis_json) if analysis_json is not None else None,
+                    analysis_json=_str_or_none(analysis_json),
                 )
-                for run_id, start, end, metadata_json, analysis_json in cur.fetchall()
+                for (
+                    run_id,
+                    start,
+                    end,
+                    created_at,
+                    analysis_started_at,
+                    analysis_completed_at,
+                    metadata_json,
+                    analysis_json,
+                ) in cur.fetchall()
             ]
             corrected: list[str] = []
             for run in stored:
@@ -634,15 +649,20 @@ class HistoryDB:
                     boot_id=boot_id,
                     wall_now_s=wall_now_s,
                     monotonic_now_s=monotonic_now_s,
+                    time_zone=time_zone,
                 )
                 if times is None:
                     continue
                 cur.execute(
-                    "UPDATE runs SET start_time_utc = ?, end_time_utc = ?, metadata_json = ?, "
+                    "UPDATE runs SET start_time_utc = ?, end_time_utc = ?, created_at = ?, "
+                    "analysis_started_at = ?, analysis_completed_at = ?, metadata_json = ?, "
                     "analysis_json = ? WHERE run_id = ?",
                     (
                         times.start_time_utc,
                         times.end_time_utc,
+                        times.created_at,
+                        times.analysis_started_at,
+                        times.analysis_completed_at,
                         times.metadata_json,
                         times.analysis_json,
                         run.run_id,
@@ -755,6 +775,10 @@ class HistoryDB:
         with self._write() as cur:
             cur.execute("DELETE FROM client_names WHERE client_id = ?", (client_id,))
             return int(cur.rowcount) > 0
+
+
+def _str_or_none(value: object) -> str | None:
+    return str(value) if value is not None else None
 
 
 def _run_status(cur: sqlite3.Cursor, run_id: str) -> str | None:

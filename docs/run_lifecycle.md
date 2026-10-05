@@ -129,7 +129,9 @@ During recording:
   `time.monotonic()` at start) in its metadata; its end is start plus monotonic
   elapsed time. `RunTimeCorrector` (`vibesensor/clock/run_times.py`) re-dates
   such runs from the same boot once the clock is trusted (startup, browser
-  report, after each post-analysis) and clears the flag
+  report, after each post-analysis, and when its `clock-watch` task sees the
+  clock become trusted, e.g. NTP with no browser open) and clears the flag;
+  exports re-time such runs' sample rows as start plus `t_s`
 
 ### 3. Final flush and finalize
 

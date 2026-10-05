@@ -240,25 +240,35 @@ not trusted is recorded anyway, with `start_time_unverified: true` in its
 metadata and History list row. That happens when the API starts it before any
 browser connected, or when the clock could not be stepped. A trusted clock is
 NTP-synchronised, or the last browser report found it within 10 s or stepped
-it. History and the report then show its times as unknown (Pi clock not set).
-Its duration and data are unaffected. Recording is not refused, so scripted or
-API-only recordings keep working.
+it. History and the report then show its times as not verified (Pi clock was
+not set). Its duration and data are unaffected. Recording is not refused, so
+scripted or API-only recordings keep working.
 
 Such a run also stores where it started on the monotonic clock with the boot
 id (`start_clock`), and its end is start plus monotonic elapsed time, so an NTP
 step mid-run does not change its duration. Once the clock is trusted (a browser
-report, at startup, or after each post-analysis), runs from the same boot get
-their true times: start = now - (monotonic now - monotonic start), with end and
-the stored analysis's times moved by the same amount, and the flag cleared. The
-journal logs `Corrected the start and end times of N run(s)`. Runs still
-analysing are corrected once their analysis is stored. Runs from an earlier boot
-cannot be corrected and stay unknown. Sample rows keep their original
-`timestamp_utc` (only exports show it).
+report, at startup, after each post-analysis, or within 30 s of NTP
+synchronising the kernel clock with no browser open), runs from the same boot
+get their true times: start = now - (monotonic now - monotonic start), with end,
+the row's `created_at` (History's sort key) and the stored analysis's times
+moved by the same amount, `analysis_started_at`/`analysis_completed_at` too when
+they predate the true start (else the 7-day retention would prune the run early),
+the flag cleared, the fallback UTC offset recomputed for the true start and the
+shift kept as `start_time_corrected_by_s`. The journal logs `Corrected the start
+and end times of N run(s)`. Runs still analysing are corrected once their
+analysis is stored. Runs from an earlier boot, and runs recorded by releases
+that did not store `start_clock`, can never be corrected and stay "not
+verified". Sample rows keep their original `timestamp_utc`; the export's
+analysis-windows CSV re-times the rows of such runs as run start plus `t_s`, so
+they match the run's (corrected) times.
 
 Reports show run times in the stored browser time zone, at the run's own date
 (DST-correct). They fall back to the offset recorded with the run until a
 browser has reported a zone. The History list formats times in the viewing
-browser's zone.
+browser's zone. Export ZIP entries carry the export time in the stored browser
+zone (else UTC). Nothing user-facing uses the Pi's system time zone (the image
+default is Europe/London); server logs are in UTC, and `hotspot.log` lines
+shown as update issues carry an explicit UTC offset.
 
 ```bash
 timedatectl show --property=NTPSynchronized --value

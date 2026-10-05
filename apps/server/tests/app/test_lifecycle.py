@@ -45,6 +45,7 @@ def _make_lifecycle(db_path: str | None) -> tuple[LifecycleManager, RuntimeHealt
         update_manager=MagicMock(job_task=None),
         esp_flash_manager=MagicMock(job_task=None),
         history_db=MagicMock(),
+        run_times=MagicMock(),
     )
 
     lifecycle = LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())

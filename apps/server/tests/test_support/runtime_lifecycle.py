@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, create_autospec
 import numpy as np
 
 from vibesensor.app.lifecycle import LifecycleManager, LifecycleRuntime
+from vibesensor.clock.run_times import RunTimeCorrector
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
 from vibesensor.ingest.protocol_messages import DataMessage, HelloMessage
@@ -235,6 +236,10 @@ def build_runtime(**overrides: Any):
     if not isinstance(getattr(obd_runner, "run", None), AsyncMock):
         obd_runner.run = AsyncMock(side_effect=asyncio.CancelledError)
     history_db = overrides.pop("history_db", create_autospec(HistoryDB, instance=True))
+    run_times = overrides.pop("run_times", None)
+    if run_times is None:
+        run_times = create_autospec(RunTimeCorrector, instance=True)
+        run_times.watch = AsyncMock(side_effect=asyncio.CancelledError)
     diagnostics = overrides.pop("run_recorder", None)
     if diagnostics is None:
         diagnostics = create_autospec(RunRecorder, instance=True)
@@ -275,6 +280,7 @@ def build_runtime(**overrides: Any):
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         history_db=history_db,
+        run_times=run_times,
     )
     lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())
     for name, value in overrides.items():

@@ -194,6 +194,9 @@ class RunMetadata:
     # Where such a run started on the monotonic clock, so its times can be corrected
     # once the wall clock is set later in the same boot.
     start_clock: RunStartClock | None = None
+    # How far the times of such a run were moved once the clock was set; ``None``
+    # unless they were. Its sample rows keep their first ``timestamp_utc``.
+    start_time_corrected_by_s: float | None = None
 
     @classmethod
     def create(

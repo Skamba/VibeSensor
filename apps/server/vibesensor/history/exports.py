@@ -9,18 +9,21 @@ import logging
 import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from vibesensor.common.filenames import safe_filename
 from vibesensor.common.json_types import JsonObject
 from vibesensor.common.json_utils import json_text_dumps, sanitize_for_json
+from vibesensor.common.time_utils import parse_iso8601
 from vibesensor.history.helpers import async_require_run
 from vibesensor.history.records import StoredHistoryRun
 from vibesensor.recording.sensor_frame_mapping import sensor_frame_to_json_object
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
+    from vibesensor.recording.sensor_frame import SensorFrame
 
 LOGGER = logging.getLogger(__name__)
 
@@ -125,7 +128,7 @@ class HistoryExportService:
         run = await async_require_run(self._history_db, run_id)
         spool_dir = self._history_db.db_path.parent
         windows_csv_spool, sample_count = await asyncio.to_thread(
-            self._build_windows_csv_spool, run_id, spool_dir
+            self._build_windows_csv_spool, run, spool_dir
         )
         raw_capture_files = await asyncio.to_thread(self._history_db.raw_capture_files, run_id)
         return HistoryExportContext(
@@ -140,10 +143,11 @@ class HistoryExportService:
 
     def _build_windows_csv_spool(
         self,
-        run_id: str,
+        run: StoredHistoryRun,
         spool_dir: Path,
     ) -> tuple[tempfile.SpooledTemporaryFile[bytes], int]:
         sample_count = 0
+        time_base = _sample_time_base(run)
         spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
             max_size=EXPORT_SPOOL_THRESHOLD,
             dir=str(spool_dir),
@@ -158,11 +162,11 @@ class HistoryExportService:
             )
             writer.writeheader()
             for batch in self._history_db.iter_run_samples(
-                run_id,
+                run.run_id,
                 batch_size=EXPORT_BATCH_SIZE,
             ):
                 sample_count += len(batch)
-                writer.writerows(flatten_for_csv(sensor_frame_to_json_object(row)) for row in batch)
+                writer.writerows(_csv_row(row, time_base) for row in batch)
             csv_text.flush()
             csv_text.detach()
             spool.seek(0)
@@ -171,6 +175,28 @@ class HistoryExportService:
             if not spool_built:
                 spool.close()
         return spool, sample_count
+
+
+def _sample_time_base(run: StoredHistoryRun) -> datetime | None:
+    """The start to re-time a run's sample rows from, when they were stamped on a wrong clock.
+
+    A run that started before the Pi clock was set stamped its rows with that
+    clock (or, after an NTP step mid-run, partly with the right one), and a
+    correction moves only the run's own times. Start plus each row's ``t_s``
+    (monotonic seconds since that start) puts every row on the run's clock.
+    ``None`` for a run started on a trusted clock: its rows are right as stored.
+    """
+    metadata = run.metadata
+    if not metadata.start_time_unverified and metadata.start_time_corrected_by_s is None:
+        return None
+    return parse_iso8601(run.start_time_utc)
+
+
+def _csv_row(frame: SensorFrame, time_base: datetime | None) -> CsvRow:
+    row = flatten_for_csv(sensor_frame_to_json_object(frame))
+    if time_base is not None and frame.t_s is not None:
+        row["timestamp_utc"] = (time_base + timedelta(seconds=frame.t_s)).isoformat()
+    return row
 
 
 def serialize_run_details_json(run_details: JsonObject, *, sample_count: int, run_id: str) -> str:

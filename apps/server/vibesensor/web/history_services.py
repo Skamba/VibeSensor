@@ -6,11 +6,13 @@ import asyncio
 import shutil
 import tempfile
 import zipfile
+from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from pydantic import TypeAdapter
 
 from vibesensor.common.json_types import JsonObject, JsonValue, is_json_array, is_json_object
+from vibesensor.common.time_utils import now_in_time_zone
 from vibesensor.history.exports import (
     EXPORT_SPOOL_THRESHOLD,
     HistoryExportContext,
@@ -135,12 +137,23 @@ def _with_suitability_warnings(
 
 
 class ProjectedHistoryExportService:
-    """Adapter that packages projected history exports for HTTP delivery."""
+    """Adapter that packages projected history exports for HTTP delivery.
 
-    __slots__ = ("_service",)
+    ZIP entry times have no zone, so they are the export time in the browser's
+    zone (*time_zone*, else UTC), never the Pi's local zone or a file's mtime
+    (which an unset clock may have stamped).
+    """
 
-    def __init__(self, service: HistoryExportService) -> None:
+    __slots__ = ("_service", "_time_zone")
+
+    def __init__(
+        self,
+        service: HistoryExportService,
+        *,
+        time_zone: Callable[[], str | None] = lambda: None,
+    ) -> None:
         self._service = service
+        self._time_zone = time_zone
 
     async def build_export(self, run_id: str) -> HistoryExportDownload:
         context = await self._service.build_export_context(run_id)
@@ -152,17 +165,32 @@ class ProjectedHistoryExportService:
             dir=str(context.spool_dir),
         )
         download_built = False
+        date_time = now_in_time_zone(self._time_zone()).timetuple()[:6]
+
+        def entry(name: str, file_size: int = 0) -> zipfile.ZipInfo:
+            info = zipfile.ZipInfo(name, date_time=date_time)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            info.file_size = file_size
+            return info
+
         try:
             with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
                 context.windows_csv_spool.seek(0)
                 with archive.open(
-                    f"{context.safe_name}_analysis_windows.csv", mode="w"
+                    entry(f"{context.safe_name}_analysis_windows.csv"), mode="w"
                 ) as windows_csv:
                     shutil.copyfileobj(context.windows_csv_spool, windows_csv)
                 for path in context.raw_capture_files:
-                    archive.write(path, arcname=f"raw-capture/{path.name}")
+                    with (
+                        path.open("rb") as source,
+                        archive.open(
+                            entry(f"raw-capture/{path.name}", path.stat().st_size), mode="w"
+                        ) as target,
+                    ):
+                        shutil.copyfileobj(source, target)
                 archive.writestr(
-                    f"{context.safe_name}.json",
+                    entry(f"{context.safe_name}.json"),
                     build_projected_run_details_json(
                         context.run,
                         sample_count=context.sample_count,

@@ -35,6 +35,7 @@ from vibesensor.live.runtime_failures import BroadcastTickLoopFailure
 from vibesensor.web.health_state import RuntimeHealthState
 
 if TYPE_CHECKING:
+    from vibesensor.clock.run_times import RunTimeCorrector
     from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.ingest.udp_control_tx import UDPControlPlane
@@ -82,6 +83,7 @@ class LifecycleRuntime:
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
     history_db: HistoryDB
+    run_times: RunTimeCorrector
     shutdown_analysis_timeout_s: float = 30.0
     """How long shutdown waits for queued post-analysis before giving up."""
 
@@ -223,6 +225,10 @@ class LifecycleManager:
             (
                 "obd-speed",
                 lambda: self._start_supervised(lambda: r.obd_runner.run(), "obd-speed"),
+            ),
+            (
+                "clock-watch",
+                lambda: self._start_supervised(lambda: r.run_times.watch(), "clock-watch"),
             ),
             ("update-startup-recover", self._start_update_recovery),
         ]
