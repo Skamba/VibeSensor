@@ -203,6 +203,9 @@ class DiagnosisPayload(TypedDict):
     order_findings: list[OrderFindingRow]
     amplitude_basis: AmplitudeBasis
     location_amplitudes: list[LocationAmplitudeRow]
+    # No cause found, yet a sensor felt a vibration in the elevated strength band
+    # (L3) or above: the run must not read as vibration-free.
+    unexplained_vibration: bool
     amplitude_vs_speed: list[SpeedAmplitudePoint]
     spectrum: DiagnosisSpectrum | None
     source_checks: list[SourceCheck]

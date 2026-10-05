@@ -385,6 +385,7 @@ export interface components {
             speed_dependence: components["schemas"]["SpeedDependenceValue"] | null;
             speed_max_kmh: number | null;
             speed_min_kmh: number | null;
+            unexplained_vibration: boolean;
             verdict: components["schemas"]["DiagnosisVerdictValue"];
             weak_reasons: string[];
             zone: string | null;

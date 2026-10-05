@@ -162,6 +162,9 @@ class Expected:
     dominant_phase: str | None = None
     # What a weak-evidence report must say made the run hard to judge.
     weak_reasons: frozenset[str] = frozenset()
+    # A strong vibration no checked order explains: a no-fault report must say
+    # it was there, never that nothing significant was found.
+    unexplained_vibration: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -541,7 +544,16 @@ EV_CASES = (
             _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
         ),
         _fault("driveline", DRIVELINE_ZONES, "P1"),
-        cars=("ev",),
+        # Without the motor's ratio no order explains the shake: the report has
+        # no cause to name, but it must not call the run vibration-free.
+        by_car={
+            "ev_no_ratio": Expected(
+                verdicts=frozenset({"no_fault", "weak_evidence"}),
+                levels=WEAK_ONLY,
+                unexplained_vibration=True,
+            )
+        },
+        cars=("ev", "ev_no_ratio"),
     ),
 )
 
@@ -589,7 +601,11 @@ BENCH_CASES = (
     Case(
         "bench-fixed-resonance-sweep",
         _sweep(_ov("all", "engine_idle", 0.5, 0.8)),
-        Expected(verdicts=frozenset({"no_fault", "weak_evidence"}), levels=WEAK_ONLY),
+        Expected(
+            verdicts=frozenset({"no_fault", "weak_evidence"}),
+            levels=WEAK_ONLY,
+            unexplained_vibration=True,
+        ),
     ),
     Case(
         "bench-rear-right-wheel-sweep",
@@ -999,6 +1015,7 @@ PDF_CASES = frozenset(
         ("bench-healthy-sweep", "fwd"),
     }
 )
+_UNEXPLAINED_HEADLINE_EN = "Vibration found, but no checked cause explains it"
 _PDF_HEADLINES = {
     "fault": ("likely cause:", "waarschijnlijke oorzaak:"),
     "weak_evidence": (
@@ -1532,7 +1549,14 @@ def _assert_report_view(
         # The workshop is told the engine check assumed top gear.
         assert _ENGINE_TOP_GEAR_LINE in result.report.mechanic.ruled_out
     if diagnosis["verdict"] == "no_fault":
-        assert owner.headline == "No significant vibration found"
+        # A strong shake that no order explains is reported as found, not as
+        # nothing found; a healthy car's road noise is not significant.
+        nothing_found = owner.headline == "No significant vibration found"
+        if expected.unexplained_vibration:
+            assert not nothing_found, owner.headline
+            assert owner.headline == _UNEXPLAINED_HEADLINE_EN, owner.headline
+        else:
+            assert nothing_found, owner.headline
         assert owner.diagram.zone is None
         # What the drive did not cover: without measured engine RPM the engine was
         # untested or checked in top gear only, and a drive that never went below

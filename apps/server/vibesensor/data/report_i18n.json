@@ -1295,6 +1295,10 @@
     "en": "What to ask the shop",
     "nl": "Wat je de werkplaats vraagt"
   },
+  "SHOP_UNEXPLAINED": {
+    "en": "A strong vibration was measured that this test could not tie to a checked rhythm; look for a loose or resonating part near the {location}.",
+    "nl": "Er is een sterke trilling gemeten die deze test niet aan een gecontroleerd ritme kon koppelen; zoek naar een los of meetrillend onderdeel bij {location}."
+  },
   "SHOP_WEAK": {
     "en": "Don't replace parts based on this report alone; record the test again first.",
     "nl": "Vervang geen onderdelen op basis van alleen dit rapport; meet eerst opnieuw."
@@ -1519,6 +1523,10 @@
     "en": "have the wheel bearing and hub of {zone} checked for play and runout.",
     "nl": "laat het wiellager en de naaf van {zone} controleren op speling en slingering."
   },
+  "STEP_UNEXPLAINED": {
+    "en": "Record again and hold the speed where you feel it for 20 seconds. If it stays, have a workshop look for a loose or resonating part near the {location}.",
+    "nl": "Meet opnieuw en houd de snelheid waarop je hem voelt 20 seconden vast. Blijft hij, laat een werkplaats dan zoeken naar een los of meetrillend onderdeel bij {location}."
+  },
   "STEP_WHEEL_UNLOCATED": {
     "en": "Mount a sensor at each wheel and record the test again to find which wheel or tire it is.",
     "nl": "Monteer bij elk wiel een sensor en meet de test opnieuw om te vinden welk wiel of welke band het is."
@@ -1674,6 +1682,18 @@
   "VERDICT_NO_FAULT_NOT_CHECKED": {
     "en": "Not checked, so not shown to be fine: {sources}.",
     "nl": "Niet gecontroleerd, dus niet aangetoond dat het in orde is: {sources}."
+  },
+  "VERDICT_UNEXPLAINED": {
+    "en": "Vibration found, but no checked cause explains it",
+    "nl": "Trilling gevonden, maar geen gecontroleerde oorzaak verklaart hem"
+  },
+  "VERDICT_UNEXPLAINED_BODY": {
+    "en": "The strongest vibration, {amplitude} at the {location}, did not follow the rhythm of anything this run could check.",
+    "nl": "De sterkste trilling, {amplitude} bij {location}, volgde het ritme van niets wat deze rit kon controleren."
+  },
+  "VERDICT_UNEXPLAINED_CHECKED": {
+    "en": "Checked and not the cause: {checked}.",
+    "nl": "Gecontroleerd en niet de oorzaak: {checked}."
   },
   "VERDICT_WEAK": {
     "en": "Not enough evidence to name a cause",

@@ -84,6 +84,16 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        and wheel-bearing hum); and what to do if the
        vibration is still felt. History shows the same sentence and a
        "Checked / Couldn't check" block in the same words.
+     - No fault with `unexplained_vibration` (a sensor felt a vibration in
+       the elevated strength band, 26 dB and up, that no checked order explains,
+       such as a body resonance or an EV run with no motor ratio): the
+       headline is "Vibration found, but no checked cause explains it", never
+       "No significant vibration found". The sentence names the strongest
+       location and its level and lists what was checked and ruled out; the
+       next step is to record again holding that speed, then have a workshop
+       look for a loose or resonating part there (also the shop-request text).
+       The verdict box is grey, as for weak evidence, not green. History
+       shows the same headline and sentence with a warning tone.
 2. **Workshop page** (always included):
    - Test conditions: tire size and circumference, final drive and top gear
      ratio, each with its provenance ("entered by you", "car library,

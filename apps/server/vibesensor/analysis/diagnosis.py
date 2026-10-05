@@ -42,6 +42,7 @@ from vibesensor.domain.order_match import (
 )
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
+from vibesensor.dsp.strength_bands import BANDS
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
@@ -86,6 +87,12 @@ _PRESENT_LEVEL_RATIO = 0.5
 _NARROW_SPEED_KMH = 10.0
 _MAX_WEAK_REASONS = 2
 _MAX_ORDER_ROWS = 6
+# With no cause found, the run still felt a vibration when a sensor's strongest
+# peaks (p95) reach the elevated strength band (L3, 26 dB over the floor). The
+# p95 of every window's strongest peak sits about 10 dB over the floor on a
+# smooth road and in the moderate band (16-26 dB) with a healthy car's residual
+# wheel imbalance; a body resonance or an unchecked motor order is well above.
+_UNEXPLAINED_MIN_DB = next(band["min_db"] for band in BANDS if band["key"] == "l3")
 _MIN_COAST_SAMPLES = 4
 # Engine revs take a moment to drop after the shift to neutral, and each
 # spectrum still holds the seconds before it: skip the start of the coast-down.
@@ -220,6 +227,9 @@ def build_diagnosis(
         ),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
+        "unexplained_vibration": (
+            verdict is DiagnosisVerdict.NO_FAULT and basis == "overall" and _elevated(rows)
+        ),
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
         "spectrum": _spectrum(
             located,
@@ -479,6 +489,14 @@ def _overall_location_amplitudes(
         for location in locations
     }
     return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations))
+
+
+def _elevated(rows: Sequence[LocationAmplitudeRow]) -> bool:
+    """A sensor's strongest peaks reached the elevated strength band (L3) or above."""
+    return any(
+        row["db_above_floor"] is not None and row["db_above_floor"] >= _UNEXPLAINED_MIN_DB
+        for row in rows
+    )
 
 
 def _strongest_row_location(rows: Sequence[LocationAmplitudeRow]) -> str | None:

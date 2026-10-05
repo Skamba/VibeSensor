@@ -265,6 +265,10 @@ the PDF both show:
   without a propshaft, `["propshaft_rear"]` for RWD, and both for AWD with
   the front first when the zone is the front axle. Empty for an EV, without
   a layout, or for another source (`_driveline_parts` in `diagnosis.py`).
+- `unexplained_vibration`: a `no_fault` run with no candidate where a sensor
+  still felt a vibration in the elevated strength band (see `docs/metrics.md`).
+  The report and the UI then say a vibration was found that no checked cause
+  explains, not that none was found.
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
   strongest location with order markers, `source_checks`, and the reference

@@ -523,7 +523,7 @@ function carSourceLabel(
 
 function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.verdict === "no_fault") {
-    return t("history.verdict.no_fault");
+    return noFaultHeadline(diagnosis, t);
   }
   if (diagnosis.verdict === "weak_evidence") {
     return t("history.verdict.weak_evidence");
@@ -808,19 +808,49 @@ function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
       checked.push(noun);
     }
   }
-  if (checked.length === 0) {
+  const strongest = unexplainedLocation(diagnosis);
+  let body: string;
+  if (strongest !== null) {
+    // A vibration was there; it just followed nothing the run could check.
+    body = t("history.verdict.unexplained_body", {
+      location: locationLabel(strongest, t),
+    });
+    if (checked.length) {
+      body = `${body} ${t("history.verdict.unexplained_checked", { checked: joinList(checked, t) })}`;
+    }
+  } else if (checked.length === 0) {
     return t(
       electric(diagnosis)
         ? "history.verdict.no_fault_nothing_checked_ev"
         : "history.verdict.no_fault_nothing_checked",
     );
+  } else {
+    body = t("history.verdict.no_fault_body", {
+      checked: joinList(checked, t),
+    });
   }
-  const body = t("history.verdict.no_fault_body", {
-    checked: joinList(checked, t),
-  });
   return notChecked.length
     ? `${body} ${t("history.verdict.no_fault_not_checked", { sources: joinList(notChecked, t) })}`
     : body;
+}
+
+/** Where a no-fault run still felt a significant vibration, strongest first. */
+function unexplainedLocation(diagnosis: Diagnosis): string | null {
+  if (diagnosis.verdict !== "no_fault" || !diagnosis.unexplained_vibration) {
+    return null;
+  }
+  const row = diagnosis.location_amplitudes.find(
+    (item) => item.amplitude_mg !== null,
+  );
+  return row ? row.location : null;
+}
+
+function noFaultHeadline(diagnosis: Diagnosis, t: Translate): string {
+  return t(
+    diagnosis.unexplained_vibration
+      ? "history.verdict.unexplained"
+      : "history.verdict.no_fault",
+  );
 }
 
 function noFaultCard(
@@ -831,10 +861,10 @@ function noFaultCard(
   const speeds = summary.speed_stats;
   return {
     eyebrow: t("history.verdict.eyebrow"),
-    headline: t("history.verdict.no_fault"),
+    headline: noFaultHeadline(summary.diagnosis, t),
     signature: "",
     confidence: "",
-    tone: "success",
+    tone: summary.diagnosis.unexplained_vibration ? "warn" : "success",
     explanation: noFaultExplanation(summary.diagnosis, t),
     chips: [
       {

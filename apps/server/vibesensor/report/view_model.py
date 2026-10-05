@@ -238,6 +238,8 @@ class OwnerPage:
     """Page 1: verdict, one confidence level, plain description, what to do."""
 
     verdict: str
+    # No cause found, yet a significant vibration was felt (never shown as all clear).
+    unexplained: bool
     headline: str
     level: str | None
     confidence_label: str
@@ -575,6 +577,12 @@ def _owner_page(
     next_step = ctx.t("STEP_NO_FAULT")
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
+        strongest = _unexplained_row(diagnosis)
+        if strongest is not None:
+            # A vibration was there; it just followed nothing the run could check.
+            headline = ctx.t("VERDICT_UNEXPLAINED")
+            where = ctx.location(strongest["location"])
+            next_step = ctx.t("STEP_UNEXPLAINED", location=where)
     elif verdict == "weak_evidence":
         headline = ctx.t("VERDICT_WEAK")
         description = _description(ctx, diagnosis)
@@ -605,6 +613,7 @@ def _owner_page(
         verify = _verify(ctx, diagnosis)
     return OwnerPage(
         verdict=verdict,
+        unexplained=_unexplained_row(diagnosis) is not None,
         headline=headline,
         confidence_label=ctx.t("CONFIDENCE"),
         level=level,
@@ -810,16 +819,27 @@ def _coverage(
             checked.append(name)
             continue
         gaps.append(ctx.t("NOT_COVERED_SOURCE", source=ctx.t(f"SOURCE_{key}"), detail=detail))
-    description = (
-        ctx.t("VERDICT_NO_FAULT_BODY", checked=ctx.join(checked))
-        if checked
-        else ctx.t(
+    strongest = _unexplained_row(diagnosis)
+    if strongest is not None:
+        amplitude = strongest["amplitude_mg"]
+        description = ctx.t(
+            "VERDICT_UNEXPLAINED_BODY",
+            amplitude=ctx.mg(amplitude) if amplitude is not None else ctx.t("VALUE_UNKNOWN"),
+            location=ctx.location(strongest["location"]),
+        )
+        if checked:
+            description = (
+                f"{description} {ctx.t('VERDICT_UNEXPLAINED_CHECKED', checked=ctx.join(checked))}"
+            )
+    elif checked:
+        description = ctx.t("VERDICT_NO_FAULT_BODY", checked=ctx.join(checked))
+    else:
+        description = ctx.t(
             "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED_EV"
             if ctx.electric
             else "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED"
         )
-    )
-    if not_checked and checked:
+    if not_checked and (checked or strongest is not None):
         description = (
             f"{description} {ctx.t('VERDICT_NO_FAULT_NOT_CHECKED', sources=ctx.join(not_checked))}"
         )
@@ -847,6 +867,14 @@ def _coverage(
         gaps.append(ctx.t("NOT_COVERED_COAST"))
     gaps.append(ctx.t("NOT_COVERED_NEVER", items=ctx.join(_never_analysed(ctx, diagnosis))))
     return description, covered, tuple(f"{gap[:1].upper()}{gap[1:]}" for gap in gaps)
+
+
+def _unexplained_row(diagnosis: DiagnosisPayload) -> LocationAmplitudeRow | None:
+    """The strongest location of a no-fault run that still felt a significant vibration."""
+    if diagnosis["verdict"] != "no_fault" or not diagnosis["unexplained_vibration"]:
+        return None
+    rows = [row for row in diagnosis["location_amplitudes"] if row["amplitude_mg"] is not None]
+    return rows[0] if rows else None
 
 
 def _never_analysed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> list[str]:
@@ -1164,6 +1192,9 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
 def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     verdict = diagnosis["verdict"]
     if verdict == "no_fault":
+        strongest = _unexplained_row(diagnosis)
+        if strongest is not None:
+            return (ctx.t("SHOP_UNEXPLAINED", location=ctx.location(strongest["location"])),)
         return (ctx.t("SHOP_NO_FAULT"),)
     if verdict == "weak_evidence":
         return (ctx.t("SHOP_WEAK"),)

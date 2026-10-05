@@ -360,6 +360,7 @@ function checkedInsights(
   sourceChecks: SourceChecks,
   language: Lang = "en",
   conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]> = {},
+  extra: Partial<HistoryInsightsPayload["diagnosis"]> = {},
 ) {
   const insights = populatedInsights("run-010");
   const base = makeDiagnosis();
@@ -372,8 +373,9 @@ function checkedInsights(
           source: "wheel/tire",
           zone: "front_left_wheel",
           source_checks: sourceChecks,
+          ...extra,
         }
-      : { source_checks: sourceChecks },
+      : { source_checks: sourceChecks, ...extra },
   );
   insights.diagnosis.conditions = { ...base.conditions, ...conditions };
   const details = buildDetails(
@@ -587,6 +589,49 @@ test("an EV run names its motor, calls the engine not applicable and skips gearb
     expect(dutch.checks.notApplicable[0].label).toBe("Verbrandingsmotor");
   } finally {
     await setLanguage("en");
+  }
+});
+
+test("a strong vibration no checked order explains never reads as nothing found", () => {
+  const sourceChecks: SourceChecks = [
+    { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
+    {
+      source: "driveline",
+      status: "not_testable",
+      reason: "no_drive_reference",
+    },
+    { source: "engine", status: "not_applicable", reason: "electric_car" },
+  ];
+  const ev = { fuel_type: "EV", final_drive_ratio: null } as const;
+  for (const [language, headline, explanation] of [
+    [
+      "en",
+      "Vibration found, but no checked cause explains it",
+      "Strongest at Rear Right Wheel, this vibration did not follow the rhythm of anything this run could check. Checked and not the cause: wheels/tires. Not checked, so not shown to be fine: electric motor.",
+    ],
+    [
+      "nl",
+      "Trilling gevonden, maar geen gecontroleerde oorzaak verklaart hem",
+      "Het sterkst bij Achterwiel rechts; deze trilling volgde het ritme van niets wat deze rit kon controleren. Gecontroleerd en niet de oorzaak: wielen/banden. Niet gecontroleerd, dus niet aangetoond dat het in orde is: elektromotor.",
+    ],
+  ] as const) {
+    const insights = checkedInsights("no_fault", sourceChecks, language, ev, {
+      unexplained_vibration: true,
+      location_amplitudes: [
+        {
+          location: "Rear Right Wheel",
+          amplitude_mg: 228.5,
+          db_above_floor: 36.5,
+          ratio_to_strongest: 1,
+          presence_ratio: null,
+        },
+      ],
+    });
+    expect(insights.primary).toMatchObject({
+      headline,
+      explanation,
+      tone: "warn",
+    });
   }
 });
 

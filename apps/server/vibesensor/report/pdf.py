@@ -311,9 +311,9 @@ def _header_band(canvas: Canvas, view: ReportView) -> float:
 
 
 def _verdict_colors(owner: OwnerPage) -> tuple[colors.Color, colors.Color]:
-    if owner.verdict == "no_fault":
+    if owner.verdict == "no_fault" and not owner.unexplained:
         return GOOD, GOOD_SOFT
-    if owner.verdict == "weak_evidence":
+    if owner.verdict in ("weak_evidence", "no_fault"):
         return MUTED, GREY_SOFT
     return _LEVEL_COLORS.get(owner.level or "", (INK, SURFACE))
 

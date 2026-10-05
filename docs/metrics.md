@@ -53,6 +53,14 @@ location's own noise floor next to it:
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
 - With no diagnosed order (`amplitude_basis = "overall"`), each location reports
   the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).
+- `unexplained_vibration`: a no-fault run with no candidate where some
+  location's p95 `db_above_floor` reaches the elevated strength band (L3,
+  26 dB). No checked order explains that vibration, so the report and the UI
+  say a vibration was found but not tied to a cause, never "No significant
+  vibration found". The p95 of each window's strongest peak sits about 10 dB
+  over the floor on a smooth road and around 20 dB with a healthy car's
+  residual wheel imbalance (benchmark); a body resonance (37 dB) or an EV
+  motor order with no ratio entered (36 dB) is well above.
 - `amplitude_vs_speed`: median order amplitude (mg) per 5 km/h speed bin and
   location; `spectrum.peaks`: median amplitude (mg) of peaks recurring in at
   least 20% of the strongest location's windows within ±5 km/h of the reference
