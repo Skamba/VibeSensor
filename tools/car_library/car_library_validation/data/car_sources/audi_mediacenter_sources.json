@@ -931,6 +931,27 @@
       "title": "Audi MediaCenter A6 Avant 55 TFSI quattro 7-speed S tronic 250 kW technical data (09/11/2024)",
       "note": "Official Audi MediaCenter Germany-program technical data, status 09/11/2024, for the A6 Avant 55 TFSI quattro 7-speed S tronic 250 kW (MHEV): quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-ttrs-coupe-until-2023-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-tt-rs-coupe-11276",
+      "title": "Audi MediaCenter TT RS Coupé (until 2023) model page",
+      "note": "Official Audi MediaCenter model page scoping the 8S TT RS Coupé as 'until 2023'. It links the 09/09/2016 TT RS basic information and the 11/2022 technical-data PDF.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-ttrs-roadster-until-2023-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-tt-rs-roadster-11275",
+      "title": "Audi MediaCenter TT RS Roadster (until 2023) model page",
+      "note": "Official Audi MediaCenter model page scoping the 8S TT RS Roadster as 'until 2023'. It links the 11/2022 technical-data PDF.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8s-tt-coupe-until-2023-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
+      "title": "Audi MediaCenter TT Coupé (until 2023) model page",
+      "note": "Official Audi MediaCenter model page scoping the 8S TT Coupé as 'until 2023'. Its last technical-data PDFs (01/2023) cover only the 40 TFSI S tronic, 45 TFSI S tronic and 45 TFSI quattro S tronic.",
+      "confidence": "high"
     }
   ]
 }

@@ -84,7 +84,7 @@
       "id": "audi-c7-2-0-tfsi-eu-2011-dct7-fwd",
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -179,7 +179,7 @@
       "id": "audi-c7-2-0-tfsi-eu-2011-zf8hp-fwd",
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -274,7 +274,7 @@
       "id": "audi-c7-3-0-tdi-quattro-eu-2011-dct7-awd",
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -375,7 +375,7 @@
       "id": "audi-c7-3-0-tdi-quattro-eu-2011-zf8hp-awd",
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",

@@ -100,4 +100,4 @@ def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_
                         unknown_fd_models.append(model["model"])
 
     # Audi TT RS Coupe (8S) is one of the rows whose final drive Audi does not publish.
-    assert "TT RS Coupe (8S, 2022)" in unknown_fd_models
+    assert "TT RS Coupe (8S, 2016–2023)" in unknown_fd_models

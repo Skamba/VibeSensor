@@ -1,17 +1,16 @@
 {
   "definitions": {
     "notes": {
-      "n4": "Official Audi Germany-market material now confirms the exact late-cycle TT Coupé 45 TFSI quattro S tronic 180 kW mapping: quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. The broad TT row remains unchanged because the current schema stores only one final_drive_ratio, the checked exact evidence is late-cycle only, and this pass did not prove one production-safe mapping across the full 2015-2023 row.",
-      "n5": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact TT Coupé 40 TFSI S tronic 145 kW state represented by this narrowed 2023-only row.",
-      "n6": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state represented by this 2023-only row.",
-      "n7": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
-      "n8": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state represented by this 2023-only row.",
-      "n9": "Official Audi MediaCenter 11/2022 technical-data PDF lists 225/50 R17 as the basic tire for the exact TT Roadster 45 TFSI S tronic 180 kW state represented by this 2022-only row.",
-      "n10": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
-      "n11": "Official Audi MediaCenter 01/2023 technical-data PDF lists 245/40 R18 as the basic tire for the exact late-cycle TTS Coupe state represented by this 2023-only row.",
-      "n12": "Official Audi MediaCenter 01/2023 technical-data PDF lists 245/40 R18 as the basic tire for the exact late-cycle TTS Roadster state represented by this 2023-only row.",
-      "n13": "Official Audi MediaCenter 11/2022 technical-data PDF lists 245/35 R19 as the basic tire for the exact TT RS Coupe state represented by this 2022-only row.",
-      "n14": "Official Audi MediaCenter 11/2022 technical-data PDF lists 245/35 R19 as the basic tire for the exact TT RS Roadster state represented by this 2022-only row."
+      "n5": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact TT Coupé 40 TFSI S tronic 145 kW state.",
+      "n6": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state.",
+      "n7": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state.",
+      "n8": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state.",
+      "n9": "Official Audi MediaCenter 11/2022 technical-data PDF lists 225/50 R17 as the basic tire for the exact TT Roadster 45 TFSI S tronic 180 kW state.",
+      "n10": "Official Audi MediaCenter 01/2023 technical-data PDF lists 225/50 R17 as the basic tire for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state.",
+      "n11": "Official Audi MediaCenter 01/2023 technical-data PDF lists 245/40 R18 as the basic tire for the exact late-cycle TTS Coupe state.",
+      "n12": "Official Audi MediaCenter 01/2023 technical-data PDF lists 245/40 R18 as the basic tire for the exact late-cycle TTS Roadster state.",
+      "n13": "Official Audi MediaCenter 11/2022 technical-data PDF lists 245/35 R19 as the basic tire for the exact TT RS Coupe state.",
+      "n14": "Official Audi MediaCenter 11/2022 technical-data PDF lists 245/35 R19 as the basic tire for the exact TT RS Roadster state."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -57,23 +56,73 @@
         "audi_mediacenter_sources:8s-ttrs-roadster-2022-tech-data-pdf"
       ],
       "e13": [
-        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
-        "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf"
-      ],
-      "e14": [
         "audi_mediacenter_sources:8s-ttrs-coupe-2022-tech-data-pdf",
         "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf"
       ],
-      "e15": [
+      "e14": [
         "audi_mediacenter_sources:8s-ttrs-roadster-2022-tech-data-pdf",
         "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf"
       ],
+      "e15": [
+        "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf"
+      ],
       "e16": [
-        "legacy_research_sources:a66ead086a49",
-        "legacy_research_sources:f46299570461"
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-adac-catalogue",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
       ],
       "e17": [
-        "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf"
+        "audi_mediacenter_sources:8s-tt-coupe-40-tfsi-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-coupe-until-2023-model-page",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e18": [
+        "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-coupe-until-2023-model-page",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e19": [
+        "audi_mediacenter_sources:8s-tt-coupe-45-tfsi-quattro-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-coupe-until-2023-model-page",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e20": [
+        "audi_mediacenter_sources:8s-tt-roadster-40-tfsi-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e21": [
+        "audi_mediacenter_sources:8s-tt-roadster-45-tfsi-2022-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e22": [
+        "audi_mediacenter_sources:8s-tt-roadster-45-tfsi-quattro-2023-tech-data-pdf",
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e23": [
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "audi_mediacenter_sources:8s-tts-coupe-2023-tech-data-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e24": [
+        "audi_mediacenter_sources:8s-tt-tts-until-2023-product-info-pdf",
+        "audi_mediacenter_sources:8s-tts-roadster-2023-tech-data-pdf",
+        "secondary_technical_sources:tt-8s-facelift-adac-catalogue"
+      ],
+      "e25": [
+        "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf",
+        "audi_mediacenter_sources:8s-ttrs-coupe-2022-tech-data-pdf",
+        "audi_mediacenter_sources:8s-ttrs-coupe-until-2023-model-page"
+      ],
+      "e26": [
+        "audi_mediacenter_sources:8s-ttrs-basic-info-2016-pdf",
+        "audi_mediacenter_sources:8s-ttrs-roadster-2022-tech-data-pdf",
+        "audi_mediacenter_sources:8s-ttrs-roadster-until-2023-model-page"
       ]
     },
     "tire_setups": {
@@ -227,85 +276,14 @@
   },
   "configurations": [
     {
-      "id": "audi-8s-40-tfsi-eu-2015-mt6-fwd",
-      "type": "Coupe",
-      "production_start_year": 2015,
-      "production_end_year": 2023,
-      "model_name": "TT (8S, 2015-2023)",
-      "variant_name": "40 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
-          }
-        ],
-        "default_ref": "setup_245_19"
-      },
-      "verification_notes": [
-        {
-          "note": "Official Audi TT/TTS product-information material shows the facelift-era 40 TFSI only with 7-speed S tronic rather than a manual gearbox, and this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet for a 40 TFSI manual coupe. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
-          "evidence_refs_ref": "e10"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Audi TT 40 TFSI exact manual applicability across the represented row",
-          "reason": "Official Audi TT/TTS product information shows the facelift-era 40 TFSI only with 7-speed S tronic, and this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet for a 40 TFSI manual coupe.",
-          "evidence_refs_ref": "e10"
-        },
-        {
-          "item": "Audi TT 40 TFSI legacy manual row replacement evidence",
-          "reason": "Accessible public historical analogue evidence suggests an early front-wheel-drive manual TT coupe existed under older naming, but this run did not recover accepted official Audi source material that maps that analogue cleanly onto a 40 TFSI manual row.",
-          "evidence_refs_ref": "e10"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "audi-8s-45-tfsi-eu-2015-mt6-fwd",
       "type": "Coupe",
-      "production_start_year": 2015,
-      "production_end_year": 2023,
-      "model_name": "TT (8S, 2015-2023)",
+      "production_start_year": 2018,
+      "production_end_year": 2020,
+      "model_name": "TT (8S, 2018-2020)",
       "variant_name": "45 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -347,6 +325,10 @@
         {
           "note": "Official Audi TT/TTS product-information material confirms that the facelift-era 45 TFSI program includes a 6-speed manual coupe, but this run did not recover an accepted exact official 2014/2015 Audi technical-data sheet with the manual row's ratios, final drive, and basic tire. The broad legacy manual row therefore remains unresolved rather than promoted to an exact early-cycle mapping.",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "note": "Production span 2018-2020: ADAC lists the 45 TFSI manual 180 kW only from 12/18 to 10/20, and before the facelift the 8S was sold as 1.8 TFSI / 2.0 TFSI; the January 2019 TT/TTS product information confirms the six-speed manual for the 45 TFSI.",
+          "evidence_refs_ref": "e16"
         }
       ],
       "unresolved": [
@@ -369,265 +351,25 @@
       }
     },
     {
-      "id": "audi-8s-45-tfsi-eu-2015-dct7-fwd",
-      "type": "Coupe",
-      "production_start_year": 2015,
-      "production_end_year": 2023,
-      "model_name": "TT (8S, 2015-2023)",
-      "variant_name": "45 TFSI",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DQ381)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
-          }
-        ],
-        "default_ref": "setup_245_19"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
-          "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-          "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target.",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-8s-45-tfsi-quattro-eu-2015-mt6-awd",
-      "type": "Coupe",
-      "production_start_year": 2015,
-      "production_end_year": 2023,
-      "model_name": "TT (8S, 2015-2023)",
-      "variant_name": "45 TFSI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "MT6",
-        "name": "6-speed manual"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.84
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.462
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
-          }
-        ],
-        "default_ref": "setup_245_19"
-      },
-      "verification_notes": [
-        {
-          "note": "Official Audi TT/TTS product-information material and the exact 01/2023 TT Coupe 45 TFSI quattro technical-data PDF support quattro AWD only alongside 7-speed S tronic wording; this run did not recover any accepted official evidence for a manual 45 TFSI quattro coupe row. The broad legacy manual row therefore remains only as an unresolved placeholder rather than a supported exact configuration.",
-          "evidence_refs_ref": "e13"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro exact manual applicability across the represented row",
-          "reason": "Official Audi TT/TTS product information lists 45 TFSI manual availability and 45 TFSI quattro availability separately, while the checked exact quattro technical-data PDF is S tronic only; this run did not recover any accepted official evidence for a manual 45 TFSI quattro coupe row.",
-          "evidence_refs_ref": "e13"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-          "reason": "Official Audi sources prove 7-speed S tronic wording, the late-cycle dual-final-drive label, and the 225/50 R17 basic tire, while TT/TTS product information only closes the broader 17/18/19/20-inch family wheel ladder rather than one exact manual-quattro option matrix or gearbox-family code.",
-          "evidence_refs_ref": "e13"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "audi-8s-45-tfsi-quattro-eu-2015-dct7-awd",
-      "type": "Coupe",
-      "production_start_year": 2015,
-      "production_end_year": 2023,
-      "model_name": "TT (8S, 2015-2023)",
-      "variant_name": "45 TFSI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e16",
-        "notes": "Exact official Audi MediaCenter TT Coupe model-page and technical-data PDF evidence confirm quattro AWD with electronically controlled multi-plate clutch for the checked 180 kW coupe state, while full-row numeric continuity remains unresolved.",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e16",
-        "notes": "Exact official Audi MediaCenter TT Coupe model-page and technical-data PDF evidence confirm the 7-speed S tronic transmission wording for the checked 180 kW coupe state, while full-row numeric continuity remains unresolved.",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DQ381)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.769
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 4.769
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "S line 21\""
-          }
-        ],
-        "default_ref": "setup_245_19"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n4",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Schema-safe encoding of the exact Audi TT 45 TFSI quattro dual final-drive values",
-          "reason": "The checked exact Audi technical-data PDF publishes two final-drive values 4.471 / 3.304 for the target, but the current row stores only one final_drive_ratio field.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro production-data applicability across the full 2015-2023 row span",
-          "reason": "The checked exact 2023 Germany-market technical-data PDF resolves the late-cycle 45 TFSI quattro mapping, but this pass did not recover enough year-specific official ratio sheets to prove one unchanged package across the full represented span.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi TT 45 TFSI quattro exact transmission-code and non-basic tire-option coverage",
-          "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire, but they do not publish the gearbox code or the full optional wheel/tire matrix for the exact target.",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "configuration_confidence": "low_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "audi-8s-40-tfsi-eu-2023-dct7-fwd",
       "type": "Coupe",
-      "production_start_year": 2023,
+      "production_start_year": 2018,
       "production_end_year": 2023,
-      "model_name": "TT (8S, 2023)",
+      "model_name": "TT (8S, 2018-2023)",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e3",
-        "notes": "Official Audi MediaCenter TT Coupé model-page and 01/2023 technical-data PDF evidence confirm front-wheel drive for the exact late-cycle TT Coupé 40 TFSI S tronic 145 kW state represented by this narrowed 2023-only row.",
+        "notes": "Official Audi MediaCenter TT Coupé model-page and 01/2023 technical-data PDF evidence confirm front-wheel drive for the exact late-cycle TT Coupé 40 TFSI S tronic 145 kW state.",
         "value": "FWD"
       },
       "transmission": {
         "confidence": "official_derived",
         "evidence_refs_ref": "e3",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms 7-speed S tronic wording for the exact TT Coupé 40 TFSI 145 kW state represented by this narrowed 2023-only row. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDF does not publish the gearbox-family code.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms 7-speed S tronic wording for the exact TT Coupé 40 TFSI 145 kW state. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDF does not publish the gearbox-family code.",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
@@ -635,13 +377,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e3",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT Coupé 40 TFSI S tronic 145 kW state represented by this narrowed 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT Coupé 40 TFSI S tronic 145 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e3",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact TT Coupé 40 TFSI S tronic 145 kW state represented by this narrowed 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact TT Coupé 40 TFSI S tronic 145 kW state.",
           "value": [
             3.4,
             2.75,
@@ -677,8 +419,12 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi MediaCenter TT Coupé model-page and 01/2023 technical-data PDF evidence now confirm the exact late-cycle TT Coupé 40 TFSI S tronic 145 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. Production JSON narrows the broad row to the supported 2023-only state because this pass did not recover an earlier official exact 40 TFSI ratio sheet.",
+          "note": "Official Audi MediaCenter TT Coupé model-page and 01/2023 technical-data PDF evidence now confirm the exact late-cycle TT Coupé 40 TFSI S tronic 145 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Production span 2018-2023: ADAC lists the 40 TFSI S tronic 145 kW from 12/18 to 07/23, and the January 2019 TT/TTS product information introduces it with the seven-speed S tronic.",
+          "evidence_refs_ref": "e17"
         }
       ],
       "unresolved": [
@@ -691,6 +437,11 @@
           "item": "Audi TT 40 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi MediaCenter sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "TT 40 TFSI ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e17"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -703,17 +454,17 @@
     {
       "id": "audi-8s-45-tfsi-eu-2023-dct7-fwd",
       "type": "Coupe",
-      "production_start_year": 2023,
+      "production_start_year": 2018,
       "production_end_year": 2023,
-      "model_name": "TT (8S, 2023)",
+      "model_name": "TT (8S, 2018-2023)",
       "variant_name": "45 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms front-wheel drive for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms front-wheel drive for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state.",
         "value": "FWD"
       },
       "transmission": {
@@ -727,13 +478,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW state.",
           "value": [
             3.4,
             2.75,
@@ -756,8 +507,12 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. Production JSON keeps this as a 2023-only exact row because the checked official evidence in this run is late-cycle only.",
+          "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Coupe 45 TFSI S tronic 180 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "note": "Production span 2018-2023: ADAC lists the 45 TFSI S tronic 180 kW from 12/18 to 07/23, and the January 2019 TT/TTS product information introduces it with the seven-speed S tronic.",
+          "evidence_refs_ref": "e18"
         }
       ],
       "unresolved": [
@@ -770,6 +525,11 @@
           "item": "Audi TT 45 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "TT 45 TFSI ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e18"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -782,17 +542,17 @@
     {
       "id": "audi-8s-45-tfsi-quattro-eu-2023-dct7-awd",
       "type": "Coupe",
-      "production_start_year": 2023,
+      "production_start_year": 2018,
       "production_end_year": 2023,
-      "model_name": "TT (8S, 2023)",
+      "model_name": "TT (8S, 2018-2023)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state.",
         "value": "AWD"
       },
       "transmission": {
@@ -806,13 +566,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW state.",
           "value": [
             3.4,
             2.75,
@@ -835,8 +595,12 @@
       },
       "verification_notes": [
         {
-          "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW mapping: on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire. Production JSON keeps this as a 2023-only exact row because the checked official evidence in this run is late-cycle only.",
+          "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Coupe 45 TFSI quattro S tronic 180 kW mapping: on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "Production span 2018-2023: ADAC lists the 45 TFSI quattro S tronic 180 kW from 12/18 to 07/23, and the January 2019 TT/TTS product information introduces it with the seven-speed S tronic.",
+          "evidence_refs_ref": "e19"
         }
       ],
       "unresolved": [
@@ -849,6 +613,11 @@
           "item": "Audi TT 45 TFSI quattro exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "TT 45 TFSI quattro ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e19"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -861,17 +630,17 @@
     {
       "id": "audi-8s-40-tfsi-roadster-eu-2023-dct7-fwd",
       "type": "Roadster",
-      "production_start_year": 2023,
+      "production_start_year": 2018,
       "production_end_year": 2023,
-      "model_name": "TT Roadster (8S, 2023)",
+      "model_name": "TT Roadster (8S, 2018-2023)",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e5",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms front-wheel drive for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms front-wheel drive for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state.",
         "value": "FWD"
       },
       "transmission": {
@@ -885,13 +654,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e5",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e5",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW state.",
           "value": [
             3.4,
             2.75,
@@ -916,6 +685,10 @@
         {
           "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Roadster 40 TFSI S tronic 145 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "note": "Production span 2018-2023: the January 2019 TT/TTS product information introduces the facelifted Coupé and Roadster with the 40 TFSI 145 kW and the seven-speed S tronic; the 12/18-07/23 sales period is ADAC's Coupé listing for the same engine and gearbox.",
+          "evidence_refs_ref": "e20"
         }
       ],
       "unresolved": [
@@ -928,6 +701,11 @@
           "item": "Audi TT Roadster 40 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "TT Roadster 40 TFSI ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e20"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -940,17 +718,17 @@
     {
       "id": "audi-8s-45-tfsi-roadster-eu-2022-dct7-fwd",
       "type": "Roadster",
-      "production_start_year": 2022,
-      "production_end_year": 2022,
-      "model_name": "TT Roadster (8S, 2022)",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "model_name": "TT Roadster (8S, 2018-2023)",
       "variant_name": "45 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e6",
-        "notes": "Official Audi MediaCenter 11/2022 technical-data PDF confirms front-wheel drive for the exact TT Roadster 45 TFSI S tronic 180 kW state represented by this 2022-only row.",
+        "notes": "Official Audi MediaCenter 11/2022 technical-data PDF confirms front-wheel drive for the exact TT Roadster 45 TFSI S tronic 180 kW state.",
         "value": "FWD"
       },
       "transmission": {
@@ -964,13 +742,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e6",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT Roadster 45 TFSI S tronic 180 kW state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT Roadster 45 TFSI S tronic 180 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e6",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact TT Roadster 45 TFSI S tronic 180 kW state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact TT Roadster 45 TFSI S tronic 180 kW state.",
           "value": [
             3.4,
             2.75,
@@ -995,6 +773,10 @@
         {
           "note": "Official Audi MediaCenter 11/2022 technical-data PDF confirms the exact TT Roadster 45 TFSI S tronic 180 kW mapping: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "note": "Production span 2018-2023: the January 2019 TT/TTS product information introduces the facelifted Coupé and Roadster with the 45 TFSI 180 kW and the seven-speed S tronic; the 12/18-07/23 sales period is ADAC's Coupé listing for the same engine and gearbox.",
+          "evidence_refs_ref": "e21"
         }
       ],
       "unresolved": [
@@ -1007,6 +789,11 @@
           "item": "Audi TT Roadster 45 TFSI exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2022 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "TT Roadster 45 TFSI ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2022 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e21"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -1019,17 +806,17 @@
     {
       "id": "audi-8s-45-tfsi-quattro-roadster-eu-2023-dct7-awd",
       "type": "Roadster",
-      "production_start_year": 2023,
+      "production_start_year": 2018,
       "production_end_year": 2023,
-      "model_name": "TT Roadster (8S, 2023)",
+      "model_name": "TT Roadster (8S, 2018-2023)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e7",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state.",
         "value": "AWD"
       },
       "transmission": {
@@ -1043,13 +830,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e7",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e7",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW state.",
           "value": [
             3.4,
             2.75,
@@ -1074,6 +861,10 @@
         {
           "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TT Roadster 45 TFSI quattro S tronic 180 kW mapping: on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, Audi's published dual final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
           "evidence_refs_ref": "e7"
+        },
+        {
+          "note": "Production span 2018-2023: the January 2019 TT/TTS product information introduces the facelifted Coupé and Roadster with the 45 TFSI quattro 180 kW and the seven-speed S tronic; the 12/18-07/23 sales period is ADAC's Coupé listing for the same engine and gearbox.",
+          "evidence_refs_ref": "e22"
         }
       ],
       "unresolved": [
@@ -1086,6 +877,11 @@
           "item": "Audi TT Roadster 45 TFSI quattro exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 225/50 R17 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "TT Roadster 45 TFSI quattro ratios between 2018 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2018-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e22"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -1098,17 +894,17 @@
     {
       "id": "audi-8s-tts-coupe-eu-2023-dct7-awd",
       "type": "Coupe",
-      "production_start_year": 2023,
+      "production_start_year": 2019,
       "production_end_year": 2023,
-      "model_name": "TTS Coupe (8S, 2023)",
+      "model_name": "TTS Coupe (8S, 2019-2023)",
       "variant_name": "TTS",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e8",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TTS Coupe state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TTS Coupe state.",
         "value": "AWD"
       },
       "transmission": {
@@ -1122,13 +918,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e8",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.661 as the 7th-gear ratio for the exact late-cycle TTS Coupe state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.661 as the 7th-gear ratio for the exact late-cycle TTS Coupe state.",
           "value": 0.661
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e8",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact late-cycle TTS Coupe state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact late-cycle TTS Coupe state.",
           "value": [
             3.19,
             2.75,
@@ -1153,6 +949,10 @@
         {
           "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TTS Coupe mapping: on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, Audi's published dual final-drive values 4.471 / 3.304, and a 245/40 R18 basic tire.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "Production span 2019-2023: the January 2019 TT/TTS product information launches the facelifted TTS (225 kW) shortly after the TT with the new seven-speed S tronic as standard; ADAC dates the TT facelift program to 12/18-07/23.",
+          "evidence_refs_ref": "e23"
         }
       ],
       "unresolved": [
@@ -1165,6 +965,11 @@
           "item": "Audi TTS exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 245/40 R18 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "item": "TTS Coupe ratios between 2019 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2019-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e23"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -1177,17 +982,17 @@
     {
       "id": "audi-8s-tts-roadster-eu-2023-dct7-awd",
       "type": "Roadster",
-      "production_start_year": 2023,
+      "production_start_year": 2019,
       "production_end_year": 2023,
-      "model_name": "TTS Roadster (8S, 2023)",
+      "model_name": "TTS Roadster (8S, 2019-2023)",
       "variant_name": "TTS",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e9",
-        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TTS Roadster state represented by this 2023-only row.",
+        "notes": "Official Audi MediaCenter 01/2023 technical-data PDF confirms on-demand quattro AWD with electronically controlled multi-plate clutch for the exact late-cycle TTS Roadster state.",
         "value": "AWD"
       },
       "transmission": {
@@ -1201,13 +1006,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e9",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.661 as the 7th-gear ratio for the exact late-cycle TTS Roadster state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists 0.661 as the 7th-gear ratio for the exact late-cycle TTS Roadster state.",
           "value": 0.661
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e9",
-          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact late-cycle TTS Roadster state represented by this 2023-only row.",
+          "notes": "Official Audi MediaCenter 01/2023 technical-data PDF lists the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the exact late-cycle TTS Roadster state.",
           "value": [
             3.19,
             2.75,
@@ -1232,6 +1037,10 @@
         {
           "note": "Official Audi MediaCenter 01/2023 technical-data PDF confirms the exact late-cycle TTS Roadster mapping: on-demand quattro AWD with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661, Audi's published dual final-drive values 4.471 / 3.304, and a 245/40 R18 basic tire.",
           "evidence_refs_ref": "e9"
+        },
+        {
+          "note": "Production span 2019-2023: the January 2019 TT/TTS product information launches the facelifted TTS Coupé and Roadster (225 kW) shortly after the TT with the new seven-speed S tronic as standard; ADAC dates the TT facelift program to 12/18-07/23.",
+          "evidence_refs_ref": "e24"
         }
       ],
       "unresolved": [
@@ -1244,6 +1053,11 @@
           "item": "Audi TTS Roadster exact transmission-code and optional wheel/tire coverage",
           "reason": "Official Audi sources prove 7-speed S tronic wording, the full ratio set, and the 245/40 R18 basic tire for the exact 2023 state, but they do not publish the gearbox-family code or the full optional wheel/tire matrix for the exact target.",
           "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "TTS Roadster ratios between 2019 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2023 technical-data sheet only; the 2019-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e24"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -1256,23 +1070,23 @@
     {
       "id": "audi-8s-tt-rs-coupe-eu-2022-dct7-awd",
       "type": "Coupe",
-      "production_start_year": 2022,
-      "production_end_year": 2022,
-      "model_name": "TT RS Coupe (8S, 2022)",
+      "production_start_year": 2016,
+      "production_end_year": 2023,
+      "model_name": "TT RS Coupe (8S, 2016-2023)",
       "variant_name": "TT RS",
       "engine_code": "2.5L",
-      "engine_name": "2.5L I5 TFSI Turbo",
+      "engine_name": "2.5L I5 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e14",
-        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm all-wheel drive for the exact TT RS Coupe state represented by this 2022-only row.",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm all-wheel drive for the exact TT RS Coupe state.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e14",
-        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm 7-speed S tronic wording for the exact TT RS Coupe state represented by this 2022-only row. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDFs do not publish a gearbox-family code.",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm 7-speed S tronic wording for the exact TT RS Coupe state. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDFs do not publish a gearbox-family code.",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
@@ -1280,13 +1094,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e11",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT RS Coupe state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT RS Coupe state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e11",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635 for the exact TT RS Coupe state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635 for the exact TT RS Coupe state.",
           "value": [
             3.563,
             2.526,
@@ -1306,7 +1120,7 @@
           },
           {
             "confidence": "official_exact",
-            "evidence_refs_ref": "e17",
+            "evidence_refs_ref": "e15",
             "notes": "Official Audi MediaCenter TT RS basic-info PDF states that the TT RS Coupe is optionally available with 255/30 R20 tires.",
             "front": {
               "width_mm": 255.0,
@@ -1322,7 +1136,11 @@
       "verification_notes": [
         {
           "note": "Official Audi MediaCenter technical-data and basic-info PDFs confirm the exact TT RS Coupe mapping: all-wheel drive, 7-speed S tronic, forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635, 245/35 R19 basic tires, and the optional 255/30 R20 package.",
-          "evidence_refs_ref": "e14"
+          "evidence_refs_ref": "e13"
+        },
+        {
+          "note": "Production span 2016-2023: the 09/2016 TT RS basic information announces the 294 kW TT RS Coupé with the seven-speed S tronic, quattro, 245/35 R19 tires and German prices, and Audi MediaCenter scopes the model 'until 2023'.",
+          "evidence_refs_ref": "e25"
         }
       ],
       "unresolved": [
@@ -1330,6 +1148,11 @@
           "item": "Audi TT RS Coupe exact final-drive value",
           "reason": "The checked exact Audi technical-data PDF does not publish a final-drive value for the TT RS Coupe.",
           "evidence_refs_ref": "e11"
+        },
+        {
+          "item": "TT RS Coupe ratios between 2016 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2022 technical-data sheet only; the 2016-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e25"
         }
       ],
       "configuration_confidence": "medium_confidence",
@@ -1341,23 +1164,23 @@
     {
       "id": "audi-8s-tt-rs-roadster-eu-2022-dct7-awd",
       "type": "Roadster",
-      "production_start_year": 2022,
-      "production_end_year": 2022,
-      "model_name": "TT RS Roadster (8S, 2022)",
+      "production_start_year": 2016,
+      "production_end_year": 2023,
+      "model_name": "TT RS Roadster (8S, 2016-2023)",
       "variant_name": "TT RS",
       "engine_code": "2.5L",
-      "engine_name": "2.5L I5 TFSI Turbo",
+      "engine_name": "2.5L I5 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e15",
-        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm all-wheel drive for the exact TT RS Roadster state represented by this 2022-only row.",
+        "evidence_refs_ref": "e14",
+        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm all-wheel drive for the exact TT RS Roadster state.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e15",
-        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm 7-speed S tronic wording for the exact TT RS Roadster state represented by this 2022-only row. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDFs do not publish a gearbox-family code.",
+        "evidence_refs_ref": "e14",
+        "notes": "Official Audi MediaCenter technical-data and basic-info PDFs confirm 7-speed S tronic wording for the exact TT RS Roadster state. The repo keeps DCT7 as the canonical gearbox-family mapping because the official Audi PDFs do not publish a gearbox-family code.",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
@@ -1365,13 +1188,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e12",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT RS Roadster state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists 0.635 as the 7th-gear ratio for the exact TT RS Roadster state.",
           "value": 0.635
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e12",
-          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635 for the exact TT RS Roadster state represented by this 2022-only row.",
+          "notes": "Official Audi MediaCenter 11/2022 technical-data PDF lists the forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635 for the exact TT RS Roadster state.",
           "value": [
             3.563,
             2.526,
@@ -1391,7 +1214,7 @@
           },
           {
             "confidence": "official_exact",
-            "evidence_refs_ref": "e17",
+            "evidence_refs_ref": "e15",
             "notes": "Official Audi MediaCenter TT RS basic-info PDF states that the TT RS Roadster is optionally available with 255/30 R20 tires.",
             "front": {
               "width_mm": 255.0,
@@ -1407,7 +1230,11 @@
       "verification_notes": [
         {
           "note": "Official Audi MediaCenter technical-data and basic-info PDFs confirm the exact TT RS Roadster mapping: all-wheel drive, 7-speed S tronic, forward ratios 3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635, 245/35 R19 basic tires, and the optional 255/30 R20 package.",
-          "evidence_refs_ref": "e15"
+          "evidence_refs_ref": "e14"
+        },
+        {
+          "note": "Production span 2016-2023: the 09/2016 TT RS basic information announces the 294 kW TT RS Roadster with the seven-speed S tronic, quattro, 245/35 R19 tires and German prices, and Audi MediaCenter scopes the model 'until 2023'.",
+          "evidence_refs_ref": "e26"
         }
       ],
       "unresolved": [
@@ -1415,6 +1242,11 @@
           "item": "Audi TT RS Roadster exact final-drive value",
           "reason": "The checked exact Audi technical-data PDF does not publish a final-drive value for the TT RS Roadster.",
           "evidence_refs_ref": "e12"
+        },
+        {
+          "item": "TT RS Roadster ratios between 2016 and 2023 outside the checked sheet date",
+          "reason": "The gear ratios come from the 2022 technical-data sheet only; the 2016-2023 span is the sales period of the same engine, power and seven-speed S tronic, not a year-by-year official confirmation of the ratios.",
+          "evidence_refs_ref": "e26"
         }
       ],
       "configuration_confidence": "medium_confidence",

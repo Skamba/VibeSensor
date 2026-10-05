@@ -24,7 +24,7 @@
       "id": "audi-8v-rs3-sedan-eu-2017-dct7-awd",
       "variant_name": "RS 3",
       "engine_code": "2.5L",
-      "engine_name": "2.5L I5 TFSI Turbo",
+      "engine_name": "2.5L I5 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

@@ -249,7 +249,7 @@
       "production_start_year": 2008,
       "variant_name": "1.8 TFSI",
       "engine_code": "1.8L",
-      "engine_name": "1.8L I4 TFSI Turbo",
+      "engine_name": "1.8L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -333,7 +333,7 @@
       "production_start_year": 2008,
       "variant_name": "1.8 TFSI",
       "engine_code": "1.8L",
-      "engine_name": "1.8L I4 TFSI Turbo",
+      "engine_name": "1.8L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -418,7 +418,7 @@
       "production_start_year": 2008,
       "variant_name": "1.8 TFSI",
       "engine_code": "1.8L",
-      "engine_name": "1.8L I4 TFSI Turbo",
+      "engine_name": "1.8L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -503,7 +503,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -597,7 +597,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -682,7 +682,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -767,7 +767,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -854,7 +854,7 @@
       "production_start_year": 2012,
       "variant_name": "2.0 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -948,7 +948,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1039,7 +1039,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -1124,7 +1124,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1209,7 +1209,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1294,7 +1294,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -1397,7 +1397,7 @@
       "production_start_year": 2012,
       "variant_name": "2.0 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -1497,7 +1497,7 @@
       "production_start_year": 2008,
       "variant_name": "2.0 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1588,7 +1588,7 @@
       "production_start_year": 2008,
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -1695,7 +1695,7 @@
       "production_start_year": 2011,
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "reputable_secondary_crosschecked",
@@ -1804,7 +1804,7 @@
       "production_start_year": 2008,
       "variant_name": "3.0 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",

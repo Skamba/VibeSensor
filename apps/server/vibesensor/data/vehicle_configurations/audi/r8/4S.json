@@ -53,7 +53,7 @@
       "id": "audi-4s-v10-rwd-eu-2015-dct7-rwd",
       "variant_name": "V10 RWD",
       "engine_code": "5.2L",
-      "engine_name": "5.2L V10 NA",
+      "engine_name": "5.2L V10",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -115,7 +115,7 @@
       "id": "audi-4s-v10-quattro-eu-2015-dct7-awd",
       "variant_name": "V10 quattro",
       "engine_code": "5.2L",
-      "engine_name": "5.2L V10 NA",
+      "engine_name": "5.2L V10",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",

@@ -99,7 +99,7 @@
       "id": "audi-8j-2-0-tfsi-eu-2011-dct6-fwd",
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",
@@ -169,7 +169,7 @@
       "id": "audi-8j-2-0-tfsi-eu-2011-mt6-fwd",
       "variant_name": "2.0 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",
@@ -239,7 +239,7 @@
       "id": "audi-8j-2-0-tfsi-quattro-eu-2011-dct6-awd",
       "variant_name": "2.0 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",
@@ -324,7 +324,7 @@
       "id": "audi-8j-2-0-tfsi-quattro-eu-2011-mt6-awd",
       "variant_name": "2.0 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_derived",

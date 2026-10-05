@@ -224,7 +224,7 @@
       "id": "audi-c8-40-tfsi-eu-2019-dct7-fwd",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -294,7 +294,7 @@
       "production_end_year": 2025,
       "variant_name": "35 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -383,7 +383,7 @@
       "production_end_year": 2025,
       "variant_name": "40 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -472,7 +472,7 @@
       "production_end_year": 2025,
       "variant_name": "40 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -567,7 +567,7 @@
       "production_end_year": 2025,
       "variant_name": "45 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -656,7 +656,7 @@
       "production_end_year": 2025,
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -751,7 +751,7 @@
       "production_end_year": 2020,
       "variant_name": "45 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -848,7 +848,7 @@
       "production_end_year": 2025,
       "variant_name": "45 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -936,7 +936,7 @@
       "production_end_year": 2025,
       "variant_name": "50 TDI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TDI Diesel",
+      "engine_name": "3.0L V6 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -1031,7 +1031,7 @@
       "production_end_year": 2025,
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo",
+      "engine_name": "3.0L V6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

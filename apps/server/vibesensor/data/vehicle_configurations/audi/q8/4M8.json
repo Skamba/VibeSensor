@@ -102,7 +102,7 @@
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "55 TFSI",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo",
+      "engine_name": "3.0L V6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -200,7 +200,7 @@
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo",
+      "engine_name": "3.0L V6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -289,7 +289,7 @@
       "model_name": "Q8 (4M8, 2019-2026)",
       "variant_name": "60 TFSI e",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo PHEV",
+      "engine_name": "3.0L V6 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "unverified",
@@ -391,7 +391,7 @@
       "model_name": "Q8 (4M8, 2020-2026)",
       "variant_name": "60 TFSI e quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo PHEV",
+      "engine_name": "3.0L V6 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",

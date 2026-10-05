@@ -126,7 +126,7 @@
       "model_name": "Q5 (FY, 2017-2026)",
       "variant_name": "40 TFSI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -245,7 +245,7 @@
       "model_name": "Q5 (FY, 2018-2019)",
       "variant_name": "35 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -351,7 +351,7 @@
       "model_name": "Q5 (FY, 2019-2024)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -475,7 +475,7 @@
       "model_name": "Q5 (FY, 2019-2025)",
       "variant_name": "55 TFSI e quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo PHEV",
+      "engine_name": "2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
@@ -606,7 +606,7 @@
       "model_name": "Q5 (FY, 2020-2024)",
       "variant_name": "40 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

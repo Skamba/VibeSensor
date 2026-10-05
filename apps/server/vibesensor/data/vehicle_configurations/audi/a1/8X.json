@@ -117,7 +117,7 @@
       "id": "audi-8x-1-0-tfsi-eu-2011-5-speed-manu-fwd",
       "variant_name": "1.0 TFSI",
       "engine_code": "1.0L",
-      "engine_name": "1.0L I3 TFSI Turbo",
+      "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -192,7 +192,7 @@
       "id": "audi-8x-1-0-tfsi-eu-2011-dct7-fwd",
       "variant_name": "1.0 TFSI",
       "engine_code": "1.0L",
-      "engine_name": "1.0L I3 TFSI Turbo",
+      "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -267,7 +267,7 @@
       "id": "audi-8x-1-4-tfsi-eu-2011-5-speed-manu-fwd",
       "variant_name": "1.4 TFSI",
       "engine_code": "1.4L",
-      "engine_name": "1.4L I4 TFSI Turbo",
+      "engine_name": "1.4L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -354,7 +354,7 @@
       "id": "audi-8x-1-4-tfsi-eu-2011-dct7-fwd",
       "variant_name": "1.4 TFSI",
       "engine_code": "1.4L",
-      "engine_name": "1.4L I4 TFSI Turbo",
+      "engine_name": "1.4L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

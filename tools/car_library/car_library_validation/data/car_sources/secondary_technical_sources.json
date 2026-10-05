@@ -861,6 +861,20 @@
       "title": "ADAC Autokatalog Audi A6 C8 facelift (06/2023-03/2025)",
       "note": "ADAC catalogue listing the Germany-market A6 C8 facelift variants with their sales periods: 35/40 TDI, 40 TDI quattro, 45 TFSI (quattro), 45 TDI quattro S tronic 180 kW 10/23-03/25, 50 TDI quattro tiptronic and 55 TFSI quattro, all ending 12/24-03/25. Used for production spans only.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:tt-8s-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/tt/8s/",
+      "title": "ADAC Autokatalog Audi TT 8S (11/2014-06/2018)",
+      "note": "ADAC catalogue listing the Germany-market TT Coup\u00e9 8S variants before the facelift with their sales periods: 1.8 TFSI 132 kW and 2.0 TFSI 169 kW (manual, S tronic, quattro S tronic) and 2.0 TDI, all ending 06/18. No variant carries a 40 TFSI or 45 TFSI badge. Used for production spans only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:tt-8s-facelift-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/tt/8s-facelift/",
+      "title": "ADAC Autokatalog Audi TT 8S facelift (12/2018-07/2023)",
+      "note": "ADAC catalogue listing the Germany-market TT Coup\u00e9 8S facelift variants with their sales periods: 40 TFSI S tronic 145 kW 12/18-07/23, 45 TFSI manual 180 kW 12/18-10/20, 45 TFSI S tronic 180 kW 12/18-07/23 and 45 TFSI quattro S tronic 180 kW 12/18-07/23. It lists no 40 TFSI manual and no 45 TFSI quattro manual. Used for production spans only; the listing shows Coup\u00e9 variants.",
+      "confidence": "medium"
     }
   ]
 }

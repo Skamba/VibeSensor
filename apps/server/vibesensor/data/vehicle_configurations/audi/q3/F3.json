@@ -83,7 +83,7 @@
       "production_start_year": 2019,
       "variant_name": "35 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -192,7 +192,7 @@
       "production_start_year": 2019,
       "variant_name": "35 TFSI",
       "engine_code": "1.5L",
-      "engine_name": "1.5L I4 TFSI Turbo",
+      "engine_name": "1.5L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -332,7 +332,7 @@
       "production_start_year": 2019,
       "variant_name": "40 TDI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -445,7 +445,7 @@
       "production_start_year": 2019,
       "variant_name": "40 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -559,7 +559,7 @@
       "production_start_year": 2021,
       "variant_name": "45 TFSI e",
       "engine_code": "1.4L",
-      "engine_name": "1.4L I4 TFSI Turbo PHEV",
+      "engine_name": "1.4L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",

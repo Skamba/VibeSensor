@@ -173,7 +173,7 @@
       "id": "audi-8y-30-tdi-eu-2021-mt6-fwd",
       "variant_name": "30 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -283,7 +283,7 @@
       "id": "audi-8y-30-tdi-eu-2021-dct7-fwd",
       "variant_name": "30 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -350,7 +350,7 @@
       "id": "audi-8y-30-tfsi-eu-2021-mt6-fwd",
       "variant_name": "30 TFSI",
       "engine_code": "1.0L",
-      "engine_name": "1.0L I3 TFSI Turbo",
+      "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -460,7 +460,7 @@
       "id": "audi-8y-30-tfsi-eu-2021-dct7-fwd",
       "variant_name": "30 TFSI",
       "engine_code": "1.0L",
-      "engine_name": "1.0L I3 TFSI Turbo",
+      "engine_name": "1.0L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -527,7 +527,7 @@
       "id": "audi-8y-35-tdi-eu-2021-mt6-fwd",
       "variant_name": "35 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -594,7 +594,7 @@
       "id": "audi-8y-35-tdi-eu-2021-dct7-fwd",
       "variant_name": "35 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TDI Diesel",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -704,7 +704,7 @@
       "id": "audi-8y-35-tfsi-eu-2021-mt6-fwd",
       "variant_name": "35 TFSI",
       "engine_code": "1.5L",
-      "engine_name": "1.5L I4 TFSI Turbo",
+      "engine_name": "1.5L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -817,7 +817,7 @@
       "id": "audi-8y-35-tfsi-eu-2021-dct7-fwd",
       "variant_name": "35 TFSI",
       "engine_code": "1.5L",
-      "engine_name": "1.5L I4 TFSI Turbo",
+      "engine_name": "1.5L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -931,7 +931,7 @@
       "id": "audi-8y-40-tfsi-quattro-eu-2021-mt6-awd",
       "variant_name": "40 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",
@@ -1002,7 +1002,7 @@
       "id": "audi-8y-40-tfsi-quattro-eu-2021-dct7-awd",
       "variant_name": "40 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",

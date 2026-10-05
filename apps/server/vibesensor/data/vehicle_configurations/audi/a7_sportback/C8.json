@@ -70,7 +70,7 @@
       "model_name": "A7 Sportback (C8, 2018-2025)",
       "variant_name": "45 TFSI quattro",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 TFSI Turbo",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -209,7 +209,7 @@
       "model_name": "A7 Sportback (C8, 2019-2026)",
       "variant_name": "55 TFSI quattro",
       "engine_code": "3.0L",
-      "engine_name": "3.0L V6 TFSI Turbo",
+      "engine_name": "3.0L V6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "unverified",

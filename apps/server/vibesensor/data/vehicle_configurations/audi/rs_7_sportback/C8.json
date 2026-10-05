@@ -42,7 +42,7 @@
       "id": "audi-c8-rs-7-eu-2020-zf8hp-awd",
       "variant_name": "RS 7",
       "engine_code": "4.0L",
-      "engine_name": "4.0L V8 TFSI Turbo",
+      "engine_name": "4.0L V8 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
