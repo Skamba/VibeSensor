@@ -1,14 +1,13 @@
 {
   "definitions": {
     "notes": {
-      "n3": "Verification backlog remains pending authoritative verification: accessible official BMW sources in this environment did not provide retrievable F22 technical ratio tables, and secondary sources were insufficient to override existing values without guessing.",
-      "n14": "BMW F22 220i 6-speed manual RWD. The row spans two engine eras: pre-LCI 2014-2016 with N20B20 (top 0.830 / FD 3.077 per BMW PressClub T0165234EN/250293) and post-LCI 2016 onwards with B48 (top 0.668 / FD 3.385 per T0260233EN/359752). Repo retains a single row covering the full generation; primary ratio values reflect the LCI B48 era because (a) it covers the larger share of production years and (b) the 220i MT6 with B48 was the variant carried into the 2017+ refresh. MT6 was retired before the 2021 packet (T0327248EN/473311 lists 220i automatic-only), so MT6 production_end is approximately 2019. Default tyre 205/55 R16 per both ACEA packets. Transmission code 'GS6-17BG' (Getrag 285) confirmed via sibling F32 420i tech sheet.",
-      "n15": "BMW F22 220i 8-speed Steptronic (ZF GA8HP45Z) RWD. Era-split: pre-LCI 2014-2016 N20 with 8HP old set (top 0.667 / FD 3.077, T0165234EN/250293) and post-LCI 2016-2021 B48 with 8HP new set (top 0.640 / FD 2.813, T0260233EN/359752 + T0327248EN/473311 confirms 2021 still uses new set). Repo single row holds post-LCI primary values; pre-LCI documented in notes. ZF GA8HP45Z is BMW-published as '8-speed Steptronic'; specific ZF code derived. Default tyre 205/55 R16.",
-      "n16": "Reverse gear ratio (research note): 3.712",
-      "n17": "BMW F22 228i 6-speed manual RWD. The 228i was a narrow EU market (UK + select ACEA) variant only produced 2014-2016 (discontinued at 07/2016 LCI; absent from T0260233EN/359752 facelift packet). production_end_year corrected 2021 -> 2016. Engine N20B20B (180 kW / 245 hp / 350 Nm). Transmission Getrag GS6-17BG. Top gear 0.701 and FD 3.909 per ACEA packet T0179544EN/267610. Default tyre 205/50 R17.",
-      "n18": "BMW F22 228i 8-speed Steptronic (ZF GA8HP45Z) RWD. Production 2014-2016 only. Engine N20B20B. ZF GA8HP45Z old ratio set: [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667], reverse 3.295, FD 3.077 per ACEA T0179544EN/267610 cross-confirmed via sibling F32 428i 2013 launch packet. Default tyre 205/50 R17.",
-      "n19": "BMW F22 230i 6-speed manual RWD. CRITICAL DATE FIX: 230i first appears in the 07/2016 LCI packet (T0260233EN/359752); it did not exist in 2014. production_start_year corrected 2014 -> 2016. MT6 is absent from the 2021 packet (T0327248EN/473311 lists 230i automatic-only); MT6 production_end approx 2019. Engine B48 (high-output tune). Top gear 0.677 / FD 3.909 per LCI ACEA packet. Default tyre 205/50 R17.",
-      "n20": "BMW F22 230i 8-speed Steptronic (ZF GA8HP45Z) RWD. DATE FIX: 230i started 07/2016 (LCI), not 2014. Production through 2021 confirmed by T0327248EN/473311. Engine B48 high-output tune. ZF GA8HP45Z new ratio set: [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, FD 2.813 per T0260233EN/359752 + T0327248EN/473311. Default tyre 205/50 R17."
+      "n14": "BMW F22 220i six-speed manual RWD with the 1998 cc engine, from the 07/2016 sheet. The Getrag GS6-17BG subtype is derived from the sibling F32 420i sheet. The 1997 cc 2014-2015 220i has its own row.",
+      "n15": "BMW F22 220i eight-speed Steptronic RWD with the 1998 cc engine, 2016-2021 (07/2016 and 03/2021 sheets). BMW publishes \"8-speed Steptronic\"; the ZF GA8HP45Z code is derived. The 1997 cc 2014-2015 220i has its own row.",
+      "n16": "Reverse gear: the 07/2016 and 03/2021 F22 sheets print 3.456 for the eight-speed Steptronic.",
+      "n17": "BMW F22 228i six-speed manual RWD, 2014-2016: the 07/2014 ACEA sheet lists it (1997 cc, 180 kW) and the 07/2016 sheet lists the 230i instead. Top gear 0.701, reverse 3.187, final drive 3.909, standard tyre 205/50 R17. The Getrag GS6-17BG subtype is derived.",
+      "n18": "BMW F22 228i eight-speed Steptronic RWD, 2014-2016. The 07/2014 ACEA sheet lists 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, final drive 3.077 and standard tyre 205/50 R17.",
+      "n19": "BMW F22 230i six-speed manual RWD. The 230i first appears in the 07/2016 sheet (1998 cc, 185 kW). Top gear 0.677, final drive 3.909, standard tyre 205/50 R17. The 03/2021 sheet lists the 230i with the automatic only, so the manual ends by 2020.",
+      "n20": "BMW F22 230i eight-speed Steptronic RWD, 2016-2021. The 07/2016 and 03/2021 sheets list 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456 and final drive 2.813, standard tyre 205/50 R17."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -98,9 +97,239 @@
   },
   "configurations": [
     {
-      "id": "bmw-f22-220i-eu-2014-mt6-rwd",
+      "id": "bmw-f22-220i-eu-2014-n-mt6-rwd",
       "production_start_year": 2014,
-      "production_end_year": 2021,
+      "production_end_year": 2015,
+      "variant_name": "220i",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2014 220i Coupé technical data list rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2014 220i Coupé technical data list a six-speed manual.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 0.830 as top gear for the six-speed manual.",
+          "value": 0.83
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list the forward ratios 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830 for the six-speed manual.",
+          "value": [
+            4.551,
+            2.548,
+            1.659,
+            1.23,
+            1.0,
+            0.83
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 3.077 as the final drive for the six-speed manual.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 205/55 R16 as the standard tyres.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Standard 18\""
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2014 technical data (valid from 03/2014) list the 220i Coupé with an in-line four of 1997 cc and 135 kW, the six-speed manual with forward ratios 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830, final drive 3.077 and 205/55 R16 tyres. The 07/2016 sheet lists a 1998 cc 220i with other ratios, so this row ends in 2015.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F22 220i (2014-2015) engine code",
+          "reason": "The 03/2014 sheet prints the 1997 cc capacity but no engine code.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the 2014-2015 220i",
+          "reason": "The 03/2014 sheet publishes only the standard tyre; the other packages on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f22-220i-eu-2014-n-zf8hp-rwd",
+      "production_start_year": 2014,
+      "production_end_year": 2015,
+      "variant_name": "220i",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2014 220i Coupé technical data list rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2014 220i Coupé technical data list a eight-speed Steptronic.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF GA8HP45Z)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 0.667 as top gear for the eight-speed Steptronic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the eight-speed Steptronic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 3.077 as the final drive for the eight-speed Steptronic.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2014 220i Coupé technical data list 205/55 R16 as the standard tyres.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Standard 18\""
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2014 technical data (valid from 03/2014) list the 220i Coupé with an in-line four of 1997 cc and 135 kW, the eight-speed Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.077 and 205/55 R16 tyres. The 07/2016 sheet lists a 1998 cc 220i with other ratios, so this row ends in 2015.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F22 220i (2014-2015) engine code",
+          "reason": "The 03/2014 sheet prints the 1997 cc capacity but no engine code.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the 2014-2015 220i",
+          "reason": "The 03/2014 sheet publishes only the standard tyre; the other packages on this row are inherited family defaults.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-220i-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f22-220i-eu-2014-mt6-rwd",
+      "production_start_year": 2016,
+      "production_end_year": 2020,
       "variant_name": "220i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -121,15 +350,34 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "notes": "Post-LCI B48 era 6th gear from BMW PressClub T0260233EN/359752; pre-LCI N20 era was 0.830 (T0165234EN/250293) - era-split documented in row notes.",
-          "value": 0.668,
-          "evidence_refs_ref": "e7"
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 F22 technical data list 0.668 as sixth gear for the 220i Coupé manual.",
+          "value": 0.668
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "notes": "Post-LCI B48 final drive from T0260233EN/359752; pre-LCI N20 era was 3.077.",
-          "value": 3.385,
-          "evidence_refs_ref": "e7"
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 F22 technical data list 3.385 as the final drive for the 220i Coupé manual.",
+          "value": 3.385
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 F22 technical data list the forward ratios 4.002 / 2.130 / 1.396 / 1.000 / 0.781 / 0.668 for the 220i Coupé six-speed manual.",
+          "value": [
+            4.002,
+            2.13,
+            1.396,
+            1.0,
+            0.781,
+            0.668
+          ]
         }
       },
       "tires": {
@@ -161,36 +409,28 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
+          "note": "The official BMW 07/2016 technical data (1998 cc, 135 kW) list the 220i Coupé six-speed manual with forward ratios 4.002 / 2.130 / 1.396 / 1.000 / 0.781 / 0.668 and final drive 3.385. The sheet is valid from 07/2016, so the row starts in 2016; the earlier 1997 cc 220i is its own 2014-2015 row. The 03/2021 sheet lists the 220i with the automatic only, so the row ends in 2020 at the latest.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-          "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-          "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-          "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '220i' across 2014-2021",
-          "reason": "Broad 2014-2021 220i MT6 row spans at least two distinct exact technical states: 03/2014 ACEA packet (T0165234EN/250293) shows MT6 with top gear 0.830, final drive 3.077, standard 205/55 R16, and 270 Nm; 07/2016 ACEA packet (T0260233EN/359752) shows the B48 220i MT6 with top gear 0.668, final drive 3.385, standard 205/55 R16, and 290 Nm. The 2021 packet (T0327248EN/473311) is automatic-only, so broad MT6 continuity to 2021 is unsupported. Default tire 225/40 R18 is contradicted by official 205/55 R16 standard."
+          "item": "Last model year of the F22 220i six-speed manual",
+          "reason": "The 07/2016 sheet lists the manual and the 03/2021 sheet does not; no sheet from 2017-2020 was checked, so the 2020 end year is an upper bound.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-f22-220i-eu-2014-zf8hp-rwd",
-      "production_start_year": 2014,
+      "production_start_year": 2016,
       "production_end_year": 2021,
       "variant_name": "220i",
       "engine_code": "B48",
@@ -212,30 +452,39 @@
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "notes": "Post-LCI B48 ZF GA8HP45Z new ratio set 8th gear; pre-LCI N20 era was 0.667 (old set).",
-          "value": 0.64,
-          "evidence_refs_ref": "e4"
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 and 03/2021 F22 technical data list 0.640 as eighth gear for the 220i Coupé automatic.",
+          "value": 0.64
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "notes": "Post-LCI ZF GA8HP45Z final drive; pre-LCI was 3.077.",
-          "value": 2.813,
-          "evidence_refs_ref": "e4"
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 and 03/2021 F22 technical data list 2.813 as the final drive for the 220i Coupé automatic.",
+          "value": 2.813
         },
         "gear_ratios": {
           "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 and 03/2021 F22 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 for the 220i Coupé eight-speed Steptronic.",
           "value": [
-            5.25,
-            3.36,
-            2.172,
+            5.0,
+            3.2,
+            2.143,
             1.72,
-            1.316,
+            1.314,
             1.0,
             0.822,
             0.64
-          ],
-          "evidence_refs_ref": "e10",
-          "notes": "Post-LCI ZF GA8HP45Z new ratio set per F22 2016 ACEA packet, cross-confirmed via sibling F32 2016 packet. Pre-LCI old set was [4.714, 3.143, 2.106, 1.667, 1.285, 1.000, 0.839, 0.667]."
+          ]
         }
       },
       "tires": {
@@ -267,44 +516,27 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e1"
-        },
-        {
           "note_ref": "n16",
           "evidence_refs_ref": "e10"
+        },
+        {
+          "note": "The official BMW 07/2016 and 03/2021 technical data list the 220i Coupé eight-speed Steptronic with forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 and final drive 2.813. The row previously stored 5.250 / 3.360 / 2.172 / 1.720 / 1.316 for the first five gears, which neither F22 sheet prints. The row starts with the 07/2016 sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ]
         }
       ],
-      "unresolved": [
-        {
-          "item": "EU F22 variant matrix with drivetrain split (RWD vs xDrive) for 220i/230i/M240i",
-          "reason": "Could not retrieve an official EU F22 technical brochure/spec table in this environment to confirm exact market mapping without ambiguity.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Transmission-specific final drive ratios for EU F22 manual/automatic by variant",
-          "reason": "No accessible official source with verifiable ratio tables was obtained; existing values retained per no-guess rule.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Top-gear ratio confirmation by gearbox subtype across EU F22 production years",
-          "reason": "Available sources did not provide directly retrievable official ratio breakdowns for F22 in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '220i' across 2014-2021",
-          "reason": "Broad 2014-2021 220i 8-speed Steptronic row spans three official exact states with different ratio/final-drive sets: 03/2014 (top 0.667, FD 3.077), 07/2016 (top 0.640, FD 2.813), 03/2021 (top 0.640, FD 2.813). One row cannot be exact across this span. Default tire 225/40 R18 is contradicted; official standard is 205/55 R16. ZF8HP transmission code is `official_derived` because BMW publishes only `8-speed Steptronic` wording, not the supplier code."
-        }
-      ],
-      "configuration_confidence": "low_confidence"
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f22-228i-eu-2014-mt6-rwd",
       "production_start_year": 2014,
       "production_end_year": 2016,
       "variant_name": "228i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -331,6 +563,21 @@
           "notes": "BMW PressClub T0179544EN/267610.",
           "value": 3.909,
           "evidence_refs_ref": "e6"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2014 228i Coupé technical data list the forward ratios 3.498 / 2.005 / 1.313 / 1.000 / 0.809 / 0.701 for the six-speed manual.",
+          "value": [
+            3.498,
+            2.005,
+            1.313,
+            1.0,
+            0.809,
+            0.701
+          ]
         }
       },
       "tires": {
@@ -362,35 +609,38 @@
       },
       "verification_notes": [
         {
-          "note": "Follow-up official BMW packet review still does not recover any EU F22 228i row. The saved 03/2014 launch article anchors 220i and M235i petrol launch material, the saved 07/2016 packet publishes the later 220i, 230i, and M240i lineup, and the saved 03/2021 packet still shows only 220i and 230i. This row should therefore be treated as an unsupported EU placeholder, not as a verified 2014-2021 configuration.",
-          "evidence_refs_ref": "e5"
+          "note": "The official BMW 07/2014 technical data for the 228i Coupé are an ACEA-market sheet (\"ACEA markets; data relevant to homologation applicable in part only to Germany\"), so the EU row is backed. They list the six-speed manual with forward ratios 3.498 / 2.005 / 1.313 / 1.000 / 0.809 / 0.701, final drive 3.909 and 205/50 R17 tyres. The 07/2016 sheet lists the 230i instead, so the row ends in 2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
+        },
+        {
+          "note": "The sheet prints an in-line four with 1997 cc and twin-scroll turbo but no engine code. The B48 in the 07/2016 sheet has 1998 cc, so the earlier B48 label is dropped and the row carries the capacity only.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW F22 228i exact EU applicability within the recovered official packet set",
-          "reason": "The saved official BMW launch, facelift, and late-cycle packets recover 220i, 230i, and M235i/M240i states but do not recover an EU 228i row, so this stored EU placeholder remains unsupported.",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "item": "Schema-safe replacement for the unsupported F22 228i EU manual row",
-          "reason": "This pass proves the stored EU 228i manual row is not backed by the recovered official packet sequence, but it does not prove whether the right fix is deletion, market narrowing, or a broader petrol-row refactor.",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '228i' across 2014-2021",
-          "reason": "Official 07/2014 ACEA 228i packet (T0179544EN/267610) supports MT6 with 180 kW/245 hp, 350 Nm, top gear 0.701, final drive 3.909, and standard 205/50 R17. No saved official source supports 228i continuity into 2021; the 2016/2021 packets do not include 228i. Broad 2014-2021 row should be narrowed; default 225/40 R18 contradicted."
+          "item": "F22 228i engine code",
+          "reason": "No checked official sheet prints the engine code; the 1997 cc capacity differs from the 1998 cc B48.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f22-228i-eu-2014-zf8hp-rwd",
       "production_start_year": 2014,
       "production_end_year": 2016,
       "variant_name": "228i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
@@ -420,6 +670,10 @@
         },
         "gear_ratios": {
           "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2014 228i Coupé technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the eight-speed Steptronic.",
           "value": [
             4.714,
             3.143,
@@ -429,9 +683,7 @@
             1.0,
             0.839,
             0.667
-          ],
-          "evidence_refs_ref": "e8",
-          "notes": "ZF GA8HP45Z old (pre-2016 facelift) ratio set per F22 228i ACEA packet T0179544EN/267610 cross-confirmed via F32 428i 2013 launch packet."
+          ]
         }
       },
       "tires": {
@@ -463,36 +715,39 @@
       },
       "verification_notes": [
         {
-          "note": "Follow-up official BMW packet review still does not recover any EU F22 228i row. The saved 03/2014 launch article anchors 220i and M235i petrol launch material, the saved 07/2016 packet publishes the later 220i, 230i, and M240i lineup, and the saved 03/2021 packet still shows only 220i and 230i. This stored automatic row should therefore be treated as an unsupported EU placeholder, not as a verified 2014-2021 configuration.",
-          "evidence_refs_ref": "e5"
-        },
-        {
           "note": "Reverse gear ratio (research note): 3.295",
           "evidence_refs_ref": "e8"
+        },
+        {
+          "note": "The official BMW 07/2014 technical data for the 228i Coupé are an ACEA-market sheet (\"ACEA markets; data relevant to homologation applicable in part only to Germany\"), so the EU row is backed. They list the eight-speed Steptronic with forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.077 and 205/50 R17 tyres. The 07/2016 sheet lists the 230i instead, so the row ends in 2016.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
+        },
+        {
+          "note": "The sheet prints an in-line four with 1997 cc and twin-scroll turbo but no engine code. The B48 in the 07/2016 sheet has 1998 cc, so the earlier B48 label is dropped and the row carries the capacity only.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW F22 228i exact EU applicability within the recovered official packet set",
-          "reason": "The saved official BMW launch, facelift, and late-cycle packets recover 220i, 230i, and M235i/M240i states but do not recover an EU 228i row, so this stored EU placeholder remains unsupported.",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "item": "Schema-safe replacement for the unsupported F22 228i EU automatic row",
-          "reason": "This pass proves the stored EU 228i automatic row is not backed by the recovered official packet sequence, but it does not prove whether the right fix is deletion, market narrowing, or a broader petrol-row refactor.",
-          "evidence_refs_ref": "e5"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '228i' across 2014-2021",
-          "reason": "Official 07/2014 228i packet supports the optional 8-speed Steptronic with top gear 0.667, final drive 3.077, and standard 205/50 R17. No saved official source documents 228i continuity past the 07/2014 ACEA window. Broad 2014-2021 span is unsupported; default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
+          "item": "F22 228i engine code",
+          "reason": "No checked official sheet prints the engine code; the 1997 cc capacity differs from the 1998 cc B48.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2014-228i-spec-pdf"
+          ]
         }
       ],
-      "configuration_confidence": "low_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-f22-230i-eu-2014-mt6-rwd",
       "production_start_year": 2016,
-      "production_end_year": 2019,
+      "production_end_year": 2020,
       "variant_name": "230i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -522,6 +777,21 @@
           "notes": "BMW PressClub T0260233EN/359752.",
           "value": 3.909,
           "evidence_refs_ref": "e7"
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 F22 technical data list the forward ratios 3.683 / 2.062 / 1.313 / 1.000 / 0.809 / 0.677 for the 230i Coupé six-speed manual.",
+          "value": [
+            3.683,
+            2.062,
+            1.313,
+            1.0,
+            0.809,
+            0.677
+          ]
         }
       },
       "tires": {
@@ -559,18 +829,12 @@
       ],
       "unresolved": [
         {
-          "item": "BMW F22 230i exact EU start-year applicability",
-          "reason": "The recovered official BMW packet sequence first supports 230i in the 07/2016 facelift packet rather than in the stored 2014 start year.",
-          "evidence_refs_ref": "e12"
-        },
-        {
-          "item": "Schema-safe split between later F22 230i manual and late-cycle automatic-only states",
-          "reason": "The saved 07/2016 packet publishes 230i as manual with optional eight-speed automatic, while the saved 03/2021 packet keeps 230i only as a later automatic state, so the broad 2014-2021 manual row is not one exact production-safe configuration.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '230i' across 2014-2021",
-          "reason": "230i MT6 is not supported as a 2014 launch row: the official 230i packet (T0260233EN/359752) starts in 07/2016 with MT6, top gear 0.677, final drive 3.909, standard 205/50 R17, and 252 hp. The 2021 packet (T0327248EN/473311) is automatic-only, so manual continuity to 2021 is unsupported. Production start year should be 2016 if the row is retained, and end year for MT6 is unresolved. Default 225/40 R18 contradicted by official 205/50 R17 standard."
+          "item": "Last model year of the F22 230i six-speed manual",
+          "reason": "The 07/2016 sheet lists the manual and the 03/2021 sheet does not; no sheet from 2017-2020 was checked, so the 2020 end year is an upper bound.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ]
         }
       ],
       "configuration_confidence": "low_confidence"
@@ -611,18 +875,21 @@
         },
         "gear_ratios": {
           "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2016 and 03/2021 F22 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 for the 230i Coupé eight-speed Steptronic.",
           "value": [
-            5.25,
-            3.36,
-            2.172,
+            5.0,
+            3.2,
+            2.143,
             1.72,
-            1.316,
+            1.314,
             1.0,
             0.822,
             0.64
-          ],
-          "evidence_refs_ref": "e10",
-          "notes": "ZF GA8HP45Z new (post-2016) ratio set."
+          ]
         }
       },
       "tires": {
@@ -660,24 +927,16 @@
         {
           "note_ref": "n16",
           "evidence_refs_ref": "e10"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW F22 230i exact EU start-year applicability",
-          "reason": "The recovered official BMW packet sequence first supports 230i in the 07/2016 facelift packet rather than in the stored 2014 start year.",
-          "evidence_refs_ref": "e12"
         },
         {
-          "item": "Schema-safe split between later F22 230i automatic states across facelift and late-cycle packets",
-          "reason": "The saved 07/2016 packet publishes 230i as manual with optional eight-speed automatic, while the saved 03/2021 packet keeps 230i only as a later automatic state, so the broad 2014-2021 automatic row is not one exact production-safe configuration.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "F22 broad-row continuity issues for '230i' across 2014-2021",
-          "reason": "230i 8-speed Steptronic is not supported as a 2014 launch row: 07/2016 ACEA packet supports top gear 0.640, final drive 2.813, standard 205/50 R17; 03/2021 packet (8-speed Steptronic Sport) supports the same top gear/final drive and standard 205/50 R17. Production start year should be 2016 if the row is retained. Default 225/40 R18 contradicted; ZF8HP code is `official_derived`."
+          "note": "The official BMW 07/2016 and 03/2021 technical data list the 230i Coupé eight-speed Steptronic with forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 and final drive 2.813. The row previously stored 5.250 / 3.360 / 2.172 / 1.720 / 1.316 for the first five gears, which neither F22 sheet prints.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
+            "bmw_pressclub_sources:f22-2021-spec-pdf"
+          ]
         }
       ],
+      "unresolved": [],
       "configuration_confidence": "low_confidence"
     }
   ]

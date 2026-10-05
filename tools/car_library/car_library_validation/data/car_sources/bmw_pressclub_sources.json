@@ -229,14 +229,14 @@
       "id": "bmw_pressclub_sources:f22-2014-220i-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0165234EN/250293",
       "title": "BMW PressClub F22 220i 2014 specifications PDF",
-      "note": "Official BMW 03/2014 launch technical-data PDF for the F22 220i Coupe row. The checked table publishes the launch 220i six-speed manual row with optional eight-speed automatic figures in brackets, sixth and eighth gears 0.830 / 0.667, differential ratio 3.077 for both transmissions, and standard 205/55 R16 tires.",
+      "note": "Official BMW 01/2014 technical-data PDF, valid from 03/2014, for the F22 220i Coupe: in-line four, 1997 cc, 135 kW; 6-speed manual 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830, optional 8-speed Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.077 for both, standard tyres 205/55 R16.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:f22-2016-220i-230i-spec-pdf",
       "url": "https://www.press.bmwgroup.com/south-africa/article/attachment/T0260233EN/359752",
       "title": "BMW PressClub F22 220i and 230i 2016 specifications PDF",
-      "note": "Official BMW 07/2016 valid-from-07/2016 technical-data PDF for the later F22 220i, 230i, and M240i lineup. The checked table directly publishes later 230i six-speed manual and optional eight-speed automatic states, proving 230i applicability only from the facelift-era packet rather than from a 2014 launch row.",
+      "note": "Official BMW 05/2016 technical-data PDF, valid from 07/2016, for the F22 220i and 230i Coupe (both 1998 cc). 220i: 6-speed manual 4.002 / 2.130 / 1.396 / 1.000 / 0.781 / 0.668, final drive 3.385; 230i manual 3.683 / 2.062 / 1.313 / 1.000 / 0.809 / 0.677, final drive 3.909; both with optional 8-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 2.813. Standard tyres 205/55 R16 (220i) and 205/50 R17 (230i).",
       "confidence": "high"
     },
     {
@@ -1454,7 +1454,7 @@
       "id": "bmw_pressclub_sources:f22-2014-228i-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0179544EN/267610",
       "title": "BMW PressClub: F22 228i tech-data PDF (T0179544EN/267610, 07/2014 ACEA)",
-      "note": "07/2014 BMW F22 228i Coupe ACEA technical-data PDF. Confirms 228i engine N20B20B (180 kW / 245 hp / 350 Nm), RWD, 6-speed manual top gear 0.701 / final drive 3.909, 8-speed Steptronic (ZF GA8HP45Z) top 0.667 / FD 3.077, standard tyre 205/50 R17. 228i was a narrow EU market (UK + select ACEA) variant, discontinued at the 07/2016 LCI.",
+      "note": "07/2014 BMW F22 228i Coupe ACEA technical-data PDF. In-line four, 1997 cc, 180 kW / 245 hp / 350 Nm (no engine code printed), RWD, 6-speed manual 3.498 / 2.005 / 1.313 / 1.000 / 0.809 / 0.701 with final drive 3.909, optional 8-speed Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.077, standard tyre 205/50 R17. The 07/2016 F22 sheet lists the 230i instead.",
       "confidence": "high"
     },
     {

@@ -559,20 +559,20 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (214 rows), BMW (357 rows); market EU only |
-| Exact configuration rows | 571 (ICE 524, PHEV 30, EV 17) |
-| Picker models / generation codes / variants | 92 / 71 / 441 |
+| Brands | Audi (214 rows), BMW (359 rows); market EU only |
+| Exact configuration rows | 573 (ICE 526, PHEV 30, EV 17) |
+| Picker models / generation codes / variants | 92 / 71 / 443 |
 | Production years | 2007–2026 |
-| Rows with tire options | 570 (1 has the default only) |
-| Rows with driven final drive | 554 (97%); 17 without: Audi 8S TT/TTS/TT RS, Audi 8U Q3, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021, BMW F48 X1 and F39 X2 xDrive18d manual |
-| Rows with top gear | 554 (every non-EV row); the 17 EVs have none: the reduction ratio is the final drive |
-| Rows with full gear sets | 341 (60%) |
-| Tire confidence | official_exact 390 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
-| Driven final-drive confidence | official_exact 297 · official_derived 87 · reputable_secondary 22 · family_default 74 · unverified 74 · none 17 |
-| Top-gear confidence | official_exact 379 · official_derived 15 · reputable_secondary 28 · family_default 64 · unverified 68 · none 17 (EVs) |
-| Weak (family_default or unverified) | final drive 148/571 (26%), top gear 132/571 (23%), tire 132/571 (23%) |
-| `order_reference_trust` | trusted 411 · approximate 85 · backlog_unverified 75 |
-| `requires_manual_confirmation` | true 148, false 423 (true exactly when the driven final drive or top gear is weak) |
+| Rows with tire options | 572 (1 has the default only) |
+| Rows with driven final drive | 556 (97%); 17 without: Audi 8S TT/TTS/TT RS, Audi 8U Q3, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021, BMW F48 X1 and F39 X2 xDrive18d manual |
+| Rows with top gear | 556 (every non-EV row); the 17 EVs have none: the reduction ratio is the final drive |
+| Rows with full gear sets | 346 (60%) |
+| Tire confidence | official_exact 392 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
+| Driven final-drive confidence | official_exact 299 · official_derived 87 · reputable_secondary 22 · family_default 74 · unverified 74 · none 17 |
+| Top-gear confidence | official_exact 381 · official_derived 15 · reputable_secondary 28 · family_default 64 · unverified 68 · none 17 (EVs) |
+| Weak (family_default or unverified) | final drive 148/573 (26%), top gear 132/573 (23%), tire 132/573 (23%) |
+| `order_reference_trust` | trusted 413 · approximate 85 · backlog_unverified 75 |
+| `requires_manual_confirmation` | true 148, false 425 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
 | Variants whose rows differ in tire options | 14 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
