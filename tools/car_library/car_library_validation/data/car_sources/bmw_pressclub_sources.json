@@ -779,6 +779,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0232406EN/325737",
+      "title": "BMW PressClub F48 X1 xDrive18d 11/2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical-data PDF for the X1 xDrive18d: in-line four diesel of 1995 cc, 110 kW, 6-speed manual I-VI 3.538/1.923/1.219/0.881/0.810/0.674 with final drive 4.059, optional 8-speed Steptronic 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673 with final drive 2.955, and 225/55 R17 97W tyres.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f48-sdrive18i-2015-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0232406EN/325736",
       "title": "BMW PressClub F48 X1 sDrive18i 2015 technical data PDF",
@@ -797,6 +804,13 @@
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0223368EN/316341",
       "title": "BMW PressClub F48 X1 sDrive18d, xDrive18d, xDrive20d 2015 technical data PDF",
       "note": "Official BMW 07/2015 technical-data PDF for the checked F48 sDrive18d states showing 6-speed manual with optional 8-speed Steptronic, manual top gear 0.628, automatic top gear 0.673, final drives 3.389 and 2.955, and 225/55 R17 baseline tires.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0223369EN/317279",
+      "title": "BMW PressClub F48 X1 xDrive20d technical data PDF, valid from 07/2015",
+      "note": "Official BMW technical-data PDF for the X1 xDrive20d valid from 07/2015: in-line four diesel of 1995 cc, 140 kW, 8-speed Steptronic 5.250/3.029/1.950/1.457/1.221/1.000/0.809/0.673, final drive 2.955, and 225/55 R17 97W tyres.",
       "confidence": "high"
     },
     {
@@ -894,7 +908,7 @@
       "id": "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327516EN/473615",
       "title": "BMW PressClub F48 X1 2021 technical data PDF",
-      "note": "Official BMW 03/2021 technical-data PDF for the later F48 X1 lineup confirming the checked sDrive18i, sDrive20i, sDrive18d, sDrive20d, xDrive25d, xDrive25e, and xDrive25i states, their later transmission-family and final-drive mappings where applicable, and the 225/55 R17 baseline tires used for safe narrow or split decisions.",
+      "note": "Official BMW 03/2021 technical-data PDF for the later F48 X1 lineup confirming the checked sDrive18i, sDrive20i, sDrive18d, sDrive20d, xDrive25d, xDrive25e, and xDrive25i states, their later transmission-family and final-drive mappings where applicable, (the xDrive18d 6-speed manual as overall ratios 14.362/7.805/4.947/3.576/2.793/2.325 with final drive 4.059), and the 225/55 R17 baseline tires used for safe narrow or split decisions.",
       "confidence": "high"
     },
     {
@@ -908,7 +922,7 @@
       "id": "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286555EN/419620",
       "title": "BMW PressClub F48 X1 2018 technical data PDF",
-      "note": "Official BMW 09/2018 technical-data PDF for the later pre-LCI F48 X1 lineup confirming sDrive18i 7-speed dual-clutch, sDrive20i 7-speed dual-clutch, sDrive18d manual and automatic values, and 225/55 R17 baseline tires used for safe mixed-era and cutover decisions.",
+      "note": "Official BMW 09/2018 technical-data PDF for the later pre-LCI F48 X1 lineup confirming sDrive18i 7-speed dual-clutch, sDrive20i 7-speed dual-clutch, sDrive18d manual and automatic values, xDrive18d (6-speed manual final drive 4.059, 8-speed Steptronic final drive 2.851) and xDrive20d (8-speed Steptronic, final drive 2.851), and 225/55 R17 baseline tires used for safe mixed-era and cutover decisions.",
       "confidence": "high"
     },
     {
@@ -1108,6 +1122,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f39-xdrive18d-2018-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0278876EN/403770",
+      "title": "BMW PressClub F39 X2 xDrive18d 03/2018 technical data PDF",
+      "note": "Official BMW 03/2018 technical-data PDF for the X2 xDrive18d: in-line four diesel of 1995 cc, 6-speed manual only, I-VI 3.539/1.923/1.219/0.881/0.810/0.674, final drive 4.059, and 225/55 R17 97W tyres.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0283649EN/412530",
       "title": "BMW PressClub F39 X2 sDrive20i 2017 specifications PDF",
@@ -1129,6 +1150,13 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f39-m35i-2019-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0291603EN/424237",
+      "title": "BMW PressClub F39 X2 M35i technical data PDF, valid from 03/2019",
+      "note": "Official BMW 03/2019 technical-data PDF for the X2 M35i: in-line four of 1998 cc, 225 kW, networked with xDrive all-wheel drive, 8-speed Steptronic Sport transmission 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, final drive 3.200, and 225/45 R19 92W tyres.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0314293EN/457892",
       "title": "BMW PressClub F39 X2 xDrive25e 2020 technical data PDF",
@@ -1139,7 +1167,7 @@
       "id": "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327517EN/473618",
       "title": "BMW PressClub F39 X2 2021 technical data PDF",
-      "note": "Official BMW 03/2021 ACEA-market technical-data PDF covering the F39 X2 lineup page-by-page, including sDrive18i, sDrive20i, xDrive20i, xDrive25e, sDrive18d, xDrive18d, xDrive20d, and xDrive25d. The checked tables publish drivetrain wording, gearbox families, full ratios, final drives, top speeds, and standard tires for the exact listed variants.",
+      "note": "Official BMW 03/2021 ACEA-market technical-data PDF covering the F39 X2 lineup page by page: sDrive18i, sDrive20i, xDrive20i, xDrive25e, sDrive18d, sDrive20d, xDrive18d, xDrive20d, xDrive25d and M35i. The xDrive18d 6-speed manual is printed as overall ratios (14.362/7.805/4.947/3.576/2.793/2.325 with final drive 4.059), which shows gears V-VI run through a different final drive than I-IV.",
       "confidence": "high"
     },
     {
@@ -1454,7 +1482,7 @@
       "id": "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286557EN/419617",
       "title": "BMW PressClub: F39 X2 multi-variant tech-data (T0286557EN/419617, 09/2018)",
-      "note": "09/2018 BMW F39 X2 multi-variant ACEA technical-data PDF. Confirmed variants: sDrive18i (DCT7 Getrag 7DCI300), sDrive20i (DCT7), sDrive18d (Aisin AWF8F35 8AT), xDrive18d (6-speed manual GS6-17BG, gear ratios 3.539/1.923/1.219/0.881/0.810/0.674, reverse 3.831, FD 4.059), xDrive20d (Aisin AWF8F45 8AT, FD 2.851). All variants standard tyre 225/55 R17 97W. F39 platform is transverse UKL2; 'ZF8HP' code in repo is a misnomer - actual gearbox is Aisin AWF8F35 (FWD) or AWF8F45 (AWD).",
+      "note": "09/2018 BMW F39 X2 multi-variant ACEA technical-data PDF: sDrive18i, sDrive20i, sDrive18d, xDrive18d (6-speed manual only, 3.539/1.923/1.219/0.881/0.810/0.674, reverse 3.831, final drive 4.059) and xDrive20d (8-speed Steptronic, final drive 2.851). All variants have 225/55 R17 97W standard tyres.",
       "confidence": "high"
     },
     {

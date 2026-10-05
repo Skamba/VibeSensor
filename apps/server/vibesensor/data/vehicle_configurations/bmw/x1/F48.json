@@ -2332,6 +2332,586 @@
       ],
       "unresolved": [],
       "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f48-xdrive18d-eu-2016-mt6-awd",
+      "production_start_year": 2016,
+      "production_end_year": 2022,
+      "variant_name": "xDrive18d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list the X1 xDrive18d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list a 6-speed manual for the X1 xDrive18d.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list 0.674 as top gear for the X1 xDrive18d 6-speed manual.",
+          "value": 0.674
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list the full forward ratio set for the X1 xDrive18d 6-speed manual.",
+          "value": [
+            3.538,
+            1.923,
+            1.219,
+            0.881,
+            0.81,
+            0.674
+          ]
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+              "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+              "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2015, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Official F48 18\" option"
+          },
+          {
+            "setup_ref": "setup_225_19",
+            "name": "Official F48 19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2015, 09/2018 and 03/2021 sheets list the X1 xDrive18d 6-speed manual 3.538 / 1.923 / 1.219 / 0.881 / 0.810 / 0.674. The 11/2015 sheet is the first to list the xDrive18d (valid from 11/2015, so the row starts in 2016).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Final drive of the X1 xDrive18d 6-speed manual",
+          "reason": "The sheets print one final drive, 4.059, beside per-gear ratios ending in 0.674. The 03/2021 sheet prints overall ratios instead: gears I-IV equal ratio x 4.059 (14.362, 7.805, 4.947, 3.576), but V and VI give 2.793 and 2.325, i.e. about 3.448 x 0.810 / 0.674. The gearbox therefore drives V-VI through a second final drive that no checked sheet prints, and the single final-drive field cannot hold both; the row keeps the final drive empty instead of an engine-order reference that would be about 18% off in top gear.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "bmw-f48-xdrive18d-eu-2016-at8-awd",
+      "production_start_year": 2016,
+      "production_end_year": 2018,
+      "variant_name": "xDrive18d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2015 technical data list the X1 xDrive18d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2015 technical data list a 8-speed Steptronic for the X1 xDrive18d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015 technical data list 0.673 as top gear for the X1 xDrive18d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015 technical data list the full forward ratio set for the X1 xDrive18d 8-speed Steptronic.",
+          "value": [
+            5.25,
+            3.029,
+            1.95,
+            1.457,
+            1.221,
+            1.0,
+            0.809,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015 technical data list 2.955 as the final drive for the X1 xDrive18d 8-speed Steptronic; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.955
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2015 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2015 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Official F48 18\" option"
+          },
+          {
+            "setup_ref": "setup_225_19",
+            "name": "Official F48 19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2015 sheets list the X1 xDrive18d 8-speed Steptronic 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673 with final drive 2.955. The 09/2018 sheet changes the gear set and final drive (2.851), so this state ends in 2018.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive18d-2015-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f48-xdrive18d-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "xDrive18d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2018 and 03/2021 technical data list the X1 xDrive18d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2018 and 03/2021 technical data list a 8-speed Steptronic for the X1 xDrive18d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 0.673 as top gear for the X1 xDrive18d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list the full forward ratio set for the X1 xDrive18d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 2.851 as the final drive for the X1 xDrive18d 8-speed Steptronic; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.851
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+              "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive18d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Official F48 18\" option"
+          },
+          {
+            "setup_ref": "setup_225_19",
+            "name": "Official F48 19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 09/2018 and 03/2021 sheets list the X1 xDrive18d 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 2.851. The state is valid from 09/2018, so the row starts in 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f48-xdrive20d-eu-2015-at8-awd",
+      "production_start_year": 2015,
+      "production_end_year": 2018,
+      "variant_name": "xDrive20d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical data list the X1 xDrive20d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2015 technical data list a 8-speed Steptronic for the X1 xDrive20d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 technical data list 0.673 as top gear for the X1 xDrive20d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 technical data list the full forward ratio set for the X1 xDrive20d 8-speed Steptronic.",
+          "value": [
+            5.25,
+            3.029,
+            1.95,
+            1.457,
+            1.221,
+            1.0,
+            0.809,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 technical data list 2.955 as the final drive for the X1 xDrive20d 8-speed Steptronic; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.955
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2015 technical data list 225/55 R17 as the standard tyre for the X1 xDrive20d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2015 technical data list 225/55 R17 as the standard tyre for the X1 xDrive20d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Official F48 18\" option"
+          },
+          {
+            "setup_ref": "setup_225_19",
+            "name": "Official F48 19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 07/2015 sheets list the X1 xDrive20d 8-speed Steptronic 5.250 / 3.029 / 1.950 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673 with final drive 2.955. The 09/2018 sheet changes the gear set and final drive (2.851), so this state ends in 2018.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-xdrive20d-2015-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f48-xdrive20d-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2022,
+      "variant_name": "xDrive20d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2018 and 03/2021 technical data list the X1 xDrive20d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+          "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 09/2018 and 03/2021 technical data list a 8-speed Steptronic for the X1 xDrive20d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 0.673 as top gear for the X1 xDrive20d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list the full forward ratio set for the X1 xDrive20d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 2.851 as the final drive for the X1 xDrive20d 8-speed Steptronic; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.851
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive20d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+              "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X1 xDrive20d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_18",
+            "name": "Official F48 18\" option"
+          },
+          {
+            "setup_ref": "setup_225_19",
+            "name": "Official F48 19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 09/2018 and 03/2021 sheets list the X1 xDrive20d 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 2.851. The state is valid from 09/2018, so the row starts in 2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f48-x1-2018-tech-spec-pdf",
+            "bmw_pressclub_sources:f48-x1-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }
