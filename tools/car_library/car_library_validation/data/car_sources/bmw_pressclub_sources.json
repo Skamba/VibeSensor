@@ -1664,14 +1664,14 @@
       "id": "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0297109EN/432678",
       "title": "BMW PressClub G21 3 Series Touring specifications PDF 06/2019 (launch)",
-      "note": "Official BMW 06/2019 technical specifications for the G21 Touring launch range: 330i and 330i xDrive Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813; 320d Touring six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154 or eight-speed Steptronic 0.640 with final drive 2.813; standard 225/50 R17 tyres.",
+      "note": "Official BMW 06/2019 technical specifications for the G21 Touring launch range: 330i, 330i xDrive and 320d xDrive Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813; 320d Touring six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154 or eight-speed Steptronic 0.640 with final drive 2.813; 330d xDrive Touring eight-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with final drive 2.471; standard 225/50 R17 tyres.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0302398EN/441180",
       "title": "BMW PressClub G21 3 Series Touring specifications PDF 11/2019 (320i, M340i xDrive, 318d, 330d)",
-      "note": "Official BMW 11/2019 technical specifications: 320i Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813; 318d Touring six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154 and optional eight-speed Steptronic whose final drive is printed as (3.154); standard 225/50 R17 tyres.",
+      "note": "Official BMW 11/2019 technical specifications: 320i and M340i xDrive Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813; 330d Touring eight-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with final drive 2.471; 318d Touring six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154 and optional eight-speed Steptronic whose final drive is printed as (3.154); standard 225/50 R17 tyres, M340i xDrive 225/45 R18 front and 255/40 R18 rear.",
       "confidence": "high"
     },
     {
@@ -1682,10 +1682,17 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0318657EN/462906",
+      "title": "BMW PressClub G21 330d and 330d xDrive Touring specifications PDF valid from 11/2020",
+      "note": "Official BMW 11/2020 specifications for the 330d and 330d xDrive Touring (48V mild hybrid): eight-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with final drive 2.563 and standard 225/50 R17 tyres.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0325532EN/471539",
       "title": "BMW PressClub G21 3 Series Touring specifications PDF valid from 03/2021",
-      "note": "Official BMW 03/2021 specifications for the G21 Touring range (ACEA markets). 318d Touring: six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154, optional eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive (2.813); standard 225/50 R17 tyres. 318i, 320i, 330i, 330i xDrive, M340i xDrive, 320d and 320d xDrive Touring: eight-speed Steptronic, eighth gear 0.640, final drive 2.813. 330d, 330d xDrive and M340d xDrive Touring: eighth gear 0.640, final drive 2.563. 320e, 320e xDrive, 330e and 330e xDrive Touring: final drive 3.231.",
+      "note": "Official BMW 03/2021 specifications for the G21 Touring range (ACEA markets). 318d Touring: six-speed manual 4.110 / 2.248 / 1.403 / 1.000 / 0.786 / 0.601 with final drive 3.154, optional eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive (2.813); standard 225/50 R17 tyres. 318i, 320i, 330i, 330i xDrive, M340i xDrive, 320d and 320d xDrive Touring: eight-speed Steptronic, eighth gear 0.640, final drive 2.813. 330d, 330d xDrive and M340d xDrive Touring: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.563. Standard tyres 225/50 R17; M340i xDrive and M340d xDrive 225/45 R18 front and 255/40 R18 rear. 320e, 320e xDrive, 330e and 330e xDrive Touring: final drive 3.231.",
       "confidence": "high"
     },
     {
@@ -1699,14 +1706,14 @@
       "id": "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0388273EN/555364",
       "title": "BMW PressClub G21 3 Series Touring technical data PDF 05/2022 (LCI)",
-      "note": "Official BMW 05/2022 technical data for the facelifted (LCI) G21 Touring; the PDF is image-only, values read from the rendered pages. 318i, 320i, 330i, 330i xDrive, 318d, 320d and 320d xDrive Touring: eight-speed Steptronic only, eighth gear 0.640, final drive 2.813, standard 225/50 R17 tyres; 320e, 320e xDrive, 330e and 330e xDrive Touring: eighth gear 0.667, final drive 3.231, 225/50 R17. No manual gearbox is listed.",
+      "note": "Official BMW 05/2022 technical data for the facelifted (LCI) G21 Touring; the PDF is image-only, values read from the rendered pages. 318i, 320i, 330i, 330i xDrive, M340i xDrive, 318d, 320d and 320d xDrive Touring: eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 2.813; 330d, 330d xDrive and M340d xDrive Touring: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.563; 320e, 320e xDrive, 330e and 330e xDrive Touring: eighth gear 0.667, final drive 3.231. Standard tyres 225/50 R17; M340i xDrive and M340d xDrive 225/45 R18 front and 255/40 R18 rear. No manual gearbox is listed.",
       "confidence": "high"
     },
     {
       "id": "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0442333EN/620073",
       "title": "BMW PressClub G21 3 Series Touring specifications PDF 05/2024",
-      "note": "Official BMW 05/2024 technical specifications for the G21 Touring range: 318i, 320i, 330i xDrive, 318d, 320d and 320d xDrive Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813 and standard 225/50 R17 tyres; 330e and 330e xDrive Touring 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231 and standard 225/45 R18 tyres. No 330i (RWD), 320e or manual Touring is listed.",
+      "note": "Official BMW 05/2024 technical specifications for the G21 Touring range: 318i, 320i, 330i xDrive, M340i xDrive, 318d, 320d and 320d xDrive Touring eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with final drive 2.813; 330d xDrive and M340d xDrive Touring 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 with final drive 2.563; 330e and 330e xDrive Touring 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.231. Standard tyres 225/50 R17 (330e: 225/45 R18; M340i xDrive and M340d xDrive: 225/45 R18 front and 255/40 R18 rear). No 330i (RWD), 330d (RWD), 320e or manual Touring is listed.",
       "confidence": "high"
     },
     {

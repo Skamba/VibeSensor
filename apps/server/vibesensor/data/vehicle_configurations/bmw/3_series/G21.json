@@ -513,21 +513,14 @@
       },
       "verification_notes": [
         {
-          "note": "Touring body added from the official BMW 06/2019 G21 launch sheet: 320d Touring six-speed manual, top gear 0.601, final drive 3.154, standard 225/50 R17 tyres. The 03/2021 G20 sheet lists the 320d with the eight-speed Steptronic only, so the row ends in 2020.",
+          "note": "Touring body added from the official BMW 06/2019 G21 launch sheet: 320d Touring six-speed manual, top gear 0.601, final drive 3.154, standard 225/50 R17 tyres. The 03/2021 G21 sheet lists the 320d Touring with the eight-speed Steptronic only, so the row ends in 2020.",
           "evidence_refs": [
-            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf"
           ]
         }
       ],
       "unresolved": [
-        {
-          "item": "Touring-specific 2020-2021 sheet",
-          "reason": "No 2020-2021 G21 Touring sheet was recovered; the 2020 end year follows the 03/2021 G20 Sedan sheet for the same drivetrain.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g20-3series-2021-techdata",
-            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
-          ]
-        },
         {
           "item": "Optional wheel/tyre sizes for the G21 320d Touring six-speed manual",
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
@@ -1284,6 +1277,970 @@
           "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
           "evidence_refs": [
             "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-320d-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2025,
+      "variant_name": "320d xDrive",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list the 320d xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list an eight-speed Steptronic transmission for the 320d xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 0.640 as eighth gear for the 320d xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the 320d xDrive Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 2.813 as the final drive for the 320d xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 320d xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 320d xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 06/2019, 03/2021, 05/2022 and 05/2024 G21 sheets: 320d xDrive Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.813, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G21 320d xDrive Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-330d-eu-2020-zf8hp-rwd",
+      "production_start_year": 2020,
+      "production_end_year": 2020,
+      "variant_name": "330d",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2019 G21 sheet lists the 330d Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2019 G21 sheet lists an eight-speed Steptronic transmission for the 330d Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019 G21 sheet lists 0.640 as eighth gear for the 330d Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019 G21 sheet lists 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 330d Touring.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019 G21 sheet lists 2.471 as the final drive for the 330d Touring.",
+          "value": 2.471
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019 G21 sheet lists 225/50 R17 as the standard tyre for the 330d Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2019 G21 sheet lists 225/50 R17 as the standard tyre for the 330d Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 11/2019 G21 sheet: 330d Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.471, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "note": "The 11/2019 sheet is the first recovered G21 sheet that lists this variant; a sheet valid after July counts from the next model year, so the row starts in 2020.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact month of the 330d final-drive change",
+          "reason": "The 06/2019 and 11/2019 G21 sheets print 2.471 and the 11/2020 sheet (the first recovered later sheet) prints 2.563; no G21 sheet between them was recovered, so the change is placed at the 11/2020 sheet, which counts from model year 2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the G21 330d Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-330d-eu-2021-zf8hp-rwd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
+      "variant_name": "330d",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list the 330d Touring as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list an eight-speed Steptronic transmission for the 330d Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list 0.640 as eighth gear for the 330d Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 330d Touring.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list 2.563 as the final drive for the 330d Touring.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list 225/50 R17 as the standard tyre for the 330d Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2020, 03/2021 and 05/2022 G21 sheets list 225/50 R17 as the standard tyre for the 330d Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 11/2020, 03/2021 and 05/2022 G21 sheets: 330d Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.563, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact month of the 330d final-drive change",
+          "reason": "The 06/2019 and 11/2019 G21 sheets print 2.471 and the 11/2020 sheet (the first recovered later sheet) prints 2.563; no G21 sheet between them was recovered, so the change is placed at the 11/2020 sheet, which counts from model year 2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "05/2024 330d Touring availability",
+          "reason": "The 05/2024 sheet lists only the 330d xDrive Touring, not a rear-wheel-drive 330d Touring.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the G21 330d Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-330d-xdrive-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2020,
+      "variant_name": "330d xDrive",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2019 G21 sheet lists the 330d xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 06/2019 G21 sheet lists an eight-speed Steptronic transmission for the 330d xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019 G21 sheet lists 0.640 as eighth gear for the 330d xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019 G21 sheet lists 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 330d xDrive Touring.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019 G21 sheet lists 2.471 as the final drive for the 330d xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.471
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 06/2019 G21 sheet lists 225/50 R17 as the standard tyre for the 330d xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 06/2019 G21 sheet lists 225/50 R17 as the standard tyre for the 330d xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 06/2019 G21 sheet: 330d xDrive Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.471, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact month of the 330d final-drive change",
+          "reason": "The 06/2019 and 11/2019 G21 sheets print 2.471 and the 11/2020 sheet (the first recovered later sheet) prints 2.563; no G21 sheet between them was recovered, so the change is placed at the 11/2020 sheet, which counts from model year 2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the G21 330d xDrive Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-330d-xdrive-eu-2021-zf8hp-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2025,
+      "variant_name": "330d xDrive",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list the 330d xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list an eight-speed Steptronic transmission for the 330d xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list 0.640 as eighth gear for the 330d xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the 330d xDrive Touring.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list 2.563 as the final drive for the 330d xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 330d xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 50.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/50 R17 as the standard tyre for the 330d xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 50.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 11/2020, 03/2021, 05/2022 and 05/2024 G21 sheets: 330d xDrive Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.563, standard 225/50 R17 tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Exact month of the 330d final-drive change",
+          "reason": "The 06/2019 and 11/2019 G21 sheets print 2.471 and the 11/2020 sheet (the first recovered later sheet) prints 2.563; no G21 sheet between them was recovered, so the change is placed at the 11/2020 sheet, which counts from model year 2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf"
+          ]
+        },
+        {
+          "item": "Optional wheel/tyre sizes for the G21 330d xDrive Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-330d-2020-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-m340i-xdrive-eu-2020-zf8hp-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2025,
+      "variant_name": "M340i xDrive",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list the M340i xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list an eight-speed Steptronic transmission for the M340i xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 0.640 as eighth gear for the M340i xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the M340i xDrive Touring.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 2.813 as the final drive for the M340i xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/45 R18 front and 255/40 R18 rear as the standard tyres for the M340i xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\" staggered",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets list 225/45 R18 front and 255/40 R18 rear as the standard tyres for the M340i xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 11/2019, 03/2021, 05/2022 and 05/2024 G21 sheets: M340i xDrive Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.813, standard 225/45 R18 front and 255/40 R18 rear tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        },
+        {
+          "note": "The 11/2019 sheet is the first recovered G21 sheet that lists this variant; a sheet valid after July counts from the next model year, so the row starts in 2020.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G21 M340i xDrive Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2019-11-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g21-m340d-xdrive-eu-2021-zf8hp-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2025,
+      "variant_name": "M340d xDrive",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list the M340d xDrive Touring as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+          "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list an eight-speed Steptronic transmission for the M340d xDrive Touring; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list 0.640 as eighth gear for the M340d xDrive Touring.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the M340d xDrive Touring.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list 2.563 as the final drive for the M340d xDrive Touring; no separate front-axle ratio is published.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list 225/45 R18 front and 255/40 R18 rear as the standard tyres for the M340d xDrive Touring.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 18.0
+          },
+          "rear": {
+            "width_mm": 255.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 18\" staggered",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+              "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 03/2021, 05/2022 and 05/2024 G21 sheets list 225/45 R18 front and 255/40 R18 rear as the standard tyres for the M340d xDrive Touring.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 18.0
+            },
+            "rear": {
+              "width_mm": 255.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Touring body added from the official BMW 03/2021, 05/2022 and 05/2024 G21 sheets: M340d xDrive Touring, eight-speed Steptronic, eighth gear 0.640, final drive 2.563, standard 225/45 R18 front and 255/40 R18 rear tyres.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
+            "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
+          ]
+        },
+        {
+          "note": "The 03/2021 sheet is the first recovered G21 sheet that lists the M340d xDrive Touring, so the row starts in model year 2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Optional wheel/tyre sizes for the G21 M340d xDrive Touring",
+          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g21-2021-03-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2022-05-tech-spec-pdf",
             "bmw_pressclub_sources:g21-2024-05-tech-spec-pdf"
           ]
