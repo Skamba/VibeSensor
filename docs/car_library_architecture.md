@@ -113,6 +113,26 @@ inherited from family-level data, encode that through `confidence` and
   an electric motor on the rear axle, stores the gearbox final drive as
   `final_drive_front`. The validator rejects a non-EV AWD row whose front
   and rear values are equal (`drivetrain_final_drive_layout`).
+  The picker serves each gearbox's driven final drive with the axle it
+  belongs to (`final_drive_axle`, from
+  `VehicleConfiguration.driven_final_drive_axle`): `front` for FWD and for
+  an e-AWD hybrid (front only), `rear` for RWD and for an AWD row with both
+  ratios (the rear motor's or rear differential's), and `null` for an AWD
+  row with one published axle ratio, which does not say which axle it is.
+- **Drive layout on a saved car:** a car added from the library takes the
+  variant's `drivetrain` as its drive layout and the gearbox's
+  `final_drive_axle` while its final drive is kept. Cars saved before the
+  layout existed get it on load from the rows they were picked from (same
+  body type and variant, preferring rows whose `"{brand} {model} {variant}"`
+  is the car's name; a variant saved before it was split by model year
+  matches without the years) when those rows agree on one layout, and are
+  saved again (`with_library_drive_layout` in
+  `apps/server/vibesensor/settings/car_library.py`). A car the library does
+  not know keeps no layout (unknown). See `apps/server/vibesensor/domain/drive_layout.py`
+  for what the layout decides: the driven axles and whether there is a
+  propshaft (none for FWD, an EV or an e-AWD hybrid; front-engined cars
+  assumed). A dual-motor EV is AWD with the rear motor's reduction ratio; the
+  front motor's order is not analysed.
 - **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
   [Turbo|Supercharged] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel` or
   `3.0L V6 Supercharged` (Audi's mechanically supercharged 3.0 TFSI).

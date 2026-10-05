@@ -28,6 +28,13 @@ import {
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 type FormatNumber = (value: number, digits?: number) => string;
 
+/** Front-, rear- or all-wheel drive; `null` when nobody said. */
+export type DriveLayout = NonNullable<CarRecord["drive_layout"]> | null;
+/** The axle a final drive belongs to; `null` when not known. */
+export type FinalDriveAxle = NonNullable<CarRecord["final_drive_axle"]> | null;
+
+export const DRIVE_LAYOUTS = ["FWD", "RWD", "AWD"] as const;
+
 export const STEP_LABEL_KEYS = [
   "settings.car.step_brand_short",
   "settings.car.step_type_short",
@@ -47,6 +54,8 @@ export interface EditTarget {
   staggeredTire: string | null;
   /** The saved powertrain; `null` when it was never set. */
   fuelType: FuelType;
+  /** The saved drive layout; `null` when it was never set. */
+  driveLayout: DriveLayout;
 }
 
 export interface WizardState {
@@ -63,6 +72,8 @@ export interface WizardState {
   editing: EditTarget | null;
   /** The powertrain the user picked where the library does not say. */
   fuelType: FuelType;
+  /** The drive layout the user picked where the library does not say. */
+  driveLayout: DriveLayout;
 }
 
 export interface ManualInputs {
@@ -98,6 +109,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   selectedTire: null,
   editing: null,
   fuelType: null,
+  driveLayout: null,
 };
 
 export function resolveGearboxes(
@@ -296,6 +308,7 @@ export function editTarget(
         ? formatSavedCarTireSummary(aspects, fmt, "")
         : null,
       fuelType: car.fuel_type ?? null,
+      driveLayout: car.drive_layout ?? null,
     },
     inputs,
   };
@@ -664,6 +677,24 @@ function libraryFuelType(state: WizardState): FuelType {
   return fuelTypes.size === 1 ? [...fuelTypes][0] : null;
 }
 
+/**
+ * The car's drive layout: the library variant's when picked, else the user's
+ * pick, else the saved car's; `null` when nobody said.
+ */
+export function wizardDriveLayout(state: WizardState): DriveLayout {
+  return (
+    state.selectedVariant?.drivetrain ??
+    state.driveLayout ??
+    state.editing?.driveLayout ??
+    null
+  );
+}
+
+/** Whether the specs step asks for the drive layout: the library does not say. */
+export function asksDriveLayout(state: WizardState): boolean {
+  return !state.selectedVariant;
+}
+
 function confidenceOrNull(provenance: ReferenceProvenance) {
   return provenance === "missing" ? null : provenance;
 }
@@ -676,6 +707,10 @@ export type CarRequest =
       status: CarOrderReferenceStatus;
       /** The library row's or the user's powertrain; `null` when unknown. */
       fuelType: FuelType;
+      /** The library variant's or the user's drive layout; `null` when unknown. */
+      driveLayout: DriveLayout;
+      /** The library gearbox's final-drive axle, while its final drive is kept. */
+      finalDriveAxle: FinalDriveAxle;
     }
   | { ok: false; focus: ManualField };
 
@@ -731,6 +766,12 @@ export function carRequest(
     },
     status,
     fuelType: wizardFuelType(state),
+    driveLayout: wizardDriveLayout(state),
+    finalDriveAxle:
+      gearbox &&
+      sameRatio(inputs.finalDrive, ratioText(gearbox.final_drive_ratio))
+        ? (gearbox.final_drive_axle ?? null)
+        : null,
   };
 }
 
@@ -749,6 +790,8 @@ export type EditRequest =
       aspects: EditedAspects;
       /** The powertrain the user set; `null` when it did not change. */
       fuelType: FuelType;
+      /** The drive layout the user set; `null` when it did not change. */
+      driveLayout: DriveLayout;
     }
   | { ok: false; focus: ManualField };
 
@@ -785,6 +828,10 @@ export function editRequest(
     fuelType:
       state.fuelType && state.fuelType !== editing.fuelType
         ? state.fuelType
+        : null,
+    driveLayout:
+      state.driveLayout && state.driveLayout !== editing.driveLayout
+        ? state.driveLayout
         : null,
   };
 }

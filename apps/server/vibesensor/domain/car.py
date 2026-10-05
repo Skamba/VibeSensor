@@ -20,9 +20,19 @@ from vibesensor.domain._order_reference_helpers import (
     order_reference_mapping_from_spec,
     order_reference_spec_from_mapping,
 )
+from vibesensor.domain.drive_layout import (
+    Axle,
+    driven_axles,
+    final_drive_axle_for,
+    has_propshaft,
+)
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
-from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence, VehicleFuelType
+from vibesensor.domain.vehicle_configuration import (
+    VehicleDrivetrain,
+    VehicleFieldConfidence,
+    VehicleFuelType,
+)
 
 __all__ = [
     "AxleTireSetup",
@@ -136,6 +146,8 @@ class CarSnapshot:
     aspects: Mapping[str, float | str] = field(default_factory=dict)
     order_reference_status: CarOrderReferenceStatus | None = None
     fuel_type: VehicleFuelType | None = None
+    drive_layout: VehicleDrivetrain | None = None
+    final_drive_axle: Axle | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.aspects, MappingProxyType):
@@ -157,6 +169,10 @@ class Car:
     order_reference_status: CarOrderReferenceStatus | None = None
     # Powertrain from the car library (ICE/PHEV/EV); ``None`` when not known.
     fuel_type: VehicleFuelType | None = None
+    # FWD/RWD/AWD from the car library or the owner; ``None`` when not given.
+    drive_layout: VehicleDrivetrain | None = None
+    # The axle the saved final drive belongs to (see ``domain.drive_layout``).
+    final_drive_axle: Axle | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
     _aspects: Mapping[str, float | str] = field(
         init=False,
@@ -173,6 +189,8 @@ class Car:
         variant: str | None = None,
         order_reference_status: CarOrderReferenceStatus | None = None,
         fuel_type: VehicleFuelType | None = None,
+        drive_layout: VehicleDrivetrain | None = None,
+        final_drive_axle: Axle | None = None,
         order_reference_spec: OrderReferenceSpec | None = None,
     ) -> None:
         object.__setattr__(self, "id", id or uuid.uuid4().hex)
@@ -181,6 +199,10 @@ class Car:
         object.__setattr__(self, "variant", variant)
         object.__setattr__(self, "order_reference_status", order_reference_status)
         object.__setattr__(self, "fuel_type", fuel_type)
+        object.__setattr__(self, "drive_layout", drive_layout)
+        object.__setattr__(
+            self, "final_drive_axle", final_drive_axle_for(drive_layout, final_drive_axle)
+        )
         object.__setattr__(self, "order_reference_spec", order_reference_spec)
         object.__setattr__(self, "_aspects", MappingProxyType({}))
         self._normalize_order_reference_state(aspects)
@@ -216,6 +238,16 @@ class Car:
         return self._aspects
 
     # -- queries -----------------------------------------------------------
+
+    @property
+    def driven_axles(self) -> tuple[Axle, ...]:
+        """The axles the drive layout drives; empty when it was not given."""
+        return driven_axles(self.drive_layout)
+
+    @property
+    def propshaft(self) -> bool | None:
+        """Whether the car has a propshaft; ``None`` without a drive layout."""
+        return has_propshaft(self.drive_layout, self.fuel_type, self.final_drive_axle)
 
     @property
     def display_name(self) -> str:

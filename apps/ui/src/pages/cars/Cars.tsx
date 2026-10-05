@@ -138,7 +138,7 @@ function CarTableBody() {
                   <span class="car-row__setup-label">{metric.label}</span>
                   <span class="car-row__setup-value">
                     {metric.code ? <code>{metric.value}</code> : metric.value}
-                    {metric.tier === "missing" ? null : (
+                    {!metric.tier || metric.tier === "missing" ? null : (
                       <ProvenanceChip tier={metric.tier} />
                     )}
                   </span>

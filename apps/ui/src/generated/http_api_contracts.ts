@@ -151,6 +151,8 @@ export interface components {
         /** One car profile as persisted in the settings snapshot and served over HTTP. */
         CarConfigPayload: {
             aspects: components["schemas"]["AnalysisSettingsPayload"];
+            drive_layout?: ("FWD" | "RWD" | "AWD") | null;
+            final_drive_axle?: ("front" | "rear") | null;
             fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             id: string;
             name: string;
@@ -161,6 +163,8 @@ export interface components {
         /** Create/update request body for one car profile; omitted or null fields stay unchanged. */
         CarConfigUpdatePayload: {
             aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
+            drive_layout?: ("FWD" | "RWD" | "AWD") | null;
+            final_drive_axle?: ("front" | "rear") | null;
             fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             name?: string | null;
             order_reference_status?: components["schemas"]["CarOrderReferenceStatusPayload"] | null;
@@ -173,6 +177,8 @@ export interface components {
         };
         /** A gearbox option from the car library (gear ratios). */
         CarLibraryGearboxEntry: {
+            /** The axle the final drive belongs to; `null` when the library row doesn't say (an all-wheel-drive row with one published axle ratio). */
+            final_drive_axle?: ("front" | "rear") | null;
             /** `null` when the library has no final drive for this gearbox. */
             final_drive_ratio: number | null;
             final_drive_ratio_confidence?: string | null;

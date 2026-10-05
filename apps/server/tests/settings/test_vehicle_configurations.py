@@ -268,6 +268,7 @@ def test_row_without_top_gear_loads_and_serves_an_unknown_top_gear(tmp_path: Pat
         "name": config.transmission_name,
         "final_drive_ratio": 3.652,
         "final_drive_ratio_confidence": "official_exact",
+        "final_drive_axle": "front",
         "fuel_type": "ICE",
         "source_status": "exact_row",
         "transmission_confidence": config.order_reference_confidence("transmission_name"),

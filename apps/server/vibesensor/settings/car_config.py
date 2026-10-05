@@ -10,7 +10,12 @@ from typing import TYPE_CHECKING, Annotated, NotRequired, TypedDict, cast
 from pydantic import StringConstraints
 
 from vibesensor.domain.car import CarOrderReferenceSourceStatus, CarOrderReferenceStatus
-from vibesensor.domain.vehicle_configuration import VehicleFieldConfidence, VehicleFuelType
+from vibesensor.domain.drive_layout import Axle
+from vibesensor.domain.vehicle_configuration import (
+    VehicleDrivetrain,
+    VehicleFieldConfidence,
+    VehicleFuelType,
+)
 from vibesensor.settings.analysis_settings_schema import (
     ANALYSIS_SETTINGS_DEFAULTS,
     sanitize_analysis_settings,
@@ -32,6 +37,8 @@ __all__ = [
     "car_order_reference_status_payload_from_domain",
     "car_order_reference_status_from_mapping",
     "car_to_persistence_dict",
+    "drive_layout_or_none",
+    "final_drive_axle_or_none",
     "fuel_type_or_none",
     "new_car_id",
 ]
@@ -66,6 +73,10 @@ class CarConfigPayload(TypedDict):
     variant: NotRequired[str | None]
     order_reference_status: NotRequired[CarOrderReferenceStatusPayload | None]
     fuel_type: NotRequired[VehicleFuelType | None]
+    drive_layout: NotRequired[VehicleDrivetrain | None]
+    """FWD/RWD/AWD; absent when the owner did not give it."""
+    final_drive_axle: NotRequired[Axle | None]
+    """The axle the final drive belongs to: the driven one, or the library's for AWD."""
 
 
 class CarConfigUpdatePayload(TypedDict, total=False):
@@ -77,6 +88,8 @@ class CarConfigUpdatePayload(TypedDict, total=False):
     variant: _CarText | None
     order_reference_status: CarOrderReferenceStatusPayload | None
     fuel_type: VehicleFuelType | None
+    drive_layout: VehicleDrivetrain | None
+    final_drive_axle: Axle | None
 
 
 @dataclass(slots=True)
@@ -117,12 +130,28 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
             else None
         ),
         fuel_type=fuel_type_or_none(payload.get("fuel_type")),
+        drive_layout=drive_layout_or_none(payload.get("drive_layout")),
+        final_drive_axle=final_drive_axle_or_none(payload.get("final_drive_axle")),
     )
 
 
 def fuel_type_or_none(value: object) -> VehicleFuelType | None:
     """Keep only the known powertrain vocabulary (ICE/PHEV/EV)."""
     if value in {"ICE", "PHEV", "EV"}:
+        return value
+    return None
+
+
+def drive_layout_or_none(value: object) -> VehicleDrivetrain | None:
+    """Keep only the known drive layouts (FWD/RWD/AWD)."""
+    if value in {"FWD", "RWD", "AWD"}:
+        return value
+    return None
+
+
+def final_drive_axle_or_none(value: object) -> Axle | None:
+    """Keep only a front or rear axle."""
+    if value in {"front", "rear"}:
         return value
     return None
 
@@ -143,6 +172,10 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
         )
     if car.fuel_type is not None:
         payload["fuel_type"] = car.fuel_type
+    if car.drive_layout is not None:
+        payload["drive_layout"] = car.drive_layout
+    if car.final_drive_axle is not None:
+        payload["final_drive_axle"] = car.final_drive_axle
     return payload
 
 

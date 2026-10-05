@@ -336,6 +336,17 @@ the form.
   (`Car` in `apps/server/vibesensor/domain/car.py`), so an EV asks for
   confirmation only when its reduction ratio is an estimate. See §5.3 for
   what the powertrain changes in the analysis.
+- **Drive layout:** a library variant carries its drive layout (FWD, RWD or
+  AWD); the car takes it, and the gearbox's final-drive axle while its final
+  drive is kept. Where the library does not say (a car entered by hand, or
+  editing a saved car), the specs step asks "Driven wheels"
+  (*Front-wheel drive*, *Rear-wheel drive*, *All-wheel drive*, or *Not sure*
+  while the car has none), with a hint that xDrive, quattro, 4MOTION or
+  4MATIC mean all-wheel drive (`asksDriveLayout`, `wizardDriveLayout` in
+  `wizard_model.ts`). The car row shows it under "Drive layout" ("Not set"
+  when unknown). Cars saved before the layout existed get it from their
+  library row on the next start (`with_library_drive_layout` in
+  `apps/server/vibesensor/settings/car_library.py`); others stay unknown.
 
 ### 3.4 Choosing a speed source
 

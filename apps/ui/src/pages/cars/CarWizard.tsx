@@ -10,8 +10,11 @@ import { CapabilityList, ProvenanceChip } from "./CapabilityList";
 import { formatCarLibraryTireOption } from "./tires";
 import {
   actionHint,
+  asksDriveLayout,
   asksPowertrain,
   canFinish,
+  DRIVE_LAYOUTS,
+  type DriveLayout,
   gearboxParts,
   type ManualField,
   progressText,
@@ -23,6 +26,7 @@ import {
   specProvenance,
   summary,
   variantDetail,
+  wizardDriveLayout,
   wizardFuelType,
 } from "./wizard_model";
 import {
@@ -44,6 +48,7 @@ import {
   modelOptions,
   noGearboxesMessage,
   selectBrand,
+  selectDriveLayout,
   selectGearbox,
   selectModel,
   selectPowertrain,
@@ -155,6 +160,41 @@ function PowertrainField(props: { value: FuelType; canBeUnknown: boolean }) {
       </select>
       <div id="wizPowertrainHelp" class="subtle wizard-field-help">
         {t("settings.car.powertrain_help")}
+      </div>
+    </div>
+  );
+}
+
+function DriveLayoutField(props: {
+  value: DriveLayout;
+  canBeUnknown: boolean;
+}) {
+  return (
+    <div class="field wizard-spec-field">
+      <label htmlFor="wizDriveLayout" class="wizard-spec-label">
+        <span>{t("settings.car.drive_layout")}</span>
+      </label>
+      <select
+        id="wizDriveLayout"
+        value={props.value ?? ""}
+        aria-describedby="wizDriveLayoutHelp"
+        onChange={(event) =>
+          selectDriveLayout((event.currentTarget.value || null) as DriveLayout)
+        }
+      >
+        {props.canBeUnknown ? (
+          <option value="">
+            {t("settings.car.drive_layout.unknown_option")}
+          </option>
+        ) : null}
+        {DRIVE_LAYOUTS.map((layout) => (
+          <option key={layout} value={layout}>
+            {t(`settings.car.drive_layout.${layout}`)}
+          </option>
+        ))}
+      </select>
+      <div id="wizDriveLayoutHelp" class="subtle wizard-field-help">
+        {t("settings.car.drive_layout_help")}
       </div>
     </div>
   );
@@ -346,6 +386,12 @@ function SpecsForm() {
       </div>
       {asksPowertrain(state) ? (
         <PowertrainField value={fuelType} canBeUnknown={!editing?.fuelType} />
+      ) : null}
+      {asksDriveLayout(state) ? (
+        <DriveLayoutField
+          value={wizardDriveLayout(state)}
+          canBeUnknown={!editing?.driveLayout}
+        />
       ) : null}
       <div class="field wizard-spec-field">
         <label htmlFor="wizTireSize" class="wizard-spec-label">

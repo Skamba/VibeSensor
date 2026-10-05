@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 
@@ -310,3 +311,82 @@ def test_settings_snapshot_persist_failure_logs_error(
         "Failed to persist" in record.message and record.levelname == "ERROR"
         for record in caplog.records
     )
+
+
+def test_drive_layout_survives_a_restart(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+    services.car_settings.add_car({"name": "Custom", "type": "Custom", "drive_layout": "RWD"})
+
+    reloaded = build_settings_services(db=db).coordinator.snapshot()["cars"][0]
+
+    assert (reloaded.get("drive_layout"), reloaded.get("final_drive_axle")) == ("RWD", "rear")
+
+
+def _saved_car(car_id: str, name: str, car_type: str, variant: str | None, **extra: object) -> str:
+    car: dict[str, object] = {"id": car_id, "name": name, "type": car_type, "aspects": {}}
+    car.update(extra)
+    if variant is not None:
+        car["variant"] = variant
+    return json.dumps(car)
+
+
+def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: Path) -> None:
+    """Cars saved before the drive layout existed take it from their library row."""
+    xdrive_status = {
+        "selection_source_status": "exact_row",
+        "requires_manual_confirmation": False,
+        "transmission_name": "8-speed Steptronic",
+    }
+    cars = [
+        _saved_car("fwd", "BMW X1 (F48, 2015–2022) sDrive18i", "SUV", "sDrive18i"),
+        _saved_car("rwd", "BMW 3 Series (G20, 2019–2025) 320d", "Sedan", "320d"),
+        _saved_car(
+            "e-awd",
+            "BMW 2 Series Active Tourer (F45, 2014–2021) 225xe",
+            "Hatchback",
+            "225xe",
+            # The library's final drive is on the front axle: the engine drives it.
+            aspects={"final_drive_ratio": 3.944},
+            fuel_type="PHEV",
+        ),
+        _saved_car(
+            "awd",
+            "BMW X1 (F48, 2015–2022) xDrive20d (2019–2022)",
+            "SUV",
+            "xDrive20d (2019–2022)",
+            order_reference_status=xdrive_status,
+        ),
+        _saved_car("custom", "My project car", "Custom", None),
+        _saved_car("unknown-variant", "BMW X1 (F48, 2015–2022) Prototype", "SUV", "Prototype"),
+        # A layout the owner already set is never overwritten by the library.
+        _saved_car(
+            "kept", "BMW 3 Series (G20, 2019–2025) 320d", "Sedan", "320d", drive_layout="AWD"
+        ),
+    ]
+    db = HistoryDB(tmp_path / "history.db")
+    write_raw_settings_snapshot(db, '{"cars": [' + ", ".join(cars) + '], "activeCarId": "fwd"}')
+
+    services = build_settings_services(db=db)
+
+    loaded = {car["id"]: car for car in services.coordinator.snapshot()["cars"]}
+    layouts = {
+        car_id: (car.get("drive_layout"), car.get("final_drive_axle"))
+        for car_id, car in loaded.items()
+    }
+    assert layouts == {
+        "fwd": ("FWD", "front"),
+        "rwd": ("RWD", "rear"),
+        "e-awd": ("AWD", "front"),
+        "awd": ("AWD", None),
+        "custom": (None, None),
+        "unknown-variant": (None, None),
+        "kept": ("AWD", None),
+    }
+    assert loaded["fwd"]["name"] == "BMW X1 (F48, 2015–2022) sDrive18i"
+    snapshot = services.car_settings.active_car_snapshot()
+    assert snapshot is not None and snapshot.drive_layout == "FWD"
+    # The filled-in layout is saved, so the next start does not redo it.
+    persisted = db.get_settings_snapshot()
+    assert persisted is not None
+    assert persisted["cars"][0].get("drive_layout") == "FWD"

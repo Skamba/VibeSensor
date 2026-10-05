@@ -363,6 +363,8 @@ test("journey: the library path prefills the car and shows what it can test", as
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
     "VW Golf GTD",
   );
+  // The library names the drive layout, so the wizard does not ask it.
+  await expect(page.locator("#wizDriveLayout")).toHaveCount(0);
   await page.locator("#wizardManualAddBtn").click();
 
   await expect(wizard).toBeHidden();
@@ -372,6 +374,7 @@ test("journey: the library path prefills the car and shows what it can test", as
     type: "Hatchback",
     variant: "GTD",
     fuel_type: "ICE",
+    drive_layout: "FWD",
     aspects: {
       final_drive_ratio: 3.94,
       current_gear_ratio: 0.79,
@@ -913,6 +916,53 @@ test("journey: a custom brand skips the library; ratios stay optional", async ({
       selection_source_status: "manual_entry",
     },
   });
+});
+
+test("journey: a custom car asks its drive layout; not sure leaves it unset", async ({
+  page,
+}) => {
+  const server = createServer();
+  await bootWithCars(page, server);
+  await openCarsTab(page);
+
+  const addCustomCar = async (model: string) => {
+    await page.locator("#addCarBtn").click();
+    await page.locator("#wizardCustomBrand").fill("Track");
+    await page.locator("#wizardCustomBrandBtn").click();
+    await page.locator("#wizardCustomType").fill("Coupe");
+    await page.locator("#wizardCustomTypeBtn").click();
+    await page.locator("#wizardCustomModel").fill(model);
+    await page.locator("#wizardCustomModelBtn").click();
+    await page.locator("#wizTireSize").fill("225/45 R18");
+  };
+
+  await addCustomCar("Hatch");
+  const layout = page.locator("#wizDriveLayout");
+  await expect(layout).toHaveValue("");
+  await expect(layout.locator("option")).toHaveText([
+    "Not sure",
+    "Front-wheel drive",
+    "Rear-wheel drive",
+    "All-wheel drive",
+  ]);
+  await layout.selectOption("FWD");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect(page.locator("#addCarWizard")).toBeHidden();
+  expect(server.posts[0]).toMatchObject({
+    name: "Track Hatch",
+    drive_layout: "FWD",
+  });
+  await expect(
+    page.locator('#carListBody tr[data-car-id="car-1"]'),
+  ).toContainText("Front-wheel drive");
+
+  await addCustomCar("Mystery");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect(page.locator("#addCarWizard")).toBeHidden();
+  expect(server.posts[1].drive_layout).toBeUndefined();
+  await expect(
+    page.locator('#carListBody tr[data-car-id="car-2"]'),
+  ).toContainText("Not set");
 });
 
 test("journey: the dashboard's add-car prompt opens the wizard", async ({

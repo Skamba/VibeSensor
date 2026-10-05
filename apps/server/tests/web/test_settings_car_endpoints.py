@@ -186,3 +186,33 @@ def test_an_ev_keeps_no_top_gear_so_only_its_reduction_ratio_asks_for_confirmati
         },
     ).json()["cars"][0]
     assert weak["order_reference_status"]["requires_manual_confirmation"] is True
+
+
+def test_drive_layout_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_state) -> None:
+    """The layout the wizard sends is saved; the final-drive axle follows from it."""
+    car = _add(car_client, name="Golf", drive_layout="FWD")["cars"][0]
+    assert (car["drive_layout"], car["final_drive_axle"]) == ("FWD", "front")
+    custom = _add(car_client, name="Unknown layout")["cars"][1]
+    assert custom.get("drive_layout") is None
+
+    changed = car_client.put(
+        f"/api/settings/cars/{custom['id']}", json={"drive_layout": "RWD"}
+    ).json()["cars"][1]
+    renamed = car_client.put(f"/api/settings/cars/{car['id']}", json={"name": "Golf GTI"}).json()
+    car_client.put("/api/settings/cars/active", json={"car_id": car["id"]})
+
+    assert (changed["drive_layout"], changed["final_drive_axle"]) == ("RWD", "rear")
+    assert renamed["cars"][0]["drive_layout"] == "FWD"
+    snapshot = fake_state.car_settings.active_car_snapshot()
+    assert snapshot is not None
+    assert (snapshot.drive_layout, snapshot.final_drive_axle) == ("FWD", "front")
+
+
+def test_a_library_awd_car_keeps_the_axle_of_its_final_drive(car_client) -> None:
+    car = _add(car_client, name="225xe", drive_layout="AWD", final_drive_axle="front")["cars"][0]
+    assert (car["drive_layout"], car["final_drive_axle"]) == ("AWD", "front")
+
+
+def test_an_unknown_drive_layout_is_rejected(car_client) -> None:
+    response = car_client.post("/api/settings/cars", json={"name": "X", "drive_layout": "4WD"})
+    assert response.status_code == 422

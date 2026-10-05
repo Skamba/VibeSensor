@@ -20,6 +20,7 @@ from vibesensor.settings.ui_preferences import UiPreferencesState
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
 if TYPE_CHECKING:
+    from vibesensor.domain.car import Car
     from vibesensor.history.history_db import HistoryDB
 
 __all__ = ["SettingsPersistenceCoordinator"]
@@ -82,7 +83,11 @@ class SettingsPersistenceCoordinator:
             return
 
         with self._lock:
-            self._car_state.cars = [car_from_persistence_dict(car) for car in snapshot["cars"]]
+            cars = [car_from_persistence_dict(car) for car in snapshot["cars"]]
+            self._car_state.cars = _with_library_drive_layouts(cars)
+            filled_in = any(
+                new is not old for new, old in zip(self._car_state.cars, cars, strict=True)
+            )
 
             active_id = snapshot["activeCarId"] or ""
             car_ids = {car.id for car in self._car_state.cars}
@@ -97,6 +102,11 @@ class SettingsPersistenceCoordinator:
                 sensor_id: SensorConfig.from_dict(sensor_id, value)
                 for sensor_id, value in snapshot["sensorsByMac"].items()
             }
+            if filled_in:
+                try:
+                    self._persist()
+                except PersistenceError:
+                    LOGGER.warning("Drive layouts filled in from the car library were not saved")
 
     def snapshot(self) -> SettingsSnapshotPayload:
         with self._lock:
@@ -143,3 +153,17 @@ class SettingsPersistenceCoordinator:
             after_persist=after_persist,
             result=result,
         )
+
+
+def _with_library_drive_layouts(cars: list[Car]) -> list[Car]:
+    """Fill the drive layout of cars saved before it existed from the car library.
+
+    Only a car picked from the library (it has a variant) and without a layout
+    needs the library, so the library is loaded only then.
+    """
+
+    if all(car.drive_layout is not None or not car.variant for car in cars):
+        return cars
+    from vibesensor.settings.car_library import with_library_drive_layout
+
+    return [with_library_drive_layout(car) for car in cars]

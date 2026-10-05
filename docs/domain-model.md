@@ -98,6 +98,10 @@ Current examples on `main`:
 
 - `Car` normalizes blank names to `Unnamed Car` and rebuilds its
   `OrderReferenceSpec` / aspect state from sanitized settings input.
+- `Car` keeps the final-drive axle consistent with its drive layout (front
+  for FWD, rear for RWD) and derives the driven axles and whether there is a
+  propshaft from the layout, fuel type and final-drive axle
+  (`domain/drive_layout.py`) instead of storing them.
 - `SensorPlacement` rejects empty placement codes.
 - `Finding` rejects out-of-range confidence and cruise-fraction values plus
   non-finite ranking scores.

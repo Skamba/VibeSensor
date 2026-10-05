@@ -43,7 +43,8 @@ export interface CarRow {
     label: string;
     value: string;
     code?: boolean;
-    tier: ProvenanceTier;
+    /** The reference's source chip; facts the owner states have none. */
+    tier?: ProvenanceTier;
   }>;
   fuelType: FuelType;
   capabilities: Capabilities;
@@ -162,6 +163,12 @@ export function carRows(
                 tier: provenanceTier(refs.topGear),
               },
             ]),
+        {
+          label: t("settings.car.col_drive_layout"),
+          value: t(
+            `settings.car.drive_layout.${car.drive_layout ?? "unknown"}`,
+          ),
+        },
       ],
       fuelType: car.fuel_type ?? null,
       capabilities: carCapabilities(refs, car.fuel_type ?? null),

@@ -16,6 +16,8 @@ from vibesensor.settings.car_config import (
     car_from_persistence_dict,
     car_order_reference_status_from_mapping,
     car_to_persistence_dict,
+    drive_layout_or_none,
+    final_drive_axle_or_none,
     fuel_type_or_none,
     new_car_id,
 )
@@ -124,6 +126,8 @@ class CarSettingsService:
                 aspects=dict(car.aspects),
                 order_reference_status=car.order_reference_status,
                 fuel_type=car.fuel_type,
+                drive_layout=car.drive_layout,
+                final_drive_axle=car.final_drive_axle,
             )
 
     def _find_car(self, car_id: str | None) -> Car | None:
@@ -236,6 +240,19 @@ class CarSettingsService:
                         raw_order_reference_status
                     )
             new_fuel_type = fuel_type_or_none(car_data.get("fuel_type")) or car.fuel_type
+            new_drive_layout = (
+                drive_layout_or_none(car_data.get("drive_layout")) or car.drive_layout
+            )
+            # An AWD car's final-drive axle comes from its library row: it holds
+            # only while the layout and the final drive it describes are kept.
+            new_final_drive_axle = final_drive_axle_or_none(car_data.get("final_drive_axle"))
+            if (
+                new_final_drive_axle is None
+                and new_drive_layout == car.drive_layout
+                and "final_drive_ratio" not in aspect_updates
+                and not clear_final_drive
+            ):
+                new_final_drive_axle = car.final_drive_axle
             if new_order_reference_status is not None and (clear_final_drive or clear_gear):
                 status = new_order_reference_status
                 new_order_reference_status = replace(
@@ -255,6 +272,8 @@ class CarSettingsService:
                 variant=new_variant,
                 order_reference_status=new_order_reference_status,
                 fuel_type=new_fuel_type,
+                drive_layout=new_drive_layout,
+                final_drive_axle=new_final_drive_axle,
             )
             return True
 
@@ -295,6 +314,8 @@ class CarSettingsService:
                     aspects,
                 ),
                 fuel_type=car.fuel_type,
+                drive_layout=car.drive_layout,
+                final_drive_axle=car.final_drive_axle,
             )
             return True
 

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import copy
+import math
 import re
 from itertools import pairwise
 from typing import Literal, NotRequired, TypedDict
 
+from vibesensor.domain.car import Car
 from vibesensor.domain.tire_spec import AxleTireSetup
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
 from vibesensor.settings.vehicle_configurations import load_vehicle_configurations
@@ -18,6 +20,7 @@ __all__ = [
     "get_models_for_brand_type",
     "get_types_for_brand",
     "load_car_library",
+    "with_library_drive_layout",
 ]
 
 
@@ -28,6 +31,8 @@ class CarLibraryGearbox(TypedDict):
     top_gear_ratio: float | None
     """``None`` when the library has no top gear for this row (unknown)."""
     fuel_type: Literal["ICE", "PHEV", "EV"]
+    final_drive_axle: NotRequired[Literal["front", "rear"] | None]
+    """The axle ``final_drive_ratio`` belongs to; ``None`` when the row doesn't say."""
     gear_ratios: NotRequired[list[float]]
     source_status: NotRequired[Literal["exact_row"]]
     final_drive_ratio_confidence: NotRequired[str]
@@ -173,6 +178,7 @@ def _gearbox_row_from_configuration(config: VehicleConfiguration) -> CarLibraryG
         "final_drive_ratio": final_drive_ratio,
         "top_gear_ratio": config.top_gear_ratio,
         "fuel_type": config.fuel_type,
+        "final_drive_axle": config.driven_final_drive_axle,
         "source_status": config.source_status,
         "transmission_confidence": config.order_reference_confidence("transmission_name"),
         "requires_manual_confirmation": config.requires_manual_drivetrain_confirmation,
@@ -409,3 +415,70 @@ def get_exact_configurations_for_variant(
     """
 
     return _ROWS_BY_VARIANT.get((brand, car_type, model, variant_name), ())
+
+
+_VARIANT_YEARS = re.compile(r" \(\d{4}(?:\u2013\d{4})?\)$")
+
+
+def _library_rows_for_saved_car(car: Car) -> list[VehicleConfiguration]:
+    """The library rows a saved car was picked from, best match first.
+
+    The wizard saves a library car as ``"{brand} {model} {variant}"`` with the
+    body type and variant name. A car saved before its variant was split by
+    model year names the variant without the years. A renamed car falls back to
+    every row of its body type and variant.
+    """
+
+    if not car.variant:
+        return []
+    candidates = [
+        (key, rows)
+        for key, rows in _ROWS_BY_VARIANT.items()
+        if key[1] == car.car_type and car.variant in {key[3], _VARIANT_YEARS.sub("", key[3])}
+    ]
+    named = [
+        row
+        for (brand, _, model, variant), rows in candidates
+        if car.name == f"{brand} {model} {variant}"
+        for row in rows
+    ]
+    return named or [row for _, rows in candidates for row in rows]
+
+
+def with_library_drive_layout(car: Car) -> Car:
+    """Fill a saved car's missing drive layout from the library row it came from.
+
+    Cars saved before the layout existed get it when their rows agree on one;
+    an AWD car also gets the axle of its final drive when the saved ratio is
+    the row's. A layout the car already has is kept, and a car the library
+    doesn't know stays without one.
+    """
+
+    if car.drive_layout is not None:
+        return car
+    rows = _library_rows_for_saved_car(car)
+    layouts = {row.drivetrain for row in rows}
+    if len(layouts) != 1:
+        return car
+    status = car.order_reference_status
+    transmission = status.transmission_name if status is not None else None
+    same_gearbox = [row for row in rows if row.transmission_name == transmission] or rows
+    saved_ratio = car.aspects.get("final_drive_ratio")
+    axles = {
+        row.driven_final_drive_axle
+        for row in same_gearbox
+        if isinstance(saved_ratio, float)
+        and row.driven_final_drive_ratio is not None
+        and math.isclose(saved_ratio, row.driven_final_drive_ratio, abs_tol=1e-6)
+    }
+    return Car(
+        id=car.id,
+        name=car.name,
+        car_type=car.car_type,
+        aspects=car.aspects,
+        variant=car.variant,
+        order_reference_status=car.order_reference_status,
+        fuel_type=car.fuel_type,
+        drive_layout=layouts.pop(),
+        final_drive_axle=axles.pop() if len(axles) == 1 else None,
+    )

@@ -276,3 +276,46 @@ def test_bundled_picker_reaches_every_exact_row_once_per_gearbox_choice() -> Non
     assert fuel_types == {"ICE", "PHEV", "EV"}
     assert reached == {config.id for config in load_vehicle_configurations()}
     assert {key: labels for key, labels in families.items() if len(labels) > 1} == {}
+
+
+def test_each_gearbox_names_the_axle_its_final_drive_belongs_to() -> None:
+    """The saved final drive is the driven axle's; AWD rows say which when the data does.
+
+    An AWD row with one published axle ratio stores it in the rear field without
+    saying which axle it is, so no axle is claimed. A front-only ratio on an AWD
+    row is an e-AWD hybrid whose engine drives the front axle.
+    """
+    axles: dict[tuple[str, str | None], set[str]] = {}
+    for entry in load_car_library():
+        for variant in entry["variants"]:
+            configs = get_exact_configurations_for_variant(
+                entry["brand"], entry["type"], entry["model"], variant["name"]
+            )
+            for gearbox, config in zip(variant["gearboxes"], configs, strict=True):
+                both = config.final_drive_front is not None and config.final_drive_rear is not None
+                kind = "both" if both else "front" if config.final_drive_front else "rear"
+                if gearbox["final_drive_ratio"] is None:
+                    kind = "none"
+                axles.setdefault(
+                    (variant["drivetrain"], gearbox.get("final_drive_axle")), set()
+                ).add(kind)
+    assert axles == {
+        ("FWD", "front"): {"front"},
+        ("FWD", None): {"none"},
+        ("RWD", "rear"): {"rear"},
+        ("RWD", None): {"none"},
+        ("AWD", "rear"): {"both"},
+        ("AWD", "front"): {"front"},
+        ("AWD", None): {"rear", "none"},
+    }
+    picked = get_models_for_brand_type("BMW", "Hatchback")
+    e_awd = next(
+        variant
+        for entry in picked
+        if entry["model"].startswith("2 Series Active Tourer (F45")
+        for variant in entry["variants"]
+        if variant["name"] == "225xe"
+    )
+    assert [(g["fuel_type"], g.get("final_drive_axle")) for g in e_awd["gearboxes"]] == [
+        ("PHEV", "front")
+    ]

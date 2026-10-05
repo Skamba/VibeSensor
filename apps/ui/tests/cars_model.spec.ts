@@ -20,6 +20,7 @@ import {
 } from "../src/pages/cars/tires";
 import {
   actionHint,
+  asksDriveLayout,
   asksPowertrain,
   canFinish,
   carRequest,
@@ -38,6 +39,7 @@ import {
   tireSizeFromInputs,
   type WizardState,
   variantDetail,
+  wizardDriveLayout,
   wizardFuelType,
 } from "../src/pages/cars/wizard_model";
 
@@ -142,6 +144,7 @@ test("car rows show each reference's source and what the car can test", () => {
     ["225/45R18", "exact"],
     ["3.08", "checked"],
     ["0.64", "user"],
+    ["settings.car.drive_layout.unknown", undefined],
   ]);
   // Library estimates are flagged on the row, with what they mean for a run.
   expect(rows[1]).toMatchObject({
@@ -171,6 +174,7 @@ test("car rows show each reference's source and what the car can test", () => {
     ["settings.car.tires_missing", "missing"],
     ["settings.car.value_missing", "missing"],
     ["settings.car.value_missing", "missing"],
+    ["settings.car.drive_layout.unknown", undefined],
   ]);
 });
 
@@ -252,6 +256,7 @@ test("an EV row names its reduction ratio and motor, not a final drive", () => {
   expect(estimated.metrics.map((metric) => metric.label)).toEqual([
     "settings.car.col_tires",
     "settings.car.col_reduction",
+    "settings.car.col_drive_layout",
   ]);
   expect(estimated.detail).toBe(
     "settings.car.estimate.final_drive_ev settings.car.confidence.review_detail",
@@ -522,6 +527,8 @@ test("each saved spec records where it came from", () => {
       selection_source_status: "manual_entry",
     },
     fuelType: null,
+    driveLayout: null,
+    finalDriveAxle: null,
   });
   expect(carRequest(custom, { ...TYPED, topGear: "x" })).toEqual({
     ok: false,
@@ -627,12 +634,16 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     ok: true,
     aspects: {},
     fuelType: null,
+
+    driveLayout: null,
   });
   // The editor sets a powertrain the saved car lacks.
   expect(editRequest({ ...editing, fuelType: "EV" }, inputs)).toEqual({
     ok: true,
     aspects: {},
     fuelType: "EV",
+
+    driveLayout: null,
   });
   const changed = { ...inputs, finalDrive: "3.15", topGear: "" };
   expect(specProvenance(editing, changed)).toMatchObject({
@@ -643,11 +654,15 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     ok: true,
     aspects: { final_drive_ratio: 3.15, current_gear_ratio: null },
     fuelType: null,
+
+    driveLayout: null,
   });
   expect(editRequest(editing, { ...inputs, rim: "19" })).toEqual({
     ok: true,
     aspects: { tire_width_mm: 225, tire_aspect_pct: 45, rim_in: 19 },
     fuelType: null,
+
+    driveLayout: null,
   });
   expect(editRequest(editing, { ...inputs, tireWidth: "" })).toEqual({
     ok: false,
@@ -758,4 +773,87 @@ test("a variant names its drivetrain, engine and model years", () => {
       production_end_year: 2020,
     }),
   ).toBe("AWD · 2.0 diesel");
+});
+
+test("the wizard asks the drive layout only where the library does not say", () => {
+  // A library variant names its layout; its gearbox says which axle its final
+  // drive is on.
+  const golf = {
+    name: "GTD",
+    drivetrain: "FWD",
+    engine: "2.0 diesel",
+  } as const;
+  const library = specs({
+    selectedVariant: golf,
+    selectedTire: TIRE,
+    selectedGearbox: { ...GEARBOX, final_drive_axle: "front" },
+  });
+  expect(asksDriveLayout(library)).toBe(false);
+  expect(wizardDriveLayout({ ...library, driveLayout: "RWD" })).toBe("FWD");
+  const kept = { ...TYPED, finalDrive: "3.94", topGear: "0.79" };
+  expect(carRequest(library, kept)).toMatchObject({
+    ok: true,
+    driveLayout: "FWD",
+    finalDriveAxle: "front",
+  });
+  // A typed final drive is the user's own: no library axle is claimed for it.
+  expect(
+    carRequest(
+      { ...library, selectedVariant: { ...golf, drivetrain: "AWD" } },
+      { ...kept, finalDrive: "4.1" },
+    ),
+  ).toMatchObject({ ok: true, driveLayout: "AWD", finalDriveAxle: null });
+
+  // A car entered by hand: the user's pick is saved; "don't know" stays unknown.
+  const custom = specs({ libraryMiss: "brand", selectedModel: null });
+  expect(asksDriveLayout(custom)).toBe(true);
+  expect(carRequest(custom, TYPED)).toMatchObject({
+    ok: true,
+    driveLayout: null,
+    finalDriveAxle: null,
+  });
+  expect(carRequest({ ...custom, driveLayout: "RWD" }, TYPED)).toMatchObject({
+    ok: true,
+    driveLayout: "RWD",
+  });
+});
+
+test("the editor sets or changes a saved car's drive layout", () => {
+  const { target, inputs } = editTarget(
+    makeCar({ aspects: complete, drive_layout: "FWD" }),
+    fmt,
+  );
+  expect(target.driveLayout).toBe("FWD");
+  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  expect(asksDriveLayout(editing)).toBe(true);
+  expect(wizardDriveLayout(editing)).toBe("FWD");
+  expect(editRequest(editing, inputs)).toMatchObject({ driveLayout: null });
+  expect(editRequest({ ...editing, driveLayout: "AWD" }, inputs)).toMatchObject(
+    { ok: true, aspects: {}, driveLayout: "AWD" },
+  );
+});
+
+test("car rows show the drive layout, or that it was not given", () => {
+  const rows = carRows(
+    [
+      makeCar({ id: "fwd", aspects: complete, drive_layout: "FWD" }),
+      makeCar({ id: "unknown", aspects: complete }),
+    ],
+    "fwd",
+    null,
+    fmt,
+    t,
+  );
+  const layout = (index: number) =>
+    rows[index].metrics.find(
+      (metric) => metric.label === "settings.car.col_drive_layout",
+    );
+  expect(layout(0)).toEqual({
+    label: "settings.car.col_drive_layout",
+    value: "settings.car.drive_layout.FWD",
+  });
+  expect(layout(1)).toEqual({
+    label: "settings.car.col_drive_layout",
+    value: "settings.car.drive_layout.unknown",
+  });
 });

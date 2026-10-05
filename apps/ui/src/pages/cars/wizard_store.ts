@@ -18,6 +18,7 @@ import { carSettings } from "../../settings_store";
 import { createAndActivateCar, saveCarEdits } from "./cars_store";
 import {
   carRequest,
+  type DriveLayout,
   EMPTY_MANUAL_INPUTS,
   editRequest,
   editTarget,
@@ -498,6 +499,11 @@ export function selectPowertrain(fuelType: FuelType): void {
   });
 }
 
+/** The drive layout where the library does not say; `null` is "don't know". */
+export function selectDriveLayout(driveLayout: DriveLayout): void {
+  update({ driveLayout });
+}
+
 /** "I don't know": the ratio stays unknown and its check shows "couldn't test". */
 export function clearRatio(field: RatioField): void {
   editManualInput(field, "");
@@ -534,12 +540,15 @@ export async function finishWizard(): Promise<void> {
         focus(request.focus);
         return;
       }
-      if (Object.keys(request.aspects).length || request.fuelType) {
-        await saveCarEdits(
-          state.editing.carId,
-          request.aspects,
-          request.fuelType,
-        );
+      if (
+        Object.keys(request.aspects).length ||
+        request.fuelType ||
+        request.driveLayout
+      ) {
+        await saveCarEdits(state.editing.carId, request.aspects, {
+          fuelType: request.fuelType,
+          driveLayout: request.driveLayout,
+        });
       }
     } else {
       const request = carRequest(state, manualInputs.value);
@@ -554,6 +563,8 @@ export async function finishWizard(): Promise<void> {
         aspects: request.aspects,
         status: request.status,
         fuelType: request.fuelType,
+        driveLayout: request.driveLayout,
+        finalDriveAxle: request.finalDriveAxle,
       });
     }
   } catch {

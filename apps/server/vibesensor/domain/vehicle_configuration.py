@@ -164,6 +164,28 @@ class VehicleConfiguration:
             return self.final_drive_rear
         return self.final_drive_front
 
+    @property
+    def driven_final_drive_axle(self) -> Literal["front", "rear"] | None:
+        """The axle ``driven_final_drive_ratio`` belongs to, when the row says.
+
+        FWD and RWD rows drive one axle. An AWD row that lists both ratios
+        (a dual-motor EV, an Audi with front and rear differentials) gives the
+        rear one; an AWD row with only a front ratio is an e-AWD hybrid whose
+        engine drives the front axle. An AWD row with one published axle ratio
+        keeps it in the rear field without saying which axle it is, so no axle
+        is claimed for it.
+        """
+
+        if self.driven_final_drive_ratio is None:
+            return None
+        if self.drivetrain == "FWD":
+            return "front"
+        if self.drivetrain == "RWD":
+            return "rear"
+        if self.final_drive_front is None:
+            return None
+        return "rear" if self.final_drive_rear is not None else "front"
+
     def metadata_for(
         self,
         field_name: VehicleConfigurationField,

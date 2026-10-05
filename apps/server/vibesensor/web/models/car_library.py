@@ -32,6 +32,13 @@ class CarLibraryGearboxEntry(_StrictBase):
         gt=0, description="`null` when the library has no top gear for this gearbox."
     )
     fuel_type: Literal["ICE", "PHEV", "EV"]
+    final_drive_axle: Literal["front", "rear"] | None = Field(
+        default=None,
+        description=(
+            "The axle the final drive belongs to; `null` when the library row doesn't say "
+            "(an all-wheel-drive row with one published axle ratio)."
+        ),
+    )
     gear_ratios: list[float] | None = Field(default=None, min_length=1)
     source_status: Literal["exact_row"] | None = None
     final_drive_ratio_confidence: str | None = None

@@ -325,3 +325,56 @@ def test_car_snapshot_aspects_mapping_is_immutable() -> None:
 
     with pytest.raises(TypeError):
         snap.aspects["b"] = 2.0
+
+
+@pytest.mark.parametrize(
+    ("car_fields", "driven_axles", "final_drive_axle", "propshaft"),
+    [
+        pytest.param(dict(), (), None, None, id="not-given"),
+        pytest.param(dict(drive_layout="FWD"), ("front",), "front", False, id="fwd"),
+        pytest.param(dict(drive_layout="RWD"), ("rear",), "rear", True, id="rwd"),
+        pytest.param(
+            dict(drive_layout="FWD", final_drive_axle="rear"),
+            ("front",),
+            "front",
+            False,
+            id="fwd-ratio-is-always-the-front-one",
+        ),
+        pytest.param(dict(drive_layout="AWD"), ("front", "rear"), None, True, id="awd"),
+        pytest.param(
+            dict(drive_layout="AWD", fuel_type="EV", final_drive_axle="rear"),
+            ("front", "rear"),
+            "rear",
+            False,
+            id="dual-motor-ev",
+        ),
+        pytest.param(
+            dict(drive_layout="RWD", fuel_type="EV"), ("rear",), "rear", False, id="rear-motor-ev"
+        ),
+        pytest.param(
+            dict(drive_layout="AWD", fuel_type="PHEV", final_drive_axle="front"),
+            ("front", "rear"),
+            "front",
+            False,
+            id="e-awd-phev-engine-drives-the-front-axle",
+        ),
+        pytest.param(
+            dict(drive_layout="AWD", fuel_type="PHEV", final_drive_axle="rear"),
+            ("front", "rear"),
+            "rear",
+            True,
+            id="awd-phev-with-propshaft",
+        ),
+    ],
+)
+def test_drive_layout_derives_driven_axles_final_drive_axle_and_propshaft(
+    car_fields: dict[str, str],
+    driven_axles: tuple[str, ...],
+    final_drive_axle: str | None,
+    propshaft: bool | None,
+) -> None:
+    car = Car(**car_fields)  # type: ignore[arg-type]
+
+    assert car.driven_axles == driven_axles
+    assert car.final_drive_axle == final_drive_axle
+    assert car.propshaft is propshaft
