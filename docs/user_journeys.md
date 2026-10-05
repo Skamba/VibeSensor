@@ -254,7 +254,7 @@ the form.
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
-    gear is weak (179 of 542 rows, see §4). A saved car's flag follows the
+    gear is weak (167 of 541 rows, see §4). A saved car's flag follows the
     same rule (`CarOrderReferenceStatus.requires_manual_confirmation`); it is
     derived on every load, so cars saved under the older rule (which also
     counted tire size and the gearbox name) no longer keep a stale `true`.
@@ -554,22 +554,22 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (212 rows), BMW (330 rows); market EU only |
-| Exact configuration rows | 542 (ICE 495, PHEV 30, EV 17) |
-| Picker models / generation codes / variants | 91 / 70 / 411 |
+| Brands | Audi (212 rows), BMW (329 rows); market EU only |
+| Exact configuration rows | 541 (ICE 496, PHEV 28, EV 17) |
+| Picker models / generation codes / variants | 91 / 70 / 413 |
 | Production years | 2007–2026 |
-| Rows with tire options | 541 (1 has the default only) |
-| Rows with driven final drive | 528 (97%); 14 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
-| Rows with top gear | 542 (100%; EVs store 1.0 for the single speed) |
-| Rows with full gear sets | 284 (52%) |
-| Tire confidence | official_exact 330 · reputable_secondary 43 · official_derived 8 · family_default 89 · unverified 72 |
-| Driven final-drive confidence | official_exact 232 · official_derived 93 · reputable_secondary 24 · family_default 82 · unverified 97 · none 14 |
-| Top-gear confidence | official_exact 323 · official_derived 19 · reputable_secondary 29 · family_default 77 · unverified 94 |
-| Weak (family_default or unverified) | final drive 179/542 (33%), top gear 171/542 (32%), tire 161/542 (30%) |
-| `order_reference_trust` | trusted 351 · approximate 90 · backlog_unverified 101 |
-| `requires_manual_confirmation` | true 179, false 363 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
+| Rows with tire options | 540 (1 has the default only) |
+| Rows with driven final drive | 527 (97%); 14 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
+| Rows with top gear | 541 (100%; EVs store 1.0 for the single speed) |
+| Rows with full gear sets | 287 (53%) |
+| Tire confidence | official_exact 339 · reputable_secondary 43 · official_derived 8 · family_default 89 · unverified 62 |
+| Driven final-drive confidence | official_exact 245 · official_derived 91 · reputable_secondary 24 · family_default 82 · unverified 85 · none 14 |
+| Top-gear confidence | official_exact 329 · official_derived 24 · reputable_secondary 29 · family_default 77 · unverified 82 |
+| Weak (family_default or unverified) | final drive 167/541 (31%), top gear 159/541 (29%), tire 151/541 (28%) |
+| `order_reference_trust` | trusted 362 · approximate 90 · backlog_unverified 89 |
+| `requires_manual_confirmation` | true 167, false 374 (true exactly when the driven final drive or top gear is weak; the 53 BMW `order_analysis_policy_override` rows agree) |
 | Picker variants without any gearbox | 0 |
-| Variants whose rows differ in tire options | 21 (the picker offers the union) |
+| Variants whose rows differ in tire options | 14 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
 
 **How confidence is surfaced today:**
@@ -606,7 +606,7 @@ changes and update this table.
 - **Final drive:** missing on 13 Audi TT/RS 3 rows and the 2019–2021 G21 318d
   automatic. The `unresolved` notes say the manufacturer publishes split,
   conflicting or no values; do not invent one. Weak
-  (family_default or unverified) on 179 rows. Those rows are where a single
+  (family_default or unverified) on 167 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---

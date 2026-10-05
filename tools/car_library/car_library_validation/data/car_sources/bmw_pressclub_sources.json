@@ -1680,6 +1680,13 @@
       "title": "BMW PressClub article: BMW 3 Series model range expands to include four plug-in hybrid models",
       "note": "Official BMW 2020 article: the 330e Touring (eight-speed Steptronic with integrated electric motor) is available from summer 2020, alongside the 330e xDrive Sedan and Touring.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f48-x1-2019-07-fr-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/france/article/attachment/T0296225FR/431938",
+      "title": "BMW PressClub France F48 X1 technical data PDF 07/2019 (LCI, English-language sheet)",
+      "note": "Official BMW 07/2019 media information (English technical data, published by BMW France) for the facelifted F48 X1 range. sDrive18i: six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 with final drive 3.882, or 7-speed Steptronic with double clutch (overall ratios, seventh 2.285, final drive 4.176). sDrive20i: 7-speed Steptronic with double clutch only (overall seventh 2.073, final drive 3.789). xDrive20i and xDrive25i: 8-speed Steptronic, eighth 0.673, final drive 3.200. sDrive16d: six-speed manual top 0.628 with final drive 3.588, or 7-speed double clutch (overall seventh 2.285, final drive 4.176). sDrive18d: six-speed manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 with final drive 3.389, or 8-speed Steptronic eighth 0.673 with final drive 2.851. sDrive20d and xDrive20d: 8-speed Steptronic, eighth 0.673, final drive 2.851. Standard tyres 225/55 R17 throughout.",
+      "confidence": "high"
     }
   ]
 }

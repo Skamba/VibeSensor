@@ -2,24 +2,8 @@
   "definitions": {
     "notes": {
       "n2": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The 28i badge (sDrive28i / xDrive28i) is a North American market designation only - it was NEVER offered in the EU lineup. The repo row carries an 'eu' market tag which is incorrect for this badge. BMW Germany 2022 price list contains no 28i variant; Wikipedia BMW X2 confirms 28i is North America only. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n3": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The Getrag 7DCI300 7-speed DCT in F39 is a FWD-only gearbox; it is mechanically incompatible with the Haldex AWD coupling used on xDrive variants. All AWD variants of the X2 F39 use the Aisin AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n9": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 FWD petrol variants (sDrive18i / sDrive20i) were offered exclusively with the Getrag 7DCI300 7-speed DCT. No 8-speed Steptronic was offered for FWD petrol. AWD petrol (xDrive20i, M35i) used the Aisin 8AT, but FWD petrol did not. Confirmed by BMW PressClub T0286557EN/419617 and T0327517EN/473618 across all production years. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n12": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses a 6-speed Aisin Steptronic (AT6), NOT the Getrag 7DCI300 DCT7. Confirmed by BMW PressClub T0314293EN/457892 (05/2020 xDrive25e launch tech-data PDF). Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n13": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 xDrive25e PHEV uses the Aisin AT6 6-speed Steptronic, NOT the AWF8F45 8-speed Steptronic. The 6AT is a different gearbox model with different gear ratios. Confirmed by BMW PressClub T0314293EN/457892. Additionally production_start_year 2018 is wrong: xDrive25e launched July 2020.",
       "n14": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) is offered exclusively with the 6-speed manual transmission per BMW Cyprus brochure (PSL44 EWL) Power Transmission table. The DCT7 was never paired with this engine. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence.",
-      "n15": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation.",
-      "n16": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The BMW X2 F39 diesel variants (B37/B47 engines) were never paired with the Getrag 7DCI300 7-speed DCT. The DCT7 in F39 is a FWD petrol-only gearbox (sDrive18i / sDrive20i). All diesel variants used either the 6-speed manual (GS6-17BG) or the Aisin AWF8F35/AWF8F45 8-speed Steptronic. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec) listing diesel 8AT/6MT only and T0327517EN/473618 (03/2021 multi-variant spec) confirming. Drivetrain, transmission, ratios and tires set to no_confidence; safety gates require manual confirmation.",
-      "n17": "Reverse gear ratio (research note): 4.221",
-      "n18": "Verification backlog remains pending authoritative verification: official review did not yield a safe EU-only ratio update, so the existing entry is retained only as an unsupported reference.",
-      "n19": "BMW X2 F39 sDrive18d 8-speed Steptronic (Aisin AWF8F35) FWD. Confirmed by BMW PressClub spec PDF T0282289EN/403768 (03/2018) and T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B47C20O0 (110 kW / 150 hp), gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: repo's transmission code label 'ZF8HP' is a misnomer (ZF 8HP is longitudinal-only); the actual gearbox is the Aisin AWF8F35 transverse 8AT. Code retained as stored to avoid breaking shard-internal references; transmission.name corrected.",
-      "n20": "BMW X2 F39 sDrive18i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0282289EN/403769 (03/2018), T0286557EN/419617 (09/2018), and T0327517EN/473618 (03/2021). Engine B38A15M0 (100 kW / 136 hp). BMW spec PDFs publish DCT7 ratios as OVERALL (gear x final-drive) values; FD published separately as 4.176. Individual gear set derived: [3.769, 2.161, 1.380, 0.978, 0.766, 0.614, 0.547]. Standard tyre 225/55 R17 97W.",
-      "n21": "BMW X2 F39 sDrive20i 7-speed dual-clutch (Getrag 7DCI300) FWD. Confirmed by BMW PressClub spec PDFs T0286557EN/419617 (09/2018) and T0327517EN/473618 (03/2021). Engine B48A20M0 (141 kW / 192 hp). BMW publishes DCT7 OVERALL ratios; FD 3.789 published separately. Individual gear set derived: [4.155, 2.381, 1.522, 1.079, 0.844, 0.677, 0.547] - same 7th gear (0.547) as sDrive18i, expected for same gearbox. Standard tyre 225/55 R17 97W.",
-      "n22": "BMW X2 F39 xDrive20d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0286557EN/419617 (09/2018 multi-variant spec, xDrive20d section, FD=2.851) and T0327517EN/473618 (03/2021). Engine B47C20O1 (140 kW / 190 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. AWD via Haldex coupling on rear axle.",
-      "n23": "Aisin AWF8F45 8th gear.",
-      "n24": "BMW X2 F39 xDrive20i 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0282289EN/403771 (03/2018 xDrive20i spec) and T0327517EN/473618 (03/2021). Engine B48A20M1 (141 kW / 192 hp) AWD tune. Gear set 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 3.200 (higher than diesel 2.851). Standard tyre 225/55 R17 97W.",
-      "n25": "BMW X2 F39 xDrive25d 8-speed Steptronic (Aisin AWF8F45) AWD. Confirmed by BMW PressClub T0327517EN/473618 (03/2021 multi-variant spec, xDrive25d section). Engine B47C20O2 (170 kW / 231 hp) AWD tune. Same Aisin AWF8F45 gear set as xDrive20d: 5.519/3.184/2.050/1.492/1.235/1.000/0.801/0.673, reverse 4.221, FD 2.851. Standard tyre 225/55 R17 97W. NOTE: an existing repo source note for f39-xdrive20d-xdrive25d-2017-spec-pdf cites FD 2.955 from a 10/2017 launch spec - this value was either pre-production or a transcription error and is superseded by the 2.851 confirmed in two subsequent multi-variant spec PDFs (09/2018 and 03/2021).",
-      "n26": "Getrag 7DCI300 final drive per BMW spec.",
-      "n27": "Aisin AWF8F45 gear set."
+      "n15": "Sonnet redo research (2026-04 v2): PHANTOM ROW. The X2 sDrive16d (B37 1.5L diesel, EU only, from 2019) standard transmission is the 6-speed manual per BMW Cyprus brochure. No BMW PressClub spec PDF or market brochure confirms an 8-speed Steptronic option for this variant. Additionally production_start_year 2018 is wrong: sDrive16d entered production in 2019. Drivetrain, transmission, ratios and tires set to no_confidence pending direct confirmation."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -33,51 +17,10 @@
         "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
         "secondary_technical_sources:bmw-x2-f39-wikipedia"
       ],
-      "e3": [
-        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e4": [
-        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
       "e5": [
         "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
         "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
         "secondary_technical_sources:bmw-x2-f39-wikipedia"
-      ],
-      "e6": [
-        "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e7": [
-        "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e8": [
-        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e9": [
-        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e10": [
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e11": [
-        "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e12": [
-        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
       ],
       "e13": [
         "bmw_market_pages:f39-x2-brochure-2021-cy"
@@ -91,46 +34,6 @@
       "e15": [
         "bmw_pressclub_sources:f39-x2-usa-2018-launch-article",
         "bmw_pressclub_sources:f39-x2-usa-2021-edition-m-mesh-article"
-      ],
-      "e16": [
-        "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e17": [
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e18": [
-        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e19": [
-        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e20": [
-        "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e21": [
-        "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
-        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-        "bmw_market_pages:f39-x2-brochure-2022-gr"
-      ],
-      "e22": [
-        "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-xdrive25e-launch-article",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-      ],
-      "e23": [
-        "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec"
-      ],
-      "e24": [
-        "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
-        "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-        "bmw_market_pages:f39-x2-price-list-2022-de"
       ]
     },
     "tire_setups": {
@@ -188,6 +91,1195 @@
     "production_end_year": 2023
   },
   "configurations": [
+    {
+      "id": "bmw-f39-sdrive18i-eu-2018-mt6-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "sDrive18i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the X2 sDrive18i as front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list a six-speed manual for the X2 sDrive18i.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 0.683 as top gear for the X2 sDrive18i six-speed manual.",
+          "value": 0.683
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the full forward ratio set for the X2 sDrive18i six-speed manual.",
+          "value": [
+            3.615,
+            1.952,
+            1.241,
+            0.969,
+            0.806,
+            0.683
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 3.882 as the final drive for the X2 sDrive18i six-speed manual.",
+          "value": 3.882
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18i six-speed manual.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18i six-speed manual.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 02/2018 sDrive18i sheet (valid from 03/2018), the 09/2018 and the 03/2021 X2 sheets list the six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 with final drive 3.882. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-sdrive18i-eu-2018-dct7-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "sDrive18i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the X2 sDrive18i as front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list a 7-speed Steptronic transmission with double clutch for the X2 sDrive18i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+          ],
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.285 with final drive 4.176; the stored top gear is 2.285 / 4.176 = 0.547, the same seventh-gear ratio BMW prints for the 7-speed dual-clutch gearbox in the 10/2017 X2 sDrive20i sheet. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 4.176 as the final drive for the X2 sDrive18i 7-speed Steptronic transmission with double clutch.",
+          "value": 4.176
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18i 7-speed Steptronic transmission with double clutch.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+              "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18i 7-speed Steptronic transmission with double clutch.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 02/2018 sDrive18i sheet (valid from 03/2018), the 09/2018 and the 03/2021 X2 sheets list the optional 7-speed Steptronic with double clutch: overall seventh 2.285, final drive 4.176. The former derived gear set (overall ratios divided by 4.176) is dropped because the gearbox uses two output ratios. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-sdrive20i-eu-2018-dct7-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "sDrive20i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list the X2 sDrive20i as front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list a 7-speed Steptronic transmission with double clutch for the X2 sDrive20i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.073 with final drive 3.789; the stored top gear is 2.073 / 3.789 = 0.547, the same seventh-gear ratio BMW prints for the 7-speed dual-clutch gearbox in the 10/2017 X2 sDrive20i sheet. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 3.789 as the final drive for the X2 sDrive20i 7-speed Steptronic transmission with double clutch.",
+          "value": 3.789
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive20i 7-speed Steptronic transmission with double clutch.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive20i 7-speed Steptronic transmission with double clutch.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2017 sDrive20i sheet lists the 7-speed Steptronic dual-clutch transmission with seventh gear 0.547 and front drive ratio 3.789; the 09/2018 and 03/2021 X2 sheets list the sDrive20i with it only (overall seventh 2.073, final drive 3.789). Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive20i-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-sdrive18d-eu-2018-mt6-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "sDrive18d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the X2 sDrive18d as front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list a six-speed manual for the X2 sDrive18d.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 0.605 as top gear for the X2 sDrive18d six-speed manual.",
+          "value": 0.605
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 3.389 as the final drive for the X2 sDrive18d six-speed manual.",
+          "value": 3.389
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18d six-speed manual.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18d six-speed manual.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 02/2018 sDrive18d sheet (valid from 03/2018), the 09/2018 and the 03/2021 X2 sheets list the six-speed manual with sixth gear 0.605 and final drive 3.389 (fourth gear is printed 0.921 in 2018 and 0.919 in 2021, so the full gear set is not stored). Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-sdrive18d-eu-2018-zf8hp-fwd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "sDrive18d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the X2 sDrive18d as front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list a 8-speed Steptronic transmission for the X2 sDrive18d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 0.673 as top gear for the X2 sDrive18d 8-speed Steptronic transmission.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list the full forward ratio set for the X2 sDrive18d 8-speed Steptronic transmission.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 2.851 as the final drive for the X2 sDrive18d 8-speed Steptronic transmission.",
+          "value": 2.851
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18d 8-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2018, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 sDrive18d 8-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 02/2018 sDrive18d sheet (valid from 03/2018), the 09/2018 and the 03/2021 X2 sheets list the optional 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 2.851. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-xdrive20i-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "xDrive20i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018 and 03/2021 technical data list the X2 xDrive20i as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 02/2018 and 03/2021 technical data list a 8-speed Steptronic transmission for the X2 xDrive20i.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018 and 03/2021 technical data list 0.673 as top gear for the X2 xDrive20i 8-speed Steptronic transmission.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018 and 03/2021 technical data list the full forward ratio set for the X2 xDrive20i 8-speed Steptronic transmission.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018 and 03/2021 technical data list 3.200 as the final drive for the X2 xDrive20i 8-speed Steptronic transmission; one axle ratio is published for the all-wheel-drive car.",
+          "value": 3.2
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 02/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive20i 8-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 02/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive20i 8-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 02/2018 xDrive20i sheet (valid from 03/2018) and the 03/2021 X2 sheet list the 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 3.200. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20i-2018-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-xdrive20d-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2023,
+      "variant_name": "xDrive20d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list the X2 xDrive20d as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list a 8-speed Steptronic transmission for the X2 xDrive20d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 0.673 as top gear for the X2 xDrive20d 8-speed Steptronic transmission.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list the full forward ratio set for the X2 xDrive20d 8-speed Steptronic transmission.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 2.851 as the final drive for the X2 xDrive20d 8-speed Steptronic transmission; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.851
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive20d 8-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 10/2017, 09/2018 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive20d 8-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2017, 09/2018 and 03/2021 X2 sheets list the xDrive20d 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with drive ratio 2.851. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-xdrive25d-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2020,
+      "variant_name": "xDrive25d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017 technical data list the X2 xDrive25d as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 10/2017 technical data list a 8-speed Steptronic transmission for the X2 xDrive25d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017 technical data list 0.673 as top gear for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017 technical data list the full forward ratio set for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "value": [
+            5.25,
+            3.029,
+            1.95,
+            1.457,
+            1.221,
+            1.0,
+            0.809,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017 technical data list 2.955 as the final drive for the X2 xDrive25d 8-speed Steptronic transmission; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.955
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 10/2017 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 10/2017 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25d 8-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2017 X2 sheet lists the xDrive25d 8-speed Steptronic 5.25 / 3.029 / 1.95 / 1.457 / 1.221 / 1.000 / 0.809 / 0.673 with drive ratio 2.955. The 03/2021 sheet lists 2.851, so this row ends with model year 2020.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive20d-xdrive25d-2017-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "xDrive25d drive-ratio change year",
+          "reason": "The 09/2018 X2 sheet does not include the xDrive25d; the change to 2.851 is first visible for this variant in the 03/2021 sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-xdrive25d-eu-2021-zf8hp-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
+      "variant_name": "xDrive25d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical data list the X2 xDrive25d as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical data list a 8-speed Steptronic transmission for the X2 xDrive25d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 0.673 as top gear for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list the full forward ratio set for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 2.851 as the final drive for the X2 xDrive25d 8-speed Steptronic transmission; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.851
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25d 8-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25d 8-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 X2 sheet lists the xDrive25d 8-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 with final drive 2.851. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f39-xdrive25e-eu-2020-at6-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2023,
+      "variant_name": "xDrive25e",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2020 and 03/2021 technical data list the X2 xDrive25e as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+          "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2020 and 03/2021 technical data list a 6-speed Steptronic transmission for the X2 xDrive25e.",
+        "code": "AT6",
+        "name": "6-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2020 and 03/2021 technical data list 0.672 as top gear for the X2 xDrive25e 6-speed Steptronic transmission.",
+          "value": 0.672
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2020 and 03/2021 technical data list the full forward ratio set for the X2 xDrive25e 6-speed Steptronic transmission.",
+          "value": [
+            4.459,
+            2.508,
+            1.556,
+            1.142,
+            0.851,
+            0.672
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2020 and 03/2021 technical data list 3.944 as the final drive for the X2 xDrive25e 6-speed Steptronic transmission; the combustion engine drives the front axle and the rear axle is electric.",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2020 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25e 6-speed Steptronic transmission.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 55.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 05/2020 and 03/2021 technical data list 225/55 R17 as the standard tyre for the X2 xDrive25e 6-speed Steptronic transmission.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "2021 standard 17\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 03/2021 X2 sheet lists 205/55 R17 as the standard tyre for the xDrive25e.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "setup_ref": "setup_235_19",
+            "name": "Sport Line 19\""
+          },
+          {
+            "setup_ref": "setup_245_20",
+            "name": "M Sport 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2020 xDrive25e sheet and the 03/2021 X2 sheet list the 6-speed Steptronic 4.459 / 2.508 / 1.556 / 1.142 / 0.851 / 0.672 with final drive 3.944; the standard tyre is 225/55 R17 in 05/2020 and 205/55 R17 in 03/2021, so both are offered. This replaces the former unverified dual-clutch and 8-speed xDrive25e rows. Production of the F39 ran to 2023 (the U10 X2 followed); rows whose drivetrain the 03/2021 sheet still lists run to 2023.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
+            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
     {
       "id": "bmw-f39-sdrive16d-eu-2018-dct7-fwd",
       "variant_name": "sDrive16d",
@@ -379,627 +1471,6 @@
       }
     },
     {
-      "id": "bmw-f39-sdrive18d-eu-2018-dct7-fwd",
-      "variant_name": "sDrive18d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n16",
-        "value": "FWD",
-        "evidence_refs_ref": "e6"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n16",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (DKG)",
-        "evidence_refs_ref": "e6"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n16",
-          "value": 0.71,
-          "evidence_refs_ref": "e6"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n16",
-          "value": 3.636,
-          "evidence_refs_ref": "e6"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e6",
-          "notes_ref": "n16",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n18",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e16"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive18d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 (F39, 2018-2023) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X2 (F39, 2018-2023) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official 2018 and 2021 F39 sDrive18d technical-data sheets show six-speed manual with optional 8-speed Steptronic, not a DCT7 automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e16"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-sdrive18d-eu-2018-zf8hp-fwd",
-      "variant_name": "sDrive18d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e6",
-        "notes_ref": "n19",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e6",
-        "notes_ref": "n19",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (Aisin AWF8F35)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e6",
-          "notes": "Aisin AWF8F35 8th gear from BMW PressClub T0282289EN/403768 (03/2018).",
-          "value": 0.673
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e6",
-          "notes": "Aisin AWF8F35 final drive (FWD).",
-          "value": 2.851
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.519,
-            3.184,
-            2.05,
-            1.492,
-            1.235,
-            1.0,
-            0.801,
-            0.673
-          ],
-          "evidence_refs_ref": "e6",
-          "notes": "Aisin AWF8F35 gear set per BMW PressClub spec."
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-sdrive18d-2018-spec-pdf",
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec"
-          ],
-          "notes_ref": "n19",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e16",
-            "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive18d automatic row.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2018 and 03/2021 technical-data PDFs agree on the broad F39 sDrive18d automatic row: front-wheel drive, 8-speed Steptronic, 0.673 top gear, 2.851 final drive, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders.",
-          "evidence_refs_ref": "e16"
-        },
-        {
-          "note_ref": "n17",
-          "evidence_refs_ref": "e6"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive18d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 sDrive18d automatic year-by-year continuity across the represented 2018-2023 row span",
-          "reason": "The checked official BMW 03/2018 and 03/2021 packets agree on the promoted drivetrain, transmission, top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
-          "evidence_refs_ref": "e16"
-        },
-        {
-          "item": "BMW X2 sDrive18d exact optional wheel and tire matrix across the represented row span",
-          "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
-          "evidence_refs_ref": "e16"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-sdrive18i-eu-2018-dct7-fwd",
-      "variant_name": "sDrive18i",
-      "engine_code": "B38",
-      "engine_name": "B38 1.5L I3 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e8",
-        "notes_ref": "n20",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e8",
-        "notes_ref": "n20",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (Getrag 7DCI300)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e8",
-          "notes": "Getrag 7DCI300 7th gear individual ratio derived from BMW spec overall ratio 2.285 / FD 4.176.",
-          "value": 0.547
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n26",
-          "value": 4.176
-        },
-        "gear_ratios": {
-          "confidence": "official_derived",
-          "value": [
-            3.769,
-            2.161,
-            1.38,
-            0.978,
-            0.766,
-            0.614,
-            0.547
-          ],
-          "evidence_refs_ref": "e23",
-          "notes": "Individual gear ratios derived by dividing BMW spec OVERALL ratios (15.741/9.024/5.766/4.085/3.197/2.562/2.285) by FD 4.176. BMW publishes overall ratios for DCT7; individual derivation is arithmetic."
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e23",
-          "notes_ref": "n20",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e18",
-            "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive18i automatic row.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2018 and 03/2021 technical-data PDFs agree on the broad F39 sDrive18i automatic row: front-wheel drive, 7-speed Steptronic dual-clutch, effective top gear 0.547, final drive 4.176, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders.",
-          "evidence_refs_ref": "e18"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 sDrive18i automatic year-by-year continuity across the represented 2018-2023 row span",
-          "reason": "The checked official BMW 03/2018 and 03/2021 packets agree on the promoted drivetrain, transmission, top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
-          "evidence_refs_ref": "e18"
-        },
-        {
-          "item": "BMW X2 sDrive18i exact optional wheel and tire matrix across the represented row span",
-          "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
-          "evidence_refs_ref": "e18"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-sdrive18i-eu-2018-zf8hp-fwd",
-      "variant_name": "sDrive18i",
-      "engine_code": "B38",
-      "engine_name": "B38 1.5L I3 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n9",
-        "value": "FWD",
-        "evidence_refs_ref": "e8"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n9",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (Aisin)",
-        "evidence_refs_ref": "e8"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 0.674,
-          "evidence_refs_ref": "e8"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 3.294,
-          "evidence_refs_ref": "e8"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n9",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n18",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Official 2018 and 2021 F39 sDrive18i technical-data sheets show six-speed manual with optional 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e19"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 (F39, 2018-2023) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X2 (F39, 2018-2023) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official 2018 and 2021 F39 sDrive18i technical-data sheets show six-speed manual with optional 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e19"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-sdrive20i-eu-2018-dct7-fwd",
-      "variant_name": "sDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e10",
-        "notes_ref": "n21",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e10",
-        "notes_ref": "n21",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (Getrag 7DCI300)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes": "Getrag 7DCI300 7th gear individual ratio (BMW spec overall 2.073 / FD 3.789).",
-          "value": 0.547
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes_ref": "n26",
-          "value": 3.789
-        },
-        "gear_ratios": {
-          "confidence": "official_derived",
-          "value": [
-            4.155,
-            2.381,
-            1.522,
-            1.079,
-            0.844,
-            0.677,
-            0.547
-          ],
-          "evidence_refs_ref": "e10",
-          "notes": "Individual gear ratios derived by dividing BMW OVERALL ratios by FD 3.789."
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes_ref": "n21",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e20",
-            "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 sDrive20i automatic row.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 10/2017 and 03/2021 technical-data PDFs agree on the broad F39 sDrive20i automatic row: front-wheel drive, 7-speed Steptronic dual-clutch, 0.547 top gear, 3.789 final drive, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders.",
-          "evidence_refs_ref": "e20"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive20i in-line 4 cylinders, 1998 cc, BMW TwinPower Turbo - the same engine as the xDrive20i row.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 sDrive20i automatic year-by-year continuity across the represented 2018-2023 row span",
-          "reason": "The checked official BMW 10/2017 and 03/2021 packets agree on the promoted drivetrain, transmission, top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
-          "evidence_refs_ref": "e20"
-        },
-        {
-          "item": "BMW X2 sDrive20i exact optional wheel and tire matrix across the represented row span",
-          "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
-          "evidence_refs_ref": "e20"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-sdrive20i-eu-2018-zf8hp-fwd",
-      "variant_name": "sDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n9",
-        "value": "FWD",
-        "evidence_refs_ref": "e12"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n9",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (Aisin)",
-        "evidence_refs_ref": "e12"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 0.674,
-          "evidence_refs_ref": "e12"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n9",
-          "value": 3.294,
-          "evidence_refs_ref": "e12"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e12",
-          "notes_ref": "n9",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 10/2017 and 03/2021 technical-data PDFs both show the EU-market F39 xDrive20d automatic state as 8-speed Steptronic, not 7-speed dual-clutch. This DCT7 row remains only as a contradicted placeholder until the broader F39 shard is reshaped.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e19"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: sDrive20i in-line 4 cylinders, 1998 cc, BMW TwinPower Turbo - the same engine as the xDrive20i row.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Whether this contradicted xDrive20d DCT7 row should be replaced by an exact Steptronic row",
-          "reason": "Official BMW PDFs support the EU-market F39 xDrive20d automatic state only as 8-speed Steptronic and do not support a dual-clutch row, but this pass did not split or delete the legacy broad row.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official F39 sDrive20i technical-data sheets show 7-speed Steptronic DCT, not an 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e19"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
       "id": "bmw-f39-sdrive28i-eu-2018-dct7-fwd",
       "variant_name": "sDrive28i",
       "engine_code": "B48",
@@ -1164,865 +1635,6 @@
           "item": "Unsupported exact F39 transmission/market mapping",
           "reason": "Official 28i evidence recovered in this run is USA-market only; it supports sDrive28i as a USA 8-speed automatic row, not a broad EU row. Keep this EU placeholder out of driveshaft/wheel order analysis until market-specific rows are split.",
           "evidence_refs_ref": "e15"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-xdrive20d-eu-2018-dct7-awd",
-      "variant_name": "xDrive20d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "value": "AWD",
-        "evidence_refs_ref": "e9"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (DKG)",
-        "evidence_refs_ref": "e9"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 0.71,
-          "evidence_refs_ref": "e9"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e9"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e9"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n3",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n18",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: xDrive20d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 (F39, 2018-2023) EU ratio-relevant variant mapping",
-          "reason": "Authoritative per-model ratio extraction is still missing, so the no-guess policy keeps the existing values only as an unsupported reference.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X2 (F39, 2018-2023) variant-level final_drive_ratio and top_gear_ratio confirmation",
-          "reason": "Official source links logged, but values not programmatically verified in this pass.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official 2018 and 2021 F39 xDrive20d technical-data sheets show 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-xdrive20d-eu-2018-zf8hp-awd",
-      "variant_name": "xDrive20d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e9",
-        "notes_ref": "n22",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e9",
-        "notes_ref": "n22",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (Aisin AWF8F45)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes_ref": "n23",
-          "value": 0.673
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes": "Aisin AWF8F45 final drive for xDrive20d.",
-          "value": 2.851
-        },
-        "final_drive_rear": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive; UKL2 Haldex AWD has a single FD value with rear coupling output ratio not separately published.",
-          "value": 2.851
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.519,
-            3.184,
-            2.05,
-            1.492,
-            1.235,
-            1.0,
-            0.801,
-            0.673
-          ],
-          "evidence_refs_ref": "e10",
-          "notes": "Aisin AWF8F45 gear set per BMW PressClub spec."
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e10",
-          "notes_ref": "n22",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e3",
-            "notes": "The checked official BMW 10/2017 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 xDrive20d automatic row.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 10/2017 and 03/2021 technical-data PDFs agree on the broad F39 xDrive20d automatic row: all-wheel drive, 8-speed Steptronic, 0.673 top gear, a single published AWD drive ratio of 2.851, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders, mirroring the one published AWD ratio into both axle fields.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n17",
-          "evidence_refs_ref": "e10"
-        },
-        {
-          "note": "Engine text from the 2018 and 2021 X2 technical data: xDrive20d in-line 4 cylinders, 1995 cc, BMW TwinPower Turbo, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2018-multi-variant-spec",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 xDrive20d automatic year-by-year continuity across the represented 2018-2023 row span",
-          "reason": "The checked official BMW 10/2017 and 03/2021 packets agree on the promoted drivetrain, transmission, top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW X2 xDrive20d exact optional wheel and tire matrix across the represented row span",
-          "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-xdrive20i-eu-2018-dct7-awd",
-      "variant_name": "xDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "value": "AWD",
-        "evidence_refs_ref": "e11"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (DKG)",
-        "evidence_refs_ref": "e11"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 0.71,
-          "evidence_refs_ref": "e11"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e11"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e11"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e11",
-          "notes_ref": "n3",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2018 and 03/2021 technical-data PDFs both show the EU-market F39 xDrive20i automatic state as 8-speed Steptronic, not 7-speed dual-clutch. This DCT7 row remains only as a contradicted placeholder until the broader F39 shard is reshaped.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note": "Official F39 xDrive20i technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Whether this contradicted xDrive20i DCT7 row should be replaced by an exact Steptronic row",
-          "reason": "Official BMW PDFs support the EU-market F39 xDrive20i automatic state only as 8-speed Steptronic and do not support a dual-clutch row, but this pass did not split or delete the legacy broad row.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official F39 xDrive20i technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-xdrive20i-eu-2018-zf8hp-awd",
-      "variant_name": "xDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e7",
-        "notes_ref": "n24",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e7",
-        "notes_ref": "n24",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (Aisin AWF8F45)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n23",
-          "value": 0.673
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e7",
-          "notes": "Aisin AWF8F45 final drive for xDrive20i petrol.",
-          "value": 3.2
-        },
-        "final_drive_rear": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e7",
-          "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive; UKL2 Haldex AWD has a single FD.",
-          "value": 3.2
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.519,
-            3.184,
-            2.05,
-            1.492,
-            1.235,
-            1.0,
-            0.801,
-            0.673
-          ],
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n27"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n24",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "confidence": "official_derived",
-            "evidence_refs_ref": "e7",
-            "notes": "The checked official BMW 03/2018 and 03/2021 technical-data PDFs agree on 225/55 R17 as the baseline tire for the broad F39 xDrive20i automatic row.",
-            "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 55.0,
-              "rim_in": 17.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Standard 17\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 03/2018 and 03/2021 technical-data PDFs agree on the broad F39 xDrive20i automatic row: all-wheel drive, 8-speed Steptronic, 0.673 top gear, a single published AWD drive ratio of 3.200, and 225/55 R17 baseline tires. The row now promotes those stable official values instead of the contradicted inherited placeholders, mirroring the one published AWD ratio into both axle fields.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "note_ref": "n17",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X2 xDrive20i automatic year-by-year continuity across the represented 2018-2023 row span",
-          "reason": "The checked official BMW 03/2018 and 03/2021 packets agree on the promoted drivetrain, transmission, top-gear, final-drive, and baseline-tire values, but this pass did not recover a complete official year-by-year chain for every intermediate model year.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "BMW X2 xDrive20i exact optional wheel and tire matrix across the represented row span",
-          "reason": "The checked official BMW packets close the baseline 225/55 R17 fitment, but this pass did not recover one exact optional wheel and tire matrix for the full broad row.",
-          "evidence_refs_ref": "e7"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-xdrive25d-eu-2018-dct7-awd",
-      "variant_name": "xDrive25d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "value": "AWD",
-        "evidence_refs_ref": "e3"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n3",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (DKG)",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 0.71,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e3"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.636,
-          "evidence_refs_ref": "e3"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n3",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW 10/2017 and 03/2021 technical-data PDFs both show the EU-market F39 xDrive25d automatic state as 8-speed Steptronic, never 7-speed dual-clutch. This DCT7 row remains only as a contradicted placeholder until the broader F39 shard is reshaped.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note": "Engine text from the 2021 X2 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Replace the contradicted xDrive25d DCT7 row with an exact Steptronic row",
-          "reason": "The saved official BMW sources support xDrive25d only as an 8-speed automatic state, but this pass does not delete or replace the legacy placeholder row.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official F39 xDrive25d technical-data sheets show all-wheel drive with 8-speed Steptronic, not a DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-xdrive25d-eu-2018-zf8hp-awd",
-      "variant_name": "xDrive25d",
-      "engine_code": "B47",
-      "engine_name": "B47 2.0L I4 Turbo Diesel",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e3",
-        "notes_ref": "n25",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e3",
-        "notes_ref": "n25",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (Aisin AWF8F45)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e17",
-          "notes_ref": "n23",
-          "value": 0.673
-        },
-        "final_drive_front": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e17",
-          "notes": "Aisin AWF8F45 final drive for xDrive25d. Supersedes the 2.955 value cited in the 10/2017 launch spec note (treated as pre-production).",
-          "value": 2.851
-        },
-        "final_drive_rear": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e17",
-          "notes": "Sonnet redo (2026-04 v2): mirrored from front axle final drive.",
-          "value": 2.851
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.519,
-            3.184,
-            2.05,
-            1.492,
-            1.235,
-            1.0,
-            0.801,
-            0.673
-          ],
-          "evidence_refs_ref": "e17",
-          "notes_ref": "n27"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e17",
-          "notes_ref": "n25",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 55.0,
-            "rim_in": 17.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW launch-period and later EU technical-data sources agree that the F39 xDrive25d is an AWD 8-speed Steptronic row and keep the 225/55 R17 baseline tyre, but they drift on the published final-drive value from 2.955 early in the run to 2.851 later in the run. This broad row therefore remains a mixed-era placeholder instead of promoting one unsafe all-years final-drive mapping.",
-          "evidence_refs_ref": "e24"
-        },
-        {
-          "note": "Official F39 technical-data sheets promote the xDrive25d automatic core fields to 8-speed Steptronic, 0.673 top gear, 2.851 final drive, all-wheel drive, and 225/55 R17 baseline tires; optional tire/package and full-span continuity remain unresolved.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "note_ref": "n17",
-          "evidence_refs_ref": "e17"
-        },
-        {
-          "note": "Engine text from the 2021 X2 technical data: xDrive25d in-line 4 cylinders, 1995 cc, multi-stage turbocharging, diesel; family code from the cited X2 (F39) reference.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf",
-            "secondary_technical_sources:bmw-x2-f39-wikipedia"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Split xDrive25d by era before promoting one exact final-drive value",
-          "reason": "The saved official BMW sources close the gearbox family and baseline tyre but disagree on the final-drive value across the represented span, so this broad AWD automatic row still needs year-aware reshaping before any exact numeric rewrite.",
-          "evidence_refs_ref": "e24"
-        },
-        {
-          "item": "BMW X2 xDrive25d automatic year-by-year continuity and tire options",
-          "reason": "The official 2017/2021 technical-data evidence supports the core automatic row fields, but this pass did not recover one exact optional wheel/tire matrix or a full year-by-year chain for every 2018-2023 state.",
-          "evidence_refs_ref": "e3"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "bmw-f39-xdrive25e-eu-2018-dct7-awd",
-      "variant_name": "xDrive25e",
-      "engine_code": "B38",
-      "engine_name": "B38 1.5L I3 Turbo PHEV",
-      "fuel_type": "PHEV",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n12",
-        "value": "AWD",
-        "evidence_refs_ref": "e4"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n12",
-        "code": "DCT7",
-        "name": "7-speed dual-clutch (DKG)",
-        "evidence_refs_ref": "e4"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n12",
-          "value": 0.71,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n12",
-          "value": 3.636,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n12",
-          "value": 3.636,
-          "evidence_refs_ref": "e4"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n12",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW launch and technical-data material shows the F39 xDrive25e only from 2020 onward as a hybrid-specific AWD row with 6-speed Steptronic transmission and published final drive 3.944, not as a 2018 dual-clutch row. The checked official sources also disagree on the standard tyre between 225/55 R17 and 205/55 R17, so this DCT7 row remains only as a contradicted placeholder until the shard is reshaped into a dedicated 2020-on hybrid row.",
-          "evidence_refs_ref": "e21"
-        },
-        {
-          "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
-          "evidence_refs_ref": "e22"
-        },
-        {
-          "note": "Engine text from the 2020 xDrive25e and 2021 X2 technical data: in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive (plug-in hybrid, so fuel type PHEV, not EV).",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Replace the contradicted xDrive25e DCT7 row with a dedicated 2020-on hybrid row",
-          "reason": "The saved official BMW sources support xDrive25e only as a later 6-speed hybrid AWD state and still show a standard-tyre conflict across the run, so this 2018 DCT7 placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e21"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 DCT7 row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
-          "evidence_refs_ref": "e22"
-        }
-      ],
-      "configuration_confidence": "no_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_driveshaft_order": false,
-        "usable_for_wheel_order": false
-      }
-    },
-    {
-      "id": "bmw-f39-xdrive25e-eu-2018-zf8hp-awd",
-      "variant_name": "xDrive25e",
-      "engine_code": "B38",
-      "engine_name": "B38 1.5L I3 Turbo PHEV",
-      "fuel_type": "PHEV",
-      "drivetrain": {
-        "confidence": "unverified",
-        "notes_ref": "n13",
-        "value": "AWD",
-        "evidence_refs_ref": "e4"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n13",
-        "code": "ZF8HP",
-        "name": "8-speed automatic (Aisin)",
-        "evidence_refs_ref": "e4"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n13",
-          "value": 0.674,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n13",
-          "value": 3.294,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n13",
-          "value": 3.294,
-          "evidence_refs_ref": "e4"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n13",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 45.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note": "Official BMW launch and technical-data material shows the F39 xDrive25e only from 2020 onward as a hybrid-specific AWD row with 6-speed Steptronic transmission and published final drive 3.944, not as an 8-speed automatic row. The checked official sources also disagree on the standard tyre between 225/55 R17 and 205/55 R17, so this ZF8HP row remains only as a contradicted placeholder until the shard is reshaped into a dedicated 2020-on hybrid row.",
-          "evidence_refs_ref": "e21"
-        },
-        {
-          "note": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
-          "evidence_refs_ref": "e22"
-        },
-        {
-          "note": "Engine text from the 2020 xDrive25e and 2021 X2 technical data: in-line 3 cylinders, 1499 cc, BMW TwinPower Turbo, plus BMW eDrive (plug-in hybrid, so fuel type PHEV, not EV).",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f39-xdrive25e-2020-tech-spec-pdf",
-            "bmw_pressclub_sources:f39-x2-2021-tech-spec-pdf"
-          ]
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Replace the contradicted xDrive25e ZF8HP row with a dedicated 2020-on hybrid row",
-          "reason": "The saved official BMW sources support xDrive25e only as a later 6-speed hybrid AWD state and still show a standard-tyre conflict across the run, so this 8-speed placeholder cannot be corrected safely in place.",
-          "evidence_refs_ref": "e21"
-        },
-        {
-          "item": "Unsupported exact F39 transmission/market mapping",
-          "reason": "Official F39 xDrive25e evidence starts in 05/2020 and shows hybrid-specific xDrive with a 6-speed Steptronic transmission, not a 2018 8-speed automatic row; keep this contradicted placeholder out of driveshaft/wheel order analysis until a 2020-on PHEV row is built.",
-          "evidence_refs_ref": "e22"
         }
       ],
       "configuration_confidence": "no_confidence",
