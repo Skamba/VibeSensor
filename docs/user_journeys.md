@@ -524,7 +524,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     `source_checks` (`_coverage` in `view_model.py`): each untested or
     estimate-based source with how to close the gap ("Driveline: no
     final-drive ratio — add it to the car in Settings if you know it
-    (optional)."), then the speeds and driving the run left out.
+    (optional)."), then the speeds and driving the run left out, and last
+    "Never analysed: …" (`_never_analysed`): a misfiring engine's half
+    order, a six-cylinder's firing rhythm, wheel-bearing hum and, without
+    measured RPM, shaking at a standstill with the engine idling.
 
 ### 3.9 Re-test after a fix
 
@@ -688,7 +691,9 @@ capability line state the current layout's consequence.
   test conditions print "Powertrain: electric (EV)" and say plainly that the
   motor's electrical and gear-mesh orders are not analysed
   (`_source_checks`, `_order_markers` in `diagnosis.py`; `_conditions`,
-  `_Ctx.source_key` in `report/view_model.py`). Readiness reports the engine
+  `_Ctx.source_key` in `report/view_model.py`). The motor's check names its
+  reduction ratio, never a final drive ("Electric motor: not testable: no
+  reduction ratio"; `_MOTOR_CHECK_KEYS` in `view_model.py`). Readiness reports the engine
   as `not_applicable` and an EV on OBD-II speed does not wait for RPM
   (`capture_readiness_evaluator.py`).
 - **PHEV:** without OBD-II RPM, an engine no-match is `ruled_out_estimated`

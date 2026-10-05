@@ -355,6 +355,55 @@ def test_no_fault_names_what_was_checked_and_what_could_not_be(
     assert owner.not_covered[:2] == not_covered
 
 
+@pytest.mark.parametrize(
+    ("lang", "fuel_type", "rpm_source", "never"),
+    [
+        (
+            "en",
+            None,
+            "estimated_top_gear",
+            "Never analysed: a misfiring or unevenly running engine (a shake at half the"
+            " engine speed), the firing rhythm of a six-cylinder engine (three times per"
+            " engine revolution), wheel-bearing hum and shaking at a standstill with the"
+            " engine idling",
+        ),
+        (
+            "nl",
+            None,
+            "estimated_top_gear",
+            "Nooit geanalyseerd: een motor die overslaat of onrustig loopt (een trilling op"
+            " het halve motortoerental), het ontstekingsritme van een zescilindermotor (drie"
+            " keer per omwenteling), brommende wiellagers en trillen bij stilstand met"
+            " stationair draaiende motor",
+        ),
+        # Measured RPM places the engine orders at idle too.
+        (
+            "en",
+            None,
+            "measured",
+            "Never analysed: a misfiring or unevenly running engine (a shake at half the"
+            " engine speed), the firing rhythm of a six-cylinder engine (three times per"
+            " engine revolution) and wheel-bearing hum",
+        ),
+        (
+            "en",
+            "EV",
+            "none",
+            "Never analysed: the electric motor's electrical and gear-mesh rhythms and"
+            " wheel-bearing hum",
+        ),
+    ],
+)
+def test_no_fault_names_what_no_run_analyses(
+    lang: str, fuel_type: str | None, rpm_source: str, never: str
+) -> None:
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"]["conditions"]["fuel_type"] = fuel_type
+    summary["diagnosis"]["conditions"]["rpm_source"] = rpm_source
+
+    assert report_view_for(summary, lang=lang).owner.not_covered[-1] == never
+
+
 def test_no_fault_hedges_checks_that_rest_on_estimates() -> None:
     summary = deepcopy(_healthy_summary())
     summary["diagnosis"]["source_checks"] = [
@@ -375,6 +424,43 @@ def test_no_fault_hedges_checks_that_rest_on_estimates() -> None:
         " top gear, so lower gears were not checked — an OBD-II adapter measures RPM in"
         " every gear.",
     )
+
+
+@pytest.mark.parametrize(
+    ("status", "reason", "owner_line", "mechanic_line"),
+    [
+        (
+            "not_testable",
+            "no_drive_reference",
+            "Electric motor: no reduction ratio — add it to the car in Settings if you know"
+            " it (optional).",
+            "Electric motor: not testable: no reduction ratio",
+        ),
+        (
+            "ruled_out_estimated",
+            "estimated_final_drive",
+            "Electric motor: checked only against a car-library estimate of the reduction"
+            " ratio, so not conclusive — enter the exact ratio if you know it.",
+            "Electric motor: no match with the estimated reduction ratio (car-library"
+            " estimate); not conclusive",
+        ),
+    ],
+)
+def test_ev_motor_checks_name_the_reduction_ratio(
+    status: str, reason: str, owner_line: str, mechanic_line: str
+) -> None:
+    """An EV's motor turns at wheel speed x its reduction ratio, not a final drive."""
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"]["conditions"]["fuel_type"] = "EV"
+    summary["diagnosis"]["source_checks"] = [
+        {"source": "wheel/tire", "status": "ruled_out", "reason": "no_matching_order"},
+        {"source": "driveline", "status": status, "reason": reason},
+        {"source": "engine", "status": "not_applicable", "reason": "electric_car"},
+    ]
+    view = report_view_for(summary)
+
+    assert view.owner.not_covered[0] == owner_line
+    assert mechanic_line in view.mechanic.ruled_out
 
 
 def test_no_fault_without_any_reference_does_not_imply_the_car_is_fine() -> None:

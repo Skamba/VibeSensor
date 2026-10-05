@@ -155,6 +155,16 @@ _ENGINE_CHECK_KEYS = {
     "CHECKED_HEDGE_FINAL_DRIVE": "CHECKED_HEDGE_ENGINE_FINAL_DRIVE",
     "CHECKED_LIMITED_FINAL_DRIVE": "CHECKED_LIMITED_ENGINE_FINAL_DRIVE",
 }
+# An EV's motor turns at wheel speed x its reduction ratio, which the car keeps as
+# its final drive: the motor's wording names the reduction ratio.
+_MOTOR_CHECK_KEYS = {
+    "NOT_TESTABLE_DRIVE": "NOT_TESTABLE_MOTOR_DRIVE",
+    "RULED_OUT_ESTIMATED_FINAL_DRIVE": "RULED_OUT_ESTIMATED_MOTOR_FINAL_DRIVE",
+    "COULDNT_TEST_DRIVE": "COULDNT_TEST_MOTOR_DRIVE",
+    "CHECKED_HEDGE_FINAL_DRIVE": "CHECKED_HEDGE_MOTOR_FINAL_DRIVE",
+    "CHECKED_LIMITED_FINAL_DRIVE": "CHECKED_LIMITED_MOTOR_FINAL_DRIVE",
+}
+_SOURCE_CHECK_KEYS = {"ENGINE": _ENGINE_CHECK_KEYS, "MOTOR": _MOTOR_CHECK_KEYS}
 
 
 # -- view types ----------------------------------------------------------------
@@ -664,8 +674,7 @@ def _verify(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 
 def _check_text(ctx: _Ctx, table: Mapping[str, str], source_key: str, reason: str) -> str:
     key = table[reason]
-    if source_key == "ENGINE":
-        key = _ENGINE_CHECK_KEYS.get(key, key)
+    key = _SOURCE_CHECK_KEYS.get(source_key, {}).get(key, key)
     return ctx.t(key)
 
 
@@ -735,7 +744,26 @@ def _coverage(
         gaps.append(ctx.t("NOT_COVERED_CRUISE"))
     if not {"deceleration", "coast_down"} & set(driven):
         gaps.append(ctx.t("NOT_COVERED_COAST"))
+    gaps.append(ctx.t("NOT_COVERED_NEVER", items=ctx.join(_never_analysed(ctx, diagnosis))))
     return description, covered, tuple(f"{gap[:1].upper()}{gap[1:]}" for gap in gaps)
+
+
+def _never_analysed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> list[str]:
+    """Vibrations no run checks: no order covers them, whatever was driven.
+
+    The analysis tracks the first and second wheel, propshaft and engine orders
+    only, while moving; measured RPM also places the engine orders at idle.
+    """
+    if ctx.electric:
+        return [ctx.t("NEVER_MOTOR_ORDERS"), ctx.t("NEVER_WHEEL_BEARING")]
+    items = [
+        ctx.t("NEVER_ENGINE_MISFIRE"),
+        ctx.t("NEVER_SIX_CYLINDER"),
+        ctx.t("NEVER_WHEEL_BEARING"),
+    ]
+    if diagnosis["conditions"]["rpm_source"] != "measured":
+        items.append(ctx.t("NEVER_IDLE_SHAKE"))
+    return items
 
 
 def _diagram(ctx: _Ctx, diagnosis: DiagnosisPayload) -> CarDiagram:
@@ -1002,9 +1030,9 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
             lines.append(f"{ctx.t('SOURCE_COMBUSTION_ENGINE')}: {ctx.t('NOT_APPLICABLE_ELECTRIC')}")
             continue
         if check["status"] == "not_testable":
-            detail = ctx.t(_NOT_TESTABLE_KEYS[reason])
+            detail = _check_text(ctx, _NOT_TESTABLE_KEYS, key, reason)
         elif check["status"] == "ruled_out_estimated":
-            detail = ctx.t(_RULED_OUT_ESTIMATED_KEYS[reason])
+            detail = _check_text(ctx, _RULED_OUT_ESTIMATED_KEYS, key, reason)
         elif reason in ("stayed_in_neutral", "stopped_in_neutral"):
             detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:

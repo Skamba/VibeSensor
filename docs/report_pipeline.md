@@ -69,8 +69,12 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        gear only)") and the ones it could not, never "your car is fine"; what
        the test covered; "Not covered", built from `source_checks` (each
        untested or estimate-based source with how to close the gap: add the
-       missing reference, enter the exact ratio, or connect OBD-II) and then
-       the speeds and driving the run left out; and what to do if the
+       missing reference, enter the exact ratio, or connect OBD-II), then
+       the speeds and driving the run left out, and last what no run
+       analyses (a misfiring engine's half order, a six-cylinder's firing
+       rhythm, wheel-bearing hum and, without measured RPM, an idle shake at
+       a standstill; for an EV, the motor's electrical and gear-mesh rhythms
+       and wheel-bearing hum); and what to do if the
        vibration is still felt. History shows the same sentence and a
        "Checked / Couldn't check" block in the same words.
 2. **Workshop page** (always included):
@@ -88,7 +92,8 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
      presence, strongest location, and level.
    - Per-location amplitude at the diagnosed order in mg, with dB above that
      location's floor in brackets and the ratio to the strongest location.
-   - Ruled-out and not-testable sources, each with a plain reason.
+   - Ruled-out and not-testable sources, each with a plain reason (an EV's
+     motor names its reduction ratio, not a final drive).
    - Recurring-peak spectrum at the strongest location, with T1/T2/P1/P2/E1/E2
      markers.
    - Amplitude-vs-speed chart, shown only when the swept range is at least

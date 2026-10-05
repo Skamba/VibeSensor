@@ -183,6 +183,10 @@
     "en": "against an estimated final drive",
     "nl": "met een geschatte eindoverbrenging"
   },
+  "CHECKED_HEDGE_MOTOR_FINAL_DRIVE": {
+    "en": "against an estimated reduction ratio",
+    "nl": "met een geschatte reductieverhouding"
+  },
   "CHECKED_HEDGE_TOP_GEAR": {
     "en": "against an estimated top-gear ratio, top gear only",
     "nl": "met een geschatte hoogste versnelling, alleen in de hoogste versnelling"
@@ -202,6 +206,10 @@
   "CHECKED_LIMITED_FINAL_DRIVE": {
     "en": "checked only against a car-library estimate of the final drive, so not conclusive — enter the exact ratio if you know it.",
     "nl": "alleen gecontroleerd met een schatting van de eindoverbrenging uit de autobibliotheek, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
+  },
+  "CHECKED_LIMITED_MOTOR_FINAL_DRIVE": {
+    "en": "checked only against a car-library estimate of the reduction ratio, so not conclusive — enter the exact ratio if you know it.",
+    "nl": "alleen gecontroleerd met een schatting van de reductieverhouding uit de autobibliotheek, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
   },
   "CHECKED_LIMITED_TOP_GEAR": {
     "en": "checked only against a car-library estimate of the top-gear ratio, in top gear, so not conclusive — enter the exact ratio if you know it.",
@@ -314,6 +322,10 @@
   "COULDNT_TEST_MANUAL_SPEED": {
     "en": "the speed was entered by hand, so finding no match proves nothing — record again with GPS or OBD-II speed.",
     "nl": "de snelheid is handmatig ingevoerd, dus geen overeenkomst vinden bewijst niets — meet opnieuw met GPS- of OBD-II-snelheid."
+  },
+  "COULDNT_TEST_MOTOR_DRIVE": {
+    "en": "no reduction ratio — add it to the car in Settings if you know it (optional).",
+    "nl": "geen reductieverhouding — voeg hem toe aan de auto in Instellingen als je hem weet (optioneel)."
   },
   "COULDNT_TEST_TIRE": {
     "en": "no tire size — add it to the car in Settings.",
@@ -535,6 +547,26 @@
     "en": "Vibration strength in dB using the canonical peak-vs-floor definition.",
     "nl": "Trillingssterkte in dB met de canonieke piek-tegen-vloerdefinitie."
   },
+  "NEVER_ENGINE_MISFIRE": {
+    "en": "a misfiring or unevenly running engine (a shake at half the engine speed)",
+    "nl": "een motor die overslaat of onrustig loopt (een trilling op het halve motortoerental)"
+  },
+  "NEVER_IDLE_SHAKE": {
+    "en": "shaking at a standstill with the engine idling",
+    "nl": "trillen bij stilstand met stationair draaiende motor"
+  },
+  "NEVER_MOTOR_ORDERS": {
+    "en": "the electric motor's electrical and gear-mesh rhythms",
+    "nl": "de elektrische en tandwielritmes van de elektromotor"
+  },
+  "NEVER_SIX_CYLINDER": {
+    "en": "the firing rhythm of a six-cylinder engine (three times per engine revolution)",
+    "nl": "het ontstekingsritme van een zescilindermotor (drie keer per omwenteling)"
+  },
+  "NEVER_WHEEL_BEARING": {
+    "en": "wheel-bearing hum",
+    "nl": "brommende wiellagers"
+  },
   "NEXT_STEP": {
     "en": "Next step",
     "nl": "Volgende stap"
@@ -563,6 +595,10 @@
     "en": "steady cruising",
     "nl": "constant rijden"
   },
+  "NOT_COVERED_NEVER": {
+    "en": "never analysed: {items}",
+    "nl": "nooit geanalyseerd: {items}"
+  },
   "NOT_COVERED_SOURCE": {
     "en": "{source}: {detail}",
     "nl": "{source}: {detail}"
@@ -582,6 +618,10 @@
   "NOT_TESTABLE_MANUAL_SPEED": {
     "en": "not testable: the speed was entered by hand, so order matching only holds at exactly that speed",
     "nl": "niet te testen: de snelheid is handmatig ingevoerd, dus ordes kloppen alleen bij precies die snelheid"
+  },
+  "NOT_TESTABLE_MOTOR_DRIVE": {
+    "en": "not testable: no reduction ratio",
+    "nl": "niet te testen: geen reductieverhouding"
   },
   "NOT_TESTABLE_TIRE": {
     "en": "not testable: no tire size",
@@ -890,6 +930,10 @@
   "RULED_OUT_ESTIMATED_FINAL_DRIVE": {
     "en": "no match with the estimated final drive (car-library estimate); not conclusive",
     "nl": "geen overeenkomst met de geschatte eindoverbrenging (schatting uit de autobibliotheek); niet doorslaggevend"
+  },
+  "RULED_OUT_ESTIMATED_MOTOR_FINAL_DRIVE": {
+    "en": "no match with the estimated reduction ratio (car-library estimate); not conclusive",
+    "nl": "geen overeenkomst met de geschatte reductieverhouding (schatting uit de autobibliotheek); niet doorslaggevend"
   },
   "RULED_OUT_ESTIMATED_TOP_GEAR": {
     "en": "no match with the estimated top-gear ratio (car-library estimate, top gear assumed); not conclusive",
