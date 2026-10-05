@@ -131,15 +131,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g61-2024-launch-tech-spec-pdf",
-            "bmw_pressclub_sources:g61-2025-03-tech-spec-pdf"
-          ],
-          "notes": "The official BMW G61 launch and 03/2025 technical-specification PDFs list a single-stage transmission for the i5 eDrive40 Touring. The repo keeps 1.0 as the canonical top-gear value for the single-speed EV mapping.",
-          "value": 1.0
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs": [
@@ -241,15 +232,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "bmw_pressclub_sources:g61-2024-launch-tech-spec-pdf",
-            "bmw_pressclub_sources:g61-2025-03-tech-spec-pdf"
-          ],
-          "notes": "The official BMW G61 launch and 03/2025 technical-specification PDFs list single-stage transmissions for the i5 M60 xDrive Touring. The repo keeps 1.0 as the canonical top-gear value for the single-speed EV mapping.",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "official_exact",
           "evidence_refs": [

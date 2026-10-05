@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
+import pytest
 from car_library_validation import (
     ensure_valid_vehicle_configurations,
     load_car_library_validation_allowlist,
@@ -180,7 +181,12 @@ def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
     cases = {
         "engine_text_format": replace(config, engine_name="1.5L B38 turbo + electric motor (PHEV)"),
         "engine_text_fuel_type": replace(
-            config, engine_code="B38", engine_name="B38 1.5L I3 Turbo PHEV", fuel_type="EV"
+            config,
+            engine_code="B38",
+            engine_name="B38 1.5L I3 Turbo PHEV",
+            fuel_type="EV",
+            top_gear_ratio=None,
+            top_gear_ratio_metadata=None,
         ),
         "engine_code_mismatch": replace(config, engine_code="2.0L"),
     }
@@ -196,54 +202,70 @@ def test_validate_vehicle_configurations_enforces_engine_text_format() -> None:
     assert not validate_vehicle_configurations([unchecked_brand], allowlist={})
 
 
-def test_validate_vehicle_configurations_allows_unresolved_final_drive() -> None:
-    config = _make_valid_vehicle_configuration()
+_MISSING_RATIO = {
+    "final drive": (
+        "drivetrain_final_drive_layout",
+        "final_drive_ratio",
+        {
+            "final_drive_front": None,
+            "final_drive_front_metadata": None,
+            "final_drive_rear": None,
+            "final_drive_rear_metadata": None,
+        },
+    ),
+    "top gear": (
+        "missing_top_gear",
+        "top_gear_ratio",
+        {"top_gear_ratio": None, "top_gear_ratio_metadata": None},
+    ),
+}
+
+
+@pytest.mark.parametrize("reference", list(_MISSING_RATIO))
+def test_a_missing_ratio_needs_an_unresolved_item_naming_it(reference: str) -> None:
+    """A ratio is left out, never filled in, but the row must say why.
+
+    Both rules read the same forms: spaced, hyphenated or the field name.
+    """
+    rule, field_name, cleared = _MISSING_RATIO[reference]
+    other = next(name for name in _MISSING_RATIO if name != reference)
     partial = replace(
-        config,
-        variant_name="Validation Partial Variant",
-        final_drive_front=None,
-        final_drive_front_metadata=None,
-        final_drive_rear=None,
-        final_drive_rear_metadata=None,
+        _make_valid_vehicle_configuration(),
+        **cleared,
+        unresolved=(VehicleConfigurationIssue(item=f"{other} check", reason="unrelated item"),),
     )
 
     assert [issue.rule for issue in validate_vehicle_configurations([partial], allowlist={})] == [
-        "drivetrain_final_drive_layout"
+        rule
     ]
-    explained = replace(
-        partial,
-        unresolved=(
-            VehicleConfigurationIssue(
-                item="Final drive of the test variant",
-                reason="the official sheets disagree",
-            ),
-        ),
-    )
-    assert not validate_vehicle_configurations([explained], allowlist={})
+    for item in (
+        f"{reference.capitalize()} of this variant",
+        f"8HP {reference.replace(' ', '-')} value",
+        f"{field_name} for this variant",
+    ):
+        explained = replace(
+            partial,
+            unresolved=(VehicleConfigurationIssue(item=item, reason="no official sheet found"),),
+        )
+        assert not validate_vehicle_configurations([explained], allowlist={}), item
 
 
-def test_validate_vehicle_configurations_allows_unresolved_top_gear() -> None:
-    """A missing top gear is allowed, never filled in, but the row must say why."""
-    partial = replace(
+def test_an_ev_row_has_no_top_gear_to_store_or_explain() -> None:
+    """An EV's reduction ratio is its final drive; a top gear would be made up."""
+    ev = replace(
         _make_valid_vehicle_configuration(),
-        top_gear_ratio=None,
-        top_gear_ratio_metadata=None,
-        unresolved=(VehicleConfigurationIssue(item="Final drive check", reason="unrelated item"),),
+        variant_name="iX xDrive40",
+        transmission_name="Single-speed fixed gear (EV)",
+        fuel_type="EV",
+        engine_code="Electric",
+        engine_name="Electric Dual Motor",
+        top_gear_ratio=1.0,
     )
 
-    issues = validate_vehicle_configurations([partial], allowlist={})
-    assert [issue.rule for issue in issues] == ["missing_top_gear"]
-    assert "no unresolved top-gear item" in issues[0].message
-    explained = replace(
-        partial,
-        unresolved=(
-            VehicleConfigurationIssue(
-                item="8HP top_gear_ratio for this variant",
-                reason="no official gear-ratio sheet found",
-            ),
-        ),
-    )
-    assert not validate_vehicle_configurations([explained], allowlist={})
+    issues = validate_vehicle_configurations([ev], allowlist={})
+    assert [issue.rule for issue in issues] == ["ev_top_gear"]
+    without = replace(ev, top_gear_ratio=None, top_gear_ratio_metadata=None)
+    assert not validate_vehicle_configurations([without], allowlist={})
 
 
 def test_validate_vehicle_configurations_accepts_low_dct_top_gear() -> None:

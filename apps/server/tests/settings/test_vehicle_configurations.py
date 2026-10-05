@@ -276,6 +276,45 @@ def test_row_without_top_gear_loads_and_serves_an_unknown_top_gear(tmp_path: Pat
     }
 
 
+@pytest.mark.parametrize(
+    ("reduction_confidence", "confirm"), [("official_exact", False), ("family_default", True)]
+)
+def test_an_ev_row_has_no_top_gear_and_its_reduction_ratio_decides_confirmation(
+    tmp_path: Path, reduction_confidence: str, confirm: bool
+) -> None:
+    """An EV's single reduction is its final drive: no top gear to load, serve or confirm."""
+
+    relative_path, shard = load_sample_vehicle_configuration_shards(1)[0]
+    fixture = copy.deepcopy(shard)
+    row = _first_row(fixture)
+    row.update(fuel_type="EV", engine_code="Electric", engine_name="Electric Single Motor")
+    cast(dict[str, object], row["transmission"])["name"] = "Single-speed fixed gear (EV)"
+    ratios = cast(dict[str, dict[str, object]], row["ratios"])
+    del ratios["top_gear_ratio"]
+    ratios["final_drive_front"]["confidence"] = reduction_confidence
+    write_vehicle_configuration_shard(tmp_path, relative_path, fixture)
+
+    config = next(c for c in _load_configs_from_data_dir(tmp_path) if c.id == row["id"])
+    assert (config.fuel_type, config.top_gear_ratio) == ("EV", None)
+    assert config.requires_manual_drivetrain_confirmation is confirm
+    # No unresolved top-gear item is needed: there is nothing to research.
+    assert not [
+        issue
+        for issue in validate_vehicle_configurations([config], allowlist={})
+        if issue.rule in {"missing_top_gear", "ev_top_gear", "missing_field_metadata"}
+    ]
+
+    with patch(
+        "vibesensor.settings.car_library.load_vehicle_configurations", return_value=[config]
+    ):
+        [entry] = load_car_library()
+    [model] = CarLibraryModelsResponse.model_validate({"models": [entry]}).models
+    [gearbox] = [gearbox for variant in model.variants for gearbox in variant.gearboxes or []]
+    assert (gearbox.fuel_type, gearbox.final_drive_ratio) == ("EV", 3.652)
+    assert (gearbox.top_gear_ratio, gearbox.top_gear_ratio_confidence) == (None, None)
+    assert gearbox.requires_manual_confirmation is confirm
+
+
 def _first_row(shard: dict[str, object]) -> dict[str, object]:
     return cast(list[dict[str, object]], shard["configurations"])[0]
 

@@ -145,13 +145,25 @@ order-analysis fields inline with their own metadata:
   final drive or top gear is "couldn't test", not a value to confirm.
 - the driven final drive and `ratios.top_gear_ratio` are optional: leave a
   value out rather than enter a weak or unsourced one. A row without one must
-  carry an `unresolved` item naming it ("final drive" / "top gear") and saying
-  why; the validator enforces this (`drivetrain_final_drive_layout`,
-  `missing_top_gear`). The picker serves the missing ratio as `null`, the
+  carry an `unresolved` item naming it and saying why; the validator enforces
+  this (`drivetrain_final_drive_layout`, `missing_top_gear`). Both rules read
+  the item the same way: spaced, hyphenated or as the field name ("Final
+  drive", "final-drive", "final_drive_ratio"; likewise "top gear"). The picker
+  serves the missing ratio as `null`, the
   wizard shows it as unknown and saves the car without it, and the analysis
   reports the checks that need it as not testable: without a top gear the
   engine is checked only from measured OBD-II RPM; wheel and driveline checks
   are unaffected. Rows carry no per-row policy flags.
+- an EV row (`fuel_type: EV`) has no `ratios.top_gear_ratio` and needs no
+  `unresolved` item for it: a single-speed EV has no gearbox to research, its
+  motor-to-wheel reduction ratio is the final drive, and the motor is checked
+  at wheel speed × reduction ratio. The validator rejects a stored one
+  (`ev_top_gear`), so an EV's confirmation and research completeness follow
+  its reduction ratio alone, and a saved EV car keeps no top gear either
+  (`Car`). The Audi e-tron GT's rear motor has a 2-speed gearbox; its row
+  stores one rear reduction ratio (`family_default`), so the car asks for
+  confirmation, motor results are marked as estimated, and an `unresolved`
+  item records that the second ratio is not encoded.
 
 `tools/car_library/car_library_validation/data/car_sources/*.json` contains only reusable
 source-document metadata. It is test-only data and does not ship in the wheel. `evidence_refs` inside canonical rows resolve through

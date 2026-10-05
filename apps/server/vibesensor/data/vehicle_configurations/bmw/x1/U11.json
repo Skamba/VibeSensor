@@ -161,12 +161,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes": "The official BMW Deutschland technical-data PDF describes a single-speed fixed-ratio EV transmission. The repo's EV ratio model represents that gearbox with a normalized top-gear value of 1.0.",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",

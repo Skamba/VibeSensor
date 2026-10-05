@@ -213,16 +213,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "legacy_research_sources:386e9ba97f8b",
-            "legacy_research_sources:43771d65c9e5",
-            "legacy_research_sources:5a5c196c955b"
-          ],
-          "notes": "BMW publishes the exact i7 eDrive50 as a single-speed electric drivetrain. The canonical ratio model represents that fixed single forward ratio as 1.0.",
-          "value": 1.0
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n6",
@@ -535,16 +525,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "legacy_research_sources:8ca59a933c62",
-            "legacy_research_sources:d9e8060997ac",
-            "legacy_research_sources:f31f1ea854da"
-          ],
-          "notes": "BMW publishes the exact i7 M70 xDrive as a single-speed electric drivetrain. The canonical ratio model represents that fixed single forward ratio as 1.0.",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e12",

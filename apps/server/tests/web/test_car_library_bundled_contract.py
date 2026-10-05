@@ -83,9 +83,10 @@ def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_
     instead of guessing it. The gearbox is served with ``final_drive_ratio:
     null`` (and no final-drive confidence), so the car can be saved and the
     driveline order reports "not testable". A missing top gear is served the
-    same way.
+    same way, and an EV never has one: its reduction ratio is the final drive.
     """
     unknown_fd_models: list[str] = []
+    ev_gearboxes: list[str] = []
     for brand, car_type in _bundled_brand_types():
         response = car_library_client.get(
             "/api/car-library/models", params={"brand": brand, "type": car_type}
@@ -101,6 +102,11 @@ def test_models_without_a_driven_final_drive_serve_gearboxes_with_unknown_final_
                             assert gearbox[f"{ratio}_confidence"] is None
                     if gearbox["final_drive_ratio"] is None:
                         unknown_fd_models.append(model["model"])
+                    if gearbox["fuel_type"] == "EV":
+                        assert gearbox["top_gear_ratio"] is None, (model["model"], variant["name"])
+                        ev_gearboxes.append(gearbox["name"])
 
     # Audi TT RS Coupe (8S) is one of the rows whose final drive Audi does not publish.
     assert "TT RS Coupe (8S, 2016–2023)" in unknown_fd_models
+    # The e-tron GT's rear 2-speed gearbox is an EV gearbox too: one reduction, no top gear.
+    assert "2-speed automatic (rear) / single-speed (front)" in ev_gearboxes

@@ -176,12 +176,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 M60 xDrive. The repo keeps 1.0 as the canonical top-gear value for that single-speed EV mapping.",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e1",
@@ -261,12 +255,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2025 technical-specification PDF lists a single-speed transmission for the exact i5 eDrive40. The repo keeps 1.0 as the canonical top-gear value for that single-speed EV mapping.",
-          "value": 1.0
-        },
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e1",

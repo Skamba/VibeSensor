@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from typing import Literal
 
 from car_library_validation._common import (
     AWD_BADGE_TOKENS,
@@ -27,10 +28,6 @@ ENGINE_TEXT_PATTERN = re.compile(
     r"(?:I3|I4|I5|I6|V6|V8|V10|V12)(?: Turbo| Supercharged)?(?: Diesel)?(?P<phev> PHEV)?$"
     r"|^(?P<ev>Electric (?:Single|Dual) Motor)$"
 )
-# A row without a driven final drive must say why in an `unresolved` item.
-FINAL_DRIVE_ITEM_PATTERN = re.compile(r"final[- ]drive", re.IGNORECASE)
-# Likewise a row without a top gear ("Top gear", "top-gear", "top_gear_ratio").
-TOP_GEAR_ITEM_PATTERN = re.compile(r"top[-_ ]gear", re.IGNORECASE)
 # Brands whose rows already follow the engine-text format.
 ENGINE_TEXT_BRANDS = frozenset({"Audi", "BMW"})
 
@@ -257,8 +254,8 @@ def validate_final_drive_layout(
                 message=f"{label} is RWD but still sets final_drive_front",
             )
         )
-    if config.driven_final_drive_ratio is None and not any(
-        FINAL_DRIVE_ITEM_PATTERN.search(issue.item) for issue in config.unresolved
+    if config.driven_final_drive_ratio is None and not _unresolved_names(
+        config, "final drive"
     ):
         issues.append(
             CarLibraryValidationIssue(
@@ -272,16 +269,29 @@ def validate_final_drive_layout(
         )
 
 
-def validate_missing_top_gear(
+def validate_top_gear(
     config: VehicleConfiguration,
     *,
     entity: str,
     label: str,
     issues: list[CarLibraryValidationIssue],
 ) -> None:
-    if config.top_gear_ratio is None and not any(
-        TOP_GEAR_ITEM_PATTERN.search(issue.item) for issue in config.unresolved
-    ):
+    # An EV has no gearbox to research: its reduction ratio is the final drive
+    # and it has no top gear, so a stored one would be a made-up reference.
+    if config.fuel_type == "EV":
+        if config.top_gear_ratio is not None:
+            issues.append(
+                CarLibraryValidationIssue(
+                    rule="ev_top_gear",
+                    entity=entity,
+                    message=(
+                        f"{label} is EV but sets top_gear_ratio; an EV's reduction ratio "
+                        "is its final drive and it has no top gear"
+                    ),
+                )
+            )
+        return
+    if config.top_gear_ratio is None and not _unresolved_names(config, "top gear"):
         issues.append(
             CarLibraryValidationIssue(
                 rule="missing_top_gear",
@@ -289,6 +299,22 @@ def validate_missing_top_gear(
                 message=f"{label} has no top_gear_ratio and no unresolved top-gear item saying why",
             )
         )
+
+
+def _unresolved_names(
+    config: VehicleConfiguration, reference: Literal["final drive", "top gear"]
+) -> bool:
+    """Whether an ``unresolved`` item names *reference* (``"final drive"``).
+
+    A row leaving a ratio out must say why; the item may write it spaced,
+    hyphenated or as the field name ("Final drive", "final-drive",
+    "final_drive_ratio").
+    """
+
+    return any(
+        reference in re.sub(r"[-_\s]+", " ", issue.item.casefold())
+        for issue in config.unresolved
+    )
 
 
 def validate_engine_text(

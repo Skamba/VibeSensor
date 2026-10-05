@@ -106,15 +106,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_derived",
-          "notes": "The official BMW UK iX2 technical-data page lists a 1-speed automatic transmission and the 10/2023 X2 technical-data PDF a single-speed automatic with fixed ratio. The repo's EV ratio model represents that gearbox with a normalized top-gear value of 1.0.",
-          "value": 1.0,
-          "evidence_refs": [
-            "bmw_market_pages:u10-ix2-technical-data-uk",
-            "bmw_pressclub_sources:u10-x2-2023-spec-pdf"
-          ]
-        },
         "final_drive_front": {
           "confidence": "official_exact",
           "evidence_refs": [

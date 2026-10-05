@@ -149,3 +149,40 @@ def test_library_powertrain_is_kept_on_the_car_and_its_run_snapshot(car_client, 
     assert renamed["cars"][0]["fuel_type"] == "EV"
     snapshot = fake_state.car_settings.active_car_snapshot()
     assert snapshot is not None and snapshot.fuel_type == "EV"
+
+
+def test_an_ev_keeps_no_top_gear_so_only_its_reduction_ratio_asks_for_confirmation(
+    car_client, fake_state
+) -> None:
+    """Older library rows gave EVs a made-up top gear of 1.0; an EV car keeps none."""
+    tire = {"tire_width_mm": 245.0, "tire_aspect_pct": 45.0, "rim_in": 20.0}
+    status = {
+        "selection_source_status": "exact_row",
+        "requires_manual_confirmation": True,
+        "final_drive_ratio_confidence": "official_exact",
+        "current_gear_ratio_confidence": "family_default",
+    }
+    car = _add(
+        car_client,
+        name="iX xDrive40",
+        fuel_type="EV",
+        aspects={**tire, "final_drive_ratio": 9.079, "current_gear_ratio": 1.0},
+        order_reference_status=status,
+    )["cars"][0]
+    car_client.put("/api/settings/cars/active", json={"car_id": car["id"]})
+
+    assert car["aspects"]["final_drive_ratio"] == 9.079
+    assert "current_gear_ratio" not in car["aspects"]
+    assert car["order_reference_status"].get("current_gear_ratio_confidence") is None
+    assert car["order_reference_status"]["requires_manual_confirmation"] is False
+    snapshot = fake_state.car_settings.active_car_snapshot()
+    assert snapshot is not None and "current_gear_ratio" not in snapshot.aspects
+
+    # The reduction ratio is still confirmed by its own confidence.
+    weak = car_client.put(
+        f"/api/settings/cars/{car['id']}",
+        json={
+            "order_reference_status": {**status, "final_drive_ratio_confidence": "family_default"}
+        },
+    ).json()["cars"][0]
+    assert weak["order_reference_status"]["requires_manual_confirmation"] is True

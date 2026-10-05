@@ -18,6 +18,9 @@ from test_support.synthetic_samples import make_engine_order_samples, make_noise
 
 
 def _car(fuel_type: str, **overrides: Any) -> dict[str, Any]:
+    if fuel_type == "EV":
+        # An EV car keeps no top gear: its single reduction ratio is the final drive.
+        overrides["current_gear_ratio"] = None
     return standard_metadata(
         car_name="Test car", active_car_snapshot={"fuel_type": fuel_type}, **overrides
     )
@@ -43,7 +46,7 @@ def _gps(samples: list[dict[str, Any]], *, rpm: float | None = None) -> list[dic
 def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> None:
     summary = run_analysis(
         _gps(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)),
-        _car("EV", current_gear_ratio=1.0),
+        _car("EV"),
     )
     view = report_view_for(summary)
     conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
@@ -59,7 +62,10 @@ def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> Non
     assert view.owner.description == (
         "Nothing stood out in the checks this run could make: wheels/tires and electric motor."
     )
+    # The motor check needs no top gear: the motor turns at wheel speed x reduction ratio.
     assert conditions["Powertrain"].startswith("electric (EV): the motor is checked at once")
+    assert "(wheel speed × reduction ratio)" in conditions["Powertrain"]
+    assert _checks(summary)["driveline"] == ("ruled_out", "no_matching_order")
     assert "electrical and gear-mesh orders are not analysed" in conditions["Powertrain"]
     assert f"{FINAL_DRIVE:.2f}" in conditions["Reduction ratio (final drive)"]
     assert "Top gear ratio" not in conditions
@@ -69,7 +75,7 @@ def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> Non
 def test_an_evs_speed_check_names_its_motor_not_a_drivetrain() -> None:
     summary = run_analysis(
         _gps(make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)),
-        _car("EV", current_gear_ratio=1.0),
+        _car("EV"),
     )
 
     for lang, label, motor, combustion in (
@@ -93,7 +99,7 @@ def test_an_ev_motor_vibration_is_named_the_motor_not_the_engine() -> None:
         )
     )
     guided = [{"phase": "coast_down", "start_t_s": 28.0, "end_t_s": 40.0}]
-    summary = run_analysis(samples, _car("EV", current_gear_ratio=1.0, guided_phases=guided))
+    summary = run_analysis(samples, _car("EV", guided_phases=guided))
     diagnosis = summary["diagnosis"]
     view = report_view_for(summary)
     view_nl = report_view_for(summary, lang="nl")

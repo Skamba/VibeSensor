@@ -31,6 +31,7 @@ import {
   INITIAL_WIZARD_STATE,
   parseTireSize,
   progressText,
+  ratioInputsFromGearbox,
   selectionTrail,
   specProvenance,
   summary,
@@ -545,23 +546,30 @@ test("the wizard asks the powertrain only where the library does not say", () =>
   expect(
     summary(ev, { ...TYPED, finalDrive: "9.05" }, fmt, t).rows.at(-1)?.value,
   ).toBe('settings.car.wizard_summary_ev_gearbox:{"finalDrive":"9.05"}');
+  // A library EV has no top gear: its single reduction is the final drive.
   const evGearbox = {
     ...GEARBOX,
     fuel_type: "EV" as const,
     final_drive_ratio: 9.05,
     final_drive_ratio_confidence: "official_exact",
-    top_gear_ratio: 1,
-    top_gear_ratio_confidence: "family_default",
+    top_gear_ratio: null,
+    top_gear_ratio_confidence: null,
   };
-  // A library EV's top gear (1.0) is no estimate the user needs to fix.
-  expect(
-    actionHint(
-      specs({ selectedTire: TIRE, selectedGearbox: evGearbox }),
-      { ...TYPED, finalDrive: "9.05", topGear: "1.00" },
-      1,
-      t,
-    ),
-  ).toBe("settings.car.finish_ready");
+  const evPick = specs({ selectedTire: TIRE, selectedGearbox: evGearbox });
+  const evInputs = ratioInputsFromGearbox(evGearbox, TYPED);
+  expect(evInputs).toMatchObject({ finalDrive: "9.05", topGear: "" });
+  expect(actionHint(evPick, evInputs, 1, t)).toBe("settings.car.finish_ready");
+  // With an official reduction ratio there is nothing to confirm.
+  expect(carRequest(evPick, evInputs)).toMatchObject({
+    ok: true,
+    fuelType: "EV",
+    aspects: { final_drive_ratio: 9.05, current_gear_ratio: null },
+    status: {
+      final_drive_ratio_confidence: "official_exact",
+      current_gear_ratio_confidence: null,
+      requires_manual_confirmation: false,
+    },
+  });
   expect(gearboxParts(evGearbox, fmt, t)).toEqual([
     { text: 'settings.car.gearbox_reduction:{"value":"9.05"}', tier: "exact" },
   ]);

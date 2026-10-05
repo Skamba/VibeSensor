@@ -71,10 +71,6 @@
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 1.0
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 8.057
@@ -101,8 +97,8 @@
       ],
       "unresolved": [
         {
-          "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
-          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",
+          "item": "Audi e-tron GT quattro exact axle reduction ratios, including both ratios of the rear 2-speed gearbox",
+          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe reduction ratio per axle for the base e-tron GT quattro; the rear motor's 2-speed gearbox has two, and the row stores one.",
           "evidence_refs_ref": "e1"
         },
         {
@@ -130,10 +126,6 @@
         "name": "2-speed automatic (rear) / single-speed (front)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 1.0
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 8.057
@@ -160,8 +152,8 @@
       ],
       "unresolved": [
         {
-          "item": "Audi e-tron GT quattro exact axle reduction ratios and schema-safe top-gear mapping",
-          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe single reduction-ratio or top-gear value for the base e-tron GT quattro.",
+          "item": "Audi e-tron GT quattro exact axle reduction ratios, including both ratios of the rear 2-speed gearbox",
+          "reason": "Exact Germany-market base-car technical sheets confirm AWD, 2-speed automatic wording, top speed, and staggered tires, but the checked official sources did not publish a schema-safe reduction ratio per axle for the base e-tron GT quattro; the rear motor's 2-speed gearbox has two, and the row stores one.",
           "evidence_refs_ref": "e1"
         },
         {

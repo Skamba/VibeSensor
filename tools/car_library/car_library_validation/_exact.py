@@ -14,9 +14,9 @@ from car_library_validation._powertrain import (
     validate_drivetrain_badges,
     validate_engine_text,
     validate_final_drive_layout,
-    validate_missing_top_gear,
     validate_powertrain_gearbox_consistency,
     validate_single_gearbox,
+    validate_top_gear,
 )
 from car_library_validation._tires import validate_tire_setup, validate_tire_spec
 from vibesensor.domain.vehicle_configuration import (
@@ -62,7 +62,7 @@ def validate_vehicle_configuration(
     )
     validate_engine_text(config, entity=entity, label=label, issues=issues)
     validate_final_drive_layout(config, entity=entity, label=label, issues=issues)
-    validate_missing_top_gear(config, entity=entity, label=label, issues=issues)
+    validate_top_gear(config, entity=entity, label=label, issues=issues)
     validate_tire_spec(
         config.default_tire,
         entity=entity,

@@ -71,10 +71,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "family_default",
           "value": 9.079
@@ -110,8 +106,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "item": "BMW iX M60 numeric top-gear ratio and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording rather than a numeric top-gear ratio, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
+          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
+          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
           "evidence_refs_ref": "e1"
         }
       ],
@@ -134,10 +130,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "family_default",
           "value": 9.079
@@ -173,8 +165,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "item": "BMW iX M60 numeric top-gear ratio and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording rather than a numeric top-gear ratio, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
+          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
+          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
           "evidence_refs_ref": "e1"
         }
       ],
@@ -197,10 +189,6 @@
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 1.0
-        },
         "final_drive_front": {
           "confidence": "family_default",
           "value": 9.079
@@ -236,8 +224,8 @@
           "evidence_refs_ref": "e1"
         },
         {
-          "item": "BMW iX M60 numeric top-gear ratio and broad-row applicability across 2022-2026",
-          "reason": "Exact official M60 sources use single-speed wording rather than a numeric top-gear ratio, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
+          "item": "BMW iX M60 exact EV ratio package and broad-row applicability across 2022-2026",
+          "reason": "Exact official M60 sources use single-speed wording without numeric reduction ratios, and this pass did not prove one exact EV ratio package across the broad 2022-2026 row.",
           "evidence_refs_ref": "e1"
         }
       ],

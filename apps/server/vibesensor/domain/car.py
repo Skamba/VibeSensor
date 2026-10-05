@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from types import MappingProxyType
 from typing import Literal
 
@@ -77,7 +77,8 @@ class CarOrderReferenceStatus:
         Same rule as the car library
         (``VehicleConfiguration.requires_manual_drivetrain_confirmation``): only the
         ratios the order checks depend on count; tire size and gearbox name do not,
-        and a missing ratio is "couldn't test", not something to confirm. Derived on
+        and a missing ratio is "couldn't test", not something to confirm. An EV car
+        keeps no top gear (``Car``), so only its reduction ratio counts. Derived on
         every load, so cars saved under an older rule follow this one.
         """
 
@@ -192,6 +193,19 @@ class Car:
             object.__setattr__(self, "name", "Unnamed Car")
         normalized_aspects = normalize_order_reference_mapping(aspects or {})
         spec = self.order_reference_spec or order_reference_spec_from_mapping(normalized_aspects)
+        if self.fuel_type == "EV":
+            # An EV has no gearbox: its reduction ratio is the final drive and it
+            # has no top gear, so none is kept to confirm or to estimate RPM from.
+            normalized_aspects.pop("current_gear_ratio", None)
+            if spec is not None:
+                spec = replace(spec, current_gear_ratio=0.0)
+            status = self.order_reference_status
+            if status is not None:
+                object.__setattr__(
+                    self,
+                    "order_reference_status",
+                    replace(status, current_gear_ratio_confidence=None),
+                )
         object.__setattr__(self, "order_reference_spec", spec)
         if spec is not None:
             normalized_aspects = order_reference_mapping_from_spec(spec)

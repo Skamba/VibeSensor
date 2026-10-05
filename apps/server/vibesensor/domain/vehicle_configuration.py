@@ -339,8 +339,9 @@ class VehicleConfiguration:
 
         Only the ratios the order checks depend on count, each at its own field
         confidence (``family_default`` or ``unverified`` is weak). A missing final
-        drive or top gear is "couldn't test", not something to confirm. Saved
-        cars follow the same rule in
+        drive or top gear is "couldn't test", not something to confirm. An EV row
+        has no top gear (validator rule ``ev_top_gear``), so its reduction ratio
+        (the final drive) alone decides. Saved cars follow the same rule in
         ``CarOrderReferenceStatus.requires_manual_confirmation``.
         """
 

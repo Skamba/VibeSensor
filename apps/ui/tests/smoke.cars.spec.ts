@@ -66,6 +66,18 @@ const NO_TOP_GEAR: CarLibraryGearbox = {
   source_status: "exact_row",
 };
 
+/** A library EV: one official reduction ratio (its final drive), no top gear. */
+const EV_REDUCTION: CarLibraryGearbox = {
+  name: "Single-speed fixed gear (EV)",
+  final_drive_ratio: 11.53,
+  top_gear_ratio: null,
+  fuel_type: "EV",
+  final_drive_ratio_confidence: "official_exact",
+  transmission_confidence: "official_exact",
+  requires_manual_confirmation: false,
+  source_status: "exact_row",
+};
+
 const TIRE: CarLibraryTireOption = {
   name: "Standard",
   default_axle_for_speed: "rear",
@@ -285,6 +297,20 @@ async function bootWithCars(page: Page, server: CarsServer) {
                     },
                   ],
                 },
+                {
+                  ...GOLF,
+                  type: "Estate",
+                  model: "ID.7 Tourer",
+                  gearboxes: [EV_REDUCTION],
+                  variants: [
+                    {
+                      name: "Pro S",
+                      drivetrain: "RWD",
+                      engine: "Electric Single Motor",
+                      gearboxes: [EV_REDUCTION],
+                    },
+                  ],
+                },
               ]
             : [GOLF, POLO],
       });
@@ -432,6 +458,50 @@ test("journey: a library gearbox without a top gear is saved without one", async
   await expect(row.locator('[data-family="engine"]')).toContainText(
     "Needs the top gear ratio, or OBD-II.",
   );
+});
+
+test("journey: a library EV with an official reduction ratio needs no confirmation", async ({
+  page,
+}) => {
+  const server = createServer();
+  await bootWithCars(page, server);
+  await openCarsTab(page);
+  await page.locator("#addCarBtn").click();
+  const wizard = page.locator("#addCarWizard");
+  await wizard.locator('#wizardBrandList [data-value="VW"]').click();
+  await wizard.locator('#wizardTypeList [data-value="Estate"]').click();
+  await wizard.locator('#wizardModelList [data-idx="1"]').click();
+  await wizard.locator('#wizardVariantList [data-idx="0"]').click();
+
+  // One reduction ratio and no top gear: no gearbox estimate to confirm.
+  const gearbox = wizard.locator('#wizardGearboxList [data-idx="0"]');
+  await expect(gearbox).toHaveAttribute("aria-pressed", "true");
+  await expect(gearbox).toContainText("Reduction 11.53");
+  await expect(gearbox).not.toContainText("Top gear");
+  await expect(gearbox.locator(".ref-chip")).toHaveText(["exact"]);
+  await expect(page.locator("#wizFinalDrive")).toHaveValue("11.53");
+  await expect(page.locator("#wizGearRatio")).toHaveCount(0);
+  await expect(page.locator("#wizardActionHint")).toHaveText(
+    "Ready to add. \u201cThis car can test\u201d shows what it can check.",
+  );
+  await page.locator("#wizardManualAddBtn").click();
+
+  await expect(wizard).toBeHidden();
+  expect(server.posts[0]).toMatchObject({
+    variant: "Pro S",
+    fuel_type: "EV",
+    aspects: { final_drive_ratio: 11.53, current_gear_ratio: null },
+    order_reference_status: {
+      final_drive_ratio_confidence: "official_exact",
+      current_gear_ratio_confidence: null,
+      requires_manual_confirmation: false,
+      selection_source_status: "exact_row",
+    },
+  });
+  const row = page.locator('#carListBody tr[data-car-id="car-1"]');
+  await expect(row).toContainText("Reduction ratio");
+  await expect(row.locator(".ref-chip")).toHaveText(["exact", "exact"]);
+  await expect(row).not.toContainText("Edit the car if you know");
 });
 
 test("journey: a failed library load recovers through manual specs and back", async ({
@@ -612,7 +682,7 @@ test("journey: a slow older model list never replaces the newer one", async ({
   await expect(wizard.locator("#wizardModelList")).toContainText(
     "Golf Variant",
   );
-  await expect(wizard.locator("#wizardModelList .wiz-opt")).toHaveCount(1);
+  await expect(wizard.locator("#wizardModelList")).not.toContainText("Polo");
 });
 
 test("journey: typed values become the user's; a pasted size and an unknown ratio are saved as such", async ({

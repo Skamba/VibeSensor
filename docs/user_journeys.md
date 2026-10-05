@@ -256,7 +256,7 @@ the form.
     (`carCapabilities` in `apps/ui/src/capabilities.ts`, the same vocabulary
     as the Live capability line).
   - `requires_manual_confirmation` is set only when the final drive or top
-    gear is weak (162 of 548 rows, see §4). A saved car's flag follows the
+    gear is weak (148 of 550 rows, see §4). A saved car's flag follows the
     same rule (`CarOrderReferenceStatus.requires_manual_confirmation`); it is
     derived on every load, so cars saved under the older rule (which also
     counted tire size and the gearbox name) no longer keep a stale `true`.
@@ -331,8 +331,11 @@ the form.
   top gear, labels the final drive "Reduction ratio", and names the driveline
   family "Electric motor" and the engine "not applicable" in "This car can
   test" (`carCapabilities`, `capabilityFamilyKey` in
-  `apps/ui/src/capabilities.ts`). See §5.3 for what the powertrain changes in
-  the analysis.
+  `apps/ui/src/capabilities.ts`). A library EV row has no top gear (the
+  reduction ratio is its final drive), and a saved EV car keeps none
+  (`Car` in `apps/server/vibesensor/domain/car.py`), so an EV asks for
+  confirmation only when its reduction ratio is an estimate. See §5.3 for
+  what the powertrain changes in the analysis.
 
 ### 3.4 Choosing a speed source
 
@@ -561,13 +564,13 @@ changes and update this table.
 | Picker models / generation codes / variants | 92 / 71 / 422 |
 | Production years | 2007–2026 |
 | Rows with tire options | 549 (1 has the default only) |
-| Rows with driven final drive | 535 (97%); 15 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
-| Rows with top gear | 550 (100%; EVs store 1.0 for the single speed) |
+| Rows with driven final drive | 535 (97%); 15 without: Audi 8S TT/TTS/TT RS, Audi 8U Q3, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
+| Rows with top gear | 533 (every non-EV row); the 17 EVs have none: the reduction ratio is the final drive |
 | Rows with full gear sets | 320 (58%) |
 | Tire confidence | official_exact 369 · reputable_secondary 42 · official_derived 7 · family_default 82 · unverified 50 |
 | Driven final-drive confidence | official_exact 278 · official_derived 87 · reputable_secondary 22 · family_default 75 · unverified 73 · none 15 |
-| Top-gear confidence | official_exact 358 · official_derived 23 · reputable_secondary 28 · family_default 73 · unverified 68 |
-| Weak (family_default or unverified) | final drive 148/550 (27%), top gear 141/550 (26%), tire 132/550 (24%) |
+| Top-gear confidence | official_exact 358 · official_derived 15 · reputable_secondary 28 · family_default 64 · unverified 68 · none 17 (EVs) |
+| Weak (family_default or unverified) | final drive 148/550 (27%), top gear 132/550 (24%), tire 132/550 (24%) |
 | `order_reference_trust` | trusted 390 · approximate 85 · backlog_unverified 75 |
 | `requires_manual_confirmation` | true 148, false 402 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
@@ -671,7 +674,13 @@ capability line state the current layout's consequence.
   "couldn't test" or "ruled out". The driveline order (wheel speed ×
   reduction ratio) is the motor's 1× and 2×, so that family is worded
   "Electric motor" in the report, History, the car wizard, the Live
-  capability line and the spectrum. The coast-down judges nothing
+  capability line and the spectrum. An EV has no top gear: library EV rows
+  carry none and a saved EV car keeps none, so nothing (confirmation, the
+  motor check, an RPM estimate) depends on one. The Audi e-tron GT's rear
+  motor has a 2-speed gearbox; the library stores one rear reduction ratio
+  as a family estimate, so the car asks for confirmation and motor results
+  are marked as estimated; in its other (launch) gear the rear motor turns
+  at an order the analysis does not model. The coast-down judges nothing
   (`speed_dependence` stays `null`), no engine markers are drawn, and the
   confirm step is a repeat drive instead of a neutral coast. The report's
   test conditions print "Powertrain: electric (EV)" and say plainly that the
