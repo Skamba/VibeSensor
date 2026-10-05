@@ -261,20 +261,6 @@
       "confidence": "medium"
     },
     {
-      "id": "secondary_technical_sources:fy-q5-35-tdi-quattro-adac",
-      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy/293050/",
-      "title": "ADAC Audi Q5 FY 35 TDI quattro S tronic variant page",
-      "note": "Reputable secondary exact-variant page for the FY Q5 35 TDI quattro S tronic used to anchor the narrowed 08/2018-05/2019 lifecycle window, confirm AWD and dual-clutch identity, and cross-check the 235/65 R17 baseline tire.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:fy-q5-40-tdi-quattro-adac",
-      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy-facelift/313511/",
-      "title": "ADAC Audi Q5 FY facelift 40 TDI quattro S tronic variant page",
-      "note": "Reputable secondary exact-variant page for the FY facelift Q5 40 TDI quattro S tronic used to anchor the narrowed 09/2020-11/2023 lifecycle window for the later AWD dual-clutch state.",
-      "confidence": "medium"
-    },
-    {
       "id": "secondary_technical_sources:a4-b8-3-0-tdi-quattro-mt6-carfolio",
       "url": "https://www.carfolio.com/audi-a4-3.0-tdi-quattro-264979",
       "title": "Carfolio A4 B8 3.0 TDI quattro manual specification entry",
@@ -522,29 +508,15 @@
     {
       "id": "secondary_technical_sources:q5-fy-adac-prefacelift",
       "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy/",
-      "title": "ADAC Autokatalog: Audi Q5 (FY) pre-facelift (2017-07/2020) variant catalogue",
-      "note": "Independent German automotive consumer organization variant catalogue. Lists every Q5 FY pre-facelift variant sold in Germany: confirms NO FWD TFSI exists; all TFSI are quattro; only FWD variant is 35 TDI (diesel). Used as negative evidence for 40 TFSI FWD phantom row, and as production-window evidence for 35 TDI quattro (08/2018-07/2020), 45 TFSI quattro (01/2019-07/2020 at 180 kW), 55 TFSI e quattro (09/2019-08/2020).",
+      "title": "ADAC Autokatalog Audi Q5 FY (2017-2020)",
+      "note": "ADAC catalogue listing every Germany-market pre-facelift Q5 FY variant with its sales period: 2.0 TFSI quattro 185 kW 01/17-04/18, 45 TFSI quattro 180 kW 01/19-07/20, 2.0 TDI 110 kW manual 01/17-04/18, 2.0 TDI quattro 120/140 kW 01/17-08/18, 35 TDI quattro S tronic 08/18-07/20, 35 TDI S tronic (front-wheel drive) 08/19-07/20, 40 TDI quattro manual 02/19-07/20, 40 TDI quattro S tronic 08/18-07/20, 45 TDI quattro tiptronic 02/19-07/20, 3.0 TDI quattro 11/17-08/18, 50 TDI quattro tiptronic 02/19-07/20, 50/55 TFSI e quattro 09/19-08/20. Every TFSI is quattro; there is no front-wheel-drive TFSI.",
       "confidence": "medium"
     },
     {
       "id": "secondary_technical_sources:q5-fy-adac-facelift",
       "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q5/fy-facelift/",
-      "title": "ADAC Autokatalog: Audi Q5 (FY) facelift (09/2020-11/2024) variant catalogue",
-      "note": "Facelift catalogue lists 40 TFSI quattro (12/2021+, 150 kW), 40 TDI quattro (09/2020-11/2024, 150 kW), 45 TFSI quattro (09/2020-11/2024, 195 kW), 55 TFSI e quattro (02/2021-11/2024). Confirms all TFSI variants are quattro-only; 35 TDI FWD remains the only FWD Q5 FY in DE.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:q5-fy-wikipedia",
-      "url": "https://en.wikipedia.org/wiki/Audi_Q5",
-      "title": "Wikipedia: Audi Q5 (second generation FY)",
-      "note": "Second-generation Q5 FY infobox confirms transmission split: 7-speed S tronic (DL382, 4-cylinder applications) vs 8-speed Tiptronic (ZF 8HP, V6 50 TDI applications). None of the 5 backlog rows fall into the V6 ZF 8HP category.",
-      "confidence": "medium"
-    },
-    {
-      "id": "secondary_technical_sources:q5-fy-tfsi-e-caranddriver",
-      "url": "https://www.caranddriver.com/audi/q5/specs/2021/",
-      "title": "Car and Driver: 2021 Audi Q5 specs",
-      "note": "2021 Q5 spec page including 55 TFSI e variant. Explicitly states 'Transmission: 7-Speed S tronic Dual-Clutch Auto' for the PHEV \u2014 refutes any suggestion of 8-speed Tiptronic for the FY PHEV. US axle ratio 5.302 noted (does not apply to EU spec).",
+      "title": "ADAC Autokatalog Audi Q5 FY facelift (2020-2024)",
+      "note": "ADAC catalogue listing the Germany-market facelifted Q5 FY variants with their sales periods: 40 TFSI quattro 150 kW 12/21-11/24, 45 TFSI quattro 195 kW 09/20-11/24, 50 TFSI e quattro 220 kW and 55 TFSI e quattro 270 kW 02/21-11/24, 35 TDI S tronic (front-wheel drive) 09/20-11/24, 40 TDI quattro S tronic 150 kW 09/20-11/24, 50 TDI quattro tiptronic 10/20-04/23. Every TFSI is quattro; the 35 TDI is the only front-wheel-drive Q5 FY.",
       "confidence": "medium"
     },
     {

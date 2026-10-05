@@ -199,9 +199,9 @@
     },
     {
       "id": "audi_mediacenter_sources:fy-q5-45-tfsi-quattro-2019-tech-data-pdf",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/953/file_de/0a4a8fa2a3274aecf30b11d6b8bd47624ac4bfd3/td_Q5_45_TFSI_quattro_S_tronic_180_kW.pdf?1698933816",
-      "title": "Audi MediaCenter Q5 45 TFSI quattro 2019 technical-data PDF",
-      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact FY Q5 45 TFSI quattro S tronic 180 kW state showing quattro ultra AWD, 7-speed S tronic, the full 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 ratio set, final drive 5.302, and basic 235/65 R17 tires.",
+      "url": "https://web.archive.org/web/20240715192633/https://uploads.audi-mediacenter.com/system/production/car_motorizations/953/file_en/0a4a8fa2a3274aecf30b11d6b8bd47624ac4bfd3/en01605_td_Q5_45_TFSI_quattro_S_tronic_180_kW.pdf",
+      "title": "Audi MediaCenter Q5 45 TFSI quattro S tronic (180 kW) technical data, status 09/27/2019",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (Internet Archive copy) for the pre-facelift FY Q5 45 TFSI quattro S tronic 180 kW: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, basic tire 235/65 R17.",
       "confidence": "high"
     },
     {
@@ -219,17 +219,10 @@
       "confidence": "high"
     },
     {
-      "id": "audi_mediacenter_sources:fy-q5-third-generation-launch-release",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/the-new-audi-q5-suv-proven-concept-in-its-third-generation-16232",
-      "title": "Audi MediaCenter third-generation Q5 launch release",
-      "note": "Official Audi launch release stating the new Q5 is the third generation, with ordering from September 2024 and market launch in the first quarter of 2025, used to bound the FY Q5 row end year.",
-      "confidence": "high"
-    },
-    {
       "id": "audi_mediacenter_sources:fy-q5-35-tdi-quattro-2019-tech-data-pdf",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/37/file_en/80e6790c8c1cd17c8677f056d55467d0af1aa56c/en01605_td_Q5_35_TDI_quattro_S_tronic_120_kW.pdf?1698933679",
-      "title": "Audi MediaCenter Q5 35 TDI quattro 2019 technical-data PDF",
-      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact FY Q5 35 TDI quattro S tronic 120 kW state showing quattro AWD with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, and basic 235/65 R17 tires.",
+      "url": "https://web.archive.org/web/20240714161112/https://uploads.audi-mediacenter.com/system/production/car_motorizations/37/file_en/80e6790c8c1cd17c8677f056d55467d0af1aa56c/en01605_td_Q5_35_TDI_quattro_S_tronic_120_kW.pdf",
+      "title": "Audi MediaCenter Q5 35 TDI quattro S tronic (120 kW) technical data, status 09/27/2019",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (Internet Archive copy; the MediaCenter file is no longer served) for the pre-facelift FY Q5 35 TDI quattro S tronic 120 kW: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, basic tire 235/65 R17.",
       "confidence": "high"
     },
     {
@@ -241,9 +234,9 @@
     },
     {
       "id": "audi_mediacenter_sources:fy-q5-40-tdi-quattro-2019-tech-data-pdf",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/951/file_de/882a1ba9c0e910a31233ea47216745dd30ebd89b/td_Q5_40_TDI_quattro_140_kW.pdf",
-      "title": "Audi MediaCenter Q5 40 TDI quattro 2019 technical-data PDF",
-      "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact FY Q5 40 TDI quattro 140 kW state showing AWD, 6-speed manual transmission, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, and basic 235/65 R17 tires.",
+      "url": "https://web.archive.org/web/20240715133311/https://uploads.audi-mediacenter.com/system/production/car_motorizations/951/file_en/882a1ba9c0e910a31233ea47216745dd30ebd89b/en01605_td_Q5_40_TDI_quattro_140_kW.pdf",
+      "title": "Audi MediaCenter Q5 40 TDI quattro (140 kW, manual) technical data, status 09/27/2019",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (Internet Archive copy) for the pre-facelift FY Q5 40 TDI quattro 140 kW with 6-speed manual: all-wheel drive, forward ratios 3.778 / 1.957 / 1.241 / 0.912 / 0.692 / 0.571, reverse 3.333, final drive 2.647, basic tire 235/65 R17. The printed overall top ratio is far taller than the S tronic's, so the library has no manual row (see the 40 TDI quattro row's unresolved note).",
       "confidence": "high"
     },
     {
@@ -543,15 +536,8 @@
     {
       "id": "audi_mediacenter_sources:fy-q5-55-tfsi-e-2021-tech-data-pdf",
       "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5_TFSI_e.pdf",
-      "title": "Audi official Q5 55 TFSI e quattro 2021 technical-data PDF",
-      "note": "Official Audi technical-data PDF hosted on an Audi country CDN for the exact FY Q5 55 TFSI e quattro S tronic 270 kW state, explicitly marked Program for Germany / Status 03/10/2021, showing quattro ultra AWD, 7-speed S tronic, the same forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, single final drive 5.302, and basic 235/60 R18 tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:fy-q5-2025-e-hybrid-launch-release",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/the-audi-q5-e-hybrid-all-rounder-with-great-electric-range-16685",
-      "title": "Audi MediaCenter 2025 Q5 e-hybrid launch release",
-      "note": "Official Audi launch release for the successor Q5 SUV e-hybrid quattro and Q5 Sportback e-hybrid quattro models, used to document the mid-2025 product-cycle handover away from FY 55 TFSI e quattro naming.",
+      "title": "Audi official Q5 TFSI e technical-data compilation, status 03/10/2021",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia), Program for Germany, status 03/10/2021, for the facelifted FY Q5 55 TFSI e quattro S tronic 270 kW and 50 TFSI e quattro S tronic 220 kW: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.75, final drive 5.302, basic tire 235/60 R18 for both.",
       "confidence": "high"
     },
     {
@@ -1147,6 +1133,55 @@
       "url": "https://uploads.audi.com/system/production/car_motorizations/1070/file_en/76be1c810539e2c0ea0be15aa0c4d4ed08ec9349/eTD-Audi-A5-Cabriolet-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf",
       "title": "Audi MediaCenter A5 Cabriolet 45 TFSI quattro 7-speed S tronic 195 kW technical data (03/20/2024)",
       "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 45 TFSI quattro 7-speed S tronic 195 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-40-tdi-quattro-s-tronic-2020-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240716085655/https://uploads.audi-mediacenter.com/system/production/car_motorizations/366/file_en/fe728a60a347ef0ccade46e8751fec47e72b6acb/en01605_td_Q5_40_TDI_quattro_S_tronic_140_kW.pdf",
+      "title": "Audi MediaCenter Q5 40 TDI quattro S tronic (140 kW) technical data, status 03/09/2020",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (Internet Archive copy) for the pre-facelift FY Q5 40 TDI quattro S tronic 140 kW: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 5.302, basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-50-tdi-quattro-2019-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240714193535/https://uploads.audi-mediacenter.com/system/production/car_motorizations/954/file_en/55fb28a26c098a57da414e606cd1fc6ce50d8edb/en01605_td_Q5_50_TDI_quattro_tiptronic_210_kW.pdf",
+      "title": "Audi MediaCenter Q5 50 TDI quattro tiptronic (210 kW) technical data, status 09/27/2019",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (Internet Archive copy) for the pre-facelift FY Q5 50 TDI quattro tiptronic 210 kW: quattro permanent all-wheel drive, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 2.848, basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-50-tdi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1389/file_de/705e400f1498028d0b82afa26c0faa0d3ece5b4f/TD-Audi-Q5-50-TDI-quattro-tiptronic-210kW-MHEV_240604.pdf",
+      "title": "Audi MediaCenter Q5 50 TDI quattro tiptronic 210 kW MHEV technical data, status 04.06.2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet (German) for the facelifted FY Q5 50 TDI quattro tiptronic 210 kW MHEV: permanent quattro all-wheel drive, 8-speed tiptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, reverse 3.478, final drive 2.848, basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-40-tfsi-quattro-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1491/file_en/d7793fc81649f7cb1ae432f090246ab8cb377399/eTD-Audi-Q5-40-TFSI-quattro-S_tronic-150kW-MHEV_240604.pdf?1741620895&disposition=attachment",
+      "title": "Audi MediaCenter Q5 40 TFSI quattro S tronic 150 kW MHEV technical data, status 06/04/2024",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the facelifted FY Q5 40 TFSI quattro S tronic 150 kW MHEV: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, basic tire 235/65 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-50-tfsi-e-2024-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/976/file_en/ba4ac5716025d45aa954ac28860d4b98e579f75b/eTD-Audi-Q5-50-TFSIe-quattro-S_tronic-220kW_240604.pdf",
+      "title": "Audi MediaCenter Q5 50 TFSI e quattro S tronic 220 kW technical data, date 06/04/24",
+      "note": "Official Audi MediaCenter Germany-program technical-data sheet for the FY Q5 50 TFSI e quattro S tronic 220 kW plug-in hybrid: quattro all-wheel drive with ultra technology, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 5.302, basic tire 235/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-sportback-2020-ee-tech-data-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ee/Mudelikataloogid/tehniline_info/Tehniline_info_Q5%20Sportback.pdf",
+      "title": "Audi official Q5 Sportback technical-data compilation, status 11/28/2020 - 01/21/2021",
+      "note": "Official Audi technical-data compilation hosted on Audi's media.audi.com (Estonia), Program for Germany, for the launch Q5 Sportback (FY facelift drivetrains): 45 TFSI quattro S tronic 195 kW (status 11/28/2020; ratios ending 0.557 / 0.433, final drive 5.302), 35 TDI S tronic 120 kW (status 01/21/2021; front-wheel drive, ratios ending 0.508 / 0.386, final drive 4.885), 40 TDI quattro S tronic 150 kW (status 11/28/2020; ratios ending 0.508 / 0.386, final drive 5.302) and 50 TDI quattro tiptronic 210 kW (status 11/28/2020; 8-speed tiptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.848); basic tire 235/65 R17 for all four.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fy-q5-ch-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/nemo/ch/preislisten/mj25/Audi_Q5_SQ5_Preisliste_MJ25_ab_01.07.24_DE.pdf",
+      "title": "Audi Switzerland Q5 / SQ5 / Q5 TFSI e price list, model year 2025, valid from 01.07.2024",
+      "note": "Official Audi Switzerland price list for the last FY Q5 (40 TDI quattro, 50 TDI quattro, 40 TFSI quattro, 45 TFSI quattro, 50/55 TFSI e quattro). Standard wheels 8.0 J x 17 with 235/65 R17 (8.0 J x 18 with 235/60 R18 on the TFSI e); the wheel program offers 235/65 R17, 235/60 R18, 235/55 R19, 255/45 R20 and 255/40 R21. Used for the optional tire sizes; no Germany-market FY price list was found online.",
       "confidence": "high"
     }
   ]
