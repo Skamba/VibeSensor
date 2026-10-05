@@ -8,11 +8,13 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
+import yaml
 from test_support.root_helpers import ROOT_HELPERS_DIR, load_root_helper
 
 from vibesensor.app.config_defaults import DEFAULT_CONFIG
 from vibesensor.hotspot.captive_portal import CAPTIVE_PROBE_HOSTS, HOTSPOT_ADDRESS
 from vibesensor.hotspot.constants import HOTSPOT_CON_NAME, HOTSPOT_IFNAME, HOTSPOT_IP
+from vibesensor.updates.wifi.wifi_uplink_setup import psk_passwd_file
 
 hotspot = load_root_helper("vibesensor_hotspot.py")
 
@@ -168,11 +170,35 @@ def test_unresponsive_networkmanager_reprovisions(restart_rc: int, expected: int
     assert fake.calls == [_ACTIVE, _REPROVISION]
 
 
+@pytest.mark.parametrize("psk", ["secret-psk", " lead\\trail ", "tab\there"])
+def test_passwd_file_matches_the_updater_uplink_encoding(
+    psk: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump({"ap": {"psk": psk}}))
+
+    assert hotspot.main(["passwd-file", str(config_path)]) == 0
+    assert capsys.readouterr().out == psk_passwd_file(psk)
+
+
+def test_open_hotspot_prints_an_empty_passwd_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("ap:\n  ssid: Open Shop\n")
+
+    assert hotspot.main(["passwd-file", str(config_path)]) == 0
+    assert capsys.readouterr().out == ""
+
+
 def test_run_command_reports_missing_binary_as_failure() -> None:
     assert hotspot.run_command(["/nonexistent/vibesensor-binary"], 1).returncode == 127
 
 
-@pytest.mark.parametrize("argv", [[], ["status"], ["watchdog", "--mode"], ["config", "a", "b"]])
+@pytest.mark.parametrize(
+    "argv",
+    [[], ["status"], ["watchdog", "--mode"], ["config", "a", "b"], ["passwd-file", "a", "b"]],
+)
 def test_unknown_invocations_are_refused(
     argv: list[str], capsys: pytest.CaptureFixture[str]
 ) -> None:

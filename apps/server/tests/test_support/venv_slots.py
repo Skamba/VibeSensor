@@ -11,7 +11,7 @@ from vibesensor.updates.venv_slots import VenvSlots
 
 # What the fake ``pip install`` leaves as ``bin/vibesensor-server``. It is a fixed
 # marker, never built from the command line: fake runners pass every command here,
-# including ``nmcli ... wifi-sec.psk <password>``, and nothing from argv is written.
+# and nothing from argv is written to disk.
 PIP_CONSOLE_SCRIPT = "#!/usr/bin/env python3\n# installed by pip\n"
 
 

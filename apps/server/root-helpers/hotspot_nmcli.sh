@@ -215,15 +215,11 @@ if ! run_as_root nmcli general reload >/dev/null 2>&1; then
   fi
 fi
 
-if [ -z "${PSK}" ]; then
-  # For open AP mode, always recreate the profile to avoid stale security
-  # fields (e.g. WEP/WPA remnants) surviving from prior configuration.
-  run_as_root nmcli connection delete "${CON_NAME}" >/dev/null 2>&1 || true
-fi
-
-if ! run_as_root nmcli -t -f NAME connection show | grep -Fxq "${CON_NAME}"; then
-  run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
-fi
+# Always recreate the profile: it must not keep stale security fields
+# (WEP/WPA remnants) or an old PSK, which NetworkManager stores only when
+# "connection up" below supplies it.
+run_as_root nmcli connection delete "${CON_NAME}" >/dev/null 2>&1 || true
+run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
 
 run_as_root nmcli connection modify "${CON_NAME}" \
   802-11-wireless.mode ap \
@@ -234,14 +230,21 @@ run_as_root nmcli connection modify "${CON_NAME}" \
   ipv6.method ignore
 
 if [ -n "${PSK}" ]; then
-  run_as_root nmcli connection modify "${CON_NAME}" \
-    802-11-wireless-security.key-mgmt wpa-psk \
-    802-11-wireless-security.psk "${PSK}"
-else
-  :
+  run_as_root nmcli connection modify "${CON_NAME}" 802-11-wireless-security.key-mgmt wpa-psk
 fi
 
-if ! run_as_root nmcli connection up "${CON_NAME}"; then
+bring_up_hotspot() {
+  if [ -z "${PSK}" ]; then
+    run_as_root nmcli connection up "${CON_NAME}"
+    return
+  fi
+  # The PSK goes to nmcli as a passwd-file through a pipe, never on a command
+  # line, where any local user could read it from /proc/<pid>/cmdline.
+  run_as_root nmcli connection up "${CON_NAME}" \
+    passwd-file <(/usr/bin/python3 -I "${SCRIPT_DIR}/vibesensor_hotspot.py" passwd-file "${CONFIG_PATH}")
+}
+
+if ! bring_up_hotspot; then
   echo "AP connection bring-up failed for ${CON_NAME}"
   dump_all ap_failed
   write_summary FAILED 22

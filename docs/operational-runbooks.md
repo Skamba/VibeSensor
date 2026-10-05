@@ -349,6 +349,14 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    missing; see the migration below. See
    [Root runs only root-owned code](#root-runs-only-root-owned-code) for what
    root executes and how releases change it.
+   Wi-Fi passwords never appear on a command line, where any local user could
+   read them in `/proc/<pid>/cmdline`. The updater writes the uplink password
+   into an unnamed 0600 file in RAM (`O_TMPFILE` on `/dev/shm`) and passes
+   `nmcli connection up VibeSensor-Uplink passwd-file /proc/<pid>/fd/<fd>`;
+   the allowlist accepts no other `passwd-file`. `hotspot_nmcli.sh` recreates
+   `VibeSensor-AP` on every run and hands `ap.psk` to `nmcli connection up`
+   through a pipe. NetworkManager stores the PSK in the root-only profile, so
+   the watchdog's later `nmcli connection up` needs no password.
 9. If emergency patching was used to restore service, follow up with the repo fix, validation, and a successful updater rerun so the device returns to wheel-managed state.
 
 ## Root runs only root-owned code

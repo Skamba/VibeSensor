@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import re
 from dataclasses import replace
 from pathlib import Path
 
@@ -13,6 +15,7 @@ from vibesensor.updates.transport.failures import UpdateTransportStepError
 from vibesensor.updates.wifi.wifi_config import build_default_wifi_config
 from vibesensor.updates.wifi.wifi_uplink_setup import (
     UpdateUplinkProvisioner,
+    psk_passwd_file,
     ssid_security_modes,
 )
 
@@ -59,20 +62,48 @@ async def test_prepare_uplink_connection_requires_password_for_secured_network(
         await provisioner.prepare_uplink_connection("HomeNet", "")
 
 
+def test_psk_passwd_file_escapes_what_nmcli_would_unescape_or_strip() -> None:
+    assert psk_passwd_file("example-psk") == "802-11-wireless-security.psk:example-psk\n"
+    assert psk_passwd_file(" a\\b:c ") == "802-11-wireless-security.psk:\\040a\\134b:c\\040\n"
+
+
 @pytest.mark.asyncio
-async def test_prepare_uplink_connection_reports_password_configuration_failure(
-    tmp_path: Path,
-) -> None:
+async def test_wifi_password_reaches_nmcli_through_memory_never_argv(tmp_path: Path) -> None:
     provisioner, runner, _status = _build_uplink_provisioner(tmp_path)
-    runner.set_response("wifi-sec.psk", 10, "", "failed to set Wi-Fi credentials")
+    # nmcli (here: a real reader of the same path) opens the passwd-file while
+    # the command runs; afterwards the descriptor is closed.
+    seen: list[str] = []
+    original_run = runner.run
 
-    with pytest.raises(
-        UpdateTransportStepError,
-        match="Failed to set Wi-Fi credentials",
-    ) as exc_info:
-        await provisioner.prepare_uplink_connection("HomeNet", "example-psk")
+    async def reading_run(args, **kwargs):
+        if "passwd-file" in args:
+            seen.append(Path(args[args.index("passwd-file") + 1]).read_text())
+        return await original_run(args, **kwargs)
 
-    assert exc_info.value.detail == "failed to set Wi-Fi credentials"
+    runner.run = reading_run
+
+    await provisioner.prepare_uplink_connection("HomeNet", "example-psk")
+    await provisioner.bring_uplink_up("HomeNet", "example-psk")
+
+    assert all("example-psk" not in arg for args, _ in runner.calls for arg in args)
+    configure, up = (args for args, _ in runner.calls[-2:])
+    assert configure[-2:] == ["wifi-sec.key-mgmt", "wpa-psk"]
+    assert up[-3:-1] == ["VibeSensor-Uplink", "passwd-file"]
+    assert re.fullmatch(rf"/proc/{os.getpid()}/fd/\d+", up[-1])
+    assert seen == ["802-11-wireless-security.psk:example-psk\n"]
+    assert not Path(up[-1]).exists()
+
+
+@pytest.mark.asyncio
+async def test_open_network_is_brought_up_without_a_passwd_file(tmp_path: Path) -> None:
+    provisioner, runner, _status = _build_uplink_provisioner(tmp_path)
+
+    await provisioner.prepare_uplink_connection("Cafe", "")
+    await provisioner.bring_uplink_up("Cafe", "")
+
+    configure, up = (args for args, _ in runner.calls[-2:])
+    assert "wifi-sec.key-mgmt" not in configure
+    assert up[-1] == "VibeSensor-Uplink"
 
 
 @pytest.mark.asyncio
@@ -86,7 +117,7 @@ async def test_bring_uplink_up_retries_ssid_not_found_then_succeeds(
         (0, "", ""),
     )
 
-    await provisioner.bring_uplink_up("TestNet")
+    await provisioner.bring_uplink_up("TestNet", "pass1234")
 
     assert any("rescanning and retrying" in line for line in tracker.status.log_tail)
 
@@ -107,7 +138,7 @@ async def test_bring_uplink_up_fails_immediately_for_non_retryable_error(
         UpdateTransportStepError,
         match="Failed to connect to Wi-Fi 'TestNet'",
     ) as exc_info:
-        await provisioner.bring_uplink_up("TestNet")
+        await provisioner.bring_uplink_up("TestNet", "pass1234")
 
     assert exc_info.value.detail == "Error: Connection activation failed"
 
@@ -128,7 +159,7 @@ async def test_bring_uplink_up_exhausts_retryable_ssid_not_found_error(
         UpdateTransportStepError,
         match="Failed to connect to Wi-Fi 'TestNet'",
     ) as exc_info:
-        await provisioner.bring_uplink_up("TestNet")
+        await provisioner.bring_uplink_up("TestNet", "pass1234")
 
     assert exc_info.value.detail == "Error: No network with SSID 'TestNet' found.\n"
     assert any("rescanning and retrying" in line for line in tracker.status.log_tail)

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 from vibesensor.updates.models import UpdatePhase
 from vibesensor.updates.runner import UpdateCommandExecutor
@@ -10,6 +13,7 @@ from vibesensor.updates.transport.failures import UpdateTransportStepError
 from vibesensor.updates.wifi.wifi_config import UpdateWifiConfig
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
+_PASSWD_FILE_DIR = "/dev/shm"
 
 
 def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
@@ -35,6 +39,42 @@ def ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
     return modes
 
 
+def psk_passwd_file(password: str) -> str:
+    """Return nmcli ``passwd-file`` contents that supply *password* as the Wi-Fi PSK.
+
+    nmcli unescapes backslashes in the value and strips unescaped leading and
+    trailing whitespace, so backslashes, whitespace and control characters are
+    written as octal escapes.
+    """
+
+    escaped = "".join(
+        f"\\{ord(char):03o}" if char == "\\" or ord(char) <= 0x20 or ord(char) == 0x7F else char
+        for char in password
+    )
+    return f"802-11-wireless-security.psk:{escaped}\n"
+
+
+@contextmanager
+def in_memory_passwd_file(password: str) -> Iterator[str]:
+    """Yield a path from which root's nmcli reads *password* as a ``passwd-file``.
+
+    The password must stay off command lines, which any local user can read in
+    /proc/<pid>/cmdline, and off the SD card. It goes into an unnamed 0600 file
+    in RAM (``O_TMPFILE`` on the /dev/shm tmpfs) that exists only as a
+    descriptor of this process; the path is that descriptor under /proc, which
+    only this user and root can open. Older root-side helpers already allow
+    ``nmcli connection up ... passwd-file <path>``, so this needs no new root
+    command.
+    """
+
+    fd = os.open(_PASSWD_FILE_DIR, os.O_TMPFILE | os.O_RDWR | os.O_CLOEXEC, 0o600)
+    try:
+        os.write(fd, psk_passwd_file(password).encode())
+        yield f"/proc/{os.getpid()}/fd/{fd}"
+    finally:
+        os.close(fd)
+
+
 class UpdateUplinkProvisioner:
     """Create and configure the temporary Wi-Fi uplink connection for updates."""
 
@@ -58,13 +98,22 @@ class UpdateUplinkProvisioner:
             await self._validate_open_network(ssid)
         await self._delete_existing_uplink_connections()
         await self._create_uplink_connection(ssid)
-        await self._configure_uplink_connection()
-        if password:
-            await self._apply_wifi_password(password)
+        await self._configure_uplink_connection(secured=bool(password))
 
-    async def bring_uplink_up(self, ssid: str) -> None:
-        """Bring the prepared uplink connection up, retrying on scan lag."""
+    async def bring_uplink_up(self, ssid: str, password: str) -> None:
+        """Bring the prepared uplink connection up, retrying on scan lag.
 
+        nmcli reads a password from a ``passwd-file``; NetworkManager then
+        stores it in the root-only uplink profile.
+        """
+
+        if not password:
+            await self._connect_with_retries(ssid, [])
+            return
+        with in_memory_passwd_file(password) as passwd_file:
+            await self._connect_with_retries(ssid, ["passwd-file", passwd_file])
+
+    async def _connect_with_retries(self, ssid: str, extra_args: list[str]) -> None:
         detail = ""
         max_attempts = max(1, self._config.uplink_connect_retries)
         for attempt_number in range(1, max_attempts + 1):
@@ -78,6 +127,7 @@ class UpdateUplinkProvisioner:
                     "connection",
                     "up",
                     self._config.uplink_connection_name,
+                    *extra_args,
                 ],
                 phase="connecting_wifi",
                 timeout=float(self._config.uplink_connect_wait_s + 10),
@@ -208,8 +258,8 @@ class UpdateUplinkProvisioner:
             detail=create_result.stderr,
         )
 
-    async def _configure_uplink_connection(self) -> None:
-        """Apply the non-secret updater defaults to the uplink profile."""
+    async def _configure_uplink_connection(self, *, secured: bool) -> None:
+        """Apply the non-secret updater settings to the uplink profile."""
 
         configure_result = await self._commands.run(
             [
@@ -227,6 +277,7 @@ class UpdateUplinkProvisioner:
                 self._config.uplink_fallback_dns,
                 "ipv6.method",
                 "ignore",
+                *(["wifi-sec.key-mgmt", "wpa-psk"] if secured else []),
             ],
             phase="connecting_wifi",
             timeout=self._config.nmcli_timeout_s,
@@ -239,33 +290,6 @@ class UpdateUplinkProvisioner:
             phase=UpdatePhase.connecting_wifi,
             message="Failed to configure uplink",
             detail=configure_result.stderr,
-        )
-
-    async def _apply_wifi_password(self, password: str) -> None:
-        """Apply WPA-PSK credentials to the transient uplink profile."""
-
-        password_result = await self._commands.run(
-            [
-                "nmcli",
-                "connection",
-                "modify",
-                self._config.uplink_connection_name,
-                "wifi-sec.key-mgmt",
-                "wpa-psk",
-                "wifi-sec.psk",
-                password,
-            ],
-            phase="connecting_wifi",
-            timeout=self._config.nmcli_timeout_s,
-            privileged=True,
-        )
-        if password_result.returncode == 0:
-            return
-        await self._delete_uplink_connection()
-        raise UpdateTransportStepError(
-            phase=UpdatePhase.connecting_wifi,
-            message="Failed to set Wi-Fi credentials",
-            detail=password_result.stderr,
         )
 
     async def _delete_uplink_connection(self) -> None:

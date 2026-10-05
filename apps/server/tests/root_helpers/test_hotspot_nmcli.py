@@ -11,6 +11,7 @@ provisioning path.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import time
@@ -22,6 +23,7 @@ from test_support.root_helpers import ROOT_HELPERS_DIR
 
 _CON = "VibeSensor-AP"
 _DEFAULT_CONFIG = "ap:\n  ssid: Workshop\n  psk: secret-psk\n"
+_PASSWD_FILE_UP = re.compile(rf"connection up {_CON} passwd-file /dev/fd/\d+")
 
 # State lives in files under $STUB_STATE: "connections" (one profile name per
 # line), "interfaces" (devices `ip link show` knows), "wifi_device" (what
@@ -64,6 +66,7 @@ case "$*" in
   "connection up "*)
     has_con "${3}" || exit 10
     [ -e "${s}/fail_up" ] && exit 4
+    if [ "${4:-}" = passwd-file ]; then cat -- "${5}" >"${s}/passwd_file"; fi
     exit 0 ;;
   "-f GENERAL.STATE,IP4.ADDRESS connection show "*)
     has_con "${5}" || exit 10
@@ -90,6 +93,7 @@ class HotspotRun:
     summary: dict[str, str]
     log_dir: Path
     nm_dir: Path
+    passwd_file: str | None
 
     def nmcli_changes(self) -> list[str]:
         """The nmcli calls that change NetworkManager state, in order."""
@@ -192,6 +196,9 @@ def _run_hotspot(
         summary=summary,
         log_dir=log_dir,
         nm_dir=nm_dir,
+        passwd_file=(
+            (state / "passwd_file").read_text() if (state / "passwd_file").exists() else None
+        ),
     )
 
 
@@ -206,15 +213,20 @@ def test_first_boot_creates_the_wpa_hotspot_offline(tmp_path: Path) -> None:
     run = _run_hotspot(tmp_path)
 
     assert run.returncode == 0, run.log_text()
-    assert run.nmcli_changes() == [
+    *changes, up = run.nmcli_changes()
+    assert changes == [
         "radio wifi on",
         "general reload",
+        f"connection delete {_CON}",
         f"connection add type wifi ifname wlan0 con-name {_CON} autoconnect yes ssid Workshop",
         _AP_SETTINGS,
-        f"connection modify {_CON} 802-11-wireless-security.key-mgmt wpa-psk "
-        "802-11-wireless-security.psk secret-psk",
-        f"connection up {_CON}",
+        f"connection modify {_CON} 802-11-wireless-security.key-mgmt wpa-psk",
     ]
+    # The PSK reaches nmcli through a pipe, never on a command line.
+    assert _PASSWD_FILE_UP.fullmatch(up)
+    assert run.passwd_file == "802-11-wireless-security.psk:secret-psk\n"
+    assert not any("secret-psk" in call for call in run.calls)
+    assert "secret-psk" not in run.log_text()
     assert "systemctl disable --now dnsmasq.service" in run.calls
     assert run.summary["status"] == "OK"
     assert run.summary["ap_connection_exists"] == "yes"
@@ -228,18 +240,17 @@ def test_first_boot_creates_the_wpa_hotspot_offline(tmp_path: Path) -> None:
     assert (run.log_dir / "pre_nm_dev.txt").exists() and (run.log_dir / "post_meta.txt").exists()
 
 
-def test_existing_wpa_profile_is_updated_in_place(tmp_path: Path) -> None:
+def test_existing_wpa_profile_is_recreated_so_no_old_psk_survives(tmp_path: Path) -> None:
     run = _run_hotspot(tmp_path, connections=(_CON,))
 
     assert run.returncode == 0, run.log_text()
     changes = run.nmcli_changes()
-    assert not any(c.startswith(("connection add", "connection delete")) for c in changes)
-    assert changes[-3:] == [
-        _AP_SETTINGS,
-        f"connection modify {_CON} 802-11-wireless-security.key-mgmt wpa-psk "
-        "802-11-wireless-security.psk secret-psk",
-        f"connection up {_CON}",
+    assert changes[2:4] == [
+        f"connection delete {_CON}",
+        f"connection add type wifi ifname wlan0 con-name {_CON} autoconnect yes ssid Workshop",
     ]
+    assert _PASSWD_FILE_UP.fullmatch(changes[-1])
+    assert run.passwd_file == "802-11-wireless-security.psk:secret-psk\n"
 
 
 def test_open_hotspot_recreates_the_profile_without_security(tmp_path: Path) -> None:
@@ -252,6 +263,7 @@ def test_open_hotspot_recreates_the_profile_without_security(tmp_path: Path) -> 
         _AP_SETTINGS,
         f"connection up {_CON}",
     ]
+    assert run.passwd_file is None
     assert run.summary["status"] == "OK"
 
 

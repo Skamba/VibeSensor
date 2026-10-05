@@ -95,7 +95,7 @@ class UpdateWifiSession:
 
         self._status.log(f"Connecting to Wi-Fi network: {ssid}")
         await self._uplink.prepare_uplink_connection(ssid, password)
-        await self._uplink.bring_uplink_up(ssid)
+        await self._uplink.bring_uplink_up(ssid, password)
         fallback = self._config.uplink_fallback_dns
         self._status.log(
             f"Wi-Fi connected successfully (client DNS fallback={fallback})",

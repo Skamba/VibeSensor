@@ -49,6 +49,21 @@ allowed_command_name_for_path() {
   return 1
 }
 
+# The uplink password reaches nmcli as a passwd-file in the server's memory
+# (/proc/<pid>/fd/<fd>, never in argv); refuse any other passwd-file so root
+# nmcli cannot be pointed at files on disk.
+passwd_file_is_server_memfd() {
+  local args=("$@")
+  local idx
+  for idx in "${!args[@]}"; do
+    if [ "${args[${idx}]}" = "passwd-file" ] && \
+      ! [[ "${args[$((idx + 1))]:-}" =~ ^/proc/[0-9]+/fd/[0-9]+$ ]]; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 nmcli_subcommand_allowed() {
   local args=("$@")
   local idx=0
@@ -70,7 +85,11 @@ nmcli_subcommand_allowed() {
         second="${args[$((idx + 1))]:-}"
         third="${args[$((idx + 2))]:-}"
         case "${top_level}:${second}:${third}" in
-          connection:up:*|connection:down:*|connection:delete:*|connection:add:*|connection:modify:*|connection:show:*)
+          connection:up:*)
+            passwd_file_is_server_memfd "${args[@]:$((idx + 3))}"
+            return
+            ;;
+          connection:down:*|connection:delete:*|connection:add:*|connection:modify:*|connection:show:*)
             return 0
             ;;
           device:up:*|dev:wifi:list)

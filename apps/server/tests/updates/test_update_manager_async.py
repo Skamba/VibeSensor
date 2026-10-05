@@ -240,20 +240,6 @@ class TestUpdateManagerAsync:
         await run_update(manager, "HomeNet", "")
         assert manager.status.state == UpdateState.failed
 
-    async def test_password_configuration_failure_fails_update(self, tmp_path) -> None:
-        with patch_release_fetcher() as fetcher:
-            manager, runner, _ = setup_update_env(
-                tmp_path,
-                seed_artifacts=True,
-                server_release_fetcher=fetcher,
-            )
-            runner.set_response("wifi-sec.psk", 10, "", "failed to set Wi-Fi credentials")
-            await run_update(manager, "HomeNet", "example-psk")
-        assert manager.status.state == UpdateState.failed
-        assert any(
-            issue.message == "Failed to set Wi-Fi credentials" for issue in manager.status.issues
-        )
-
     async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
         with patch_release_fetcher(current_version="2025.6.14") as fetcher:
             manager, runner, _ = setup_update_env(

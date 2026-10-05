@@ -5,6 +5,11 @@
 ``hotspot_nmcli.sh`` to ``eval``. SSID and PSK come from the ``ap`` section of
 the YAML config; everything else is fixed.
 
+``passwd-file [CONFIG_PATH]`` prints the PSK as an nmcli ``passwd-file``, which
+``hotspot_nmcli.sh`` hands to ``nmcli connection up`` through a pipe so the
+PSK never appears on a command line (``/proc/<pid>/cmdline`` is world-readable).
+NetworkManager then stores it in the root-only profile.
+
 ``watchdog`` is one pass of ``vibesensor-hotspot-self-heal.timer``. It checks
 whether the NetworkManager hotspot profile is active. When it is not, it
 retries ``nmcli connection up`` with backoff, and if that keeps failing it
@@ -107,6 +112,27 @@ def hotspot_exports(config_path: Path) -> dict[str, object]:
     }
 
 
+def psk_passwd_file(psk: str) -> str:
+    """Return an nmcli ``passwd-file`` supplying *psk*; same as the updater's uplink copy.
+
+    nmcli unescapes backslashes in the value and strips unescaped leading and
+    trailing whitespace, so backslashes, whitespace and control characters are
+    written as octal escapes.
+    """
+    escaped = "".join(
+        f"\\{ord(char):03o}" if char == "\\" or ord(char) <= 0x20 or ord(char) == 0x7F else char
+        for char in psk
+    )
+    return f"802-11-wireless-security.psk:{escaped}\n"
+
+
+def print_passwd_file(config_path: Path) -> int:
+    psk = str(hotspot_exports(config_path)["PSK"])
+    if psk:
+        sys.stdout.write(psk_passwd_file(psk))
+    return 0
+
+
 def print_exports(config_path: Path) -> int:
     for name, value in hotspot_exports(config_path).items():
         # hotspot_nmcli.sh evals these lines, so quote every value for the shell.
@@ -184,10 +210,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if args[:1] == ["config"] and len(args) <= 2:
         return print_exports(Path(args[1]) if len(args) == 2 else DEFAULT_CONFIG_PATH)
+    if args[:1] == ["passwd-file"] and len(args) <= 2:
+        return print_passwd_file(Path(args[1]) if len(args) == 2 else DEFAULT_CONFIG_PATH)
     if args == ["watchdog"]:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
         return check_hotspot()
-    print("Usage: vibesensor_hotspot.py config [CONFIG_PATH] | watchdog", file=sys.stderr)
+    print(
+        "Usage: vibesensor_hotspot.py config [CONFIG_PATH] | passwd-file [CONFIG_PATH] | watchdog",
+        file=sys.stderr,
+    )
     return 2
 
 

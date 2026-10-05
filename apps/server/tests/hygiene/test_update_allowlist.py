@@ -37,6 +37,8 @@ def test_update_allowlist_allows_expected_update_commands(tmp_path: Path) -> Non
     allowed_commands = [
         ["python3", "-c", "pass"],
         ["nmcli", "connection", "up", "VibeSensor-uplink"],
+        ["nmcli", "--wait", "45", "connection", "up", "VibeSensor-uplink"]
+        + ["passwd-file", "/proc/1234/fd/7"],
         ["nmcli", "--wait", "45", "device", "up", "usb0"],
         ["systemctl", "restart", "vibesensor.service"],
         [
@@ -78,11 +80,17 @@ def test_update_allowlist_rejects_unexpected_subcommands(tmp_path: Path) -> None
 
 
 def test_update_allowlist_rejects_malformed_nmcli_options(tmp_path: Path) -> None:
-    result = _run_wrapper(tmp_path, ["nmcli", "--wait"])
+    for args in (
+        ["nmcli", "--wait"],
+        ["nmcli", "connection", "up", "VibeSensor-uplink", "passwd-file", "/etc/shadow"],
+        ["nmcli", "connection", "up", "x", "passwd-file", "/proc/1/fd/../../../etc/shadow"],
+        ["nmcli", "connection", "up", "VibeSensor-uplink", "passwd-file"],
+    ):
+        result = _run_wrapper(tmp_path, args)
 
-    assert result.returncode == 126
-    assert "is not allowed" in result.stderr
-    assert result.stdout == ""
+        assert result.returncode == 126, args
+        assert "is not allowed" in result.stderr
+        assert result.stdout == ""
 
 
 def test_update_allowlist_rejects_commands_outside_the_allowlist(tmp_path: Path) -> None:
