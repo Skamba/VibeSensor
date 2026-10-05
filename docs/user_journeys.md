@@ -221,7 +221,8 @@ the form.
   variant is listed once per model-year period ("xDrive25d (2021)"), so the
   variant step resolves the year (`_variants_for_generation` in
   `apps/server/vibesensor/settings/car_library.py`, `variantDetail` in
-  `wizard_model.ts`).
+  `wizard_model.ts`, which leaves the years out of the detail line when the
+  name already carries them).
 - **Prefill:**
   - The model list shows the default tire size (`CarWizard.tsx`).
   - The tire options come from the variant (`resolveTireOptions` in
@@ -278,7 +279,11 @@ the form.
     top gear: estimated RPM, which assumes top gear or D)
     (`settings.car.*_help`).
   - The tire size can be pasted as on the sidewall, e.g. "225/45 R18" or
-    "P225/45ZR18 94W", and fills the three tire fields (`parseTireSize`).
+    "P225/45ZR18 94W", and fills the three tire fields (`parseTireSize`);
+    clearing it clears them. It stays in sync the other way too: once a tire
+    pick, a library or saved-car prefill, or an edit of the three fields
+    changes them, it shows their size, e.g. "225/55 R17"
+    (`tireSizeText` in `wizard_store.ts`, `tireSizeFromInputs`).
   - Final drive and top gear are marked "(optional)", with a neutral
     "unknown" placeholder; "I don't know" clears the field.
 - **Validation:** only the tire size is required; a ratio must be empty or

@@ -389,6 +389,10 @@ test("journey: one model per generation; the variant step picks the model year",
     "FWD · 1.0 petrol · 2018\u20132024",
   );
   await expect(variants.nth(2)).toContainText("GTI (2021\u20132024)");
+  // The year-split name carries the years; its detail doesn't repeat them.
+  await expect(variants.nth(2).locator(".wiz-opt-detail")).toHaveText(
+    "FWD · 2.0 TSI EA888 evo4 turbo petrol",
+  );
   await expect(wizard.locator("#wizardStep3")).toContainText(
     "Pick the one that matches your car's year",
   );
@@ -532,6 +536,11 @@ test("journey: typed values become the user's; a pasted size and an unknown rati
   };
 
   await openGolf();
+  // The sidewall-size field shows the library size and follows the fields.
+  await expect(page.locator("#wizTireSize")).toHaveValue("205/55 R16");
+  await page.locator("#wizTireWidth").fill("215");
+  await expect(page.locator("#wizTireSize")).toHaveValue("215/55 R16");
+  await page.locator("#wizTireWidth").fill("205");
   await page.locator("#wizFinalDrive").fill("4.1");
   await expect(page.locator('label[for="wizFinalDrive"] .ref-chip')).toHaveText(
     "yours",
@@ -550,6 +559,9 @@ test("journey: typed values become the user's; a pasted size and an unknown rati
   });
 
   await openGolf();
+  // Clearing the size clears the three fields it fills.
+  await page.locator("#wizTireSize").fill("");
+  await expect(page.locator("#wizRim")).toHaveValue("");
   await page.locator("#wizTireSize").fill("18 inch");
   await expect(page.locator("#wizTireSizeHelp")).toContainText("Couldn't read");
   await page.locator("#wizTireSize").fill("215/50 R17 91V");

@@ -34,6 +34,7 @@ import {
   selectionTrail,
   specProvenance,
   summary,
+  tireSizeFromInputs,
   type WizardState,
   variantDetail,
   wizardFuelType,
@@ -405,6 +406,16 @@ test("a pasted tire size reads the common sidewall spellings", () => {
   expect(parseTireSize("18 inch")).toBeNull();
 });
 
+test("the three tire fields read back as a sidewall size the parser accepts", () => {
+  const fields = { tireWidth: "225", tireAspect: "55", rim: "17.5" };
+  const size = tireSizeFromInputs({ ...EMPTY_MANUAL_INPUTS, ...fields });
+  expect(size).toBe("225/55 R17.5");
+  expect(parseTireSize(size)).toEqual(fields);
+  expect(
+    tireSizeFromInputs({ ...EMPTY_MANUAL_INPUTS, ...fields, rim: "" }),
+  ).toBe("");
+});
+
 const TYPED = {
   tireWidth: "225",
   tireAspect: "40",
@@ -722,4 +733,21 @@ test("a variant names its drivetrain, engine and model years", () => {
     }),
   ).toBe("AWD · 2.0 diesel · 2021");
   expect(variantDetail(variant)).toBe("AWD · 2.0 diesel");
+  // A variant split by model year names its years; the detail doesn't repeat them.
+  expect(
+    variantDetail({
+      ...variant,
+      name: "xDrive25d (2021)",
+      production_start_year: 2021,
+      production_end_year: 2021,
+    }),
+  ).toBe("AWD · 2.0 diesel");
+  expect(
+    variantDetail({
+      ...variant,
+      name: "xDrive25d (2016\u20132020)",
+      production_start_year: 2016,
+      production_end_year: 2020,
+    }),
+  ).toBe("AWD · 2.0 diesel");
 });

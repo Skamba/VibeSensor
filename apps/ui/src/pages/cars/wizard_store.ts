@@ -31,6 +31,7 @@ import {
   resolveTireOptions,
   SPECS_STEP,
   tireInputsFromOption,
+  tireSizeFromInputs,
   type WizardState,
   wizardCarName,
 } from "./wizard_model";
@@ -73,9 +74,21 @@ export const variantOptions = signal<readonly CarLibraryVariant[]>([]);
 export const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
 export const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
 export const noGearboxesMessage = signal<string | null>(null);
-/** The sidewall-style tire size the user typed, and whether it could be read. */
-export const tireSizeText = signal("");
-export const tireSizeUnreadable = signal(false);
+/**
+ * The sidewall-style size the user typed, with the size the three tire fields
+ * held right after. The field shows that text while the fields still hold that
+ * size; once a tire pick, a prefill or a field edit changes them, it shows theirs.
+ */
+const tireSizeDraft = signal<{ text: string; size: string } | null>(null);
+export const tireSizeText = computed(() => {
+  const size = tireSizeFromInputs(manualInputs.value);
+  const draft = tireSizeDraft.value;
+  return draft?.size === size ? draft.text : size;
+});
+export const tireSizeUnreadable = computed(() => {
+  const text = tireSizeText.value;
+  return Boolean(text.trim()) && parseTireSize(text) === null;
+});
 export const focusRequest = signal<{ target: FocusTarget; seq: number } | null>(
   null,
 );
@@ -91,8 +104,7 @@ function update(patch: Partial<WizardState>): void {
 
 function resetSpecsForm(inputs: ManualInputs): void {
   manualInputs.value = inputs;
-  tireSizeText.value = "";
-  tireSizeUnreadable.value = false;
+  tireSizeDraft.value = null;
 }
 
 /**
@@ -478,15 +490,22 @@ export function clearRatio(field: RatioField): void {
   editManualInput(field, "");
 }
 
-/** A size typed as on the sidewall ("225/45 R18") fills the three tire fields. */
+/**
+ * A size typed as on the sidewall ("225/45 R18") fills the three tire fields;
+ * clearing it clears them.
+ */
 export function editTireSize(text: string): void {
-  const parsed = parseTireSize(text);
+  const parsed =
+    parseTireSize(text) ??
+    (text.trim() ? null : { tireWidth: "", tireAspect: "", rim: "" });
   batch(() => {
-    tireSizeText.value = text;
-    tireSizeUnreadable.value = Boolean(text.trim()) && parsed === null;
     if (parsed) {
       manualInputs.value = { ...manualInputs.value, ...parsed };
     }
+    tireSizeDraft.value = {
+      text,
+      size: tireSizeFromInputs(manualInputs.value),
+    };
   });
 }
 

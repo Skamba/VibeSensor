@@ -175,6 +175,12 @@ function specTire(
   return width && aspect && rim ? { width, aspect, rim } : null;
 }
 
+/** The three tire fields as a sidewall size ("225/45 R18"); empty while incomplete. */
+export function tireSizeFromInputs(inputs: ManualInputs): string {
+  const tire = specTire(inputs);
+  return tire ? `${tire.width}/${tire.aspect} R${tire.rim}` : "";
+}
+
 /** The first field that blocks saving: a missing tire value or an unreadable ratio. */
 export function firstInvalidField(inputs: ManualInputs): ManualField | null {
   const tire = (["tireWidth", "tireAspect", "rim"] as const).find(
@@ -599,11 +605,16 @@ function modelYears(
   return start === end ? String(start) : `${start}\u2013${end}`;
 }
 
+/**
+ * "AWD · 2.0 diesel · 2016–2022". The years are left out when the name already
+ * carries them: a variant split by model year is named "xDrive25d (2021)".
+ */
 export function variantDetail(variant: CarLibraryVariant): string | null {
-  const years = modelYears(
+  const span = modelYears(
     variant.production_start_year,
     variant.production_end_year,
   );
+  const years = span && !variant.name.endsWith(`(${span})`) ? span : null;
   return (
     [variant.drivetrain, variant.engine, years].filter(Boolean).join(" · ") ||
     null
