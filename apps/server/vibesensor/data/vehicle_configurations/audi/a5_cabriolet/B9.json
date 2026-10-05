@@ -1,0 +1,767 @@
+{
+  "definitions": {
+    "notes": {
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+    },
+    "evidence_ref_sets": {
+      "e1": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tdi-120kw-2024-tech-data-pdf"
+      ],
+      "e2": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tfsi-110kw-2024-tech-data-pdf"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-150kw-2024-tech-data-pdf"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-150kw-2024-tech-data-pdf"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-45-tfsi-quattro-195kw-2024-tech-data-pdf"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-cabriolet-45-tfsi-quattro-195kw-2024-tech-data-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf"
+      ]
+    },
+    "tire_setups": {
+      "setup_225_50r17": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e15",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_40r18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e16",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 18.0,
+          "width_mm": 245.0
+        }
+      },
+      "setup_255_35r19": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e16",
+        "front": {
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        }
+      },
+      "setup_265_30r20": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e16",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 265.0
+        }
+      }
+    }
+  },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Convertible",
+    "market": "EU",
+    "model_code": "B9",
+    "body_code": "B9",
+    "model_name": "A5 Cabriolet (B9, 2020-2024)",
+    "production_start_year": 2020,
+    "production_end_year": 2024
+  },
+  "configurations": [
+    {
+      "id": "audi-b9-a5-cabriolet-35-tdi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Final drive 4.048 per official Audi technical data: A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 35 TDI 7-speed S tronic FWD: official Audi technical data (A5 Cabriolet 35 TDI S tronic 120kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048 (120 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 35 TDI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-35-tfsi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official Audi technical data (A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) list drive type 'Frontantrieb'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "Official Audi technical data (A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) name the transmission . Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "Final drive 4.234 per official Audi technical data: A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 35 TFSI 7-speed S tronic FWD: official Audi technical data (A5 Cabriolet 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) give Frontantrieb, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234 (110 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 35 TFSI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-40-tdi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "Final drive 4.048 per official Audi technical data: A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 40 TDI 7-speed S tronic FWD: official Audi technical data (A5 Cabriolet 40 TDI S tronic 150kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 40 TDI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "A5 Cabriolet 40 TDI early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 09/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-40-tdi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Cabriolet 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Cabriolet 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 40 TDI quattro 7-speed S tronic AWD: official Audi technical data (A5 Cabriolet 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 40 TDI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e8"
+        },
+        {
+          "item": "A5 Cabriolet 40 TDI quattro early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 08/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-40-tfsi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "Final drive 4.234 per official Audi technical data: A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 40 TFSI 7-speed S tronic FWD: official Audi technical data (A5 Cabriolet 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 40 TFSI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "A5 Cabriolet 40 TFSI early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 07/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-40-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "Official Audi technical data (A5 Cabriolet 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Cabriolet 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Cabriolet 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 40 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A5 Cabriolet 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 40 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-cabriolet-45-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A5 Cabriolet 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e13",
+        "notes": "Official Audi technical data (A5 Cabriolet 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Cabriolet 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e13",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Cabriolet 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e13",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Cabriolet B9 45 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A5 Cabriolet 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (195 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Cabriolet 45 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e14"
+        },
+        {
+          "item": "A5 Cabriolet 45 TFSI quattro early-2020 180 kW version",
+          "reason": "ADAC lists a 180 kW version of this variant before the checked power level (from 07/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    }
+  ]
+}

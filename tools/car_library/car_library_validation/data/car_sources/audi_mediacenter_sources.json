@@ -492,24 +492,10 @@
       "confidence": "high"
     },
     {
-      "id": "audi_mediacenter_sources:c8-a7-2018-launch-subpage",
-      "url": "https://www.audi-mediacenter.com/en/the-audi-a7-sportback-until-2025-progressive-in-design-and-technology-9831/the-new-audi-a7-sportback-sportiness-in-its-most-beautiful-form-9834",
-      "title": "Audi MediaCenter A7 Sportback 2018 launch article",
-      "note": "Official Audi launch article for the new A7 Sportback stating that the 55 TFSI quattro is mated to seven-speed S tronic, that quattro uses ultra technology with S tronic on this variant, and that the model launches on the German market in early March 2018.",
-      "confidence": "high"
-    },
-    {
       "id": "audi_mediacenter_sources:c8-a7-55-tfsi-quattro-2024-tech-data-pdf",
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/363/file_en/2d9ee07814bc8d0d429027ef04726da1bd796eef/eTD-Audi-A7-Sportback-55-TFSI-quattro-S_tronic-250kW-MHEV_240911.pdf?1726134799&disposition=attachment",
       "title": "Audi MediaCenter A7 Sportback 55 TFSI quattro 2024 technical-data PDF",
       "note": "Official Audi MediaCenter Germany-program technical-data PDF for the exact A7 Sportback 55 TFSI quattro S tronic 250 kW MHEV state showing quattro ultra AWD, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, one published final-drive value 4.410, and basic 225/55 R18 tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "audi_mediacenter_sources:c8-a7-2025-price-list-pdf",
-      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a7-s7-sportback-modelljahr-2025-798/download",
-      "title": "Audi Germany A7/S7 Sportback model-year 2025 price list",
-      "note": "Official Audi Germany price list confirming the exact A7 Sportback 55 TFSI quattro S tronic row and documenting A7-family square 18-inch, 19-inch, 20-inch, and 21-inch summer wheel packages while not showing any staggered A7 wheel setup in the checked family table.",
       "confidence": "high"
     },
     {
@@ -951,6 +937,216 @@
       "url": "https://www.audi-mediacenter.com/en/audi-tt-coupe-68",
       "title": "Audi MediaCenter TT Coupé (until 2023) model page",
       "note": "Official Audi MediaCenter model page scoping the 8S TT Coupé as 'until 2023'. Its last technical-data PDFs (01/2023) cover only the 40 TFSI S tronic, 45 TFSI S tronic and 45 TFSI quattro S tronic.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-de-my2025-price-list-pdf",
+      "url": "https://media.audi.com/is/content/audi/country/de/de/neuwagen/preislisten/my-2025/preislisten/preisliste_a7-sportback_a7-sportback-tfsi-e_s7-sportback.pdf",
+      "title": "Audi Germany A7 Sportback / S7 Sportback model-year 2025 price list",
+      "note": "Official Audi Germany price list for the last C8 A7 Sportback: 40 TDI, 40 TDI quattro, 45 TDI quattro S tronic, 50 TDI quattro tiptronic, 45 TFSI, 45 TFSI quattro and 55 TFSI quattro. Its wheel program lists 8.0 J x 18 with 225/55 R18, 8.5 J x 19 with 245/45 R19, 8.5 J x 20 with 255/40 R20 and 8.5 J x 21 with 255/35 R21 (one 21-inch Audi Sport wheel is not available for the 40 TDI).",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+      "url": "https://emea-dam.audi.com/adobe/assets/urn:aaid:aem:4e9fea3d-af4a-4cf1-b91e-7d5eb05cceaa/original/as/preisliste_a5-sportback_a5-sportback-g-tron_s5-sportback_a5-cabriolet_s5-cabriolet_a5-coupe_s5-coupe.pdf",
+      "title": "Audi Germany A5 / S5 Sportback, Coupé and Cabriolet model-year 2022 price list",
+      "note": "Official Audi Germany price list for the facelifted B9 A5. Its technical data list, per body, the 35 TFSI 110 kW (6-speed manual and 7-speed S tronic for Sportback and Coupé, S tronic only for the Cabriolet), 40 TFSI 150 kW, 40 TFSI quattro 150 kW, 45 TFSI quattro 195 kW, 35 TDI 120 kW, 40 TDI 150 kW, 40 TDI quattro 150 kW and, for Sportback and Coupé, the 50 TDI quattro tiptronic 210 kW. Its wheel program lists 7.5 J x 17 with 225/50 R17, 8.5 J x 18 with 245/40 R18, 8.5 J x 19 with 255/35 R19 and 9.0 J x 20 with 265/30 R20 (20-inch not for the 35 TDI Cabriolet).",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-until-2024-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a5-sportback-33",
+      "title": "Audi MediaCenter A5 Sportback (until 2024) model page",
+      "note": "Official Audi MediaCenter model page for the outgoing B9 A5 Sportback; links the Germany-program eTD technical-data PDFs (status 06/13/2024) used as the late-B9 Sportback anchors.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-until-2024-model-page",
+      "url": "https://www.audi-mediacenter.com/en/audi-a5-cabriolet-31",
+      "title": "Audi MediaCenter A5 Cabriolet (until 2024) model page",
+      "note": "Official Audi MediaCenter model page for the outgoing B9 A5 Cabriolet; links the Germany-program technical-data PDFs (status 03/20/2024 and 04/26/2024) used as the late-B9 Cabriolet anchors.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/46/file_en/949c181b33c57825dd5cada8551e1f20ff5d5a64/eTD-Audi-A7-Sportback-40-TDI-S_tronic-150kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 40 TDI 7-speed S tronic 150 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 40 TDI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.234; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/362/file_en/ad0433e9fdd684d2de61d5dfa8efc150d186d4a8/eTD-Audi-A7-Sportback-40-TDI-quattro-S_tronic-150kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 40 TDI quattro 7-speed S tronic 150 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 40 TDI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-45-tdi-quattro-180kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1198/file_en/180c57c92fcb9805a4951e8a12c4b777de55c0db/eTD-Audi-A7-Sportback-45-TDI-quattro-S_tronic-180kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 45 TDI quattro 7-speed S tronic 180 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 45 TDI quattro 7-speed S tronic 180 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-45-tfsi-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/412/file_en/254de2212a5416c15a572087039c9786c22caa99/eTD-Audi-A7-Sportback-45-TFSI-S_tronic-195kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 45 TFSI 7-speed S tronic 195 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 45 TFSI 7-speed S tronic 195 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/47/file_en/19ed34485396a6c2b76e6c838da5a44dd57db7e8/eTD-Audi-A7-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 45 TFSI quattro 7-speed S tronic 195 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 45 TFSI quattro 7-speed S tronic 195 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:c8-a7-sportback-50-tdi-quattro-210kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/44/file_en/ee03d0293ab15f1fd33a7c0c515502747a4e2d78/eTD-Audi-A7-Sportback-50-TDI-quattro-tiptronic-210kW-MHEV_240906.pdf",
+      "title": "Audi MediaCenter A7 Sportback 50 TDI quattro 8-speed tiptronic 210 kW technical data (09/06/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 09/06/2024, for the A7 Sportback 50 TDI quattro 8-speed tiptronic 210 kW: quattro permanent all-wheel drive with self-locking center differential; forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640; reverse / final drive 3.478 / 2.624; basic tires 225/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/967/file_en/e8e700fc895abdee1d74cc95e4e1d15a0a91f700/eTD-Audi-A5-Coupe-35-TDI-S_tronic-120kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Coupé 35 TDI 7-speed S tronic 120 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Coupé 35 TDI 7-speed S tronic 120 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-35-tfsi-110kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1074/file_en/0526243fe0745f64fe7f217dfb0808203c2c79d0/eTD-Audi-A5-Coupe-35-TFSI-S_tronic-110kW-MHEV_240426.pdf",
+      "title": "Audi MediaCenter A5 Coupé 35 TFSI 7-speed S tronic 110 kW technical data (04/26/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 04/26/2024, for the A5 Coupé 35 TFSI 7-speed S tronic 110 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/969/file_en/a364f39c64b0fadc1bd036eef4da6e8496e814fe/eTD-Audi-A5-Coupe-40-TDI-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Coupé 40 TDI 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Coupé 40 TDI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1081/file_en/e64d24a697ca73e78e13ab23456de6d7bc68a3e5/eTD-Audi-A5-Coupe-40-TDI-quattro-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Coupé 40 TDI quattro 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Coupé 40 TDI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/970/file_en/3929d8c79ac5796cab7777c7f0cf691d95d6ec56/eTD-Audi-A5-Coupe-40-TFSI-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Coupé 40 TFSI 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Coupé 40 TFSI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1075/file_en/1d18313921f87a55058e49514ecb4d8b7208c4dc/eTD-Audi-A5-Coupe-40-TFSI-quattro-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Coupé 40 TFSI quattro 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Coupé 40 TFSI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/961/file_en/93d6c3bc2510ab51f06a949ecc7808b0434e8964/eTD-Audi-A5-Sportback-35-TDI-S_tronic-120kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 35 TDI 7-speed S tronic 120 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 35 TDI 7-speed S tronic 120 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-35-tfsi-110kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1071/file_en/5b33f6a2a0c8ac5098f1dc993170c6b9cf45cb10/eTD-Audi-A5-Sportback-35-TFSI-S_tronic-110kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 35 TFSI 7-speed S tronic 110 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 35 TFSI 7-speed S tronic 110 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/963/file_en/ddef7ce9b9460d86afe2eacdbb1e950202d4dd2a/eTD-Audi-A5-Sportback-40-TDI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 40 TDI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 40 TDI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/962/file_en/8a5ca1731bd5c3c27fcf3f288f9622ca27467a57/eTD-Audi-A5-Sportback-40-TDI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 40 TDI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 40 TDI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-40-tfsi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/964/file_en/1efb854a2a376cbaeaba745c036c20e5805ecd0a/eTD-Audi-A5-Sportback-40-TFSI-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 40 TFSI 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 40 TFSI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1072/file_en/56084865a128268c5e39f803a44d8a454daf5298/eTD-Audi-A5-Sportback-40-TFSI-quattro-S_tronic-150kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 40 TFSI quattro 7-speed S tronic 150 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 40 TFSI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-sportback-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1073/file_en/5b4b65c8ae72cd8942fa0df105e4c3743645d7ab/eTD-Audi-A5-Sportback-45-TFSI-quattro-S_tronic-195kW-MHEV_240613.pdf",
+      "title": "Audi MediaCenter A5 Sportback 45 TFSI quattro 7-speed S tronic 195 kW technical data (06/13/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 06/13/2024, for the A5 Sportback 45 TFSI quattro 7-speed S tronic 195 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-35-tdi-120kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/607/file_en/32b93e0741af9071c7bf12d5d08029f2d1f85864/eTD-Audi-A5-Cabriolet-35-TDI-S_tronic-120kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 35 TDI 7-speed S tronic 120 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 35 TDI 7-speed S tronic 120 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-35-tfsi-110kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1068/file_en/1502814c02a0c839d4c4dac69a941636f46a1324/TD-Audi-A5-Cabriolet-35-TFSI-S_tronic-110kW-MHEV_240426.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 35 TFSI 7-stufige S tronic 110 kW technical data (04/26/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 04/26/2024, for the A5 Cabriolet 35 TFSI 7-stufige S tronic 110 kW: Frontantrieb; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/303/file_en/7221a9e8c4ab3c100c56ab23779affd0731038a1/eTD-Audi-A5-Cabriolet-40-TDI-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 40 TDI 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 40 TDI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.048; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-40-tdi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/608/file_en/c83cfcf84ec4f02e80f81260c66907cc6b6fb874/eTD-Audi-A5-Cabriolet-40-TDI-quattro-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 40 TDI quattro 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 40 TDI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/299/file_en/f942ad59ccad32f99b75ee2c1e335dae9dfe032a/eTD-Audi-A5-Cabriolet-40-TFSI-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 40 TFSI 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 40 TFSI 7-speed S tronic 150 kW: Front-wheel drive; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.234; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1069/file_en/570c05954f783e44a4f256124df5e419f7a4fb3c/eTD-Audi-A5-Cabriolet-40-TFSI-quattro-S_tronic-150kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 40 TFSI quattro 7-speed S tronic 150 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 40 TFSI quattro 7-speed S tronic 150 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:b9-a5-cabriolet-45-tfsi-quattro-195kw-2024-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1070/file_en/76be1c810539e2c0ea0be15aa0c4d4ed08ec9349/eTD-Audi-A5-Cabriolet-45-TFSI-quattro-S_tronic-195kW-MHEV_240320.pdf",
+      "title": "Audi MediaCenter A5 Cabriolet 45 TFSI quattro 7-speed S tronic 195 kW technical data (03/20/2024)",
+      "note": "Official Audi MediaCenter Germany-program technical data, status 03/20/2024, for the A5 Cabriolet 45 TFSI quattro 7-speed S tronic 195 kW: quattro all-wheel drive with ultra technology; forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433; reverse / final drive 2.750 / 4.410; basic tires 225/50 R17.",
       "confidence": "high"
     }
   ]

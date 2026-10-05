@@ -1,52 +1,125 @@
 {
   "definitions": {
     "notes": {
-      "n2": "Official Audi 03/20/2024 technical-data PDF publishes one final-drive value 4.410 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots.",
-      "n3": "Official Audi 03/20/2024 technical-data material confirms 225/50 R17 as the exact basic tire package for the late-B9 A5 Coupé 45 TFSI quattro S tronic row."
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
     },
     "evidence_ref_sets": {
       "e1": [
-        "legacy_research_sources:1f64a70f7798",
-        "legacy_research_sources:40902bf8de39",
-        "legacy_research_sources:4d089475ce12",
-        "legacy_research_sources:4dfe6573fbd8",
-        "legacy_research_sources:6f2489b6d6b2",
-        "legacy_research_sources:a615f24ca1f7",
-        "legacy_research_sources:b04c6ac99a88",
-        "legacy_research_sources:b901a9c86975",
-        "legacy_research_sources:bd3399c45b29",
-        "legacy_research_sources:c6e2f8abe80a",
-        "legacy_research_sources:ed529186a624"
+        "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
       ],
       "e2": [
-        "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+        "audi_mediacenter_sources:b9-a5-coupe-35-tdi-120kw-2024-tech-data-pdf"
       ],
       "e3": [
+        "audi_mediacenter_sources:b9-a5-coupe-35-tdi-120kw-2024-tech-data-pdf",
         "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:b9-a5-coupe-35-tfsi-110kw-2024-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:b9-a5-coupe-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-150kw-2024-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-150kw-2024-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-quattro-150kw-2024-tech-data-pdf"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e14": [
+        "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-until-2024-model-page",
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf",
+        "secondary_technical_sources:a5-b9-facelift-adac-catalogue"
+      ],
+      "e15": [
+        "audi_mediacenter_sources:b9-a5-coupe-35-tdi-120kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-35-tfsi-110kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-40-tdi-quattro-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-150kw-2024-tech-data-pdf",
+        "audi_mediacenter_sources:b9-a5-coupe-40-tfsi-quattro-150kw-2024-tech-data-pdf",
         "audi_mediacenter_sources:b9-a5-coupe-45-tfsi-quattro-2024-tech-data-pdf"
+      ],
+      "e16": [
+        "audi_mediacenter_sources:b9-a5-de-my2022-price-list-pdf"
       ]
     },
     "tire_setups": {
-      "setup_245_18": {
-        "confidence": "family_default",
+      "setup_225_50r17": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e15",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 17.0,
+          "width_mm": 225.0
+        }
+      },
+      "setup_245_40r18": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e16",
         "front": {
           "aspect_pct": 40.0,
           "rim_in": 18.0,
           "width_mm": 245.0
         }
       },
-      "setup_225_17": {
+      "setup_255_35r19": {
         "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
+        "evidence_refs_ref": "e16",
         "front": {
-          "aspect_pct": 50.0,
-          "rim_in": 17.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n3"
+          "aspect_pct": 35.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
+        }
+      },
+      "setup_265_30r20": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e16",
+        "front": {
+          "aspect_pct": 30.0,
+          "rim_in": 20.0,
+          "width_mm": 265.0
+        }
       }
     }
   },
@@ -56,120 +129,29 @@
     "market": "EU",
     "model_code": "B9",
     "body_code": "B9",
+    "model_name": "A5 (B9, 2020-2024)",
+    "production_start_year": 2020,
     "production_end_year": 2024
   },
   "configurations": [
     {
-      "id": "audi-b9-40-tfsi-eu-2017-dct7-fwd",
-      "production_start_year": 2017,
-      "model_name": "A5 (B9, 2017-2024)",
-      "variant_name": "40 TFSI",
+      "id": "audi-b9-a5-35-tdi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "35 TDI",
       "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
+      "engine_name": "2.0L I4 Turbo Diesel",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "Official Audi technical data (A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
         "value": "FWD"
       },
       "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed S tronic (DL382)"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.725
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 4.234
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
-          },
-          {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport 19\""
-          },
-          {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "S line 20\""
-          }
-        ],
-        "default_ref": "setup_245_18"
-      },
-      "verification_notes": [
-        {
-          "note": "Verified Audi A5 B9 S tronic final-drive ratios from official Audi UK and Audi MediaCenter technical PDFs. Later exact 45 TFSI quattro Coupe and Sportback sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW MHEV configuration. Wave 11 validation added exact late-B9 Germany 40 TFSI evidence from the 03/20/2024 A5 Coupé and 06/13/2024 A5 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, final drive 4.234, and basic tire 225/50 R17. Wave 13 now adds the parallel late-B9 Germany 35 TDI evidence from checked 03/20/2024 Coupé and 06/13/2024 Sportback technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 225/50 R17. The broad 2017-2024 row remains unchanged because official 2020 launch material still shows earlier model states and this pass did not recover year-spanning evidence proving one unchanged package across the whole row.",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Broad-row Audi A5 B9 40 TFSI production-data applicability across the full represented span",
-          "reason": "Checked exact late-B9 Germany Coupé and Sportback PDFs resolve the 150 kW 40 TFSI mapping, but official 2020 launch material still shows an earlier 140 kW 40 TFSI state and this pass did not recover the early exact technical-data sheets needed to prove one unchanged 2019-2024 package.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A5 B9 45 TFSI quattro top_gear_ratio applicability across the full represented span",
-          "reason": "Official Audi MediaCenter eTD PDFs now prove top gear 0.433 and the full gear-ratio set for the later 195 kW Coupe and Sportback, but this pass did not verify whether the earlier years in the broad row use the same exact mapping.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A5 B9 40 TFSI transmission-code and optional tire-matrix confirmation",
-          "reason": "Official Audi exact material now proves the late-B9 40 TFSI drivetrain, full ratio set, reverse ratio, final drive 4.234, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 40 TFSI target.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Broad-row Audi A5 B9 35 TDI production-data applicability across the full represented span",
-          "reason": "Checked exact late-B9 Germany Coupé and Sportback PDFs resolve the 120 kW 35 TDI mapping, but this pass did not recover a year-by-year official chain proving one unchanged 2019-2024 package.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Audi A5 B9 35 TDI gearbox-family code and optional tire-matrix confirmation",
-          "reason": "Official Audi exact material now proves the late-B9 35 TDI drivetrain, full ratio set, reverse ratio, final drive 4.048, and the 225/50 R17 basic tire, but it does not publish the gearbox-family code or a full optional wheel/tire matrix for the exact 35 TDI target.",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "configuration_confidence": "low_confidence"
-    },
-    {
-      "id": "audi-b9-45-tfsi-quattro-eu-2017-dct7-awd",
-      "production_start_year": 2024,
-      "model_name": "A5 (B9, 2024)",
-      "variant_name": "45 TFSI quattro",
-      "engine_code": "2.0L",
-      "engine_name": "2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
-        "notes": "Official Audi 03/20/2024 technical-data material confirms that the exact late-B9 A5 Coupé 45 TFSI quattro S tronic state uses quattro all-wheel drive with ultra technology.",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
-        "notes": "Official Audi 03/20/2024 technical-data material confirms 7-speed S tronic wording and a wet dual-clutch layout for the exact late-B9 A5 Coupé 45 TFSI quattro state.",
+        "notes": "Official Audi technical data (A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
         "code": "DCT7",
         "name": "7-speed S tronic"
       },
@@ -177,13 +159,543 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",
-          "notes": "Official Audi 03/20/2024 technical-data PDF lists 0.433 as the 7th-gear ratio for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
-          "value": 0.433
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": 0.386
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e2",
-          "notes": "Official Audi 03/20/2024 technical-data PDF lists the forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 for the exact late-B9 A5 Coupé 45 TFSI quattro S tronic row.",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "Final drive 4.048 per official Audi technical data: A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 35 TDI 7-speed S tronic FWD: official Audi technical data (A5 Coupé 35 TDI S tronic 120kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048 (120 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 35 TDI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-35-tfsi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Final drive 4.234 per official Audi technical data: A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 35 TFSI 7-speed S tronic FWD: official Audi technical data (A5 Coupé 35 TFSI S tronic 110kW MHEV (status 04/26/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234 (110 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 35 TFSI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-35-tfsi-eu-2020-mt6-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "35 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official Audi technical data (A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024)) name the transmission '6-speed manual gearbox'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Top (6th) gear 0.667 per official Audi technical data: A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024).",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Forward ratios 3.778 / 2.045 / 1.276 / 0.941 / 0.784 / 0.667 per official Audi technical data: A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024).",
+          "value": [
+            3.778,
+            2.045,
+            1.276,
+            0.941,
+            0.784,
+            0.667
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Final drive 3.410 per official Audi technical data: A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024).",
+          "value": 3.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 35 TFSI 6-speed manual FWD: official Audi technical data (A5 Coupé 35 TFSI 110kW MHEV (status 05/02/2024)) give Front-wheel drive, forward ratios 3.778 / 2.045 / 1.276 / 0.941 / 0.784 / 0.667 and final drive 3.410 (110 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body (ADAC's listing shows the 35 TFSI manual from 11/20; the checked Coupé sheet is dated 05/2024). Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 35 TFSI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-40-tdi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "Official Audi technical data (A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "Final drive 4.048 per official Audi technical data: A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 4.048
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 40 TDI 7-speed S tronic FWD: official Audi technical data (A5 Coupé 40 TDI S tronic 150kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.048 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 40 TDI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "A5 Coupé 40 TDI early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 09/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-40-tdi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TDI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A5 Coupé 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "Official Audi technical data (A5 Coupé 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Top (7th) gear 0.386 per official Audi technical data: A5 Coupé 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.386
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 per official Audi technical data: A5 Coupé 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.508,
+            0.386
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 40 TDI quattro 7-speed S tronic AWD: official Audi technical data (A5 Coupé 40 TDI quattro S tronic 150kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 40 TDI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "A5 Coupé 40 TDI quattro early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 08/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-40-tfsi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) list drive type 'Front-wheel drive'.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "Official Audi technical data (A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "Final drive 4.234 per official Audi technical data: A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 4.234
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 40 TFSI 7-speed S tronic FWD: official Audi technical data (A5 Coupé 40 TFSI S tronic 150kW MHEV (status 03/20/2024)) give Front-wheel drive, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.234 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 40 TFSI values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e11"
+        },
+        {
+          "item": "A5 Coupé 40 TFSI early-2020 140 kW version",
+          "reason": "ADAC lists a 140 kW version of this variant before the checked power level (from 07/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-40-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A5 Coupé 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e12",
+        "notes": "Official Audi technical data (A5 Coupé 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Coupé 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e12",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Coupé 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024).",
           "value": [
             3.188,
             2.19,
@@ -196,54 +708,148 @@
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n2",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
           "value": 4.41
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes_ref": "n2",
+          "evidence_refs_ref": "e12",
+          "notes_ref": "awd_fd",
           "value": 4.41
         }
       },
       "tires": {
         "options": [
           {
-            "setup_ref": "setup_225_17",
+            "setup_ref": "setup_225_50r17",
             "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
           }
         ],
-        "default_ref": "setup_225_17"
+        "default_ref": "setup_225_50r17"
       },
       "verification_notes": [
         {
-          "note": "Batch 6 validation narrows this row to the exact late-B9 Coupé state actually supported by the evidence. The official Audi 03/20/2024 technical-data PDF proves the exact A5 Coupé 45 TFSI quattro S tronic 195 kW MHEV package with quattro all-wheel drive, wet 7-speed dual-clutch S tronic transmission, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433, reverse 2.750, one published final-drive value 4.410, and basic 225/50 R17 tires. The Audi MediaCenter model page scopes the outgoing A5 Coupé as 'until 2024', so the row is retimed conservatively to the exact 2024 state instead of carrying unsupported continuity back to 2017.",
-          "evidence_refs_ref": "e3"
+          "note": "A5 Coupé B9 40 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A5 Coupé 40 TFSI quattro S tronic 150kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (150 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e13"
         }
       ],
       "unresolved": [
         {
-          "item": "Exact Audi A5 Coupé 45 TFSI quattro continuity before the checked 2024 state",
-          "reason": "The checked official Audi evidence closes the exact 2024 Coupé state, but this pass did not recover a year-by-year official chain proving the same 195 kW 45 TFSI quattro package unchanged across earlier B9 years.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "Audi A5 Coupé 45 TFSI quattro exact optional wheel and tire matrix",
-          "reason": "The checked official Audi exact sheet proves only the basic 225/50 R17 package for the late-B9 Coupé row. This pass did not recover a clean official optional wheel/tire matrix or any staggered-fitment proof for the exact target.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Audi A5 Coupé 45 TFSI quattro exact public gearbox-family naming",
-          "reason": "The checked official Audi exact sheet proves wet-clutch 7-speed S tronic wording for the 2024 Coupé state but does not publish a gearbox-family code beyond Audi's public transmission naming.",
-          "evidence_refs_ref": "e2"
+          "item": "A5 Coupé 40 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e13"
         }
       ],
-      "configuration_confidence": "high_confidence",
-      "order_analysis_policy_override": {
-        "reason": "preserved-from-pre-derivation-curated-data",
-        "usable_for_wheel_order": false
-      }
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-b9-a5-45-tfsi-quattro-eu-2020-dct7-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A5 Coupé 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) list drive type 'quattro all-wheel drive with ultra technology'.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "Official Audi technical data (A5 Coupé 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) name the transmission '7-speed S tronic'. Audi does not publish a gearbox-family code on these sheets.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Top (7th) gear 0.433 per official Audi technical data: A5 Coupé 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024).",
+          "value": 0.433
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 per official Audi technical data: A5 Coupé 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024).",
+          "value": [
+            3.188,
+            2.19,
+            1.517,
+            1.057,
+            0.738,
+            0.557,
+            0.433
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes_ref": "awd_fd",
+          "value": 4.41
+        }
+      },
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_225_50r17",
+            "name": "Basic 17\""
+          },
+          {
+            "setup_ref": "setup_245_40r18",
+            "name": "Option 18\""
+          },
+          {
+            "setup_ref": "setup_255_35r19",
+            "name": "Option 19\""
+          },
+          {
+            "setup_ref": "setup_265_30r20",
+            "name": "Option 20\""
+          }
+        ],
+        "default_ref": "setup_225_50r17"
+      },
+      "verification_notes": [
+        {
+          "note": "A5 Coupé B9 45 TFSI quattro 7-speed S tronic AWD: official Audi technical data (A5 Coupé 45 TFSI quattro S tronic 195kW MHEV (status 03/20/2024)) give quattro all-wheel drive with ultra technology, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.557 / 0.433 and final drive 4.410 (195 kW). Production span 2020-2024 from ADAC's A5 B9 facelift catalogue (01/2020-11/2024) and the model-year 2022 Germany price list, which lists this variant for this body. Basic tire 225/50 R17 from the latest checked sheet; optional sizes from the model-year 2022 Germany price list wheel program.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A5 Coupé 45 TFSI quattro values between 2020 and 2024 outside the checked sheet dates",
+          "reason": "Official sheets were checked for 2024 only; the 2020-2024 span is the ADAC sales period for the same variant and power, not a year-by-year official confirmation.",
+          "evidence_refs_ref": "e14"
+        },
+        {
+          "item": "A5 Coupé 45 TFSI quattro early-2020 180 kW version",
+          "reason": "ADAC lists a 180 kW version of this variant before the checked power level (from 07/20); its ratios were not checked, so 2020 cars may be either version.",
+          "evidence_refs_ref": "e14"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
     }
   ]
 }

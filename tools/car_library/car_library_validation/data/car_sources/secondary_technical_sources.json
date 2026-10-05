@@ -875,6 +875,27 @@
       "title": "ADAC Autokatalog Audi TT 8S facelift (12/2018-07/2023)",
       "note": "ADAC catalogue listing the Germany-market TT Coup\u00e9 8S facelift variants with their sales periods: 40 TFSI S tronic 145 kW 12/18-07/23, 45 TFSI manual 180 kW 12/18-10/20, 45 TFSI S tronic 180 kW 12/18-07/23 and 45 TFSI quattro S tronic 180 kW 12/18-07/23. It lists no 40 TFSI manual and no 45 TFSI quattro manual. Used for production spans only; the listing shows Coup\u00e9 variants.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a7-c8-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a7/4k/",
+      "title": "ADAC Autokatalog Audi A7 Sportback 4K / C8 (02/2018-06/2023)",
+      "note": "ADAC catalogue listing every Germany-market A7 Sportback C8 variant with its sales period and power: 40 TDI from 08/18, 40 TDI quattro from 12/18, 45 TDI quattro tiptronic 170 kW 06/18-12/20 then 180 kW 12/20-04/23, 50 TDI quattro tiptronic from 02/18, 45 TFSI and 45 TFSI quattro 180 kW from 12/18 and 195 kW from 08/20, 55 TFSI quattro from 02/18. Used for production spans only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a7-c8-facelift-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a7/4k-facelift/",
+      "title": "ADAC Autokatalog Audi A7 Sportback 4K / C8 facelift (06/2023-03/2025)",
+      "note": "ADAC catalogue listing the Germany-market A7 Sportback C8 facelift variants with their sales periods: 40 TDI (quattro), 45 TFSI (quattro), 45 TDI quattro S tronic 180 kW 10/23-03/25, 50 TDI quattro tiptronic and 55 TFSI quattro, all ending 03/25. Used for production spans only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a5-b9-facelift-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a5/f5-facelift/",
+      "title": "ADAC Autokatalog Audi A5 B9 / F5 facelift (01/2020-11/2024)",
+      "note": "ADAC catalogue listing the Germany-market A5 B9 facelift variants with their sales periods: 35 TFSI manual 110 kW 11/20-07/23, 35 TFSI S tronic 110 kW from 07/20, 40 TFSI 140 kW 01/20-07/20 then 150 kW from 07/20, 40 TFSI quattro 150 kW from 07/20, 45 TFSI quattro 180 kW 01/20-07/20 then 195 kW from 07/20, 35 TDI 120 kW from 01/20, 40 TDI 140 kW 01/20-09/20 then 150 kW from 09/20, 40 TDI quattro 140 kW 01/20-06/20 then 150 kW from 08/20, 50 TDI quattro tiptronic 01/20-11/23; all S tronic variants end 11/24. Used for production spans only; the listing shows Sportback variants.",
+      "confidence": "medium"
     }
   ]
 }
