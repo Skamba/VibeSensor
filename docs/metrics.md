@@ -105,7 +105,10 @@ Moderate (0.39), after the corroboration and phase bonuses as well as before
 them: a noise-level order is at most Weak, so on its own it reads as no fault,
 and it cannot outrank a clearly louder order of another source. Only the
 finding's own amplitude counts: the quiet sensors elsewhere on the car do not
-cap a fault that is loud at its own corner. The score itself stays internal
+cap a fault that is loud at its own corner. That amplitude is the order's level
+where it is heard: the mean of its peaks at least 6 dB over their window's
+floor at the sensors that hear it (`docs/order_tracking.md`, step 3), not an
+average with the floor-level noise the matcher picks up elsewhere. The score itself stays internal
 (ranking); no percentage is shown in the UI or the PDF.
 
 Where the vibration sits feeds the score of an order-tracked finding

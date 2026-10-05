@@ -385,10 +385,11 @@ BENCH_CASES = (
         _sweep(_ov("front-left", "wheel_mild_imbalance", 0.15, 1.0)),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
     ),
-    # Barely above the road noise: found and located, but never "go fix it".
+    # Barely above the road noise (under 16 dB over the floor at its corner):
+    # found and located, but never "go fix it".
     Case(
         "bench-barely-there-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_mild_imbalance", 0.06, 1.0)),
+        _sweep(_ov("front-left", "wheel_mild_imbalance", 0.04, 1.0)),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=frozenset({"moderate", "weak"})),
     ),
     Case(
@@ -477,6 +478,26 @@ BENCH_CASES = (
             _ov("rear-axle", "engine_order", 0.42, 0.94),
         ),
         _fault("engine", {"engine_bay"}, "E2"),
+    ),
+    # A faint engine tone only the front sensors hear, just over the moderate
+    # strength band there. Floor-level road noise the other sensors match near
+    # its frequency must not dilute its strength into "no fault".
+    Case(
+        "bench-faint-engine-front-wheels-sweep",
+        _sweep(_ov("front-axle", "engine_order", 0.027, 0.94)),
+        _fault("engine", {"engine_bay"}, "E2"),
+    ),
+    # The same with a sensor on every mounting point: the engine bay, subframe
+    # and gearbox sensors hear a faint tone, the nine others do not.
+    Case(
+        "bench-faint-engine-every-mount-sweep",
+        _sweep(
+            _ov("VS-70 engine", "engine_order", 0.03, 0.94),
+            _ov("VS-74 subframe", "engine_order", 0.03, 0.94),
+            _ov("VS-72 gearbox", "engine_order", 0.025, 0.94),
+        ),
+        _fault("engine", {"engine_bay"}, "E2"),
+        layout=EVERY_MOUNT,
     ),
     # Two real faults: an engine tone the rear sensors do not hear, and a
     # rear-left imbalance about four times the second one in the rear-right

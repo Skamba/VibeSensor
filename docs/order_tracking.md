@@ -114,6 +114,12 @@ coordinates the evidence flow:
    The matcher takes the nearest peak in the tolerance band whatever its level,
    so it also lands on floor-level road noise at every sensor. Those sensors
    neither dilute the rate nor count as corroborating sensors in the score.
+   The score's strength (mean peak over the floor), frequency error and
+   tracking, and sample count come from the order's clear matches at those
+   sensors only (`OrderMatchAccumulator.evidence_match_indices`), so a faint
+   tone some sensors hear is not averaged down by floor noise at the others or
+   in the windows it is absent. An order clear at no sensor keeps all its
+   matches.
 4. Reject matches that do not follow the prediction. As speed changes, an
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays

@@ -284,7 +284,6 @@ def compute_amplitude_and_error_stats(
     rel_errors: list[float],
     predicted_vals: list[float],
     measured_vals: list[float],
-    matched_points: list[OrderMatchObservation],
     *,
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
@@ -292,7 +291,7 @@ def compute_amplitude_and_error_stats(
     mean_amp = (sum(matched_amp) / len(matched_amp)) if matched_amp else 0.0
     mean_floor = (sum(matched_floor) / len(matched_floor)) if matched_floor else 0.0
     mean_rel_err = (sum(rel_errors) / len(rel_errors)) if rel_errors else 1.0
-    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(predicted_vals) >= 3 else None
     if constant_speed:
         corr = None
     corr_val = corr if corr is not None else 0.0

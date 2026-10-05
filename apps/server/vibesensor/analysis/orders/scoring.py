@@ -96,13 +96,16 @@ def score_order_finding(
         match.matched_by_phase,
         min_match_rate=context.min_match_rate,
     )
+    # Level, frequency tracking and sample count come from the matches that show
+    # the order: floor-level matches would dilute a faint tone that only some
+    # sensors hear.
+    evidence = match.evidence_match_indices
     mean_amp, mean_floor, mean_rel_err, corr_val, corr = compute_amplitude_and_error_stats(
-        match.matched_amp,
-        match.matched_floor,
-        match.rel_errors,
-        match.predicted_vals,
-        match.measured_vals,
-        match.matched_points,
+        [match.matched_amp[index] for index in evidence],
+        [match.matched_floor[index] for index in evidence],
+        [match.rel_errors[index] for index in evidence],
+        [match.predicted_vals[index] for index in evidence],
+        [match.measured_vals[index] for index in evidence],
         constant_speed=context.constant_speed,
     )
 
@@ -177,7 +180,7 @@ def score_order_finding(
         dominance_ratio=dominance_ratio,
         constant_speed=context.constant_speed,
         steady_speed=context.steady_speed,
-        matched=match.matched,
+        matched=len(evidence),
         corroborating_locations=corroborating_locations,
         phases_with_evidence=phases_with_evidence,
         is_diffuse_excitation=diffuse_excitation,

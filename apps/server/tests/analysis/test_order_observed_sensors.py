@@ -142,6 +142,63 @@ def test_road_noise_on_an_orders_frequency_does_not_hide_its_clear_presence() ->
     )
 
 
+def _engine_strength_db(tones: Tones) -> float:
+    return _engine_finding(_analyse(tones))["evidence_metrics"]["vibration_strength_db"]
+
+
+def test_sensors_that_do_not_hear_an_order_do_not_dilute_its_strength() -> None:
+    # A faint E2 both front sensors hear all the drive. At the three other
+    # sensors the matcher lands on road noise at the floor in every window, and
+    # on a bump clear of the floor every seventh: neither is the order's level.
+    def bump(step: int) -> bool:
+        return step % 7 == 0
+
+    def noise(step: int) -> bool:
+        return not bump(step)
+
+    heard = {
+        location: [(_E2_PER_T1, 0.03, _always)]
+        for location in ("front_left_wheel", "front_right_wheel")
+    }
+    far = {
+        location: [(_E2_PER_T1, _NOISE_G, noise), (_E2_PER_T1, 0.012, bump)]
+        for location in (*_REAR, "trunk")
+    }
+
+    summary = _analyse({**heard, **far})
+
+    finding = _engine_finding(summary)
+    assert finding["evidence_metrics"]["vibration_strength_db"] == pytest.approx(
+        _engine_strength_db(heard), abs=0.1
+    )
+    diagnosis = summary["diagnosis"]
+    assert (diagnosis["source"], diagnosis["order_code"], diagnosis["confidence_level"]) == (
+        "engine",
+        "E2",
+        "strong",
+    )
+
+
+def test_windows_an_order_is_absent_do_not_dilute_its_strength() -> None:
+    # The front sensors hear the tone in 60 % of the windows; in the others the
+    # matcher lands on road noise at the floor. How often it is there is the
+    # match rate's business; its strength is its level when it is there.
+    def present(step: int) -> bool:
+        return step % 5 < 3
+
+    def absent(step: int) -> bool:
+        return not present(step)
+
+    fronts = ("front_left_wheel", "front_right_wheel")
+    patchy = {
+        location: [(_E2_PER_T1, 0.03, present), (_E2_PER_T1, _NOISE_G, absent)]
+        for location in fronts
+    }
+    steady = {location: [(_E2_PER_T1, 0.03, _always)] for location in fronts}
+
+    assert _engine_strength_db(patchy) == pytest.approx(_engine_strength_db(steady), abs=0.3)
+
+
 _LOCATIONS = ("Front Left Wheel", "Front Right Wheel", "Rear Left Wheel", "Rear Right Wheel")
 _WINDOWS = 20
 
@@ -204,6 +261,13 @@ def test_a_sensor_hears_an_order_when_clear_half_as_often_as_the_best(
     assert match.observed_locations == frozenset(heard_at)
 
 
+def test_an_order_clear_at_no_sensor_is_judged_on_all_its_matches() -> None:
+    # Nothing stands out of the floor: its floor-level matches are all there is.
+    match = _accumulator(dict.fromkeys(_LOCATIONS, 0))
+
+    assert match.evidence_match_indices == list(range(match.matched))
+
+
 def test_the_match_rate_is_taken_where_the_order_is_heard() -> None:
     # Heard at the front (matched 18 and 16 of 20 windows); the rear sensors
     # matched floor noise in 4 windows each.
@@ -237,3 +301,82 @@ def test_only_sensors_that_clearly_hear_an_order_corroborate_it() -> None:
         return score_order_finding(wheel_1x, match, context=context).confidence
 
     assert confidence(clear_elsewhere=0) < confidence(clear_elsewhere=_WINDOWS)
+
+
+def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
+    """A wheel order front-left hears in the first half of the drive.
+
+    With *floor_matches*, the matcher lands on road noise at the floor in the
+    second half, a little off the predicted frequency, where the road is a
+    little quieter.
+    """
+    points = []
+    for window in range(_WINDOWS):
+        heard = window < _WINDOWS // 2
+        if not heard and not floor_matches:
+            continue
+        predicted_hz = 10.0 + 0.5 * window
+        rel_error = 0.0 if heard else 0.05
+        points.append(
+            OrderMatchObservation(
+                predicted_hz=predicted_hz,
+                matched_hz=predicted_hz * (1.0 + rel_error),
+                rel_error=rel_error,
+                amp=0.03 if heard else _NOISE_G,
+                location=_LOCATIONS[0],
+                t_s=float(window),
+                speed_kmh=50.0 + 3.0 * window,
+            )
+        )
+    return OrderMatchAccumulator(
+        possible=_WINDOWS * len(_LOCATIONS),
+        matched=len(points),
+        matched_amp=[point.amp for point in points],
+        matched_floor=[_FLOOR_G if point.amp > _NOISE_G else 0.003 for point in points],
+        rel_errors=[point.rel_error for point in points],
+        predicted_vals=[point.predicted_hz for point in points],
+        measured_vals=[point.matched_hz for point in points],
+        matched_points=points,
+        ref_sources={"speed+tire"},
+        possible_by_speed_bin={},
+        matched_by_speed_bin={},
+        possible_by_phase={},
+        matched_by_phase={},
+        possible_by_location=dict.fromkeys(_LOCATIONS, _WINDOWS),
+        matched_by_location={_LOCATIONS[0]: len(points)},
+        has_phases=False,
+        compliance=1.0,
+        clear_by_location={_LOCATIONS[0]: _WINDOWS // 2},
+    )
+
+
+def test_floor_level_matches_add_nothing_to_an_orders_score() -> None:
+    # Level, frequency error and tracking, and the sample count come from the
+    # matches that show the order; how often it is there is the match rate's
+    # business, which the context fixes here.
+    context = OrderFindingBuildContext(
+        effective_match_rate=0.5,
+        focused_speed_band=None,
+        per_location_dominant=False,
+        match_rate=0.5,
+        min_match_rate=0.25,
+        constant_speed=False,
+        steady_speed=False,
+        connected_locations=set(_LOCATIONS),
+        lang="en",
+    )
+    wheel_1x = next(h for h in _order_hypotheses() if h.key == "wheel_1x")
+
+    def score(*, floor_matches: bool) -> tuple[float, ...]:
+        result = score_order_finding(
+            wheel_1x, _heard_half_the_drive(floor_matches=floor_matches), context=context
+        )
+        return (
+            result.confidence,
+            result.absolute_strength_db,
+            result.mean_relative_error,
+            result.frequency_correlation,
+            result.ranking_score,
+        )
+
+    assert score(floor_matches=True) == pytest.approx(score(floor_matches=False))

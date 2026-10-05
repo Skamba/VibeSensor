@@ -104,6 +104,28 @@ class OrderMatchAccumulator:
         return clear / matched if matched else 0.0
 
     @property
+    def evidence_match_indices(self) -> list[int]:
+        """The matches that show the order: clear of the floor where it is heard.
+
+        Indices into the matched lists of the matches clear of their window's
+        floor at the sensors that hear the order. Elsewhere, and in the windows
+        it is absent, the matcher lands on floor-level road noise near the
+        predicted frequency, which says nothing about how strong the order is
+        or how closely it follows its prediction. All matches when the order is
+        clear at no sensor.
+        """
+        observed = self.observed_locations
+        ratio = ORDER_CONFIDENCE_SETTINGS.clear_peak_over_floor
+        indices = [
+            index
+            for index, (amp, floor, point) in enumerate(
+                zip(self.matched_amp, self.matched_floor, self.matched_points, strict=True)
+            )
+            if point.location in observed and amp >= ratio * floor
+        ]
+        return indices or list(range(len(self.matched_amp)))
+
+    @property
     def unique_match_locations(self) -> set[str]:
         """Set of distinct sensor locations that produced matches."""
         return {(point.location or "").strip() for point in self.matched_points if point.location}
