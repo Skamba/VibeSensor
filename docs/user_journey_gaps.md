@@ -62,10 +62,11 @@ None open.
 
 Evidence:
 
-- Generations with launch-year rows only: F20 2011–2012, G11 2016,
-  F15 2014–2015. The picker shows a generation's years from its rows, so a
-  2015 F20 owner sees "1 Series (F20, 2011-2012)". F10 (2011–2016) and G30
-  (2017–2023) are extended.
+- Generations with launch-year rows only: F20 2011–2012, F21 2012, F01
+  2012. The picker shows a generation's years from its rows, so a 2015 F20
+  owner sees "1 Series (F20, 2011-2012)". F10 (2011–2016), G30 (2017–2023),
+  G11 (2016–2022), F15 (2014–2018), F26 (2014–2016), G06 (2020–2022) and the
+  8 Series G14/G15/G16 (to 2021) are extended.
 
 Fix: **Data:** extend the year ranges where the drivetrain did not change
 (WP5).
@@ -78,7 +79,7 @@ Evidence ([user_journeys.md](user_journeys.md) §4):
 - 3 and 5 Series Touring exist (F31, G21, F11, G31, G61). Avant only for the
   A4 (B9 facelift), A6 (C8), RS 4 and RS 6.
 - No generation before about 2011.
-- 31% of rows have a weak final drive and 29% a weak top gear.
+- 30% of rows have a weak final drive and 28% a weak top gear.
 
 Fix: see WP5.
 

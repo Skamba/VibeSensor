@@ -1,12 +1,12 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW 12/2013 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive35i state represented by this narrowed 2014-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n3": "The official BMW 12/2013 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive35i state represented by this narrowed 2014-only row.",
-      "n4": "The official BMW 08/2014 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive50i state represented by this narrowed 2014-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n5": "The official BMW 08/2014 technical-data PDF lists 255/50 R19 as the baseline tire for the exact X5 xDrive50i state represented by this narrowed 2014-only row.",
-      "n6": "The official BMW 05/2015 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive40e state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n7": "The official BMW 05/2015 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive40e state represented by this narrowed 2015-only row."
+      "n2": "The official BMW 12/2013 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive35i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n3": "The official BMW 12/2013 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive35i state represented by this row.",
+      "n4": "The official BMW 08/2014 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive50i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n5": "The official BMW 08/2014 technical-data PDF lists 255/50 R19 as the baseline tire for the exact X5 xDrive50i state represented by this row.",
+      "n6": "The official BMW 05/2015 technical-data PDF publishes a single 3.154 final-drive ratio for the exact X5 xDrive40e state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n7": "The official BMW 05/2015 technical-data PDF lists 255/55 R18 as the baseline tire for the exact X5 xDrive40e state represented by this row."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -87,42 +87,56 @@
     "type": "SUV",
     "market": "EU",
     "model_code": "F15",
-    "body_code": "F15"
+    "body_code": "F15",
+    "model_name": "X5 (F15, 2014-2018)"
   },
   "configurations": [
     {
       "id": "bmw-f15-xdrive35i-eu-2014-zf8hp-awd",
       "production_start_year": 2014,
-      "production_end_year": 2014,
-      "model_name": "X5 (F15, 2014)",
+      "production_end_year": 2018,
       "variant_name": "xDrive35i",
       "engine_code": "N55",
       "engine_name": "N55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 12/2013 technical-data PDF confirms xDrive all-wheel drive for the exact X5 xDrive35i state represented by this narrowed 2014-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 12/2013 technical-data PDF confirms xDrive all-wheel drive for the exact X5 xDrive35i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 12/2013 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X5 xDrive35i state represented by this narrowed 2014-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 12/2013 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X5 xDrive35i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 12/2013 technical-data PDF lists 0.667 as the top-gear ratio for the exact X5 xDrive35i state represented by this narrowed 2014-only row.",
-          "value": 0.667
+          "notes": "The official BMW 12/2013 technical-data PDF lists 0.667 as the top-gear ratio for the exact X5 xDrive35i state represented by this row.",
+          "value": 0.667,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 12/2013 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X5 xDrive35i state represented by this narrowed 2014-only row.",
+          "notes": "The official BMW 12/2013 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X5 xDrive35i state represented by this row.",
           "value": [
             4.714,
             3.143,
@@ -132,19 +146,35 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive35i-2013-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       },
       "tires": {
@@ -166,20 +196,37 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 12/2013 technical-data PDF establishes the exact X5 xDrive35i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.154 final-drive ratio, and 255/55 R18 baseline tires. This row is narrowed to the supported 2014-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 12/2013 technical-data PDF establishes the exact X5 xDrive35i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.154 final-drive ratio, and 255/55 R18 baseline tires.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "The official BMW Canada 2015MY, 2016MY and 2018MY X5 product guides print the xDrive35i with the drivetrain of the EU 12/2013 sheet: 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667 and final drive 3.154, so the row covers 2014-2018. These are BMW Canada (North American market) guides; they are used only as continuity evidence because their values equal the EU sheet. The F15 was replaced by the G05 X5 for the 2019 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X5 xDrive35i exact optional wheel/tire matrix beyond the narrowed 2014 row",
-          "reason": "The checked official BMW 12/2013 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X5 xDrive35i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 12/2013 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X5 xDrive35i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X5 xDrive35i EU standard tyre after 2014",
+          "reason": "The Canadian guides list North American tyre fitments; no later EU sheet was recovered, so the default stays the 12/2013 EU fitment.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence",
@@ -189,38 +236,48 @@
       }
     },
     {
-      "id": "bmw-f15-xdrive50i-eu-2014-zf8hp-awd",
-      "production_start_year": 2014,
-      "production_end_year": 2014,
-      "model_name": "X5 (F15, 2014)",
+      "id": "bmw-f15-xdrive50i-eu-2015-zf8hp-awd",
+      "production_start_year": 2015,
+      "production_end_year": 2018,
       "variant_name": "xDrive50i",
       "engine_code": "N63",
       "engine_name": "N63 4.4L V8 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
-        "notes": "The official BMW 08/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X5 xDrive50i state represented by this narrowed 2014-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 08/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X5 xDrive50i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e2",
-        "notes": "The official BMW 08/2014 technical-data PDF confirms 8-speed Steptronic wording for the exact X5 xDrive50i state represented by this narrowed 2014-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 08/2014 technical-data PDF confirms 8-speed Steptronic wording for the exact X5 xDrive50i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "The official BMW 08/2014 technical-data PDF lists 0.640 as the top-gear ratio for the exact X5 xDrive50i state represented by this narrowed 2014-only row.",
-          "value": 0.64
+          "notes": "The official BMW 08/2014 technical-data PDF lists 0.640 as the top-gear ratio for the exact X5 xDrive50i state represented by this row.",
+          "value": 0.64,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e2",
-          "notes": "The official BMW 08/2014 technical-data PDF lists the forward gear ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 for the exact X5 xDrive50i state represented by this narrowed 2014-only row.",
+          "notes": "The official BMW 08/2014 technical-data PDF lists the forward gear ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 for the exact X5 xDrive50i state represented by this row.",
           "value": [
             5.0,
             3.2,
@@ -230,19 +287,32 @@
             1.0,
             0.823,
             0.64
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
           "notes_ref": "n4",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
           "notes_ref": "n4",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       },
       "tires": {
@@ -264,20 +334,43 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 08/2014 technical-data PDF establishes the exact X5 xDrive50i state checked in this pass: AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, a single published 3.154 final-drive ratio, and 255/50 R19 baseline tires. This row is narrowed to the supported 2014-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 08/2014 technical-data PDF establishes the exact X5 xDrive50i state checked in this pass: AWD, 8-speed Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, a single published 3.154 final-drive ratio, and 255/50 R19 baseline tires.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "The EU sheet valid from 08/2014 lists the xDrive50i with the 8-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 and final drive 3.154; the official BMW Canada 2016MY and 2018MY guides print the same 8HP75 set and final drive, so the row covers 2015-2018. These are BMW Canada (North American market) guides; they are used only as continuity evidence because their values equal the EU sheet. The F15 was replaced by the G05 X5 for the 2019 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X5 xDrive50i exact optional wheel/tire matrix beyond the narrowed 2014 row",
-          "reason": "The checked official BMW 08/2014 technical-data PDF closes the 19-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X5 xDrive50i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 08/2014 technical-data PDF closes the 19-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e2"
         },
         {
           "item": "BMW X5 xDrive50i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "BMW X5 xDrive50i 2014 gearbox",
+          "reason": "The BMW Canada 2015MY guide (production from mid-2014) prints the earlier 8HP70 with 4.714 ... 0.667 for the xDrive50i, and the EU sheet that introduces the 5.000 ... 0.640 set is valid from 08/2014. No EU sheet for the 2014 car was recovered, so the row starts with the 2015 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive50i-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2015my-product-guide"
+          ]
+        },
+        {
+          "item": "BMW X5 xDrive50i EU standard tyre after 2015",
+          "reason": "The Canadian guides list North American tyre fitments; no later EU sheet was recovered, so the default stays the 08/2014 EU fitment.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence"
@@ -285,36 +378,43 @@
     {
       "id": "bmw-f15-xdrive40e-eu-2015-zf8hp-awd",
       "production_start_year": 2015,
-      "production_end_year": 2015,
-      "model_name": "X5 (F15, 2015)",
+      "production_end_year": 2018,
       "variant_name": "xDrive40e",
       "engine_code": "N20",
       "engine_name": "N20 2.0L I4 Turbo PHEV",
       "fuel_type": "PHEV",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e3",
-        "notes": "The official BMW 05/2015 technical-data PDF confirms full hybrid drive with permanent torque vectoring to all four wheels for the exact X5 xDrive40e state represented by this narrowed 2015-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 05/2015 technical-data PDF confirms full hybrid drive with permanent torque vectoring to all four wheels for the exact X5 xDrive40e state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e3",
-        "notes": "The official BMW 05/2015 technical-data PDF confirms 8-speed Steptronic wording for the exact X5 xDrive40e state represented by this narrowed 2015-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 05/2015 technical-data PDF confirms 8-speed Steptronic wording for the exact X5 xDrive40e state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+          "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "The official BMW 05/2015 technical-data PDF lists 0.667 as the top-gear ratio for the exact X5 xDrive40e state represented by this narrowed 2015-only row.",
-          "value": 0.667
+          "notes": "The official BMW 05/2015 technical-data PDF lists 0.667 as the top-gear ratio for the exact X5 xDrive40e state represented by this row.",
+          "value": 0.667,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "The official BMW 05/2015 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X5 xDrive40e state represented by this narrowed 2015-only row.",
+          "notes": "The official BMW 05/2015 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X5 xDrive40e state represented by this row.",
           "value": [
             4.714,
             3.143,
@@ -324,19 +424,29 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
           "notes_ref": "n6",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e3",
           "notes_ref": "n6",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       },
       "tires": {
@@ -358,20 +468,41 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 05/2015 technical-data PDF establishes the exact X5 xDrive40e state checked in this pass: full hybrid AWD with permanent torque vectoring to all four wheels, 8-speed Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.154 final-drive ratio, and 255/55 R18 baseline tires. This row is narrowed and renamed to the supported 2015-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 05/2015 technical-data PDF establishes the exact X5 xDrive40e state checked in this pass: full hybrid AWD with permanent torque vectoring to all four wheels, 8-speed Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.154 final-drive ratio, and 255/55 R18 baseline tires.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "The official BMW Canada 2018MY X5 product guide prints the xDrive40e with top gear 0.667 and final drive 3.154, the values of the EU 05/2015 sheet, so the row covers 2015-2018. These are BMW Canada (North American market) guides; they are used only as continuity evidence because their values equal the EU sheet. The F15 was replaced by the G05 X5 for the 2019 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X5 xDrive40e exact optional wheel/tire matrix beyond the narrowed 2015 row",
-          "reason": "The checked official BMW 05/2015 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X5 xDrive40e exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 05/2015 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e3"
         },
         {
           "item": "BMW X5 xDrive40e separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "BMW X5 xDrive40e first gear in the 2018MY guide",
+          "reason": "The BMW Canada 2018MY guide prints first gear 4.174 where the EU 05/2015 sheet prints 4.714 (the other seven gears agree); the row keeps the EU value.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-xdrive40e-2015-tech-spec-pdf",
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
+        },
+        {
+          "item": "BMW X5 xDrive40e EU standard tyre after 2015",
+          "reason": "The Canadian guides list North American tyre fitments; no later EU sheet was recovered, so the default stays the 05/2015 EU fitment.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f15-ca-2018my-product-guide"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence"

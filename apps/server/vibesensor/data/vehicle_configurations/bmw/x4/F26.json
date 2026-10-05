@@ -1,12 +1,12 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive20i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n3": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive20i state represented by this narrowed 2015-only row.",
-      "n4": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive28i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n5": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive28i state represented by this narrowed 2015-only row.",
-      "n6": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive35i state represented by this narrowed 2015-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n7": "The official BMW 03/2014 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X4 xDrive35i state represented by this narrowed 2015-only row."
+      "n2": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive20i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n3": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive20i state represented by this row.",
+      "n4": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive28i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n5": "The official BMW 03/2014 technical-data PDF lists 225/60 R17 as the baseline tire for the exact X4 xDrive28i state represented by this row.",
+      "n6": "The official BMW 03/2014 technical-data PDF publishes a single 3.385 final-drive ratio for the exact X4 xDrive35i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n7": "The official BMW 03/2014 technical-data PDF lists 245/50 R18 as the baseline tire for the exact X4 xDrive35i state represented by this row."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -82,41 +82,44 @@
     "market": "EU",
     "model_code": "F26",
     "body_code": "F26",
-    "model_name": "X4 (F26, 2015)",
-    "production_start_year": 2015,
-    "production_end_year": 2015
+    "model_name": "X4 (F26, 2014-2016)"
   },
   "configurations": [
     {
-      "id": "bmw-f26-xdrive20i-eu-2015-zf8hp-awd",
+      "id": "bmw-f26-xdrive20i-eu-2014-zf8hp-awd",
       "variant_name": "xDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive20i state represented by this narrowed 2015-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive20i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive20i state represented by this narrowed 2015-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive20i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive20i state represented by this narrowed 2015-only row.",
-          "value": 0.667
+          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive20i state represented by this row.",
+          "value": 0.667,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive20i state represented by this narrowed 2015-only row.",
+          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive20i state represented by this row.",
           "value": [
             4.714,
             3.143,
@@ -126,19 +129,26 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+          ]
         }
       },
       "tires": {
@@ -160,54 +170,83 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive20i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 225/60 R17 baseline tires. This row is narrowed to the supported 2015-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive20i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 225/60 R17 baseline tires.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "The 03/2014 EU sheet is valid from 07/2014, so the row starts with the 2014 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+          ]
+        },
+        {
+          "note": "Engine text from the 03/2014 technical data: 4 cylinders, 1997 cc, BMW TwinPower Turbo petrol. The sheet does not name the engine family, so no family code is stored (the earlier B48 had no source).",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X4 xDrive20i exact optional wheel/tire matrix beyond the narrowed 2015 row",
-          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X4 xDrive20i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X4 xDrive20i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X4 xDrive20i ratios after 2015",
+          "reason": "The 07/2016 BMW South Africa price list still lists the xDrive20i (1997 cc, 8-speed Steptronic) but prints no ratios, and no later EU or other official sheet with xDrive20i ratios was recovered, so the row ends with the 2015 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-za-2016-07-price-list"
+          ]
         }
       ],
-      "configuration_confidence": "high_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_start_year": 2014,
+      "production_end_year": 2015
     },
     {
-      "id": "bmw-f26-xdrive28i-eu-2015-zf8hp-awd",
+      "id": "bmw-f26-xdrive28i-eu-2014-zf8hp-awd",
       "variant_name": "xDrive28i",
       "engine_code": "N20",
       "engine_name": "N20 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive28i state represented by this narrowed 2015-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive28i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive28i state represented by this narrowed 2015-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive28i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive28i state represented by this narrowed 2015-only row.",
-          "value": 0.667
+          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive28i state represented by this row.",
+          "value": 0.667,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive28i state represented by this narrowed 2015-only row.",
+          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive28i state represented by this row.",
           "value": [
             4.714,
             3.143,
@@ -217,19 +256,29 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n4",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n4",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       },
       "tires": {
@@ -251,54 +300,84 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive28i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 225/60 R17 baseline tires. This row is narrowed to the supported 2015-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive28i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 225/60 R17 baseline tires.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "The 03/2014 EU sheet is valid from 07/2014, so the row starts with the 2014 model year. The official BMW Canada 2016MY X4 product guide prints the xDrive28i (N20B20O0) with the drivetrain of the EU sheet: 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667 and final drive 3.385, so the row covers 2014-2016. This is a North American guide, used only as continuity evidence because its values equal the EU sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X4 xDrive28i exact optional wheel/tire matrix beyond the narrowed 2015 row",
-          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X4 xDrive28i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 17-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X4 xDrive28i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X4 xDrive28i after 2016",
+          "reason": "No later EU sheet was recovered, and the BMW Canada 2018MY guide lists a different engine variant (N26) for the xDrive28i and no xDrive35i, so the row ends with the 2016 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
+        },
+        {
+          "item": "BMW X4 xDrive28i EU standard tyre after 2014",
+          "reason": "The Canadian guide lists North American tyre fitments; the default stays the 03/2014 EU fitment.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       ],
-      "configuration_confidence": "high_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_start_year": 2014,
+      "production_end_year": 2016
     },
     {
-      "id": "bmw-f26-xdrive35i-eu-2015-zf8hp-awd",
+      "id": "bmw-f26-xdrive35i-eu-2014-zf8hp-awd",
       "variant_name": "xDrive35i",
       "engine_code": "N55",
       "engine_name": "N55 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive35i state represented by this narrowed 2015-only row.",
-        "value": "AWD"
+        "notes": "The official BMW 03/2014 technical-data PDF confirms xDrive all-wheel drive for the exact X4 xDrive35i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive35i state represented by this narrowed 2015-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW 03/2014 technical-data PDF confirms eight-speed automatic transmission with Steptronic wording for the exact X4 xDrive35i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+          "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive35i state represented by this narrowed 2015-only row.",
-          "value": 0.667
+          "notes": "The official BMW 03/2014 technical-data PDF lists 0.667 as the top-gear ratio for the exact X4 xDrive35i state represented by this row.",
+          "value": 0.667,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         },
         "gear_ratios": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive35i state represented by this narrowed 2015-only row.",
+          "notes": "The official BMW 03/2014 technical-data PDF lists the forward gear ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the exact X4 xDrive35i state represented by this row.",
           "value": [
             4.714,
             3.143,
@@ -308,19 +387,29 @@
             1.0,
             0.839,
             0.667
+          ],
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
           ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n6",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n6",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-xdrive-petrol-2014-tech-spec-pdf",
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       },
       "tires": {
@@ -342,23 +431,45 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive35i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 245/50 R18 baseline tires. This row is narrowed to the supported 2015-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW 03/2014 technical-data PDF establishes the exact X4 xDrive35i launch-state mapping checked in this pass: AWD, 8-speed automatic with Steptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, a single published 3.385 final-drive ratio, and 245/50 R18 baseline tires.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "note": "The 03/2014 EU sheet is valid from 07/2014, so the row starts with the 2014 model year. The official BMW Canada 2016MY X4 product guide prints the xDrive35i (N55B30M0) with the drivetrain of the EU sheet: 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667 and final drive 3.385, so the row covers 2014-2016. This is a North American guide, used only as continuity evidence because its values equal the EU sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X4 xDrive35i exact optional wheel/tire matrix beyond the narrowed 2015 row",
-          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X4 xDrive35i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW 03/2014 technical-data PDF closes the 18-inch baseline fitment, but this pass did not normalize one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X4 xDrive35i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X4 xDrive35i after 2016",
+          "reason": "No later EU sheet was recovered, and the BMW Canada 2018MY guide lists a different engine variant (N26) for the xDrive28i and no xDrive35i, so the row ends with the 2016 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
+        },
+        {
+          "item": "BMW X4 xDrive35i EU standard tyre after 2014",
+          "reason": "The Canadian guide lists North American tyre fitments; the default stays the 03/2014 EU fitment.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f26-ca-2016my-product-guide"
+          ]
         }
       ],
-      "configuration_confidence": "high_confidence"
+      "configuration_confidence": "high_confidence",
+      "production_start_year": 2014,
+      "production_end_year": 2016
     }
   ]
 }

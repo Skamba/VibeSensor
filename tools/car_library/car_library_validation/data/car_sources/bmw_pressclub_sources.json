@@ -1687,6 +1687,118 @@
       "title": "BMW PressClub France F48 X1 technical data PDF 07/2019 (LCI, English-language sheet)",
       "note": "Official BMW 07/2019 media information (English technical data, published by BMW France) for the facelifted F48 X1 range. sDrive18i: six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 with final drive 3.882, or 7-speed Steptronic with double clutch (overall ratios, seventh 2.285, final drive 4.176). sDrive20i: 7-speed Steptronic with double clutch only (overall seventh 2.073, final drive 3.789). xDrive20i and xDrive25i: 8-speed Steptronic, eighth 0.673, final drive 3.200. sDrive16d: six-speed manual top 0.628 with final drive 3.588, or 7-speed double clutch (overall seventh 2.285, final drive 4.176). sDrive18d: six-speed manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 with final drive 3.389, or 8-speed Steptronic eighth 0.673 with final drive 2.851. sDrive20d and xDrive20d: 8-speed Steptronic, eighth 0.673, final drive 2.851. Standard tyres 225/55 R17 throughout.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-7-series-2018-09-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286564EN/419615",
+      "title": "BMW PressClub G11 7 Series technical data PDF valid from 09/2018",
+      "note": "Official BMW 09/2018 technical data for the 7 Series diesel and plug-in-hybrid models. 730d, 730Ld, 730d xDrive, 730Ld xDrive, 740d xDrive and 740Ld xDrive: 8-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.563, tyres 225/60 R17. 750d xDrive and 750Ld xDrive: same gear set, final drive 2.813, tyres 245/50 R18. 740e and 740Le iPerformance: 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.077; 740Le xDrive iPerformance final drive 3.231; tyres 225/60 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-730d-xdrive-2015-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0235242EN/336672",
+      "title": "BMW PressClub G11 730d xDrive / 730Ld xDrive 2015 technical data PDF",
+      "note": "Official BMW 11/2015 technical data for the 730d xDrive and 730Ld xDrive: xDrive all-wheel drive, 8-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.563, tyres 225/60 R17, in-line 6 cylinders, 2993 cc diesel.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-ca-2017my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0261911EN/391255",
+      "title": "BMW Canada 7 Series 2017MY product guide (North American market)",
+      "note": "Official BMW Canada 2017 model-year product guide. 750i xDrive and 750Li xDrive: N63B44O2, 8HP75 5 / 3.2 / 2.143 / 1.72 / 1.313 / 1 / 0.823 / 0.64, final drive 2.813. 740Le xDrive iPerformance: B48B20O0, 8P75H 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667, final drive 3.231. North American market; used as continuity evidence where its values equal the EU sheets.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g11-ca-2018my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0269584EN/391267",
+      "title": "BMW Canada 7 Series 2018MY product guide (North American market)",
+      "note": "Official BMW Canada 2018 model-year product guide. 750i xDrive and 750Li xDrive: N63B44O2, 8HP75 5 / 3.2 / 2.143 / 1.72 / 1.313 / 1 / 0.823 / 0.64, final drive 2.813. 740Le xDrive iPerformance: 8P75H 4.714 / \u2026 / 0.667, final drive 3.231. North American market; used as continuity evidence where its values equal the EU sheets.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:bmw-model-upgrades-summer-2016",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0259895EN/385433",
+      "title": "BMW PressClub media information: BMW model upgrade measures in the summer of 2016 (05/2016)",
+      "note": "Official BMW 05/2016 media information: world premiere of the quad-turbo six-cylinder diesel in the 750d xDrive and 750Ld xDrive (294 kW, standard xDrive) and launch of the 740e/740Le/740Le xDrive iPerformance; all new models available from the start of production in July 2016. Prints no gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0326839EN/472825",
+      "title": "BMW PressClub G06 X6 technical data PDF 03/2021",
+      "note": "Official BMW 03/2021 technical data for the X6. xDrive40i: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, tyres 265/50 R19. M50i: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 3.154, tyres 275/40 R21 front and 315/35 R21 rear. xDrive30d: same 5.500 set, final drive 2.929, tyres 265/50 R19. xDrive40d: same 5.500 set, final drive 3.077, tyres 265/50 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article",
+      "url": "https://www.press.bmwgroup.com/canada/article/detail/T0408519EN/the-new-2024-bmw-x5-and-x6?language=en",
+      "title": "BMW Canada article: The new 2024 BMW X5 and X6 (02/2023)",
+      "note": "Official BMW Canada 02/2023 press kit for the facelifted X5 and X6: new in-line six and V8 engines with 48V mild-hybrid technology (X6 xDrive40i and M60i), production starting in Spartanburg in April 2023. Dates the end of the pre-facelift X6 drivetrains.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g15-8-series-coupe-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329192EN/475821",
+      "title": "BMW PressClub G15 8 Series Coupe technical data PDF 03/2021",
+      "note": "Official BMW 03/2021 technical data for the 8 Series Coupe. 840i and 840i xDrive: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 2.929, tyres 245/45 R18 front and 275/40 R18 rear. M850i xDrive: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.813, tyres 245/35 R20 front and 275/30 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g16-8-series-gran-coupe-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329193EN/475823",
+      "title": "BMW PressClub G16 8 Series Gran Coupe technical data PDF 03/2021",
+      "note": "Official BMW 03/2021 technical data for the 8 Series Gran Coupe. 840i and 840i xDrive: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 2.929, tyres 245/45 R18 front and 275/40 R18 rear. M850i xDrive: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.813, tyres 245/35 R20 front and 275/30 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g14-8-series-convertible-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0329191EN/475819",
+      "title": "BMW PressClub G14 8 Series Convertible technical data PDF 03/2021",
+      "note": "Official BMW 03/2021 technical data for the 8 Series Convertible. 840i and 840i xDrive: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 2.929, tyres 245/45 R18 front and 275/40 R18 rear. M850i xDrive: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.813, tyres 245/35 R20 front and 275/30 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g15-m8-competition-coupe-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0330570EN/477179",
+      "title": "BMW PressClub G15 M8 Competition Coupe technical data PDF 03/2021",
+      "note": "Official BMW 03/2021 technical data for the M8 Competition Coupe: V8, 4395 cc, 460 kW, M xDrive all-wheel drive, eight-speed M Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 3.154, tyres 275/35 ZR20 front and 285/35 ZR20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f15-ca-2015my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0195812EN/285272",
+      "title": "BMW Canada X5 2015MY product guide (North American market)",
+      "note": "Official BMW Canada 2015 model-year product guide. X5 xDrive35i: N55B30M0, 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667, final drive 3.154. X5 xDrive50i: N63B44O1 with the 8HP70, printed 4.714 \u2026 0.667, final drive 3.154. North American market.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f15-ca-2016my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0234327EN/328051",
+      "title": "BMW Canada X5 2016MY product guide (North American market)",
+      "note": "Official BMW Canada 2016 model-year product guide. X5 xDrive35i: 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667, final drive 3.154. X5 xDrive50i: 8HP75 5 / 3.2 / 2.143 / 1.72 / 1.313 / 1 / 0.823 / 0.64, final drive 3.154. North American market.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f15-ca-2018my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0276858EN/399082",
+      "title": "BMW Canada X5 2018MY product guide (North American market)",
+      "note": "Official BMW Canada 2018 model-year product guide. X5 xDrive35i: 8HP45 4.714 \u2026 0.667, final drive 3.154. X5 xDrive40e: N20B20O0, GA8P75HZ, printed 4.174 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667, final drive 3.154. X5 xDrive50i: 8HP75 5 / 3.2 / 2.143 / 1.72 / 1.313 / 1 / 0.823 / 0.64, final drive 3.154. North American market.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f26-ca-2016my-product-guide",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0234327EN/328050",
+      "title": "BMW Canada X4 2016MY product guide (North American market)",
+      "note": "Official BMW Canada 2016 model-year product guide. X4 xDrive28i (N20B20O0) and xDrive35i (N55B30M0): 8HP45 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1 / 0.839 / 0.667, final drive 3.385. North American market; used as continuity evidence where its values equal the EU sheet.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f26-za-2016-07-price-list",
+      "url": "https://www.press.bmwgroup.com/south-africa/article/attachment/T0261812EN/363046",
+      "title": "BMW South Africa X4 price list 07/2016",
+      "note": "Official BMW South Africa X4 price list, July 2016: lists the xDrive20i (4 cylinders, 1997 cc), xDrive20d, xDrive28i (1997 cc), xDrive30d and xDrive35i with the 8-speed Steptronic. Prints no gear ratios.",
+      "confidence": "high"
     }
   ]
 }

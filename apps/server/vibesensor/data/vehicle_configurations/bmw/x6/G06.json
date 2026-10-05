@@ -1,10 +1,10 @@
 {
   "definitions": {
     "notes": {
-      "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n3": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this narrowed 2020-only row.",
-      "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
-      "n5": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this narrowed 2020-only row."
+      "n2": "The official BMW launch technical-data PDF publishes a single 3.154 final-drive ratio for the exact X6 M50i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n3": "The official BMW launch technical-data PDF lists staggered 275/40 R21 front and 315/35 R21 rear baseline tires for the exact X6 M50i state represented by this row.",
+      "n4": "The official BMW launch technical-data PDF publishes a single 3.385 final-drive ratio for the exact X6 xDrive40i state represented by this row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n5": "The official BMW launch technical-data PDF lists 265/50 R19 as the baseline tire for the exact X6 xDrive40i state represented by this row."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -88,9 +88,7 @@
     "market": "EU",
     "model_code": "G06",
     "body_code": "G06",
-    "model_name": "X6 (G06, 2020)",
-    "production_start_year": 2020,
-    "production_end_year": 2020
+    "model_name": "X6 (G06, 2020-2022)"
   },
   "configurations": [
     {
@@ -101,35 +99,51 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
-        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 M50i state represented by this narrowed 2020-only row.",
-        "value": "AWD"
+        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 M50i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-launch-article",
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 M50i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 M50i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 M50i state represented by this narrowed 2020-only row.",
-          "value": 0.64
+          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 M50i state represented by this row.",
+          "value": 0.64,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n2",
-          "value": 3.154
+          "value": 3.154,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         }
       },
       "tires": {
@@ -151,27 +165,44 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW launch article and technical-data PDF establish the exact X6 M50i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.154 final-drive ratio, and staggered 275/40 R21 front plus 315/35 R21 rear baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW launch article and technical-data PDF establish the exact X6 M50i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.154 final-drive ratio, and staggered 275/40 R21 front plus 315/35 R21 rear baseline tires.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "The official BMW 03/2021 X6 technical data list the M50i with the same drivetrain as the 07/2019 launch sheet: xDrive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 3.154 and 275/40 R21 front plus 315/35 R21 rear standard tyres. The 02/2023 BMW Canada press kit dates the facelift with new 48V mild-hybrid engines to the start of production in April 2023, so the pre-facelift drivetrain runs to the 2022 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X6 M50i exact optional wheel/tire matrix beyond the narrowed 2020 row",
-          "reason": "The checked official BMW launch technical-data PDF closes the staggered 21-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X6 M50i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW launch technical-data PDF closes the staggered 21-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X6 M50i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X6 M50i 2022 technical data",
+          "reason": "No X6 technical-data sheet between 03/2021 and the 2023 facelift was recovered; the row assumes the 03/2021 drivetrain until the facelift.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence",
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_wheel_order": false
-      }
+      },
+      "production_start_year": 2020,
+      "production_end_year": 2022
     },
     {
       "id": "bmw-g06-xdrive40i-eu-2020-zf8hp-awd",
@@ -181,35 +212,51 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
-        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
-        "value": "AWD"
+        "notes": "The official BMW launch article and technical-data PDF confirm xDrive all-wheel drive for the exact X6 xDrive40i state represented by this row.",
+        "value": "AWD",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-launch-article",
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ]
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e1",
-        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 xDrive40i state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "notes": "The official BMW launch technical-data PDF confirms 8-speed Steptronic wording for the exact X6 xDrive40i state represented by this row. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
         "code": "ZF8HP",
-        "name": "8-speed automatic (ZF 8HP)"
+        "name": "8-speed automatic (ZF 8HP)",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ]
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e1",
-          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 xDrive40i state represented by this narrowed 2020-only row.",
-          "value": 0.64
+          "notes": "The official BMW launch technical-data PDF lists 0.640 as the top-gear ratio for the exact X6 xDrive40i state represented by this row.",
+          "value": 0.64,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         },
         "final_drive_front": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n4",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
           "notes_ref": "n4",
-          "value": 3.385
+          "value": 3.385,
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
         }
       },
       "tires": {
@@ -231,27 +278,288 @@
       },
       "verification_notes": [
         {
-          "note": "The official BMW launch article and technical-data PDF establish the exact X6 xDrive40i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.385 final-drive ratio, and 265/50 R19 baseline tires. This row is narrowed to the supported 2020-only state because later exact numeric continuity was not recovered in this pass.",
+          "note": "The official BMW launch article and technical-data PDF establish the exact X6 xDrive40i launch-state mapping: AWD, 8-speed Steptronic, 0.640 top gear, a single published 3.385 final-drive ratio, and 265/50 R19 baseline tires.",
           "evidence_refs_ref": "e2"
+        },
+        {
+          "note": "The official BMW 03/2021 X6 technical data list the xDrive40i with the same drivetrain as the 07/2019 launch sheet: xDrive, 8-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385 and 265/50 R19 standard tyres. The 02/2023 BMW Canada press kit dates the facelift with new 48V mild-hybrid engines to the start of production in April 2023, so the pre-facelift drivetrain runs to the 2022 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X6 xDrive40i exact optional wheel/tire matrix beyond the narrowed 2020 row",
-          "reason": "The checked official BMW launch technical-data PDF closes the 19-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix beyond the narrowed launch-state row.",
+          "item": "BMW X6 xDrive40i exact optional wheel/tire matrix",
+          "reason": "The checked official BMW launch technical-data PDF closes the 19-inch baseline fitment, but it does not prove one exact optional wheel/tire matrix for this row.",
           "evidence_refs_ref": "e1"
         },
         {
           "item": "BMW X6 xDrive40i separate front/rear final-drive publication",
           "reason": "BMW publishes one exact final-drive ratio for this AWD automatic state; the repo duplicates that value across front and rear axle fields because the source does not expose separate axle-specific numbers.",
           "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "BMW X6 xDrive40i 2022 technical data",
+          "reason": "No X6 technical-data sheet between 03/2021 and the 2023 facelift was recovered; the row assumes the 03/2021 drivetrain until the facelift.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
         }
       ],
       "configuration_confidence": "high_confidence",
       "order_analysis_policy_override": {
         "reason": "preserved-from-pre-derivation-curated-data",
         "usable_for_wheel_order": false
-      }
+      },
+      "production_start_year": 2020,
+      "production_end_year": 2022
+    },
+    {
+      "id": "bmw-g06-xdrive30d-eu-2020-zf8hp-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2022,
+      "variant_name": "xDrive30d",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2019 and 03/2021 technical data list the X6 xDrive30d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2019 and 03/2021 technical data list an 8-speed Steptronic transmission for the X6 xDrive30d. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 03/2021 technical data list 0.640 as eighth gear for the X6 xDrive30d.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 03/2021 technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the X6 xDrive30d.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 03/2021 technical data list 2.929 as the final drive for the X6 xDrive30d; one axle ratio is published for the all-wheel-drive car.",
+          "value": 2.929
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2019 and 03/2021 technical data list 265/50 R19 as the standard tyres for the X6 xDrive30d.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 19\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+              "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2019 and 03/2021 technical data list 265/50 R19 as the standard tyres for the X6 xDrive30d.",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 50.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 07/2019 and 03/2021 X6 technical data list the xDrive30d: xDrive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.929 and 265/50 R19 standard tyres. The 02/2023 BMW Canada press kit dates the facelift with new 48V mild-hybrid engines to the start of production in April 2023, so the pre-facelift drivetrain runs to the 2022 model year.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf",
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
+        },
+        {
+          "note": "Engine text from the 07/2019 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2019-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X6 xDrive30d 2022 technical data",
+          "reason": "No X6 technical-data sheet between 03/2021 and the 2023 facelift was recovered; the row assumes the 03/2021 drivetrain until the facelift.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g06-xdrive40d-eu-2021-zf8hp-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2022,
+      "variant_name": "xDrive40d",
+      "engine_code": "3.0L",
+      "engine_name": "3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical data list the X6 xDrive40d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+        ],
+        "notes": "The official BMW 03/2021 technical data list an 8-speed Steptronic transmission for the X6 xDrive40d. The repo keeps ZF8HP as the canonical transmission-family mapping for that official automatic.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 0.640 as eighth gear for the X6 xDrive40d.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 for the X6 xDrive40d.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 3.077 as the final drive for the X6 xDrive40d; one axle ratio is published for the all-wheel-drive car.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ],
+          "notes": "The official BMW 03/2021 technical data list 265/50 R19 as the standard tyres for the X6 xDrive40d.",
+          "front": {
+            "width_mm": 265.0,
+            "aspect_pct": 50.0,
+            "rim_in": 19.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 19\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+            ],
+            "notes": "The official BMW 03/2021 technical data list 265/50 R19 as the standard tyres for the X6 xDrive40d.",
+            "front": {
+              "width_mm": 265.0,
+              "aspect_pct": 50.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 X6 technical data list the xDrive40d: xDrive, 8-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 3.077 and 265/50 R19 standard tyres. The 02/2023 BMW Canada press kit dates the facelift with new 48V mild-hybrid engines to the start of production in April 2023, so the pre-facelift drivetrain runs to the 2022 model year. The 07/2019 launch sheet does not list the xDrive40d (it lists the M50d), so the row starts with the 03/2021 sheet.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
+        },
+        {
+          "note": "Engine text from the 03/2021 technical data: in-line 6 cylinders, 2993 cc, BMW TwinPower Turbo, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "BMW X6 xDrive40d 2022 technical data",
+          "reason": "No X6 technical-data sheet between 03/2021 and the 2023 facelift was recovered; the row assumes the 03/2021 drivetrain until the facelift.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g06-x6-2021-03-spec-pdf",
+            "bmw_pressclub_sources:g05-g06-ca-2024-x5-x6-article"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }
