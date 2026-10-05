@@ -1,42 +1,96 @@
 {
   "definitions": {
-    "notes": {
-      "n2": "Issue #975 official-source review confirmed the supported EU Q4 e-tron BEV variant mapping, and this pass adds exact Audi official evidence that the launch-era 50 e-tron quattro uses axle-split one-speed reduction ratios (rear 11.5:1, front 10.0:1) plus mixed-size tires with a wider rear axle. It also adds exact official evidence that the launch-era rear-drive Q4 40 e-tron used a one-speed rear-drive ratio of 13:1 and that the later reintroduced Germany-market Q4 40 e-tron uses basic 235/55 R19 front + 255/50 R19 rear tires. The broad row remains unchanged because the current schema cannot safely encode the axle-split EV ratio mapping, the 40 e-tron name is reused across materially different sub-eras, and the later official lineup temporarily renames the upper quattro variant away from the original 50 e-tron quattro naming."
-    },
     "evidence_ref_sets": {
       "e1": [
-        "legacy_research_sources:02f80102b1fb",
-        "legacy_research_sources:2d1d32db2857",
-        "legacy_research_sources:4ea362ce6a8e",
-        "legacy_research_sources:6236ede09312",
-        "legacy_research_sources:a7a38f705f5d",
-        "legacy_research_sources:b75aa6c442cb",
-        "legacy_research_sources:fd03c253ad14"
+        "audi_mediacenter_sources:fz-q4-2021-press-kit-electric-motors"
       ],
       "e2": [
-        "legacy_research_sources:2d1d32db2857",
-        "legacy_research_sources:fd03c253ad14"
+        "audi_mediacenter_sources:fz-q4-2021-press-kit-electric-motors",
+        "audi_mediacenter_sources:fz-q4-2023-update-press-release",
+        "secondary_technical_sources:q4-e-tron-fz-adac"
+      ],
+      "e3": [
+        "legacy_research_sources:b75aa6c442cb"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:fz-q4-45-e-tron-2024-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:fz-q4-2023-update-press-release",
+        "audi_mediacenter_sources:fz-q4-45-e-tron-2024-tech-data-pdf",
+        "secondary_technical_sources:q4-e-tron-fz-adac"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:fz-q4-45-e-tron-quattro-2024-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:fz-q4-2023-update-press-release",
+        "audi_mediacenter_sources:fz-q4-45-e-tron-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q4-e-tron-fz-adac"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:fz-q4-55-e-tron-quattro-2024-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:fz-q4-2023-update-press-release",
+        "audi_mediacenter_sources:fz-q4-55-e-tron-quattro-2024-tech-data-pdf",
+        "secondary_technical_sources:q4-e-tron-fz-adac"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2025-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2026-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2025-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2026-tech-data-pdf",
+        "secondary_technical_sources:q4-e-tron-fz-adac"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2025-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-40-e-tron-2026-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-45-e-tron-2024-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-45-e-tron-quattro-2024-tech-data-pdf",
+        "audi_mediacenter_sources:fz-q4-55-e-tron-quattro-2024-tech-data-pdf"
+      ],
+      "e13": [
+        "audi_mediacenter_sources:fz-q4-2021-press-kit-electric-motors",
+        "audi_mediacenter_sources:fz-q4-2023-update-press-release"
       ]
     },
     "tire_setups": {
+      "setup_235_19": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e3",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 19.0,
+          "width_mm": 235.0
+        }
+      },
       "setup_245_20": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e3",
         "front": {
           "aspect_pct": 45.0,
           "rim_in": 20.0,
           "width_mm": 245.0
         }
       },
-      "setup_235_19": {
-        "confidence": "family_default",
+      "setup_235_55r19_255_50r19": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e12",
         "front": {
-          "aspect_pct": 50.0,
+          "aspect_pct": 55.0,
           "rim_in": 19.0,
           "width_mm": 235.0
+        },
+        "rear": {
+          "aspect_pct": 50.0,
+          "rim_in": 19.0,
+          "width_mm": 255.0
         }
       }
     }
@@ -47,31 +101,36 @@
     "market": "EU",
     "model_code": "FZ",
     "body_code": "FZ",
-    "model_name": "Q4 e-tron (FZ, 2022-2026)",
-    "production_start_year": 2022,
-    "production_end_year": 2026
+    "model_name": "Q4 e-tron (FZ, 2021-2026)"
   },
   "configurations": [
     {
       "id": "audi-fz-40-e-tron-eu-2022-ss1-rwd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
       "variant_name": "40 e-tron",
       "engine_code": "Electric",
       "engine_name": "Electric Single Motor",
       "fuel_type": "EV",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
+        "evidence_refs_ref": "e1",
+        "notes": "The official launch press kit lists the 40 e-tron among the rear-wheel-drive models with one rear motor.",
         "value": "RWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official launch press kit (04/14/2021) gives every Q4 e-tron motor a one-speed transmission.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 9.756
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Rear one-speed transmission ratio 13:1 for the rear-wheel-drive models per the official launch press kit (04/14/2021).",
+          "value": 13.0
         }
       },
       "tires": {
@@ -89,44 +148,52 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "Q4 40 e-tron (launch, 150 kW): the official launch press kit gives the rear-wheel-drive models a one-speed rear transmission of 13:1; the 9.756 this row carried had no source and contradicted it. ADAC lists the launch 40 e-tron from 06/2021 to 09/2023; the model-year 2024 update (orderable from 26 September 2023) replaced it with the 45 e-tron and a redeveloped rear motor, so the row covers 2021-2023.",
+          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
         {
-          "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
-          "reason": "Official Audi sources now prove rear 11.5:1 and front 10.0:1 one-speed reduction ratios for the exact launch-era 50 e-tron quattro, but the current broad row stores only one final_drive_ratio field and cannot safely represent the axle split.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "Exact official numeric tire sizes and post-2024 naming continuity for the broad Q4 e-tron row",
-          "reason": "Official Audi launch material confirms mixed-size tires with a wider rear axle, while later official updates rename the upper quattro variant to 55 e-tron quattro, so this pass did not project one exact tire or ratio package across the full 2022-2026 broad row.",
-          "evidence_refs_ref": "e1"
+          "item": "Q4 e-tron launch (2021-2023) basic and optional tire sizes",
+          "reason": "No technical-data sheet for the launch-era cars was found; the launch press kit gives only the 19- to 21-inch range and a wider rear axle, so the stored sizes stay family_default.",
+          "evidence_refs_ref": "e3"
         }
       ],
       "configuration_confidence": "medium_confidence"
     },
     {
       "id": "audi-fz-50-e-tron-quattro-eu-2022-ss1-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2023,
       "variant_name": "50 e-tron quattro",
       "engine_code": "Electric",
       "engine_name": "Electric Dual Motor",
       "fuel_type": "EV",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
+        "evidence_refs_ref": "e1",
+        "notes": "The official launch press kit gives the quattro models a rear PSM and a front ASM (electric all-wheel drive).",
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "family_default",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official launch press kit (04/14/2021) gives every Q4 e-tron motor a one-speed transmission.",
         "code": "SS1",
         "name": "Single-speed fixed gear (EV)"
       },
       "ratios": {
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Front ASM one-speed transmission ratio 10.0:1 per the official launch press kit (04/14/2021).",
+          "value": 10.0
+        },
         "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 9.756
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "Rear one-speed transmission ratio 11.5:1 in the electric all-wheel drive per the official launch press kit (04/14/2021).",
+          "value": 11.5
         }
       },
       "tires": {
@@ -144,20 +211,219 @@
       },
       "verification_notes": [
         {
-          "note_ref": "n2",
-          "evidence_refs_ref": "e1"
+          "note": "Q4 50 e-tron quattro (launch, 220 kW): the official launch press kit gives the electric all-wheel drive a rear one-speed transmission of 11.5:1 and a front one of 10.0:1; the single 9.756 this row carried had no source and contradicted both. ADAC lists the 50 e-tron quattro from 06/2021 to 09/2023; the model-year 2024 update replaced it with the 55 e-tron quattro, so the row covers 2021-2023.",
+          "evidence_refs_ref": "e2"
         }
       ],
       "unresolved": [
         {
-          "item": "Encode axle-split EV reduction ratios for the exact Q4 50 e-tron quattro in repo schema",
-          "reason": "Official Audi sources now prove rear 11.5:1 and front 10.0:1 one-speed reduction ratios for the exact launch-era 50 e-tron quattro, but the current broad row stores only one final_drive_ratio field and cannot safely represent the axle split.",
-          "evidence_refs_ref": "e1"
+          "item": "Q4 e-tron launch (2021-2023) basic and optional tire sizes",
+          "reason": "No technical-data sheet for the launch-era cars was found; the launch press kit gives only the 19- to 21-inch range and a wider rear axle, so the stored sizes stay family_default.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-fz-45-e-tron-eu-2024-ss1-rwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "45 e-tron",
+      "engine_code": "Electric",
+      "engine_name": "Electric Single Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official 03/18/24 technical-data sheet lists drive type 'Rear-wheel drive' with electric motors front / rear 0 / 1.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e13",
+        "notes": "The 2024 technical-data sheets print no transmission; the launch press kit gives every Q4 e-tron motor a one-speed transmission, and the 2023 update changed the rear motor, not the layout.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_235_55r19_255_50r19",
+            "name": "Basic 19\""
+          }
+        ],
+        "default_ref": "setup_235_55r19_255_50r19"
+      },
+      "verification_notes": [
+        {
+          "note": "Q4 45 e-tron (210 kW, rear-wheel drive): the official technical-data sheet (Program for Germany, status 03/18/24) gives drive type and basic tires 235/55 R19 front | 255/50 R19 rear. ADAC lists it from 09/2023 to 04/2026 and the update was orderable from 26 September 2023, so the row covers model years 2024-2026.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q4 45 e-tron final drive (reduction ratio)",
+          "reason": "The official 2024 technical-data sheet and the 2023 update release publish no reduction ratio for the redeveloped rear motor, and the launch ratios belong to the previous motor, so no final drive is stored.",
+          "evidence_refs_ref": "e5"
         },
         {
-          "item": "Exact official numeric tire sizes and post-2024 naming continuity for the broad Q4 e-tron row",
-          "reason": "Official Audi launch material confirms mixed-size tires with a wider rear axle, while later official updates rename the upper quattro variant to 55 e-tron quattro, so this pass did not project one exact tire or ratio package across the full 2022-2026 broad row.",
-          "evidence_refs_ref": "e1"
+          "item": "Q4 45 e-tron optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic 19-inch tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-fz-45-e-tron-quattro-eu-2024-ss1-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "45 e-tron quattro",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official 03/18/24 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e13",
+        "notes": "The 2024 technical-data sheets print no transmission; the launch press kit gives every Q4 e-tron motor a one-speed transmission, and the 2023 update changed the rear motor, not the layout.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_235_55r19_255_50r19",
+            "name": "Basic 19\""
+          }
+        ],
+        "default_ref": "setup_235_55r19_255_50r19"
+      },
+      "verification_notes": [
+        {
+          "note": "Q4 45 e-tron quattro (210 kW): the official technical-data sheet (Program for Germany, status 03/18/24) gives drive type and basic tires 235/55 R19 front | 255/50 R19 rear. ADAC lists it from 09/2023 to 04/2026 and the update was orderable from 26 September 2023, so the row covers model years 2024-2026.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q4 45 e-tron quattro final drive (reduction ratio)",
+          "reason": "The official 2024 technical-data sheet and the 2023 update release publish no reduction ratio for the redeveloped rear motor, and the launch ratios belong to the previous motor, so no final drive is stored.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Q4 45 e-tron quattro optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic 19-inch tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-fz-55-e-tron-quattro-eu-2024-ss1-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "55 e-tron quattro",
+      "engine_code": "Electric",
+      "engine_name": "Electric Dual Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "The official 03/18/24 technical-data sheet lists drive type 'All-wheel drive' with electric motors front / rear 1 / 1.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e13",
+        "notes": "The 2024 technical-data sheets print no transmission; the launch press kit gives every Q4 e-tron motor a one-speed transmission, and the 2023 update changed the rear motor, not the layout.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_235_55r19_255_50r19",
+            "name": "Basic 19\""
+          }
+        ],
+        "default_ref": "setup_235_55r19_255_50r19"
+      },
+      "verification_notes": [
+        {
+          "note": "Q4 55 e-tron quattro (250 kW): the official technical-data sheet (Program for Germany, status 03/18/24) gives drive type and basic tires 235/55 R19 front | 255/50 R19 rear. ADAC lists it from 09/2023 to 04/2026 and the update was orderable from 26 September 2023, so the row covers model years 2024-2026.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q4 55 e-tron quattro final drive (reduction ratio)",
+          "reason": "The official 2024 technical-data sheet and the 2023 update release publish no reduction ratio for the redeveloped rear motor, and the launch ratios belong to the previous motor, so no final drive is stored.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "Q4 55 e-tron quattro optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic 19-inch tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "medium_confidence"
+    },
+    {
+      "id": "audi-fz-40-e-tron-eu-2025-ss1-rwd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "40 e-tron",
+      "engine_code": "Electric",
+      "engine_name": "Electric Single Motor",
+      "fuel_type": "EV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "The official 05/2025 and 02/2026 technical-data sheets list rear-wheel drive with electric motors front / rear 0 / 1.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e13",
+        "notes": "The 2024 technical-data sheets print no transmission; the launch press kit gives every Q4 e-tron motor a one-speed transmission, and the 2023 update changed the rear motor, not the layout.",
+        "code": "SS1",
+        "name": "Single-speed fixed gear (EV)"
+      },
+      "ratios": {},
+      "tires": {
+        "options": [
+          {
+            "setup_ref": "setup_235_55r19_255_50r19",
+            "name": "Basic 19\""
+          }
+        ],
+        "default_ref": "setup_235_55r19_255_50r19"
+      },
+      "verification_notes": [
+        {
+          "note": "Q4 40 e-tron (reintroduced, 150 kW, 63/59 kWh battery): the official technical-data sheets (status 05/08/2025 and 02.02.26) give rear-wheel drive and basic tires 235/55 R19 front | 255/50 R19 rear. ADAC lists it from 02/2025 to 04/2026, so the row covers 2025-2026; it is a different car from the 2021-2023 40 e-tron (smaller battery, later rear motor generation).",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q4 40 e-tron (2025-2026) final drive (reduction ratio)",
+          "reason": "The official 2025 and 2026 technical-data sheets publish no reduction ratio, and the launch 40 e-tron's 13:1 belongs to an earlier car, so no final drive is stored.",
+          "evidence_refs_ref": "e10"
+        },
+        {
+          "item": "Q4 40 e-tron (2025-2026) optional tire sizes",
+          "reason": "The technical-data sheet lists only the basic 19-inch tires; no official wheel program with the optional sizes was found.",
+          "evidence_refs_ref": "e10"
         }
       ],
       "configuration_confidence": "medium_confidence"

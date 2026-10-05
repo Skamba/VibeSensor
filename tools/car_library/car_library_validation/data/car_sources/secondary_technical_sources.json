@@ -910,6 +910,13 @@
       "title": "ADAC Autokatalog Audi Q5 Sportback (FY), 2021-2024",
       "note": "ADAC catalogue section 'Q5 Sportback (FY), Baujahr 2021 - 2024' (44 vehicles) with per-vehicle pages under the same path (for example /318144/ 45 TFSI advanced quattro, /319030/ 35 TDI advanced, /322598/ 40 TFSI advanced quattro, /337862/ 50 TDI advanced quattro tiptronic). Germany-market sales periods: 35 TDI S tronic (front-wheel drive), 40 TDI quattro S tronic and 45 TFSI quattro S tronic 03/21-11/23 and 11/23-12/24; 40 TFSI quattro S tronic 12/21-11/23 and 11/23-12/24; 50 TFSI e and 55 TFSI e quattro S tronic 03/21-11/23 and 11/23-11/24; 50 TDI quattro tiptronic 03/21-04/23 and again 06/24-12/24.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:q4-e-tron-fz-adac",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/q4-e-tron/fz/",
+      "title": "ADAC Autokatalog Audi Q4 e-tron FZ (2021-2026)",
+      "note": "ADAC catalogue listing the Germany-market Q4 e-tron variants with their sales periods: 35 e-tron 06/21-09/22 and 07/24-12/24, 40 e-tron 06/21-09/23 and again 02/25-04/26, launch 45 e-tron quattro 07/21-09/23, 50 e-tron quattro 06/21-09/23, updated 45 e-tron and 45 e-tron quattro 09/23-04/26, 55 e-tron quattro 09/23-04/26.",
+      "confidence": "medium"
     }
   ]
 }

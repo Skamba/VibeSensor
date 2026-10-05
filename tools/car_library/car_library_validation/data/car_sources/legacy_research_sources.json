@@ -79,13 +79,6 @@
       "confidence": "medium"
     },
     {
-      "id": "legacy_research_sources:02f80102b1fb",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/update-for-the-audi-q4-e-tron-more-range-more-efficiency-more-emotions-15594",
-      "title": "Update For The Audi Q4 E Tron More Range More Efficiency More Emotions 15594",
-      "note": "Official 2024 Audi update article shows later naming uses 45 e-tron / 45 e-tron quattro / 55 e-tron quattro rather than the original 50 e-tron quattro, so the broad 2022-2026 row should not absorb one exact launch-era ratio package without a split.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:037a64fa5220",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0447642EN/630684",
       "title": "630684",
@@ -513,13 +506,6 @@
       "confidence": "high"
     },
     {
-      "id": "legacy_research_sources:2d1d32db2857",
-      "url": "https://www.audi-technology-portal.de/en/drivetrain/electric-drives/audi-q4-e-tron-modular-electric-platform",
-      "title": "Audi Q4 E Tron Modular Electric Platform",
-      "note": "Official Audi Technology Portal page confirms Q4 40 e-tron as rear-wheel drive with one rear motor and Q4 50 e-tron quattro as dual-motor all-wheel drive.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:2eabd1ad6f42",
       "url": "https://www.audi-mediacenter.com/en/the-audi-r8-until-2024-updated-dynamics-for-the-high-performance-sports-car-11734/facts-and-figures-11736",
       "title": "Facts And Figures 11736",
@@ -891,13 +877,6 @@
       "confidence": "high"
     },
     {
-      "id": "legacy_research_sources:4ea362ce6a8e",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1286/file_de/3ddc20106e5da2eabb39e0097cb8dc76c3739832/TD-Audi-Q4-40-e-tron-150kW_260202.pdf",
-      "title": "Td Audi Q4 40 E Tron 150Kw 260202.Pdf",
-      "note": "Official Audi MediaCenter Germany technical-data PDF for the reintroduced exact Q4 40 e-tron confirming RWD, 150 kW, 310 Nm, top speed 160 km/h, and basic staggered 235/55 R19 front + 255/50 R19 rear tires.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:4f4a83d38242",
       "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X4+%28F26%2C+2015-2018%29+technical+data+Europe",
       "title": "Search",
@@ -1063,13 +1042,6 @@
       "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0267658DE/377421",
       "title": "377421",
       "note": "Official BMW Germany 11/2016 technical-data PDF for the exact 540i Limousine: RWD, 8-Gang Steptronic, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, reverse 3.456, final drive 2.929, and 225/55 R17 baseline tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:6236ede09312",
-      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/gestaerkter-einstieg-in-die-elektromobilitaet-der-audi-q4-40-e-tron-16485",
-      "title": "Gestaerkter Einstieg In Die Elektromobilitaet Der Audi Q4 40 E Tron 16485",
-      "note": "Official Audi MediaCenter Germany article confirming the later reintroduced exact Q4 40 e-tron with rear-wheel drive, 150 kW, 310 Nm, and top speed 160 km/h.",
       "confidence": "high"
     },
     {
@@ -1721,13 +1693,6 @@
       "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/421/file_en/bedd9abf6b9d0dbf986fe96870c1806bdc1b85b9/eTD_Audi_TT_Coupe_40_TFSI_S_tronic_145kW_230113.pdf?1698933712&disposition=attachment",
       "title": "Etd Audi Tt Coupe 40 Tfsi S Tronic 145Kw 230113.Pdf",
       "note": "Official Audi MediaCenter Germany-market technical-data PDF for the exact TT Coup\u00e9 40 TFSI S tronic 145 kW: front-wheel drive, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final-drive values 4.471 / 3.304, and a 225/50 R17 basic tire.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:a7a38f705f5d",
-      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/update-fuer-den-audi-q4-e-tron-mehr-reichweite-mehr-effizienz-mehr-emotionen-15594",
-      "title": "Update Fuer Den Audi Q4 E Tron Mehr Reichweite Mehr Effizienz Mehr Emotionen 15594",
-      "note": "Official Audi MediaCenter Germany update article showing the 2024 lineup rename to 45 e-tron / 45 e-tron quattro / 55 e-tron quattro, demonstrating that the original 40 e-tron name was not continuous through the full broad row span.",
       "confidence": "high"
     },
     {
@@ -2652,13 +2617,6 @@
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0325531EN",
       "title": "T0325531En",
       "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 03/2021; German-market context for the exact 330i xDrive PDF attachment.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:fd03c253ad14",
-      "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
-      "title": "Electric Motors And Electric All Wheel Drive 13900",
-      "note": "Audi MediaCenter drivetrain page documents the Q4 e-tron launch mix and confirms there is no non-quattro `Q4 50 e-tron` RWD variant in the supported EU set.",
       "confidence": "high"
     },
     {

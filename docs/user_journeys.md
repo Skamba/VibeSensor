@@ -559,22 +559,22 @@ changes and update this table.
 
 | Metric | Value |
 |---|---|
-| Brands | Audi (221 rows), BMW (361 rows); market EU only |
-| Exact configuration rows | 582 (ICE 530, PHEV 32, EV 20) |
-| Picker models / generation codes / variants | 93 / 71 / 452 |
+| Brands | Audi (225 rows), BMW (361 rows); market EU only |
+| Exact configuration rows | 586 (ICE 530, PHEV 32, EV 24) |
+| Picker models / generation codes / variants | 93 / 71 / 456 |
 | Production years | 2007–2026 |
-| Rows with tire options | 581 (1 has the default only) |
-| Rows with driven final drive | 505 (87%); 77 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
-| Rows with top gear | 495 of 562 non-EV rows (88%); the 20 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
-| Rows with full gear sets | 353 (61%) |
-| Tire confidence | official_exact 406 · reputable_secondary 42 · official_derived 7 · family_default 77 · unverified 50 |
-| Driven final-drive confidence | official_exact 309 · official_derived 100 · reputable_secondary 22 · family_default 41 · unverified 33 · none 77 |
-| Top-gear confidence | official_exact 387 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 87 (20 EVs, 67 unsourced) |
-| Weak (family_default or unverified) | final drive 74/582 (13%), top gear 67/582 (12%), tire 127/582 (22%) |
-| `order_reference_trust` | trusted 443 · approximate 80 · backlog_unverified 59 |
-| `requires_manual_confirmation` | true 74, false 508 (true exactly when the driven final drive or top gear is weak) |
+| Rows with tire options | 585 (1 has the default only) |
+| Rows with driven final drive | 505 (86%); 81 without: Audi 8X 3, GB 1, 8V 3, 8Y 4, B8 22, B9 3, C7 6, C8 3, D4 2, GA 4, 8U 8, FZ 4, 8R 6, 4S 2, 8J 4, 8S 3; BMW I20 1, F48 1, F39 1 (each carries an `unresolved` final-drive note) |
+| Rows with top gear | 495 of 562 non-EV rows (88%); the 24 EVs have none: the reduction ratio is the final drive; 67 non-EV rows without, each with an `unresolved` top-gear note |
+| Rows with full gear sets | 353 (60%) |
+| Tire confidence | official_exact 410 · reputable_secondary 42 · official_derived 7 · family_default 77 · unverified 50 |
+| Driven final-drive confidence | official_exact 311 · official_derived 100 · reputable_secondary 22 · family_default 39 · unverified 33 · none 81 |
+| Top-gear confidence | official_exact 387 · official_derived 15 · reputable_secondary 26 · family_default 38 · unverified 29 · none 91 (24 EVs, 67 unsourced) |
+| Weak (family_default or unverified) | final drive 72/586 (12%), top gear 67/586 (11%), tire 127/586 (22%) |
+| `order_reference_trust` | trusted 447 · approximate 80 · backlog_unverified 59 |
+| `requires_manual_confirmation` | true 72, false 514 (true exactly when the driven final drive or top gear is weak) |
 | Picker variants without any gearbox | 0 |
-| Variants whose rows differ in tire options | 18 (the picker offers the union) |
+| Variants whose rows differ in tire options | 20 (the picker offers the union) |
 | Model families split into several picker entries by year label | 0 (one entry per generation) |
 
 **How confidence is surfaced today:**
@@ -608,10 +608,11 @@ changes and update this table.
   from its rows, so a 2015 F20 owner still sees "1 Series (F20, 2011-2012)".
   F10 and G30 now span 2011–2016 and 2017–2023, with a separate row per
   final-drive change.
-- **Final drive:** missing on 13 Audi TT/RS 3 rows and the 2019–2021 G21 318d
-  automatic. The `unresolved` notes say the manufacturer publishes split,
-  conflicting or no values; do not invent one. Weak
-  (family_default or unverified) on 74 rows. Those rows are where a single
+- **Final drive:** missing on the rows counted in the table above. The
+  `unresolved` notes say the manufacturer publishes split, conflicting or no
+  values (the Q4 e-tron sheets from 2024 on print no reduction ratio); do not
+  invent one. Weak
+  (family_default or unverified) on 72 rows. Those rows are where a single
   parts-catalogue lookup per transmission code upgrades many rows at once.
 
 ---

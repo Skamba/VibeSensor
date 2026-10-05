@@ -1358,6 +1358,55 @@
       "title": "Audi MediaCenter press release 'Sporty and elegant plug-in hybrid: the Audi Q5 Sportback TFSI e quattro', 02/23/2021",
       "note": "Official release announcing European sales of the Q5 Sportback 50 TFSI e quattro (220 kW) and 55 TFSI e quattro (270 kW): electric motor integrated into the seven-speed S tronic, quattro drivetrain with ultra technology.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-2021-press-kit-electric-motors",
+      "url": "https://www.audi-mediacenter.com/en/electric-suvs-in-the-premium-compact-segment-the-audi-q4-e-tron-and-the-q4-sportback-e-tron-13887/electric-motors-and-electric-all-wheel-drive-13900",
+      "title": "Audi MediaCenter press kit 'Electric SUVs in the premium compact segment: the Audi Q4 e-tron and the Q4 Sportback e-tron', chapter 'Electric motors and electric all-wheel drive', 04/14/2021",
+      "note": "Official launch press kit: every Q4 e-tron has a permanently excited synchronous motor (PSM) on the rear axle that sends its torque to a one-speed transmission with a differential; 'Its ratio in the models with rear-wheel drive is 13:1, in the electric all-wheel drive it is 11.5:1.' The quattro models add an asynchronous motor (ASM) on the front axle whose 'one-speed transmission has a ratio of 10.0:1'. Lists the launch 35 e-tron and 40 e-tron (rear-wheel drive) and 50 e-tron quattro.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-2023-update-press-release",
+      "url": "https://www.audi-mediacenter.com/en/press-releases/update-for-the-audi-q4-e-tron-more-range-more-efficiency-more-emotions-15594",
+      "title": "Audi MediaCenter MediaInfo 'Update for the Audi Q4 e-tron: more range, more efficiency, more emotions', 09/21/2023",
+      "note": "Official model-year 2024 update: a completely redeveloped rear PSM; the new line-up is the 45 e-tron (rear-wheel drive, 210 kW), 45 e-tron quattro (210 kW) and 55 e-tron quattro (250 kW); orderable from 26 September 2023. Publishes no reduction ratio for the new rear motor.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-45-e-tron-2024-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250504194851/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1287/file_en/886493c11136de03ce0ba8782700e6cd397f6646/eTD-Audi-Q4-45-e-tron-210kW_240318.pdf",
+      "title": "Audi technical data Q4 45 e-tron 210 kW, Program for Germany, status 03/18/24 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: rear-wheel drive, electric motors front / rear 0 / 1, torque - / 545 Nm, top speed 180 km/h, basic tires 235/55 R19 front | 255/50 R19 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-45-e-tron-quattro-2024-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250504064859/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1292/file_en/e14d3bf3b5d821e3d7be3c0bb58de427379bf403/eTD-Audi-Q4-45-e-tron-quattro-210kW_240318.pdf",
+      "title": "Audi technical data Q4 45 e-tron quattro 210 kW, Program for Germany, status 03/18/24 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: all-wheel drive, electric motors front / rear 1 / 1, torque 134 / 545 Nm, top speed 180 km/h, basic tires 235/55 R19 front | 255/50 R19 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-55-e-tron-quattro-2024-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250504035050/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1288/file_en/8074bf61e54097c9650802eb8c69e1cabaf62307/eTD-Audi-Q4-55-e-tron-quattro-250kW_240318.pdf",
+      "title": "Audi technical data Q4 55 e-tron quattro 250 kW, Program for Germany, status 03/18/24 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet: all-wheel drive, electric motors front / rear 1 / 1, torque 134 / 545 Nm, top speed 180 km/h, basic tires 235/55 R19 front | 255/50 R19 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-40-e-tron-2025-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250627153726/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1286/file_en/3ddc20106e5da2eabb39e0097cb8dc76c3739832/eTD-Audi-Q4-40-e-tron-150kW_250508.pdf",
+      "title": "Audi technical data Q4 40 e-tron 150 kW, Program for Germany, status 05/08/2025 (Wayback Machine copy)",
+      "note": "Official Audi MediaCenter technical-data sheet for the reintroduced 40 e-tron: rear-wheel drive, electric motors front / rear 0 / 1, torque - / 310 Nm, top speed 160 km/h, basic tires 235/55 R19 front | 255/50 R19 rear. Prints no transmission or reduction ratio.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:fz-q4-40-e-tron-2026-tech-data-pdf",
+      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1286/file_de/3ddc20106e5da2eabb39e0097cb8dc76c3739832/TD-Audi-Q4-40-e-tron-150kW_260202.pdf",
+      "title": "Audi Technische Daten Q4 40 e-tron 150 kW, Angebot in Deutschland, Stand 02.02.26",
+      "note": "Official Audi MediaCenter technical-data sheet (German): Heckantrieb, electric motors front / rear 0 / 1, torque - / 310 Nm, top speed 160 km/h, battery 63 / 59 kWh, basic tires 235/55 R19 | 255/50 R19. Same drive and tires as the 05/2025 sheet; prints no transmission or reduction ratio.",
+      "confidence": "high"
     }
   ]
 }
