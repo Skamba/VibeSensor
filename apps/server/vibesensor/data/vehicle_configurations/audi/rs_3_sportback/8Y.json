@@ -82,16 +82,10 @@
             0.63
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the front field until a source publishes a split front/rear ratio.",
-          "value": 4.059
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e2",
-          "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. The repo duplicates that single official value into the rear field until a source publishes a split front/rear ratio.",
+          "notes": "The official Audi MediaCenter technical-data PDF publishes one final-drive value of 4.059 for the exact 8Y RS 3 Sportback. It is stored as final_drive_rear only; the front axle ratio is not copied.",
           "value": 4.059
         }
       },

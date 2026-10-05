@@ -107,7 +107,11 @@ inherited from family-level data, encode that through `confidence` and
   drive.
 - **AWD axle ratios:** when the sheet publishes one axle ratio for an
   all-wheel-drive car, the row stores it as `final_drive_rear` only; the
-  front ratio is not invented.
+  front ratio is not invented or copied. Both fields are set only when the
+  sheet lists separate front and rear ratios (electric cars with one motor
+  per axle). A plug-in hybrid whose engine drives only the front axle, with
+  an electric motor on the rear axle, stores the gearbox final drive as
+  `final_drive_front`.
 - **Engine text:** `engine_name` reads `<family code> <litres>L <layout>
   [Turbo|Supercharged] [Diesel] [PHEV]`, e.g. `B47 2.0L I4 Turbo Diesel` or
   `3.0L V6 Supercharged` (Audi's mechanically supercharged 3.0 TFSI).
@@ -120,6 +124,12 @@ inherited from family-level data, encode that through `confidence` and
   `PHEV`, `Electric` ⇔ `EV`) for the brands listed in `ENGINE_TEXT_BRANDS`
   (`tools/car_library/car_library_validation/_powertrain.py`); a brand joins
   that list once its rows follow the format.
+- **Dual-clutch output final drives:** some dual-clutch sheets print two
+  final drives (Audi: "final drive ratio 1-2 / 2-3"), one per gearbox output
+  shaft. They are not front and rear axle ratios. A row stores the one behind
+  the top gear in the driven axle field only when the sheet's forward ratios
+  show which one that is; otherwise it stores neither and records an
+  `unresolved` note.
 
 Each row represents one exact vehicle configuration and keeps the qualified
 order-analysis fields inline with their own metadata:

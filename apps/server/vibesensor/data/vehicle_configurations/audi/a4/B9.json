@@ -2,7 +2,7 @@
   "definitions": {
     "notes": {
       "n4": "Verified Audi A4 B9 S tronic final-drive ratios from official Audi MediaCenter eTD PDFs. Later exact DE 45 TFSI quattro sedan sheets also resolve top gear 0.433, the full 7-speed ratio set, and the 225/50 R17 basic tire for the 195 kW sedan. Wave 12 validation now also adds exact late-B9 Germany 35 TDI sedan evidence from the 03/20/2024 and 06/13/2024 technical-data PDFs: Frontantrieb, 7-speed S tronic, forward ratios 3.188 / 2.190 / 1.517 / 1.057 / 0.738 / 0.508 / 0.386, reverse 2.750, final drive 4.048, and basic tire 205/60 R16. The broad row remains unchanged because this pass did not prove the same 35 TDI mapping across the full represented span or recover exact Germany-market continuity beyond Audi's own checked late-B9 state.",
-      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models; it is stored as final_drive_rear only, and the front axle ratio is not copied (docs/car_library_architecture.md)."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -770,12 +770,6 @@
             0.386
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e12",
-          "notes_ref": "awd_fd",
-          "value": 4.27
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e12",
@@ -848,12 +842,6 @@
             0.508,
             0.386
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e14",
-          "notes_ref": "awd_fd",
-          "value": 4.41
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -935,12 +923,6 @@
             0.557,
             0.433
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e16",
-          "notes_ref": "awd_fd",
-          "value": 4.41
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -1027,12 +1009,6 @@
             0.433
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e18",
-          "notes_ref": "awd_fd",
-          "value": 4.41
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e18",
@@ -1106,12 +1082,6 @@
             0.839,
             0.667
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e12",
-          "notes_ref": "awd_fd",
-          "value": 2.411
         },
         "final_drive_rear": {
           "confidence": "official_derived",

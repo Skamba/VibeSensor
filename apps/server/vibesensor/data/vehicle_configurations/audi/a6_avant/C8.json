@@ -1,7 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models. The schema stores separate axle fields, so the single published value is duplicated conservatively across both axle slots."
+      "awd_fd": "Audi technical data publish one final-drive ratio for quattro models; it is stored as final_drive_rear only, and the front axle ratio is not copied (docs/car_library_architecture.md)."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -388,12 +388,6 @@
             0.386
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e5",
-          "notes_ref": "awd_fd",
-          "value": 4.41
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e5",
@@ -558,12 +552,6 @@
             0.433
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "awd_fd",
-          "value": 4.41
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e9",
@@ -645,12 +633,6 @@
             0.823,
             0.64
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e11",
-          "notes_ref": "awd_fd",
-          "value": 2.624
         },
         "final_drive_rear": {
           "confidence": "official_derived",
@@ -738,12 +720,6 @@
             0.386
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e13",
-          "notes_ref": "awd_fd",
-          "value": 4.41
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e13",
@@ -826,12 +802,6 @@
             0.64
           ]
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e15",
-          "notes_ref": "awd_fd",
-          "value": 2.624
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e15",
@@ -913,12 +883,6 @@
             0.508,
             0.386
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e17",
-          "notes_ref": "awd_fd",
-          "value": 4.41
         },
         "final_drive_rear": {
           "confidence": "official_derived",

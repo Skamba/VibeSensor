@@ -284,15 +284,9 @@
           "value": 0.68,
           "evidence_refs_ref": "e2"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.444 inherited family-default. A6 C7 DL501 uses split AWD 4.093/4.111 - A5 B8 may differ; needs A5 B8 specific verification.",
-          "value": 3.444,
-          "evidence_refs_ref": "e2"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Final drive rear 3.444 inherited family-default; unverified for A5 B8.",
+          "notes": "Final drive 3.444 inherited family-default. A6 C7 DL501 uses split AWD 4.093/4.111 - A5 B8 may differ; needs A5 B8 specific verification.",
           "value": 3.444,
           "evidence_refs_ref": "e2"
         }
@@ -383,12 +377,6 @@
           "confidence": "unverified",
           "notes_ref": "n6",
           "value": 0.667,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 3.077,
           "evidence_refs_ref": "e2"
         },
         "final_drive_rear": {
@@ -490,15 +478,9 @@
           "value": 0.68,
           "evidence_refs_ref": "e4"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.444 inherited family-default; A6 C7 DL501 uses split 4.093/4.111 - A5 B8.5 may differ; unverified.",
-          "value": 3.444,
-          "evidence_refs_ref": "e4"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Final drive rear 3.444 inherited family-default; unverified.",
+          "notes": "Final drive 3.444 inherited family-default; A6 C7 DL501 uses split 4.093/4.111 - A5 B8.5 may differ; unverified.",
           "value": 3.444,
           "evidence_refs_ref": "e4"
         }
@@ -580,12 +562,6 @@
           "confidence": "unverified",
           "notes_ref": "n7",
           "value": 0.667,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n7",
-          "value": 3.077,
           "evidence_refs_ref": "e2"
         },
         "final_drive_rear": {

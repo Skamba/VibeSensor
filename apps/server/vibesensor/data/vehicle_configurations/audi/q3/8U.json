@@ -486,15 +486,9 @@
           "value": 0.84,
           "evidence_refs_ref": "e4"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.462 plausible for 0AJ in this torque application but unverified.",
-          "value": 3.462,
-          "evidence_refs_ref": "e4"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Final drive rear 3.462 inherited; unverified.",
+          "notes": "Final drive 3.462 plausible for 0AJ in this torque application but unverified.",
           "value": 3.462,
           "evidence_refs_ref": "e4"
         }
@@ -587,15 +581,9 @@
           "value": 0.725,
           "evidence_refs_ref": "e1"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 4.077 plausible but unverified for Q3 8U 2.0 TDI quattro DCT7.",
-          "value": 4.077,
-          "evidence_refs_ref": "e1"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Final drive rear 4.077 inherited; unverified.",
+          "notes": "Final drive 4.077 plausible but unverified for Q3 8U 2.0 TDI quattro DCT7.",
           "value": 4.077,
           "evidence_refs_ref": "e1"
         }
@@ -681,10 +669,6 @@
           "notes": "Top gear 0.813 from prior-session Audi UK Q3 TFSI quattro technical-data PDF (cited file is now a 2,450-byte SPA shell; value plausible for 0AJ at upper end of 0.756-0.813 range). Confidence reduced from 'official_derived' to 'reputable_secondary' to reflect that the saved evidence file is not auditable.",
           "value": 0.813
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.462
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 3.462
@@ -758,18 +742,6 @@
           "evidence_refs_ref": "e9",
           "notes_ref": "n8",
           "value": 0.667
-        },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n8",
-          "value": 4.769
-        },
-        "final_drive_rear": {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs_ref": "e9",
-          "notes_ref": "n8",
-          "value": 3.444
         }
       },
       "tires": {
@@ -811,6 +783,11 @@
         {
           "item": "Q3 8U source-finding pass status",
           "reason": "Q3 8U source-finding pass collected official Audi UK 2014 ('Edition 6.2 06/14') and 2016 'atl' Q3 brochures plus three Audi UK technical-data PDFs (Q3 2.0 TFSI 170 PS, Q3 2.0 TDI quattro 177 PS, and Q3 2.0 TFSI quattro S tronic) under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/audi-q3-8u/. The packet confirms model, engine, drivetrain, S tronic vs manual, and tire-package availability per UK pricing/specification guide, but the packet was not synthesized into per-row exact gear-ratio/final-drive evidence and no new source pack was registered. The broad 2012-2018 row should remain low-confidence, with driveshaft and wheel-order analysis disabled, until a per-variant exact technical PDF is parsed and added to the source pack."
+        },
+        {
+          "item": "Q3 8U 2.0 TFSI quattro S tronic final drive behind the top gear",
+          "reason": "The Audi UK technical-data sheet (no longer served and not archived) gives two S tronic output final drives, 4.769 and 3.444. They are gearbox output ratios, not front and rear axle ratios, and without the sheet's full forward-ratio set it cannot be shown which one carries 7th gear, so no final drive is stored.",
+          "evidence_refs_ref": "e9"
         }
       ],
       "configuration_confidence": "low_confidence"

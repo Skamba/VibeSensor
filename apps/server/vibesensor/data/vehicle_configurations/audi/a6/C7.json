@@ -382,15 +382,9 @@
           "value": 0.667,
           "evidence_refs_ref": "e1"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes": "Final drive 3.077 plausible for ZF 8HP on MLB A6/A7/A8 family but unverified for A6 C7 BiTDI specific.",
-          "value": 3.077,
-          "evidence_refs_ref": "e1"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Final drive rear 3.077 inherited; unverified.",
+          "notes": "Final drive 3.077 plausible for ZF 8HP on MLB A6/A7/A8 family but unverified for A6 C7 BiTDI specific.",
           "value": 3.077,
           "evidence_refs_ref": "e1"
         }
@@ -572,12 +566,6 @@
           "confidence": "unverified",
           "notes_ref": "n4",
           "value": 0.667,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n4",
-          "value": 3.077,
           "evidence_refs_ref": "e1"
         },
         "final_drive_rear": {

@@ -561,11 +561,11 @@ changes and update this table.
 | Picker models / generation codes / variants | 91 / 70 / 422 |
 | Production years | 2007–2026 |
 | Rows with tire options | 549 (1 has the default only) |
-| Rows with driven final drive | 536 (97%); 14 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
+| Rows with driven final drive | 535 (97%); 15 without: Audi 8S TT/TTS/TT RS, Audi 8V RS 3, Audi 8Y, BMW G21 318d automatic 2019-2021 |
 | Rows with top gear | 550 (100%; EVs store 1.0 for the single speed) |
 | Rows with full gear sets | 316 (57%) |
 | Tire confidence | official_exact 364 · reputable_secondary 42 · official_derived 7 · family_default 83 · unverified 54 |
-| Driven final-drive confidence | official_exact 273 · official_derived 87 · reputable_secondary 23 · family_default 76 · unverified 77 · none 14 |
+| Driven final-drive confidence | official_exact 273 · official_derived 87 · reputable_secondary 22 · family_default 76 · unverified 77 · none 15 |
 | Top-gear confidence | official_exact 354 · official_derived 23 · reputable_secondary 28 · family_default 73 · unverified 72 |
 | Weak (family_default or unverified) | final drive 153/550 (28%), top gear 145/550 (26%), tire 137/550 (25%) |
 | `order_reference_trust` | trusted 385 · approximate 86 · backlog_unverified 79 |

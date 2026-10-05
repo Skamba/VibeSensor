@@ -75,10 +75,6 @@
           "confidence": "family_default",
           "value": 1.0
         },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 8.057
-        },
         "final_drive_rear": {
           "confidence": "family_default",
           "value": 8.057
@@ -137,10 +133,6 @@
         "top_gear_ratio": {
           "confidence": "family_default",
           "value": 1.0
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 8.057
         },
         "final_drive_rear": {
           "confidence": "family_default",

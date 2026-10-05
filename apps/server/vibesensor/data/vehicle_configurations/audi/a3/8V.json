@@ -15,8 +15,7 @@
       "n18": "Audi A3 8V Saloon 35 TFSI 7-speed S tronic FWD. Date fix: 2013 -> 2017. Transmission code corrected from DQ381 -> DQ200: 1.5 TFSI evo peak torque 250 Nm sits at the DQ200 dry-clutch ceiling (multiple VW-group 1.5 TFSI applications use DQ200 in this exact configuration). ADAC '7-Gang' label and Wikipedia A3 8V powertrain entry corroborate. Carfolio exact Saloon page: top 0.65 / FD 4.80 (DQ200 sub-trans 1 ratio); tire baseline 205/55 R16.",
       "n19": "Audi A3 8V Saloon 40 TFSI quattro (2.0 TFSI 190 PS) S tronic AWD. CRITICAL: this row merges two production eras. 2013-2016: 1.8 TFSI quattro 180 PS with DQ250-6A 6-speed wet AWD (auto-data 2013 page). 2016-2018: 2.0 TFSI quattro 190 PS / 40 TFSI badge with same DQ250-6A then DQ381-7A from 2017. UK MY2018 price list lists the 2.0 TFSI quattro only with S tronic. Carfolio adjacent 2.0 TFSI quattro S tronic page (non-Saloon labeled but same powertrain): top 0.64 / FD 3.13 - applied as reputable_secondary representative of the 2.0 TFSI quattro DQ381-7A 7-speed era. Tire baseline 205/55 R16.",
       "n23": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250 6-speed pre-2017 ratio.",
-      "n24": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio.",
-      "n25": "Sonnet redo (2026-04 v2): Haldex AWD rear ratio mirrors front in published specs."
+      "n24": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -541,15 +540,9 @@
           "value": 0.72,
           "evidence_refs_ref": "e20"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent (non-Saloon) Carfolio page; Saloon-exact value not found.",
-          "value": 3.1,
-          "evidence_refs_ref": "e20"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo (2026-04 v2): Haldex AWD - rear axle drive ratio mirrors front in published consumer specs. Reputable_secondary via Carfolio adjacent page.",
+          "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent (non-Saloon) Carfolio page; Saloon-exact value not found.",
           "value": 3.1,
           "evidence_refs_ref": "e20"
         }
@@ -633,17 +626,11 @@
           "value": 0.62,
           "evidence_refs_ref": "e5"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n24",
-          "value": 3.33,
-          "evidence_refs_ref": "e5"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n25",
           "value": 3.33,
-          "evidence_refs_ref": "e5"
+          "evidence_refs_ref": "e5",
+          "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Reflects DQ250-6A pre-2017 ratio."
         }
       },
       "tires": {
@@ -1069,12 +1056,6 @@
           "value": 0.84,
           "evidence_refs_ref": "e4"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n6",
-          "value": 3.462,
-          "evidence_refs_ref": "e4"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n6",
@@ -1161,17 +1142,11 @@
           "value": 0.64,
           "evidence_refs_ref": "e5"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent 2.0 TFSI quattro S tronic page.",
-          "value": 3.13,
-          "evidence_refs_ref": "e5"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n25",
           "value": 3.13,
-          "evidence_refs_ref": "e5"
+          "evidence_refs_ref": "e5",
+          "notes": "Sonnet redo research (2026-04 v2): Carfolio per-variant page for the Audi A3 8V Saloon supplied this value as reputable_secondary. No official Audi 8V technical-data PDF with matching ratio was recovered this pass; Audi MediaCenter and Audi UK 8V tech-data PDFs did not surface for the exact engine/gearbox combination. Holding at reputable_secondary rather than promoting to official_*. Prior repo placeholder (top 0.84 / 0.725 and FD 3.462 / 4.769) was contradicted by every Carfolio exact page checked - see SOURCE_NOTES.md Session 2 ratio table. Adjacent 2.0 TFSI quattro S tronic page."
         }
       },
       "tires": {

@@ -1,7 +1,7 @@
 {
   "definitions": {
     "notes": {
-      "n1": "Official Audi 2019 and 2024 technical-data PDFs publish a single 3.204 final-drive ratio for the exact RS 5 Coupé state represented by this narrowed 2019-2024 row. The repo duplicates that exact published ratio across the front and rear final-drive fields for the canonical AWD representation.",
+      "n1": "Official Audi 2019 and 2024 technical-data PDFs publish a single 3.204 final-drive ratio for the exact RS 5 Coupé state represented by this narrowed 2019-2024 row. It is stored as final_drive_rear only; the front axle ratio is not copied.",
       "n2": "Official Audi 2019 and 2024 technical-data PDFs agree on a square 265/35 R19 basic tire setup for the exact RS 5 Coupé state represented by this narrowed 2019-2024 row."
     },
     "evidence_ref_sets": {
@@ -75,12 +75,6 @@
             0.823,
             0.64
           ]
-        },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes_ref": "n1",
-          "value": 3.204
         },
         "final_drive_rear": {
           "confidence": "official_derived",

@@ -15,12 +15,10 @@
       "n22": "Audi A4 B8 2.0 TFSI quattro 6-speed manual AWD. Auto-Data B8 listing + Carfolio 2013 page confirm Aug 2008 start. Carfolio ratio cells were blank for this exact variant; no ratio source recovered. Standard tyre 225/55 R16 (with 225/50 R17 option) per Auto-Data.",
       "n23": "Audi A4 B8.5 facelift 2.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data B8.5 facelift Jan 2012-2015). transmission.name -> '7-speed S tronic (DL501)'. No exact ratio source recovered (Carfolio cells blank). Standard tyre 225/55 R16 per Auto-Data.",
       "n24": "Audi A4 B8 3.0 TDI quattro 6-speed manual AWD. Auto-Data + Carfolio + Audi MediaCenter 3.0 TDI clean diesel quattro press release confirm. Carfolio: top 0.54 / combined final drive 3.68. Standard tyre 225/50 R17 (with 245/40 R18 S line option) per Auto-Data B8 listing.",
-      "n25": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive.",
       "n26": "Audi A4 B8.5 facelift 3.0 TDI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2011 (Auto-Data B8.5 facelift Nov 2011-2015). Audi MediaCenter pre-facelift 3.0 TDI press release confirms pre-facelift was six-speed Tiptronic, not S tronic; S tronic appears only with facelift. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.46 / combined FD 3.88. Standard tyre 225/50 R17 per Auto-Data B8.5.",
       "n27": "Audi A4 B8.5 facelift 3.0 TFSI quattro 7-speed S tronic (DL501) AWD. DATE FIX: 2008 -> 2012 (Auto-Data Feb 2012-2014). The 3.0 TFSI A4 (272 PS, A4-only - distinct from S4) is facelift-only and DL501-only. transmission.name -> '7-speed S tronic (DL501)'. Carfolio: top 0.52 / combined FD 3.88. Standard tyre 245/40 R18 on 8.5Jx18 wheel per Carfolio (S line baseline for the engine spec); Auto-Data lists 225/50 R17 as alternate.",
       "n28": "Sonnet redo: no exact source. Repo placeholder 3.444 was a family_default carryover.",
-      "n29": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping.",
-      "n30": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio."
+      "n29": "Exact secondary S tronic sources agree on AWD and a 7-speed S tronic gearbox, but the available facelift-only evidence does not expose a cross-checked numeric ratio package or a safe full-row tire mapping."
     },
     "evidence_ref_sets": {
       "e1": [
@@ -765,15 +763,9 @@
           "value": 0.63,
           "evidence_refs_ref": "e16"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio publishes a single combined final drive value; front/rear axle split is not exposed in secondary sources for the longitudinal quattro driveline.",
-          "value": 4.49,
-          "evidence_refs_ref": "e16"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo (2026-04 v2): mirrored from combined Carfolio final drive; explicit rear axle ratio not published in secondary sources.",
+          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio publishes a single combined final drive value; front/rear axle split is not exposed in secondary sources for the longitudinal quattro driveline.",
           "value": 4.49,
           "evidence_refs_ref": "e16"
         }
@@ -852,7 +844,7 @@
           "value": 0.68,
           "evidence_refs_ref": "e9"
         },
-        "final_drive_front": {
+        "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n28",
           "value": 3.444,
@@ -940,12 +932,6 @@
           "confidence": "unverified",
           "notes_ref": "n1",
           "value": 0.667,
-          "evidence_refs_ref": "e4"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
           "evidence_refs_ref": "e4"
         },
         "final_drive_rear": {
@@ -1269,15 +1255,9 @@
           "value": 0.84,
           "evidence_refs_ref": "e10"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n18",
-          "value": 3.462,
-          "evidence_refs_ref": "e10"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Sonnet redo: no exact source for quattro rear axle ratio.",
+          "notes": "Sonnet redo: no exact source. Repo placeholder 3.462 was a family_default carryover.",
           "value": 3.462,
           "evidence_refs_ref": "e10"
         }
@@ -1368,15 +1348,9 @@
           "value": 0.68,
           "evidence_refs_ref": "e8"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n28",
-          "value": 3.444,
-          "evidence_refs_ref": "e8"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes": "Sonnet redo: no exact source.",
+          "notes": "Sonnet redo: no exact source. Repo placeholder 3.444 was a family_default carryover.",
           "value": 3.444,
           "evidence_refs_ref": "e8"
         }
@@ -1462,12 +1436,6 @@
           "confidence": "unverified",
           "notes_ref": "n1",
           "value": 0.667,
-          "evidence_refs_ref": "e2"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
           "evidence_refs_ref": "e2"
         },
         "final_drive_rear": {
@@ -1559,17 +1527,11 @@
           "value": 0.54,
           "evidence_refs_ref": "e17"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio; front/rear split not exposed.",
-          "value": 3.68,
-          "evidence_refs_ref": "e17"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n25",
           "value": 3.68,
-          "evidence_refs_ref": "e17"
+          "evidence_refs_ref": "e17",
+          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio; front/rear split not exposed."
         }
       },
       "tires": {
@@ -1668,17 +1630,11 @@
           "value": 0.46,
           "evidence_refs_ref": "e18"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n30",
-          "value": 3.88,
-          "evidence_refs_ref": "e18"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n25",
           "value": 3.88,
-          "evidence_refs_ref": "e18"
+          "evidence_refs_ref": "e18",
+          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio."
         }
       },
       "tires": {
@@ -1766,12 +1722,6 @@
           "value": 0.667,
           "evidence_refs_ref": "e4"
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
-          "evidence_refs_ref": "e4"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n1",
@@ -1850,12 +1800,6 @@
           "confidence": "unverified",
           "notes_ref": "n15",
           "value": 0.84,
-          "evidence_refs_ref": "e6"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n15",
-          "value": 3.462,
           "evidence_refs_ref": "e6"
         },
         "final_drive_rear": {
@@ -1939,17 +1883,11 @@
           "value": 0.52,
           "evidence_refs_ref": "e14"
         },
-        "final_drive_front": {
-          "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n30",
-          "value": 3.88,
-          "evidence_refs_ref": "e14"
-        },
         "final_drive_rear": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n25",
           "value": 3.88,
-          "evidence_refs_ref": "e14"
+          "evidence_refs_ref": "e14",
+          "notes": "Sonnet redo research (2026-04 v2): repo placeholder values were generic family_default carryovers contradicted by the available secondary sources. Carfolio per-variant page supplied the value as reputable_secondary; no official Audi B8-specific technical-data PDF with matching ratios was recovered this pass. Carfolio combined ratio."
         }
       },
       "tires": {
@@ -2033,12 +1971,6 @@
           "confidence": "unverified",
           "notes_ref": "n1",
           "value": 0.667,
-          "evidence_refs_ref": "e7"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.077,
           "evidence_refs_ref": "e7"
         },
         "final_drive_rear": {

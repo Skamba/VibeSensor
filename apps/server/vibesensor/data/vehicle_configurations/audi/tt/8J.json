@@ -265,12 +265,6 @@
             "secondary_technical_sources:tt-8j-wikipedia"
           ]
         },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n2",
-          "value": 3.444,
-          "evidence_refs_ref": "e6"
-        },
         "final_drive_rear": {
           "confidence": "unverified",
           "notes_ref": "n2",
@@ -343,12 +337,6 @@
             "legacy_research_sources:fa2ecfeb2ce9",
             "secondary_technical_sources:tt-8j-wikipedia"
           ]
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n3",
-          "value": 3.462,
-          "evidence_refs_ref": "e3"
         },
         "final_drive_rear": {
           "confidence": "unverified",

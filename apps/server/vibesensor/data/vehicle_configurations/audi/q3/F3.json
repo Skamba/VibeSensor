@@ -353,16 +353,10 @@
           "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 0.561 as the checked 7th-gear ratio for the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
           "value": 0.561
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e1",
-          "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 4.813 for the checked front final-drive field of the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
-          "value": 4.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e1",
-          "notes": "Exact Audi MediaCenter Germany-program 2024 and 2025 technical-data PDFs list 3.667 for the checked rear final-drive field of the old-generation Q3 40 TDI quattro state. Applied as official-derived evidence for the broader EU row while year-by-year continuity remains unresolved.",
+          "notes": "The official Audi MediaCenter 2024 and 2025 (status 03/22/2024 and 06/05/2025) technical-data sheets print two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not separate front and rear axle ratios. With the sheet's forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, the overall ratios only fall gear by gear if 6th and 7th run through 3.667 (5th gear 0.677 x 4.813 = 3.258, 6th 0.722 x 3.667 = 2.648, 7th 0.561 x 3.667 = 2.057; 7th on 4.813 would give 2.700, above 6th), so 3.667 is the final drive behind the top gear and is stored as final_drive_rear; 4.813 drives only the lower gears and is not stored as an axle ratio.",
           "value": 3.667
         }
       },
@@ -461,16 +455,10 @@
           "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 0.635 as the 7th-gear ratio for the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
           "value": 0.635
         },
-        "final_drive_front": {
-          "confidence": "official_derived",
-          "evidence_refs_ref": "e2",
-          "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 4.813 for the front final-drive field of the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
-          "value": 4.813
-        },
         "final_drive_rear": {
           "confidence": "official_derived",
           "evidence_refs_ref": "e2",
-          "notes": "The checked official Audi MediaCenter 2024 and 2025 technical-data PDFs list 3.667 for the rear final-drive field of the exact old-generation Q3 40 TFSI quattro state. Applied as official-derived evidence while year-by-year continuity remains unresolved.",
+          "notes": "The official Audi MediaCenter 2024 and 2025 (status 07/25/2024 and 06/05/2025) technical-data sheets print two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not separate front and rear axle ratios. With the sheet's forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, the overall ratios only fall gear by gear if 6th and 7th run through 3.667 (5th gear 0.705 x 4.813 = 3.393, 6th 0.755 x 3.667 = 2.769, 7th 0.635 x 3.667 = 2.329; 7th on 4.813 would give 3.056, above 6th), so 3.667 is the final drive behind the top gear and is stored as final_drive_rear; 4.813 drives only the lower gears and is not stored as an axle ratio.",
           "value": 3.667
         }
       },
