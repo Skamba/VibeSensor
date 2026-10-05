@@ -210,6 +210,21 @@ function tireMatchesOption(
   );
 }
 
+/**
+ * The library tire the tire fields hold: the picked one while they still hold
+ * its size, else the first option with their size, else none.
+ */
+export function tireOptionForInputs(
+  options: readonly CarLibraryTireOption[],
+  picked: CarLibraryTireOption | null,
+  inputs: ManualInputs,
+): CarLibraryTireOption | null {
+  if (tireMatchesOption(picked, inputs)) {
+    return picked;
+  }
+  return options.find((option) => tireMatchesOption(option, inputs)) ?? null;
+}
+
 function sameTire(a: ManualInputs, b: ManualInputs): boolean {
   return (["tireWidth", "tireAspect", "rim"] as const).every(
     (field) => positive(a[field]) === positive(b[field]),

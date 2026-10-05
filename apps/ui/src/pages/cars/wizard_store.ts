@@ -31,6 +31,7 @@ import {
   resolveTireOptions,
   SPECS_STEP,
   tireInputsFromOption,
+  tireOptionForInputs,
   tireSizeFromInputs,
   type WizardState,
   wizardCarName,
@@ -468,8 +469,20 @@ export async function continueWithManualSpecs(
   await loadCurrentStep();
 }
 
+/** Typed specs; the highlighted library tire follows the tire fields' size. */
+function setTypedInputs(inputs: ManualInputs): void {
+  batch(() => {
+    manualInputs.value = inputs;
+    const picked = wizard.value.selectedTire;
+    const tire = tireOptionForInputs(tireOptions.value, picked, inputs);
+    if (tire !== picked) {
+      update({ selectedTire: tire });
+    }
+  });
+}
+
 export function editManualInput(field: ManualField, value: string): void {
-  manualInputs.value = { ...manualInputs.value, [field]: value };
+  setTypedInputs({ ...manualInputs.value, [field]: value });
 }
 
 /**
@@ -500,7 +513,7 @@ export function editTireSize(text: string): void {
     (text.trim() ? null : { tireWidth: "", tireAspect: "", rim: "" });
   batch(() => {
     if (parsed) {
-      manualInputs.value = { ...manualInputs.value, ...parsed };
+      setTypedInputs({ ...manualInputs.value, ...parsed });
     }
     tireSizeDraft.value = {
       text,

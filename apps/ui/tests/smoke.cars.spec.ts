@@ -65,6 +65,16 @@ const TIRE: CarLibraryTireOption = {
   source_confidence: "official_exact",
 };
 
+const SPORT_TIRE: CarLibraryTireOption = {
+  ...TIRE,
+  name: "Sport",
+  front: { width_mm: 225, aspect_pct: 45, rim_in: 17 },
+  tire_width_mm: 225,
+  tire_aspect_pct: 45,
+  rim_in: 17,
+  source_confidence: "reputable_secondary_crosschecked",
+};
+
 const GOLF: CarLibraryModel = {
   brand: "VW",
   type: "Hatchback",
@@ -75,7 +85,12 @@ const GOLF: CarLibraryModel = {
   tire_options: [TIRE],
   gearboxes: [GEARBOX],
   variants: [
-    { name: "1.4 TSI", drivetrain: "FWD", engine: "1.4 petrol" },
+    {
+      name: "1.4 TSI",
+      drivetrain: "FWD",
+      engine: "1.4 petrol",
+      tire_options: [TIRE, SPORT_TIRE],
+    },
     { name: "GTD", drivetrain: "FWD", engine: "2.0 diesel" },
   ],
 };
@@ -537,10 +552,26 @@ test("journey: typed values become the user's; a pasted size and an unknown rati
 
   await openGolf();
   // The sidewall-size field shows the library size and follows the fields.
+  const tireChip = page.locator('label[for="wizTireSize"] .ref-chip');
+  const tireCard = (index: number) =>
+    wizard.locator(`[data-tire-idx="${index}"]`);
   await expect(page.locator("#wizTireSize")).toHaveValue("205/55 R16");
+  await expect(tireCard(0)).toHaveAttribute("aria-pressed", "true");
+  await expect(tireChip).toHaveText("exact");
   await page.locator("#wizTireWidth").fill("215");
   await expect(page.locator("#wizTireSize")).toHaveValue("215/55 R16");
-  await page.locator("#wizTireWidth").fill("205");
+  // The highlighted tire follows the size: no option has 215/55 R16.
+  await expect(tireCard(0)).toHaveAttribute("aria-pressed", "false");
+  await expect(tireCard(1)).toHaveAttribute("aria-pressed", "false");
+  await expect(tireChip).toHaveText("yours");
+  // Typing another option's size highlights it, with its source.
+  await page.locator("#wizTireSize").fill("225/45 R17");
+  await expect(tireCard(1)).toHaveAttribute("aria-pressed", "true");
+  await expect(tireChip).toHaveText("checked");
+  await page.locator("#wizTireSize").fill("205/55 R16");
+  await expect(tireCard(0)).toHaveAttribute("aria-pressed", "true");
+  await expect(tireCard(1)).toHaveAttribute("aria-pressed", "false");
+  await expect(tireChip).toHaveText("exact");
   await page.locator("#wizFinalDrive").fill("4.1");
   await expect(page.locator('label[for="wizFinalDrive"] .ref-chip')).toHaveText(
     "yours",

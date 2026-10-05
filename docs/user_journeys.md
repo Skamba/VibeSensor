@@ -234,7 +234,10 @@ the form.
     preselected (`loadSpecs` in `wizard_store.ts`). Choosing a tire or a
     gearbox fills the specs form, so the user can change any value, for
     example for winter tires (`tireInputsFromOption` /
-    `ratioInputsFromGearbox` in `wizard_model.ts`).
+    `ratioInputsFromGearbox` in `wizard_model.ts`). The highlighted tire
+    option follows the tire fields: a size edited to another option's size
+    highlights that option and takes its source; a size no option has
+    highlights none and is the user's (`tireOptionForInputs`).
 - **Tell:**
   - Each gearbox option shows its final drive and top gear with a confidence
     chip: "exact" (official), "checked" (cross-checked secondary source),
