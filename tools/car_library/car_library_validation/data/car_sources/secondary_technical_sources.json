@@ -889,6 +889,20 @@
       "title": "ADAC Autokatalog Audi Q8 4M facelift (2023-2025)",
       "note": "ADAC catalogue of the Germany-market facelifted Q8 variants and sales periods: 45 TDI, 50 TDI and 55 TFSI quattro 09/23-05/25, 55 TFSI e and 60 TFSI e quattro 04/24-05/25, 3.0 TFSI e quattro 05/25-11/25. All are quattro tiptronic.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a8-d5-adac-prefacelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a8/d5/",
+      "title": "ADAC Autokatalog Audi A8 D5 (2017-2021)",
+      "note": "ADAC catalogue of the Germany-market pre-facelift A8 / A8 L D5 variants and sales periods: 50 TDI quattro 11/17-09/21, 55 TFSI quattro 11/17-09/21, 60 TDI quattro 01/20-09/20, 60 TFSI quattro 02/20-09/21, 60 TFSI e quattro 10/19-09/21. All are quattro tiptronic; no 50 TFSI is listed.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:a8-d5-adac-facelift",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/audi/a8/d5-facelift/",
+      "title": "ADAC Autokatalog Audi A8 D5 facelift (2021-2026)",
+      "note": "ADAC catalogue of the Germany-market facelifted A8 / A8 L D5 variants and sales periods: 50 TDI and 55 TFSI quattro 12/21-03/26, 60 TFSI quattro 12/21-05/25, 60 TFSI e quattro 03/22-07/22 and 07/23-03/26. All are quattro tiptronic; no 50 TFSI is listed.",
+      "confidence": "medium"
     }
   ]
 }

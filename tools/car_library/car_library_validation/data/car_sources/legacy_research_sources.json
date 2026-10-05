@@ -632,13 +632,6 @@
       "confidence": "medium"
     },
     {
-      "id": "legacy_research_sources:39e9836c4406",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_de/04c20499c359997cf95dd60eb22db309f783941f/TD-Audi-A8-60-TFSIe-quattro-tiptronic-340kW_251215.pdf?1769102879&disposition=attachment",
-      "title": "Td Audi A8 60 Tfsie Quattro Tiptronic 340Kw 251215.Pdf",
-      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 60 TFSI e quattro: permanent quattro AWD, 8-speed tiptronic, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:3a6f114b8ee2",
       "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+X3+%28G45%2C+2025-2026%29+technical+data+Europe",
       "title": "Search",
@@ -651,13 +644,6 @@
       "title": "Audi A7 Sportback C7 Facelift 2014 3.0 Tdi V6 Clean Diesel 272Hp Quattro S Tronic 20688",
       "note": "Reputable secondary exact facelift page for the A7 Sportback 3.0 TDI quattro showing AWD, 7-speed S tronic wording, and 255/45 R18 tires.",
       "confidence": "medium"
-    },
-    {
-      "id": "legacy_research_sources:3b7e4dcf4760",
-      "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+A8+%28D5%2C+2018-2026%29+technical+data+Europe",
-      "title": "Search",
-      "note": "Targeted lookup for official Audi media technical documents for this model.",
-      "confidence": "low"
     },
     {
       "id": "legacy_research_sources:3b8a9657b4b7",
@@ -867,13 +853,6 @@
       "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0325537DE/471545",
       "title": "471545",
       "note": "Official BMW Germany 03/2021 technical-data PDF confirming the same exact 520i LCI package with final drive 2.929, top gear 0.640, and 225/55 R17 101Y XL baseline tires.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:4c4a6ad675f8",
-      "url": "https://www.audi-mediacenter.com/de/publikationen/preislisten/preisliste-audi-a8-a8-l-audi-a8-a8-l-tfsi-e-audi-s8-modelljahr-2026-800/download",
-      "title": "Download",
-      "note": "Official Audi MediaCenter Germany MY2026 price list confirming the exact A8 55 TFSI quattro tiptronic 8-stufig model naming and wheel/tire family context for the current Germany-market car.",
       "confidence": "high"
     },
     {
@@ -1210,13 +1189,6 @@
       "url": "https://www.bmw.de/de/neufahrzeuge/m/m3-series/bmw-m3-limousine-technische-daten.html",
       "title": "Bmw M3 Limousine Technische Daten.Html",
       "note": "Official BMW Germany technical-data page confirms the current exact M3 Competition xDrive drivetrain layout and automatic transmission context.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:7160abc38bb3",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/1141/file_en/04c20499c359997cf95dd60eb22db309f783941f/eTD-Audi-A8-60-TFSIe-quattro-tiptronic-250kW_340kW_240314.pdf?1711354488&disposition=attachment",
-      "title": "Etd Audi A8 60 Tfsie Quattro Tiptronic 250Kw 340Kw 240314.Pdf",
-      "note": "Official Audi MediaCenter English cross-check PDF for the exact A8 60 TFSI e quattro confirming the same full forward-ratio set, reverse 3.317, final drive 3.076, and 255/45 R19 base tires.",
       "confidence": "high"
     },
     {
@@ -1829,13 +1801,6 @@
       "confidence": "high"
     },
     {
-      "id": "legacy_research_sources:b20cb3ff78c5",
-      "url": "https://www.audi-mediacenter.com/de/search?query=A8%2050%20TFSI%20quattro",
-      "title": "Search",
-      "note": "Official Audi MediaCenter Germany search results resolve the checked D5 A8 petrol search toward 55 TFSI quattro and 50 TDI quattro, with no recovered exact Germany 50 TFSI quattro technical-data sheet.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:b225154c654e",
       "url": "https://www.google.com/search?q=site%3Aaudi-mediacenter.com+Audi+RS+6+Avant+%28C8%2C+2020-2026%29+technical+data+Europe",
       "title": "Search",
@@ -1969,13 +1934,6 @@
       "confidence": "medium"
     },
     {
-      "id": "legacy_research_sources:bd797ac39b22",
-      "url": "https://www.audi-mediacenter.com/de/pressemitteilungen/geschaerftes-design-und-innovative-technologien-fuer-das-flaggschiff-der-aufgewertete-audi-a8-14357",
-      "title": "Geschaerftes Design Und Innovative Technologien Fuer Das Flaggschiff Der Aufgewertete Audi A8 14357",
-      "note": "Official Audi MediaCenter Germany facelift press release states the petrol D5 flagship as A8 55 TFSI quattro and describes the lower-output 210 kW 3.0 TFSI variant as China-only.",
-      "confidence": "high"
-    },
-    {
       "id": "legacy_research_sources:bdbd52866d52",
       "url": "https://www.auto-data.net/en/audi-a7-sportback-c7-facelift-2014-3.0-tfsi-v6-333hp-quattro-s-tronic-22438",
       "title": "Audi A7 Sportback C7 Facelift 2014 3.0 Tfsi V6 333Hp Quattro S Tronic 22438",
@@ -2015,13 +1973,6 @@
       "url": "https://www.press.bmwgroup.com/global/article/detail/T0135994EN/bmw-model-update-measures-for-spring-2013",
       "title": "Bmw Model Update Measures For Spring 2013",
       "note": "Official BMW spring 2013 update confirms additional xDrive expansion for BMW 6 Series models.",
-      "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:c2eafaaa3bb4",
-      "url": "https://uploads.audi-mediacenter.com/system/production/car_motorizations/632/file_de/b56e37f81d3658f0b63f12381a9429189ff5249d/TD-Audi-A8-55TFSI-quattro-tiptronic-250kW-MHEV_251023.pdf?1761641662",
-      "title": "Td Audi A8 55Tfsi Quattro Tiptronic 250Kw Mhev 251023.Pdf",
-      "note": "Official Audi MediaCenter Germany technical-data PDF for the exact A8 55 TFSI quattro tiptronic 250 kW MHEV: permanent quattro AWD with self-locking center differential, forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.317, final drive 3.076, and base tire 235/55 R18.",
       "confidence": "high"
     },
     {
@@ -2368,13 +2319,6 @@
       "confidence": "medium"
     },
     {
-      "id": "legacy_research_sources:e2310c408b54",
-      "url": "https://www.audi-mediacenter.com/en/press-releases/sharpened-design-and-innovative-technologies-for-the-flagship-the-enhanced-audi-a8-14357",
-      "title": "Sharpened Design And Innovative Technologies For The Flagship The Enhanced Audi A8 14357",
-      "note": "Official Audi MediaCenter press release confirming the 3.0 TFSI-powered A8 55 TFSI quattro and the 18-to-21-inch wheel range for the facelift-era D5 family.",
-      "confidence": "medium"
-    },
-    {
       "id": "legacy_research_sources:e26b69822173",
       "url": "https://www.google.com/search?q=site%3Apress.bmwgroup.com+BMW+M4+%28G82%2C+2021-2026%29+technical+data+Europe",
       "title": "Search",
@@ -2506,13 +2450,6 @@
       "title": "Etd Audi A5 Coupe 40 Tfsi S Tronic 150Kw Mhev 240320.Pdf",
       "note": "Official Audi MediaCenter eTD confirming A5 Coupe 40 TFSI S tronic final-drive ratio 4.234.",
       "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:ed5679233d8c",
-      "url": "https://www.audi-mediacenter.com/en/search?query=D5",
-      "title": "Search",
-      "note": "Audi MediaCenter official search page used in second-pass lookup for model-code technical releases.",
-      "confidence": "medium"
     },
     {
       "id": "legacy_research_sources:edd605c5ca47",
@@ -2716,13 +2653,6 @@
       "title": "T0325531En",
       "note": "Official BMW PressClub article for 3 Series Sedan technical data valid from 03/2021; German-market context for the exact 330i xDrive PDF attachment.",
       "confidence": "high"
-    },
-    {
-      "id": "legacy_research_sources:fc9d1c242093",
-      "url": "https://www.audi-mediacenter.com/de/audi-a8-tfsi-e-12167",
-      "title": "Audi A8 Tfsi E 12167",
-      "note": "Official Audi MediaCenter Germany model page confirming the exact A8 60 TFSI e quattro target and compact e-machine hybrid context.",
-      "confidence": "medium"
     },
     {
       "id": "legacy_research_sources:fd03c253ad14",
