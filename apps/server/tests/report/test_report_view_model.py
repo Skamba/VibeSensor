@@ -209,6 +209,59 @@ def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     assert not any(line.startswith("Wheels/tires") for line in mechanic.ruled_out)
 
 
+def _swept_fault_samples(sensors: list[str]) -> list[dict[str, Any]]:
+    """A front-left wheel imbalance over a 50-110 km/h sweep."""
+    samples: list[dict[str, Any]] = []
+    for index, speed in enumerate(range(50, 111, 2)):
+        samples += make_fault_samples(
+            fault_sensor="front-left",
+            sensors=sensors,
+            speed_kmh=float(speed),
+            n_samples=2,
+            start_t_s=index * 2.0,
+        )
+    return samples
+
+
+@pytest.mark.parametrize(
+    ("sensors", "note"),
+    [
+        pytest.param(["front-left"], "Only one sensor was used", id="one-sensor"),
+        pytest.param(
+            ["front-left", "driver-seat"], "Only one wheel had a sensor", id="one-wheel-and-cabin"
+        ),
+    ],
+)
+def test_one_wheel_sensor_does_not_name_its_own_corner(sensors: list[str], note: str) -> None:
+    """The only wheel sensor feels an imbalance at any wheel, strongest where it sits.
+
+    So the report names no wheel, says why, and asks for a sensor at each wheel
+    first; it is never Strong and never swaps axles it could not compare.
+    """
+    summary = run_analysis(_swept_fault_samples(sensors))
+    view = report_view_for(summary)
+    owner = view.owner
+
+    assert summary["diagnosis"]["zone"] is None
+    assert owner.level != "strong"
+    assert owner.headline == (
+        "Likely cause: a wheel or tire problem that could not be pinned to one wheel"
+        " (only the front-left wheel had a sensor)"
+    )
+    assert note in owner.description
+    assert "several sensors" not in owner.description
+    assert owner.next_step.startswith("Mount a sensor at each wheel")
+    assert owner.confirm is None or "Swap the front and rear wheels" not in owner.confirm
+    assert owner.diagram.zone is None
+    texts = report_view_texts(view)
+    assert not [text for text in texts if "front-left wheel balanced" in text]
+    if len(sensors) == 1:
+        assert "measured at the front-left wheel, the only sensor" in owner.description
+        assert "strongest at" not in owner.description
+    nl = report_view_for(summary, lang="nl").owner
+    assert "alleen het wiel linksvoor had een sensor" in nl.headline
+
+
 @pytest.mark.parametrize("measured_rpm", [False, True], ids=["no_rpm", "obd_rpm"])
 def test_missing_final_drive_leaves_only_what_it_needs_untested(measured_rpm: bool) -> None:
     samples = make_fault_samples(fault_sensor="front-left", sensors=ALL_WHEEL_SENSORS)
@@ -355,6 +408,31 @@ def test_no_fault_names_what_was_checked_and_what_could_not_be(
     assert owner.description == description
     # Each untested source comes first in "Not covered", with how to close the gap.
     assert owner.not_covered[:2] == not_covered
+
+
+def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None:
+    """The run's wheel order was only at a healthy car's level: the report says
+    so wherever it names the wheels, and lists no worksheet row that reads like
+    a cause."""
+    summary = deepcopy(_healthy_summary())
+    for check in summary["diagnosis"]["source_checks"]:
+        if check["source"] == "wheel/tire":
+            check.update(status="ruled_out", reason="faint_only")
+    view = report_view_for(summary)
+
+    assert view.owner.headline == "No significant vibration found"
+    assert "wheels/tires (found only faintly, at a level a healthy car also has)" in (
+        view.owner.description
+    )
+    assert view.mechanic.worksheet == ()
+    assert view.mechanic.worksheet_empty is not None
+    assert view.mechanic.worksheet_empty.startswith("Only a faint vibration")
+    assert (
+        "Wheels/tires: found only faintly, at a level a healthy car also has: not a cause"
+        in view.mechanic.ruled_out
+    )
+    nl = report_view_for(summary, lang="nl")
+    assert "alleen zwak gevonden" in nl.owner.description
 
 
 @pytest.mark.parametrize(

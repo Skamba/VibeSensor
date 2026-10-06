@@ -48,6 +48,8 @@ type AmplitudeBasis = Literal["order", "overall"]
 # regeneration without its discs). ``not_applicable``: the car has no such
 # source (an EV's engine). ``same_rhythm_as_candidate``: without measured RPM the
 # engine turns at the diagnosed wheel or propshaft order's rhythm in some gear.
+# ``faint_only`` (ruled out, no-fault runs): the order was found only below the
+# moderate strength band, the residual a healthy car also has.
 type SourceCheckStatus = Literal[
     "candidate", "ruled_out", "ruled_out_estimated", "not_testable", "not_applicable"
 ]
@@ -69,6 +71,7 @@ type SourceCheckReason = Literal[
     "no_braking",
     "only_while_braking",
     "regen_braking",
+    "faint_only",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down", "brake"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]

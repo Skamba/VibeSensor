@@ -395,8 +395,51 @@ def test_braking_matches_weigh_on_the_speed_like_other_slowing_down() -> None:
             *_points(phase, 60.0, 0.12, 5),
         ]
         evidence = compute_matched_speed_phase_evidence(
-            points, focused_speed_band=None, hotspot_speed_band=""
+            points,
+            [(point, 0.0) for point in points],
+            focused_speed_band=None,
+            hotspot_speed_band="",
         )
         return evidence.strongest_speed_band
 
     assert band("braking") == band("deceleration") == "100-110 km/h"
+
+
+def _heard(speed_kmh: float, amp: float, count: int) -> list[OrderMatchObservation]:
+    return [
+        OrderMatchObservation(
+            predicted_hz=10.0,
+            matched_hz=10.0,
+            rel_error=0.0,
+            amp=amp,
+            location="front_left_wheel",
+            speed_kmh=speed_kmh,
+            phase="cruise",
+            heard=True,
+        )
+        for _ in range(count)
+    ]
+
+
+def test_strongest_speed_is_amplitude_over_the_floor_within_the_heard_range() -> None:
+    # The order is 0.04 g over a 0.01 g floor from 60 to 110 km/h and 0.06 g
+    # at 90, where it is strongest. At 40 km/h the matcher landed on louder road noise (0.20 g on a
+    # 0.19 g floor): the most raw amplitude, but the order barely over it. Three
+    # heard matches at 140 km/h stand far over the floor, but the drive only
+    # touched that speed: outside the range the report gives, so not where it
+    # shakes hardest either.
+    evidence = [
+        *[
+            (point, 0.01)
+            for speed in (60.0, 70.0, 80.0, 100.0, 110.0)
+            for point in _heard(speed, 0.05, 10)
+        ],
+        *[(point, 0.01) for point in _heard(90.0, 0.07, 10)],
+        *[(point, 0.19) for point in _heard(40.0, 0.20, 10)],
+        *[(point, 0.01) for point in _heard(140.0, 0.30, 3)],
+    ]
+    points = [point for point, _floor in evidence]
+    result = compute_matched_speed_phase_evidence(
+        points, evidence, focused_speed_band=None, hotspot_speed_band=""
+    )
+    assert result.strongest_speed_band == "90-100 km/h"

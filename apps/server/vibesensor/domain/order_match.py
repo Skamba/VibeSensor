@@ -9,7 +9,12 @@ from itertools import combinations
 from math import floor
 from statistics import median
 
-__all__ = ["OrderMatchObservation", "frequency_tracking_slope", "trend_moves"]
+__all__ = [
+    "OrderMatchObservation",
+    "frequency_tracking_slope",
+    "heard_speed_range",
+    "trend_moves",
+]
 
 # The order-match tolerance is several percent wide, so a speed that moves less
 # than this cannot tell an order from a fixed tone it passes.
@@ -19,6 +24,9 @@ _MIN_TRACKING_POINTS = 4
 _MAX_TRACKING_POINTS = 200
 _TRACKING_TREND_BIN_S = 2.0
 _MIN_TREND_TO_NOISE = 2.0
+# The speeds an order was heard across leave out this share at each end: a few
+# matches at the edge of the drive do not stretch the range.
+_SPEED_RANGE_TRIM = 0.05
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,3 +95,27 @@ def trend_moves(values_at: Iterable[tuple[float, float]]) -> bool:
     span = max(trend) - min(trend)
     noise = median(max(values) - min(values) for values in by_bin.values())
     return span >= _MIN_TRACKING_SPAN * median(trend) and span > _MIN_TREND_TO_NOISE * noise
+
+
+def heard_speed_range(points: Sequence[OrderMatchObservation]) -> tuple[float, float] | None:
+    """The speeds the order was heard across (all matches when none is heard).
+
+    The 5th to 95th percentile of the matches' moving speeds: the range the
+    report gives as "present across", and the speeds its strongest speed band
+    is picked from. ``None`` without a moving match.
+    """
+    heard = [point for point in points if point.heard] or points
+    speeds = sorted(
+        point.speed_kmh for point in heard if point.speed_kmh is not None and point.speed_kmh > 0
+    )
+    if not speeds:
+        return None
+    return _percentile(speeds, _SPEED_RANGE_TRIM), _percentile(speeds, 1.0 - _SPEED_RANGE_TRIM)
+
+
+def _percentile(sorted_values: Sequence[float], q: float) -> float:
+    """Linear-interpolation percentile (``numpy.quantile``'s default) of sorted values."""
+    position = q * (len(sorted_values) - 1)
+    low = floor(position)
+    high = min(low + 1, len(sorted_values) - 1)
+    return sorted_values[low] + (sorted_values[high] - sorted_values[low]) * (position - low)

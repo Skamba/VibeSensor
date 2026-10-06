@@ -1012,6 +1012,45 @@ test("a wheel fault felt only in the cabin names no wheel and asks for wheel sen
   });
 });
 
+test("one wheel sensor names no wheel, says why, and asks for wheel sensors", () => {
+  const insights = checkedInsights(
+    "fault",
+    [{ source: "wheel/tire", status: "candidate", reason: null }],
+    "en",
+    {},
+    {
+      confidence_level: "moderate",
+      location: "Front Left Wheel",
+      zone: null,
+      weak_reasons: ["single_sensor"],
+    },
+  );
+  expect(insights.primary?.chips[0]).toEqual({
+    label: "Strongest location",
+    value: "No single wheel; only one wheel sensor, at Front Left Wheel",
+  });
+  expect(insights.primary?.explanation).toContain(
+    "Only one sensor was used, so locations can't be compared.",
+  );
+  expect(insights.primary?.nextStep).toBe(
+    "Mount a sensor at each wheel and record again to find which wheel or tire it is.",
+  );
+});
+
+test("a no-fault run with only a faint residual rules it out as faint, not as a candidate", () => {
+  const insights = checkedInsights("no_fault", [
+    { source: "wheel/tire", status: "ruled_out", reason: "faint_only" },
+    { source: "driveline", status: "ruled_out", reason: "no_matching_order" },
+  ]);
+  expect(insights.primary?.explanation).toBe(
+    "Nothing stood out in the checks this run could make: wheels/tires (found only faintly, at a level a healthy car also has) and driveline.",
+  );
+  expect(insights.checks.checked[0]).toEqual({
+    label: "Wheel / Tire",
+    detail: "ruled out: found only faintly, at a level a healthy car also has",
+  });
+});
+
 test("shows every History speed in the m/s setting", () => {
   const mps = { ...f, speedUnit: "mps" as const };
   const run = historyListRun("run-007");

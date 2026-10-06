@@ -102,9 +102,11 @@ def test_driveline_is_reported_as_a_zone(amps: dict[str, float], zone: str) -> N
 @pytest.mark.parametrize(
     ("amps", "weak_spatial", "zone"),
     [
-        # A cabin sensor close behind the only wheel sensor: that corner, not its axle.
-        ({"Front Left Wheel": 0.15, "Driver Seat": 0.12}, True, "front_left_wheel"),
-        ({"Driver Seat": 0.16, "Front Left Wheel": 0.15}, True, "front_left_wheel"),
+        # The only wheel sensor feels every wheel's imbalance: no corner is named,
+        # whether it reads strongest or a cabin sensor does (then where it was felt).
+        ({"Front Left Wheel": 0.15}, True, None),
+        ({"Front Left Wheel": 0.15, "Driver Seat": 0.12}, True, None),
+        ({"Driver Seat": 0.16, "Front Left Wheel": 0.15}, True, "driver_seat"),
         (
             {"Front Left Wheel": 0.15, "Front Right Wheel": 0.14, "Driver Seat": 0.12},
             True,
@@ -117,7 +119,7 @@ def test_driveline_is_reported_as_a_zone(amps: dict[str, float], zone: str) -> N
     ],
 )
 def test_wheel_zone_needs_two_corners_for_an_axle(
-    amps: dict[str, float], weak_spatial: bool, zone: str
+    amps: dict[str, float], weak_spatial: bool, zone: str | None
 ) -> None:
     finding = _order_finding(
         "wheel_1x",
@@ -128,6 +130,64 @@ def test_wheel_zone_needs_two_corners_for_an_axle(
     )
 
     assert _diagnosis(finding)["zone"] == zone
+
+
+@pytest.mark.parametrize("source", [VibrationSource.WHEEL_TIRE, VibrationSource.BRAKES])
+@pytest.mark.parametrize("weak_spatial", [True, False])
+def test_one_sensor_is_always_said_and_caps_a_corner_fault_at_moderate(
+    source: VibrationSource, weak_spatial: bool
+) -> None:
+    """One sensor compares no locations: it names no corner or axle, says so
+    first, calls nothing "spread across locations" and is never Strong."""
+    finding = _order_finding(
+        "wheel_1x",
+        source,
+        confidence=0.95,
+        amps={"Front Left Wheel": 0.15},
+        weak_spatial=weak_spatial,
+    )
+    test_run = TestRun(
+        capture=RunCapture(run_id="run-1"), findings=(finding,), top_causes=(finding,)
+    )
+    diagnosis = build_diagnosis(
+        test_run=test_run,
+        samples=[],
+        metadata=run_metadata_from_mapping({"run_id": "run-1", **standard_metadata()}),
+        sensor_count=1,
+    )
+
+    assert diagnosis["zone"] is None
+    assert diagnosis["confidence_level"] == "moderate"
+    assert diagnosis["weak_reasons"] == ["single_sensor", "narrow_speed_range"]
+
+
+def test_a_no_fault_run_lists_no_order_it_found_only_faintly() -> None:
+    """A faint wheel order felt evenly at every corner is a healthy car's residual
+    imbalance: the run reads as no fault, so it is not listed as a Moderate
+    worksheet row or a candidate; the wheels are ruled out as found only faintly."""
+    amps = {
+        "Front Left Wheel": 0.02,
+        "Front Right Wheel": 0.019,
+        "Rear Left Wheel": 0.02,
+        "Rear Right Wheel": 0.019,
+    }
+    faint = _order_finding(
+        "wheel_1x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.6,
+        amps=amps,
+        strength_db=12.0,
+        weak_spatial=True,
+    )
+
+    diagnosis = _diagnosis(faint)
+
+    assert diagnosis["verdict"] == "no_fault"
+    assert diagnosis["order_findings"] == []
+    checks = {
+        check["source"]: (check["status"], check["reason"]) for check in diagnosis["source_checks"]
+    }
+    assert checks["wheel/tire"] == ("ruled_out", "faint_only")
 
 
 # -- guided test drive: neutral coast-down -------------------------------------

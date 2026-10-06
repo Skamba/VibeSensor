@@ -11,6 +11,7 @@ advice stays the propshaft one and the report says the layout was not given.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 import pytest
@@ -18,6 +19,7 @@ from test_support.analysis import run_analysis
 from test_support.core import (
     ALL_WHEEL_SENSORS,
     FINAL_DRIVE,
+    SENSOR_FL,
     engine_hz,
     standard_metadata,
     wheel_hz,
@@ -38,12 +40,19 @@ _RWD_P1_STEP = (
 )
 
 
-def _p1_samples(*, front: float, rear: float, n: int = 40, order: int = 1) -> list[dict[str, Any]]:
+def _p1_samples(
+    *,
+    front: float,
+    rear: float,
+    n: int = 40,
+    order: int = 1,
+    sensors: Sequence[str] = ALL_WHEEL_SENSORS,
+) -> list[dict[str, Any]]:
     """A once- (or ``order``-) per-driveshaft-turn shake over a 50-108 km/h sweep."""
     samples = []
     for i in range(n):
         speed = 50.0 + i * 1.5
-        for sensor in ALL_WHEEL_SENSORS:
+        for sensor in sensors:
             amp = front if sensor.startswith("front") else rear
             samples.append(
                 make_sample(
@@ -113,6 +122,32 @@ def test_a_fwd_driveline_shake_no_axle_dominates_points_at_the_driven_axle() -> 
 
     assert summary["diagnosis"]["zone"] == "front_axle"
     assert "near the front axle" in report_view_for(summary).owner.headline
+
+
+@pytest.mark.parametrize(
+    ("layout", "zone", "where"),
+    [
+        pytest.param("RWD", "driveshaft_tunnel", "near the centre tunnel", id="rwd"),
+        pytest.param("AWD", "driveshaft_tunnel", "near the centre tunnel", id="awd"),
+        pytest.param("FWD", "front_axle", "near the front axle", id="fwd"),
+    ],
+)
+def test_one_wheel_sensor_does_not_place_a_driveline_shake_at_its_axle(
+    layout: str, zone: str, where: str
+) -> None:
+    """One sensor at the front-left wheel feels the propshaft too: no axle is compared.
+
+    The shake is placed where the drive layout puts the shaft that turns at the
+    order: the tunnel with a propshaft, the driven axle's final drive without.
+    """
+    samples = _p1_samples(front=0.05, rear=0.05, sensors=[SENSOR_FL])
+    summary = run_analysis(samples, _car(drive_layout=layout))
+    view = report_view_for(summary)
+
+    assert summary["diagnosis"]["zone"] == zone
+    assert where in view.owner.headline, view.owner.headline
+    if layout != "FWD":
+        assert "front axle" not in " ".join(report_view_texts(view))
 
 
 def test_a_rwd_car_keeps_the_propshaft_advice_and_adds_the_rear_differential() -> None:

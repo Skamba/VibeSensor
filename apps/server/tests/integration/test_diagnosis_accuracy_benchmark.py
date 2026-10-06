@@ -138,8 +138,8 @@ _CABIN_TEXT = {
     "trunk": ("boot", "kofferbak"),
     "front_passenger_seat": ("front passenger seat", "bijrijdersstoel"),
 }
-# A wheel fault felt only in the cabin: no wheel named, and the owner is told to
-# put sensors at the wheels to find it.
+# A wheel fault felt only in the cabin, or at the only wheel with a sensor: no
+# wheel named, and the owner is told to put sensors at the wheels to find it.
 _UNLOCATED_WHEEL_TEXT = {
     "en": (
         "could not be pinned to one wheel",
@@ -152,6 +152,10 @@ _UNLOCATED_WHEEL_TEXT = {
         "bij elk wiel een sensor",
     ),
 }
+_ONLY_WHEEL_SENSOR_TEXT = {
+    "en": "only the front-left wheel had a sensor",
+    "nl": "alleen het wiel linksvoor had een sensor",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,7 +164,8 @@ class Expected:
 
     verdicts: frozenset[str]
     source: str | None = None
-    zones: frozenset[str] = frozenset()
+    # ``None``: no zone can be named (one wheel sensor feels every wheel).
+    zones: frozenset[str | None] = frozenset()
     order_codes: frozenset[str] = frozenset()
     levels: frozenset[str] = STRONG
     speed_dependence: str | None = None
@@ -233,8 +238,19 @@ class Case:
         return self.by_car.get(car, self.expected)
 
     @property
-    def wheel_sensors(self) -> bool:
-        return any(sensor.location_code in WHEEL_ZONES for sensor in self.layout)
+    def wheels(self) -> set[str]:
+        """The wheel corners with a sensor."""
+        return {sensor.location_code for sensor in self.layout} & WHEEL_ZONES
+
+    @property
+    def corners_compared(self) -> bool:
+        """Sensors at two or more wheels: a corner can be told from another."""
+        return len(self.wheels) >= 2
+
+    @property
+    def axles_compared(self) -> bool:
+        """Wheel sensors on both axles: an axle can be told from the other."""
+        return len({corner.split("_", 1)[0] for corner in self.wheels}) == 2
 
     @property
     def stands_still(self) -> bool:
@@ -268,7 +284,7 @@ def _brakes_firmly(phase: ScenarioPhase) -> bool:
     ) >= 3.0
 
 
-def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expected:
+def _fault(source: str, zones: set[str | None], order: str, **kwargs: object) -> Expected:
     return Expected(
         verdicts=frozenset({"fault"}),
         source=source,
@@ -491,23 +507,33 @@ _ROAD_SPEED_NOISE = _road_with("road_speed_noise")
 # out 1.7x and the benchmark calls it a mild rear-right imbalance: where
 # residual ends and a fault begins is a product decision, not set here.)
 _RESIDUAL_BODY = (11.5, 0.02)
-_RESIDUAL = {
-    corner: _road_with(
-        f"residual_{corner}", _Layer("wheel_mild_imbalance", gain), resonance=_RESIDUAL_BODY
-    )
-    for corner, gain in (
-        ("front-left", 0.02),
-        ("front-right", 0.025),
-        ("rear-left", 0.03),
-        ("rear-right", 0.035),
-    )
-}
-_RESIDUAL_ROAD = _road_with("residual_road", resonance=_RESIDUAL_BODY)
 _RESIDUAL_COUPLING = {"front-left": 1.0, "front-right": 1.25, "rear-left": 0.8, "rear-right": 1.1}
-_RESIDUAL_IMBALANCE = (
-    _on("all", _RESIDUAL_ROAD, 0.9),
-    *(_on(corner, _RESIDUAL[corner], _RESIDUAL_COUPLING[corner]) for corner in _RESIDUAL),
-)
+
+
+def _residual_imbalance(
+    body: tuple[float, float], name: str = "residual"
+) -> tuple[PhaseOverride, ...]:
+    """A healthy car's residual imbalance at every corner, with the body mode *body*."""
+    corners = {
+        corner: _road_with(f"{name}_{corner}", _Layer("wheel_mild_imbalance", gain), resonance=body)
+        for corner, gain in (
+            ("front-left", 0.02),
+            ("front-right", 0.025),
+            ("rear-left", 0.03),
+            ("rear-right", 0.035),
+        )
+    }
+    return (
+        _on("all", _road_with(f"{name}_road", resonance=body), 0.9),
+        *(_on(corner, corners[corner], _RESIDUAL_COUPLING[corner]) for corner in corners),
+    )
+
+
+_RESIDUAL_IMBALANCE = _residual_imbalance(_RESIDUAL_BODY)
+# The same healthy car with a stronger 13 Hz body mode, which the wheel order
+# passes through on the motorway: a vibration found, but no cause. The faint
+# wheel order it lifts is a healthy car's residual, not a worksheet row.
+_RESIDUAL_UNDER_13HZ = _residual_imbalance((13.0, 0.1), "residual_13hz")
 # A faint front-left imbalance under a strong 12 Hz body resonance every sensor feels.
 _BODY_12HZ = (12.0, 0.3)
 _FAINT_FL_UNDER_RESONANCE = (
@@ -934,6 +960,15 @@ REALISM_CASES = (
         _motorway(*_RESIDUAL_IMBALANCE),
         HEALTHY_OR_SPREAD,
     ),
+    # A healthy car with a body mode the wheel order passes on the motorway: a
+    # vibration no cause explains, and no faint residual listed as a cause. (On
+    # the default car its wheel order sits on the mode at motorway speed.)
+    Case(
+        "bench-healthy-residual-under-body-resonance-motorway",
+        _motorway(*_RESIDUAL_UNDER_13HZ),
+        Expected(verdicts=frozenset({"no_fault"}), levels=frozenset(), unexplained_vibration=True),
+        cars=("other",),
+    ),
     Case("bench-front-left-wheel-motorway", _motorway(_FL_IMBALANCE), _FL_FAULT),
 )
 
@@ -1252,12 +1287,21 @@ BENCH_CASES = (
             )
         },
     ),
-    # One sensor cannot compare corners: the fault is found at its corner, but
-    # never as Strong.
+    # One sensor cannot compare corners: a wheel fault, but no wheel named (the
+    # sensor's own corner least of all) and never Strong.
     Case(
         "bench-one-sensor-front-left-wheel-sweep",
         _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
-        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE),
+        _fault("wheel/tire", {None}, "T1", levels=MODERATE),
+        layout=ONE_SENSOR,
+    ),
+    # The owner's setup: one sensor at the front-left wheel, the imbalance at the
+    # rear-right wheel, felt there at about a third of its level. Still a wheel
+    # fault, never "at the front-left wheel".
+    Case(
+        "bench-one-sensor-rear-right-imbalance-felt-at-front-left-sweep",
+        _sweep(_ov("front-left", "wheel_imbalance", 0.85 * 0.3, 1.0)),
+        _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_SENSOR,
     ),
     # Sensors in the cabin only feel a wheel imbalance through the body: a wheel
@@ -1275,28 +1319,27 @@ BENCH_CASES = (
         ),
         layout=CABIN_ONLY,
     ),
-    # One wheel sensor plus two in the cabin: the faulty wheel is the one with a
-    # sensor, and it stands out from the cabin.
+    # One wheel sensor plus two in the cabin: the wheel sensor stands out from
+    # the cabin, but it would at any faulty wheel: no wheel named, Moderate.
     Case(
         "bench-one-wheel-and-cabin-front-left-wheel-sweep",
         _sweep(
             _ov("front-left", "wheel_imbalance", 0.85, 1.0),
             _ov("body", "wheel_imbalance", 0.12, 1.0),
         ),
-        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_WHEEL_AND_CABIN,
     ),
     # The same with a body that carries the imbalance well into the cabin (about
-    # half the wheel's level there). The wheel corner still stands out: it is
-    # that corner, not its axle, and never the engine order that on the default
-    # car shares T2's frequency.
+    # half the wheel's level there): no wheel or axle named, and never the
+    # engine order that on the default car shares T2's frequency.
     Case(
         "bench-one-wheel-and-cabin-strong-coupling-sweep",
         _sweep(
             _ov("front-left", "wheel_imbalance", 0.85, 1.0),
             _ov("body", "wheel_imbalance", 0.45, 1.0),
         ),
-        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_WHEEL_AND_CABIN,
     ),
     # A front-left imbalance with an even engine tone 12 dB under it at that
@@ -1429,6 +1472,7 @@ PDF_CASES = frozenset(
         ("bench-healthy-sweep", "other"),
         ("bench-rear-right-wheel-sweep", "default"),
         ("bench-cabin-only-wheel-sweep", "default"),
+        ("bench-one-sensor-rear-right-imbalance-felt-at-front-left-sweep", "default"),
         ("bench-front-brake-judder-stops", "default"),
         ("bench-fwd-front-driveline-sweep", "fwd"),
         ("bench-healthy-sweep", "fwd"),
@@ -1608,6 +1652,10 @@ def _assert_case(
     if diagnosis["verdict"] == "no_fault":
         assert diagnosis["source"] is None and diagnosis["zone"] is None, summary
         assert diagnosis["confidence_level"] is None, summary
+        # Nothing the verdict says is not a cause is listed as one.
+        assert diagnosis["order_findings"] == [], diagnosis["order_findings"]
+        statuses = [check["status"] for check in diagnosis["source_checks"]]
+        assert "candidate" not in statuses, diagnosis["source_checks"]
     elif expected.source is None:
         # Hedged guess only: the cause is not part of the expectation.
         assert diagnosis["confidence_level"] in expected.levels, summary
@@ -1618,6 +1666,8 @@ def _assert_case(
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, case, summary)
         _assert_order_amplitude_mg(diagnosis, case)
+    if diagnosis["verdict"] != "no_fault":
+        _assert_sensor_claims(diagnosis, case, car, summary)
     if diagnosis["source"] == "wheel/tire" and diagnosis["zone"] in _SPREAD_WHEEL_ZONES:
         # Spread over an axle or all four wheels: check first, never "go fix it".
         assert diagnosis["confidence_level"] != "strong", summary
@@ -1646,6 +1696,10 @@ def _assert_case(
     for check in diagnosis["source_checks"]:
         if check["status"] == "candidate" or check["reason"] in _COAST_REASONS:
             continue
+        if check["reason"] == "faint_only":
+            # Found only at a healthy car's level: the no-fault verdict says so.
+            assert diagnosis["verdict"] == "no_fault", diagnosis["source_checks"]
+            continue
         expected_check = _expected_check(
             check["source"], car, case, engine_alike=engine_alike, candidate=diagnosis["source"]
         )
@@ -1660,6 +1714,26 @@ def _assert_case(
         assert len(result.report.owner.reasons) == len(diagnosis["weak_reasons"]) > 0
     if diagnosis["verdict"] == "fault":
         _assert_speed_chart(result, diagnosis, car, case, expected)
+
+
+def _assert_sensor_claims(diagnosis: dict, case: Case, car: BenchCar, summary: str) -> None:
+    """A corner or an axle is named only where the sensors could compare them.
+
+    One wheel sensor feels a fault at any wheel, strongest where it sits; with
+    one sensor nothing is compared at all, and the report says so.
+    """
+    source, zone = diagnosis["source"], diagnosis["zone"]
+    axles = {"front_axle", "rear_axle"}
+    if source == "wheel/tire" and not case.corners_compared:
+        assert zone not in WHEEL_ZONES | axles | {"all_wheels"}, summary
+    if source == "brakes" and not case.axles_compared:
+        assert zone is None, summary
+    if source == "driveline" and not case.axles_compared:
+        # Where the drive layout puts the shaft: the driven axle without a propshaft.
+        assert zone not in axles or (car.drive_layout == "FWD" and zone == "front_axle"), summary
+    if len(case.layout) == 1:
+        assert "single_sensor" in diagnosis["weak_reasons"], summary
+        assert "spread_across_locations" not in diagnosis["weak_reasons"], summary
 
 
 def _rpm_source(car: BenchCar, case: Case) -> str:
@@ -2078,11 +2152,16 @@ def _assert_report_view(
         zone_text = _WHEEL_AXLE_TEXT_EN.get(diagnosis["zone"], zone_text)
     if zone_text is not None:
         assert zone_text in cause_text, cause_text
-    unlocated_wheel = diagnosis["source"] == "wheel/tire" and not case.wheel_sensors
+    unlocated_wheel = diagnosis["source"] == "wheel/tire" and not case.corners_compared
     if unlocated_wheel:
         not_pinned, felt_at, mount_sensors = _UNLOCATED_WHEEL_TEXT["en"]
         assert not_pinned in cause_text, cause_text
-        assert felt_at.format(_CABIN_TEXT[diagnosis["zone"]][0]) in cause_text, cause_text
+        felt_where = (
+            _ONLY_WHEEL_SENSOR_TEXT["en"]
+            if diagnosis["zone"] is None
+            else felt_at.format(_CABIN_TEXT[diagnosis["zone"]][0])
+        )
+        assert felt_where in cause_text, cause_text
         advice = owner.next_step if diagnosis["verdict"] == "fault" else " ".join(owner.recapture)
         assert mount_sensors in advice, advice
     assert owner.diagram.zone == diagnosis["zone"]
@@ -2133,7 +2212,7 @@ def _assert_report_view(
 
 def _assert_pdf_text(result: SimPipelineResult, case: Case, car: BenchCar) -> None:
     verdict = result.diagnosis["verdict"]
-    unlocated_wheel = result.diagnosis["source"] == "wheel/tire" and not case.wheel_sensors
+    unlocated_wheel = result.diagnosis["source"] == "wheel/tire" and not case.corners_compared
     for lang, headline in zip(("en", "nl"), _PDF_HEADLINES[verdict], strict=True):
         view = build_report_view(result.analysis.payload, result.metadata, lang=lang)
         reader = PdfReader(io.BytesIO(render_report_pdf(view)))
@@ -2149,8 +2228,13 @@ def _assert_pdf_text(result: SimPipelineResult, case: Case, car: BenchCar) -> No
         assert "%" not in pages[0]
         if unlocated_wheel:
             not_pinned, felt_at, mount_sensors = _UNLOCATED_WHEEL_TEXT[lang]
-            felt_where = _CABIN_TEXT[result.diagnosis["zone"]][lang == "nl"]
-            for text in (not_pinned, felt_at.format(felt_where), mount_sensors):
+            zone = result.diagnosis["zone"]
+            felt_where = (
+                _ONLY_WHEEL_SENSOR_TEXT[lang]
+                if zone is None
+                else felt_at.format(_CABIN_TEXT[zone][lang == "nl"])
+            )
+            for text in (not_pinned, felt_where, mount_sensors):
                 assert text in pages[0], (text, pages[0][:400])
         if verdict == "fault":
             assert view.owner.next_step.lower()[:40] in pages[0]

@@ -79,6 +79,10 @@
     "en": "a wheel or tire problem that could not be pinned to one wheel (felt strongest at the {zone})",
     "nl": "een wiel- of bandprobleem dat niet aan één wiel te koppelen is (het sterkst gevoeld bij {zone})"
   },
+  "CAUSE_WHEEL_ONE_SENSOR": {
+    "en": "a wheel or tire problem that could not be pinned to one wheel (only the {location} had a sensor)",
+    "nl": "een wiel- of bandprobleem dat niet aan één wiel te koppelen is (alleen het {location} had een sensor)"
+  },
   "CHECKED_HEDGED": {
     "en": "{source} ({hedge})",
     "nl": "{source} ({hedge})"
@@ -110,6 +114,10 @@
   "CHECKED_HEDGE_TOP_GEAR": {
     "en": "against an estimated top-gear ratio, top gear only",
     "nl": "met een geschatte hoogste versnelling, alleen in de hoogste versnelling"
+  },
+  "CHECKED_HEDGE_FAINT_ONLY": {
+    "en": "found only faintly, at a level a healthy car also has",
+    "nl": "alleen zwak gevonden, op een niveau dat een gezonde auto ook heeft"
   },
   "CHECKED_LIMITED_ENGINE_FINAL_DRIVE": {
     "en": "checked only against a car-library estimate of the final drive, in top gear, so not conclusive — enter the exact ratio if you know it, or connect an OBD-II adapter to measure RPM.",
@@ -310,6 +318,10 @@
   "DESC_STRONGEST_AT": {
     "en": "strongest at the {location}",
     "nl": "het sterkst bij {location}"
+  },
+  "DESC_ONLY_SENSOR": {
+    "en": "measured at the {location}, the only sensor",
+    "nl": "gemeten bij {location}, de enige sensor"
   },
   "DIAGRAM_FRONT": {
     "en": "FRONT",
@@ -966,6 +978,10 @@
   "RULED_OUT_ONLY_WHILE_BRAKING": {
     "en": "the vibration at the wheel's rhythm came only while braking: the brakes, not a wheel or tire",
     "nl": "de trilling op het ritme van het wiel kwam alleen tijdens het remmen: de remmen, niet een wiel of band"
+  },
+  "RULED_OUT_FAINT_ONLY": {
+    "en": "found only faintly, at a level a healthy car also has: not a cause",
+    "nl": "alleen zwak gevonden, op een niveau dat een gezonde auto ook heeft: geen oorzaak"
   },
   "RULED_OUT_REGEN_BRAKING": {
     "en": "no once- or twice-per-wheel-turn vibration while braking, but an electric or plug-in hybrid car may have slowed on regenerative braking without its brake discs; not conclusive",
@@ -1647,6 +1663,10 @@
     "en": "Only one sensor was used, so locations can't be compared.",
     "nl": "Er was maar één sensor, dus locaties zijn niet te vergelijken."
   },
+  "WEAK_SINGLE_WHEEL_SENSOR": {
+    "en": "Only one wheel had a sensor, so which wheel it is can't be told.",
+    "nl": "Maar één wiel had een sensor, dus welk wiel het is valt niet te zeggen."
+  },
   "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY": {
     "en": "Weak spatial separation; inspect both top nearby components before replacing parts.",
     "nl": "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat onderdelen worden vervangen."
@@ -1694,6 +1714,10 @@
   "WS_NONE_NO_PROPSHAFT": {
     "en": "No vibration that follows wheel, gearbox output-shaft or engine speed was found.",
     "nl": "Geen trilling gevonden die het toerental van wiel, uitgaande as van de versnellingsbak of motor volgt."
+  },
+  "WS_FAINT_ONLY": {
+    "en": "Only a faint vibration at these orders was found, at a level a healthy car also has: nothing to list.",
+    "nl": "Alleen een zwakke trilling op deze ordes gevonden, op een niveau dat een gezonde auto ook heeft: niets om te vermelden."
   },
   "WS_ORDER": {
     "en": "Order",

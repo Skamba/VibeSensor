@@ -705,9 +705,9 @@ Legend:
 
 | Layout | Source type | Location |
 |---|---|---|
-| One sensor (anywhere) | ~ source type (wheel/driveline/engine), with `single_sensor` as the weak reason (`_weak_reasons` in `diagnosis.py`) | ✗ |
+| One sensor (anywhere) | ~ source type (wheel/driveline/engine), with `single_sensor` as the weak reason, always shown (`_weak_reasons` in `diagnosis.py`); a wheel or brake fault is Moderate at most | ✗ wheel/tire: "could not be pinned to one wheel (only the front-left wheel had a sensor)"; driveline: the zone the drive layout gives (tunnel, or a FWD car's front axle) |
 | Cabin only (seat/trunk) | ✓ | wheel/tire: `history.zone.unlocated_wheel` "No single wheel; strongest at {location}" |
-| One wheel + cabin | ✓ | ~ that wheel's corner, never its axle (`_zone` in `diagnosis.py`) |
+| One wheel + cabin | ✓ (`single_wheel_sensor`, Moderate at most) | ✗ no corner or axle: the one wheel sensor feels every wheel (`_zone` in `diagnosis.py`) |
 | Four wheels (± cabin) | ✓ | ✓ corner / axle / all four; all four gets the neutral coast check, not an axle swap (`_confirm_check` in `view_model.py`) |
 | Engine bay / tunnel / transmission sensors | ✓ | ✓ driveline/engine zone (`_zone`) |
 

@@ -269,12 +269,43 @@ function diagnosisSignature(
   return parts.join(" · ") || "--";
 }
 
-/** A wheel/tire fault felt strongest away from the wheels: no wheel can be named. */
+/** Weak reasons saying too few sensors were used: shown with every verdict. */
+const SENSOR_REASONS = ["single_sensor", "single_wheel_sensor"];
+
+/** A wheel/tire fault felt strongest away from the wheels, or measured at only
+ * one wheel: no wheel can be named. */
 function unlocatedWheel(diagnosis: Diagnosis): boolean {
   return (
     diagnosis.source === "wheel/tire" &&
     !WHEEL_ZONE_KEYS.has(diagnosis.zone ?? "")
   );
+}
+
+/** Where an unlocated wheel/tire fault was felt; the only wheel sensor is not
+ * where it is strongest, it is just the only one. */
+function unlocatedWheelText(
+  diagnosis: Diagnosis,
+  zone: string,
+  t: Translate,
+): string {
+  // No zone with too few sensors: the location is the only wheel sensor.
+  const onlyWheel =
+    diagnosis.zone == null &&
+    SENSOR_REASONS.some((reason) => diagnosis.weak_reasons.includes(reason));
+  return t(
+    onlyWheel
+      ? "history.zone.one_wheel_sensor"
+      : "history.zone.unlocated_wheel",
+    { location: zone },
+  );
+}
+
+function sensorNote(diagnosis: Diagnosis, t: Translate): string {
+  return SENSOR_REASONS.filter((reason) =>
+    diagnosis.weak_reasons.includes(reason),
+  )
+    .map((reason) => t(`history.sensor_note.${reason}`))
+    .join(" ");
 }
 
 function electric(diagnosis: Diagnosis): boolean {
@@ -610,7 +641,8 @@ function checkedDetail(
   if (
     check.reason === "stayed_in_neutral" ||
     check.reason === "stopped_in_neutral" ||
-    check.reason === "only_while_braking"
+    check.reason === "only_while_braking" ||
+    check.reason === "faint_only"
   ) {
     return t(`history.checks.${check.reason}`);
   }
@@ -801,7 +833,11 @@ function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
     const noun = t(`history.checks.noun.${source}`);
     if (check.status === "not_testable") {
       notChecked.push(noun);
-    } else if (check.status === "ruled_out_estimated" && check.reason) {
+    } else if (
+      (check.status === "ruled_out_estimated" ||
+        check.reason === "faint_only") &&
+      check.reason
+    ) {
       checked.push(
         t("history.checks.hedged", {
           source: noun,
@@ -899,6 +935,7 @@ function diagnosisCard(
   const source = carSourceLabel(diagnosis.source, diagnosis, t);
   const ev = electric(diagnosis);
   const unlocated = unlocatedWheel(diagnosis);
+  const where = unlocated ? unlocatedWheelText(diagnosis, zone, t) : zone;
   const locateWheel = t("history.findings_next_step_locate_wheel");
   return {
     eyebrow: t(weak ? "history.verdict.eyebrow" : "history.primary_diagnosis"),
@@ -911,20 +948,20 @@ function diagnosisCard(
       .filter(Boolean)
       .join(" — "),
     tone: levelTone(level),
-    explanation: weak
-      ? t("history.verdict.weak_body", {
-          source,
-          location: unlocated
-            ? t("history.zone.unlocated_wheel", { location: zone })
-            : zone,
-        })
-      : String(
-          summary.findings.find(
-            (item) => item.finding_id === diagnosis.finding_id,
-          )?.evidence_summary ?? "",
-        ),
+    explanation: [
+      weak
+        ? t("history.verdict.weak_body", { source, location: where })
+        : String(
+            summary.findings.find(
+              (item) => item.finding_id === diagnosis.finding_id,
+            )?.evidence_summary ?? "",
+          ),
+      sensorNote(diagnosis, t),
+    ]
+      .filter(Boolean)
+      .join(" "),
     chips: [
-      { label: t("history.findings_location"), value: zone },
+      { label: t("history.findings_location"), value: where },
       {
         label: t("history.findings_speed_band"),
         value: speedRangeText(

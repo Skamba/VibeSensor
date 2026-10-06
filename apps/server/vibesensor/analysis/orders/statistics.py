@@ -19,7 +19,7 @@ from vibesensor.analysis.math_utils import _corr_abs_clamped, _mean, _ramp
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.speed_profile_helpers import _speed_profile_from_points
-from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation, heard_speed_range
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Statistical evidence functions
@@ -319,21 +319,33 @@ class OrderPhaseEvidence:
 
 
 def compute_matched_speed_phase_evidence(
-    matched_points: list[OrderMatchObservation],
+    matched_points: Sequence[OrderMatchObservation],
+    evidence: Sequence[tuple[OrderMatchObservation, float]],
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
 ) -> OrderPhaseEvidence:
-    """Derive speed-profile and phase-evidence from matched points."""
+    """Derive speed-profile and phase-evidence from matched points.
+
+    Where the order shakes hardest comes from its *evidence* (the heard matches
+    with their window floors, ``OrderMatchAccumulator.evidence``), by amplitude
+    over each window's floor: a floor-level match the matcher landed on in road
+    noise says nothing about the order's level, and road noise grows with speed
+    on its own. Only speeds inside the range it was heard across count (as the
+    report states that range), so a few matches at its edge cannot name it. The
+    phases come from every match.
+    """
     cruise_value = DrivingPhase.CRUISE.value
+    heard_range = heard_speed_range(matched_points)
     speed_points: list[tuple[float, float]] = []
     speed_phase_weights: list[float] = []
-    for point in matched_points:
+    for point, floor_amp in evidence:
         point_speed = point.speed_kmh
-        point_amp = point.amp
-        if point_speed is None or point_amp is None:
+        if point_speed is None or (
+            heard_range is not None and not heard_range[0] <= point_speed <= heard_range[1]
+        ):
             continue
-        speed_points.append((point_speed, point_amp))
+        speed_points.append((point_speed, point.amp - floor_amp))
         phase = str(point.phase or "")
         if phase == cruise_value:
             speed_phase_weights.append(3.0)

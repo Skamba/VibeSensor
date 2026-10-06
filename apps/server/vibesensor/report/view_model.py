@@ -88,9 +88,12 @@ _WEAK_REASON_KEYS = {
     "intermittent": "WEAK_INTERMITTENT",
     "faint": "WEAK_FAINT",
     "single_sensor": "WEAK_SINGLE_SENSOR",
+    "single_wheel_sensor": "WEAK_SINGLE_WHEEL_SENSOR",
     "coast_test_contradicts": "WEAK_COAST_CONTRADICTS",
     "manual_speed": "WEAK_MANUAL_SPEED",
 }
+# Why locations could not be compared: shown with every verdict, not just a weak one.
+_SENSOR_REASONS = ("single_sensor", "single_wheel_sensor")
 _SPEED_DEPENDENCE_KEYS = {
     "vehicle_speed": "SPEED_DEPENDENCE_VEHICLE",
     "engine_speed": "SPEED_DEPENDENCE_ENGINE",
@@ -648,6 +651,9 @@ def _owner_page(
         step_key = _step_key(ctx, diagnosis)
         headline = ctx.t("VERDICT_LIKELY_CAUSE", cause=_cause(ctx, diagnosis))
         description = _description(ctx, diagnosis)
+        for reason in _SENSOR_REASONS:
+            if reason in diagnosis["weak_reasons"]:
+                description = f"{description} {_weak_reason(ctx, reason)}".strip()
         if level == "moderate":
             confirm = _confirm_check(ctx, diagnosis)
             if confirm is None:
@@ -703,8 +709,15 @@ def _unlocated_wheel(diagnosis: DiagnosisPayload) -> bool:
     return diagnosis["source"] == "wheel/tire" and diagnosis["zone"] not in _WHEEL_ZONES
 
 
+def _corner(label: str | None) -> bool:
+    return label is not None and location_code_for_label(label) in _WHEEL_CORNERS
+
+
 def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     if _unlocated_wheel(diagnosis):
+        if diagnosis["zone"] is None and _corner(diagnosis["location"]):
+            # The only wheel with a sensor feels every wheel's imbalance.
+            return ctx.t("CAUSE_WHEEL_ONE_SENSOR", location=ctx.location(diagnosis["location"]))
         return ctx.t("CAUSE_WHEEL_UNLOCATED", zone=ctx.zone(diagnosis))
     if diagnosis["source"] == "brakes":
         # The axle whose discs judder; without one, where it was felt.
@@ -754,9 +767,10 @@ def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     if diagnosis["source"] == "wheel/tire":
         if diagnosis["zone"] in _WHEEL_CORNERS:
             return ctx.t("CONFIRM_WHEEL", zone=ctx.zone(diagnosis))
-        if diagnosis["zone"] != "all_wheels":
+        if diagnosis["zone"] in {"front_axle", "rear_axle"}:
             return ctx.t("CONFIRM_AXLE")
-        # On all four wheels a swap moves nothing; the coast-down still tells it from the engine.
+        # On all four wheels a swap moves nothing, and with no axle named a swap
+        # shows nothing; the coast-down still tells it from the engine.
     if ctx.electric:
         # No neutral decouples an EV's motor: a repeat of the same drive is the check.
         return ctx.t("CONFIRM_REPEAT_EV")
@@ -793,6 +807,9 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             else:
                 other = ctx.location(top[1]["location"])
                 parts.append(ctx.t("DESC_SIMILAR", location=location, other=other))
+        elif len(diagnosis["location_amplitudes"]) == 1:
+            # Nothing to compare with: the one sensor is not where it is strongest.
+            parts.append(ctx.t("DESC_ONLY_SENSOR", location=location))
         else:
             parts.append(ctx.t("DESC_STRONGEST_AT", location=location))
     low, high = diagnosis["speed_min_kmh"], diagnosis["speed_max_kmh"]
@@ -869,6 +886,12 @@ def _coverage(
             hedge = _check_text(ctx, _CHECKED_HEDGE_KEYS, key, reason)
             checked.append(ctx.t("CHECKED_HEDGED", source=name, hedge=hedge))
             detail = _check_text(ctx, _CHECKED_LIMITED_KEYS, key, reason)
+        elif reason == "faint_only":
+            # Found, but only at a healthy car's level: checked, and says so.
+            checked.append(
+                ctx.t("CHECKED_HEDGED", source=name, hedge=ctx.t("CHECKED_HEDGE_FAINT_ONLY"))
+            )
+            continue
         else:
             checked.append(name)
             continue
@@ -1153,6 +1176,8 @@ def _worksheet_empty(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
         return None
     if diagnosis["verdict"] != "no_fault" and diagnosis["frequency_hz"] is not None:
         return ctx.t(ctx.driveline_key("WS_PEAK_ONLY"), hz=ctx.hz(diagnosis["frequency_hz"]))
+    if any(check["reason"] == "faint_only" for check in diagnosis["source_checks"]):
+        return ctx.t("WS_FAINT_ONLY")
     return ctx.t("WS_NONE_EV" if ctx.electric else ctx.driveline_key("WS_NONE"))
 
 
@@ -1236,7 +1261,12 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
             detail = _check_text(ctx, _NOT_TESTABLE_KEYS, key, reason)
         elif check["status"] == "ruled_out_estimated":
             detail = _check_text(ctx, _RULED_OUT_ESTIMATED_KEYS, key, reason)
-        elif reason in ("stayed_in_neutral", "stopped_in_neutral", "only_while_braking"):
+        elif reason in (
+            "stayed_in_neutral",
+            "stopped_in_neutral",
+            "only_while_braking",
+            "faint_only",
+        ):
             detail = ctx.t(f"RULED_OUT_{reason.upper()}")
         else:
             detail = ctx.t(ctx.driveline_key(_RULED_OUT_KEYS[key]))

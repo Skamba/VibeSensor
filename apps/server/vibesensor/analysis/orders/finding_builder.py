@@ -48,6 +48,7 @@ def assemble_order_finding(
 
     phase_evidence = compute_matched_speed_phase_evidence(
         match.matched_points,
+        match.evidence,
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=score.hotspot_speed_band,
     )

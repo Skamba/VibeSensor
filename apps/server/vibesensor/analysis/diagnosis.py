@@ -38,6 +38,7 @@ from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_
 from vibesensor.domain.order_match import (
     OrderMatchObservation,
     frequency_tracking_slope,
+    heard_speed_range,
     trend_moves,
 )
 from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
@@ -90,6 +91,11 @@ _MAX_WEAK_REASONS = 2
 # "go fix it" (it may be a healthy car's residual), and a cause felt about as
 # strongly at several sensors is not pinned to the part a Strong level names.
 _HEDGES = frozenset({"faint", "spread_across_locations"})
+# Too few sensors to compare locations: always said, never cut off, and a
+# wheel or brake fault (whose Strong level names a corner or an axle) is never
+# Strong with one.
+_SENSOR_REASONS = frozenset({"single_sensor", "single_wheel_sensor"})
+_CORNER_SOURCES = frozenset({VibrationSource.WHEEL_TIRE, VibrationSource.BRAKES})
 _MAX_ORDER_ROWS = 6
 # With no cause found, the run still felt a vibration when a sensor's strongest
 # peaks (p95) reach the elevated strength band (L3, 26 dB over the floor). The
@@ -177,12 +183,14 @@ def build_diagnosis(
     else:
         rows = _overall_location_amplitudes(located, floors)
         basis = "overall"
-    zone = _zone(candidate, rows, refs) if candidate is not None else None
+    wheels = _wheel_sensors(row["location"] for row in rows)
+    zone = _zone(candidate, rows, refs, wheels) if candidate is not None else None
     weak_reasons = _weak_reasons(
         candidate,
         presence,
         zone=zone,
         sensor_count=sensor_count,
+        wheels=wheels,
         manual_speed=refs.manual_speed,
     )
     if _contradicts_coast_test(candidate, speed_dependence):
@@ -193,10 +201,15 @@ def build_diagnosis(
     elif verdict is DiagnosisVerdict.WEAK_EVIDENCE:
         level = ConfidenceLevel.WEAK
     elif level is not None and (
-        candidate.finding_id in engine_alike or not _HEDGES.isdisjoint(weak_reasons)
+        candidate.finding_id in engine_alike
+        or not _HEDGES.isdisjoint(weak_reasons)
+        or (
+            candidate.suspected_source in _CORNER_SOURCES
+            and not _SENSOR_REASONS.isdisjoint(weak_reasons)
+        )
     ):
         level = _at_most_moderate(level)
-    weak_reasons = weak_reasons[:_MAX_WEAK_REASONS]
+    weak_reasons = _kept_weak_reasons(weak_reasons)
     location = candidate.strongest_location if candidate is not None else None
     if candidate is not None and candidate.location is not None:
         location = candidate.location.strongest_location or location
@@ -230,7 +243,16 @@ def build_diagnosis(
         "guided_phases": _guided_phase_names(metadata.guided_phases),
         "speed_dependence": speed_dependence,
         "order_findings": _order_findings(
-            candidate, level, findings, located, braking, engine_alike
+            candidate,
+            level,
+            # A no-fault run lists no order it found only faintly: the residual a
+            # healthy car has is not a worksheet row at a level.
+            [finding for finding in findings if not _faint(finding)]
+            if verdict is DiagnosisVerdict.NO_FAULT
+            else findings,
+            located,
+            braking,
+            engine_alike,
         ),
         "amplitude_basis": basis,
         "location_amplitudes": rows,
@@ -251,6 +273,7 @@ def build_diagnosis(
             speed_dependence,
             braked=_braked(braking),
             engine_alias=alias_gear is not None,
+            no_fault=verdict is DiagnosisVerdict.NO_FAULT,
         ),
         "conditions": _conditions(refs),
         "driveline_parts": _driveline_parts(candidate, zone, refs),
@@ -272,8 +295,7 @@ def _verdict(candidate: Finding | None) -> DiagnosisVerdict:
     """
     if candidate is None:
         return DiagnosisVerdict.NO_FAULT
-    strength = candidate.vibration_strength_db
-    faint = strength is not None and strength < LIGHT_STRENGTH_MAX_DB
+    faint = _faint(candidate)
     residual = (
         faint
         and candidate.suspected_source is VibrationSource.WHEEL_TIRE
@@ -284,6 +306,12 @@ def _verdict(candidate: Finding | None) -> DiagnosisVerdict:
     if faint:
         return DiagnosisVerdict.NO_FAULT
     return DiagnosisVerdict.WEAK_EVIDENCE
+
+
+def _faint(finding: Finding) -> bool:
+    """Below the moderate strength band: a level a healthy car also has."""
+    strength = finding.vibration_strength_db
+    return strength is not None and strength < LIGHT_STRENGTH_MAX_DB
 
 
 @dataclass(frozen=True, slots=True)
@@ -545,7 +573,7 @@ def _hz_per_kmh(candidate: Finding | None) -> float | None:
         return None
     ratios = [
         point.matched_hz / point.speed_kmh
-        for point in candidate.matched_points
+        for point in _heard_points(candidate)
         if point.speed_kmh is not None and point.speed_kmh > 0 and point.matched_hz > 0
     ]
     return median(ratios) if ratios else None
@@ -562,13 +590,20 @@ def _speed_band_bounds(band: str | None) -> tuple[float, float] | None:
 
 
 def _reference_speed_kmh(candidate: Finding | None) -> float | None:
-    """Median matched speed inside the finding's strongest speed band (else overall)."""
+    """Median heard speed inside the finding's strongest speed band (else overall).
+
+    Only speeds inside the range the order was heard across count, the range
+    the report states next to this speed.
+    """
     if candidate is None:
         return None
+    heard_range = heard_speed_range(candidate.matched_points)
     speeds = [
         point.speed_kmh
-        for point in candidate.matched_points
-        if point.speed_kmh is not None and point.speed_kmh > 0
+        for point in _heard_points(candidate)
+        if point.speed_kmh is not None
+        and point.speed_kmh > 0
+        and (heard_range is None or heard_range[0] <= point.speed_kmh <= heard_range[1])
     ]
     bounds = _speed_band_bounds(candidate.strongest_speed_band)
     if bounds is not None:
@@ -581,16 +616,8 @@ def _reference_speed_kmh(candidate: Finding | None) -> float | None:
 
 
 def _matched_speed_range(candidate: Finding | None) -> tuple[float | None, float | None]:
-    if candidate is None:
-        return None, None
-    speeds = sorted(
-        point.speed_kmh
-        for point in _heard_points(candidate)
-        if point.speed_kmh is not None and point.speed_kmh > 0
-    )
-    if not speeds:
-        return None, None
-    return percentile(speeds, 0.05), percentile(speeds, 0.95)
+    heard_range = heard_speed_range(candidate.matched_points) if candidate is not None else None
+    return heard_range if heard_range is not None else (None, None)
 
 
 def _heard_points(finding: Finding) -> Sequence[OrderMatchObservation]:
@@ -763,18 +790,43 @@ def _order_findings(
 # -- interpretation -----------------------------------------------------------
 
 
+def _axle(code: str) -> str:
+    return code.split("_", 1)[0]
+
+
 def _axle_zone(codes: Iterable[str]) -> str | None:
-    axles = {code.split("_", 1)[0] for code in codes if code in WHEEL_LOCATION_CODES}
+    axles = {_axle(code) for code in codes if code in WHEEL_LOCATION_CODES}
     return f"{axles.pop()}_axle" if len(axles) == 1 else None
 
 
+def _wheel_sensors(locations: Iterable[str]) -> frozenset[str]:
+    """The wheel corners the run had a sensor at, from its location rows."""
+    codes = {location_code_for_label(label) for label in locations}
+    return frozenset(code for code in codes if code in WHEEL_LOCATION_CODES)
+
+
+def _axles_compared(wheels: frozenset[str]) -> bool:
+    """The run had wheel sensors on both axles."""
+    return len({_axle(code) for code in wheels}) == 2
+
+
 def _zone(
-    candidate: Finding, rows: Sequence[LocationAmplitudeRow], refs: _References
+    candidate: Finding,
+    rows: Sequence[LocationAmplitudeRow],
+    refs: _References,
+    wheels: frozenset[str],
 ) -> str | None:
-    """Map the diagnosed source and its evidence to a corner or a car zone."""
+    """Map the diagnosed source and its evidence to a corner or a car zone.
+
+    A corner is named only when the run had sensors at two or more wheels to
+    compare, and an axle only when they were on both axles: one wheel sensor
+    feels a fault at any corner, strongest where it sits.
+    """
     source = candidate.suspected_source
     if source is VibrationSource.ENGINE:
         return "engine_bay"
+    corners_compared = len(wheels) >= 2
+    axles_compared = _axles_compared(wheels)
     top_codes = [
         code
         for row in rows
@@ -786,12 +838,19 @@ def _zone(
         # Judder comes from an axle's brake discs, felt through the steering
         # (front) or the seat and pedal (rear): the axle the wheel sensors near
         # the top share, else the strongest wheel sensor's axle.
-        wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
-        return _axle_zone(wheels) or (_axle_zone(wheels[:1]) if wheels else None)
+        if not axles_compared:
+            return None
+        top_wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
+        return _axle_zone(top_wheels) or (_axle_zone(top_wheels[:1]) if top_wheels else None)
     if source is VibrationSource.DRIVELINE:
         if top_codes and top_codes[0] in _DRIVELINE_ZONE_CODES:
             return top_codes[0]
-        return _axle_zone(top_codes) or _no_propshaft_axle_zone(refs) or "driveshaft_tunnel"
+        # Without wheel sensors on both axles, where the drive layout puts the shaft.
+        axle = _axle_zone(top_codes) if axles_compared else None
+        return axle or _no_propshaft_axle_zone(refs) or "driveshaft_tunnel"
+    if source is VibrationSource.WHEEL_TIRE and not corners_compared:
+        # No corner to name: where it was felt, unless that is the wheel sensor.
+        return top_codes[0] if top_codes and top_codes[0] not in WHEEL_LOCATION_CODES else None
     if source is VibrationSource.WHEEL_TIRE and not candidate.weak_spatial_separation:
         # A clearly dominant corner names the zone, as it names the location:
         # the per-location medians over the whole drive dilute a fault that was
@@ -805,13 +864,13 @@ def _zone(
     if not top_codes:
         return None
     if len(top_codes) > 1 and source is VibrationSource.WHEEL_TIRE:
-        wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
-        if len(wheels) >= _ALL_WHEELS_MIN_CORNERS:
+        top_wheels = [code for code in top_codes if code in WHEEL_LOCATION_CODES]
+        if len(top_wheels) >= _ALL_WHEELS_MIN_CORNERS:
             return "all_wheels"
-        if len(wheels) == 1:
+        if len(top_wheels) == 1:
             # The only wheel sensor near the top names its corner, not its axle.
-            return wheels[0]
-        return _axle_zone(wheels) or top_codes[0]
+            return top_wheels[0]
+        return _axle_zone(top_wheels) or top_codes[0]
     return top_codes[0]
 
 
@@ -821,6 +880,7 @@ def _weak_reasons(
     *,
     zone: str | None,
     sensor_count: int,
+    wheels: frozenset[str],
     manual_speed: bool,
 ) -> list[str]:
     if candidate is None:
@@ -828,15 +888,14 @@ def _weak_reasons(
     # A hand-entered speed comes first: the order match holds only at that speed.
     reasons: list[str] = ["manual_speed"] if manual_speed else []
     source = candidate.suspected_source
-    if source is VibrationSource.BRAKES:
-        # Brake judder names an axle: spread over its two wheels is expected.
-        if zone is None:
+    if sensor_count < 2:
+        # One sensor compares nothing, so nothing can be spread across locations.
+        reasons.append("single_sensor")
+    else:
+        if source in _CORNER_SOURCES and len(wheels) == 1:
+            reasons.append("single_wheel_sensor")
+        if _spread(candidate, zone, wheels):
             reasons.append("spread_across_locations")
-    elif (
-        source not in (VibrationSource.ENGINE, VibrationSource.DRIVELINE)
-        and candidate.weak_spatial_separation
-    ):
-        reasons.append("spread_across_locations")
     speed_min, speed_max = _matched_speed_range(candidate)
     if (
         speed_min is not None
@@ -849,9 +908,30 @@ def _weak_reasons(
     strength = candidate.vibration_strength_db
     if strength is not None and strength < LIGHT_STRENGTH_MAX_DB:
         reasons.append("faint")
-    if sensor_count < 2:
-        reasons.append("single_sensor")
     return reasons
+
+
+def _spread(candidate: Finding, zone: str | None, wheels: frozenset[str]) -> bool:
+    """Felt about as strongly at several sensors, so no location stands out.
+
+    Brake judder names an axle: spread over its two wheels is expected, and
+    without wheel sensors on both axles none can be named. An engine or
+    driveline order is placed by its rhythm, not its location.
+    """
+    source = candidate.suspected_source
+    if source is VibrationSource.BRAKES:
+        return zone is None and _axles_compared(wheels)
+    return (
+        source not in (VibrationSource.ENGINE, VibrationSource.DRIVELINE)
+        and candidate.weak_spatial_separation
+    )
+
+
+def _kept_weak_reasons(reasons: Sequence[str]) -> list[str]:
+    """The first reasons, always with the one saying too few sensors were used."""
+    kept = list(reasons[:_MAX_WEAK_REASONS])
+    missing = [reason for reason in reasons if reason in _SENSOR_REASONS and reason not in kept]
+    return [*kept[: _MAX_WEAK_REASONS - len(missing)], *missing]
 
 
 def _source_checks(
@@ -862,15 +942,24 @@ def _source_checks(
     *,
     braked: bool,
     engine_alias: bool = False,
+    no_fault: bool = False,
 ) -> list[SourceCheck]:
+    """What the run checked each source family for, and with what result.
+
+    On a no-fault run, a source whose orders were found only faintly (the
+    residual a healthy car has) is ruled out as ``faint_only``, not listed as a
+    candidate the verdict contradicts.
+    """
     rpm_source = refs.rpm_source
-    seen = {
-        finding.suspected_source
+    surfaced = [
+        finding
         for finding in findings
         if finding.order_code is not None
         and finding.should_surface
         and finding.confidence_level is not ConfidenceLevel.WEAK
-    }
+    ]
+    seen = {finding.suspected_source for finding in surfaced if not (no_fault and _faint(finding))}
+    faint_only = {finding.suspected_source for finding in surfaced} - seen
     if candidate is not None:
         seen.add(candidate.suspected_source)
     checks: list[SourceCheck] = []
@@ -890,6 +979,9 @@ def _source_checks(
             continue
         if source in seen:
             checks.append({"source": str(source), "status": "candidate", "reason": None})
+            continue
+        if source in faint_only:
+            checks.append({"source": str(source), "status": "ruled_out", "reason": "faint_only"})
             continue
         if source is VibrationSource.ENGINE and engine_alias:
             # In some gear the engine turns at the diagnosed order's rhythm.

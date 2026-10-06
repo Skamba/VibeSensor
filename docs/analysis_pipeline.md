@@ -265,11 +265,19 @@ the PDF both show:
   wheel/tire or brake cause felt about as strongly at several sensors) is
   Moderate at most: a vibration that faint may be a healthy car's residual
   imbalance, and a spread one is not pinned to the part a Strong level tells
-  the owner to fix.
+  the owner to fix. So is a wheel/tire or brake cause with `single_sensor` or
+  `single_wheel_sensor` (one sensor, or one wheel sensor with others in the
+  cabin): it cannot name the corner or axle a Strong level sends the owner to.
 - `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E1/E2 engine), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and
-  `weak_reasons` codes (at most two shown); `order_findings` repeats those facts once per surfaced
-  order (its best-ranked finding; diagnosed one first) as workshop worksheet rows.
+  `weak_reasons` codes (at most two shown, always with `single_sensor` /
+  `single_wheel_sensor` when present; one sensor is never `spread_across_locations`,
+  as it compares nothing). The matched speed range is the 5th to 95th
+  percentile of the order's heard matches (`heard_speed_range`); the reference
+  speed and every row's frequency come from heard matches inside it.
+  `order_findings` repeats those facts once per surfaced
+  order (its best-ranked finding; diagnosed one first) as workshop worksheet rows;
+  a `no_fault` run lists none it found only faintly (see `faint_only` below).
   The candidate names the source and the confidence level; the order shown
   (label, amplitudes, frequency, speeds) is that source's dominant order,
   `TestRun.diagnosis_order_finding` (see "Diagnosed order" in
@@ -278,10 +286,20 @@ the PDF both show:
   amplitude is highest on average (phase-weighted: a cruise match ×3, one
   while accelerating, slowing down, braking or coasting down ×0.3), among
   bins with at least 3 matched points. A mean, not a total, so a long cruise
-  at one speed does not make that speed the strongest. The diagnosed row carries the diagnosis level. Rows are
+  at one speed does not make that speed the strongest. The band is picked from
+  the heard matches inside the matched speed range, by amplitude over each
+  window's floor, so a floor-level match in loud road noise, or a few matches
+  at the edge of the drive, cannot name it. The diagnosed row carries the diagnosis level. Rows are
   listed from Moderate up, plus the diagnosed source's other order once even
   when it is Weak on its own.
-- `zone`: a corner for wheel/tire faults: the finding's location when the
+- `zone`: a corner or axle is named only where the sensors could compare
+  them: a corner needs sensors at two or more wheels, an axle (a brake
+  judder's, or a driveline order's) wheel sensors on both axles. One wheel
+  sensor feels a fault at any wheel, strongest where it sits, so a wheel/tire
+  fault then has no zone (or the cabin location that read strongest) and is
+  worded as not pinned to one wheel; a driveline fault takes the zone from
+  the drive layout (the tunnel, or a car without a propshaft's driven axle).
+  Otherwise, a corner for wheel/tire faults: the finding's location when the
   order analysis found a dominant corner, otherwise from the per-location
   amplitudes (an axle when two corners on one axle are within 1.5×,
   `all_wheels` when three or more are). The amplitudes are medians over the
@@ -316,6 +334,9 @@ the PDF both show:
 - `source_checks` give each order family (wheel/tire, driveline, engine,
   brakes) a status and reason:
   - `candidate`: the diagnosed source.
+  - `ruled_out` (`faint_only`, `no_fault` runs only): its order was found, but
+    only under the moderate strength band, the residual a healthy car also
+    has; it is not listed as a worksheet row or a candidate.
   - `not_testable`: its reference is missing (`no_tire_reference`,
     `no_drive_reference`, `no_engine_reference`), or the speed was typed in
     by hand (`manual_speed`; every sample carries the set value, even on a
