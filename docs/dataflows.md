@@ -26,6 +26,10 @@ Live flow is for "what is happening right now". It may expose connectivity,
 speed, spectra, and strength metrics, but it does not carry persisted findings
 or PDF/report facts. If live data is stale or absent, the UI shows that state
 directly; it does not synthesize history/report readiness from the live path.
+The browser socket (`apps/ui/src/ws.ts`) replaces itself after a close (with
+backoff), after 10 s without any message (the server pushes several a second,
+so silence is a dead link), and at once when the page becomes visible again
+with the socket gone or quiet for 3 s (a phone that slept keeps dead sockets).
 
 Deep dive: `docs/intake_buffering.md`
 

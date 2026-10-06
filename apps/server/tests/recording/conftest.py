@@ -346,7 +346,11 @@ def _make_logger(
         fft_window_size_samples=config_fields.get("fft_window_size_samples", 1024),
         accel_scale_g_per_lsb=config_fields.get("accel_scale_g_per_lsb"),
         persist_history_db=config_fields.get("persist_history_db", True),
-        no_data_timeout_s=config_fields.get("no_data_timeout_s", 15.0),
+        **(
+            {"no_data_timeout_s": config_fields["no_data_timeout_s"]}
+            if "no_data_timeout_s" in config_fields
+            else {}
+        ),
     )
     reg = registry or _FakeRegistry()
     return RunRecorder(

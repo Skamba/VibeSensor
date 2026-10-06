@@ -50,6 +50,7 @@ function idleStatus(
     last_completed_run_error: null,
     guided_brake_stops: 0,
     capture_readiness: READY,
+    no_data_timeout_s: 60,
     ...overrides,
   };
 }
@@ -426,7 +427,7 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
 
   // The run hit the 30-minute cap, and Live says so.
   await page.locator("#tab-dashboard").click();
-  await expect(page.locator("#loggingSummary")).toContainText(
+  await expect(page.locator("#autoStopNotice")).toContainText(
     "Recording stopped automatically at the 30-minute limit.",
   );
 });
@@ -709,5 +710,55 @@ test.describe("on a phone", () => {
     await expect(page.locator("#captureManualSpeedNote")).toContainText(
       "Start waits for live speed",
     );
+  });
+
+  test("journey: a solo drive keeps the screen on, flags a quiet sensor, and says why the run stopped", async ({
+    page,
+  }) => {
+    let status = idleStatus();
+    await bootWithStatus(page, (route) => fulfillJson(route, status));
+    await page.route("**/api/recording/start", async (route) => {
+      status = idleStatus({ enabled: true, run_id: "run-7", elapsed_s: 3 });
+      await fulfillJson(route, status);
+    });
+    const keepAwakeVideo = page.locator("#keepAwakeVideo");
+    const isPlaying = () =>
+      keepAwakeVideo.evaluate((video: HTMLVideoElement) => !video.paused);
+
+    await expect(page.locator("#keepAwakeHint")).toBeHidden();
+    await page.locator("#startLoggingBtn").tap();
+    await expect(page.locator("#stopLoggingBtn")).toBeVisible();
+    // The Start tap starts the muted keep-awake video, and Live says to set auto-lock to Never.
+    await expect.poll(isPlaying).toBe(true);
+    await expect(keepAwakeVideo).toHaveJSProperty("muted", true);
+    const hint = page.locator("#keepAwakeHint");
+    await expect(hint).toContainText("Auto-Lock");
+    await expect(hint).toBeInViewport();
+
+    // The sensor goes quiet: a warning at the top, with the time left before the stop.
+    status = idleStatus({
+      enabled: true,
+      run_id: "run-7",
+      elapsed_s: 40,
+      no_data_s: 20.2,
+    });
+    const silent = page.locator("#sensorSilentNotice");
+    await expect(silent).toContainText("No data from the sensor");
+    await expect(silent).toContainText("within 40 s");
+    await expect(silent).toBeInViewport();
+
+    // It never came back: the run stopped by itself, and Live says why.
+    status = idleStatus({
+      last_stop_reason: "no_data_timeout",
+      last_run_id: "run-7",
+      analysis_in_progress: true,
+    });
+    const stopped = page.locator("#autoStopNotice");
+    await expect(stopped).toContainText("Recording stopped: sensor lost");
+    await expect(stopped).toContainText("battery");
+    await expect(stopped).toBeInViewport();
+    await expect(silent).toBeHidden();
+    await expect(hint).toBeHidden();
+    await expect.poll(isPlaying).toBe(false);
   });
 });

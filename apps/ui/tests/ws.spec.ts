@@ -342,4 +342,121 @@ describe("createWsClient", () => {
       globalThis.WebSocket = originalWebSocket;
     }
   });
+  test("reconnects a socket that went quiet instead of staying stale", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    const originalDateNow = Date.now;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    let now = 1_000;
+    Date.now = () => now;
+    try {
+      const client = createWsClient({
+        url: "ws://example.test/ws",
+        staleAfterMs: 10,
+      });
+      client.connect();
+      const quiet = FakeWebSocket.instances[0];
+      quiet?.emitOpen();
+      quiet?.emitMessage({ spectra: { clients: { "client-1": {} } } });
+
+      now += 10;
+      timeouts.fireNext();
+      expect(client.uiState.value).toBe("stale");
+      expect(timeouts.pendingTimeoutCount()).toBe(1);
+
+      timeouts.fireNext();
+      expect(quiet?.closeCalls).toBe(1);
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      expect(client.uiState.value).toBe("reconnecting");
+      client.close();
+    } finally {
+      Date.now = originalDateNow;
+      timeouts.restore();
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("an open socket that never sends anything is reconnected too", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    const originalDateNow = Date.now;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    let now = 1_000;
+    Date.now = () => now;
+    try {
+      const client = createWsClient({
+        url: "ws://example.test/ws",
+        staleAfterMs: 10,
+      });
+      client.connect();
+      FakeWebSocket.instances[0]?.emitOpen();
+      expect(timeouts.pendingDelays()).toEqual([10]);
+
+      now += 10;
+      timeouts.fireNext();
+      expect(client.uiState.value).toBe("reconnecting");
+      timeouts.fireNext();
+      expect(FakeWebSocket.instances).toHaveLength(2);
+      client.close();
+    } finally {
+      Date.now = originalDateNow;
+      timeouts.restore();
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+
+  test("coming back to the page reconnects at once when the socket is gone or quiet", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    const originalDateNow = Date.now;
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    const timeouts = installTimeoutHarness();
+    let visibility: DocumentVisibilityState = "hidden";
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => visibility,
+    });
+    const showPage = () => {
+      visibility = "visible";
+      document.dispatchEvent(new Event("visibilitychange"));
+    };
+    let now = 1_000;
+    Date.now = () => now;
+    try {
+      const client = createWsClient({ url: "ws://example.test/ws" });
+      client.connect();
+      const first = FakeWebSocket.instances[0];
+      first?.emitOpen();
+      first?.emitMessage({ spectra: { clients: { "client-1": {} } } });
+
+      // Back within a moment of the last message: the socket is kept.
+      now += 500;
+      showPage();
+      expect(FakeWebSocket.instances).toHaveLength(1);
+
+      // Back after the phone slept: no message for a while, so reconnect now.
+      visibility = "hidden";
+      now += 30_000;
+      showPage();
+      expect(first?.closeCalls).toBe(1);
+      expect(FakeWebSocket.instances).toHaveLength(2);
+
+      // Closed while hidden with a long backoff pending: reconnect now as well.
+      const second = FakeWebSocket.instances[1];
+      second?.close();
+      expect(client.uiState.value).toBe("reconnecting");
+      visibility = "hidden";
+      showPage();
+      expect(FakeWebSocket.instances).toHaveLength(3);
+
+      client.dispose();
+      visibility = "hidden";
+      showPage();
+      expect(FakeWebSocket.instances).toHaveLength(3);
+    } finally {
+      Date.now = originalDateNow;
+      timeouts.restore();
+      globalThis.WebSocket = originalWebSocket;
+      Reflect.deleteProperty(document, "visibilityState");
+    }
+  });
 });

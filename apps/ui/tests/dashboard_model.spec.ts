@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { LoggingStatusPayload } from "../src/api/types";
 import {
   classifyFreshness,
+  driveAlerts,
   formatElapsed,
   freshnessText,
   guidedTestModel,
@@ -318,18 +319,74 @@ describe("recording card", () => {
     expect(JSON.stringify(resumed)).not.toContain("status.unavailable");
   });
 
-  test("a run that hit the 30-minute limit says it stopped automatically", () => {
-    const detail = (reason: LoggingStatusPayload["last_stop_reason"]) =>
+  test("a run that stopped by itself says why, until the next run starts", () => {
+    const notice = (overrides: Partial<LoggingStatusPayload>) =>
+      driveAlerts({ status: status(overrides), keepAwake: "off" }, t, formatInt)
+        .stopNotice;
+    expect(notice({ last_stop_reason: "max_duration" })).toEqual({
+      body: "dashboard.logging.auto_stopped_max_duration",
+      tone: "info",
+    });
+    expect(notice({ last_stop_reason: "no_data_timeout" })).toEqual({
+      title: "dashboard.logging.auto_stopped_no_data.title",
+      body: 'dashboard.logging.auto_stopped_no_data.body:{"seconds":"60"}',
+      tone: "error",
+    });
+    expect(notice({ last_stop_reason: "manual" })).toBeNull();
+    expect(
+      notice({ enabled: true, run_id: "run-2", last_stop_reason: null }),
+    ).toBeNull();
+    // The saved-run panel keeps its own detail.
+    expect(
       recording({
         status: status({
           last_completed_run_id: "run-1",
-          last_stop_reason: reason,
+          last_stop_reason: "max_duration",
         }),
-      }).summaryPanel?.detail;
-    expect(detail("max_duration")).toBe(
-      "dashboard.logging.auto_stopped_max_duration",
-    );
-    expect(detail("manual")).toBe("dashboard.logging.saved.detail");
+      }).summaryPanel?.detail,
+    ).toBe("dashboard.logging.saved.detail");
+  });
+
+  test("a quiet sensor while recording warns with the time left before the stop", () => {
+    const alerts = (noDataS: number | null) =>
+      driveAlerts(
+        {
+          status: status({
+            enabled: true,
+            run_id: "run-1",
+            no_data_s: noDataS,
+            no_data_timeout_s: 60,
+          }),
+          keepAwake: "video",
+        },
+        t,
+        formatInt,
+      );
+    expect(alerts(null).sensorSilent).toBeNull();
+    expect(alerts(4.9).sensorSilent).toBeNull();
+    expect(alerts(12.4).sensorSilent).toEqual({
+      title: "dashboard.logging.sensor_silent.title",
+      body: 'dashboard.logging.sensor_silent.body:{"seconds":"12","remaining":"48"}',
+      tone: "error",
+    });
+    expect(alerts(75).sensorSilent?.body).toContain('"remaining":"0"');
+  });
+
+  test("while recording, the auto-lock hint shows unless a wake lock holds the screen", () => {
+    const hint = (keepAwake: "wake-lock" | "video" | "off", enabled = true) =>
+      driveAlerts(
+        { status: status({ enabled, run_id: "run-1" }), keepAwake },
+        t,
+        formatInt,
+      ).keepAwakeHint;
+    expect(hint("video")).toEqual({
+      body: "dashboard.logging.keep_awake_hint",
+      tone: "info",
+      compact: true,
+    });
+    expect(hint("off")).not.toBeNull();
+    expect(hint("wake-lock")).toBeNull();
+    expect(hint("video", false)).toBeNull();
   });
 
   test("pending start and stop disable both buttons", () => {

@@ -118,3 +118,31 @@ def test_stop_clears_active_run_state() -> None:
     assert state.last_data_progress_mono_s is None
     assert state.start_frames_total == 0
     assert state.last_active_frames_total == 0
+
+
+def test_a_silent_sensor_counts_toward_the_stop_even_when_it_leaves_the_live_set() -> None:
+    """Frames that vanish from the total (sensor no longer live) are not new data."""
+    state = RunLifecycleState(no_data_timeout_s=60.0)
+    state.start_new_run(
+        run_id="run-1",
+        analysis_settings_snapshot=_analysis_settings_snapshot(),
+        start_time_utc="2026-01-01T00:00:00Z",
+        start_mono_s=0.0,
+        current_total=100,
+    )
+    state.refresh_data_progress(now_mono_s=1.0, current_total=110)
+    assert state.seconds_without_data(now_mono_s=1.0) == 0.0
+
+    # Ten seconds later the registry no longer counts the silent sensor as live.
+    state.refresh_data_progress(now_mono_s=11.0, current_total=0)
+    assert state.seconds_without_data(now_mono_s=30.0) == 29.0
+    assert state.auto_stop_reason(now_mono_s=60.9) is None
+    assert state.auto_stop_reason(now_mono_s=61.0) == "no_data_timeout"
+
+    # The sensor reconnects inside the grace period: recording carries on.
+    state.refresh_data_progress(now_mono_s=45.0, current_total=120)
+    assert state.seconds_without_data(now_mono_s=45.0) == 0.0
+    assert state.auto_stop_reason(now_mono_s=61.0) is None
+
+    state.stop(reason="manual")
+    assert state.seconds_without_data(now_mono_s=50.0) is None

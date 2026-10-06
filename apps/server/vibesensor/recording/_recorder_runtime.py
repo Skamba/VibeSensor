@@ -152,7 +152,7 @@ async def _run_tick(recorder: RunRecorder, *, logger: logging.Logger) -> None:
                 )
             else:
                 logger.info(
-                    "Auto-stopping run %s after %.1fs without new data",
+                    "Auto-stopping run %s: no sensor data for %.0f s",
                     run_id,
                     recorder._lifecycle.no_data_timeout_s,
                 )

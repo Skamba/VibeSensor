@@ -1,10 +1,12 @@
 import type { ComponentChildren } from "preact";
 
 import { CAPABILITY_MARK_SYMBOL } from "../../capabilities";
+import { FeedbackBlock } from "../../components/feedback";
 import { t } from "../../i18n";
 import type { RecordingModel, SummaryAction } from "./dashboard_model";
 import {
   advanceGuidedTest,
+  alerts,
   capabilities,
   guidedTest,
   health,
@@ -331,6 +333,8 @@ function GuidedTest() {
 
 function Recording(props: { onAddCar: () => void }) {
   const model = recording.value;
+  // At the top of the recording card, which is on screen right after the Start tap.
+  const { keepAwakeHint } = alerts.value;
   const onAction = (action: SummaryAction) => {
     if (action === "open-add-car") {
       props.onAddCar();
@@ -349,6 +353,11 @@ function Recording(props: { onAddCar: () => void }) {
           <Summary model={model} onAction={onAction} />
         </div>
       </div>
+      {keepAwakeHint ? (
+        <div id="keepAwakeHint" class="logging-keep-awake">
+          <FeedbackBlock message={keepAwakeHint} />
+        </div>
+      ) : null}
       <div
         class="logging-row"
         hidden={!model.showPill && model.runIdText === ""}
@@ -401,6 +410,33 @@ function Recording(props: { onAddCar: () => void }) {
           {t("dashboard.logging.start_hint")}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Notices a driver must see at a glance, shown in the sticky header so they
+ * stay on screen wherever the page is scrolled: a quiet sensor while recording
+ * (on every view), and why the last run stopped by itself (on Live).
+ */
+export function DriveAlerts(props: { onLive: boolean }) {
+  const { sensorSilent } = alerts.value;
+  const stopNotice = props.onLive ? alerts.value.stopNotice : null;
+  if (!sensorSilent && !stopNotice) {
+    return null;
+  }
+  return (
+    <div class="site-header__alerts">
+      {sensorSilent ? (
+        <div id="sensorSilentNotice" role="alert">
+          <FeedbackBlock message={sensorSilent} />
+        </div>
+      ) : null}
+      {stopNotice ? (
+        <div id="autoStopNotice" role="alert">
+          <FeedbackBlock message={stopNotice} />
+        </div>
+      ) : null}
     </div>
   );
 }

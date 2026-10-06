@@ -34,7 +34,10 @@ class RunRecorderConfig:
     metrics_log_hz: int = 4
     accel_scale_g_per_lsb: float | None = None
     persist_history_db: bool = True
-    no_data_timeout_s: float = 15.0
+    no_data_timeout_s: float = 60.0
+    """Sensor silence that stops a run. A sensor's Wi-Fi reconnect (15 s connect
+    timeout, then retries at most 10 s apart) can take 25 s or more, and the raw
+    capture records the gap, so a run waits a minute before giving up."""
     max_recording_duration_s: float = MAX_RECORDING_DURATION_S
 
 

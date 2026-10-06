@@ -139,9 +139,17 @@ class RunLifecycleState:
         return (not history_run_created) and current_total <= self.start_frames_total
 
     def refresh_data_progress(self, *, now_mono_s: float, current_total: int) -> None:
-        if current_total != self.last_active_frames_total:
-            self.last_active_frames_total = current_total
+        # Only a growing total is new data: the total also shrinks when a silent
+        # sensor drops out of the live set, which must not restart the stop timer.
+        if current_total > self.last_active_frames_total:
             self.last_data_progress_mono_s = now_mono_s
+        self.last_active_frames_total = current_total
+
+    def seconds_without_data(self, *, now_mono_s: float) -> float | None:
+        """Seconds since sensor data last arrived for the active run (``None`` when idle)."""
+        if not self.enabled or self.last_data_progress_mono_s is None:
+            return None
+        return max(0.0, now_mono_s - self.last_data_progress_mono_s)
 
     def mark_rows_written(self, *, now_mono_s: float) -> None:
         self.last_data_progress_mono_s = now_mono_s

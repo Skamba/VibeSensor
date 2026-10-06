@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -35,6 +36,46 @@ async def test_idle_runtime_tick_does_not_create_phantom_run(
     assert status.enabled is False
     assert status.run_id is None
     assert history_db.list_runs() == []
+
+
+@pytest.mark.asyncio
+async def test_a_quiet_sensor_shows_while_recording_and_stops_the_run_after_a_minute(
+    make_logger,
+    history_db,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A sensor reconnecting over Wi-Fi can take longer than 15 s: the run waits a minute."""
+    logger = make_logger(history_db=history_db)
+    monkeypatch.setattr(logger.post_analysis, "schedule", lambda _run_id: None)
+    logger.start_recording()
+    snapshot = logger._lifecycle.snapshot()
+    assert snapshot is not None
+    assert logger.status().no_data_timeout_s == 60.0
+    # The sensor has gone quiet: the registry dropped it from the live set.
+    monkeypatch.setattr(logger.registry, "active_client_ids", lambda: [])
+
+    logger._lifecycle.last_data_progress_mono_s = time.monotonic() - 20.0
+    quiet = logger.status()
+    assert quiet.enabled is True
+    assert quiet.no_data_s is not None and 20.0 <= quiet.no_data_s < 25.0
+
+    logger._sample_flush._monotonic = lambda: snapshot.start_mono_s + 59.0
+    logger._lifecycle.last_data_progress_mono_s = snapshot.start_mono_s
+    with pytest.raises(_StopLoop):
+        await _recorder_runtime.run_loop(
+            logger, logger=logging.getLogger(__name__), sleep=_raise_stop_loop
+        )
+    assert logger.status().enabled is True
+
+    logger._sample_flush._monotonic = lambda: snapshot.start_mono_s + 60.0
+    with pytest.raises(_StopLoop):
+        await _recorder_runtime.run_loop(
+            logger, logger=logging.getLogger(__name__), sleep=_raise_stop_loop
+        )
+    stopped = logger.status()
+    assert stopped.enabled is False
+    assert stopped.no_data_s is None
+    assert stopped.last_stop_reason == "no_data_timeout"
 
 
 @pytest.mark.asyncio

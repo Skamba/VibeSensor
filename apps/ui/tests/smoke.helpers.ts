@@ -304,6 +304,7 @@ export async function installCommonRoutes(
       last_completed_run_id: null,
       last_completed_run_error: null,
       guided_brake_stops: 0,
+      no_data_timeout_s: 60,
       capture_readiness: buildCaptureReadiness({
         isReady: false,
         sensors: { state: "fail", reasonKey: "no_live_sensors" },

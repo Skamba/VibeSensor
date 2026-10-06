@@ -11,6 +11,7 @@ import { errorMessage, isDemoMode, navigate, speedUnit } from "../../app_store";
 import { reportClock } from "../../clock_report";
 import { fmt, formatIntLocale, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
+import { keepAwakeMode, startKeepAwake, stopKeepAwake } from "../../keep_awake";
 import {
   clients,
   liveSensorLayout,
@@ -39,6 +40,7 @@ import {
 } from "../../speed_source";
 import {
   activeCarText,
+  driveAlerts,
   formatElapsed,
   freshnessText,
   guidedTestModel,
@@ -188,6 +190,8 @@ async function runAction(
  * has set yet (it has no RTC) is set before the run is stamped.
  */
 export function startRecording(): Promise<void> {
+  // Inside the tap: iOS only starts the keep-awake video from a user gesture.
+  startKeepAwake();
   return runAction("starting", async () => {
     await reportClock();
     return await startLoggingRun();
@@ -206,6 +210,19 @@ export function stopRecording(): Promise<void> {
     return stopped;
   });
 }
+
+// Keep the screen on for the whole run however it started (also after a
+// reload mid-run), and let it lock again once the run stops for any reason.
+const keepScreenOn = computed(
+  () => status.value.enabled || pending.value === "starting",
+);
+effect(() => {
+  if (keepScreenOn.value) {
+    startKeepAwake();
+  } else {
+    stopKeepAwake();
+  }
+});
 
 /** Starts the next guided test-drive step, or ends the guided test with `null`. */
 export async function advanceGuidedTest(
@@ -333,6 +350,15 @@ export const capabilities = computed(() => {
       : null,
   };
 });
+
+/** Sensor-silent warning, why the last run stopped, and the auto-lock hint. */
+export const alerts = computed(() =>
+  driveAlerts(
+    { status: status.value, keepAwake: keepAwakeMode.value },
+    t,
+    formatInt,
+  ),
+);
 
 export const guidedTest = computed(() =>
   guidedTestModel(

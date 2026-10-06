@@ -1,6 +1,7 @@
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import type { FuelType } from "../../capabilities";
 import type { CarSelectionState } from "../../car_selection";
+import type { Feedback } from "../../components/feedback";
 import {
   GUIDED_BRAKE_FROM_KMH,
   GUIDED_BRAKE_STOPS,
@@ -10,6 +11,7 @@ import {
   GUIDED_SWEEP_TO_KMH,
 } from "../../config";
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
+import type { KeepAwakeMode } from "../../keep_awake";
 import type { LocationOption } from "../../sensor_locations";
 import type {
   AdaptedClient,
@@ -88,6 +90,7 @@ export const IDLE_STATUS: LoggingStatusPayload = {
   last_completed_run_error: null,
   guided_brake_stops: 0,
   capture_readiness: null,
+  no_data_timeout_s: 60,
 };
 
 /**
@@ -550,13 +553,7 @@ export function recordingModel(
       pillVariant: status.analysis_in_progress ? "warn" : "ok",
       pillText: phase(key),
       phaseText: phase(key),
-      summaryPanel:
-        status.last_stop_reason === "max_duration"
-          ? {
-              ...summary,
-              detail: t("dashboard.logging.auto_stopped_max_duration"),
-            }
-          : summary,
+      summaryPanel: summary,
       elapsedText: input.lastRunElapsedText,
       blockedReason: blockedReason(),
       startDisabled: notReady,
@@ -602,6 +599,67 @@ export function recordingModel(
     checklist: items.length ? items : null,
     startDisabled: notReady,
     setupMode: waiting,
+  };
+}
+
+/** Notices at the top of Live that a driver must see at a glance. */
+export interface DriveAlerts {
+  /** Recording, but no sensor data for a while: the run stops if it stays away. */
+  sensorSilent: Feedback | null;
+  /** Why the last run stopped by itself; kept until the next run starts. */
+  stopNotice: Feedback | null;
+  /** While recording: set the phone's auto-lock to Never. */
+  keepAwakeHint: Feedback | null;
+}
+
+/** A few seconds without data is normal Wi-Fi jitter; longer is worth a look. */
+const SENSOR_SILENT_NOTICE_S = 5;
+
+export function driveAlerts(
+  input: { status: LoggingStatusPayload; keepAwake: KeepAwakeMode },
+  t: Translate,
+  formatInt: FormatInt,
+): DriveAlerts {
+  const { status } = input;
+  const timeoutS = status.no_data_timeout_s;
+  const silentS = status.enabled ? (status.no_data_s ?? null) : null;
+  const sensorSilent: Feedback | null =
+    silentS !== null && silentS >= SENSOR_SILENT_NOTICE_S
+      ? {
+          title: t("dashboard.logging.sensor_silent.title"),
+          body: t("dashboard.logging.sensor_silent.body", {
+            seconds: formatInt(Math.round(silentS)),
+            remaining: formatInt(Math.max(0, Math.round(timeoutS - silentS))),
+          }),
+          tone: "error",
+        }
+      : null;
+  let stopNotice: Feedback | null = null;
+  if (!status.enabled && status.last_stop_reason === "no_data_timeout") {
+    stopNotice = {
+      title: t("dashboard.logging.auto_stopped_no_data.title"),
+      body: t("dashboard.logging.auto_stopped_no_data.body", {
+        seconds: formatInt(Math.round(timeoutS)),
+      }),
+      tone: "error",
+    };
+  } else if (!status.enabled && status.last_stop_reason === "max_duration") {
+    stopNotice = {
+      body: t("dashboard.logging.auto_stopped_max_duration"),
+      tone: "info",
+    };
+  }
+  return {
+    sensorSilent,
+    stopNotice,
+    keepAwakeHint:
+      status.enabled && input.keepAwake !== "wake-lock"
+        ? {
+            body: t("dashboard.logging.keep_awake_hint"),
+            tone: "info",
+            compact: true,
+          }
+        : null,
   };
 }
 

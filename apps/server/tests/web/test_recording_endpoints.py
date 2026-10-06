@@ -30,6 +30,7 @@ def _make_recording_status_snapshot(
     last_completed_run_error: str | None = None,
     capture_readiness: CaptureReadiness | None = None,
     last_run_id: str | None = None,
+    no_data_s: float | None = None,
 ) -> RunRecorderStatusSnapshot:
     return RunRecorderStatusSnapshot(
         enabled=enabled,
@@ -44,6 +45,8 @@ def _make_recording_status_snapshot(
         last_completed_run_error=last_completed_run_error,
         capture_readiness=capture_readiness,
         last_run_id=last_run_id,
+        no_data_s=no_data_s,
+        no_data_timeout_s=60.0,
     )
 
 
@@ -86,6 +89,7 @@ class TestRecordingStatusEndpoint:
             samples_dropped=3,
             analysis_in_progress=True,
             last_completed_run_id="run-122",
+            no_data_s=4.5,
         )
 
         response = client.get("/api/recording/status")
@@ -108,6 +112,8 @@ class TestRecordingStatusEndpoint:
             "guided_phase": None,
             "guided_phases_completed": [],
             "guided_brake_stops": 0,
+            "no_data_s": 4.5,
+            "no_data_timeout_s": 60.0,
         }
 
     def test_status_idle_enabled_false(self, _recording_client) -> None:
@@ -200,6 +206,8 @@ class TestRecordingStartEndpoint:
             "guided_phase": None,
             "guided_phases_completed": [],
             "guided_brake_stops": 0,
+            "no_data_s": None,
+            "no_data_timeout_s": 60.0,
         }
         state.run_recorder.start_recording.assert_called_once_with()
 
@@ -246,6 +254,8 @@ class TestRecordingStopEndpoint:
             "guided_phase": None,
             "guided_phases_completed": [],
             "guided_brake_stops": 0,
+            "no_data_s": None,
+            "no_data_timeout_s": 60.0,
         }
         state.run_recorder.stop_recording.assert_called_once_with()
 

@@ -436,8 +436,18 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - Recording auto-stops after 30 minutes
     (`apps/server/vibesensor/recording/lifecycle_state.py`), with the notice
     `dashboard.logging.auto_stopped_max_duration`.
-  - It also auto-stops with `no_data_timeout` when the sensors go silent
-    ([run_lifecycle.md](run_lifecycle.md)).
+  - It also auto-stops with `no_data_timeout` when the sensors stay silent for
+    a minute ([run_lifecycle.md](run_lifecycle.md)). From 5 s of silence Live
+    shows `dashboard.logging.sensor_silent` (check battery and range, and how
+    long until the stop); after the stop it shows
+    `dashboard.logging.auto_stopped_no_data`. Both sit in the sticky header so a
+    phone in a holder shows them wherever the page is scrolled.
+  - While recording, the Start tap also keeps the screen on
+    (`apps/ui/src/keep_awake.ts`): a Screen Wake Lock on secure pages, else a
+    muted inline looping video (the NoSleep.js technique, since the Pi serves
+    plain http). Neither is guaranteed, so the recording card also shows
+    `dashboard.logging.keep_awake_hint` (set auto-lock to Never) unless a wake
+    lock holds the screen.
 - **Guided drive (optional):** four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
   1. Sweep from 50 to 120 km/h (`GUIDED_SWEEP_FROM_KMH` /

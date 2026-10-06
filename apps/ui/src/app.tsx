@@ -32,7 +32,7 @@ import { startLive } from "./live_transport";
 import { Analysis } from "./pages/analysis/Analysis";
 import { Cars } from "./pages/cars/Cars";
 import { openWizard } from "./pages/cars/wizard_store";
-import { Dashboard } from "./pages/dashboard/Dashboard";
+import { Dashboard, DriveAlerts } from "./pages/dashboard/Dashboard";
 import { health } from "./pages/dashboard/dashboard_store";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { History } from "./pages/history/History";
@@ -427,6 +427,7 @@ export function App() {
       <header class="site-header">
         <Header />
         <StatusPills />
+        <DriveAlerts onLive={activeView.value === "dashboardView"} />
       </header>
       <HotspotHint />
       <ErrorBanner />

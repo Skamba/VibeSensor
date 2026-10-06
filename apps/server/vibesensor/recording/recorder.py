@@ -214,8 +214,10 @@ class RunRecorder:
             run_id = self._lifecycle.run_id
             start_time_utc = self._lifecycle.start_time_utc
             start_mono_s = self._lifecycle.start_mono_s
+            now_mono_s = time.monotonic()
+            no_data_s = self._lifecycle.seconds_without_data(now_mono_s=now_mono_s)
             elapsed_s = (
-                max(0.0, time.monotonic() - start_mono_s)
+                max(0.0, now_mono_s - start_mono_s)
                 if enabled and start_mono_s is not None
                 else None
             )
@@ -245,6 +247,8 @@ class RunRecorder:
             guided_phase=self._recording_session.current_guided_phase(),
             guided_phases_completed=self._recording_session.completed_guided_phases(),
             guided_brake_stops=self._recording_session.guided_brake_stops(),
+            no_data_s=None if no_data_s is None else round(no_data_s, 1),
+            no_data_timeout_s=self._lifecycle.no_data_timeout_s,
         )
 
     def mark_guided_phase(self, phase: GuidedPhaseName | None) -> RunRecorderStatusSnapshot:

@@ -95,8 +95,20 @@ class RecordingStatusResponse(BaseModel):
         default=None,
         description=(
             "Why the most recent run stopped; cleared when a new run starts. "
-            "`max_duration` means it hit the 30-minute recording limit."
+            "`max_duration` means it hit the 30-minute recording limit; "
+            "`no_data_timeout` means no sensor data arrived for `no_data_timeout_s`."
         ),
+    )
+    no_data_s: float | None = Field(
+        default=None,
+        description=(
+            "Seconds since sensor data last arrived for the current run; `null` when "
+            "not recording. The run stops by itself once this reaches `no_data_timeout_s`."
+        ),
+    )
+    no_data_timeout_s: float = Field(
+        default=0.0,
+        description="Sensor silence, in seconds, after which a run stops by itself.",
     )
     last_run_id: str | None = Field(
         default=None,

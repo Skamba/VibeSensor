@@ -13,6 +13,10 @@
   display: none;
 }
 
+.logging-keep-awake {
+  margin: var(--space-2) 0;
+}
+
 [data-summary-layout="panel"] {
   color: inherit;
   font-size: inherit;

@@ -1096,8 +1096,12 @@ export interface components {
             last_completed_run_id?: string | null;
             /** The run most recently stopped since the server started; cleared when a new run starts. Until then `samples_written` and `samples_dropped` describe it. */
             last_run_id?: string | null;
-            /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit. */
+            /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit; `no_data_timeout` means no sensor data arrived for `no_data_timeout_s`. */
             last_stop_reason?: components["schemas"]["RecordingStopReason"] | null;
+            /** Seconds since sensor data last arrived for the current run; `null` when not recording. The run stops by itself once this reaches `no_data_timeout_s`. */
+            no_data_s?: number | null;
+            /** Sensor silence, in seconds, after which a run stops by itself. */
+            no_data_timeout_s: number;
             run_id: string | null;
             samples_dropped: number;
             samples_written: number;

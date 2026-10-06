@@ -69,6 +69,8 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         guided_phase=snapshot.guided_phase,
         guided_phases_completed=list(snapshot.guided_phases_completed),
         guided_brake_stops=snapshot.guided_brake_stops,
+        no_data_s=snapshot.no_data_s,
+        no_data_timeout_s=snapshot.no_data_timeout_s,
     )
 
 

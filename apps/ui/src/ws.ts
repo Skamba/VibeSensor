@@ -28,6 +28,13 @@ export interface WsClient {
   send(payload: { client_id: string | null }): void;
 }
 
+/**
+ * Coming back to the page after this long without a message reconnects at
+ * once: a phone that slept or backgrounded the tab often keeps a socket that
+ * looks open but is dead, and the server pushes several messages a second.
+ */
+const RESUME_QUIET_MS = 3000;
+
 function hasSpectraClients(payload: unknown): boolean {
   const record =
     payload && typeof payload === "object"
@@ -37,6 +44,12 @@ function hasSpectraClients(payload: unknown): boolean {
   return Boolean(clients && Object.keys(clients).length > 0);
 }
 
+/**
+ * Live socket that reconnects by itself: after a close (with backoff), when an
+ * open socket goes quiet for `staleAfterMs` (the server pushes several times a
+ * second, so silence means a dead link), and at once when the page becomes
+ * visible again with the socket gone or quiet.
+ */
 export function createWsClient(options: WsClientOptions): WsClient {
   const resolvedOptions: Required<WsClientOptions> = {
     // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
@@ -50,6 +63,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   const latestPayload = signal<unknown | null>(null);
   const uiState = signal<WsUiState>("connecting");
   const lastMessageAtMs = signal(0);
+  const openedAtMs = signal(0);
   const hasReceivedData = signal(false);
   const manuallyClosed = signal(false);
   const reconnectAttempt = signal(0);
@@ -59,6 +73,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
   const staleTimer = createReplaceableTimeout();
   const disposeReconnectLifecycle = bindReconnectLifecycle();
   const disposeStaleLifecycle = bindStaleLifecycle();
+  const disposeVisibilityListener = bindVisibilityListener();
   let disposed = false;
 
   return {
@@ -111,6 +126,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
     close();
     disposeReconnectLifecycle();
     disposeStaleLifecycle();
+    disposeVisibilityListener();
   }
 
   function send(payload: { client_id: string | null }): void {
@@ -142,6 +158,7 @@ export function createWsClient(options: WsClientOptions): WsClient {
         return;
       }
       batch(() => {
+        openedAtMs.value = Date.now();
         socketOpen.value = true;
         commitState("no_data");
       });
@@ -160,6 +177,8 @@ export function createWsClient(options: WsClientOptions): WsClient {
       const receivedAt = Date.now();
       batch(() => {
         reconnectAttempt.value = 0;
+        // The socket is alive after all: drop a reconnect it went quiet into.
+        reconnectDelayMs.value = null;
         lastMessageAtMs.value = receivedAt;
         hasReceivedData.value =
           hasReceivedData.value || resolvedOptions.hasData(payload);
@@ -227,31 +246,58 @@ export function createWsClient(options: WsClientOptions): WsClient {
 
   function bindStaleLifecycle(): () => void {
     return bindReplaceableTimerEffect(staleTimer, () => {
-      if (
-        !socketOpen.value ||
-        manuallyClosed.value ||
-        !hasReceivedData.value ||
-        lastMessageAtMs.value <= 0
-      ) {
+      if (!socketOpen.value || manuallyClosed.value) {
         return null;
       }
-      const elapsedMs = Date.now() - lastMessageAtMs.value;
-      const remainingMs = resolvedOptions.staleAfterMs - elapsedMs;
-      if (remainingMs <= 0) {
-        setState("stale");
-        return null;
-      }
+      const lastHeardAtMs = lastMessageAtMs.value || openedAtMs.value;
+      const elapsedMs = Date.now() - lastHeardAtMs;
       return {
-        delayMs: remainingMs,
-        callback: () => {
-          setState("stale");
-        },
+        delayMs: Math.max(0, resolvedOptions.staleAfterMs - elapsedMs),
+        callback: goneQuiet,
       };
     });
   }
 
-  function setState(next: WsUiState): void {
-    commitState(next);
+  /** Shows the data as stale, then replaces the silent socket after the usual backoff. */
+  function goneQuiet(): void {
+    batch(() => {
+      commitState(hasReceivedData.value ? "stale" : "reconnecting");
+      scheduleReconnect();
+    });
+  }
+
+  function bindVisibilityListener(): () => void {
+    if (typeof document === "undefined") {
+      return () => {};
+    }
+    const onVisibilityChange = () => {
+      if (
+        disposed ||
+        manuallyClosed.peek() ||
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
+      const socket = ws;
+      if (socket?.readyState === WebSocket.CONNECTING) {
+        return;
+      }
+      const lastHeardAtMs = lastMessageAtMs.peek() || openedAtMs.peek();
+      if (
+        socket?.readyState === WebSocket.OPEN &&
+        Date.now() - lastHeardAtMs < RESUME_QUIET_MS
+      ) {
+        return;
+      }
+      batch(() => {
+        reconnectAttempt.value = 0;
+        reconnectDelayMs.value = null;
+      });
+      open("reconnecting");
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
   }
 
   function commitState(next: WsUiState): void {

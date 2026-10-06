@@ -96,9 +96,14 @@ During recording:
   `RunRawCaptureWriter`, which writes per-run artifacts under the history data
   directory without bloating `samples_v2`
 - `refresh_data_progress()` / `mark_rows_written()` keep the no-data timeout
-  clock moving
+  clock moving; only a growing frame total counts, so a silent sensor dropping
+  out of the live set does not restart it
 - auto-stop is based on monotonic time, not wall-clock timestamps: a run stops
-  with reason `no_data_timeout` after `no_data_timeout_s` without data progress,
+  with reason `no_data_timeout` after `no_data_timeout_s` (60 s) without data
+  progress. A minute covers a sensor's Wi-Fi reconnect (15 s connect timeout,
+  then retries at most 10 s apart); the raw capture records the gap and analysis skips it.
+  `/api/recording/status` reports `no_data_s` while recording so Live can warn
+  before the stop,
   and with reason `max_duration` when it reaches `MAX_RECORDING_DURATION_S`
   (30 minutes, `recording/lifecycle_state.py`; the `recording.max_duration_s`
   config default, which only isolated test runtimes shorten), which keeps
