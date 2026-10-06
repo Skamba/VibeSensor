@@ -37,7 +37,7 @@ def _result(buf: ClientBuffer, **overrides: object) -> MetricsComputationResult:
         "client_id": "c",
         "sample_rate_hz": 200,
         "ingest_generation": buf.ingest_generation,
-        "metrics": {"combined": {"vib_mag_rms": 1.0, "vib_mag_p2p": 2.0, "peaks": []}},
+        "metrics": {"combined": {"peaks": [{"hz": 12.0, "amp": 1.0}]}},
         "spectrum_by_axis": {},
         "strength_metrics": {},
         "has_fft_data": False,
@@ -156,7 +156,7 @@ def test_commit_rejects_results_from_replaced_reset_or_older_buffer_state(
     assert buf.commit_metrics(_result(buf, **{stale_field: stale_value})) is False
     assert buf.latest_metrics == {}
     assert buf.commit_metrics(_result(buf)) is True
-    assert buf.latest_metrics["combined"]["vib_mag_rms"] == 1.0
+    assert buf.latest_metrics["combined"]["peaks"] == [{"hz": 12.0, "amp": 1.0}]
 
 
 def test_set_sample_rate_clamps_and_optionally_resizes(caplog: pytest.LogCaptureFixture) -> None:
@@ -310,7 +310,8 @@ def test_result_computed_before_evict_and_reconnect_is_discarded(
     monkeypatch.undo()
     fresh = proc.compute_metrics("c")
     assert proc.latest_metrics("c") is fresh
-    assert fresh["x"]["rms"] > 5.0
+    # The reconnected client's 10x louder signal, not the evicted one's.
+    assert fresh["combined"]["strength_metrics"]["peak_amp_g"] > 2.0
 
 
 def test_older_result_does_not_overwrite_newer_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -327,7 +328,8 @@ def test_older_result_does_not_overwrite_newer_metrics(monkeypatch: pytest.Monke
 
     latest = proc.latest_metrics("c")
     assert latest is not stale
-    assert latest["x"]["rms"] > 5.0
+    # The newer, 10x louder signal's metrics survive.
+    assert latest["combined"]["strength_metrics"]["peak_amp_g"] > 2.0
 
 
 def test_compute_all_skips_failing_client(

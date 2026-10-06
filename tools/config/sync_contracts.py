@@ -45,8 +45,6 @@ _WS_ALIASES = {
     "StrengthMetricPeak": "StrengthPeak",
     "StrengthMetricsPayload": "VibrationStrengthMetrics",
     "WsSpectrumSeries": "SpectrumSeriesPayload",
-    "WsAlignmentInfo": "AlignmentInfoPayload",
-    "WsFrequencyWarning": "FrequencyWarningPayload",
     "WsSpectraPayload": "SpectraPayload",
     "WsRotationalSpeedValue": "RotationalSpeedValuePayload",
     "WsOrderBand": "OrderBandPayload",

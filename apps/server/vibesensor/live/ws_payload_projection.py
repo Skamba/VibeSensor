@@ -64,7 +64,6 @@ class LiveWsPayloadProjector:
         clients = snapshot_for_api(
             self._registry,
             bundled_firmware_version=self._bundled_firmware_version(),
-            include_metrics=False,
             sensor_metadata_reader=self._sensor_metadata_reader,
         )
         client_ids = [client["id"] for client in clients]

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.domain.sensor_firmware import firmware_status
-from vibesensor.live.payload_types import ClientApiRow, ClientMetrics
+from vibesensor.live.payload_types import ClientApiRow
 from vibesensor.settings.sensor_metadata import resolve_sensor_presentation
 
 if TYPE_CHECKING:
@@ -25,7 +25,6 @@ def build_client_api_row(
     snapshot: ClientSnapshot,
     *,
     bundled_firmware_version: str = "",
-    include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> ClientApiRow:
     """Build a single client row for HTTP and WebSocket payloads.
@@ -60,12 +59,6 @@ def build_client_api_row(
         "frame_loss_recent": snapshot.frame_loss_recent,
         "frame_samples": snapshot.frame_samples,
     }
-    if include_metrics:
-        row["latest_metrics"] = (
-            snapshot.latest_metrics if snapshot.latest_metrics is not None else ClientMetrics()
-        )
-        row["reset_count"] = snapshot.reset_count
-        row["last_reset_time"] = snapshot.last_reset_time
     return row
 
 
@@ -73,7 +66,6 @@ def build_client_api_rows(
     snapshots: Iterable[ClientSnapshot],
     *,
     bundled_firmware_version: str = "",
-    include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> list[ClientApiRow]:
     """Project runtime snapshots into the existing API/WS payload rows."""
@@ -82,7 +74,6 @@ def build_client_api_rows(
         build_client_api_row(
             snapshot,
             bundled_firmware_version=bundled_firmware_version,
-            include_metrics=include_metrics,
             sensor_metadata_reader=sensor_metadata_reader,
         )
         for snapshot in snapshots
@@ -95,8 +86,6 @@ def snapshot_for_api(
     *,
     bundled_firmware_version: str = "",
     now_mono: float | None = None,
-    metrics_by_client: dict[str, ClientMetrics] | None = None,
-    include_metrics: bool = True,
     sensor_metadata_reader: SensorSettingsService | None = None,
 ) -> list[ClientApiRow]:
     """Convenience presenter from client snapshots to API rows."""
@@ -105,9 +94,7 @@ def snapshot_for_api(
         registry.client_snapshots(
             now=now,
             now_mono=now_mono,
-            metrics_by_client=metrics_by_client,
         ),
         bundled_firmware_version=bundled_firmware_version,
-        include_metrics=include_metrics,
         sensor_metadata_reader=sensor_metadata_reader,
     )

@@ -97,27 +97,7 @@ measured before the user pressed start, and the raw capture cannot replay it):
 - **Fallback path**: Uses `last_ingest_mono_s` (server arrival time)
   and the buffer sample count to estimate the window.
 
-### 4. Multi-Spectrum Payload
-
-`multi_spectrum_payload()` includes an `alignment` block when two or more
-sensors with a computed spectrum are present. `overlap_ratio` is the fraction
-of the union covered by the intersection of all sensor windows, `aligned` is
-`True` when `overlap_ratio ≥ 0.5`, and `clock_synced` is `True` when every
-sensor uses synced timestamps:
-
-```json
-{
-  "alignment": {
-    "overlap_ratio": 0.95,
-    "aligned": true,
-    "shared_window_s": 1.9,
-    "sensor_count": 3,
-    "clock_synced": true
-  }
-}
-```
-
-### 5. Persisted Raw Replay
+### 4. Persisted Raw Replay
 
 Post-stop raw replay now uses the persisted raw chunk timeline instead
 of assuming that summary-sample `t_s` starts at raw sample index zero.
@@ -187,7 +167,7 @@ persisted summary sample instead of guessing raw alignment. Gaps,
 overlaps, dropped chunks, and other incomplete raw coverage still fall
 back per window and emit deterministic warnings.
 
-### 6. Simulator Parity
+### 5. Simulator Parity
 
 `vibesensor-sim` follows the same contract as the firmware: it streams
 only after `HELLO_ACK`, answers `CMD_SYNC_CLOCK` with the sync-clock ACK
@@ -200,7 +180,7 @@ follows the first as soon as its ACK arrives (both start at the sensor's
 HELLO); a recording that catches a sensor before that drops its pre-sync
 chunks and replays from its first synced chunk.
 
-### 7. Sensor Timing Guard
+### 6. Sensor Timing Guard
 
 A sync offset only maps the sensor's clock onto the server clock; it does not
 prove the sensor stamps its samples correctly. Firmware that stamped `t0_us`
@@ -243,10 +223,7 @@ of the frame's first sample and the declared rate is the delivered one.
 
 | Scenario | Behaviour |
 |----------|-----------|
-| Sensor has no `t0_us` yet (pre-sync) | Falls back to server arrival time for alignment. |
-| One sensor missing data | Excluded from alignment; remaining sensors compared normally. |
-| Overlap ratio < 50 % | `aligned = False`; consumers can choose to skip the comparison. |
-| Single sensor | Trivially aligned (`overlap_ratio = 1.0`). |
+| Sensor has no `t0_us` yet (pre-sync) | Falls back to server arrival time for its analysis time range. |
 
 ## How to Run the Tests
 

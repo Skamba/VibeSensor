@@ -1,79 +1,11 @@
-"""Time-alignment utilities for multi-sensor overlap analysis.
+"""Per-buffer analysis time ranges.
 
-Pure functions that compute intersection-over-union overlap metrics
-and per-buffer analysis time ranges.  Used by the
-:class:`~vibesensor.live.processor.SignalProcessor` for
-multi-sensor alignment metadata.
+:class:`~vibesensor.live.buffers.ClientBuffer` uses this to report the time
+window its latest spectrum describes, which recording uses to place each live
+sample on the run timeline.
 """
 
 from __future__ import annotations
-
-from typing import NamedTuple
-
-_ALIGNMENT_MIN_OVERLAP = 0.5  # shared window must cover ≥50 % of the union
-
-
-class OverlapResult(NamedTuple):
-    """Computed overlap between multiple sensor time-ranges."""
-
-    overlap_ratio: float
-    aligned: bool
-    shared_start: float
-    shared_end: float
-    overlap_s: float
-
-
-def compute_overlap(starts: list[float], ends: list[float]) -> OverlapResult:
-    """Compute the intersection-over-union overlap for a set of time ranges.
-
-    Each pair ``(starts[i], ends[i])`` defines one sensor's active window.
-    Returns an :class:`OverlapResult` with the overlap ratio, alignment flag,
-    and the shared window boundaries.
-    """
-    if not starts or not ends or len(starts) != len(ends):
-        return OverlapResult(
-            overlap_ratio=0.0,
-            aligned=False,
-            shared_start=0.0,
-            shared_end=0.0,
-            overlap_s=0.0,
-        )
-
-    # Fast path: single range is trivially fully overlapping.
-    if len(starts) == 1:
-        s, e = starts[0], ends[0]
-        dur = max(0.0, e - s)
-        return OverlapResult(
-            overlap_ratio=1.0 if dur > 0 else 0.0,
-            aligned=dur > 0,
-            shared_start=s,
-            shared_end=e,
-            overlap_s=dur,
-        )
-
-    shared_start = max(starts)
-    shared_end = min(ends)
-    overlap = max(0.0, shared_end - shared_start)
-
-    # Early exit when ranges don't intersect — skip union computation.
-    if overlap <= 0.0:
-        return OverlapResult(
-            overlap_ratio=0.0,
-            aligned=False,
-            shared_start=shared_start,
-            shared_end=shared_end,
-            overlap_s=0.0,
-        )
-
-    union = max(1e-9, max(ends) - min(starts))
-    overlap_ratio = overlap / union
-    return OverlapResult(
-        overlap_ratio=overlap_ratio,
-        aligned=overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
-        shared_start=shared_start,
-        shared_end=shared_end,
-        overlap_s=overlap,
-    )
 
 
 def analysis_time_range(

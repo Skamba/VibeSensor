@@ -16,12 +16,9 @@ from vibesensor.live.models import (
     SpectrumAxisData,
 )
 from vibesensor.live.payload_types import (
-    AlignmentInfoPayload,
-    FrequencyWarningPayload,
     SpectraPayload,
     SpectrumSeriesPayload,
 )
-from vibesensor.live.time_align import compute_overlap
 
 if TYPE_CHECKING:
     from vibesensor.live.buffers import ClientBuffer
@@ -75,11 +72,8 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
 def build_multi_spectrum_payload(
     buffers: dict[str, ClientBuffer],
     client_ids: list[str],
-    *,
-    default_sample_rate_hz: int,
-    fft_n: int,
 ) -> SpectraPayload:
-    """Build the combined multi-client spectrum payload with alignment metadata.
+    """Build the combined multi-client spectrum payload.
 
     *buffers* must already be locked by the caller. When all clients share the
     same frequency axis, a single top-level ``freq`` is emitted.
@@ -89,9 +83,6 @@ def build_multi_spectrum_payload(
     mismatch_ids: list[str] = []
     per_client_freq: dict[str, np.ndarray] = {}
 
-    ranges: list[tuple[str, float, float]] = []
-    any_synced = False
-    all_synced = True
     for client_id in client_ids:
         buf = buffers.get(client_id)
         if buf is None or not buf.latest_spectrum:
@@ -114,17 +105,6 @@ def build_multi_spectrum_payload(
         per_client_freq[client_id] = client_freq
         clients[client_id] = build_spectrum_payload(buf)
 
-        time_range = buf.analysis_time_range(
-            default_sample_rate_hz=default_sample_rate_hz,
-            fft_n=fft_n,
-        )
-        if time_range is not None:
-            ranges.append((client_id, time_range.start_s, time_range.end_s))
-            if time_range.synced:
-                any_synced = True
-            else:
-                all_synced = False
-
     # When all clients share the same frequency axis, emit a single
     # top-level "freq" and omit per-client "freq" to reduce payload size.
     shared_freq_list: list[float]
@@ -139,30 +119,8 @@ def build_multi_spectrum_payload(
     else:
         shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
 
-    payload: SpectraPayload = {
+    return {
         "frame_fingerprint": _build_spectrum_frame_fingerprint(buffers, client_ids),
         "freq": shared_freq_list,
         "clients": clients,
     }
-    if mismatch_ids:
-        warning: FrequencyWarningPayload = {
-            "code": "frequency_bin_mismatch",
-            "message": "Per-client frequency axes returned due to sample-rate mismatch.",
-            "client_ids": sorted(mismatch_ids),
-        }
-        payload["warning"] = warning
-
-    if len(ranges) >= 2:
-        ov = compute_overlap(
-            [s for _, s, _ in ranges],
-            [e for _, _, e in ranges],
-        )
-        alignment: AlignmentInfoPayload = {
-            "overlap_ratio": round(ov.overlap_ratio, 4),
-            "aligned": ov.aligned,
-            "shared_window_s": round(ov.overlap_s, 4),
-            "sensor_count": len(ranges),
-            "clock_synced": all_synced and any_synced,
-        }
-        payload["alignment"] = alignment
-    return payload

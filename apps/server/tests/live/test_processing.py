@@ -1,17 +1,16 @@
-"""Exercise end-to-end processor behavior around ingest, locking, spectra, and overlap helpers."""
+"""Exercise end-to-end processor behavior around ingest, locking, and spectra."""
 
 from __future__ import annotations
 
-import math
 import time
-from math import pi, sqrt
+from math import pi
 from threading import Event, Thread
 from unittest.mock import patch
 
 import numpy as np
+import pytest
 
 from vibesensor.live.processor import SignalProcessor
-from vibesensor.live.time_align import compute_overlap
 
 
 def _make_3axis(x: np.ndarray) -> np.ndarray:
@@ -22,25 +21,34 @@ def _make_3axis(x: np.ndarray) -> np.ndarray:
 def test_processing_scales_to_g_detrends_dc_and_tracks_peak() -> None:
     sample_rate_hz = 800
     fft_n = 2048
-    processor = SignalProcessor(
-        sample_rate_hz=sample_rate_hz,
-        waveform_seconds=8,
-        waveform_display_hz=100,
-        fft_n=fft_n,
-        spectrum_max_hz=200,
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+
+    def _processor(accel_scale_g_per_lsb: float | None) -> SignalProcessor:
+        return SignalProcessor(
+            sample_rate_hz=sample_rate_hz,
+            waveform_seconds=8,
+            waveform_display_hz=100,
+            fft_n=fft_n,
+            spectrum_max_hz=200,
+            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        )
 
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
-    x_g = 1.0 + (0.05 * np.sin(2.0 * pi * 20.0 * t))
-    y_g = np.zeros_like(x_g)
-    z_g = np.zeros_like(x_g)
-    raw_lsb = np.stack([x_g * 256.0, y_g * 256.0, z_g * 256.0], axis=1).astype(np.int16)
-    processor.ingest("c1", raw_lsb, sample_rate_hz=sample_rate_hz)
+    sine_g = 0.05 * np.sin(2.0 * pi * 20.0 * t)
+    # Raw LSB input riding on a 1 g offset, against the same sine already in g.
+    raw_lsb = _make_3axis((1.0 + sine_g) * 256.0).astype(np.int16)
+    scaled = _processor(1.0 / 256.0)
+    scaled.ingest("c1", raw_lsb, sample_rate_hz=sample_rate_hz)
+    reference = _processor(None)
+    reference.ingest("c1", _make_3axis(sine_g).astype(np.float32), sample_rate_hz=sample_rate_hz)
 
-    metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    expected_rms = 0.05 / sqrt(2.0)
-    assert abs(float(metrics["x"]["rms"]) - expected_rms) < 0.006
+    metrics = scaled.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    reference_metrics = reference.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    x_peak = max(metrics["x"]["peaks"], key=lambda peak: peak["amp"])
+    reference_peak = max(reference_metrics["x"]["peaks"], key=lambda peak: peak["amp"])
+    assert abs(x_peak["hz"] - 20.0) < 1.0
+    # Scaled to g and with the offset removed, the LSB input matches the g input
+    # (up to int16 quantization).
+    assert x_peak["amp"] == pytest.approx(reference_peak["amp"], rel=0.05)
     combined = metrics["combined"]
     peaks = combined["peaks"]
     assert peaks
@@ -67,30 +75,6 @@ def test_processing_combined_strength_top_peaks_includes_eight_candidates() -> N
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     top_peaks = metrics["combined"]["strength_metrics"]["top_peaks"]
     assert len(top_peaks) >= 8
-
-
-def test_processing_window_seconds_uses_client_sample_rate() -> None:
-    sample_rate_hz = 400
-    processor = SignalProcessor(
-        sample_rate_hz=800,
-        waveform_seconds=8,
-        waveform_display_hz=100,
-        fft_n=1024,
-        spectrum_max_hz=200,
-        accel_scale_g_per_lsb=None,
-    )
-
-    total_samples = 5000
-    t = np.arange(total_samples, dtype=np.float64) / sample_rate_hz
-    x = np.zeros(total_samples, dtype=np.float32)
-    x[:1800] = (0.8 * np.sin(2.0 * pi * 6.0 * t[:1800])).astype(np.float32)
-    x[1800:] = (0.1 * np.sin(2.0 * pi * 6.0 * t[1800:])).astype(np.float32)
-    samples = _make_3axis(x)
-    processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
-
-    metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    # If more than the last 8 seconds were used, RMS would be much higher.
-    assert float(metrics["x"]["rms"]) < 0.12
 
 
 def test_clients_with_recent_data_filters_stale() -> None:
@@ -253,74 +237,3 @@ def test_spectrum_min_hz_zero_allows_all_frequencies() -> None:
     combined_peaks = metrics.get("combined", {}).get("peaks", [])
     # With min_hz=0, the 2 Hz peak should appear.
     assert any(abs(float(p["hz"]) - 2.0) < 1.0 for p in combined_peaks)
-
-
-def test_compute_overlap_empty_lists() -> None:
-    """_compute_overlap must not crash on empty input lists."""
-    result = compute_overlap([], [])
-    assert result.overlap_ratio == 0.0
-    assert result.aligned is False
-
-
-def test_compute_overlap_mismatched_lengths() -> None:
-    """_compute_overlap returns zero-overlap when starts/ends lengths differ."""
-    result = compute_overlap([1.0, 2.0], [3.0])
-    assert result.overlap_ratio == 0.0
-    assert result.aligned is False
-    assert result.overlap_s == 0.0
-
-
-def test_compute_overlap_single_range() -> None:
-    """_compute_overlap handles a single time range correctly."""
-    result = compute_overlap([0.0], [10.0])
-    assert result.overlap_ratio == 1.0
-    assert result.aligned is True
-    assert result.shared_start == 0.0
-    assert result.shared_end == 10.0
-    assert result.overlap_s == 10.0
-
-
-def test_compute_overlap_partial_overlap() -> None:
-    """_compute_overlap correctly computes partial overlap between two ranges."""
-    result = compute_overlap([0.0, 5.0], [10.0, 15.0])
-    # Shared: max(0,5)=5 to min(10,15)=10 => 5s overlap
-    # Union: min(0,5)=0 to max(10,15)=15 => 15s
-    assert abs(result.overlap_ratio - 5.0 / 15.0) < 1e-9
-    assert result.shared_start == 5.0
-    assert result.shared_end == 10.0
-    assert result.overlap_s == 5.0
-
-
-def test_compute_overlap_no_overlap() -> None:
-    """_compute_overlap returns zero overlap for disjoint ranges."""
-    result = compute_overlap([0.0, 20.0], [10.0, 30.0])
-    # Shared: max(0,20)=20 to min(10,30)=10 => negative => 0
-    assert result.overlap_ratio == 0.0
-    assert result.aligned is False
-    assert result.overlap_s == 0.0
-
-
-def test_metrics_rms_p2p_always_finite() -> None:
-    """compute_metrics must return finite rms/p2p even for extreme inputs."""
-    sample_rate_hz = 800
-    fft_n = 256
-    proc = SignalProcessor(
-        sample_rate_hz=sample_rate_hz,
-        waveform_seconds=1,
-        waveform_display_hz=100,
-        fft_n=fft_n,
-        spectrum_max_hz=200,
-        accel_scale_g_per_lsb=1.0,
-    )
-    # Normal small signal
-    t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
-    x = (0.01 * np.sin(2.0 * pi * 50.0 * t)).astype(np.float32)
-    samples = _make_3axis(x)
-    proc.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
-    metrics = proc.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    for axis in ("x", "y", "z"):
-        if axis in metrics:
-            assert math.isfinite(metrics[axis]["rms"])
-            assert math.isfinite(metrics[axis]["p2p"])
-    assert math.isfinite(metrics["combined"]["vib_mag_rms"])
-    assert math.isfinite(metrics["combined"]["vib_mag_p2p"])

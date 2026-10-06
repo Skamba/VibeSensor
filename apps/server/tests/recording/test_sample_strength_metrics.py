@@ -77,24 +77,24 @@ class TestDominantAxisFromMetrics:
 
     def test_returns_axis_when_peak_match_is_clear(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 42.0, "amp": 0.3}]},
-            "y": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 42.0, "amp": 0.1}]},
-            "z": {"rms": 0.0, "p2p": 0.0, "peaks": []},
+            "x": {"peaks": [{"hz": 42.0, "amp": 0.3}]},
+            "y": {"peaks": [{"hz": 42.0, "amp": 0.1}]},
+            "z": {"peaks": []},
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == "x"
 
     def test_returns_combined_when_multiple_axes_match_without_clear_winner(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 42.0, "amp": 0.2}]},
-            "y": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 42.0, "amp": 0.2}]},
-            "z": {"rms": 0.0, "p2p": 0.0, "peaks": []},
+            "x": {"peaks": [{"hz": 42.0, "amp": 0.2}]},
+            "y": {"peaks": [{"hz": 42.0, "amp": 0.2}]},
+            "z": {"peaks": []},
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == "combined"
 
     def test_returns_empty_when_dominant_peak_has_no_axis_evidence(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 20.0, "amp": 0.1}]},
-            "y": {"rms": 0.0, "p2p": 0.0, "peaks": []},
-            "z": {"rms": 0.0, "p2p": 0.0, "peaks": []},
+            "x": {"peaks": [{"hz": 20.0, "amp": 0.1}]},
+            "y": {"peaks": []},
+            "z": {"peaks": []},
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == ""

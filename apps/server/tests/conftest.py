@@ -115,7 +115,6 @@ def _processor_mock() -> SignalProcessor:
     }
     processor.buffer_overflow_drops.return_value = 0
     processor.recent_buffer_overflow_drops.return_value = 0
-    processor.all_latest_metrics.return_value = {}
     return processor
 
 

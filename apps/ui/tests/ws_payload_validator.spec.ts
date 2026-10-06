@@ -70,18 +70,6 @@ function makeRepresentativePayload(): LiveWsPayload {
           strength_metrics: makeStrengthMetrics(),
         },
       },
-      warning: {
-        code: "shared_freq",
-        message: "Shared frequency mismatch.",
-        client_ids: ["sensor-1"],
-      },
-      alignment: {
-        aligned: true,
-        clock_synced: true,
-        overlap_ratio: 0.75,
-        sensor_count: 1,
-        shared_window_s: 0.5,
-      },
     },
   };
 }
@@ -121,13 +109,6 @@ const requiredFieldCases: readonly RequiredFieldCase[] = [
     field: "rpm",
     getTarget: (payload) =>
       requireRecord(payload.rotational_speeds?.wheel, "rotational speed value"),
-  },
-  {
-    label: "alignment",
-    pathPrefix: "/spectra/alignment",
-    field: "clock_synced",
-    getTarget: (payload) =>
-      requireRecord(payload.spectra?.alignment, "alignment"),
   },
   {
     label: "strength metrics",
@@ -271,9 +252,7 @@ describe("validateLiveWsPayload", () => {
       },
       selected_client_id: "sensor-1",
       spectra: {
-        alignment: { clock_synced: true },
         frame_fingerprint: "sensor-1:0:0:1",
-        warning: { code: "shared_freq" },
       },
     });
   });

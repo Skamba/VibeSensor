@@ -93,26 +93,10 @@ const spectrumSeriesSchema = v.looseObject({
   strength_metrics: v.optional(strengthMetricsSchema),
 });
 
-const warningSchema = v.looseObject({
-  code: v.string(),
-  message: v.string(),
-  client_ids: v.array(v.string()),
-});
-
-const alignmentSchema = v.looseObject({
-  aligned: v.boolean(),
-  clock_synced: v.boolean(),
-  overlap_ratio: finiteNumberSchema,
-  sensor_count: integerSchema,
-  shared_window_s: finiteNumberSchema,
-});
-
 const spectraSchema = v.looseObject({
   frame_fingerprint: v.optional(v.string()),
   freq: v.optional(finiteNumberArraySchema),
   clients: v.optional(v.record(v.string(), spectrumSeriesSchema)),
-  warning: v.optional(warningSchema),
-  alignment: v.optional(alignmentSchema),
 });
 
 const liveWsPayloadSchema = v.looseObject({

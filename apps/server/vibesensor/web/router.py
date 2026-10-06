@@ -113,7 +113,6 @@ def create_router(services: WebServices) -> APIRouter:
             s.registry,
             s.control_plane,
             s.sensor_metadata_store,
-            s.processor,
             s.esp_flash_manager,
         ),
     )

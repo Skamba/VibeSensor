@@ -52,7 +52,7 @@ def test_data_loss_snapshot_aggregates_counters_and_affected_clients() -> None:
     }
 
 
-def test_client_snapshots_use_given_clocks_and_preserve_metrics() -> None:
+def test_client_snapshots_use_given_clocks() -> None:
     registry = ClientRegistry(live_ttl_seconds=10.0, retention_ttl_seconds=30.0)
     hello = make_hello_message("aabbccddeeff")
     registry.update_from_hello(hello, _ADDR, now=1000.0, now_mono=100.0)
@@ -60,14 +60,12 @@ def test_client_snapshots_use_given_clocks_and_preserve_metrics() -> None:
     snapshots = registry.client_snapshots(
         now=1002.5,
         now_mono=102.5,
-        metrics_by_client={"aabbccddeeff": {"rms": 0.5}},
     )
 
     assert len(snapshots) == 1
     assert snapshots[0].client_id == "aabbccddeeff"
     assert snapshots[0].connected is True
     assert snapshots[0].last_seen_age_ms == 2500
-    assert snapshots[0].latest_metrics == {"rms": 0.5}
 
 
 def test_client_snapshots_include_named_offline_clients() -> None:

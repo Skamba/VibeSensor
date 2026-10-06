@@ -113,7 +113,7 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
         ("10.4.0.2", 50000),
         now=2.0,
     )
-    registry.update_from_data(
+    result = registry.update_from_data(
         DataMessage(
             client_id=client_id,
             seq=10,
@@ -124,8 +124,8 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
         ("10.4.0.2", 50000),
         now=3.0,
     )
+    assert result.reset_detected is True
     row = snapshot_for_api(registry, now=3.0)[0]
-    assert row["reset_count"] == 1
     assert row["dropped_frames"] == 0
 
 
@@ -214,7 +214,6 @@ def test_rebooted_sensor_with_rewound_clock_starts_a_new_session(tmp_path: Path)
     record = registry.get(client_id.hex())
     assert record.last_seq == 2
     assert record.last_t0_us == 500_000
-    assert record.reset_count == 1
 
 
 def test_reordered_frame_slightly_behind_is_still_late(tmp_path: Path) -> None:

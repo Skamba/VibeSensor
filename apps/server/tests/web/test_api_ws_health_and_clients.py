@@ -14,14 +14,13 @@ from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.protocol_messages import HelloMessage
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_control_tx import UDPControlPlane
-from vibesensor.live.processor import SignalProcessor
 from vibesensor.settings.sensor_settings import SensorSettingsService
 from vibesensor.settings.services import build_settings_services
 from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 
 
 def _client_routes_app(
-    registry, control_plane, settings_store, processor, bundled_firmware_version: str = ""
+    registry, control_plane, settings_store, bundled_firmware_version: str = ""
 ) -> FastAPI:
     from vibesensor.web.clients import create_client_routes
 
@@ -29,7 +28,7 @@ def _client_routes_app(
     esp_flash_manager.bundled_firmware_version.return_value = bundled_firmware_version
     app = FastAPI()
     app.include_router(
-        create_client_routes(registry, control_plane, settings_store, processor, esp_flash_manager)
+        create_client_routes(registry, control_plane, settings_store, esp_flash_manager)
     )
     return app
 
@@ -52,30 +51,25 @@ class _ClientRig:
     registry: ClientRegistry
     settings: SensorSettingsService
     control_plane: UDPControlPlane
-    processor: SignalProcessor
 
     def app(self, bundled_firmware_version: str = "") -> FastAPI:
         return _client_routes_app(
             self.registry,
             self.control_plane,
             self.settings,
-            self.processor,
             bundled_firmware_version,
         )
 
 
 @pytest.fixture
 def client_rig(tmp_path: Path):
-    """Real registry, sensor settings and HistoryDB; spec'd control plane and processor."""
+    """Real registry, sensor settings and HistoryDB; spec'd control plane."""
     db = HistoryDB(tmp_path / "history.db")
-    processor = create_autospec(SignalProcessor, instance=True)
-    processor.all_latest_metrics.return_value = {}
     rig = _ClientRig(
         db=db,
         registry=ClientRegistry(db=db),
         settings=build_settings_services(db=db).sensor_settings,
         control_plane=create_autospec(UDPControlPlane, instance=True),
-        processor=processor,
     )
     yield rig
     db.close()
@@ -276,27 +270,22 @@ def test_get_clients_keeps_retained_stale_client_but_marks_it_disconnected(
         )
         monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: 9.0)
         monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: 9.0)
-        processor = create_autospec(SignalProcessor, instance=True)
-        processor.all_latest_metrics.return_value = {}
         app = _client_routes_app(
             registry,
             create_autospec(UDPControlPlane, instance=True),
             build_settings_services(db=db).sensor_settings,
-            processor,
         )
 
         with TestClient(app) as client:
             response = client.get("/api/clients")
 
         assert response.status_code == 200
-        processor.all_latest_metrics.assert_called_once_with([])
         clients = response.json()["clients"]
         assert len(clients) == 1
         assert clients[0]["id"] == "001122334455"
         assert clients[0]["name"] == "sensor"
         assert clients[0]["connected"] is False
         assert clients[0]["last_seen_age_ms"] == 8000
-        assert clients[0]["latest_metrics"] == {}
     finally:
         db.close()
 
@@ -317,10 +306,8 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
         )
         monkeypatch.setattr("vibesensor.ingest.registry.time.time", lambda: 1.0)
         monkeypatch.setattr("vibesensor.ingest.registry.time.monotonic", lambda: 1.0)
-        processor = create_autospec(SignalProcessor, instance=True)
-        processor.all_latest_metrics.return_value = {}
         app = _client_routes_app(
-            registry, create_autospec(UDPControlPlane, instance=True), settings_store, processor
+            registry, create_autospec(UDPControlPlane, instance=True), settings_store
         )
 
         with TestClient(app) as client:
@@ -333,7 +320,6 @@ def test_get_clients_overlays_canonical_settings_metadata_after_restart(
         assert clients[0]["name"] == "Rear Left Wheel"
         assert clients[0]["connected"] is True
         assert clients[0]["location_code"] == "rear_left_wheel"
-        assert clients[0]["latest_metrics"] == {}
     finally:
         db.close()
 

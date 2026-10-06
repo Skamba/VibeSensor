@@ -31,7 +31,7 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
 |-|----------------------------------------|------------------------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB, plus optional raw-capture artifacts for replay |
-| **Output** | Per-tick metrics: FFT spectrum, peaks, strength_db, RMS, P2P | Diagnostic findings, rankings, reports |
+| **Output** | Per-tick metrics: FFT spectrum, peaks, strength_db | Diagnostic findings, rankings, reports |
 | **Purpose** | Data acquisition — transform raw signals into structured metrics | Diagnostic reasoning — classify, rank, and explain vibration causes |
 | **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
 
@@ -51,10 +51,7 @@ preserved.
 When raw capture is available, `analysis/raw_capture_replay.py` recomputes each
 summary row's FFT peaks and strength metrics from the raw window the row was
 analysed over, so the summary analysis reasons over unfiltered diagnostic
-evidence. Shared window-quality scoring marks clipped, suspect-mounted, or
-timing-compromised windows as limited/excluded evidence rather than treating
-local sensor artifacts or corrupted sample timing as trustworthy vibration
-strength.
+evidence.
 
 The summary analysis is the single diagnosis: the UI insights endpoint and the
 PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.

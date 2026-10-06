@@ -70,7 +70,8 @@ snapshot -> compute -> store shape:
 
 The snapshot contains two overlapping views from the same immutable capture:
 
-- `time_window` keeps the wider waveform slice used for RMS/P2P metrics.
+- `time_window` keeps the wider waveform slice; its sample just before the FFT
+  block gives the median filter real history at the block's leading edge.
 - `fft_block` keeps the most recent `fft_n` samples used for spectral analysis.
 
 The FFT block is a suffix of the time window. VibeSensor does not run a dense
@@ -96,8 +97,7 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
 1. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
    removes isolated transport/I2C spikes without blurring normal vibration
    content.
-2. `SignalMetricsComputer.compute()` detrends the captured windows by removing
-   the per-axis mean before RMS/P2P and FFT computation.
+2. The FFT step detrends the filtered block by removing the per-axis mean.
 3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
    Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
    the configured frequency range via SciPy FFT frequency bins, and produces

@@ -84,9 +84,6 @@ class TestMultiSpectrumFreqDedup:
         assert "freq" in result["clients"]["aaa"]
         assert "freq" in result["clients"]["bbb"]
         assert result["clients"]["aaa"]["freq"] == pytest.approx([10.0, 20.0, 30.0], abs=1e-4)
-        # Warning should be present
-        assert "warning" in result
-        assert result["warning"]["code"] == "frequency_bin_mismatch"
 
     def test_single_client_shared_freq(self) -> None:
         """Single-client payloads use shared freq (no per-client key)."""

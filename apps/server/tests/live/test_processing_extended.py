@@ -176,8 +176,6 @@ def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     assert sorted(result["clients"]) == ["c1", "c2"]
     assert result["clients"]["c1"]["freq"]
     assert result["clients"]["c2"]["freq"]
-    assert result["warning"]["code"] == "frequency_bin_mismatch"
-    assert "c2" in result["warning"]["client_ids"]
 
 
 def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
@@ -300,7 +298,7 @@ def test_compute_metrics_with_data() -> None:
     assert "y" in metrics
     assert "z" in metrics
     assert "combined" in metrics
-    assert metrics["x"]["rms"] > 0
+    assert metrics["x"]["peaks"]
 
 
 # -- evict_clients -------------------------------------------------------------
@@ -327,4 +325,4 @@ def test_compute_all() -> None:
     result = proc.compute_all(["c1", "c2"])
     assert "c1" in result
     assert "c2" in result
-    assert result["c1"]["x"]["rms"] > 0
+    assert result["c1"]["x"]["peaks"]

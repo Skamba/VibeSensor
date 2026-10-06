@@ -304,9 +304,7 @@ class FakeState:
             (),
             {
                 "snapshot_for_api": lambda self: [],
-                "client_snapshots": (
-                    lambda self, now=None, now_mono=None, metrics_by_client=None: []
-                ),
+                "client_snapshots": lambda self, now=None, now_mono=None: [],
                 "active_client_ids": lambda self, now=None, stale_after_s=None: [],
                 "data_loss_snapshot": lambda self: {
                     "tracked_clients": 0,

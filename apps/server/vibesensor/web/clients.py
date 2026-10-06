@@ -31,7 +31,6 @@ from vibesensor.web.models.clients import (
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.ingest.udp_control_tx import UDPControlPlane
-    from vibesensor.live.processor import SignalProcessor
     from vibesensor.settings.sensor_settings import SensorSettingsService
     from vibesensor.updates.firmware.esp_flash_manager import EspFlashManager
 
@@ -57,7 +56,6 @@ def create_client_routes(
     registry: ClientRegistry,
     control_plane: UDPControlPlane,
     sensor_settings_store: SensorSettingsService,
-    processor: SignalProcessor,
     esp_flash_manager: EspFlashManager,
 ) -> APIRouter:
     """Create and return the client-management API routes."""
@@ -65,14 +63,11 @@ def create_client_routes(
 
     @router.get("/api/clients", response_model=ClientsResponse)
     async def get_clients() -> ClientsResponse:
-        """List known sensor clients with live connection state and latest computed metrics."""
-        active_ids = registry.active_client_ids()
-        metrics = processor.all_latest_metrics(active_ids)
+        """List known sensor clients with their live connection state."""
         return ClientsResponse(
             clients=snapshot_for_api(
                 registry,
                 bundled_firmware_version=esp_flash_manager.bundled_firmware_version(),
-                metrics_by_client=metrics,
                 sensor_metadata_reader=sensor_settings_store,
             ),
         )

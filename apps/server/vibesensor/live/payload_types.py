@@ -4,7 +4,6 @@ from typing import Literal, NotRequired, TypedDict
 
 from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.dsp.vibration_strength import StrengthPeak, VibrationStrengthMetrics
-from vibesensor.live.processing_profile import ProcessingFilterId, ProcessingProfile
 
 # Bump this when the payload shape changes in a backwards-incompatible way.
 SCHEMA_VERSION: str = "1"
@@ -25,39 +24,12 @@ class AxisPeak(TypedDict, total=False):
 
 
 class AxisMetrics(TypedDict):
-    rms: float
-    p2p: float
     peaks: list[AxisPeak]
 
 
 class CombinedMetrics(TypedDict, total=False):
-    vib_mag_rms: float
-    vib_mag_p2p: float
     peaks: list[StrengthPeak]
     strength_metrics: VibrationStrengthMetrics
-    window_quality: WindowQualityPayload
-    processing_profile: ProcessingProfile
-    filter_chain: list[ProcessingFilterId]
-
-
-class WindowQualityPayload(TypedDict):
-    score: float
-    state: str
-    sample_completeness_score: float
-    packet_integrity_score: float
-    timing_integrity_score: float
-    clipping_score: float
-    clipping_sample_count: int
-    clipping_sample_ratio: float
-    clipping_axis_counts: dict[str, int]
-    transient_score: float
-    shock_crest_factor: float | None
-    shock_broadband_ratio: float | None
-    mounting_score: float
-    mounting_high_frequency_ratio: float | None
-    context_score: float
-    frequency_stability_score: float
-    reasons: list[str]
 
 
 class ClientMetrics(TypedDict, total=False):
@@ -84,10 +56,6 @@ class ClientApiRow(TypedDict, total=True):
     frame_loss_recent: bool
     """The sensor lost a significant share of its frames in the last minute."""
     frame_samples: int
-    # API-only fields — omitted in lightweight WebSocket snapshots:
-    latest_metrics: NotRequired[ClientMetrics]
-    reset_count: NotRequired[int]
-    last_reset_time: NotRequired[float | None]
 
 
 class SpectrumSeriesPayload(TypedDict, total=False):
@@ -96,26 +64,10 @@ class SpectrumSeriesPayload(TypedDict, total=False):
     freq: list[float]
 
 
-class AlignmentInfoPayload(TypedDict):
-    overlap_ratio: float
-    aligned: bool
-    shared_window_s: float
-    sensor_count: int
-    clock_synced: bool
-
-
-class FrequencyWarningPayload(TypedDict):
-    code: str
-    message: str
-    client_ids: list[str]
-
-
 class SpectraPayload(TypedDict, total=False):
     frame_fingerprint: str
     freq: list[float]
     clients: dict[str, SpectrumSeriesPayload]
-    alignment: AlignmentInfoPayload
-    warning: FrequencyWarningPayload
 
 
 WsErrorCode = Literal["payload_build_failed"]

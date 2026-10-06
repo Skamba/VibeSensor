@@ -23,7 +23,6 @@ from vibesensor.common.recent_counter import RECENT_WINDOW_S, RecentCounter
 from vibesensor.domain.sensor import normalize_sensor_id
 from vibesensor.ingest.client_metadata import ClientMetadataManager
 from vibesensor.ingest.sensor_timing import SensorTimingGuard
-from vibesensor.live.payload_types import ClientMetrics
 from vibesensor.settings.location_assignment_validator import (
     AssignedLocation,
     LocationAssignmentValidator,
@@ -221,8 +220,6 @@ class ClientRecord:
     sync_offset_us: int | None = None
     sync_rtt_us: int | None = None
     last_sync_monotonic_us: int | None = None
-    reset_count: int = 0
-    last_reset_time: float | None = None
     last_t0_us: int | None = None
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
@@ -263,9 +260,6 @@ class ClientSnapshot:
     frames_total: int = 0
     dropped_frames: int = 0
     frame_loss_recent: bool = False
-    latest_metrics: ClientMetrics | None = None
-    reset_count: int = 0
-    last_reset_time: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -417,7 +411,7 @@ def apply_data_message_update(
     if rebooted:
         # Treat the rewound frame as the first frame of a new session instead of
         # discarding every frame as "late" until the sensor's clock catches up.
-        _restart_session(record, now_ts=now_ts)
+        _restart_session(record)
 
     continues_device_timeline = _continues_device_timeline(
         record, seq=seq, t0_us=t0_us, sample_count=sample_count
@@ -457,8 +451,6 @@ def apply_data_message_update(
 
     if record.last_seq is not None:
         if seq < record.last_seq and (record.last_seq - seq) > _RESTART_SEQ_GAP:
-            record.reset_count += 1
-            record.last_reset_time = now_ts
             record.last_t0_us = None
             record.timing_jitter_us_ema = 0.0
             record.timing_drift_us_total = 0.0
@@ -609,10 +601,8 @@ def _stamps_with_previous_boot_offset(record: ClientRecord, *, estimate_us: int)
     )
 
 
-def _restart_session(record: ClientRecord, *, now_ts: float) -> None:
+def _restart_session(record: ClientRecord) -> None:
     """Start a rebooted sensor's new session: new sequence numbers, a new device clock."""
-    record.reset_count += 1
-    record.last_reset_time = now_ts
     record.last_seq = None
     record.last_t0_us = None
     record.timing_jitter_us_ema = 0.0
@@ -699,7 +689,6 @@ def project_client_snapshots(
     now_wall: float,
     now_mono: float,
     policy: ClientLivenessPolicy,
-    metrics_by_client: dict[str, ClientMetrics] | None = None,
 ) -> list[ClientSnapshot]:
     """Build transport-facing ``ClientSnapshot`` rows from registry state."""
     snapshots: list[ClientSnapshot] = []
@@ -729,13 +718,6 @@ def project_client_snapshots(
                 frames_total=record.frames_total,
                 dropped_frames=record.frames_dropped,
                 frame_loss_recent=recent_frame_loss(record, now_mono),
-                latest_metrics=(
-                    metrics_by_client.get(record.client_id)
-                    if metrics_by_client is not None
-                    else None
-                ),
-                reset_count=record.reset_count,
-                last_reset_time=record.last_reset_time,
             ),
         )
     return snapshots
@@ -813,8 +795,6 @@ class ClientRegistry:
             record.sample_rate_hz = hello.sample_rate_hz
             record.frame_samples = hello.frame_samples
             if record.firmware_version and hello.firmware_version != record.firmware_version:
-                record.reset_count += 1
-                record.last_reset_time = now_ts
                 record.dedup_window.clear()
             record.firmware_version = hello.firmware_version
             _count_queue_overflow_drops(
@@ -929,7 +909,7 @@ class ClientRegistry:
                         + (server_receive_us - ack.device_send_us)
                     ) // 2
                     if _stamps_with_previous_boot_offset(record, estimate_us=estimate_us):
-                        _restart_session(record, now_ts=now_ts)
+                        _restart_session(record)
                     record.sync_offset_us = _disciplined_sync_offset(
                         record,
                         estimate_us=estimate_us,
@@ -1120,7 +1100,6 @@ class ClientRegistry:
         now: float | None = None,
         *,
         now_mono: float | None = None,
-        metrics_by_client: dict[str, ClientMetrics] | None = None,
     ) -> list[ClientSnapshot]:
         """Return raw per-client snapshots for transport presenters."""
         with self._lock:
@@ -1130,5 +1109,4 @@ class ClientRegistry:
                 now_wall=_resolve_now_wall(now),
                 now_mono=_resolve_now_mono(now_mono),
                 policy=self._liveness_policy,
-                metrics_by_client=metrics_by_client,
             )

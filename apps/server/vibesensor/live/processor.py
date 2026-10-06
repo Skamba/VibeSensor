@@ -238,8 +238,6 @@ class SignalProcessor:
             return build_multi_spectrum_payload(
                 self._buffers,
                 client_ids,
-                default_sample_rate_hz=self._config.sample_rate_hz,
-                fft_n=self._config.fft_n,
             )
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
@@ -266,15 +264,6 @@ class SignalProcessor:
         with self._lock:
             buf = self._buffers.get(client_id)
             return buf.latest_metrics if buf is not None else {}
-
-    def all_latest_metrics(self, client_ids: list[str]) -> dict[str, ClientMetrics]:
-        """Return latest metrics for requested clients that have any."""
-        with self._lock:
-            return {
-                cid: buf.latest_metrics
-                for cid in client_ids
-                if (buf := self._buffers.get(cid)) is not None and buf.latest_metrics
-            }
 
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         """Return the subset of *client_ids* that received samples within *max_age_s*."""

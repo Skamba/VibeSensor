@@ -220,9 +220,7 @@ change report or forensic diagnostics.
 | `diagnostic_filtered` | persisted-summary fallback or optional comparisons | `median_3_sample_time_domain` | Clearly labeled fallback/comparison data, not raw truth. |
 
 The shared identifiers live in
-`apps/server/vibesensor/live/processing_profile.py`. Live combined
-metrics carry `processing_profile = "live_display"` and their filter chain.
-Persisted analysis metadata records the active diagnostic `processing_profile`,
+`apps/server/vibesensor/live/processing_profile.py`. Persisted analysis metadata records the active diagnostic `processing_profile`,
 available profile rows, the live filter chain, the diagnostic filter chain, and
 whether raw diagnostic evidence was preserved.
 

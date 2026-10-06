@@ -7,7 +7,7 @@
 - :mod:`~vibesensor.live.compute` — metrics/FFT computation from immutable
   snapshots.
 - :mod:`~vibesensor.live.payload` — live ``spectra`` payload builder.
-- :mod:`~vibesensor.live.time_align` — multi-sensor time-alignment helpers.
+- :mod:`~vibesensor.live.time_align` — per-buffer analysis time ranges.
 - :mod:`~vibesensor.live.processing_loop` — the periodic metrics/FFT tick.
 - :mod:`~vibesensor.live.ws_payload_projection` /
   :mod:`~vibesensor.live.broadcaster` — live WebSocket payload and push loop.

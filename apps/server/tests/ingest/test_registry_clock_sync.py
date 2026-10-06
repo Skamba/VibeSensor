@@ -354,7 +354,6 @@ def test_a_sensor_that_applied_its_previous_boots_offset_is_resynced_at_once() -
     record = registry.get("aabbccddeeff")
     assert record is not None
     assert resync_now is True
-    assert record.reset_count == 1
     assert stale.clock_synced is False
     assert (resynced.is_duplicate, resynced.is_late, resynced.clock_synced) == (False, False, True)
     assert _applied_offset(registry) == boot2_offset_us

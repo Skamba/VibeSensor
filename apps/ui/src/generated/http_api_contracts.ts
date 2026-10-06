@@ -127,16 +127,6 @@ export interface components {
         ApiPayloadObject: {
             [key: string]: components["schemas"]["JsonSchemaValue"];
         };
-        AxisMetrics: {
-            p2p: number;
-            peaks: components["schemas"]["AxisPeak"][];
-            rms: number;
-        };
-        AxisPeak: {
-            amp?: number;
-            hz?: number;
-            snr_ratio?: number;
-        };
         /** The browser's clock and IANA time zone, reported when the UI connects. */
         BrowserClockRequest: {
             epoch_ms: number;
@@ -285,37 +275,19 @@ export interface components {
             frame_samples: number;
             frames_total: number;
             id: string;
-            last_reset_time?: number | null;
             last_seen_age_ms: number | null;
-            latest_metrics?: components["schemas"]["ClientMetrics"];
             location_code: string;
             mac_address: string;
             name: string;
-            reset_count?: number;
             sample_rate_hz: number;
         };
         /** Response body with available sensor-location options. */
         ClientLocationsResponse: {
             locations: components["schemas"]["LocationOptionResponse"][];
         };
-        ClientMetrics: {
-            combined?: components["schemas"]["CombinedMetrics"];
-            x?: components["schemas"]["AxisMetrics"];
-            y?: components["schemas"]["AxisMetrics"];
-            z?: components["schemas"]["AxisMetrics"];
-        };
         /** Response body listing known sensor clients and their live connection state. */
         ClientsResponse: {
             clients: components["schemas"]["ClientApiRow"][];
-        };
-        CombinedMetrics: {
-            filter_chain?: components["schemas"]["ProcessingFilterId"][];
-            peaks?: components["schemas"]["StrengthPeak"][];
-            processing_profile?: components["schemas"]["ProcessingProfile"];
-            strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
-            vib_mag_p2p?: number;
-            vib_mag_rms?: number;
-            window_quality?: components["schemas"]["WindowQualityPayload"];
         };
         ConfidenceLevelValue: "strong" | "moderate" | "weak";
         /** Response body for acceleration sanity diagnostics. */
@@ -1078,8 +1050,6 @@ export interface components {
         PlotDataResult: {
             peaks_table: components["schemas"]["PeakTableRow"][];
         };
-        ProcessingFilterId: "median_3_sample_time_domain";
-        ProcessingProfile: "live_display" | "diagnostic_raw" | "diagnostic_filtered";
         /** Which order families the active car can test; informational, never blocks capture. */
         RecordingCaptureCapabilitiesResponse: {
             driveline: components["schemas"]["DrivelineCapability"];
@@ -1250,12 +1220,6 @@ export interface components {
             percent_time_l5: number;
             total: number;
         };
-        StrengthPeak: {
-            amp: number;
-            hz: number;
-            strength_bucket: string | null;
-            vibration_strength_db: number;
-        };
         /** Response body for a persisted summary warning before localization. */
         SummaryWarningResponse: {
             applies_to: string;
@@ -1372,34 +1336,6 @@ export interface components {
             msg: string;
             type: string;
         };
-        VibrationStrengthMetrics: {
-            noise_floor_amp_g: number;
-            peak_amp_g: number;
-            strength_bucket: string | null;
-            top_peaks: components["schemas"]["StrengthPeak"][];
-            vibration_strength_db: number;
-        };
         WheelCapability: "ok" | "missing_tire" | "manual_speed";
-        WindowQualityPayload: {
-            clipping_axis_counts: {
-                [key: string]: number;
-            };
-            clipping_sample_count: number;
-            clipping_sample_ratio: number;
-            clipping_score: number;
-            context_score: number;
-            frequency_stability_score: number;
-            mounting_high_frequency_ratio: number | null;
-            mounting_score: number;
-            packet_integrity_score: number;
-            reasons: string[];
-            sample_completeness_score: number;
-            score: number;
-            shock_broadband_ratio: number | null;
-            shock_crest_factor: number | null;
-            state: string;
-            timing_integrity_score: number;
-            transient_score: number;
-        };
     };
 }

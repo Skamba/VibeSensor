@@ -39,10 +39,10 @@ _POLICY = ClientLivenessPolicy(live_ttl_seconds=10.0, retention_ttl_seconds=30.0
 
 
 class TestProjectClientSnapshots:
-    """Cover connected/offline projection, ages, and optional metrics attachment."""
+    """Cover connected/offline projection and ages."""
 
-    def test_connected_record_projects_age_and_metrics(self) -> None:
-        """Active record within the live TTL → connected, with age and optional metrics."""
+    def test_connected_record_projects_age(self) -> None:
+        """Active record within the live TTL → connected, with its age."""
         rec = _make_record(last_seen=1000.0, last_seen_mono=100.0)
         snaps = project_client_snapshots(
             {rec.client_id: rec},
@@ -50,13 +50,11 @@ class TestProjectClientSnapshots:
             now_wall=1002.5,
             now_mono=102.5,
             policy=_POLICY,
-            metrics_by_client={rec.client_id: {"rms": 0.5}},
         )
         assert len(snaps) == 1
         assert snaps[0].client_id == rec.client_id
         assert snaps[0].connected is True
         assert snaps[0].last_seen_age_ms == 2500
-        assert snaps[0].latest_metrics == {"rms": 0.5}
 
     def test_disconnected_record_past_ttl(self) -> None:
         """Record whose mono time exceeds TTL → connected=False."""

@@ -127,9 +127,9 @@ class TestBuildSampleRecords:
         proc = create_autospec(SignalProcessor, instance=True)
         proc.clients_with_recent_data.return_value = ["client-1"]
         proc.latest_metrics.return_value = {
-            "x": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "y": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 15.0, "amp": 0.05}]},
-            "z": {"rms": 0.0, "p2p": 0.0, "peaks": []},
+            "x": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
+            "y": {"peaks": [{"hz": 15.0, "amp": 0.05}]},
+            "z": {"peaks": []},
             "combined": {
                 "strength_metrics": {
                     "vibration_strength_db": 22.0,
@@ -181,9 +181,9 @@ class TestBuildSampleRecords:
         proc = create_autospec(SignalProcessor, instance=True)
         proc.clients_with_recent_data.return_value = ["client-1"]
         proc.latest_metrics.return_value = {
-            "x": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "y": {"rms": 0.0, "p2p": 0.0, "peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "z": {"rms": 0.0, "p2p": 0.0, "peaks": []},
+            "x": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
+            "y": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
+            "z": {"peaks": []},
             "combined": {
                 "strength_metrics": {
                     "vibration_strength_db": 22.0,
