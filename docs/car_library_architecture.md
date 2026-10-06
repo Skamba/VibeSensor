@@ -121,11 +121,16 @@ inherited from family-level data, encode that through `confidence` and
   row with one published axle ratio, which does not say which axle it is.
 - **Drive layout on a saved car:** a car added from the library takes the
   variant's `drivetrain` as its drive layout and the gearbox's
-  `final_drive_axle` while its final drive is kept. Cars saved before the
+  `final_drive_axle` (which axle the engine drives), kept while the layout
+  is, also when the owner corrects or clears the ratio. Cars saved before the
   layout existed get it on load from the rows they were picked from (same
   body type and variant, preferring rows whose `"{brand} {model} {variant}"`
   is the car's name; a variant saved before it was split by model year
-  matches without the years) when those rows agree on one layout, and are
+  matches without the years; a name that starts with a library generation's
+  brand, model and generation code, such as a pre-#4153 label
+  `"BMW 1 Series (F40, 2019-2024) 118i"`, matches only that generation's
+  rows, so a variant name another generation shares never lends its layout)
+  when those rows agree on one layout, with the gearbox's axle, and are
   saved again (`with_library_drive_layout` in
   `apps/server/vibesensor/settings/car_library.py`). A car the library does
   not know keeps no layout (unknown). See `apps/server/vibesensor/domain/drive_layout.py`

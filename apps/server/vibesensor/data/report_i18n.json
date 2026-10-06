@@ -15,38 +15,6 @@
     "en": "A wheel-order vibration that appears only while braking comes from the brake discs (thickness variation or runout), not from the wheels or tires.",
     "nl": "Een trilling op wielorde die alleen tijdens het remmen optreedt komt van de remschijven (diktevariatie of slingering), niet van de wielen of banden."
   },
-  "ACTION_DRIVELINE_INSPECTION_CONFIRM": {
-    "en": "Mechanical defect or out-of-spec runout/play is found in driveline components.",
-    "nl": "Er is een mechanisch defect of te veel slingering/speling gevonden in de aandrijflijn."
-  },
-  "ACTION_DRIVELINE_INSPECTION_FALSIFY": {
-    "en": "No driveline play/runout/balance issue is found.",
-    "nl": "Er wordt geen aandrijflijnprobleem met speling, slingering of balans gevonden."
-  },
-  "ACTION_DRIVELINE_INSPECTION_WHAT": {
-    "en": "Inspect propshaft runout/balance, center support bearing, and CV/guibo joints.",
-    "nl": "Controleer de cardanas op slingering/onbalans, plus middenlager, homokineten en flexschijf."
-  },
-  "ACTION_DRIVELINE_INSPECTION_WHY": {
-    "en": "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
-    "nl": "Trillingen op aandrijflijnorde komen vaak door onbalans in de as, versleten homokineten of problemen met het middenlager."
-  },
-  "ACTION_DRIVELINE_MOUNTS_CONFIRM": {
-    "en": "Loose mount/fastener or cracked rubber support is found.",
-    "nl": "Losse bevestiging of gescheurde rubbersteun wordt gevonden."
-  },
-  "ACTION_DRIVELINE_MOUNTS_FALSIFY": {
-    "en": "All inspected mounts and fasteners are within condition/torque spec.",
-    "nl": "Alle gecontroleerde steunen en bevestigingen zijn in goede staat en met het juiste aanhaalmoment vastgezet."
-  },
-  "ACTION_DRIVELINE_MOUNTS_WHAT": {
-    "en": "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
-    "nl": "Controleer aandrijflijnsteunen en aanhaalmomenten (differentieelsteunen, askoppelingen, draagbeugels)."
-  },
-  "ACTION_DRIVELINE_MOUNTS_WHY": {
-    "en": "Loose or degraded mounts can amplify normal order content into cabin vibration.",
-    "nl": "Losse of versleten steunen kunnen normale orde-trillingen versterken tot voelbare trillingen in de auto."
-  },
   "ACTION_ENGINE_COMBUSTION_CONFIRM": {
     "en": "Cylinder-specific deviation aligns with the vibration complaint.",
     "nl": "Cilinderspecifieke afwijking sluit aan op de trillingsklacht."
@@ -180,16 +148,16 @@
     "nl": "de aandrijflijn (cardanas of koppelingen), bij {zone}"
   },
   "CAUSE_DRIVELINE_FRONT": {
-    "en": "the driveline (gearbox output, drive shafts or CV joints), near {zone}",
-    "nl": "de aandrijflijn (uitgaande as van de versnellingsbak, aandrijfassen of homokineten), bij {zone}"
+    "en": "the driveline (gearbox output shaft, final-drive pinion or differential bearings), near {zone}",
+    "nl": "de aandrijflijn (uitgaande as van de versnellingsbak, pignon van de eindoverbrenging of differentieellagers), bij {zone}"
   },
   "CAUSE_DRIVELINE_FRONT_REAR": {
-    "en": "the driveline (front drive shafts or the propshaft), near {zone}",
-    "nl": "de aandrijflijn (aandrijfassen voor of de cardanas), bij {zone}"
+    "en": "the driveline (front propshaft and front differential, or the propshaft to the rear axle), near {zone}",
+    "nl": "de aandrijflijn (voorste cardanas en voordifferentieel, of de cardanas naar de achteras), bij {zone}"
   },
   "CAUSE_DRIVELINE_REAR_FRONT": {
-    "en": "the driveline (propshaft or front drive shafts), near {zone}",
-    "nl": "de aandrijflijn (cardanas of aandrijfassen voor), bij {zone}"
+    "en": "the driveline (propshaft to the rear axle, or the front propshaft and front differential), near {zone}",
+    "nl": "de aandrijflijn (cardanas naar de achteras, of de voorste cardanas en het voordifferentieel), bij {zone}"
   },
   "CAUSE_ENGINE": {
     "en": "the engine or its mounts ({zone})",
@@ -440,12 +408,12 @@
     "nl": "VOOR"
   },
   "DRIVE_LAYOUT_AWD": {
-    "en": "all-wheel drive: front drive shafts, and a propshaft to the rear axle",
-    "nl": "vierwielaandrijving: aandrijfassen voor, en een cardanas naar de achteras"
+    "en": "all-wheel drive: a propshaft to the rear axle and a drive to the front differential",
+    "nl": "vierwielaandrijving: een cardanas naar de achteras en een aandrijving naar het voordifferentieel"
   },
   "DRIVE_LAYOUT_AWD_NO_PROPSHAFT": {
-    "en": "all-wheel drive with an electric rear axle: the engine's driveline is the gearbox output, front differential and drive shafts",
-    "nl": "vierwielaandrijving met elektrische achteras: de aandrijflijn van de motor is de uitgaande as van de versnellingsbak, het voordifferentieel en de aandrijfassen"
+    "en": "all-wheel drive with an electric rear axle: the engine's gearbox output shaft turns at the driveline order",
+    "nl": "vierwielaandrijving met elektrische achteras: de uitgaande as van de versnellingsbak draait op de aandrijflijnorde"
   },
   "DRIVE_LAYOUT_EV_AWD": {
     "en": "all-wheel drive (two motors): only the motor whose reduction ratio is entered is checked",
@@ -460,8 +428,8 @@
     "nl": "achterwielaandrijving (elektromotor op de achteras)"
   },
   "DRIVE_LAYOUT_FWD": {
-    "en": "front-wheel drive: the driveline is the gearbox output, front differential and drive shafts",
-    "nl": "voorwielaandrijving: de aandrijflijn is de uitgaande as van de versnellingsbak, het voordifferentieel en de aandrijfassen"
+    "en": "front-wheel drive: the gearbox output shaft turns at the driveline order",
+    "nl": "voorwielaandrijving: de uitgaande as van de versnellingsbak draait op de aandrijflijnorde"
   },
   "DRIVE_LAYOUT_RWD": {
     "en": "rear-wheel drive: propshaft to the rear axle",
@@ -1220,20 +1188,20 @@
     "nl": "Meet de werkhoeken van de aandrijflijn."
   },
   "SHOP_DRIVELINE_FRONT_DIFF": {
-    "en": "Check the gearbox output shaft and front differential bearings for play, and the intermediate shaft's support bearing if fitted.",
-    "nl": "Controleer de lagers van de uitgaande as van de versnellingsbak en het voordifferentieel op speling, en het steunlager van de tussenas indien aanwezig."
+    "en": "Check the gearbox output shaft and the final-drive pinion for runout and bearing play, and the differential bearings for play.",
+    "nl": "Controleer de uitgaande as van de versnellingsbak en het pignon van de eindoverbrenging op slingering en lagerspeling, en de differentieellagers op speling."
   },
-  "SHOP_DRIVELINE_FRONT_SHAFTS": {
-    "en": "Check the drive shafts and CV joints for play, wear and balance, and the CV boots for damage.",
-    "nl": "Controleer de aandrijfassen en homokineten op speling, slijtage en balans, en de hoezen van de homokineten op schade."
+  "SHOP_DRIVELINE_FRONT_PROPSHAFT": {
+    "en": "Check the front propshaft (if fitted) and its joints for runout, balance and play, and the front differential pinion's bearings for play.",
+    "nl": "Controleer de voorste cardanas (indien aanwezig) en de koppelingen op slingering, balans en speling, en de lagers van het pignon van het voordifferentieel op speling."
   },
   "SHOP_DRIVELINE_ORDERS": {
     "en": "P1 (once per propshaft turn) points to balance or runout; P2 (twice per turn) points to joint working angles.",
     "nl": "P1 (één keer per omwenteling) wijst op balans of slingering; P2 (twee keer per omwenteling) wijst op de werkhoek van een koppeling."
   },
   "SHOP_DRIVELINE_ORDERS_NO_PROPSHAFT": {
-    "en": "P1 (once per gearbox output-shaft turn) points to drive shaft balance or runout; P2 (twice per turn) points to CV joint wear or working angles.",
-    "nl": "P1 (één keer per omwenteling van de uitgaande as) wijst op balans of slingering van een aandrijfas; P2 (twee keer per omwenteling) wijst op slijtage of werkhoeken van de homokineten."
+    "en": "P1 (once per gearbox output-shaft turn) points to runout or imbalance of the output shaft or final-drive pinion; P2 (twice per turn) to misalignment or an out-of-round part there.",
+    "nl": "P1 (één keer per omwenteling van de uitgaande as) wijst op slingering of onbalans van de uitgaande as of het pignon; P2 (twee keer per omwenteling) op een uitlijnfout of een onrond onderdeel daar."
   },
   "SHOP_DRIVELINE_REAR_DIFF": {
     "en": "Check the rear differential's pinion flange for runout, and its bearings and mounts for play.",
@@ -1412,8 +1380,8 @@
     "nl": "laat de motor controleren op overslaan of onrustig lopen onder belasting."
   },
   "STEP_LAYOUT_UNKNOWN": {
-    "en": "The car's drive layout was not given: on a front-wheel-drive car, which has no propshaft, have the drive shafts, CV joints and gearbox output checked instead.",
-    "nl": "De aandrijving van de auto is niet opgegeven: heeft de auto voorwielaandrijving (zonder cardanas), laat dan in plaats daarvan de aandrijfassen, homokineten en de uitgaande as van de versnellingsbak controleren."
+    "en": "The car's drive layout was not given: on a front-wheel-drive car, which has no propshaft, have the gearbox output shaft, the final-drive pinion and the differential bearings checked instead.",
+    "nl": "De aandrijving van de auto is niet opgegeven: heeft de auto voorwielaandrijving (zonder cardanas), laat dan in plaats daarvan de uitgaande as van de versnellingsbak, het pignon van de eindoverbrenging en de differentieellagers controleren."
   },
   "STEP_NO_FAULT": {
     "en": "If you still feel a vibration, record again and hold the speed where you feel it for 20 seconds.",
@@ -1444,24 +1412,24 @@
     "nl": "laat de werkhoeken van de aandrijflijn en het middenlager controleren."
   },
   "STEP_P1_FRONT": {
-    "en": "Have the drive shafts and CV joints checked for wear, play and balance, and the gearbox output and front differential for play.",
-    "nl": "Laat de aandrijfassen en homokineten controleren op slijtage, speling en balans, en de uitgaande as van de versnellingsbak en het voordifferentieel op speling."
+    "en": "Have the gearbox output shaft and the final-drive pinion checked for runout and bearing play, and the differential bearings for play.",
+    "nl": "Laat de uitgaande as van de versnellingsbak en het pignon van de eindoverbrenging controleren op slingering en lagerspeling, en de differentieellagers op speling."
   },
   "STEP_P1_FRONT_FALLBACK": {
-    "en": "have the inner CV joints and, if fitted, the intermediate shaft's support bearing checked.",
-    "nl": "laat de binnenste homokineten en, indien aanwezig, het steunlager van de tussenas controleren."
+    "en": "have the gearbox mounts checked.",
+    "nl": "laat de steunen van de versnellingsbak controleren."
   },
   "STEP_P1_FRONT_REAR": {
-    "en": "Have the front drive shafts and CV joints checked for wear, play and balance; then the propshaft for runout and balance, and its joints for play.",
-    "nl": "Laat eerst de aandrijfassen voor en de homokineten controleren op slijtage, speling en balans; daarna de cardanas op slingering en balans, en de koppelingen op speling."
+    "en": "Have the front propshaft (if fitted) and the front differential pinion checked for runout, balance and play; then the propshaft to the rear axle for runout and balance, and its joints for play.",
+    "nl": "Laat eerst de voorste cardanas (indien aanwezig) en het pignon van het voordifferentieel controleren op slingering, balans en speling; daarna de cardanas naar de achteras op slingering en balans, en de koppelingen op speling."
   },
   "STEP_P1_FRONT_REAR_FALLBACK": {
-    "en": "have the gearbox output, the front differential and the centre bearing checked.",
-    "nl": "laat de uitgaande as van de versnellingsbak, het voordifferentieel en het middenlager controleren."
+    "en": "have the transfer case, the front differential and the centre bearing checked.",
+    "nl": "laat de verdeelbak, het voordifferentieel en het middenlager controleren."
   },
   "STEP_P1_REAR_FRONT": {
-    "en": "Have the propshaft checked for runout and balance, and its joints (U-joints or flex discs) for play; then the front drive shafts and CV joints.",
-    "nl": "Laat de cardanas controleren op slingering en balans, en de koppelingen (kruiskoppelingen of hardyschijven) op speling; daarna de aandrijfassen voor en de homokineten."
+    "en": "Have the propshaft to the rear axle checked for runout and balance, and its joints (U-joints or flex discs) for play; then the front propshaft (if fitted) and the front differential pinion.",
+    "nl": "Laat de cardanas naar de achteras controleren op slingering en balans, en de koppelingen (kruiskoppelingen of hardyschijven) op speling; daarna de voorste cardanas (indien aanwezig) en het pignon van het voordifferentieel."
   },
   "STEP_P1_REAR_FRONT_FALLBACK": {
     "en": "have the centre bearing, the rear differential and the transfer case checked.",
@@ -1484,28 +1452,28 @@
     "nl": "laat de cardanas controleren op slingering en balans."
   },
   "STEP_P2_FRONT": {
-    "en": "Have the CV joints and the drive shaft working angles checked; a twice-per-turn shake points to a worn joint.",
-    "nl": "Laat de homokineten en de werkhoeken van de aandrijfassen controleren; twee keer per omwenteling wijst op een versleten homokineet."
+    "en": "Have the gearbox output shaft and the final-drive pinion checked for runout and misalignment, and the differential bearings for play.",
+    "nl": "Laat de uitgaande as van de versnellingsbak en het pignon van de eindoverbrenging controleren op slingering en uitlijning, en de differentieellagers op speling."
   },
   "STEP_P2_FRONT_FALLBACK": {
-    "en": "have the drive shafts checked for runout and balance.",
-    "nl": "laat de aandrijfassen controleren op slingering en balans."
+    "en": "have the gearbox mounts checked.",
+    "nl": "laat de steunen van de versnellingsbak controleren."
   },
   "STEP_P2_FRONT_REAR": {
-    "en": "Have the front CV joints and the propshaft joints checked, and their working angles; a twice-per-turn shake points to joint angle.",
-    "nl": "Laat de homokineten voor en de koppelingen van de cardanas controleren, en hun werkhoeken; twee keer per omwenteling wijst op de hoek van een koppeling."
+    "en": "Have the joints of the front propshaft (if fitted) and of the propshaft to the rear axle checked, and their working angles; a twice-per-turn shake points to joint angle.",
+    "nl": "Laat de koppelingen van de voorste cardanas (indien aanwezig) en van de cardanas naar de achteras controleren, en hun werkhoeken; twee keer per omwenteling wijst op de hoek van een koppeling."
   },
   "STEP_P2_FRONT_REAR_FALLBACK": {
-    "en": "have the front drive shafts and the propshaft checked for runout and balance.",
-    "nl": "laat de aandrijfassen voor en de cardanas controleren op slingering en balans."
+    "en": "have the front propshaft and the propshaft to the rear axle checked for runout and balance.",
+    "nl": "laat de voorste cardanas en de cardanas naar de achteras controleren op slingering en balans."
   },
   "STEP_P2_REAR_FRONT": {
-    "en": "Have the propshaft joints and their working angles checked, then the front CV joints; a twice-per-turn shake points to joint angle.",
-    "nl": "Laat de koppelingen van de cardanas en hun werkhoeken controleren, daarna de homokineten voor; twee keer per omwenteling wijst op de hoek van een koppeling."
+    "en": "Have the joints of the propshaft to the rear axle and their working angles checked, then the front propshaft's joints (if fitted); a twice-per-turn shake points to joint angle.",
+    "nl": "Laat de koppelingen van de cardanas naar de achteras en hun werkhoeken controleren, daarna de koppelingen van de voorste cardanas (indien aanwezig); twee keer per omwenteling wijst op de hoek van een koppeling."
   },
   "STEP_P2_REAR_FRONT_FALLBACK": {
-    "en": "have the propshaft and the front drive shafts checked for runout and balance.",
-    "nl": "laat de cardanas en de aandrijfassen voor controleren op slingering en balans."
+    "en": "have the propshaft to the rear axle and the front propshaft checked for runout and balance.",
+    "nl": "laat de cardanas naar de achteras en de voorste cardanas controleren op slingering en balans."
   },
   "STEP_T1": {
     "en": "Have {zone} balanced and checked for wheel and tire runout.",
@@ -1736,8 +1704,8 @@
     "nl": "De snelheid veranderde nauwelijks, dus niet te bevestigen dat de trilling de wielen, cardanas of motor volgt."
   },
   "WEAK_NARROW_SPEED_NO_PROPSHAFT": {
-    "en": "The speed hardly changed, so it can't be confirmed that the vibration follows the wheels, drive shafts or engine.",
-    "nl": "De snelheid veranderde nauwelijks, dus niet te bevestigen dat de trilling de wielen, aandrijfassen of motor volgt."
+    "en": "The speed hardly changed, so it can't be confirmed that the vibration follows the wheels, the gearbox output shaft or the engine.",
+    "nl": "De snelheid veranderde nauwelijks, dus niet te bevestigen dat de trilling de wielen, de uitgaande as van de versnellingsbak of de motor volgt."
   },
   "WEAK_REASONS_TITLE": {
     "en": "Why this is not conclusive",
@@ -1792,8 +1760,8 @@
     "nl": "Geen trilling gevonden die het toerental van wiel of elektromotor volgt."
   },
   "WS_NONE_NO_PROPSHAFT": {
-    "en": "No vibration that follows wheel, drive shaft or engine speed was found.",
-    "nl": "Geen trilling gevonden die het toerental van wiel, aandrijfas of motor volgt."
+    "en": "No vibration that follows wheel, gearbox output-shaft or engine speed was found.",
+    "nl": "Geen trilling gevonden die het toerental van wiel, uitgaande as van de versnellingsbak of motor volgt."
   },
   "WS_ORDER": {
     "en": "Order",
@@ -1804,8 +1772,8 @@
     "nl": "{hz}, niet gekoppeld aan een wiel-, cardanas- of motororde."
   },
   "WS_PEAK_ONLY_NO_PROPSHAFT": {
-    "en": "{hz}, not linked to a wheel, drive shaft or engine order.",
-    "nl": "{hz}, niet gekoppeld aan een wiel-, aandrijfas- of motororde."
+    "en": "{hz}, not linked to a wheel, gearbox output-shaft or engine order.",
+    "nl": "{hz}, niet gekoppeld aan de orde van een wiel, de uitgaande as van de versnellingsbak of de motor."
   },
   "WS_PHASES": {
     "en": "Driving",

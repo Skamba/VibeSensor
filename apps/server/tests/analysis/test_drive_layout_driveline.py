@@ -1,10 +1,12 @@
 """The car's drive layout decides which driveline parts the advice names.
 
-A front-wheel-drive car has no propshaft: a driveline-order (P1) shake points to
-the gearbox output, front differential, drive shafts and CV joints. A
-rear-wheel-drive car keeps the propshaft advice; an all-wheel-drive car gets
-both, the axle the sensors point to first. Without a layout the advice stays
-the propshaft one and the report says the layout was not given.
+The driveline order turns at wheel speed x final drive. A front-wheel-drive car
+has no propshaft: only its gearbox output shaft, final-drive pinion and
+differential bearings turn at that speed (the drive shafts and CV joints turn at
+wheel speed, so their faults show at the wheel order), and a P1/P2 shake points
+there. A rear-wheel-drive car keeps the propshaft advice; an all-wheel-drive car
+gets both propshafts, the axle the sensors point to first. Without a layout the
+advice stays the propshaft one and the report says the layout was not given.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ from test_support.report_rendering import (
     propshaft_mentions,
     report_view_for,
     report_view_texts,
+    wheel_speed_part_mentions,
 )
 from test_support.synthetic_samples import make_noise_samples, make_sample
 
@@ -35,8 +38,8 @@ _RWD_P1_STEP = (
 )
 
 
-def _p1_samples(*, front: float, rear: float, n: int = 40) -> list[dict[str, Any]]:
-    """A once-per-driveshaft-turn shake over a 50-108 km/h sweep, per axle strength."""
+def _p1_samples(*, front: float, rear: float, n: int = 40, order: int = 1) -> list[dict[str, Any]]:
+    """A once- (or ``order``-) per-driveshaft-turn shake over a 50-108 km/h sweep."""
     samples = []
     for i in range(n):
         speed = 50.0 + i * 1.5
@@ -48,7 +51,7 @@ def _p1_samples(*, front: float, rear: float, n: int = 40) -> list[dict[str, Any
                     speed_kmh=speed,
                     client_name=sensor,
                     top_peaks=[
-                        {"hz": wheel_hz(speed) * FINAL_DRIVE, "amp": amp},
+                        {"hz": order * wheel_hz(speed) * FINAL_DRIVE, "amp": amp},
                         {"hz": 200.0, "amp": 0.004},
                     ],
                     vibration_strength_db=24.0 if amp > 0.03 else 16.0,
@@ -90,12 +93,14 @@ def test_a_fwd_car_is_never_told_to_check_a_propshaft() -> None:
     conditions = diagnosis["conditions"]
     assert (conditions["drive_layout"], conditions["propshaft"]) == ("FWD", False)
     assert conditions["final_drive_axle"] == "front"
-    assert propshaft_mentions(report_view_texts(view)) == []
-    assert propshaft_mentions(report_view_texts(view_nl)) == []
-    assert "gearbox output" in view.owner.next_step
-    assert "CV joints" in view.owner.next_step
-    assert "homokineten" in view_nl.owner.next_step
-    assert any("CV joints" in line for line in view.mechanic.shop)
+    for texts in (report_view_texts(view), report_view_texts(view_nl)):
+        assert propshaft_mentions(texts) == []
+        assert wheel_speed_part_mentions(texts) == []
+    for part in ("gearbox output shaft", "final-drive pinion", "differential bearings"):
+        assert part in view.owner.next_step
+        assert part in view.owner.headline
+    assert "pignon van de eindoverbrenging" in view_nl.owner.next_step
+    assert any("final-drive pinion" in line for line in view.mechanic.shop)
     assert view.mechanic.worksheet[0].order == "P1 - once per gearbox output-shaft turn"
     assert _conditions(view)["Drive layout"].startswith("front-wheel drive")
     assert "front axle" in _conditions(view)["Final drive"]
@@ -123,18 +128,33 @@ def test_a_rwd_car_keeps_the_propshaft_advice_and_adds_the_rear_differential() -
     assert _conditions(view)["Drive layout"].startswith("rear-wheel drive")
 
 
+def test_a_fwd_twice_per_turn_shake_is_not_blamed_on_cv_joint_angles() -> None:
+    """P2 turns with the gearbox output too: CV joint working angles do not make it."""
+    summary = run_analysis(_p1_samples(front=0.05, rear=0.015, order=2), _car(drive_layout="FWD"))
+    view = report_view_for(summary)
+
+    assert (summary["diagnosis"]["source"], summary["diagnosis"]["order_code"]) == (
+        "driveline",
+        "P2",
+    )
+    assert "gearbox output shaft" in view.owner.next_step
+    for lang in ("en", "nl"):
+        texts = report_view_texts(report_view_for(summary, lang=lang))
+        assert wheel_speed_part_mentions(texts) == []
+        assert not [text for text in texts if "working angle" in text or "werkhoek" in text]
+
+
 @pytest.mark.parametrize(
     ("front", "rear", "parts", "first_checked"),
     [
-        pytest.param(
-            0.05, 0.015, ["front_drive", "propshaft_rear"], "front drive shafts", id="front"
-        ),
+        pytest.param(0.05, 0.015, ["front_drive", "propshaft_rear"], "front propshaft", id="front"),
         pytest.param(0.015, 0.05, ["propshaft_rear", "front_drive"], "propshaft", id="rear"),
     ],
 )
 def test_an_awd_car_names_the_axle_the_sensors_point_to_first(
     front: float, rear: float, parts: list[str], first_checked: str
 ) -> None:
+    """A longitudinal AWD car (xDrive, quattro) drives its front differential by a propshaft."""
     summary = run_analysis(_p1_samples(front=front, rear=rear), _car(drive_layout="AWD"))
     view = report_view_for(summary)
 
@@ -142,7 +162,11 @@ def test_an_awd_car_names_the_axle_the_sensors_point_to_first(
     assert view.owner.next_step.startswith(f"Have the {first_checked}"), view.owner.next_step
     # Both axles stay in the advice: the shop checks the other one too.
     shop = " ".join(view.mechanic.shop)
-    assert "CV joints" in shop and "propshaft" in shop
+    assert "front propshaft" in shop and "front differential" in shop
+    assert "propshaft to the rear axle" in view.owner.next_step
+    for lang in ("en", "nl"):
+        texts = report_view_texts(report_view_for(summary, lang=lang))
+        assert wheel_speed_part_mentions(texts) == []
 
 
 def test_without_a_drive_layout_the_propshaft_advice_stays_and_the_report_says_so() -> None:
@@ -155,9 +179,10 @@ def test_without_a_drive_layout_the_propshaft_advice_stays_and_the_report_says_s
     assert diagnosis["conditions"]["drive_layout"] is None
     assert view.owner.next_step.startswith(_RWD_P1_STEP)
     assert "drive layout was not given" in view.owner.next_step
-    assert "CV joints" in view.owner.next_step
+    assert "gearbox output shaft, the final-drive pinion" in view.owner.next_step
     assert "aandrijving" not in view_nl.owner.next_step.lower()[:20]
-    assert "homokineten" in view_nl.owner.next_step
+    assert "pignon van de eindoverbrenging" in view_nl.owner.next_step
+    assert wheel_speed_part_mentions([view.owner.next_step, view_nl.owner.next_step]) == []
     assert _conditions(view)["Drive layout"].startswith("not provided")
     assert _conditions(view_nl)["Aangedreven wielen"].startswith("niet opgegeven")
 
@@ -171,8 +196,9 @@ def test_a_healthy_fwd_drive_rules_the_driveline_out_without_a_propshaft() -> No
 
     assert summary["diagnosis"]["verdict"] == "no_fault"
     assert "Driveline: no driveline-order vibration found" in view.mechanic.ruled_out
-    assert propshaft_mentions(report_view_texts(view)) == []
-    assert propshaft_mentions(report_view_texts(report_view_for(summary, lang="nl"))) == []
+    for texts in (report_view_texts(view), report_view_texts(report_view_for(summary, lang="nl"))):
+        assert propshaft_mentions(texts) == []
+        assert wheel_speed_part_mentions(texts) == []
 
 
 def test_an_ev_keeps_its_motor_advice_whatever_its_layout() -> None:

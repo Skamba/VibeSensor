@@ -744,15 +744,18 @@ capability line state the current layout's consequence.
   an AWD plug-in hybrid whose final drive is on the front axle is e-AWD: none;
   `has_propshaft` in `apps/server/vibesensor/domain/drive_layout.py`). A
   driveline-order (P1/P2) fault then names the parts that turn at that order
-  (`driveline_parts`): front-wheel drive gets the gearbox output, front
-  differential, drive shafts and CV joints and never a propshaft, centre
-  bearing or rear differential (and P1/P2 read "per gearbox output-shaft
-  turn"; a driveline order no axle dominates points at the driven axle, not
-  the centre tunnel); rear-wheel drive keeps the propshaft advice and adds
-  the rear differential to the shop request; all-wheel drive names both, the
-  axle the sensors point to first. Without a layout the propshaft advice
-  stays, the next step adds that on a front-wheel-drive car the drive shafts
-  and CV joints are checked instead, and the test conditions say the layout
+  (`driveline_parts`), at wheel speed x final drive: front-wheel drive gets
+  the gearbox output shaft, final-drive pinion and differential bearings and
+  never a propshaft, centre bearing or rear differential, nor the drive
+  shafts and CV joints, which turn at wheel speed (and P1/P2 read "per
+  gearbox output-shaft turn"; a driveline order no axle dominates points at
+  the driven axle, not the centre tunnel); rear-wheel drive keeps the
+  propshaft advice and adds the rear differential to the shop request;
+  all-wheel drive names both propshafts, the front one with the front
+  differential pinion, the axle the sensors point to first. Without a layout
+  the propshaft advice stays, the next step adds that on a front-wheel-drive
+  car the gearbox output shaft, final-drive pinion and differential bearings
+  are checked instead, and the test conditions say the layout
   was not provided. An EV keeps its motor wording whatever its layout; a
   dual-motor EV is AWD and only the motor whose reduction ratio is entered
   (the library's rear one) is analysed. History shows the same layout line,

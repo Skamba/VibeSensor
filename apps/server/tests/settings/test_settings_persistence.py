@@ -357,6 +357,23 @@ def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: 
             "xDrive20d (2019–2022)",
             order_reference_status=xdrive_status,
         ),
+        # The owner edited the final drive: the gearbox's axle still holds.
+        _saved_car(
+            "e-awd-edited",
+            "BMW X1 (F48, 2015–2022) xDrive25e",
+            "SUV",
+            "xDrive25e",
+            aspects={"final_drive_ratio": 4.1},
+            fuel_type="PHEV",
+        ),
+        # Saved before #4153: the model label had a hyphen and other years, and
+        # its variant name is shared with another generation of the same body.
+        _saved_car("old-f40", "BMW 1 Series (F40, 2019-2024) 118i", "Hatchback", "118i"),
+        _saved_car("old-m5", "BMW M5 (F90, 2018-2024) M5", "Sedan", "M5"),
+        _saved_car("old-x1", "BMW X1 (F48, 2016-2019) sDrive18d", "SUV", "sDrive18d"),
+        # A generation that never had the variant: the X1/X2 xDrive25e (e-AWD)
+        # rows must not lend their layout to it.
+        _saved_car("other-gen", "BMW X3 (G01, 2018-2021) xDrive25e", "SUV", "xDrive25e"),
         _saved_car("custom", "My project car", "Custom", None),
         _saved_car("unknown-variant", "BMW X1 (F48, 2015–2022) Prototype", "SUV", "Prototype"),
         # A layout the owner already set is never overwritten by the library.
@@ -379,6 +396,11 @@ def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: 
         "rwd": ("RWD", "rear"),
         "e-awd": ("AWD", "front"),
         "awd": ("AWD", None),
+        "e-awd-edited": ("AWD", "front"),
+        "old-f40": ("FWD", "front"),
+        "old-m5": ("AWD", None),
+        "old-x1": ("FWD", "front"),
+        "other-gen": (None, None),
         "custom": (None, None),
         "unknown-variant": (None, None),
         "kept": ("AWD", None),

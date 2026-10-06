@@ -209,8 +209,21 @@ def test_drive_layout_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_s
 
 
 def test_a_library_awd_car_keeps_the_axle_of_its_final_drive(car_client) -> None:
-    car = _add(car_client, name="225xe", drive_layout="AWD", final_drive_axle="front")["cars"][0]
+    """The axle belongs to the layout: editing the ratio keeps an e-AWD car e-AWD."""
+    car = _add(
+        car_client, name="225xe", drive_layout="AWD", final_drive_axle="front", fuel_type="PHEV"
+    )["cars"][0]
     assert (car["drive_layout"], car["final_drive_axle"]) == ("AWD", "front")
+
+    url = f"/api/settings/cars/{car['id']}"
+    edited = car_client.put(url, json={"aspects": {"final_drive_ratio": 4.1}}).json()["cars"][0]
+    assert (edited["aspects"]["final_drive_ratio"], edited["final_drive_axle"]) == (4.1, "front")
+    cleared = car_client.put(url, json={"aspects": {"final_drive_ratio": None}}).json()["cars"][0]
+    assert "final_drive_ratio" not in cleared["aspects"]
+    assert cleared["final_drive_axle"] == "front"
+    # A new layout drops the library's axle.
+    rwd = car_client.put(url, json={"drive_layout": "RWD"}).json()["cars"][0]
+    assert (rwd["drive_layout"], rwd["final_drive_axle"]) == ("RWD", "rear")
 
 
 def test_an_unknown_drive_layout_is_rejected(car_client) -> None:

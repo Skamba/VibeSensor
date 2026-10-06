@@ -946,15 +946,25 @@ function diagnosisCard(
 }
 
 /** Where to look; a driveline fault on a car with a known layout also names
- * the parts to have checked, the axle the sensors point to first. */
+ * the parts to have checked, the axle the sensors point to first. Next to the
+ * rear propshaft, the front drive is an all-wheel-drive car's front propshaft
+ * and differential; alone it is a car without a propshaft, whose gearbox
+ * output shaft turns at the order (its drive shafts turn at wheel speed). */
 function drivelineNextStep(
   diagnosis: Diagnosis,
   zone: string,
   t: Translate,
 ): string {
-  const parts = (
-    diagnosis.source === "driveline" ? (diagnosis.driveline_parts ?? []) : []
-  ).map((part) => t(`history.driveline_parts.${part}`));
+  const named =
+    diagnosis.source === "driveline" ? (diagnosis.driveline_parts ?? []) : [];
+  const awd = named.includes("propshaft_rear");
+  const parts = named.map((part) =>
+    t(
+      awd && part === "front_drive"
+        ? "history.driveline_parts.front_drive_awd"
+        : `history.driveline_parts.${part}`,
+    ),
+  );
   if (parts.length === 0) {
     return t("history.findings_next_step", { location: zone });
   }

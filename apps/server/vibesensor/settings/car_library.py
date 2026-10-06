@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import math
 import re
 from itertools import pairwise
 from typing import Literal, NotRequired, TypedDict
@@ -420,13 +419,31 @@ def get_exact_configurations_for_variant(
 _VARIANT_YEARS = re.compile(r" \(\d{4}(?:\u2013\d{4})?\)$")
 
 
+def _names_generation(name: str, row: VehicleConfiguration) -> bool:
+    """Whether a saved car name starts with the row's brand, model and generation.
+
+    ``"BMW 1 Series (F40, 2019-2024) 118i"`` names the F40 whatever its label's
+    years or dash: the picker's labels changed (#4153), the generation code did not.
+    """
+
+    brand, _, base, code = _generation_key(row)
+    if code is None:
+        return name.startswith(f"{brand} {base} ")
+    prefix = f"{brand} {base} ({code}"
+    return name.startswith(prefix) and name[len(prefix) : len(prefix) + 1] in {",", ")"}
+
+
 def _library_rows_for_saved_car(car: Car) -> list[VehicleConfiguration]:
     """The library rows a saved car was picked from, best match first.
 
     The wizard saves a library car as ``"{brand} {model} {variant}"`` with the
     body type and variant name. A car saved before its variant was split by
-    model year names the variant without the years. A renamed car falls back to
-    every row of its body type and variant.
+    model year names the variant without the years; one saved before the
+    picker's model labels changed names its generation with other years. A
+    name that names a library generation only matches that generation's rows,
+    so a variant name another generation shares (118i: F20 and F40) never lends
+    its layout. Only a renamed car falls back to every row of its body type and
+    variant.
     """
 
     if not car.variant:
@@ -442,16 +459,21 @@ def _library_rows_for_saved_car(car: Car) -> list[VehicleConfiguration]:
         if car.name == f"{brand} {model} {variant}"
         for row in rows
     ]
-    return named or [row for _, rows in candidates for row in rows]
+    if named:
+        return named
+    if any(_names_generation(car.name, row) for rows in _ROWS_BY_VARIANT.values() for row in rows):
+        return [row for _, rows in candidates for row in rows if _names_generation(car.name, row)]
+    return [row for _, rows in candidates for row in rows]
 
 
 def with_library_drive_layout(car: Car) -> Car:
     """Fill a saved car's missing drive layout from the library row it came from.
 
     Cars saved before the layout existed get it when their rows agree on one;
-    an AWD car also gets the axle of its final drive when the saved ratio is
-    the row's. A layout the car already has is kept, and a car the library
-    doesn't know stays without one.
+    an AWD car also gets the axle its gearbox's final drive is on (which axle
+    the engine drives), also when the owner has corrected the ratio. A layout
+    the car already has is kept, and a car the library doesn't know stays
+    without one.
     """
 
     if car.drive_layout is not None:
@@ -463,14 +485,7 @@ def with_library_drive_layout(car: Car) -> Car:
     status = car.order_reference_status
     transmission = status.transmission_name if status is not None else None
     same_gearbox = [row for row in rows if row.transmission_name == transmission] or rows
-    saved_ratio = car.aspects.get("final_drive_ratio")
-    axles = {
-        row.driven_final_drive_axle
-        for row in same_gearbox
-        if isinstance(saved_ratio, float)
-        and row.driven_final_drive_ratio is not None
-        and math.isclose(saved_ratio, row.driven_final_drive_ratio, abs_tol=1e-6)
-    }
+    axles = {row.driven_final_drive_axle for row in same_gearbox}
     return Car(
         id=car.id,
         name=car.name,

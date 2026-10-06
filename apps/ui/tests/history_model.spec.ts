@@ -707,21 +707,25 @@ const FWD = {
   propshaft: false,
 } as const;
 
-test("a front-wheel-drive car's driveline fault names its drive shafts, never a propshaft", async () => {
+// Drive shafts and CV joints turn at wheel speed, not at the driveline order.
+const WHEEL_SPEED_PARTS = /drive shaft|CV joint|aandrijfas|homokinet/i;
+
+test("a front-wheel-drive car's driveline fault names its gearbox output shaft, never a propshaft or drive shaft", async () => {
   const fault = drivelineInsights(
     "fault",
     { zone: "front_axle", driveline_parts: ["front_drive"] },
     FWD,
   );
   expect(fault.primary?.nextStep).toBe(
-    "Front axle: have the gearbox output, front differential, drive shafts and CV joints checked",
+    "Front axle: have the gearbox output shaft, final-drive pinion and differential bearings checked",
   );
   expect(fault.checks.references[1]).toEqual({
     label: "Drive layout",
     detail:
-      "front-wheel drive: the driveline is the gearbox output, front differential and drive shafts",
+      "front-wheel drive: the gearbox output shaft turns at the driveline order",
   });
   expect(JSON.stringify(fault)).not.toMatch(/propshaft\)|centre bearing/i);
+  expect(JSON.stringify(fault)).not.toMatch(WHEEL_SPEED_PARTS);
 
   // No axle standing out: a centre-tunnel location is not a propshaft.
   const tunnel = drivelineInsights(
@@ -745,9 +749,10 @@ test("a front-wheel-drive car's driveline fault names its drive shafts, never a 
       "nl",
     );
     expect(dutch.primary?.nextStep).toBe(
-      "Vooras: laat de uitgaande as van de versnellingsbak, het voordifferentieel, de aandrijfassen en homokineten controleren",
+      "Vooras: laat de uitgaande as van de versnellingsbak, het pignon van de eindoverbrenging en de differentieellagers controleren",
     );
     expect(JSON.stringify(dutch)).not.toMatch(/cardanas|middenlager/i);
+    expect(JSON.stringify(dutch)).not.toMatch(WHEEL_SPEED_PARTS);
   } finally {
     await setLanguage("en");
   }
@@ -760,7 +765,19 @@ test("an all-wheel-drive car checks the axle the sensors point to first, then th
     { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
   );
   expect(rear.primary?.nextStep).toBe(
-    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked; then the gearbox output, front differential, drive shafts and CV joints",
+    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked; then the front propshaft (if fitted) and the front differential pinion",
+  );
+  expect(JSON.stringify(rear)).not.toMatch(WHEEL_SPEED_PARTS);
+  const front = drivelineInsights(
+    "fault",
+    { zone: "front_axle", driveline_parts: ["front_drive", "propshaft_rear"] },
+    { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
+  );
+  expect(front.primary?.nextStep).toBe(
+    "Front axle: have the front propshaft (if fitted) and the front differential pinion checked; then the propshaft, its joints and centre bearing, and the rear differential",
+  );
+  expect(front.checks.references[1].detail).toBe(
+    "all-wheel drive: a propshaft to the rear axle and a drive to the front differential",
   );
   const rwd = drivelineInsights(
     "fault",

@@ -767,11 +767,9 @@ export function carRequest(
     status,
     fuelType: wizardFuelType(state),
     driveLayout: wizardDriveLayout(state),
-    finalDriveAxle:
-      gearbox &&
-      sameRatio(inputs.finalDrive, ratioText(gearbox.final_drive_ratio))
-        ? (gearbox.final_drive_axle ?? null)
-        : null,
+    // The axle the gearbox's final drive is on (which axle the engine drives)
+    // holds for a corrected ratio too.
+    finalDriveAxle: gearbox?.final_drive_axle ?? null,
   };
 }
 

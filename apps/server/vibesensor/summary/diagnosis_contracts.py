@@ -85,9 +85,10 @@ type FuelTypeValue = Literal["ICE", "PHEV", "EV"]
 type DriveLayoutValue = Literal["FWD", "RWD", "AWD"]
 type FinalDriveAxleValue = Literal["front", "rear"]
 # The driveline parts a driveline-order fault points to, in the order to check
-# them: the front axle's drive (gearbox output, front differential, drive shafts,
-# CV joints), or the propshaft and the rear axle's drive (joints, centre
-# bearing, rear differential).
+# them: the front axle's drive turning at wheel speed x final drive (without a
+# propshaft the gearbox output shaft, final-drive pinion and differential
+# bearings; on AWD the front propshaft and front differential pinion), or the
+# propshaft and the rear axle's drive (joints, centre bearing, rear differential).
 type DrivelinePart = Literal["front_drive", "propshaft_rear"]
 
 

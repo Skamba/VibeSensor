@@ -59,3 +59,20 @@ def report_view_texts(view: object) -> list[str]:
 def propshaft_mentions(texts: list[str]) -> list[str]:
     """The texts that name a propshaft or rear-axle drive part."""
     return [text for text in texts if any(word in text.lower() for word in PROPSHAFT_WORDS)]
+
+
+# Driveline parts that turn at wheel speed (a fault there shows at the wheel
+# order), so a driveline-order (P1/P2) fault never points to them.
+WHEEL_SPEED_PART_WORDS = (
+    "drive shaft",
+    "cv joint",
+    "intermediate shaft",
+    "aandrijfas",
+    "homokinet",
+    "tussenas",
+)
+
+
+def wheel_speed_part_mentions(texts: list[str]) -> list[str]:
+    """The texts that name a drive shaft or CV joint."""
+    return [text for text in texts if any(word in text.lower() for word in WHEEL_SPEED_PART_WORDS)]

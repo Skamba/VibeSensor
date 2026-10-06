@@ -108,7 +108,8 @@ _RPM_KEYS = {
     "none": "RPM_NONE",
 }
 # A car without a propshaft (front-wheel drive, e-AWD hybrid) has its own
-# driveline wording: the gearbox output and drive shafts turn at P1/P2.
+# driveline wording: the gearbox output shaft turns at P1/P2 (wheel speed x
+# final drive); its drive shafts turn at wheel speed.
 _NO_PROPSHAFT_KEYS = frozenset(
     {
         "ORDER_P1",
@@ -121,14 +122,19 @@ _NO_PROPSHAFT_KEYS = frozenset(
 )
 # The catalog suffix of a driveline fault's cause and step, per the parts to check
 # (``driveline_parts``); a rear-wheel-drive car, or one without a layout, keeps
-# the propshaft wording.
+# the propshaft wording. Alone, ``front_drive`` is a car without a propshaft: its
+# gearbox output shaft, final-drive pinion and differential bearings turn at the
+# order. Next to ``propshaft_rear`` it is an AWD car's front axle, driven like the
+# rear one by a propshaft (longitudinal AWD such as xDrive or quattro) into its
+# differential pinion.
 _DRIVELINE_PARTS_SUFFIX = {
     ("front_drive",): "_FRONT",
     ("front_drive", "propshaft_rear"): "_FRONT_REAR",
     ("propshaft_rear", "front_drive"): "_REAR_FRONT",
 }
 _DRIVELINE_SHOP_KEYS = {
-    "front_drive": ("SHOP_DRIVELINE_FRONT_SHAFTS", "SHOP_DRIVELINE_FRONT_DIFF"),
+    "front_drive": ("SHOP_DRIVELINE_FRONT_DIFF",),
+    "front_drive_awd": ("SHOP_DRIVELINE_FRONT_PROPSHAFT",),
     "propshaft_rear": (
         "SHOP_DRIVELINE_RUNOUT",
         "SHOP_DRIVELINE_ANGLES",
@@ -1212,12 +1218,12 @@ def _shop_keys(key: str, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     parts = diagnosis.get("driveline_parts", ())
     if key != "DRIVELINE" or not parts:
         return _SHOP_KEYS[key]
-    orders = (
-        "SHOP_DRIVELINE_ORDERS"
-        if "propshaft_rear" in parts
-        else "SHOP_DRIVELINE_ORDERS_NO_PROPSHAFT"
-    )
-    return (*(line for part in parts for line in _DRIVELINE_SHOP_KEYS[part]), orders)
+    if "propshaft_rear" in parts:
+        shop_parts = ["front_drive_awd" if part == "front_drive" else part for part in parts]
+        orders = "SHOP_DRIVELINE_ORDERS"
+    else:
+        shop_parts, orders = list(parts), "SHOP_DRIVELINE_ORDERS_NO_PROPSHAFT"
+    return (*(line for part in shop_parts for line in _DRIVELINE_SHOP_KEYS[part]), orders)
 
 
 # -- quality ---------------------------------------------------------------------

@@ -796,11 +796,23 @@ test("the wizard asks the drive layout only where the library does not say", () 
     driveLayout: "FWD",
     finalDriveAxle: "front",
   });
-  // A typed final drive is the user's own: no library axle is claimed for it.
+  // The axle is the gearbox's, whatever final drive is typed: an e-AWD hybrid
+  // (225xe: engine on the front axle) stays one when its ratio is corrected.
   expect(
     carRequest(
       { ...library, selectedVariant: { ...golf, drivetrain: "AWD" } },
       { ...kept, finalDrive: "4.1" },
+    ),
+  ).toMatchObject({ ok: true, driveLayout: "AWD", finalDriveAxle: "front" });
+  // A gearbox that doesn't say keeps the axle unknown.
+  expect(
+    carRequest(
+      {
+        ...library,
+        selectedVariant: { ...golf, drivetrain: "AWD" },
+        selectedGearbox: { ...GEARBOX, final_drive_axle: null },
+      },
+      kept,
     ),
   ).toMatchObject({ ok: true, driveLayout: "AWD", finalDriveAxle: null });
 

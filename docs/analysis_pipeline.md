@@ -274,7 +274,12 @@ the PDF both show:
 - `driveline_parts`: for a driveline fault on an engined car with a known
   drive layout, the parts to check, likelier first: `["front_drive"]`
   without a propshaft, `["propshaft_rear"]` for RWD, and both for AWD with
-  the front first when the zone is the front axle. Empty for an EV, without
+  the front first when the zone is the front axle. The order turns at wheel
+  speed x final drive, so `front_drive` alone is the gearbox output shaft,
+  final-drive pinion and differential bearings (drive shafts and CV joints
+  turn at wheel speed and show at the wheel order); next to `propshaft_rear`
+  it is the AWD car's front propshaft (if fitted) and front differential
+  pinion. Empty for an EV, without
   a layout, or for another source (`_driveline_parts` in `diagnosis.py`).
 - `unexplained_vibration`: a `no_fault` run with no candidate where a sensor
   still felt a vibration in the elevated strength band (see `docs/metrics.md`).

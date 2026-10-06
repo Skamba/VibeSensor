@@ -243,15 +243,11 @@ class CarSettingsService:
             new_drive_layout = (
                 drive_layout_or_none(car_data.get("drive_layout")) or car.drive_layout
             )
-            # An AWD car's final-drive axle comes from its library row: it holds
-            # only while the layout and the final drive it describes are kept.
+            # An AWD car's final-drive axle comes from its library gearbox (which
+            # axle the engine drives): it holds while the layout is kept, also
+            # when the owner corrects or clears the ratio itself.
             new_final_drive_axle = final_drive_axle_or_none(car_data.get("final_drive_axle"))
-            if (
-                new_final_drive_axle is None
-                and new_drive_layout == car.drive_layout
-                and "final_drive_ratio" not in aspect_updates
-                and not clear_final_drive
-            ):
+            if new_final_drive_axle is None and new_drive_layout == car.drive_layout:
                 new_final_drive_axle = car.final_drive_axle
             if new_order_reference_status is not None and (clear_final_drive or clear_gear):
                 status = new_order_reference_status

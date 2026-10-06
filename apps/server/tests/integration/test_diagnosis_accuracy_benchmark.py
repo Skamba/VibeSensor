@@ -22,7 +22,11 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
-from test_support.report_rendering import propshaft_mentions, report_view_texts
+from test_support.report_rendering import (
+    propshaft_mentions,
+    report_view_texts,
+    wheel_speed_part_mentions,
+)
 from test_support.sim_pipeline import (
     BenchCar,
     BenchSensor,
@@ -1047,10 +1051,10 @@ BENCH_CASES = (
         _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE),
         cars=(*BOTH_CARS, "rwd"),
     ),
-    # A front-wheel-drive hatchback whose front drive shaft is out of balance:
-    # the same propshaft-order tone, strongest at the front wheels. It has no
-    # propshaft, so the front axle is the place to look and the drive shafts,
-    # CV joints and gearbox output what to check.
+    # A front-wheel-drive hatchback with the same propshaft-order tone (wheel
+    # speed x final drive), strongest at the front wheels. It has no propshaft,
+    # so the front axle is the place to look and the gearbox output shaft and
+    # final-drive pinion, which turn at that order, what to check.
     Case(
         "bench-fwd-front-driveline-sweep",
         _sweep(
@@ -1061,7 +1065,8 @@ BENCH_CASES = (
         cars=("fwd",),
     ),
     # An all-wheel-drive car with the same front-axle shake: both axles are driven,
-    # so the front drive shafts come first and the propshaft still gets checked.
+    # so the front propshaft and differential come first and the propshaft to the
+    # rear axle still gets checked.
     Case(
         "bench-awd-front-driveline-sweep",
         _sweep(
@@ -1890,12 +1895,12 @@ _BRAKE_DISCS = {
 _NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "E2": "mounts"}
 _EV_NEXT_STEP_KEYWORDS = {**_NEXT_STEP_KEYWORDS, "P1": "drive unit"}
 # A driveline fault's advice follows the drive layout: a car without a propshaft
-# is sent to its drive shafts; without a layout the propshaft advice stays and
-# the report says the layout was not given.
+# is sent to its gearbox output shaft; without a layout the propshaft advice
+# stays and the report says the layout was not given.
 _DRIVELINE_NEXT_STEP = {
-    "FWD": ("CV joints",),
+    "FWD": ("gearbox output shaft",),
     "RWD": ("propshaft",),
-    "AWD": ("CV joints", "propshaft"),
+    "AWD": ("front propshaft", "propshaft to the rear axle"),
     None: ("propshaft", "drive layout was not given"),
 }
 _DRIVE_LAYOUT_TEXT = {
@@ -1937,6 +1942,9 @@ def _assert_report_view(
         assert conditions["Drive layout"].startswith(layout_text), conditions
     if car.drive_layout == "FWD":
         assert propshaft_mentions(report_view_texts(result.report)) == []
+    if car.drive_layout is not None:
+        # Drive shafts and CV joints turn at wheel speed, never at a driveline order.
+        assert wheel_speed_part_mentions(report_view_texts(result.report)) == []
     if electric and not car.final_drive_entered:
         # The motor's own ratio is missing, not a final drive.
         assert _MOTOR_NO_RATIO_LINE in result.report.mechanic.ruled_out
