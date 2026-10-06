@@ -147,23 +147,23 @@ class SimClient:
         local_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
             (self.frame_samples, 3), dtype=np.float32
         )
-        # Order tones are defined at the reference speed; scale them
-        # proportionally to the current speed.
+        # Order tones are defined at the reference speed; their frequency
+        # follows the current speed, their amplitude the profile's speed law.
         speed_ratio = 1.0
         if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
             speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
+        order_gain = profile.order_amplitude_gain(self.current_speed_kmh)
 
         _sin = np.sin
         _phase = self.phase_offsets
         local_tones: list[tuple[tuple[str, float], float, tuple[float, float, float]]] = [
-            (("hz", freq_hz), freq_hz * speed_ratio, amps_xyz)
-            for freq_hz, amps_xyz in profile.tones
+            (("hz", freq_hz), freq_hz, amps_xyz) for freq_hz, amps_xyz in profile.tones
         ]
         local_tones.extend(
             (
                 (order_key, multiple),
                 self.order_tone_hz(order_key) * multiple * speed_ratio,
-                amps_xyz,
+                (amps_xyz[0] * order_gain, amps_xyz[1] * order_gain, amps_xyz[2] * order_gain),
             )
             for order_key, multiple, amps_xyz in profile.order_tones
         )
@@ -196,7 +196,10 @@ class SimClient:
 
         noise = self.rng.normal(
             0.0,
-            profile.noise_std * self.noise_scale * self.scene_noise_gain,
+            profile.noise_std
+            * self.noise_scale
+            * self.scene_noise_gain
+            * profile.noise_gain(self.current_speed_kmh),
             size=local_signal.shape,
         ).astype(np.float32)
         local_signal += noise

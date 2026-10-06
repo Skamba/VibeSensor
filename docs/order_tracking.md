@@ -103,7 +103,9 @@ coordinates the evidence flow:
 
 1. Skip hypotheses that do not have enough reference data (`_should_test()`).
 2. Use `match_samples_for_hypothesis()` to compare predicted order bands against
-   the stored sample peaks.
+   the stored sample peaks. Orders placed from the speed are matched without
+   each sensor's fixed tones (see "Fixed tones" below); an engine order placed
+   from measured RPM keeps every peak.
 3. Use `_compute_effective_match_rate()` to rescue or focus the evidence around
    the best speed band or dominant location. It starts from the match rate at
    the sensors that hear the order (see "Heard matches" below). Below the
@@ -131,7 +133,9 @@ coordinates the evidence flow:
    not penalised for it as its own evidence becomes established, unless it
    shares most of its peaks with a wheel order (see "Confidence levels" in
    `docs/metrics.md`).
-6. Assemble a domain `Finding` with `assemble_order_finding()`.
+6. Assemble a domain `Finding` with `assemble_order_finding()`. A wheel or
+   driveline finding that rides on a measured engine order produces no
+   finding (see "Engine tone through a near-1:1 gear" below).
 7. Split multi-location wheel findings when two corners are both strong.
 8. Apply `suppress_engine_aliases()` before returning the final ranked list.
    An engine order that ranks below the best wheel order and is not clearly
@@ -161,6 +165,56 @@ Ranking decides the diagnosed source; it does not decide which of that
 source's orders the diagnosis names. `TestRun.diagnosis_order_finding` labels
 the source's louder order, comparing 1x and 2x amplitudes in the windows both
 matched (see "Diagnosed order" in `docs/metrics.md`).
+
+## Fixed tones
+
+A body or seat resonance, a mirror buzz or an idle tone rings at one frequency
+whatever the speed. The matcher takes the nearest peak in an order's
+tolerance window, so while a road-speed order sweeps past such a tone it lands
+on it: the order borrows the tone's level at every sensor that feels it, and a
+crossing at a speed the drive lingers at (a city drive's 45 km/h) reads as an
+order of its own. The tracking slope (step 4) catches a crossing only when
+the crossing is most of the order's evidence.
+
+`orders/fixed_tones.py:without_fixed_tones()` finds each sensor's fixed tones
+on the moving spectra and drops the peaks within a tone's width (0.5 Hz or
+2 %, whichever is wider) from that sensor's spectra before the speed-following
+orders are matched:
+
+- Speeds are grouped in bins one order tolerance wide (8 %, on a log scale),
+  so lingering at one speed weighs no more than sweeping past it. A bin is
+  judged when it holds at least 2 spectra.
+- Only peaks at least 6 dB over their spectrum's floor
+  (`heard_peak_over_floor`) count: road noise at the floor is no tone.
+- A tone is held in a bin when it is in at least 75 % of the bin's spectra.
+- It is fixed when the bins that hold it span at least 1.5× in speed (an
+  order's frequency would have left its window several times over) and it is
+  held in at least 80 % of the judged bins between the lowest and highest, so
+  an order and its harmonic meeting one frequency at two speeds is not a
+  tone.
+
+An engine order placed from measured RPM is matched on every peak: the
+engine's revs cycle through the same range on each gear while the speed
+climbs, so a real engine order can look fixed against the speed. With RPM
+estimated from speed the engine order moves with the speed and uses the
+filtered peaks like the road orders.
+
+## Engine tone through a near-1:1 gear
+
+With measured RPM, a gear near 1:1 puts E1/E2 on P1/P2 (and some gears put an
+engine order on T2). While that gear is engaged the road-speed order's window
+holds the engine's tone, so a pull through the gears gives the engine verdict
+plus P1/P2 rows the drive never carried. `pipeline.py::_rides_on_measured_engine()`
+drops a wheel or driveline finding when both hold:
+
+- at least half (`wheel_alias_shared_peak_fraction`) of its matches have a
+  measured engine order's peak within 8 % of its own predicted frequency, and
+- under half of the measured engine orders' matches are in its window: the
+  engine went on through gears where the road-speed order did not follow.
+
+A real wheel or driveline fault keeps its own peaks in every gear, so the
+first condition fails. With estimated RPM the engine order cannot be told from
+the road order (see "Engine alias" in `docs/analysis_pipeline.md`).
 
 ## Heard matches
 
@@ -253,4 +307,5 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |
+| `apps/server/vibesensor/analysis/orders/fixed_tones.py` | Drop each sensor's fixed-frequency tones before speed-following orders are matched. |
 | `apps/server/vibesensor/analysis/orders/brake_attribution.py` | Put a wheel order heard only while braking down to the brakes (brake judder). |

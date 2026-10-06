@@ -31,6 +31,7 @@ from test_support.sim_pipeline import (
     run_sim_pipeline,
 )
 
+from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.report.pdf import render_report_pdf
@@ -125,6 +126,8 @@ _ZONE_TEXT_EN = {
     "all_wheels": "all four wheels",
     "engine_bay": "engine bay",
 }
+_SPREAD_WHEEL_ZONES = frozenset({"front_axle", "rear_axle", "all_wheels"})
+_WHEEL_AXLE_TEXT_EN = {"front_axle": "front wheels", "rear_axle": "rear wheels"}
 _CABIN_TEXT = {
     "driver_seat": ("driver seat", "bestuurdersstoel"),
     "trunk": ("boot", "kofferbak"),
@@ -162,6 +165,8 @@ class Expected:
     dominant_phase: str | None = None
     # What a weak-evidence report must say made the run hard to judge.
     weak_reasons: frozenset[str] = frozenset()
+    # The speed band (km/h) where the injected order shakes hardest.
+    peak_speed_kmh: tuple[float, float] | None = None
     # A strong vibration no checked order explains: a no-fault report must say
     # it was there, never that nothing significant was found.
     unexplained_vibration: bool = False
@@ -191,6 +196,10 @@ class Case:
     cars: tuple[str, ...] = BOTH_CARS
     # The OBD adapter also reads the engine RPM (needs ``speed_source="obd2"``).
     obd_rpm: bool = False
+    # The speed source reports every ``speed_report_period_s`` the speed it
+    # measured ``speed_lag_s`` earlier (a GPS receiver: once a second, late).
+    speed_lag_s: float = 0.0
+    speed_report_period_s: float = 0.5
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -228,14 +237,15 @@ class Case:
 
     @property
     def brakes_firmly(self) -> bool:
-        """The drive brakes from speed: a phase of 3 s or more sheds 0.25 g or more.
+        """The drive brakes from speed: a phase sheds 0.25 g or more for 3 s or more above 30 km/h.
 
-        A car coasting without the brakes slows at well under 0.15 g.
+        A car coasting without the brakes slows at well under 0.15 g, and a stop
+        from town speeds is over too soon to judge a judder.
         """
         return any(
-            phase.duration_s >= 3.0
-            and (phase.speed_start_kmh - phase.speed_end_kmh) / 3.6 / phase.duration_s
+            (phase.speed_start_kmh - phase.speed_end_kmh) / 3.6 / phase.duration_s
             >= _FIRM_BRAKING_MPS2
+            and _seconds_above(phase, _FIRM_BRAKING_FROM_KMH) >= 3.0
             for phase in self.phases
         )
 
@@ -252,6 +262,15 @@ def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expect
 
 NO_FAULT = Expected(verdicts=frozenset({"no_fault"}), levels=frozenset())
 _FIRM_BRAKING_MPS2 = 0.25 * 9.81
+_FIRM_BRAKING_FROM_KMH = 30.0
+
+
+def _seconds_above(phase: ScenarioPhase, kmh: float) -> float:
+    """How long a slowing phase stays above *kmh*."""
+    start, end = phase.speed_start_kmh, phase.speed_end_kmh
+    if start <= end or start <= kmh:
+        return 0.0
+    return (start - max(end, kmh)) / (start - end) * phase.duration_s
 
 
 def _scripted(name: str, expected: Expected, **by_car: Expected) -> Case:
@@ -378,6 +397,161 @@ _BRAKE_JUDDER = Profile(
     reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
 
+# -- realistic cars: layered sensor signals --------------------------------------
+# Each sensor plays one profile, so a sensor that hears several things at once
+# (road noise, its own wheel, a neighbour's wheel, a body resonance) plays a
+# layered profile under the road override's gains: the road reads as on every
+# other sensor and each layer at the level its gain gives it on its own.
+_ROAD_SCENE_GAIN, _ROAD_AMP = 0.28, 0.52
+_ROAD_GAIN = _ROAD_SCENE_GAIN * _ROAD_AMP
+# Tire and road noise grow with speed (about in proportion), unlike the flat
+# road noise the scripted scenarios play.
+_ROAD_NOISE_SPEED_EXPONENT = 1.0
+
+
+_LAYERED_PROFILES: dict[str, Profile] = {}
+
+
+@dataclass(frozen=True, slots=True)
+class _Layer:
+    """The order tones of a simulator profile at *gain*, at *hz_scale* times their frequency.
+
+    A wheel on a tire 0.5 % smaller turns 0.5 % faster (``hz_scale`` 1.005).
+    """
+
+    profile: str
+    gain: float
+    hz_scale: float = 1.0
+
+
+def _road_with(
+    name: str,
+    *layers: _Layer,
+    resonance: tuple[float, float] | None = None,
+    **speed_laws: object,
+) -> Profile:
+    """Road noise that grows with speed, plus *layers* and a fixed *resonance* ``(hz, gain)``.
+
+    The resonance is a body or seat mode: the engine-idle profile's 13 Hz shake
+    at *gain*, moved to *hz*.
+    """
+    road = PROFILE_LIBRARY["rough_road"]
+    order_tones = tuple(
+        (key, multiple * layer.hz_scale, tuple(a * layer.gain / _ROAD_GAIN for a in amps))
+        for layer in layers
+        for key, multiple, amps in PROFILE_LIBRARY[layer.profile].order_tones
+    )
+    tones: tuple[tuple[float, tuple[float, float, float]], ...] = ()
+    if resonance is not None:
+        hz, gain = resonance
+        idle_amps = PROFILE_LIBRARY["engine_idle"].tones[0][1]
+        tones = ((hz, tuple(a * gain / _ROAD_GAIN for a in idle_amps)),)  # type: ignore[assignment]
+    profile = replace(
+        road,
+        name=f"bench_{name}",
+        tones=tones,
+        order_tones=order_tones,  # type: ignore[arg-type]
+        reference_speed_kmh=DEFAULT_SPEED_KMH if order_tones else None,
+        noise_speed_exponent=_ROAD_NOISE_SPEED_EXPONENT,
+        **speed_laws,  # type: ignore[arg-type]
+    )
+    _LAYERED_PROFILES[profile.name] = profile
+    return profile
+
+
+def _on(target: str, profile: Profile, coupling: float = 1.0) -> PhaseOverride:
+    """*target* plays *profile* under the road's gains; *coupling* scales all it hears."""
+    return _ov(target, profile.name, _ROAD_SCENE_GAIN, _ROAD_AMP * coupling)
+
+
+_ROAD_SPEED_NOISE = _road_with("road_speed_noise")
+# A healthy car: every wheel keeps some residual imbalance after balancing, a
+# little more at rear-right, and each sensor couples to its corner a little
+# differently. A faint seat/body mode rings at 11.5 Hz. Rear-right alone at this
+# level is the barely-there fault below; spread over all four it is residual.
+# (With rear-right twice the others, 0.08 against 0.03-0.05, rear-right stands
+# out 1.7x and the benchmark calls it a mild rear-right imbalance: where
+# residual ends and a fault begins is a product decision, not set here.)
+_RESIDUAL_BODY = (11.5, 0.02)
+_RESIDUAL = {
+    corner: _road_with(
+        f"residual_{corner}", _Layer("wheel_mild_imbalance", gain), resonance=_RESIDUAL_BODY
+    )
+    for corner, gain in (
+        ("front-left", 0.02),
+        ("front-right", 0.025),
+        ("rear-left", 0.03),
+        ("rear-right", 0.035),
+    )
+}
+_RESIDUAL_ROAD = _road_with("residual_road", resonance=_RESIDUAL_BODY)
+_RESIDUAL_COUPLING = {"front-left": 1.0, "front-right": 1.25, "rear-left": 0.8, "rear-right": 1.1}
+_RESIDUAL_IMBALANCE = (
+    _on("all", _RESIDUAL_ROAD, 0.9),
+    *(_on(corner, _RESIDUAL[corner], _RESIDUAL_COUPLING[corner]) for corner in _RESIDUAL),
+)
+# A faint front-left imbalance under a strong 12 Hz body resonance every sensor feels.
+_BODY_12HZ = (12.0, 0.3)
+_FAINT_FL_UNDER_RESONANCE = (
+    _on("all", _road_with("body_12hz", resonance=_BODY_12HZ)),
+    _on(
+        "front-left",
+        _road_with(
+            "faint_fl_body_12hz", _Layer("wheel_mild_imbalance", 0.15), resonance=_BODY_12HZ
+        ),
+    ),
+)
+# An imbalance shakes with the square of the speed and a suspension mode
+# amplifies it threefold between 95 and 115 km/h.
+_RESONANT_BAND_KMH = (95.0, 115.0)
+_FL_SPEED_SQUARED_RESONANT = _road_with(
+    "fl_speed_squared_resonant",
+    _Layer("wheel_imbalance", 0.85),
+    order_speed_exponent=2.0,
+    order_resonance_kmh=(*_RESONANT_BAND_KMH, 3.0),
+)
+# A front-left imbalance: the other corners feel some of it through the
+# subframe (front-right most), and the front-right sensor is mounted on a stiff
+# spot that reads everything 2.5 times as strongly.
+_FL_IMBALANCE_LAYERED = _road_with("fl_imbalance", _Layer("wheel_imbalance", 0.85))
+_FL_FELT_AT_FR = _road_with("fl_felt_at_fr", _Layer("wheel_imbalance", 0.85 * 0.3))
+_FL_FELT_AT_REAR = _road_with("fl_felt_at_rear", _Layer("wheel_imbalance", 0.85 * 0.12))
+_FR_STIFF_MOUNT = (
+    _on("all", _FL_FELT_AT_REAR),
+    _on("front-left", _FL_IMBALANCE_LAYERED),
+    _on("front-right", _FL_FELT_AT_FR, 2.5),
+)
+# Both front wheels out of balance after a tire fitting (0.6 and 0.5), the new
+# front-right tire 0.5 % smaller than the front-left, so the two tones beat.
+# Each front sensor also feels the other front wheel, the rear ones both, faintly.
+_FR_TIRE = 1.005
+_BOTH_FRONT = (
+    _on(
+        "all",
+        _road_with(
+            "both_front_felt_at_rear",
+            _Layer("wheel_imbalance", 0.6 * 0.12),
+            _Layer("wheel_imbalance", 0.5 * 0.12, _FR_TIRE),
+        ),
+    ),
+    _on(
+        "front-left",
+        _road_with(
+            "both_front_at_fl",
+            _Layer("wheel_imbalance", 0.6),
+            _Layer("wheel_imbalance", 0.5 * 0.3, _FR_TIRE),
+        ),
+    ),
+    _on(
+        "front-right",
+        _road_with(
+            "both_front_at_fr",
+            _Layer("wheel_imbalance", 0.5, _FR_TIRE),
+            _Layer("wheel_imbalance", 0.6 * 0.3),
+        ),
+    ),
+)
+
 _BENCH_PROFILES = {
     profile.name: profile
     for profile in (
@@ -387,6 +561,7 @@ _BENCH_PROFILES = {
         _IMBALANCED_OVAL_TIRE,
         _with_engine_hum("rough_road", 0.28 * 0.52),
         _with_engine_hum("wheel_imbalance", 0.85),
+        *_LAYERED_PROFILES.values(),
     )
 }
 
@@ -555,6 +730,161 @@ EV_CASES = (
         },
         cars=("ev", "ev_no_ratio"),
     ),
+)
+
+
+def _long_sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Sweep 50->120 km/h, hold 100, then a short coast to 80."""
+    return (
+        _phase("sweep", 14.0, 50.0, 120.0, *faults),
+        _phase("hold", 6.0, 100.0, 100.0, *faults),
+        _phase("coast", 4.0, 100.0, 80.0, *faults),
+    )
+
+
+def _city(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Stop-and-go in town, never above 50 km/h: two firm stops and a crawl."""
+    return (
+        _phase("idle", 4.0, 0.0, 0.0, *faults),
+        _phase("pull-away", 8.0, 0.0, 45.0, *faults),
+        _phase("street", 6.0, 45.0, 45.0, *faults),
+        _phase("stop", 4.5, 45.0, 0.0, *faults),
+        _phase("lights", 3.0, 0.0, 0.0, *faults),
+        _phase("pull-away-2", 6.0, 0.0, 35.0, *faults),
+        _phase("traffic", 5.0, 35.0, 35.0, *faults),
+        _phase("crawl", 4.0, 35.0, 20.0, *faults),
+        _phase("speed-up", 7.0, 20.0, 48.0, *faults),
+        _phase("avenue", 6.0, 48.0, 48.0, *faults),
+        _phase("stop-2", 4.0, 48.0, 10.0, *faults),
+    )
+
+
+def _motorway(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """A long motorway cruise between 110 and 130 km/h."""
+    return (
+        _phase("cruise", 10.0, 120.0, 120.0, *faults),
+        _phase("overtake", 6.0, 120.0, 130.0, *faults),
+        _phase("fast-lane", 8.0, 130.0, 130.0, *faults),
+        _phase("lift-off", 12.0, 130.0, 110.0, *faults),
+        _phase("roadworks", 10.0, 110.0, 110.0, *faults),
+        _phase("merge", 6.0, 110.0, 125.0, *faults),
+        _phase("cruise-2", 6.0, 125.0, 125.0, *faults),
+    )
+
+
+def _under_load(*load: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Two pulls between steady and coasting stretches; *load* plays only while pulling."""
+    return (
+        _phase("steady", 6.0, 60.0, 60.0),
+        _phase("pull", 8.0, 60.0, 100.0, *load),
+        _phase("steady-2", 6.0, 100.0, 100.0),
+        _phase("lift-off", 8.0, 100.0, 70.0),
+        _phase("pull-2", 8.0, 70.0, 110.0, *load),
+        _phase("steady-3", 5.0, 110.0, 110.0),
+    )
+
+
+# A healthy car is no fault, at most a hedged guess spread over the car: never
+# one corner to fix.
+HEALTHY_OR_SPREAD = Expected(
+    verdicts=frozenset({"no_fault", "weak_evidence"}),
+    levels=WEAK_ONLY,
+    weak_reasons=frozenset({"spread_across_locations"}),
+)
+_FL_IMBALANCE = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+_FL_FAULT = _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True)
+_DRIVELINE_UNDER_LOAD = (
+    _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
+    _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+)
+
+REALISM_CASES = (
+    # The main false-positive risk: a healthy car with residual imbalance on
+    # every wheel, uneven sensor coupling, road noise growing with speed and a
+    # faint body mode.
+    Case(
+        "bench-healthy-residual-imbalance-sweep",
+        _long_sweep(*_RESIDUAL_IMBALANCE),
+        HEALTHY_OR_SPREAD,
+    ),
+    # A mild imbalance (bench-mild-front-left-wheel-sweep's level, Strong on its
+    # own) the order sweeps through a strong body resonance: still that wheel,
+    # and the resonance is no fault of its own.
+    Case(
+        "bench-faint-front-left-under-body-resonance-sweep",
+        _long_sweep(*_FAINT_FL_UNDER_RESONANCE),
+        Expected(
+            verdicts=frozenset({"fault", "weak_evidence"}),
+            source="wheel/tire",
+            zones=frozenset({"front_left_wheel"}),
+            order_codes=frozenset({"T1"}),
+            levels=frozenset({"strong", "moderate", "weak"}),
+        ),
+    ),
+    # An imbalance growing with the square of the speed and amplified in a band:
+    # the report names the speeds where it shakes hardest.
+    Case(
+        "bench-front-left-resonant-speed-band-sweep",
+        (
+            _phase("sweep", 16.0, 50.0, 130.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+            _phase("hold", 4.0, 130.0, 130.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+            _phase("coast", 12.0, 130.0, 70.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+        ),
+        replace(_FL_FAULT, peak_speed_kmh=_RESONANT_BAND_KMH),
+    ),
+    # A GPS receiver reports once a second and about 0.8 s late: while pulling
+    # from 30 to 100 km/h the speed it gives lags the wheels by 2-3 km/h.
+    Case(
+        "bench-gps-lag-upshift-front-left-wheel",
+        _upshifts(_FL_IMBALANCE),
+        _FL_FAULT,
+        speed_lag_s=0.8,
+        speed_report_period_s=1.0,
+    ),
+    # A propshaft or CV joint that shakes only under load: the driveline, while
+    # accelerating, never a wheel.
+    Case(
+        "bench-driveline-under-load",
+        _under_load(*_DRIVELINE_UNDER_LOAD),
+        Expected(
+            verdicts=frozenset({"fault", "weak_evidence"}),
+            source="driveline",
+            zones=frozenset(DRIVELINE_ZONES),
+            order_codes=frozenset({"P1"}),
+            levels=frozenset({"moderate", "weak"}),
+            dominant_phase="acceleration",
+        ),
+    ),
+    # The front-right sensor reads 2.5 times as strongly as the others: the
+    # imbalance it feels from front-left must not move the fault to its corner.
+    Case(
+        "bench-front-left-wheel-stiff-front-right-mount-sweep",
+        _sweep(*_FR_STIFF_MOUNT),
+        Expected(
+            verdicts=frozenset({"fault", "weak_evidence"}),
+            source="wheel/tire",
+            zones=frozenset({"front_left_wheel", "front_axle"}),
+            order_codes=frozenset({"T1"}),
+            levels=frozenset({"strong", "moderate", "weak"}),
+        ),
+    ),
+    # Both front wheels out of balance: the front axle, not one corner nor all four.
+    Case(
+        "bench-both-front-wheels-sweep",
+        _sweep(*_BOTH_FRONT),
+        _fault("wheel/tire", {"front_axle"}, "T1", levels=MODERATE_OR_STRONG),
+    ),
+    # The main cases on other drives: stop-and-go in town and a motorway cruise.
+    Case("bench-healthy-city", _city(), NO_FAULT),
+    Case("bench-healthy-residual-imbalance-city", _city(*_RESIDUAL_IMBALANCE), HEALTHY_OR_SPREAD),
+    Case("bench-front-left-wheel-city", _city(_FL_IMBALANCE), _FL_FAULT),
+    Case("bench-healthy-motorway", _motorway(), NO_FAULT),
+    Case(
+        "bench-healthy-residual-imbalance-motorway",
+        _motorway(*_RESIDUAL_IMBALANCE),
+        HEALTHY_OR_SPREAD,
+    ),
+    Case("bench-front-left-wheel-motorway", _motorway(_FL_IMBALANCE), _FL_FAULT),
 )
 
 BENCH_CASES = (
@@ -944,6 +1274,7 @@ BENCH_CASES = (
     ),
     *GEAR_CASES,
     *EV_CASES,
+    *REALISM_CASES,
 )
 
 SCRIPTED_CASES = (
@@ -1069,15 +1400,33 @@ def injected_order_mg(
     for phase in phases:
         tones = _phase_tones(phase, order_code)
         apply_phase(clients, "ground-truth", phase)
+        speeds = _phase_speeds_kmh(phase)
         for sensor, client in zip(layout, clients, strict=True):
+            profile = PROFILE_LIBRARY[client.profile_name]
             counts = sum(
                 math.hypot(*amps)
-                for key, multiple, amps in PROFILE_LIBRARY[client.profile_name].order_tones
-                if (key, multiple) in tones
+                for key, multiple, amps in profile.order_tones
+                if _is_tone(key, multiple, tones)
             )
+            counts *= max(profile.order_amplitude_gain(speed) for speed in speeds)
             mg = counts * client.scene_gain * client.amp_scale * _SIM_MG_PER_COUNT
             injected[sensor.location_code] = max(injected[sensor.location_code], mg)
     return injected
+
+
+def _is_tone(key: str, multiple: float, tones: set[tuple[str, float]]) -> bool:
+    """Whether a profile tone is one of *tones*: the same order, within the order tolerance
+    (a wheel on a slightly smaller tire turns a little faster)."""
+    return any(
+        key == tone_key and abs(multiple - tone_multiple) <= _ORDER_TOLERANCE_REL * tone_multiple
+        for tone_key, tone_multiple in tones
+    )
+
+
+def _phase_speeds_kmh(phase: ScenarioPhase) -> list[float]:
+    """The speeds a phase drives through, a km/h apart."""
+    low, high = sorted((phase.speed_start_kmh, phase.speed_end_kmh))
+    return [low + step for step in range(int(high - low) + 1)] + [high]
 
 
 _ORDER_MULTIPLE = {"T1": 1.0, "T2": 2.0, "P1": 1.0, "P2": 2.0, "E1": 1.0, "E2": 2.0}
@@ -1117,6 +1466,8 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         car_start=case.car_start,
         speed_source=case.speed_source,
         obd_rpm=case.obd_rpm,
+        speed_lag_s=case.speed_lag_s,
+        speed_report_period_s=case.speed_report_period_s,
     )
     try:
         lossy = bool(case.frame_loss)
@@ -1176,10 +1527,15 @@ def _assert_case(
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, case, summary)
         _assert_order_amplitude_mg(diagnosis, case)
+    if diagnosis["source"] == "wheel/tire" and diagnosis["zone"] in _SPREAD_WHEEL_ZONES:
+        # Spread over an axle or all four wheels: check first, never "go fix it".
+        assert diagnosis["confidence_level"] != "strong", summary
     if expected.dominant_phase is not None:
         assert diagnosis["dominant_phase"] == expected.dominant_phase, summary
     if expected.speed_dependence is not None:
         assert diagnosis["speed_dependence"] == expected.speed_dependence, summary
+    if expected.peak_speed_kmh is not None:
+        _assert_peak_speed(diagnosis, expected.peak_speed_kmh, summary)
     _assert_spectrum_markers(diagnosis, car, case)
     assert diagnosis["conditions"]["rpm_source"] == _rpm_source(car, case)
     engine_alike = _engine_alike(car, case, diagnosis["order_code"])
@@ -1212,7 +1568,7 @@ def _assert_case(
         assert expected.weak_reasons <= set(diagnosis["weak_reasons"]), summary
         assert len(result.report.owner.reasons) == len(diagnosis["weak_reasons"]) > 0
     if diagnosis["verdict"] == "fault":
-        _assert_speed_chart(result, diagnosis, case, expected)
+        _assert_speed_chart(result, diagnosis, car, case, expected)
 
 
 def _rpm_source(car: BenchCar, case: Case) -> str:
@@ -1300,15 +1656,22 @@ def _phase_tones(phase: ScenarioPhase, order_code: str) -> set[tuple[str, float]
     return tones
 
 
-def injected_sweep_kmh(phases: tuple[ScenarioPhase, ...], order_code: str) -> float:
-    """Widest steady speed sweep (km/h, over 8 s or more) while the order's tone was injected."""
+def injected_sweep_kmh(
+    phases: tuple[ScenarioPhase, ...], order_code: str, *, visible_from_kmh: float = 0.0
+) -> float:
+    """Widest steady speed sweep (km/h, over 8 s or more) while the order's tone was injected.
+
+    Only the part of a sweep above *visible_from_kmh* counts: below it the
+    order's tone is under the lowest frequency the analysis looks at.
+    """
     return max(
         (
-            abs(phase.speed_end_kmh - phase.speed_start_kmh)
+            max(phase.speed_end_kmh, phase.speed_start_kmh)
+            - max(min(phase.speed_end_kmh, phase.speed_start_kmh), visible_from_kmh)
             for phase in phases
             if phase.duration_s >= 8.0
             and any(
-                (key, multiple) in _phase_tones(phase, order_code)
+                _is_tone(key, multiple, _phase_tones(phase, order_code))
                 for override in phase.overrides
                 for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
             )
@@ -1318,11 +1681,14 @@ def injected_sweep_kmh(phases: tuple[ScenarioPhase, ...], order_code: str) -> fl
 
 
 def _assert_speed_chart(
-    result: SimPipelineResult, diagnosis: dict, case: Case, expected: Expected
+    result: SimPipelineResult, diagnosis: dict, car: BenchCar, case: Case, expected: Expected
 ) -> None:
     """Amplitude vs speed is charted when the fault was swept over a speed range."""
     chart = result.report.mechanic.speed_chart
-    span = injected_sweep_kmh(case.phases, diagnosis["order_code"])
+    order_code = diagnosis["order_code"]
+    # A wheel order at walking pace is far below the analysed band (5 Hz and up).
+    visible_from = MIN_ANALYSIS_FREQ_HZ / (_order_hz(car, order_code, 100.0) / 100.0)
+    span = injected_sweep_kmh(case.phases, order_code, visible_from_kmh=visible_from)
     if span >= 40.0:
         assert chart is not None, span
         assert [series.strongest for series in chart.series][:1] == [True]
@@ -1330,6 +1696,26 @@ def _assert_speed_chart(
             # The highlighted curve is the faulty corner's, the loudest one.
             peaks = [max(amp for _speed, amp in series.points) for series in chart.series]
             assert peaks[0] == max(peaks), (chart.series[0].label, peaks)
+
+
+def _assert_peak_speed(diagnosis: dict, band_kmh: tuple[float, float], summary: str) -> None:
+    """The report names the speeds where the order shakes hardest.
+
+    The description's speed (the median matched speed in the loudest 10 km/h
+    band) sits within half a band of it, and the top of the strongest
+    location's amplitude-vs-speed curve (5 km/h bins) within half a bin.
+    """
+    low, high = band_kmh
+    assert low - 5.0 <= diagnosis["reference_speed_kmh"] <= high + 5.0, summary
+    strongest = diagnosis["location_amplitudes"][0]["location"]
+    curve = [
+        (point["amplitude_mg"], point["speed_kmh"])
+        for point in diagnosis["amplitude_vs_speed"]
+        if point["location"] == strongest
+    ]
+    assert curve, diagnosis["amplitude_vs_speed"]
+    peak_kmh = max(curve)[1]
+    assert low - 2.5 <= peak_kmh <= high + 2.5, (peak_kmh, curve)
 
 
 def _assert_order_frequency(diagnosis: dict, car: BenchCar, case: Case, summary: str) -> None:
@@ -1527,6 +1913,18 @@ def _assert_report_view(
     # in the per-location table.
     worksheet_orders = [row.order for row in result.report.mechanic.worksheet]
     assert len(worksheet_orders) == len(set(worksheet_orders)), worksheet_orders
+    if case.obd_rpm:
+        # Measured RPM tells the engine's tone from a road-speed order it passes
+        # in one gear: the worksheet lists only orders the drive really carried.
+        carried = {
+            key
+            for phase in case.phases
+            for override in phase.overrides
+            for key, _multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+        }
+        listed = {row["order_code"] for row in diagnosis["order_findings"]}
+        uncarried = {code for code in listed if _ORDER_TONES[code][0] not in carried}
+        assert uncarried == set(), f"not in the drive: {sorted(uncarried)} of {sorted(listed)}"
     owner = result.report.owner
     assert owner.verdict == diagnosis["verdict"]
     assert owner.level == diagnosis["confidence_level"]
@@ -1575,6 +1973,9 @@ def _assert_report_view(
     cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
     assert cause_text is not None
     zone_text = _ZONE_TEXT_EN.get(diagnosis["zone"])
+    if diagnosis["source"] == "wheel/tire":
+        # Both wheels of an axle are named as wheels, not as the axle.
+        zone_text = _WHEEL_AXLE_TEXT_EN.get(diagnosis["zone"], zone_text)
     if zone_text is not None:
         assert zone_text in cause_text, cause_text
     unlocated_wheel = diagnosis["source"] == "wheel/tire" and not case.wheel_sensors

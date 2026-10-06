@@ -22,6 +22,8 @@ from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.dsp.statistics_utils import _mean_variance
 
+# Fewer matched points than this in a speed bin say little about how hard it shakes there.
+_MIN_POINTS_PER_BAND = 3
 # A speed typed in by hand is not a measurement: every sample carries the set value.
 _MANUAL_SPEED_SOURCES = frozenset({"manual", "fallback_manual"})
 
@@ -100,6 +102,36 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
+def _loudest_speed_window(
+    speeds: Sequence[float],
+    amplitudes: Sequence[float],
+    weights: Sequence[float],
+) -> tuple[float | None, float | None]:
+    """The speed bin where the weighted mean amplitude is highest.
+
+    A mean, not a sum: lingering at one speed (a cruise, a long hold) does not
+    make a vibration strongest there; where it shakes hardest does. A bin with
+    fewer than ``_MIN_POINTS_PER_BAND`` points counts only when no bin has more.
+    """
+    total: dict[str, float] = defaultdict(float)
+    weight: dict[str, float] = defaultdict(float)
+    count: Counter[str] = Counter()
+    for speed, amp, point_weight in zip(speeds, amplitudes, weights, strict=True):
+        label = speed_bin_label(speed)
+        total[label] += amp * point_weight
+        weight[label] += point_weight
+        count[label] += 1
+    if not total:
+        return (None, None)
+    eligible = [label for label in total if count[label] >= _MIN_POINTS_PER_BAND] or list(total)
+    strongest_bin = max(
+        eligible,
+        key=lambda label: (total[label] / weight[label], speed_band_sort_key(label)),
+    )
+    low_kmh = float(speed_band_sort_key(strongest_bin))
+    return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
+
+
 def _speed_stats(speed_values: Sequence[float]) -> SpeedProfileSummary:
     if not speed_values:
         return SpeedProfileSummary()
@@ -171,7 +203,7 @@ def _speed_profile_from_points(
     _float_or_none = _as_float
 
     valid: list[tuple[float, float]] = []
-    effective_amps: list[float] = []
+    weights: list[float] = []
     speeds: list[float] = []
     phase_weights_seq = phase_weights if phase_weights is not None else []
     has_weights = phase_weights is not None
@@ -188,7 +220,7 @@ def _speed_profile_from_points(
             if parsed_weight is not None and parsed_weight > 0:
                 phase_weight = parsed_weight
         valid.append((speed, amp))
-        effective_amps.append(amp * phase_weight)
+        weights.append(phase_weight)
         speeds.append(speed)
 
     if not valid:
@@ -203,9 +235,10 @@ def _speed_profile_from_points(
         low, high = high, low
     speed_window_kmh = (low, high)
 
-    low_speed, high_speed = _amplitude_weighted_speed_window(
+    low_speed, high_speed = _loudest_speed_window(
         speeds,
-        effective_amps,
+        [amp for _speed, amp in valid],
+        weights,
     )
     strongest_speed_band = (
         f"{low_speed:.0f}-{high_speed:.0f} km/h"

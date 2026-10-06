@@ -235,19 +235,30 @@ the PDF both show:
 
 - `verdict`: `fault` (Strong/Moderate candidate), `weak_evidence` (Weak
   candidate), or `no_fault` (no candidate, or a Weak candidate fainter than the
-  moderate strength band). The candidate is `TestRun.diagnosis_candidate`: the
+  moderate strength band, or a wheel/tire candidate fainter than that band that
+  no corner stands out in: every wheel keeps some imbalance after balancing,
+  and a healthy car feels that residual about evenly at every corner). The candidate is `TestRun.diagnosis_candidate`: the
   first surfaced, actionable top cause that is not baseline noise or a
   transient.
 - `confidence_level`: the action-defined level (see `docs/metrics.md`); no
-  percentage is exposed anywhere.
+  percentage is exposed anywhere. A candidate with the weak reason `faint`
+  (under the 16 dB moderate strength band) or `spread_across_locations` (a
+  wheel/tire or brake cause felt about as strongly at several sensors) is
+  Moderate at most: a vibration that faint may be a healthy car's residual
+  imbalance, and a spread one is not pinned to the part a Strong level tells
+  the owner to fix.
 - `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E1/E2 engine), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and
-  `weak_reasons` codes; `order_findings` repeats those facts once per surfaced
+  `weak_reasons` codes (at most two shown); `order_findings` repeats those facts once per surfaced
   order (its best-ranked finding; diagnosed one first) as workshop worksheet rows.
   The candidate names the source and the confidence level; the order shown
   (label, amplitudes, frequency, speeds) is that source's dominant order,
   `TestRun.diagnosis_order_finding` (see "Diagnosed order" in
-  `docs/metrics.md`). The diagnosed row carries the diagnosis level. Rows are
+  `docs/metrics.md`). `reference_speed_kmh` is the median matched speed in
+  the order's strongest speed band: the 10 km/h bin where its matched
+  amplitude is highest on average (phase-weighted), among bins with at least
+  3 matched points. A mean, not a total, so a long cruise at one speed does
+  not make that speed the strongest. The diagnosed row carries the diagnosis level. Rows are
   listed from Moderate up, plus the diagnosed source's other order once even
   when it is Weak on its own.
 - `zone`: a corner for wheel/tire faults: the finding's location when the

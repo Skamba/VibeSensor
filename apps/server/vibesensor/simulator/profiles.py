@@ -62,6 +62,8 @@ DEFAULT_ORDER_HZ = calc_default_orders()
 @dataclass(frozen=True, slots=True)
 class Profile:
     name: str
+    # Fixed-frequency tones ``(hz, amps_xyz)``: body resonances and idle shake,
+    # the same frequency at every speed.
     tones: tuple[tuple[float, tuple[float, float, float]], ...]
     noise_std: float
     bump_probability: float
@@ -77,6 +79,33 @@ class Profile:
     # tones by ``current_speed / reference_speed``. ``None`` means the
     # profile has only absolute tones (e.g. engine_idle, rough_road).
     reference_speed_kmh: float | None = None
+    # Road noise grows with speed: the broadband noise is scaled by
+    # ``(speed / DEFAULT_SPEED_KMH) ** noise_speed_exponent`` (0: flat).
+    noise_speed_exponent: float = 0.0
+    # An unbalanced mass shakes harder the faster it turns: order-tone
+    # amplitudes are scaled by ``(speed / reference_speed) ** order_speed_exponent``
+    # (0: the same amplitude at every speed).
+    order_speed_exponent: float = 0.0
+    # ``(low_kmh, high_kmh, gain)``: a suspension or body resonance the order
+    # passes through amplifies its tones by ``gain`` inside that speed band.
+    order_resonance_kmh: tuple[float, float, float] | None = None
+
+    def order_amplitude_gain(self, speed_kmh: float) -> float:
+        """How much the order tones are amplified at *speed_kmh* (1 at the reference speed)."""
+        gain = 1.0
+        if self.order_speed_exponent and self.reference_speed_kmh:
+            gain = (max(0.0, speed_kmh) / self.reference_speed_kmh) ** self.order_speed_exponent
+        if self.order_resonance_kmh is not None:
+            low_kmh, high_kmh, resonance_gain = self.order_resonance_kmh
+            if low_kmh <= speed_kmh <= high_kmh:
+                gain *= resonance_gain
+        return gain
+
+    def noise_gain(self, speed_kmh: float) -> float:
+        """How much the broadband noise grows with *speed_kmh* (1 at ``DEFAULT_SPEED_KMH``)."""
+        if not self.noise_speed_exponent:
+            return 1.0
+        return float((max(0.0, speed_kmh) / DEFAULT_SPEED_KMH) ** self.noise_speed_exponent)
 
 
 # A profile only carries the tones of the source it simulates. Road and body

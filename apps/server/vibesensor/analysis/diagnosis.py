@@ -86,6 +86,10 @@ _PRESENCE_SLOT_S = 0.5
 _PRESENT_LEVEL_RATIO = 0.5
 _NARROW_SPEED_KMH = 10.0
 _MAX_WEAK_REASONS = 2
+# Never Strong with these: a vibration under the moderate strength band is no
+# "go fix it" (it may be a healthy car's residual), and a cause felt about as
+# strongly at several sensors is not pinned to the part a Strong level names.
+_HEDGES = frozenset({"faint", "spread_across_locations"})
 _MAX_ORDER_ROWS = 6
 # With no cause found, the run still felt a vibration when a sensor's strongest
 # peaks (p95) reach the elevated strength band (L3, 26 dB over the floor). The
@@ -183,13 +187,16 @@ def build_diagnosis(
     )
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
-        weak_reasons = ["coast_test_contradicts", *weak_reasons][:_MAX_WEAK_REASONS]
+        weak_reasons = ["coast_test_contradicts", *weak_reasons]
     if candidate is None:
         level = None
     elif verdict is DiagnosisVerdict.WEAK_EVIDENCE:
         level = ConfidenceLevel.WEAK
-    elif candidate.finding_id in engine_alike and level is not None:
+    elif level is not None and (
+        candidate.finding_id in engine_alike or not _HEDGES.isdisjoint(weak_reasons)
+    ):
         level = _at_most_moderate(level)
+    weak_reasons = weak_reasons[:_MAX_WEAK_REASONS]
     location = candidate.strongest_location if candidate is not None else None
     if candidate is not None and candidate.location is not None:
         location = candidate.location.strongest_location or location
@@ -258,14 +265,23 @@ def _verdict(candidate: Finding | None) -> DiagnosisVerdict:
     """Fault for a Strong/Moderate candidate, weak evidence for a Weak one, else no fault.
 
     A Weak candidate that is also faint (below the moderate strength band) is not
-    a significant vibration, so the run reads as no fault.
+    a significant vibration, so the run reads as no fault. So is a faint
+    wheel/tire order no corner stands out in: every wheel keeps some imbalance
+    after balancing, and on a healthy car that residual is felt about evenly at
+    every corner.
     """
     if candidate is None:
         return DiagnosisVerdict.NO_FAULT
-    if candidate.confidence_level is not ConfidenceLevel.WEAK:
-        return DiagnosisVerdict.FAULT
     strength = candidate.vibration_strength_db
-    if strength is not None and strength < LIGHT_STRENGTH_MAX_DB:
+    faint = strength is not None and strength < LIGHT_STRENGTH_MAX_DB
+    residual = (
+        faint
+        and candidate.suspected_source is VibrationSource.WHEEL_TIRE
+        and candidate.weak_spatial_separation
+    )
+    if candidate.confidence_level is not ConfidenceLevel.WEAK and not residual:
+        return DiagnosisVerdict.FAULT
+    if faint:
         return DiagnosisVerdict.NO_FAULT
     return DiagnosisVerdict.WEAK_EVIDENCE
 
@@ -837,7 +853,7 @@ def _weak_reasons(
         reasons.append("faint")
     if sensor_count < 2:
         reasons.append("single_sensor")
-    return reasons[:_MAX_WEAK_REASONS]
+    return reasons
 
 
 def _source_checks(

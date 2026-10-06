@@ -343,6 +343,8 @@ def run_sim_pipeline(
     speed_source: SpeedSource = "gps",
     obd_rpm: bool = False,
     max_recording_duration_s: float | None = None,
+    speed_lag_s: float = 0.0,
+    speed_report_period_s: float = _SPEED_UPDATE_PERIOD_S,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
@@ -355,6 +357,9 @@ def run_sim_pipeline(
     connected OBD adapter: the speed PID, plus the engine RPM PID with *obd_rpm*
     (the engine turning in the gear each phase drives in).
     *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
+    The speed source reports every *speed_report_period_s* (a GPS receiver: once
+    a second) the speed it measured *speed_lag_s* earlier, while the simulated
+    tones follow the true speed.
     """
     runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
     try:
@@ -370,6 +375,8 @@ def run_sim_pipeline(
             car_start=car_start,
             speed_source=speed_source,
             obd_rpm=obd_rpm,
+            speed_lag_s=speed_lag_s,
+            speed_report_period_s=speed_report_period_s,
         )
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
@@ -388,6 +395,8 @@ def _record(
     car_start: bool,
     speed_source: SpeedSource,
     obd_rpm: bool,
+    speed_lag_s: float,
+    speed_report_period_s: float,
 ) -> SimPipelineResult:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -500,15 +509,15 @@ def _record(
             lifecycle.gps_monitor.gps_enabled = True
             lifecycle.gps_monitor.connection_state = "connected"
         assert obd_rpm is False or speed_source == "obd2", "engine RPM comes from the OBD adapter"
-        set_speed = _speed_setter(
+        report_speed = _speed_reporter(
             lifecycle.gps_monitor,
             lifecycle.obd_runner,
-            clients,
             speed_source,
             car if obd_rpm else None,
         )
         apply_phase(clients, scenario_name, phases[0])
-        set_speed(phases[0].speed_start_kmh)
+        _set_true_speed(clients, phases[0].speed_start_kmh)
+        report_speed(phases[0].speed_start_kmh, phases[0].gear_ratio)
         loop.run_until(start_s + 1.0)
         client_ids: dict[str, str] = {}
         for sensor in sims.values():
@@ -527,12 +536,19 @@ def _record(
         run_id = recorder.status().run_id
         assert run_id is not None
         guided = any(phase.guided_phase is not None for phase in phases)
-        phase_start = clock.now_s
+        phase_start = drive_start = clock.now_s
         for phase in phases:
-            _schedule_phase(
-                loop, set_speed, clients, scenario_name, phase, phase_start, guided, recorder
-            )
+            _schedule_phase(loop, clients, scenario_name, phase, phase_start, guided, recorder)
             phase_start += phase.duration_s
+        _schedule_speed_reports(
+            loop,
+            report_speed,
+            clients,
+            phases,
+            drive_start,
+            lag_s=speed_lag_s,
+            period_s=speed_report_period_s,
+        )
         loop.run_until(phase_start)
         if guided:
             recorder.mark_guided_phase(None)
@@ -701,21 +717,24 @@ def _pid_read(value: float) -> ObdPidPollResult:
     )
 
 
-def _speed_setter(
+def _set_true_speed(clients: Sequence[SimClient], speed_kmh: float) -> None:
+    """The car's true speed, which the simulated tones follow."""
+    for client in clients:
+        client.current_speed_kmh = speed_kmh
+
+
+def _speed_reporter(
     gps: GPSSpeedMonitor,
     obd: ObdService,
-    clients: Sequence[SimClient],
     speed_source: SpeedSource,
     rpm_car: BenchCar | None,
-) -> Callable[[float], None]:
-    """Feed the drive's speed (and, with *rpm_car*, its engine RPM) to the server."""
+) -> Callable[[float, float | None], None]:
+    """Feed a measured speed (and, with *rpm_car*, the engine RPM in that gear) to the server."""
 
-    def set_speed(speed_kmh: float) -> None:
-        for client in clients:
-            client.current_speed_kmh = speed_kmh
+    def report_speed(speed_kmh: float, gear_ratio: float | None) -> None:
         if speed_source == "obd2":
             rpm = (
-                _pid_read(float(round(rpm_car.engine_rpm(speed_kmh, clients[0].gear_ratio))))
+                _pid_read(float(round(rpm_car.engine_rpm(speed_kmh, gear_ratio))))
                 if rpm_car is not None
                 else ObdPidPollResult.skipped()
             )
@@ -725,7 +744,7 @@ def _speed_setter(
         # One gpsd TPV report with a 3D fix, as ``GPSTransportRunner`` reads it.
         gps._transport.ingest_message({"class": "TPV", "mode": 3, "speed": speed_kmh / 3.6})
 
-    return set_speed
+    return report_speed
 
 
 def _assign_location(runtime: AppRuntime, client_id: str, location_code: str) -> None:
@@ -739,7 +758,6 @@ def _assign_location(runtime: AppRuntime, client_id: str, location_code: str) ->
 
 def _schedule_phase(
     loop: _EventLoop,
-    set_speed: Callable[[float], None],
     clients: list[SimClient],
     scenario_name: str,
     phase: ScenarioPhase,
@@ -767,6 +785,56 @@ def _schedule_phase(
         speed = phase_speed_kmh(phase, elapsed)
         loop.at(
             phase_start_s + elapsed + 1e-6,
-            lambda speed=speed: set_speed(speed),
+            lambda speed=speed: _set_true_speed(clients, speed),
         )
         elapsed += _SPEED_UPDATE_PERIOD_S
+
+
+def _schedule_speed_reports(
+    loop: _EventLoop,
+    report_speed: Callable[[float, float | None], None],
+    clients: Sequence[SimClient],
+    phases: Sequence[ScenarioPhase],
+    drive_start_s: float,
+    *,
+    lag_s: float,
+    period_s: float,
+) -> None:
+    """Report the speed every *period_s*, as measured *lag_s* earlier.
+
+    Without lag and at the default period the reports land with the true-speed
+    updates, phase by phase, as the speed source would see them instantly, in
+    the gear the car is in at that moment.
+    """
+    if lag_s == 0.0 and period_s == _SPEED_UPDATE_PERIOD_S:
+        phase_start_s = drive_start_s
+        for phase in phases:
+            elapsed = 0.0
+            while elapsed <= phase.duration_s:
+                speed = phase_speed_kmh(phase, elapsed)
+                loop.at(
+                    phase_start_s + elapsed + 1e-6,
+                    lambda speed=speed: report_speed(speed, clients[0].gear_ratio),
+                )
+                elapsed += _SPEED_UPDATE_PERIOD_S
+            phase_start_s += phase.duration_s
+        return
+    drive_s = sum(phase.duration_s for phase in phases)
+    report_s = 0.0
+    while report_s <= drive_s:
+        phase, elapsed = _phase_at(phases, max(0.0, report_s - lag_s))
+        speed = phase_speed_kmh(phase, elapsed)
+        loop.at(
+            drive_start_s + report_s + 1e-6,
+            lambda speed=speed, gear=phase.gear_ratio: report_speed(speed, gear),
+        )
+        report_s += period_s
+
+
+def _phase_at(phases: Sequence[ScenarioPhase], t_s: float) -> tuple[ScenarioPhase, float]:
+    """The phase the drive is in *t_s* after it started, and the time spent in it."""
+    for phase in phases:
+        if t_s < phase.duration_s:
+            return phase, t_s
+        t_s -= phase.duration_s
+    return phases[-1], phases[-1].duration_s
