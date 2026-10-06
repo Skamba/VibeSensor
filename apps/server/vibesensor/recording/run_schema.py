@@ -203,6 +203,9 @@ class RunMetadata:
     start_time_corrected_by_s: float | None = None
     # Supply or heat trouble the Pi saw while this run recorded (``power/monitor.py``).
     power_issues: tuple[PowerIssue, ...] = field(default_factory=tuple)
+    # The recording was cut off before Stop (power lost, or the server died) and
+    # the startup recovery finished it from what had reached the disk.
+    interrupted: bool = False
 
     @classmethod
     def create(

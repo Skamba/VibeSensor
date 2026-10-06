@@ -241,6 +241,21 @@ test("a run started before the Pi clock was set shows no wall times", () => {
   expect(summary).toContain("history.summary_size: 12.3 s");
 });
 
+test("a run cut off before Stop says so in its row", () => {
+  const run = historyListRun("run-cut");
+  const detail = defaultDetail({ preview: populatedInsights("run-cut") });
+  expect(buildRow(run, detail, false, f).chips.map((chip) => chip.key)).toEqual(
+    ["status"],
+  );
+
+  const chips = buildRow({ ...run, interrupted: true }, detail, false, f).chips;
+  expect(chips[1]).toEqual({
+    key: "interrupted",
+    text: "history.interrupted",
+    tone: "warn",
+  });
+});
+
 test("keeps loading and error state in the models", () => {
   const run = historyListRun("run-002");
   const detail = defaultDetail({

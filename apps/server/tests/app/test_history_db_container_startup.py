@@ -19,9 +19,9 @@ class _RecordingHistoryDB:
         self.calls: list[tuple[str, int | None]] = []
         self._prune_error = prune_error
 
-    def recover_stale_recording_runs(self) -> int:
+    def recover_interrupted_runs(self) -> list[str]:
         self.calls.append(("recover", None))
-        return 0
+        return []
 
     def prune_terminal_runs_older_than_days(self, days: int) -> int:
         self.calls.append(("summary", days))

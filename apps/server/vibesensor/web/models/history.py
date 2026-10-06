@@ -86,6 +86,11 @@ class HistoryListEntryResponse(BaseModel):
         description="The run started before the Pi clock was set (no NTP, no browser "
         "report), so start_time_utc and end_time_utc are wrong; the duration is right.",
     )
+    interrupted: bool = Field(
+        default=False,
+        description="The recording was cut off before Stop (power lost or the server "
+        "stopped); startup recovered it from the data saved until then.",
+    )
     created_at: str
     raw_sample_count: int | None = Field(
         default=None,

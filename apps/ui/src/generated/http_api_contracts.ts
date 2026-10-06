@@ -755,6 +755,8 @@ export interface components {
             end_time_utc?: string | null;
             error_message?: string | null;
             finalization_stages?: components["schemas"]["HistoryFinalizationStageResponse"][] | null;
+            /** The recording was cut off before Stop (power lost or the server stopped); startup recovered it from the data saved until then. */
+            interrupted: boolean;
             lifecycle?: components["schemas"]["HistoryRunLifecycleResponse"] | null;
             raw_capture_finalize?: components["schemas"]["HistoryRawCaptureFinalizeResponse"] | null;
             /** Accelerometer samples in the raw capture across all sensors; null when the run has no raw capture. */

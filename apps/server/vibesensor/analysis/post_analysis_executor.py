@@ -179,26 +179,27 @@ def abandon_unfinished_post_analysis(
     *,
     run_id: str,
     db: HistoryDB,
-    unfinished_attempts: int,
+    crashed_attempts: int,
 ) -> PostAnalysisExecutionResult:
-    """Fail a run whose earlier analysis attempts all died before finishing.
+    """Fail a run whose earlier analysis attempts crashed the server.
 
     The server restarts after a crash (most likely out of memory on a long
     drive) and re-queues runs still marked analyzing, so without this a run
-    that cannot be analysed would crash the server on every start.
+    that cannot be analysed would crash the server on every start. Attempts a
+    reboot or power cut ended are not counted.
     """
     completed_error = (
-        f"Analysis did not finish in {unfinished_attempts} attempts: the server stopped "
+        f"Analysis did not finish in {crashed_attempts} attempts: the server stopped "
         "during analysis each time, most likely out of memory. Record a shorter run."
     )
     LOGGER.error(
-        "Giving up on post-analysis for run %s after %d unfinished attempt(s)",
+        "Giving up on post-analysis for run %s after %d crashed attempt(s)",
         run_id,
-        unfinished_attempts,
+        crashed_attempts,
         extra=log_extra(
             event="post_analysis_abandoned",
             run_id=run_id,
-            unfinished_attempts=unfinished_attempts,
+            crashed_attempts=crashed_attempts,
         ),
     )
     return _store_load_error(

@@ -43,7 +43,6 @@ class _HistoryStore:
         self.errors: list[tuple[str, str]] = []
         self.store_failure: Exception | None = None
         self.transient_store_failures: list[Exception] = []
-        self.attempts: dict[str, int] = {}
 
     def get_run(self, run_id: str):
         metadata = post_analysis_metadata(run_id, fft_n=256, language=self.language)
@@ -52,9 +51,8 @@ class _HistoryStore:
     def load_raw_capture(self, _run_id: str):
         return None
 
-    def begin_analysis_attempt(self, run_id: str) -> int:
-        self.attempts[run_id] = self.attempts.get(run_id, 0) + 1
-        return self.attempts[run_id]
+    def begin_analysis_attempt(self, _run_id: str, *, boot_id: str | None) -> int:
+        return 0
 
     def run_sample_selection_columns(self, _run_id: str) -> SampleSelectionColumns:
         return SampleSelectionColumns.from_rows(
@@ -254,21 +252,23 @@ def _store_recorded_run(db: HistoryDB, run_id: str) -> None:
     db.finalize_run(run_id, "2026-01-01T00:01:00Z", metadata=metadata)
 
 
-def test_a_run_that_twice_stopped_the_server_mid_analysis_is_marked_failed(
+def test_a_run_that_twice_crashed_the_server_mid_analysis_is_marked_failed(
     tmp_path: Path,
 ) -> None:
-    # Each attempt is counted before the analysis starts and cleared when its result
-    # (or error) is stored, so a count left behind means the process died mid-analysis,
-    # most likely out of memory. A third try would only crash the server again.
+    # Each attempt is recorded before the analysis starts and cleared when its result
+    # (or error) is stored, so one left behind in the same boot means the server died
+    # mid-analysis, most likely out of memory. A third try would only crash it again.
     db = build_history_db(tmp_path)
     _store_recorded_run(db, "run-oom")
-    assert db.begin_analysis_attempt("run-oom") == 1
-    assert db.begin_analysis_attempt("run-oom") == 2
+    assert db.begin_analysis_attempt("run-oom", boot_id="boot-a") == 0
+    assert db.begin_analysis_attempt("run-oom", boot_id="boot-a") == 1
     db.close()
-    db = build_history_db(tmp_path)  # the count survives the restart
+    db = build_history_db(tmp_path)  # the record survives the restart
     seen: list[str] = []
 
-    worker = PostAnalysisWorker(history_db=db, analysis_runner=_runner(seen.append))
+    worker = PostAnalysisWorker(
+        history_db=db, analysis_runner=_runner(seen.append), boot_id=lambda: "boot-a"
+    )
     worker.schedule("run-oom")
 
     assert worker.wait(timeout_s=5.0)
@@ -283,13 +283,15 @@ def test_a_run_that_twice_stopped_the_server_mid_analysis_is_marked_failed(
     assert worker.snapshot().last_completed_error == run.error_message
 
 
-def test_one_unfinished_attempt_is_retried_and_the_count_cleared(tmp_path: Path) -> None:
+def test_one_crashed_attempt_is_retried_and_the_record_cleared(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
     _store_recorded_run(db, "run-retry")
-    db.begin_analysis_attempt("run-retry")
+    db.begin_analysis_attempt("run-retry", boot_id="boot-a")
     seen: list[str] = []
 
-    worker = PostAnalysisWorker(history_db=db, analysis_runner=_runner(seen.append))
+    worker = PostAnalysisWorker(
+        history_db=db, analysis_runner=_runner(seen.append), boot_id=lambda: "boot-a"
+    )
     worker.schedule("run-retry")
 
     assert worker.wait(timeout_s=5.0)
@@ -297,14 +299,43 @@ def test_one_unfinished_attempt_is_retried_and_the_count_cleared(tmp_path: Path)
     run = db.get_run("run-retry")
     assert run is not None
     assert run.status == "complete"
-    assert fetch_all(db, "SELECT * FROM analysis_attempts") == []
+    assert fetch_all(db, "SELECT * FROM unfinished_analyses") == []
 
 
-def test_attempts_are_only_counted_for_runs_awaiting_analysis(tmp_path: Path) -> None:
+def test_attempts_a_power_cut_ended_are_not_counted_as_crashes(tmp_path: Path) -> None:
+    # The ignition went off twice during the analysis: each attempt ended with the
+    # boot, not with a crash, so the run is analysed again on the next start.
+    db = build_history_db(tmp_path)
+    _store_recorded_run(db, "run-cut")
+    assert db.begin_analysis_attempt("run-cut", boot_id="boot-a") == 0
+    assert db.begin_analysis_attempt("run-cut", boot_id="boot-b") == 0
+    # One crash, then a power cut: the crash still counts, the cut does not.
+    assert db.begin_analysis_attempt("run-cut", boot_id="boot-b") == 1
+    db.close()
+    db = build_history_db(tmp_path)
+    seen: list[str] = []
+
+    worker = PostAnalysisWorker(
+        history_db=db, analysis_runner=_runner(seen.append), boot_id=lambda: "boot-c"
+    )
+    worker.schedule("run-cut")
+
+    assert worker.wait(timeout_s=5.0)
+    assert seen == ["run-cut"]
+    run = db.get_run("run-cut")
+    assert run is not None
+    assert run.status == "complete"
+    assert fetch_all(db, "SELECT * FROM unfinished_analyses") == []
+
+
+def test_attempts_are_only_recorded_for_runs_awaiting_analysis(tmp_path: Path) -> None:
     db = build_history_db(tmp_path)
     create_analyzing_run(db, "run-a")
 
-    assert db.begin_analysis_attempt("run-missing") == 0
-    assert db.begin_analysis_attempt("run-a") == 1
+    assert db.begin_analysis_attempt("run-missing", boot_id="boot-a") == 0
+    assert db.begin_analysis_attempt("run-a", boot_id="boot-a") == 0
+    assert fetch_all(db, "SELECT run_id FROM unfinished_analyses") == [("run-a",)]
     db.store_analysis_error("run-a", "boom")
-    assert db.begin_analysis_attempt("run-a") == 0
+    assert fetch_all(db, "SELECT run_id FROM unfinished_analyses") == []
+    assert db.begin_analysis_attempt("run-a", boot_id="boot-a") == 0
+    assert fetch_all(db, "SELECT run_id FROM unfinished_analyses") == []

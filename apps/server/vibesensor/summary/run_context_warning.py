@@ -22,6 +22,7 @@ WARNING_CODE_RAW_CAPTURE_LOSS_POLICY = "raw_capture_loss_policy"
 WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED = "raw_capture_finalize_degraded"
 WARNING_CODE_POWER_UNDERVOLTAGE = "power_undervoltage"
 WARNING_CODE_POWER_OVERHEATED = "power_overheated"
+WARNING_CODE_RECORDING_INTERRUPTED = "recording_interrupted"
 WarningSeverity = Literal["warn", "error"]
 
 

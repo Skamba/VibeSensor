@@ -11,15 +11,19 @@ from tests_e2e._docker_edge_helpers import (
     _simulate,
     _wait_complete,
 )
+from tests_e2e.conftest import PowerCut
 from tests_e2e.e2e_helpers import (
     CAPPED_RECORDING_S,
     api_json,
     history_run_ids,
+    pdf_text,
     registered_client_ids,
     remove_all_clients,
     run_simulator,
     sim_client_ids,
     wait_for,
+    wait_report_pdf_ready,
+    wait_run_status,
 )
 
 pytestmark = pytest.mark.e2e
@@ -202,3 +206,25 @@ def test_recording_auto_stops_at_the_configured_cap_e2e(capped_e2e_env: dict[str
         assert analysis["diagnosis"]["verdict"] in {"fault", "weak_evidence", "no_fault"}
     finally:
         _cleanup_run(base, run_id)
+
+
+def test_a_recording_cut_off_by_a_power_loss_is_analysed_after_the_restart(
+    power_cut: PowerCut,
+) -> None:
+    base = power_cut.env["base_url"]
+    run_id = str(api_json(base, "/api/recording/start", method="POST")["run_id"])
+    _simulate(power_cut.env)
+    # The power goes while the run is still recording: no Stop, no shutdown.
+    power_cut.cut_and_restore()
+
+    run = wait_run_status(base, run_id, statuses=("complete", "error"), timeout_s=60.0)
+    assert run["status"] == "complete", run.get("error_message")
+    assert run["metadata"]["interrupted"] is True
+    assert {row["run_id"]: row["interrupted"] for row in api_json(base, "/api/history")["runs"]}[
+        run_id
+    ]
+    analysis = run["analysis"]
+    assert "recording_interrupted" in {warning["code"] for warning in analysis["warnings"]}
+    assert analysis["analysis_metadata"]["raw_backed_sample_count"] > 0
+    pdf = " ".join(pdf_text(wait_report_pdf_ready(base, run_id).body).split())
+    assert "power was lost" in pdf, pdf[:600]

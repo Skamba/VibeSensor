@@ -106,6 +106,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     start_clock: object = None
     start_time_corrected_by_s: object = None
     power_issues: object = None
+    interrupted: object = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +137,7 @@ class _RunMetadataScalarState:
     recorded_utc_offset_seconds: int | None
     start_time_unverified: bool
     start_time_corrected_by_s: float | None
+    interrupted: bool
 
 
 _RUN_METADATA_SCALAR_FIELD_SPECS: tuple[PayloadFieldSpec, ...] = (
@@ -240,6 +242,7 @@ _RUN_METADATA_SCALAR_FIELD_SPECS: tuple[PayloadFieldSpec, ...] = (
         float_decoder("start_time_corrected_by_s"),
         include=include_if_not_none,
     ),
+    PayloadFieldSpec("interrupted", "interrupted", bool_decoder("interrupted"), include=bool),
 )
 _RUN_METADATA_SCALAR_STATE_FACTORY: Callable[..., _RunMetadataScalarState] = _RunMetadataScalarState
 
@@ -309,6 +312,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         start_clock=_run_start_clock_from_payload(data.get("start_clock")),
         start_time_corrected_by_s=scalar_state.start_time_corrected_by_s,
         power_issues=_power_issues_from_payload(data.get("power_issues")),
+        interrupted=scalar_state.interrupted,
     )
 
 

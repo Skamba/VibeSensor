@@ -57,6 +57,7 @@ class HistoryRunListEntry:
     # Accelerometer samples in the raw capture (all sensors); None without one.
     raw_sample_count: int | None = None
     start_time_unverified: bool = False
+    interrupted: bool = False
 
     def to_json_object(self) -> JsonObject:
         """Serialize the list-entry record into a JSON-safe persistence payload."""
@@ -70,6 +71,8 @@ class HistoryRunListEntry:
         }
         if self.start_time_unverified:
             payload["start_time_unverified"] = True
+        if self.interrupted:
+            payload["interrupted"] = True
         if self.car_name is not None:
             payload["car_name"] = self.car_name
         if self.error_message is not None:

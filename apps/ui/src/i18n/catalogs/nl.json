@@ -184,6 +184,7 @@
   "history.car_label": "Auto",
   "history.car_missing": "Niet vastgelegd",
   "history.time_unknown": "Niet geverifieerd (klok van de Pi was niet gezet)",
+  "history.interrupted": "Afgebroken: stroom weggevallen vóór Stop",
   "history.quick_report": "Snel rapport",
   "history.none": "Nog geen meetruns.",
   "history.empty.title": "Leg de eerste meetrun vast vanuit Live.",

@@ -133,16 +133,6 @@ def test_list_runs_uses_incremental_sample_count(db: HistoryDB) -> None:
     assert run.sample_count == 3
 
 
-def test_recover_stale_recording_runs_marks_error(db: HistoryDB) -> None:
-    create_recording_run(db, "run-5")
-    recovered = db.recover_stale_recording_runs()
-    assert recovered == 1
-    run = db.get_run("run-5")
-    assert run is not None
-    assert run.status.value == "error"
-    assert "Recovered stale recording during startup at" in str(run.error_message)
-
-
 def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
     db: HistoryDB,
 ) -> None:

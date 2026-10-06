@@ -891,6 +891,10 @@
     "en": "Sensor timing could not be fully verified for part of the run.",
     "nl": "De timing van de sensoren kon voor een deel van de meting niet volledig worden gecontroleerd."
   },
+  "QUALITY_WARNING_RECORDING_INTERRUPTED": {
+    "en": "The recording was cut off: power was lost (or the server stopped) before Stop. The report covers the data saved until then.",
+    "nl": "De opname is afgebroken: de stroom viel weg (of de server stopte) voordat op Stop werd gedrukt. Het rapport gebruikt de gegevens die tot dan zijn opgeslagen."
+  },
   "QUALITY_WARNING_REFERENCE_CONTEXT_INCOMPLETE": {
     "en": "Some car details (tire size or ratios) were missing, so order labels are less certain.",
     "nl": "Sommige autogegevens (bandenmaat of overbrengingen) ontbraken, dus ordelabels zijn minder zeker."
@@ -1102,6 +1106,14 @@
   "RUN_CONTEXT_WARNING_RAW_REPLAY_TIMING_FALLBACK_TITLE": {
     "en": "Raw replay used persisted sample timing for some windows",
     "nl": "Heranalyse van ruwe meetdata gebruikte opgeslagen sampletiming voor sommige vensters"
+  },
+  "RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_DETAIL": {
+    "en": "Power was lost (or the server stopped) before Stop was pressed. The run was recovered at the next start and analysed from the data saved until then; the last few seconds may be missing.",
+    "nl": "De stroom viel weg (of de server stopte) voordat op Stop werd gedrukt. De meting is bij de volgende start hersteld en geanalyseerd met de gegevens die tot dan waren opgeslagen; de laatste seconden kunnen ontbreken."
+  },
+  "RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_TITLE": {
+    "en": "Recording was cut off — power lost before Stop",
+    "nl": "Opname afgebroken — stroom weggevallen vóór Stop"
   },
   "RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL": {
     "en": "This run is missing part of the wheel/engine reference context needed for confident order analysis. Order-based findings may still be shown, but they should be treated as provisional until the run is repeated with complete vehicle reference data.",

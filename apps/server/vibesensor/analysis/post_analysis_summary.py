@@ -37,6 +37,7 @@ from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
+    WARNING_CODE_RECORDING_INTERRUPTED,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
@@ -204,6 +205,16 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     _set_initial_report_fallback_reasons(analysis_metadata)
     summary_payload["analysis_metadata"] = payload_object_from_json(analysis_metadata)
     summary_warnings: list[RunContextWarning] = list(run.raw_replay.warnings)
+    if run.context.interrupted:
+        summary_warnings.append(
+            RunContextWarning(
+                code=WARNING_CODE_RECORDING_INTERRUPTED,
+                severity="warn",
+                applies_to="recording",
+                title=i18n_ref("RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_TITLE"),
+                detail=i18n_ref("RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_DETAIL"),
+            )
+        )
     finalize_warning = _raw_capture_finalize_warning(raw_capture_finalize)
     if finalize_warning is not None:
         summary_warnings.append(finalize_warning)

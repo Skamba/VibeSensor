@@ -142,10 +142,32 @@ def _tail(path: Path, lines: int = 80) -> str:
     return "\n".join(path.read_text(encoding="utf-8", errors="replace").splitlines()[-lines:])
 
 
+class PowerCut:
+    """Stops a running e2e server the way a power cut does and starts it again."""
+
+    def __init__(self, server: E2EServer, process: subprocess.Popen[str]) -> None:
+        self.server = server
+        self.process = process
+
+    @property
+    def env(self) -> dict[str, str]:
+        return _env_for(self.server)
+
+    def cut_and_restore(self) -> None:
+        """SIGKILL the server (no Stop, no shutdown) and start it on the same data."""
+        os.killpg(self.process.pid, signal.SIGKILL)
+        self.process.wait(timeout=10.0)
+        env = build_isolated_server_env(
+            self.server.runtime.root, repo_root=ROOT, extra_env={"VIBESENSOR_SERVE_STATIC": "0"}
+        )
+        self.process = _spawn(self.server, env)
+        _wait_ready(self.server.base_url, self.process, self.server.log_path)
+
+
 @contextmanager
 def _running_server(
     runtime_root: Path, *, config_overrides: dict[str, object] | None = None
-) -> Iterator[E2EServer]:
+) -> Iterator[PowerCut]:
     with _reserved_tcp_port() as http_port, _reserved_tcp_port() as gps_port:
         for attempt in range(1, _START_ATTEMPTS + 1):
             # The server binds its UDP ports itself, without SO_REUSEPORT, so they
@@ -171,11 +193,12 @@ def _running_server(
                 terminate_subprocess(process)
                 raise
             break
+        power = PowerCut(server, process)
         try:
             _activate_simulator_car(server.base_url)
-            yield server
+            yield power
         finally:
-            terminate_subprocess(process)
+            terminate_subprocess(power.process)
 
 
 def _start_server(
@@ -212,9 +235,14 @@ def _start_server(
         sim_gps_port=gps_port,
         log_path=runtime.root / "server.log",
     )
-    with server.log_path.open("w", encoding="utf-8") as log_file:
-        process = subprocess.Popen(
-            build_server_subprocess_cmd(runtime.config_path),
+    server.log_path.write_text("", encoding="utf-8")
+    return server, _spawn(server, env)
+
+
+def _spawn(server: E2EServer, env: dict[str, str]) -> subprocess.Popen[str]:
+    with server.log_path.open("a", encoding="utf-8") as log_file:
+        return subprocess.Popen(
+            build_server_subprocess_cmd(server.runtime.config_path),
             cwd=str(ROOT),
             env=env,
             stdout=log_file,
@@ -222,7 +250,6 @@ def _start_server(
             text=True,
             preexec_fn=_start_session_dying_with_parent,
         )
-    return server, process
 
 
 def _env_for(server: E2EServer) -> dict[str, str]:
@@ -237,8 +264,8 @@ def _env_for(server: E2EServer) -> dict[str, str]:
 
 @pytest.fixture(scope="session")
 def e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2EServer]:
-    with _running_server(tmp_path_factory.mktemp("e2e-server")) as server:
-        yield server
+    with _running_server(tmp_path_factory.mktemp("e2e-server")) as power:
+        yield power.server
 
 
 @pytest.fixture
@@ -252,13 +279,20 @@ def capped_e2e_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[E2ES
     with _running_server(
         tmp_path_factory.mktemp("e2e-capped-server"),
         config_overrides={"recording": {"max_duration_s": CAPPED_RECORDING_S}},
-    ) as server:
-        yield server
+    ) as power:
+        yield power.server
 
 
 @pytest.fixture
 def capped_e2e_env(capped_e2e_server: E2EServer) -> dict[str, str]:
     return _env_for(capped_e2e_server)
+
+
+@pytest.fixture
+def power_cut(tmp_path_factory: pytest.TempPathFactory) -> Iterator[PowerCut]:
+    """A dedicated server a test may stop as a power cut does and start again."""
+    with _running_server(tmp_path_factory.mktemp("e2e-power-cut-server")) as power:
+        yield power
 
 
 @pytest.hookimpl(wrapper=True)

@@ -34,6 +34,9 @@ _CONTROL_REQUEST_ENQUEUE_TIMEOUT_S = 1.0
 # its first DATA (one frame per 250 ms) before that HELLO. This covers one lost
 # HELLO.
 _MAX_HELD_CHUNKS_PER_SENSOR = 20
+# How often the worker saves a recording checkpoint (raw files synced to disk, run
+# start and clock proof): a run cut off before Stop loses at most this.
+_CHECKPOINT_INTERVAL_S = 5.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,6 +164,7 @@ class RunRawCaptureWriter:
         "_active_run_id",
         "_history_db",
         "_ingest_diagnostics",
+        "_last_checkpoint_mono_s",
         "_late_finalize_callback",
         "_lock",
         "_logger",
@@ -196,6 +200,7 @@ class RunRawCaptureWriter:
         self._active_run_id: str | None = None
         self._run_start_monotonic_us: int | None = None
         self._run_stats: _RunCaptureStats | None = None
+        self._last_checkpoint_mono_s: float | None = None
         self._thread: threading.Thread | None = None
         if self._history_db is not None:
             self._thread = threading.Thread(
@@ -493,8 +498,43 @@ class RunRawCaptureWriter:
                         chunk.client_id,
                         exc_info=True,
                     )
+                    continue
+                self._checkpoint_when_due(history_db, run_id, run_stats)
             finally:
                 self._queue.task_done()
+
+    def _checkpoint_when_due(
+        self,
+        history_db: HistoryDB,
+        run_id: str,
+        run_stats: _RunCaptureStats | None,
+    ) -> None:
+        """Save the active run's recording checkpoint every ``_CHECKPOINT_INTERVAL_S``."""
+        now = time.monotonic()
+        last = self._last_checkpoint_mono_s
+        if last is not None and now - last < _CHECKPOINT_INTERVAL_S:
+            return
+        self._last_checkpoint_mono_s = now
+        with self._lock:
+            if self._active_run_id != run_id:
+                return
+            run_start_monotonic_us = self._run_start_monotonic_us
+        client_ids = tuple(sorted(run_stats.seen_client_ids.copy())) if run_stats else ()
+        sensor_clock_sync = (
+            self._sensor_sync_snapshotter(client_ids)
+            if self._sensor_sync_snapshotter is not None and client_ids
+            else None
+        )
+        try:
+            history_db.checkpoint_raw_capture(
+                run_id,
+                run_start_monotonic_us=run_start_monotonic_us,
+                sensor_clock_sync=sensor_clock_sync,
+            )
+        except (OSError, ValueError):
+            self._logger.warning(
+                "Failed to save the raw capture checkpoint for run %s", run_id, exc_info=True
+            )
 
     def _notify_late_finalize(self, request: _FinalizeRequest) -> None:
         callback = self._late_finalize_callback

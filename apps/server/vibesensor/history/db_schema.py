@@ -71,12 +71,17 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 
--- Post-analysis attempts started for an analyzing run, so a run whose analysis
--- keeps killing the server (out of memory) is failed instead of retried forever.
-CREATE TABLE IF NOT EXISTS analysis_attempts (
+-- The post-analysis in flight for an analyzing run: the boot it started in, and
+-- how many earlier attempts died in the boot they started in (the server crashed,
+-- most likely out of memory), so such a run is failed instead of retried forever.
+-- An attempt a reboot or power cut ended does not count.
+CREATE TABLE IF NOT EXISTS unfinished_analyses (
     run_id          TEXT PRIMARY KEY REFERENCES runs(run_id) ON DELETE CASCADE,
-    attempt_count   INTEGER NOT NULL
+    boot_id         TEXT,
+    crash_count     INTEGER NOT NULL DEFAULT 0
 );
+-- Its predecessor counted every unfinished attempt, power cuts included.
+DROP TABLE IF EXISTS analysis_attempts;
 
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);

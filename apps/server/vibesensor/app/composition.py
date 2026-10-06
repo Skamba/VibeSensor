@@ -97,13 +97,18 @@ def create_history_db(
         )
         return history
     try:
-        recovered_runs = history.recover_stale_recording_runs()
+        # Runs cut off before Stop move to analyzing; build_runtime queues them.
+        recovered_runs = history.recover_interrupted_runs()
     except (sqlite3.Error, OSError):
         LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
         history.close()
         raise
     if recovered_runs:
-        LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
+        LOGGER.warning(
+            "Recovered %d run(s) cut off before Stop: %s",
+            len(recovered_runs),
+            ", ".join(recovered_runs),
+        )
     try:
         pruned_runs = history.prune_terminal_runs_older_than_days(
             RUN_RETENTION_DAYS,

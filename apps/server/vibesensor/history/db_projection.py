@@ -257,6 +257,7 @@ def project_run_list_entry(
             raw_capture_manifest.total_samples if raw_capture_manifest is not None else None
         ),
         start_time_unverified=metadata is not None and metadata.start_time_unverified,
+        interrupted=metadata is not None and metadata.interrupted,
     )
 
 

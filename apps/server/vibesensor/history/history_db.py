@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from vibesensor.common.json_utils import safe_json_dumps
-from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.common.time_utils import parse_iso8601, utc_now_iso
 from vibesensor.domain.run_status import RunStatus, is_run_deletable, transition_run
 from vibesensor.history.db_projection import (
     coerce_raw_capture_manifest,
@@ -74,7 +74,12 @@ from vibesensor.summary.persisted_codec import (
 
 LOGGER = logging.getLogger(__name__)
 
-__all__ = ["HistoryDB"]
+__all__ = ["INTERRUPTED_WITHOUT_DATA_ERROR", "HistoryDB"]
+
+INTERRUPTED_WITHOUT_DATA_ERROR = (
+    "Recording was cut off before Stop (power lost or the server stopped) "
+    "before any data was saved."
+)
 
 _RECOMMENDED_METADATA_KEYS: frozenset[str] = frozenset({"sensor_model", "raw_sample_rate_hz"})
 _EXPECTED_ANALYSIS_KEYS: frozenset[str] = frozenset({"findings", "top_causes", "warnings"})
@@ -311,6 +316,19 @@ class HistoryDB:
     def append_raw_capture_chunk(self, run_id: str, chunk: RawCaptureChunk) -> None:
         self._raw_capture_store.append_chunk(run_id, chunk)
 
+    def checkpoint_raw_capture(
+        self,
+        run_id: str,
+        *,
+        run_start_monotonic_us: int | None,
+        sensor_clock_sync: Mapping[str, RawCaptureSensorClockSync] | None,
+    ) -> None:
+        self._raw_capture_store.checkpoint_run(
+            run_id,
+            run_start_monotonic_us=run_start_monotonic_us,
+            sensor_clock_sync=sensor_clock_sync,
+        )
+
     def finalize_raw_capture(
         self,
         run_id: str,
@@ -407,7 +425,7 @@ class HistoryDB:
                     current_status,
                 )
                 return False
-            cur.execute("DELETE FROM analysis_attempts WHERE run_id = ?", (run_id,))
+            cur.execute("DELETE FROM unfinished_analyses WHERE run_id = ?", (run_id,))
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
@@ -421,23 +439,35 @@ class HistoryDB:
             )
             return int(cur.rowcount) > 0
 
-    def begin_analysis_attempt(self, run_id: str) -> int:
-        """Count one more started analysis of an ``analyzing`` run and return the count.
+    def begin_analysis_attempt(self, run_id: str, *, boot_id: str | None) -> int:
+        """Record that an analysis of an ``analyzing`` run starts in *boot_id*.
 
-        The count survives a server restart and is cleared when the analysis or its
-        error is stored, so it counts the attempts that never finished. Returns 0
-        when the run is not ``analyzing``.
+        Returns how many earlier attempts died in the boot they started in: an
+        attempt still recorded when the next one starts in the same boot means the
+        server crashed during it. One that a reboot or power cut ended is not
+        counted. The record survives a restart and is cleared when the analysis
+        or its error is stored. Returns 0 when the run is not ``analyzing``.
         """
-        with self._write() as cur:
+        with self._write(immediate=True) as cur:
+            if _run_status(cur, run_id) != RunStatus.ANALYZING.value:
+                return 0
             cur.execute(
-                "INSERT INTO analysis_attempts (run_id, attempt_count) "
-                "SELECT run_id, 1 FROM runs WHERE run_id = ? AND status = 'analyzing' "
-                "ON CONFLICT (run_id) DO UPDATE SET attempt_count = attempt_count + 1 "
-                "RETURNING attempt_count",
+                "SELECT boot_id, crash_count FROM unfinished_analyses WHERE run_id = ?",
                 (run_id,),
             )
-            rows = cur.fetchall()
-        return int(rows[0][0]) if rows else 0
+            row = cur.fetchone()
+            crash_count = 0
+            if row is not None:
+                previous_boot_id, crash_count = row
+                if previous_boot_id == boot_id:
+                    crash_count += 1
+            cur.execute(
+                "INSERT INTO unfinished_analyses (run_id, boot_id, crash_count) VALUES (?, ?, ?) "
+                "ON CONFLICT (run_id) DO UPDATE SET boot_id = excluded.boot_id, "
+                "crash_count = excluded.crash_count",
+                (run_id, boot_id, crash_count),
+            )
+        return int(crash_count)
 
     def store_analysis_error(self, run_id: str, error: str) -> bool:
         now = utc_now_iso()
@@ -458,7 +488,7 @@ class HistoryDB:
                     current_status,
                 )
                 return False
-            cur.execute("DELETE FROM analysis_attempts WHERE run_id = ?", (run_id,))
+            cur.execute("DELETE FROM unfinished_analyses WHERE run_id = ?", (run_id,))
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
@@ -482,13 +512,72 @@ class HistoryDB:
             self._raw_capture_store.delete_run_artifacts(run_id)
         return deleted, None
 
-    def recover_stale_recording_runs(self) -> int:
-        with self._write() as cur:
+    def recover_interrupted_runs(self) -> list[str]:
+        """Finish the runs a power cut or a server crash left ``recording``; startup only.
+
+        A run with saved samples ends at its last sample (its start plus the last
+        sample's run time, so both stay on one clock), gets a raw-capture manifest
+        rebuilt from the files on disk, is marked ``interrupted`` and moves to
+        ``analyzing``: startup queues it, and its analysis applies the same
+        minimum as a run stopped normally. A run without samples becomes
+        ``error``. Returns the ids of the runs sent to analysis.
+        """
+        with self._read() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
-                (f"Recovered stale recording during startup at {utc_now_iso()}",),
+                "SELECT r.run_id, r.start_time_utc, r.metadata_json, "
+                "r.raw_capture_manifest_json, "
+                "(SELECT MAX(s.t_s) FROM samples_v2 s WHERE s.run_id = r.run_id) "
+                "FROM runs r WHERE r.status = 'recording'"
             )
-            return int(cur.rowcount)
+            rows = cur.fetchall()
+        recovered: list[str] = []
+        for run_id, start_time_utc, metadata_json, manifest_json, last_t_s in rows:
+            run_id = str(run_id)
+            start = parse_iso8601(start_time_utc)
+            if last_t_s is None or start is None:
+                LOGGER.warning("Run %s was cut off before Stop with no samples saved", run_id)
+                with self._write() as cur:
+                    cur.execute(
+                        "UPDATE runs SET status = 'error', error_message = ?, "
+                        "analysis_completed_at = ? WHERE run_id = ? AND status = 'recording'",
+                        (INTERRUPTED_WITHOUT_DATA_ERROR, utc_now_iso(), run_id),
+                    )
+                continue
+            end_time_utc = (start + timedelta(seconds=max(0.0, float(last_t_s)))).isoformat()
+            metadata = coerce_run_metadata(
+                run_id=run_id,
+                start_time_utc=str(start_time_utc),
+                end_time_utc=end_time_utc,
+                metadata_json=str(metadata_json) if metadata_json is not None else None,
+                source="recover_interrupted_runs",
+                allow_fallback=True,
+            )
+            assert metadata is not None  # allow_fallback always returns metadata
+            metadata.end_time_utc = end_time_utc
+            metadata.interrupted = True
+            manifest = (
+                None if manifest_json is not None else self._raw_capture_store.recover_run(run_id)
+            )
+            with self._write() as cur:
+                cur.execute(
+                    "UPDATE runs SET status = 'analyzing', end_time_utc = ?, metadata_json = ?, "
+                    "raw_capture_manifest_json = COALESCE(raw_capture_manifest_json, ?), "
+                    "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
+                    (
+                        end_time_utc,
+                        safe_json_dumps(run_metadata_to_json_object(metadata)),
+                        safe_json_dumps(manifest.to_json_object()) if manifest else None,
+                        utc_now_iso(),
+                        run_id,
+                    ),
+                )
+            LOGGER.warning(
+                "Run %s was cut off before Stop; recovered it up to %.1f s for analysis",
+                run_id,
+                float(last_t_s),
+            )
+            recovered.append(run_id)
+        return recovered
 
     def prune_terminal_runs_older_than_days(self, retention_days: int) -> int:
         run_ids = self._terminal_run_ids_older_than(_retention_cutoff_utc(retention_days))

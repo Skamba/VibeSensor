@@ -184,6 +184,32 @@ If `finalize_run()` fails, `RunRecorder` still schedules post-analysis when the
 run was otherwise ready. The persistence layer handles that fallback path by
 storing the later analysis result or analysis error explicitly.
 
+### 4. Cut off before Stop (power lost, server killed)
+
+The Pi runs from the car, so a run can end without Stop. What it recorded is
+on disk already: sample rows are committed as they are written, raw chunks go
+to their sidecar files unbuffered, and every `_CHECKPOINT_INTERVAL_S = 5.0`
+seconds `RunRawCaptureWriter` fsyncs the files and writes `checkpoint.json`
+(the run start and each sensor's clock-sync proof, which the manifest needs to
+replay raw data). A power cut therefore loses at most the last few seconds.
+
+On the next start `HistoryDB.recover_interrupted_runs()` (called from
+`create_history_db`) handles every run still `recording`:
+
+- no sample rows: the run is stored as `error` with "Recording was cut off
+  before Stop … before any data was saved."
+- otherwise its end is its start plus the last sample's `t_s` (the same clock
+  its start was stamped on, so `RunTimeCorrector` still re-dates it when it
+  started on an untrusted clock in the same boot), its metadata gets
+  `interrupted: true`, its raw capture is rebuilt from the sidecar files (the
+  longest run of whole chunks, a torn last write cut off) with the checkpoint's
+  anchors, and it becomes `analyzing`, so the startup re-queue analyses it like
+  any stopped run, with the same minimum-data rules
+
+An interrupted run's analysis adds the `recording_interrupted` run-context
+warning ("Recording was cut off — power lost before Stop"), which the report's
+quality section and the History row (`interrupted` chip) show.
+
 ## Canonical read-side lifecycle projection
 
 History/report/UI read paths do not infer readiness from ad hoc combinations of
@@ -249,13 +275,15 @@ because there is nothing persistent to close.
   FFT peaks from raw capture when it is available, calls the injected summary
   analysis runner, and stores either analysis output or an analysis error
   record
-- each analysis start is counted in the `analysis_attempts` table before any
-  work, and the count is cleared when a result or error is stored. A count left
-  behind means the server stopped mid-analysis (most likely out of memory on the
-  Pi). After `MAX_UNFINISHED_ANALYSIS_ATTEMPTS = 2` such attempts the worker does
-  not try again: it stores the run as `error` with "Analysis did not finish in 2
-  attempts: … Record a shorter run.", which the history UI shows, instead of
-  crashing the restarted server again
+- each analysis start is recorded in the `unfinished_analyses` table with the
+  boot id (`/proc/sys/kernel/random/boot_id`) before any work, and the row is
+  cleared when a result or error is stored. A row left behind from the same boot
+  means the server process died mid-analysis (most likely out of memory on the
+  Pi) and counts as a crash; one from an earlier boot means the Pi lost power
+  (or rebooted) and does not. After `MAX_CRASHED_ANALYSIS_ATTEMPTS = 2` crashes
+  the worker does not try again: it stores the run as `error` with "Analysis did
+  not finish in 2 attempts: … Record a shorter run.", which the history UI
+  shows, instead of crashing the restarted server again
 - to stay within the Pi's memory, loading reads only `id`, `t_s` and the
   loudness columns of every summary row first, picks the rows to analyse (at most
   12,000: evenly spaced plus the loudest of each stretch) and decodes only those;

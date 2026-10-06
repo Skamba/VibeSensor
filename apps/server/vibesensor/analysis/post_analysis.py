@@ -39,6 +39,7 @@ from vibesensor.analysis.post_analysis_state import (
     PostAnalysisState,
 )
 from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
+from vibesensor.clock.boot import current_boot_id
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
@@ -47,9 +48,10 @@ LOGGER = logging.getLogger(__name__)
 
 _WARN_QUEUE_DEPTH = 10
 _RETRY_DELAYS_S = (0.5, 1.0, 2.0)
-# A run whose analysis was started this many times without finishing (the
-# server died mid-analysis each time) is failed instead of started again.
-MAX_UNFINISHED_ANALYSIS_ATTEMPTS = 2
+# A run whose analysis crashed the server this many times (each attempt died in
+# the boot it started in) is failed instead of started again. An attempt that a
+# reboot or power cut ended does not count.
+MAX_CRASHED_ANALYSIS_ATTEMPTS = 2
 
 
 class PostAnalysisWorker:
@@ -72,6 +74,9 @@ class PostAnalysisWorker:
     after_run:
         Called (no args) after each run's analysis or error is stored; it may
         touch that run again (the run-time corrector re-dates it).
+    boot_id:
+        Reads the current boot's id, to tell a crash from a reboot (see
+        ``HistoryDB.begin_analysis_attempt``).
 
     Notes
     -----
@@ -87,8 +92,10 @@ class PostAnalysisWorker:
         clear_error_callback: Callable[[], None] | None = None,
         analysis_runner: PostAnalysisRunner = build_post_analysis_summary,
         after_run: Callable[[], object] | None = None,
+        boot_id: Callable[[], str | None] = current_boot_id,
     ) -> None:
         self._history_db = history_db
+        self._boot_id = boot_id()
         self._error_cb = error_callback or (lambda _msg: None)
         self._clear_error_cb = clear_error_callback or (lambda: None)
         self._analysis_runner = analysis_runner
@@ -248,13 +255,13 @@ class PostAnalysisWorker:
         db = self._history_db
         if db is None:
             return
-        unfinished_attempts = self._begin_attempt(db, run_id) - 1
-        if unfinished_attempts >= MAX_UNFINISHED_ANALYSIS_ATTEMPTS:
+        crashed_attempts = self._begin_attempt(db, run_id)
+        if crashed_attempts >= MAX_CRASHED_ANALYSIS_ATTEMPTS:
             self._record_execution_result(
                 abandon_unfinished_post_analysis(
                     run_id=run_id,
                     db=db,
-                    unfinished_attempts=unfinished_attempts,
+                    crashed_attempts=crashed_attempts,
                 )
             )
             return
@@ -285,11 +292,10 @@ class PostAnalysisWorker:
             self._record_execution_result(result)
             return
 
-    @staticmethod
-    def _begin_attempt(db: HistoryDB, run_id: str) -> int:
-        """Persist one more started attempt; 0 when it cannot be counted."""
+    def _begin_attempt(self, db: HistoryDB, run_id: str) -> int:
+        """Persist the started attempt; return the earlier ones that crashed (0 if unknown)."""
         try:
-            return db.begin_analysis_attempt(run_id)
+            return db.begin_analysis_attempt(run_id, boot_id=self._boot_id)
         except sqlite3.Error:
             LOGGER.warning("Could not count the analysis attempt for run %s", run_id, exc_info=True)
             return 0

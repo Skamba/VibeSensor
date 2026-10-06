@@ -44,7 +44,8 @@ def test_the_server_starts_on_fresh_udp_ports_when_another_process_took_one(
         picks = iter([taken_port])
         free_udp_port = conftest._free_udp_port
         monkeypatch.setattr(conftest, "_free_udp_port", lambda: next(picks, 0) or free_udp_port())
-        with conftest._running_server(tmp_path) as server:
+        with conftest._running_server(tmp_path) as power:
+            server = power.server
             assert taken_port not in {server.sim_data_port, server.sim_control_port}
             assert api_json(server.base_url, "/api/health")["startup_state"] == "ready"
     assert "Address already in use" in (tmp_path / "start-1" / "server.log").read_text()

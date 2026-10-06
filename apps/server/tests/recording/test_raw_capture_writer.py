@@ -57,6 +57,9 @@ class _FirstAppendBlocksHistoryDb:
         self.first_started.set()
         self.block_append.wait()
 
+    def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
+        return None
+
     def finalize_raw_capture(
         self,
         _run_id: str,
@@ -158,6 +161,9 @@ def test_raw_capture_writer_finalize_returns_manifest_with_persisted_loss_counts
             self.stored_chunks.setdefault(chunk.client_id, []).append(chunk)
             self.first_write_completed.set()
 
+        def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
+            return None
+
         def finalize_raw_capture(
             self,
             run_id: str,
@@ -246,6 +252,9 @@ class _StoringHistoryDb:
 
     def append_raw_capture_chunk(self, _run_id: str, chunk: RawCaptureChunk) -> None:
         self.stored_chunks.setdefault(chunk.client_id, []).append(chunk)
+
+    def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
+        return None
 
     def finalize_raw_capture(
         self,
@@ -346,6 +355,9 @@ def test_raw_capture_writer_finalize_timeout_returns_degraded_result() -> None:
         def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
             return None
 
+        def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
+            return None
+
         def finalize_raw_capture(
             self,
             _run_id: str,
@@ -379,6 +391,9 @@ def test_raw_capture_writer_notifies_late_finalize_after_timeout() -> None:
             self.block_finalize = threading.Event()
 
         def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+            return None
+
+        def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
             return None
 
         def finalize_raw_capture(
@@ -443,6 +458,9 @@ def test_raw_capture_writer_finalize_returns_enqueue_timeout_when_queue_stays_fu
 def test_raw_capture_writer_finalize_failure_returns_failed_result() -> None:
     class FailingHistoryDb:
         def append_raw_capture_chunk(self, _run_id: str, _chunk) -> None:
+            return None
+
+        def checkpoint_raw_capture(self, _run_id: str, **_anchors: object) -> None:
             return None
 
         def finalize_raw_capture(

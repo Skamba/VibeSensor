@@ -2331,6 +2331,45 @@ def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
         result.history_db.close()
 
 
+def test_a_drive_cut_off_before_stop_is_recovered_and_diagnosed(tmp_path: Path) -> None:
+    """The ignition cuts the Pi's power mid-drive: the next start analyses what was saved.
+
+    The run is not lost as an error: startup ends it at its last saved sample,
+    rebuilds its raw capture from the files on disk and analyses it from raw
+    replay, with the same diagnosis as a drive stopped normally, and the report
+    says the recording was cut off.
+    """
+    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="power-cut-drive",
+        phases=phases,
+        client_seed=CI_SEED,
+        cut_power=True,
+    )
+    try:
+        assert result.metadata.interrupted
+        run = result.history_db.get_run(result.run_id)
+        assert run is not None and run.status == "complete"
+        assert run.end_time_utc is not None
+        payload = result.analysis.payload
+        assert payload["duration_s"] == pytest.approx(35.0, abs=1.5)
+        assert payload["analysis_metadata"]["raw_capture_mode"] == "raw_backed"
+        diagnosis = result.diagnosis
+        assert (diagnosis["verdict"], diagnosis["source"], diagnosis["zone"]) == (
+            "fault",
+            "wheel/tire",
+            "front_left_wheel",
+        )
+        assert "recording_interrupted" in {warning["code"] for warning in payload["warnings"]}
+        assert any("power was lost" in warning for warning in result.report.quality.warnings)
+    finally:
+        result.history_db.close()
+
+
 def test_recording_stops_at_the_configured_cap_and_is_still_analysed(tmp_path: Path) -> None:
     fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
     phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))

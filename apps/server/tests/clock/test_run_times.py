@@ -40,7 +40,9 @@ _WINTER_OFFSET_S = 3600
 _SUMMER_OFFSET_S = 7200
 
 
-def _record(db: HistoryDB, run_id: str, start_clock: RunStartClock | None) -> None:
+def _record(
+    db: HistoryDB, run_id: str, start_clock: RunStartClock | None, *, stop: bool = True
+) -> None:
     metadata = create_recording_run(db, run_id, started_at=_WRONG_START.isoformat())
     end = (_WRONG_START + timedelta(seconds=_RUN_S)).isoformat()
     metadata = replace(
@@ -62,7 +64,8 @@ def _record(db: HistoryDB, run_id: str, start_clock: RunStartClock | None) -> No
             ]
         ),
     )
-    db.finalize_run(run_id, end, metadata)
+    if stop:
+        db.finalize_run(run_id, end, metadata)
 
 
 def _stamp_on_the_wrong_clock(db_path: Path, run_id: str) -> None:
@@ -227,6 +230,37 @@ def test_this_boots_unverified_runs_are_redated_once_the_clock_is_trusted(
     )
     assert _times(db, "trusted") == _expected(_WRONG_START, unverified=False, start_clock=None)
     assert corrector.correct() == []
+    db.close()
+
+
+def test_a_run_cut_off_before_stop_is_redated_like_a_stopped_one(tmp_path: Path) -> None:
+    # The server died mid-recording in this boot (one run) and the power was cut in
+    # an earlier boot (the other): startup ends both at their last sample, 3.5 s in.
+    db = HistoryDB(tmp_path / "history.db")
+    _record(db, "cut-off", RunStartClock(boot_id=_BOOT, monotonic_s=_START_MONO_S), stop=False)
+    earlier_boot = RunStartClock(boot_id="boot-z", monotonic_s=_START_MONO_S)
+    _record(db, "cut-off-earlier-boot", earlier_boot, stop=False)
+    assert sorted(db.recover_interrupted_runs()) == ["cut-off", "cut-off-earlier-boot"]
+
+    corrector = _corrector(db, {"now": True})
+    worker = PostAnalysisWorker(history_db=db, after_run=corrector.correct, boot_id=lambda: _BOOT)
+    worker.schedule("cut-off")
+    worker.schedule("cut-off-earlier-boot")
+    assert worker.wait(timeout_s=30.0)
+
+    last_sample = timedelta(seconds=3.5)
+    run = db.get_run("cut-off")
+    assert run is not None and run.status == RunStatus.COMPLETE
+    assert run.metadata.interrupted
+    assert not run.metadata.start_time_unverified
+    assert parse_iso8601(run.start_time_utc) == _TRUE_START
+    assert parse_iso8601(run.end_time_utc) == _TRUE_START + last_sample
+    assert parse_iso8601(run.metadata.end_time_utc) == _TRUE_START + last_sample
+    other = db.get_run("cut-off-earlier-boot")
+    assert other is not None and other.status == RunStatus.COMPLETE
+    assert other.metadata.start_time_unverified
+    assert other.metadata.start_clock == earlier_boot
+    assert parse_iso8601(other.end_time_utc) == _WRONG_START + last_sample
     db.close()
 
 

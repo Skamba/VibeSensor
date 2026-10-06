@@ -480,6 +480,13 @@ export function buildRow(
   const diagnosis = summary?.diagnosis ?? null;
   const badge = statusBadge(run, detail, t);
   const chips: RowModel["chips"] = [{ key: "status", ...badge }];
+  if (run.interrupted) {
+    chips.push({
+      key: "interrupted",
+      text: t("history.interrupted"),
+      tone: "warn",
+    });
+  }
   if (failed(run) && run.error_message) {
     chips.push({
       key: "error-message",

@@ -184,6 +184,7 @@
   "history.car_label": "Car",
   "history.car_missing": "Not recorded",
   "history.time_unknown": "Not verified (Pi clock was not set)",
+  "history.interrupted": "Cut off: power lost before Stop",
   "history.quick_report": "Quick report",
   "history.none": "No runs yet.",
   "history.empty.title": "Capture the first run from Live.",

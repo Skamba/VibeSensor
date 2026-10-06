@@ -94,22 +94,26 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 - `idx_samples_v2_run_id` on `(run_id)` — fast lookup by run
 - `idx_samples_v2_run_time` on `(run_id, t_s)` — time-range queries
 
-### `analysis_attempts`
+### `unfinished_analyses`
 
-Unfinished post-analysis attempts, one row per run being analysed.
+Post-analysis attempts not yet finished, one row per run being analysed.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `run_id` | TEXT PK | References `runs(run_id)` with `ON DELETE CASCADE` |
-| `attempt_count` | INTEGER | Analysis starts not yet finished by a stored result or error |
+| `boot_id` | TEXT | Boot id of the latest attempt's start (`NULL` off Linux) |
+| `crash_count` | INTEGER | Attempts that ended with the server process dying in the boot they started in |
 
-`begin_analysis_attempt()` increments the count (only while the run is
-`analyzing`) before the worker starts; `store_analysis()` and
-`store_analysis_error()` delete the row. A count of 2 at the next start means the
-server stopped mid-analysis twice, so the worker stores the run as `error`
-instead of trying again (see `docs/run_lifecycle.md`). The table is created with
-`CREATE TABLE IF NOT EXISTS` on every open, so a current-version (v15) database
-gains it without a version bump.
+`begin_analysis_attempt(run_id, boot_id=...)` (only while the run is
+`analyzing`) runs before the worker starts: a row left from the same boot means
+the previous attempt crashed the server, so `crash_count` goes up; a row from
+another boot (power lost) leaves it unchanged. `store_analysis()` and
+`store_analysis_error()` delete the row. A `crash_count` of 2 means the worker
+stores the run as `error` instead of trying again (see
+`docs/run_lifecycle.md`). The table is created with `CREATE TABLE IF NOT
+EXISTS` on every open, so a current-version (v15) database gains it without a
+version bump; the same open drops its predecessor `analysis_attempts`, which
+counted power cuts as crashes.
 
 ### `settings_snapshot`
 
@@ -209,8 +213,9 @@ not to the Pi's RAM-backed `/tmp`.
 
 ## Startup retention policy
 
-On startup, the container opens `HistoryDB`, first recovers stale `recording`
-rows into `error`, then deletes `complete` and `error` runs older than
+On startup, the container opens `HistoryDB`, first recovers runs left
+`recording` by a power cut (see "Cut off before Stop" in
+`docs/run_lifecycle.md`), then deletes `complete` and `error` runs older than
 `RUN_RETENTION_DAYS` (7 days, in `apps/server/vibesensor/app/composition.py`).
 
 The cutoff uses the run's terminal timestamp (`analysis_completed_at`, then

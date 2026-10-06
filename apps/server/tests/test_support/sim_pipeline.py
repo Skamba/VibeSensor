@@ -348,6 +348,7 @@ def run_sim_pipeline(
     speed_lag_s: float = 0.0,
     speed_report_period_s: float = _SPEED_UPDATE_PERIOD_S,
     flush_period_s: float | None = None,
+    cut_power: bool = False,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
@@ -365,17 +366,22 @@ def run_sim_pipeline(
     tones follow the true speed. The recorder flushes a tick every
     *flush_period_s* (default: ``1 / metrics_log_hz``, as the Pi's flush loop
     keeps its deadlines whatever a tick's work takes).
+
+    With *cut_power*, the drive ends without Stop, as when the ignition cuts the
+    Pi's power: the raw-capture writer saves what it had queued (the OS keeps
+    what reached it), and a second server started on the same data recovers the
+    run at startup and analyses it.
     """
-    runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
+    config_path = _runtime_config(tmp_path, max_recording_duration_s)
+    runtime = build_runtime(load_config(config_path))
     try:
-        return _record(
+        recorded = _record(
             runtime,
             car=car,
             sensors=sensors,
             scenario_name=scenario_name,
             phases=phases,
             client_seed=client_seed,
-            lang=lang,
             trace_post_analysis_memory=trace_post_analysis_memory,
             car_start=car_start,
             speed_source=speed_source,
@@ -383,9 +389,55 @@ def run_sim_pipeline(
             speed_lag_s=speed_lag_s,
             speed_report_period_s=speed_report_period_s,
             flush_period_s=flush_period_s,
+            cut_power=cut_power,
         )
+        if not cut_power:
+            return _analysed(runtime, recorded, lang=lang)
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
+    runtime.lifecycle.history_db.close()
+    restarted = build_runtime(load_config(config_path))
+    try:
+        return _analysed(restarted, recorded, lang=lang)
+    finally:
+        restarted.lifecycle.run_recorder.raw_capture.shutdown()
+
+
+@dataclass(frozen=True, slots=True)
+class _RecordedDrive:
+    run_id: str
+    client_ids: dict[str, str]
+    guided_brake_stops: int
+    analysis_started: float
+    post_analysis_timeout_s: float
+    trace_post_analysis_memory: bool
+
+
+def _analysed(runtime: AppRuntime, recorded: _RecordedDrive, *, lang: str) -> SimPipelineResult:
+    """Wait for the recorded run's post-analysis and build its report view."""
+    recorder = runtime.lifecycle.run_recorder
+    history_db = runtime.lifecycle.history_db
+    assert recorder.post_analysis.wait(timeout_s=recorded.post_analysis_timeout_s)
+    post_analysis_s = time.perf_counter() - recorded.analysis_started
+    peak_bytes: int | None = None
+    if recorded.trace_post_analysis_memory:
+        peak_bytes = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+    run = history_db.get_run(recorded.run_id)
+    assert run is not None and run.analysis is not None, run
+    report = build_report_view(run.analysis.payload, run.metadata, lang=lang)
+    return SimPipelineResult(
+        run_id=recorded.run_id,
+        analysis=run.analysis,
+        report=report,
+        client_ids=recorded.client_ids,
+        history_db=history_db,
+        metadata=run.metadata,
+        post_analysis_s=post_analysis_s,
+        post_analysis_peak_bytes=peak_bytes,
+        stop_reason=recorder.status().last_stop_reason,
+        guided_brake_stops=recorded.guided_brake_stops,
+    )
 
 
 def _record(
@@ -396,7 +448,6 @@ def _record(
     scenario_name: str,
     phases: Sequence[ScenarioPhase],
     client_seed: int,
-    lang: str,
     trace_post_analysis_memory: bool,
     car_start: bool,
     speed_source: SpeedSource,
@@ -404,12 +455,12 @@ def _record(
     speed_lag_s: float,
     speed_report_period_s: float,
     flush_period_s: float | None,
-) -> SimPipelineResult:
+    cut_power: bool,
+) -> _RecordedDrive:
     web = runtime.web
     lifecycle = runtime.lifecycle
     registry = lifecycle.registry
     recorder = lifecycle.run_recorder
-    history_db = lifecycle.history_db
 
     snapshot = web.car_settings.add_car(
         {  # type: ignore[typeddict-item]
@@ -563,28 +614,19 @@ def _record(
         if trace_post_analysis_memory:
             tracemalloc.start()
         analysis_started = time.perf_counter()
-        recorder.stop_recording(_only_if_run_id=run_id)
+        if cut_power:
+            # No Stop and no final flush: the writer saves the chunks it had queued.
+            recorder.raw_capture.shutdown()
+        else:
+            recorder.stop_recording(_only_if_run_id=run_id)
 
-    assert recorder.post_analysis.wait(timeout_s=post_analysis_timeout_s)
-    post_analysis_s = time.perf_counter() - analysis_started
-    peak_bytes: int | None = None
-    if trace_post_analysis_memory:
-        peak_bytes = tracemalloc.get_traced_memory()[1]
-        tracemalloc.stop()
-    run = history_db.get_run(run_id)
-    assert run is not None and run.analysis is not None, run
-    report = build_report_view(run.analysis.payload, run.metadata, lang=lang)
-    return SimPipelineResult(
+    return _RecordedDrive(
         run_id=run_id,
-        analysis=run.analysis,
-        report=report,
         client_ids=client_ids,
-        history_db=history_db,
-        metadata=run.metadata,
-        post_analysis_s=post_analysis_s,
-        post_analysis_peak_bytes=peak_bytes,
-        stop_reason=recorder.status().last_stop_reason,
         guided_brake_stops=guided_brake_stops,
+        analysis_started=analysis_started,
+        post_analysis_timeout_s=post_analysis_timeout_s,
+        trace_post_analysis_memory=trace_post_analysis_memory,
     )
 
 
