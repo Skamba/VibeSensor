@@ -516,3 +516,38 @@ def test_windows_whose_order_lies_below_the_analysis_floor_do_not_dilute_it() ->
         key=lambda f: f["confidence"],
     )
     assert wheel["evidence_metrics"]["match_rate"] == pytest.approx(1.0)
+
+
+def _rotating(multiples: tuple[float, ...], amp_g: float) -> list:
+    """One peak per window at E2 times each of *multiples* in turn."""
+    return [
+        (_E2_PER_T1 * multiple, amp_g, lambda step, k=k: step % len(multiples) == k)
+        for k, multiple in enumerate(multiples)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("multiples", "expected"),
+    [
+        # A road-excited body mode under E2: a clear peak in every window,
+        # scattered over the tolerance window. Not the order.
+        ((0.94, 1.03, 0.97, 1.06), ("no_fault", None, None)),
+        # The engine's E2 read through a speed that is off by up to 1 %: a line.
+        ((0.99, 1.005, 1.0, 0.995), ("fault", "E2", "strong")),
+    ],
+)
+def test_only_peaks_on_one_line_are_an_order(
+    multiples: tuple[float, ...], expected: tuple[str, str | None, str | None]
+) -> None:
+    fronts = {
+        location: _rotating(multiples, 0.05)
+        for location in ("front_left_wheel", "front_right_wheel")
+    }
+
+    diagnosis = _analyse(fronts)["diagnosis"]
+
+    assert (
+        diagnosis["verdict"],
+        diagnosis["order_code"],
+        diagnosis["confidence_level"],
+    ) == expected

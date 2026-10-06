@@ -7,13 +7,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from scipy.signal import lfilter
 
 from vibesensor.ingest.protocol_messages import client_id_mac
+from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.profiles import (
     DEFAULT_ORDER_HZ,
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
     Profile,
+    RoadResonance,
 )
 
 __all__ = ["SimClient", "make_client_id"]
@@ -22,6 +25,22 @@ _TWO_PI = 2.0 * np.pi
 
 # ESP32 crystals are specified around ±10-40 ppm; stay within that envelope.
 _MAX_CLOCK_DRIFT_PPM = 40.0
+_COUNTS_PER_MG = 1.0 / (1000.0 * ADXL345_SCALE_G_PER_LSB)
+# Road resonances draw their own noise, so adding or tuning one leaves the
+# rest of a sensor's simulated signal as it was.
+_RESONANCE_SEED_SALT = 0x5E50
+
+
+def _resonator(resonance: RoadResonance, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
+    """Band-pass biquad (unit peak gain) ringing at the mode, scaled so unit
+    white noise comes out at unit RMS."""
+    w0 = 2.0 * np.pi * resonance.hz / sample_rate_hz
+    alpha = np.sin(w0) / (2.0 * resonance.q)
+    b = np.array([alpha, 0.0, -alpha]) / (1.0 + alpha)
+    a = np.array([1.0, -2.0 * np.cos(w0) / (1.0 + alpha), (1.0 - alpha) / (1.0 + alpha)])
+    # Noise power through a unit-peak band-pass: its equivalent noise bandwidth
+    # (pi/2 * hz/q) over the Nyquist band.
+    return b / np.sqrt(np.pi * resonance.hz / (resonance.q * sample_rate_hz)), a
 
 
 @dataclass(slots=True)
@@ -73,10 +92,14 @@ class SimClient:
     # tone identity, so a tone whose frequency follows the speed stays
     # phase-continuous across frames instead of jumping at every frame edge.
     tone_phases: dict[tuple[str, float], float] = field(default_factory=dict)
+    # Each road resonance's filter state per axis, so it rings on across frames.
+    resonance_states: dict[RoadResonance, np.ndarray] = field(default_factory=dict)
+    resonance_rng: np.random.Generator | None = None
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
         self.rng = np.random.default_rng(seed)
+        self.resonance_rng = np.random.default_rng((seed, _RESONANCE_SEED_SALT))
         self.phase_offsets = np.asarray(self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32)
         # Per-sensor crystal error, like real ESP32 boards (tens of ppm), so
         # sensors run at slightly different true rates, as in real deployments.
@@ -211,10 +234,32 @@ class SimClient:
             size=signal.shape,
         ).astype(np.float32)
         signal += floor_noise
+        signal += self._road_resonances(profile)
 
         self.phase_s = float(t[-1] + dt)
         result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
         return result
+
+    def _road_resonances(self, profile: Profile) -> np.ndarray:
+        """The road-excited modes, in counts: band-passed noise that grows with speed.
+
+        They are what the sensor itself feels, whatever the scene's gains.
+        """
+        assert self.resonance_rng is not None  # guaranteed by __post_init__
+        out = np.zeros((self.frame_samples, 3), dtype=np.float64)
+        gain = profile.resonance_gain(self.current_speed_kmh)
+        states: dict[RoadResonance, np.ndarray] = {}
+        for resonance in profile.road_resonances:
+            b, a = _resonator(resonance, self.sample_rate_hz)
+            state = self.resonance_states.get(resonance)
+            if state is None:
+                state = np.zeros((2, 3))
+            drive = self.resonance_rng.normal(0.0, 1.0, size=out.shape)
+            drive *= gain * _COUNTS_PER_MG * np.asarray(resonance.rms_mg)
+            rung, states[resonance] = lfilter(b, a, drive, axis=0, zi=state)
+            out += rung
+        self.resonance_states = states
+        return out.astype(np.float32)
 
 
 def make_client_id(seed: int) -> bytes:

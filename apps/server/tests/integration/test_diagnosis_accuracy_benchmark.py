@@ -42,7 +42,13 @@ from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
-from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LIBRARY, Profile
+from vibesensor.simulator.profiles import (
+    DEFAULT_SPEED_KMH,
+    PROFILE_LIBRARY,
+    ROAD_RESONANCES,
+    Profile,
+    RoadResonance,
+)
 from vibesensor.simulator.scripted_scenario_catalog import SCRIPTED_SCENARIOS
 from vibesensor.simulator.scripted_scenario_models import PhaseOverride, ScenarioPhase
 from vibesensor.simulator.scripted_targeting import apply_phase
@@ -600,6 +606,49 @@ _BOTH_FRONT = (
     ),
 )
 
+# -- road-excited structural modes ------------------------------------------------
+# The road shakes the car's structural modes broadly: a hump about the mode, not
+# a line. Every sensor feels it whatever plays there (see "Simulated road
+# resonances" in docs/testing.md); the sensors sit near the suspension mounts.
+# A seat/subframe mode near 15 Hz that carries most of the car's ride vibration
+# (40 mg vertical at 100 km/h, the top of measured seat levels): on the motorway
+# the wheel order of either car runs through it (default car 14-17 Hz, other
+# car 16-19 Hz), in town the driveline and engine orders do.
+_SEAT_MODE = RoadResonance(hz=15.0, q=6.0, rms_mg=(20.0, 20.0, 40.0))
+# Soft tyres on a broken surface: wheel hop rings broadly about 13 Hz at 60 mg
+# vertical near the suspension mounts at 100 km/h. (At 80 mg its strongest
+# peaks reach the 26 dB a no-fault report calls a vibration found.)
+_WHEEL_HOP = RoadResonance(hz=13.0, q=3.0, rms_mg=(30.0, 30.0, 60.0))
+
+
+def _with_mode(base: str, mode: RoadResonance) -> Profile:
+    """The simulator profile *base* on a road that also rings *mode*."""
+    profile = replace(
+        PROFILE_LIBRARY[base],
+        name=f"bench_{base}_{mode.hz:g}hz_q{mode.q:g}",
+        road_resonances=(*ROAD_RESONANCES, mode),
+    )
+    _LAYERED_PROFILES[profile.name] = profile
+    return profile
+
+
+def _healthy_with(mode: RoadResonance) -> PhaseOverride:
+    return _ov("all", _with_mode("rough_road", mode).name, _ROAD_SCENE_GAIN, _ROAD_AMP)
+
+
+def _mild_front_left_with(mode: RoadResonance) -> tuple[PhaseOverride, ...]:
+    """bench-mild-front-left-wheel-sweep's imbalance, on a road that rings *mode*."""
+    return (
+        _healthy_with(mode),
+        _ov("front-left", _with_mode("wheel_mild_imbalance", mode).name, 0.15, 1.0),
+    )
+
+
+_HEALTHY_SEAT_MODE = _healthy_with(_SEAT_MODE)
+_HEALTHY_WHEEL_HOP = _healthy_with(_WHEEL_HOP)
+_MILD_FL_SEAT_MODE = _mild_front_left_with(_SEAT_MODE)
+_MILD_FL_WHEEL_HOP = _mild_front_left_with(_WHEEL_HOP)
+
 _BENCH_PROFILES = {
     profile.name: profile
     for profile in (
@@ -974,6 +1023,35 @@ REALISM_CASES = (
         cars=("other",),
     ),
     Case("bench-front-left-wheel-motorway", _motorway(_FL_IMBALANCE), _FL_FAULT),
+    # A healthy car whose road-excited seat mode or wheel hop sits where the
+    # orders run: every window has a peak somewhere in the order's tolerance,
+    # scattered over it, not a line on the prediction. Not a fault.
+    Case("bench-healthy-seat-mode-long-sweep", _long_sweep(_HEALTHY_SEAT_MODE), NO_FAULT),
+    Case("bench-healthy-seat-mode-motorway", _motorway(_HEALTHY_SEAT_MODE), NO_FAULT),
+    Case("bench-healthy-seat-mode-city", _city(_HEALTHY_SEAT_MODE), NO_FAULT),
+    Case("bench-healthy-wheel-hop-sweep", _sweep(_HEALTHY_WHEEL_HOP), NO_FAULT),
+    Case(
+        "bench-healthy-wheel-hop-motorway-stops",
+        _motorway_stops(always=(_HEALTHY_WHEEL_HOP,)),
+        NO_FAULT,
+    ),
+    # The same roads with a mild front-left imbalance: its line stands on the
+    # hump, still that wheel and not hedged.
+    Case(
+        "bench-mild-front-left-under-seat-mode-motorway",
+        _motorway(*_MILD_FL_SEAT_MODE),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE_OR_STRONG),
+    ),
+    Case(
+        "bench-mild-front-left-under-seat-mode-city",
+        _city(*_MILD_FL_SEAT_MODE),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE_OR_STRONG),
+    ),
+    Case(
+        "bench-mild-front-left-under-wheel-hop-motorway",
+        _motorway(*_MILD_FL_WHEEL_HOP),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE_OR_STRONG),
+    ),
 )
 
 BENCH_CASES = (

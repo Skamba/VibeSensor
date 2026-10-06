@@ -12,6 +12,40 @@ from vibesensor.settings.analysis_settings_codec import (
 DEFAULT_SPEED_KMH = 100.0
 
 
+@dataclass(frozen=True, slots=True)
+class RoadResonance:
+    """A structural mode the road excites: wheel hop, a seat, the body, a mirror.
+
+    The road shakes the car with broadband noise, so a mode rings as a
+    narrowband hump of noise centred on *hz* (half-power width ``hz / q``), the
+    same frequency at every speed. *rms_mg* is its level per axis at
+    ``DEFAULT_SPEED_KMH`` on an ISO 8608 class A-B road (``road_roughness`` 1).
+    """
+
+    hz: float
+    q: float
+    rms_mg: tuple[float, float, float]
+
+
+# Road displacement roughness falls with the square of the spatial frequency
+# (ISO 8608), so the acceleration a fixed mode sees grows with the square root
+# of the speed; each rougher ISO 8608 class doubles it.
+RESONANCE_SPEED_EXPONENT = 0.5
+
+ROAD_RESONANCES: tuple[RoadResonance, ...] = (
+    # Wheel hop: the unsprung mass on the tire, damped by the shock absorber
+    # (10-15 Hz, damping ratio about 0.2). Mostly vertical.
+    RoadResonance(hz=12.0, q=2.5, rms_mg=(3.0, 2.0, 6.0)),
+    # The trimmed body's first bending/torsion mode (20-35 Hz, 3-6 % damping).
+    RoadResonance(hz=24.0, q=8.0, rms_mg=(1.5, 1.0, 2.5)),
+    # Steering column or mirror (30-40 Hz, lightly damped).
+    RoadResonance(hz=33.0, q=15.0, rms_mg=(1.0, 1.5, 1.0)),
+)
+"""A healthy car's road-excited modes, kept modest: a few mg each, well under
+the 20-50 mg whole-body level ISO 2631 surveys find on normal roads (see
+"Simulated road resonances" in ``docs/testing.md``)."""
+
+
 SIMULATOR_CAR_ASPECTS: dict[str, float] = {
     **ANALYSIS_SETTINGS_DEFAULTS,
     "tire_width_mm": 285.0,
@@ -89,6 +123,10 @@ class Profile:
     # ``(low_kmh, high_kmh, gain)``: a suspension or body resonance the order
     # passes through amplifies its tones by ``gain`` inside that speed band.
     order_resonance_kmh: tuple[float, float, float] | None = None
+    # Structural modes the road excites at this sensor, scaled by
+    # ``road_roughness`` (each ISO 8608 class rougher doubles it) and the speed.
+    road_resonances: tuple[RoadResonance, ...] = ROAD_RESONANCES
+    road_roughness: float = 1.0
 
     def order_amplitude_gain(self, speed_kmh: float) -> float:
         """How much the order tones are amplified at *speed_kmh* (1 at the reference speed)."""
@@ -100,6 +138,11 @@ class Profile:
             if low_kmh <= speed_kmh <= high_kmh:
                 gain *= resonance_gain
         return gain
+
+    def resonance_gain(self, speed_kmh: float) -> float:
+        """How strongly the road excites the resonances at *speed_kmh* (none at a standstill)."""
+        speed_ratio = max(0.0, speed_kmh) / DEFAULT_SPEED_KMH
+        return self.road_roughness * float(speed_ratio**RESONANCE_SPEED_EXPONENT)
 
     def noise_gain(self, speed_kmh: float) -> float:
         """How much the broadband noise grows with *speed_kmh* (1 at ``DEFAULT_SPEED_KMH``)."""

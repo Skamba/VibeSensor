@@ -199,6 +199,62 @@ climbs, so a real engine order can look fixed against the speed. With RPM
 estimated from speed the engine order moves with the speed and uses the
 filtered peaks like the road orders.
 
+## Order lines
+
+The road rings the car's structural modes (wheel hop, a seat or subframe, the
+body) as broad humps of noise, the same frequency at every speed. A hump wider
+than an order's tolerance window puts a local-maximum peak somewhere in that
+window in nearly every spectrum, clear of the floor, at every sensor. The
+matcher takes the nearest one, so an order whose frequency sits on the hump
+(a wheel order at motorway speed, a driveline or engine order in town) is
+"matched" and heard in most windows, with a mean frequency error near 0, and
+the tracking slope cannot tell: the matches are censored to the window around
+the prediction, so they follow it. A fixed-tone filter needs a narrow tone
+held over a wide speed range and misses both a broad hump and a drive that
+stays at one speed.
+
+An order is a line: a rotating part shakes at its turning frequency, so its
+peak sits on the prediction times one constant factor (a slightly-off tyre
+size or ratio) to within the speed reading's error. Peaks borrowed from a hump
+scatter across the window. `match_samples_for_hypothesis()` therefore tests
+each sensor's clear matches (6 dB over their window's floor), split into
+braking and other windows (a brake order is a line only while braking, and
+firm braking smears every line; `_masked()`, `_off_the_line()`). Sensors with
+fewer than 12 clear matches (`ORDER_LINE_MIN_POINTS`) are tested together, per
+braking side: the line is at the same frequency at every sensor.
+
+- Only some matches are judged: those whose tolerance window is at least 4
+  line widths (`ORDER_LINE_MIN_TOLERANCE_WIDTHS`; above about 10 Hz), and whose
+  sensor lost no frames over the time its spectrum spans
+  (`frames_dropped_total`, `_timed()`). The server stacks the frames that
+  arrive, so a spectrum over a lost frame reaches further back than its stated
+  span and, while the speed changes, its peak lags the prediction.
+- `k` is the median of matched / predicted over the judged matches; a judged
+  match is on the line when it is within `ORDER_LINE_WIDTH_REL` (1.5 %) of
+  `k ×` its prediction, or half an FFT bin where that is wider (peaks sit on
+  bin centres).
+- With under half of the judged matches on the line (`ORDER_LINE_MIN_SHARE`)
+  the group has no line and every match is off it. Otherwise the judged
+  matches off the line are off it; a match not judged never is on its own.
+- A group with fewer than 12 judged matches is not judged.
+
+A window whose clear match is off the line holds broadband content louder
+than the order could be seen through: like a window whose order lies under
+the analysis floor, it is not a chance to hear the order, and it leaves the
+match and the possible counts before the heard sensors are chosen ("Heard
+matches"). Dropping only the match would count the window against the order;
+keeping it as an unheard match would let an order heard nowhere fall back to
+the hump's level as its evidence.
+
+On the benchmark's drives with a road-excited mode at an order, a real order's
+groups sit at a median 85 % on the line (10th percentile about 60 %) and the
+hump's at 24 % (95th percentile about 40 %). The groups the test drops among
+real faults are noise ones: brake judder's matches outside braking, and firm
+stops' braking windows on a wheel imbalance. Within a real order's group the
+off-line windows are mostly a hump the order passes at other speeds. The line
+width and share are set from simulated drives; real drives with a known mode
+near an order are needed to confirm them.
+
 ## Engine tone through a near-1:1 gear
 
 With measured RPM, a gear near 1:1 puts E1/E2 on P1/P2 (and some gears put an
@@ -249,6 +305,7 @@ diagnosis.
 | `presence_ratio`, per-location `presence` (`analysis/diagnosis.py`) | heard matches over the moving samples |
 | Coast-down `speed_dependence`: the order's main location and the matches counted during and outside the coast-down | heard matches |
 | Matched speed range (`speed_min_kmh` / `speed_max_kmh`) | heard matches (all, when none is heard) |
+| Enough matches and matched time for a finding (`OrderMatchAccumulator.is_eligible()`) | the evidence: heard matches (all, when none is heard) |
 
 Why 6 dB over the window's floor: on the full benchmark matrix (40 cases, both
 cars, seeds 1–6, and the healthy cases on seeds 7–26) this one rule gives the

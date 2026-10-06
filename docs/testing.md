@@ -66,8 +66,38 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Speed comes in measured: as gpsd TPV reports (3D fix) through the production GPS ingestion, or from a connected OBD adapter (`Case.speed_source`); the adapter can also report the engine RPM of the gear each phase drives in (`Case.obd_rpm`, `ScenarioPhase.gear_ratio`; idle at a standstill). A standstill drive must leave 0 km/h out of the per-speed breakdown.
 - Cars are part of the cases (`Case.cars`): the default car, a hatchback, and an EV with and without its reduction ratio entered. A phase driven in a lower gear (`ScenarioPhase.gear_ratio`) moves only the simulated engine orders; without measured RPM the benchmark checks with its own gear math that a wheel or propshaft order the engine can match in some gear is never Strong and that the report says so. `run_sim_pipeline(max_recording_duration_s=...)` sets the server's recording cap, and the flush loop auto-stops at it as production does.
 - Realistic drives are part of the cases: healthy cars with a residual imbalance on every corner, uneven mount coupling, road noise that grows with speed (`Profile.noise_speed_exponent`) and a body mode; an order whose level grows with speed and peaks in a resonant speed band (`order_speed_exponent`, `order_resonance_kmh`; `Expected.peak_speed_kmh` checks the reference speed lands there); town stop-and-go and motorway drives; GPS speed reported late and once a second (`Case.speed_lag_s`, `Case.speed_report_period_s`); a tone only while pulling; a sensor read through a stiffer mount; two tyres slightly apart. A run whose strong vibration no checked order explains (`Expected.unexplained_vibration`) must not read "No significant vibration found". With measured RPM the worksheet must list only orders the drive carried.
+- Road-excited structural modes are part of every simulated sensor signal (see "Simulated road resonances" below); a case can add a stronger mode near an order (`_with_mode`) to check that a healthy car with a boomy seat or soft tyres is not a fault and that a mild imbalance on that road still is.
 - Every analysis rule should be justified by a case it changes for the better; a rule that changes no realistic case is a candidate for deletion. A miss is fixed at its root cause, not listed as an expected failure.
 - New simulator scenarios need a ground-truth entry there; prefer adding a case over adding hand-built peak fixtures in `tests/analysis/`.
+
+### Simulated road resonances
+
+The road shakes the car with broadband noise, and the car's structural modes
+ring in it: a narrowband hump of noise about each mode's frequency, the same
+at every speed, not a line. `simulator/profiles.py` gives every profile
+`road_resonances` (`RoadResonance`: frequency, Q, RMS mg per axis at 100 km/h)
+and a `road_roughness` scale; `SimClient` filters its own noise stream through
+a band-pass biquad per mode and adds it in counts, whatever the scene's gains,
+so every sensor feels it.
+
+| Mode (default) | Hz | Q | mg (x, y, z) | Basis |
+|----------------|----|---|--------------|-------|
+| Wheel hop | 12 | 2.5 | 3, 2, 6 | unsprung mass on the tyre, 10-15 Hz, damping ratio about 0.2 (Gillespie, *Fundamentals of Vehicle Dynamics*, ch. 5) |
+| Body bending/torsion | 24 | 8 | 1.5, 1, 2.5 | trimmed-body first global modes 20-35 Hz at 3-6 % damping |
+| Steering column/mirror | 33 | 15 | 1, 1.5, 1 | column and mirror modes 30-40 Hz, lightly damped |
+
+- Level grows with the square root of the speed: ISO 8608 road displacement
+  roughness falls with the square of the spatial frequency, so the
+  acceleration a fixed mode sees grows as `v^0.5`. Each rougher ISO 8608 class
+  doubles it (`road_roughness` 2, 4, ...).
+- The defaults are modest on purpose: a few mg per mode, against the 0.2-0.5
+  m/s² (20-50 mg) frequency-weighted whole-body levels ISO 2631-1 surveys of
+  cars on normal roads find at the seat (Paddan & Griffin, J. Sound Vib.
+  253(1), 2002). The benchmark's strong modes (`_SEAT_MODE`, 15 Hz Q 6 at 40 mg
+  vertical; `_WHEEL_HOP`, 13 Hz Q 3 at 60 mg near the suspension mounts) are a
+  car whose one mode carries most of that.
+- Real-drive recordings are needed to calibrate the levels and Q per car; the
+  numbers above are literature ranges, not measurements.
 
 ## Backend test placement
 

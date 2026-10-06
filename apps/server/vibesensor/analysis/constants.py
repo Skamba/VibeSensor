@@ -109,6 +109,28 @@ ORDER_VARIABLE_MIN_CORRELATION: Final[float] = 0.9
 """Minimum frequency correlation for variable-speed order evidence when matched
 samples do not span enough speed bins."""
 
+ORDER_LINE_WIDTH_REL: Final[float] = 0.015
+"""Half-width of an order's spectral line, relative to its frequency. A
+rotating order is a line that follows its prediction (times one constant
+factor, for a slightly-off tyre size or ratio) to within the speed reading's
+error; see "Order lines" in docs/order_tracking.md."""
+
+ORDER_LINE_WIDTH_MIN_BINS: Final[float] = 0.5
+"""Minimum line half-width in FFT bins: peaks sit on bin centres."""
+
+ORDER_LINE_MIN_SHARE: Final[float] = 0.5
+"""Share of a sensor's clear matches that must sit on one line for them to be
+the order rather than broadband content (a road-excited resonance hump) that
+fills the tolerance window."""
+
+ORDER_LINE_MIN_POINTS: Final[int] = 12
+"""Fewest judged clear matches in a group before the line test judges it; a
+sensor with fewer clear matches is judged together with the others."""
+
+ORDER_LINE_MIN_TOLERANCE_WIDTHS: Final[float] = 4.0
+"""The line test judges only where the tolerance window is at least this many
+line widths wide; in a narrower window any peak sits on the line."""
+
 ORDER_MIN_CONFIDENCE: Final[float] = 0.25
 """Minimum confidence score for an order-tracking finding to be retained."""
 

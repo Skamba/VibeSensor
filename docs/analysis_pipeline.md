@@ -243,7 +243,9 @@ Below about 35 km/h a wheel's first order lies under the 5 Hz analysis floor
 show it. Those spectra are no chance to hear any order
 (`match_samples_for_hypothesis` skips a window whose predicted frequency is
 under the floor), so they neither dilute the braking share nor any finding's
-match rate.
+match rate. Nor are spectra where a road-excited resonance hump fills the
+order's window with peaks off its line (see "Order lines" in
+`docs/order_tracking.md`).
 
 An unbalanced or out-of-round wheel fails the second test: it is there at the
 same speeds without braking. The brake finding keeps only its braking matched

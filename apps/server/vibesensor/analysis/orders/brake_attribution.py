@@ -21,14 +21,12 @@ from dataclasses import replace
 from statistics import median
 
 from vibesensor.analysis._types import PhaseLabels, Sample
-from vibesensor.analysis.orders.matching import OrderMatchAccumulator
-from vibesensor.domain.driving_segment import DrivingPhase
+from vibesensor.analysis.orders.matching import BRAKING_PHASE, OrderMatchAccumulator
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 
 __all__ = ["BRAKING_PHASE", "as_brake_finding", "only_while_braking"]
 
-BRAKING_PHASE = DrivingPhase.BRAKING.value
 # Enough braking spectra at the sensors that hear the order to judge it: about
 # two seconds of braking per sensor at the 4 Hz spectrum rate (and as many
 # spectra while not braking).
