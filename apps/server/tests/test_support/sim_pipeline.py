@@ -363,9 +363,8 @@ def run_sim_pipeline(
     The speed source reports every *speed_report_period_s* (a GPS receiver: once
     a second) the speed it measured *speed_lag_s* earlier, while the simulated
     tones follow the true speed. The recorder flushes a tick every
-    *flush_period_s* (default: ``1 / metrics_log_hz``); the Pi's flush loop
-    sleeps a whole interval after each tick's work, so there it ticks about
-    every 0.27 s, drifting against a GPS receiver's fixes.
+    *flush_period_s* (default: ``1 / metrics_log_hz``, as the Pi's flush loop
+    keeps its deadlines whatever a tick's work takes).
     """
     runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
     try:

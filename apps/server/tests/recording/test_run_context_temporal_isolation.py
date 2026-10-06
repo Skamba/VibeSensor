@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
 
 import pytest
@@ -87,10 +88,10 @@ def test_recording_keeps_run_start_context_when_settings_change_mid_run(
             return
         raise _StopLoop
 
-    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
-
     with pytest.raises(_StopLoop):
-        asyncio.run(logger.run())
+        asyncio.run(
+            _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__), sleep=fake_sleep)
+        )
 
     logger.stop_recording()
     assert logger.post_analysis.wait(timeout_s=3.0)

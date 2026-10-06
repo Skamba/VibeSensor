@@ -85,8 +85,13 @@ the live run context, and calls `RunLifecycleState.start_new_run()`.
 During recording:
 
 - `current_run.is_recording` is true
-- `SampleFlushOrchestrator` periodically builds `SensorFrame` rows from the
-  registry, processor metrics, and resolved speed context
+- `SampleFlushOrchestrator` builds `SensorFrame` rows from the registry,
+  processor metrics, and resolved speed context at `metrics_log_hz` (4 Hz).
+  The recorder's loop (`_recorder_runtime.run_loop`) schedules each tick one
+  interval after the previous tick's deadline on the monotonic clock, so a
+  tick's own work does not slow the row rate; a tick that overran the next
+  deadline by more than an interval resyncs to now instead of bursting
+  through the ticks it missed
 - raw UDP ingress also streams full-run `int16` chunks through
   `RunRawCaptureWriter`, which writes per-run artifacts under the history data
   directory without bloating `samples_v2`

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
@@ -25,6 +26,7 @@ __all__ = [
     "analysis_settings_snapshot",
     "normalize_accel_scale_g_per_lsb",
     "flush_active_run_tick",
+    "next_tick_deadline",
     "run_loop",
 ]
 
@@ -103,49 +105,70 @@ def flush_active_run_tick(
     return snapshot.run_id, auto_stop_reason
 
 
-async def run_loop(recorder: RunRecorder, *, logger: logging.Logger) -> None:
-    """Drive the periodic live-sample flush loop for ``RunRecorder``."""
+def next_tick_deadline(deadline: float, interval: float, now: float) -> float:
+    """When the tick after the one due at *deadline* is due, on the monotonic clock.
+
+    One interval after the previous deadline, so a tick's own work does not
+    stretch the period: rows come at ``metrics_log_hz``, not slower. A tick that
+    overran the next deadline by more than an interval resyncs to *now* instead
+    of bursting through the ticks it missed.
+    """
+    next_deadline = deadline + interval
+    return now if now - next_deadline > interval else next_deadline
+
+
+async def run_loop(
+    recorder: RunRecorder,
+    *,
+    logger: logging.Logger,
+    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], Awaitable[object]] = asyncio.sleep,
+) -> None:
+    """Drive the periodic live-sample flush loop for ``RunRecorder`` at ``metrics_log_hz``."""
     interval = 1.0 / recorder.metrics_log_hz
+    deadline = monotonic()
     while True:
-        try:
-            run_id, auto_stop_reason = await asyncio.wait_for(
+        await _run_tick(recorder, logger=logger)
+        now = monotonic()
+        deadline = next_tick_deadline(deadline, interval, now)
+        await sleep(max(0.0, deadline - now))
+
+
+async def _run_tick(recorder: RunRecorder, *, logger: logging.Logger) -> None:
+    """Flush one tick, auto-stop the run if it should stop, and track tick errors."""
+    try:
+        run_id, auto_stop_reason = await asyncio.wait_for(
+            asyncio.to_thread(
+                recorder.flush_tick,
+            ),
+            timeout=_DB_THREAD_TIMEOUT_S,
+        )
+        if run_id is not None and auto_stop_reason is not None:
+            if auto_stop_reason == "max_duration":
+                logger.info(
+                    "Auto-stopping run %s at the %.0f s recording limit",
+                    run_id,
+                    recorder._lifecycle.max_duration_s,
+                )
+            else:
+                logger.info(
+                    "Auto-stopping run %s after %.1fs without new data",
+                    run_id,
+                    recorder._lifecycle.no_data_timeout_s,
+                )
+            await asyncio.wait_for(
                 asyncio.to_thread(
-                    recorder.flush_tick,
+                    recorder.stop_recording,
+                    _only_if_run_id=run_id,
+                    reason=auto_stop_reason,
                 ),
                 timeout=_DB_THREAD_TIMEOUT_S,
             )
-            if run_id is None:
-                if _is_tick_error_message(recorder._persistence.last_write_error):
-                    recorder._persistence.clear_last_write_error()
-                await asyncio.sleep(interval)
-                continue
-            if auto_stop_reason is not None:
-                if auto_stop_reason == "max_duration":
-                    logger.info(
-                        "Auto-stopping run %s at the %.0f s recording limit",
-                        run_id,
-                        recorder._lifecycle.max_duration_s,
-                    )
-                else:
-                    logger.info(
-                        "Auto-stopping run %s after %.1fs without new data",
-                        run_id,
-                        recorder._lifecycle.no_data_timeout_s,
-                    )
-                await asyncio.wait_for(
-                    asyncio.to_thread(
-                        recorder.stop_recording,
-                        _only_if_run_id=run_id,
-                        reason=auto_stop_reason,
-                    ),
-                    timeout=_DB_THREAD_TIMEOUT_S,
-                )
-            if _is_tick_error_message(recorder._persistence.last_write_error):
-                recorder._persistence.clear_last_write_error()
-        except TimeoutError:
-            recorder._persistence.set_last_write_error(_DB_TIMEOUT_ERROR)
-            logger.warning(
-                "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
-                _DB_THREAD_TIMEOUT_S,
-            )
-        await asyncio.sleep(interval)
+        if _is_tick_error_message(recorder._persistence.last_write_error):
+            recorder._persistence.clear_last_write_error()
+    except TimeoutError:
+        recorder._persistence.set_last_write_error(_DB_TIMEOUT_ERROR)
+        logger.warning(
+            "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
+            _DB_THREAD_TIMEOUT_S,
+        )

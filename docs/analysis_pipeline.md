@@ -192,9 +192,10 @@ flat stretch). A spell is **braking** when all of these hold:
   tell light braking from coasting, so it counts as `DECEL`. The detector
   itself accepts from 0.19 g, so a stop at exactly 0.2 g is not lost to the
   slope fit over a GPS staircase or a speed rounded to whole km/h. On a 1 Hz
-  GPS each new fix lands on an irregular row (the Pi's flush ticks come about
-  every 0.27 s and drift against the fixes), which makes the slope wobble: by
-  up to about 20 % over ±1.5 s, about 9 % over ±2.5 s;
+  GPS each new fix lands on only about every fourth row, and not on a fixed
+  one (the fixes are not locked to the Pi's 0.25 s flush ticks, and their
+  latency varies), which makes the slope wobble: with ticks drifting against
+  the fixes, by up to about 20 % over ±1.5 s, about 9 % over ±2.5 s;
 - it lasts at least 2.5 s (`BRAKING_MIN_DURATION_S`, about one spectrum
   window). Its braking readings lie at most 1 s apart, so neither a gap in
   the readings nor a reading whose slope wobbles above the threshold for up

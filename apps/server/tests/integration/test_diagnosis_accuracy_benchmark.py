@@ -2188,9 +2188,10 @@ def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:
 def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
     """The firm-stops step at its gentlest, 0.2 g from 100 to 40 km/h (8.5 s), on a 1 Hz GPS.
 
-    The fixes come 0.8 s late, and the recorder flushes every 0.268 s, as
-    measured on the Pi, so each new speed lands on an irregular tick. The Live
-    count has each stop, and the analysis brakes in each.
+    The fixes come 0.8 s late, and the recorder flushes every 0.268 s (as the
+    Pi did before its flush loop kept deadlines), so each new speed lands on an
+    irregular tick, as when a fix's latency varies. The Live count has each
+    stop, and the analysis brakes in each.
     """
     stop_s = 60.0 / (0.2 * 9.80665 * 3.6)
     phases = [_phase("brake-speed-up", 6.0, 70.0, 100.0, guided="brake")]

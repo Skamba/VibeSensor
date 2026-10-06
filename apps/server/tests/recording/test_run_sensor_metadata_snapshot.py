@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import create_autospec
@@ -21,7 +22,6 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
     make_logger,
     fake_registry,
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     sensor_id = "AA:BB:CC:DD:EE:01"
@@ -71,10 +71,10 @@ def test_run_sensor_rows_stay_stable_when_live_metadata_changes(
             return
         raise _StopLoop
 
-    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
-
     with pytest.raises(_StopLoop):
-        asyncio.run(logger.run())
+        asyncio.run(
+            _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__), sleep=fake_sleep)
+        )
 
     logger.stop_recording()
     assert logger.post_analysis.wait(timeout_s=3.0)
@@ -97,7 +97,6 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
     make_logger,
     fake_registry,
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     active_sensor_id = "AA:BB:CC:DD:EE:01"
@@ -169,10 +168,10 @@ def test_first_seen_sensor_gets_stable_snapshot_entry_during_run(
             return
         raise _StopLoop
 
-    monkeypatch.setattr(_recorder_runtime.asyncio, "sleep", fake_sleep)
-
     with pytest.raises(_StopLoop):
-        asyncio.run(logger.run())
+        asyncio.run(
+            _recorder_runtime.run_loop(logger, logger=logging.getLogger(__name__), sleep=fake_sleep)
+        )
 
     logger.stop_recording()
     assert logger.post_analysis.wait(timeout_s=3.0)
