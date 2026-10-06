@@ -3,11 +3,16 @@ import type { ComponentChildren } from "preact";
 import { CAPABILITY_MARK_SYMBOL } from "../../capabilities";
 import { FeedbackBlock } from "../../components/feedback";
 import { t } from "../../i18n";
-import type { RecordingModel, SummaryAction } from "./dashboard_model";
+import type {
+  GuidedStep,
+  RecordingModel,
+  SummaryAction,
+} from "./dashboard_model";
 import {
   advanceGuidedTest,
   alerts,
   capabilities,
+  confirmAndStopRecording,
   guidedTest,
   health,
   openSummaryTarget,
@@ -15,7 +20,6 @@ import {
   recording,
   speedReadout,
   startRecording,
-  stopRecording,
 } from "./dashboard_store";
 
 function Stat(props: {
@@ -281,9 +285,56 @@ function CapabilityLine() {
   );
 }
 
+function GuidedSteps(props: { steps: GuidedStep[]; preview: boolean }) {
+  return (
+    <ol class="guided-test__steps">
+      {props.steps.map((step) => (
+        <li
+          key={step.phase}
+          class="guided-test__step"
+          data-guided-step={step.phase}
+          data-step-state={step.state}
+          aria-current={step.state === "current" ? "step" : undefined}
+        >
+          <div class="guided-test__step-label">{step.label}</div>
+          <strong>{step.title}</strong>
+          {props.preview || step.state === "current" ? (
+            <div class="guided-test__instruction">{step.instruction}</div>
+          ) : null}
+          {step.progress ? (
+            <div class="guided-test__progress" data-guided-progress>
+              {step.progress}
+            </div>
+          ) : null}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * The guided test drive in the recording card: a preview of its steps while
+ * parked, and the full instructions while a run records. The step in progress
+ * and its Next button sit in the card at the top of Live (`GuidedStepCard`),
+ * away from Stop.
+ */
 function GuidedTest() {
   const model = guidedTest.value;
-  if (!model.visible) {
+  if (model.mode === "preview") {
+    return (
+      <details id="guidedPreview" class="guided-test guided-test--preview">
+        <summary class="guided-test__title">
+          {t("dashboard.guided.preview.summary")}
+        </summary>
+        <div class="guided-test__hint">{model.hint}</div>
+        <div class="guided-test__hint">
+          {t("dashboard.guided.preview.note")}
+        </div>
+        <GuidedSteps steps={model.steps} preview />
+      </details>
+    );
+  }
+  if (model.mode !== "active") {
     return null;
   }
   const action = model.action;
@@ -291,28 +342,7 @@ function GuidedTest() {
     <section id="guidedTest" class="guided-test" aria-live="polite">
       <div class="guided-test__title">{t("dashboard.guided.title")}</div>
       <div class="guided-test__hint">{model.hint}</div>
-      <ol class="guided-test__steps">
-        {model.steps.map((step) => (
-          <li
-            key={step.phase}
-            class="guided-test__step"
-            data-guided-step={step.phase}
-            data-step-state={step.state}
-            aria-current={step.state === "current" ? "step" : undefined}
-          >
-            <div class="guided-test__step-label">{step.label}</div>
-            <strong>{step.title}</strong>
-            {step.state === "current" ? (
-              <div class="guided-test__instruction">{step.instruction}</div>
-            ) : null}
-            {step.progress ? (
-              <div class="guided-test__progress" data-guided-progress>
-                {step.progress}
-              </div>
-            ) : null}
-          </li>
-        ))}
-      </ol>
+      <GuidedSteps steps={model.steps} preview={false} />
       {model.finished ? (
         <div class="guided-test__done">{t("dashboard.guided.done")}</div>
       ) : null}
@@ -327,6 +357,42 @@ function GuidedTest() {
           {action.label}
         </button>
       ) : null}
+    </section>
+  );
+}
+
+/** The guided step in progress, short enough to read at a glance, with Next. */
+function GuidedStepCard() {
+  const model = guidedTest.value;
+  const step = model.current;
+  if (!step) {
+    return null;
+  }
+  return (
+    <section
+      id="guidedStepCard"
+      class="guided-step-card"
+      data-guided-step={step.phase}
+      aria-live="polite"
+    >
+      <div class="guided-step-card__label">
+        {step.label} · <strong>{step.title}</strong>
+      </div>
+      <div class="guided-step-card__text">{step.short}</div>
+      {step.progress ? (
+        <div class="guided-step-card__progress" data-guided-progress>
+          {step.progress}
+        </div>
+      ) : null}
+      <button
+        id="guidedNextBtn"
+        class="btn btn--primary guided-step-card__next"
+        type="button"
+        disabled={model.disabled}
+        onClick={() => void advanceGuidedTest(step.action.phase)}
+      >
+        {step.action.label}
+      </button>
     </section>
   );
 }
@@ -395,7 +461,7 @@ function Recording(props: { onAddCar: () => void }) {
           type="button"
           hidden={!model.showStop}
           disabled={model.stopDisabled}
-          onClick={() => void stopRecording()}
+          onClick={() => void confirmAndStopRecording()}
         >
           {t("dashboard.stop_recording")}
         </button>
@@ -415,14 +481,16 @@ function Recording(props: { onAddCar: () => void }) {
 }
 
 /**
- * Notices a driver must see at a glance, shown in the sticky header so they
- * stay on screen wherever the page is scrolled: a quiet sensor while recording
- * (on every view), and why the last run stopped by itself (on Live).
+ * What a driver must see at a glance, in the sticky header so it stays on
+ * screen wherever the page is scrolled: a quiet sensor while recording (on
+ * every view), and on Live why the last run stopped by itself and the guided
+ * step in progress.
  */
 export function DriveAlerts(props: { onLive: boolean }) {
   const { sensorSilent } = alerts.value;
   const stopNotice = props.onLive ? alerts.value.stopNotice : null;
-  if (!sensorSilent && !stopNotice) {
+  const guidedStep = props.onLive && guidedTest.value.current !== null;
+  if (!sensorSilent && !stopNotice && !guidedStep) {
     return null;
   }
   return (
@@ -437,6 +505,7 @@ export function DriveAlerts(props: { onLive: boolean }) {
           <FeedbackBlock message={stopNotice} />
         </div>
       ) : null}
+      {guidedStep ? <GuidedStepCard /> : null}
     </div>
   );
 }

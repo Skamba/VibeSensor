@@ -10,12 +10,15 @@ export const GUIDED_SWEEP_FROM_KMH = 50;
 export const GUIDED_SWEEP_TO_KMH = 120;
 export const GUIDED_COAST_DROP_KMH = 30;
 /**
- * The brake step's firm stops: from 100 to 40 km/h at a brisk 0.25-0.4 g lasts
- * 4-7 s, well over the 2.5 s at 0.2 g the analysis needs to call it braking,
- * and three stops give it ample braking spectra (docs/analysis_pipeline.md).
+ * The brake step's firm stops, at speeds an ordinary road allows. The braking
+ * rule smears a stop's ends over its +-2.5 s slope window, so a stop counts only
+ * when it sheds about 50 km/h at 0.2 g (45 from 0.22 g); from 80 to 20 km/h
+ * sheds 60, so a driver who starts at 75 or stops at 25 still counts. It lasts
+ * 5-8.5 s at 0.2-0.35 g, and three stops give the brake check ample braking
+ * spectra (docs/analysis_pipeline.md).
  */
-export const GUIDED_BRAKE_FROM_KMH = 100;
-export const GUIDED_BRAKE_TO_KMH = 40;
+export const GUIDED_BRAKE_FROM_KMH = 80;
+export const GUIDED_BRAKE_TO_KMH = 20;
 export const GUIDED_BRAKE_STOPS = 3;
 
 export const SPECTRUM_DB_MIN = 0;

@@ -725,25 +725,44 @@ export interface GuidedStep {
   state: "done" | "current" | "todo";
 }
 
+/** The step in progress, for the large card at the top of Live. */
+export interface GuidedCurrentStep {
+  phase: GuidedPhase;
+  label: string;
+  title: string;
+  /** A glanceable version of the instruction. */
+  short: string;
+  progress: string | null;
+  /** The next step to start, or `null` to finish the guided test. */
+  action: { label: string; phase: GuidedPhase | null };
+}
+
 export interface GuidedTestModel {
-  visible: boolean;
+  /**
+   * `preview` lists the steps to read while parked; `active` is the guided
+   * test of the run being recorded.
+   */
+  mode: "hidden" | "preview" | "active";
   hint: string;
   finished: boolean;
   steps: GuidedStep[];
-  /** What the button does next: a step to start, `null` to finish, absent when done. */
-  action: { label: string; phase: GuidedPhase | null } | null;
+  /** Starts the guided test, before any step; `current.action` moves on from there. */
+  action: { label: string; phase: GuidedPhase } | null;
+  current: GuidedCurrentStep | null;
   disabled: boolean;
 }
 
-function guidedInstruction(
+function guidedText(
   phase: GuidedPhase,
+  kind: "instruction" | "short",
   unit: SpeedUnit,
   electric: boolean,
   t: Translate,
 ): string {
   const speed = (kmh: number) => fmt(kmhInUnit(kmh, unit), 0);
-  const suffix = electric ? "_ev" : "";
-  return t(`dashboard.guided.${phase}.instruction${suffix}`, {
+  // Only the sweep (top gear) and the brake step (regen) read differently in an EV.
+  const ev = electric && (kind === "instruction" || phase === "sweep");
+  return t(`dashboard.guided.${phase}.${kind}${ev ? "_ev" : ""}`, {
     from: speed(GUIDED_SWEEP_FROM_KMH),
     to: speed(GUIDED_SWEEP_TO_KMH),
     drop: speed(GUIDED_COAST_DROP_KMH),
@@ -766,11 +785,13 @@ function brakeProgress(stops: number, t: Translate): string {
 }
 
 /**
- * The optional guided test drive shown while a run records. The server
+ * The optional guided test drive. While parked, Live previews its steps so the
+ * driver can read them before setting off. While a run records, the server
  * reports the step in progress, the steps completed so far and the brake
- * step's firm stops, so the panel survives a page reload mid-run. An EV drives
- * without top gear or neutral: its steps are the sweep, the hold and the
- * firm stops (docs/user_journeys.md §5.3).
+ * step's firm stops, so the guided test survives a page reload mid-run; the
+ * step in progress also gets a short card with the Next button at the top of
+ * Live. An EV drives without top gear or neutral: its steps are the sweep, the
+ * hold and the firm stops (docs/user_journeys.md §5.3).
  */
 export function guidedTestModel(
   status: LoggingStatusPayload,
@@ -781,22 +802,23 @@ export function guidedTestModel(
 ): GuidedTestModel {
   const electric = fuelType === "EV";
   const order = electric ? GUIDED_STEPS_EV : GUIDED_STEPS;
-  const current = status.guided_phase ?? null;
-  const completed = status.guided_phases_completed ?? [];
+  const recording = status.enabled && Boolean(status.run_id);
+  const current = recording ? (status.guided_phase ?? null) : null;
+  const completed = recording ? (status.guided_phases_completed ?? []) : [];
   const finished =
     current === null && order.every((step) => completed.includes(step));
   const index = current ? order.indexOf(current) : finished ? order.length : -1;
+  const label = (i: number) =>
+    t("dashboard.guided.step_label", { n: i + 1, total: order.length });
+  const title = (phase: GuidedPhase) => t(`dashboard.guided.${phase}.title`);
   const steps = order.map((phase, i) => {
     const state: GuidedStep["state"] =
       i < index ? "done" : i === index ? "current" : "todo";
     return {
       phase,
-      label: t("dashboard.guided.step_label", {
-        n: i + 1,
-        total: order.length,
-      }),
-      title: t(`dashboard.guided.${phase}.title`),
-      instruction: guidedInstruction(phase, unit, electric, t),
+      label: label(i),
+      title: title(phase),
+      instruction: guidedText(phase, "instruction", unit, electric, t),
       progress:
         phase === "brake" && state !== "todo"
           ? brakeProgress(status.guided_brake_stops, t)
@@ -804,26 +826,50 @@ export function guidedTestModel(
       state,
     };
   });
-  let action: GuidedTestModel["action"] = null;
-  if (index < 0) {
-    action = { label: t("dashboard.guided.start"), phase: order[0] };
-  } else if (index < order.length - 1) {
+  let currentStep: GuidedCurrentStep | null = null;
+  if (current !== null && index >= 0) {
     const next = order[index + 1];
-    action = {
-      label: t("dashboard.guided.next", {
-        step: t(`dashboard.guided.${next}.title`),
-      }),
-      phase: next,
+    currentStep = {
+      phase: current,
+      label: label(index),
+      title: title(current),
+      short: guidedText(current, "short", unit, electric, t),
+      progress: steps[index].progress,
+      action: next
+        ? {
+            label: t("dashboard.guided.next", { step: title(next) }),
+            phase: next,
+          }
+        : { label: t("dashboard.guided.finish"), phase: null },
     };
-  } else if (index === order.length - 1) {
-    action = { label: t("dashboard.guided.finish"), phase: null };
   }
   return {
-    visible: status.enabled && Boolean(status.run_id),
+    mode: recording ? "active" : status.enabled ? "hidden" : "preview",
     hint: t(electric ? "dashboard.guided.hint_ev" : "dashboard.guided.hint"),
     finished,
     steps,
-    action,
+    action:
+      recording && index < 0
+        ? { label: t("dashboard.guided.start"), phase: order[0] }
+        : null,
+    current: currentStep,
     disabled: busy,
   };
+}
+
+/**
+ * Stopping mid-step ends the guided test with the run, so a tap meant for Next
+ * asks first. Without a step in progress, Stop stops straight away.
+ */
+export function stopConfirmation(
+  model: GuidedTestModel,
+  t: Translate,
+): string | null {
+  const step = model.current;
+  return step
+    ? t("dashboard.guided.confirm_stop", {
+        step: step.title,
+        label: step.label,
+      })
+    : null;
 }

@@ -15,6 +15,7 @@ import {
   recordingModel,
   runsAffected,
   speedText,
+  stopConfirmation,
   strongestSensor,
   withLoggingError,
 } from "../src/pages/dashboard/dashboard_model";
@@ -748,12 +749,27 @@ describe("guidedTestModel", () => {
   const states = (model: ReturnType<typeof guidedTestModel>) =>
     model.steps.map((step) => step.state);
 
-  test("only shows while a run records", () => {
-    expect(guidedTestModel(IDLE_STATUS, "kmh", false, null, t).visible).toBe(
-      false,
-    );
-    expect(guidedTestModel(recordingRun, "kmh", false, null, t).visible).toBe(
-      true,
+  test("previews every step while parked, and runs only while a run records", () => {
+    const parked = guidedTestModel(IDLE_STATUS, "kmh", false, null, t);
+    expect(parked.mode).toBe("preview");
+    expect(states(parked)).toEqual(["todo", "todo", "todo", "todo"]);
+    expect(parked.steps.every((step) => step.instruction !== "")).toBe(true);
+    // Nothing to start or move on to until the run records.
+    expect(parked.action).toBeNull();
+    expect(parked.current).toBeNull();
+    // A step left over from the last run is not shown as in progress.
+    expect(
+      guidedTestModel(
+        { ...IDLE_STATUS, guided_phase: "hold" },
+        "kmh",
+        false,
+        null,
+        t,
+      ).current,
+    ).toBeNull();
+
+    expect(guidedTestModel(recordingRun, "kmh", false, null, t).mode).toBe(
+      "active",
     );
   });
 
@@ -765,6 +781,7 @@ describe("guidedTestModel", () => {
       label: "dashboard.guided.start",
       phase: "sweep",
     });
+    expect(model.current).toBeNull();
     expect(model.finished).toBe(false);
   });
 
@@ -781,7 +798,16 @@ describe("guidedTestModel", () => {
       t,
     );
     expect(states(hold)).toEqual(["done", "current", "todo", "todo"]);
-    expect(hold.action).toEqual({
+    // Next moves to the card at the top; the recording card has no button.
+    expect(hold.action).toBeNull();
+    expect(hold.current).toMatchObject({
+      phase: "hold",
+      label: 'dashboard.guided.step_label:{"n":2,"total":4}',
+      title: "dashboard.guided.hold.title",
+      progress: null,
+    });
+    expect(hold.current?.short).toMatch(/^dashboard\.guided\.hold\.short:/);
+    expect(hold.current?.action).toEqual({
       label:
         'dashboard.guided.next:{"step":"dashboard.guided.coast_down.title"}',
       phase: "coast_down",
@@ -799,7 +825,7 @@ describe("guidedTestModel", () => {
       t,
     );
     expect(states(coast)).toEqual(["done", "done", "current", "todo"]);
-    expect(coast.action).toEqual({
+    expect(coast.current?.action).toEqual({
       label: 'dashboard.guided.next:{"step":"dashboard.guided.brake.title"}',
       phase: "brake",
     });
@@ -816,7 +842,10 @@ describe("guidedTestModel", () => {
       t,
     );
     expect(states(brake)).toEqual(["done", "done", "done", "current"]);
-    expect(brake.action).toEqual({
+    expect(brake.current?.progress).toBe(
+      'dashboard.guided.brake.progress:{"n":0,"total":3}',
+    );
+    expect(brake.current?.action).toEqual({
       label: "dashboard.guided.finish",
       phase: null,
     });
@@ -874,6 +903,7 @@ describe("guidedTestModel", () => {
     expect(model.finished).toBe(true);
     expect(states(model)).toEqual(["done", "done", "done", "done"]);
     expect(model.action).toBeNull();
+    expect(model.current).toBeNull();
   });
 
   test("a new run without completed steps starts over", () => {
@@ -906,16 +936,27 @@ describe("guidedTestModel", () => {
       "hold",
       "brake",
     ]);
-    expect(model.action).toEqual({
+    expect(model.current?.action).toEqual({
       label: "Next: Firm stops",
       phase: "brake",
     });
+    expect(model.current?.short).toBe(
+      "Hold a steady speed where it vibrates most, about 20 s.",
+    );
     expect(model.hint).toContain("no coast-down step");
     // Regenerative braking spares the discs: the stops must use them.
     expect(model.steps[2].instruction).toContain("regenerative braking");
     for (const step of model.steps) {
       expect(step.instruction).not.toMatch(/top gear|neutral|\{\w+\}/);
     }
+    const sweep = guidedTestModel(
+      { ...recordingRun, guided_phase: "sweep" },
+      "kmh",
+      false,
+      "EV",
+      activeT,
+    );
+    expect(sweep.current?.short).toBe("Speed up smoothly from 50 to 120 km/h.");
     expect(
       guidedTestModel(
         {
@@ -930,6 +971,34 @@ describe("guidedTestModel", () => {
     ).toBe(true);
   });
 
+  test("asks before Stop only while a guided step is in progress", () => {
+    const model = (status: LoggingStatusPayload) =>
+      guidedTestModel(status, "kmh", false, null, t);
+
+    expect(stopConfirmation(model(recordingRun), t)).toBeNull();
+    expect(
+      stopConfirmation(
+        model({
+          ...recordingRun,
+          guided_phase: "brake",
+          guided_phases_completed: ["sweep", "hold", "coast_down"],
+        }),
+        t,
+      ),
+    ).toBe(
+      'dashboard.guided.confirm_stop:{"step":"dashboard.guided.brake.title","label":"dashboard.guided.step_label:{\\"n\\":4,\\"total\\":4}"}',
+    );
+    expect(
+      stopConfirmation(
+        model({
+          ...recordingRun,
+          guided_phases_completed: ["sweep", "hold", "coast_down", "brake"],
+        }),
+        t,
+      ),
+    ).toBeNull();
+  });
+
   test("disables the button while a request is in flight", () => {
     expect(guidedTestModel(recordingRun, "kmh", true, null, t).disabled).toBe(
       true,
@@ -942,32 +1011,36 @@ describe("guidedTestModel", () => {
       unit: "kmh",
       sweep: "from about 50 to 120 km/h,",
       coast: "about 30 km/h slower",
-      brake: "brake firmly from about 100 to 40 km/h,",
+      brake: "brake firmly from about 80 to 20 km/h,",
+      short: "brake firmly from 80 to 20 km/h, 3 times.",
     },
     {
       language: "en",
       unit: "mps",
       sweep: "from about 14 to 33 m/s,",
       coast: "about 8 m/s slower",
-      brake: "brake firmly from about 28 to 11 m/s,",
+      brake: "brake firmly from about 22 to 6 m/s,",
+      short: "brake firmly from 22 to 6 m/s, 3 times.",
     },
     {
       language: "nl",
       unit: "kmh",
       sweep: "van ongeveer 50 naar 120 km/u,",
       coast: "ongeveer 30 km/u langzamer",
-      brake: "stevig af van ongeveer 100 tot 40 km/u,",
+      brake: "stevig af van ongeveer 80 tot 20 km/u,",
+      short: "rem 3 keer stevig af van 80 tot 20 km/u.",
     },
     {
       language: "nl",
       unit: "mps",
       sweep: "van ongeveer 14 naar 33 m/s,",
       coast: "ongeveer 8 m/s langzamer",
-      brake: "stevig af van ongeveer 28 tot 11 m/s,",
+      brake: "stevig af van ongeveer 22 tot 6 m/s,",
+      short: "rem 3 keer stevig af van 22 tot 6 m/s.",
     },
   ] as const)(
     "names step speeds in the speed unit ($language, $unit)",
-    async ({ language, unit, sweep, coast, brake }) => {
+    async ({ language, unit, sweep, coast, brake, short }) => {
       await setLanguage(language);
       try {
         const model = guidedTestModel(recordingRun, unit, false, null, activeT);
@@ -979,6 +1052,15 @@ describe("guidedTestModel", () => {
           expect(step.instruction).not.toMatch(/\{\w+\}/);
         }
         expect(holdStep.instruction).not.toMatch(/km\/h|km\/u|m\/s/);
+        // The card at the top says the same in a few words.
+        const braking = guidedTestModel(
+          { ...recordingRun, guided_phase: "brake" },
+          unit,
+          false,
+          null,
+          activeT,
+        );
+        expect(braking.current?.short).toContain(short);
       } finally {
         await setLanguage("en");
       }

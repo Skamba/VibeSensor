@@ -132,14 +132,14 @@ def _brake_step_drive() -> list[tuple[float, float]]:
     """The guided brake step as the recorder stores it: 4 rows a second, GPS speed at 1 Hz.
 
     A lift-off coast (0.04 g), a gentle stop (0.14 g) and a dab on the brakes too
-    short to judge (100 to 70 km/h in 3 s) first, then three firm stops from 100
-    to 40 km/h in 6 s (0.28 g), each followed by speeding up again.
+    short to judge (100 to 70 km/h in 3 s) first, then three firm stops from 80
+    to 20 km/h in 6 s (0.28 g), each followed by speeding up again.
     """
     legs = [(4.0, 100.0, 100.0), (10.0, 100.0, 85.0), (4.0, 85.0, 100.0), (8.0, 100.0, 60.0)]
-    legs += [(8.0, 60.0, 100.0), (3.0, 100.0, 70.0), (5.0, 70.0, 100.0)]
+    legs += [(8.0, 60.0, 100.0), (3.0, 100.0, 70.0), (5.0, 70.0, 100.0), (6.0, 100.0, 80.0)]
     for _stop in range(3):
-        legs += [(4.0, 100.0, 100.0), (6.0, 100.0, 40.0), (6.0, 40.0, 100.0)]
-    legs.append((4.0, 100.0, 100.0))
+        legs += [(4.0, 80.0, 80.0), (6.0, 80.0, 20.0), (6.0, 20.0, 80.0)]
+    legs.append((4.0, 80.0, 80.0))
 
     def speed_at(t_s: float) -> float:
         for duration_s, start, end in legs:
@@ -220,7 +220,7 @@ def _gps_ticks(legs: list[tuple[float, float, float]], *, fix_offset_s: float, s
 @pytest.mark.parametrize("firm_g", [0.2, 0.3])
 @pytest.mark.parametrize("fix_offset_s", [i / 20 for i in range(20)])
 def test_firm_stops_count_once_each_on_a_one_hz_gps(fix_offset_s: float, firm_g: float) -> None:
-    """Stops from 100 to 40 km/h count once each on a 1 Hz GPS, from the step's gentlest 0.2 g.
+    """Stops from 80 to 20 km/h count once each on a 1 Hz GPS, from the step's gentlest 0.2 g.
 
     A slowdown at 0.1 g first does not count. The live count and the analysis
     find the same three stops.
@@ -229,16 +229,16 @@ def test_firm_stops_count_once_each_on_a_one_hz_gps(fix_offset_s: float, firm_g:
     # The brakes take half a second to bite and to let go (half the deceleration).
     bite_kmh = firm_kmh_s * 0.25
     slowdown_s = 60.0 / (0.1 * _G_KMH_S)
-    legs = [(4.0, 100.0, 100.0), (slowdown_s, 100.0, 40.0), (8.0, 40.0, 100.0)]
+    legs = [(4.0, 80.0, 80.0), (slowdown_s, 80.0, 20.0), (8.0, 20.0, 80.0)]
     for _stop in range(3):
         legs += [
-            (4.0, 100.0, 100.0),
-            (0.5, 100.0, 100.0 - bite_kmh),
-            ((60.0 - 2 * bite_kmh) / firm_kmh_s, 100.0 - bite_kmh, 40.0 + bite_kmh),
-            (0.5, 40.0 + bite_kmh, 40.0),
-            (8.0, 40.0, 100.0),
+            (4.0, 80.0, 80.0),
+            (0.5, 80.0, 80.0 - bite_kmh),
+            ((60.0 - 2 * bite_kmh) / firm_kmh_s, 80.0 - bite_kmh, 20.0 + bite_kmh),
+            (0.5, 20.0 + bite_kmh, 20.0),
+            (8.0, 20.0, 80.0),
         ]
-    legs.append((6.0, 100.0, 100.0))
+    legs.append((6.0, 80.0, 80.0))
     drive = _gps_ticks(legs, fix_offset_s=fix_offset_s, seed=round(fix_offset_s * 20))
 
     stops = GuidedBrakeStops()

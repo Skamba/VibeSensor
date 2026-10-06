@@ -208,7 +208,7 @@ flat stretch). A spell is **braking** when all of these hold:
 The wide slope window smears a stop's start and end, so a gentle stop must
 last a little longer to count: on a 1 Hz GPS, about 7.5 s at 0.2 g (100 to 47
 km/h), 5.5 s at 0.25 g, 4.5 s at 0.3 g and 3 s at 0.4 g. A 0.2 g stop from
-100 to 40 km/h (8.5 s), the guided step's gentlest, counts with a 1 Hz GPS
+80 to 20 km/h (8.5 s), the guided step's gentlest, counts with a 1 Hz GPS
 0.8 s late; over ±1.5 s, without bridging the wobble, most such stops were
 lost. A slowdown at 0.18 g or less never counts.
 
@@ -216,8 +216,9 @@ The same rule applies to OBD speed: OBD-II has no standard brake-pedal PID,
 so braking is inferred from the speed trend whatever the speed source. A
 typed-in speed never brakes.
 
-The guided test drive's last step asks for three firm stops from about 100 to
-40 km/h (4–7 s each at 0.25–0.4 g), and the Live page counts them with the
+The guided test drive's last step asks for three firm stops from about 80 to
+20 km/h (5–8.5 s each at 0.2–0.35 g; shedding 60 km/h leaves room for a
+driver who starts at 75 or stops at 25), and the Live page counts them with the
 same `braking_intervals` ([run_lifecycle.md](run_lifecycle.md)), so a drive
 that completes the step has braking spectra to judge.
 
@@ -236,6 +237,13 @@ as `brakes` when, at the sensors that hear it:
   braking sample, so spectra that straddle the start or end of a stop count
   for neither side) fall in the speed band the car braked through, and at
   most 10 % of them hear the order within 12 dB of its median braking level.
+
+Below about 35 km/h a wheel's first order lies under the 5 Hz analysis floor
+(`MIN_ANALYSIS_FREQ_HZ`), whose peaks are dropped, so the end of a stop cannot
+show it. Those spectra are no chance to hear any order
+(`match_samples_for_hypothesis` skips a window whose predicted frequency is
+under the floor), so they neither dilute the braking share nor any finding's
+match rate.
 
 An unbalanced or out-of-round wheel fails the second test: it is there at the
 same speeds without braking. The brake finding keeps only its braking matched

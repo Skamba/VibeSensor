@@ -544,13 +544,17 @@ test("journey: the guided test drive walks sweep, hold, neutral coast-down and f
   });
 
   const panel = page.locator("#guidedTest");
-  const button = page.locator("#guidedTestBtn");
+  const start = page.locator("#guidedTestBtn");
+  // The step in progress and its Next button sit at the top of Live.
+  const card = page.locator("#guidedStepCard");
+  const button = page.locator("#guidedNextBtn");
   const stepState = (phase: string) =>
     panel.locator(`[data-guided-step="${phase}"]`);
   await expect(panel).toContainText("Guided test drive (optional)");
-  await expect(button).toHaveText("Start guided test");
+  await expect(start).toHaveText("Start guided test");
+  await expect(card).toBeHidden();
 
-  await button.click();
+  await start.click();
   await expect(stepState("sweep")).toHaveAttribute(
     "data-step-state",
     "current",
@@ -558,9 +562,15 @@ test("journey: the guided test drive walks sweep, hold, neutral coast-down and f
   await expect(panel).toContainText(
     "In top gear (or D), accelerate smoothly from about 50 to 120 km/h",
   );
+  await expect(card).toContainText("Step 1 of 4 · Speed sweep");
+  await expect(card).toContainText(
+    "Top gear (or D): speed up smoothly from 50 to 120 km/h.",
+  );
+  await expect(start).toBeHidden();
   await expect(button).toHaveText("Next: Steady hold");
 
   await button.click();
+  await expect(card).toContainText("Step 2 of 4 · Steady hold");
   await expect(button).toHaveText("Next: Neutral coast-down");
 
   // A reload mid-run picks the guided test up where the driver left it.
@@ -574,19 +584,23 @@ test("journey: the guided test drive walks sweep, hold, neutral coast-down and f
   await expect(button).toHaveText("Next: Firm stops");
 
   await button.click();
-  await expect(panel).toContainText("brake firmly from about 100 to 40 km/h");
+  await expect(panel).toContainText("brake firmly from about 80 to 20 km/h");
   await expect(panel).toContainText("no traffic behind you");
-  await expect(panel).toContainText("0 of 3 firm stops counted");
+  await expect(card).toContainText(
+    "Where safe: brake firmly from 80 to 20 km/h, 3 times.",
+  );
+  await expect(card).toContainText("0 of 3 firm stops counted");
   // The server counts each firm stop as it happens.
   status = { ...status, guided_brake_stops: 3 };
-  await expect(panel).toContainText(
+  await expect(card).toContainText(
     "3 of 3 firm stops counted. You can finish the guided test.",
   );
   await expect(button).toHaveText("Finish guided test");
 
   await button.click();
   await expect(panel).toContainText("Guided test done.");
-  await expect(button).toBeHidden();
+  await expect(card).toBeHidden();
+  await expect(start).toBeHidden();
   expect(marked).toEqual(["sweep", "hold", "coast_down", "brake", null]);
 
   // ...and still knows the guided test is done after another reload.
@@ -595,7 +609,8 @@ test("journey: the guided test drive walks sweep, hold, neutral coast-down and f
   for (const phase of ["sweep", "hold", "coast_down", "brake"]) {
     await expect(stepState(phase)).toHaveAttribute("data-step-state", "done");
   }
-  await expect(button).toBeHidden();
+  await expect(card).toBeHidden();
+  await expect(start).toBeHidden();
 
   status = idleStatus();
   await expect(panel).toBeHidden();
@@ -763,5 +778,77 @@ test.describe("on a phone", () => {
     await expect(silent).toBeHidden();
     await expect(hint).toBeHidden();
     await expect.poll(isPlaying).toBe(false);
+  });
+
+  test("journey: a solo driver reads the guided steps while parked, follows the current step at the top, and Stop asks first", async ({
+    page,
+  }) => {
+    let status = idleStatus();
+    await bootWithStatus(page, (route) => fulfillJson(route, status));
+    await page.route("**/api/recording/start", async (route) => {
+      status = idleStatus({ enabled: true, run_id: "run-9", elapsed_s: 2 });
+      await fulfillJson(route, status);
+    });
+    await page.route("**/api/recording/guided-phase", async (route) => {
+      const phase = (route.request().postDataJSON() as { phase: string })
+        .phase as LoggingStatusPayload["guided_phase"];
+      status = { ...status, guided_phase: phase };
+      await fulfillJson(route, status);
+    });
+    let stops = 0;
+    await page.route("**/api/recording/stop", async (route) => {
+      stops += 1;
+      status = idleStatus({ last_run_id: "run-9" });
+      await fulfillJson(route, status);
+    });
+
+    // Parked: the steps can be read before setting off.
+    const preview = page.locator("#guidedPreview");
+    await preview.locator("summary").tap();
+    await expect(preview).toContainText("Read them now, while parked.");
+    await expect(preview).toContainText(
+      "brake firmly from about 80 to 20 km/h",
+    );
+
+    await page.locator("#startLoggingBtn").tap();
+    await expect(preview).toBeHidden();
+    await page.locator("#guidedTestBtn").tap();
+
+    // The current step stays at the top, however far down the page is scrolled.
+    const card = page.locator("#guidedStepCard");
+    await expect(card).toContainText("Step 1 of 4 · Speed sweep");
+    const stop = page.locator("#stopLoggingBtn");
+    await stop.scrollIntoViewIfNeeded();
+    await expect(card).toBeInViewport();
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(card).toBeInViewport();
+    // Next and Stop are well apart.
+    const next = await page.locator("#guidedNextBtn").boundingBox();
+    const stopBox = await stop.boundingBox();
+    expect(next && stopBox).toBeTruthy();
+    if (next && stopBox) {
+      const gap = Math.max(
+        stopBox.y - (next.y + next.height),
+        next.y - (stopBox.y + stopBox.height),
+      );
+      expect(gap).toBeGreaterThanOrEqual(48);
+    }
+
+    // A Stop tap mid-step asks first; Cancel keeps recording.
+    const dialog = page.getByRole("alertdialog");
+    await stop.tap();
+    await expect(dialog).toContainText(
+      "The guided test is on Step 1 of 4: Speed sweep.",
+    );
+    await dialog.getByRole("button", { name: "Cancel" }).tap();
+    await expect(dialog).toBeHidden();
+    await expect(stop).toBeVisible();
+    expect(stops).toBe(0);
+
+    await stop.tap();
+    await dialog.getByRole("button", { name: "Confirm" }).tap();
+    await expect(page.locator("#startLoggingBtn")).toBeVisible();
+    await expect(card).toBeHidden();
+    expect(stops).toBe(1);
   });
 });

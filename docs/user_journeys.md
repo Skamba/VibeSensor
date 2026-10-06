@@ -461,9 +461,23 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   3. Coast down in neutral by about 30 km/h.
   4. Firm stops: only where it is safe and there is no traffic behind, brake
      firmly (a brisk stop at traffic lights, not an emergency stop) from about
-     100 to 40 km/h, three times (`GUIDED_BRAKE_FROM_KMH`,
+     80 to 20 km/h, three times (`GUIDED_BRAKE_FROM_KMH`,
      `GUIDED_BRAKE_TO_KMH`, `GUIDED_BRAKE_STOPS`). The step shows "n of 3 firm
      stops counted" live, then says the test can be finished.
+
+  Built for a solo driver with the phone in a holder:
+  - While parked, Live previews the steps with their full instructions
+    (`#guidedPreview`, collapsed by default), so they can be read before
+    setting off.
+  - Once recording, Start guided test sits in the recording card. From then on
+    the step in progress is a large card in the sticky header
+    (`#guidedStepCard`): "Step n of N · title", a short instruction
+    (`dashboard.guided.<step>.short`), the firm-stop count, and the Next /
+    Finish button. It stays on screen wherever the page is scrolled, and Next
+    is far from Stop. The recording card keeps the full instruction of each step.
+  - Stop during a guided step asks first (`dashboard.guided.confirm_stop`),
+    so a tap meant for Next does not end the run; without a step in progress,
+    Stop stops straight away.
 
   The coast-down classifies the vibration as following road speed or engine
   speed (`_speed_dependence` in `diagnosis.py`), and a contradicting coast-down
@@ -473,7 +487,7 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   more for at least 2.5 s from 15 km/h up (see "Braking" in
   [analysis_pipeline.md](analysis_pipeline.md)). A drive without one says the
   brakes were not checked, and points to the guided firm stops. One stop from
-  100 to 40 km/h at a brisk 0.25–0.4 g lasts 4–7 s; three give the brake
+  80 to 20 km/h at 0.2–0.35 g lasts 5–8.5 s; three give the brake
   check ample braking spectra. The step counts a stop by the analysis's own
   rule (`guided_brake_stops` in the recording status, from
   `recording/guided_brake_stops.py`), about 4 s after it ends, so a counted

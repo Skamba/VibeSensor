@@ -304,6 +304,50 @@
   justify-self: start;
 }
 
+.guided-test--preview > summary {
+  cursor: pointer;
+}
+
+.guided-test--preview[open] > summary {
+  margin-bottom: var(--space-1);
+}
+
+/* The step in progress, in the sticky header: large enough to read in a holder. */
+.guided-step-card {
+  display: grid;
+  gap: var(--space-1);
+  border: 2px solid var(--md-sys-color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface-container-high);
+  padding: var(--space-2) var(--space-3);
+}
+
+.guided-step-card__label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.guided-step-card__label strong {
+  color: var(--md-sys-color-on-surface);
+}
+
+.guided-step-card__text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.guided-step-card__progress {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.guided-step-card__next {
+  justify-self: stretch;
+  min-height: 3rem;
+  font-size: 1.05rem;
+}
+
 .logging-start-hint {
   margin: var(--space-2) 0 0;
 }

@@ -1,5 +1,5 @@
 name: guided-brake-stops
-description: Guided test drive with the brake step (sweep, hold, three firm stops from 100 to 40 km/h) and a front-left wheel imbalance that shakes whether or not the car brakes.
+description: Guided test drive with the brake step (sweep, hold, three firm stops from 80 to 20 km/h after easing off to 80) and a front-left wheel imbalance that shakes whether or not the car brakes.
 phases:
 - name: sweep
   guided_phase: sweep
@@ -51,11 +51,36 @@ phases:
     amp_scale: 0.55
     noise_scale: 1.0
   pulses: []
+- name: slow-down
+  guided_phase: brake
+  duration_s: 8.0
+  speed_start_kmh: 100.0
+  speed_end_kmh: 80.0
+  overrides:
+  - target: all
+    profile_name: rough_road
+    scene_gain: 0.28
+    scene_noise_gain: 1.0
+    amp_scale: 0.52
+    noise_scale: 1.0
+  - target: front-left
+    profile_name: wheel_imbalance
+    scene_gain: 0.85
+    scene_noise_gain: 1.0
+    amp_scale: 1.0
+    noise_scale: 1.0
+  - target: front-right
+    profile_name: wheel_mild_imbalance
+    scene_gain: 0.3
+    scene_noise_gain: 1.0
+    amp_scale: 0.55
+    noise_scale: 1.0
+  pulses: []
 - name: brake-1
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 100.0
-  speed_end_kmh: 40.0
+  speed_start_kmh: 80.0
+  speed_end_kmh: 20.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -79,8 +104,8 @@ phases:
 - name: speed-up-1
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 40.0
-  speed_end_kmh: 100.0
+  speed_start_kmh: 20.0
+  speed_end_kmh: 80.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -104,8 +129,8 @@ phases:
 - name: brake-2
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 100.0
-  speed_end_kmh: 40.0
+  speed_start_kmh: 80.0
+  speed_end_kmh: 20.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -129,8 +154,8 @@ phases:
 - name: speed-up-2
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 40.0
-  speed_end_kmh: 100.0
+  speed_start_kmh: 20.0
+  speed_end_kmh: 80.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -154,8 +179,8 @@ phases:
 - name: brake-3
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 100.0
-  speed_end_kmh: 40.0
+  speed_start_kmh: 80.0
+  speed_end_kmh: 20.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -179,8 +204,8 @@ phases:
 - name: speed-up-3
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 40.0
-  speed_end_kmh: 100.0
+  speed_start_kmh: 20.0
+  speed_end_kmh: 80.0
   overrides:
   - target: all
     profile_name: rough_road
@@ -204,8 +229,8 @@ phases:
 - name: cruise
   guided_phase: brake
   duration_s: 6.0
-  speed_start_kmh: 100.0
-  speed_end_kmh: 100.0
+  speed_start_kmh: 80.0
+  speed_end_kmh: 80.0
   overrides:
   - target: all
     profile_name: rough_road

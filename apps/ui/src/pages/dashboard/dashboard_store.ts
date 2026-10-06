@@ -7,7 +7,13 @@ import {
   stopLoggingRun,
 } from "../../api/logging";
 import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
-import { errorMessage, isDemoMode, navigate, speedUnit } from "../../app_store";
+import {
+  errorMessage,
+  isDemoMode,
+  navigate,
+  requestConfirmation,
+  speedUnit,
+} from "../../app_store";
 import { reportClock } from "../../clock_report";
 import { fmt, formatIntLocale, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
@@ -53,6 +59,7 @@ import {
   runsAffected,
   sensorLabel,
   speedText,
+  stopConfirmation,
   strongestSensor,
   type SummaryAction,
   withLoggingError,
@@ -203,12 +210,24 @@ export function startRecording(): Promise<void> {
  * clock under a recording, so a run the browser first saw mid-recording gets
  * its true time once it has stopped.
  */
-export function stopRecording(): Promise<void> {
+function stopRecording(): Promise<void> {
   return runAction("stopping", async () => {
     const stopped = await stopLoggingRun();
     void reportClock();
     return stopped;
   });
+}
+
+/**
+ * The Stop button: asks first while a guided step is in progress, so a tap
+ * meant for Next does not end the run.
+ */
+export async function confirmAndStopRecording(): Promise<void> {
+  const message = stopConfirmation(guidedTest.peek(), t);
+  if (message !== null && !(await requestConfirmation(message))) {
+    return;
+  }
+  await stopRecording();
 }
 
 // Keep the screen on for the whole run however it started (also after a

@@ -17,6 +17,7 @@ from vibesensor.analysis._types import (
     Sample,
 )
 from vibesensor.analysis.constants import (
+    MIN_ANALYSIS_FREQ_HZ,
     ORDER_MIN_COVERAGE_DURATION_S,
     ORDER_MIN_COVERAGE_POINTS,
     ORDER_MIN_MATCH_DURATION_S,
@@ -250,7 +251,10 @@ def match_samples_for_hypothesis(
         if not peaks:
             continue
         predicted_hz, ref_source = hypothesis.predicted_hz(sample, context, tire_circumference_m)
-        if predicted_hz is None or predicted_hz <= 0:
+        # Peaks under the analysis floor are dropped (``_sample_top_peaks``), so a
+        # window whose order lies there could never show it: it is not a chance
+        # to hear the order (a wheel order at town speeds, the end of a stop).
+        if predicted_hz is None or predicted_hz < MIN_ANALYSIS_FREQ_HZ:
             continue
         possible += 1
         ref_sources.add(ref_source)

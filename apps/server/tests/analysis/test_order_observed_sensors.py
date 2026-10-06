@@ -497,3 +497,22 @@ def test_floor_level_matches_add_nothing_to_an_orders_score() -> None:
         )
 
     assert score(floor_matches=True) == pytest.approx(score(floor_matches=False))
+
+
+def test_windows_whose_order_lies_below_the_analysis_floor_do_not_dilute_it() -> None:
+    # Spectra below 5 Hz are not analysed, so a wheel order at town speeds (under
+    # about 35 km/h) cannot be heard there. A drive that is half town, half
+    # 50-115 km/h with a clear wheel order whenever it can show is matched in
+    # every window that could show it, not in half of them.
+    town = [
+        {**sample, "t_s": sample["t_s"] + 100.0, "speed_kmh": 20.0 + sample["speed_kmh"] / 10.0}
+        for sample in _drive({})
+    ]
+    assert wheel_hz(31.5) < 5.0
+    drive = _drive({"front_left_wheel": [(1.0, 0.05, _always)]}) + town
+    summary = run_analysis(drive, _metadata())
+    wheel = max(
+        (f for f in summary["findings"] if f["suspected_source"] == "wheel/tire"),
+        key=lambda f: f["confidence"],
+    )
+    assert wheel["evidence_metrics"]["match_rate"] == pytest.approx(1.0)

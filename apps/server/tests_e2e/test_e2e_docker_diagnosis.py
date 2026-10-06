@@ -23,8 +23,9 @@ pytestmark = pytest.mark.e2e
 _SIM_DURATION_S = 18.0
 # One pass of a guided scenario: sweep, hold, then a neutral coast-down.
 _GUIDED_DURATION_S = 25.0
-# One pass of guided-brake-stops: sweep, hold, three firm stops, then cruising on.
-_GUIDED_BRAKE_DURATION_S = 54.0
+# One pass of guided-brake-stops: sweep, hold, easing off to 80 km/h, three firm
+# stops (the last settles about 4 s after it ends, at 56 s), then cruising on.
+_GUIDED_BRAKE_DURATION_S = 62.0
 
 
 def _record(

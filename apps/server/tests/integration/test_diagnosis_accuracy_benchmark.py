@@ -639,15 +639,15 @@ def _guided(
 def _brake_step(
     *, braking: tuple[PhaseOverride, ...] = (), from_kmh: float = 70.0
 ) -> tuple[ScenarioPhase, ...]:
-    """The guided brake step: back up to 100 km/h, then three firm stops to 40.
+    """The guided brake step: to 80 km/h, then three firm stops to 20.
 
     Each stop sheds 60 km/h in 6 s (0.28 g), a firm stop short of an emergency
     one; *braking* faults play only then.
     """
-    phases = [_phase("brake-speed-up", 6.0, from_kmh, 100.0, guided="brake")]
+    phases = [_phase("brake-speed-up", 6.0, from_kmh, 80.0, guided="brake")]
     for stop in range(3):
-        phases.append(_phase(f"brake-{stop}", 6.0, 100.0, 40.0, *braking, guided="brake"))
-        phases.append(_phase(f"brake-speed-up-{stop}", 6.0, 40.0, 100.0, guided="brake"))
+        phases.append(_phase(f"brake-{stop}", 6.0, 80.0, 20.0, *braking, guided="brake"))
+        phases.append(_phase(f"brake-speed-up-{stop}", 6.0, 20.0, 80.0, guided="brake"))
     return tuple(phases)
 
 
@@ -2294,7 +2294,7 @@ def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:
 
 
 def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
-    """The firm-stops step at its gentlest, 0.2 g from 100 to 40 km/h (8.5 s), on a 1 Hz GPS.
+    """The firm-stops step at its gentlest, 0.2 g from 80 to 20 km/h (8.5 s), on a 1 Hz GPS.
 
     The fixes come 0.8 s late, and the recorder flushes every 0.268 s (as the
     Pi did before its flush loop kept deadlines), so each new speed lands on an
@@ -2302,12 +2302,12 @@ def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
     stop, and the analysis brakes in each.
     """
     stop_s = 60.0 / (0.2 * 9.80665 * 3.6)
-    phases = [_phase("brake-speed-up", 6.0, 70.0, 100.0, guided="brake")]
+    phases = [_phase("brake-speed-up", 6.0, 70.0, 80.0, guided="brake")]
     for stop in range(3):
         phases += [
-            _phase(f"brake-steady-{stop}", 4.0, 100.0, 100.0, guided="brake"),
-            _phase(f"brake-{stop}", stop_s, 100.0, 40.0, guided="brake"),
-            _phase(f"brake-speed-up-{stop}", 8.0, 40.0, 100.0, guided="brake"),
+            _phase(f"brake-steady-{stop}", 4.0, 80.0, 80.0, guided="brake"),
+            _phase(f"brake-{stop}", stop_s, 80.0, 20.0, guided="brake"),
+            _phase(f"brake-speed-up-{stop}", 8.0, 20.0, 80.0, guided="brake"),
         ]
     result = run_sim_pipeline(
         tmp_path,
