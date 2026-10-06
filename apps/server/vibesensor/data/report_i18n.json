@@ -271,6 +271,10 @@
     "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — do the guided test's firm stops, or brake firmly from about {brake_from} a few times during the drive.",
     "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — doe de stap stevig afremmen van de begeleide test, of rem tijdens de rit een paar keer stevig af vanaf ongeveer {brake_from}."
   },
+  "COULDNT_TEST_SPEED_MISSING": {
+    "en": "the live speed (GPS or OBD-II) was missing for most of the drive, so finding no match proves nothing — record again once the GPS receiver has a fix (or the OBD-II adapter reads speed).",
+    "nl": "de live snelheid (gps of OBD-II) ontbrak het grootste deel van de rit, dus geen overeenkomst vinden bewijst niets — meet opnieuw zodra de gps-ontvanger een fix heeft (of de OBD-II-adapter snelheid leest)."
+  },
   "COULDNT_TEST_TIRE": {
     "en": "no tire size — add it to the car in Settings.",
     "nl": "geen bandenmaat — voeg die toe aan de auto in Instellingen."
@@ -611,6 +615,10 @@
     "en": "{source}: {detail}",
     "nl": "{source}: {detail}"
   },
+  "NOT_COVERED_SPEED_MISSING": {
+    "en": "the {seconds} s without {source} speed: any vibration there was not compared with a wheel or drivetrain rhythm",
+    "nl": "de {seconds} s zonder {source}-snelheid: trillingen daar zijn niet met een ritme van wielen of aandrijving vergeleken"
+  },
   "NOT_TESTABLE_DRIVE": {
     "en": "not testable: no final-drive ratio",
     "nl": "niet te testen: geen eindoverbrenging"
@@ -638,6 +646,10 @@
   "NOT_TESTABLE_SAME_RHYTHM": {
     "en": "not told apart: without measured RPM, in some gear the engine turns at this same rhythm; an OBD-II adapter or a neutral coast-down separates them",
     "nl": "niet te onderscheiden: zonder gemeten toerental draait de motor in een van de versnellingen op hetzelfde ritme; een OBD-II-adapter of uitrollen in neutraal maakt het verschil"
+  },
+  "NOT_TESTABLE_SPEED_MISSING": {
+    "en": "not testable: the live speed was missing for most of the drive, so no order could be placed",
+    "nl": "niet te testen: de live snelheid ontbrak het grootste deel van de rit, dus geen orde was te bepalen"
   },
   "NOT_TESTABLE_TIRE": {
     "en": "not testable: no tire size",
@@ -1123,6 +1135,14 @@
     "en": "Order-analysis reference context was incomplete for this run",
     "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze meting"
   },
+  "RUN_CONTEXT_WARNING_SPEED_MISSING_DETAIL": {
+    "en": "Without a live speed, those parts ({percent}% of the recording) could not be matched to the speed-dependent causes (wheels, driveline, engine) and were left out of that part of the analysis. The typed-in fallback speed is only shown live, never recorded.",
+    "nl": "Zonder live snelheid konden die delen ({percent}% van de opname) niet aan de snelheidsafhankelijke oorzaken (wielen, aandrijflijn, motor) worden gekoppeld en zijn bij dat deel van de analyse weggelaten. De ingevoerde terugvalsnelheid wordt alleen live getoond, nooit opgenomen."
+  },
+  "RUN_CONTEXT_WARNING_SPEED_MISSING_TITLE": {
+    "en": "{source} speed was missing for {seconds} s of the recording",
+    "nl": "{source}-snelheid ontbrak gedurende {seconds} s van de opname"
+  },
   "RUN_CONTEXT_WARNING_VEHICLE_CONTEXT_ALIGNMENT_DETAIL": {
     "en": "Vehicle speed or RPM context could not be aligned with some vibration analysis windows, so affected samples were excluded from time-matched order context. Unaligned speed samples: {speed_samples}, unaligned RPM samples: {rpm_samples}.",
     "nl": "De voertuigsnelheids- of toerentalcontext kon voor sommige trillingsanalysevensters niet worden uitgelijnd, dus getroffen samples zijn uitgesloten van tijd-uitgelijnde ordecontext. Niet-uitgelijnde snelheidssamples: {speed_samples}, niet-uitgelijnde toerentalsamples: {rpm_samples}."
@@ -1350,6 +1370,10 @@
   "STEP_LAYOUT_UNKNOWN": {
     "en": "The car's drive layout was not given: on a front-wheel-drive car, which has no propshaft, have the gearbox output shaft, the final-drive pinion and the differential bearings checked instead.",
     "nl": "De aandrijving van de auto is niet opgegeven: heeft de auto voorwielaandrijving (zonder cardanas), laat dan in plaats daarvan de uitgaande as van de versnellingsbak, het pignon van de eindoverbrenging en de differentieellagers controleren."
+  },
+  "STEP_NOT_CHECKED_SPEED_MISSING": {
+    "en": "Record again once the GPS receiver has a fix (or the OBD-II adapter reads speed): the live speed was missing for most of this run, so no wheel or drivetrain rhythm could be compared.",
+    "nl": "Meet opnieuw zodra de gps-ontvanger een fix heeft (of de OBD-II-adapter snelheid leest): de live snelheid ontbrak het grootste deel van deze rit, dus geen ritme van wielen of aandrijving was te vergelijken."
   },
   "STEP_NO_FAULT": {
     "en": "If you still feel a vibration, record again and hold the speed where you feel it for 20 seconds.",

@@ -525,6 +525,27 @@ test("a no-fault run without a tire size does not suggest the car is fine", () =
   ]);
 });
 
+test("a run whose live speed was missing is no result, never ruled out", () => {
+  const insights = checkedInsights(
+    "no_fault",
+    ["wheel/tire", "driveline", "brakes"].map((source) => ({
+      source,
+      status: "not_testable" as const,
+      reason: "speed_missing" as const,
+    })),
+  );
+  expect(insights.primary).toMatchObject({
+    headline: "No result: this run could not check for a cause",
+    tone: "warn",
+    nextStep:
+      "Record again once the GPS receiver has a fix (or the OBD-II adapter reads speed): the live speed was missing for most of this run, so no wheel or drivetrain rhythm could be compared.",
+  });
+  expect(insights.checks.checked).toEqual([]);
+  expect(insights.checks.notChecked[0]?.detail).toBe(
+    "the live speed (GPS or OBD-II) was missing for most of the drive, so finding no match proves nothing — record again once the GPS receiver has a fix (or the OBD-II adapter reads speed).",
+  );
+});
+
 test("a run on a hand-typed speed is no result in the list too, and asks for live speed", () => {
   const insights = populatedInsights("run-011");
   insights.diagnosis = makeDiagnosis({

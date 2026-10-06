@@ -39,6 +39,7 @@ from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
 from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LIBRARY, Profile
@@ -2392,5 +2393,185 @@ def test_recording_stops_at_the_configured_cap_and_is_still_analysed(tmp_path: P
             "wheel/tire",
             "front_left_wheel",
         )
+    finally:
+        result.history_db.close()
+
+
+def _rows(result: SimPipelineResult) -> list[SensorFrame]:
+    return [frame for batch in result.history_db.iter_run_samples(result.run_id) for frame in batch]
+
+
+# A typed-in fallback speed none of these drives holds, so a recorded one would show.
+_FALLBACK_KMH = 50.0
+
+
+@pytest.mark.parametrize("speed_source", ["gps", "obd2"])
+def test_a_live_speed_dropout_is_recorded_as_unknown_not_as_the_fallback_speed(
+    tmp_path: Path, speed_source: SpeedSource
+) -> None:
+    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="speed-dropout",
+        phases=phases,
+        client_seed=CI_SEED,
+        speed_source=speed_source,
+        fallback_speed_kmh=_FALLBACK_KMH,
+        speed_dropout_s=(24.0, 31.0),
+    )
+    try:
+        rows = _rows(result)
+        assert {row.speed_source for row in rows} == {speed_source, f"{speed_source}_unaligned"}
+        lost = [row for row in rows if 26.0 <= row.t_s <= 31.0]
+        assert lost and all(row.speed_kmh is None for row in lost), lost[0]
+        assert all(row.speed_source == f"{speed_source}_unaligned" for row in lost)
+        diagnosis = result.diagnosis
+        assert (diagnosis["verdict"], diagnosis["source"], diagnosis["zone"]) == (
+            "fault",
+            "wheel/tire",
+            "front_left_wheel",
+        )
+        source_name = "GPS" if speed_source == "gps" else "OBD-II"
+        gap = [w for w in result.analysis.payload["warnings"] if w["code"] == "speed_missing"]
+        assert len(gap) == 1, result.analysis.payload["warnings"]
+        stated = " ".join(result.report.quality.warnings)
+        # 7 s without a report; a window within a second of one still has its speed.
+        assert re.search(f"{source_name} speed was missing for [56] s of the recording", stated), (
+            stated
+        )
+    finally:
+        result.history_db.close()
+
+
+def test_a_drive_started_before_the_gps_has_a_fix_records_no_speed_until_it_has(
+    tmp_path: Path,
+) -> None:
+    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="gps-cold-start",
+        phases=phases,
+        client_seed=CI_SEED,
+        fallback_speed_kmh=_FALLBACK_KMH,
+        speed_dropout_s=(0.0, 8.0),
+    )
+    try:
+        rows = _rows(result)
+        early = [row for row in rows if row.t_s <= 8.0]
+        assert early and all(row.speed_kmh is None for row in early), early[0]
+        assert all(row.speed_source == "gps_unaligned" for row in early)
+        assert all(row.speed_kmh is not None for row in rows if row.t_s >= 10.0)
+    finally:
+        result.history_db.close()
+
+
+def test_a_stop_is_recorded_at_zero_speed(tmp_path: Path) -> None:
+    """A 1 Hz GPS reports the stop; its first 0.0 fixes are recorded, not a gap."""
+    phases = (
+        _phase("cruise", 6.0, 80.0, 80.0),
+        _phase("brake", 6.0, 80.0, 0.0),
+        _phase("stopped", 6.0, 0.0, 0.0),
+        _phase("drive-off", 8.0, 0.0, 60.0),
+        _phase("cruise-again", 10.0, 60.0, 60.0),
+    )
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="stop",
+        phases=phases,
+        client_seed=CI_SEED,
+        fallback_speed_kmh=_FALLBACK_KMH,
+        speed_report_period_s=1.0,
+    )
+    try:
+        rows = _rows(result)
+        assert {row.speed_source for row in rows} == {"gps"}
+        # Stopped from 12 s to 18 s; a row's speed is that of its analysis window.
+        stopped = [row for row in rows if 13.5 <= row.t_s <= 18.0]
+        assert stopped and all(row.speed_kmh == 0.0 for row in stopped), [
+            (row.t_s, row.speed_kmh) for row in stopped
+        ]
+    finally:
+        result.history_db.close()
+
+
+@pytest.mark.parametrize(
+    ("dropout_s", "faults"),
+    [
+        # The GPS never had a fix: no speed at all.
+        pytest.param((0.0, 100.0), (), id="no-fix-healthy-car"),
+        # A fix only for the last 7 s: too little speed to place any rhythm.
+        pytest.param(
+            (0.0, 28.0),
+            (_ov("front-left", "wheel_imbalance", 0.85, 1.0),),
+            id="late-fix-wheel-fault",
+        ),
+    ],
+)
+def test_a_run_without_live_speed_for_most_of_it_could_check_nothing(
+    tmp_path: Path, dropout_s: tuple[float, float], faults: tuple[PhaseOverride, ...]
+) -> None:
+    """No speed is no result: never "ruled out", never "no significant vibration"."""
+    phases = (*_sweep(*faults), _phase("cruise", 13.0, 70.0, 70.0, *faults))
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="mostly-no-speed",
+        phases=phases,
+        client_seed=CI_SEED,
+        fallback_speed_kmh=_FALLBACK_KMH,
+        speed_dropout_s=dropout_s,
+    )
+    try:
+        diagnosis = result.diagnosis
+        assert diagnosis["verdict"] == "no_fault", diagnosis
+        checks = {
+            check["source"]: (check["status"], check["reason"])
+            for check in diagnosis["source_checks"]
+        }
+        assert checks["wheel/tire"] == ("not_testable", "speed_missing"), checks
+        assert checks["driveline"] == ("not_testable", "speed_missing"), checks
+        assert checks["brakes"] == ("not_testable", "speed_missing"), checks
+        assert not {status for status, _ in checks.values()} & {
+            "candidate",
+            "ruled_out",
+            "ruled_out_estimated",
+        }, checks
+        owner = result.report.owner
+        assert owner.headline == "No result: this run could not check for a cause"
+        assert "GPS" in owner.next_step, owner.next_step
+        shop = " ".join(result.report.mechanic.shop)
+        assert shop.endswith("neither indicates nor rules out a repair."), shop
+    finally:
+        result.history_db.close()
+
+
+def test_a_long_speed_dropout_is_listed_as_not_covered(tmp_path: Path) -> None:
+    """The checks a run with a dropout makes hold for the part with speed only."""
+    phases = (*_sweep(), _phase("cruise", 13.0, 70.0, 70.0))
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="long-speed-dropout",
+        phases=phases,
+        client_seed=CI_SEED,
+        fallback_speed_kmh=_FALLBACK_KMH,
+        speed_dropout_s=(14.0, 28.0),
+    )
+    try:
+        assert result.diagnosis["verdict"] == "no_fault", result.diagnosis
+        not_covered = " ".join(result.report.owner.not_covered)
+        assert re.search(
+            r"The 1[34] s without GPS speed: any vibration there was not compared", not_covered
+        ), not_covered
     finally:
         result.history_db.close()

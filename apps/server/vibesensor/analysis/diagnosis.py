@@ -14,6 +14,7 @@ from math import floor, log
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
+from vibesensor.analysis._reference_findings import SPEED_REFERENCE_FINDING_ID
 from vibesensor.analysis._reference_resolution import (
     ENGINE_OFF_RPM_SOURCE,
     ESTIMATED_RPM_SOURCE,
@@ -142,7 +143,13 @@ def build_diagnosis(
     floors = _location_floors(located)
     braking = _braking_spans(test_run)
     presence = _presence_ratio(candidate, located, braking)
-    refs = _references(metadata, samples)
+    refs = _references(
+        metadata,
+        samples,
+        speed_missing=any(
+            finding.finding_id == SPEED_REFERENCE_FINDING_ID for finding in test_run.findings
+        ),
+    )
     # The tapped guided steps the drive's speed shows were done (a typed-in
     # speed shows none); a coast-down that was not one decides nothing.
     guided_done = _guided_steps_done(metadata.guided_phases, samples, braking, refs)
@@ -342,6 +349,9 @@ class _References:
     final_drive_axle: FinalDriveAxleValue | None
     # Whether a propshaft drives the rear axle; ``None`` without a drive layout.
     propshaft: bool | None
+    # Too little road speed to place any road-speed order (a live source that
+    # dropped out for most of the drive): finding no match proves nothing.
+    speed_missing: bool
 
     @property
     def electric(self) -> bool:
@@ -367,7 +377,9 @@ class _References:
         return self.gear_ratio_provenance in WEAK_FIELD_CONFIDENCES
 
 
-def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References:
+def _references(
+    metadata: RunMetadata, samples: Sequence[Sample], *, speed_missing: bool
+) -> _References:
     status = metadata.car.order_reference_status if metadata.car is not None else None
     tire = metadata.tire_circumference_m
     final_drive = _positive(metadata.final_drive_ratio)
@@ -393,6 +405,7 @@ def _references(metadata: RunMetadata, samples: Sequence[Sample]) -> _References
         drive_layout=metadata.drive_layout,
         final_drive_axle=metadata.final_drive_axle,
         propshaft=metadata.propshaft,
+        speed_missing=speed_missing,
     )
 
 
@@ -1032,6 +1045,8 @@ def _source_checks(
             # Every order was placed at the typed-in speed: no match proves nothing
             # unless the car really held exactly that speed.
             reason = "manual_speed"
+        elif refs.speed_missing:
+            reason = "speed_missing"
         else:
             reason = None
         if reason is not None:
@@ -1060,6 +1075,8 @@ def _brakes_check(refs: _References, *, braked: bool) -> SourceCheck:
     elif refs.manual_speed:
         # A typed-in speed never drops, so braking cannot be seen.
         reason = "manual_speed"
+    elif refs.speed_missing:
+        reason = "speed_missing"
     elif not braked:
         # Coasting is not braking: judder shows only with the brakes on.
         reason = "no_braking"

@@ -89,17 +89,18 @@ def apply_tpv(
     if isinstance(tpv.mode, int) and tpv.mode >= 2 and tpv.speed is not None:
         if is_speed_plausible(tpv.speed):
             accepted, zero_speed_streak = evaluate_snapshot_speed_sample(snapshot, tpv.speed)
+            observed_at = monotonic()
             if accepted:
-                observed_at = monotonic()
                 speed_snapshot = (tpv.speed, observed_at)
-                speed_history = append_timed_observation(
-                    snapshot.speed_history,
-                    value=tpv.speed,
-                    monotonic_s=observed_at,
-                    now_s=observed_at,
-                )
-            else:
-                speed_history = snapshot.speed_history
+            # The history the recording aligns to keeps every fix, a first 0.0 too:
+            # only the live speed waits for a drop to zero to be confirmed, so a run
+            # records a real stop from its first fix instead of a gap there.
+            speed_history = append_timed_observation(
+                snapshot.speed_history,
+                value=tpv.speed,
+                monotonic_s=observed_at,
+                now_s=observed_at,
+            )
         else:
             zero_speed_streak = 0
             speed_history = snapshot.speed_history

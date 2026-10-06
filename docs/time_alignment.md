@@ -89,7 +89,19 @@ it, so `SignalProcessor.latest_analysis_time_range()` reports the window the
 latest metrics cover. The recorder uses it to place each sample row on the
 timeline, to take the row's speed at the window's midpoint, and to skip rows
 whose synced window still starts before the recording did (that vibration was
-measured before the user pressed start, and the raw capture cannot replay it):
+measured before the user pressed start, and the raw capture cannot replay it).
+The speed is the live reading (GPS or OBD-II) within
+`DEFAULT_ALIGNMENT_TOLERANCE_S` (1 s) of the midpoint, interpolated between two
+readings around it. Without one the row stores no speed and the source
+`gps_unaligned` / `obd2_unaligned`, never the typed-in fallback speed, which
+only stands in on the live view; the analysis leaves such rows out of order
+matching and warns (`speed_missing`) when they are at least 5 % of the run.
+A no-fault report lists those seconds under "Not covered"; with live speed for
+under 35 % of the run no road-speed source can be checked (`speed_missing`
+source checks), so the run reads "No result", never "ruled out".
+GPS readings of 0.0 go into the reading history at once: only the live speed
+waits for three in a row before it drops to zero, so a stop is recorded at zero
+from its first fix:
 
 - **Synced path** (preferred): When `last_t0_us > 0`, the window end is
   computed from the sensor timestamp plus the frame duration.  The

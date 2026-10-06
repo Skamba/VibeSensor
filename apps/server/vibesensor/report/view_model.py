@@ -35,6 +35,7 @@ from vibesensor.summary.diagnosis_contracts import (
     TestConditions,
 )
 from vibesensor.summary.phases import PHASE_I18N_KEYS
+from vibesensor.summary.run_context_warning import WARNING_CODE_SPEED_MISSING
 
 __all__ = [
     "AmplitudeRow",
@@ -174,6 +175,7 @@ _NOT_TESTABLE_KEYS = {
     "no_drive_reference": "NOT_TESTABLE_DRIVE",
     "no_engine_reference": "NOT_TESTABLE_ENGINE",
     "manual_speed": "NOT_TESTABLE_MANUAL_SPEED",
+    "speed_missing": "NOT_TESTABLE_SPEED_MISSING",
     "engine_not_running": "NOT_TESTABLE_ENGINE_NOT_RUNNING",
     "same_rhythm_as_candidate": "NOT_TESTABLE_SAME_RHYTHM",
     "no_braking": "NOT_TESTABLE_NO_BRAKING",
@@ -189,6 +191,7 @@ _RULED_OUT_ESTIMATED_KEYS = {
 _CHECKED_STATUSES = frozenset({"candidate", "ruled_out", "ruled_out_estimated"})
 _NOT_CHECKED_STEP_KEYS = {
     "manual_speed": "STEP_NOT_CHECKED_MANUAL_SPEED",
+    "speed_missing": "STEP_NOT_CHECKED_SPEED_MISSING",
     "no_tire_reference": "STEP_NOT_CHECKED_TIRE",
 }
 # Page 1 of a no-fault run: what each untested or estimate-based check leaves open,
@@ -198,6 +201,7 @@ _COULDNT_TEST_KEYS = {
     "no_drive_reference": "COULDNT_TEST_DRIVE",
     "no_engine_reference": "COULDNT_TEST_ENGINE",
     "manual_speed": "COULDNT_TEST_MANUAL_SPEED",
+    "speed_missing": "COULDNT_TEST_SPEED_MISSING",
     "engine_not_running": "COULDNT_TEST_ENGINE_NOT_RUNNING",
     "no_braking": "COULDNT_TEST_NO_BRAKING",
 }
@@ -933,6 +937,10 @@ def _coverage(
             f"{description} {ctx.t('VERDICT_NO_FAULT_NOT_CHECKED', sources=ctx.join(not_checked))}"
         )
 
+    # The checks hold only where the run had live speed: say how long it had none.
+    speed_gap = _speed_missing_gap(ctx, analysis)
+    if speed_gap is not None:
+        gaps.append(speed_gap)
     speeds = analysis["speed_stats"]
     phases = analysis["phase_info"]["phase_pcts"]
     driven = [phase for phase, share in phases.items() if share >= 1.0 and phase != "speed_unknown"]
@@ -956,6 +964,19 @@ def _coverage(
         gaps.append(ctx.t("NOT_COVERED_COAST"))
     gaps.append(ctx.t("NOT_COVERED_NEVER", items=ctx.join(_never_analysed(ctx, diagnosis))))
     return description, covered, tuple(f"{gap[:1].upper()}{gap[1:]}" for gap in gaps)
+
+
+def _speed_missing_gap(ctx: _Ctx, analysis: AnalysisSummary) -> str | None:
+    """How long the run had no live speed, from its ``speed_missing`` warning."""
+    for warning in analysis["warnings"]:
+        title = warning["title"]
+        if warning["code"] == WARNING_CODE_SPEED_MISSING and isinstance(title, dict):
+            return ctx.t(
+                "NOT_COVERED_SPEED_MISSING",
+                seconds=str(title.get("seconds", "?")),
+                source=str(title.get("source", "?")),
+            )
+    return None
 
 
 def _checked_anything(diagnosis: DiagnosisPayload) -> bool:

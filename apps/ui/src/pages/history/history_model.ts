@@ -911,6 +911,7 @@ function checkedAnything(diagnosis: Diagnosis): boolean {
 /** What fixes a run that checked nothing: why the wheels could not be checked. */
 const NOT_CHECKED_STEP_REASONS = new Set<CheckReason>([
   "manual_speed",
+  "speed_missing",
   "no_tire_reference",
 ]);
 

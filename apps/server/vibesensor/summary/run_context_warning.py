@@ -12,6 +12,7 @@ from vibesensor.common.json_utils import i18n_ref
 WARNING_CODE_REFERENCE_CONTEXT_INCOMPLETE = "reference_context_incomplete"
 WARNING_CODE_CAR_SETTINGS_CHANGED = "car_settings_changed"
 WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE = "vehicle_context_alignment_incomplete"
+WARNING_CODE_SPEED_MISSING = "speed_missing"
 WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE = "raw_replay_coverage_incomplete"
 WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK = "raw_replay_legacy_fallback"
 WARNING_CODE_RAW_REPLAY_DROPPED_CHUNKS = "raw_replay_dropped_chunks"

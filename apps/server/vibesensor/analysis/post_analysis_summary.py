@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Callable
 from math import ceil
 from typing import TYPE_CHECKING
@@ -38,15 +39,57 @@ from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
     WARNING_CODE_RECORDING_INTERRUPTED,
+    WARNING_CODE_SPEED_MISSING,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
     RunContextWarning,
 )
 from vibesensor.summary.warning_fields import summary_warning_payloads
 
 _MIN_POST_ANALYSIS_DURATION_S = 1.0
+# A live speed missing for at least this share of the recording is worth a warning.
+_SPEED_MISSING_WARN_SHARE = 0.05
+_LIVE_SPEED_SOURCE_NAMES = {"gps": "GPS", "obd2": "OBD-II"}
 
 if TYPE_CHECKING:
     from vibesensor.domain.run_suitability import SuitabilityCheck
+
+
+def _speed_missing_warning(
+    run: PostAnalysisRunInput, duration_s: object
+) -> RunContextWarning | None:
+    """Say how long the live speed (GPS or OBD-II) was missing, when that was a real part.
+
+    A row whose analysis window had no live speed is ``<source>_unaligned``: the
+    recording stores no speed there (never the typed-in fallback), so the
+    order analysis leaves it out. Rows are evenly spaced in time, so their share
+    is the share of the recording.
+    """
+    if not run.samples or not isinstance(duration_s, int | float) or duration_s <= 0:
+        return None
+    missing = Counter(
+        source.removesuffix("_unaligned")
+        for sample in run.samples
+        if (source := str(sample.speed_source or "")).endswith("_unaligned")
+    )
+    share = sum(missing.values()) / len(run.samples)
+    if share < _SPEED_MISSING_WARN_SHARE:
+        return None
+    source = missing.most_common(1)[0][0]
+    source_name = _LIVE_SPEED_SOURCE_NAMES.get(source, source)
+    return RunContextWarning(
+        code=WARNING_CODE_SPEED_MISSING,
+        severity="warn",
+        applies_to="order_analysis",
+        title=i18n_ref(
+            "RUN_CONTEXT_WARNING_SPEED_MISSING_TITLE",
+            source=source_name,
+            seconds=f"{share * float(duration_s):.0f}",
+        ),
+        detail=i18n_ref(
+            "RUN_CONTEXT_WARNING_SPEED_MISSING_DETAIL",
+            percent=f"{share * 100.0:.0f}",
+        ),
+    )
 
 
 def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
@@ -218,7 +261,11 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     finalize_warning = _raw_capture_finalize_warning(raw_capture_finalize)
     if finalize_warning is not None:
         summary_warnings.append(finalize_warning)
-    if unaligned_speed_sample_count > 0 or unaligned_rpm_sample_count > 0:
+    speed_missing_warning = _speed_missing_warning(run, summary_payload.get("duration_s"))
+    if speed_missing_warning is not None:
+        # It states the gap in the driver's terms; the alignment warning would repeat it.
+        summary_warnings.append(speed_missing_warning)
+    elif unaligned_speed_sample_count > 0 or unaligned_rpm_sample_count > 0:
         summary_warnings.append(
             RunContextWarning(
                 code=WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,

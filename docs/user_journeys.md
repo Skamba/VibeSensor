@@ -379,10 +379,15 @@ before the choice was recorded count GPS as not chosen.
     never seen a receiver, the page, the Live setup panel and the spectrum say
     "No GPS receiver found — plug in a USB GPS receiver or switch to OBD-II"
     (`gpsReceiverMissing` in `apps/ui/src/speed_source.ts`).
-  - Live data goes stale with a manual fallback set: the fallback is used,
-    readiness says so, and the report names the source "entered by hand"
+  - Live data goes stale with a manual fallback set: the Live view shows the
+    fallback and readiness says so, but a recording never stores it: those rows
+    have no speed (`gps_unaligned` / `obd2_unaligned`), the analysis leaves them
+    out of order matching, and from 5 % of the run the report says how long the
+    speed was missing ("GPS speed was missing for 12 s of the recording",
+    `speed_missing`). Runs recorded before this still carry
+    `fallback_manual`, which the report names "entered by hand"
     (`SPEED_SOURCE_FALLBACK_MANUAL`). The Live speed readout, the capability
-    note and the Speed source summary name why the fallback is used (the same
+    note and the Speed source summary name why the fallback is shown (the same
     "No GPS receiver found" text, "GPS has no fix yet", or "No live OBD-II
     speed"; `fallbackReasonKey` in `apps/ui/src/speed_source.ts`) instead of
     calling it a manual override.
@@ -532,7 +537,7 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   implies the car is fine for a source that was not testable. Brakes are
   checked only when the drive braked firmly from speed; coasting does not
   count. A run that could check no source at all (a hand-typed speed, no tire
-  size) reads "No result: this run could not check for a cause" in the list,
+  size, or a GPS/OBD-II speed missing for most of the drive) reads "No result: this run could not check for a cause" in the list,
   the detail and the PDF, with the step that makes the next run count
   (`history.verdict.not_checked*`); never "hold the speed" or "no repair".
 - Each failing run-suitability check (speed variation, sensor coverage, frame

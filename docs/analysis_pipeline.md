@@ -340,7 +340,10 @@ the PDF both show:
   - `not_testable`: its reference is missing (`no_tire_reference`,
     `no_drive_reference`, `no_engine_reference`), or the speed was typed in
     by hand (`manual_speed`; every sample carries the set value, even on a
-    desk), or, for the engine, `same_rhythm_as_candidate` (see "Engine
+    desk), or the live speed was missing for most of the drive
+    (`speed_missing`: under 35 % of the rows had a GPS/OBD-II speed above 0,
+    so the order analysis placed no road-speed order; the engine stays
+    testable with measured RPM), or, for the engine, `same_rhythm_as_candidate` (see "Engine
     alias" below).
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a
@@ -362,8 +365,8 @@ the PDF both show:
     measured, and the engine check is hedged the same way.
   - `ruled_out` (`no_matching_order`): no match on references the user gave
     or the library verified, and for the engine only with measured RPM.
-  - Brakes are `not_testable` with `no_tire_reference` or `manual_speed` as
-    for the wheels, else `no_braking` when the run had less than 2.5 s of
+  - Brakes are `not_testable` with `no_tire_reference`, `manual_speed` or
+    `speed_missing` as for the wheels, else `no_braking` when the run had less than 2.5 s of
     braking (see "Braking"), else `ruled_out` (`no_matching_order`); on an EV
     or PHEV `ruled_out_estimated` (`regen_braking`), because regenerative
     braking slows it at up to about 0.3 g, often without the discs, so its

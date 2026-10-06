@@ -49,7 +49,9 @@ type AmplitudeBasis = Literal["order", "overall"]
 # source (an EV's engine). ``same_rhythm_as_candidate``: without measured RPM the
 # engine turns at the diagnosed wheel or propshaft order's rhythm in some gear.
 # ``faint_only`` (ruled out, no-fault runs): the order was found only below the
-# moderate strength band, the residual a healthy car also has.
+# moderate strength band, the residual a healthy car also has. ``speed_missing``:
+# the live speed (GPS/OBD-II) was missing for most of the drive, so no
+# road-speed order could be placed.
 type SourceCheckStatus = Literal[
     "candidate", "ruled_out", "ruled_out_estimated", "not_testable", "not_applicable"
 ]
@@ -58,6 +60,7 @@ type SourceCheckReason = Literal[
     "no_drive_reference",
     "no_engine_reference",
     "manual_speed",
+    "speed_missing",
     "top_gear_assumed",
     "estimated_final_drive",
     "estimated_top_gear",

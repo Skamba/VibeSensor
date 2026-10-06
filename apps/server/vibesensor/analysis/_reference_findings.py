@@ -12,11 +12,16 @@ from vibesensor.domain.finding_types import FindingKind, VibrationSource
 from vibesensor.recording.run_schema import RunMetadata
 
 __all__ = [
+    "SPEED_REFERENCE_FINDING_ID",
     "_reference_missing_finding",
     "build_reference_findings",
     "engine_reference_coverage_pct",
     "has_engine_reference",
 ]
+
+# The run had too little road speed (live speed missing, or the car stood still)
+# to place any road-speed order: the order analysis compared none.
+SPEED_REFERENCE_FINDING_ID = "REF_SPEED"
 
 
 def _reference_missing_finding(
@@ -47,7 +52,7 @@ def build_reference_findings(
     if not speed_sufficient:
         findings.append(
             _reference_missing_finding(
-                finding_id="REF_SPEED",
+                finding_id=SPEED_REFERENCE_FINDING_ID,
                 suspected_source=VibrationSource.UNKNOWN,
             ),
         )

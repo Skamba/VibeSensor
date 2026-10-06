@@ -1143,7 +1143,7 @@ export interface components {
             source: string;
             status: components["schemas"]["SourceCheckStatus"];
         };
-        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral" | "engine_may_be_off" | "engine_not_running" | "electric_car" | "same_rhythm_as_candidate" | "no_braking" | "only_while_braking" | "regen_braking" | "faint_only";
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "speed_missing" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral" | "engine_may_be_off" | "engine_not_running" | "electric_car" | "same_rhythm_as_candidate" | "no_braking" | "only_while_braking" | "regen_braking" | "faint_only";
         SourceCheckStatus: "candidate" | "ruled_out" | "ruled_out_estimated" | "not_testable" | "not_applicable";
         /** One recurring spectral peak (0.5 Hz bin) and its median amplitude. */
         SpectrumPeak: {

@@ -191,10 +191,9 @@ class ObdService:
                 speed_snapshot=(lookup.value, lookup.monotonic_s),
                 reference_time_s=target_mono_s,
             )
-        resolved_aligned = (
-            resolution.source == "obd2" and lookup.aligned and resolution.speed_mps is not None
-        ) or (
-            resolution.source in {"manual", "fallback_manual"} and resolution.speed_mps is not None
+        # As for GPS: the typed-in fallback for a lost OBD-II speed is not a measurement.
+        resolved_aligned = resolution.speed_mps is not None and (
+            resolution.source == "manual" or (resolution.source == "obd2" and lookup.aligned)
         )
         return AlignedSpeedContextSnapshot(
             selected_speed_source="obd2",

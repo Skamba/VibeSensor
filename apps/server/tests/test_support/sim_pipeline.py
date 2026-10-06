@@ -347,6 +347,8 @@ def run_sim_pipeline(
     max_recording_duration_s: float | None = None,
     speed_lag_s: float = 0.0,
     speed_report_period_s: float = _SPEED_UPDATE_PERIOD_S,
+    speed_dropout_s: tuple[float, float] | None = None,
+    fallback_speed_kmh: float | None = None,
     flush_period_s: float | None = None,
     cut_power: bool = False,
 ) -> SimPipelineResult:
@@ -363,7 +365,11 @@ def run_sim_pipeline(
     *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
     The speed source reports every *speed_report_period_s* (a GPS receiver: once
     a second) the speed it measured *speed_lag_s* earlier, while the simulated
-    tones follow the true speed. The recorder flushes a tick every
+    tones follow the true speed. During *speed_dropout_s* (seconds into the drive,
+    start inclusive, end exclusive) it reports nothing, as a GPS receiver without a
+    fix; one from 0 also skips the report before the drive (a cold start).
+    *fallback_speed_kmh* is the typed-in fallback speed set with the live source.
+    The recorder flushes a tick every
     *flush_period_s* (default: ``1 / metrics_log_hz``, as the Pi's flush loop
     keeps its deadlines whatever a tick's work takes).
 
@@ -388,6 +394,8 @@ def run_sim_pipeline(
             obd_rpm=obd_rpm,
             speed_lag_s=speed_lag_s,
             speed_report_period_s=speed_report_period_s,
+            speed_dropout_s=speed_dropout_s,
+            fallback_speed_kmh=fallback_speed_kmh,
             flush_period_s=flush_period_s,
             cut_power=cut_power,
         )
@@ -454,6 +462,8 @@ def _record(
     obd_rpm: bool,
     speed_lag_s: float,
     speed_report_period_s: float,
+    speed_dropout_s: tuple[float, float] | None,
+    fallback_speed_kmh: float | None,
     flush_period_s: float | None,
     cut_power: bool,
 ) -> _RecordedDrive:
@@ -560,10 +570,14 @@ def _record(
         # Before the drive: the simulator starts in its first phase, the user
         # assigns locations once the sensors show up.
         if speed_source == "obd2":
-            web.speed_source_service.update_speed_source({"speedSource": "obd2", **_OBD_ADAPTER})  # type: ignore[typeddict-item]
+            web.speed_source_service.update_speed_source(
+                {"speedSource": "obd2", "manualSpeedKph": fallback_speed_kmh, **_OBD_ADAPTER}  # type: ignore[typeddict-item]
+            )
             lifecycle.obd_runner.mark_connected()
         else:
-            web.speed_source_service.update_speed_source({"speedSource": "gps"})
+            web.speed_source_service.update_speed_source(
+                {"speedSource": "gps", "manualSpeedKph": fallback_speed_kmh}
+            )
             lifecycle.gps_monitor.gps_enabled = True
             lifecycle.gps_monitor.connection_state = "connected"
         assert obd_rpm is False or speed_source == "obd2", "engine RPM comes from the OBD adapter"
@@ -575,7 +589,8 @@ def _record(
         )
         apply_phase(clients, scenario_name, phases[0])
         _set_true_speed(clients, phases[0].speed_start_kmh)
-        report_speed(phases[0].speed_start_kmh, phases[0].gear_ratio)
+        if speed_dropout_s is None or speed_dropout_s[0] > 0.0:
+            report_speed(phases[0].speed_start_kmh, phases[0].gear_ratio)
         loop.run_until(start_s + 1.0)
         client_ids: dict[str, str] = {}
         for sensor in sims.values():
@@ -606,6 +621,7 @@ def _record(
             drive_start,
             lag_s=speed_lag_s,
             period_s=speed_report_period_s,
+            dropout_s=speed_dropout_s,
         )
         loop.run_until(phase_start)
         guided_brake_stops = recorder.status().guided_brake_stops
@@ -850,8 +866,9 @@ def _schedule_speed_reports(
     *,
     lag_s: float,
     period_s: float,
+    dropout_s: tuple[float, float] | None,
 ) -> None:
-    """Report the speed every *period_s*, as measured *lag_s* earlier.
+    """Report the speed every *period_s*, as measured *lag_s* earlier, except in *dropout_s*.
 
     Without lag and at the default period the reports land with the true-speed
     updates, phase by phase, as the speed source would see them instantly, in
@@ -863,10 +880,11 @@ def _schedule_speed_reports(
             elapsed = 0.0
             while elapsed <= phase.duration_s:
                 speed = phase_speed_kmh(phase, elapsed)
-                loop.at(
-                    phase_start_s + elapsed + 1e-6,
-                    lambda speed=speed: report_speed(speed, clients[0].gear_ratio),
-                )
+                if not _in_dropout(phase_start_s + elapsed - drive_start_s, dropout_s):
+                    loop.at(
+                        phase_start_s + elapsed + 1e-6,
+                        lambda speed=speed: report_speed(speed, clients[0].gear_ratio),
+                    )
                 elapsed += _SPEED_UPDATE_PERIOD_S
             phase_start_s += phase.duration_s
         return
@@ -875,11 +893,16 @@ def _schedule_speed_reports(
     while report_s <= drive_s:
         phase, elapsed = _phase_at(phases, max(0.0, report_s - lag_s))
         speed = phase_speed_kmh(phase, elapsed)
-        loop.at(
-            drive_start_s + report_s + 1e-6,
-            lambda speed=speed, gear=phase.gear_ratio: report_speed(speed, gear),
-        )
+        if not _in_dropout(report_s, dropout_s):
+            loop.at(
+                drive_start_s + report_s + 1e-6,
+                lambda speed=speed, gear=phase.gear_ratio: report_speed(speed, gear),
+            )
         report_s += period_s
+
+
+def _in_dropout(drive_s: float, dropout_s: tuple[float, float] | None) -> bool:
+    return dropout_s is not None and dropout_s[0] <= drive_s < dropout_s[1]
 
 
 def _phase_at(phases: Sequence[ScenarioPhase], t_s: float) -> tuple[ScenarioPhase, float]:

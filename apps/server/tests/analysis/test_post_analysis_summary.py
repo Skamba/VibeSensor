@@ -36,6 +36,7 @@ from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mapping
 from vibesensor.report.i18n import tr
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED,
+    WARNING_CODE_SPEED_MISSING,
     WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE,
 )
 
@@ -149,15 +150,51 @@ def test_degraded_raw_capture_finalize_is_kept_and_warned() -> None:
     assert WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED in codes
 
 
-def test_unaligned_vehicle_context_is_counted_and_warned() -> None:
-    row = {**_ROW, "speed_source": "gps_unaligned", "engine_rpm_source": "context_unaligned"}
-    summary = build_post_analysis_summary(_run("run-vehicle-context", [row]))
+def _drive_rows(*, unaligned: int) -> list[dict[str, object]]:
+    """40 rows at 4 Hz with GPS speed, the last *unaligned* of them without one."""
+    rows: list[dict[str, object]] = []
+    for index in range(40):
+        lost = index >= 40 - unaligned
+        rows.append(
+            {
+                **_ROW,
+                "t_s": 0.25 * (index + 1),
+                "speed_kmh": None if lost else 50.0,
+                "speed_source": "gps_unaligned" if lost else "gps",
+                "engine_rpm_source": (
+                    "context_unaligned" if lost else "estimated_from_speed_and_ratios"
+                ),
+            }
+        )
+    return rows
+
+
+def test_a_window_now_and_then_without_speed_is_counted_and_warned() -> None:
+    summary = build_post_analysis_summary(_run("run-vehicle-context", _drive_rows(unaligned=1)))
 
     metadata = summary["analysis_metadata"]
     assert metadata["vehicle_context_unaligned_speed_sample_count"] == 1
     assert metadata["vehicle_context_unaligned_rpm_sample_count"] == 1
     codes = [warning["code"] for warning in summary["warnings"]]
     assert WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE in codes
+    assert WARNING_CODE_SPEED_MISSING not in codes
+
+
+def test_a_speed_missing_for_a_real_part_of_the_drive_is_stated_in_seconds() -> None:
+    # 2 of 40 rows (5 %) is the least that is stated.
+    summary = build_post_analysis_summary(_run("run-gps-lost", _drive_rows(unaligned=8)))
+
+    assert summary["analysis_metadata"]["vehicle_context_unaligned_speed_sample_count"] == 8
+    (warning,) = (w for w in summary["warnings"] if w["code"] == WARNING_CODE_SPEED_MISSING)
+    codes = [w["code"] for w in summary["warnings"]]
+    assert WARNING_CODE_VEHICLE_CONTEXT_ALIGNMENT_INCOMPLETE not in codes
+    quality = report_view_for(summary, lang="en").quality
+    assert "GPS speed was missing for 2 s of the recording" in quality.warnings
+    nl = report_view_for(summary, lang="nl").quality
+    assert "GPS-snelheid ontbrak gedurende 2 s van de opname" in nl.warnings
+    assert warning["detail"]["percent"] == "20"
+    edge = build_post_analysis_summary(_run("run-gps-edge", _drive_rows(unaligned=2)))
+    assert WARNING_CODE_SPEED_MISSING in [w["code"] for w in edge["warnings"]]
 
 
 def test_a_raw_capture_shorter_than_a_second_fails_the_duration_check() -> None:

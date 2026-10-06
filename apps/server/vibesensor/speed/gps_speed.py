@@ -224,9 +224,11 @@ class GPSSpeedMonitor:
             live_source="gps",
             reference_time_s=target_mono_s,
         )
-        resolved_aligned = (
-            resolution.source in {"manual", "fallback_manual"} and resolution.speed_mps is not None
-        ) or (resolution.source == "gps" and raw_speed.aligned and resolution.speed_mps is not None)
+        # The typed-in fallback that stands in live for a lost GPS fix is not a
+        # measurement of this window: with GPS selected its speed is unknown here.
+        resolved_aligned = resolution.speed_mps is not None and (
+            resolution.source == "manual" or (resolution.source == "gps" and raw_speed.aligned)
+        )
         return AlignedSpeedContextSnapshot(
             selected_speed_source=selected_source,
             resolved_speed_mps=resolution.speed_mps,
