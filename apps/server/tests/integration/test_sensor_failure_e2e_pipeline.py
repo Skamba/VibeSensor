@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 from pypdf import PdfReader
 from test_support.core import TEST_CAR_ASPECTS
+from test_support.power import unknown_power
 from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
@@ -263,6 +264,7 @@ def _run_pipeline(
         logger,
         IngestDiagnosticsCollector(),
         "",
+        unknown_power(),
     )
     return _PipelineArtifacts(
         analysis=analysis,

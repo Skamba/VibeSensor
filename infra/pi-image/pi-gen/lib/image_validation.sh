@@ -452,6 +452,12 @@ validate_image_artifact() {
     exit 1
   fi
 
+  # The journal must survive power cuts (apps/server/systemd/vibesensor-journald.conf).
+  if [ "$(unit_value "${ROOT_MNT}/etc/systemd/journald.conf.d/90-vibesensor.conf" Storage 2>/dev/null)" != "persistent" ]; then
+    echo "Validation failed: ${ROOT_MNT}/etc/systemd/journald.conf.d/90-vibesensor.conf must set Storage=persistent"
+    exit 1
+  fi
+
   if [ ! -f "${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/usr/lib/systemd/system/usbmuxd.service"
     exit 1

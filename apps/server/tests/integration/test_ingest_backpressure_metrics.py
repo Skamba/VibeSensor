@@ -22,6 +22,7 @@ import pytest
 from test_support.clock_sync import complete_clock_sync
 from test_support.core import TEST_CAR_ASPECTS
 from test_support.polling import async_wait_until
+from test_support.power import unknown_power
 from test_support.speed import observed_speed
 
 from vibesensor.common.units import KMH_TO_MPS
@@ -384,6 +385,7 @@ async def _build_smoke_health(ctx: _IngestSmokeContext) -> dict[str, object]:
         ctx.recorder,
         ctx.ingest_diagnostics,
         "",
+        unknown_power(),
     )
 
 

@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, create_autospec
 from fastapi import FastAPI
 from test_support.analysis import summarize_mappings, summarize_sensor_frames
 from test_support.persisted_analysis import make_persisted_analysis
+from test_support.power import sensorless_power_monitor
 
 from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.domain.run_status import RunStatus
@@ -360,6 +361,7 @@ class FakeState:
         self.update_manager = create_autospec(UpdateManager, instance=True)
         self.esp_flash_manager = create_autospec(EspFlashManager, instance=True)
         self.browser_clock = create_autospec(BrowserClockCorrector, instance=True)
+        self.power_monitor = sensorless_power_monitor()
         self.run_service = ProjectedHistoryRunService(
             HistoryRunService(
                 self.history_db,

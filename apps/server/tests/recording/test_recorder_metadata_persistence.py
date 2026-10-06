@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 from test_support.history_db_lifecycle import run_samples
+from test_support.power import FakePiSysfs
 
 from tests.recording.test_metrics_log_helpers import _started_snapshot_with_sample
 from vibesensor.clock.boot import current_boot_id
@@ -13,6 +14,7 @@ from vibesensor.common.time_utils import parse_iso8601
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.history.history_db import HistoryDB
+from vibesensor.power.monitor import PowerMonitor
 from vibesensor.recording import finalize_stages
 from vibesensor.recording._recorder_types import _build_run_metadata_record
 from vibesensor.recording.run_schema import RunStartClock
@@ -138,3 +140,30 @@ def test_a_run_started_before_the_pi_clock_was_set_is_marked_unverified(
     )
     assert timedelta(0) <= duration < timedelta(seconds=30)
     assert verified_run.end_time_utc == stepped_now
+
+
+def test_a_run_during_which_the_supply_dipped_stores_it_and_the_next_run_does_not(
+    make_logger, tmp_path: Path
+) -> None:
+    sysfs = FakePiSysfs(tmp_path / "sys")
+    monitor = PowerMonitor(hwmon_dir=sysfs.hwmon, thermal_path=sysfs.thermal)
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = make_logger(history_db=history_db, power_issues_since=monitor.issues_since)
+
+    dipped = _started_snapshot_with_sample(logger).run_id
+    sysfs.set(undervoltage=True, celsius=82.0)
+    monitor.poll()
+    sysfs.set(undervoltage=False, celsius=50.0)
+    monitor.poll()
+    logger.stop_recording()
+    clean = _started_snapshot_with_sample(logger).run_id
+    monitor.poll()
+    logger.stop_recording()
+
+    def stored(run_id: str) -> tuple[str, ...]:
+        run = history_db.get_run(run_id)
+        assert run is not None
+        return run.metadata.power_issues
+
+    assert stored(dipped) == ("undervoltage", "overheated")
+    assert stored(clean) == ()

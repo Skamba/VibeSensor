@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, create_autospec
 
 import pytest
+from test_support.power import unknown_power
 
 from vibesensor.common.root_side import ROOT_SIDE_DIGEST, RootSideStatus
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
@@ -113,6 +114,7 @@ def _snapshot(
         run_recorder,
         IngestDiagnosticsCollector() if ingest_diagnostics is None else ingest_diagnostics,
         bundled_firmware_version,
+        unknown_power(),
     )
 
 

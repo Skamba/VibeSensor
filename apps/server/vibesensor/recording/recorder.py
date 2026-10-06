@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
     from vibesensor.ingest.registry import ClientRegistry
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.power.monitor import PowerIssue
     from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
     from vibesensor.settings.sensor_settings import SensorSettingsService
     from vibesensor.settings.settings_derivation import SettingsDerivationService
@@ -89,6 +90,7 @@ class RunRecorder:
         ingest_diagnostics: IngestDiagnosticsCollector | None = None,
         clock_trusted: Callable[[], bool] | None = None,
         after_analysis: Callable[[], object] | None = None,
+        power_issues_since: Callable[[float], tuple[PowerIssue, ...]] | None = None,
     ):
         self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
@@ -160,6 +162,7 @@ class RunRecorder:
             active_frames_total=lambda: _recorder_runtime.active_frames_total(self.registry),
             monotonic=lambda: time.monotonic(),
             clock_trusted=clock_trusted,
+            power_issues_since=power_issues_since,
         )
 
         self._sample_flush = SampleFlushOrchestrator(

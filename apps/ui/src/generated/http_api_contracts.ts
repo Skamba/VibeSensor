@@ -582,6 +582,14 @@ export interface components {
             samples_written: number;
             write_error: string | null;
         };
+        /** The Pi's supply voltage and SoC temperature (``vibesensor/power/monitor.py``). */
+        HealthPowerResponse: {
+            hottest_state_seen: "unknown" | "normal" | "warm" | "hot";
+            temperature_c: number | null;
+            temperature_state: "unknown" | "normal" | "warm" | "hot";
+            undervoltage_now: boolean | null;
+            undervoltage_seen: boolean;
+        };
         HealthRawCaptureResponse: {
             dropped_chunks: number;
             pressure_state: "ok" | "warn" | "degraded";
@@ -615,6 +623,7 @@ export interface components {
             intake_stats: components["schemas"]["HealthIntakeStatsResponse"];
             max_tick_duration_s: number;
             persistence: components["schemas"]["HealthPersistenceResponse"];
+            power: components["schemas"]["HealthPowerResponse"];
             processing_failure_categories: {
                 [key: string]: number;
             };

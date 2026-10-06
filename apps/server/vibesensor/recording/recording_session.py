@@ -14,6 +14,7 @@ from vibesensor.clock.boot import current_boot_id
 from vibesensor.common.time_utils import parse_iso8601, utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
+from vibesensor.power.monitor import PowerIssue
 from vibesensor.recording.guided_brake_stops import GuidedBrakeStops
 from vibesensor.recording.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
@@ -60,6 +61,7 @@ class RunRecordingSessionService:
         monotonic: Callable[[], float],
         uuid_factory: Callable[[], str] | None = None,
         clock_trusted: Callable[[], bool] | None = None,
+        power_issues_since: Callable[[float], tuple[PowerIssue, ...]] | None = None,
     ) -> None:
         self._lock = lock
         self._registry = registry
@@ -74,6 +76,7 @@ class RunRecordingSessionService:
         self._monotonic = monotonic
         self._uuid_factory = uuid_factory or (lambda: uuid4().hex)
         self._clock_trusted = clock_trusted or (lambda: True)
+        self._power_issues_since = power_issues_since or (lambda _start_mono_s: ())
         self._start_time_trusted = True
         self._start_boot_id: str | None = None
         self._live_start_mono_s = monotonic()
@@ -169,6 +172,14 @@ class RunRecordingSessionService:
             if current_run is None or current_run.run_id != run_id:
                 return False
             return not self._start_time_trusted
+
+    def power_issues(self, run_id: str) -> tuple[PowerIssue, ...]:
+        """Supply or heat trouble the Pi saw while *run_id* recorded."""
+        with self._lock:
+            current_run = self._lifecycle.current_run
+            if current_run is None or current_run.run_id != run_id:
+                return ()
+            return self._power_issues_since(self._live_start_mono_s)
 
     def unverified_start_clock(self, run_id: str) -> RunStartClock | None:
         """Where an unverified *run_id* started on the monotonic clock, to correct it later."""

@@ -196,6 +196,16 @@ const healthRootSideSchema = v.looseObject({
   state: v.picklist(["current", "outdated", "not_installed"]),
 });
 
+const temperatureStateSchema = v.picklist(["unknown", "normal", "warm", "hot"]);
+
+const healthPowerSchema = v.looseObject({
+  hottest_state_seen: temperatureStateSchema,
+  temperature_c: v.nullable(finiteNumberSchema),
+  temperature_state: temperatureStateSchema,
+  undervoltage_now: v.nullable(v.boolean()),
+  undervoltage_seen: v.boolean(),
+});
+
 const healthStatusPayloadSchema = v.looseObject({
   background_task_failures: stringMapSchema,
   data_loss: healthDataLossSchema,
@@ -208,6 +218,7 @@ const healthStatusPayloadSchema = v.looseObject({
   intake_stats: healthIntakeStatsSchema,
   max_tick_duration_s: finiteNumberSchema,
   persistence: healthPersistenceSchema,
+  power: healthPowerSchema,
   processing_failure_categories: integerMapSchema,
   processing_failures: integerSchema,
   processing_last_failure: nullableStringSchema,

@@ -93,10 +93,40 @@ Useful events:
 - `post_analysis_started` / `post_analysis_completed`, and `post_analysis_step`
   (one per post-analysis step with `step`, `step_status`, `duration_ms`,
   `details`) or `post_analysis_failed` / `post_analysis_retryable_failure`
+- `power_undervoltage` / `power_undervoltage_cleared` (`duration_s`) and
+  `power_temperature` (`temperature_state`, `temperature_c`); see
+  [Check power and heat after a drive](#check-power-and-heat-after-a-drive)
 
 ```bash
 grep '"event": "post_analysis_step"' /path/to/app.log | tail -n 20
 ```
+
+## Check power and heat after a drive
+
+A Pi powered from a car USB port can brown out, and a hot car can make the
+firmware slow the CPU. `vibesensor/power/monitor.py` reads the `rpi_volt`
+undervoltage alarm (`/sys/class/hwmon/hwmon*/in0_lcrit_alarm`) and the SoC
+temperature (`/sys/class/thermal/thermal_zone0/temp`) once a second, without a
+subprocess:
+
+- `/api/health` `power`: `undervoltage_now`, `undervoltage_seen` (since boot),
+  `temperature_c`, `temperature_state` and `hottest_state_seen` (since boot).
+  `warm` is the 60 °C soft limit (CPU clock lowered), `hot` is above 80 °C (CPU
+  throttled). The `power` subsystem shows `undervoltage_seen` /
+  `overheated_seen`; like `root_side` it never changes the overall `status`.
+  What this boot has seen survives a server restart in `power_state.json` next
+  to the history DB. Off a Pi the fields are `null` / `unknown`.
+- The app log (`/var/lib/vibesensor/app.log`, which survives a power cut) gets
+  one line per transition: `grep '"event": "power_' /var/lib/vibesensor/app.log`.
+- A run during which the supply dipped or the Pi was `hot` stores
+  `power_issues` in its metadata; its report (data quality section) and History
+  entry say the results may be affected.
+
+The system journal is persistent too (`apps/server/systemd/vibesensor-journald.conf`,
+installed as `/etc/systemd/journald.conf.d/90-vibesensor.conf`, at most 32 MB),
+so `journalctl -b -1` shows the boot before a power cut, including the kernel's
+`Undervoltage detected!`. Devices installed before this change get it with the
+root side ([Installing a release's root side](#installing-a-releases-root-side)).
 
 ## Diagnose high dropped frames
 

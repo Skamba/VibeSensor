@@ -49,6 +49,7 @@ def _make_lifecycle(*, update_job_task: asyncio.Task[None] | None = None) -> Lif
         esp_flash_manager=MagicMock(job_task=None),
         history_db=MagicMock(),
         run_times=MagicMock(),
+        power_monitor=MagicMock(),
     )
     return LifecycleManager(runtime=runtime, start_udp_receiver=MagicMock())
 

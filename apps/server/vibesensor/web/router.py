@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from vibesensor.live.broadcaster import LiveBroadcaster
     from vibesensor.live.processing_loop import ProcessingLoopState
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.power.monitor import PowerMonitor
     from vibesensor.recording.recorder import RunRecorder
     from vibesensor.report.service import HistoryReportService
     from vibesensor.settings.analysis_settings import ActiveCarAnalysisSettingsService
@@ -74,6 +75,7 @@ class WebServices:
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
     browser_clock: BrowserClockCorrector
+    power_monitor: PowerMonitor
 
 
 def create_router(services: WebServices) -> APIRouter:
@@ -89,6 +91,7 @@ def create_router(services: WebServices) -> APIRouter:
             s.run_recorder,
             s.ingest_diagnostics,
             s.esp_flash_manager,
+            s.power_monitor,
         ),
     )
     router.include_router(create_car_settings_routes(s.car_settings))

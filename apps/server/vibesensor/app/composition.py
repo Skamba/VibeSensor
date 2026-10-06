@@ -40,6 +40,7 @@ from vibesensor.live.processing_loop import ProcessingLoop, ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
 from vibesensor.live.ui_constants import UI_HEAVY_PUSH_HZ, UI_PUSH_HZ
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
+from vibesensor.power.monitor import PowerMonitor
 from vibesensor.recording._recorder_types import RunRecorderConfig
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.report.service import HistoryReportService
@@ -123,12 +124,12 @@ def create_history_db(
     return history
 
 
-def _clock_state_path(config: AppConfig) -> Path | None:
-    """The per-boot clock verdict lives next to the history DB (none for an in-memory DB)."""
+def _boot_state_path(config: AppConfig, name: str) -> Path | None:
+    """Per-boot state lives next to the history DB (none for an in-memory DB)."""
     db_path = config.logging.history_db_path
     if str(db_path) == ":memory:":
         return None
-    return Path(db_path).parent / "clock_state.json"
+    return Path(db_path).parent / name
 
 
 def build_runtime(config: AppConfig) -> AppRuntime:
@@ -192,7 +193,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
     )
     browser_clock = BrowserClockCorrector(
         recording=lambda: run_recorder.enabled,
-        state_path=_clock_state_path(config),
+        state_path=_boot_state_path(config, "clock_state.json"),
         after_report=lambda: run_times.correct(),
     )
     run_times = RunTimeCorrector(
@@ -200,6 +201,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         clock_trusted=browser_clock.clock_trusted,
         time_zone=lambda: settings.ui_preferences.time_zone,
     )
+    power_monitor = PowerMonitor(state_path=_boot_state_path(config, "power_state.json"))
     run_recorder = RunRecorder(
         RunRecorderConfig(
             sensor_model=SENSOR_MODEL,
@@ -218,6 +220,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         ingest_diagnostics=ingest_diagnostics,
         clock_trusted=browser_clock.clock_trusted,
         after_analysis=run_times.correct,
+        power_issues_since=power_monitor.issues_since,
     )
     run_times.correct()
     outdated = history.requeue_outdated_analyses()
@@ -254,6 +257,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         esp_flash_manager=esp_flash_manager,
         history_db=history,
         run_times=run_times,
+        power_monitor=power_monitor,
     )
     web = WebServices(
         health_state=health_state,
@@ -289,6 +293,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
         browser_clock=browser_clock,
+        power_monitor=power_monitor,
     )
     settings.speed_source_service.sync_all()
     return AppRuntime(lifecycle=lifecycle, web=web)

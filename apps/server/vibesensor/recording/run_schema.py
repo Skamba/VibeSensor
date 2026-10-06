@@ -12,6 +12,7 @@ from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.domain.drive_layout import Axle, final_drive_axle_for, has_propshaft
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.vehicle_configuration import VehicleDrivetrain, VehicleFuelType
+from vibesensor.power.monitor import PowerIssue
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 
@@ -200,6 +201,8 @@ class RunMetadata:
     # How far the times of such a run were moved once the clock was set; ``None``
     # unless they were. Its sample rows keep their first ``timestamp_utc``.
     start_time_corrected_by_s: float | None = None
+    # Supply or heat trouble the Pi saw while this run recorded (``power/monitor.py``).
+    power_issues: tuple[PowerIssue, ...] = field(default_factory=tuple)
 
     @classmethod
     def create(

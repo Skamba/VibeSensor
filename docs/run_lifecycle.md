@@ -148,6 +148,11 @@ During recording:
   report, after each post-analysis, and when its `clock-watch` task sees the
   clock become trusted, e.g. NTP with no browser open) and clears the flag;
   exports re-time such runs' sample rows as start plus `t_s`
+- the run metadata built at finalize stores `power_issues`: `undervoltage`
+  and/or `overheated` when `PowerMonitor` (`vibesensor/power/monitor.py`) saw
+  the supply dip or the SoC above 80 °C since the run started; the analysis
+  turns each into a `power_*` run warning, shown in the report's data quality
+  section and in History
 
 ### 3. Final flush and finalize
 

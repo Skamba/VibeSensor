@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, create_autospec
 
 import numpy as np
 
+from test_support.power import sensorless_power_monitor
 from vibesensor.app.lifecycle import LifecycleManager, LifecycleRuntime
 from vibesensor.clock.run_times import RunTimeCorrector
 from vibesensor.history.history_db import HistoryDB
@@ -281,6 +282,7 @@ def build_runtime(**overrides: Any):
         esp_flash_manager=esp_flash_manager,
         history_db=history_db,
         run_times=run_times,
+        power_monitor=overrides.pop("power_monitor", sensorless_power_monitor()),
     )
     lifecycle = LifecycleManager(runtime=lifecycle_runtime, start_udp_receiver=AsyncMock())
     for name, value in overrides.items():

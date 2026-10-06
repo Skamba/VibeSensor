@@ -84,14 +84,15 @@ def _write_executable(path: Path, text: str) -> None:
 def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None:
     """Run install_systemd_units.sh against a sandbox and check what it installs and stamps.
 
-    The copy only points /usr/local/lib/vibesensor, /etc/systemd/system, and
-    the sudoers entry at the sandbox; id, systemctl, and install's root
-    ownership are stubbed.
+    The copy only points /usr/local/lib/vibesensor, /etc/systemd/system, the
+    journald drop-in, and the sudoers entry at the sandbox; id, systemctl, and
+    install's root ownership are stubbed.
     """
 
     helper_dir = tmp_path / "usr-local-lib-vibesensor"
     unit_dir = tmp_path / "etc-systemd-system"
     unit_dir.mkdir()
+    journald_dropin = tmp_path / "etc-systemd-journald.conf.d/90-vibesensor.conf"
     server = tmp_path / "apps/server"
     for dirname in ("root-helpers", "systemd"):
         (server / dirname).mkdir(parents=True)
@@ -106,6 +107,7 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
     for real, sandboxed in (
         ("/usr/local/lib/vibesensor", str(helper_dir)),
         ("UNIT_DIR=/etc/systemd/system", f"UNIT_DIR={unit_dir}"),
+        ("/etc/systemd/journald.conf.d/90-vibesensor.conf", str(journald_dropin)),
         ("/etc/sudoers.d/vibesensor-update", str(tmp_path / "sudoers-vibesensor-update")),
     ):
         assert real in installer, f"install_systemd_units.sh no longer uses {real}"
@@ -145,6 +147,8 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
         + ["root-side.sha256"]
     )
     assert "__SERVICE_USER__" not in (unit_dir / "vibesensor.service").read_text()
+    # The journal outlives a power cut.
+    assert "\nStorage=persistent\n" in journald_dropin.read_text()
     # The stamp is the manifest of the tree the installer ran from (its own
     # sandboxed copy included), so on a device its digest is ROOT_SIDE_DIGEST.
     stamp = helper_dir / "root-side.sha256"

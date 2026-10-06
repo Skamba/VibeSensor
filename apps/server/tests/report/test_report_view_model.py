@@ -19,6 +19,7 @@ from test_support.synthetic_samples import (
 
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.report.view_model import ReportView, build_report_view
+from vibesensor.summary.warning_fields import localize_warning_list
 
 _UNRESOLVED_KEY = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
 _PERCENT_CONFIDENCE = re.compile(r"\d+\s?%\s*(confidence|zekerheid)", re.IGNORECASE)
@@ -988,3 +989,35 @@ def test_guided_coast_down_replaces_the_neutral_cheap_check() -> None:
     assert unguided.confirm is not None and "neutral" in unguided.confirm
     assert guided.confirm is None
     assert guided.level_meaning == "the neutral coast-down in this test already backs it up."
+
+
+def test_a_run_with_a_power_dip_and_overheating_says_its_results_may_be_affected() -> None:
+    """Stored by the recorder (power/monitor.py), stated on the PDF and in History."""
+    summary = run_analysis(
+        make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30),
+        power_issues=["undervoltage", "overheated"],
+    )
+
+    pdf = {lang: report_view_for(summary, lang=lang).quality for lang in ("en", "nl")}
+    history = localize_warning_list(summary["warnings"], lang="nl")
+
+    assert not pdf["en"].all_passed
+    assert {
+        "Power dipped during this run; results may be affected",
+        "The Pi overheated during this run; results may be affected",
+    } <= set(pdf["en"].warnings)
+    nl_dip = "De voeding zakte weg tijdens deze meting; de uitkomst kan afwijken"
+    assert nl_dip in pdf["nl"].warnings
+    power = [row for row in history if str(row["code"]).startswith("power_")]
+    assert [(row["code"], row["detail"]) for row in power] == [
+        (
+            "power_undervoltage",
+            "De voedingsspanning van de Pi was te laag. Gebruik een sterkere USB-poort "
+            "of een 5 V / 2,5 A auto-adapter.",
+        ),
+        (
+            "power_overheated",
+            "Hij werd heter dan 80 °C en ging trager werken. Houd hem uit de zon en weg "
+            "van de verwarming.",
+        ),
+    ]

@@ -159,6 +159,7 @@ The image contains:
   - `vibesensor-privileged.socket` — root commands for the updater and Bluetooth OBD admin. `vibesensor.service` runs with `NoNewPrivileges=true`, so it cannot use sudo. Each connection runs `vibesensor-privileged@.service` as root, through the allowlist wrapper it names (`vibesensor_update_allowlist.sh`, `vibesensor_obd_admin.py`). There is no sudoers entry.
   - root units run only the root-owned helper copies in `/usr/local/lib/vibesensor` (installed from `apps/server/root-helpers/` by `install_systemd_units.sh`) under `/usr/bin/python3 -I`, never code from the service user's venv; image validation fails otherwise
   - `/usr/local/lib/vibesensor/root-side.sha256`, the root-side manifest `install_systemd_units.sh` writes last; image validation fails unless its digest equals the installed app's `ROOT_SIDE_DIGEST`
+- A persistent system journal: `install_systemd_units.sh` installs `apps/server/systemd/vibesensor-journald.conf` as `/etc/systemd/journald.conf.d/90-vibesensor.conf` (`Storage=persistent`, at most 32 MB), overriding Raspberry Pi OS's RAM-only journal so logs survive a power cut; image validation checks it
 - Bluetooth OBD support prerequisites:
   - `bluez` / `pi-bluetooth` userspace packages in the image
   - root-side helper `/usr/local/lib/vibesensor/vibesensor_obd_admin.py` (stdlib only), reached through `vibesensor-privileged.socket` so the local UI can scan/pair adapters without SSH

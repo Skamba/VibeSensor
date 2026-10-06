@@ -150,7 +150,7 @@ layers = [
   "vibesensor.cli | vibesensor.simulator",
   "vibesensor.app",
   "vibesensor.web",
-  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.speed : vibesensor.summary : vibesensor.updates : vibesensor.hotspot : vibesensor.clock",
+  "vibesensor.analysis : vibesensor.dsp : vibesensor.history : vibesensor.ingest : vibesensor.live : vibesensor.recording : vibesensor.report : vibesensor.settings : vibesensor.speed : vibesensor.summary : vibesensor.updates : vibesensor.hotspot : vibesensor.clock : vibesensor.power",
   "vibesensor.domain : vibesensor.common",
 ]
 

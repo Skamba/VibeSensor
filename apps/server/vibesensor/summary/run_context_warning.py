@@ -20,6 +20,8 @@ WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE = "raw_replay_fft_unusable"
 WARNING_CODE_RAW_REPLAY_SYNC_UNVERIFIED = "raw_replay_sync_unverified"
 WARNING_CODE_RAW_CAPTURE_LOSS_POLICY = "raw_capture_loss_policy"
 WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED = "raw_capture_finalize_degraded"
+WARNING_CODE_POWER_UNDERVOLTAGE = "power_undervoltage"
+WARNING_CODE_POWER_OVERHEATED = "power_overheated"
 WarningSeverity = Literal["warn", "error"]
 
 
@@ -54,6 +56,23 @@ def build_summary_warnings(
                 detail=i18n_ref("RUN_CONTEXT_WARNING_REFERENCE_INCOMPLETE_DETAIL"),
             )
         )
+    # The Pi's supply dipped or it overheated while recording (power/monitor.py).
+    power_issues = metadata.get("power_issues")
+    for issue, code in (
+        ("undervoltage", WARNING_CODE_POWER_UNDERVOLTAGE),
+        ("overheated", WARNING_CODE_POWER_OVERHEATED),
+    ):
+        if isinstance(power_issues, list) and issue in power_issues:
+            key = f"RUN_CONTEXT_WARNING_POWER_{issue.upper()}"
+            warnings.append(
+                RunContextWarning(
+                    code=code,
+                    severity="warn",
+                    applies_to="run",
+                    title=i18n_ref(f"{key}_TITLE"),
+                    detail=i18n_ref(f"{key}_DETAIL"),
+                )
+            )
     return warnings
 
 

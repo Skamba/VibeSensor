@@ -76,6 +76,7 @@ def _build_run_metadata_record(
         guided_phases=session.guided_phases_for_run(run_id),
         start_time_unverified=session.start_time_unverified(run_id),
         start_clock=session.unverified_start_clock(run_id),
+        power_issues=session.power_issues(run_id),
     )
 
 

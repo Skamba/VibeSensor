@@ -37,7 +37,7 @@ __all__ = [
     "root_side_manifest",
 ]
 
-ROOT_SIDE_DIGEST: Final = "af65216dc0308e987499c65334eecc1581b58e478071e629f4fd1b7fb88ca711"
+ROOT_SIDE_DIGEST: Final = "a9079b6f58bbaf15ab7174135531257203619951a3af0a2f7de1d74800c0f025"
 """Manifest digest of this release's root side.
 
 ``tests/hygiene/test_root_side.py`` fails with the new value whenever a

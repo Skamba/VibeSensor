@@ -42,6 +42,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `hotspot/`: fixed hotspot settings and the captive-portal probe hosts (`captive_portal.py`, used by `web/middleware.py`). The root-side copies live in `apps/server/root-helpers/`.
 
 - `clock/`: steps the RTC-less Pi's unsynchronised wall clock to the browser clock the UI reports on connect, before a recording starts and after it stops (needs `CAP_SYS_TIME` from `vibesensor.service`); says whether the clock is trusted (kept per boot in `clock_state.json`), so runs started on an unset clock are marked `start_time_unverified`; `run_times.py` re-dates this boot's such runs once it is.
+- `power/`: `monitor.py` polls the Pi's undervoltage alarm and SoC temperature from sysfs, logs transitions, reports them in `/api/health` (`power`, per boot in `power_state.json`), and tells the recorder which issues a run saw (`power_issues` in run metadata).
 - `simulator/`: sensor simulator and WebSocket smoke client.
 - `domain/`: core value objects and aggregates; see `docs/domain-model.md`.
 - `common/`: small cross-cutting helpers (JSON, time, logging, errors, units, process env settings, the privileged helper client, `root_side.py` which compares the installed root-side stamp with this release).

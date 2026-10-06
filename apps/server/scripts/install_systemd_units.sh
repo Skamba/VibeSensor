@@ -87,6 +87,11 @@ for unit in \
   render_unit "${unit}"
 done
 
+# Keep the system journal across power cuts (systemd/vibesensor-journald.conf).
+JOURNALD_DROPIN=/etc/systemd/journald.conf.d/90-vibesensor.conf
+install -d -o root -g root -m 0755 "$(dirname "${JOURNALD_DROPIN}")"
+install -o root -g root -m 0644 "${PI_DIR}/systemd/vibesensor-journald.conf" "${JOURNALD_DROPIN}"
+
 # Record what is now installed: the manifest of the root side this ran from
 # (sha256sum lines for the regular files in root-helpers/, scripts/ and
 # systemd/, sorted bytewise). The server compares its digest with the one its
@@ -117,6 +122,10 @@ if [ "${SKIP_SERVICE_START}" = "1" ]; then
   enable_unit vibesensor-hotspot-self-heal.timer timers.target
 else
   systemctl daemon-reload
+  # Move the journal from RAM to /var/log/journal now rather than at the next boot.
+  if ! { systemctl restart systemd-journald && journalctl --flush; }; then
+    echo "WARNING: could not restart journald; the journal becomes persistent at the next boot." >&2
+  fi
   systemctl enable --now vibesensor-privileged.socket
   # Restart (not just start) so a re-run applies the updated unit to a running server.
   systemctl enable vibesensor.service

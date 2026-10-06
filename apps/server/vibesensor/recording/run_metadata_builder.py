@@ -25,6 +25,7 @@ from vibesensor.recording.run_schema import (
 
 if TYPE_CHECKING:
     from vibesensor.ingest.registry import ClientRegistry
+    from vibesensor.power.monitor import PowerIssue
     from vibesensor.settings.ui_preferences import UiPreferencesService
 
 
@@ -109,6 +110,7 @@ def build_run_metadata(
     guided_phases: tuple[RunGuidedPhase, ...] = (),
     start_time_unverified: bool = False,
     start_clock: RunStartClock | None = None,
+    power_issues: tuple[PowerIssue, ...] = (),
 ) -> RunMetadata:
     """Assemble comprehensive typed run metadata."""
     feature_interval_s = 1.0 / max(1.0, float(metrics_log_hz))
@@ -146,6 +148,7 @@ def build_run_metadata(
     metadata.guided_phases = guided_phases
     metadata.start_time_unverified = start_time_unverified
     metadata.start_clock = start_clock
+    metadata.power_issues = power_issues
     metadata.incomplete_for_order_analysis = not order_reference_context_complete(metadata)
     if ui_preferences is not None:
         metadata.language = str(ui_preferences.language).strip().lower() or "en"

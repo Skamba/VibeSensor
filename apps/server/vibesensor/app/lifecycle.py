@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from vibesensor.live.broadcaster import LiveBroadcaster
     from vibesensor.live.processing_loop import ProcessingLoop
     from vibesensor.live.processor import SignalProcessor
+    from vibesensor.power.monitor import PowerMonitor
     from vibesensor.recording.recorder import RunRecorder
     from vibesensor.speed.gps_speed import GPSSpeedMonitor
     from vibesensor.speed.obd.service import ObdService
@@ -84,6 +85,7 @@ class LifecycleRuntime:
     esp_flash_manager: EspFlashManager
     history_db: HistoryDB
     run_times: RunTimeCorrector
+    power_monitor: PowerMonitor
     shutdown_analysis_timeout_s: float = 30.0
     """How long shutdown waits for queued post-analysis before giving up."""
 
@@ -229,6 +231,10 @@ class LifecycleManager:
             (
                 "clock-watch",
                 lambda: self._start_supervised(lambda: r.run_times.watch(), "clock-watch"),
+            ),
+            (
+                "power-watch",
+                lambda: self._start_supervised(lambda: r.power_monitor.run(), "power-watch"),
             ),
             ("update-startup-recover", self._start_update_recovery),
         ]

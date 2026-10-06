@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from vibesensor.common.root_side import RootSideState
 from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.ingest.registry import ExpectedFrameLoss
+from vibesensor.power.monitor import TemperatureState
 
 
 class HealthDataLossResponse(BaseModel):
@@ -143,6 +144,21 @@ class HealthRootSideResponse(BaseModel):
     expected_digest: str
 
 
+class HealthPowerResponse(BaseModel):
+    """The Pi's supply voltage and SoC temperature (``vibesensor/power/monitor.py``)."""
+
+    undervoltage_now: bool | None
+    """``null`` when the device has no ``rpi_volt`` sensor (not a Pi)."""
+    undervoltage_seen: bool
+    """The supply dropped below about 4.63 V since boot."""
+    temperature_c: float | None
+    temperature_state: TemperatureState
+    """``warm``: at the 60 °C soft limit (CPU clock lowered); ``hot``: above 80 °C
+    (CPU throttled)."""
+    hottest_state_seen: TemperatureState
+    """The hottest ``temperature_state`` since boot."""
+
+
 class HealthResponse(BaseModel):
     """Response body for the server health check endpoint."""
 
@@ -168,6 +184,7 @@ class HealthResponse(BaseModel):
     intake_stats: HealthIntakeStatsResponse
     ingest: HealthIngestResponse
     root_side: HealthRootSideResponse
+    power: HealthPowerResponse
 
     tick_duration_s: float = 0.0
     max_tick_duration_s: float = 0.0

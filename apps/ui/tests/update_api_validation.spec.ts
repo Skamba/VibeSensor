@@ -116,6 +116,13 @@ function makeHealthPayload() {
       installed_digest: null,
       expected_digest: "a".repeat(64),
     },
+    power: {
+      undervoltage_now: null,
+      undervoltage_seen: false,
+      temperature_c: null,
+      temperature_state: "unknown",
+      hottest_state_seen: "unknown",
+    },
     tick_duration_s: 0,
     max_tick_duration_s: 0,
     tick_count: 0,

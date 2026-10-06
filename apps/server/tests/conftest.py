@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, create_autospec
 
 import pytest
+from test_support.power import sensorless_power_monitor
 
 from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.history.exports import HistoryExportService
@@ -25,6 +26,7 @@ from vibesensor.ingest.udp_control_tx import UDPControlPlane
 from vibesensor.live.broadcaster import LiveBroadcaster
 from vibesensor.live.processing_loop import ProcessingLoopState
 from vibesensor.live.processor import SignalProcessor
+from vibesensor.power.monitor import PowerMonitor
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.status_reporting import RunRecorderStatusSnapshot
 from vibesensor.report.service import HistoryReportService
@@ -217,6 +219,7 @@ class FakeState:
             recording=lambda: False, synchronized=lambda: None
         )
     )
+    power_monitor: PowerMonitor = field(default_factory=sensorless_power_monitor)
 
     def __post_init__(self) -> None:
         self.health_state.mark_ready()

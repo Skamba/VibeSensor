@@ -5,15 +5,16 @@ from __future__ import annotations
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from test_support.power import FakePiSysfs
 from test_support.routes import iter_api_routes
+
+from vibesensor.power.monitor import PowerMonitor
+from vibesensor.web.router import create_router
 
 
 @pytest.fixture
 def _health_client(fake_state):
     """Return ``(client, state, app)`` for health-endpoint tests."""
-
-    from vibesensor.web.router import create_router
-
     fake_state.processing_loop_state.processing_state = "ok"
     fake_state.processing_loop_state.processing_failure_count = 0
     app = FastAPI()
@@ -136,3 +137,34 @@ def test_health_endpoint_validates_through_fastapi_response_field(_health_client
     assert payload["data_loss"]["tracked_clients"] == 0
     assert payload["persistence"]["analysis_in_progress"] is False
     assert validated.status == "ok"
+
+
+def test_health_reports_a_supply_dip_seen_this_boot_without_failing_the_server(
+    fake_state, tmp_path
+):
+    """The power subsystem degrades; the status the update boot check reads stays ok."""
+    state = fake_state
+    sysfs = FakePiSysfs(tmp_path / "sys")
+    state.power_monitor = PowerMonitor(hwmon_dir=sysfs.hwmon, thermal_path=sysfs.thermal)
+    sysfs.set(undervoltage=True, celsius=63.4)
+    state.power_monitor.poll()
+    sysfs.set(undervoltage=False, celsius=63.4)
+    state.power_monitor.poll()
+    app = FastAPI()
+    app.include_router(create_router(state))
+
+    with TestClient(app) as client:
+        result = client.get("/api/health").json()
+
+    assert result["status"] == "ok"
+    assert result["power"] == {
+        "undervoltage_now": False,
+        "undervoltage_seen": True,
+        "temperature_c": 63.4,
+        "temperature_state": "warm",
+        "hottest_state_seen": "warm",
+    }
+    assert result["subsystems"]["power"] == {
+        "status": "degraded",
+        "reason_codes": ["undervoltage_seen"],
+    }

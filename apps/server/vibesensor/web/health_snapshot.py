@@ -14,6 +14,7 @@ from vibesensor.ingest.registry import ExpectedFrameLoss
 from vibesensor.ingest.sensor_timing import SensorTimingState
 from vibesensor.live.payload_types import IntakeStatsPayload
 from vibesensor.live.processing_loop import ProcessingHealth, ProcessingLoopState
+from vibesensor.power.monitor import PowerSnapshot
 from vibesensor.recording.status_reporting import RunRecorderHealthSnapshot
 from vibesensor.web.health_state import RuntimeHealthState
 
@@ -117,6 +118,7 @@ class HealthSnapshotData(TypedDict):
     intake_stats: IntakeStatsPayload
     ingest: IngestHealthSnapshot
     root_side: RootSideHealthSnapshot
+    power: PowerSnapshot
     tick_duration_s: float | None
     max_tick_duration_s: float | None
     tick_count: int
@@ -132,6 +134,7 @@ def build_system_health_snapshot(
     run_recorder: RunRecorder,
     ingest_diagnostics: IngestDiagnosticsCollector,
     bundled_firmware_version: str,
+    power: PowerSnapshot,
 ) -> HealthSnapshotData:
     """Build the app-level health snapshot from runtime collaborators.
 
@@ -142,7 +145,9 @@ def build_system_health_snapshot(
     An outdated root side (``root_side``) likewise degrades only its subsystem:
     every device runs the root side of an older release until an operator
     reinstalls it, and boot checks of earlier releases revert an update whose
-    status is ``warn``.
+    status is ``warn``. Undervoltage or overheating seen this boot (*power*)
+    likewise degrades only the ``power`` subsystem: the supply is not the
+    server's fault.
     """
 
     def _coerce_duration(value: float | None) -> float:
@@ -309,6 +314,16 @@ def build_system_health_snapshot(
     ingest_clients.sort(key=lambda row: str(row["client_id"]))
     if any(row["firmware_status"] == "outdated" for row in ingest_clients):
         subsystems["firmware"] = _subsystem(degraded=["sensor_firmware_outdated"])
+    subsystems["power"] = _subsystem(
+        degraded=[
+            reason
+            for reason, seen in (
+                ("undervoltage_seen", power["undervoltage_seen"]),
+                ("overheated_seen", power["hottest_state_seen"] == "hot"),
+            )
+            if seen
+        ]
+    )
     return {
         "status": status,
         "startup_state": health_state.startup_state,
@@ -361,6 +376,7 @@ def build_system_health_snapshot(
             "installed_digest": root_side.installed_digest,
             "expected_digest": root_side.expected_digest,
         },
+        "power": power,
         "tick_duration_s": _coerce_duration(loop_state.last_tick_duration_s),
         "max_tick_duration_s": _coerce_duration(loop_state.max_tick_duration_s),
         "tick_count": loop_state.tick_count,

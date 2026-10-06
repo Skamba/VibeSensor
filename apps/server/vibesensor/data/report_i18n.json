@@ -995,6 +995,22 @@
     "en": "Vehicle profile settings changed after this run",
     "nl": "Voertuigprofielinstellingen zijn na deze meting gewijzigd"
   },
+  "RUN_CONTEXT_WARNING_POWER_OVERHEATED_DETAIL": {
+    "en": "It went above 80 °C and slowed down. Keep it out of direct sun and away from heater vents.",
+    "nl": "Hij werd heter dan 80 °C en ging trager werken. Houd hem uit de zon en weg van de verwarming."
+  },
+  "RUN_CONTEXT_WARNING_POWER_OVERHEATED_TITLE": {
+    "en": "The Pi overheated during this run; results may be affected",
+    "nl": "De Pi werd te heet tijdens deze meting; de uitkomst kan afwijken"
+  },
+  "RUN_CONTEXT_WARNING_POWER_UNDERVOLTAGE_DETAIL": {
+    "en": "The Pi's supply voltage dropped too low. Use a stronger USB port or a 5 V / 2.5 A car adapter.",
+    "nl": "De voedingsspanning van de Pi was te laag. Gebruik een sterkere USB-poort of een 5 V / 2,5 A auto-adapter."
+  },
+  "RUN_CONTEXT_WARNING_POWER_UNDERVOLTAGE_TITLE": {
+    "en": "Power dipped during this run; results may be affected",
+    "nl": "De voeding zakte weg tijdens deze meting; de uitkomst kan afwijken"
+  },
   "RUN_CONTEXT_WARNING_RAW_CAPTURE_FINALIZE_ENQUEUE_TIMEOUT_DETAIL": {
     "en": "Raw capture finalization could not be queued before stop completed. Queue depth at failure: {queue_depth}. Error: {error_summary}.",
     "nl": "De ruwe-opnamefinalisatie kon niet meer in de wachtrij worden gezet voordat stoppen was voltooid. Wachtrijdiepte bij falen: {queue_depth}. Fout: {error_summary}."

@@ -11,6 +11,7 @@ import msgspec
 
 from vibesensor.common.json_types import JsonObject, is_json_object
 from vibesensor.common.scalars import text_or_none
+from vibesensor.power.monitor import POWER_ISSUES, PowerIssue
 from vibesensor.recording.run_metadata_codecs import (
     PayloadFieldSpec,
     bool_decoder,
@@ -104,6 +105,7 @@ class _RunMetadataRecord(msgspec.Struct, kw_only=True, frozen=True):
     start_time_unverified: object = False
     start_clock: object = None
     start_time_corrected_by_s: object = None
+    power_issues: object = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,6 +308,7 @@ def run_metadata_from_mapping(data: Mapping[str, object]) -> RunMetadata:
         start_time_unverified=scalar_state.start_time_unverified,
         start_clock=_run_start_clock_from_payload(data.get("start_clock")),
         start_time_corrected_by_s=scalar_state.start_time_corrected_by_s,
+        power_issues=_power_issues_from_payload(data.get("power_issues")),
     )
 
 
@@ -343,7 +346,17 @@ def run_metadata_to_json_object(metadata: RunMetadata) -> JsonObject:
             "boot_id": start_clock.boot_id,
             "monotonic_s": start_clock.monotonic_s,
         }
+    if metadata.power_issues:
+        payload["power_issues"] = list(metadata.power_issues)
     return payload
+
+
+def _power_issues_from_payload(payload: object) -> tuple[PowerIssue, ...]:
+    """Decode persisted ``power_issues``; unknown entries are dropped."""
+
+    if not isinstance(payload, list):
+        return ()
+    return tuple(issue for issue in POWER_ISSUES if issue in payload)
 
 
 def _run_start_clock_from_payload(payload: object) -> RunStartClock | None:
