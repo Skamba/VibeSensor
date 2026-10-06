@@ -89,7 +89,6 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
     top_causes = summary.get("top_causes", [])
     origin = summary.get("most_likely_origin", {})
     suitability = summary.get("run_suitability", [])
-    test_plan = summary.get("test_plan", [])
 
     first_cause = top_causes[0] if top_causes else {}
     suitability_states = {
@@ -97,7 +96,6 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
         for c in suitability
         if isinstance(c, dict) and "check_key" in c and "state" in c
     }
-    action_ids = [s["action_id"] for s in test_plan if isinstance(s, dict) and "action_id" in s]
     return {
         "finding_key": first_cause.get("finding_key"),
         "suspected_source": first_cause.get("suspected_source"),
@@ -106,7 +104,6 @@ def _extract_domain_meaning(summary: dict[str, Any]) -> dict[str, Any]:
         "origin_location": origin.get("location"),
         "origin_source": origin.get("suspected_source"),
         "suitability_states": suitability_states,
-        "action_ids": action_ids,
     }
 
 
@@ -140,4 +137,3 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
     ).lower()
     assert direct_meaning["origin_source"] == reloaded_meaning["origin_source"]
     assert direct_meaning["suitability_states"] == reloaded_meaning["suitability_states"]
-    assert direct_meaning["action_ids"] == reloaded_meaning["action_ids"]

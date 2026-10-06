@@ -300,7 +300,6 @@ def assert_summary_sections(
         "findings",
         "top_causes",
         "most_likely_origin",
-        "test_plan",
         "phase_info",
         "run_suitability",
     ),

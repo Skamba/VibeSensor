@@ -43,8 +43,9 @@ type ConfidenceLevelValue = Literal["strong", "moderate", "weak"]
 type OrderCodeValue = Literal["T1", "T2", "P1", "P2", "E1", "E2"]
 type AmplitudeBasis = Literal["order", "overall"]
 # ``ruled_out_estimated``: no match, but the order rests on an estimate (a weak
-# library ratio, engine RPM estimated from speed assuming top gear, or a plug-in
-# hybrid whose engine may have been off). ``not_applicable``: the car has no such
+# library ratio, engine RPM estimated from speed assuming top gear, a plug-in
+# hybrid whose engine may have been off, or an EV/PHEV that may have braked on
+# regeneration without its discs). ``not_applicable``: the car has no such
 # source (an EV's engine). ``same_rhythm_as_candidate``: without measured RPM the
 # engine turns at the diagnosed wheel or propshaft order's rhythm in some gear.
 type SourceCheckStatus = Literal[
@@ -67,6 +68,7 @@ type SourceCheckReason = Literal[
     "same_rhythm_as_candidate",
     "no_braking",
     "only_while_braking",
+    "regen_braking",
 ]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down", "brake"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]

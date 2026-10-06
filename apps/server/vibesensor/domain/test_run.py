@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import ClassVar
 
 from vibesensor.domain.driving_segment import DrivingSegment
@@ -10,7 +10,6 @@ from vibesensor.domain.finding import Finding, VibrationSource
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.speed_profile import SpeedProfile
-from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 
 __all__ = ["TestRun"]
 
@@ -25,7 +24,6 @@ class TestRun:
     top_causes: tuple[Finding, ...] = ()
     speed_profile: SpeedProfile | None = None
     suitability: RunSuitability | None = None
-    test_plan: TestPlan = field(default_factory=TestPlan)
 
     def __post_init__(self) -> None:
         if not self.top_causes:
@@ -159,7 +157,3 @@ class TestRun:
         if non_ref_tc:
             return non_ref_tc
         return self.top_causes
-
-    @property
-    def recommended_actions(self) -> tuple[RecommendedAction, ...]:
-        return self.test_plan.prioritized_actions

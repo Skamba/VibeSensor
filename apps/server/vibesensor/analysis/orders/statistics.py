@@ -182,14 +182,11 @@ def _spatial_weakness(
 
     1 for a weakly separated hotspot; past the dominance edge where it stops
     counting as weak, fading to 0 over ``weak_separation_edge_ramp``. A hotspot
-    declared separated by other evidence (below the edge, or with no edge)
-    takes none.
+    declared separated by other evidence has no edge and takes none.
     """
     if weak_spatial_separation:
         return 1.0
     if weak_separation_edge is None or dominance_ratio is None:
-        return 0.0
-    if dominance_ratio < weak_separation_edge:
         return 0.0
     return 1.0 - _ramp(
         dominance_ratio,
@@ -297,10 +294,13 @@ def _zone_credit(
 # Speed-phase evidence
 # ═══════════════════════════════════════════════════════════════════════════
 
+# Transient phases: a match there weighs less on the speed band than one at a
+# cruise, and they make up the onset evidence. Braking is slowing down too.
 _PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
     {
         DrivingPhase.ACCELERATION.value,
         DrivingPhase.DECELERATION.value,
+        DrivingPhase.BRAKING.value,
         DrivingPhase.COAST_DOWN.value,
     },
 )
@@ -386,16 +386,32 @@ def compute_phase_stats(
     min_match_rate: float,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[dict[str, float] | None, int]:
-    """Compute per-phase confidence and count phases with sufficient evidence."""
+    """Compute per-phase confidence and count phases with sufficient evidence.
+
+    Braking counts as one phase with deceleration: both are slowing down, and
+    splitting the spectra by how the car slowed may not add a phase bonus.
+    """
     if not has_phases or not possible_by_phase:
         return None, 0
     per_phase_confidence: dict[str, float] = {}
-    phases_with_evidence = 0
+    possible_by_group: Counter[str] = Counter()
+    matched_by_group: Counter[str] = Counter()
     for phase_key, phase_possible in possible_by_phase.items():
         phase_matched = matched_by_phase.get(phase_key, 0)
         per_phase_confidence[phase_key] = phase_matched / max(1, phase_possible)
-        if phase_matched >= min_match_points and per_phase_confidence[phase_key] >= min_match_rate:
-            phases_with_evidence += 1
+        group = (
+            DrivingPhase.DECELERATION.value
+            if phase_key == DrivingPhase.BRAKING.value
+            else phase_key
+        )
+        possible_by_group[group] += phase_possible
+        matched_by_group[group] += phase_matched
+    phases_with_evidence = sum(
+        1
+        for group, possible in possible_by_group.items()
+        if matched_by_group[group] >= min_match_points
+        and matched_by_group[group] / max(1, possible) >= min_match_rate
+    )
     return per_phase_confidence, phases_with_evidence
 
 

@@ -361,6 +361,7 @@ function checkedInsights(
   language: Lang = "en",
   conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]> = {},
   extra: Partial<HistoryInsightsPayload["diagnosis"]> = {},
+  speedUnit: "kmh" | "mps" = "kmh",
 ) {
   const insights = populatedInsights("run-010");
   const base = makeDiagnosis();
@@ -381,7 +382,7 @@ function checkedInsights(
   const details = buildDetails(
     historyListRun("run-010"),
     defaultDetail({ preview: insights }),
-    { ...f, t: (key, vars) => translate(language, key, vars) },
+    { ...f, t: (key, vars) => translate(language, key, vars), speedUnit },
   );
   if (details.insights.kind !== "findings") {
     throw new Error("expected findings");
@@ -928,6 +929,54 @@ test("brake judder names the axle's brake discs and asks for firm stops, not a s
     detail:
       "ruled out: the vibration at the wheel's rhythm came only while braking (the brakes, not a wheel or tire)",
   });
+});
+
+test("the brake tips name the speed to brake from in the display unit", () => {
+  const wheels = {
+    source: "wheel/tire",
+    status: "ruled_out",
+    reason: "no_matching_order",
+  } as const;
+  const noBraking = checkedInsights(
+    "no_fault",
+    [
+      wheels,
+      { source: "brakes", status: "not_testable", reason: "no_braking" },
+    ],
+    "en",
+    {},
+    {},
+    "mps",
+  );
+  expect(noBraking.checks.notChecked[0].detail).toContain(
+    "brake firmly from about 28 m/s a few times",
+  );
+  // An EV may have stopped on regeneration alone: its brakes are checked only
+  // with a hedge, and the tip asks for firm stops on the brake pedal.
+  const ev = checkedInsights(
+    "no_fault",
+    [
+      wheels,
+      {
+        source: "brakes",
+        status: "ruled_out_estimated",
+        reason: "regen_braking",
+      },
+    ],
+    "nl",
+    { fuel_type: "EV" },
+    {},
+    "mps",
+  );
+  expect(ev.primary?.explanation).toBe(
+    "Niets viel op bij de controles die deze rit kon doen: wielen/banden en remmen (kan op regeneratie vertraagd hebben).",
+  );
+  expect(ev.checks.checked[1].detail).toContain(
+    "doe de stap stevig afremmen van de begeleide test met regeneratie op het laagste niveau",
+  );
+  expect(ev.checks.checked[1].detail).toContain(
+    "harder dan regeneratie alleen, vanaf ongeveer 28 m/s.",
+  );
 });
 
 test("a wheel fault felt only in the cabin names no wheel and asks for wheel sensors", () => {

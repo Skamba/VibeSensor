@@ -92,7 +92,6 @@ markers = [
 ]
 filterwarnings = [
     "ignore:cannot collect test class 'TestRun':pytest.PytestCollectionWarning",
-    "ignore:cannot collect test class 'TestPlan':pytest.PytestCollectionWarning",
 ]
 
 [tool.ruff]

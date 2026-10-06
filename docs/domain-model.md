@@ -64,8 +64,8 @@ The model uses explicit scope boundaries:
 - case scope: `DiagnosticCase`, `Car`, `Symptom`
 - car-scoped interpretive context: `OrderReferenceSpec`
 - run diagnostic scope: `TestRun`, `Finding`, `DrivingSegment`,
-  `RecommendedAction`, `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
-  `TestPlan`, `CaptureReadiness`, `CaptureReadinessCheck`
+  `RunSuitability`, `SuitabilityCheck`, `SpeedProfile`,
+  `CaptureReadiness`, `CaptureReadinessCheck`
 - finding scope: `ConfidenceLevel`, `FindingEvidence`, `LocationHotspot`,
   `VibrationOrigin`
 - capture lifecycle scope: `Run`, `RunStatus`
@@ -165,8 +165,7 @@ RunCapture (raw samples stay arrays) -> Finding -> Report
 
 `DiagnosticCase`, `TestRun`, `Finding`, `Run`, `RunCapture`, `RunSetup`,
 `Car`, `Symptom`, `DrivingSegment`, `Sensor`,
-`SensorPlacement`, `SpeedSource`, `TestPlan`, `RecommendedAction`,
-`SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
+`SensorPlacement`, `SpeedSource`, `SpeedProfile`, `RunSuitability`, `SuitabilityCheck`,
 `ConfigurationSnapshot`, `LocationHotspot`.
 
 ### Domain enums

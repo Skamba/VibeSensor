@@ -169,6 +169,7 @@ _RULED_OUT_ESTIMATED_KEYS = {
     "estimated_top_gear": "RULED_OUT_ESTIMATED_TOP_GEAR",
     "top_gear_assumed": "RULED_OUT_ENGINE_TOP_GEAR",
     "engine_may_be_off": "RULED_OUT_ENGINE_MAY_BE_OFF",
+    "regen_braking": "RULED_OUT_REGEN_BRAKING",
 }
 # Page 1 of a no-fault run: what each untested or estimate-based check leaves open,
 # and how to close it; the short hedge names the estimate in the "checked" list.
@@ -185,12 +186,14 @@ _CHECKED_LIMITED_KEYS = {
     "estimated_top_gear": "CHECKED_LIMITED_TOP_GEAR",
     "top_gear_assumed": "CHECKED_LIMITED_ENGINE_TOP_GEAR",
     "engine_may_be_off": "CHECKED_LIMITED_ENGINE_MAY_BE_OFF",
+    "regen_braking": "CHECKED_LIMITED_REGEN_BRAKING",
 }
 _CHECKED_HEDGE_KEYS = {
     "estimated_final_drive": "CHECKED_HEDGE_FINAL_DRIVE",
     "estimated_top_gear": "CHECKED_HEDGE_TOP_GEAR",
     "top_gear_assumed": "CHECKED_HEDGE_ENGINE_TOP_GEAR",
     "engine_may_be_off": "CHECKED_HEDGE_ENGINE_MAY_BE_OFF",
+    "regen_braking": "CHECKED_HEDGE_REGEN_BRAKING",
 }
 # The engine's own wording: measured RPM tests it without the tire size or ratios, and
 # an estimated RPM always assumes top gear.

@@ -80,6 +80,10 @@ def detect_diffuse_excitation(
     return diffuseness >= 1.0, 1.0 - diffuseness * (1.0 - penalty)
 
 
+# Brake judder is a wheel order heard only while braking (``brake_attribution``).
+_WHEEL_ORDER_SOURCES = frozenset({VibrationSource.WHEEL_TIRE, VibrationSource.BRAKES})
+
+
 def suppress_engine_aliases(
     findings: list[tuple[float, DomainFinding]],
     *,
@@ -87,6 +91,8 @@ def suppress_engine_aliases(
     min_confidence: float = ORDER_MIN_CONFIDENCE,
 ) -> list[DomainFinding]:
     """Suppress engine findings likely to be aliases of stronger wheel findings.
+
+    A brake finding counts as a wheel finding here: it is a wheel order.
 
     Engine findings whose ranking score is at least as high as the best wheel
     finding are kept intact — a better ranking score indicates superior
@@ -113,7 +119,7 @@ def suppress_engine_aliases(
     wheels = [
         (score, finding)
         for score, finding in findings
-        if finding.source_normalized == VibrationSource.WHEEL_TIRE
+        if finding.source_normalized in _WHEEL_ORDER_SOURCES
     ]
     best_wheel_conf = max((finding.effective_confidence for _, finding in wheels), default=0.0)
     best_wheel_ranking = max((score for score, _ in wheels), default=0.0)
@@ -172,8 +178,15 @@ def apply_localization_override(
     localization_confidence: float,
     weak_spatial_separation: bool,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
-) -> tuple[float, bool]:
-    """Adjust localization confidence when only one connected sensor matched."""
+) -> tuple[float, bool, bool]:
+    """Adjust localization confidence when only one connected sensor matched.
+
+    Returns the localization confidence, whether the hotspot is weakly
+    separated, and whether that verdict was declared here from the
+    per-location evidence. A declared verdict stands at any dominance, so
+    scoring must not ease the hotspot's own weak-separation penalty back in
+    past its dominance edge.
+    """
     settings = ORDER_HEURISTIC_SETTINGS
     wheel_sensor_count = sum(1 for location in connected_locations if is_wheel_location(location))
     if (
@@ -187,14 +200,14 @@ def apply_localization_override(
             settings.dominant_single_location_base
             + settings.dominant_single_location_step * (wheel_sensor_count - 1),
         )
-        return localization_confidence, False
+        return localization_confidence, False, True
     if (
         suspected_source == VibrationSource.DRIVELINE
         and per_location_dominant
         and wheel_sensor_count >= 4
         and matched >= min_match_points
     ):
-        return localization_confidence, True
+        return localization_confidence, True, True
     if (
         suspected_source == VibrationSource.WHEEL_TIRE
         and per_location_dominant
@@ -207,8 +220,8 @@ def apply_localization_override(
             settings.dominant_single_location_base
             + settings.dominant_single_location_step * (len(connected_locations) - 1),
         )
-        weak_spatial_separation = False
-    elif (
+        return localization_confidence, False, True
+    if (
         suspected_source == VibrationSource.WHEEL_TIRE
         and len(unique_match_locations) == 1
         and len(connected_locations) >= 2
@@ -223,5 +236,5 @@ def apply_localization_override(
                 + settings.fallback_single_location_step * (len(connected_locations) - 1),
             ),
         )
-        weak_spatial_separation = False
-    return localization_confidence, weak_spatial_separation
+        return localization_confidence, False, True
+    return localization_confidence, weak_spatial_separation, False

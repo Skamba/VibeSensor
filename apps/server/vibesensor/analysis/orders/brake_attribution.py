@@ -15,6 +15,7 @@ neither side. See "Brake judder" in ``docs/analysis_pipeline.md``.
 from __future__ import annotations
 
 from bisect import bisect_left
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import replace
 from statistics import median
@@ -32,15 +33,22 @@ BRAKING_PHASE = DrivingPhase.BRAKING.value
 # two seconds of braking per sensor at the 4 Hz spectrum rate (and as many
 # spectra while not braking).
 _MIN_SPECTRA = 8
-# The order is in at least half of the braking spectra...
+# The order is in at least half of the braking spectra of the stops it shows
+# in. A stop shows it when it is in at least a quarter of that stop's spectra
+# within 12 dB (a quarter of the amplitude) of the loudest stop's level: road
+# noise lands a floor-level peak near the predicted frequency in about a third
+# of the spectra. A stop that does not show it may have been an EV's or PHEV's
+# regeneration alone, without touching the discs, or judder may need hot discs.
 _MIN_BRAKING_HEARD_SHARE = 0.5
-# ...and in at most one in ten of the other spectra at the same speeds, counting
-# only peaks within 12 dB (a quarter of the amplitude) of its braking level:
-# road noise lands a floor-level peak near the predicted frequency now and then.
+_MIN_STOP_HEARD_SHARE = 0.25
 _PRESENT_LEVEL_RATIO = 0.25
+# ...and in at most one in ten of the other spectra at the same speeds, counting
+# only peaks within 12 dB of its braking level.
 _MAX_CLEAR_PRESENT_SHARE = 0.1
 # Half a spectrum's span when the sample does not carry its analysis window.
 _DEFAULT_HALF_WINDOW_S = 1.28
+# Braking samples further apart than this belong to different stops.
+_SPELL_GAP_S = 1.0
 
 
 def _phase_value(phase: object) -> str:
@@ -61,12 +69,32 @@ def _near(times: Sequence[float], t_s: float, distance_s: float) -> bool:
     return any(abs(t - t_s) <= distance_s for t in neighbours)
 
 
+def _braking_spells(samples: Sequence[Sample], braking: Sequence[bool]) -> dict[int, int]:
+    """The stop (numbered in time order) each timed braking sample belongs to."""
+    timed = sorted(
+        (t_s, idx)
+        for idx, (sample, is_braking) in enumerate(zip(samples, braking, strict=True))
+        if is_braking and (t_s := sample.t_s) is not None
+    )
+    spell_of: dict[int, int] = {}
+    spell = 0
+    for position, (t_s, idx) in enumerate(timed):
+        if position and t_s - timed[position - 1][0] > _SPELL_GAP_S:
+            spell += 1
+        spell_of[idx] = spell
+    return spell_of
+
+
 def only_while_braking(
     match: OrderMatchAccumulator,
     samples: Sequence[Sample],
     per_sample_phases: PhaseLabels | None,
 ) -> bool:
-    """Whether the matched order is there while braking and not otherwise."""
+    """Whether the matched order is there while braking and not otherwise.
+
+    Only the stops that show the order at its braking level count as braking
+    (``_MIN_STOP_HEARD_SHARE``).
+    """
     if per_sample_phases is None or len(per_sample_phases) != len(samples):
         return False
     braking = [_phase_value(phase) == BRAKING_PHASE for phase in per_sample_phases]
@@ -77,6 +105,7 @@ def only_while_braking(
     )
     if not braking_times:
         return False
+    spell_of = _braking_spells(samples, braking)
     locations = match.heard_locations or {location for _idx, location in match.possible_samples}
     # True: a braking spectrum; False: a spectrum clear of any braking; spectra
     # that straddle a braking spell are left out.
@@ -85,19 +114,41 @@ def only_while_braking(
         if location not in locations:
             continue
         sample = samples[idx]
-        if braking[idx]:
+        if idx in spell_of:
             side[idx] = True
         elif sample.t_s is not None and not _near(
             braking_times, sample.t_s, _half_window_s(sample)
         ):
             side[idx] = False
     heard = [
-        (side[idx], point)
+        (idx, point)
         for idx, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
         if point.heard and idx in side
     ]
-    braking_possible = [idx for idx, is_braking in side.items() if is_braking]
-    braking_heard = [point for is_braking, point in heard if is_braking]
+    possible_by_spell = Counter(spell_of[idx] for idx, is_braking in side.items() if is_braking)
+    amps_by_spell: dict[int, list[float]] = {}
+    for idx, point in heard:
+        if side[idx]:
+            amps_by_spell.setdefault(spell_of[idx], []).append(point.amp)
+    # The loudest stop's level, among the stops heard often enough to judge.
+    stop_levels = [
+        median(amps)
+        for spell, amps in amps_by_spell.items()
+        if len(amps) >= _MIN_STOP_HEARD_SHARE * possible_by_spell[spell]
+    ]
+    if not stop_levels:
+        return False
+    stop_level = max(stop_levels)
+    shown = {
+        spell
+        for spell, amps in amps_by_spell.items()
+        if sum(amp >= _PRESENT_LEVEL_RATIO * stop_level for amp in amps)
+        >= _MIN_STOP_HEARD_SHARE * possible_by_spell[spell]
+    }
+    braking_possible = [
+        idx for idx, is_braking in side.items() if is_braking and spell_of[idx] in shown
+    ]
+    braking_heard = [point for idx, point in heard if side[idx] and spell_of[idx] in shown]
     if len(braking_possible) < _MIN_SPECTRA or len(braking_heard) < _MIN_BRAKING_HEARD_SHARE * len(
         braking_possible
     ):
@@ -121,8 +172,8 @@ def only_while_braking(
     level = median(point.amp for point in braking_heard)
     clear_present = [
         point
-        for is_braking, point in heard
-        if not is_braking and in_band(point.speed_kmh) and point.amp >= _PRESENT_LEVEL_RATIO * level
+        for idx, point in heard
+        if not side[idx] and in_band(point.speed_kmh) and point.amp >= _PRESENT_LEVEL_RATIO * level
     ]
     return len(clear_present) <= _MAX_CLEAR_PRESENT_SHARE * len(clear_possible)
 

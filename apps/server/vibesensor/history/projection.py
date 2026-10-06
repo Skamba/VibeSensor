@@ -34,10 +34,6 @@ from vibesensor.summary.reconstruction import (
     test_run_from_persisted_analysis,
     test_run_from_summary,
 )
-from vibesensor.summary.test_plan_fields import (
-    _has_structured_step_content,
-    step_payloads_from_plan,
-)
 
 __all__ = [
     "build_projected_run_details_json",
@@ -223,8 +219,6 @@ def _project_analysis_payload(
     projected["most_likely_origin"] = (
         origin_payload_from_finding(primary) if primary is not None else {}
     )
-    if not _has_structured_step_content(analysis.get("test_plan")):
-        projected["test_plan"] = step_payloads_from_plan(test_run.test_plan)
     projected["run_suitability"] = run_suitability_payload(test_run.suitability)
     return cast(JsonObject, projected)
 

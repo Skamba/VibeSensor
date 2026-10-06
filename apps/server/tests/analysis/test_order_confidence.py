@@ -6,9 +6,16 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
+from test_support.analysis import run_analysis
+from test_support.core import ALL_WHEEL_SENSORS, wheel_hz
+from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis.orders.heuristics import detect_diffuse_excitation
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
+from vibesensor.analysis.orders.statistics import (
+    compute_matched_speed_phase_evidence,
+    compute_phase_stats,
+)
 from vibesensor.analysis.orders.statistics import (
     compute_order_confidence as _compute_order_confidence,
 )
@@ -229,12 +236,6 @@ class TestComputeOrderConfidence:
         expected = 0.90 / 0.70 if no_wheel else 1.0 / 0.70
         assert scores[-1] / scores[0] == pytest.approx(expected)
 
-    def test_a_hotspot_separated_by_other_evidence_takes_no_spread_penalty(self) -> None:
-        # Declared separated below the edge (a single matched sensor): no ramp.
-        assert self._call(dominance_ratio=1.1, weak_separation_edge=1.44) == self._call(
-            dominance_ratio=1.1, weak_separation_edge=None
-        )
-
     @pytest.mark.parametrize("name", ["constancy", "steadiness"])
     def test_speed_grades_scale_the_score_linearly(self, name: str) -> None:
         scores = [self._call(**{name: grade}) for grade in _grid(0.0, 1.0, 0.05)]
@@ -306,3 +307,96 @@ def test_the_diffuse_penalty_eases_out_past_each_edge(knob: str, values: list[fl
     assert all(step >= -1e-12 for step in _steps(penalties))
     # A penalty step of 0.035 is under 0.04 of a Strong score.
     assert max(_steps(penalties)) <= 0.035
+
+
+def _hotspot_run(dominance: float) -> list[dict[str, Any]]:
+    """A wheel order at four wheel sensors, clearest at front-left by *dominance*.
+
+    Front-left hears it in 3 of 10 windows, the other wheels in 2 of 10: too
+    seldom overall, but often enough at front-left alone, so the per-location
+    evidence pins it to that wheel (``per_location_dominant``).
+    """
+    samples = []
+    for i in range(60):
+        speed = 50.0 + i
+        for sensor in ALL_WHEEL_SENSORS:
+            peaks = [{"hz": 200.0, "amp": 0.004}]
+            if sensor == "front-left" and i % 10 in (0, 3, 6):
+                peaks.insert(0, {"hz": wheel_hz(speed), "amp": 0.03 * dominance})
+            elif sensor != "front-left" and i % 10 in (1, 5):
+                peaks.insert(0, {"hz": wheel_hz(speed), "amp": 0.03})
+            samples.append(
+                make_sample(
+                    t_s=float(i),
+                    speed_kmh=speed,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=24.0 if sensor == "front-left" else 18.0,
+                    strength_floor_amp_g=0.004,
+                )
+            )
+    return samples
+
+
+def test_a_clearer_hotspot_never_lowers_the_confidence() -> None:
+    # Swept across the dominance edge where four wheel sensors stop calling
+    # the hotspot weakly separated (1.44): the per-location evidence already
+    # declared it separated, so no spread penalty applies on either side of
+    # the edge, nor eases out past it. Only the strength term moves the score.
+    findings = []
+    for dominance in _grid(1.30, 1.70, 0.02):
+        summary = run_analysis(_hotspot_run(dominance))
+        wheel = next(f for f in summary["findings"] if f["suspected_source"] == "wheel/tire")
+        assert wheel["strongest_location"] == "front-left"
+        assert wheel["dominance_ratio"] == pytest.approx(dominance)
+        findings.append(wheel)
+    assert {f["location_hotspot"]["weak_spatial_separation"] for f in findings} == {False}
+    steps = _steps([f["confidence"] for f in findings])
+    assert min(steps) >= -1e-9
+    assert max(steps) <= 0.003
+
+
+def _points(phase: str, speed_kmh: float, amp: float, count: int) -> list[OrderMatchObservation]:
+    return [
+        OrderMatchObservation(
+            predicted_hz=10.0,
+            matched_hz=10.0,
+            rel_error=0.0,
+            amp=amp,
+            location="front_left_wheel",
+            speed_kmh=speed_kmh,
+            phase=phase,
+        )
+        for _ in range(count)
+    ]
+
+
+def test_braking_is_slowing_down_not_one_more_phase_for_the_bonus() -> None:
+    # Before braking had its own label, these spectra were all "deceleration":
+    # splitting them may not turn two phases into three.
+    _per_phase, phases = compute_phase_stats(
+        True,
+        {"cruise": 20, "deceleration": 10, "braking": 10},
+        {"cruise": 10, "deceleration": 5, "braking": 5},
+        min_match_rate=0.25,
+    )
+    assert phases == 2
+
+
+def test_braking_matches_weigh_on_the_speed_like_other_slowing_down() -> None:
+    # At 60 km/h the order is 0.03 g at a cruise and 0.12 g while slowing down;
+    # at 100 km/h it is 0.05 g at a cruise. A match while slowing down weighs
+    # less than one at a cruise, whether the car slowed by lifting off or on
+    # the brakes, so 100 km/h is where it shakes hardest.
+    def band(phase: str) -> str | None:
+        points = [
+            *_points("cruise", 100.0, 0.05, 5),
+            *_points("cruise", 60.0, 0.03, 5),
+            *_points(phase, 60.0, 0.12, 5),
+        ]
+        evidence = compute_matched_speed_phase_evidence(
+            points, focused_speed_band=None, hotspot_speed_band=""
+        )
+        return evidence.strongest_speed_band
+
+    assert band("braking") == band("deceleration") == "100-110 km/h"

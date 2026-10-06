@@ -271,9 +271,14 @@ The matcher records every possible window with its sensor
 sensors, the share of braking windows that heard the order with the share of
 non-braking windows at the same speeds that heard it within 12 dB of its
 braking level. Windows within half an analysis window of a braking sample are
-left out, because their spectrum spans part of the stop. When the order is in
-at least half of the braking windows and at most 10 % of the others (at least
-8 windows on each side), `as_brake_finding()` relabels the finding to the
+left out, because their spectrum spans part of the stop. Only the stops that
+show the order count: a stop where it is in under a quarter of the windows
+within 12 dB of the loudest stop's level is left out, as an EV or PHEV may
+have slowed on regeneration alone without touching the discs. Road noise near
+the predicted frequency lands a floor-level peak in about a third of the
+windows, so the level matters, not just the count. When the order
+is in at least half of the braking windows of those stops and at most 10 % of
+the others (at least 8 windows on each side), `as_brake_finding()` relabels the finding to the
 `brakes` source and keeps only its braking matched points. An unbalanced wheel
 stays a wheel/tire finding.
 

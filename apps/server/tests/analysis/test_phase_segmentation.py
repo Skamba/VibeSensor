@@ -105,6 +105,31 @@ class TestBraking:
         assert DrivingPhase.BRAKING not in phases
         assert DrivingPhase.DECELERATION in phases
 
+    @pytest.mark.parametrize(
+        ("gps_hz", "whole_kmh"),
+        [
+            pytest.param(None, False, id="smooth"),
+            pytest.param(1.0, False, id="1hz-gps"),
+            pytest.param(2.0, True, id="2hz-obd-whole-kmh"),
+        ],
+    )
+    def test_a_stop_at_exactly_the_documented_deceleration_is_braking(
+        self, gps_hz: float | None, whole_kmh: bool
+    ) -> None:
+        # 0.2 g sustained for 6 s: "from 0.2 g" includes 0.2 g itself, also on a
+        # GPS staircase or an OBD-II speed in whole km/h.
+        drop = 0.2 * 9.80665 * 3.6 * 6.0
+        samples = _drive(
+            [(10.0, 110.0, 110.0), (6.0, 110.0, 110.0 - drop), (10.0, 110.0 - drop, 110.0 - drop)],
+            sensors=4,
+            gps_hz=gps_hz,
+        )
+        if whole_kmh:
+            samples = _typed(
+                [{"speed_kmh": round(row.speed_kmh), "t_s": row.t_s} for row in samples]
+            )
+        assert _braking_seconds(samples) >= 3.0
+
     def test_engine_braking_just_under_the_threshold_is_not_braking(self) -> None:
         # 0.18 g sustained (6.4 km/h per second) is still a lift-off in a low gear.
         samples = _drive([(5.0, 90.0, 90.0), (5.0, 90.0, 58.0), (5.0, 58.0, 58.0)])

@@ -597,12 +597,15 @@ function checkedDetail(
   source: string,
   diagnosis: Diagnosis,
   t: Translate,
+  brakeTestSpeed: string,
 ): string {
   if (check.status === "candidate") {
     return t("history.checks.candidate");
   }
   if (check.status === "ruled_out_estimated" && check.reason) {
-    return t(`history.checks.limited.${checkReasonKey(source, check.reason)}`);
+    return t(`history.checks.limited.${checkReasonKey(source, check.reason)}`, {
+      speed: brakeTestSpeed,
+    });
   }
   if (
     check.reason === "stayed_in_neutral" ||
@@ -730,9 +733,11 @@ function referenceLines(
  * and the references behind them. */
 function checksModel(
   diagnosis: Diagnosis,
-  f: Pick<Formatters, "fmt" | "t">,
+  f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
 ): ChecksModel {
   const { t } = f;
+  // The brake tips name the speed to brake from in the display unit.
+  const brakeTestSpeed = formatSpeed(BRAKE_TEST_FROM_KMH, f.speedUnit, t, 0);
   const checked: CheckLine[] = [];
   const notChecked: CheckLine[] = [];
   const notApplicable: CheckLine[] = [];
@@ -752,12 +757,13 @@ function checksModel(
         label,
         detail: t(
           `history.checks.couldnt.${checkReasonKey(source, check.reason)}`,
+          { speed: brakeTestSpeed },
         ),
       });
     } else {
       checked.push({
         label,
-        detail: checkedDetail(check, source, diagnosis, t),
+        detail: checkedDetail(check, source, diagnosis, t, brakeTestSpeed),
       });
     }
   }

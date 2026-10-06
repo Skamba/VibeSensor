@@ -15,7 +15,6 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import FindingKind, VibrationSource
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture
 from vibesensor.domain.run_suitability import RunSuitability, SuitabilityCheck
-from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,7 +41,6 @@ def _run(
     findings: tuple[Finding, ...] = (),
     top_causes: tuple[Finding, ...] | None = None,
     suitability: RunSuitability | None = None,
-    actions: tuple[RecommendedAction, ...] = (),
     snapshot: ConfigurationSnapshot | None = None,
 ) -> TestRun:
     if top_causes is None:
@@ -55,12 +53,7 @@ def _run(
         findings=findings,
         top_causes=top_causes,
         suitability=suitability,
-        test_plan=TestPlan(actions=actions),
     )
-
-
-def _action(action_id: str, what: str) -> RecommendedAction:
-    return RecommendedAction(action_id=action_id, what=what)
 
 
 def _passing_suitability() -> RunSuitability:
@@ -101,13 +94,11 @@ class TestCaseLifecycle:
         first = _run(
             "run-1",
             findings=(_finding("F001"),),
-            actions=(_action("inspect-wheel", "Inspect wheel balance"),),
             suitability=_passing_suitability(),
         )
         second = _run(
             "run-2",
             findings=(_finding("F002", source="driveline", location="center"),),
-            actions=(_action("inspect-driveline", "Inspect driveline joints"),),
             suitability=_failing_suitability(),
         )
 
@@ -122,9 +113,6 @@ class TestCaseLifecycle:
         assert latest_run.primary_finding is not None
         assert latest_run.primary_finding.suspected_source is VibrationSource.DRIVELINE
         assert latest_run.primary_finding.strongest_location == "center"
-        assert latest_run.recommended_actions == (
-            _action("inspect-driveline", "Inspect driveline joints"),
-        )
         assert latest_run.suitability == _failing_suitability()
 
 

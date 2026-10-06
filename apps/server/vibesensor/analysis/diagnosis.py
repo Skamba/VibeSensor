@@ -948,7 +948,11 @@ def _source_checks(
 
 
 def _brakes_check(refs: _References, *, braked: bool) -> SourceCheck:
-    """Brake judder is a wheel order while braking: it needs the tire size and real braking."""
+    """Brake judder is a wheel order while braking: it needs the tire size and real braking.
+
+    An EV's or PHEV's stops may have been on regeneration alone, so its brakes are
+    ruled out only with a hedge.
+    """
     reason: SourceCheckReason | None
     if refs.tire_circumference_m is None:
         reason = "no_tire_reference"
@@ -958,6 +962,14 @@ def _brakes_check(refs: _References, *, braked: bool) -> SourceCheck:
     elif not braked:
         # Coasting is not braking: judder shows only with the brakes on.
         reason = "no_braking"
+    elif refs.electric or refs.hybrid:
+        # Regenerative braking slows an EV or PHEV at up to about 0.3 g, often
+        # without the discs: a firm stop need not have tested them.
+        return {
+            "source": str(VibrationSource.BRAKES),
+            "status": "ruled_out_estimated",
+            "reason": "regen_braking",
+        }
     else:
         return {
             "source": str(VibrationSource.BRAKES),

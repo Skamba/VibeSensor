@@ -38,7 +38,6 @@ __all__ = [
     "StrengthBucketDistributionResponse",
     "SummaryWarningResponse",
     "SuspectedVibrationOriginPayload",
-    "TestPlanStepResponse",
 ]
 
 _FORBID_EXTRA = ConfigDict(extra="forbid")
@@ -68,18 +67,6 @@ class SummaryWarningResponse(TypedDict, total=False):
     applies_to: Required[str]
     title: Required[PayloadValue]
     detail: PayloadValue
-
-
-@with_config(_IGNORE_EXTRA)
-class TestPlanStepResponse(TypedDict):
-    """Response body for one recommended next-step action."""
-
-    action_id: str
-    what: str
-    why: str | None
-    confirm: str | None
-    falsify: str | None
-    eta: str | None
 
 
 @with_config(_IGNORE_EXTRA)
@@ -228,7 +215,6 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     top_causes: Required[list[FindingPayload]]
     most_likely_origin: Required[SuspectedVibrationOriginPayload]
     diagnosis: Required[DiagnosisPayload]
-    test_plan: Required[list[TestPlanStepResponse]]
     phase_timeline: Required[list[PhaseTimelineEntryResponse]]
     speed_stats: Required[SpeedStatsResponse]
     speed_stats_by_phase: Required[dict[str, SpeedStatsResponse]]

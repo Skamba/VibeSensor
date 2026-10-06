@@ -67,7 +67,6 @@ def minimal_summary(**overrides: Any) -> dict:
         "findings": [],
         "speed_stats": {"min_kmh": None, "max_kmh": None},
         "phase_info": {"phase_pcts": {}},
-        "test_plan": [],
         "run_suitability": [],
         "plots": {},
     }

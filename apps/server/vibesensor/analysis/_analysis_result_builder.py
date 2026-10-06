@@ -20,7 +20,6 @@ from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.domain.test_plan import plan_test_actions
 from vibesensor.domain.test_run import TestRun
 from vibesensor.recording.run_capture_codec import configuration_snapshot_from_run_metadata
 from vibesensor.recording.run_projection import (
@@ -59,7 +58,6 @@ def build_analysis_result(
     metadata = context.context
     summary_speed_stats = _speed_stats(context.prepared.speed_values)
     summary_phase_info = build_phase_summary(context.prepared.phase_segments)
-    domain_test_plan = plan_test_actions(findings_bundle.domain_findings)
     peaks_table = annotate_peak_rows_with_order_labels(
         top_peaks_table_rows(
             list(context.samples),
@@ -92,12 +90,10 @@ def build_analysis_result(
         ),
         speed_profile=context.prepared.speed_profile if context.prepared.speed_values else None,
         suitability=context.run_suitability,
-        test_plan=domain_test_plan,
     )
     diagnostic_case = DiagnosticCase.start(
         car=car_from_run_metadata(context.context),
         symptoms=(symptom_from_run_metadata(context.context),),
-        test_plan=domain_test_plan,
     ).add_run(test_run)
     return AnalysisResult(
         file_name=context.file_name,

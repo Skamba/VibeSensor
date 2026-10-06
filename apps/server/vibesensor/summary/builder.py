@@ -39,9 +39,6 @@ from vibesensor.summary.contracts import (
 from vibesensor.summary.contracts import (
     SpeedStatsResponse as SpeedStatsPayload,
 )
-from vibesensor.summary.contracts import (
-    TestPlanStepResponse as TestPlanStepPayload,
-)
 from vibesensor.summary.data_quality_payload import (
     AccelStatisticsLike,
     build_data_quality_dict,
@@ -85,7 +82,6 @@ class AnalysisSummaryBuildContext:
     findings: tuple[DomainFinding, ...]
     top_causes: tuple[DomainFinding, ...]
     most_likely_origin: VibrationOrigin | None
-    test_plan: list[TestPlanStepPayload]
     phase_timeline: Sequence[DrivingPhaseInterval]
     speed_stats: SpeedProfileSummary
     speed_stats_by_phase: Mapping[str, SpeedProfileSummary]
@@ -118,7 +114,6 @@ def build_analysis_summary(
     findings: tuple[DomainFinding, ...],
     top_causes: tuple[DomainFinding, ...],
     most_likely_origin: VibrationOrigin | None,
-    test_plan: list[TestPlanStepPayload],
     phase_timeline: Sequence[DrivingPhaseInterval],
     speed_stats: SpeedProfileSummary,
     speed_stats_by_phase: Mapping[str, SpeedProfileSummary],
@@ -152,7 +147,6 @@ def build_analysis_summary(
             findings=findings,
             top_causes=top_causes,
             most_likely_origin=most_likely_origin,
-            test_plan=test_plan,
             phase_timeline=phase_timeline,
             speed_stats=speed_stats,
             speed_stats_by_phase=speed_stats_by_phase,
@@ -321,7 +315,6 @@ def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSumma
         "top_causes": serialize_findings(context.top_causes),
         "most_likely_origin": serialize_origin_summary(context.most_likely_origin),
         "diagnosis": context.diagnosis,
-        "test_plan": context.test_plan,
         "phase_timeline": phase_timeline_payload,
         "speed_stats": _speed_stats_payload(context.speed_stats),
         "speed_stats_by_phase": {

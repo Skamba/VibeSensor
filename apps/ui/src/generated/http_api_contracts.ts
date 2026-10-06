@@ -120,7 +120,6 @@ export interface components {
                 [key: string]: components["schemas"]["SpeedStatsResponse"];
             };
             start_time_utc?: string | null;
-            test_plan: components["schemas"]["TestPlanStepResponse"][];
             top_causes: components["schemas"]["FindingPayload"][];
             warnings: components["schemas"]["SummaryWarningResponse"][];
         };
@@ -735,7 +734,6 @@ export interface components {
             };
             start_time_utc?: string | null;
             status: "complete";
-            test_plan: components["schemas"]["TestPlanStepResponse"][];
             top_causes: components["schemas"]["FindingPayload"][];
             warnings?: components["schemas"]["HistoryInsightWarningResponse"][];
         };
@@ -1129,7 +1127,7 @@ export interface components {
             source: string;
             status: components["schemas"]["SourceCheckStatus"];
         };
-        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral" | "engine_may_be_off" | "engine_not_running" | "electric_car" | "same_rhythm_as_candidate" | "no_braking" | "only_while_braking";
+        SourceCheckReason: "no_tire_reference" | "no_drive_reference" | "no_engine_reference" | "manual_speed" | "top_gear_assumed" | "estimated_final_drive" | "estimated_top_gear" | "no_matching_order" | "stayed_in_neutral" | "stopped_in_neutral" | "engine_may_be_off" | "engine_not_running" | "electric_car" | "same_rhythm_as_candidate" | "no_braking" | "only_while_braking" | "regen_braking";
         SourceCheckStatus: "candidate" | "ruled_out" | "ruled_out_estimated" | "not_testable" | "not_applicable";
         /** One recurring spectral peak (0.5 Hz bin) and its median amplitude. */
         SpectrumPeak: {
@@ -1253,15 +1251,6 @@ export interface components {
             speed_source: string | null;
             tire_circumference_m: number | null;
             tire_provenance: components["schemas"]["ReferenceProvenanceValue"];
-        };
-        /** Response body for one recommended next-step action. */
-        TestPlanStepResponse: {
-            action_id: string;
-            confirm: string | null;
-            eta: string | null;
-            falsify: string | null;
-            what: string;
-            why: string | null;
         };
         TireSpeedAxle: "front" | "rear" | "average";
         /** Response body confirming whether an OTA update job was cancelled. */

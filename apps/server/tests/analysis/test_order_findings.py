@@ -237,6 +237,20 @@ def test_engine_order_is_a_wheel_alias_only_when_weaker(
     assert engine.effective_confidence == pytest.approx(expected_confidence)
 
 
+def test_an_engine_order_is_an_alias_of_brake_judder_as_of_any_wheel_order() -> None:
+    # Brake judder is a wheel order heard only while braking: an engine order
+    # weaker on both measures is its alias like that of any wheel order.
+    findings = [
+        (0.5, make_finding(suspected_source="brakes", confidence=0.60, ranking_score=0.5)),
+        (0.4, make_finding(suspected_source="engine", confidence=0.50, ranking_score=0.4)),
+    ]
+
+    result = suppress_engine_aliases(findings)
+
+    engine = next(f for f in result if f.suspected_source == "engine")
+    assert engine.effective_confidence == pytest.approx(0.30)
+
+
 # A front-left wheel imbalance (T1 well above T2) with one wheel sensor and two
 # cabin sensors that feel half of it, swept 50-115 km/h in top gear (ratio 0.8).
 _CABIN_SHARE = {"front_left_wheel": 1.0, "driver_seat": 0.55, "trunk": 0.5}

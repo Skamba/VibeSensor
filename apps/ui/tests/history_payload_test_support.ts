@@ -195,7 +195,6 @@ export function makeHistoryInsightsPayload(
     speed_stats_by_phase: {},
     start_time_utc: "2026-01-01T00:00:00Z",
     status: "complete",
-    test_plan: [],
     top_causes: [],
     warnings: [],
     ...overrides,

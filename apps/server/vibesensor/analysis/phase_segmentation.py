@@ -46,9 +46,11 @@ _SLOPE_MIN_POINTS = 3
 # sheds speed. Rolling resistance, aerodynamic drag and engine drag in gear slow
 # a car at about 0.05-0.1 g (0.15 g at most in a low gear at high revs); a stop
 # on the brakes sheds 0.2-0.4 g. From 0.2 g (7.1 km/h per second), sustained,
-# the car is on the brakes.
+# the car is on the brakes. The detector accepts from 0.19 g, so a stop at
+# exactly 0.2 g is not lost to a slope fit over a GPS staircase or a speed
+# rounded to whole km/h (OBD-II).
 _STANDARD_GRAVITY_KMH_PER_S = 9.80665 * 3.6
-BRAKING_MIN_DECEL_G = 0.2
+BRAKING_MIN_DECEL_G = 0.19
 _BRAKING_THRESHOLD_KMH_S = -BRAKING_MIN_DECEL_G * _STANDARD_GRAVITY_KMH_PER_S
 # A braking spell must last one analysis spectrum (2.56 s at 800 Hz) to show
 # in one, and a jump between two speed readings (a GPS glitch) is not braking:

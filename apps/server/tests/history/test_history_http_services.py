@@ -297,7 +297,6 @@ async def test_projected_run_service_projects_persisted_summary_through_domain()
                     },
                 ],
                 top_causes=[],
-                test_plan=[],
                 run_suitability=[],
                 most_likely_origin={},
                 _internal={"secret": True},
@@ -324,7 +323,6 @@ async def test_projected_run_service_drops_persisted_origin_without_primary_find
                 lang="en",
                 findings=[],
                 top_causes=[],
-                test_plan=[],
                 run_suitability=[],
                 most_likely_origin={
                     "location": "rear left",

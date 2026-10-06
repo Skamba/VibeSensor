@@ -6,7 +6,6 @@ from dataclasses import dataclass, replace
 from uuid import uuid4
 
 from vibesensor.domain.car import Car
-from vibesensor.domain.test_plan import TestPlan
 from vibesensor.domain.test_run import TestRun
 
 __all__ = ["DiagnosticCase", "Symptom"]
@@ -42,10 +41,7 @@ class DiagnosticCase:
     case_id: str
     car: Car | None = None
     symptoms: tuple[Symptom, ...] = ()
-    test_plan: TestPlan = TestPlan()
     test_runs: tuple[TestRun, ...] = ()
-
-    _EMPTY_TEST_PLAN = TestPlan()
 
     @classmethod
     def start(
@@ -53,13 +49,11 @@ class DiagnosticCase:
         *,
         car: Car | None = None,
         symptoms: tuple[Symptom, ...] = (),
-        test_plan: TestPlan | None = None,
     ) -> DiagnosticCase:
         return cls(
             case_id=uuid4().hex,
             car=car,
             symptoms=symptoms or (Symptom.unspecified(),),
-            test_plan=test_plan or cls._EMPTY_TEST_PLAN,
         )
 
     def add_run(self, test_run: TestRun) -> DiagnosticCase:

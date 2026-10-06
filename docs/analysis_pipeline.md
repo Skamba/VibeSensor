@@ -184,12 +184,17 @@ speed readings within ±1.5 s of each sample on the time axis (one reading per
 timestamp, so several sensors reporting the same moment do not count as a
 flat stretch). A spell is **braking** when all of these hold:
 
-- the speed falls at **0.2 g or more** (7.1 km/h/s,
-  `BRAKING_MIN_DECEL_G`). Physical basis: a car coasting in gear slows at
-  about 0.05–0.1 g (rolling resistance, aero drag and engine braking; up to
-  about 0.15 g in a low gear at high speed), while an ordinary stop on the
-  brakes is 0.2–0.4 g. Below 0.2 g the run cannot tell light braking from
-  coasting, so it counts as `DECEL`;
+- the speed falls at **0.2 g or more** (7.1 km/h/s; the detector's
+  `BRAKING_MIN_DECEL_G` is 0.19 g, see below). Physical basis: a car
+  coasting in gear slows at about 0.05–0.1 g (rolling resistance, aero drag
+  and engine braking; up to about 0.15 g in a low gear at high speed), while
+  an ordinary stop on the brakes is 0.2–0.4 g. Below 0.2 g the run cannot
+  tell light braking from coasting, so it counts as `DECEL`. The detector
+  itself accepts from 0.19 g, so a stop at exactly 0.2 g is not lost to the
+  slope fit over a GPS staircase or a speed rounded to whole km/h. A 1 Hz GPS
+  staircase read by sensors on staggered timestamps still makes the fitted
+  slope wobble by up to about 12 %, so there a stop needs about 0.22 g to
+  count;
 - it lasts at least 2.5 s (`BRAKING_MIN_DURATION_S`, about one spectrum
   window), with gaps of at most 1 s;
 - the speed reading drops at least twice inside it, so one GPS jump or glitch
@@ -213,7 +218,10 @@ wheel's own order, mainly 1x and sometimes 2x, but only while the brakes are
 on. `analysis/orders/brake_attribution.py` relabels a wheel/tire order finding
 as `brakes` when, at the sensors that hear it:
 
-- it is heard in at least half of at least 8 braking spectra, and
+- it is heard in at least half of at least 8 braking spectra, counting only
+  the stops that show it (heard within 12 dB of the loudest stop's level in
+  at least a quarter of the stop's spectra; an EV or PHEV may have made the
+  others on regeneration alone), and
 - at least 8 spectra clear of braking (not within half an analysis window of a
   braking sample, so spectra that straddle the start or end of a stop count
   for neither side) fall in the speed band the car braked through, and at
@@ -257,9 +265,10 @@ the PDF both show:
   `TestRun.diagnosis_order_finding` (see "Diagnosed order" in
   `docs/metrics.md`). `reference_speed_kmh` is the median matched speed in
   the order's strongest speed band: the 10 km/h bin where its matched
-  amplitude is highest on average (phase-weighted), among bins with at least
-  3 matched points. A mean, not a total, so a long cruise at one speed does
-  not make that speed the strongest. The diagnosed row carries the diagnosis level. Rows are
+  amplitude is highest on average (phase-weighted: a cruise match ×3, one
+  while accelerating, slowing down, braking or coasting down ×0.3), among
+  bins with at least 3 matched points. A mean, not a total, so a long cruise
+  at one speed does not make that speed the strongest. The diagnosed row carries the diagnosis level. Rows are
   listed from Moderate up, plus the diagnosed source's other order once even
   when it is Weak on its own.
 - `zone`: a corner for wheel/tire faults: the finding's location when the
@@ -307,7 +316,7 @@ the PDF both show:
     car-library ratio with `family_default` / `unverified` confidence, else
     `engine_may_be_off` for a plug-in hybrid (`fuel_type` `PHEV`) whose engine
     RPM was estimated, else `top_gear_assumed` for engine RPM estimated from
-    speed.
+    speed. For the brakes it is `regen_braking` (see below).
   - `not_applicable` (`electric_car`): the engine of an EV (`fuel_type`
     `EV`). An EV's motor turns at the driveline order (wheel speed ×
     reduction ratio), so the driveline check is its motor check; no E1/E2
@@ -324,7 +333,10 @@ the PDF both show:
     or the library verified, and for the engine only with measured RPM.
   - Brakes are `not_testable` with `no_tire_reference` or `manual_speed` as
     for the wheels, else `no_braking` when the run had less than 2.5 s of
-    braking (see "Braking"), else `ruled_out` (`no_matching_order`). When
+    braking (see "Braking"), else `ruled_out` (`no_matching_order`); on an EV
+    or PHEV `ruled_out_estimated` (`regen_braking`), because regenerative
+    braking slows it at up to about 0.3 g, often without the discs, so its
+    firm stops need not have tested them. When
     brakes are the candidate, the wheel/tire check is `ruled_out` with
     `only_while_braking`: the same order was absent while driving at the same
     speeds.

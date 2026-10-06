@@ -1,104 +1,4 @@
 {
-  "ACTION_BRAKE_DISCS_CONFIRM": {
-    "en": "Disc runout or thickness variation is over the limit, and the judder is gone after skimming or replacing the discs.",
-    "nl": "De slingering of diktevariatie van de schijven ligt boven de grens, en het trillen is weg na afdraaien of vervangen van de schijven."
-  },
-  "ACTION_BRAKE_DISCS_FALSIFY": {
-    "en": "Disc runout and thickness variation are within spec and the car still shakes only while braking (look at the hubs, caliper slides and suspension bushes).",
-    "nl": "Slingering en diktevariatie van de schijven zijn binnen specificatie en de auto trilt nog steeds alleen tijdens het remmen (kijk naar naven, geleidingen van de remklauw en ophangingsrubbers)."
-  },
-  "ACTION_BRAKE_DISCS_WHAT": {
-    "en": "Measure the brake discs on the juddering axle for lateral runout and thickness variation; skim or replace them with the pads if out of spec.",
-    "nl": "Meet de remschijven van de as die trilt op laterale slingering en diktevariatie; draai ze af of vervang ze met de remblokken als ze buiten specificatie zijn."
-  },
-  "ACTION_BRAKE_DISCS_WHY": {
-    "en": "A wheel-order vibration that appears only while braking comes from the brake discs (thickness variation or runout), not from the wheels or tires.",
-    "nl": "Een trilling op wielorde die alleen tijdens het remmen optreedt komt van de remschijven (diktevariatie of slingering), niet van de wielen of banden."
-  },
-  "ACTION_ENGINE_COMBUSTION_CONFIRM": {
-    "en": "Cylinder-specific deviation aligns with the vibration complaint.",
-    "nl": "Cilinderspecifieke afwijking sluit aan op de trillingsklacht."
-  },
-  "ACTION_ENGINE_COMBUSTION_FALSIFY": {
-    "en": "Combustion quality indicators are stable and balanced.",
-    "nl": "Verbrandingskwaliteitsindicatoren zijn stabiel en gebalanceerd."
-  },
-  "ACTION_ENGINE_COMBUSTION_WHAT": {
-    "en": "Check misfire counters and fuel/ignition adaptation for cylinders contributing to roughness.",
-    "nl": "Controleer misfire-tellers en brandstof-/ontstekingsadaptaties op cilinders die ruwloop veroorzaken."
-  },
-  "ACTION_ENGINE_COMBUSTION_WHY": {
-    "en": "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
-    "nl": "Verbrandingsonbalans kan motororde-trillingen veroorzaken zonder duidelijk mechanisch geluid."
-  },
-  "ACTION_ENGINE_MOUNTS_CONFIRM": {
-    "en": "A worn mount or accessory imbalance is identified.",
-    "nl": "Een versleten steun of onbalans in de hulpaandrijving wordt vastgesteld."
-  },
-  "ACTION_ENGINE_MOUNTS_FALSIFY": {
-    "en": "Mounts and accessory drive are within acceptable condition.",
-    "nl": "Steunen en hulpaandrijving zijn in acceptabele staat."
-  },
-  "ACTION_ENGINE_MOUNTS_WHAT": {
-    "en": "Inspect engine mounts and accessory drive (idler, tensioner, pulleys) for play or resonance.",
-    "nl": "Controleer motorsteunen en de hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie."
-  },
-  "ACTION_ENGINE_MOUNTS_WHY": {
-    "en": "Engine-order vibration often transfers through weakened mounts or accessory imbalance.",
-    "nl": "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in de hulpaandrijving."
-  },
-  "ACTION_GENERAL_FALLBACK_WHY": {
-    "en": "Use direct mechanical checks first because source classification is not specific enough yet.",
-    "nl": "Gebruik eerst directe mechanische controles omdat de bronclassificatie nog niet specifiek genoeg is."
-  },
-  "ACTION_GENERAL_INSPECTION_CONFIRM": {
-    "en": "A clear mechanical issue is found at or near the hotspot.",
-    "nl": "Een duidelijke mechanische afwijking wordt in of bij het probleemgebied gevonden."
-  },
-  "ACTION_GENERAL_INSPECTION_FALSIFY": {
-    "en": "No abnormal wear, play, or looseness is found.",
-    "nl": "Er wordt geen abnormale slijtage, speling of losheid gevonden."
-  },
-  "ACTION_GENERAL_INSPECTION_WHAT": {
-    "en": "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the hotspot area.",
-    "nl": "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in het probleemgebied."
-  },
-  "ACTION_GENERAL_WEAK_SPATIAL_WHY": {
-    "en": "Spatial separation is weak, so prioritize broad underbody and mount checks before part replacement.",
-    "nl": "Ruimtelijke scheiding is zwak, dus prioriteer brede onderstel- en steuncontroles vóór onderdeelvervanging."
-  },
-  "ACTION_TIRE_CONDITION_CONFIRM": {
-    "en": "Visible/measureable tire defect aligns with complaint speed band.",
-    "nl": "Zichtbare of meetbare bandschade sluit aan op het snelheidsbereik waarin de klacht optreedt."
-  },
-  "ACTION_TIRE_CONDITION_FALSIFY": {
-    "en": "No tire condition anomaly is found on inspected wheels.",
-    "nl": "Er wordt geen afwijking aan de band gevonden op de gecontroleerde wielen."
-  },
-  "ACTION_TIRE_CONDITION_WHAT": {
-    "en": "Inspect the relevant wheel/tire assemblies for tire defects: flat spots, belt shift, uneven wear, and pressure mismatch.",
-    "nl": "Controleer de relevante wiel-bandcombinaties op bandschade: vlakke plekken, karkasschade, ongelijkmatige slijtage en afwijkende bandenspanning."
-  },
-  "ACTION_TIRE_CONDITION_WHY": {
-    "en": "Tire structural issues often create strong 1x/2x wheel-order vibration.",
-    "nl": "Structurele bandproblemen veroorzaken vaak sterke 1x/2x wielorde-trillingen."
-  },
-  "ACTION_WHEEL_BALANCE_CONFIRM": {
-    "en": "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
-    "nl": "Er wordt duidelijke onbalans of hoogte-/zijslag gevonden en gecorrigeerd, waarna de trillingsklacht afneemt."
-  },
-  "ACTION_WHEEL_BALANCE_FALSIFY": {
-    "en": "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
-    "nl": "Balans en hoogte-/zijslag zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft ongewijzigd."
-  },
-  "ACTION_WHEEL_BALANCE_WHAT": {
-    "en": "Inspect and balance the relevant wheel/tire assemblies; measure radial/lateral runout on the wheel and tire.",
-    "nl": "Controleer en balanceer de relevante wiel-bandcombinaties; meet hoogte- en zijslag van wiel en band."
-  },
-  "ACTION_WHEEL_BALANCE_WHY": {
-    "en": "Wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
-    "nl": "Wielorde-signaturen worden meestal veroorzaakt door onbalans, hoogte-/zijslag of bandvervorming."
-  },
   "AMPLITUDE_TITLE_ORDER": {
     "en": "Amplitude at {order} per location",
     "nl": "Amplitude bij {order} per locatie"
@@ -203,6 +103,10 @@
     "en": "against an estimated reduction ratio",
     "nl": "met een geschatte reductieverhouding"
   },
+  "CHECKED_HEDGE_REGEN_BRAKING": {
+    "en": "may have slowed on regeneration",
+    "nl": "kan op regeneratie vertraagd hebben"
+  },
   "CHECKED_HEDGE_TOP_GEAR": {
     "en": "against an estimated top-gear ratio, top gear only",
     "nl": "met een geschatte hoogste versnelling, alleen in de hoogste versnelling"
@@ -226,6 +130,10 @@
   "CHECKED_LIMITED_MOTOR_FINAL_DRIVE": {
     "en": "checked only against a car-library estimate of the reduction ratio, so not conclusive — enter the exact ratio if you know it.",
     "nl": "alleen gecontroleerd met een schatting van de reductieverhouding uit de autobibliotheek, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
+  },
+  "CHECKED_LIMITED_REGEN_BRAKING": {
+    "en": "an electric or plug-in hybrid car slows at up to about 0.3 g on regenerative braking, often without its brake discs, so a drive without brake judder is not conclusive — do the guided test's firm stops with regeneration at its lowest, or brake firmly with the brake pedal, harder than regeneration alone, from about 100 km/h a few times.",
+    "nl": "een elektrische auto of plug-in hybride remt met regeneratief remmen tot ongeveer 0,3 g af, vaak zonder de remschijven, dus een rit zonder remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de begeleide test met regeneratie op het laagste niveau, of rem een paar keer stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer 100 km/h."
   },
   "CHECKED_LIMITED_TOP_GEAR": {
     "en": "checked only against a car-library estimate of the top-gear ratio, in top gear, so not conclusive — enter the exact ratio if you know it.",
@@ -1058,6 +966,10 @@
   "RULED_OUT_ONLY_WHILE_BRAKING": {
     "en": "the vibration at the wheel's rhythm came only while braking: the brakes, not a wheel or tire",
     "nl": "de trilling op het ritme van het wiel kwam alleen tijdens het remmen: de remmen, niet een wiel of band"
+  },
+  "RULED_OUT_REGEN_BRAKING": {
+    "en": "no once- or twice-per-wheel-turn vibration while braking, but an electric or plug-in hybrid car may have slowed on regenerative braking without its brake discs; not conclusive",
+    "nl": "geen trilling van één of twee keer per wielomwenteling tijdens het remmen, maar een elektrische auto of plug-in hybride kan op regeneratief remmen vertraagd hebben zonder de remschijven; niet doorslaggevend"
   },
   "RULED_OUT_STAYED_IN_NEUTRAL": {
     "en": "ruled out: the vibration kept going while coasting in neutral (it follows road speed)",

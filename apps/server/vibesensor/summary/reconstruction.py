@@ -14,7 +14,6 @@ from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_source import SpeedSource
-from vibesensor.domain.test_plan import RecommendedAction, TestPlan
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.recording.run_capture_codec import (
@@ -30,27 +29,6 @@ from vibesensor.summary.speed_phase_codecs import (
 )
 
 __all__ = ["test_run_from_persisted_analysis", "test_run_from_summary"]
-
-
-def _actions_from_steps(steps: object) -> tuple[RecommendedAction, ...]:
-    if not isinstance(steps, list):
-        return ()
-    actions: list[RecommendedAction] = []
-    for idx, step in enumerate(steps):
-        if not isinstance(step, Mapping):
-            continue
-        actions.append(
-            RecommendedAction(
-                action_id=str(step.get("action_id") or f"action-{idx + 1}"),
-                what=str(step.get("what") or ""),
-                why=str(step.get("why") or ""),
-                confirm=str(step.get("confirm") or ""),
-                falsify=str(step.get("falsify") or ""),
-                eta=str(step.get("eta") or "") or None,
-                priority=idx,
-            )
-        )
-    return tuple(actions)
 
 
 def _segments_from_summary(summary: Mapping[str, object]) -> tuple[DrivingSegment, ...]:
@@ -129,7 +107,6 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
         findings=findings,
         top_causes=top_causes,
     )
-    actions = _actions_from_steps(payload.get("test_plan"))
     raw_speed_stats = payload.get("speed_stats")
     phase_info = payload.get("phase_info")
     if not isinstance(phase_info, Mapping):
@@ -179,10 +156,6 @@ def _test_run_from_payload(payload: Mapping[str, object]) -> TestRun:
         top_causes=top_causes,
         speed_profile=speed_profile,
         suitability=suitability,
-        test_plan=TestPlan(
-            actions=actions,
-            requires_additional_data=not bool(findings),
-        ),
     )
 
 

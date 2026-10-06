@@ -16,7 +16,6 @@ from vibesensor.summary.plots_payload import serialize_peak_table
 from vibesensor.summary.run_context_warning import (
     build_summary_warnings,
 )
-from vibesensor.summary.test_plan_fields import step_payloads_from_plan
 from vibesensor.summary.warning_fields import summary_warning_payloads
 
 if TYPE_CHECKING:
@@ -62,7 +61,6 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
         findings=result.test_run.findings,
         top_causes=_serialized_top_causes(result),
         most_likely_origin=result.most_likely_origin,
-        test_plan=step_payloads_from_plan(result.test_run.test_plan),
         phase_timeline=list(result.phase_timeline),
         speed_stats=result.summary_speed_stats,
         speed_stats_by_phase=dict(result.prepared.speed_stats_by_phase),

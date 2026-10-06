@@ -30,7 +30,6 @@ from vibesensor.summary.run_context_warning import (
     RunContextWarning,
     normalize_run_context_warnings,
 )
-from vibesensor.summary.test_plan_fields import step_payloads_from_plan
 
 
 def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:
@@ -50,7 +49,6 @@ def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:
         findings=(),
         top_causes=(),
         most_likely_origin=None,
-        test_plan=[],
         phase_timeline=[
             DrivingPhaseInterval(
                 phase=DrivingPhase.CRUISE,
@@ -201,13 +199,6 @@ def test_project_analysis_summary_projects_run_suitability_from_reconstructed_te
         "metadata": _canonical_metadata(),
         "findings": [make_finding_payload(finding_id="F001", confidence=0.8)],
         "top_causes": [make_finding_payload(finding_id="F001", confidence=0.8)],
-        "test_plan": [
-            {
-                "action_id": "check-wheel",
-                "what": {"_i18n_key": "ACTION_WHEEL_BALANCE_WHAT"},
-                "why": {"_i18n_key": "ACTION_WHEEL_BALANCE_WHY"},
-            }
-        ],
         "run_suitability": [
             {"check_key": "speed_profile", "state": "warn"},
         ],
@@ -266,7 +257,6 @@ def _minimal_summary(**overrides: object) -> dict[str, object]:
         "firmware_version": "1.0.0",
         "run_suitability": [],
         "warnings": [],
-        "test_plan": [],
         "sensor_intensity_by_location": [],
     }
     base.update(overrides)
@@ -358,36 +348,6 @@ class TestSummaryHelpers:
         assert secondary.origin.projected_location == "Unknown"
         assert secondary.location is None
         assert secondary.strongest_location == "front right"
-
-    def test_history_projection_uses_canonical_test_plan_payload(self) -> None:
-        summary = _minimal_summary(
-            findings=[{"finding_id": "F001", "suspected_source": "engine"}],
-            top_causes=[{"finding_id": "F001", "suspected_source": "engine"}],
-            test_plan=[
-                {
-                    "action_id": "engine_mounts_and_accessories",
-                    "what": "  ACTION_ENGINE_MOUNTS_WHAT  ",
-                    "why": "   ",
-                    "confirm": " movement changes ",
-                    "falsify": " no change ",
-                    "eta": " 15-30 min ",
-                }
-            ],
-        )
-
-        test_run = _test_run_from_summary(summary)
-        projected_plan = step_payloads_from_plan(test_run.test_plan)
-
-        assert projected_plan == [
-            {
-                "action_id": "engine_mounts_and_accessories",
-                "what": "ACTION_ENGINE_MOUNTS_WHAT",
-                "why": None,
-                "confirm": "movement changes",
-                "falsify": "no change",
-                "eta": "15-30 min",
-            }
-        ]
 
 
 @pytest.mark.parametrize(

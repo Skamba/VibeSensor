@@ -237,7 +237,8 @@ without a schema-version bump so existing v15 databases keep opening:
 
 `runs.analysis_json` carries `_schema_version`
 (`PERSISTED_ANALYSIS_SCHEMA_VERSION` in `summary/persisted_analysis.py`). When
-the summary contract gains a required field, the version is bumped. On startup,
+the summary contract gains a required field or drops one (the top-level
+summary forbids unknown keys), the version is bumped. On startup,
 `HistoryDB.requeue_outdated_analyses()` moves every `complete` run whose stored
 version differs back to `analyzing` with its analysis cleared, and the startup
 re-queue of `analyzing` runs re-analyses them from their stored samples (and raw

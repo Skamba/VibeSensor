@@ -121,7 +121,7 @@ def score_order_finding(
 
     unique_match_locations = match.unique_match_locations
     no_wheel_override = loc_result.no_wheel_sensors if loc_result is not None else False
-    localization_confidence, weak_spatial_separation = apply_localization_override(
+    localization_confidence, weak_spatial_separation, declared = apply_localization_override(
         suspected_source=hypothesis.suspected_source,
         per_location_dominant=context.per_location_dominant,
         unique_match_locations=unique_match_locations,
@@ -131,6 +131,9 @@ def score_order_finding(
         localization_confidence=localization_confidence,
         weak_spatial_separation=weak_spatial_separation,
     )
+    if declared:
+        # Separation judged from the per-location evidence: no dominance edge to ease past.
+        weak_separation_edge = None
     if domain_hotspot is not None:
         domain_hotspot = replace(
             domain_hotspot,

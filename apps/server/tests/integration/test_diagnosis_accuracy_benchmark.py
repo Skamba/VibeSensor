@@ -653,6 +653,23 @@ def _motorway_stops(
     return tuple(phases)
 
 
+def _ev_stops(*judder: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Four motorway stops in an EV: two firm stops on the discs, two on regeneration.
+
+    The firm stops (120->40 km/h in 6 s, 0.38 g) use the friction brakes, where
+    *judder* plays. The other two shed 0.25 g (120->67 km/h in 6 s), which
+    regenerative braking alone delivers without touching the discs.
+    """
+    phases: list[ScenarioPhase] = []
+    for stop in range(4):
+        friction = stop % 2 == 0
+        low = 40.0 if friction else 67.0
+        phases.append(_phase(f"cruise-{stop}", 10.0, 120.0, 120.0))
+        phases.append(_phase(f"brake-{stop}", 6.0, 120.0, low, *(judder if friction else ())))
+        phases.append(_phase(f"speed-up-{stop}", 12.0, low, 120.0))
+    return tuple(phases)
+
+
 # Held at 75-76 km/h, and the tone is there for 12 s of the 28 s drive.
 _FAINT_ENGINE_REASONS = frozenset({"narrow_speed_range", "intermittent"})
 
@@ -963,8 +980,23 @@ BENCH_CASES = (
     ),
     # A healthy car on the full guided drive: the brakes are checked, not skipped.
     Case("bench-guided-healthy-brake-step", (*_guided(), *_brake_step()), NO_FAULT),
+    # An EV's judder shows only in its stops on the discs; the stops it made on
+    # regeneration alone (no disc contact) do not count against it.
+    Case(
+        "bench-ev-brake-judder-regen-stops",
+        _ev_stops(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0)),
+        _fault(
+            "brakes",
+            {"front_axle"},
+            "T1",
+            levels=MODERATE_OR_STRONG,
+            dominant_phase="braking",
+        ),
+        cars=("ev",),
+    ),
     # A healthy car on the same drive, once with firm stops and once only coasting.
-    Case("bench-healthy-brake-stops", _motorway_stops(), NO_FAULT),
+    # An EV's stops may have been on regeneration: its brakes are checked with a hedge.
+    Case("bench-healthy-brake-stops", _motorway_stops(), NO_FAULT, cars=(*BOTH_CARS, "ev")),
     Case("bench-healthy-coast-downs", _motorway_stops(coast=True), NO_FAULT),
     # An imbalance shakes in every phase, braking included: a wheel to balance,
     # not the brakes.
@@ -1664,11 +1696,15 @@ def _expected_check(
     car has no final drive to place the driveline orders. An engine no-match on
     RPM estimated in top gear is never a plain "ruled out", and is no test at
     all when some gear puts an engine order on the diagnosed one; an EV has no
-    engine. Brake judder can only be judged on a drive that braked from speed,
+    engine. Brake judder can only be judged on a drive that braked from speed
+    (an EV or PHEV may have braked on regeneration alone, so only with a hedge),
     and a wheel order heard only while braking is the brakes, not a wheel.
     """
     if source == "brakes" and not case.brakes_firmly:
         return ("not_testable", "no_braking")
+    if source == "brakes" and car.fuel_type in ("EV", "PHEV"):
+        # Regenerative braking may have slowed the car without the discs.
+        return ("ruled_out_estimated", "regen_braking")
     if source == "wheel/tire" and candidate == "brakes":
         return ("ruled_out", "only_while_braking")
     if source == "engine":
@@ -2027,9 +2063,11 @@ def _assert_report_view(
         below = any(item.startswith("Speeds below") for item in not_covered)
         assert below is (lowest_kmh >= 40.0), not_covered
         # A coast-down is not braking: without firm braking from speed the report
-        # says brake judder was not checked.
+        # says brake judder was not checked. An EV or PHEV may have stopped on
+        # regeneration alone, so its brake check stays open either way.
         braking_gap = [item for item in not_covered if "brak" in item.lower()]
-        assert bool(braking_gap) is not case.brakes_firmly, not_covered
+        regen = car.fuel_type in ("EV", "PHEV")
+        assert bool(braking_gap) is (regen or not case.brakes_firmly), not_covered
         return
     cause_text = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
     assert cause_text is not None

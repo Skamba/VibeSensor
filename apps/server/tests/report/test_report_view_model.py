@@ -482,6 +482,57 @@ def test_braking_and_coasting_are_covered_separately() -> None:
     assert not [gap for gap in owner.not_covered if "brak" in gap.lower()], owner.not_covered
 
 
+@pytest.mark.parametrize(
+    ("lang", "description", "gap", "mechanic"),
+    [
+        pytest.param(
+            "en",
+            "Nothing stood out in the checks this run could make: wheels/tires and brakes"
+            " (may have slowed on regeneration).",
+            "Brakes: an electric or plug-in hybrid car slows at up to about 0.3 g on"
+            " regenerative braking, often without its brake discs, so a drive without"
+            " brake judder is not conclusive — do the guided test's firm stops with"
+            " regeneration at its lowest, or brake firmly with the brake pedal, harder"
+            " than regeneration alone, from about 100 km/h a few times.",
+            "Brakes: no once- or twice-per-wheel-turn vibration while braking, but an"
+            " electric or plug-in hybrid car may have slowed on regenerative braking"
+            " without its brake discs; not conclusive",
+            id="en",
+        ),
+        pytest.param(
+            "nl",
+            "Niets viel op bij de controles die deze rit kon doen: wielen/banden en remmen"
+            " (kan op regeneratie vertraagd hebben).",
+            "Remmen: een elektrische auto of plug-in hybride remt met regeneratief remmen"
+            " tot ongeveer 0,3 g af, vaak zonder de remschijven, dus een rit zonder"
+            " remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de"
+            " begeleide test met regeneratie op het laagste niveau, of rem een paar keer"
+            " stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer"
+            " 100 km/h.",
+            "Remmen: geen trilling van één of twee keer per wielomwenteling tijdens het"
+            " remmen, maar een elektrische auto of plug-in hybride kan op regeneratief"
+            " remmen vertraagd hebben zonder de remschijven; niet doorslaggevend",
+            id="nl",
+        ),
+    ],
+)
+def test_an_ev_that_braked_without_judder_has_its_brakes_checked_only_with_a_hedge(
+    lang: str, description: str, gap: str, mechanic: str
+) -> None:
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"]["conditions"]["fuel_type"] = "EV"
+    summary["diagnosis"]["source_checks"] = [
+        {"source": "wheel/tire", "status": "ruled_out", "reason": "no_matching_order"},
+        {"source": "brakes", "status": "ruled_out_estimated", "reason": "regen_braking"},
+    ]
+    summary["phase_info"]["phase_pcts"] = {"cruise": 60.0, "braking": 20.0, "coast_down": 20.0}
+    view = report_view_for(summary, lang=lang)
+
+    assert view.owner.description == description
+    assert view.owner.not_covered[0] == gap
+    assert mechanic in view.mechanic.ruled_out
+
+
 def test_no_fault_without_any_reference_does_not_imply_the_car_is_fine() -> None:
     samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
     summary = run_analysis(samples, standard_metadata(tire_circumference_m=None))

@@ -135,7 +135,11 @@ the source:
   the corners (no dominant corner) lowers the score: the localisation factor
   drops and the weak-separation penalty applies (×0.70 when the corners are
   even, dominance under 1.05; ×0.80 above; ×0.90 for a clear cabin hotspot,
-  dominance 1.5 and up, when no wheel sensor is fitted).
+  dominance 1.5 and up, when no wheel sensor is fitted). When the
+  per-location match rates already pin the order to one corner
+  (`apply_localization_override`), the hotspot counts as separated at any
+  dominance and takes none of this penalty, so a clearer corner never scores
+  lower.
 - **Engine and driveline** orders are diagnosed as a zone (engine bay, axle,
   centre tunnel), so the same order on the left and right is expected. When
   such an order shows no dominant corner and its own evidence is established,
@@ -188,7 +192,7 @@ judgement, or because no score depends on where they sit:
   already off frequency and scores low on the frequency error.
 - Sensor counts: the zone credit's two heard sensors, the corroboration
   bonus (×1.04 at two sensors, ×1.08 at three) and the phase bonus (×1.03,
-  ×1.06). One heard sensor is a point, not a zone; on the benchmark matrix
+  ×1.06; braking counts as one phase with deceleration). One heard sensor is a point, not a zone; on the benchmark matrix
   no zone-source order heard at one sensor has evidence that would earn
   credit, so the step never acts there. The bonuses move a score by at most
   0.04 per count.
