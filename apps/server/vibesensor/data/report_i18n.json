@@ -287,6 +287,10 @@
     "en": "{speeds} ({phases}) with sensors at {locations}.",
     "nl": "{speeds} ({phases}) met sensoren bij {locations}."
   },
+  "COVERED_BODY_NO_SPEED": {
+    "en": "No live speed was recorded, so the speeds and driving phases are not known; sensors at {locations}.",
+    "nl": "Er is geen live snelheid vastgelegd, dus de snelheden en rijfasen zijn onbekend; sensoren bij {locations}."
+  },
   "DESC_ENGINE_SAME_RHYTHM": {
     "en": "Without measured engine RPM this can also be the engine: in some gear it turns at this same rhythm.",
     "nl": "Zonder gemeten motortoerental kan dit ook de motor zijn: in een van de versnellingen draait die op hetzelfde ritme."

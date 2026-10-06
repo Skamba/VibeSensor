@@ -351,7 +351,8 @@ the PDF both show:
     desk), or the live speed was missing for most of the drive
     (`speed_missing`: under 35 % of the rows had a GPS/OBD-II speed above 0,
     so the order analysis placed no road-speed order; the engine stays
-    testable with measured RPM), or, for the engine, `same_rhythm_as_candidate` (see "Engine
+    testable with measured RPM, and without it a car that has a top-gear ratio
+    reads `speed_missing` rather than `no_engine_reference`), or, for the engine, `same_rhythm_as_candidate` (see "Engine
     alias" below).
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a

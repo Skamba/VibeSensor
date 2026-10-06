@@ -178,6 +178,31 @@ def test_healthy_run_says_no_significant_vibration_and_what_was_covered() -> Non
     assert view.owner.diagram.zone is None
 
 
+@pytest.mark.parametrize(
+    ("lang", "covered"),
+    [
+        (
+            "en",
+            "No live speed was recorded, so the speeds and driving phases are not known;"
+            " sensors at front-left wheel",
+        ),
+        (
+            "nl",
+            "Er is geen live snelheid vastgelegd, dus de snelheden en rijfasen zijn onbekend;"
+            " sensoren bij wiel linksvoor",
+        ),
+    ],
+)
+def test_covered_says_no_live_speed_was_recorded_when_no_speed_is_known(
+    lang: str, covered: str
+) -> None:
+    summary = deepcopy(_healthy_summary())
+    summary["speed_stats"].update(min_kmh=None, max_kmh=None)
+    owner = report_view_for(summary, lang=lang).owner
+
+    assert owner.covered is not None and owner.covered.startswith(covered), owner.covered
+
+
 def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     summary = _wheel_summary()
     view = report_view_for(summary)

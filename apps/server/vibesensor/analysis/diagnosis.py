@@ -1039,13 +1039,15 @@ def _source_checks(
             reason = "no_tire_reference"
         elif source is not VibrationSource.WHEEL_TIRE and refs.final_drive_ratio is None:
             reason = "no_drive_reference"
-        elif source is VibrationSource.ENGINE and rpm_source == "none":
+        elif source is VibrationSource.ENGINE and rpm_source == "none" and refs.gear_ratio is None:
             reason = "no_engine_reference"
         elif refs.manual_speed:
             # Every order was placed at the typed-in speed: no match proves nothing
             # unless the car really held exactly that speed.
             reason = "manual_speed"
-        elif refs.speed_missing:
+        elif refs.speed_missing or (source is VibrationSource.ENGINE and rpm_source == "none"):
+            # With a top-gear ratio the RPM is estimated from the speed: no RPM
+            # then means the drive had no live speed to estimate it from.
             reason = "speed_missing"
         else:
             reason = None

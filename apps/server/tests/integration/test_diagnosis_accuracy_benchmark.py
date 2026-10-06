@@ -2540,6 +2540,8 @@ def test_a_run_without_live_speed_for_most_of_it_could_check_nothing(
         assert checks["wheel/tire"] == ("not_testable", "speed_missing"), checks
         assert checks["driveline"] == ("not_testable", "speed_missing"), checks
         assert checks["brakes"] == ("not_testable", "speed_missing"), checks
+        # The car has a top-gear ratio: the engine RPM would have come from the speed.
+        assert checks["engine"] == ("not_testable", "speed_missing"), checks
         assert not {status for status, _ in checks.values()} & {
             "candidate",
             "ruled_out",
@@ -2548,6 +2550,15 @@ def test_a_run_without_live_speed_for_most_of_it_could_check_nothing(
         owner = result.report.owner
         assert owner.headline == "No result: this run could not check for a cause"
         assert "GPS" in owner.next_step, owner.next_step
+        engine_gap = next(gap for gap in owner.not_covered if gap.startswith("Engine:"))
+        assert "the live speed (GPS or OBD-II) was missing" in engine_gap, engine_gap
+        assert "top-gear ratio" not in engine_gap, engine_gap
+        assert owner.covered is not None and "unknown" not in owner.covered, owner.covered
+        if dropout_s == (0.0, 100.0):
+            assert owner.covered.startswith(
+                "No live speed was recorded, so the speeds and driving phases are not known;"
+                " sensors at "
+            ), owner.covered
         shop = " ".join(result.report.mechanic.shop)
         assert shop.endswith("neither indicates nor rules out a repair."), shop
     finally:

@@ -945,13 +945,18 @@ def _coverage(
     phases = analysis["phase_info"]["phase_pcts"]
     driven = [phase for phase, share in phases.items() if share >= 1.0 and phase != "speed_unknown"]
     locations = [ctx.location(row["location"]) for row in diagnosis["location_amplitudes"]]
-    covered = ctx.t(
-        "COVERED_BODY",
-        speeds=ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"]),
-        phases=", ".join(ctx.phase(phase) for phase in driven) or ctx.t("VALUE_UNKNOWN"),
-        locations=", ".join(locations) or ctx.t("VALUE_UNKNOWN"),
-    )
     low, high = speeds["min_kmh"], speeds["max_kmh"]
+    sensors = ", ".join(locations) or ctx.t("VALUE_UNKNOWN")
+    if low is None or high is None:
+        # No live speed at all: no speed range or driving phase to name.
+        covered = ctx.t("COVERED_BODY_NO_SPEED", locations=sensors)
+    else:
+        covered = ctx.t(
+            "COVERED_BODY",
+            speeds=ctx.speed_range(low, high),
+            phases=", ".join(ctx.phase(phase) for phase in driven) or ctx.t("VALUE_UNKNOWN"),
+            locations=sensors,
+        )
     if low is not None and low > 30.0:
         gaps.append(ctx.t("NOT_COVERED_BELOW", speed=ctx.speed(low)))
     if high is not None and high < 120.0:
