@@ -206,9 +206,7 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   const server = createServer();
   await bootWithHistory(page, server);
   await openHistoryTab(page);
-  await expect(page.locator("#historySummary")).toHaveText(
-    "2 run(s) available",
-  );
+  await expect(page.locator("#historySummary")).toHaveText("2 runs available");
   // Analysed runs get their row summary prefetched.
   const firstRow = page.locator('[data-run-row="1"][data-run="run-001"]');
   await expect(firstRow.locator(".history-row__diagnosis-title")).toHaveText(
@@ -315,9 +313,7 @@ test("journey: history deletes one run and reports a partial delete-all", async 
     "Deleted 1 of 2 runs. 1 failed.",
   );
   await expect(page.locator("#appErrorBanner")).toContainText("run is locked");
-  await expect(page.locator("#historySummary")).toHaveText(
-    "1 run(s) available",
-  );
+  await expect(page.locator("#historySummary")).toHaveText("1 run available");
 });
 
 test("journey: history speeds follow the speed unit setting in English and Dutch", async ({

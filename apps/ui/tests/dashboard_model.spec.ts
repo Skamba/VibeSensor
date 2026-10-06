@@ -245,7 +245,7 @@ describe("recording card", () => {
     expect(model.startDisabled).toBe(false);
     expect(model.setupMode).toBe(false);
     expect(model.summaryText).toBe(
-      'dashboard.capture_readiness.sensors_ready.limited_sensor_coverage:{"count":"1"}',
+      'dashboard.capture_readiness.sensors_ready.limited_sensor_coverage:{"count":1}',
     );
     expect(model.checklist).toHaveLength(3);
   });
@@ -396,18 +396,18 @@ describe("run health", () => {
       "dashboard.logging.active_car_required",
     );
     expect(health([client({ frame_loss_recent: true })]).summary).toBe(
-      'dashboard.logging.frame_loss:{"count":"1"}',
+      'dashboard.logging.frame_loss:{"count":1}',
     );
     // Old loss (the never-resetting total) alone no longer needs attention.
     expect(health([client({ dropped_frames: 2 })]).summary).not.toContain(
       "frame_loss",
     );
     expect(health([client({ location_code: "" })]).summary).toBe(
-      'dashboard.logging.unassigned:{"count":"1"}',
+      'dashboard.logging.unassigned:{"count":1}',
     );
     expect(
       health([client(), client({ id: "b", connected: false })]).summary,
-    ).toBe('dashboard.logging.offline:{"count":"1"}');
+    ).toBe('dashboard.logging.offline:{"count":1}');
   });
 
   test("is ok while recording or ready, and hides the overview pill then", () => {
@@ -513,7 +513,7 @@ describe("readiness text", () => {
       'dashboard.capture_readiness.speed_stable.speed_stabilizing:{"seconds":"3"}',
     );
     expect(checkDetail(unknown, t, formatInt, "kmh")).toBe(
-      'dashboard.capture_readiness.sensors_ready.ready:{"count":"3"}',
+      'dashboard.capture_readiness.sensors_ready.ready:{"count":3}',
     );
     expect(checkDetail(other, t, formatInt, "kmh")).toBe(
       "dashboard.capture_readiness.capture_ready.capture_blocked",

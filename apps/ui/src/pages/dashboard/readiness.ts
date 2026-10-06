@@ -97,20 +97,20 @@ export function checkDetail(
   const reason = KNOWN_REASONS[group].includes(check.reason_key ?? "")
     ? (check.reason_key ?? "")
     : "ready";
-  let vars: Record<string, string> | undefined;
+  let vars: Record<string, string | number> | undefined;
   if (key === "sensors_ready") {
     if (reason === "sensor_locations_missing") {
       vars = {
-        count: formatInt(detailCount(check, "unassigned_sensor_count")),
+        count: detailCount(check, "unassigned_sensor_count"),
       };
     } else if (reason === "sensor_timing_unreliable") {
       vars = {
-        count: formatInt(detailCount(check, "timing_unreliable_sensor_count")),
+        count: detailCount(check, "timing_unreliable_sensor_count"),
       };
     } else if (reason === "frame_loss_high" || reason === "recent_frame_loss") {
       vars = { percent: fmt(detailNumber(check, "frame_loss_pct"), 1) };
     } else if (reason !== "no_live_sensors") {
-      vars = { count: formatInt(detailCount(check, "live_sensor_count")) };
+      vars = { count: detailCount(check, "live_sensor_count") };
     }
   } else if (key === "speed_stable") {
     if (reason === "speed_too_low") {

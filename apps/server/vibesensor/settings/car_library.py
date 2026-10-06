@@ -18,7 +18,7 @@ __all__ = [
     "get_models_for_brand_type",
     "get_types_for_brand",
     "load_car_library",
-    "with_library_drive_layout",
+    "with_library_fields",
 ]
 
 
@@ -450,26 +450,34 @@ def _library_rows_for_saved_car(car: Car) -> list[VehicleConfiguration]:
     return [row for _, rows in candidates for row in rows]
 
 
-def with_library_drive_layout(car: Car) -> Car:
-    """Fill a saved car's missing drive layout from the library row it came from.
+def with_library_fields(car: Car) -> Car:
+    """Fill a saved car's missing drive layout and powertrain from its library rows.
 
-    Cars saved before the layout existed get it when their rows agree on one;
-    an AWD car also gets the axle its gearbox's final drive is on (which axle
-    the engine drives), also when the owner has corrected the ratio. A layout
-    the car already has is kept, and a car the library doesn't know stays
-    without one.
+    Cars saved before the layout or the powertrain existed get them when their
+    rows agree on one; an AWD car also gets the axle its gearbox's final drive
+    is on (which axle the engine drives), also when the owner has corrected the
+    ratio. A value the car already has is kept, and a car the library doesn't
+    know stays without one.
     """
 
-    if car.drive_layout is not None:
+    if car.drive_layout is not None and car.fuel_type is not None:
         return car
     rows = _library_rows_for_saved_car(car)
+    drive_layout, final_drive_axle = car.drive_layout, car.final_drive_axle
     layouts = {row.drivetrain for row in rows}
-    if len(layouts) != 1:
+    if drive_layout is None and len(layouts) == 1:
+        status = car.order_reference_status
+        transmission = status.transmission_name if status is not None else None
+        same_gearbox = [row for row in rows if row.transmission_name == transmission] or rows
+        axles = {row.driven_final_drive_axle for row in same_gearbox}
+        drive_layout = layouts.pop()
+        final_drive_axle = axles.pop() if len(axles) == 1 else None
+    fuel_types = {row.fuel_type for row in rows}
+    fuel_type = car.fuel_type
+    if fuel_type is None and len(fuel_types) == 1:
+        fuel_type = fuel_types.pop()
+    if (drive_layout, fuel_type) == (car.drive_layout, car.fuel_type):
         return car
-    status = car.order_reference_status
-    transmission = status.transmission_name if status is not None else None
-    same_gearbox = [row for row in rows if row.transmission_name == transmission] or rows
-    axles = {row.driven_final_drive_axle for row in same_gearbox}
     return Car(
         id=car.id,
         name=car.name,
@@ -477,7 +485,7 @@ def with_library_drive_layout(car: Car) -> Car:
         aspects=car.aspects,
         variant=car.variant,
         order_reference_status=car.order_reference_status,
-        fuel_type=car.fuel_type,
-        drive_layout=layouts.pop(),
-        final_drive_axle=axles.pop() if len(axles) == 1 else None,
+        fuel_type=fuel_type,
+        drive_layout=drive_layout,
+        final_drive_axle=final_drive_axle,
     )

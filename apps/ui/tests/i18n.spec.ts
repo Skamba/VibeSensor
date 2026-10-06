@@ -47,3 +47,40 @@ test("lists a key's text in every loaded language", async () => {
   await setLanguage("nl");
   expect(translationsOf("nav.history")).toEqual(["History", "Geschiedenis"]);
 });
+
+test("a count of one reads singular, others plural, in both languages", async () => {
+  await setLanguage("nl");
+  const key =
+    "dashboard.capture_readiness.sensors_ready.limited_sensor_coverage";
+  expect(translate("nl", key, { count: 1 })).toBe(
+    "Er is maar 1 live sensor actief, dus het rapport kan niet zeggen op welke plek de trilling het sterkst is.",
+  );
+  expect(translate("nl", key, { count: 2 })).toBe(
+    "Er zijn maar 2 live sensoren actief, dus de locatierangschikking is zwakker.",
+  );
+  expect(translate("en", key, { count: 1 })).toBe(
+    "Only 1 live sensor is active, so the report can't tell where the vibration is strongest.",
+  );
+  expect(translate("en", "history.available_count", { count: 1 })).toBe(
+    "1 run available",
+  );
+  expect(translate("en", "history.available_count", { count: 3 })).toBe(
+    "3 runs available",
+  );
+});
+
+test("no counted text hedges its plural with (s) or (en)", async () => {
+  await setLanguage("nl");
+  const hedged = /\w\((s|en)\)/;
+  for (const language of ["en", "nl"] as const) {
+    const catalog = (
+      language === "en"
+        ? (await import("../src/i18n/catalogs/en.json")).default
+        : (await import("../src/i18n/catalogs/nl.json")).default
+    ) as Record<string, string>;
+    const offenders = Object.entries(catalog).filter(([, text]) =>
+      hedged.test(text),
+    );
+    expect(offenders, language).toEqual([]);
+  }
+});

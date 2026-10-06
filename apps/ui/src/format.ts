@@ -20,11 +20,16 @@ export function fmt(n: number, digits = 2): string {
   return format.format(n);
 }
 
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+/** Local "YYYY-MM-DD HH:MM:SS" in every language, as the PDF report writes it. */
 function formatDateTime(date: Date, invalidText: string): string {
   if (!Number.isFinite(date.getTime())) {
     return invalidText;
   }
-  return date.toLocaleString(lang.value);
+  const day = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+  const time = `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+  return `${day} ${time}`;
 }
 
 export function fmtTs(iso: string): string {

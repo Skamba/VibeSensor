@@ -131,9 +131,11 @@ inherited from family-level data, encode that through `confidence` and
   `"BMW 1 Series (F40, 2019-2024) 118i"`, matches only that generation's
   rows, so a variant name another generation shares never lends its layout)
   when those rows agree on one layout, with the gearbox's axle, and are
-  saved again (`with_library_drive_layout` in
-  `apps/server/vibesensor/settings/car_library.py`). A car the library does
-  not know keeps no layout (unknown). See `apps/server/vibesensor/domain/drive_layout.py`
+  saved again (`with_library_fields` in
+  `apps/server/vibesensor/settings/car_library.py`). Cars saved before the
+  powertrain (`fuel_type`) existed get it the same way, so the report's
+  "Powertrain" fact does not read "not provided" for a library car. A car the
+  library does not know keeps no layout or powertrain (unknown). See `apps/server/vibesensor/domain/drive_layout.py`
   for what the layout decides: the driven axles and whether there is a
   propshaft (none for FWD, an EV or an e-AWD hybrid; front-engined cars
   assumed). A dual-motor EV is AWD with the rear motor's reduction ratio; the

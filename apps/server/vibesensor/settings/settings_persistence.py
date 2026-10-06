@@ -84,7 +84,7 @@ class SettingsPersistenceCoordinator:
 
         with self._lock:
             cars = [car_from_persistence_dict(car) for car in snapshot["cars"]]
-            self._car_state.cars = _with_library_drive_layouts(cars)
+            self._car_state.cars = _with_library_fields(cars)
             filled_in = any(
                 new is not old for new, old in zip(self._car_state.cars, cars, strict=True)
             )
@@ -155,15 +155,18 @@ class SettingsPersistenceCoordinator:
         )
 
 
-def _with_library_drive_layouts(cars: list[Car]) -> list[Car]:
-    """Fill the drive layout of cars saved before it existed from the car library.
+def _with_library_fields(cars: list[Car]) -> list[Car]:
+    """Fill the drive layout and powertrain of cars saved before they existed.
 
-    Only a car picked from the library (it has a variant) and without a layout
-    needs the library, so the library is loaded only then.
+    Only a car picked from the library (it has a variant) and missing one of
+    them needs the library, so the library is loaded only then.
     """
 
-    if all(car.drive_layout is not None or not car.variant for car in cars):
+    if all(
+        (car.drive_layout is not None and car.fuel_type is not None) or not car.variant
+        for car in cars
+    ):
         return cars
-    from vibesensor.settings.car_library import with_library_drive_layout
+    from vibesensor.settings.car_library import with_library_fields
 
-    return [with_library_drive_layout(car) for car in cars]
+    return [with_library_fields(car) for car in cars]

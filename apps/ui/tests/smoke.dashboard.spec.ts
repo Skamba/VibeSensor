@@ -144,9 +144,7 @@ test("journey: the readiness checklist explains what is missing and links to the
 
   const summary = page.locator("#loggingSummary");
   await expect(summary).toContainText("Finish setup before recording.");
-  await expect(summary).toContainText(
-    "1 live sensor(s) still need a location.",
-  );
+  await expect(summary).toContainText("1 live sensor still needs a location.");
   await expect(page.locator(".realtime-logging-shell")).toHaveAttribute(
     "data-layout",
     "setup",

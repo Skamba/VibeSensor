@@ -347,8 +347,8 @@ the form.
   while the car has none), with a hint that xDrive, quattro, 4MOTION or
   4MATIC mean all-wheel drive (`asksDriveLayout`, `wizardDriveLayout` in
   `wizard_model.ts`). The car row shows it under "Drive layout" ("Not set"
-  when unknown). Cars saved before the layout existed get it from their
-  library row on the next start (`with_library_drive_layout` in
+  when unknown). Cars saved before the layout or the powertrain existed get
+  them from their library row on the next start (`with_library_fields` in
   `apps/server/vibesensor/settings/car_library.py`); others stay unknown.
   See §5.3 for what the layout changes in the advice.
 
@@ -496,6 +496,11 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - After Stop, the run is queued for post-analysis
   ([run_lifecycle.md](run_lifecycle.md) §3). The Live page shows "Run … is
   being analyzed" and then "ready in History" (`dashboard.logging.*`).
+- Run times in History (and the update and flash pages) read
+  `YYYY-MM-DD HH:MM:SS` in the phone's local time in both languages, as the
+  PDF writes its date (`formatDateTime` in `apps/ui/src/format.ts`). Counted
+  texts read singular for one ("1 live sensor is active") through a key's
+  `_one` variant (`translate` in `apps/ui/src/i18n.ts`).
 - History shows the following (`history.*` strings):
   - the verdict: no significant vibration / not enough evidence / fault;
   - the confidence level with its action meaning (Strong: go fix it;

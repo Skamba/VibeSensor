@@ -51,14 +51,23 @@ function formatVar(language: Lang, value: unknown): string {
   return String(value);
 }
 
-/** Translates `key` in `language`, falling back to English, then the key. */
+function lookup(language: Lang, key: string): string | undefined {
+  return catalogs[language]?.[key] || en[key as keyof typeof en];
+}
+
+/**
+ * Translates `key` in `language`, falling back to English, then the key.
+ *
+ * A `count` of exactly 1 reads the key's singular `<key>_one` when the catalog
+ * has one, so a counted text never hedges "sensor(s)".
+ */
 export function translate(
   language: Lang,
   key: string,
   vars?: Record<string, unknown>,
 ): string {
-  const template =
-    catalogs[language]?.[key] || en[key as keyof typeof en] || key;
+  const singular = vars?.["count"] === 1 ? lookup(language, `${key}_one`) : "";
+  const template = singular || lookup(language, key) || key;
   if (!vars) {
     return template;
   }

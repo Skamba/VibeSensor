@@ -27,12 +27,19 @@ describe("number formatting", () => {
 });
 
 describe("timestamp formatting helpers", () => {
-  test("formats valid timestamps through locale path and falls back for invalid values", () => {
-    const iso = "2024-01-02T03:04:05Z";
-    const expected = new Date(iso).toLocaleString();
+  test("formats local time as the PDF does, in every language, and falls back for invalid values", async () => {
+    // Local 2024-01-02 03:04:05, whatever the test machine's zone.
+    const local = new Date(2024, 0, 2, 3, 4, 5);
+    const iso = local.toISOString();
 
-    expect(fmtTs(iso)).toBe(expected);
-    expect(formatEpochTimestamp(Date.parse(iso) / 1000)).toBe(expected);
+    expect(fmtTs(iso)).toBe("2024-01-02 03:04:05");
+    expect(formatEpochTimestamp(local.getTime() / 1000)).toBe(
+      "2024-01-02 03:04:05",
+    );
+    await setLanguage("nl");
+    expect(fmtTs(new Date(2026, 9, 6, 14, 21, 50).toISOString())).toBe(
+      "2026-10-06 14:21:50",
+    );
 
     expect(fmtTs("")).toBe("--");
     expect(fmtTs("not-a-date")).toBe("--");

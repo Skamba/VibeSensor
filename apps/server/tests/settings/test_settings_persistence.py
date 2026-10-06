@@ -405,6 +405,23 @@ def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: 
         "unknown-variant": (None, None),
         "kept": ("AWD", None),
     }
+    # The powertrain too, so the report does not read "not provided" for a
+    # library car saved before it existed; one the owner set is kept.
+    fuel_types = {car_id: car.get("fuel_type") for car_id, car in loaded.items()}
+    assert fuel_types == {
+        "fwd": "ICE",
+        "rwd": "ICE",
+        "e-awd": "PHEV",
+        "awd": "ICE",
+        "e-awd-edited": "PHEV",
+        "old-f40": "ICE",
+        "old-m5": "ICE",
+        "old-x1": "ICE",
+        "other-gen": None,
+        "custom": None,
+        "unknown-variant": None,
+        "kept": "ICE",
+    }
     assert loaded["fwd"]["name"] == "BMW X1 (F48, 2015–2022) sDrive18i"
     snapshot = services.car_settings.active_car_snapshot()
     assert snapshot is not None and snapshot.drive_layout == "FWD"
@@ -412,3 +429,4 @@ def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: 
     persisted = db.get_settings_snapshot()
     assert persisted is not None
     assert persisted["cars"][0].get("drive_layout") == "FWD"
+    assert persisted["cars"][0].get("fuel_type") == "ICE"

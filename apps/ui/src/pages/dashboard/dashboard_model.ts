@@ -183,21 +183,15 @@ export function liveHealth(
     (client) => client.frame_loss_recent,
   ).length;
   if (dropping > 0) {
-    return attention(
-      t("dashboard.logging.frame_loss", { count: formatInt(dropping) }),
-    );
+    return attention(t("dashboard.logging.frame_loss", { count: dropping }));
   }
   const unassigned = connected.filter((client) => !locationOf(client)).length;
   if (unassigned > 0) {
-    return attention(
-      t("dashboard.logging.unassigned", { count: formatInt(unassigned) }),
-    );
+    return attention(t("dashboard.logging.unassigned", { count: unassigned }));
   }
   const offline = clients.length - connected.length;
   if (offline > 0) {
-    return attention(
-      t("dashboard.logging.offline", { count: formatInt(offline) }),
-    );
+    return attention(t("dashboard.logging.offline", { count: offline }));
   }
   if (status.enabled) {
     return {

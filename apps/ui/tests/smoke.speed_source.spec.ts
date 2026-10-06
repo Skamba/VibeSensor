@@ -337,7 +337,7 @@ test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
 
   await page.locator("#scanObdDevicesBtn").click();
   await expect(page.locator("#obdDeviceScanStatus")).toHaveText(
-    "2 adapter(s) found.",
+    "2 adapters found.",
   );
   const devices = page.locator("#obdDeviceList .speed-source-device");
   await expect(devices).toHaveCount(2);
