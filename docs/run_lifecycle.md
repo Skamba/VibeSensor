@@ -227,6 +227,18 @@ because there is nothing persistent to close.
   FFT peaks from raw capture when it is available, calls the injected summary
   analysis runner, and stores either analysis output or an analysis error
   record
+- each analysis start is counted in the `analysis_attempts` table before any
+  work, and the count is cleared when a result or error is stored. A count left
+  behind means the server stopped mid-analysis (most likely out of memory on the
+  Pi). After `MAX_UNFINISHED_ANALYSIS_ATTEMPTS = 2` such attempts the worker does
+  not try again: it stores the run as `error` with "Analysis did not finish in 2
+  attempts: … Record a shorter run.", which the history UI shows, instead of
+  crashing the restarted server again
+- to stay within the Pi's memory, loading reads only `id`, `t_s` and the
+  loudness columns of every summary row first, picks the rows to analyse (at most
+  12,000: evenly spaced plus the loudest of each stretch) and decodes only those;
+  the raw waveform is memory-mapped read-only rather than copied, and both are
+  released once the analysis input is built
 
 The worker also exposes `PostAnalysisHealthSnapshot`, which is what the health
 surface uses for queue depth, active run ID, and the most recent completion

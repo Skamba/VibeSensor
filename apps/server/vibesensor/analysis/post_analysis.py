@@ -12,6 +12,7 @@ lifecycle, health state, and callback forwarding.
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
 from collections.abc import Callable
 from threading import Event, RLock, Thread
@@ -21,6 +22,7 @@ from vibesensor.analysis.post_analysis_executor import (
     PostAnalysisAttemptResult,
     PostAnalysisExecutionConfig,
     PostAnalysisRunner,
+    abandon_unfinished_post_analysis,
     execute_post_analysis,
 )
 from vibesensor.analysis.post_analysis_failures import (
@@ -45,6 +47,9 @@ LOGGER = logging.getLogger(__name__)
 
 _WARN_QUEUE_DEPTH = 10
 _RETRY_DELAYS_S = (0.5, 1.0, 2.0)
+# A run whose analysis was started this many times without finishing (the
+# server died mid-analysis each time) is failed instead of started again.
+MAX_UNFINISHED_ANALYSIS_ATTEMPTS = 2
 
 
 class PostAnalysisWorker:
@@ -243,6 +248,16 @@ class PostAnalysisWorker:
         db = self._history_db
         if db is None:
             return
+        unfinished_attempts = self._begin_attempt(db, run_id) - 1
+        if unfinished_attempts >= MAX_UNFINISHED_ANALYSIS_ATTEMPTS:
+            self._record_execution_result(
+                abandon_unfinished_post_analysis(
+                    run_id=run_id,
+                    db=db,
+                    unfinished_attempts=unfinished_attempts,
+                )
+            )
+            return
         retry_index = 0
         while True:
             if self._shutdown_event.is_set():
@@ -269,6 +284,15 @@ class PostAnalysisWorker:
                 continue
             self._record_execution_result(result)
             return
+
+    @staticmethod
+    def _begin_attempt(db: HistoryDB, run_id: str) -> int:
+        """Persist one more started attempt; 0 when it cannot be counted."""
+        try:
+            return db.begin_analysis_attempt(run_id)
+        except sqlite3.Error:
+            LOGGER.warning("Could not count the analysis attempt for run %s", run_id, exc_info=True)
+            return 0
 
     def _record_retryable_failure(
         self,

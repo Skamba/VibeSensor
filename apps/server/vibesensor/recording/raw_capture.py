@@ -266,7 +266,7 @@ class RawCaptureChunkTable:
 
 @dataclass(frozen=True, slots=True)
 class RawCaptureSensorData:
-    """Decoded raw waveform stream plus its persisted chunk index."""
+    """One sensor's ``(n, 3)`` int16 raw waveform (memory-mapped on load) plus its chunk index."""
 
     manifest: RawCaptureSensorManifest
     samples_i16: Int16Array

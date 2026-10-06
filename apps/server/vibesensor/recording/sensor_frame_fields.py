@@ -10,6 +10,7 @@ from typing import cast
 from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_json_array
 from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.common.scalars import optional_float, optional_int
+from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_values import (
     SensorFrameDecodeError,
@@ -23,6 +24,7 @@ from vibesensor.recording.strength_metrics_codec import (
 
 __all__ = [
     "SENSOR_FRAME_FIELD_NAMES",
+    "sensor_frame_top_peaks_from_row_value",
     "sensor_frame_from_mapping_payload",
     "sensor_frame_from_row_payload",
     "sensor_frame_to_mapping_payload",
@@ -310,6 +312,19 @@ def sensor_frame_to_row_payload(frame: SensorFrame) -> tuple[object, ...]:
     )
 
 
+def sensor_frame_top_peaks_from_row_value(
+    value: object,
+    *,
+    source: str = "sample row",
+) -> tuple[StrengthPeak, ...]:
+    """Decode a stored ``top_peaks`` column exactly as a full row decode would."""
+    return _strength_peaks(_top_peaks_from_row_value(value, source=source))
+
+
+def _strength_peaks(top_peaks: object) -> tuple[StrengthPeak, ...]:
+    return strength_peaks_from_sequence(top_peaks, max_items=10)
+
+
 def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -> SensorFrame:
     return SensorFrame(
         run_id=values.run_id,
@@ -334,7 +349,7 @@ def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -
         accel_z_g=values.accel_z_g,
         dominant_freq_hz=values.dominant_freq_hz,
         dominant_axis=values.dominant_axis,
-        top_peaks=strength_peaks_from_sequence(top_peaks, max_items=10),
+        top_peaks=_strength_peaks(top_peaks),
         vibration_strength_db=values.vibration_strength_db,
         strength_bucket=values.strength_bucket,
         strength_peak_amp_g=values.strength_peak_amp_g,

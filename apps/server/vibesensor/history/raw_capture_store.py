@@ -165,6 +165,11 @@ class HistoryRawCaptureStore:
         return manifest
 
     def load_capture(self, manifest: RawCaptureManifest) -> RawRunCapture:
+        """Map each sensor's waveform read-only from disk and load its chunk index.
+
+        The waveform is not copied into memory: replay reads only the analysed
+        windows, and the kernel can drop those pages again under memory pressure.
+        """
         run_dir = self._data_dir / manifest.relative_dir
         sensors: list[RawCaptureSensorData] = []
         for sensor_manifest in manifest.sensors:
@@ -173,7 +178,7 @@ class HistoryRawCaptureStore:
             sensors.append(
                 RawCaptureSensorData(
                     manifest=sensor_manifest,
-                    samples_i16=self._read_all_sensor_samples(data_path),
+                    samples_i16=_map_sensor_samples(data_path),
                     chunks=_load_chunk_table(index_path),
                 )
             )
@@ -201,17 +206,6 @@ class HistoryRawCaptureStore:
         for sensor in manifest.sensors:
             names += [sensor.data_file, sensor.index_file]
         return tuple(path for name in names if (path := run_dir / name).is_file())
-
-    def _read_all_sensor_samples(self, data_path: Path) -> np.ndarray:
-        return self._reshape_samples(raw_bytes=data_path.read_bytes(), data_path=data_path)
-
-    def _reshape_samples(self, *, raw_bytes: bytes, data_path: Path) -> np.ndarray:
-        samples_i16 = np.frombuffer(raw_bytes, dtype=np.dtype("<i2")).copy()
-        if samples_i16.size % _AXIS_COUNT != 0:
-            raise ValueError(
-                f"raw capture {data_path} length {samples_i16.size} is not divisible by 3 axes"
-            )
-        return samples_i16.reshape(-1, _AXIS_COUNT)
 
     def _ensure_stream(
         self,
@@ -308,6 +302,20 @@ def _load_chunk_table(index_path: Path) -> RawCaptureChunkTable:
         sample_count=np.array(columns[1], dtype=np.int64),
         t0_us=np.array(columns[2], dtype=np.int64),
     )
+
+
+def _map_sensor_samples(data_path: Path) -> np.ndarray:
+    """Map a sensor's interleaved little-endian int16 x/y/z file as a read-only ``(n, 3)`` array."""
+    size_bytes = data_path.stat().st_size
+    if size_bytes % _BYTES_PER_SAMPLE != 0:
+        raise ValueError(
+            f"raw capture {data_path} length {size_bytes // _BYTES_PER_AXIS} "
+            "is not divisible by 3 axes"
+        )
+    if size_bytes == 0:
+        return np.empty((0, _AXIS_COUNT), dtype=np.int16)
+    mapped = np.memmap(data_path, dtype=np.dtype("<i2"), mode="r")
+    return mapped.reshape(-1, _AXIS_COUNT).view(np.ndarray)
 
 
 def _rounded_median(values: list[float]) -> int:

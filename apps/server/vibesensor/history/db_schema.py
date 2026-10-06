@@ -71,6 +71,13 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 
+-- Post-analysis attempts started for an analyzing run, so a run whose analysis
+-- keeps killing the server (out of memory) is failed instead of retried forever.
+CREATE TABLE IF NOT EXISTS analysis_attempts (
+    run_id          TEXT PRIMARY KEY REFERENCES runs(run_id) ON DELETE CASCADE,
+    attempt_count   INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
 CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
 CREATE INDEX IF NOT EXISTS idx_runs_status_created_at ON runs(status, created_at);

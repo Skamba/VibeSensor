@@ -9,7 +9,7 @@ application settings and client names in a single SQLite file located at
 | Goal | Approach |
 |------|----------|
 | Low overhead on Raspberry Pi 3A+ | WAL journal mode, batched inserts (256 rows), typed columns (no per-row JSON parsing) |
-| Efficient long recordings | Keyset pagination (`id > ?`), streaming iterator, no full-run memory load |
+| Efficient long recordings | Keyset pagination (`id > ?`), streaming iterator, no full-run memory load; post-analysis selects rows from a light column pass and decodes only those |
 | Queryable time-series | Typed columns for accel, speed, frequency, strength; indexed by `(run_id, t_s)` |
 
 ## Module organization
@@ -93,6 +93,23 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 **Indexes:**
 - `idx_samples_v2_run_id` on `(run_id)` — fast lookup by run
 - `idx_samples_v2_run_time` on `(run_id, t_s)` — time-range queries
+
+### `analysis_attempts`
+
+Unfinished post-analysis attempts, one row per run being analysed.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `run_id` | TEXT PK | References `runs(run_id)` with `ON DELETE CASCADE` |
+| `attempt_count` | INTEGER | Analysis starts not yet finished by a stored result or error |
+
+`begin_analysis_attempt()` increments the count (only while the run is
+`analyzing`) before the worker starts; `store_analysis()` and
+`store_analysis_error()` delete the row. A count of 2 at the next start means the
+server stopped mid-analysis twice, so the worker stores the run as `error`
+instead of trying again (see `docs/run_lifecycle.md`). The table is created with
+`CREATE TABLE IF NOT EXISTS` on every open, so a current-version (v15) database
+gains it without a version bump.
 
 ### `settings_snapshot`
 

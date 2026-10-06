@@ -11,7 +11,7 @@ import logging
 import shutil
 import sqlite3
 import threading
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -39,9 +39,12 @@ from vibesensor.history.records import (
 )
 from vibesensor.history.run_clock_correction import StoredRunTimes, correct_run_times
 from vibesensor.history.sample_store import (
+    SELECTION_SELECT_SQL_COLS,
     V2_INSERT_SQL,
     V2_SELECT_SQL_COLS,
+    SampleSelectionColumns,
     sample_to_v2_row,
+    selection_row_values,
     v2_row_to_sensor_frame,
 )
 from vibesensor.recording.raw_capture import (
@@ -408,6 +411,7 @@ class HistoryDB:
                     current_status,
                 )
                 return False
+            cur.execute("DELETE FROM analysis_attempts WHERE run_id = ?", (run_id,))
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
@@ -420,6 +424,24 @@ class HistoryDB:
                 ),
             )
             return int(cur.rowcount) > 0
+
+    def begin_analysis_attempt(self, run_id: str) -> int:
+        """Count one more started analysis of an ``analyzing`` run and return the count.
+
+        The count survives a server restart and is cleared when the analysis or its
+        error is stored, so it counts the attempts that never finished. Returns 0
+        when the run is not ``analyzing``.
+        """
+        with self._write() as cur:
+            cur.execute(
+                "INSERT INTO analysis_attempts (run_id, attempt_count) "
+                "SELECT run_id, 1 FROM runs WHERE run_id = ? AND status = 'analyzing' "
+                "ON CONFLICT (run_id) DO UPDATE SET attempt_count = attempt_count + 1 "
+                "RETURNING attempt_count",
+                (run_id,),
+            )
+            rows = cur.fetchall()
+        return int(rows[0][0]) if rows else 0
 
     def store_analysis_error(self, run_id: str, error: str) -> bool:
         now = utc_now_iso()
@@ -440,6 +462,7 @@ class HistoryDB:
                     current_status,
                 )
                 return False
+            cur.execute("DELETE FROM analysis_attempts WHERE run_id = ?", (run_id,))
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
                 "analysis_completed_at = ?, end_time_utc = COALESCE(end_time_utc, ?) "
@@ -737,6 +760,75 @@ class HistoryDB:
                     LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
             if batch:
                 yield batch
+
+    def run_sample_selection_columns(
+        self,
+        run_id: str,
+        batch_size: int = 4096,
+    ) -> SampleSelectionColumns:
+        """Decode only the columns that pick post-analysis rows, for every run row.
+
+        A light pass over a long run: no :class:`SensorFrame` is built, so memory
+        stays a few numbers per row. Rows whose selection columns are corrupt are
+        skipped and logged, like :meth:`iter_run_samples` skips corrupt rows.
+        """
+        size = max(1, batch_size)
+        last_id = 0
+        skipped = 0
+        parts: list[SampleSelectionColumns] = []
+        while True:
+            with self._read() as cur:
+                cur.execute(
+                    f"SELECT {SELECTION_SELECT_SQL_COLS} FROM samples_v2"
+                    " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
+                    (run_id, last_id, size),
+                )
+                rows = cur.fetchall()
+            if not rows:
+                break
+            last_id = int(rows[-1][0])
+            decoded: list[tuple[int, float, float, float, float]] = []
+            for row in rows:
+                try:
+                    decoded.append(selection_row_values(row))
+                except SensorFrameDecodeError as exc:
+                    skipped += 1
+                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+            parts.append(SampleSelectionColumns.from_rows(decoded))
+        if skipped:
+            LOGGER.warning(
+                "run_id=%s: skipped %d corrupt v2 sample row(s) in total", run_id, skipped
+            )
+        return SampleSelectionColumns.concatenate(parts)
+
+    def load_run_samples_by_id(
+        self,
+        run_id: str,
+        row_ids: Sequence[int],
+        batch_size: int = 500,
+    ) -> list[SensorFrame]:
+        """Decode the given ``samples_v2`` rows (ascending ids) in id order.
+
+        Corrupt rows are skipped and logged; the read lock is released between batches.
+        """
+        size = max(1, batch_size)
+        frames: list[SensorFrame] = []
+        for offset in range(0, len(row_ids), size):
+            batch_ids = [int(row_id) for row_id in row_ids[offset : offset + size]]
+            placeholders = ", ".join("?" * len(batch_ids))
+            with self._read() as cur:
+                cur.execute(
+                    f"SELECT {V2_SELECT_SQL_COLS} FROM samples_v2"
+                    f" WHERE run_id = ? AND id IN ({placeholders}) ORDER BY id",
+                    (run_id, *batch_ids),
+                )
+                rows = [tuple(row) for row in cur.fetchall()]
+            for row in rows:
+                try:
+                    frames.append(v2_row_to_sensor_frame(row))
+                except SensorFrameDecodeError as exc:
+                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+        return frames
 
     # -- settings snapshot ----------------------------------------------------
 

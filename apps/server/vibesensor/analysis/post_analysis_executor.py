@@ -4,10 +4,13 @@
 ``post_analysis_step`` line per step (status ``ok``/``skipped``/``degraded``/
 ``failed`` plus timing and step details):
 
-1. ``load_run`` loads metadata and summary rows. Missing metadata or an empty
-   run ends the attempt with a stored terminal error.
+1. ``load_run`` loads metadata, the kept summary rows (a light pass picks at
+   most 12,000 before any row is decoded) and the memory-mapped raw capture.
+   Missing metadata or an empty run ends the attempt with a stored terminal
+   error.
 2. ``build_input`` shapes the canonical ``PostAnalysisRunInput`` (summary rows
-   with FFT peaks recomputed from the raw capture when it is available).
+   with FFT peaks recomputed from the raw capture when it is available), then
+   releases the loaded rows and raw capture.
 3. ``analyze`` runs the summary analysis (findings, top causes, most likely
    origin) that both the UI and the PDF report read.
 4. ``persist_analysis`` stores the persisted analysis.
@@ -40,6 +43,7 @@ from vibesensor.analysis.post_analysis_loader import (
 )
 from vibesensor.analysis.post_analysis_outcomes import (
     PostAnalysisAttemptResult,
+    PostAnalysisExecutionAbandoned,
     PostAnalysisExecutionMissingMetadata,
     PostAnalysisExecutionNoSamples,
     PostAnalysisExecutionPersistenceFailure,
@@ -126,10 +130,11 @@ def execute_post_analysis(
                 completed_error=load_result.error_message,
                 kind=failure_kind,
             )
-        loaded = load_result
-
         with _step(run_id, "build_input") as step:
-            run_input = build_post_analysis_input(loaded)
+            run_input = build_post_analysis_input(load_result)
+            # The loaded rows and the mapped raw capture are not needed past this
+            # point; release them before the analysis allocates its own working set.
+            del load_result
             step.update(
                 summary_row_count=len(run_input.samples),
                 raw_capture_available=run_input.raw_capture_available,
@@ -139,7 +144,7 @@ def execute_post_analysis(
         with _step(run_id, "analyze"):
             summary = _analyze(run_input, config.analysis_runner)
         with _step(run_id, "persist_analysis"):
-            db.store_analysis(loaded.run_id, summary)
+            db.store_analysis(run_id, summary)
     except _STEP_ERRORS as exc:
         if config.defer_retryable_error_storage and is_retryable_post_analysis_error(exc):
             return _retryable_failure_result(
@@ -157,17 +162,51 @@ def execute_post_analysis(
     duration_s = time.monotonic() - analysis_start
     LOGGER.info(
         "Analysis completed for run %s: %d samples in %.2fs",
-        loaded.run_id,
+        run_id,
         len(run_input.samples),
         duration_s,
         extra=log_extra(
             event="post_analysis_completed",
-            run_id=loaded.run_id,
+            run_id=run_id,
             sample_count=len(run_input.samples),
             duration_s=round(duration_s, 3),
         ),
     )
-    return PostAnalysisExecutionSuccess(run_id=loaded.run_id)
+    return PostAnalysisExecutionSuccess(run_id=run_id)
+
+
+def abandon_unfinished_post_analysis(
+    *,
+    run_id: str,
+    db: HistoryDB,
+    unfinished_attempts: int,
+) -> PostAnalysisExecutionResult:
+    """Fail a run whose earlier analysis attempts all died before finishing.
+
+    The server restarts after a crash (most likely out of memory on a long
+    drive) and re-queues runs still marked analyzing, so without this a run
+    that cannot be analysed would crash the server on every start.
+    """
+    completed_error = (
+        f"Analysis did not finish in {unfinished_attempts} attempts: the server stopped "
+        "during analysis each time, most likely out of memory. Record a shorter run."
+    )
+    LOGGER.error(
+        "Giving up on post-analysis for run %s after %d unfinished attempt(s)",
+        run_id,
+        unfinished_attempts,
+        extra=log_extra(
+            event="post_analysis_abandoned",
+            run_id=run_id,
+            unfinished_attempts=unfinished_attempts,
+        ),
+    )
+    return _store_load_error(
+        db=db,
+        run_id=run_id,
+        completed_error=completed_error,
+        kind="abandoned",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +291,11 @@ def _store_load_error(
 
     if kind == "missing_metadata":
         return PostAnalysisExecutionMissingMetadata(
+            run_id=run_id,
+            completed_error=completed_error,
+        )
+    if kind == "abandoned":
+        return PostAnalysisExecutionAbandoned(
             run_id=run_id,
             completed_error=completed_error,
         )

@@ -96,7 +96,9 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(
     assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
 
 
-def test_a_torn_raw_capture_index_line_is_skipped(tmp_path: Path, db: HistoryDB) -> None:
+def test_a_loaded_waveform_is_mapped_read_only_and_a_torn_index_line_is_skipped(
+    tmp_path: Path, db: HistoryDB
+) -> None:
     create_recording_run(db, "run-torn")
     first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
     second = np.asarray([[7, 8, 9]], dtype=np.int16)
@@ -120,6 +122,9 @@ def test_a_torn_raw_capture_index_line_is_skipped(tmp_path: Path, db: HistoryDB)
     assert sensor.chunks.sample_count.tolist() == [2, 1]
     assert sensor.chunks.t0_us.tolist() == [1000, 3500]
     assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
+    # Mapped from the file rather than copied into memory, and never written through.
+    assert not sensor.samples_i16.flags.owndata
+    assert not sensor.samples_i16.flags.writeable
 
 
 def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(

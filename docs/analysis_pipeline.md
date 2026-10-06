@@ -79,8 +79,8 @@ RunRecorder.stop_recording()            # recording/recorder.py
        └─ PostAnalysisWorker.schedule() # analysis/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata + persisted summary rows via the injected HistoryDB
-                      ├─ load raw manifest; compact replay may load full RawRunCapture
+                      ├─ load metadata, then a light pass over the summary rows picks ≤ 12,000 rows; only those are decoded
+                      ├─ load raw manifest; replay memory-maps the raw waveform (read-only) via RawRunCapture
                       ├─ build_post_analysis_input(...)
                       │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
                       ├─ analysis_runner(...)

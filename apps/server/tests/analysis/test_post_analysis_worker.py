@@ -6,19 +6,28 @@ and an injected ``analysis_runner``) against a small in-memory history store.
 
 from __future__ import annotations
 
+import math
 import sqlite3
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from pathlib import Path
 
 import pytest
-from test_support.history_db_lifecycle import make_stored_run
+from test_support.history_db_lifecycle import (
+    build_history_db,
+    create_analyzing_run,
+    create_recording_run,
+    make_stored_run,
+)
+from test_support.history_db_sql import fetch_all
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.raw_capture_fixtures import post_analysis_metadata
 
 from vibesensor.analysis.post_analysis import PostAnalysisWorker
 from vibesensor.analysis.post_analysis_failures import UnexpectedPostAnalysisBugRecorder
 from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
-from vibesensor.analysis.post_analysis_loader import load_post_analysis_run
+from vibesensor.history.history_db import HistoryDB
+from vibesensor.history.sample_store import SampleSelectionColumns
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 _ROWS = [{"t_s": 1.0, "vibration_strength_db": 10.0}, {"t_s": 2.0, "vibration_strength_db": 11.0}]
@@ -34,7 +43,7 @@ class _HistoryStore:
         self.errors: list[tuple[str, str]] = []
         self.store_failure: Exception | None = None
         self.transient_store_failures: list[Exception] = []
-        self.iter_calls: list[tuple[int, int]] = []
+        self.attempts: dict[str, int] = {}
 
     def get_run(self, run_id: str):
         metadata = post_analysis_metadata(run_id, fft_n=256, language=self.language)
@@ -43,9 +52,24 @@ class _HistoryStore:
     def load_raw_capture(self, _run_id: str):
         return None
 
-    def iter_run_samples(self, _run_id: str, batch_size: int = 1024, *, stride: int = 1):
-        self.iter_calls.append((batch_size, stride))
-        yield sensor_frames_from_mappings(self.rows)
+    def begin_analysis_attempt(self, run_id: str) -> int:
+        self.attempts[run_id] = self.attempts.get(run_id, 0) + 1
+        return self.attempts[run_id]
+
+    def run_sample_selection_columns(self, _run_id: str) -> SampleSelectionColumns:
+        return SampleSelectionColumns.from_rows(
+            [
+                (row_id, frame.t_s, frame.vibration_strength_db, math.nan, math.nan)
+                for row_id, frame in enumerate(self._frames(), start=1)
+            ]
+        )
+
+    def load_run_samples_by_id(self, _run_id: str, row_ids: Sequence[int]):
+        frames = self._frames()
+        return [frames[row_id - 1] for row_id in row_ids]
+
+    def _frames(self):
+        return sensor_frames_from_mappings(self.rows)
 
     def store_analysis(self, run_id: str, analysis) -> None:
         if self.store_failure is not None:
@@ -224,23 +248,63 @@ def test_a_worker_bug_is_reported_even_when_storing_it_fails() -> None:
     assert callbacks == ["post-analysis worker bug for run run-bug: worker boom"]
 
 
-def test_long_runs_keep_loud_events_when_thinned(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("vibesensor.analysis.post_analysis_loader._MAX_POST_ANALYSIS_SAMPLES", 2)
-    store = _HistoryStore(
-        [
-            {"t_s": 1.0, "vibration_strength_db": 10.0},
-            {"t_s": 2.0, "vibration_strength_db": 11.0},
-            {"t_s": 3.0, "vibration_strength_db": 48.0},
-            {"t_s": 4.0, "vibration_strength_db": 12.0},
-        ]
+def _store_recorded_run(db: HistoryDB, run_id: str) -> None:
+    metadata = create_recording_run(db, run_id)
+    db.append_samples(run_id, sensor_frames_from_mappings(_ROWS))
+    db.finalize_run(run_id, "2026-01-01T00:01:00Z", metadata=metadata)
+
+
+def test_a_run_that_twice_stopped_the_server_mid_analysis_is_marked_failed(
+    tmp_path: Path,
+) -> None:
+    # Each attempt is counted before the analysis starts and cleared when its result
+    # (or error) is stored, so a count left behind means the process died mid-analysis,
+    # most likely out of memory. A third try would only crash the server again.
+    db = build_history_db(tmp_path)
+    _store_recorded_run(db, "run-oom")
+    assert db.begin_analysis_attempt("run-oom") == 1
+    assert db.begin_analysis_attempt("run-oom") == 2
+    db.close()
+    db = build_history_db(tmp_path)  # the count survives the restart
+    seen: list[str] = []
+
+    worker = PostAnalysisWorker(history_db=db, analysis_runner=_runner(seen.append))
+    worker.schedule("run-oom")
+
+    assert worker.wait(timeout_s=5.0)
+    assert seen == []
+    run = db.get_run("run-oom")
+    assert run is not None
+    assert run.status == "error"
+    assert run.error_message == (
+        "Analysis did not finish in 2 attempts: the server stopped during analysis each "
+        "time, most likely out of memory. Record a shorter run."
     )
+    assert worker.snapshot().last_completed_error == run.error_message
 
-    result = load_post_analysis_run(run_id="run-capped", db=store)
 
-    assert result.total_summary_row_count == 4
-    assert result.summary_duration_s == pytest.approx(3.0)
-    assert result.stride == 2
-    assert result.sampling_method == "event_preserving"
-    assert result.event_sample_count == 1
-    assert [sample.t_s for sample in result.samples] == [1.0, 3.0]
-    assert store.iter_calls == [(1024, 1)]
+def test_one_unfinished_attempt_is_retried_and_the_count_cleared(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    _store_recorded_run(db, "run-retry")
+    db.begin_analysis_attempt("run-retry")
+    seen: list[str] = []
+
+    worker = PostAnalysisWorker(history_db=db, analysis_runner=_runner(seen.append))
+    worker.schedule("run-retry")
+
+    assert worker.wait(timeout_s=5.0)
+    assert seen == ["run-retry"]
+    run = db.get_run("run-retry")
+    assert run is not None
+    assert run.status == "complete"
+    assert fetch_all(db, "SELECT * FROM analysis_attempts") == []
+
+
+def test_attempts_are_only_counted_for_runs_awaiting_analysis(tmp_path: Path) -> None:
+    db = build_history_db(tmp_path)
+    create_analyzing_run(db, "run-a")
+
+    assert db.begin_analysis_attempt("run-missing") == 0
+    assert db.begin_analysis_attempt("run-a") == 1
+    db.store_analysis_error("run-a", "boom")
+    assert db.begin_analysis_attempt("run-a") == 0

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 __all__ = [
     "PostAnalysisAttemptResult",
+    "PostAnalysisExecutionAbandoned",
     "PostAnalysisExecutionMissingMetadata",
     "PostAnalysisExecutionNoSamples",
     "PostAnalysisExecutionPersistenceFailure",
@@ -43,6 +44,14 @@ class PostAnalysisExecutionPersistenceFailure:
 
 
 @dataclass(frozen=True, slots=True)
+class PostAnalysisExecutionAbandoned:
+    """Earlier attempts never finished (the server died mid-analysis); the run is failed."""
+
+    run_id: str
+    completed_error: str
+
+
+@dataclass(frozen=True, slots=True)
 class PostAnalysisExecutionRetryableFailure:
     run_id: str
     error_message: str
@@ -54,6 +63,7 @@ PostAnalysisExecutionResult = (
     | PostAnalysisExecutionMissingMetadata
     | PostAnalysisExecutionNoSamples
     | PostAnalysisExecutionPersistenceFailure
+    | PostAnalysisExecutionAbandoned
 )
 
 PostAnalysisAttemptResult = PostAnalysisExecutionResult | PostAnalysisExecutionRetryableFailure
