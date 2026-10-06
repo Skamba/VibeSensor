@@ -19,7 +19,6 @@ from vibesensor.common.json_types import JsonValue
 
 __all__ = [
     "build_request",
-    "build_get_request",
     "read_json_response",
     "read_typed_json_response",
     "read_text_response",
@@ -41,24 +40,6 @@ def build_request(
     if require_https and not url.startswith("https://"):
         raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
     return httpx.Request(method.upper(), url, headers=dict(headers or {}), content=content)
-
-
-def build_get_request(
-    url: str,
-    *,
-    headers: Mapping[str, str] | None = None,
-    context: str = "operation",
-    require_https: bool = False,
-) -> httpx.Request:
-    """Build a GET request after applying the shared runtime safety checks."""
-
-    return build_request(
-        "GET",
-        url,
-        headers=headers,
-        context=context,
-        require_https=require_https,
-    )
 
 
 def _http_error_as_oserror(exc: httpx.HTTPError, *, context: str, url: str) -> OSError:

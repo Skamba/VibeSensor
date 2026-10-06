@@ -58,8 +58,6 @@ def test_registry_accepts_protocol_shaped_messages() -> None:
     assert record is not None
     assert result.is_duplicate is False
     assert record.frames_total == 1
-    assert record.last_ack_cmd_seq == 77
-    assert record.last_ack_status == 1
 
 
 def test_registry_persists_names_with_protocol_shaped_store() -> None:

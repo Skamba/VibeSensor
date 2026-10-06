@@ -8,10 +8,7 @@ from typing import Any
 import httpx
 import msgspec
 
-from vibesensor.updates.http_client import (
-    build_get_request,
-    read_typed_json_response,
-)
+from vibesensor.updates.http_client import read_typed_json_response
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
 GITHUB_USER_AGENT = "VibeSensor-Updater"
@@ -65,19 +62,6 @@ class GitHubApiClient:
 
     def api_headers(self, *, accept: str = "application/vnd.github+json") -> dict[str, str]:
         return github_api_headers(self.token, accept=accept)
-
-    def build_request(
-        self,
-        url: str,
-        *,
-        accept: str = "application/vnd.github+json",
-    ) -> httpx.Request:
-        return build_get_request(
-            url,
-            headers=self.api_headers(accept=accept),
-            context=self.context,
-            require_https=True,
-        )
 
     def get_typed_json(self, url: str, *, response_type: Any) -> Any:
         """GET *url* and decode the JSON response into *response_type* via msgspec."""

@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from vibesensor.ingest.protocol_messages import (
-    client_id_hex,
     client_id_mac,
     extract_client_id_hex,
     parse_client_id,
@@ -40,11 +39,10 @@ def test_extract_client_id_hex_too_short(data: bytes) -> None:
 @pytest.mark.parametrize(
     ("fn", "arg", "match"),
     [
-        (client_id_hex, b"\x01\x02", "6 bytes"),
         (client_id_mac, b"\x01\x02\x03", "6 bytes"),
         (parse_client_id, "abcd", "12 hex chars"),
     ],
-    ids=["hex", "mac", "parse"],
+    ids=["mac", "parse"],
 )
 def test_client_id_rejects_wrong_length(fn, arg, match) -> None:
     with pytest.raises(ValueError, match=match):

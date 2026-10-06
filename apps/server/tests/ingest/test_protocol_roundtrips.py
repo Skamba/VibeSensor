@@ -22,13 +22,13 @@ from vibesensor.ingest.protocol_parsing import (
     parse_ack,
     parse_cmd,
     parse_data,
-    parse_data_ack,
     parse_hello,
     parse_hello_ack,
 )
 from vibesensor.ingest.protocol_wire import (
     CMD_IDENTIFY,
     CMD_SYNC_CLOCK,
+    DATA_ACK_STRUCT,
     HELLO_CAP_EXPLICIT_ACK,
     MSG_DATA,
     MSG_DATA_ACK,
@@ -206,9 +206,7 @@ def test_data_ack_roundtrip() -> None:
     pkt = pack_data_ack(client_id, last_seq_received=1234)
 
     assert pkt[0] == MSG_DATA_ACK
-    decoded = parse_data_ack(pkt)
-    assert decoded.client_id == client_id
-    assert decoded.last_seq_received == 1234
+    assert DATA_ACK_STRUCT.unpack(pkt) == (MSG_DATA_ACK, VERSION, client_id, 1234)
 
 
 def test_client_id_mac_roundtrip() -> None:

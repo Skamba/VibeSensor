@@ -105,7 +105,7 @@ def test_data_before_the_first_hello_starts_one_sync_exchange_at_a_time() -> Non
     # The firmware's control port: 9010 + last MAC byte (0xff) % 100.
     assert record.control_addr == ("10.4.0.2", 9065)
 
-    registry.mark_cmd_sent("aabbccddeeff", 7, sync_send_us=1_000_000_000)
+    registry.mark_sync_sent("aabbccddeeff", 7, sync_send_us=1_000_000_000)
     in_flight = registry.update_from_data(_data(2, 2_250_000), addr, now_mono=1_000.25)
     presumed_lost = registry.update_from_data(_data(3, 2_500_000), addr, now_mono=1_000.5)
     assert in_flight.sync_due is False
@@ -143,7 +143,7 @@ def _sync_exchange(
     """
     send_us = int(send_s * 1_000_000)
     device_us = send_us + outbound_us - offset_us
-    registry.mark_cmd_sent("aabbccddeeff", cmd_seq, sync_send_us=send_us, sync_applies_offset=True)
+    registry.mark_sync_sent("aabbccddeeff", cmd_seq, sync_send_us=send_us, sync_applies_offset=True)
     return registry.update_from_ack(
         AckMessage(
             client_id=bytes.fromhex("aabbccddeeff"),
@@ -370,7 +370,7 @@ def test_a_hello_after_the_sensor_went_silent_starts_a_sync_exchange() -> None:
         )
     streaming_hello = _hello(registry, now_mono=1_001.6)
     # A broadcast to the sensor goes unanswered: it stopped streaming.
-    registry.mark_cmd_sent("aabbccddeeff", 9, sync_send_us=1_002_000_000, sync_applies_offset=True)
+    registry.mark_sync_sent("aabbccddeeff", 9, sync_send_us=1_002_000_000, sync_applies_offset=True)
     hello_after_silence = _hello(registry, now_mono=1_003.5)
 
     assert streaming_hello is False

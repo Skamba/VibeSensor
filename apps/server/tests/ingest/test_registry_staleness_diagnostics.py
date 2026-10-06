@@ -125,7 +125,7 @@ def test_registry_data_loss_snapshot_preserves_public_counter_shape(tmp_path: Pa
     }
 
 
-def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
+def test_registry_tracks_latest_frame_t0(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("001122334455")
@@ -151,5 +151,3 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
     record = registry.get(client_id.hex())
     assert record is not None
     assert record.last_t0_us == 1_105_000
-    assert record.timing_jitter_us_ema == 1_000.0
-    assert record.timing_drift_us_total == 5_000.0

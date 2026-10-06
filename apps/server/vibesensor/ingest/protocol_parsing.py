@@ -12,7 +12,6 @@ from vibesensor.common.exceptions import ProtocolError as _ProtocolError
 from vibesensor.ingest.protocol_messages import (
     AckMessage,
     CmdMessage,
-    DataAckMessage,
     DataMessage,
     HelloAckMessage,
     HelloMessage,
@@ -35,8 +34,6 @@ from vibesensor.ingest.protocol_wire import (
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
     CMD_SYNC_CLOCK,
-    DATA_ACK_BYTES,
-    DATA_ACK_STRUCT,
     DATA_HEADER,
     DATA_HEADER_BYTES,
     HELLO_ACK_BYTES,
@@ -45,7 +42,6 @@ from vibesensor.ingest.protocol_wire import (
     MSG_ACK,
     MSG_CMD,
     MSG_DATA,
-    MSG_DATA_ACK,
     MSG_HELLO,
     MSG_HELLO_ACK,
     SAMPLE_DTYPE,
@@ -231,18 +227,3 @@ def parse_ack(data: bytes) -> AckMessage:
             device_send_us=device_send_us,
         )
     return AckMessage(client_id=client_id, cmd_seq=cmd_seq, status=status)
-
-
-def parse_data_ack(data: bytes) -> DataAckMessage:
-    """Decode a raw DATA_ACK message into a :class:`DataAckMessage`."""
-    validate_fixed_message_size(
-        label="DATA_ACK", data_length=len(data), expected_size=DATA_ACK_BYTES
-    )
-    header = DATA_ACK_STRUCT.unpack_from(data, 0)
-    _validate_unpacked_header(
-        label="DATA_ACK",
-        header_fields=header,
-        expected_msg_type=MSG_DATA_ACK,
-    )
-    _msg_type, _version, client_id, last_seq_received = header
-    return DataAckMessage(client_id=client_id, last_seq_received=last_seq_received)

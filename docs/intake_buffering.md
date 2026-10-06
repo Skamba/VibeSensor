@@ -71,7 +71,8 @@ snapshot -> compute -> store shape:
 The snapshot contains two overlapping views from the same immutable capture:
 
 - `time_window` keeps the wider waveform slice; its sample just before the FFT
-  block gives the median filter real history at the block's leading edge.
+  block gives the median filter real history at the block's leading edge. The
+  live tick filters only the block plus that one sample, never the whole window.
 - `fft_block` keeps the most recent `fft_n` samples used for spectral analysis.
 
 The FFT block is a suffix of the time window. VibeSensor does not run a dense

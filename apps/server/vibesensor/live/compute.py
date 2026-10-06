@@ -15,13 +15,20 @@ from vibesensor.live.payload_types import ClientMetrics
 
 
 def _filtered_fft_input(snapshot: MetricsSnapshot) -> FloatArray | None:
-    """Median-filter the FFT block, using the time window's history at its edge."""
+    """Median-filter the FFT block, using the time window's history at its edge.
+
+    A filtered sample depends only on itself and its two neighbours, so only the
+    sample just before the block is read from the history: filtering that tail
+    gives the same block as filtering the whole time window, for a fraction of
+    the work on every live tick.
+    """
     fft_block = snapshot.fft_block
     if fft_block is None:
         return None
 
-    if snapshot.time_window.shape[1] >= fft_block.shape[1]:
-        return medfilt3(snapshot.time_window)[:, -fft_block.shape[1] :]
+    fft_n = fft_block.shape[1]
+    if snapshot.time_window.shape[1] >= fft_n:
+        return medfilt3(snapshot.time_window[:, -(fft_n + 1) :])[:, -fft_n:]
 
     return medfilt3(fft_block)
 

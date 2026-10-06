@@ -18,7 +18,6 @@ from test_support.httpx import (
 
 from vibesensor.updates.asset_download import download_release_asset
 from vibesensor.updates.http_client import (
-    build_get_request,
     build_request,
     read_text_response,
     read_typed_json_response,
@@ -31,9 +30,10 @@ from vibesensor.updates.releases.github_api import (
 )
 
 
-def test_build_get_request_rejects_non_https_when_required() -> None:
+def test_build_request_rejects_non_https_when_required() -> None:
     with pytest.raises(ValueError, match="non-HTTPS"):
-        build_get_request(
+        build_request(
+            "GET",
             "http://example.com/releases",
             context="release",
             require_https=True,

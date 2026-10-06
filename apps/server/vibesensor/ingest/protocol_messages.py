@@ -57,24 +57,10 @@ class AckMessage:
 
 
 @dataclass(slots=True)
-class DataAckMessage:
-    """Decoded DATA_ACK message: data-receipt acknowledgment from server to sensor."""
-
-    client_id: bytes
-    last_seq_received: int
-
-
-@dataclass(slots=True)
 class HelloAckMessage:
     """Decoded HELLO_ACK message: server acknowledgment of HELLO receipt."""
 
     client_id: bytes
-
-
-def client_id_hex(client_id: bytes) -> str:
-    """Return the 6-byte *client_id* as a lowercase hex string."""
-    validate_client_id(client_id)
-    return client_id.hex()
 
 
 def extract_client_id_hex(data: bytes) -> str | None:

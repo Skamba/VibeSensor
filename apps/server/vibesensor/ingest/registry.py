@@ -60,7 +60,6 @@ _RESTART_T0_REWIND_US = 2_000_000
 # 0.75 s while it retransmits (``kDataMaxFrameAgeMs``); one silent for longer
 # stopped streaming, and may come back from a reboot.
 _STREAMING_SILENCE_MAX_S = 1.0
-_JITTER_EMA_ALPHA = 0.2
 # A sync exchange delayed on either side (a scheduling stall, a Wi-Fi retry) has an
 # inflated round trip, and its offset estimate is off by up to half of it. Sensors
 # apply each offset the server sends, so adopting such an estimate steps their
@@ -192,7 +191,6 @@ class ClientRecord:
     last_seen: float = 0.0
     last_seen_mono: float = 0.0
     location_code: str = ""
-    data_addr: tuple[str, int] | None = None
     control_addr: tuple[str, int] | None = None
     frames_total: int = 0
     frames_dropped: int = 0
@@ -206,8 +204,6 @@ class ClientRecord:
     server_queue_drops: int = 0
     parse_errors: int = 0
     last_seq: int | None = None
-    last_ack_cmd_seq: int | None = None
-    last_ack_status: int | None = None
     pending_sync_cmd_seq: int | None = None
     pending_sync_send_us: int | None = None
     pending_sync_applies_offset: bool = False
@@ -221,8 +217,6 @@ class ClientRecord:
     sync_rtt_us: int | None = None
     last_sync_monotonic_us: int | None = None
     last_t0_us: int | None = None
-    timing_jitter_us_ema: float = 0.0
-    timing_drift_us_total: float = 0.0
     timing_guard: SensorTimingGuard = field(default_factory=SensorTimingGuard)
     duplicates_received: int = 0
     dedup_window: DedupWindow = field(default_factory=DedupWindow)
@@ -381,7 +375,6 @@ def apply_data_message_update(
     seq: int,
     sample_count: int,
     t0_us: int,
-    addr: tuple[str, int],
     now_ts: float,
     mono: float,
     expected_loss: ExpectedFrameLoss | None = None,
@@ -395,7 +388,6 @@ def apply_data_message_update(
 
     record.last_seen = now_ts
     record.last_seen_mono = mono
-    record.data_addr = (addr[0], addr[1])
 
     if _is_short_session_restart(record, seq=seq, t0_us=t0_us):
         # A restarted short-lived sender can reuse low sequence numbers with a
@@ -403,8 +395,6 @@ def apply_data_message_update(
         record.dedup_window.clear()
         record.last_seq = None
         record.last_t0_us = None
-        record.timing_jitter_us_ema = 0.0
-        record.timing_drift_us_total = 0.0
         record.timing_guard.reset()
 
     rebooted = _is_rebooted_session(record, seq=seq, t0_us=t0_us)
@@ -435,25 +425,9 @@ def apply_data_message_update(
         record.stream_start_mono = mono
     reset_detected = rebooted
     missed_frames = 0
-    if (
-        record.sample_rate_hz > 0
-        and sample_count > 0
-        and record.last_t0_us is not None
-        and t0_us >= record.last_t0_us
-    ):
-        expected_delta_us = (float(sample_count) / float(record.sample_rate_hz)) * 1_000_000.0
-        actual_delta_us = float(t0_us - record.last_t0_us)
-        jitter_us = actual_delta_us - expected_delta_us
-        record.timing_jitter_us_ema = (
-            1.0 - _JITTER_EMA_ALPHA
-        ) * record.timing_jitter_us_ema + _JITTER_EMA_ALPHA * jitter_us
-        record.timing_drift_us_total += jitter_us
-
     if record.last_seq is not None:
         if seq < record.last_seq and (record.last_seq - seq) > _RESTART_SEQ_GAP:
             record.last_t0_us = None
-            record.timing_jitter_us_ema = 0.0
-            record.timing_drift_us_total = 0.0
             record.dedup_window.clear()
             record.dedup_window.track(seq)
             _forget_clock_sync(record)
@@ -605,8 +579,6 @@ def _restart_session(record: ClientRecord) -> None:
     """Start a rebooted sensor's new session: new sequence numbers, a new device clock."""
     record.last_seq = None
     record.last_t0_us = None
-    record.timing_jitter_us_ema = 0.0
-    record.timing_drift_us_total = 0.0
     record.dedup_window.clear()
     _forget_clock_sync(record)
 
@@ -839,7 +811,6 @@ class ClientRegistry:
                 seq=data_msg.seq,
                 sample_count=data_msg.sample_count,
                 t0_us=data_msg.t0_us,
-                addr=addr,
                 now_ts=now_ts,
                 mono=mono,
                 expected_loss=self._active_expected_loss(mono),
@@ -882,8 +853,6 @@ class ClientRegistry:
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
             record.last_seen_mono = mono
-            record.last_ack_cmd_seq = ack.cmd_seq
-            record.last_ack_status = ack.status
             if record.pending_sync_cmd_seq != ack.cmd_seq:
                 return False
             if record.pending_sync_applies_offset:
@@ -1078,22 +1047,20 @@ class ClientRegistry:
                 self._clients.pop(client_id, None)
             return stale_ids
 
-    def mark_cmd_sent(
+    def mark_sync_sent(
         self,
         client_id: str,
         cmd_seq: int,
         *,
-        sync_send_us: int | None = None,
+        sync_send_us: int,
         sync_applies_offset: bool = False,
     ) -> None:
+        """Track a sent clock-sync command so the sensor's ACK can be matched to it."""
         with self._lock:
             record = self._get_or_create(client_id)
-            record.last_ack_cmd_seq = cmd_seq
-            record.last_ack_status = None
-            if sync_send_us is not None:
-                record.pending_sync_cmd_seq = cmd_seq
-                record.pending_sync_send_us = sync_send_us
-                record.pending_sync_applies_offset = sync_applies_offset
+            record.pending_sync_cmd_seq = cmd_seq
+            record.pending_sync_send_us = sync_send_us
+            record.pending_sync_applies_offset = sync_applies_offset
 
     def client_snapshots(
         self,

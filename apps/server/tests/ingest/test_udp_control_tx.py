@@ -61,10 +61,7 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
 
     cmd = parse_cmd(payload)
     assert cmd.client_id.hex() == client_hex
-    record = registry.get(client_hex)
-    assert record is not None
-    # The command is tracked so the sensor's ACK can be matched to it.
-    assert (record.last_ack_cmd_seq, record.last_ack_status) == (cmd_seq, None)
+    assert cmd.cmd_seq == cmd_seq
 
 
 def test_control_datagram_programming_bug_propagates(

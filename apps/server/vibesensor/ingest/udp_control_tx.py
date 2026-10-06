@@ -150,7 +150,6 @@ class UDPControlPlane:
         seq = self._next_cmd_seq()
         payload = pack_cmd_identify(bytes.fromhex(record.client_id), seq, duration_ms)
         self.transport.sendto(payload, record.control_addr)
-        self.registry.mark_cmd_sent(normalized_client_id, seq)
         return True, seq
 
     def broadcast_sync_clock(self) -> int:
@@ -181,7 +180,7 @@ class UDPControlPlane:
             record.control_addr,
         )
         # Sensors apply the carried offset only once it has a measured round trip.
-        self.registry.mark_cmd_sent(
+        self.registry.mark_sync_sent(
             record.client_id,
             seq,
             sync_send_us=server_time_us,

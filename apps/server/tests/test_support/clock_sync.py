@@ -21,7 +21,7 @@ def complete_clock_sync(
     """
     for cmd_seq, applies_offset in ((1, False), (2, True)):
         server_us = int(now_mono_s * 1_000_000) + cmd_seq
-        registry.mark_cmd_sent(
+        registry.mark_sync_sent(
             client_id,
             cmd_seq,
             sync_send_us=server_us,

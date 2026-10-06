@@ -12,7 +12,6 @@ from vibesensor.ingest.protocol_packing import (
     pack_ack,
     pack_cmd_identify,
     pack_data,
-    pack_data_ack,
     pack_hello,
     pack_hello_ack,
 )
@@ -20,7 +19,6 @@ from vibesensor.ingest.protocol_parsing import (
     parse_ack,
     parse_cmd,
     parse_data,
-    parse_data_ack,
     parse_hello,
     parse_hello_ack,
 )
@@ -58,17 +56,12 @@ from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
             "ACK version mismatch: expected 1, got 2",
         ),
         (
-            pack_data_ack(bytes.fromhex("aabbccddeeff"), last_seq_received=42),
-            parse_data_ack,
-            "DATA_ACK version mismatch: expected 1, got 2",
-        ),
-        (
             pack_hello_ack(bytes.fromhex("aabbccddeeff")),
             parse_hello_ack,
             "HELLO_ACK version mismatch: expected 1, got 2",
         ),
     ],
-    ids=["hello", "data", "cmd", "ack", "data-ack", "hello-ack"],
+    ids=["hello", "data", "cmd", "ack", "hello-ack"],
 )
 def test_parse_reports_explicit_version_mismatch(
     packet: bytes,

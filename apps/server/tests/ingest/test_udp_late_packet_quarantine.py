@@ -10,7 +10,7 @@ from test_support.clock_sync import complete_clock_sync
 
 from vibesensor.ingest.protocol_messages import HelloMessage
 from vibesensor.ingest.protocol_packing import pack_data
-from vibesensor.ingest.protocol_parsing import parse_data_ack
+from vibesensor.ingest.protocol_wire import DATA_ACK_STRUCT
 from vibesensor.ingest.registry import ClientRegistry
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 from vibesensor.live.processor import SignalProcessor
@@ -89,7 +89,7 @@ async def test_late_packet_is_quarantined_to_raw_capture_only(
     assert ingest_spy.call_count == 2
     assert raw_capture_sink.capture_raw_samples.call_count == 3
     raw_capture_sink.note_late_packet_loss.assert_called_once_with(client_id="aabbccddeeff")
-    assert [parse_data_ack(data).last_seq_received for data, _addr in fake_transport.sent] == [
+    assert [DATA_ACK_STRUCT.unpack(data)[-1] for data, _addr in fake_transport.sent] == [
         0,
         2,
         1,

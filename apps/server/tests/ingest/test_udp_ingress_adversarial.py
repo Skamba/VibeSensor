@@ -11,9 +11,8 @@ import numpy as np
 import pytest
 
 from vibesensor.ingest.protocol_packing import pack_data
-from vibesensor.ingest.protocol_parsing import parse_data_ack
 from vibesensor.ingest.protocol_validator import MAX_SAMPLE_COUNT
-from vibesensor.ingest.protocol_wire import DATA_HEADER_BYTES
+from vibesensor.ingest.protocol_wire import DATA_ACK_STRUCT, DATA_HEADER_BYTES
 from vibesensor.ingest.registry import DataUpdateResult
 from vibesensor.ingest.udp_data_rx import DataDatagramProtocol
 
@@ -99,9 +98,7 @@ async def test_out_of_order_duplicate_packet_is_acked_but_not_ingested(
     await drain_queue(proto)
 
     assert processor.ingest.call_count == 1
-    acked_sequences = [
-        parse_data_ack(data).last_seq_received for data, _addr in fake_transport.sent
-    ]
+    acked_sequences = [DATA_ACK_STRUCT.unpack(data)[-1] for data, _addr in fake_transport.sent]
     assert acked_sequences == [42, 41]
     assert [call.args[0].seq for call in registry.update_from_data.call_args_list] == [42, 41]
 
@@ -126,5 +123,5 @@ async def test_ack_send_failure_logs_and_continues_draining_queue(
         await drain_queue(proto)
 
     assert processor.ingest.call_count == 2
-    assert [parse_data_ack(data).last_seq_received for data, _addr in transport.sent] == [2]
+    assert [DATA_ACK_STRUCT.unpack(data)[-1] for data, _addr in transport.sent] == [2]
     assert any("failed to send DATA_ACK" in record.message for record in caplog.records)

@@ -21,14 +21,12 @@ from vibesensor.ingest.protocol_parsing import (
     parse_ack,
     parse_cmd,
     parse_data,
-    parse_data_ack,
     parse_hello,
     parse_hello_ack,
 )
 from vibesensor.ingest.protocol_wire import (
     ACK_STRUCT,
     CMD_HEADER_BYTES,
-    DATA_ACK_STRUCT,
     DATA_HEADER_BYTES,
     HELLO_ACK_STRUCT,
     HELLO_BASE,
@@ -93,17 +91,12 @@ def test_parse_too_short(parse_fn, short_data: bytes, match: str) -> None:
             "Invalid ACK header",
         ),
         (
-            parse_data_ack,
-            DATA_ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0),
-            "Invalid DATA_ACK header",
-        ),
-        (
             parse_hello_ack,
             HELLO_ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6),
             "Invalid HELLO_ACK header",
         ),
     ],
-    ids=["hello", "data", "cmd", "ack", "data_ack", "hello_ack"],
+    ids=["hello", "data", "cmd", "ack", "hello_ack"],
 )
 def test_parse_rejects_invalid_headers(
     parse_fn: Callable[[bytes], object],
@@ -156,10 +149,9 @@ def test_pack_data_rejects_wrong_shape() -> None:
     ("parse_fn", "short_data", "match"),
     [
         (parse_ack, b"\x04\x01\x00", "ACK too short"),
-        (parse_data_ack, b"\x05\x01\x00", "DATA_ACK has unexpected size"),
         (parse_hello_ack, b"\x06\x01\x00", "HELLO_ACK has unexpected size"),
     ],
-    ids=["ack", "data_ack", "hello_ack"],
+    ids=["ack", "hello_ack"],
 )
 def test_parse_wrong_size(parse_fn, short_data: bytes, match: str) -> None:
     with pytest.raises(ProtocolError, match=match):
