@@ -350,6 +350,17 @@ the form.
   when unknown). Cars saved before the layout or the powertrain existed get
   them from their library row on the next start (`with_library_fields` in
   `apps/server/vibesensor/settings/car_library.py`); others stay unknown.
+- **Engine:** a library variant carries its engine profile (layout and
+  cylinder count, read from its engine text); the car takes it. Where the
+  library does not say (a car entered by hand, or editing a saved car) and
+  the car is not an EV, the specs step asks "Engine" (*Inline-3* to
+  *Inline-6*, *V6* to *V12*, *Flat-4/6 (boxer)*, *W12*, *Rotary, 2 rotors*,
+  or *Not sure* while the car has none), with a hint that the engine decides
+  which rhythm the analysis listens for (`asksEngine`, `wizardEngine` in
+  `wizard_model.ts`). The car row shows it under "Engine" ("Not set" when
+  unknown; no row for an EV). Saved library cars without one get it from
+  their library rows on the next start, like the drive layout; unknown keeps
+  the engine checked at E1 and E2 only.
   See §5.3 for what the layout changes in the advice.
 
 ### 3.4 Choosing a speed source

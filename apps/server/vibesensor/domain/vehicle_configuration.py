@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
+from vibesensor.domain.engine_profile import EngineProfile, engine_profile_from_engine_text
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 
 __all__ = [
@@ -151,6 +152,15 @@ class VehicleConfiguration:
     configuration_confidence: VehicleConfigurationConfidence = "not_applicable"
     verification_notes: tuple[VehicleConfigurationNote, ...] = ()
     unresolved: tuple[VehicleConfigurationIssue, ...] = ()
+
+    @property
+    def engine_profile(self) -> EngineProfile | None:
+        """The engine's layout and cylinder count, read from its engine text.
+
+        ``None`` for an EV (``Electric … Motor``) or a row without engine text.
+        """
+
+        return engine_profile_from_engine_text(self.engine_name)
 
     @property
     def driven_final_drive_ratio(self) -> float | None:

@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import copy
 import re
+from collections.abc import Iterable
 from itertools import pairwise
 from typing import Literal, NotRequired, TypedDict
 
 from vibesensor.domain.car import Car
+from vibesensor.domain.engine_profile import EngineLayout, EngineProfile
 from vibesensor.domain.tire_spec import AxleTireSetup
 from vibesensor.domain.vehicle_configuration import VehicleConfiguration
+from vibesensor.settings.car_config import needs_library_fields
 from vibesensor.settings.vehicle_configurations import load_vehicle_configurations
 
 __all__ = [
@@ -57,10 +60,17 @@ class CarLibraryTireOption(TypedDict):
     source_confidence: NotRequired[str]
 
 
+class CarLibraryEngineProfile(TypedDict):
+    layout: EngineLayout
+    cylinders: int
+
+
 class CarLibraryVariant(TypedDict):
     name: str
     drivetrain: Literal["FWD", "RWD", "AWD"]
     engine: NotRequired[str]
+    engine_profile: NotRequired[CarLibraryEngineProfile]
+    """Read from the rows' engine text when they agree; absent for an EV."""
     gearboxes: NotRequired[list[CarLibraryGearbox]]
     tire_options: NotRequired[list[CarLibraryTireOption]]
     tire_width_mm: NotRequired[float]
@@ -236,12 +246,21 @@ def _library_variant_from_configs(
         "tire_aspect_pct": first.default_tire.aspect_pct,
         "rim_in": first.default_tire.rim_in,
     }
+    profile = _agreed_engine_profile(configs)
+    if profile is not None:
+        variant["engine_profile"] = {"layout": profile.layout, "cylinders": profile.cylinders}
     start, end = years
     if start is not None:
         variant["production_start_year"] = start
     if end is not None:
         variant["production_end_year"] = end
     return variant
+
+
+def _agreed_engine_profile(configs: Iterable[VehicleConfiguration]) -> EngineProfile | None:
+    """The engine profile every row names; ``None`` when they differ or name none."""
+    profiles = {config.engine_profile for config in configs}
+    return profiles.pop() if len(profiles) == 1 else None
 
 
 _Period = tuple[int, int, list[VehicleConfiguration]]
@@ -451,16 +470,16 @@ def _library_rows_for_saved_car(car: Car) -> list[VehicleConfiguration]:
 
 
 def with_library_fields(car: Car) -> Car:
-    """Fill a saved car's missing drive layout and powertrain from its library rows.
+    """Fill a saved car's missing drive layout, powertrain and engine from its library rows.
 
-    Cars saved before the layout or the powertrain existed get them when their
-    rows agree on one; an AWD car also gets the axle its gearbox's final drive
-    is on (which axle the engine drives), also when the owner has corrected the
-    ratio. A value the car already has is kept, and a car the library doesn't
-    know stays without one.
+    Cars saved before the layout, the powertrain or the engine profile existed
+    get them when their rows agree on one; an AWD car also gets the axle its
+    gearbox's final drive is on (which axle the engine drives), also when the
+    owner has corrected the ratio. A value the car already has is kept, and a
+    car the library doesn't know stays without one.
     """
 
-    if car.drive_layout is not None and car.fuel_type is not None:
+    if not needs_library_fields(car):
         return car
     rows = _library_rows_for_saved_car(car)
     drive_layout, final_drive_axle = car.drive_layout, car.final_drive_axle
@@ -476,7 +495,12 @@ def with_library_fields(car: Car) -> Car:
     fuel_type = car.fuel_type
     if fuel_type is None and len(fuel_types) == 1:
         fuel_type = fuel_types.pop()
-    if (drive_layout, fuel_type) == (car.drive_layout, car.fuel_type):
+    engine_profile = car.engine_profile or (_agreed_engine_profile(rows) if rows else None)
+    if (drive_layout, fuel_type, engine_profile) == (
+        car.drive_layout,
+        car.fuel_type,
+        car.engine_profile,
+    ):
         return car
     return Car(
         id=car.id,
@@ -488,4 +512,5 @@ def with_library_fields(car: Car) -> Car:
         fuel_type=fuel_type,
         drive_layout=drive_layout,
         final_drive_axle=final_drive_axle,
+        engine_profile=engine_profile,
     )

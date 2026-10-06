@@ -319,3 +319,41 @@ def test_each_gearbox_names_the_axle_its_final_drive_belongs_to() -> None:
     assert [(g["fuel_type"], g.get("final_drive_axle")) for g in e_awd["gearboxes"]] == [
         ("PHEV", "front")
     ]
+
+
+def test_each_variant_serves_the_engine_profile_its_rows_agree_on() -> None:
+    profiles: dict[str, int] = {}
+    for entry in load_car_library():
+        for variant in entry["variants"]:
+            rows = _ROWS_BY_VARIANT[
+                (entry["brand"], entry["type"], entry["model"], variant["name"])
+            ]
+            row_profiles = {row.engine_profile for row in rows}
+            expected = row_profiles.pop() if len(row_profiles) == 1 else None
+            served = variant.get("engine_profile")
+            assert served == (
+                None
+                if expected is None
+                else {"layout": expected.layout, "cylinders": expected.cylinders}
+            ), (entry["model"], variant["name"])
+            key = "none" if served is None else f"{served['layout']}-{served['cylinders']}"
+            profiles[key] = profiles.get(key, 0) + 1
+    assert set(profiles) == {
+        "none",
+        "inline-3",
+        "inline-4",
+        "inline-5",
+        "inline-6",
+        "v-6",
+        "v-8",
+        "v-10",
+        "v-12",
+    }
+    g32 = next(
+        variant
+        for entry in get_models_for_brand_type("BMW", "Sedan")
+        if entry["model"].startswith("6 Series Gran Turismo (G32")
+        for variant in entry["variants"]
+        if variant["name"] == "640i (2018–2019)"
+    )
+    assert g32["engine_profile"] == {"layout": "inline", "cylinders": 6}

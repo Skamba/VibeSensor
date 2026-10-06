@@ -14,7 +14,7 @@ import {
   getCarCompleteness,
 } from "../../car_selection";
 import { formatSavedCarTireSummary } from "./tires";
-import { estimateNoteKey } from "./wizard_model";
+import { engineLabel, estimateNoteKey } from "./wizard_model";
 
 /** Pure view models for the saved-car list and its guidance banner. */
 
@@ -169,6 +169,17 @@ export function carRows(
             `settings.car.drive_layout.${car.drive_layout ?? "unknown"}`,
           ),
         },
+        // An EV has no combustion engine to name.
+        ...(car.fuel_type === "EV"
+          ? []
+          : [
+              {
+                label: t("settings.car.col_engine"),
+                value: car.engine_profile
+                  ? engineLabel(car.engine_profile, t)
+                  : t("settings.car.engine.unknown"),
+              },
+            ]),
       ],
       fuelType: car.fuel_type ?? null,
       capabilities: carCapabilities(refs, car.fuel_type ?? null),

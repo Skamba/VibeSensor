@@ -66,6 +66,7 @@ export async function createAndActivateCar(car: {
   fuelType?: CarUpsertRequest["fuel_type"];
   driveLayout?: CarUpsertRequest["drive_layout"];
   finalDriveAxle?: CarUpsertRequest["final_drive_axle"];
+  engineProfile?: CarUpsertRequest["engine_profile"];
 }): Promise<void> {
   let failureKey = "settings.car.create_failed";
   const started = await mutate(async () => {
@@ -88,6 +89,9 @@ export async function createAndActivateCar(car: {
       }
       if (car.finalDriveAxle) {
         request.final_drive_axle = car.finalDriveAxle;
+      }
+      if (car.engineProfile) {
+        request.engine_profile = car.engineProfile;
       }
       const created = await addSettingsCar(request);
       applyCars(created);
@@ -132,13 +136,14 @@ export async function activateCar(carId: string): Promise<void> {
  * it; the powertrain when the user set one). The server marks each changed
  * value user-confirmed. Throws on failure.
  */
-/** Save an edited car: the changed aspects plus a newly set powertrain or drive layout. */
+/** Save an edited car: the changed aspects plus a newly set powertrain, drive layout or engine. */
 export async function saveCarEdits(
   carId: string,
   aspects: EditedAspects,
   set: {
     fuelType?: CarUpsertRequest["fuel_type"];
     driveLayout?: CarUpsertRequest["drive_layout"];
+    engineProfile?: CarUpsertRequest["engine_profile"];
   } = {},
 ): Promise<void> {
   const request: CarUpsertRequest = { aspects };
@@ -147,6 +152,9 @@ export async function saveCarEdits(
   }
   if (set.driveLayout) {
     request.drive_layout = set.driveLayout;
+  }
+  if (set.engineProfile) {
+    request.engine_profile = set.engineProfile;
   }
   const started = await mutate(async () => {
     try {

@@ -115,7 +115,12 @@ const GOLF: CarLibraryModel = {
       engine: "1.4 petrol",
       tire_options: [TIRE, SPORT_TIRE],
     },
-    { name: "GTD", drivetrain: "FWD", engine: "2.0 diesel" },
+    {
+      name: "GTD",
+      drivetrain: "FWD",
+      engine: "2.0 diesel",
+      engine_profile: { layout: "inline", cylinders: 4 },
+    },
   ],
 };
 
@@ -363,8 +368,9 @@ test("journey: the library path prefills the car and shows what it can test", as
   await expect(page.locator("#wizardSummaryPanel")).toContainText(
     "VW Golf GTD",
   );
-  // The library names the drive layout, so the wizard does not ask it.
+  // The library names the drive layout and the engine, so the wizard does not ask them.
   await expect(page.locator("#wizDriveLayout")).toHaveCount(0);
+  await expect(page.locator("#wizEngine")).toHaveCount(0);
   await page.locator("#wizardManualAddBtn").click();
 
   await expect(wizard).toBeHidden();
@@ -375,6 +381,7 @@ test("journey: the library path prefills the car and shows what it can test", as
     variant: "GTD",
     fuel_type: "ICE",
     drive_layout: "FWD",
+    engine_profile: { layout: "inline", cylinders: 4 },
     aspects: {
       final_drive_ratio: 3.94,
       current_gear_ratio: 0.79,
@@ -963,6 +970,56 @@ test("journey: a custom car asks its drive layout; not sure leaves it unset", as
   await expect(
     page.locator('#carListBody tr[data-car-id="car-2"]'),
   ).toContainText("Not set");
+});
+
+test("journey: a custom car asks its engine; not sure leaves it unset", async ({
+  page,
+}) => {
+  const server = createServer();
+  await bootWithCars(page, server);
+  await openCarsTab(page);
+
+  const addCustomCar = async (model: string) => {
+    await page.locator("#addCarBtn").click();
+    await page.locator("#wizardCustomBrand").fill("Track");
+    await page.locator("#wizardCustomBrandBtn").click();
+    await page.locator("#wizardCustomType").fill("Coupe");
+    await page.locator("#wizardCustomTypeBtn").click();
+    await page.locator("#wizardCustomModel").fill(model);
+    await page.locator("#wizardCustomModelBtn").click();
+    await page.locator("#wizTireSize").fill("225/45 R18");
+  };
+
+  await addCustomCar("Six");
+  const engine = page.locator("#wizEngine");
+  await expect(engine).toHaveValue("");
+  await expect(engine.locator("option").first()).toHaveText("Not sure");
+  await expect(engine.locator("option")).toContainText([
+    "Inline-4",
+    "Inline-6",
+    "V8",
+    "Flat-4 (boxer)",
+  ]);
+  await engine.selectOption("inline-6");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect(page.locator("#addCarWizard")).toBeHidden();
+  expect(server.posts[0]).toMatchObject({
+    name: "Track Six",
+    engine_profile: { layout: "inline", cylinders: 6 },
+  });
+  await expect(
+    page.locator('#carListBody tr[data-car-id="car-1"]'),
+  ).toContainText("Inline-6");
+
+  await addCustomCar("Mystery");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect(page.locator("#addCarWizard")).toBeHidden();
+  expect(server.posts[1].engine_profile).toBeUndefined();
+
+  // An EV has no combustion engine: the wizard does not ask one.
+  await addCustomCar("Volt");
+  await page.locator("#wizPowertrain").selectOption("EV");
+  await expect(page.locator("#wizEngine")).toHaveCount(0);
 });
 
 test("journey: the dashboard's add-car prompt opens the wizard", async ({

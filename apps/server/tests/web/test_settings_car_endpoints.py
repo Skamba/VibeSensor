@@ -6,6 +6,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from vibesensor.domain.engine_profile import EngineProfile
+
 
 @pytest.fixture
 def car_client(fake_state):
@@ -228,4 +230,47 @@ def test_a_library_awd_car_keeps_the_axle_of_its_final_drive(car_client) -> None
 
 def test_an_unknown_drive_layout_is_rejected(car_client) -> None:
     response = car_client.post("/api/settings/cars", json={"name": "X", "drive_layout": "4WD"})
+    assert response.status_code == 422
+
+
+def test_engine_profile_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_state) -> None:
+    """The engine the wizard sends is saved; an EV keeps none; unknown stays unknown."""
+    six = _add(car_client, name="640i", engine_profile={"layout": "inline", "cylinders": 6})
+    car = six["cars"][0]
+    assert car["engine_profile"] == {"layout": "inline", "cylinders": 6}
+    custom = _add(car_client, name="Unknown engine")["cars"][1]
+    assert custom.get("engine_profile") is None
+    ev = _add(
+        car_client, name="i4", fuel_type="EV", engine_profile={"layout": "inline", "cylinders": 4}
+    )["cars"][2]
+    assert ev.get("engine_profile") is None
+
+    changed = car_client.put(
+        f"/api/settings/cars/{custom['id']}",
+        json={"engine_profile": {"layout": "v", "cylinders": 6, "bank_angle_deg": 90}},
+    ).json()["cars"][1]
+    renamed = car_client.put(f"/api/settings/cars/{car['id']}", json={"name": "640i GT"}).json()
+    car_client.put("/api/settings/cars/active", json={"car_id": car["id"]})
+
+    assert changed["engine_profile"] == {"layout": "v", "cylinders": 6, "bank_angle_deg": 90}
+    assert renamed["cars"][0]["engine_profile"] == {"layout": "inline", "cylinders": 6}
+    snapshot = fake_state.car_settings.active_car_snapshot()
+    assert snapshot is not None
+    assert snapshot.engine_profile == EngineProfile("inline", 6)
+
+
+@pytest.mark.parametrize(
+    "engine_profile",
+    [
+        {"layout": "hemi", "cylinders": 8},
+        {"layout": "inline", "cylinders": 0},
+        {"layout": "inline", "cylinders": 17},
+        {"layout": "inline", "cylinders": 4, "bank_angle_deg": 90},
+        {"layout": "rotary", "cylinders": 6},
+    ],
+)
+def test_an_impossible_engine_profile_is_rejected(car_client, engine_profile) -> None:
+    response = car_client.post(
+        "/api/settings/cars", json={"name": "X", "engine_profile": engine_profile}
+    )
     assert response.status_code == 422

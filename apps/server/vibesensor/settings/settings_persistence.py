@@ -9,7 +9,11 @@ from threading import RLock
 from typing import TYPE_CHECKING, TypeVar
 
 from vibesensor.common.exceptions import PersistenceError
-from vibesensor.settings.car_config import car_from_persistence_dict, car_to_persistence_dict
+from vibesensor.settings.car_config import (
+    car_from_persistence_dict,
+    car_to_persistence_dict,
+    needs_library_fields,
+)
 from vibesensor.settings.car_settings import CarSettingsState
 from vibesensor.settings.sensor_config import SensorConfig
 from vibesensor.settings.sensor_settings import SensorSettingsState
@@ -156,16 +160,13 @@ class SettingsPersistenceCoordinator:
 
 
 def _with_library_fields(cars: list[Car]) -> list[Car]:
-    """Fill the drive layout and powertrain of cars saved before they existed.
+    """Fill the drive layout, powertrain and engine of cars saved before they existed.
 
     Only a car picked from the library (it has a variant) and missing one of
     them needs the library, so the library is loaded only then.
     """
 
-    if all(
-        (car.drive_layout is not None and car.fuel_type is not None) or not car.variant
-        for car in cars
-    ):
+    if not any(needs_library_fields(car) for car in cars):
         return cars
     from vibesensor.settings.car_library import with_library_fields
 

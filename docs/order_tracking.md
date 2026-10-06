@@ -43,6 +43,51 @@ The spec exposes capability checks before any of that math is used:
 If the required tire or driveline data is missing, VibeSensor omits the order
 reference instead of inventing one.
 
+## Engine orders
+
+An engine order `E<m>` is a vibration at *m* times the crankshaft speed (for a
+rotary, the eccentric shaft). Which orders an engine excites follows from its
+profile, layout and cylinder (rotor) count, plus a V or W engine's bank angle
+when known (`EngineProfile` in `apps/server/vibesensor/domain/engine_profile.py`).
+Library cars read the profile from their engine text (`B58 3.0L I6 Turbo` is
+an inline-6); a custom car's owner can pick it. `engine_orders(profile)` maps
+the profile through one rules table, `ENGINE_ORDER_RULES`, to its orders, each
+with its roles:
+
+| Rule (role) | Engines | Order |
+|---|---|---|
+| rotating | every engine | E1: the crank's own rotation (unbalanced rotating parts, crank pulley, flywheel) |
+| firing | four-stroke piston (inline, V, flat, W) | E(n/2) for *n* evenly firing cylinders: twin E1, inline-3 E1.5, four E2, five E2.5, six E3, V8 E4, V10 E5, V12/W12 E6 |
+| firing | rotary | E1 per rotor: each rotor fires once per eccentric-shaft turn (three faces, rotor at a third of shaft speed) |
+| imbalance | inline-3 | E1: primary rocking couple |
+| imbalance | inline-4 | E2: secondary free force (same order as its firing rhythm) |
+| imbalance | V6, 90° bank angle | E1: primary rocking couple (cancelled where a balance shaft is fitted; VibeSensor does not record balance shafts) |
+| imbalance | flat-4 | E2: secondary rocking couple |
+
+Inline-6, flat-6, V12 and cross-plane V8 engines are inherently balanced (no
+free primary or secondary forces or couples) and add no imbalance row. Not
+modelled: flat-plane V8s (secondary force at E2; the profile does not record
+the crank type), uneven-firing engines (odd-fire V6/V-twins, which add half
+orders) and two-strokes (which fire every turn). Without a profile (not given,
+or an EV) the orders stay E1 and E2, the ones tested before engines had a
+profile, without claiming what E2 is. A PHEV has its combustion engine's
+profile.
+
+A new engine type, or a new order such as the half-order misfire (E0.5, one
+cylinder's missing pulse per two turns), is a row in the table (with its role
+name), not new code. Half orders get keys and codes of their own
+(`engine_1_5x`, `E1.5`).
+
+Sources: J. B. Heywood, *Internal Combustion Engine Fundamentals*, 2nd ed.
+(McGraw-Hill, 2018), ch. 2 (four-stroke cycle: one power stroke per cylinder
+per two crank turns); C. F. Taylor, *The Internal-Combustion Engine in Theory
+and Practice*, vol. 2, rev. ed. (MIT Press, 1985), ch. 8 "Engine balance"
+(primary/secondary forces and couples by layout: inline-3 and 90° V6 primary
+couples, inline-4 secondary force, flat-4 secondary couple, balanced inline-6,
+flat-6, V12 and cross-plane V8); K. Yamamoto, *Rotary Engine* (Toyo Kogyo,
+1981), ch. 2 (one power impulse per rotor per eccentric-shaft revolution);
+summary: "Engine balance", Wikipedia.
+
 ## Uncertainty and tolerance bands
 
 Order matching is not based on a single exact frequency bin. Post-run
@@ -363,6 +408,7 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | File | Responsibility |
 |------|----------------|
 | `apps/server/vibesensor/domain/order_reference.py` | Vehicle-physics reference model and frequency derivation helpers. |
+| `apps/server/vibesensor/domain/engine_profile.py` | Engine profile and the rules table of the engine orders it excites. |
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks and classify each match as heard. |

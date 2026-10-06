@@ -10,6 +10,7 @@ import pytest
 from test_support.settings_services import write_raw_settings_snapshot
 
 from vibesensor.common.exceptions import PersistenceError
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.settings.services import build_settings_services
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
@@ -430,3 +431,59 @@ def test_saved_cars_get_the_drive_layout_of_their_library_row_on_load(tmp_path: 
     assert persisted is not None
     assert persisted["cars"][0].get("drive_layout") == "FWD"
     assert persisted["cars"][0].get("fuel_type") == "ICE"
+
+
+def test_engine_profile_survives_a_restart(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    services = build_settings_services(db=db)
+    services.car_settings.add_car(
+        {"name": "Custom", "type": "Custom", "engine_profile": {"layout": "v", "cylinders": 8}}
+    )
+
+    reloaded = build_settings_services(db=db).coordinator.snapshot()["cars"][0]
+
+    assert reloaded.get("engine_profile") == {"layout": "v", "cylinders": 8}
+
+
+def test_saved_cars_get_the_engine_profile_of_their_library_row_on_load(tmp_path: Path) -> None:
+    """Cars saved before the engine profile existed take it from their library row."""
+    cars = [
+        _saved_car(
+            "640i",
+            "BMW 6 Series Gran Turismo (G32, 2018–2024) 640i (2018–2019)",
+            "Sedan",
+            "640i (2018–2019)",
+            drive_layout="RWD",
+            fuel_type="ICE",
+        ),
+        _saved_car("i3", "BMW X1 (F48, 2015–2022) sDrive18i", "SUV", "sDrive18i"),
+        _saved_car("custom", "My project car", "Custom", None),
+        # An engine the owner already gave is never overwritten by the library.
+        _saved_car(
+            "kept",
+            "BMW 3 Series (G20, 2019–2025) 320d",
+            "Sedan",
+            "320d",
+            engine_profile={"layout": "inline", "cylinders": 6},
+        ),
+    ]
+    db = HistoryDB(tmp_path / "history.db")
+    write_raw_settings_snapshot(db, '{"cars": [' + ", ".join(cars) + '], "activeCarId": "640i"}')
+
+    services = build_settings_services(db=db)
+
+    loaded = {
+        car["id"]: car.get("engine_profile") for car in services.coordinator.snapshot()["cars"]
+    }
+    assert loaded == {
+        "640i": {"layout": "inline", "cylinders": 6},
+        "i3": {"layout": "inline", "cylinders": 3},
+        "custom": None,
+        "kept": {"layout": "inline", "cylinders": 6},
+    }
+    snapshot = services.car_settings.active_car_snapshot()
+    assert snapshot is not None
+    assert snapshot.engine_profile == EngineProfile("inline", 6)
+    persisted = db.get_settings_snapshot()
+    assert persisted is not None
+    assert persisted["cars"][0].get("engine_profile") == {"layout": "inline", "cylinders": 6}

@@ -21,6 +21,7 @@ import {
 import {
   actionHint,
   asksDriveLayout,
+  asksEngine,
   asksPowertrain,
   canFinish,
   carRequest,
@@ -40,6 +41,7 @@ import {
   type WizardState,
   variantDetail,
   wizardDriveLayout,
+  wizardEngine,
   wizardFuelType,
 } from "../src/pages/cars/wizard_model";
 
@@ -145,6 +147,7 @@ test("car rows show each reference's source and what the car can test", () => {
     ["3.08", "checked"],
     ["0.64", "user"],
     ["settings.car.drive_layout.unknown", undefined],
+    ["settings.car.engine.unknown", undefined],
   ]);
   // Library estimates are flagged on the row, with what they mean for a run.
   expect(rows[1]).toMatchObject({
@@ -175,6 +178,7 @@ test("car rows show each reference's source and what the car can test", () => {
     ["settings.car.value_missing", "missing"],
     ["settings.car.value_missing", "missing"],
     ["settings.car.drive_layout.unknown", undefined],
+    ["settings.car.engine.unknown", undefined],
   ]);
 });
 
@@ -529,6 +533,7 @@ test("each saved spec records where it came from", () => {
     fuelType: null,
     driveLayout: null,
     finalDriveAxle: null,
+    engineProfile: null,
   });
   expect(carRequest(custom, { ...TYPED, topGear: "x" })).toEqual({
     ok: false,
@@ -636,6 +641,7 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     fuelType: null,
 
     driveLayout: null,
+    engineProfile: null,
   });
   // The editor sets a powertrain the saved car lacks.
   expect(editRequest({ ...editing, fuelType: "EV" }, inputs)).toEqual({
@@ -644,6 +650,7 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     fuelType: "EV",
 
     driveLayout: null,
+    engineProfile: null,
   });
   const changed = { ...inputs, finalDrive: "3.15", topGear: "" };
   expect(specProvenance(editing, changed)).toMatchObject({
@@ -656,6 +663,7 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     fuelType: null,
 
     driveLayout: null,
+    engineProfile: null,
   });
   expect(editRequest(editing, { ...inputs, rim: "19" })).toEqual({
     ok: true,
@@ -663,6 +671,7 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     fuelType: null,
 
     driveLayout: null,
+    engineProfile: null,
   });
   expect(editRequest(editing, { ...inputs, tireWidth: "" })).toEqual({
     ok: false,
@@ -868,4 +877,104 @@ test("car rows show the drive layout, or that it was not given", () => {
     label: "settings.car.col_drive_layout",
     value: "settings.car.drive_layout.unknown",
   });
+});
+
+test("the wizard asks the engine only where the library does not say, never for an EV", () => {
+  // A library variant names its engine: nothing to ask, the library's is saved.
+  const g32 = {
+    name: "640i (2018\u20132019)",
+    drivetrain: "RWD",
+    engine: "B58 3.0L I6 Turbo",
+    engine_profile: { layout: "inline", cylinders: 6 },
+  } as const;
+  const library = specs({
+    selectedVariant: g32,
+    selectedTire: TIRE,
+    selectedGearbox: GEARBOX,
+  });
+  expect(asksEngine(library)).toBe(false);
+  expect(wizardEngine({ ...library, engine: "v-8" })).toBe("inline-6");
+  expect(carRequest(library, TYPED)).toMatchObject({
+    ok: true,
+    engineProfile: { layout: "inline", cylinders: 6 },
+  });
+
+  // A car entered by hand: the user's pick is saved; "not sure" stays unknown.
+  const custom = specs({ libraryMiss: "brand", selectedModel: null });
+  expect(asksEngine(custom)).toBe(true);
+  expect(carRequest(custom, TYPED)).toMatchObject({
+    ok: true,
+    engineProfile: null,
+  });
+  expect(carRequest({ ...custom, engine: "flat-4" }, TYPED)).toMatchObject({
+    ok: true,
+    engineProfile: { layout: "flat", cylinders: 4 },
+  });
+  // An EV has no combustion engine: not asked, none saved.
+  const ev = { ...custom, fuelType: "EV", engine: "inline-4" } as const;
+  expect(asksEngine(ev)).toBe(false);
+  expect(carRequest(ev, TYPED)).toMatchObject({
+    ok: true,
+    engineProfile: null,
+  });
+});
+
+test("the editor sets or changes a saved car's engine", () => {
+  const { target, inputs } = editTarget(
+    makeCar({
+      aspects: complete,
+      engine_profile: { layout: "v", cylinders: 6, bank_angle_deg: 90 },
+    }),
+    fmt,
+  );
+  expect(target.engineProfile).toEqual({
+    layout: "v",
+    cylinders: 6,
+    bank_angle_deg: 90,
+  });
+  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  expect(asksEngine(editing)).toBe(true);
+  expect(wizardEngine(editing)).toBe("v-6");
+  // The same pick keeps the saved profile (and its bank angle) as it is.
+  expect(editRequest({ ...editing, engine: "v-6" }, inputs)).toMatchObject({
+    engineProfile: null,
+  });
+  expect(editRequest({ ...editing, engine: "inline-6" }, inputs)).toMatchObject(
+    {
+      ok: true,
+      aspects: {},
+      engineProfile: { layout: "inline", cylinders: 6 },
+    },
+  );
+});
+
+test("car rows show the engine, or that it was not given; an EV has none", () => {
+  const rows = carRows(
+    [
+      makeCar({
+        id: "six",
+        aspects: complete,
+        engine_profile: { layout: "inline", cylinders: 6 },
+      }),
+      makeCar({ id: "unknown", aspects: complete }),
+      makeCar({ id: "ev", aspects: complete, fuel_type: "EV" }),
+    ],
+    "six",
+    null,
+    fmt,
+    t,
+  );
+  const engine = (index: number) =>
+    rows[index].metrics.find(
+      (metric) => metric.label === "settings.car.col_engine",
+    );
+  expect(engine(0)).toEqual({
+    label: "settings.car.col_engine",
+    value: 'settings.car.engine.inline:{"count":6}',
+  });
+  expect(engine(1)).toEqual({
+    label: "settings.car.col_engine",
+    value: "settings.car.engine.unknown",
+  });
+  expect(engine(2)).toBeUndefined();
 });

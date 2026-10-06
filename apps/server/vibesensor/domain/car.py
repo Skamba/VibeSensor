@@ -26,6 +26,7 @@ from vibesensor.domain.drive_layout import (
     final_drive_axle_for,
     has_propshaft,
 )
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
 from vibesensor.domain.vehicle_configuration import (
@@ -148,6 +149,7 @@ class CarSnapshot:
     fuel_type: VehicleFuelType | None = None
     drive_layout: VehicleDrivetrain | None = None
     final_drive_axle: Axle | None = None
+    engine_profile: EngineProfile | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.aspects, MappingProxyType):
@@ -173,6 +175,9 @@ class Car:
     drive_layout: VehicleDrivetrain | None = None
     # The axle the saved final drive belongs to (see ``domain.drive_layout``).
     final_drive_axle: Axle | None = None
+    # Layout and cylinder count (``domain.engine_profile``); ``None`` when not
+    # known, and always for an EV.
+    engine_profile: EngineProfile | None = None
     order_reference_spec: OrderReferenceSpec | None = field(default=None, repr=False)
     _aspects: Mapping[str, float | str] = field(
         init=False,
@@ -191,6 +196,7 @@ class Car:
         fuel_type: VehicleFuelType | None = None,
         drive_layout: VehicleDrivetrain | None = None,
         final_drive_axle: Axle | None = None,
+        engine_profile: EngineProfile | None = None,
         order_reference_spec: OrderReferenceSpec | None = None,
     ) -> None:
         object.__setattr__(self, "id", id or uuid.uuid4().hex)
@@ -203,6 +209,7 @@ class Car:
         object.__setattr__(
             self, "final_drive_axle", final_drive_axle_for(drive_layout, final_drive_axle)
         )
+        object.__setattr__(self, "engine_profile", engine_profile if fuel_type != "EV" else None)
         object.__setattr__(self, "order_reference_spec", order_reference_spec)
         object.__setattr__(self, "_aspects", MappingProxyType({}))
         self._normalize_order_reference_state(aspects)

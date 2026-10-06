@@ -35,6 +35,53 @@ export type FinalDriveAxle = NonNullable<CarRecord["final_drive_axle"]> | null;
 
 export const DRIVE_LAYOUTS = ["FWD", "RWD", "AWD"] as const;
 
+/** The engine's layout and cylinder count; `null` when not known (always for an EV). */
+export type EngineProfile = NonNullable<CarRecord["engine_profile"]> | null;
+/** An engine the wizard offers, `"<layout>-<cylinders>"`; `null` is "not sure". */
+export type EngineChoice = string | null;
+
+/** The engines the specs step offers (rotary: the rotor count). */
+export const ENGINE_CHOICES = [
+  "inline-3",
+  "inline-4",
+  "inline-5",
+  "inline-6",
+  "v-6",
+  "v-8",
+  "v-10",
+  "v-12",
+  "flat-4",
+  "flat-6",
+  "w-12",
+  "rotary-2",
+] as const;
+
+/** The choice that names *profile* (its bank angle aside). */
+function engineChoice(profile: EngineProfile | undefined): EngineChoice {
+  return profile ? `${profile.layout}-${profile.cylinders}` : null;
+}
+
+function engineProfileFromChoice(choice: EngineChoice): EngineProfile {
+  if (!choice) {
+    return null;
+  }
+  const [layout, cylinders] = choice.split("-");
+  return {
+    layout: layout as NonNullable<EngineProfile>["layout"],
+    cylinders: Number(cylinders),
+  };
+}
+
+/** "Inline-6", "V8", "Flat-4": the engine as the car list and the wizard name it. */
+export function engineLabel(
+  profile: NonNullable<EngineProfile> | { layout: string; cylinders: number },
+  t: Translate,
+): string {
+  return t(`settings.car.engine.${profile.layout}`, {
+    count: profile.cylinders,
+  });
+}
+
 export const STEP_LABEL_KEYS = [
   "settings.car.step_brand_short",
   "settings.car.step_type_short",
@@ -56,6 +103,8 @@ export interface EditTarget {
   fuelType: FuelType;
   /** The saved drive layout; `null` when it was never set. */
   driveLayout: DriveLayout;
+  /** The saved engine; `null` when it was never set. */
+  engineProfile: EngineProfile;
 }
 
 export interface WizardState {
@@ -74,6 +123,8 @@ export interface WizardState {
   fuelType: FuelType;
   /** The drive layout the user picked where the library does not say. */
   driveLayout: DriveLayout;
+  /** The engine the user picked where the library does not say. */
+  engine: EngineChoice;
 }
 
 export interface ManualInputs {
@@ -110,6 +161,7 @@ export const INITIAL_WIZARD_STATE: WizardState = {
   editing: null,
   fuelType: null,
   driveLayout: null,
+  engine: null,
 };
 
 export function resolveGearboxes(
@@ -309,6 +361,7 @@ export function editTarget(
         : null,
       fuelType: car.fuel_type ?? null,
       driveLayout: car.drive_layout ?? null,
+      engineProfile: car.engine_profile ?? null,
     },
     inputs,
   };
@@ -695,6 +748,26 @@ export function asksDriveLayout(state: WizardState): boolean {
   return !state.selectedVariant;
 }
 
+/**
+ * The car's engine: the library variant's when it names one, else the user's
+ * pick, else the saved car's; `null` when nobody said.
+ */
+export function wizardEngine(state: WizardState): EngineChoice {
+  return (
+    engineChoice(state.selectedVariant?.engine_profile) ??
+    state.engine ??
+    engineChoice(state.editing?.engineProfile) ??
+    null
+  );
+}
+
+/** Whether the specs step asks the engine: the library does not say, and it is no EV. */
+export function asksEngine(state: WizardState): boolean {
+  return (
+    !state.selectedVariant?.engine_profile && wizardFuelType(state) !== "EV"
+  );
+}
+
 function confidenceOrNull(provenance: ReferenceProvenance) {
   return provenance === "missing" ? null : provenance;
 }
@@ -711,6 +784,8 @@ export type CarRequest =
       driveLayout: DriveLayout;
       /** The library gearbox's final-drive axle, while its final drive is kept. */
       finalDriveAxle: FinalDriveAxle;
+      /** The library variant's or the user's engine; `null` when unknown or an EV. */
+      engineProfile: EngineProfile;
     }
   | { ok: false; focus: ManualField };
 
@@ -770,6 +845,11 @@ export function carRequest(
     // The axle the gearbox's final drive is on (which axle the engine drives)
     // holds for a corrected ratio too.
     finalDriveAxle: gearbox?.final_drive_axle ?? null,
+    engineProfile:
+      wizardFuelType(state) === "EV"
+        ? null
+        : (state.selectedVariant?.engine_profile ??
+          engineProfileFromChoice(wizardEngine(state))),
   };
 }
 
@@ -790,6 +870,8 @@ export type EditRequest =
       fuelType: FuelType;
       /** The drive layout the user set; `null` when it did not change. */
       driveLayout: DriveLayout;
+      /** The engine the user set; `null` when it did not change. */
+      engineProfile: EngineProfile;
     }
   | { ok: false; focus: ManualField };
 
@@ -830,6 +912,10 @@ export function editRequest(
     driveLayout:
       state.driveLayout && state.driveLayout !== editing.driveLayout
         ? state.driveLayout
+        : null,
+    engineProfile:
+      state.engine && state.engine !== engineChoice(editing.engineProfile)
+        ? engineProfileFromChoice(state.engine)
         : null,
   };
 }

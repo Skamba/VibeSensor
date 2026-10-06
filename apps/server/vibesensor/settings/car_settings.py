@@ -17,6 +17,7 @@ from vibesensor.settings.car_config import (
     car_order_reference_status_from_mapping,
     car_to_persistence_dict,
     drive_layout_or_none,
+    engine_profile_or_none,
     final_drive_axle_or_none,
     fuel_type_or_none,
     new_car_id,
@@ -128,6 +129,7 @@ class CarSettingsService:
                 fuel_type=car.fuel_type,
                 drive_layout=car.drive_layout,
                 final_drive_axle=car.final_drive_axle,
+                engine_profile=car.engine_profile,
             )
 
     def _find_car(self, car_id: str | None) -> Car | None:
@@ -243,6 +245,9 @@ class CarSettingsService:
             new_drive_layout = (
                 drive_layout_or_none(car_data.get("drive_layout")) or car.drive_layout
             )
+            new_engine_profile = (
+                engine_profile_or_none(car_data.get("engine_profile")) or car.engine_profile
+            )
             # An AWD car's final-drive axle comes from its library gearbox (which
             # axle the engine drives): it holds while the layout is kept, also
             # when the owner corrects or clears the ratio itself.
@@ -270,6 +275,7 @@ class CarSettingsService:
                 fuel_type=new_fuel_type,
                 drive_layout=new_drive_layout,
                 final_drive_axle=new_final_drive_axle,
+                engine_profile=new_engine_profile,
             )
             return True
 
@@ -312,6 +318,7 @@ class CarSettingsService:
                 fuel_type=car.fuel_type,
                 drive_layout=car.drive_layout,
                 final_drive_axle=car.final_drive_axle,
+                engine_profile=car.engine_profile,
             )
             return True
 

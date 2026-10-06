@@ -102,6 +102,13 @@ Current examples on `main`:
   for FWD, rear for RWD) and derives the driven axles and whether there is a
   propshaft from the layout, fuel type and final-drive axle
   (`domain/drive_layout.py`) instead of storing them.
+- `EngineProfile` (`domain/engine_profile.py`) holds an engine's layout
+  (inline, V, flat, W, rotary), cylinder (rotor) count and, for a V or W
+  engine, the bank angle when known, and rejects impossible combinations.
+  `engine_orders()` maps it through the one rules table
+  (`ENGINE_ORDER_RULES`) to the engine orders it excites, each with its roles
+  (rotating, firing, imbalance); see docs/order_tracking.md "Engine orders".
+  `Car` keeps no engine profile for an EV.
 - `SensorPlacement` rejects empty placement codes.
 - `Finding` rejects out-of-range confidence and cruise-fraction values plus
   non-finite ranking scores.

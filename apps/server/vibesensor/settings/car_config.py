@@ -7,10 +7,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, NotRequired, TypedDict, cast
 
-from pydantic import StringConstraints
+from pydantic import AfterValidator, StringConstraints
 
 from vibesensor.domain.car import CarOrderReferenceSourceStatus, CarOrderReferenceStatus
 from vibesensor.domain.drive_layout import Axle
+from vibesensor.domain.engine_profile import EngineLayout, EngineProfile
 from vibesensor.domain.vehicle_configuration import (
     VehicleDrivetrain,
     VehicleFieldConfidence,
@@ -38,8 +39,11 @@ __all__ = [
     "car_order_reference_status_from_mapping",
     "car_to_persistence_dict",
     "drive_layout_or_none",
+    "engine_profile_or_none",
+    "engine_profile_payload",
     "final_drive_axle_or_none",
     "fuel_type_or_none",
+    "needs_library_fields",
     "new_car_id",
 ]
 
@@ -63,6 +67,29 @@ class CarOrderReferenceStatusPayload(TypedDict):
     transmission_confidence: NotRequired[str | None]
 
 
+class EngineProfilePayload(TypedDict):
+    """The engine's layout and cylinder count (rotors for a rotary)."""
+
+    layout: EngineLayout
+    cylinders: int
+    bank_angle_deg: NotRequired[int | None]
+    """The angle between a V or W engine's banks; absent when not known."""
+
+
+def _possible_engine_profile(payload: EngineProfilePayload) -> EngineProfilePayload:
+    """Reject a profile no engine has (``EngineProfile`` says why)."""
+    _engine_profile_from_payload(payload)
+    return payload
+
+
+def _engine_profile_from_payload(payload: EngineProfilePayload) -> EngineProfile:
+    return EngineProfile(
+        layout=payload["layout"],
+        cylinders=payload["cylinders"],
+        bank_angle_deg=payload.get("bank_angle_deg"),
+    )
+
+
 class CarConfigPayload(TypedDict):
     """One car profile as persisted in the settings snapshot and served over HTTP."""
 
@@ -77,6 +104,8 @@ class CarConfigPayload(TypedDict):
     """FWD/RWD/AWD; absent when the owner did not give it."""
     final_drive_axle: NotRequired[Axle | None]
     """The axle the final drive belongs to: the driven one, or the library's for AWD."""
+    engine_profile: NotRequired[EngineProfilePayload | None]
+    """Engine layout and cylinder count; absent when not known and for an EV."""
 
 
 class CarConfigUpdatePayload(TypedDict, total=False):
@@ -90,6 +119,7 @@ class CarConfigUpdatePayload(TypedDict, total=False):
     fuel_type: VehicleFuelType | None
     drive_layout: VehicleDrivetrain | None
     final_drive_axle: Axle | None
+    engine_profile: Annotated[EngineProfilePayload, AfterValidator(_possible_engine_profile)] | None
 
 
 @dataclass(slots=True)
@@ -132,6 +162,7 @@ def car_from_persistence_dict(payload: Mapping[str, object]) -> Car:
         fuel_type=fuel_type_or_none(payload.get("fuel_type")),
         drive_layout=drive_layout_or_none(payload.get("drive_layout")),
         final_drive_axle=final_drive_axle_or_none(payload.get("final_drive_axle")),
+        engine_profile=engine_profile_or_none(payload.get("engine_profile")),
     )
 
 
@@ -156,6 +187,44 @@ def final_drive_axle_or_none(value: object) -> Axle | None:
     return None
 
 
+def needs_library_fields(car: Car) -> bool:
+    """Whether a saved library car lacks a field the library can fill.
+
+    See ``car_library.with_library_fields``: the drive layout, the powertrain
+    and (except for an EV) the engine profile.
+    """
+    return bool(car.variant) and (
+        car.drive_layout is None
+        or car.fuel_type is None
+        or (car.engine_profile is None and car.fuel_type != "EV")
+    )
+
+
+def engine_profile_or_none(value: object) -> EngineProfile | None:
+    """Keep only a possible engine profile; anything else is unknown."""
+    if not isinstance(value, Mapping):
+        return None
+    cylinders = value.get("cylinders")
+    bank_angle = value.get("bank_angle_deg")
+    if not isinstance(cylinders, int) or not isinstance(bank_angle, int | None):
+        return None
+    try:
+        return EngineProfile(
+            layout=cast(EngineLayout, value.get("layout")),
+            cylinders=cylinders,
+            bank_angle_deg=bank_angle,
+        )
+    except ValueError:
+        return None
+
+
+def engine_profile_payload(profile: EngineProfile) -> EngineProfilePayload:
+    payload: EngineProfilePayload = {"layout": profile.layout, "cylinders": profile.cylinders}
+    if profile.bank_angle_deg is not None:
+        payload["bank_angle_deg"] = profile.bank_angle_deg
+    return payload
+
+
 def car_to_persistence_dict(car: Car) -> CarConfigPayload:
     """Serialize a domain ``Car`` to a plain dict for JSON persistence."""
     payload: CarConfigPayload = {
@@ -176,6 +245,8 @@ def car_to_persistence_dict(car: Car) -> CarConfigPayload:
         payload["drive_layout"] = car.drive_layout
     if car.final_drive_axle is not None:
         payload["final_drive_axle"] = car.final_drive_axle
+    if car.engine_profile is not None:
+        payload["engine_profile"] = engine_profile_payload(car.engine_profile)
     return payload
 
 

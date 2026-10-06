@@ -142,6 +142,7 @@ export interface components {
         CarConfigPayload: {
             aspects: components["schemas"]["AnalysisSettingsPayload"];
             drive_layout?: ("FWD" | "RWD" | "AWD") | null;
+            engine_profile?: components["schemas"]["EngineProfilePayload"] | null;
             final_drive_axle?: ("front" | "rear") | null;
             fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             id: string;
@@ -154,6 +155,7 @@ export interface components {
         CarConfigUpdatePayload: {
             aspects?: components["schemas"]["AnalysisSettingsPayload"] | null;
             drive_layout?: ("FWD" | "RWD" | "AWD") | null;
+            engine_profile?: components["schemas"]["EngineProfilePayload"] | null;
             final_drive_axle?: ("front" | "rear") | null;
             fuel_type?: ("ICE" | "PHEV" | "EV") | null;
             name?: string | null;
@@ -164,6 +166,11 @@ export interface components {
         /** Response body listing available car manufacturer brands. */
         CarLibraryBrandsResponse: {
             brands: string[];
+        };
+        /** The engine's layout and cylinder count, read from the library's engine text. */
+        CarLibraryEngineProfileEntry: {
+            cylinders: number;
+            layout: "inline" | "v" | "flat" | "w" | "rotary";
         };
         /** A gearbox option from the car library (gear ratios). */
         CarLibraryGearboxEntry: {
@@ -234,6 +241,8 @@ export interface components {
         CarLibraryVariantEntry: {
             drivetrain: "FWD" | "RWD" | "AWD";
             engine?: string | null;
+            /** `null` for an EV, or when the variant's rows name different engines. */
+            engine_profile?: components["schemas"]["CarLibraryEngineProfileEntry"] | null;
             gearboxes?: components["schemas"]["CarLibraryGearboxEntry"][] | null;
             name: string;
             /** Last model year of the variant's rows. */
@@ -379,6 +388,12 @@ export interface components {
         DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
         DrivelinePart: "front_drive" | "propshaft_rear";
         EngineCapability: "measured" | "estimated_top_gear" | "hybrid_estimated" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed" | "not_applicable";
+        /** The engine's layout and cylinder count (rotors for a rotary). */
+        EngineProfilePayload: {
+            bank_angle_deg?: number | null;
+            cylinders: number;
+            layout: "inline" | "v" | "flat" | "w" | "rotary";
+        };
         /** Response body confirming whether an ESP32 flash job was cancelled. */
         EspFlashCancelResponse: {
             cancelled: boolean;

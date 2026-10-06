@@ -11,10 +11,14 @@ import { formatCarLibraryTireOption } from "./tires";
 import {
   actionHint,
   asksDriveLayout,
+  asksEngine,
   asksPowertrain,
   canFinish,
   DRIVE_LAYOUTS,
   type DriveLayout,
+  ENGINE_CHOICES,
+  type EngineChoice,
+  engineLabel,
   gearboxParts,
   type ManualField,
   progressText,
@@ -27,6 +31,7 @@ import {
   summary,
   variantDetail,
   wizardDriveLayout,
+  wizardEngine,
   wizardFuelType,
 } from "./wizard_model";
 import {
@@ -49,6 +54,7 @@ import {
   noGearboxesMessage,
   selectBrand,
   selectDriveLayout,
+  selectEngine,
   selectGearbox,
   selectModel,
   selectPowertrain,
@@ -195,6 +201,38 @@ function DriveLayoutField(props: {
       </select>
       <div id="wizDriveLayoutHelp" class="subtle wizard-field-help">
         {t("settings.car.drive_layout_help")}
+      </div>
+    </div>
+  );
+}
+
+/** Asks the engine where the library does not say (or for a saved car); not for an EV. */
+function EngineField(props: { value: EngineChoice; canBeUnknown: boolean }) {
+  return (
+    <div class="field wizard-spec-field">
+      <label htmlFor="wizEngine" class="wizard-spec-label">
+        <span>{t("settings.car.engine")}</span>
+      </label>
+      <select
+        id="wizEngine"
+        value={props.value ?? ""}
+        aria-describedby="wizEngineHelp"
+        onChange={(event) => selectEngine(event.currentTarget.value || null)}
+      >
+        {props.canBeUnknown ? (
+          <option value="">{t("settings.car.engine.unknown_option")}</option>
+        ) : null}
+        {ENGINE_CHOICES.map((choice) => {
+          const [layout, cylinders] = choice.split("-");
+          return (
+            <option key={choice} value={choice}>
+              {engineLabel({ layout, cylinders: Number(cylinders) }, t)}
+            </option>
+          );
+        })}
+      </select>
+      <div id="wizEngineHelp" class="subtle wizard-field-help">
+        {t("settings.car.engine_help")}
       </div>
     </div>
   );
@@ -391,6 +429,12 @@ function SpecsForm() {
         <DriveLayoutField
           value={wizardDriveLayout(state)}
           canBeUnknown={!editing?.driveLayout}
+        />
+      ) : null}
+      {asksEngine(state) ? (
+        <EngineField
+          value={wizardEngine(state)}
+          canBeUnknown={!editing?.engineProfile}
         />
       ) : null}
       <div class="field wizard-spec-field">

@@ -143,8 +143,10 @@ inherited from family-level data, encode that through `confidence` and
   saved again (`with_library_fields` in
   `apps/server/vibesensor/settings/car_library.py`). Cars saved before the
   powertrain (`fuel_type`) existed get it the same way, so the report's
-  "Powertrain" fact does not read "not provided" for a library car. A car the
-  library does not know keeps no layout or powertrain (unknown). See `apps/server/vibesensor/domain/drive_layout.py`
+  "Powertrain" fact does not read "not provided" for a library car. Cars
+  saved before the engine profile existed get it the same way (from rows
+  that agree on one; never for an EV). A car the
+  library does not know keeps no layout, powertrain or engine (unknown). See `apps/server/vibesensor/domain/drive_layout.py`
   for what the layout decides: the driven axles and whether there is a
   propshaft (none for FWD, an EV or an e-AWD hybrid; front-engined cars
   assumed). A dual-motor EV is AWD with the rear motor's reduction ratio; the
@@ -155,7 +157,12 @@ inherited from family-level data, encode that through `confidence` and
   Litres, layout, charging and fuel come from the technical-data sheet; the
   family code is left out when it is not known for the row. All rows of one generation use the
   same text for the same engine. EVs use `Electric Single Motor` /
-  `Electric Dual Motor`. `engine_code` repeats the family code, or reads
+  `Electric Dual Motor`. The layout token is the engine's evidence-backed
+  profile: `VehicleConfiguration.engine_profile` reads `I6` as an inline-6
+  and `V8` as a V8 (`domain/engine_profile.py`), and each picker variant
+  serves it as `engine_profile` when its rows agree; EVs have none. The bank
+  angle is not on the sheets, so library profiles leave it unknown.
+  `engine_code` repeats the family code, or reads
   `<litres>L` (`Electric` for EVs) when there is none. The validator
   enforces the format, the code and the fuel type (`PHEV` text ⇔ fuel type
   `PHEV`, `Electric` ⇔ `EV`) for the brands listed in `ENGINE_TEXT_BRANDS`

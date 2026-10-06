@@ -69,6 +69,13 @@ class CarLibraryTireOptionEntry(_StrictBase):
     source_confidence: str | None = None
 
 
+class CarLibraryEngineProfileEntry(_StrictBase):
+    """The engine's layout and cylinder count, read from the library's engine text."""
+
+    layout: Literal["inline", "v", "flat", "w", "rotary"]
+    cylinders: int = Field(ge=1)
+
+
 class CarLibraryVariantEntry(_StrictBase):
     """A specific variant/trim of a car library model entry.
 
@@ -78,6 +85,10 @@ class CarLibraryVariantEntry(_StrictBase):
 
     name: str = Field(min_length=1)
     engine: str | None = None
+    engine_profile: CarLibraryEngineProfileEntry | None = Field(
+        default=None,
+        description="`null` for an EV, or when the variant's rows name different engines.",
+    )
     drivetrain: Literal["FWD", "RWD", "AWD"]
     gearboxes: list[CarLibraryGearboxEntry] | None = None
     tire_options: list[CarLibraryTireOptionEntry] | None = None
