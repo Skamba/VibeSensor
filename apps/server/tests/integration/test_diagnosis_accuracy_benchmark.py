@@ -246,12 +246,25 @@ class Case:
         A car coasting without the brakes slows at well under 0.15 g, and a stop
         from town speeds is over too soon to judge a judder.
         """
-        return any(
-            (phase.speed_start_kmh - phase.speed_end_kmh) / 3.6 / phase.duration_s
-            >= _FIRM_BRAKING_MPS2
-            and _seconds_above(phase, _FIRM_BRAKING_FROM_KMH) >= 3.0
-            for phase in self.phases
-        )
+        return any(_brakes_firmly(phase) for phase in self.phases)
+
+    @property
+    def guided_steps(self) -> list[str]:
+        """The guided test-drive steps the drive marks, each once, in order."""
+        return list(dict.fromkeys(p.guided_phase for p in self.phases if p.guided_phase))
+
+    @property
+    def guided_firm_stops(self) -> int:
+        """The firm stops the driver makes in the guided brake step."""
+        return sum(p.guided_phase == "brake" and _brakes_firmly(p) for p in self.phases)
+
+
+def _brakes_firmly(phase: ScenarioPhase) -> bool:
+    return (
+        phase.speed_start_kmh - phase.speed_end_kmh
+    ) / 3.6 / phase.duration_s >= _FIRM_BRAKING_MPS2 and _seconds_above(
+        phase, _FIRM_BRAKING_FROM_KMH
+    ) >= 3.0
 
 
 def _fault(source: str, zones: set[str], order: str, **kwargs: object) -> Expected:
@@ -592,6 +605,21 @@ def _guided(
     )
 
 
+def _brake_step(
+    *, braking: tuple[PhaseOverride, ...] = (), from_kmh: float = 70.0
+) -> tuple[ScenarioPhase, ...]:
+    """The guided brake step: back up to 100 km/h, then three firm stops to 40.
+
+    Each stop sheds 60 km/h in 6 s (0.28 g), a firm stop short of an emergency
+    one; *braking* faults play only then.
+    """
+    phases = [_phase("brake-speed-up", 6.0, from_kmh, 100.0, guided="brake")]
+    for stop in range(3):
+        phases.append(_phase(f"brake-{stop}", 6.0, 100.0, 40.0, *braking, guided="brake"))
+        phases.append(_phase(f"brake-speed-up-{stop}", 6.0, 40.0, 100.0, guided="brake"))
+    return tuple(phases)
+
+
 def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
     """Sweep 50->115 km/h, hold 90, then a short coast to 70."""
     return (
@@ -919,6 +947,22 @@ BENCH_CASES = (
             dominant_phase="braking",
         ),
     ),
+    # The full guided test drive, its brake step included: judder from warped
+    # front discs only in the step's firm stops. Without the step a guided drive
+    # never brakes firmly, and the brakes go unchecked.
+    Case(
+        "bench-guided-front-brake-judder",
+        (*_guided(), *_brake_step(braking=(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0),))),
+        _fault(
+            "brakes",
+            {"front_axle"},
+            "T1",
+            levels=MODERATE_OR_STRONG,
+            dominant_phase="braking",
+        ),
+    ),
+    # A healthy car on the full guided drive: the brakes are checked, not skipped.
+    Case("bench-guided-healthy-brake-step", (*_guided(), *_brake_step()), NO_FAULT),
     # A healthy car on the same drive, once with firm stops and once only coasting.
     Case("bench-healthy-brake-stops", _motorway_stops(), NO_FAULT),
     Case("bench-healthy-coast-downs", _motorway_stops(coast=True), NO_FAULT),
@@ -1333,6 +1377,12 @@ SCRIPTED_CASES = (
         "guided-engine-coastdown",
         _fault("engine", {"engine_bay"}, "E2", speed_dependence="engine_speed"),
     ),
+    # The imbalance shakes in the brake step's stops too: a wheel, and the brakes
+    # checked and ruled out.
+    _scripted(
+        "guided-brake-stops",
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+    ),
 )
 
 CASES = (*SCRIPTED_CASES, *BENCH_CASES)
@@ -1478,6 +1528,9 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         lossy = bool(case.frame_loss)
         expected = case.expected_for(car_key, result.diagnosis["source"])
         _assert_case(result, car, expected, case)
+        assert result.diagnosis["guided_phases"] == case.guided_steps
+        # The Live page's brake step counts each firm stop the analysis brakes in.
+        assert result.guided_brake_stops == case.guided_firm_stops
         if not case.wifi_retry_loss:
             # Congested Wi-Fi may or may not drop a frame for good.
             _assert_frame_integrity(result, lossy=lossy)

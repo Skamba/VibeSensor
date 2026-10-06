@@ -352,8 +352,8 @@
     "nl": "geen reductieverhouding — voeg hem toe aan de auto in Instellingen als je hem weet (optioneel)."
   },
   "COULDNT_TEST_NO_BRAKING": {
-    "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — brake firmly from about 100 km/h a few times during the drive.",
-    "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — rem tijdens de rit een paar keer stevig af vanaf ongeveer 100 km/h."
+    "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — do the guided test's firm stops, or brake firmly from about 100 km/h a few times during the drive.",
+    "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — doe de stap stevig afremmen van de begeleide test, of rem tijdens de rit een paar keer stevig af vanaf ongeveer 100 km/h."
   },
   "COULDNT_TEST_TIRE": {
     "en": "no tire size — add it to the car in Settings.",
@@ -486,6 +486,10 @@
   "FINAL_DRIVE_AXLE_REAR": {
     "en": "rear axle",
     "nl": "achteras"
+  },
+  "GUIDED_BRAKE": {
+    "en": "firm stops",
+    "nl": "stevig afremmen"
   },
   "GUIDED_COAST_DOWN": {
     "en": "neutral coast-down",

@@ -68,6 +68,7 @@ def _recording_status_response(snapshot: RunRecorderStatusSnapshot) -> Recording
         last_run_id=snapshot.last_run_id,
         guided_phase=snapshot.guided_phase,
         guided_phases_completed=list(snapshot.guided_phases_completed),
+        guided_brake_stops=snapshot.guided_brake_stops,
     )
 
 
@@ -94,7 +95,7 @@ def create_recording_routes(
 
     @router.post("/api/recording/guided-phase", response_model=RecordingStatusResponse)
     async def mark_guided_phase(body: GuidedPhaseRequest) -> RecordingStatusResponse:
-        """Mark the guided test-drive step (sweep, hold, neutral coast-down) starting now."""
+        """Mark the guided test-drive step (sweep, hold, neutral coast-down, brake) starting now."""
         return _recording_status_response(
             await asyncio.to_thread(run_recorder.mark_guided_phase, body.phase)
         )

@@ -23,6 +23,8 @@ pytestmark = pytest.mark.e2e
 _SIM_DURATION_S = 18.0
 # One pass of a guided scenario: sweep, hold, then a neutral coast-down.
 _GUIDED_DURATION_S = 25.0
+# One pass of guided-brake-stops: sweep, hold, three firm stops, then cruising on.
+_GUIDED_BRAKE_DURATION_S = 54.0
 
 
 def _record(
@@ -210,7 +212,8 @@ def _distinct_orders_car(e2e_env: dict[str, str]) -> Iterator[None]:
             "guided-wheel-coastdown",
             "wheel/tire",
             "vehicle_speed",
-            {"engine": "stayed_in_neutral"},
+            # No firm stop in this guided drive: the brakes go unchecked.
+            {"engine": "stayed_in_neutral", "brakes": "no_braking"},
             "it follows road speed",
         ),
         (
@@ -251,6 +254,34 @@ def test_guided_coast_down_classifies_what_the_vibration_follows_e2e(
         pdf = " ".join(pdf_text(wait_report_pdf_ready(e2e_env["base_url"], run_id).body).split())
         assert sentence in pdf
         assert "neutral coast-down" in pdf
+    finally:
+        _cleanup_run(e2e_env["base_url"], run_id)
+        remove_all_clients(e2e_env["base_url"])
+
+
+def test_guided_brake_step_counts_its_stops_and_checks_the_brakes_e2e(
+    e2e_env: dict[str, str],
+) -> None:
+    live_status: list[dict] = []
+    run_id, insights = _record(
+        e2e_env,
+        "guided-brake-stops",
+        duration_s=_GUIDED_BRAKE_DURATION_S,
+        before_stop=live_status.append,
+    )
+    try:
+        # The Live page's brake step counted each firm stop as it settled.
+        assert live_status[0]["guided_phase"] == "brake", live_status
+        assert live_status[0]["guided_brake_stops"] == 3, live_status
+        diagnosis = insights["diagnosis"]
+        assert diagnosis["guided_phases"] == ["sweep", "hold", "brake"], diagnosis
+        assert diagnosis["source"] == "wheel/tire", diagnosis
+        # The imbalance shakes with and without the brakes: the brakes were
+        # checked and ruled out, not left unchecked.
+        brakes = next(c for c in diagnosis["source_checks"] if c["source"] == "brakes")
+        assert brakes == {"source": "brakes", "status": "ruled_out", "reason": "no_matching_order"}
+        pdf = " ".join(pdf_text(wait_report_pdf_ready(e2e_env["base_url"], run_id).body).split())
+        assert "speed sweep, steady hold, firm stops" in pdf
     finally:
         _cleanup_run(e2e_env["base_url"], run_id)
         remove_all_clients(e2e_env["base_url"])

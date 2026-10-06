@@ -650,7 +650,7 @@ describe("guidedTestModel", () => {
   test("offers to start with the sweep before any step", () => {
     const model = guidedTestModel(recordingRun, "kmh", false, null, t);
 
-    expect(states(model)).toEqual(["todo", "todo", "todo"]);
+    expect(states(model)).toEqual(["todo", "todo", "todo", "todo"]);
     expect(model.action).toEqual({
       label: "dashboard.guided.start",
       phase: "sweep",
@@ -658,7 +658,7 @@ describe("guidedTestModel", () => {
     expect(model.finished).toBe(false);
   });
 
-  test("walks sweep, hold, then the neutral coast-down, then finishes", () => {
+  test("walks sweep, hold, the neutral coast-down, then the firm stops, then finishes", () => {
     const hold = guidedTestModel(
       {
         ...recordingRun,
@@ -670,7 +670,7 @@ describe("guidedTestModel", () => {
       null,
       t,
     );
-    expect(states(hold)).toEqual(["done", "current", "todo"]);
+    expect(states(hold)).toEqual(["done", "current", "todo", "todo"]);
     expect(hold.action).toEqual({
       label:
         'dashboard.guided.next:{"step":"dashboard.guided.coast_down.title"}',
@@ -688,18 +688,72 @@ describe("guidedTestModel", () => {
       null,
       t,
     );
-    expect(states(coast)).toEqual(["done", "done", "current"]);
+    expect(states(coast)).toEqual(["done", "done", "current", "todo"]);
     expect(coast.action).toEqual({
+      label: 'dashboard.guided.next:{"step":"dashboard.guided.brake.title"}',
+      phase: "brake",
+    });
+
+    const brake = guidedTestModel(
+      {
+        ...recordingRun,
+        guided_phase: "brake",
+        guided_phases_completed: ["sweep", "hold", "coast_down"],
+      },
+      "kmh",
+      false,
+      null,
+      t,
+    );
+    expect(states(brake)).toEqual(["done", "done", "done", "current"]);
+    expect(brake.action).toEqual({
       label: "dashboard.guided.finish",
       phase: null,
     });
+  });
+
+  test("counts the firm stops the brake step captured, live", () => {
+    const progress = (stops: number, phase: "brake" | null = "brake") =>
+      guidedTestModel(
+        {
+          ...recordingRun,
+          guided_phase: phase,
+          guided_phases_completed:
+            phase === null
+              ? ["sweep", "hold", "coast_down", "brake"]
+              : ["sweep", "hold", "coast_down"],
+          guided_brake_stops: stops,
+        },
+        "kmh",
+        false,
+        null,
+        t,
+      ).steps.map((step) => step.progress);
+
+    expect(progress(0)).toEqual([
+      null,
+      null,
+      null,
+      'dashboard.guided.brake.progress:{"n":0,"total":3}',
+    ]);
+    expect(progress(2)[3]).toBe(
+      'dashboard.guided.brake.progress:{"n":2,"total":3}',
+    );
+    // Enough stops: the step says so.
+    expect(progress(3)[3]).toBe(
+      'dashboard.guided.brake.progress_done:{"n":3,"total":3}',
+    );
+    // A finished test still shows what the brake step captured.
+    expect(progress(1, null)[3]).toBe(
+      'dashboard.guided.brake.progress:{"n":1,"total":3}',
+    );
   });
 
   test("restores a finished guided test from the server's completed steps", () => {
     const model = guidedTestModel(
       {
         ...recordingRun,
-        guided_phases_completed: ["sweep", "hold", "coast_down"],
+        guided_phases_completed: ["sweep", "hold", "coast_down", "brake"],
       },
       "kmh",
       false,
@@ -708,7 +762,7 @@ describe("guidedTestModel", () => {
     );
 
     expect(model.finished).toBe(true);
-    expect(states(model)).toEqual(["done", "done", "done"]);
+    expect(states(model)).toEqual(["done", "done", "done", "done"]);
     expect(model.action).toBeNull();
   });
 
@@ -737,18 +791,27 @@ describe("guidedTestModel", () => {
       "EV",
       activeT,
     );
-    expect(model.steps.map((step) => step.phase)).toEqual(["sweep", "hold"]);
+    expect(model.steps.map((step) => step.phase)).toEqual([
+      "sweep",
+      "hold",
+      "brake",
+    ]);
     expect(model.action).toEqual({
-      label: "Finish guided test",
-      phase: null,
+      label: "Next: Firm stops",
+      phase: "brake",
     });
     expect(model.hint).toContain("no coast-down step");
+    // Regenerative braking spares the discs: the stops must use them.
+    expect(model.steps[2].instruction).toContain("regenerative braking");
     for (const step of model.steps) {
       expect(step.instruction).not.toMatch(/top gear|neutral|\{\w+\}/);
     }
     expect(
       guidedTestModel(
-        { ...recordingRun, guided_phases_completed: ["sweep", "hold"] },
+        {
+          ...recordingRun,
+          guided_phases_completed: ["sweep", "hold", "brake"],
+        },
         "kmh",
         false,
         "EV",
@@ -769,34 +832,39 @@ describe("guidedTestModel", () => {
       unit: "kmh",
       sweep: "from about 50 to 120 km/h,",
       coast: "about 30 km/h slower",
+      brake: "brake firmly from about 100 to 40 km/h,",
     },
     {
       language: "en",
       unit: "mps",
       sweep: "from about 14 to 33 m/s,",
       coast: "about 8 m/s slower",
+      brake: "brake firmly from about 28 to 11 m/s,",
     },
     {
       language: "nl",
       unit: "kmh",
       sweep: "van ongeveer 50 naar 120 km/u,",
       coast: "ongeveer 30 km/u langzamer",
+      brake: "stevig af van ongeveer 100 tot 40 km/u,",
     },
     {
       language: "nl",
       unit: "mps",
       sweep: "van ongeveer 14 naar 33 m/s,",
       coast: "ongeveer 8 m/s langzamer",
+      brake: "stevig af van ongeveer 28 tot 11 m/s,",
     },
   ] as const)(
     "names step speeds in the speed unit ($language, $unit)",
-    async ({ language, unit, sweep, coast }) => {
+    async ({ language, unit, sweep, coast, brake }) => {
       await setLanguage(language);
       try {
         const model = guidedTestModel(recordingRun, unit, false, null, activeT);
-        const [sweepStep, holdStep, coastStep] = model.steps;
+        const [sweepStep, holdStep, coastStep, brakeStep] = model.steps;
         expect(sweepStep.instruction).toContain(sweep);
         expect(coastStep.instruction).toContain(coast);
+        expect(brakeStep.instruction).toContain(brake);
         for (const step of model.steps) {
           expect(step.instruction).not.toMatch(/\{\w+\}/);
         }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Mapping
 from dataclasses import replace
 from datetime import timedelta
@@ -13,6 +14,7 @@ from vibesensor.clock.boot import current_boot_id
 from vibesensor.common.time_utils import parse_iso8601, utc_now_iso
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.run_context import RunContextSnapshot
+from vibesensor.recording.guided_brake_stops import GuidedBrakeStops
 from vibesensor.recording.lifecycle_state import ActiveRunSnapshot, RunLifecycleState
 from vibesensor.recording.persistence_writer import RunPersistenceWriter
 from vibesensor.recording.raw_capture import RawCaptureLossStats
@@ -79,6 +81,7 @@ class RunRecordingSessionService:
         self._run_sensor_snapshots: dict[str, RunSensorMetadata] = {}
         self._run_ingest_drop_baseline: dict[str, int] | None = None
         self._guided_phases: list[RunGuidedPhase] = []
+        self._brake_stops = GuidedBrakeStops()
 
     @property
     def live_start_mono_s(self) -> float:
@@ -144,6 +147,20 @@ class RunRecordingSessionService:
         with self._lock:
             done = (step.phase for step in self._guided_phases if step.end_t_s is not None)
             return tuple(dict.fromkeys(done))
+
+    def observe_speed(self, t_s: float, speed_kmh: float) -> None:
+        """Take the speed the run stores at *t_s*; the guided brake step counts its stops."""
+        if not (math.isfinite(t_s) and math.isfinite(speed_kmh)):
+            return
+        with self._lock:
+            if self._guided_phases and self._guided_phases[-1].end_t_s is None:
+                if self._guided_phases[-1].phase == "brake":
+                    self._brake_stops.observe(t_s, speed_kmh)
+
+    def guided_brake_stops(self) -> int:
+        """Firm stops counted in this run's guided brake step so far."""
+        with self._lock:
+            return self._brake_stops.count
 
     def start_time_unverified(self, run_id: str) -> bool:
         """Whether *run_id* started before the Pi clock was set (by NTP or a browser)."""
@@ -236,6 +253,7 @@ class RunRecordingSessionService:
         )
         self._persistence.reset()
         self._guided_phases = []
+        self._brake_stops = GuidedBrakeStops()
         self._live_start_mono_s = snapshot.start_mono_s
         self._raw_capture.start_run(
             snapshot.run_id,
@@ -252,6 +270,7 @@ class RunRecordingSessionService:
 
     def clear_stopped_run(self) -> None:
         self._guided_phases = []
+        self._brake_stops = GuidedBrakeStops()
         self._active_run_context = None
         self._run_sensor_snapshots = {}
         self._run_ingest_drop_baseline = None

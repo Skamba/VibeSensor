@@ -78,7 +78,7 @@ def _weak_summary() -> dict[str, Any]:
 
 def _guided_summary() -> dict[str, Any]:
     summary = _variant(
-        guided_phases=["sweep", "hold", "coast_down"], speed_dependence="vehicle_speed"
+        guided_phases=["sweep", "hold", "coast_down", "brake"], speed_dependence="vehicle_speed"
     )
     for check in summary["diagnosis"]["source_checks"]:
         if check["source"] == "engine":
@@ -804,13 +804,13 @@ def test_speed_chart_only_when_the_speed_range_was_swept() -> None:
             "en",
             "It follows road speed: it kept going while coasting in neutral.",
             "Engine: ruled out: the vibration kept going while coasting in neutral",
-            "speed sweep, steady hold, neutral coast-down",
+            "speed sweep, steady hold, neutral coast-down, firm stops",
         ),
         (
             "nl",
             "Hij volgt de rijsnelheid: hij bleef bij uitrollen in neutraal.",
             "uitgesloten: de trilling bleef bij uitrollen in neutraal",
-            "snelheidsopbouw, constante snelheid, uitrollen in neutraal",
+            "snelheidsopbouw, constante snelheid, uitrollen in neutraal, stevig afremmen",
         ),
     ],
 )

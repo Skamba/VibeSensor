@@ -185,6 +185,8 @@ class SimPipelineResult:
     post_analysis_s: float
     post_analysis_peak_bytes: int | None
     stop_reason: RecordingStopReason | None
+    # The firm stops the Live page's guided brake step counted just before the stop.
+    guided_brake_stops: int = 0
 
     @property
     def diagnosis(self) -> dict[str, Any]:
@@ -550,6 +552,7 @@ def _record(
             period_s=speed_report_period_s,
         )
         loop.run_until(phase_start)
+        guided_brake_stops = recorder.status().guided_brake_stops
         if guided:
             recorder.mark_guided_phase(None)
         if trace_post_analysis_memory:
@@ -576,6 +579,7 @@ def _record(
         post_analysis_s=post_analysis_s,
         post_analysis_peak_bytes=peak_bytes,
         stop_reason=recorder.status().last_stop_reason,
+        guided_brake_stops=guided_brake_stops,
     )
 
 

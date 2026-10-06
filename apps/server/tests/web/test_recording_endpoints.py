@@ -107,6 +107,7 @@ class TestRecordingStatusEndpoint:
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],
+            "guided_brake_stops": 0,
         }
 
     def test_status_idle_enabled_false(self, _recording_client) -> None:
@@ -198,6 +199,7 @@ class TestRecordingStartEndpoint:
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],
+            "guided_brake_stops": 0,
         }
         state.run_recorder.start_recording.assert_called_once_with()
 
@@ -243,6 +245,7 @@ class TestRecordingStopEndpoint:
             "capture_readiness": None,
             "guided_phase": None,
             "guided_phases_completed": [],
+            "guided_brake_stops": 0,
         }
         state.run_recorder.stop_recording.assert_called_once_with()
 
@@ -268,17 +271,19 @@ class TestGuidedPhaseEndpoint:
         client, state = _recording_client
         snapshot = replace(
             _make_recording_status_snapshot(enabled=True, run_id="run-abc", samples_written=42),
-            guided_phase="coast_down",
-            guided_phases_completed=("sweep", "hold"),
+            guided_phase="brake",
+            guided_phases_completed=("sweep", "hold", "coast_down"),
+            guided_brake_stops=2,
         )
         state.run_recorder.mark_guided_phase.return_value = snapshot
 
-        response = client.post("/api/recording/guided-phase", json={"phase": "coast_down"})
+        response = client.post("/api/recording/guided-phase", json={"phase": "brake"})
 
         assert response.status_code == 200
-        assert response.json()["guided_phase"] == "coast_down"
-        assert response.json()["guided_phases_completed"] == ["sweep", "hold"]
-        state.run_recorder.mark_guided_phase.assert_called_once_with("coast_down")
+        assert response.json()["guided_phase"] == "brake"
+        assert response.json()["guided_phases_completed"] == ["sweep", "hold", "coast_down"]
+        assert response.json()["guided_brake_stops"] == 2
+        state.run_recorder.mark_guided_phase.assert_called_once_with("brake")
 
     def test_null_phase_ends_the_guided_test(self, _recording_client) -> None:
         client, state = _recording_client

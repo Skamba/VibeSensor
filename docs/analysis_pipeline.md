@@ -205,6 +205,11 @@ The same rule applies to OBD speed: OBD-II has no standard brake-pedal PID,
 so braking is inferred from the speed trend whatever the speed source. A
 typed-in speed never brakes.
 
+The guided test drive's last step asks for three firm stops from about 100 to
+40 km/h (4–7 s each at 0.25–0.4 g), and the Live page counts them with the
+same `braking_intervals` ([run_lifecycle.md](run_lifecycle.md)), so a drive
+that completes the step has braking spectra to judge.
+
 ### Brake judder
 
 Brake judder (disc thickness variation or runout) shakes the car at the
@@ -330,7 +335,8 @@ the PDF both show:
   - Provenance is the car's recorded field confidence, `user_confirmed` when
     none was recorded, or `missing`. A manual speed also adds the weak reason
     `manual_speed` to a found cause.
-- `guided_phases` (the guided test-drive steps the driver marked) and
+- `guided_phases` (the guided test-drive steps the driver marked: `sweep`,
+  `hold`, `coast_down`, `brake`) and
   `speed_dependence`: after a guided neutral coast-down, `vehicle_speed` when
   the diagnosed order stayed present while coasting (wheels or driveline) and
   `engine_speed` when it disappeared (engine). The first 3 s of the coast-down

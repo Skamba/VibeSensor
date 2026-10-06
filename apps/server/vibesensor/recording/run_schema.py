@@ -125,8 +125,8 @@ class RunFinalizationStageResult:
         return payload
 
 
-type GuidedPhaseName = Literal["sweep", "hold", "coast_down"]
-GUIDED_PHASES: tuple[GuidedPhaseName, ...] = ("sweep", "hold", "coast_down")
+type GuidedPhaseName = Literal["sweep", "hold", "coast_down", "brake"]
+GUIDED_PHASES: tuple[GuidedPhaseName, ...] = ("sweep", "hold", "coast_down", "brake")
 
 
 @dataclass(frozen=True, slots=True)

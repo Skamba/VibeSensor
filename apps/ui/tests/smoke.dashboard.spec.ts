@@ -46,6 +46,7 @@ function idleStatus(
     samples_dropped: 0,
     last_completed_run_id: null,
     last_completed_run_error: null,
+    guided_brake_stops: 0,
     capture_readiness: READY,
     ...overrides,
   };
@@ -512,7 +513,7 @@ test("journey: sensor cards show location labels and the strongest signal", asyn
   );
 });
 
-test("journey: the guided test drive walks sweep, hold and neutral coast-down while recording", async ({
+test("journey: the guided test drive walks sweep, hold, neutral coast-down and firm stops while recording", async ({
   page,
 }) => {
   let status = idleStatus({
@@ -566,17 +567,28 @@ test("journey: the guided test drive walks sweep, hold and neutral coast-down wh
 
   await button.click();
   await expect(panel).toContainText("shift to neutral");
+  await expect(button).toHaveText("Next: Firm stops");
+
+  await button.click();
+  await expect(panel).toContainText("brake firmly from about 100 to 40 km/h");
+  await expect(panel).toContainText("no traffic behind you");
+  await expect(panel).toContainText("0 of 3 firm stops counted");
+  // The server counts each firm stop as it happens.
+  status = { ...status, guided_brake_stops: 3 };
+  await expect(panel).toContainText(
+    "3 of 3 firm stops counted. You can finish the guided test.",
+  );
   await expect(button).toHaveText("Finish guided test");
 
   await button.click();
   await expect(panel).toContainText("Guided test done.");
   await expect(button).toBeHidden();
-  expect(marked).toEqual(["sweep", "hold", "coast_down", null]);
+  expect(marked).toEqual(["sweep", "hold", "coast_down", "brake", null]);
 
   // ...and still knows the guided test is done after another reload.
   await page.reload();
   await expect(panel).toContainText("Guided test done.");
-  for (const phase of ["sweep", "hold", "coast_down"]) {
+  for (const phase of ["sweep", "hold", "coast_down", "brake"]) {
     await expect(stepState(phase)).toHaveAttribute("data-step-state", "done");
   }
   await expect(button).toBeHidden();

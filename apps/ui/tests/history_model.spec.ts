@@ -916,7 +916,7 @@ test("brake judder names the axle's brake discs and asks for firm stops, not a s
     {
       label: "Brakes",
       detail:
-        "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — brake firmly from about 100 km/h a few times during the drive.",
+        "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — do the guided test's firm stops, or brake firmly from about 100 km/h a few times during the drive.",
     },
   ]);
   const judder = checkedInsights("fault", [

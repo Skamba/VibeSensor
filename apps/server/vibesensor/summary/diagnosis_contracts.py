@@ -68,7 +68,7 @@ type SourceCheckReason = Literal[
     "no_braking",
     "only_while_braking",
 ]
-type GuidedPhaseValue = Literal["sweep", "hold", "coast_down"]
+type GuidedPhaseValue = Literal["sweep", "hold", "coast_down", "brake"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]
 type RpmSourceValue = Literal["measured", "estimated_top_gear", "none"]
 # Where a car reference came from: the user, a car-library confidence, or missing.

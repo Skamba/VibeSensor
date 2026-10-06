@@ -9,6 +9,14 @@ export const GPS_POLL_SLOW_MS = 10_000;
 export const GUIDED_SWEEP_FROM_KMH = 50;
 export const GUIDED_SWEEP_TO_KMH = 120;
 export const GUIDED_COAST_DROP_KMH = 30;
+/**
+ * The brake step's firm stops: from 100 to 40 km/h at a brisk 0.25-0.4 g lasts
+ * 4-7 s, well over the 2.5 s at 0.2 g the analysis needs to call it braking,
+ * and three stops give it ample braking spectra (docs/analysis_pipeline.md).
+ */
+export const GUIDED_BRAKE_FROM_KMH = 100;
+export const GUIDED_BRAKE_TO_KMH = 40;
+export const GUIDED_BRAKE_STOPS = 3;
 
 export const SPECTRUM_DB_MIN = 0;
 export const SPECTRUM_DB_MAX = 100;

@@ -290,6 +290,12 @@
   line-height: 1.45;
 }
 
+.guided-test__progress {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .guided-test .btn {
   justify-self: start;
 }

@@ -303,6 +303,11 @@ function GuidedTest() {
             {step.state === "current" ? (
               <div class="guided-test__instruction">{step.instruction}</div>
             ) : null}
+            {step.progress ? (
+              <div class="guided-test__progress" data-guided-progress>
+                {step.progress}
+              </div>
+            ) : null}
           </li>
         ))}
       </ol>

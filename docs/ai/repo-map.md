@@ -31,7 +31,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `ingest/`: UDP wire protocol, data receiver/control plane, client registry, ingest diagnostics.
 - `live/`: signal processor, processing loop, live WebSocket payload and broadcaster.
 - `dsp/`: FFT, window quality, order bands, canonical dB strength math, DSP constants.
-- `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness.
+- `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness, the guided brake step's stop counter.
 - `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`) and the post-analysis worker.
 - `summary/`: the persisted analysis-summary contract and its (de)serialization; read by history, report, and web.
 - `report/`: PDF report of a stored run: `view_model.py` (stored analysis + run metadata -> localized text), `pdf.py` (ReportLab pages and charts), `service.py` (history delivery + cache), `i18n.py`.

@@ -92,6 +92,7 @@ async function installReadyDashboardRoutes(page: Page): Promise<void> {
       samples_dropped: 0,
       last_completed_run_id: null,
       last_completed_run_error: null,
+      guided_brake_stops: 0,
       capture_readiness: buildCaptureReadiness({
         isReady: true,
         sensors: { state: "pass", reasonKey: "sensors_ready" },

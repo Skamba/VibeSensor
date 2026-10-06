@@ -46,7 +46,7 @@ class GuidedPhaseRequest(BaseModel):
     """Request body that marks the guided test-drive step the driver starts now."""
 
     phase: GuidedPhaseName | None = Field(
-        description="`sweep`, `hold`, or `coast_down`; `null` ends the guided test.",
+        description="`sweep`, `hold`, `coast_down`, or `brake`; `null` ends the guided test.",
     )
 
 
@@ -73,13 +73,22 @@ class RecordingStatusResponse(BaseModel):
     capture_readiness: RecordingCaptureReadinessResponse | None = None
     guided_phase: GuidedPhaseName | None = Field(
         default=None,
-        description="The guided test-drive step in progress (sweep, hold, coast_down), if any.",
+        description=(
+            "The guided test-drive step in progress (sweep, hold, coast_down, brake), if any."
+        ),
     )
     guided_phases_completed: list[GuidedPhaseName] = Field(
         default_factory=list,
         description=(
             "Guided test-drive steps finished so far in the current recording, in the "
             "order first finished; lets the Live page restore the guided panel after a reload."
+        ),
+    )
+    guided_brake_stops: int = Field(
+        default=0,
+        description=(
+            "Firm stops counted so far in the current recording's guided brake step, by "
+            "the analysis's own braking rule; a stop counts about 3 s after it ends."
         ),
     )
     last_stop_reason: RecordingStopReason | None = Field(

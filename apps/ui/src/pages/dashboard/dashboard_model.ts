@@ -2,6 +2,9 @@ import type { GuidedPhase, LoggingStatusPayload } from "../../api/types";
 import type { FuelType } from "../../capabilities";
 import type { CarSelectionState } from "../../car_selection";
 import {
+  GUIDED_BRAKE_FROM_KMH,
+  GUIDED_BRAKE_STOPS,
+  GUIDED_BRAKE_TO_KMH,
   GUIDED_COAST_DROP_KMH,
   GUIDED_SWEEP_FROM_KMH,
   GUIDED_SWEEP_TO_KMH,
@@ -81,6 +84,7 @@ export const IDLE_STATUS: LoggingStatusPayload = {
   samples_dropped: 0,
   last_completed_run_id: null,
   last_completed_run_error: null,
+  guided_brake_stops: 0,
   capture_readiness: null,
 };
 
@@ -608,16 +612,26 @@ export function withLoggingError(
 
 // --- Guided test drive ---------------------------------------------------------
 
-/** Sweep, hold, then a neutral coast-down: the order the driver does them in. */
-const GUIDED_STEPS: readonly GuidedPhase[] = ["sweep", "hold", "coast_down"];
+/**
+ * Sweep, hold, a neutral coast-down, then firm stops for the brake check: the
+ * order the driver does them in.
+ */
+const GUIDED_STEPS: readonly GuidedPhase[] = [
+  "sweep",
+  "hold",
+  "coast_down",
+  "brake",
+];
 /** An EV has no neutral that decouples its motor, so it skips the coast-down. */
-const GUIDED_STEPS_EV: readonly GuidedPhase[] = ["sweep", "hold"];
+const GUIDED_STEPS_EV: readonly GuidedPhase[] = ["sweep", "hold", "brake"];
 
 export interface GuidedStep {
   phase: GuidedPhase;
   label: string;
   title: string;
   instruction: string;
+  /** The brake step's firm stops counted so far, once it has started. */
+  progress: string | null;
   state: "done" | "current" | "todo";
 }
 
@@ -643,15 +657,30 @@ function guidedInstruction(
     from: speed(GUIDED_SWEEP_FROM_KMH),
     to: speed(GUIDED_SWEEP_TO_KMH),
     drop: speed(GUIDED_COAST_DROP_KMH),
+    brakeFrom: speed(GUIDED_BRAKE_FROM_KMH),
+    brakeTo: speed(GUIDED_BRAKE_TO_KMH),
+    stops: GUIDED_BRAKE_STOPS,
     unit: t(speedUnitKey(unit)),
   });
 }
 
 /**
+ * How many firm stops the server counted in the brake step, by the analysis's
+ * own braking rule (`guided_brake_stops`).
+ */
+function brakeProgress(stops: number, t: Translate): string {
+  const vars = { n: stops, total: GUIDED_BRAKE_STOPS };
+  return stops >= GUIDED_BRAKE_STOPS
+    ? t("dashboard.guided.brake.progress_done", vars)
+    : t("dashboard.guided.brake.progress", vars);
+}
+
+/**
  * The optional guided test drive shown while a run records. The server
- * reports the step in progress and the steps completed so far, so the panel
- * survives a page reload mid-run. An EV drives without top gear or neutral:
- * its steps are the sweep and the hold (docs/user_journeys.md §5.3).
+ * reports the step in progress, the steps completed so far and the brake
+ * step's firm stops, so the panel survives a page reload mid-run. An EV drives
+ * without top gear or neutral: its steps are the sweep, the hold and the
+ * firm stops (docs/user_journeys.md §5.3).
  */
 export function guidedTestModel(
   status: LoggingStatusPayload,
@@ -667,19 +696,24 @@ export function guidedTestModel(
   const finished =
     current === null && order.every((step) => completed.includes(step));
   const index = current ? order.indexOf(current) : finished ? order.length : -1;
-  const steps = order.map((phase, i) => ({
-    phase,
-    label: t("dashboard.guided.step_label", {
-      n: i + 1,
-      total: order.length,
-    }),
-    title: t(`dashboard.guided.${phase}.title`),
-    instruction: guidedInstruction(phase, unit, electric, t),
-    state: (i < index ? "done" : i === index ? "current" : "todo") as
-      | "done"
-      | "current"
-      | "todo",
-  }));
+  const steps = order.map((phase, i) => {
+    const state: GuidedStep["state"] =
+      i < index ? "done" : i === index ? "current" : "todo";
+    return {
+      phase,
+      label: t("dashboard.guided.step_label", {
+        n: i + 1,
+        total: order.length,
+      }),
+      title: t(`dashboard.guided.${phase}.title`),
+      instruction: guidedInstruction(phase, unit, electric, t),
+      progress:
+        phase === "brake" && state !== "todo"
+          ? brakeProgress(status.guided_brake_stops, t)
+          : null,
+      state,
+    };
+  });
   let action: GuidedTestModel["action"] = null;
   if (index < 0) {
     action = { label: t("dashboard.guided.start"), phase: order[0] };

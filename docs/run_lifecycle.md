@@ -112,15 +112,21 @@ During recording:
   Live page's elapsed timer counts on from it with the browser clock, never
   from `start_time_utc`, which is wrong while the Pi clock is unset
 - the optional guided test drive on the Live page posts each step to
-  `POST /api/recording/guided-phase` (`sweep`, `hold`, `coast_down`, or `null`
-  to end the test). `RunRecordingSessionService` closes the open step and starts
+  `POST /api/recording/guided-phase` (`sweep`, `hold`, `coast_down`, `brake`,
+  or `null` to end the test). `RunRecordingSessionService` closes the open step and starts
   the next one at the current run time (seconds since the run's live start, the
   same clock as sample `t_s`); the steps are stored as `guided_phases` in the
   run metadata when the run is finalized. Markers outside a recording are
   ignored. Status reports the step in progress as `guided_phase` and the
   distinct steps finished so far as `guided_phases_completed`, so a Live page
   reloaded mid-run restores the guided panel (including a finished test). The
-  step texts name their speeds in the UI's speed unit.
+  step texts name their speeds in the UI's speed unit. While the `brake` step
+  is open, each flush tick feeds the tick's stored speed to
+  `GuidedBrakeStops` (`recording/guided_brake_stops.py`), which counts firm
+  stops with the analysis's own `braking_intervals` (see "Braking" in
+  [analysis_pipeline.md](analysis_pipeline.md)); status reports the count as
+  `guided_brake_stops`. A stop counts about 3 s after it ends, once its last
+  speed slopes are final.
 - the Live page posts the browser clock (`POST /api/system/browser-clock`)
   before `POST /api/recording/start`, so an unset Pi clock is stepped first,
   and again after a successful `POST /api/recording/stop`, so a run the browser

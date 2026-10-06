@@ -241,6 +241,7 @@ class RunRecorder:
             last_run_id=last_run_id,
             guided_phase=self._recording_session.current_guided_phase(),
             guided_phases_completed=self._recording_session.completed_guided_phases(),
+            guided_brake_stops=self._recording_session.guided_brake_stops(),
         )
 
     def mark_guided_phase(self, phase: GuidedPhaseName | None) -> RunRecorderStatusSnapshot:

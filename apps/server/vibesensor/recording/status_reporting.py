@@ -61,6 +61,7 @@ class RunRecorderStatusSnapshot:
     last_run_id: str | None = None
     guided_phase: GuidedPhaseName | None = None
     guided_phases_completed: tuple[GuidedPhaseName, ...] = ()
+    guided_brake_stops: int = 0
 
 
 def build_run_recorder_status(
@@ -76,6 +77,7 @@ def build_run_recorder_status(
     last_run_id: str | None = None,
     guided_phase: GuidedPhaseName | None = None,
     guided_phases_completed: tuple[GuidedPhaseName, ...] = (),
+    guided_brake_stops: int = 0,
 ) -> RunRecorderStatusSnapshot:
     """Build the compact status snapshot exposed by recorder-facing APIs."""
     post_snapshot = post_analysis.snapshot()
@@ -96,6 +98,7 @@ def build_run_recorder_status(
         last_run_id=last_run_id,
         guided_phase=guided_phase,
         guided_phases_completed=guided_phases_completed,
+        guided_brake_stops=guided_brake_stops,
     )
 
 

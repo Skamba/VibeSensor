@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.analysis.phase_segmentation import braking_intervals, speed_slopes_kmh_s
 from vibesensor.recording.raw_capture import RawCaptureLossStats
 from vibesensor.recording.run_schema import RunGuidedPhase
 
@@ -122,3 +123,59 @@ def test_guided_phases_reset_with_each_new_run(make_logger) -> None:
     assert session.guided_phases_for_run(second) == ()
     assert recorder.status().guided_phase is None
     assert recorder.status().guided_phases_completed == ()
+
+
+def _brake_step_drive() -> list[tuple[float, float]]:
+    """The guided brake step as the recorder stores it: 4 rows a second, GPS speed at 1 Hz.
+
+    A lift-off coast (0.04 g), a gentle stop (0.14 g) and a dab on the brakes too
+    short to judge (100 to 70 km/h in 3 s) first, then three firm stops from 100
+    to 40 km/h in 6 s (0.28 g), each followed by speeding up again.
+    """
+    legs = [(4.0, 100.0, 100.0), (10.0, 100.0, 85.0), (4.0, 85.0, 100.0), (8.0, 100.0, 60.0)]
+    legs += [(8.0, 60.0, 100.0), (3.0, 100.0, 70.0), (5.0, 70.0, 100.0)]
+    for _stop in range(3):
+        legs += [(4.0, 100.0, 100.0), (6.0, 100.0, 40.0), (6.0, 40.0, 100.0)]
+    legs.append((4.0, 100.0, 100.0))
+
+    def speed_at(t_s: float) -> float:
+        for duration_s, start, end in legs:
+            if t_s <= duration_s:
+                return start + (end - start) * t_s / duration_s
+            t_s -= duration_s
+        return legs[-1][2]
+
+    total_s = sum(duration_s for duration_s, _start, _end in legs)
+    return [(tick / 4.0, speed_at(float(int(tick / 4.0)))) for tick in range(int(total_s * 4))]
+
+
+def test_guided_brake_step_counts_the_stops_the_analysis_sees_as_braking(make_logger) -> None:
+    recorder = make_logger()
+    recorder.start_recording()
+    session = recorder._recording_session
+    drive = _brake_step_drive()
+    start_s = 100.0
+
+    # Braking outside the brake step is the analysis's business, not the step's.
+    session.mark_guided_phase("hold")
+    for t_s, speed in drive:
+        session.observe_speed(t_s, speed)
+    assert recorder.status().guided_brake_stops == 0
+
+    session.mark_guided_phase("brake")
+    seen: list[int] = []
+    for t_s, speed in drive:
+        session.observe_speed(start_s + t_s, speed)
+        if not seen or seen[-1] != recorder.status().guided_brake_stops:
+            seen.append(recorder.status().guided_brake_stops)
+
+    # The coast, the gentle stop and the dab are not braking; each firm stop
+    # counts once, the same stops the analysis's braking rule finds in the
+    # whole series.
+    assert seen == [0, 1, 2, 3]
+    assert len(braking_intervals(drive, speed_slopes_kmh_s(drive))) == 3
+    # Finishing the step keeps the count for the panel; a new run starts over.
+    assert recorder.mark_guided_phase(None).guided_brake_stops == 3
+    recorder.stop_recording()
+    recorder.start_recording()
+    assert recorder.status().guided_brake_stops == 0

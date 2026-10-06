@@ -76,9 +76,10 @@ def flush_active_run_tick(
             return None, None
         live_start_mono_s = recorder._recording_session.live_start_mono_s
     timestamp_utc = utc_now_iso()
+    t_s = max(0.0, time.monotonic() - live_start_mono_s)
     live_rows = recorder._sample_flush.build_sample_records(
         run_id=snapshot.run_id,
-        t_s=max(0.0, time.monotonic() - live_start_mono_s),
+        t_s=t_s,
         timestamp_utc=timestamp_utc,
         run_start_mono_s=live_start_mono_s,
     )
@@ -88,6 +89,11 @@ def flush_active_run_tick(
             type(live_rows).__name__,
         )
         live_rows = []
+    speeds = [row.speed_kmh for row in live_rows if row.speed_kmh is not None]
+    if speeds:
+        # Rows of one tick share a timestamp; their mean speed stands for it, as
+        # in the analysis's speed series.
+        recorder._recording_session.observe_speed(t_s, sum(speeds) / len(speeds))
     auto_stop_reason = recorder._sample_flush.append_records(
         snapshot.run_id,
         snapshot.start_time_utc,

@@ -538,13 +538,13 @@ export interface components {
         };
         FirmwareStatus: "current" | "outdated" | "unknown";
         FuelTypeValue: "ICE" | "PHEV" | "EV";
-        GuidedPhaseName: "sweep" | "hold" | "coast_down";
+        GuidedPhaseName: "sweep" | "hold" | "coast_down" | "brake";
         /** Request body that marks the guided test-drive step the driver starts now. */
         GuidedPhaseRequest: {
-            /** `sweep`, `hold`, or `coast_down`; `null` ends the guided test. */
+            /** `sweep`, `hold`, `coast_down`, or `brake`; `null` ends the guided test. */
             phase: components["schemas"]["GuidedPhaseName"] | null;
         };
-        GuidedPhaseValue: "sweep" | "hold" | "coast_down";
+        GuidedPhaseValue: "sweep" | "hold" | "coast_down" | "brake";
         HTTPValidationError: {
             detail?: components["schemas"]["ValidationError"][];
         };
@@ -1109,7 +1109,9 @@ export interface components {
             /** Seconds the current run has been recording, on the Pi's monotonic clock; right even when the Pi wall clock (and so `start_time_utc`) is wrong. `null` when not recording. */
             elapsed_s?: number | null;
             enabled: boolean;
-            /** The guided test-drive step in progress (sweep, hold, coast_down), if any. */
+            /** Firm stops counted so far in the current recording's guided brake step, by the analysis's own braking rule; a stop counts about 3 s after it ends. */
+            guided_brake_stops: number;
+            /** The guided test-drive step in progress (sweep, hold, coast_down, brake), if any. */
             guided_phase?: components["schemas"]["GuidedPhaseName"] | null;
             /** Guided test-drive steps finished so far in the current recording, in the order first finished; lets the Live page restore the guided panel after a reload. */
             guided_phases_completed?: components["schemas"]["GuidedPhaseName"][];

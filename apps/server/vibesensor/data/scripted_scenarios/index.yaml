@@ -11,3 +11,4 @@ scenarios:
 - dual-fault-recovery
 - guided-wheel-coastdown
 - guided-engine-coastdown
+- guided-brake-stops

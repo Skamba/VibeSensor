@@ -435,21 +435,33 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     `dashboard.logging.auto_stopped_max_duration`.
   - It also auto-stops with `no_data_timeout` when the sensors go silent
     ([run_lifecycle.md](run_lifecycle.md)).
-- **Guided drive (optional):** three steps posted to
+- **Guided drive (optional):** four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
   1. Sweep from 50 to 120 km/h (`GUIDED_SWEEP_FROM_KMH` /
      `GUIDED_SWEEP_TO_KMH` in `apps/ui/src/config.ts`).
   2. Hold at the worst speed for about 20 s.
   3. Coast down in neutral by about 30 km/h.
+  4. Firm stops: only where it is safe and there is no traffic behind, brake
+     firmly (a brisk stop at traffic lights, not an emergency stop) from about
+     100 to 40 km/h, three times (`GUIDED_BRAKE_FROM_KMH`,
+     `GUIDED_BRAKE_TO_KMH`, `GUIDED_BRAKE_STOPS`). The step shows "n of 3 firm
+     stops counted" live, then says the test can be finished.
 
   The coast-down classifies the vibration as following road speed or engine
   speed (`_speed_dependence` in `diagnosis.py`), and a contradicting coast-down
   downgrades the verdict (`_contradicts_coast_test`).
 
-  There is no guided braking step (gap J36). Brake judder is found from the
-  firm stops of any drive: braking at 0.2 g or more for at least 2.5 s from
-  15 km/h up (see "Braking" in [analysis_pipeline.md](analysis_pipeline.md)).
-  A drive without one says the brakes were not checked.
+  Brake judder is found from the firm stops of any drive: braking at 0.2 g or
+  more for at least 2.5 s from 15 km/h up (see "Braking" in
+  [analysis_pipeline.md](analysis_pipeline.md)). A drive without one says the
+  brakes were not checked, and points to the guided firm stops. One stop from
+  100 to 40 km/h at a brisk 0.25–0.4 g lasts 4–7 s; three give the brake
+  check ample braking spectra. The step counts a stop by the analysis's own
+  rule (`guided_brake_stops` in the recording status, from
+  `recording/guided_brake_stops.py`), about 3 s after it ends, so a counted
+  stop is one the analysis brakes in; a gentle slow-down or a short dab on the
+  brakes does not count. The report lists the step as "firm stops" under the
+  guided test.
 - **Tell (target):**
   - The sweep and hold steps say "in top gear (or D) — engine checks assume top
     gear unless an OBD-II adapter measures RPM" (owner decision).
@@ -464,8 +476,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     top gear)" / "(measured)"), and the spectrum's band status names what a
     blank family needs ("needs final drive", "needs top gear or OBD-II"). The
     report states it too (`RPM_ESTIMATED_TOP_GEAR`,
-    `RULED_OUT_ENGINE_TOP_GEAR`). For an EV the guided drive is the sweep and
-    the hold, without the top-gear sentence (`guidedTestModel` in
+    `RULED_OUT_ENGINE_TOP_GEAR`). For an EV the guided drive is the sweep, the
+    hold and the firm stops, without the top-gear sentence; its firm-stops
+    step asks to set regenerative braking to its lowest level first, so the
+    discs do the braking (`guidedTestModel` in
     `apps/ui/src/pages/dashboard/dashboard_model.ts`); the live spectrum
     labels the driveline band "Motor 1x" and draws no engine bands
     (`orderBands`, `bandStatus` in `spectrum_model.ts`).
