@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-import time
 from types import SimpleNamespace
 
 import pytest
 
 from vibesensor.recording import _recorder_runtime
+from vibesensor.recording import recorder as recorder_module
 
 
 class _StopLoop(BaseException):
@@ -53,21 +53,26 @@ async def test_a_quiet_sensor_shows_while_recording_and_stops_the_run_after_a_mi
     assert logger.status().no_data_timeout_s == 60.0
     # The sensor has gone quiet: the registry dropped it from the live set.
     monkeypatch.setattr(logger.registry, "active_client_ids", lambda: [])
+    # One clock, set by the test, for the status and for the ticks' stop check.
+    # Times sit clear of the 60 s boundary: start + 60.0 - start can round below 60.
+    now_s = snapshot.start_mono_s
+    monkeypatch.setattr(recorder_module, "time", SimpleNamespace(monotonic=lambda: now_s))
+    logger._sample_flush._monotonic = lambda: now_s
 
-    logger._lifecycle.last_data_progress_mono_s = time.monotonic() - 20.0
+    now_s = snapshot.start_mono_s + 20.0
     quiet = logger.status()
     assert quiet.enabled is True
-    assert quiet.no_data_s is not None and 20.0 <= quiet.no_data_s < 25.0
+    assert quiet.no_data_s == 20.0
 
-    logger._sample_flush._monotonic = lambda: snapshot.start_mono_s + 59.0
-    logger._lifecycle.last_data_progress_mono_s = snapshot.start_mono_s
+    now_s = snapshot.start_mono_s + 59.5
     with pytest.raises(_StopLoop):
         await _recorder_runtime.run_loop(
             logger, logger=logging.getLogger(__name__), sleep=_raise_stop_loop
         )
     assert logger.status().enabled is True
+    assert logger.status().no_data_s == 59.5
 
-    logger._sample_flush._monotonic = lambda: snapshot.start_mono_s + 60.0
+    now_s = snapshot.start_mono_s + 60.5
     with pytest.raises(_StopLoop):
         await _recorder_runtime.run_loop(
             logger, logger=logging.getLogger(__name__), sleep=_raise_stop_loop

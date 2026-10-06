@@ -14,6 +14,7 @@ from tests_e2e.e2e_helpers import (
     remove_all_clients,
     run_simulator,
     sim_client_ids,
+    wait_for,
     wait_report_pdf_ready,
 )
 
@@ -26,6 +27,8 @@ _GUIDED_DURATION_S = 25.0
 # One pass of guided-brake-stops: sweep, hold, easing off to 80 km/h, three firm
 # stops (the last settles about 4 s after it ends, at 56 s), then cruising on.
 _GUIDED_BRAKE_DURATION_S = 62.0
+# How long a loaded server may take to catch up on frames the simulator already sent.
+_CATCH_UP_TIMEOUT_S = 30.0
 
 
 def _record(
@@ -34,10 +37,15 @@ def _record(
     *,
     duration_s: float = _SIM_DURATION_S,
     before_stop: Callable[[dict], None] | None = None,
+    stop_when: Callable[[dict], bool] | None = None,
     names: str | None = None,
     keep_clients: bool = False,
 ) -> tuple[str, dict]:
-    """Record *scenario*; *before_stop* sees the live recording status before the stop."""
+    """Record *scenario*; *before_stop* sees the live recording status before the stop.
+
+    With *stop_when*, the stop waits until the live status satisfies it: a loaded
+    server can still be working through frames the simulator has already sent.
+    """
     base = e2e_env["base_url"]
     if not keep_clients:
         remove_all_clients(base)
@@ -55,8 +63,21 @@ def _record(
         speed_kmh=80.0,
         **({"names": names} if names is not None else {}),
     )
+    status = api_json(base, "/api/recording/status")
+    if stop_when is not None:
+
+        def _status_when_ready() -> dict | None:
+            current = api_json(base, "/api/recording/status")
+            return current if stop_when(current) else None
+
+        status = wait_for(
+            _status_when_ready,
+            timeout_s=_CATCH_UP_TIMEOUT_S,
+            message="the live recording status never got there",
+            state=lambda: api_json(base, "/api/recording/status"),
+        )
     if before_stop is not None:
-        before_stop(api_json(base, "/api/recording/status"))
+        before_stop(status)
     api_json(base, "/api/recording/stop", method="POST")
     run = _wait_complete(base, run_id)
     assert run["status"] == "complete", run
@@ -269,6 +290,8 @@ def test_guided_brake_step_counts_its_stops_and_checks_the_brakes_e2e(
         "guided-brake-stops",
         duration_s=_GUIDED_BRAKE_DURATION_S,
         before_stop=live_status.append,
+        # Each stop is counted once it has settled; wait for the third.
+        stop_when=lambda status: status["guided_brake_stops"] >= 3,
     )
     try:
         # The Live page's brake step counted each firm stop as it settled.

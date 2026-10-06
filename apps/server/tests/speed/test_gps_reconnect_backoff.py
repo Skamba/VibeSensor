@@ -13,6 +13,10 @@ from vibesensor.speed.gps_transport_lifecycle import (
     GPS_RECONNECT_MAX_DELAY_S,
 )
 
+# Read timeout for tests whose fake gpsd answers every probe: an unanswered probe
+# reconnects, so it must outlast a busy runner's scheduling delays.
+_ANSWERED_READ_TIMEOUT_S = 0.25
+
 
 class TestGPSReconnectBackoff:
     """Cover reconnect delay growth and capping."""
@@ -71,7 +75,11 @@ class TestGPSReconnectBackoff:
 @pytest.mark.asyncio
 async def test_gpsd_version_banner_is_no_receiver(monkeypatch: pytest.MonkeyPatch) -> None:
     """gpsd greets with VERSION and an empty DEVICES list when nothing is plugged in."""
-    monkeypatch.setattr("vibesensor.speed.gps_transport_lifecycle.GPS_READ_TIMEOUT_S", 0.02)
+    # Short enough to probe often, long enough that a loaded runner still gets each
+    # answer in time (an unanswered probe reconnects).
+    monkeypatch.setattr(
+        "vibesensor.speed.gps_transport_lifecycle.GPS_READ_TIMEOUT_S", _ANSWERED_READ_TIMEOUT_S
+    )
     monitor = GPSSpeedMonitor(gps_enabled=True)
     release = asyncio.Event()
     queries: list[bytes] = []
@@ -94,7 +102,7 @@ async def test_gpsd_version_banner_is_no_receiver(monkeypatch: pytest.MonkeyPatc
     task = asyncio.create_task(monitor.run(host=host, port=port))
     try:
         # A quiet gpsd is asked for its devices instead of being reconnected to.
-        assert await async_wait_until(lambda: len(queries) >= 3, timeout_s=3.0)
+        assert await async_wait_until(lambda: len(queries) >= 3, timeout_s=10.0)
         status = monitor.status_snapshot()
         assert (status.device, status.fix_wait_s) == (None, None)
         assert monitor.connection_state == "connected"
@@ -113,14 +121,18 @@ async def test_gpsd_without_receiver_keeps_the_session_for_a_hot_plugged_one(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """No receiver: stay connected, no warnings; a hot-plugged receiver reuses the session."""
-    monkeypatch.setattr("vibesensor.speed.gps_transport_lifecycle.GPS_READ_TIMEOUT_S", 0.02)
+    monkeypatch.setattr(
+        "vibesensor.speed.gps_transport_lifecycle.GPS_READ_TIMEOUT_S", _ANSWERED_READ_TIMEOUT_S
+    )
     monitor = GPSSpeedMonitor(gps_enabled=True)
     sessions = 0
+    answered = 0
     plug_in = asyncio.Event()
     fix = asyncio.Event()
     release = asyncio.Event()
 
     async def _answer_queries(reader, writer):
+        nonlocal answered
         while True:
             line = await reader.readline()
             if not line:
@@ -128,6 +140,7 @@ async def test_gpsd_without_receiver_keeps_the_session_for_a_hot_plugged_one(
             if not plug_in.is_set():
                 writer.write(b'{"class":"DEVICES","devices":[]}\n')
                 await writer.drain()
+                answered += 1
 
     async def _handler(reader, writer):
         nonlocal sessions
@@ -138,13 +151,14 @@ async def test_gpsd_without_receiver_keeps_the_session_for_a_hot_plugged_one(
         answering = asyncio.create_task(_answer_queries(reader, writer))
         await plug_in.wait()
         writer.write(b'{"class":"DEVICE","path":"/dev/ttyACM0","activated":"2026-10-06T10:00Z"}\n')
-        while not fix.is_set():
-            writer.write(b'{"class":"TPV","device":"/dev/ttyACM0","mode":1}\n')
+        # A receiver reports once a second; it never goes quiet until released.
+        while not release.is_set():
+            if fix.is_set():
+                writer.write(b'{"class":"TPV","device":"/dev/ttyACM0","mode":3,"speed":10.0}\n')
+            else:
+                writer.write(b'{"class":"TPV","device":"/dev/ttyACM0","mode":1}\n')
             await writer.drain()
-            await asyncio.sleep(0.005)
-        writer.write(b'{"class":"TPV","device":"/dev/ttyACM0","mode":3,"speed":10.0}\n')
-        await writer.drain()
-        await release.wait()
+            await asyncio.sleep(0.02)
         answering.cancel()
         writer.close()
 
@@ -153,18 +167,18 @@ async def test_gpsd_without_receiver_keeps_the_session_for_a_hot_plugged_one(
     caplog.set_level("DEBUG", logger="vibesensor.speed.gps_transport_runner")
     task = asyncio.create_task(monitor.run(host=host, port=port))
     try:
-        assert await async_wait_until(
-            lambda: monitor.connection_state == "connected", timeout_s=2.0
-        )
-        await asyncio.sleep(0.2)
+        # Quiet reads while nothing is plugged in are probed, not reconnected.
+        assert await async_wait_until(lambda: answered >= 2, timeout_s=10.0)
+        assert monitor.connection_state == "connected"
         assert monitor.device_info is None
         plug_in.set()
-        assert await async_wait_until(lambda: monitor.device_info == "/dev/ttyACM0", timeout_s=2.0)
-        await asyncio.sleep(0.05)
-        waiting = monitor.status_snapshot()
-        assert waiting.fix_wait_s is not None and waiting.fix_wait_s > 0.0
+        assert await async_wait_until(lambda: monitor.device_info == "/dev/ttyACM0", timeout_s=10.0)
+        # The receiver is there without a fix: Live counts the wait.
+        assert await async_wait_until(
+            lambda: (monitor.status_snapshot().fix_wait_s or 0.0) >= 0.1, timeout_s=10.0
+        )
         fix.set()
-        assert await async_wait_until(lambda: monitor.speed_mps == 10.0, timeout_s=2.0)
+        assert await async_wait_until(lambda: monitor.speed_mps == 10.0, timeout_s=10.0)
         assert monitor.status_snapshot().fix_wait_s is None
     finally:
         release.set()
