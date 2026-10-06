@@ -881,14 +881,14 @@ test("car rows show the drive layout, or that it was not given", () => {
 
 test("the wizard asks the engine only where the library does not say, never for an EV", () => {
   // A library variant names its engine: nothing to ask, the library's is saved.
-  const g32 = {
-    name: "640i (2018\u20132019)",
+  const sixCylinder = {
+    name: "540i",
     drivetrain: "RWD",
     engine: "B58 3.0L I6 Turbo",
     engine_profile: { layout: "inline", cylinders: 6 },
   } as const;
   const library = specs({
-    selectedVariant: g32,
+    selectedVariant: sixCylinder,
     selectedTire: TIRE,
     selectedGearbox: GEARBOX,
   });

@@ -91,6 +91,8 @@ class OrderBandPayload(TypedDict):
     key: str
     center_hz: float
     tolerance: float
+    # The engine's firing order (E3 for a six); absent on every other band.
+    firing: NotRequired[bool]
 
 
 class RotationalSpeedsPayload(TypedDict):

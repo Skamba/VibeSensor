@@ -37,6 +37,7 @@ from test_support.sim_pipeline import (
 
 from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sensor_frame import SensorFrame
@@ -66,6 +67,31 @@ EV_NO_RATIO_CAR = replace(EV_CAR, final_drive_entered=False)
 FWD_CAR = replace(OTHER_CAR, name="FWD hatchback", drive_layout="FWD")
 RWD_CAR = replace(DEFAULT_CAR, name="RWD saloon", drive_layout="RWD")
 AWD_CAR = replace(DEFAULT_CAR, name="AWD saloon", drive_layout="AWD")
+# A rear-wheel-drive saloon with an inline-six and an 8-speed automatic:
+# 225/45 R18 tires, final drive 3.15, top gear 0.67. The six fires three times
+# per crank turn (E3), 6.33 times per wheel turn in top gear: on P2 (6.30).
+INLINE_6_CAR = BenchCar(
+    "Inline-6 RWD saloon",
+    225.0,
+    45.0,
+    18.0,
+    3.15,
+    0.67,
+    fuel_type="ICE",
+    drive_layout="RWD",
+    engine_profile=EngineProfile("inline", 6),
+)
+# Its 5th to 8th gears; 6th is direct (1:1), where E1 is P1.
+_FIFTH_OF_8, _SIXTH_OF_8, _SEVENTH_OF_8, _EIGHTH_OF_8 = 1.32, 1.00, 0.84, 0.67
+# The other car's ratios with a known engine: an inline-3 fires at E1.5, an
+# inline-4 at E2, a V8 at E4, none of them on a wheel or propshaft order.
+INLINE_3_CAR = replace(
+    OTHER_CAR, name="Inline-3 hatchback", fuel_type="ICE", engine_profile=EngineProfile("inline", 3)
+)
+INLINE_4_CAR = replace(
+    OTHER_CAR, name="Inline-4 hatchback", fuel_type="ICE", engine_profile=EngineProfile("inline", 4)
+)
+V8_CAR = replace(OTHER_CAR, name="V8 coupe", fuel_type="ICE", engine_profile=EngineProfile("v", 8))
 CARS = {
     "default": DEFAULT_CAR,
     "other": OTHER_CAR,
@@ -74,6 +100,10 @@ CARS = {
     "fwd": FWD_CAR,
     "rwd": RWD_CAR,
     "awd": AWD_CAR,
+    "inline_6": INLINE_6_CAR,
+    "inline_3": INLINE_3_CAR,
+    "inline_4": INLINE_4_CAR,
+    "v8": V8_CAR,
 }
 # Every case runs on these two cars unless it names its own.
 BOTH_CARS = ("default", "other")
@@ -373,6 +403,31 @@ _ENGINE_FIRST_ORDER = Profile(
     modulation_depth=0.10,
     reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
+
+
+def _engine_firing(name: str, *tones: tuple[float, tuple[float, float, float]]) -> Profile:
+    """The engine_order profile's sound at the crank orders *tones* ``(multiple, amps_xyz)``."""
+    return replace(
+        PROFILE_LIBRARY["engine_order"],
+        name=f"bench_{name}",
+        order_tones=tuple(("engine_1x", multiple, amps) for multiple, amps in tones),
+    )
+
+
+# A rough-running six or worn engine mounts: the firing rhythm (E3) shakes the car.
+_SIX_FIRING = _engine_firing("six_firing", (3.0, (185.0, 128.0, 248.0)))
+# An inline-3's firing rhythm (E1.5) over its built-in rocking couple (E1).
+_THREE_FIRING = _engine_firing(
+    "three_firing", (1.5, (185.0, 128.0, 248.0)), (1.0, (62.0, 46.0, 92.0))
+)
+# A V8's firing rhythm (E4).
+_V8_FIRING = _engine_firing("v8_firing", (4.0, (185.0, 128.0, 248.0)))
+# A propshaft joint working at an angle: twice per shaft turn (P2) dominates.
+_PROPSHAFT_JOINT = replace(
+    PROFILE_LIBRARY["driveshaft_imbalance"],
+    name="bench_propshaft_joint",
+    order_tones=(("shaft_1x", 2.0, (150.0, 120.0, 190.0)), ("shaft_1x", 1.0, (45.0, 36.0, 60.0))),
+)
 # An out-of-round tire: twice per wheel turn dominates, well over 3 dB above T1.
 _TIRE_OUT_OF_ROUND = Profile(
     name="bench_tire_out_of_round",
@@ -653,6 +708,10 @@ _BENCH_PROFILES = {
     profile.name: profile
     for profile in (
         _ENGINE_FIRST_ORDER,
+        _SIX_FIRING,
+        _THREE_FIRING,
+        _V8_FIRING,
+        _PROPSHAFT_JOINT,
         _BRAKE_JUDDER,
         _TIRE_OUT_OF_ROUND,
         _IMBALANCED_OVAL_TIRE,
@@ -830,6 +889,110 @@ GEAR_CASES = (
         speed_source="obd2",
         obd_rpm=True,
         cars=("other",),
+    ),
+)
+
+
+def _eight_speed_upshifts(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Pull from 30 to 115 km/h, shifting up from 5th through 6th and 7th to 8th."""
+    return (
+        _phase("fifth", 8.0, 30.0, 55.0, *faults, gear=_FIFTH_OF_8),
+        _phase("sixth", 8.0, 55.0, 75.0, *faults, gear=_SIXTH_OF_8),
+        _phase("seventh", 8.0, 75.0, 95.0, *faults, gear=_SEVENTH_OF_8),
+        _phase("eighth", 8.0, 95.0, 115.0, *faults, gear=_EIGHTH_OF_8),
+    )
+
+
+_SIX_AT_ENGINE_BAY = (
+    _ov("front-axle", _SIX_FIRING.name, 0.74, 0.94),
+    _ov("VS-70 engine", _SIX_FIRING.name, 0.74, 0.94),
+)
+_PROPSHAFT_JOINT_AT_REAR = (
+    _ov("rear-axle", _PROPSHAFT_JOINT.name, 0.80, 0.95),
+    _ov("front-axle", _PROPSHAFT_JOINT.name, 0.35, 0.60),
+)
+ENGINE_PROFILE_CASES = (
+    # The six shaking at its firing rhythm in top gear, GPS only: E3 and
+    # the propshaft's P2 are the same peaks, so the report names both and is
+    # never Strong. Felt strongest at the front, the engine is named first.
+    Case(
+        "bench-inline6-firing-top-gear-sweep",
+        _sweep(*_SIX_AT_ENGINE_BAY),
+        _fault("engine", {"engine_bay"}, "E3", levels=MODERATE),
+        layout=WITH_ENGINE_BAY,
+        cars=("inline_6",),
+    ),
+    # A real propshaft joint fault on the same car, GPS only: the same two names,
+    # the propshaft first, felt strongest at the rear axle.
+    Case(
+        "bench-inline6-propshaft-joint-sweep",
+        _sweep(*_PROPSHAFT_JOINT_AT_REAR),
+        _fault("driveline", DRIVELINE_ZONES, "P2", levels=MODERATE),
+        cars=("inline_6",),
+    ),
+    # The guided coast-down: the shake stops when the engine drops to idle in
+    # neutral, so it is the engine's firing rhythm.
+    Case(
+        "bench-inline6-guided-firing",
+        _guided(*_SIX_AT_ENGINE_BAY, coast=(_ov("all", "engine_idle", 0.2, 0.6),)),
+        _fault(
+            "engine",
+            {"engine_bay"},
+            "E3",
+            speed_dependence="engine_speed",
+            levels=MODERATE_OR_STRONG,
+        ),
+        layout=WITH_ENGINE_BAY,
+        cars=("inline_6",),
+    ),
+    # OBD-II RPM while shifting up through 5th to 8th: E3 follows the RPM through
+    # every shift and sits on P2 only in 8th.
+    Case(
+        "bench-inline6-obd-rpm-firing-upshifts",
+        _eight_speed_upshifts(*_SIX_AT_ENGINE_BAY),
+        _fault("engine", {"engine_bay"}, "E3"),
+        layout=WITH_ENGINE_BAY,
+        speed_source="obd2",
+        obd_rpm=True,
+        cars=("inline_6",),
+    ),
+    # The propshaft joint on the same pull: P2 follows the speed, not the RPM.
+    Case(
+        "bench-inline6-obd-rpm-propshaft-joint-upshifts",
+        _eight_speed_upshifts(*_PROPSHAFT_JOINT_AT_REAR),
+        _fault("driveline", DRIVELINE_ZONES, "P2", levels=MODERATE_OR_STRONG),
+        speed_source="obd2",
+        obd_rpm=True,
+        cars=("inline_6",),
+    ),
+    Case("bench-inline6-healthy-sweep", _sweep(), NO_FAULT, cars=("inline_6",)),
+    # Each engine's firing rhythm where no road order sits: the engine, Strong.
+    Case(
+        "bench-inline-3-firing-sweep",
+        _sweep(
+            _ov("front-axle", _THREE_FIRING.name, 0.74, 0.94),
+            _ov("rear-axle", _THREE_FIRING.name, 0.42, 0.94),
+        ),
+        _fault("engine", {"engine_bay"}, "E1.5"),
+        cars=("inline_3",),
+    ),
+    Case(
+        "bench-inline-4-firing-sweep",
+        _sweep(
+            _ov("front-axle", "engine_order", 0.74, 0.94),
+            _ov("rear-axle", "engine_order", 0.42, 0.94),
+        ),
+        _fault("engine", {"engine_bay"}, "E2"),
+        cars=("inline_4",),
+    ),
+    Case(
+        "bench-v8-firing-sweep",
+        _sweep(
+            _ov("front-axle", _V8_FIRING.name, 0.74, 0.94),
+            _ov("rear-axle", _V8_FIRING.name, 0.42, 0.94),
+        ),
+        _fault("engine", {"engine_bay"}, "E4"),
+        cars=("v8",),
     ),
 )
 
@@ -1417,7 +1580,7 @@ BENCH_CASES = (
         _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_SENSOR,
     ),
-    # The owner's setup: one sensor at the front-left wheel, the imbalance at the
+    # One sensor at the front-left wheel, the imbalance at the
     # rear-right wheel, felt there at about a third of its level. Still a wheel
     # fault, never "at the front-left wheel".
     Case(
@@ -1520,6 +1683,7 @@ BENCH_CASES = (
         ),
     ),
     *GEAR_CASES,
+    *ENGINE_PROFILE_CASES,
     *EV_CASES,
     *REALISM_CASES,
 )
@@ -1598,6 +1762,7 @@ PDF_CASES = frozenset(
         ("bench-front-brake-judder-stops", "default"),
         ("bench-fwd-front-driveline-sweep", "fwd"),
         ("bench-healthy-sweep", "fwd"),
+        ("bench-inline6-firing-top-gear-sweep", "inline_6"),
     }
 )
 _UNEXPLAINED_HEADLINE_EN = "Vibration found, but no checked cause explains it"
@@ -1610,15 +1775,60 @@ _PDF_HEADLINES = {
     "no_fault": ("no significant vibration found", "geen noemenswaardige trilling gevonden"),
 }
 
-# The simulator's order tone (profile key, multiple) behind each order label.
-_ORDER_TONES = {
-    "T1": ("wheel_1x", 1.0),
-    "T2": ("wheel_2x", 1.0),
-    "P1": ("shaft_1x", 1.0),
-    "P2": ("shaft_1x", 2.0),
-    "E1": ("engine_1x", 1.0),
-    "E2": ("engine_2x", 1.0),
+# The simulator's order keys as (base key, multiple of it): wheel_2x is the
+# wheel's 2nd order, engine_2x the crank's.
+_TONE_KEYS = {
+    "wheel_1x": ("wheel_1x", 1.0),
+    "wheel_2x": ("wheel_1x", 2.0),
+    "shaft_1x": ("shaft_1x", 1.0),
+    "engine_1x": ("engine_1x", 1.0),
+    "engine_2x": ("engine_1x", 2.0),
 }
+_ORDER_BASES = {"T": "wheel_1x", "P": "shaft_1x", "E": "engine_1x"}
+_ORDER_SOURCES = {"T": "wheel/tire", "P": "driveline", "E": "engine"}
+
+
+def _tone(key: str, multiple: float) -> tuple[str, float]:
+    """A simulator order tone as (base key, multiple of it)."""
+    base, base_multiple = _TONE_KEYS[key]
+    return base, base_multiple * multiple
+
+
+def _order_tone(order_code: str) -> tuple[str, float]:
+    """The simulator tone behind an order label: ``E1.5`` is the crank's 1.5th order."""
+    return _ORDER_BASES[order_code[0]], float(order_code[1:])
+
+
+def _engine_multiples(car: BenchCar) -> tuple[float, ...]:
+    """The crank orders the car's engine shakes at, from its profile.
+
+    E1 (the crank turning) and the firing rhythm: a four-stroke fires every
+    cylinder once per two crank turns, E(n/2). The bench engines' built-in
+    imbalance (an inline-3's E1, an inline-4's E2) adds no other order. Without
+    a profile E1 and E2; an EV has no engine.
+    """
+    if car.fuel_type == "EV":
+        return ()
+    if car.engine_profile is None:
+        return (1.0, 2.0)
+    return tuple(sorted({1.0, car.engine_profile.cylinders / 2}))
+
+
+def _engine_code(multiple: float) -> str:
+    return f"E{multiple:g}"
+
+
+def _turns_per_wheel_turn(car: BenchCar, order_code: str, gear: float | None = None) -> float:
+    """How often an order repeats per wheel turn, the engine in *gear* (its top gear by default)."""
+    multiple = _order_tone(order_code)[1]
+    if order_code[0] == "T":
+        return multiple
+    shaft = multiple * car.final_drive_ratio
+    if order_code[0] == "P":
+        return shaft
+    return shaft * (car.current_gear_ratio if gear is None else gear)
+
+
 _SIM_MG_PER_COUNT = 1000.0 / 256.0  # ADXL345 full-resolution counts
 _FRAME_SAMPLES = 200  # samples per simulated DATA frame (test_support.sim_pipeline)
 # A slow, one-sided sync exchange on busy Wi-Fi can step a sensor clock by up to
@@ -1630,11 +1840,12 @@ def injected_order_mg(
     phases: tuple[ScenarioPhase, ...],
     order_code: str,
     layout: tuple[BenchSensor, ...] = SENSORS,
+    car: BenchCar = DEFAULT_CAR,
 ) -> dict[str, float]:
     """Peak order-tone amplitude (mg, 3-axis vector) each location receives in any phase.
 
-    In a gear that puts an engine order on a propshaft order, the engine's tone
-    is that order's too.
+    In a gear that puts an engine order on a wheel or propshaft order, the
+    engine's tone is that order's too, and the other way round.
     """
     clients = [
         SimClient(
@@ -1652,7 +1863,7 @@ def injected_order_mg(
     ]
     injected = {sensor.location_code: 0.0 for sensor in layout}
     for phase in phases:
-        tones = _phase_tones(phase, order_code)
+        tones = _phase_tones(phase, order_code, car)
         apply_phase(clients, "ground-truth", phase)
         speeds = _phase_speeds_kmh(phase)
         for sensor, client in zip(layout, clients, strict=True):
@@ -1671,8 +1882,9 @@ def injected_order_mg(
 def _is_tone(key: str, multiple: float, tones: set[tuple[str, float]]) -> bool:
     """Whether a profile tone is one of *tones*: the same order, within the order tolerance
     (a wheel on a slightly smaller tire turns a little faster)."""
+    base, total = _tone(key, multiple)
     return any(
-        key == tone_key and abs(multiple - tone_multiple) <= _ORDER_TOLERANCE_REL * tone_multiple
+        base == tone_key and abs(total - tone_multiple) <= _ORDER_TOLERANCE_REL * tone_multiple
         for tone_key, tone_multiple in tones
     )
 
@@ -1683,15 +1895,13 @@ def _phase_speeds_kmh(phase: ScenarioPhase) -> list[float]:
     return [low + step for step in range(int(high - low) + 1)] + [high]
 
 
-_ORDER_MULTIPLE = {"T1": 1.0, "T2": 2.0, "P1": 1.0, "P2": 2.0, "E1": 1.0, "E2": 2.0}
 # An order matches within 8 % of its predicted frequency.
 _ORDER_TOLERANCE_REL = 0.08
 
 
 def _order_hz(car: BenchCar, code: str, speed_kmh: float) -> float:
-    orders = car.order_hz(speed_kmh)
-    base = {"T": orders["wheel_1x"], "P": orders["shaft_1x"], "E": orders["engine_1x"]}[code[0]]
-    return base * _ORDER_MULTIPLE[code]
+    base, multiple = _order_tone(code)
+    return car.order_hz(speed_kmh)[base] * multiple
 
 
 # Every case runs on one sensor-id seed in default CI; the opt-in matrix repeats
@@ -1793,7 +2003,7 @@ def _assert_case(
         assert diagnosis["order_code"] in expected.order_codes, summary
         assert diagnosis["confidence_level"] in expected.levels, summary
         _assert_order_frequency(diagnosis, car, case, summary)
-        _assert_order_amplitude_mg(diagnosis, case)
+        _assert_order_amplitude_mg(diagnosis, case, car)
     if diagnosis["verdict"] != "no_fault":
         _assert_sensor_claims(diagnosis, case, car, summary)
     if diagnosis["source"] == "wheel/tire" and diagnosis["zone"] in _SPREAD_WHEEL_ZONES:
@@ -1807,6 +2017,15 @@ def _assert_case(
         _assert_peak_speed(diagnosis, expected.peak_speed_kmh, summary)
     _assert_spectrum_markers(diagnosis, car, case)
     assert diagnosis["conditions"]["rpm_source"] == _rpm_source(car, case)
+    assert [row["code"] for row in diagnosis["conditions"]["engine_orders"]] == [
+        _engine_code(multiple) for multiple in _engine_multiples(car)
+    ]
+    # Without measured RPM an engine order and a road-speed order at the same
+    # rhythm in top gear are named together, never Strong.
+    alternative = _expected_alternative(car, case, diagnosis)
+    assert diagnosis.get("alternative") == alternative, summary
+    if alternative is not None:
+        assert diagnosis["confidence_level"] != "strong", summary
     engine_alike = _engine_alike(car, case, diagnosis["order_code"])
     if diagnosis["speed_dependence"] != "vehicle_speed":
         # Only measured RPM or a coast-down that keeps it going tells a road-speed
@@ -1829,7 +2048,12 @@ def _assert_case(
             assert diagnosis["verdict"] == "no_fault", diagnosis["source_checks"]
             continue
         expected_check = _expected_check(
-            check["source"], car, case, engine_alike=engine_alike, candidate=diagnosis["source"]
+            check["source"],
+            car,
+            case,
+            engine_alike=engine_alike,
+            candidate=diagnosis["source"],
+            alternative=alternative,
         )
         assert (check["status"], check["reason"]) == expected_check, diagnosis["source_checks"]
     _assert_sensor_identity(result)
@@ -1878,19 +2102,55 @@ def _engine_alike(car: BenchCar, case: Case, order_code: str | None) -> bool:
     engine's ``m``-th order repeats ``m * g * final drive`` times per wheel
     turn, and a lower gear has a higher ratio than the top gear.
     """
-    if car.fuel_type == "EV" or case.obd_rpm or order_code is None or order_code[0] == "E":
+    if case.obd_rpm or order_code is None or order_code[0] == "E":
         return False
-    per_wheel_turn = _ORDER_MULTIPLE[order_code] * (
-        car.final_drive_ratio if order_code[0] == "P" else 1.0
-    )
+    per_wheel_turn = _turns_per_wheel_turn(car, order_code)
     lowest_gear = car.current_gear_ratio * (1.0 - _ORDER_TOLERANCE_REL)
     return any(
-        per_wheel_turn / (multiple * car.final_drive_ratio) >= lowest_gear for multiple in (1, 2)
+        per_wheel_turn / (multiple * car.final_drive_ratio) >= lowest_gear
+        for multiple in _engine_multiples(car)
     )
+
+
+def _expected_alternative(car: BenchCar, case: Case, diagnosis: dict) -> dict | None:
+    """The other order at the diagnosed one's rhythm in top gear, when nothing told them apart.
+
+    RPM estimated from the speed puts the engine in top gear: an engine order
+    within the order tolerance of a wheel or propshaft order there is the same
+    peaks. Measured RPM or a neutral coast-down that decided tells them apart.
+    """
+    code = diagnosis["order_code"]
+    if (
+        diagnosis["verdict"] == "no_fault"
+        or code is None
+        or case.obd_rpm
+        or diagnosis["speed_dependence"] is not None
+        or not car.final_drive_entered
+    ):
+        return None
+    engine_codes = [_engine_code(multiple) for multiple in _engine_multiples(car)]
+    others = ["T1", "T2", "P1", "P2"] if code[0] == "E" else engine_codes
+    turns = _turns_per_wheel_turn(car, code)
+    alike = []
+    for other in others:
+        other_turns = _turns_per_wheel_turn(car, other)
+        engine_turns = turns if code[0] == "E" else other_turns
+        if abs(other_turns - turns) <= _ORDER_TOLERANCE_REL * engine_turns:
+            alike.append((abs(other_turns - turns), other))
+    if not alike:
+        return None
+    other = min(alike)[1]
+    return {"source": _ORDER_SOURCES[other[0]], "order_code": other}
 
 
 def _expected_check(
-    source: str, car: BenchCar, case: Case, *, engine_alike: bool, candidate: str
+    source: str,
+    car: BenchCar,
+    case: Case,
+    *,
+    engine_alike: bool,
+    candidate: str,
+    alternative: dict | None = None,
 ) -> tuple[str, str]:
     """How a source the run did not blame is checked off.
 
@@ -1901,8 +2161,11 @@ def _expected_check(
     all when some gear puts an engine order on the diagnosed one; an EV has no
     engine. Brake judder can only be judged on a drive that braked from speed
     (an EV or PHEV may have braked on regeneration alone, so only with a hedge),
-    and a wheel order heard only while braking is the brakes, not a wheel.
+    and a wheel order heard only while braking is the brakes, not a wheel. The
+    source the diagnosis names as the other possible cause is not told apart.
     """
+    if alternative is not None and source == alternative["source"]:
+        return ("not_testable", "same_rhythm_as_candidate")
     if source == "brakes" and not case.brakes_firmly:
         return ("not_testable", "no_braking")
     if source == "brakes" and car.fuel_type in ("EV", "PHEV"):
@@ -1922,7 +2185,7 @@ def _expected_check(
     return ("ruled_out", "no_matching_order")
 
 
-def _assert_order_amplitude_mg(diagnosis: dict, case: Case) -> None:
+def _assert_order_amplitude_mg(diagnosis: dict, case: Case, car: BenchCar) -> None:
     """The strongest location's mg level is on the scale of the tone the simulator injected.
 
     It is a median over the run's matched windows (single-axis band level, smeared
@@ -1933,28 +2196,34 @@ def _assert_order_amplitude_mg(diagnosis: dict, case: Case) -> None:
     assert diagnosis["amplitude_basis"] == "order"
     strongest = diagnosis["location_amplitudes"][0]
     code = location_code_for_label(strongest["location"])
-    injected = injected_order_mg(case.phases, diagnosis["order_code"], case.layout)[code]
+    injected = injected_order_mg(case.phases, diagnosis["order_code"], case.layout, car)[code]
     assert injected > 0, (strongest, diagnosis["order_code"])
     assert injected / 40.0 <= strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
 
 
-def _phase_tones(phase: ScenarioPhase, order_code: str) -> set[tuple[str, float]]:
-    """The simulator tones at *order_code* in *phase*: its own, and an engine order's
-    when the phase's gear puts one on this propshaft order."""
-    tones = {_ORDER_TONES[order_code]}
-    gear = phase.gear_ratio
-    if gear is not None and order_code[0] == "P":
-        per_shaft_turn = _ORDER_MULTIPLE[order_code]
-        tones |= {
-            _ORDER_TONES[f"E{multiple}"]
-            for multiple in (1, 2)
-            if abs(multiple * gear - per_shaft_turn) <= _ORDER_TOLERANCE_REL * per_shaft_turn
-        }
+def _phase_tones(phase: ScenarioPhase, order_code: str, car: BenchCar) -> set[tuple[str, float]]:
+    """The simulator tones at *order_code* in *phase*: its own, and those of the
+    engine or road-speed orders the phase's gear puts on it (the car's own gear
+    unless the phase names one)."""
+    tones = {_order_tone(order_code)}
+    if car.fuel_type == "EV" or not car.final_drive_entered:
+        return tones
+    turns = _turns_per_wheel_turn(car, order_code, phase.gear_ratio)
+    engine_codes = [_engine_code(multiple) for multiple in _engine_multiples(car)]
+    others = ["T1", "T2", "P1", "P2"] if order_code[0] == "E" else engine_codes
+    for other in others:
+        other_turns = _turns_per_wheel_turn(car, other, phase.gear_ratio)
+        if abs(other_turns - turns) <= _ORDER_TOLERANCE_REL * turns:
+            tones.add(_order_tone(other))
     return tones
 
 
 def injected_sweep_kmh(
-    phases: tuple[ScenarioPhase, ...], order_code: str, *, visible_from_kmh: float = 0.0
+    phases: tuple[ScenarioPhase, ...],
+    order_code: str,
+    car: BenchCar,
+    *,
+    visible_from_kmh: float = 0.0,
 ) -> float:
     """Widest steady speed sweep (km/h, over 8 s or more) while the order's tone was injected.
 
@@ -1968,7 +2237,7 @@ def injected_sweep_kmh(
             for phase in phases
             if phase.duration_s >= 8.0
             and any(
-                _is_tone(key, multiple, _phase_tones(phase, order_code))
+                _is_tone(key, multiple, _phase_tones(phase, order_code, car))
                 for override in phase.overrides
                 for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
             )
@@ -1985,7 +2254,7 @@ def _assert_speed_chart(
     order_code = diagnosis["order_code"]
     # A wheel order at walking pace is far below the analysed band (5 Hz and up).
     visible_from = MIN_ANALYSIS_FREQ_HZ / (_order_hz(car, order_code, 100.0) / 100.0)
-    span = injected_sweep_kmh(case.phases, order_code, visible_from_kmh=visible_from)
+    span = injected_sweep_kmh(case.phases, order_code, car, visible_from_kmh=visible_from)
     if span >= 40.0:
         assert chart is not None, span
         assert [series.strongest for series in chart.series][:1] == [True]
@@ -2049,17 +2318,22 @@ def _assert_spectrum_markers(diagnosis: dict, car: BenchCar, case: Case) -> None
     high = car.wheel_hz(spectrum["speed_max_kmh"])
     assert low * 0.98 <= markers["T1"] <= high * 1.02, markers
     assert markers["T2"] == pytest.approx(2.0 * markers["T1"], rel=1e-6)
+    engine_markers = {code for code in markers if code.startswith("E")}
     if not car.final_drive_entered:
-        assert not {"P1", "P2", "E1", "E2"} & set(markers), markers
+        assert not {"P1", "P2"} & set(markers) and not engine_markers, markers
         return
     assert markers["P1"] == pytest.approx(car.final_drive_ratio * markers["T1"], rel=1e-6)
     assert markers["P2"] == pytest.approx(2.0 * markers["P1"], rel=1e-6)
-    if car.fuel_type == "EV":
-        assert not {"E1", "E2"} & set(markers), markers
+    # The engine's own orders: E1 and its firing rhythm (E1/E2 when not known).
+    multiples = _engine_multiples(car)
+    assert engine_markers == {_engine_code(multiple) for multiple in multiples}, markers
+    if not multiples:
         return
     if not case.obd_rpm:
         assert markers["E1"] == pytest.approx(car.current_gear_ratio * markers["P1"], rel=1e-6)
-    assert markers["E2"] == pytest.approx(2.0 * markers["E1"], rel=1e-6)
+    for multiple in multiples:
+        code = _engine_code(multiple)
+        assert markers[code] == pytest.approx(multiple * markers["E1"], rel=1e-6)
 
 
 def _assert_sensor_identity(result: SimPipelineResult) -> None:
@@ -2169,6 +2443,8 @@ _ENGINE_SAME_RHYTHM_TEXT = (
     "Without measured engine RPM this can also be the engine: in some gear it turns at this"
     " same rhythm."
 )
+# A diagnosis that names a second cause at the same rhythm says so.
+_HEDGE_TEXT = "Without measured engine RPM it cannot be told apart from"
 _COAST_REASONS = ("stayed_in_neutral", "stopped_in_neutral")
 _SPEED_SOURCE_TEXT = {"gps": "GPS", "obd2": "OBD"}
 _SOURCE_NAMES_EN = {
@@ -2186,7 +2462,9 @@ _BRAKE_DISCS = {
 }
 
 # What the owner is told to have checked, per diagnosed order.
-_NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round", "E2": "mounts"}
+_NEXT_STEP_KEYWORDS = {"T1": "balanced", "T2": "out-of-round"}
+# Every engine order sends the owner to the engine and gearbox mounts.
+_ENGINE_NEXT_STEP_KEYWORD = "mounts"
 _EV_NEXT_STEP_KEYWORDS = {**_NEXT_STEP_KEYWORDS, "P1": "drive unit"}
 # A driveline fault's advice follows the drive layout: a car without a propshaft
 # is sent to its gearbox output shaft; without a layout the propshaft advice
@@ -2216,13 +2494,13 @@ def _assert_report_view(
         # Measured RPM tells the engine's tone from a road-speed order it passes
         # in one gear: the worksheet lists only orders the drive really carried.
         carried = {
-            key
+            _tone(key, multiple)[0]
             for phase in case.phases
             for override in phase.overrides
-            for key, _multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+            for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
         }
         listed = {row["order_code"] for row in diagnosis["order_findings"]}
-        uncarried = {code for code in listed if _ORDER_TONES[code][0] not in carried}
+        uncarried = {code for code in listed if _order_tone(code)[0] not in carried}
         assert uncarried == set(), f"not in the drive: {sorted(uncarried)} of {sorted(listed)}"
     owner = result.report.owner
     assert owner.verdict == diagnosis["verdict"]
@@ -2242,9 +2520,27 @@ def _assert_report_view(
     if electric and not car.final_drive_entered:
         # The motor's own ratio is missing, not a final drive.
         assert _MOTOR_NO_RATIO_LINE in result.report.mechanic.ruled_out
-    # The owner is told when the engine could not be told apart from the cause.
-    same_rhythm = engine_check["reason"] == "same_rhythm_as_candidate"
+    # The owner is told when the engine could not be told apart from the cause:
+    # by name when it turns at the same rhythm in top gear.
+    alternative = diagnosis.get("alternative")
+    same_rhythm = engine_check["reason"] == "same_rhythm_as_candidate" and alternative is None
     assert (_ENGINE_SAME_RHYTHM_TEXT in owner.description) is same_rhythm, owner.description
+    assert (_HEDGE_TEXT in owner.description) is (alternative is not None), owner.description
+    if alternative is not None:
+        cause = owner.headline if diagnosis["verdict"] == "fault" else owner.candidate
+        assert cause is not None and f"({alternative['order_code']})" in cause, cause
+    # The engine the run tested: its layout and firing order when known.
+    if electric:
+        assert "Engine" not in conditions, conditions
+    elif car.engine_profile is None:
+        assert conditions["Engine"] == "not known: E1 and E2 tested", conditions
+    else:
+        firing = _engine_code(car.engine_profile.cylinders / 2)
+        assert conditions["Engine"].endswith(f"fires at {firing}"), conditions
+    # A known engine's firing rhythm is analysed; without one a six's is not.
+    never = next((item for item in owner.not_covered if item.startswith("Never analysed")), None)
+    if never is not None:
+        assert ("six-cylinder" in never) is (car.engine_profile is None and not electric), never
     if engine_check["reason"] == "top_gear_assumed":
         # The workshop is told the engine check assumed top gear.
         assert _ENGINE_TOP_GEAR_LINE in result.report.mechanic.ruled_out
@@ -2328,8 +2624,9 @@ def _assert_report_view(
             for keyword in _DRIVELINE_NEXT_STEP[car.drive_layout]:
                 assert keyword in owner.next_step, owner.next_step
         else:
+            code = diagnosis["order_code"]
             keyword = (_EV_NEXT_STEP_KEYWORDS if electric else _NEXT_STEP_KEYWORDS).get(
-                diagnosis["order_code"]
+                code, _ENGINE_NEXT_STEP_KEYWORD if code and code[0] == "E" else None
             )
             if keyword is not None and not unlocated_wheel:
                 assert keyword in owner.next_step, owner.next_step

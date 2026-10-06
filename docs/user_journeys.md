@@ -514,7 +514,9 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     and regenerative braking makes a lift-off coast no cleaner.
   - The live bands use fresh measured OBD-II RPM for the engine, and a
     missing reference blanks only its own family (`vehicle_orders_hz` in
-    `apps/server/vibesensor/dsp/order_bands.py`).
+    `apps/server/vibesensor/dsp/order_bands.py`). The engine bands are the
+    active car's engine orders (an inline-6's E1 and E3, labelled "Engine 3x,
+    firing"; E1 and E2 when the engine is not known).
   - **Today:** the guided steps and the band labels say it ("Engine 1x (est.,
     top gear)" / "(measured)"), and the spectrum's band status names what a
     blank family needs ("needs final drive", "needs top gear or OBD-II"). The
@@ -618,8 +620,24 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     final-drive ratio — add it to the car in Settings if you know it
     (optional)."), then the speeds and driving the run left out, and last
     "Never analysed: …" (`_never_analysed`): a misfiring engine's half
-    order, a six-cylinder's firing rhythm, wheel-bearing hum and, without
-    measured RPM, shaking at a standstill with the engine idling.
+    order, a six-cylinder's firing rhythm (only while the engine is not
+    known: a known engine's firing order is analysed), wheel-bearing hum and,
+    without measured RPM, shaking at a standstill with the engine idling.
+  - With a known engine the report speaks of its orders: "3 times per engine
+    revolution (the inline-6's firing rhythm)", the conditions list "Engine:
+    Inline-6, fires at E3" ("not known: E1 and E2 tested" without one), the
+    spectrum marks E1 and "E3 firing", and the advice follows the order's role
+    (firing: the engine and gearbox mounts plus a misfire/ignition read-out;
+    built-in imbalance: the mounts).
+  - Without measured RPM an engine order that sits on a wheel or propshaft
+    order in top gear (a six-cylinder 8-speed's E3 on P2) names both: "Likely cause: the
+    engine or its mounts (the engine bay), or the propshaft (P2)", Moderate at
+    most. The description says why, the fallback step is the other cause's,
+    page 2 asks the workshop to confirm with a neutral coast-down or OBD-II
+    RPM first and lists the other source as "not told apart". Felt strongest
+    at the rear, the propshaft is named first. History shows "Engine or
+    driveline" and the chip "E3 / P2". A guided coast-down or OBD-II RPM
+    through the gears names one.
   - Without measured RPM a propshaft order (and, on a car whose top gear is
     about 2 / final drive, a T2 wheel order) is also an engine order in some
     gear: page 1 says it can also be the engine, the level is Moderate at

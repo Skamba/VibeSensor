@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.engine_profile import UNKNOWN_ENGINE_ORDERS, EngineOrder
 from vibesensor.domain.speed_source import SpeedSource
 from vibesensor.dsp.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.live.payload_types import (
@@ -35,6 +38,7 @@ def build_rotational_speeds_payload(
     speed_mps: float | None,
     measured_engine_rpm: float | None = None,
     analysis_settings: AnalysisSettingsSnapshot,
+    engine_orders: Sequence[EngineOrder] = UNKNOWN_ENGINE_ORDERS,
 ) -> RotationalSpeedsPayload:
     """Assemble the ``rotational_speeds`` sub-dict for the WS payload.
 
@@ -42,7 +46,8 @@ def build_rotational_speeds_payload(
     family, and a fresh measured engine RPM (OBD-II) drives the engine values.
     A blank family's ``reason`` names the first missing reference
     (``missing_tire``, ``missing_final_drive``, ``missing_gear_ratio``), else
-    ``speed_unavailable``.
+    ``speed_unavailable``. The engine bands are *engine_orders* (the active
+    car's engine profile's).
     """
     measured_rpm = (
         float(measured_engine_rpm)
@@ -70,7 +75,7 @@ def build_rotational_speeds_payload(
             return {"rpm": None, "mode": "calculated", "reason": missing or "speed_unavailable"}
         return {"rpm": hz * SECONDS_PER_MINUTE, "mode": mode, "reason": None}
 
-    bands = build_order_bands(orders_hz)
+    bands = build_order_bands(orders_hz, engine_orders)
     return {
         "basis_speed_source": basis_speed_source,
         "wheel": _value(orders_hz.get("wheel_hz"), mode="calculated", missing=wheel_missing),

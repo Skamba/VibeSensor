@@ -257,7 +257,11 @@ function diagnosisSignature(
 ): string {
   const parts: string[] = [];
   if (diagnosis.order_code) {
-    parts.push(diagnosis.order_code);
+    // Not told apart without measured RPM: both orders sit at this frequency.
+    const other = diagnosis.alternative?.order_code;
+    parts.push(
+      other ? `${diagnosis.order_code} / ${other}` : diagnosis.order_code,
+    );
   }
   if (diagnosis.frequency_hz != null) {
     const at =
@@ -559,6 +563,20 @@ function carSourceLabel(
     : sourceLabel(source, t);
 }
 
+/** The diagnosed source; with an order not told apart from another source's,
+ * both (an engine order on the propshaft's rhythm without measured RPM). */
+function diagnosedSource(diagnosis: Diagnosis, t: Translate): string {
+  const source = carSourceLabel(diagnosis.source, diagnosis, t);
+  const other = diagnosis.alternative?.source;
+  if (!other) {
+    return source;
+  }
+  return t("history.source_or", {
+    source,
+    other: carSourceLabel(other, diagnosis, t).toLowerCase(),
+  });
+}
+
 function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.verdict === "no_fault") {
     return noFaultHeadline(diagnosis, t);
@@ -566,7 +584,7 @@ function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
   if (diagnosis.verdict === "weak_evidence") {
     return t("history.verdict.weak_evidence");
   }
-  return carSourceLabel(diagnosis.source, diagnosis, t);
+  return diagnosedSource(diagnosis, t);
 }
 
 function secondaryFinding(
@@ -624,6 +642,10 @@ const MOTOR_CHECK_REASONS = new Set<CheckReason>([
 function checkReasonKey(source: string, reason: CheckReason): string {
   if (source === "engine" && ENGINE_CHECK_REASONS.has(reason)) {
     return `engine_${reason}`;
+  }
+  // A wheel or propshaft order the diagnosed engine order turns with in top gear.
+  if (reason === "same_rhythm_as_candidate" && source !== "engine") {
+    return `road_${reason}`;
   }
   return source === "motor" && MOTOR_CHECK_REASONS.has(reason)
     ? `motor_${reason}`
@@ -978,7 +1000,7 @@ function diagnosisCard(
   const weak = diagnosis.verdict === "weak_evidence";
   const level = diagnosis.confidence_level;
   const zone = zoneText(diagnosis, t);
-  const source = carSourceLabel(diagnosis.source, diagnosis, t);
+  const source = diagnosedSource(diagnosis, t);
   const ev = electric(diagnosis);
   const unlocated = unlocatedWheel(diagnosis);
   const where = unlocated ? unlocatedWheelText(diagnosis, zone, t) : zone;

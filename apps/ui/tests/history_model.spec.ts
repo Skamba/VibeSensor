@@ -893,6 +893,32 @@ test("an all-wheel-drive car checks the axle the sensors point to first, then th
   );
 });
 
+test("an engine order on the propshaft's rhythm without measured RPM names both", () => {
+  const insights = drivelineInsights(
+    "fault",
+    {
+      source: "engine",
+      order_code: "E3",
+      confidence_level: "moderate",
+      alternative: { source: "driveline", order_code: "P2" },
+      source_checks: [
+        { source: "engine", status: "candidate", reason: null },
+        {
+          source: "driveline",
+          status: "not_testable",
+          reason: "same_rhythm_as_candidate",
+        },
+      ],
+    },
+    { drive_layout: "RWD", final_drive_axle: "rear", propshaft: true },
+  );
+  expect(insights.primary?.headline).toBe("Engine or driveline");
+  expect(insights.primary?.chips[2].value.startsWith("E3 / P2")).toBe(true);
+  expect(JSON.stringify(insights.checks)).toContain(
+    "without measured RPM, the engine's order turns at this rhythm in top gear",
+  );
+});
+
 test("a run without a drive layout keeps the propshaft wording and says the layout was not given", () => {
   const insights = drivelineInsights(
     "fault",

@@ -108,7 +108,7 @@ class RoadSceneController:
             client.pulse(pulse_strength * self.rng.uniform(0.90, 1.10))
 
     def _apply_highway_100_sync(self) -> None:
-        # 640i-like synchronized event around 100 km/h across all sensors.
+        # A synchronized event around 100 km/h across all sensors.
         pulse_strength = self.rng.uniform(0.20, 0.50)
         for client in self.clients:
             client.scene_mode = "highway100-sync"

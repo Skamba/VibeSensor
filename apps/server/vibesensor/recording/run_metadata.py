@@ -11,6 +11,7 @@ import msgspec
 
 from vibesensor.common.json_types import JsonObject, is_json_object
 from vibesensor.common.scalars import text_or_none
+from vibesensor.domain.engine_profile import engine_profile_payload
 from vibesensor.power.monitor import POWER_ISSUES, PowerIssue
 from vibesensor.recording.run_metadata_codecs import (
     PayloadFieldSpec,
@@ -54,6 +55,7 @@ from vibesensor.settings.car_config import (
     car_order_reference_status_from_mapping,
     car_order_reference_status_payload_from_domain,
     drive_layout_or_none,
+    engine_profile_or_none,
     final_drive_axle_or_none,
     fuel_type_or_none,
 )
@@ -401,6 +403,7 @@ def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:
         fuel_type=fuel_type_or_none(payload.get("fuel_type")),
         drive_layout=drive_layout_or_none(payload.get("drive_layout")),
         final_drive_axle=final_drive_axle_or_none(payload.get("final_drive_axle")),
+        engine_profile=engine_profile_or_none(payload.get("engine_profile")),
     )
     if (
         run_car.car_id is None
@@ -434,4 +437,6 @@ def run_car_metadata_to_json_object(run_car: RunCarMetadata | None) -> JsonObjec
         payload["drive_layout"] = run_car.drive_layout
     if run_car.final_drive_axle is not None:
         payload["final_drive_axle"] = run_car.final_drive_axle
+    if run_car.engine_profile is not None:
+        payload["engine_profile"] = cast(JsonObject, engine_profile_payload(run_car.engine_profile))
     return payload

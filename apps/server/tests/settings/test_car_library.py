@@ -349,11 +349,11 @@ def test_each_variant_serves_the_engine_profile_its_rows_agree_on() -> None:
         "v-10",
         "v-12",
     }
-    g32 = next(
+    g30 = next(
         variant
         for entry in get_models_for_brand_type("BMW", "Sedan")
-        if entry["model"].startswith("6 Series Gran Turismo (G32")
+        if entry["model"].startswith("5 Series (G30")
         for variant in entry["variants"]
-        if variant["name"] == "640i (2018–2019)"
+        if variant["name"] == "540i"
     )
-    assert g32["engine_profile"] == {"layout": "inline", "cylinders": 6}
+    assert g30["engine_profile"] == {"layout": "inline", "cylinders": 6}

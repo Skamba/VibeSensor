@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.domain.engine_profile import engine_orders
 from vibesensor.ingest.client_payloads import snapshot_for_api
 from vibesensor.live.payload_types import SCHEMA_VERSION, LiveWsPayload
 from vibesensor.live.processing_loop import STALE_DATA_AGE_S
@@ -75,6 +76,7 @@ class LiveWsPayloadProjector:
         resolution = self._gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
         analysis_settings_snapshot = self._settings_reader.analysis_settings_snapshot()
+        car = self._settings_reader.active_car_snapshot()
         speed_source = self._speed_source_reader.speed_source_config()
         basis = rotational_basis_speed_source(
             str(speed_source.speed_source),
@@ -92,6 +94,7 @@ class LiveWsPayloadProjector:
                 speed_mps=speed_mps,
                 measured_engine_rpm=self._gps_monitor.engine_rpm,
                 analysis_settings=analysis_settings_snapshot,
+                engine_orders=engine_orders(car.engine_profile if car is not None else None),
             ),
         }
         if include_heavy:

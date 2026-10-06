@@ -77,6 +77,7 @@ const orderBandSchema = v.looseObject({
   key: v.string(),
   center_hz: finiteNumberSchema,
   tolerance: finiteNumberSchema,
+  firing: v.optional(v.boolean()),
 });
 
 const rotationalSpeedsSchema = v.looseObject({

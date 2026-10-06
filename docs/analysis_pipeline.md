@@ -278,7 +278,8 @@ the PDF both show:
   the owner to fix. So is a wheel/tire or brake cause with `single_sensor` or
   `single_wheel_sensor` (one sensor, or one wheel sensor with others in the
   cabin): it cannot name the corner or axle a Strong level sends the owner to.
-- `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E1/E2 engine), `frequency_hz` at
+- `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E<m> engine: the orders of the
+  car's engine profile, E1/E2 when it is not known; see "Engine orders" in `docs/order_tracking.md`), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and
   `weak_reasons` codes (at most two shown, always with `single_sensor` /
   `single_wheel_sensor` when present; one sensor is never `spread_across_locations`,
@@ -354,8 +355,8 @@ the PDF both show:
     (`speed_missing`: under 35 % of the rows had a GPS/OBD-II speed above 0,
     so the order analysis placed no road-speed order; the engine stays
     testable with measured RPM, and without it a car that has a top-gear ratio
-    reads `speed_missing` rather than `no_engine_reference`), or, for the engine, `same_rhythm_as_candidate` (see "Engine
-    alias" below).
+    reads `speed_missing` rather than `no_engine_reference`), or `same_rhythm_as_candidate`: for the engine, or for
+    the source named in `alternative` (see "Engine alias" and "Engine order on a road-speed order" below).
   - `ruled_out_estimated`: no match, but the check rests on an estimate. The
     reason is `estimated_final_drive` or `estimated_top_gear` for a
     car-library ratio with `family_default` / `unverified` confidence, else
@@ -364,8 +365,8 @@ the PDF both show:
     speed. For the brakes it is `regen_braking` (see below).
   - `not_applicable` (`electric_car`): the engine of an EV (`fuel_type`
     `EV`). An EV's motor turns at the driveline order (wheel speed ×
-    reduction ratio), so the driveline check is its motor check; no E1/E2
-    markers are drawn and `speed_dependence` stays `null` (no neutral
+    reduction ratio), so the driveline check is its motor check; no engine
+    orders are tested or drawn and `speed_dependence` stays `null` (no neutral
     decouples the motor).
   - On a plug-in hybrid, a measured 0 rpm sample means the engine was off: it
     is not replaced by an estimate. If the engine ran in fewer than 35 % of
@@ -415,8 +416,8 @@ the PDF both show:
   stays in neutral, a wheel or driveline order that stops), the verdict drops
   to `weak_evidence` with the weak reason `coast_test_contradicts`.
 - Engine alias: RPM estimated from speed assumes top gear, but the drive may
-  have been in any gear. In gear `g` the engine's `m`-th order (m = 1, 2)
-  repeats `m × g × final drive` times per wheel turn, so a wheel or propshaft
+  have been in any gear. In gear `g` the engine's `m`-th order (each order of
+  the engine profile; E1 and E2 when it is not known) repeats `m × g × final drive` times per wheel turn, so a wheel or propshaft
   order sits on an engine order whenever that gives a ratio at or above the
   top gear's (within the 8 % order tolerance): P1/P2 always do in a direct
   1:1 gear, and T2 does on a car whose top gear is about 2 / final drive.
@@ -429,6 +430,18 @@ the PDF both show:
   are there (P2 → E2 and P1 → E1 in a direct gear, T2 → E1 in top gear), so
   the verdict is an engine fault, not `coast_test_contradicts`. Measured RPM
   and EVs (no gears) never alias.
+- Engine order on a road-speed order: in top gear itself an engine order can
+  sit within the order tolerance of a wheel or propshaft order (a six's E3
+  is 1.5 × top gear × P2, so on P2 with a top gear near 0.62–0.72). Without measured RPM and a coast-down that decided, the
+  two are the same peaks: the diagnosis keeps the found order, names the
+  other in `alternative` (`source`, `order_code`), is Moderate at most, and
+  marks the other source `not_testable` / `same_rhythm_as_candidate`. When
+  the shake is strongest away from the engine (rear wheels, the propshaft
+  tunnel, rear seats, the boot) the road-speed order is named first. A
+  coast-down showing `vehicle_speed` relabels an engine candidate to the
+  road-speed order (`engine_speed` relabels the other way, as above). The
+  report names both ("the engine …, or the propshaft (P2)"), gives the other
+  cause's step as the fallback and tells the workshop to confirm first.
 
 ## Adding a New Analysis Step
 

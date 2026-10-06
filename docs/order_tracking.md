@@ -78,6 +78,45 @@ cylinder's missing pulse per two turns), is a row in the table (with its role
 name), not new code. Half orders get keys and codes of their own
 (`engine_1_5x`, `E1.5`).
 
+The profile's orders are what every stage uses:
+
+- The analysis tests one hypothesis per order
+  (`analysis/orders/physics.py::_order_hypotheses(profile)`): an inline-6 is
+  tested at E1 and E3, not E2. An EV has none.
+- The run metadata snapshots the profile (`RunCarMetadata.engine_profile`), so
+  a run is analysed with the engine the car had when it was recorded.
+- The diagnosis's `conditions.engine_profile` and `conditions.engine_orders`
+  (code and roles per order) carry them to the report: the spectrum marks each
+  order, with the firing order labelled "firing"; the conditions list the
+  engine ("Inline-6, fires at E3"); the advice follows the role (firing: the
+  mounts plus a misfire/ignition read-out; imbalance: the mounts); and the
+  "never analysed" list drops the six's firing rhythm once the engine is known.
+- Live, `build_order_bands()` draws a band per order (`engine_3x`), the firing
+  one flagged `firing: true` for the spectrum legend.
+
+### Engine order on a road-speed order (the hedge)
+
+Without measured RPM the engine is placed in top gear. There an engine order
+can sit within the order tolerance of a wheel or propshaft order. A six's E3
+is 1.5 × top gear × P2: with an 8-speed's top gear of 0.64 it is 0.96 × P2
+(and with a final drive near 3.1, E1 sits on T2 too). The two are the
+same peaks, and nothing in the spectrum tells them apart. The diagnosis then:
+
+- keeps the found order and names the other in `alternative` (`source`,
+  `order_code`); the report's headline reads "the engine …, or the propshaft
+  (P2)", the description says why, the owner gets the other cause's step as the
+  fallback, and the workshop is told to confirm before replacing parts;
+- is never Strong;
+- names the road-speed order first when the shake is strongest away from the
+  engine (rear wheels, the propshaft tunnel, the rear seats or the boot);
+- marks the other source's check `not_testable` / `same_rhythm_as_candidate`.
+
+A neutral coast-down decides it: the shake stopping names the engine (a
+road-speed candidate is relabelled to the engine order), the shake going on
+names the road-speed order (an engine candidate is relabelled to it). Measured
+RPM through gear changes decides it too (see "Engine tone through a
+near-1:1 gear").
+
 Sources: J. B. Heywood, *Internal Combustion Engine Fundamentals*, 2nd ed.
 (McGraw-Hill, 2018), ch. 2 (four-stroke cycle: one power stroke per cylinder
 per two crank turns); C. F. Taylor, *The Internal-Combustion Engine in Theory
@@ -179,8 +218,9 @@ coordinates the evidence flow:
    shares most of its peaks with a wheel order (see "Confidence levels" in
    `docs/metrics.md`).
 6. Assemble a domain `Finding` with `assemble_order_finding()`. A wheel or
-   driveline finding that rides on a measured engine order produces no
-   finding (see "Engine tone through a near-1:1 gear" below).
+   driveline finding that rides on a measured engine order, or a measured
+   engine finding that rides on a wheel or driveline order, produces no finding
+   (see "Engine tone through a near-1:1 gear" below).
 7. Split multi-location wheel findings when two corners are both strong.
 8. Apply `suppress_engine_aliases()` before returning the final ranked list.
    An engine order that ranks below the best wheel order and is not clearly
@@ -304,17 +344,22 @@ near an order are needed to confirm them.
 With measured RPM, a gear near 1:1 puts E1/E2 on P1/P2 (and some gears put an
 engine order on T2). While that gear is engaged the road-speed order's window
 holds the engine's tone, so a pull through the gears gives the engine verdict
-plus P1/P2 rows the drive never carried. `pipeline.py::_rides_on_measured_engine()`
-drops a wheel or driveline finding when both hold:
+plus P1/P2 rows the drive never carried. The other way round, a propshaft
+fault on a pull through a six-cylinder 8-speed's gears puts its P2 tone in
+E3's window in 8th only. `pipeline.py::_rides_on_another_order()` drops a wheel or driveline
+finding that rides on the measured engine orders, and a measured engine
+finding that rides on the wheel and driveline orders. An order rides on others
+when both hold:
 
-- at least half (`wheel_alias_shared_peak_fraction`) of its matches have a
-  measured engine order's peak within 8 % of its own predicted frequency, and
-- under half of the measured engine orders' matches are in its window: the
-  engine went on through gears where the road-speed order did not follow.
+- at least half (`wheel_alias_shared_peak_fraction`) of its matches have one of
+  their peaks within 8 % of its own predicted frequency, and
+- under half of their matches are in its window: they went on through gears
+  where this order did not follow.
 
-A real wheel or driveline fault keeps its own peaks in every gear, so the
-first condition fails. With estimated RPM the engine order cannot be told from
-the road order (see "Engine alias" in `docs/analysis_pipeline.md`).
+A real fault keeps its own peaks in every gear, so the first condition fails.
+With estimated RPM the engine order cannot be told from the road order (see
+"Engine order on a road-speed order (the hedge)" above, and "Engine alias" in
+`docs/analysis_pipeline.md`).
 
 ## Heard matches
 

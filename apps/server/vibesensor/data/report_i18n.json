@@ -1,4 +1,28 @@
 {
+  "ALT_DRIVELINE": {
+    "en": "the propshaft ({code})",
+    "nl": "de cardanas ({code})"
+  },
+  "ALT_DRIVELINE_NO_PROPSHAFT": {
+    "en": "the gearbox output shaft or final drive ({code})",
+    "nl": "de uitgaande as van de versnellingsbak of de eindoverbrenging ({code})"
+  },
+  "ALT_ENGINE": {
+    "en": "the engine ({code})",
+    "nl": "de motor ({code})"
+  },
+  "ALT_ENGINE_FIRING": {
+    "en": "the {engine}'s firing rhythm ({code})",
+    "nl": "het ontstekingsritme van de {engine} ({code})"
+  },
+  "ALT_ENGINE_IMBALANCE": {
+    "en": "the {engine}'s built-in imbalance ({code})",
+    "nl": "de ingebouwde onbalans van de {engine} ({code})"
+  },
+  "ALT_WHEEL": {
+    "en": "a wheel or tire ({code})",
+    "nl": "een wiel of band ({code})"
+  },
   "AMPLITUDE_TITLE_ORDER": {
     "en": "Amplitude at {order} per location",
     "nl": "Amplitude bij {order} per locatie"
@@ -66,6 +90,10 @@
   "CAUSE_MOTOR": {
     "en": "the electric motor or its reduction gear ({zone})",
     "nl": "de elektromotor of de reductiekast ({zone})"
+  },
+  "CAUSE_OR": {
+    "en": "{cause}, or {other}",
+    "nl": "{cause}, of {other}"
   },
   "CAUSE_OTHER": {
     "en": "a vibration concentrated at {zone}",
@@ -162,6 +190,18 @@
   "COND_DRIVE_LAYOUT": {
     "en": "Drive layout",
     "nl": "Aangedreven wielen"
+  },
+  "COND_ENGINE": {
+    "en": "Engine",
+    "nl": "Motor"
+  },
+  "COND_ENGINE_PROFILE": {
+    "en": "{engine}, fires at {firing}",
+    "nl": "{engine}, ontsteking op {firing}"
+  },
+  "COND_ENGINE_UNKNOWN": {
+    "en": "not known: E1 and E2 tested",
+    "nl": "onbekend: E1 en E2 getest"
   },
   "COND_FINAL_DRIVE": {
     "en": "Final drive",
@@ -303,6 +343,10 @@
     "en": "A vibration at {hz}",
     "nl": "Een trilling van {hz}"
   },
+  "DESC_HEDGE": {
+    "en": "Without measured engine RPM it cannot be told apart from {other}: in top gear both repeat at this rhythm.",
+    "nl": "Zonder gemeten motortoerental is dit niet te onderscheiden van {other}: in de hoogste versnelling komen beide op dit ritme terug."
+  },
   "DESC_ONLY_WHILE_BRAKING": {
     "en": "only while braking",
     "nl": "alleen tijdens het remmen"
@@ -398,6 +442,26 @@
   "DRIVING_PHASE_SPEED_UNKNOWN": {
     "en": "unknown speed",
     "nl": "onbekende snelheid"
+  },
+  "ENGINE_FLAT": {
+    "en": "flat-{count}",
+    "nl": "{count}-cilinder boxermotor"
+  },
+  "ENGINE_INLINE": {
+    "en": "inline-{count}",
+    "nl": "{count}-in-lijn"
+  },
+  "ENGINE_ROTARY": {
+    "en": "{count}-rotor rotary engine",
+    "nl": "{count}-rotor-wankelmotor"
+  },
+  "ENGINE_V": {
+    "en": "V{count}",
+    "nl": "V{count}-motor"
+  },
+  "ENGINE_W": {
+    "en": "W{count}",
+    "nl": "W{count}-motor"
   },
   "EVIDENCE_ORDER_TRACKED": {
     "en": "{order_label} tracked over {matched}/{possible} samples (match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, reference {ref_text}).",
@@ -655,6 +719,10 @@
     "en": "not told apart: without measured RPM, in some gear the engine turns at this same rhythm; an OBD-II adapter or a neutral coast-down separates them",
     "nl": "niet te onderscheiden: zonder gemeten toerental draait de motor in een van de versnellingen op hetzelfde ritme; een OBD-II-adapter of uitrollen in neutraal maakt het verschil"
   },
+  "NOT_TESTABLE_SAME_RHYTHM_ROAD": {
+    "en": "not told apart: without measured RPM the engine's order turns at this same rhythm in top gear; an OBD-II adapter or a neutral coast-down separates them",
+    "nl": "niet te onderscheiden: zonder gemeten toerental draait de motororde in de hoogste versnelling op hetzelfde ritme; een OBD-II-adapter of uitrollen in neutraal maakt het verschil"
+  },
   "NOT_TESTABLE_SPEED_MISSING": {
     "en": "not testable: the live speed was missing for most of the drive, so no order could be placed",
     "nl": "niet te testen: de live snelheid ontbrak het grootste deel van de rit, dus geen orde was te bepalen"
@@ -678,6 +746,18 @@
   "ORDER_E2_NOTE": {
     "en": "the firing rhythm of a 4-cylinder",
     "nl": "het ontstekingsritme van een 4-cilinder"
+  },
+  "ORDER_E_TIMES": {
+    "en": "{times} times per engine revolution",
+    "nl": "{times} keer per motoromwenteling"
+  },
+  "ORDER_NOTE_FIRING": {
+    "en": "the {engine}'s firing rhythm",
+    "nl": "het ontstekingsritme van de {engine}"
+  },
+  "ORDER_NOTE_IMBALANCE": {
+    "en": "the {engine}'s built-in imbalance",
+    "nl": "de ingebouwde onbalans van de {engine}"
   },
   "ORDER_P1": {
     "en": "once per propshaft turn",
@@ -1215,6 +1295,14 @@
     "en": "Compare E1 and E2 under load: E1 points to a rotating imbalance (crank pulley, flywheel, torque converter); E2 to firing pulses and mounts on a 4-cylinder.",
     "nl": "Vergelijk E1 en E2 onder belasting: E1 wijst op een draaiende onbalans (krukaspoelie, vliegwiel, koppelomvormer); E2 op ontstekingspulsen en steunen bij een 4-cilinder."
   },
+  "SHOP_ENGINE_ORDERS_PROFILE": {
+    "en": "Compare E1 and {firing} under load: E1 points to a rotating imbalance (crank pulley, flywheel, torque converter); {firing} is the {engine}'s firing rhythm: mounts, misfire and ignition.",
+    "nl": "Vergelijk E1 en {firing} onder belasting: E1 wijst op een draaiende onbalans (krukaspoelie, vliegwiel, koppelomvormer); {firing} is het ontstekingsritme van de {engine}: steunen, overslaan en ontsteking."
+  },
+  "SHOP_HEDGE": {
+    "en": "{code} and {other} sit at the same frequency in top gear and the RPM was estimated from speed: confirm with a neutral coast-down or OBD-II RPM before replacing parts.",
+    "nl": "{code} en {other} liggen in de hoogste versnelling op dezelfde frequentie en het toerental is geschat uit de snelheid: bevestig met uitrollen in neutraal of het OBD-II-toerental voordat er onderdelen worden vervangen."
+  },
   "SHOP_MOTOR_BALANCE": {
     "en": "Check the motor rotor, the reduction gear bearings and the output shafts for imbalance or play.",
     "nl": "Controleer de rotor, de lagers van de reductiekast en de uitgaande assen op onbalans of speling."
@@ -1311,6 +1399,10 @@
     "en": "wheels/tires",
     "nl": "wielen/banden"
   },
+  "SPECTRUM_FIRING": {
+    "en": "firing",
+    "nl": "ontsteking"
+  },
   "SPECTRUM_FLOOR": {
     "en": "noise floor",
     "nl": "ruisvloer"
@@ -1379,6 +1471,26 @@
     "en": "have the engine checked for misfire or uneven running under load.",
     "nl": "laat de motor controleren op overslaan of onrustig lopen onder belasting."
   },
+  "STEP_ENGINE_FIRING": {
+    "en": "Have the engine and gearbox mounts checked, and the engine read out for misfire and ignition faults (spark plugs, coils) under load.",
+    "nl": "Laat de motor- en versnellingsbaksteunen controleren, en de motor uitlezen op overslaan en ontstekingsfouten (bougies, bobines) onder belasting."
+  },
+  "STEP_ENGINE_FIRING_FALLBACK": {
+    "en": "have the engine checked for uneven running under load (injectors, compression).",
+    "nl": "laat de motor controleren op onrustig lopen onder belasting (injectoren, compressie)."
+  },
+  "STEP_ENGINE_IMBALANCE": {
+    "en": "Have the engine and gearbox mounts checked: this engine shakes at this rhythm by design, and worn mounts pass it into the car.",
+    "nl": "Laat de motor- en versnellingsbaksteunen controleren: deze motor trilt van nature op dit ritme, en versleten steunen geven dat door aan de auto."
+  },
+  "STEP_ENGINE_IMBALANCE_FALLBACK": {
+    "en": "have the balance shaft and its drive checked, if the engine has one.",
+    "nl": "laat de balansas en de aandrijving ervan controleren, als de motor die heeft."
+  },
+  "STEP_HEDGE_OTHER": {
+    "en": "If the neutral coast-down points to the other cause: {step}",
+    "nl": "Wijst het uitrollen in neutraal op de andere oorzaak: {step}"
+  },
   "STEP_LAYOUT_UNKNOWN": {
     "en": "The car's drive layout was not given: on a front-wheel-drive car, which has no propshaft, have the gearbox output shaft, the final-drive pinion and the differential bearings checked instead.",
     "nl": "De aandrijving van de auto is niet opgegeven: heeft de auto voorwielaandrijving (zonder cardanas), laat dan in plaats daarvan de uitgaande as van de versnellingsbak, het pignon van de eindoverbrenging en de differentieellagers controleren."
@@ -1440,8 +1552,8 @@
     "nl": "laat het middenlager, het achterdifferentieel en de verdeelbak controleren."
   },
   "STEP_P2": {
-    "en": "Have the driveline joints and their working angles checked; a twice-per-turn shake points to joint angle.",
-    "nl": "Laat de koppelingen van de aandrijflijn en hun werkhoeken controleren; twee keer per omwenteling wijst op de hoek van een koppeling."
+    "en": "Have the propshaft joints (U-joints or flex discs) and their working angles checked; a twice-per-turn shake points to joint angle.",
+    "nl": "Laat de koppelingen van de cardanas (kruiskoppelingen of hardyschijven) en hun werkhoeken controleren; twee keer per omwenteling wijst op de hoek van een koppeling."
   },
   "STEP_P2_EV": {
     "en": "Have the motor mounts and the alignment of the drive unit checked.",

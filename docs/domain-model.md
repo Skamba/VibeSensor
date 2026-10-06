@@ -108,7 +108,14 @@ Current examples on `main`:
   `engine_orders()` maps it through the one rules table
   (`ENGINE_ORDER_RULES`) to the engine orders it excites, each with its roles
   (rotating, firing, imbalance); see docs/order_tracking.md "Engine orders".
-  `Car` keeps no engine profile for an EV.
+  `Car` keeps no engine profile for an EV. A run snapshots it in
+  `RunCarMetadata.engine_profile`, and the analysis tests that profile's
+  orders.
+- A diagnosis whose engine order and a wheel or propshaft order are the same
+  peaks in top gear (RPM estimated, no coast-down that decided) names the
+  other one in `DiagnosisPayload.alternative` (`source`, `order_code`) and is
+  never Strong; see docs/order_tracking.md "Engine order on a road-speed
+  order (the hedge)".
 - `SensorPlacement` rejects empty placement codes.
 - `Finding` rejects out-of-range confidence and cruise-fraction values plus
   non-finite ranking scores.

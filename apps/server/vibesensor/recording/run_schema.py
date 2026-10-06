@@ -10,6 +10,7 @@ from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus
 from vibesensor.domain.diagnostic_case import Symptom
 from vibesensor.domain.drive_layout import Axle, final_drive_axle_for, has_propshaft
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.vehicle_configuration import VehicleDrivetrain, VehicleFuelType
 from vibesensor.power.monitor import PowerIssue
@@ -62,6 +63,7 @@ class RunCarMetadata:
     fuel_type: VehicleFuelType | None = None
     drive_layout: VehicleDrivetrain | None = None
     final_drive_axle: Axle | None = None
+    engine_profile: EngineProfile | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -297,6 +299,11 @@ class RunMetadata:
     def electric(self) -> bool:
         """A battery-electric car: no engine, and the motor turns with the wheels."""
         return self.fuel_type == "EV"
+
+    @property
+    def engine_profile(self) -> EngineProfile | None:
+        """The engine's layout and cylinder count; ``None`` when not known or an EV."""
+        return self.car.engine_profile if self.car is not None else None
 
     @property
     def drive_layout(self) -> VehicleDrivetrain | None:

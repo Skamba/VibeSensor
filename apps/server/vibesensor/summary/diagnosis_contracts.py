@@ -11,6 +11,8 @@ from typing import Literal, NotRequired, TypedDict
 
 from pydantic import ConfigDict, with_config
 
+from vibesensor.domain.engine_profile import EngineOrderRole, EngineProfilePayload
+
 __all__ = [
     "AmplitudeBasis",
     "ConfidenceLevelValue",
@@ -18,7 +20,9 @@ __all__ = [
     "DiagnosisSpectrum",
     "DiagnosisVerdictValue",
     "DriveLayoutValue",
+    "DiagnosisAlternative",
     "DrivelinePart",
+    "EngineOrderRow",
     "FinalDriveAxleValue",
     "FuelTypeValue",
     "GuidedPhaseValue",
@@ -40,7 +44,30 @@ _FORBID_EXTRA = ConfigDict(extra="forbid")
 
 type DiagnosisVerdictValue = Literal["fault", "weak_evidence", "no_fault"]
 type ConfidenceLevelValue = Literal["strong", "moderate", "weak"]
-type OrderCodeValue = Literal["T1", "T2", "P1", "P2", "E1", "E2"]
+# Engine orders run in half orders: E1.5 is an inline-3's firing order, E8 a
+# 16-cylinder's (domain/engine_profile.py).
+type OrderCodeValue = Literal[
+    "T1",
+    "T2",
+    "P1",
+    "P2",
+    "E0.5",
+    "E1",
+    "E1.5",
+    "E2",
+    "E2.5",
+    "E3",
+    "E3.5",
+    "E4",
+    "E4.5",
+    "E5",
+    "E5.5",
+    "E6",
+    "E6.5",
+    "E7",
+    "E7.5",
+    "E8",
+]
 type AmplitudeBasis = Literal["order", "overall"]
 # ``ruled_out_estimated``: no match, but the order rests on an estimate (a weak
 # library ratio, engine RPM estimated from speed assuming top gear, a plug-in
@@ -167,6 +194,15 @@ class SourceCheck(TypedDict):
 
 
 @with_config(_FORBID_EXTRA)
+class EngineOrderRow(TypedDict):
+    """One engine order the run tested, and why the engine excites it."""
+
+    code: OrderCodeValue
+    # Empty when the engine is not known (E1/E2 tested without a profile).
+    roles: list[EngineOrderRole]
+
+
+@with_config(_FORBID_EXTRA)
 class TestConditions(TypedDict):
     """Reference data the order analysis used, with where each reference came from."""
 
@@ -186,6 +222,24 @@ class TestConditions(TypedDict):
     final_drive_axle: NotRequired[FinalDriveAxleValue | None]
     # Whether a propshaft drives the rear axle; ``None`` without a drive layout.
     propshaft: NotRequired[bool | None]
+    # The engine's layout and cylinder count; ``None`` when not known, or for an
+    # EV (absent on runs analysed before engines had one).
+    engine_profile: NotRequired[EngineProfilePayload | None]
+    # The engine orders the analysis tested (none for an EV).
+    engine_orders: NotRequired[list[EngineOrderRow]]
+
+
+@with_config(_FORBID_EXTRA)
+class DiagnosisAlternative(TypedDict):
+    """The other source the diagnosed order may equally be.
+
+    Without measured RPM an engine order that turns at a wheel or propshaft
+    order's rhythm in top gear (where the RPM estimate puts it) cannot be told
+    from it; the neutral coast-down or an OBD-II adapter can.
+    """
+
+    source: str
+    order_code: OrderCodeValue
 
 
 @with_config(_FORBID_EXTRA)
@@ -199,6 +253,10 @@ class DiagnosisPayload(TypedDict):
     location: str | None
     zone: str | None
     order_code: OrderCodeValue | None
+    # Set when the diagnosed order may equally be another source's (an engine
+    # order on a road-speed order without measured RPM): the level is then
+    # never Strong.
+    alternative: NotRequired[DiagnosisAlternative]
     frequency_hz: float | None
     reference_speed_kmh: float | None
     speed_min_kmh: float | None

@@ -30,6 +30,7 @@ export interface components {
         FirmwareStatus: "current" | "outdated" | "unknown";
         OrderBandPayload: {
             center_hz: number;
+            firing?: boolean;
             key: string;
             tolerance: number;
         };

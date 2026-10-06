@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from math import isfinite
 from typing import Final
 
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.engine_profile import UNKNOWN_ENGINE_ORDERS, EngineOrder
 from vibesensor.domain.order_reference import OrderFrequencies
 from vibesensor.live.payload_types import OrderBandPayload
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
@@ -68,10 +70,14 @@ def _relative_tolerance(center_hz: float, path_compliance: float) -> float:
     )
 
 
-def build_order_bands(orders_hz: OrderFrequencies) -> list[OrderBandPayload]:
+def build_order_bands(
+    orders_hz: OrderFrequencies, engine_orders: Sequence[EngineOrder] = UNKNOWN_ENGINE_ORDERS
+) -> list[OrderBandPayload]:
     """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
 
-    Only the order families present in *orders_hz* get bands.
+    Only the order families present in *orders_hz* get bands. The engine's are
+    *engine_orders* (the car's engine profile's, E1 and E2 when it is not
+    known), its firing order marked.
     """
     bands: list[OrderBandPayload] = []
     wheel_hz = orders_hz.get("wheel_hz")
@@ -123,14 +129,19 @@ def build_order_bands(orders_hz: OrderFrequencies) -> list[OrderBandPayload]:
     elif engine_hz is not None:
         bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
     if engine_hz is not None:
-        engine_2x_hz = engine_hz * HARMONIC_2X
-        bands.append(
-            {
-                "key": "engine_2x",
-                "center_hz": engine_2x_hz,
-                "tolerance": _relative_tolerance(engine_2x_hz, RIGID_ORDER_PATH_COMPLIANCE),
-            },
-        )
+        for order in engine_orders:
+            # E1 is drawn above, merged with the driveshaft's when they coincide.
+            if order.multiple == 1.0:
+                continue
+            center_hz = engine_hz * order.multiple
+            band: OrderBandPayload = {
+                "key": order.key,
+                "center_hz": center_hz,
+                "tolerance": _relative_tolerance(center_hz, RIGID_ORDER_PATH_COMPLIANCE),
+            }
+            if "firing" in order.roles:
+                band["firing"] = True
+            bands.append(band)
     return bands
 
 

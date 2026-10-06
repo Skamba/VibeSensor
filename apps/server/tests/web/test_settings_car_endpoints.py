@@ -235,7 +235,9 @@ def test_an_unknown_drive_layout_is_rejected(car_client) -> None:
 
 def test_engine_profile_is_kept_on_the_car_and_its_run_snapshot(car_client, fake_state) -> None:
     """The engine the wizard sends is saved; an EV keeps none; unknown stays unknown."""
-    six = _add(car_client, name="640i", engine_profile={"layout": "inline", "cylinders": 6})
+    six = _add(
+        car_client, name="Six-cylinder saloon", engine_profile={"layout": "inline", "cylinders": 6}
+    )
     car = six["cars"][0]
     assert car["engine_profile"] == {"layout": "inline", "cylinders": 6}
     custom = _add(car_client, name="Unknown engine")["cars"][1]
@@ -249,7 +251,9 @@ def test_engine_profile_is_kept_on_the_car_and_its_run_snapshot(car_client, fake
         f"/api/settings/cars/{custom['id']}",
         json={"engine_profile": {"layout": "v", "cylinders": 6, "bank_angle_deg": 90}},
     ).json()["cars"][1]
-    renamed = car_client.put(f"/api/settings/cars/{car['id']}", json={"name": "640i GT"}).json()
+    renamed = car_client.put(
+        f"/api/settings/cars/{car['id']}", json={"name": "Six-cylinder estate"}
+    ).json()
     car_client.put("/api/settings/cars/active", json={"car_id": car["id"]})
 
     assert changed["engine_profile"] == {"layout": "v", "cylinders": 6, "bank_angle_deg": 90}

@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Final, Literal, get_args
+from typing import Final, Literal, NotRequired, TypedDict, get_args
 
 __all__ = [
     "ENGINE_ORDER_RULES",
@@ -45,8 +45,10 @@ __all__ = [
     "EngineOrderRole",
     "EngineOrderRule",
     "EngineProfile",
+    "EngineProfilePayload",
     "UNKNOWN_ENGINE_ORDERS",
     "engine_orders",
+    "engine_profile_payload",
     "engine_profile_from_engine_text",
 ]
 
@@ -118,6 +120,23 @@ class EngineProfile:
     def firing_order(self) -> EngineOrder:
         """The order of the engine's firing rhythm."""
         return next(order for order in self.orders if "firing" in order.roles)
+
+
+class EngineProfilePayload(TypedDict):
+    """The engine's layout and cylinder count (rotors for a rotary)."""
+
+    layout: EngineLayout
+    cylinders: int
+    bank_angle_deg: NotRequired[int | None]
+    """The angle between a V or W engine's banks; absent when not known."""
+
+
+def engine_profile_payload(profile: EngineProfile) -> EngineProfilePayload:
+    """*profile* as its stored and served JSON shape."""
+    payload: EngineProfilePayload = {"layout": profile.layout, "cylinders": profile.cylinders}
+    if profile.bank_angle_deg is not None:
+        payload["bank_angle_deg"] = profile.bank_angle_deg
+    return payload
 
 
 @dataclass(frozen=True, slots=True)
