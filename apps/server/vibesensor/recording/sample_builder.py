@@ -225,11 +225,7 @@ def _speed_context_for_record(
 ) -> SpeedContext:
     if speed_provider is None or run_start_mono_s is None:
         return fallback_speed_context
-    target_mono_s = None
-    if analysis_time_range is not None:
-        target_mono_s = analysis_time_range.start_s + (
-            (analysis_time_range.end_s - analysis_time_range.start_s) / 2.0
-        )
+    target_mono_s = analysis_time_range.centre_s if analysis_time_range is not None else None
     return resolve_speed_context_snapshot(
         snapshot=speed_provider.resolve_speed_context_at(target_mono_s),
         analysis_settings_snapshot=analysis_settings_snapshot,

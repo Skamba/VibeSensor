@@ -79,6 +79,16 @@ receiver passes `msg.t0_us` through once the sensor is clock-synced. Before
 that, `t0_us` is the sensor's own uptime, so the buffer keeps using server
 arrival time.
 
+A synced chunk stamped later than the buffer's newest sample ends (by at least
+half a sample) follows frames lost on the way: the buffer writes their samples
+as NaN before it, so every sample keeps its place in time and the FFT block is
+exactly the newest `fft_n` samples' worth of time. Before the server stacked
+the frames that arrived, so a block over a lost frame reached further back
+than its stated range, and its tone was spliced out of phase at the gap. The
+live compute fills the lost samples (`fill_lost_samples()`, see
+`docs/intake_buffering.md`) and reports no spectrum for a block with under 30 % of
+its window energy present (`FFT_MIN_WINDOW_COVERAGE`).
+
 ### 3. Analysis Time-Range Computation
 
 `ClientBuffer.analysis_time_range()` returns an `AnalysisTimeRange`
@@ -87,11 +97,13 @@ arrival time.
 only that block, not the longer waveform buffer. Each metrics snapshot records
 it, so `SignalProcessor.latest_analysis_time_range()` reports the window the
 latest metrics cover. The recorder uses it to place each sample row on the
-timeline, to take the row's speed at the window's midpoint, and to skip rows
+timeline, to take the row's speed at the spectrum's time (`centre_s`: the
+window's midpoint, or where frames were lost, where the samples present weigh
+in under the FFT window, `present_centre()`), and to skip rows
 whose synced window still starts before the recording did (that vibration was
 measured before the user pressed start, and the raw capture cannot replay it).
 The speed is the live reading (GPS or OBD-II) within
-`DEFAULT_ALIGNMENT_TOLERANCE_S` (1 s) of the midpoint, interpolated between two
+`DEFAULT_ALIGNMENT_TOLERANCE_S` (1 s) of that time, interpolated between two
 readings around it. Without one the row stores no speed and the source
 `gps_unaligned` / `obd2_unaligned`, never the typed-in fallback speed, which
 only stands in on the live view; the analysis leaves such rows out of order
@@ -170,7 +182,8 @@ steps; replay records it as a gap or overlap (beyond 0.75 sample) and skips
 only the windows that cross it, however many there are. Windows between breaks
 hold the same samples the live spectra used, so there is nothing to gain from
 dropping a whole sensor with many breaks: a lossy or congested sensor keeps its
-intact windows raw-backed.
+intact windows raw-backed. A window that crosses a lost frame keeps its live
+spectrum, whose samples sit at their times with the lost ones filled (section 2).
 
 Replay only treats `t0_us` as server-monotonic when that proof is
 explicitly `verified`. Older artifacts without the per-sensor proof, or

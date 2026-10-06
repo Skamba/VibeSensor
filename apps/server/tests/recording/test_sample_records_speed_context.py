@@ -40,8 +40,8 @@ def test_sample_records_resolve_speed_context_per_sensor_analysis_window() -> No
     proc.latest_sample_xyz.return_value = None
     proc.latest_sample_rate_hz.return_value = 400
     proc.latest_analysis_time_range.side_effect = [
-        AnalysisTimeRange(start_s=100.0, end_s=101.0, synced=True),
-        AnalysisTimeRange(start_s=102.0, end_s=103.0, synced=True),
+        AnalysisTimeRange(start_s=100.0, end_s=101.0, synced=True, centre_s=100.5),
+        AnalysisTimeRange(start_s=102.0, end_s=103.0, synced=True, centre_s=102.5),
     ]
 
     class _SpeedProvider:
@@ -110,6 +110,7 @@ def test_sample_records_mark_unaligned_vehicle_context_missing_for_analysis_wind
         start_s=100.0,
         end_s=101.0,
         synced=True,
+        centre_s=100.5,
     )
 
     class _SpeedProvider:

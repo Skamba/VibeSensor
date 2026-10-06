@@ -12,7 +12,11 @@ import pyfftw
 from scipy import fft as scipy_fft
 from scipy.signal import windows as signal_windows
 
-from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+from vibesensor.dsp.constants import (
+    FFT_MIN_WINDOW_COVERAGE,
+    PEAK_BANDWIDTH_HZ,
+    PEAK_SEPARATION_HZ,
+)
 from vibesensor.dsp.vibration_strength import (
     VibrationStrengthMetrics,
     _combined_spectrum_amp_g_array,
@@ -37,9 +41,11 @@ __all__ = [
     "compute_fft_spectrum",
     "fft_frequency_slice",
     "fft_window_values",
+    "fill_lost_samples",
     "float_list",
     "high_frequency_energy_ratio",
     "medfilt3",
+    "present_centre",
 ]
 
 type FloatArray = npt.NDArray[np.float32]
@@ -253,6 +259,45 @@ def medfilt3(block: FloatArray) -> FloatArray:
     all_invalid = ~left_valid & ~mid_valid & ~right_valid
     center[all_invalid] = np.nan
     return _sanitize_float_array(filtered)
+
+
+def fill_lost_samples(signal: FloatArray, fft_window: FloatArray) -> FloatArray | None:
+    """Fill the lost samples (NaN) of a ``(3, N)`` signal ending in an FFT block.
+
+    A frame lost on the way leaves its time in the signal, so the block spans
+    exactly its stated time and a tone keeps its phase across the gap: its peak
+    stays on its frequency at the block's time. Lost samples take each axis's
+    mean over the block's samples present, which the FFT removes. The rest is
+    scaled by the window energy lost, so the spectrum keeps the signal's power
+    (its noise floor exactly; a tone's level to within a few percent). ``None``
+    when the samples present carry under ``FFT_MIN_WINDOW_COVERAGE`` of the
+    window's energy (over the last ``len(fft_window)`` samples).
+    """
+    lost = np.isnan(signal).any(axis=0)
+    if not lost.any():
+        return signal
+    fft_n = fft_window.shape[0]
+    energy = np.square(fft_window, dtype=np.float64)
+    coverage = float(np.sum(energy[~lost[-fft_n:]])) / max(float(np.sum(energy)), 1e-12)
+    if coverage < FFT_MIN_WINDOW_COVERAGE:
+        return None
+    mean = np.nanmean(signal[:, -fft_n:], axis=1, keepdims=True)
+    present = signal if coverage >= 1.0 else mean + (signal - mean) / np.float32(np.sqrt(coverage))
+    return np.where(lost, mean, present).astype(np.float32, copy=False)
+
+
+def present_centre(lost: BoolArray, fft_window: FloatArray) -> float:
+    """Where an FFT block's samples present weigh in, in samples from its start.
+
+    Their centroid under the window's energy, which a lost frame pulls away
+    from the block's middle (``len(fft_window) / 2`` when none was lost): while
+    a tone's frequency changes, the block's peak sits at its frequency there.
+    """
+    energy = np.square(fft_window, dtype=np.float64) * ~lost
+    total = float(np.sum(energy))
+    if total <= 0.0:
+        return len(fft_window) / 2.0
+    return float(np.sum(energy * (np.arange(fft_window.shape[0]) + 0.5))) / total
 
 
 def float_list(values: FloatArray | list[float]) -> list[float]:

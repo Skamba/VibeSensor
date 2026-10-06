@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from bisect import bisect_right
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -236,11 +235,10 @@ def _line_half_width_hz(frequency_hz: float, bin_hz: float) -> float:
 
 @dataclass(frozen=True, slots=True)
 class _LinePoint:
-    """A clear match; *timed* unless its sensor lost frames over its spectrum's span."""
+    """A clear match: the order's predicted frequency and the peak it matched."""
 
     predicted_hz: float
     matched_hz: float
-    timed: bool
 
 
 def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float) -> list[bool]:
@@ -253,15 +251,12 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
     window in most windows, scattered across it. A group with under
     ``ORDER_LINE_MIN_SHARE`` on one line has no line: every match is off it.
 
-    The line is judged on the timed matches where the tolerance window is wide
+    The line is judged on the matches where the tolerance window is wide
     enough to tell scatter from a line (``ORDER_LINE_MIN_TOLERANCE_WIDTHS``);
-    with too few of them the group is not judged. A spectrum over a lost frame
-    reaches further back than its stated span, so while the speed changes its
-    peak lags the prediction: such a match is not judged on its own either.
+    with too few of them the group is not judged.
     """
     judged = [
-        point.timed
-        and order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
+        order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
         >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
         for point in points
     ]
@@ -286,25 +281,6 @@ def _fft_bin_hz(context: RunMetadata) -> float:
     return sample_rate_hz / fft_n
 
 
-def _timed(windows: Sequence[_Window]) -> list[bool]:
-    """Whether each window's sensor lost no frames over the time its spectrum spans."""
-    series: dict[str, list[tuple[float, int]]] = defaultdict(list)
-    for window in windows:
-        if window.t_s is not None:
-            series[window.location].append((window.t_s, window.frames_dropped))
-    for located in series.values():
-        located.sort()
-    times = {location: [t_s for t_s, _ in located] for location, located in series.items()}
-    timed: list[bool] = []
-    for window in windows:
-        if window.span_s is None or window.location not in times:
-            timed.append(True)
-            continue
-        before = max(bisect_right(times[window.location], window.span_s[0]) - 1, 0)
-        timed.append(series[window.location][before][1] >= window.frames_dropped)
-    return timed
-
-
 def _masked(windows: Sequence[_Window], bin_hz: float, compliance: float) -> set[int]:
     """The windows whose clear match is off the order's line (see ``_off_the_line``).
 
@@ -313,12 +289,11 @@ def _masked(windows: Sequence[_Window], bin_hz: float, compliance: float) -> set
     line. The sensors with too few clear matches to judge on their own are
     judged together: an order's line is at the same frequency at every sensor.
     """
-    timed = _timed(windows)
     groups: dict[tuple[str, bool], list[tuple[int, _LinePoint]]] = defaultdict(list)
     for index, window in enumerate(windows):
         if window.match is not None and window.clear:
             braking = window.match.phase == BRAKING_PHASE
-            point = _LinePoint(window.predicted_hz, window.match.matched_hz, timed[index])
+            point = _LinePoint(window.predicted_hz, window.match.matched_hz)
             groups[(window.location, braking)].append((index, point))
     judged: list[list[tuple[int, _LinePoint]]] = []
     pooled: dict[bool, list[tuple[int, _LinePoint]]] = defaultdict(list)
@@ -338,27 +313,12 @@ def _masked(windows: Sequence[_Window], bin_hz: float, compliance: float) -> set
     }
 
 
-def _spectrum_span_s(sample: Sample) -> tuple[float, float] | None:
-    """The run time (s) the signal behind *sample*'s spectrum spans: its analysis
-    window, else the FFT length up to the sample's time."""
-    start_us = sample.analysis_window_start_us
-    end_us = sample.analysis_window_end_us
-    if start_us is not None and end_us is not None and end_us > start_us:
-        return start_us / 1e6, end_us / 1e6
-    if sample.t_s is None:
-        return None
-    return sample.t_s - FFT_N / SAMPLE_RATE_HZ, sample.t_s
-
-
 @dataclass(frozen=True, slots=True)
 class _Window:
     """One spectrum the order could be looked for in, and its match if any."""
 
     sample_idx: int
     location: str
-    t_s: float | None
-    span_s: tuple[float, float] | None
-    frames_dropped: int
     predicted_hz: float
     speed_bin: str | None
     phase_key: str | None
@@ -410,9 +370,6 @@ def match_samples_for_hypothesis(
         window = _Window(
             sample_idx=sample_idx,
             location=sample_location,
-            t_s=sample.t_s,
-            span_s=_spectrum_span_s(sample),
-            frames_dropped=sample.frames_dropped_total,
             predicted_hz=predicted_hz,
             speed_bin=(
                 speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)

@@ -28,6 +28,14 @@ FFT_UPDATE_HZ: Final[int] = 4
 FFT_N: Final[int] = 2048
 """FFT window size (samples, power of 2)."""
 
+FFT_MIN_WINDOW_COVERAGE: Final[float] = 0.3
+"""Least share of an FFT block's window energy its samples present must carry.
+
+Frames lost on the way leave gaps in the block (``fill_lost_samples``). Down to
+this share a tone's peak, timed at ``present_centre``, sits on its frequency as
+closely as in an intact block; below it the peak scatters.
+"""
+
 SPECTRUM_MIN_HZ: Final[float] = 5.0
 """Lower frequency bound for the spectrum display (Hz)."""
 

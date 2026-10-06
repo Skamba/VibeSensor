@@ -76,6 +76,7 @@ class TestBuildSampleRecords:
             start_s=100.5,
             end_s=101.0,
             synced=True,
+            centre_s=100.75,
         )
 
         records = build_sample_records(

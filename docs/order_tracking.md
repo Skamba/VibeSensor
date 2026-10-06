@@ -269,11 +269,10 @@ fewer than 12 clear matches (`ORDER_LINE_MIN_POINTS`) are tested together, per
 braking side: the line is at the same frequency at every sensor.
 
 - Only some matches are judged: those whose tolerance window is at least 4
-  line widths (`ORDER_LINE_MIN_TOLERANCE_WIDTHS`; above about 10 Hz), and whose
-  sensor lost no frames over the time its spectrum spans
-  (`frames_dropped_total`, `_timed()`). The server stacks the frames that
-  arrive, so a spectrum over a lost frame reaches further back than its stated
-  span and, while the speed changes, its peak lags the prediction.
+  line widths (`ORDER_LINE_MIN_TOLERANCE_WIDTHS`; above about 10 Hz). A
+  spectrum over lost frames is judged like any other: the lost frames keep
+  their time in it and its speed is read where its samples weigh in
+  ([time_alignment.md](time_alignment.md)).
 - `k` is the median of matched / predicted over the judged matches; a judged
   match is on the line when it is within `ORDER_LINE_WIDTH_REL` (1.5 %) of
   `k ×` its prediction, or half an FFT bin where that is wider (peaks sit on

@@ -1,4 +1,4 @@
-"""The live FFT input filters only the block's tail yet matches filtering the whole window."""
+"""The live FFT input fills and filters only the block's tail, as if it did the whole window."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from vibesensor.dsp.constants import FFT_N, WAVEFORM_BUFFER_SECONDS
-from vibesensor.dsp.fft_analysis import medfilt3
+from vibesensor.dsp.fft_analysis import fft_window_values, fill_lost_samples, medfilt3
 from vibesensor.live.compute import _filtered_fft_input
 from vibesensor.live.models import FloatArray, MetricsSnapshot
 from vibesensor.live.processor import SignalProcessor
@@ -15,13 +15,14 @@ _CLIENT_ID = "aabbccddeeff"
 
 
 def _full_window_reference(snapshot: MetricsSnapshot) -> FloatArray | None:
-    """The previous implementation: median-filter the whole time window, keep the FFT tail."""
+    """Fill and median-filter the whole time window, keep the FFT tail."""
     fft_block = snapshot.fft_block
     if fft_block is None:
         return None
-    if snapshot.time_window.shape[1] >= fft_block.shape[1]:
-        return medfilt3(snapshot.time_window)[:, -fft_block.shape[1] :]
-    return medfilt3(fft_block)
+    fft_n = fft_block.shape[1]
+    signal = snapshot.time_window if snapshot.time_window.shape[1] >= fft_n else fft_block
+    filled = fill_lost_samples(signal, fft_window_values(fft_n=fft_n))
+    return None if filled is None else medfilt3(filled)[:, -fft_n:]
 
 
 def _spiky_samples(rng: np.random.Generator, count: int) -> np.ndarray:
@@ -77,7 +78,7 @@ def test_tail_filter_matches_full_window_filter(
     )
 
     expected = _full_window_reference(snapshot)
-    actual = _filtered_fft_input(snapshot)
+    actual = _filtered_fft_input(snapshot, fft_window_values(fft_n=FFT_N))
 
     if expected is None:
         assert actual is None
@@ -118,5 +119,7 @@ def test_tail_filter_matches_full_window_filter_around_gaps(
     )
 
     np.testing.assert_array_equal(
-        _filtered_fft_input(snapshot), _full_window_reference(snapshot), strict=True
+        _filtered_fft_input(snapshot, fft_window_values(fft_n=fft_n)),
+        _full_window_reference(snapshot),
+        strict=True,
     )

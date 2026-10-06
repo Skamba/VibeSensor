@@ -78,7 +78,9 @@ class TestAnalysisTimeRange:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
         _fill_sensor(proc, "s1", n_samples=400, sample_rate_hz=200, mono_time=100.0)
         time_range = _time_range(proc, "s1")
-        assert time_range == AnalysisTimeRange(start_s=98.0, end_s=100.0, synced=False)
+        assert time_range == AnalysisTimeRange(
+            start_s=98.0, end_s=100.0, synced=False, centre_s=99.0
+        )
 
     def test_range_limited_by_available_samples(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
@@ -136,7 +138,9 @@ class TestSyncedClockTimeRange:
         proc = _make_processor()
         _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0, t0_us=99_000_000)
         time_range = _time_range(proc, "s1")
-        assert time_range == AnalysisTimeRange(start_s=99.0, end_s=99.5, synced=True)
+        assert time_range == AnalysisTimeRange(
+            start_s=99.0, end_s=99.5, synced=True, centre_s=99.25
+        )
 
     def test_t0_us_reset_on_flush(self) -> None:
         proc = _make_processor()
