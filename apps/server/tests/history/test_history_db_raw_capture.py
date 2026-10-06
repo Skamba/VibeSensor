@@ -96,6 +96,32 @@ def test_raw_capture_round_trip_persists_manifest_and_samples(
     assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
 
 
+def test_a_torn_raw_capture_index_line_is_skipped(tmp_path: Path, db: HistoryDB) -> None:
+    create_recording_run(db, "run-torn")
+    first = np.asarray([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
+    second = np.asarray([[7, 8, 9]], dtype=np.int16)
+    _append_chunk(db, run_id="run-torn", client_id="sensor-a", t0_us=1000, samples=first)
+    _append_chunk(db, run_id="run-torn", client_id="sensor-a", t0_us=3500, samples=second)
+    manifest = db.finalize_raw_capture("run-torn")
+    assert manifest is not None
+    sensor_manifest = manifest.sensor_manifest("sensor-a")
+    assert sensor_manifest is not None
+    # A power cut mid-write leaves half an index line behind.
+    index_path = tmp_path / "raw-runs" / "run-torn" / sensor_manifest.index_file
+    with index_path.open("a", encoding="utf-8") as handle:
+        handle.write('{"sample_start": 3, "sample_co')
+
+    loaded = db.load_raw_capture("run-torn")
+
+    assert loaded is not None
+    sensor = loaded.sensor_data("sensor-a")
+    assert sensor is not None
+    assert sensor.chunks.sample_start.tolist() == [0, 2]
+    assert sensor.chunks.sample_count.tolist() == [2, 1]
+    assert sensor.chunks.t0_us.tolist() == [1000, 3500]
+    assert np.array_equal(sensor.samples_i16, np.vstack([first, second]))
+
+
 def test_raw_capture_round_trip_persists_chunk_loss_counts_across_reload(
     tmp_path: Path, db: HistoryDB
 ) -> None:

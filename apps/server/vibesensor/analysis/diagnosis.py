@@ -27,7 +27,7 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     SPEED_COVERAGE_MIN_PCT,
 )
-from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S
+from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES, ReferenceProvenance, reference_provenance
@@ -470,12 +470,13 @@ def _order_location_amplitudes(
             amps[point.location].append(point.amp)
             heard[point.location] += point.heard
     brakes = candidate.suspected_source is VibrationSource.BRAKES
+    in_braking = TimeSpanLookup(braking) if brakes else None
     speed_samples: Counter[str] = Counter(
         location
         for sample, location in located
         if sample.speed_kmh is not None
         and sample.speed_kmh > 0
-        and (not brakes or _in_spans(sample.t_s, braking))
+        and (in_braking is None or in_braking(sample.t_s))
     )
     locations = sorted({location for _sample, location in located} | set(amps))
     medians: dict[str, float | None] = {
@@ -620,10 +621,6 @@ def _braking_spans(test_run: TestRun) -> list[tuple[float, float]]:
     ]
 
 
-def _in_spans(t_s: float | None, spans: Sequence[tuple[float, float]]) -> bool:
-    return t_s is not None and any(start <= t_s <= end for start, end in spans)
-
-
 def _braked(braking: Sequence[tuple[float, float]]) -> bool:
     """The drive braked firmly from speed for long enough to show brake judder."""
     return sum(end - start for start, end in braking) >= BRAKING_MIN_DURATION_S
@@ -648,13 +645,14 @@ def _presence_ratio(
     if not candidate.matched_points:
         return candidate.evidence.presence_ratio
     brakes = candidate.suspected_source is VibrationSource.BRAKES
+    in_braking = TimeSpanLookup(braking) if brakes else None
     moving = {
         floor(sample.t_s / _PRESENCE_SLOT_S)
         for sample, _location in located
         if sample.t_s is not None
         and sample.speed_kmh is not None
         and sample.speed_kmh > 0
-        and (not brakes or _in_spans(sample.t_s, braking))
+        and (in_braking is None or in_braking(sample.t_s))
     }
     if not moving:
         return candidate.evidence.match_rate

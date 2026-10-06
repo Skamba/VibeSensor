@@ -120,7 +120,6 @@ class _ResolvedWindow:
 @dataclass(frozen=True, slots=True)
 class _ComputedStrengthMetrics:
     metrics: StrengthMetrics
-    has_valid_analysis_bins: bool
     analytically_valid: bool
 
 
@@ -983,19 +982,21 @@ def _compute_strength_metrics(
     *,
     fft_computer: SpectralAnalysisComputer,
 ) -> _ComputedStrengthMetrics:
-    if window_f32.size <= 0:
+    strength_metrics = (
+        fft_computer.compute_combined_strength_metrics(
+            window_f32.T,
+            sample_rate_hz,
+            spike_filter_enabled=False,
+        )
+        if window_f32.size > 0
+        else None
+    )
+    if strength_metrics is None:
         return _ComputedStrengthMetrics(
             metrics=strength_metrics_from_mapping(None),
-            has_valid_analysis_bins=False,
             analytically_valid=False,
         )
-    fft_result = fft_computer.compute_fft_spectrum(
-        window_f32.T,
-        sample_rate_hz,
-        spike_filter_enabled=False,
-    )
     return _ComputedStrengthMetrics(
-        metrics=strength_metrics_from_mapping(fft_result["strength_metrics"]),
-        has_valid_analysis_bins=bool(fft_result["has_valid_analysis_bins"]),
-        analytically_valid=bool(fft_result["strength_metrics_analytically_valid"]),
+        metrics=strength_metrics_from_mapping(strength_metrics),
+        analytically_valid=True,
     )

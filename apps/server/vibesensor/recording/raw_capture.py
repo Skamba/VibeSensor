@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -14,6 +15,7 @@ from vibesensor.common.json_contract import JsonContract
 __all__ = [
     "RawCaptureChunk",
     "RawCaptureChunkIndex",
+    "RawCaptureChunkTable",
     "RawCaptureClockDomain",
     "RawCaptureLossStats",
     "RawCaptureManifest",
@@ -26,6 +28,7 @@ __all__ = [
 ]
 
 type Int16Array = npt.NDArray[np.int16]
+type Int64Array = npt.NDArray[np.int64]
 type RawCaptureClockDomain = Literal["server_monotonic", "unverified"]
 type RawCaptureSampleRateProofState = Literal[
     "declared_only",
@@ -237,13 +240,37 @@ class RawCaptureManifest(JsonContract):
         return self.losses.total_loss_event_count or sensor_total
 
 
+@dataclass(frozen=True, slots=True, eq=False)
+class RawCaptureChunkTable:
+    """A sensor's persisted chunk index as parallel int64 columns, in append order.
+
+    Columns instead of one object per chunk keep a long drive's index (tens of
+    thousands of chunks per sensor) small enough for the Pi.
+    """
+
+    sample_start: Int64Array
+    sample_count: Int64Array
+    t0_us: Int64Array
+
+    def __len__(self) -> int:
+        return int(self.t0_us.shape[0])
+
+    @classmethod
+    def from_rows(cls, rows: Sequence[RawCaptureChunkIndex]) -> RawCaptureChunkTable:
+        return cls(
+            sample_start=np.array([row.sample_start for row in rows], dtype=np.int64),
+            sample_count=np.array([row.sample_count for row in rows], dtype=np.int64),
+            t0_us=np.array([row.t0_us for row in rows], dtype=np.int64),
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class RawCaptureSensorData:
     """Decoded raw waveform stream plus its persisted chunk index."""
 
     manifest: RawCaptureSensorManifest
     samples_i16: Int16Array
-    chunks: tuple[RawCaptureChunkIndex, ...]
+    chunks: RawCaptureChunkTable
 
 
 @dataclass(frozen=True, slots=True)

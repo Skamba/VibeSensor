@@ -1822,7 +1822,7 @@ def _assert_raw_capture_on_one_clock(result: SimPipelineResult) -> None:
     assert capture is not None
     for sensor in capture.sensors:
         frame_us = 1_000_000.0 * _FRAME_SAMPLES / sensor.manifest.sample_rate_hz
-        starts = sorted(chunk.t0_us for chunk in sensor.chunks)
+        starts = sorted(sensor.chunks.t0_us.tolist())
         for previous, current in zip(starts, starts[1:], strict=False):
             frames = (current - previous) / frame_us
             off_us = abs(frames - round(frames)) * frame_us

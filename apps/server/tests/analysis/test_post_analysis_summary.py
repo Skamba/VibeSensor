@@ -22,6 +22,7 @@ from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.analysis.post_analysis_summary import build_post_analysis_summary
 from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
+    RawCaptureChunkTable,
     RawCaptureManifest,
     RawCaptureSensorData,
     RawCaptureSensorManifest,
@@ -96,7 +97,13 @@ def _raw_capture(run_id: str, *, sample_count: int = 160) -> RawRunCapture:
             created_at="2025-01-01T00:00:01Z",
             run_start_monotonic_us=run_start_us,
         ),
-        sensors=(RawCaptureSensorData(manifest=sensor, samples_i16=samples, chunks=(chunk,)),),
+        sensors=(
+            RawCaptureSensorData(
+                manifest=sensor,
+                samples_i16=samples,
+                chunks=RawCaptureChunkTable.from_rows([chunk]),
+            ),
+        ),
     )
 
 

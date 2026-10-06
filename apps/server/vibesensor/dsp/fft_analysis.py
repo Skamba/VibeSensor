@@ -33,6 +33,7 @@ __all__ = [
     "SpectrumAxisData",
     "SpectrumByAxis",
     "broadband_energy_ratio",
+    "compute_combined_strength_metrics",
     "compute_fft_spectrum",
     "fft_frequency_slice",
     "fft_window_values",
@@ -354,28 +355,14 @@ def compute_fft_spectrum(
     spike_filter_enabled: bool = True,
 ) -> FftSpectrumResult:
     """Compute per-axis and combined FFT spectra from a sample block."""
-    if fft_block.ndim != 2 or fft_block.shape[0] != 3:
-        raise ValueError(f"fft_block must have shape (3, N), got {fft_block.shape}")
-    fft_n = fft_window.shape[0]
-    if fft_block.shape[1] != fft_n:
-        raise ValueError(
-            f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}",
-        )
-    if fft_n == 0:
+    specs_all = _amplitude_spectra(
+        fft_block,
+        fft_window=fft_window,
+        fft_scale=fft_scale,
+        spike_filter_enabled=spike_filter_enabled,
+    )
+    if specs_all is None:
         return _empty_fft_spectrum_result(freq_slice)
-    if spike_filter_enabled:
-        fft_block = medfilt3(fft_block)
-    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
-
-    plan = _get_rfft_plan(fft_block.shape[0], fft_n)
-    np.multiply(fft_block, fft_window, out=plan.input_array)
-    plan()
-    specs_all: FloatArray = np.abs(plan.output_array)
-    specs_all *= fft_scale
-    if specs_all.shape[1] > 0:
-        specs_all[:, 0] *= 0.5
-    if (fft_n % 2) == 0 and specs_all.shape[1] > 1:
-        specs_all[:, -1] *= 0.5
 
     spectrum_by_axis: SpectrumByAxis = {}
     axis_peaks: dict[Axis, list[AxisPeak]] = {}
@@ -392,26 +379,12 @@ def compute_fft_spectrum(
             strength_range_mask=strength_range_mask,
         )
 
-    combined_amp: FloatArray = np.empty(0, dtype=np.float32)
-    strength_metrics: VibrationStrengthMetrics = empty_vibration_strength_metrics()
+    combined_amp, strength_metrics = _combined_strength_metrics(
+        freq_slice=freq_slice,
+        amp_slices=[spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis],
+        strength_range_mask=strength_range_mask,
+    )
     has_valid_analysis_bins = freq_slice.size > 0
-    if spectrum_by_axis:
-        amp_slices = [spectrum_by_axis[axis]["amp"] for axis in spectrum_by_axis]
-        combined_amp = _combined_spectrum_amp_g_array(
-            axis_spectra_amp_g=amp_slices,
-            axis_count_for_mean=len(amp_slices),
-        ).astype(
-            np.float32,
-            copy=False,
-        )
-        strength_metrics = compute_vibration_strength_db(
-            freq_hz=freq_slice,
-            combined_spectrum_amp_g_values=combined_amp,
-            peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
-            peak_separation_hz=PEAK_SEPARATION_HZ,
-            top_n=8,
-            strength_range_mask=strength_range_mask,
-        )
     return {
         "freq_slice": freq_slice,
         "spectrum_by_axis": spectrum_by_axis,
@@ -421,6 +394,94 @@ def compute_fft_spectrum(
         "strength_metrics_analytically_valid": has_valid_analysis_bins,
         "axis_peaks": axis_peaks,
     }
+
+
+def compute_combined_strength_metrics(
+    fft_block: FloatArray,
+    *,
+    fft_window: FloatArray,
+    fft_scale: float,
+    freq_slice: FloatArray,
+    valid_idx: IntIndexArray,
+    strength_range_mask: BoolArray | None = None,
+    spike_filter_enabled: bool = True,
+) -> VibrationStrengthMetrics | None:
+    """Strength metrics of the combined spectrum only, as ``compute_fft_spectrum`` reports them.
+
+    Skips the per-axis peak search, for callers that read only the combined
+    strength (post-stop raw replay). ``None`` when there are no analysis bins.
+    """
+    specs_all = _amplitude_spectra(
+        fft_block,
+        fft_window=fft_window,
+        fft_scale=fft_scale,
+        spike_filter_enabled=spike_filter_enabled,
+    )
+    if specs_all is None or freq_slice.size == 0:
+        return None
+    _combined_amp, strength_metrics = _combined_strength_metrics(
+        freq_slice=freq_slice,
+        amp_slices=[specs_all[axis_idx, valid_idx] for axis_idx in range(len(AXES))],
+        strength_range_mask=strength_range_mask,
+    )
+    return strength_metrics
+
+
+def _amplitude_spectra(
+    fft_block: FloatArray,
+    *,
+    fft_window: FloatArray,
+    fft_scale: float,
+    spike_filter_enabled: bool,
+) -> FloatArray | None:
+    """Single-sided per-axis amplitude spectra (g) of a ``(3, N)`` block; ``None`` when N is 0."""
+    if fft_block.ndim != 2 or fft_block.shape[0] != 3:
+        raise ValueError(f"fft_block must have shape (3, N), got {fft_block.shape}")
+    fft_n = fft_window.shape[0]
+    if fft_block.shape[1] != fft_n:
+        raise ValueError(
+            f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}",
+        )
+    if fft_n == 0:
+        return None
+    if spike_filter_enabled:
+        fft_block = medfilt3(fft_block)
+    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
+
+    plan = _get_rfft_plan(fft_block.shape[0], fft_n)
+    np.multiply(fft_block, fft_window, out=plan.input_array)
+    plan()
+    specs_all: FloatArray = np.abs(plan.output_array)
+    specs_all *= fft_scale
+    if specs_all.shape[1] > 0:
+        specs_all[:, 0] *= 0.5
+    if (fft_n % 2) == 0 and specs_all.shape[1] > 1:
+        specs_all[:, -1] *= 0.5
+    return specs_all
+
+
+def _combined_strength_metrics(
+    *,
+    freq_slice: FloatArray,
+    amp_slices: list[FloatArray],
+    strength_range_mask: BoolArray | None,
+) -> tuple[FloatArray, VibrationStrengthMetrics]:
+    combined_amp = _combined_spectrum_amp_g_array(
+        axis_spectra_amp_g=amp_slices,
+        axis_count_for_mean=len(amp_slices),
+    ).astype(
+        np.float32,
+        copy=False,
+    )
+    strength_metrics = compute_vibration_strength_db(
+        freq_hz=freq_slice,
+        combined_spectrum_amp_g_values=combined_amp,
+        peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+        peak_separation_hz=PEAK_SEPARATION_HZ,
+        top_n=8,
+        strength_range_mask=strength_range_mask,
+    )
+    return combined_amp, strength_metrics
 
 
 class SpectralAnalysisComputer:
@@ -467,6 +528,24 @@ class SpectralAnalysisComputer:
     def strength_range_mask(self, sample_rate_hz: int) -> BoolArray:
         _, _, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return strength_range_mask
+
+    def compute_combined_strength_metrics(
+        self,
+        fft_block: FloatArray,
+        sample_rate_hz: int,
+        *,
+        spike_filter_enabled: bool = True,
+    ) -> VibrationStrengthMetrics | None:
+        freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        return compute_combined_strength_metrics(
+            fft_block,
+            fft_window=self.fft_window,
+            fft_scale=self.fft_scale,
+            freq_slice=freq_slice,
+            valid_idx=valid_idx,
+            strength_range_mask=strength_range_mask,
+            spike_filter_enabled=spike_filter_enabled,
+        )
 
     def compute_fft_spectrum(
         self,

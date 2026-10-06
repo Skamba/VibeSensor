@@ -19,8 +19,11 @@ GPS dropouts do not silently discard valid vibration data (issue #287).
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from bisect import bisect_right
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from itertools import accumulate, repeat
+from operator import mul
 
 from vibesensor.analysis._types import Sample
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
@@ -98,26 +101,54 @@ def speed_slopes_kmh_s(
     *series* is sorted by time. A reading with fewer than three readings, or
     less than one second of readings, around it has no slope.
     """
+    # Same arithmetic, in the same order, as the plain least-squares sums; only the
+    # per-reading Python overhead is cut (slices of flat lists instead of tuples).
+    times = [t_s for t_s, _speed in series]
+    speeds = [speed for _t_s, speed in series]
+    min_span_s = half_window_s * (2.0 / 3.0)
     slopes: list[float | None] = []
     lo = 0
     hi = 0
-    n = len(series)
-    for t_s, _speed in series:
-        while series[lo][0] < t_s - half_window_s:
+    n = len(times)
+    for t_s in times:
+        while times[lo] < t_s - half_window_s:
             lo += 1
-        while hi < n and series[hi][0] <= t_s + half_window_s:
+        while hi < n and times[hi] <= t_s + half_window_s:
             hi += 1
-        window = series[lo:hi]
-        span = window[-1][0] - window[0][0]
-        if len(window) < _SLOPE_MIN_POINTS or span < half_window_s * (2.0 / 3.0):
+        count = hi - lo
+        if count < _SLOPE_MIN_POINTS or times[hi - 1] - times[lo] < min_span_s:
             slopes.append(None)
             continue
-        mean_t = sum(t for t, _v in window) / len(window)
-        mean_v = sum(v for _t, v in window) / len(window)
-        var_t = sum((t - mean_t) ** 2 for t, _v in window)
-        cov = sum((t - mean_t) * (v - mean_v) for t, v in window)
+        window_t = times[lo:hi]
+        window_v = speeds[lo:hi]
+        mean_t = sum(window_t) / count
+        mean_v = sum(window_v) / count
+        dev_t = [t - mean_t for t in window_t]
+        var_t = sum(map(pow, dev_t, repeat(2, count)))
+        cov = sum(map(mul, dev_t, [v - mean_v for v in window_v]))
         slopes.append(cov / var_t if var_t > 0 else None)
     return slopes
+
+
+class TimeSpanLookup:
+    """Whether a time lies in any closed span ``(start, end)``: a binary search per call.
+
+    The spans need not be sorted or disjoint: among the spans starting at or before
+    the time, the furthest-reaching end decides. A NaN bound never matches.
+    """
+
+    __slots__ = ("_reach", "_starts")
+
+    def __init__(self, spans: Iterable[tuple[float, float]]) -> None:
+        ordered = sorted((start, end) for start, end in spans if start == start and end == end)
+        self._starts = [start for start, _end in ordered]
+        self._reach = list(accumulate((end for _start, end in ordered), max))
+
+    def __call__(self, t_s: float | None) -> bool:
+        if t_s is None:
+            return False
+        before = bisect_right(self._starts, t_s)
+        return before > 0 and self._reach[before - 1] >= t_s
 
 
 def braking_intervals(
@@ -287,13 +318,12 @@ def segment_run_phases(
     series = _speed_series(samples)
     slopes = speed_slopes_kmh_s(series)
     slope_at = {t_s: slope for (t_s, _speed), slope in zip(series, slopes, strict=True)}
-    braking = braking_intervals(series, slopes)
+    in_braking = TimeSpanLookup(braking_intervals(series, slopes))
 
     per_sample: list[DrivingPhase] = []
     for speed, t_s in zip(speeds, times, strict=True):
         slope = slope_at.get(t_s) if t_s is not None else None
-        in_braking = t_s is not None and any(start <= t_s <= end for start, end in braking)
-        per_sample.append(classify_sample_phase(speed, slope, braking=in_braking))
+        per_sample.append(classify_sample_phase(speed, slope, braking=in_braking(t_s)))
 
     # Interpolate SPEED_UNKNOWN gaps: if a contiguous block of SPEED_UNKNOWN
     # samples is surrounded on both sides by the same moving phase (anything

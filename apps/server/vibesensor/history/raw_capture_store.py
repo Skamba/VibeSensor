@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -9,14 +10,15 @@ from pathlib import Path
 from threading import RLock
 from typing import BinaryIO, TextIO
 
+import msgspec
 import numpy as np
 
-from vibesensor.common.json_types import is_json_object
-from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
+from vibesensor.common.json_utils import safe_json_dumps
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
     RawCaptureChunkIndex,
+    RawCaptureChunkTable,
     RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSampleRateProofState,
@@ -26,6 +28,8 @@ from vibesensor.recording.raw_capture import (
     RawCaptureSensorManifest,
     RawRunCapture,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 _AXIS_COUNT = 3
 _BYTES_PER_AXIS = 2
@@ -110,12 +114,11 @@ class HistoryRawCaptureStore:
             stream = streams[client_id]
             stream.data_handle.close()
             stream.index_handle.close()
-            chunk_indexes = tuple(self._load_chunk_indexes(stream.index_path))
             (
                 sample_rate_hz,
                 declared_sample_rate_hz,
                 sample_rate_proof_state,
-            ) = _derive_sensor_sample_rate(stream, chunk_indexes)
+            ) = _derive_sensor_sample_rate(stream, _load_chunk_table(stream.index_path))
             sensor_manifest = RawCaptureSensorManifest(
                 client_id=stream.client_id,
                 sample_rate_hz=sample_rate_hz,
@@ -167,13 +170,11 @@ class HistoryRawCaptureStore:
         for sensor_manifest in manifest.sensors:
             data_path = run_dir / sensor_manifest.data_file
             index_path = run_dir / sensor_manifest.index_file
-            reshaped = self._read_all_sensor_samples(data_path)
-            chunk_indexes = self._load_chunk_indexes(index_path)
             sensors.append(
                 RawCaptureSensorData(
                     manifest=sensor_manifest,
-                    samples_i16=reshaped,
-                    chunks=tuple(chunk_indexes),
+                    samples_i16=self._read_all_sensor_samples(data_path),
+                    chunks=_load_chunk_table(index_path),
                 )
             )
         return RawRunCapture(manifest=manifest, sensors=tuple(sensors))
@@ -200,16 +201,6 @@ class HistoryRawCaptureStore:
         for sensor in manifest.sensors:
             names += [sensor.data_file, sensor.index_file]
         return tuple(path for name in names if (path := run_dir / name).is_file())
-
-    def _load_chunk_indexes(self, index_path: Path) -> list[RawCaptureChunkIndex]:
-        chunk_indexes: list[RawCaptureChunkIndex] = []
-        if not index_path.exists():
-            return chunk_indexes
-        for line in index_path.read_text(encoding="utf-8").splitlines():
-            parsed = safe_json_loads(line, context=f"raw capture index {index_path}")
-            if is_json_object(parsed):
-                chunk_indexes.append(RawCaptureChunkIndex.from_mapping(parsed))
-        return chunk_indexes
 
     def _read_all_sensor_samples(self, data_path: Path) -> np.ndarray:
         return self._reshape_samples(raw_bytes=data_path.read_bytes(), data_path=data_path)
@@ -250,19 +241,18 @@ class HistoryRawCaptureStore:
 
 def _derive_sensor_sample_rate(
     stream: _OpenSensorStream,
-    chunk_indexes: tuple[RawCaptureChunkIndex, ...],
+    chunks: RawCaptureChunkTable,
 ) -> tuple[int, int | None, RawCaptureSampleRateProofState]:
     declared_sample_rate_hz = stream.sample_rate_hz if stream.sample_rate_hz > 0 else None
-    observed_rates_hz: list[float] = []
     # Chronological like the replay timeline, so a reordered chunk is not a step.
-    ordered = sorted(chunk_indexes, key=lambda chunk: (chunk.t0_us, chunk.sample_start))
-    for previous, current in zip(ordered, ordered[1:], strict=False):
-        if previous.sample_count <= 0:
-            continue
-        delta_t_us = current.t0_us - previous.t0_us
-        if delta_t_us <= 0:
-            continue
-        observed_rates_hz.append((previous.sample_count * 1_000_000.0) / delta_t_us)
+    order = np.lexsort((chunks.sample_start, chunks.t0_us))
+    t0_us = chunks.t0_us[order]
+    previous_counts = chunks.sample_count[order][:-1]
+    delta_t_us = np.diff(t0_us)
+    steps = (previous_counts > 0) & (delta_t_us > 0)
+    observed_rates_hz: list[float] = (
+        (previous_counts[steps] * 1_000_000.0) / delta_t_us[steps]
+    ).tolist()
     if not observed_rates_hz:
         if declared_sample_rate_hz is not None:
             return declared_sample_rate_hz, declared_sample_rate_hz, "declared_only"
@@ -286,6 +276,38 @@ def _derive_sensor_sample_rate(
             representative_rate_hz = declared_sample_rate_hz
 
     return representative_rate_hz, declared_sample_rate_hz, "observed_consistent"
+
+
+class _ChunkIndexRow(msgspec.Struct):
+    sample_start: int
+    sample_count: int
+    t0_us: int
+
+
+_CHUNK_INDEX_ROW_DECODER = msgspec.json.Decoder(_ChunkIndexRow, strict=False)
+
+
+def _load_chunk_table(index_path: Path) -> RawCaptureChunkTable:
+    """Read a sensor's JSONL chunk index into columns; an unreadable line is skipped."""
+    columns: tuple[list[int], list[int], list[int]] = ([], [], [])
+    if index_path.exists():
+        with index_path.open("rb") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                try:
+                    row = _CHUNK_INDEX_ROW_DECODER.decode(line)
+                except msgspec.DecodeError:
+                    LOGGER.warning("Skipping unreadable raw capture index line in %s", index_path)
+                    continue
+                columns[0].append(row.sample_start)
+                columns[1].append(row.sample_count)
+                columns[2].append(row.t0_us)
+    return RawCaptureChunkTable(
+        sample_start=np.array(columns[0], dtype=np.int64),
+        sample_count=np.array(columns[1], dtype=np.int64),
+        t0_us=np.array(columns[2], dtype=np.int64),
+    )
 
 
 def _rounded_median(values: list[float]) -> int:

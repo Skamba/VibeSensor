@@ -23,6 +23,7 @@ from vibesensor.analysis.post_analysis_input import build_post_analysis_input
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
+    RawCaptureChunkTable,
     RawCaptureLossStats,
     RawCaptureManifest,
     RawCaptureSensorClockSync,
@@ -87,13 +88,15 @@ def _rate_capture(
             RawCaptureSensorData(
                 manifest=manifest,
                 samples_i16=samples_i16,
-                chunks=(
-                    RawCaptureChunkIndex(
-                        sample_start=0,
-                        sample_count=int(samples_i16.shape[0]),
-                        t0_us=_RUN_START_MONOTONIC_US + raw_start_offset_us,
-                        byte_offset=0,
-                    ),
+                chunks=RawCaptureChunkTable.from_rows(
+                    [
+                        RawCaptureChunkIndex(
+                            sample_start=0,
+                            sample_count=int(samples_i16.shape[0]),
+                            t0_us=_RUN_START_MONOTONIC_US + raw_start_offset_us,
+                            byte_offset=0,
+                        )
+                    ]
                 ),
             ),
         ),
@@ -135,7 +138,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
         stride=1,
     )
     calls: list[int] = []
-    original_compute = raw_capture_replay.SpectralAnalysisComputer.compute_fft_spectrum
+    original_compute = raw_capture_replay.SpectralAnalysisComputer.compute_combined_strength_metrics
 
     def _counting_compute(self, fft_block, sample_rate_hz, **kwargs):
         calls.append(sample_rate_hz)
@@ -143,7 +146,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
 
     monkeypatch.setattr(
         raw_capture_replay.SpectralAnalysisComputer,
-        "compute_fft_spectrum",
+        "compute_combined_strength_metrics",
         _counting_compute,
     )
 
@@ -217,7 +220,7 @@ def _timing_capture(
             RawCaptureSensorData(
                 manifest=manifest,
                 samples_i16=samples_i16,
-                chunks=tuple(chunk_indexes),
+                chunks=RawCaptureChunkTable.from_rows(chunk_indexes),
             )
         )
         sensor_manifests.append(manifest)
@@ -396,13 +399,15 @@ def _outcome_capture(
             RawCaptureSensorData(
                 manifest=sensor_manifest,
                 samples_i16=samples_i16,
-                chunks=(
-                    RawCaptureChunkIndex(
-                        sample_start=0,
-                        sample_count=fft_n,
-                        t0_us=1_000_000,
-                        byte_offset=0,
-                    ),
+                chunks=RawCaptureChunkTable.from_rows(
+                    [
+                        RawCaptureChunkIndex(
+                            sample_start=0,
+                            sample_count=fft_n,
+                            t0_us=1_000_000,
+                            byte_offset=0,
+                        )
+                    ]
                 ),
             ),
         ),

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import math
+import random
+
 import pytest
 
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
+    TimeSpanLookup,
     classify_sample_phase,
     diagnostic_sample_mask,
     segment_run_phases,
@@ -216,3 +220,21 @@ class TestDiagnosticSampleMaskGpsDropout:
 # ---------------------------------------------------------------------------
 # phase_summary (integration: DrivingPhaseSegment population)
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_span_lookup_agrees_with_checking_every_span(seed: int) -> None:
+    # Sorted, overlapping, nested, touching, empty, reversed and NaN-bounded spans.
+    rng = random.Random(seed)
+    spans: list[tuple[float, float]] = []
+    for _ in range(rng.randint(0, 40)):
+        start = rng.choice((rng.uniform(0.0, 100.0), float(rng.randint(0, 100)), math.nan))
+        end = rng.choice((start + rng.uniform(-5.0, 20.0), start, math.nan, math.inf))
+        spans.append((start, end))
+    lookup = TimeSpanLookup(spans)
+    times = [None, math.nan, -math.inf, math.inf, *(rng.uniform(-5.0, 125.0) for _ in range(200))]
+    times += [bound for span in spans for bound in span]
+
+    for t_s in times:
+        expected = t_s is not None and any(start <= t_s <= end for start, end in spans)
+        assert lookup(t_s) is expected, (t_s, spans)
