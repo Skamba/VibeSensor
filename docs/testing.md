@@ -167,7 +167,7 @@ Other workflows: `codeql.yml` (Python + JS/TS analysis), `main-release.yml` (whe
 make coverage
 COV_OPTS="--cov-report=html --cov-report=term-missing:skip-covered" make coverage
 cd apps/server && python -m pytest -q --cov=vibesensor --cov-report=term-missing:skip-covered tests
-python3 -m vibesensor.cli.characterize_aliasing
+.venv/bin/python tools/dev/characterize_aliasing.py
 ```
 
 Treat coverage as a risk-finding tool, not the only quality signal. High-risk backend areas (`analysis`, `live` processing, the `history` DB, `updates`) should stay above the repo baseline when practical.

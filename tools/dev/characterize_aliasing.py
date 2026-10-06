@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+"""Show which out-of-band tones fold into the analysis band (digital chain only).
+
+A developer tool, not part of the server. Run it with the repo venv::
+
+    .venv/bin/python tools/dev/characterize_aliasing.py
+    .venv/bin/python tools/dev/characterize_aliasing.py --sample-rate-hz 400 --fft-n 1024
+
+See docs/anti_alias_characterization.md.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -6,7 +17,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ, SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
+from vibesensor.dsp.constants import (
+    FFT_N,
+    SAMPLE_RATE_HZ,
+    SPECTRUM_MAX_HZ,
+    SPECTRUM_MIN_HZ,
+)
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import ProcessorConfig
 
@@ -18,20 +34,6 @@ DEFAULT_INTERVAL_STEP_HZ = 1.0
 class AliasInterval:
     input_start_hz: float
     input_end_hz: float
-
-    @property
-    def alias_start_hz(self) -> float:
-        return min(
-            alias_frequency_hz(self.input_start_hz, self.sample_rate_hz),
-            alias_frequency_hz(self.input_end_hz, self.sample_rate_hz),
-        )
-
-    @property
-    def alias_end_hz(self) -> float:
-        return max(
-            alias_frequency_hz(self.input_start_hz, self.sample_rate_hz),
-            alias_frequency_hz(self.input_end_hz, self.sample_rate_hz),
-        )
 
     @property
     def sample_rate_hz(self) -> float:
@@ -171,7 +173,9 @@ def analyze_tone(
 ) -> ExampleResult:
     """Run one pure tone through the current FFT chain and report the in-band peak."""
     t = np.arange(fft_n, dtype=np.float32) / np.float32(sample_rate_hz)
-    tone = np.sin(np.float32(2.0 * math.pi) * np.float32(input_hz) * t).astype(np.float32)
+    tone = np.sin(np.float32(2.0 * math.pi) * np.float32(input_hz) * t).astype(
+        np.float32
+    )
     block = np.zeros((3, fft_n), dtype=np.float32)
     block[0, :] = tone
     result = computer.compute_fft_spectrum(
@@ -259,7 +263,9 @@ def main() -> int:
     print(f"fft_n              : {args.fft_n}")
     print(f"fft_window_s       : {args.fft_n / args.sample_rate_hz:.3f}")
     print(f"bin_spacing_hz     : {bin_spacing_hz:.6f}")
-    print(f"analysis_band_hz   : {_fmt_hz(args.spectrum_min_hz)}-{_fmt_hz(args.spectrum_max_hz)}")
+    print(
+        f"analysis_band_hz   : {_fmt_hz(args.spectrum_min_hz)}-{_fmt_hz(args.spectrum_max_hz)}"
+    )
     print(f"scan_max_input_hz  : {_fmt_hz(args.max_input_hz)}")
     print()
     print("Out-of-band input intervals that fold into the current analysis band:")
@@ -267,8 +273,12 @@ def main() -> int:
         print("  none")
     else:
         for interval in alias_intervals:
-            alias_lo = alias_frequency_hz(interval.input_start_hz, interval.sample_rate_hz)
-            alias_hi = alias_frequency_hz(interval.input_end_hz, interval.sample_rate_hz)
+            alias_lo = alias_frequency_hz(
+                interval.input_start_hz, interval.sample_rate_hz
+            )
+            alias_hi = alias_frequency_hz(
+                interval.input_end_hz, interval.sample_rate_hz
+            )
             print(
                 "  "
                 f"{_fmt_hz(interval.input_start_hz)}-{_fmt_hz(interval.input_end_hz)} Hz"

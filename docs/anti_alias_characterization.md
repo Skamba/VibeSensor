@@ -12,8 +12,13 @@ Use the characterization tool to see which out-of-band tones fold back into the
 current analysis band:
 
 ```bash
-python3 -m vibesensor.cli.characterize_aliasing
+.venv/bin/python tools/dev/characterize_aliasing.py
+.venv/bin/python tools/dev/characterize_aliasing.py --sample-rate-hz 400 --fft-n 1024
 ```
+
+It is a developer tool in `tools/dev/`, not part of the server package; run it
+from the repo root with the repo venv. `--help` lists the sample-rate, FFT-size,
+analysis-band and scan-range options (defaults are the current runtime values).
 
 The tool reports:
 
