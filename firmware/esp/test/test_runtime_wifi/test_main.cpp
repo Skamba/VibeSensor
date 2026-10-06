@@ -143,11 +143,40 @@ void test_service_wifi_starts_async_scan_and_schedules_backoff_retry() {
   TEST_ASSERT_EQUAL_UINT32(1, status.wifi_reconnect_attempts);
 }
 
+void test_a_sensor_that_lost_the_hotspot_retries_at_least_every_10_s() {
+  WifiState state{};
+  vibesensor::runtime::load_wifi_credentials(state);
+  RuntimeStatus status{};
+  WiFi.setStatus(WL_DISCONNECTED);
+  uint32_t attempts = 0;
+  uint32_t last_attempt_ms = 0;
+  uint32_t longest_gap_ms = 0;
+
+  // Two minutes without the hotspot (the Pi rebooting), checked every millisecond.
+  for (uint32_t now_ms = 1000; now_ms <= 121000; ++now_ms) {
+    arduino_test::set_millis(now_ms);
+    arduino_test::set_random_value(now_ms * 2654435761U);
+    vibesensor::runtime::service_wifi(state, status);
+    if (status.wifi_reconnect_attempts != attempts) {
+      if (attempts > 0 && now_ms - last_attempt_ms > longest_gap_ms) {
+        longest_gap_ms = now_ms - last_attempt_ms;
+      }
+      attempts = status.wifi_reconnect_attempts;
+      last_attempt_ms = now_ms;
+    }
+  }
+
+  TEST_ASSERT_TRUE(longest_gap_ms <= 10000);
+  TEST_ASSERT_TRUE(longest_gap_ms >= 8000);  // still backed off, not hammering
+  TEST_ASSERT_TRUE(attempts >= 12);
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_load_wifi_credentials_prefers_nvs_and_falls_back_to_build_defaults);
   RUN_TEST(test_connect_wifi_joins_the_hotspot_stored_in_nvs);
   RUN_TEST(test_connect_wifi_retries_until_connected_and_uses_scanned_bssid);
   RUN_TEST(test_service_wifi_starts_async_scan_and_schedules_backoff_retry);
+  RUN_TEST(test_a_sensor_that_lost_the_hotspot_retries_at_least_every_10_s);
   return UNITY_END();
 }

@@ -42,30 +42,40 @@ def _stream(
     duration_s: float,
     lost_every: int = 0,
     outages: tuple[tuple[float, float], ...] = (),
+    backlog_s: float = _BACKLOG_S,
+    link_delay_s: float = 0.0,
 ) -> None:
     """Send frames a sensor delivering ``delivered_hz`` makes, stamped at ``stamped_hz``.
 
     A sensor that stamps right has ``stamped_hz == delivered_hz``; firmware
     cf117a43e stamped from the nominal 800 Hz schedule while delivering ~742.
-    Each frame arrives 15-75 ms after its last sample (Wi-Fi and queueing).
+    Each frame arrives 15-75 ms after its last sample (Wi-Fi and queueing), plus
+    ``link_delay_s`` on a link that keeps the sensor's queue that far behind.
     During an outage (start, end), seconds into the stream, nothing arrives:
-    the sensor drops frames older than its 0.75 s hold, and the 0.7 s of frames
-    it still queues at the end drain faster than real time over the next second.
+    the sensor drops frames older than its 3 s hold, and the ``backlog_s`` of
+    frames it still queues at the end drain faster than real time over the next
+    second.
     """
     frame = 0
     while True:
         frame_start_s = _START_S + frame * _FRAME_SAMPLES / delivered_hz
-        arrival_s = frame_start_s + _FRAME_SAMPLES / delivered_hz + 0.015 + (frame % 7) * 0.01
+        arrival_s = (
+            frame_start_s
+            + _FRAME_SAMPLES / delivered_hz
+            + 0.015
+            + (frame % 7) * 0.01
+            + link_delay_s
+        )
         if arrival_s - _START_S > duration_s:
             return
         t0_us = int((_START_S + frame * _FRAME_SAMPLES / stamped_hz) * 1_000_000)
         aged_out = False
         for outage_start_s, outage_end_s in outages:
-            since_queued_s = arrival_s - _START_S - (outage_end_s - _BACKLOG_S)
+            since_queued_s = arrival_s - _START_S - (outage_end_s - backlog_s)
             if outage_start_s <= arrival_s - _START_S and since_queued_s < 0:
                 aged_out = True
-            elif 0 <= since_queued_s < _BACKLOG_S + _DRAIN_S:
-                arrival_s += _BACKLOG_S * (1 - since_queued_s / (_BACKLOG_S + _DRAIN_S))
+            elif 0 <= since_queued_s < backlog_s + _DRAIN_S:
+                arrival_s += backlog_s * (1 - since_queued_s / (backlog_s + _DRAIN_S))
         if not aged_out and not (lost_every and frame % lost_every == lost_every - 1):
             registry.update_from_data(
                 DataMessage(
@@ -90,6 +100,8 @@ def _stream(
         # resamples it, a raw stream labelled 800 Hz would be this.
         pytest.param(823.0, 823.0, 0, "rate_mismatch", id="off-rate-sensor"),
         # The hardware bug: 742 samples/s stamped as 800, falling ~55 ms/s behind.
+        # Its first window (25 s) shows rate_mismatch; once its stamps are further
+        # behind than the sensor ever holds a frame (3.5 s), timestamp_lag.
         pytest.param(742.0, 800.0, 0, "timestamp_lag", id="stamps-behind-real-time"),
     ],
 )
@@ -105,7 +117,7 @@ def test_timing_guard_flags_sensors_whose_samples_cannot_be_placed_in_time(
         registry,
         delivered_hz=delivered_hz,
         stamped_hz=stamped_hz,
-        duration_s=50.0,
+        duration_s=90.0,
         lost_every=lost_every,
     )
 
@@ -132,18 +144,22 @@ def test_timing_guard_reports_nothing_before_a_full_window() -> None:
 
 
 @pytest.mark.parametrize(
-    ("outages", "duration_s"),
+    ("outages", "backlog_s", "duration_s"),
     [
         # Synced while its queue still holds frames from before the server came
         # up: a window anchored there counts 0.7 s too many samples (+3.5 %).
-        pytest.param(((0.0, 0.8),), 27.0, id="backlog-at-stream-start"),
+        pytest.param(((0.0, 0.8),), 0.7, 27.0, id="backlog-at-stream-start"),
         # A Wi-Fi drop that ends just before the second window would close:
         # closed there, it would miss the frames still queued (-2.8 %).
-        pytest.param(((0.0, 0.8), (44.0, 45.6)), 47.0, id="backlog-after-an-interruption"),
+        pytest.param(((0.0, 0.8), (44.0, 45.6)), 0.7, 47.0, id="backlog-after-an-interruption"),
+        # A 5 s Wi-Fi drop mid-window: the sensor delivers its last 2.9 s of
+        # frames once it is back, 14 % of a window if one were anchored there.
+        pytest.param(((0.0, 0.8), (20.0, 25.0)), 2.9, 52.0, id="wifi-drop-backlog"),
     ],
 )
 def test_timing_guard_waits_for_a_drained_queue_before_judging_the_rate(
     outages: tuple[tuple[float, float], ...],
+    backlog_s: float,
     duration_s: float,
 ) -> None:
     registry = _registry()
@@ -154,12 +170,26 @@ def test_timing_guard_waits_for_a_drained_queue_before_judging_the_rate(
         stamped_hz=800.0,
         duration_s=duration_s,
         outages=outages,
+        backlog_s=backlog_s,
     )
 
     record = registry.get(_CLIENT_ID)
     assert record is not None
     assert record.timing_guard.state == "ok"
     assert record.timing_guard.effective_rate_hz == pytest.approx(800.0, rel=0.005)
+
+
+def test_a_link_that_keeps_a_sensor_seconds_behind_is_not_a_timestamp_error() -> None:
+    """The sensor holds frames up to 3 s; correctly stamped late frames are placed right."""
+    registry = _registry()
+
+    _stream(registry, delivered_hz=800.0, stamped_hz=800.0, duration_s=50.0, link_delay_s=2.5)
+
+    record = registry.get(_CLIENT_ID)
+    assert record is not None
+    assert record.timing_guard.state == "ok"
+    assert record.timing_guard.min_lag_us is not None
+    assert 2_500_000 <= record.timing_guard.min_lag_us <= 2_520_000
 
 
 def test_timing_guard_still_flags_an_off_rate_sensor_with_a_backlog_at_stream_start() -> None:

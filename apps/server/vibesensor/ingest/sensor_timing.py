@@ -18,13 +18,13 @@ The guard compares, per window of receive time:
   rate.
 
 Both measures hold only once the sensor's send queue is in its steady state.
-The sensor sends stop-and-wait and holds a frame up to 0.75 s
+The sensor sends stop-and-wait and holds a frame up to 3 s
 (``kDataMaxFrameAgeMs``); right after it connects, reconnects or is synced, and
 after any interruption, its queue still holds frames that are drained faster
 than real time. A window anchored on a queued frame and closed on a fresh one
-counts up to 0.75 s too many samples (3.75 % of 20 s), so the guard starts a
-window only after the stream has run ``SENSOR_TIMING_SETTLE_S`` without an
-interruption.
+counts too many samples (0.75 s of backlog is 3.75 % of 20 s), so the guard
+starts a window only after the stream has run ``SENSOR_TIMING_SETTLE_S`` without
+an interruption.
 """
 
 from __future__ import annotations
@@ -44,19 +44,21 @@ __all__ = [
 type SensorTimingState = Literal["unknown", "ok", "timestamp_lag", "rate_mismatch"]
 
 SENSOR_TIMING_WINDOW_S = 20.0
-# Frames are held back at most 0.75 s for retransmission (``kDataMaxFrameAgeMs``);
-# a window whose fastest frame still arrives later than this is stamped behind
-# real time.
-SENSOR_TIMING_MAX_LAG_US = 1_000_000
+# The sensor holds a frame back at most 3 s (``kDataMaxFrameAgeMs``), plus up to
+# four 120 ms retransmits once sent: a link that keeps it that far behind still
+# delivers correctly stamped frames. A window whose fastest frame arrives later
+# than this is stamped behind real time.
+SENSOR_TIMING_MAX_LAG_US = 3_500_000
 # Arrival jitter over a 20 s window is well under 1 %; an untrimmed sensor
 # oscillator is a few percent off.
 SENSOR_TIMING_MAX_RATE_ERROR = 0.02
-# A sensor's backlog ages out within 0.75 s once its frames are acknowledged
-# promptly; a server still starting acknowledges slowly for longer. The
-# registry's stream-start grace for frame loss is as long.
+# A sensor's backlog (at most 3 s of frames) drains within a second once its
+# frames are acknowledged promptly; a server still starting acknowledges slowly
+# for longer. The registry's stream-start grace for frame loss is as long.
 SENSOR_TIMING_SETTLE_S = 5.0
-# No frame for longer than a frame may be held back: the stream was interrupted
-# and its queue drains again.
+# No frame for this long from a sensor that sends several a second and resends an
+# unacknowledged one every 120 ms: the stream was interrupted and its queue
+# drains again.
 _INTERRUPTION_S = 1.0
 # A frame stamped this far ahead of its arrival means a wrong clock offset.
 _MAX_LEAD_US = 250_000

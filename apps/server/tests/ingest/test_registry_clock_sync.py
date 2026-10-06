@@ -69,6 +69,36 @@ def test_data_frames_are_clock_synced_only_after_an_applied_offset_is_acknowledg
     assert synced.clock_synced is True
 
 
+def test_a_3_s_backlog_queued_before_the_sync_stays_on_device_time() -> None:
+    """A sensor back on Wi-Fi is synced while it still drains up to 3 s of frames
+    stamped on its own clock; they never pass as server time, even though its
+    sample clock runs 1 % fast and so drifts 30 ms from a nominal prediction."""
+    registry = _registry_with_sensor()
+    offset_us = 1_500_000  # car start: the device timer reads 1.5 s behind the Pi
+    now_mono_s = 1_000.0
+    frame_us = 250_000 / 1.01
+    device_t0_us = int(now_mono_s * 1e6) - offset_us - 3_000_000
+
+    registry.update_from_data(_data(1, device_t0_us), ("10.4.0.2", 50000), now_mono=now_mono_s)
+    complete_clock_sync(registry, "aabbccddeeff", offset_us=offset_us, now_mono_s=now_mono_s)
+    backlog = [
+        registry.update_from_data(
+            _data(seq, device_t0_us + int((seq - 1) * frame_us)),
+            ("10.4.0.2", 50000),
+            now_mono=now_mono_s + seq * 0.02,
+        )
+        for seq in range(2, 14)
+    ]
+    synced = registry.update_from_data(
+        _data(14, device_t0_us + int(13 * frame_us) + offset_us),
+        ("10.4.0.2", 50000),
+        now_mono=now_mono_s + 0.5,
+    )
+
+    assert [result.clock_synced for result in backlog] == [False] * 12
+    assert synced.clock_synced is True
+
+
 def test_sensor_reboot_forgets_its_clock_sync() -> None:
     registry = _registry_with_sensor()
     complete_clock_sync(registry, "aabbccddeeff", now_mono_s=1_000.0)

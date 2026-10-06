@@ -175,6 +175,45 @@ void test_service_tx_drops_stale_and_retry_exhausted_frames() {
   TEST_ASSERT_NULL(vibesensor::runtime::peek_frame(queue_state));
 }
 
+void test_frames_queued_during_a_short_wifi_drop_are_sent_after_reconnect() {
+  DataFrame frames[32] = {};
+  FrameQueueState queue_state = make_queue_state(frames, 32);
+  RuntimeStatus status{};
+  TransportState transport{};
+  copy_client_id(transport.client_id, fixture::kCommandClientId);
+  WiFi.setStatus(WL_DISCONNECTED);
+
+  // One frame from before the drop: 3 s old once Wi-Fi is back.
+  arduino_test::set_millis(500);
+  append_full_frame(queue_state, status, 0, 500000, 0);
+  // 2.5 s without Wi-Fi: 25 frames of 100 ms queue up, none sent or dropped yet.
+  for (uint32_t i = 0; i < 25; ++i) {
+    const uint32_t now_ms = 1000 + i * 100;
+    arduino_test::set_millis(now_ms);
+    append_full_frame(queue_state, status, static_cast<int16_t>(i), now_ms * 1000ULL, 0);
+    vibesensor::runtime::service_tx(transport, queue_state, status);
+  }
+  TEST_ASSERT_EQUAL_UINT32(0, transport.data_udp.sent_packets.size());
+  TEST_ASSERT_EQUAL_UINT32(0, status.tx_stale_frame_drops);
+
+  arduino_test::set_millis(3500);
+  WiFi.setStatus(WL_CONNECTED);
+  transport.handshake_complete = true;
+  for (int i = 0; i < 64 && vibesensor::runtime::peek_frame(queue_state) != nullptr; ++i) {
+    vibesensor::runtime::service_tx(transport, queue_state, status);
+    const DataFrame* head = vibesensor::runtime::peek_frame(queue_state);
+    if (head != nullptr && head->transmitted) {
+      vibesensor::runtime::ack_data_frames(queue_state, head->seq);
+    }
+  }
+
+  // Everything the drop queued is delivered; only the 3 s old frame is not.
+  TEST_ASSERT_NULL(vibesensor::runtime::peek_frame(queue_state));
+  TEST_ASSERT_EQUAL_UINT32(1, status.tx_stale_frame_drops);
+  TEST_ASSERT_EQUAL_UINT32(25, transport.data_udp.sent_packets.size());
+  TEST_ASSERT_EQUAL_UINT32(0, status.queue_overflow_drops);
+}
+
 void test_initialize_transport_uses_station_mac_while_wifi_is_down() {
   TransportState transport{};
   WiFi.setStatus(WL_DISCONNECTED);
@@ -210,6 +249,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_service_tx_tracks_send_failures_and_retries_after_backoff);
   RUN_TEST(test_service_control_rx_handles_handshake_identify_and_sync_clock);
   RUN_TEST(test_service_tx_drops_stale_and_retry_exhausted_frames);
+  RUN_TEST(test_frames_queued_during_a_short_wifi_drop_are_sent_after_reconnect);
   RUN_TEST(test_initialize_transport_uses_station_mac_while_wifi_is_down);
   RUN_TEST(test_initialize_transport_uses_efuse_fallback_client_id_when_mac_read_fails);
   return UNITY_END();

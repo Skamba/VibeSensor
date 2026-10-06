@@ -117,12 +117,12 @@ proof** captured at finalize time:
 Raw capture only stores chunks stamped on the server clock. The registry
 marks a sensor clock-synced once the sensor acknowledges a sync command
 that carried an offset to apply (the second exchange). The firmware stamps a
-frame when it queues it and sends the queue stop-and-wait, retransmitting the
-head for up to 0.75 s, so frames queued just before the offset was applied can
+frame when it queues it and sends the queue stop-and-wait, holding frames in
+the queue for up to 3 s, so frames queued just before the offset was applied can
 still arrive after the acknowledgement, on bare device time. The registry
-spots them because they continue the sensor's device timeline (its last
-pre-sync frame's `t0_us` plus one frame duration per sequence step, for up to
-8 frames), whereas frames stamped after the offset was applied are the offset
+spots them because they continue the sensor's device timeline (the previous
+device-time frame's `t0_us` plus one frame duration per sequence step, across
+at most 8 steps of lost frames), whereas frames stamped after the offset was applied are the offset
 away from it. Judging by arrival time instead fails at car start, when the Pi
 and the sensors boot together and a device timer reads within a second or two
 of server time: a synced frame held back by a retransmission then looks like
@@ -191,9 +191,9 @@ samples. The registry therefore checks every synced sensor in 20 s windows of
 receive time (`vibesensor/ingest/sensor_timing.py`):
 
 - **arrival lag**: receive time minus the time of the frame's last sample, as
-  the window minimum (strips Wi-Fi and retransmit delays). Above 1 s (frames
-  are held back at most 0.75 s), or more than 0.25 s ahead, the state is
-  `timestamp_lag`.
+  the window minimum (strips Wi-Fi and retransmit delays). Above 3.5 s
+  (frames are held back at most 3 s, plus retransmits), or more than 0.25 s
+  ahead, the state is `timestamp_lag`.
 - **effective rate**: samples delivered per second of receive time, frames
   lost in transit counted from sequence gaps. More than 2 % off the declared
   rate is `rate_mismatch`.
@@ -201,10 +201,20 @@ receive time (`vibesensor/ingest/sensor_timing.py`):
 A window starts only after the stream has run 5 s without a gap of more than
 1 s, counted from the first synced frame. Right after the sensor connects,
 reconnects or is synced, and after any interruption, its stop-and-wait queue
-still holds up to 0.75 s of frames that drain faster than real time. A window
-anchored in that drain counted up to 3.75 % too many samples, and a server
-restart showed `sensor_rate_mismatch` for its first window. A sensor that
-really is off-rate is flagged 25 s after it is synced.
+still holds up to 3 s of frames that drain faster than real time. A window
+anchored in that drain counted too many samples (3.75 % for 0.75 s of
+backlog), and a server restart showed `sensor_rate_mismatch` for its first
+window. A sensor that really is off-rate is flagged 25 s after it is synced;
+the ~740 samples/s firmware above shows `rate_mismatch` from then on and
+`timestamp_lag` once its stamps are 3.5 s behind.
+
+A sensor that loses Wi-Fi keeps sampling. Once it is back (it retries at least
+every 10 s) it sends the frames it queued in the last 3 s, in order and with
+their own `t0_us`: raw capture places them on the timeline, and a recorded row
+built from them takes the speed at its analysis window's time. Only the live
+view runs that far behind until the backlog has drained, which takes well
+under a second on a healthy link. A link too slow to drain it keeps the sensor
+up to 3 s behind; its stamps are still right, so that is not `timestamp_lag`.
 
 A flagged sensor shows up as the health degradation reason
 `sensor_timestamp_lag` / `sensor_rate_mismatch` (with per-client

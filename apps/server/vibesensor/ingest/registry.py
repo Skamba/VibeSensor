@@ -56,9 +56,9 @@ _RESTART_SEQ_GAP = 1000
 # Genuine late/reordered UDP frames are only milliseconds behind, so a rewind
 # this large means a new session.
 _RESTART_T0_REWIND_US = 2_000_000
-# A streaming sensor sends a frame every 250 ms and holds frames back at most
-# 0.75 s while it retransmits (``kDataMaxFrameAgeMs``); one silent for longer
-# stopped streaming, and may come back from a reboot.
+# A streaming sensor sends several frames a second and resends an unacknowledged
+# one every 120 ms; one silent for longer stopped streaming (a Wi-Fi drop, whose
+# last 3 s of frames it still delivers, or a reboot).
 _STREAMING_SILENCE_MAX_S = 1.0
 # A sync exchange delayed on either side (a scheduling stall, a Wi-Fi retry) has an
 # inflated round trip, and its offset estimate is off by up to half of it. Sensors
@@ -95,7 +95,7 @@ type ExpectedFrameLoss = Literal["stream_start", "bluetooth_scan", "bluetooth_pa
 """Why frame loss is expected rather than a sensor or Wi-Fi fault.
 
 - ``stream_start``: the sensor sends stop-and-wait and drops a frame it could
-  not deliver within 0.75 s (``kDataMaxFrameAgeMs``). Frames it queued while the
+  not deliver within 3 s (``kDataMaxFrameAgeMs``). Frames it queued while the
   server was down (a restart or update) or before its handshake age out while
   the first ones are acknowledged, so its first seconds at this server show a
   gap of a few frames. A longer outage also overflows its send queue; its first
@@ -615,8 +615,10 @@ def firmware_control_port(client_id: str) -> int:
     return FIRMWARE_CONTROL_PORT_BASE + int(client_id[-2:], 16) % 100
 
 
-# The firmware holds back at most 0.75 s of frames (``kDataMaxFrameAgeMs``) while
-# it retransmits; frames further on were queued after the offset was applied.
+# Frames the sensor queued before it applied the offset arrive in order, each
+# continuing the one before it (the sensor holds up to 3 s of them,
+# ``kDataMaxFrameAgeMs``). Only a run of lost frames puts a gap between them;
+# past one this long the prediction is too loose and the frame counts as synced.
 _MAX_HELD_BACK_FRAMES = 8
 # A sensor's sample clock runs continuously: a frame on the same device timeline
 # lands within this of where it predicts (sync offsets are ms to seconds).

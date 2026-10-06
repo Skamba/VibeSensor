@@ -148,12 +148,18 @@ constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr size_t kMaxDataAckPacketsPerLoop = 8;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
 constexpr uint8_t kDataMaxRetransmits = 4;
-constexpr uint32_t kDataMaxFrameAgeMs = 750;
+// A frame older than this is dropped unsent: a short Wi-Fi drop or stall (a
+// reconnect, a Pi 3 Bluetooth scan sharing the radio) keeps its last 3 s of data,
+// which the server places by t0_us and the queue (12.8 s) holds easily. The server
+// side assumes this bound (``SENSOR_TIMING_MAX_LAG_US``, registry comments).
+constexpr uint32_t kDataMaxFrameAgeMs = 3000;
 constexpr uint32_t kStatusReportIntervalMs = 10000;
 constexpr uint16_t kMaxIdentifyDurationMs = 10000;
 constexpr uint8_t kSensorReinitErrorThreshold = 3;
 constexpr uint32_t kSensorReinitCooldownMs = 5000;
-constexpr uint32_t kWifiRetryIntervalMaxMs = 60000;
+// A sensor that lost the hotspot (the Pi rebooting, a brown-out) retries at least
+// every 10 s, so it is back within seconds of the hotspot instead of up to a minute.
+constexpr uint32_t kWifiRetryIntervalMaxMs = 10000;
 
 #ifndef VIBESENSOR_WIFI_SCAN_INTERVAL_MS
 #define VIBESENSOR_WIFI_SCAN_INTERVAL_MS 20000
