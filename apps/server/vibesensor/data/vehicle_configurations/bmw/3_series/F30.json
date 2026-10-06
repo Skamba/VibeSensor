@@ -1,15 +1,461 @@
 {
+  "definitions": {
+    "notes": {
+      "n_pre_tyres": "The official pre-LCI BMW 03/2012 320i and 07/2012 320i xDrive sheets list this size in the consumption footnote of factory tyre formats; staggered sizes are printed as front and rear.",
+      "n_lci_tyres": "The official BMW 05/2015 (LCI) sheet prints only the standard 205/60 R16; this optional size comes from the pre-LCI 2012 320i sheets' list of factory tyre formats (same body and axles), so it is a family default for the LCI rows."
+    },
+    "evidence_ref_sets": {
+      "e_pre_tyres": [
+        "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+        "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf"
+      ],
+      "e_lci_tyres": [
+        "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf",
+        "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+        "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf"
+      ]
+    },
+    "tire_setups": {
+      "pre_16_225_55": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_16_225_55": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 55.0,
+          "rim_in": 16.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "pre_17_225_50": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_17_225_50": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "pre_17_mixed": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_17_mixed": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 50.0,
+          "rim_in": 17.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 45.0,
+          "rim_in": 17.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "pre_18_225_45": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_18_225_45": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "pre_18_mixed": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_18_mixed": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 45.0,
+          "rim_in": 18.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 40.0,
+          "rim_in": 18.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "pre_19_mixed": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e_pre_tyres",
+        "notes_ref": "n_pre_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      },
+      "lci_19_mixed": {
+        "confidence": "family_default",
+        "evidence_refs_ref": "e_lci_tyres",
+        "notes_ref": "n_lci_tyres",
+        "front": {
+          "width_mm": 225.0,
+          "aspect_pct": 40.0,
+          "rim_in": 19.0
+        },
+        "rear": {
+          "width_mm": 255.0,
+          "aspect_pct": 35.0,
+          "rim_in": 19.0
+        },
+        "default_axle_for_speed": "rear"
+      }
+    }
+  },
   "defaults": {
     "brand": "BMW",
     "type": "Sedan",
     "market": "EU",
     "model_code": "F30",
     "body_code": "F30",
-    "model_name": "3 Series (F30, 2015-2019)"
+    "model_name": "3 Series (F30, 2012-2019)"
   },
   "configurations": [
     {
       "id": "bmw-f30-320i-eu-2012-mt6-rwd",
+      "production_start_year": 2012,
+      "production_end_year": 2014,
+      "variant_name": "320i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Germany 03/2012 technical data list the F30 320i Sedan six-speed manual as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Germany 03/2012 technical data list a six-speed manual for the F30 320i Sedan six-speed manual.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 0.830 as top gear for the F30 320i Sedan six-speed manual.",
+          "value": 0.83
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list the forward ratios 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830 for the F30 320i Sedan six-speed manual.",
+          "value": [
+            4.551,
+            2.548,
+            1.659,
+            1.23,
+            1.0,
+            0.83
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 3.077 as the final drive for the F30 320i Sedan six-speed manual.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan six-speed manual.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+              "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+            ],
+            "notes": "The official BMW Germany 03/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan six-speed manual.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "pre_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "pre_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "pre_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "pre_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "pre_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "pre_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Pre-LCI F30 320i (N20, 135 kW) from the official BMW Germany 03/2012 sheet: six-speed manual 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830 with final drive 3.077, eight-speed automatic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.154, standard 205/60 R16. The official 11/2012 320i Touring sheet repeats both ratio sets and final drives, and BMW Canada's MY2014 guide shows the same automatic ratio set and 3.154. The facelifted (LCI) B48 320i replaced it from 07/2015, so the row ends with the 2014 model year; cars built January-June 2015 also carry these values.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
+      "production_start_year": 2012,
+      "production_end_year": 2014,
+      "variant_name": "320i",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW Germany 03/2012 technical data list the F30 320i Sedan eight-speed Steptronic as rear-wheel drive.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf",
+          "bmw_pressclub_sources:f30-ca-my2014-product-guide-pdf"
+        ],
+        "notes": "The official BMW Germany 03/2012 technical data list an eight-speed automatic with Steptronic for the F30 320i Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, and BMW Canada's MY2014 guide names the N20 320i gearbox with this ratio set as the 8HP45.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 0.667 as top gear for the F30 320i Sedan eight-speed Steptronic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the F30 320i Sedan eight-speed Steptronic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 3.154 as the final drive for the F30 320i Sedan eight-speed Steptronic.",
+          "value": 3.154
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW Germany 03/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan eight-speed Steptronic.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+              "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+            ],
+            "notes": "The official BMW Germany 03/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i Sedan eight-speed Steptronic.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "pre_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "pre_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "pre_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "pre_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "pre_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "pre_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Pre-LCI F30 320i (N20, 135 kW) from the official BMW Germany 03/2012 sheet: six-speed manual 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830 with final drive 3.077, eight-speed automatic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.154, standard 205/60 R16. The official 11/2012 320i Touring sheet repeats both ratio sets and final drives, and BMW Canada's MY2014 guide shows the same automatic ratio set and 3.154. The facelifted (LCI) B48 320i replaced it from 07/2015, so the row ends with the 2014 model year; cars built January-June 2015 also carry these values.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-320i-eu-2015-mt6-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "320i",
@@ -94,6 +540,30 @@
               "rim_in": 16.0
             },
             "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "lci_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "lci_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "lci_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "lci_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "lci_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "lci_19_mixed"
           }
         ]
       },
@@ -112,19 +582,12 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
-        },
-        {
-          "item": "Optional wheel/tyre sizes for the F30 320i Sedan six-speed manual",
-          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
-          "evidence_refs": [
-            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
-          ]
         }
       ],
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-320i-eu-2012-zf8hp-rwd",
+      "id": "bmw-f30-320i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "320i",
@@ -211,6 +674,30 @@
               "rim_in": 16.0
             },
             "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "lci_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "lci_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "lci_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "lci_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "lci_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "lci_19_mixed"
           }
         ]
       },
@@ -229,10 +716,400 @@
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-320i-xdrive-eu-2012-mt6-awd",
+      "production_start_year": 2012,
+      "production_end_year": 2014,
+      "variant_name": "320i xDrive",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical data list the F30 320i xDrive Sedan six-speed manual as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical data list a six-speed manual for the F30 320i xDrive Sedan six-speed manual.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 0.846 as top gear for the F30 320i xDrive Sedan six-speed manual.",
+          "value": 0.846
         },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list the forward ratios 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 for the F30 320i xDrive Sedan six-speed manual.",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 3.385 as the final drive for the F30 320i xDrive Sedan six-speed manual; no separate front-axle ratio is published.",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan six-speed manual.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+              "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan six-speed manual.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "pre_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "pre_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "pre_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "pre_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "pre_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "pre_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
         {
-          "item": "Optional wheel/tyre sizes for the F30 320i Sedan eight-speed Steptronic",
-          "reason": "The checked official technical data publish only the standard tyre, so optional sizes are not stored for this row.",
+          "note": "Pre-LCI F30 320i xDrive (N20, 135 kW) from the official BMW 07/2012 sheet (valid from 07/2012, when the 320i xDrive was introduced): six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.385, eight-speed automatic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.154, standard 205/60 R16. The official 03/2013 320i xDrive Touring sheet repeats both. The facelifted (LCI) B48 320i xDrive replaced it from 07/2015, so the row ends with the 2014 model year; cars built January-June 2015 also carry these values.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-320i-xdrive-eu-2012-zf8hp-awd",
+      "production_start_year": 2012,
+      "production_end_year": 2014,
+      "variant_name": "320i xDrive",
+      "engine_code": "N20",
+      "engine_name": "N20 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical data list the F30 320i xDrive Sedan eight-speed Steptronic as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+          "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf",
+          "bmw_pressclub_sources:f30-ca-my2014-product-guide-pdf"
+        ],
+        "notes": "The official BMW 07/2012 technical data list an eight-speed automatic with Steptronic for the F30 320i xDrive Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, and BMW Canada's MY2014 guide names the N20 320i gearbox with this ratio set as the 8HP45.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 0.667 as top gear for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 3.154 as the final drive for the F30 320i xDrive Sedan eight-speed Steptronic; no separate front-axle ratio is published.",
+          "value": 3.154
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 07/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+              "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 07/2012 technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan eight-speed Steptronic.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "pre_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "pre_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "pre_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "pre_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "pre_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "pre_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "Pre-LCI F30 320i xDrive (N20, 135 kW) from the official BMW 07/2012 sheet (valid from 07/2012, when the 320i xDrive was introduced): six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.385, eight-speed automatic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 with final drive 3.154, standard 205/60 R16. The official 03/2013 320i xDrive Touring sheet repeats both. The facelifted (LCI) B48 320i xDrive replaced it from 07/2015, so the row ends with the 2014 model year; cars built January-June 2015 also carry these values.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+            "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-320i-xdrive-eu-2015-mt6-awd",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "variant_name": "320i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 320i xDrive Sedan six-speed manual as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2015 (LCI) technical data list a six-speed manual for the F30 320i xDrive Sedan six-speed manual.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.846 as top gear for the F30 320i xDrive Sedan six-speed manual.",
+          "value": 0.846
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list the forward ratios 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 for the F30 320i xDrive Sedan six-speed manual.",
+          "value": [
+            4.11,
+            2.315,
+            1.542,
+            1.179,
+            1.0,
+            0.846
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 3.385 as the final drive for the F30 320i xDrive Sedan six-speed manual; no separate front-axle ratio is published.",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan six-speed manual.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan six-speed manual.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "lci_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "lci_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "lci_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "lci_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "lci_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "lci_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "LCI F30 320i xDrive (B48) from the official BMW 05/2015 F30/F31 LCI technical data: six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.385, eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with final drive 2.813, standard 205/60 R16. The G20 replaced the F30 from 03/2019, so the row spans 2015-2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Later-year F30/F31 drivetrain continuity",
+          "reason": "No EU technical-data sheet after 05/2015 was recovered, so a later mid-cycle change to these ratios would not be visible here.",
           "evidence_refs": [
             "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
           ]
@@ -241,7 +1118,141 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-eu-2012-mt6-rwd",
+      "id": "bmw-f30-320i-xdrive-eu-2015-zf8hp-awd",
+      "production_start_year": 2015,
+      "production_end_year": 2019,
+      "variant_name": "320i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2015 (LCI) technical data list the F30 320i xDrive Sedan eight-speed Steptronic as xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs": [
+          "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+        ],
+        "notes": "The official BMW 05/2015 (LCI) technical data list an eight-speed automatic with Steptronic for the F30 320i xDrive Sedan eight-speed Steptronic; the repo maps it to the ZF8HP family code, which the sheets do not print.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 0.640 as top gear for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 2.813 as the final drive for the F30 320i xDrive Sedan eight-speed Steptronic; no separate front-axle ratio is published.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ],
+          "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan eight-speed Steptronic.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 60.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "name": "Standard 16\"",
+            "confidence": "official_exact",
+            "evidence_refs": [
+              "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+            ],
+            "notes": "The official BMW 05/2015 (LCI) technical data list 205/60 R16 as the standard tyre for the F30 320i xDrive Sedan eight-speed Steptronic.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 60.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear"
+          },
+          {
+            "name": "16\" 225/55",
+            "setup_ref": "lci_16_225_55"
+          },
+          {
+            "name": "17\"",
+            "setup_ref": "lci_17_225_50"
+          },
+          {
+            "name": "17\" staggered",
+            "setup_ref": "lci_17_mixed"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "lci_18_225_45"
+          },
+          {
+            "name": "18\" staggered",
+            "setup_ref": "lci_18_mixed"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "lci_19_mixed"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "LCI F30 320i xDrive (B48) from the official BMW 05/2015 F30/F31 LCI technical data: six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with final drive 3.385, eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with final drive 2.813, standard 205/60 R16. The G20 replaced the F30 from 03/2019, so the row spans 2015-2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Later-year F30/F31 drivetrain continuity",
+          "reason": "No EU technical-data sheet after 05/2015 was recovered, so a later mid-cycle change to these ratios would not be visible here.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f30-f31-2015-05-tech-spec-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f30-330i-eu-2015-mt6-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i",
@@ -356,7 +1367,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-eu-2012-zf8hp-rwd",
+      "id": "bmw-f30-330i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i",
@@ -473,7 +1484,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-330i-xdrive-eu-2012-zf8hp-awd",
+      "id": "bmw-f30-330i-xdrive-eu-2015-zf8hp-awd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "330i xDrive",
@@ -590,7 +1601,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-340i-eu-2012-mt6-rwd",
+      "id": "bmw-f30-340i-eu-2015-mt6-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "340i",
@@ -705,7 +1716,7 @@
       "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f30-340i-eu-2012-zf8hp-rwd",
+      "id": "bmw-f30-340i-eu-2015-zf8hp-rwd",
       "production_start_year": 2015,
       "production_end_year": 2019,
       "variant_name": "340i",

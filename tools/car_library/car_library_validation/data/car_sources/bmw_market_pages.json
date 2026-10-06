@@ -203,6 +203,13 @@
       "title": "BMW UK F40 1 Series inform page (Wayback Oct 2019)",
       "note": "Official BMW UK F40 launch inform page \u2014 explicitly confirms F40 transverse-engine FWD platform; ZF 8HP architecturally incompatible.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_market_pages:g32-de-preisliste-2022-11",
+      "url": "https://www.bmw.de/content/dam/bmw/marketDE/bmw_de/new-vehicles/pdf/Desktop/Preisliste_G32_28_05.pdf",
+      "title": "BMW Germany 6er Gran Turismo (G32) price list valid from 14.11.2022",
+      "note": "Official BMW Germany G32 price list (archived copy: web.archive.org/web/20240626161906/...Preisliste_G32_28_05.pdf). Model columns 630i, 640i, 640i xDrive, 620d, 630d, 630d xDrive, 640d xDrive with the eight-speed Steptronic. Standard tyres 225/60 R17 (630i, 620d, 630d, 630d xDrive) and 245/50 R18 (640i, 640i xDrive, 640d xDrive). Factory wheel options: 18-inch 245/50 R18; 19-inch 245/45 R19 all round (e.g. 29L, 26G, 2QV) or mixed 245/45 R19 front / 275/40 R19 rear (29K, 26F, 21F M, 23K, 2QU); 20-inch mixed 245/40 R20 front / 275/35 R20 rear (29N, 21H M, 29V M, 29R Individual). No 21-inch wheel is offered.",
+      "confidence": "high"
     }
   ]
 }

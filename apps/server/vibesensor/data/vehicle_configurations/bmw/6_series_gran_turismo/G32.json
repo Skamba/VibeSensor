@@ -2,22 +2,15 @@
   "definitions": {
     "notes": {
       "n3": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 630d xDrive Gran Turismo.",
-      "n4": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 2.563 final drive for the exact 640d xDrive Gran Turismo.",
-      "n5": "Official BMW 11/2020 technical-data PDF lists 245/50 R18 as the standard tire for the exact 640i Gran Turismo facelift state represented by the 2020-only row.",
-      "n6": "Official BMW 09/2018 technical-data PDF lists 225/60 R17 as the standard tire for the exact pre-facelift 640i Gran Turismo state."
+      "n5": "Official BMW 11/2020 technical data list 245/50 R18 as the standard tyre for the facelifted 640i, 640i xDrive and 640d xDrive Gran Turismo; the 11/2022 BMW Germany price list repeats it.",
+      "n6": "Official BMW 09/2018 technical data list 225/60 R17 as the standard tyre for the pre-facelift 640i, 640i xDrive and 640d xDrive Gran Turismo.",
+      "n7": "The 11/2022 BMW Germany price list offers this factory wheel for the 640i, 640i xDrive and 640d xDrive Gran Turismo; mixed (staggered) sets are printed as front and rear sizes.",
+      "n8": "Size from the 11/2022 BMW Germany (facelift) price list; no pre-facelift wheel list was recovered, so it is a family default for the 2018-2019 row."
     },
     "evidence_ref_sets": {
       "e1": [
         "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
         "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
-      ],
-      "e2": [
-        "legacy_research_sources:27b263e49b0d",
-        "legacy_research_sources:5b75597267b1",
-        "legacy_research_sources:95b9bf2bf0cf",
-        "legacy_research_sources:b2d556993748",
-        "legacy_research_sources:ca1480e64c12",
-        "legacy_research_sources:e2ab2042d8b2"
       ],
       "e3": [
         "bmw_pressclub_sources:g32-2018-tech-spec-pdf",
@@ -42,39 +35,16 @@
         "bmw_pressclub_sources:g32-2020-netherlands-facelift-article",
         "bmw_pressclub_sources:g32-2020-italy-facelift-article",
         "bmw_pressclub_sources:g32-2020-tech-spec-pdf"
+      ],
+      "e8": [
+        "bmw_pressclub_sources:g32-2020-tech-spec-pdf",
+        "bmw_market_pages:g32-de-preisliste-2022-11"
+      ],
+      "e9": [
+        "bmw_market_pages:g32-de-preisliste-2022-11"
       ]
     },
     "tire_setups": {
-      "setup_265_21": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 21.0,
-          "width_mm": 265.0
-        }
-      },
-      "setup_255_20": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 35.0,
-          "rim_in": 20.0,
-          "width_mm": 255.0
-        }
-      },
-      "setup_245_19_2": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 19.0,
-          "width_mm": 245.0
-        }
-      },
       "setup_245_19": {
         "confidence": "family_default",
         "default_axle_for_speed": "rear",
@@ -88,7 +58,7 @@
       "setup_245_18": {
         "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e4",
+        "evidence_refs_ref": "e8",
         "front": {
           "aspect_pct": 50.0,
           "rim_in": 18.0,
@@ -106,6 +76,103 @@
           "width_mm": 225.0
         },
         "notes_ref": "n6"
+      },
+      "setup_245_19_square": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n7"
+      },
+      "setup_19_mixed": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "rear": {
+          "aspect_pct": 40.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        },
+        "notes_ref": "n7"
+      },
+      "setup_20_mixed": {
+        "confidence": "official_exact",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        },
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 20.0,
+          "width_mm": 275.0
+        },
+        "notes_ref": "n7"
+      },
+      "setup_245_18_pre": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 50.0,
+          "rim_in": 18.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n8"
+      },
+      "setup_245_19_square_pre": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "notes_ref": "n8"
+      },
+      "setup_19_mixed_pre": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 45.0,
+          "rim_in": 19.0,
+          "width_mm": 245.0
+        },
+        "rear": {
+          "aspect_pct": 40.0,
+          "rim_in": 19.0,
+          "width_mm": 275.0
+        },
+        "notes_ref": "n8"
+      },
+      "setup_20_mixed_pre": {
+        "confidence": "family_default",
+        "default_axle_for_speed": "rear",
+        "evidence_refs_ref": "e9",
+        "front": {
+          "aspect_pct": 40.0,
+          "rim_in": 20.0,
+          "width_mm": 245.0
+        },
+        "rear": {
+          "aspect_pct": 35.0,
+          "rim_in": 20.0,
+          "width_mm": 275.0
+        },
+        "notes_ref": "n8"
       }
     }
   },
@@ -585,7 +652,7 @@
     {
       "id": "bmw-g32-640d-xdrive-eu-2018-zf8hp-awd",
       "production_start_year": 2018,
-      "production_end_year": 2024,
+      "production_end_year": 2019,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "640d xDrive",
       "engine_code": "B57",
@@ -593,61 +660,75 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs_ref": "e3",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm xDrive all-wheel drive for the exact 640d xDrive Gran Turismo across the represented row span.",
+        "evidence_refs_ref": "e7",
+        "notes": "Official BMW 09/2018 technical data list xDrive all-wheel drive for the pre-facelift 640d xDrive Gran Turismo.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_derived",
-        "evidence_refs_ref": "e3",
-        "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm 8-speed Steptronic wording for the exact 640d xDrive Gran Turismo. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official 8-speed automatic.",
+        "evidence_refs_ref": "e7",
+        "notes": "Official BMW 09/2018 technical data list an eight-speed Steptronic transmission for the pre-facelift 640d xDrive Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on 0.640 top gear for the exact 640d xDrive Gran Turismo.",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list 0.640 as top gear for the pre-facelift 640d xDrive Gran Turismo.",
           "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640 (reverse 3.478) for the pre-facelift 640d xDrive Gran Turismo.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.313,
+            1.0,
+            0.823,
+            0.64
+          ]
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes_ref": "n4",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list 2.563 as the final drive for the pre-facelift 640d xDrive Gran Turismo; it is the one published axle ratio, so no front ratio is stored.",
           "value": 2.563
         }
       },
       "tires": {
-        "default": {
-          "confidence": "unverified",
-          "evidence_refs_ref": "e3",
-          "notes": "Official BMW 09/2018 and 11/2020 technical-data PDFs disagree on the exact baseline tire for the represented 640d xDrive row (225/60 R17 vs 245/50 R18), so the inherited placeholder remains unresolved until the row is split or one stable across-span mapping is proven.",
-          "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 40.0,
-            "rim_in": 19.0
-          },
-          "default_axle_for_speed": "rear"
-        },
+        "default_ref": "setup_225_17",
         "options": [
           {
-            "setup_ref": "setup_245_19_2",
-            "name": "Standard 19\""
+            "name": "Standard 17\"",
+            "setup_ref": "setup_225_17"
           },
           {
-            "setup_ref": "setup_255_20",
-            "name": "Sport Line 20\""
+            "name": "18\"",
+            "setup_ref": "setup_245_18_pre"
           },
           {
-            "setup_ref": "setup_265_21",
-            "name": "M Sport 21\""
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square_pre"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed_pre"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed_pre"
           }
         ]
       },
+      "configuration_confidence": "high_confidence",
       "verification_notes": [
         {
-          "note": "Batch 10 adds exact official BMW 09/2018 and 11/2020 technical-data evidence that the G32 640d xDrive uses xDrive AWD, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive. Production JSON promotes those stable exact drivetrain and gearbox-ratio fields; the repo keeps ZF8HP as an official-derived gearbox-family mapping, and the inherited default-tire value stays unresolved because the exact BMW baseline tire changes from 225/60 R17 in 09/2018 to 245/50 R18 in 11/2020.",
+          "note": "Official BMW 09/2018 technical data: pre-facelift 640d xDrive Gran Turismo, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.563, standard 225/60 R17. The 11/2020 sheet keeps top gear 0.640 and final drive 2.563 but prints another forward gear set and standard tyre, so the 640d xDrive has one row per state (2018-2019 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
           "evidence_refs_ref": "e3"
         },
         {
@@ -659,26 +740,102 @@
       ],
       "unresolved": [
         {
-          "item": "BMW G32 640d xDrive one exact full-ratio and reverse-ratio set across the represented row span",
-          "reason": "Official BMW 09/2018 and 11/2020 technical-data PDFs agree on xDrive, 8-speed Steptronic wording, 0.640 top gear, and 2.563 final drive, but they publish different 1st-6th and reverse ratios.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "BMW G32 640d xDrive exact baseline-tire continuity across the represented row span",
-          "reason": "Official BMW 09/2018 technical data lists 225/60 R17 baseline tires, while the exact 11/2020 technical-data PDF lists 245/50 R18, so the current broad row still needs a year split before one default tire can be encoded safely.",
-          "evidence_refs_ref": "e3"
-        },
-        {
-          "item": "G32 source-finding pass status",
-          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+          "item": "Pre-facelift optional wheel/tyre sizes",
+          "reason": "The 09/2018 sheet prints only the standard tyre; the 18-, 19- and 20-inch options come from the 11/2022 BMW Germany price list, as no pre-facelift wheel list was recovered.",
+          "evidence_refs_ref": "e9"
         }
-      ],
-      "configuration_confidence": "medium_confidence"
+      ]
+    },
+    {
+      "id": "bmw-g32-640d-xdrive-eu-2020-zf8hp-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "640d xDrive",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical data list xDrive all-wheel drive for the facelifted 640d xDrive Gran Turismo.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical data list an eight-speed Steptronic transmission for the facelifted 640d xDrive Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list 0.640 as top gear for the facelifted 640d xDrive Gran Turismo.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list the forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640 (reverse 3.993) for the facelifted 640d xDrive Gran Turismo.",
+          "value": [
+            5.5,
+            3.52,
+            2.2,
+            1.72,
+            1.317,
+            1.0,
+            0.823,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list 2.563 as the final drive for the facelifted 640d xDrive Gran Turismo; it is the one published axle ratio, so no front ratio is stored.",
+          "value": 2.563
+        }
+      },
+      "tires": {
+        "default_ref": "setup_245_18",
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "setup_ref": "setup_245_18"
+          },
+          {
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed"
+          }
+        ]
+      },
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Official BMW 11/2020 technical data: facelifted 640d xDrive Gran Turismo, forward ratios 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.563, standard 245/50 R18. The 09/2018 sheet keeps top gear 0.640 and final drive 2.563 but prints another forward gear set and standard tyre, so the 640d xDrive has one row per state (2020-2024 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "note": "Engine text from the 2018 technical data: 640d xDrive in-line 6 cylinders, 2993 cc, multi-stage charging, diesel.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g32-2018-tech-spec-pdf"
+          ]
+        }
+      ]
     },
     {
       "id": "bmw-g32-640i-xdrive-eu-2018-zf8hp-awd",
       "production_start_year": 2018,
-      "production_end_year": 2024,
+      "production_end_year": 2019,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
       "variant_name": "640i xDrive",
       "engine_code": "B58",
@@ -686,94 +843,14 @@
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:27b263e49b0d",
-          "legacy_research_sources:5b75597267b1",
-          "legacy_research_sources:b2d556993748",
-          "legacy_research_sources:ca1480e64c12"
-        ],
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic transmission"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.64
-        },
-        "final_drive_rear": {
-          "confidence": "family_default",
-          "value": 3.077
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_245_19_2",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport Line 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "M Sport 21\""
-          }
-        ],
-        "default_ref": "setup_245_19_2"
-      },
-      "verification_notes": [
-        {
-          "note": "Wave 17 now adds exact official BMW technical-data evidence that the G32 640i xDrive uses all-wheel drive, Eight-speed Steptronic transmission wording, final drive 3.077, and top gear 0.640 in checked 11/2020 and later Germany-relevant material. Production JSON promotes only those stable exact gearbox fields because official 2018 and 2020+ documents still disagree on the full forward-ratio and reverse-ratio set, early Germany-market tire continuity is still not closed, and the checked sources do not prove one gearbox-family code across the full 2018-2024 span.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "Per-variant final-drive and top-gear ratios for the remaining unresolved EU G32 lineup",
-          "reason": "Wave 17 closes the exact 640i xDrive stable gearbox fields, but this run still did not recover authoritative BMW technical-data tables for the other G32 variants.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G32 640i xDrive one exact full-ratio and reverse-ratio set across the represented row span",
-          "reason": "Official BMW 2018 and 11/2020 technical-data sheets for the exact 640i xDrive agree on AWD, Eight-speed Steptronic wording, final drive 3.077, and top gear 0.640, but they publish different 1st-6th and reverse ratios, so this pass promotes only the stable exact fields.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "BMW G32 640i xDrive exact Germany-market tire continuity across the represented row span",
-          "reason": "Checked 11/2020 technical data and the 11/2022 BMW Germany price list prove a 245/50 R18 baseline tire with 19- and 20-inch options, but this pass did not recover an early Germany-market wheel matrix proving the same package across the full 2018-2024 row span.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "G32 source-finding pass status",
-          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
-        }
-      ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-g32-640i-eu-2018-zf8hp-rwd",
-      "production_start_year": 2018,
-      "production_end_year": 2019,
-      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-      "variant_name": "640i",
-      "engine_code": "B58",
-      "engine_name": "B58 3.0L I6 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
         "evidence_refs_ref": "e7",
-        "notes": "Official BMW 09/2018 technical-data PDF confirms rear-wheel drive for the exact pre-facelift 640i Gran Turismo state.",
-        "value": "RWD"
+        "notes": "Official BMW 09/2018 technical data list xDrive all-wheel drive for the pre-facelift 640i xDrive Gran Turismo.",
+        "value": "AWD"
       },
       "transmission": {
         "confidence": "official_derived",
         "evidence_refs_ref": "e7",
-        "notes": "Official BMW 09/2018 technical-data PDF confirms 8-speed Steptronic wording for the exact pre-facelift 640i Gran Turismo state. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+        "notes": "Official BMW 09/2018 technical data list an eight-speed Steptronic transmission for the pre-facelift 640i xDrive Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -781,13 +858,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e7",
-          "notes": "Official BMW 09/2018 technical-data PDF lists 0.640 as the top-gear ratio for the exact pre-facelift 640i Gran Turismo state.",
+          "notes": "Official BMW 09/2018 technical data list 0.640 as top gear for the pre-facelift 640i xDrive Gran Turismo.",
           "value": 0.64
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e7",
-          "notes": "Official BMW 09/2018 technical-data PDF lists the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 for the exact pre-facelift 640i Gran Turismo state.",
+          "notes": "Official BMW 09/2018 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 (reverse 3.456) for the pre-facelift 640i xDrive Gran Turismo.",
           "value": [
             5.0,
             3.2,
@@ -802,58 +879,69 @@
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e7",
-          "notes": "Official BMW 09/2018 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact pre-facelift 640i Gran Turismo state.",
+          "notes": "Official BMW 09/2018 technical data list 3.077 as the final drive for the pre-facelift 640i xDrive Gran Turismo; it is the one published axle ratio, so no front ratio is stored.",
           "value": 3.077
         }
       },
       "tires": {
+        "default_ref": "setup_225_17",
         "options": [
           {
-            "setup_ref": "setup_225_17",
-            "name": "Standard 17\""
+            "name": "Standard 17\"",
+            "setup_ref": "setup_225_17"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "setup_245_18_pre"
+          },
+          {
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square_pre"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed_pre"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed_pre"
           }
-        ],
-        "default_ref": "setup_225_17"
+        ]
       },
+      "configuration_confidence": "high_confidence",
       "verification_notes": [
         {
-          "note": "Official BMW 09/2018 technical-data PDF proves the exact pre-facelift 640i Gran Turismo rear-wheel-drive package with 225/60 R17 standard tires, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, and rear final drive 3.077. Official BMW 11/2020 technical-data material closes a different facelift package, so production JSON now splits the rear-wheel-drive 640i into separate pre-facelift and facelift rows instead of showing only the 2020 state.",
+          "note": "Official BMW 09/2018 technical data: pre-facelift 640i xDrive Gran Turismo, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.077, standard 225/60 R17. The 11/2020 sheet keeps top gear 0.640 and final drive 3.077 but prints another forward gear set and standard tyre, so the 640i xDrive has one row per state (2018-2019 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
           "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
         {
-          "item": "BMW G32 640i exact optional wheel/tire matrix for the pre-facelift state",
-          "reason": "Official BMW 09/2018 technical-data PDF closes the 225/60 R17 standard tire for the exact pre-facelift 640i Gran Turismo row, but this pass did not recover a full row-specific optional wheel/tire matrix for the 2018-2019 state.",
-          "evidence_refs_ref": "e7"
-        },
-        {
-          "item": "G32 source-finding pass status",
-          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the rear-wheel-drive 640i exact package is now split into pre-facelift 2018-2019 and facelift 2020 rows instead of one mixed-era row.",
-          "evidence_refs_ref": "e6"
+          "item": "Pre-facelift optional wheel/tyre sizes",
+          "reason": "The 09/2018 sheet prints only the standard tyre; the 18-, 19- and 20-inch options come from the 11/2022 BMW Germany price list, as no pre-facelift wheel list was recovered.",
+          "evidence_refs_ref": "e9"
         }
-      ],
-      "configuration_confidence": "medium_confidence"
+      ]
     },
     {
-      "id": "bmw-g32-640i-eu-2020-zf8hp-rwd",
+      "id": "bmw-g32-640i-xdrive-eu-2020-zf8hp-awd",
       "production_start_year": 2020,
-      "production_end_year": 2020,
+      "production_end_year": 2024,
       "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
-      "variant_name": "640i",
+      "variant_name": "640i xDrive",
       "engine_code": "B58",
       "engine_name": "B58 3.0L I6 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e4",
-        "notes": "Official BMW 11/2020 technical-data PDF confirms rear-wheel drive for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
-        "value": "RWD"
+        "notes": "Official BMW 11/2020 technical data list xDrive all-wheel drive for the facelifted 640i xDrive Gran Turismo.",
+        "value": "AWD"
       },
       "transmission": {
         "confidence": "official_derived",
         "evidence_refs_ref": "e4",
-        "notes": "Official BMW 11/2020 technical-data PDF confirms 8-speed Steptronic wording for the exact 640i Gran Turismo state represented by this narrowed 2020-only row. The repo keeps ZF8HP as the canonical gearbox-family mapping for that official automatic.",
+        "notes": "Official BMW 11/2020 technical data list an eight-speed Steptronic transmission for the facelifted 640i xDrive Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
         "code": "ZF8HP",
         "name": "8-speed automatic (ZF 8HP)"
       },
@@ -861,13 +949,13 @@
         "top_gear_ratio": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Official BMW 11/2020 technical-data PDF lists 0.640 as the top-gear ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "notes": "Official BMW 11/2020 technical data list 0.640 as top gear for the facelifted 640i xDrive Gran Turismo.",
           "value": 0.64
         },
         "gear_ratios": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Official BMW 11/2020 technical-data PDF lists the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "notes": "Official BMW 11/2020 technical data list the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 (reverse 3.712) for the facelifted 640i xDrive Gran Turismo.",
           "value": [
             5.25,
             3.36,
@@ -882,61 +970,209 @@
         "final_drive_rear": {
           "confidence": "official_exact",
           "evidence_refs_ref": "e4",
-          "notes": "Official BMW 11/2020 technical-data PDF lists 3.077 as the rear final-drive ratio for the exact 640i Gran Turismo state represented by this narrowed 2020-only row.",
+          "notes": "Official BMW 11/2020 technical data list 3.077 as the final drive for the facelifted 640i xDrive Gran Turismo; it is the one published axle ratio, so no front ratio is stored.",
           "value": 3.077
         }
       },
       "tires": {
+        "default_ref": "setup_245_18",
         "options": [
           {
-            "setup_ref": "setup_245_18",
-            "name": "Standard 18\""
+            "name": "Standard 18\"",
+            "setup_ref": "setup_245_18"
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "notes": "Retained conservative inherited placeholder for the non-baseline 20-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
-            "front": {
-              "width_mm": 255.0,
-              "aspect_pct": 35.0,
-              "rim_in": 20.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Sport Line 20\""
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square"
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e2",
-            "notes": "Retained conservative inherited placeholder for the non-baseline 21-inch wheel package because this pass only closes the exact 245/50 R18 standard tire for the narrowed 2020-only row.",
-            "front": {
-              "width_mm": 265.0,
-              "aspect_pct": 30.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "M Sport 21\""
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed"
           }
-        ],
-        "default_ref": "setup_245_18"
+        ]
       },
+      "configuration_confidence": "high_confidence",
       "verification_notes": [
         {
-          "note": "Official BMW 09/2018 and 11/2020 technical-data PDFs confirm that the 640i Gran Turismo rear-wheel-drive package changed between the pre-facelift and facelift states: 2018 used forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 with 225/60 R17 standard tires, while 2020 used forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 with 245/50 R18 standard tires, both with rear final drive 3.077. Production JSON therefore models the facelift state as its own 2020 row and keeps the pre-facelift package in a separate 2018-2019 row.",
+          "note": "Official BMW 11/2020 technical data: facelifted 640i xDrive Gran Turismo, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.077, standard 245/50 R18. The 09/2018 sheet keeps top gear 0.640 and final drive 3.077 but prints another forward gear set and standard tyre, so the 640i xDrive has one row per state (2020-2024 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
+          "evidence_refs_ref": "e3"
+        }
+      ]
+    },
+    {
+      "id": "bmw-g32-640i-eu-2018-zf8hp-rwd",
+      "production_start_year": 2018,
+      "production_end_year": 2019,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "640i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "Official BMW 09/2018 technical data list rear-wheel drive for the pre-facelift 640i Gran Turismo.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e7",
+        "notes": "Official BMW 09/2018 technical data list an eight-speed Steptronic transmission for the pre-facelift 640i Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list 0.640 as top gear for the pre-facelift 640i Gran Turismo.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 (reverse 3.456) for the pre-facelift 640i Gran Turismo.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "Official BMW 09/2018 technical data list 3.077 as the final drive for the pre-facelift 640i Gran Turismo.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default_ref": "setup_225_17",
+        "options": [
+          {
+            "name": "Standard 17\"",
+            "setup_ref": "setup_225_17"
+          },
+          {
+            "name": "18\"",
+            "setup_ref": "setup_245_18_pre"
+          },
+          {
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square_pre"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed_pre"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed_pre"
+          }
+        ]
+      },
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Official BMW 09/2018 technical data: pre-facelift 640i Gran Turismo, forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.077, standard 225/60 R17. The 11/2020 sheet keeps top gear 0.640 and final drive 3.077 but prints another forward gear set and standard tyre, so the 640i has one row per state (2018-2019 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
           "evidence_refs_ref": "e3"
         }
       ],
       "unresolved": [
         {
-          "item": "BMW G32 640i exact optional wheel/tire matrix for the 2020 facelift state",
-          "reason": "Official BMW 11/2020 technical-data PDF closes the 245/50 R18 standard tire for the exact 640i Gran Turismo row, but this pass did not recover a full row-specific optional wheel/tire matrix for the narrowed 2020-only state.",
-          "evidence_refs_ref": "e4"
-        },
-        {
-          "item": "G32 source-finding pass status",
-          "reason": "G32 source-finding pass collected official BMW PressClub launch (2017 global), 2017 Netherlands price list, 2018 tech-data PDF (T0259...?/419611), 2020 LCI tech-data PDF (463145), 2020 Italy and Netherlands facelift releases, and BMW Germany 11/2022 Preisliste under .tmp/audi-bmw-uncertain-config-research-20260427-1745/sources/bmw-6-series-gran-turismo-g32/. Per official sources the G32 had a 2020 LCI facelift, so the broad 2018-2024 row spans pre-LCI and LCI states with potentially different ratio/final-drive sets. Driveshaft and wheel-order analysis disabled until per-row exact technical data is parsed and added to the source pack. ZF8HP transmission family is `official_derived` from BMW's 'Eight-speed Steptronic' wording."
+          "item": "Pre-facelift optional wheel/tyre sizes",
+          "reason": "The 09/2018 sheet prints only the standard tyre; the 18-, 19- and 20-inch options come from the 11/2022 BMW Germany price list, as no pre-facelift wheel list was recovered.",
+          "evidence_refs_ref": "e9"
         }
-      ],
-      "configuration_confidence": "medium_confidence"
+      ]
+    },
+    {
+      "id": "bmw-g32-640i-eu-2020-zf8hp-rwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "model_name": "6 Series Gran Turismo (G32, 2018-2024)",
+      "variant_name": "640i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical data list rear-wheel drive for the facelifted 640i Gran Turismo.",
+        "value": "RWD"
+      },
+      "transmission": {
+        "confidence": "official_derived",
+        "evidence_refs_ref": "e4",
+        "notes": "Official BMW 11/2020 technical data list an eight-speed Steptronic transmission for the facelifted 640i Gran Turismo; the repo maps it to the ZF8HP family code, which the sheet does not print.",
+        "code": "ZF8HP",
+        "name": "8-speed automatic (ZF 8HP)"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list 0.640 as top gear for the facelifted 640i Gran Turismo.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list the forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640 (reverse 3.712) for the facelifted 640i Gran Turismo.",
+          "value": [
+            5.25,
+            3.36,
+            2.172,
+            1.72,
+            1.316,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "Official BMW 11/2020 technical data list 3.077 as the final drive for the facelifted 640i Gran Turismo.",
+          "value": 3.077
+        }
+      },
+      "tires": {
+        "default_ref": "setup_245_18",
+        "options": [
+          {
+            "name": "Standard 18\"",
+            "setup_ref": "setup_245_18"
+          },
+          {
+            "name": "19\"",
+            "setup_ref": "setup_245_19_square"
+          },
+          {
+            "name": "19\" staggered",
+            "setup_ref": "setup_19_mixed"
+          },
+          {
+            "name": "20\" staggered",
+            "setup_ref": "setup_20_mixed"
+          }
+        ]
+      },
+      "configuration_confidence": "high_confidence",
+      "verification_notes": [
+        {
+          "note": "Official BMW 11/2020 technical data: facelifted 640i Gran Turismo, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.077, standard 245/50 R18. The 09/2018 sheet keeps top gear 0.640 and final drive 3.077 but prints another forward gear set and standard tyre, so the 640i has one row per state (2020-2024 here). Mixed 19- and 20-inch sets differ front to rear by 0.1 % (245/45 R19 vs 275/40 R19) and 0.5 % (245/40 R20 vs 275/35 R20) in rolling diameter; the analysis uses one circumference for all sensors, taken from the rear axle (default_axle_for_speed), which is the driven axle of the rear-wheel-drive car and the main-drive axle of xDrive.",
+          "evidence_refs_ref": "e3"
+        }
+      ]
     }
   ]
 }

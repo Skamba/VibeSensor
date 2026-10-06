@@ -1661,6 +1661,41 @@
       "confidence": "high"
     },
     {
+      "id": "bmw_pressclub_sources:f30-2012-03-de-320i-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0124415DE/208929",
+      "title": "BMW PressClub Germany F30 3er Limousine 320i technical data PDF 01/2012 (valid from 03/2012)",
+      "note": "Official BMW Germany technical data of the pre-LCI F30 BMW 320i Limousine (N20, 135 kW), valid from 03/2012. Six-speed manual 4.551 / 2.548 / 1.659 / 1.230 / 1.000 / 0.830, reverse 4.138, final drive (Hinterachs\u00fcbersetzung) 3.077; optional eight-speed automatic with Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, final drive 3.154; rear-wheel drive; standard 205/60 R16 92W. The consumption footnote lists the factory tyre formats 225/55 R16, 225/50 R17, 225/50 R17 front with 255/45 R17 rear, 225/45 R18, 225/45 R18 front with 255/40 R18 rear, and 225/40 R19 front with 255/35 R19 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f30-2012-07-320i-xdrive-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/slovak/article/attachment/T0134236SK/202168",
+      "title": "BMW PressClub F30 3 Series Sedan 320i xDrive / 328i xDrive technical data PDF 06/2012 (valid from 07/2012)",
+      "note": "Official BMW media information (English text) with the technical data of the pre-LCI F30 BMW 320i xDrive and 328i xDrive Sedan, valid from 07/2012. 320i xDrive: six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846, reverse 3.727, final drive 3.385; optional eight-speed automatic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, reverse 3.295, final drive 3.154 (one axle ratio, no separate front ratio); standard 205/60 R16 92V. The consumption footnote lists the same optional tyre formats as the 03/2012 320i sheet (225/55 R16, 225/50 R17, 225/50 R17 + 255/45 R17, 225/45 R18, 225/45 R18 + 255/40 R18, 225/40 R19 + 255/35 R19).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f31-2012-11-320i-touring-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0132112EN/207745",
+      "title": "BMW PressClub F31 3 Series Touring 320i technical data PDF 09/2012 (valid from 11/2012)",
+      "note": "Official BMW technical data of the pre-LCI BMW 320i Touring, valid from 11/2012: six-speed manual 4.551 ... 0.830 with differential ratio 3.077, eight-speed automatic 4.714 ... 0.667 with 3.154. Used as a cross-check that the N20 320i ratios of the 03/2012 Sedan sheet were unchanged in later pre-LCI production.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f31-2013-03-320i-xdrive-touring-tech-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0137145EN/208685",
+      "title": "BMW PressClub F31 3 Series Touring 320i xDrive technical data PDF 02/2013 (valid from 03/2013)",
+      "note": "Official BMW technical data of the pre-LCI BMW 320i xDrive Touring, valid from 03/2013: six-speed manual 4.110 / 2.315 / 1.542 / 1.179 / 1.000 / 0.846 with differential ratio 3.385, eight-speed automatic 4.714 ... 0.667 with 3.154; standard 205/60 R16 92W and the same optional tyre formats as the Sedan sheets. Used as a cross-check that the 320i xDrive drivetrain of the 07/2012 Sedan sheet was unchanged in 2013.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f30-ca-my2014-product-guide-pdf",
+      "url": "https://www.press.bmwgroup.com/canada/article/attachment/T0143232EN/222153",
+      "title": "BMW Canada 3 Series Sedan MY2014 product guide",
+      "note": "Official BMW Canada MY2014 technical specifications for the North-American F30 320i, 320i xDrive and 328i. Names the 320i automatic as the ZF 8HP45 (4.714 ... 0.667, final drive 3.154) and shows that North-American gearbox and axle choices differ from the EU sheets (320i six-speed manual 3.498 ... 0.701 with 3.077; 320i xDrive automatic with 3.385). Used only to name the 8HP45 and as a market cross-check, not for EU values.",
+      "confidence": "high"
+    },
+    {
       "id": "bmw_pressclub_sources:g21-2019-06-tech-spec-pdf",
       "url": "https://www.press.bmwgroup.com/global/article/attachment/T0297109EN/432678",
       "title": "BMW PressClub G21 3 Series Touring specifications PDF 06/2019 (launch)",

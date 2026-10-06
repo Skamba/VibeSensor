@@ -59,6 +59,16 @@
       "rule": "duplicate_vehicle_configuration",
       "entity": "bmw-g11-730ld-xdrive-eu-2019-zf8hp-awd",
       "reason": "The 7 Series 730Ld xDrive keeps the 0.640 top gear, 2.563 final drive and 225/60 R17 standard tyres across the 01/2019 facelift, so the 2016-2018 and 2019-2022 rows share the order-analysis math; the rows differ in production years and forward gear set (first gear 5.000 before, 5.500 after)."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-f30-320i-xdrive-eu-2012-mt6-awd",
+      "reason": "The 320i xDrive six-speed manual kept its gear set (4.110 ... 0.846) and 3.385 final drive when the N20 engine gave way to the B48 at the 07/2015 LCI, so the pre-LCI and LCI rows share the order-analysis math; they differ in engine and production years, and the split matches the automatic, whose ratios did change."
+    },
+    {
+      "rule": "duplicate_vehicle_configuration",
+      "entity": "bmw-f30-320i-xdrive-eu-2015-mt6-awd",
+      "reason": "The 320i xDrive six-speed manual kept its gear set (4.110 ... 0.846) and 3.385 final drive when the N20 engine gave way to the B48 at the 07/2015 LCI, so the pre-LCI and LCI rows share the order-analysis math; they differ in engine and production years, and the split matches the automatic, whose ratios did change."
     }
   ]
 }
