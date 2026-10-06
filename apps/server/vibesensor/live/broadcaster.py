@@ -6,6 +6,11 @@ ticks. A socket whose send fails or exceeds the send timeout is dropped and its
 ``on_drop`` callback ends the owning ``/ws`` endpoint, which closes it; the
 browser reconnects on its own. This send-side check is also how half-open
 (zombie) connections are found, so a silent passive viewer is never dropped.
+
+The ``/ws`` route calls ``add``/``remove``/``select`` on the event loop, so they
+can land while a tick awaits serialization. A tick therefore works from a
+snapshot of the connections and their selections taken when it starts; changes
+take effect on the next tick.
 """
 
 from __future__ import annotations
@@ -36,7 +41,6 @@ SEND_TIMEOUT_S = 0.5
 
 _SEND_ERROR_LOG_INTERVAL_S = 10.0
 _MAX_CONSECUTIVE_TICK_FAILURES = 10
-_SEND_FAILURE_EXCEPTIONS = (OSError, RuntimeError, TimeoutError, WebSocketDisconnect)
 _CLIENT_GONE_EXCEPTIONS = (OSError, TimeoutError, WebSocketDisconnect, WebSocketDisconnected)
 """Send failures that just mean the browser went away or stalled."""
 _BUILD_FAILURE_EXCEPTIONS = (
@@ -114,9 +118,9 @@ class LiveBroadcaster:
         return True
 
     async def broadcast(self, *, include_heavy: bool) -> None:
-        """Build the payload once and send it to every current connection."""
-        connections = list(self._connections.values())
-        if not connections:
+        """Build the payload once and send it to every connection open at tick start."""
+        targets = [(conn, conn.selected_client_id) for conn in self._connections.values()]
+        if not targets:
             return
         try:
             shared: LiveWsPayload | None = self._payload_source.build_shared_payload(
@@ -125,14 +129,13 @@ class LiveBroadcaster:
         except _BUILD_FAILURE_EXCEPTIONS:
             LOGGER.error(
                 "WebSocket payload build failed; sending error payload to %d connection(s).",
-                len(connections),
+                len(targets),
                 exc_info=True,
             )
             shared = None
 
         texts: dict[str | None, str] = {}
-        for conn in connections:
-            selected = conn.selected_client_id
+        for _conn, selected in targets:
             if selected not in texts:
                 texts[selected] = (
                     ERROR_PAYLOAD_TEXT
@@ -140,14 +143,17 @@ class LiveBroadcaster:
                     else await anyio.to_thread.run_sync(_serialize, shared, selected)
                 )
         async with anyio.create_task_group() as task_group:
-            for conn in connections:
-                task_group.start_soon(self._send, conn, texts[conn.selected_client_id])
+            for conn, selected in targets:
+                task_group.start_soon(self._send, conn, texts[selected])
 
     async def _send(self, conn: _Connection, text: str) -> None:
+        """Send to one connection; any failure drops only that connection."""
+        if self._connections.get(id(conn.websocket)) is not conn:
+            return  # removed while this tick serialized; its /ws endpoint closes it
         try:
             with anyio.fail_after(SEND_TIMEOUT_S):
                 await conn.websocket.send_text(text)
-        except _SEND_FAILURE_EXCEPTIONS as exc:
+        except Exception as exc:  # one bad socket must never fail the tick for every viewer
             self._log_send_failure(conn, exc)
             if self._connections.get(id(conn.websocket)) is conn:
                 del self._connections[id(conn.websocket)]
@@ -174,7 +180,9 @@ class LiveBroadcaster:
     async def run(self) -> None:
         """Broadcast at ``push_hz`` until cancelled.
 
-        Repeated ``OSError`` ticks escalate as :class:`BroadcastTickLoopFailure` so the
+        A failed tick is logged and the next tick runs as usual, so one bad tick
+        costs one frame, not the live view. Only ``_MAX_CONSECUTIVE_TICK_FAILURES``
+        failed ticks in a row escalate as :class:`BroadcastTickLoopFailure`, so the
         task supervisor owns restart/backoff and health reporting.
         """
         interval_s = 1.0 / self._push_hz
@@ -184,7 +192,7 @@ class LiveBroadcaster:
             include_heavy = self._next_tick_includes_heavy()
             try:
                 await self.broadcast(include_heavy=include_heavy)
-            except OSError as exc:
+            except Exception as exc:
                 consecutive_failures += 1
                 if consecutive_failures >= _MAX_CONSECUTIVE_TICK_FAILURES:
                     LOGGER.error(

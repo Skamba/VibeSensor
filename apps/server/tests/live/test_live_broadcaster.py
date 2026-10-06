@@ -12,6 +12,7 @@ from starlette.websockets import WebSocketDisconnect, WebSocketDisconnected
 from test_support.ws_hub import build_broadcaster, sent_json, sent_json_sequence
 
 from vibesensor.ingest.diagnostics import IngestDiagnosticsCollector
+from vibesensor.live import broadcaster as broadcaster_module
 from vibesensor.live.broadcaster import ERROR_PAYLOAD_TEXT
 from vibesensor.live.payload_types import (
     SCHEMA_VERSION,
@@ -151,6 +152,44 @@ async def test_select_and_remove_route_payloads() -> None:
     assert broadcaster.connection_count() == 1
 
 
+async def test_selection_change_and_removal_mid_tick_use_the_tick_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A browser selecting a sensor or leaving while the tick serializes (Pi KeyError)."""
+    clients = [_client_row("aaaaaaaaaaaa", "front-left"), _client_row("bbbbbbbbbbbb", "rear")]
+    broadcaster, [selecting, leaving, default] = build_broadcaster(
+        _StubPayloadSource([_shared_payload(clients=clients)]),
+        "aaaaaaaaaaaa",
+        "aaaaaaaaaaaa",
+        None,
+    )
+    serialize = broadcaster_module._serialize
+    browser_acted = False
+
+    def _serialize_while_browsers_act(shared: LiveWsPayload, selected: str | None) -> str:
+        nonlocal browser_acted
+        if not browser_acted:
+            browser_acted = True
+            # The /ws route runs these on the event loop while the tick awaits this thread.
+            anyio.from_thread.run_sync(broadcaster.select, selecting, "bbbbbbbbbbbb")
+            anyio.from_thread.run_sync(broadcaster.remove, leaving)
+        return serialize(shared, selected)
+
+    monkeypatch.setattr(broadcaster_module, "_serialize", _serialize_while_browsers_act)
+
+    await broadcaster.broadcast(include_heavy=True)
+    await broadcaster.broadcast(include_heavy=True)
+
+    assert [p["selected_client_id"] for p in sent_json_sequence(selecting)] == [
+        "aaaaaaaaaaaa",
+        "bbbbbbbbbbbb",
+    ]
+    assert [p["selected_client_id"] for p in sent_json_sequence(default)] == ["aaaaaaaaaaaa"] * 2
+    leaving.send_text.assert_not_awaited()
+    leaving.on_drop.assert_not_called()
+    assert broadcaster.connection_count() == 2
+
+
 async def test_no_payload_built_without_connections() -> None:
     source = _StubPayloadSource()
     broadcaster, _ = build_broadcaster(source)
@@ -219,8 +258,9 @@ async def test_serialization_replaces_non_finite_and_numpy_values(
         ConnectionError("reset"),
         WebSocketDisconnect(1006),
         RuntimeError("closed"),
+        ValueError("unexpected"),
     ],
-    ids=["timeout", "os-error", "disconnect", "runtime-error"],
+    ids=["timeout", "os-error", "disconnect", "runtime-error", "unexpected-error"],
 )
 async def test_failed_send_drops_only_that_connection(send_error: Exception) -> None:
     broadcaster, [healthy, failing] = build_broadcaster(_StubPayloadSource(), None, None)
@@ -286,7 +326,7 @@ async def test_send_failure_logging_is_one_line_for_gone_clients_and_rate_limite
     assert (record.exc_info is not None) is has_traceback
 
 
-async def test_run_records_publish_metrics_and_escalates_repeated_tick_failures(
+async def test_run_survives_failed_ticks_and_escalates_only_repeated_failures(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     diagnostics = MagicMock(spec=IngestDiagnosticsCollector)
@@ -296,7 +336,8 @@ async def test_run_records_publish_metrics_and_escalates_repeated_tick_failures(
         ingest_diagnostics=diagnostics,
         push_hz=1000,
     )
-    outcomes: list[Exception | None] = [None, OSError("one")] + [OSError("again")] * 10
+    unexpected = ExceptionGroup("tick", [KeyError("c0ffee000001")])
+    outcomes: list[Exception | None] = [None, unexpected, None] + [OSError("again")] * 10
     heavy_flags: list[bool] = []
 
     async def _broadcast(*, include_heavy: bool) -> None:
@@ -311,6 +352,6 @@ async def test_run_records_publish_metrics_and_escalates_repeated_tick_failures(
         await broadcaster.run()
 
     assert excinfo.value.consecutive_failures == 10
-    assert len(heavy_flags) == 11
-    diagnostics.note_ws_publish.assert_called_once()
+    assert len(heavy_flags) == 13
+    assert diagnostics.note_ws_publish.call_count == 2
     assert diagnostics.note_ws_publish.call_args.kwargs["connection_count"] == 1

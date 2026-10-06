@@ -17,7 +17,10 @@ who consumes it?" Then follow the linked deep dives for step-by-step details.
 One `LiveBroadcaster` task builds the payload at `UI_PUSH_HZ` (spectra on
 `UI_HEAVY_PUSH_HZ` of those ticks), serializes it once per distinct selected
 sensor, and sends it to every connected browser; a socket whose send fails or
-exceeds the send timeout is closed and dropped.
+exceeds the send timeout is closed and dropped. A tick uses the connections and
+sensor selections present when it starts (changes apply on the next tick). A
+failed tick costs one frame; only repeated failed ticks in a row escalate to the
+task supervisor's restart/backoff and `/api/health`.
 
 Live flow is for "what is happening right now". It may expose connectivity,
 speed, spectra, and strength metrics, but it does not carry persisted findings
