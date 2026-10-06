@@ -362,6 +362,15 @@ test("critical journey: History run expands into dB diagnosis", async ({
         diagnosis: makeDiagnosis({
           verdict: "no_fault",
           confidence_level: null,
+          // It checked the wheels: a real "nothing found", not a run that
+          // could check nothing.
+          source_checks: [
+            {
+              source: "wheel/tire",
+              status: "ruled_out",
+              reason: "no_matching_order",
+            },
+          ],
         }),
         sensor_intensity_by_location: [
           makeLocationIntensityRow({

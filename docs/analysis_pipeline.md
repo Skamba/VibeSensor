@@ -374,9 +374,15 @@ the PDF both show:
   - Provenance is the car's recorded field confidence, `user_confirmed` when
     none was recorded, or `missing`. A manual speed also adds the weak reason
     `manual_speed` to a found cause.
-- `guided_phases` (the guided test-drive steps the driver marked: `sweep`,
-  `hold`, `coast_down`, `brake`) and
-  `speed_dependence`: after a guided neutral coast-down, `vehicle_speed` when
+- `guided_phases` (the guided test-drive steps the driver tapped that the
+  measured speed shows were driven: `sweep`, `hold`, `coast_down`, `brake`;
+  `analysis/guided_steps.py`) and `guided_phases_undetected` (those tapped
+  but not seen in the data). Inside a step's window a sweep covers at least
+  20 km/h, a hold stays within 6 km/h for at least 3 s above 20 km/h, a
+  coast-down sheds at least 10 km/h with no braking in between, and the brake
+  step overlaps a braking span. With a manual speed no step counts as done.
+- `speed_dependence`: after a detected guided neutral coast-down (a tapped one
+  that never shed speed decides nothing), `vehicle_speed` when
   the diagnosed order stayed present while coasting (wheels or driveline) and
   `engine_speed` when it disappeared (engine). The first 3 s of the coast-down
   are skipped while the revs drop and the spectrum window clears. Presence at

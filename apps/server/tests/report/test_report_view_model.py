@@ -618,10 +618,15 @@ def test_no_fault_without_any_reference_does_not_imply_the_car_is_fine() -> None
     view = report_view_for(summary)
     owner = view.owner
 
-    assert owner.headline == "No significant vibration found"
+    # A run that compared nothing is no result: never "nothing found" or "no repair".
+    assert owner.headline == "No result: this run could not check for a cause"
     assert owner.description == (
         "No vibration stood out, but this run could not check the wheels, driveline or"
         " engine against their rhythms, so it does not show that they are fine."
+    )
+    assert owner.next_step.startswith("Add the tire size to the car in Settings")
+    assert view.mechanic.shop == (
+        "This test could not check for a cause, so it neither indicates nor rules out a repair.",
     )
     assert owner.not_covered[:3] == (
         "Wheels/tires: no tire size — add it to the car in Settings.",
@@ -691,6 +696,55 @@ def test_manual_fallback_speed_source_is_named_in_plain_words(lang: str, text: s
 
     conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
     assert conditions["Speed source" if lang == "en" else "Snelheidsbron"] == text
+
+
+def test_a_run_on_a_hand_typed_speed_is_no_result_and_asks_for_live_speed() -> None:
+    """Every order was placed at the typed-in speed: nothing was checked."""
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30)
+    for sample in samples:
+        sample["speed_source"] = "fallback_manual"
+    summary = run_analysis(samples)
+    view = report_view_for(summary)
+    texts = report_view_texts(view)
+
+    assert view.owner.headline == "No result: this run could not check for a cause"
+    assert view.owner.next_step.startswith("Record again with live speed from GPS or an OBD-II")
+    assert not [text for text in texts if "hold the speed" in text]
+    assert not [text for text in texts if "No repair is indicated" in text]
+    nl = report_view_for(summary, lang="nl").owner
+    assert nl.headline == "Geen uitslag: deze rit kon niet op een oorzaak controleren"
+
+
+def test_guided_steps_tapped_while_holding_one_speed_are_not_listed_as_done() -> None:
+    """Tapping through the guided test at a steady 50 km/h did only the hold."""
+    guided = [
+        {"phase": "sweep", "start_t_s": 0.0, "end_t_s": 10.0},
+        {"phase": "hold", "start_t_s": 10.0, "end_t_s": 20.0},
+        {"phase": "coast_down", "start_t_s": 20.0, "end_t_s": None},
+    ]
+    samples = make_engine_order_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=50.0, n_samples=30)
+    summary = run_analysis(samples, standard_metadata(guided_phases=guided))
+    diagnosis = summary["diagnosis"]
+
+    assert diagnosis["guided_phases"] == ["hold"]
+    assert diagnosis["guided_phases_undetected"] == ["sweep", "coast_down"]
+    # A coast-down that never shed speed does not decide what the vibration follows.
+    assert diagnosis["speed_dependence"] is None
+    for lang, label, text in (
+        (
+            "en",
+            "Guided test",
+            "steady hold; tapped but not detected: speed sweep, neutral coast-down",
+        ),
+        (
+            "nl",
+            "Begeleide test",
+            "constante snelheid; aangetikt maar niet gezien in de meting:"
+            " snelheidsopbouw, uitrollen in neutraal",
+        ),
+    ):
+        conditions = report_view_for(summary, lang=lang).mechanic.conditions
+        assert {fact.label: fact.value for fact in conditions}[label] == text
 
 
 def test_measured_rpm_places_the_engine_markers_without_gear_ratios() -> None:

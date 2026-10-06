@@ -345,6 +345,7 @@ export interface components {
             finding_id: string | null;
             frequency_hz: number | null;
             guided_phases: components["schemas"]["GuidedPhaseValue"][];
+            guided_phases_undetected?: components["schemas"]["GuidedPhaseValue"][];
             location: string | null;
             location_amplitudes: components["schemas"]["LocationAmplitudeRow"][];
             order_code: components["schemas"]["OrderCodeValue"] | null;

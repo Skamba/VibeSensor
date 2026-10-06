@@ -388,7 +388,18 @@ test("journey: a no-fault run at one steady speed shows that speed and no empty 
       lang,
       duration_s: 15,
       sensor_count_used: 1,
-      diagnosis: makeDiagnosis({ verdict: "no_fault" }),
+      diagnosis: makeDiagnosis({
+        verdict: "no_fault",
+        // It checked the wheels: a real "nothing found", not a run that
+        // could check nothing.
+        source_checks: [
+          {
+            source: "wheel/tire",
+            status: "ruled_out",
+            reason: "no_matching_order",
+          },
+        ],
+      }),
       speed_stats: {
         min_kmh: 50,
         max_kmh: 50,

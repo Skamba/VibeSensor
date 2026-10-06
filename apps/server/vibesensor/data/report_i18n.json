@@ -427,6 +427,10 @@
     "en": "speed sweep",
     "nl": "snelheidsopbouw"
   },
+  "GUIDED_UNDETECTED": {
+    "en": "tapped but not detected: {steps}",
+    "nl": "aangetikt maar niet gezien in de meting: {steps}"
+  },
   "HEADER_CAR": {
     "en": "Car",
     "nl": "Auto"
@@ -1215,6 +1219,10 @@
     "en": "A strong vibration was measured that this test could not tie to a checked rhythm; look for a loose or resonating part near the {location}.",
     "nl": "Er is een sterke trilling gemeten die deze test niet aan een gecontroleerd ritme kon koppelen; zoek naar een los of meetrillend onderdeel bij {location}."
   },
+  "SHOP_NOT_CHECKED": {
+    "en": "This test could not check for a cause, so it neither indicates nor rules out a repair.",
+    "nl": "Deze test kon niet op een oorzaak controleren, dus wijst hij geen reparatie aan en sluit hij er ook geen uit."
+  },
   "SHOP_WEAK": {
     "en": "Don't replace parts based on this report alone; record the test again first.",
     "nl": "Vervang geen onderdelen op basis van alleen dit rapport; meet eerst opnieuw."
@@ -1443,6 +1451,18 @@
     "en": "Record again and hold the speed where you feel it for 20 seconds. If it stays, have a workshop look for a loose or resonating part near the {location}.",
     "nl": "Meet opnieuw en houd de snelheid waarop je hem voelt 20 seconden vast. Blijft hij, laat een werkplaats dan zoeken naar een los of meetrillend onderdeel bij {location}."
   },
+  "STEP_NOT_CHECKED": {
+    "en": "Fix what is listed under “Not covered” and record again.",
+    "nl": "Los op wat onder “Niet gedekt” staat en meet opnieuw."
+  },
+  "STEP_NOT_CHECKED_MANUAL_SPEED": {
+    "en": "Record again with live speed from GPS or an OBD-II adapter: a speed typed in by hand cannot be compared with any wheel or drivetrain rhythm.",
+    "nl": "Meet opnieuw met live snelheid van gps of een OBD-II-adapter: een met de hand ingevoerde snelheid is met geen enkel ritme van wielen of aandrijving te vergelijken."
+  },
+  "STEP_NOT_CHECKED_TIRE": {
+    "en": "Add the tire size to the car in Settings and record again: without it no wheel or drivetrain rhythm can be placed.",
+    "nl": "Voeg de bandenmaat toe aan de auto in Instellingen en meet opnieuw: zonder bandenmaat is geen ritme van wielen of aandrijving te bepalen."
+  },
   "STEP_WHEEL_UNLOCATED": {
     "en": "Mount a sensor at each wheel and record the test again to find which wheel or tire it is.",
     "nl": "Monteer bij elk wiel een sensor en meet de test opnieuw om te vinden welk wiel of welke band het is."
@@ -1602,6 +1622,10 @@
   "VERDICT_UNEXPLAINED": {
     "en": "Vibration found, but no checked cause explains it",
     "nl": "Trilling gevonden, maar geen gecontroleerde oorzaak verklaart hem"
+  },
+  "VERDICT_NOT_CHECKED": {
+    "en": "No result: this run could not check for a cause",
+    "nl": "Geen uitslag: deze rit kon niet op een oorzaak controleren"
   },
   "VERDICT_UNEXPLAINED_BODY": {
     "en": "The strongest vibration, {amplitude} at the {location}, did not follow the rhythm of anything this run could check.",

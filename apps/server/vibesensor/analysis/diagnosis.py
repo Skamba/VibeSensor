@@ -27,6 +27,7 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     SPEED_COVERAGE_MIN_PCT,
 )
+from vibesensor.analysis.guided_steps import guided_step_done
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
@@ -142,6 +143,9 @@ def build_diagnosis(
     braking = _braking_spans(test_run)
     presence = _presence_ratio(candidate, located, braking)
     refs = _references(metadata, samples)
+    # The tapped guided steps the drive's speed shows were done (a typed-in
+    # speed shows none); a coast-down that was not one decides nothing.
+    guided_done = _guided_steps_done(metadata.guided_phases, samples, braking, refs)
     # A hand-entered speed does not drop while coasting, so the coast-down
     # comparison cannot tell road speed from engine speed; an EV has no engine
     # and no neutral that decouples its motor. Brake judder stops whenever the
@@ -151,7 +155,7 @@ def build_diagnosis(
         if refs.manual_speed
         or refs.electric
         or (candidate is not None and candidate.suspected_source is VibrationSource.BRAKES)
-        else _speed_dependence(candidate, located, metadata.guided_phases)
+        else _speed_dependence(candidate, located, guided_done)
     )
     findings = test_run.findings
     # Road-speed orders the engine may have caused: never Strong unless the
@@ -240,7 +244,12 @@ def build_diagnosis(
         "dominant_phase": candidate.dominant_phase if candidate is not None else None,
         "presence_ratio": presence,
         "weak_reasons": weak_reasons,
-        "guided_phases": _guided_phase_names(metadata.guided_phases),
+        "guided_phases": _guided_phase_names(guided_done),
+        "guided_phases_undetected": [
+            name
+            for name in _guided_phase_names(metadata.guided_phases)
+            if name not in _guided_phase_names(guided_done)
+        ],
         "speed_dependence": speed_dependence,
         "order_findings": _order_findings(
             candidate,
@@ -1103,6 +1112,24 @@ def _coast_ruled_out_reason(
 
 
 # -- guided test drive --------------------------------------------------------
+
+
+def _guided_steps_done(
+    phases: Sequence[RunGuidedPhase],
+    samples: Sequence[Sample],
+    braking: Sequence[tuple[float, float]],
+    refs: _References,
+) -> list[RunGuidedPhase]:
+    """The tapped guided steps whose window the run's measured speed shows done."""
+    if refs.manual_speed:
+        return []
+    by_time = {
+        sample.t_s: sample.speed_kmh
+        for sample in samples
+        if sample.t_s is not None and sample.speed_kmh is not None
+    }
+    speeds = sorted(by_time.items())
+    return [phase for phase in phases if guided_step_done(phase, speeds, braking)]
 
 
 def _guided_phase_names(phases: Sequence[RunGuidedPhase]) -> list[GuidedPhaseValue]:

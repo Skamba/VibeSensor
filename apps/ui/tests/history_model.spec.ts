@@ -327,7 +327,15 @@ test("explains degraded raw capture", () => {
 
 test("a run without a fault says so and covers what was driven", () => {
   const insights = populatedInsights("run-005");
-  insights.diagnosis = makeDiagnosis();
+  insights.diagnosis = makeDiagnosis({
+    source_checks: [
+      {
+        source: "wheel/tire",
+        status: "ruled_out",
+        reason: "no_matching_order",
+      },
+    ],
+  });
   insights.speed_stats = { ...insights.speed_stats, min_kmh: 50, max_kmh: 118 };
   const run = historyListRun("run-005");
   const detail = defaultDetail({ preview: insights });
@@ -484,6 +492,13 @@ test("a no-fault run without a tire size does not suggest the car is fine", () =
       reason: "no_tire_reference" as const,
     })),
   );
+  // It checked nothing: no result, and what to fix, never a success.
+  expect(insights.primary).toMatchObject({
+    headline: "No result: this run could not check for a cause",
+    tone: "warn",
+    nextStep:
+      "Add the tire size to the car in Settings and record again: without it no wheel or drivetrain rhythm can be placed.",
+  });
   expect(insights.primary?.explanation).toBe(
     "No vibration stood out, but this run could not check the wheels, driveline or engine against their rhythms, so it does not show that they are fine.",
   );
@@ -493,6 +508,31 @@ test("a no-fault run without a tire size does not suggest the car is fine", () =
     "no tire size — add it to the car in Settings.",
     "no tire size — connect an OBD-II adapter to measure RPM, or add the tire size to the car.",
   ]);
+});
+
+test("a run on a hand-typed speed is no result in the list too, and asks for live speed", () => {
+  const insights = populatedInsights("run-011");
+  insights.diagnosis = makeDiagnosis({
+    source_checks: ["wheel/tire", "driveline", "engine", "brakes"].map(
+      (source) => ({
+        source,
+        status: "not_testable" as const,
+        reason: "manual_speed" as const,
+      }),
+    ),
+  });
+  const run = historyListRun("run-011");
+  const detail = defaultDetail({ preview: insights });
+  expect(buildRow(run, detail, false, f).headline).toBe(
+    "history.verdict.not_checked",
+  );
+  const details = buildDetails(run, detail, f);
+  expect(details.insights).toMatchObject({
+    primary: {
+      headline: "history.verdict.not_checked",
+      nextStep: "history.verdict.not_checked_step.manual_speed",
+    },
+  });
 });
 
 test("a fault run lists the matching source as checked and states the top-gear assumption", () => {

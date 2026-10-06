@@ -210,6 +210,9 @@ class Case:
     # measured ``speed_lag_s`` earlier (a GPS receiver: once a second, late).
     speed_lag_s: float = 0.0
     speed_report_period_s: float = 0.5
+    # Guided steps the driver taps through without driving them: the report
+    # lists them as tapped but not detected, never as done.
+    guided_undetected: tuple[GuidedPhaseName, ...] = ()
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -1152,6 +1155,20 @@ BENCH_CASES = (
             dominant_corner=True,
         ),
     ),
+    # The driver taps through the guided steps while holding 80 km/h: only the
+    # hold was driven. The sweep and the coast-down are tapped but not detected,
+    # and the coast-down that never shed speed does not decide what the
+    # vibration follows.
+    Case(
+        "bench-guided-steps-tapped-at-a-steady-speed",
+        (
+            _phase("sweep", 8.0, 80.0, 82.0, _FL_IMBALANCE, guided="sweep"),
+            _phase("hold", 8.0, 82.0, 82.0, _FL_IMBALANCE, guided="hold"),
+            _phase("coast", 8.0, 82.0, 80.0, _FL_IMBALANCE, guided="coast_down"),
+        ),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE),
+        guided_undetected=("sweep", "coast_down"),
+    ),
     # In a direct (1:1) gear the engine turns as fast as the propshaft: without
     # measured RPM or a coast-down a propshaft order is never Strong.
     Case(
@@ -1605,7 +1622,13 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         lossy = bool(case.frame_loss)
         expected = case.expected_for(car_key, result.diagnosis["source"])
         _assert_case(result, car, expected, case)
-        assert result.diagnosis["guided_phases"] == case.guided_steps
+        assert result.diagnosis["guided_phases"] == [
+            step for step in case.guided_steps if step not in case.guided_undetected
+        ]
+        assert result.diagnosis["guided_phases_undetected"] == list(case.guided_undetected)
+        if "coast_down" in case.guided_undetected:
+            # A coast-down that never shed speed decides nothing.
+            assert result.diagnosis["speed_dependence"] is None
         # The Live page's brake step counts each firm stop the analysis brakes in.
         assert result.guided_brake_stops == case.guided_firm_stops
         if not case.wifi_retry_loss:

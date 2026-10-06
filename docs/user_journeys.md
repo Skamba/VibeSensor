@@ -531,7 +531,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   checked, so not shown to be fine: driveline, engine and brakes." It never
   implies the car is fine for a source that was not testable. Brakes are
   checked only when the drive braked firmly from speed; coasting does not
-  count.
+  count. A run that could check no source at all (a hand-typed speed, no tire
+  size) reads "No result: this run could not check for a cause" in the list,
+  the detail and the PDF, with the step that makes the next run count
+  (`history.verdict.not_checked*`); never "hold the speed" or "no repair".
 - Each failing run-suitability check (speed variation, sensor coverage, frame
   integrity, …) is a warning banner at the top of the run detail, titled with
   the check and worded as its row on the PDF's data-quality page

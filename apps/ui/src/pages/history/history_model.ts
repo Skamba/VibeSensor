@@ -887,7 +887,41 @@ function unexplainedLocation(diagnosis: Diagnosis): string | null {
   return row ? row.location : null;
 }
 
+/** Check statuses that compared a source's rhythm with what the run measured. */
+const CHECKED_STATUSES = new Set<SourceCheck["status"]>([
+  "candidate",
+  "ruled_out",
+  "ruled_out_estimated",
+]);
+
+/** A run that compared no rhythm at all is no result, whatever it measured. */
+function checkedAnything(diagnosis: Diagnosis): boolean {
+  return diagnosis.source_checks.some((check) =>
+    CHECKED_STATUSES.has(check.status),
+  );
+}
+
+/** What fixes a run that checked nothing: why the wheels could not be checked. */
+const NOT_CHECKED_STEP_REASONS = new Set<CheckReason>([
+  "manual_speed",
+  "no_tire_reference",
+]);
+
+function notCheckedStep(diagnosis: Diagnosis, t: Translate): string {
+  const reason = diagnosis.source_checks.find(
+    (check) => check.status === "not_testable",
+  )?.reason;
+  return t(
+    reason && NOT_CHECKED_STEP_REASONS.has(reason)
+      ? `history.verdict.not_checked_step.${reason}`
+      : "history.verdict.not_checked_step.other",
+  );
+}
+
 function noFaultHeadline(diagnosis: Diagnosis, t: Translate): string {
+  if (!checkedAnything(diagnosis)) {
+    return t("history.verdict.not_checked");
+  }
   return t(
     diagnosis.unexplained_vibration
       ? "history.verdict.unexplained"
@@ -901,12 +935,14 @@ function noFaultCard(
 ): PrimaryFinding {
   const { t } = f;
   const speeds = summary.speed_stats;
+  const checked = checkedAnything(summary.diagnosis);
   return {
     eyebrow: t("history.verdict.eyebrow"),
     headline: noFaultHeadline(summary.diagnosis, t),
     signature: "",
     confidence: "",
-    tone: summary.diagnosis.unexplained_vibration ? "warn" : "success",
+    tone:
+      summary.diagnosis.unexplained_vibration || !checked ? "warn" : "success",
     explanation: noFaultExplanation(summary.diagnosis, t),
     chips: [
       {
@@ -918,8 +954,8 @@ function noFaultCard(
         value: f.formatInt(summary.sensor_count_used),
       },
     ],
-    nextStepLabel: null,
-    nextStep: null,
+    nextStepLabel: checked ? null : t("history.findings_next_step_label"),
+    nextStep: checked ? null : notCheckedStep(summary.diagnosis, t),
   };
 }
 

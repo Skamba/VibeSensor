@@ -204,7 +204,10 @@ class DiagnosisPayload(TypedDict):
     # Share of the moving drive in which the diagnosed order was there (any sensor).
     presence_ratio: float | None
     weak_reasons: list[str]
+    # The tapped guided steps the drive's speed shows were done, and those it
+    # does not (absent on runs analysed before steps were checked).
     guided_phases: list[GuidedPhaseValue]
+    guided_phases_undetected: NotRequired[list[GuidedPhaseValue]]
     speed_dependence: SpeedDependenceValue | None
     order_findings: list[OrderFindingRow]
     amplitude_basis: AmplitudeBasis

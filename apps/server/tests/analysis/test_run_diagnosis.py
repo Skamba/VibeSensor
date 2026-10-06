@@ -203,9 +203,11 @@ _GUIDED = [
 def _guided_analysis(
     samples: list[dict[str, Any]], *, stops_in_neutral: bool, neutral_peaks: list[dict] = ()
 ) -> Any:
-    if stops_in_neutral:
-        for sample in samples:
-            if sample["t_s"] >= _COAST_START_S:
+    for sample in samples:
+        if sample["t_s"] >= _COAST_START_S:
+            # The coast-down really coasts: the car sheds speed off the brakes.
+            sample["speed_kmh"] -= 2.0 * (sample["t_s"] - _COAST_START_S)
+            if stops_in_neutral:
                 sample["top_peaks"] = [*neutral_peaks, {"hz": 200.0, "amp": 0.004}]
                 sample["vibration_strength_db"] = 8.0
     return run_analysis(samples, standard_metadata(guided_phases=_GUIDED))["diagnosis"]

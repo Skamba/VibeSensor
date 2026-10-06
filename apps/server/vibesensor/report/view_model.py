@@ -8,7 +8,7 @@ zones; the renderer in ``report/pdf.py`` only lays this out.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from vibesensor._version import __version__
@@ -184,6 +184,12 @@ _RULED_OUT_ESTIMATED_KEYS = {
     "top_gear_assumed": "RULED_OUT_ENGINE_TOP_GEAR",
     "engine_may_be_off": "RULED_OUT_ENGINE_MAY_BE_OFF",
     "regen_braking": "RULED_OUT_REGEN_BRAKING",
+}
+# A run that compared no rhythm at all: the next step that fixes why.
+_CHECKED_STATUSES = frozenset({"candidate", "ruled_out", "ruled_out_estimated"})
+_NOT_CHECKED_STEP_KEYS = {
+    "manual_speed": "STEP_NOT_CHECKED_MANUAL_SPEED",
+    "no_tire_reference": "STEP_NOT_CHECKED_TIRE",
 }
 # Page 1 of a no-fault run: what each untested or estimate-based check leaves open,
 # and how to close it; the short hedge names the estimate in the "checked" list.
@@ -630,7 +636,13 @@ def _owner_page(
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
         strongest = _unexplained_row(diagnosis)
-        if strongest is not None:
+        if not _checked_anything(diagnosis):
+            # Nothing was compared with any rhythm: no result, and what fixes that.
+            headline = ctx.t("VERDICT_NOT_CHECKED")
+            next_step = ctx.t(
+                _NOT_CHECKED_STEP_KEYS.get(_not_checked_reason(diagnosis), "STEP_NOT_CHECKED")
+            )
+        elif strongest is not None:
             # A vibration was there; it just followed nothing the run could check.
             headline = ctx.t("VERDICT_UNEXPLAINED")
             where = ctx.location(strongest["location"])
@@ -946,6 +958,23 @@ def _coverage(
     return description, covered, tuple(f"{gap[:1].upper()}{gap[1:]}" for gap in gaps)
 
 
+def _checked_anything(diagnosis: DiagnosisPayload) -> bool:
+    """Whether the run compared any source's rhythm with what it measured."""
+    return any(check["status"] in _CHECKED_STATUSES for check in diagnosis["source_checks"])
+
+
+def _not_checked_reason(diagnosis: DiagnosisPayload) -> str:
+    """Why the wheels (the first check) could not be checked; that fixes the rest too."""
+    return next(
+        (
+            check["reason"]
+            for check in diagnosis["source_checks"]
+            if check["status"] == "not_testable" and check["reason"]
+        ),
+        "",
+    )
+
+
 def _unexplained_row(diagnosis: DiagnosisPayload) -> LocationAmplitudeRow | None:
     """The strongest location of a no-fault run that still felt a significant vibration."""
     if diagnosis["verdict"] != "no_fault" or not diagnosis["unexplained_vibration"]:
@@ -1110,13 +1139,23 @@ def _conditions(
         *references,
         Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
         Fact(ctx.t("COND_PHASES"), phases or unknown),
-        Fact(
-            ctx.t("COND_GUIDED"),
-            ", ".join(ctx.t(f"GUIDED_{phase.upper()}") for phase in diagnosis["guided_phases"])
-            or ctx.t("GUIDED_NONE"),
-        ),
+        Fact(ctx.t("COND_GUIDED"), _guided_steps(ctx, diagnosis)),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
     )
+
+
+def _guided_steps(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
+    """The guided steps done, then those tapped that the drive's speed does not show."""
+
+    def names(phases: Sequence[str]) -> str:
+        return ", ".join(ctx.t(f"GUIDED_{phase.upper()}") for phase in phases)
+
+    done = names(diagnosis["guided_phases"])
+    undetected = diagnosis.get("guided_phases_undetected", [])
+    if undetected:
+        missing = ctx.t("GUIDED_UNDETECTED", steps=names(undetected))
+        return f"{done}; {missing}" if done else f"{missing[:1].upper()}{missing[1:]}"
+    return done or ctx.t("GUIDED_NONE")
 
 
 def _powertrain_key(conditions: TestConditions) -> str:
@@ -1276,6 +1315,8 @@ def _ruled_out(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
 
 def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     verdict = diagnosis["verdict"]
+    if verdict == "no_fault" and not _checked_anything(diagnosis):
+        return (ctx.t("SHOP_NOT_CHECKED"),)
     if verdict == "no_fault":
         strongest = _unexplained_row(diagnosis)
         if strongest is not None:
