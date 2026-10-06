@@ -3,7 +3,7 @@ import { useEffect, useRef } from "preact/hooks";
 import type { SpeedSourceKind } from "../../api/types";
 import { speedUnit } from "../../app_store";
 import { FeedbackBlock, FeedbackSlot } from "../../components/feedback";
-import { formatSpeed } from "../../format";
+import { formatSpeed, speedUnitKey } from "../../format";
 import { t } from "../../i18n";
 import {
   obdStatus,
@@ -442,9 +442,11 @@ export function SpeedSource() {
           <div class="subtle">{t("settings.speed.manual_intro")}</div>
           <NumberField
             id="manualSpeedInput"
-            label={t("settings.speed.manual_label")}
+            label={t("settings.speed.manual_label", {
+              unit: t(speedUnitKey(speedUnit.value)),
+            })}
             value={manualSpeedInput.value}
-            step="0.1"
+            step={speedUnit.value === "mps" ? "0.01" : "0.1"}
             min="0"
             feedbackId="manualSpeedFeedback"
             feedback={manualSpeedFeedback.value}

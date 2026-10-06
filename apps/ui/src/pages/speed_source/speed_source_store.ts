@@ -1,4 +1,4 @@
-import { batch, computed, signal } from "@preact/signals";
+import { batch, computed, effect, signal } from "@preact/signals";
 
 import {
   pairSettingsObdDevice,
@@ -6,8 +6,14 @@ import {
   updateSettingsSpeedSource,
 } from "../../api/settings";
 import type { ObdDevicePayload, SpeedSourceKind } from "../../api/types";
-import { errorMessage, onViewEnter, showError } from "../../app_store";
+import {
+  errorMessage,
+  onViewEnter,
+  showError,
+  speedUnit,
+} from "../../app_store";
 import type { Feedback } from "../../components/feedback";
+import { fmt, speedUnitKey } from "../../format";
 import { t } from "../../i18n";
 import {
   applySpeedSource,
@@ -21,6 +27,8 @@ import {
   activeSourceLabel,
   checkSave,
   compareDevices,
+  manualSpeedFieldValue,
+  maxManualSpeed,
 } from "./speed_source_model";
 
 /** Unsaved edits; `null` means "show the saved value". */
@@ -34,13 +42,26 @@ export const selectedMode = computed(() => modeDraft.value ?? savedMode.value);
 export const draftPending = computed(
   () => modeDraft.value !== null && modeDraft.value !== savedMode.value,
 );
+/** The manual speed field, in the display unit. */
 export const manualSpeedInput = computed(
   () =>
     manualSpeedDraft.value ??
-    (speedSettings.manualSpeedKph.value != null
-      ? String(speedSettings.manualSpeedKph.value)
-      : ""),
+    manualSpeedFieldValue(speedSettings.manualSpeedKph.value, speedUnit.value),
 );
+// A typed speed was in the old unit: a unit switch shows the saved one again.
+effect(() => {
+  void speedUnit.value;
+  manualSpeedDraft.value = null;
+});
+
+/** "Enter a manual speed above 0 and up to 500 km/h." in the display unit. */
+function manualSpeedInvalidText(): string {
+  const unit = speedUnit.value;
+  return t("settings.speed.manual_invalid", {
+    max: fmt(maxManualSpeed(unit), unit === "mps" ? 1 : 0),
+    unit: t(speedUnitKey(unit)),
+  });
+}
 export const staleTimeoutInput = computed(
   () =>
     staleTimeoutDraft.value ??
@@ -147,6 +168,7 @@ export async function saveSpeedSource(): Promise<void> {
   const check = checkSave({
     source: modeDraft.value ?? speedSettings.source.value,
     manualSpeed: manualSpeedInput.value,
+    speedUnit: speedUnit.value,
     staleTimeout: staleTimeoutInput.value,
     obdDeviceMac: speedSettings.obdDeviceMac.value,
   });
@@ -157,11 +179,11 @@ export async function saveSpeedSource(): Promise<void> {
     batch(() => {
       if (check.problem === "manual_speed") {
         manualSpeedFeedback.value = {
-          body: t("settings.speed.manual_invalid"),
+          body: manualSpeedInvalidText(),
           compact: true,
           tone: "error",
         };
-        showSaveProblem(t("settings.speed.manual_invalid"), detail);
+        showSaveProblem(manualSpeedInvalidText(), detail);
       } else if (check.problem === "stale_timeout") {
         staleTimeoutFeedback.value = {
           body: t("settings.speed.stale_timeout_invalid"),

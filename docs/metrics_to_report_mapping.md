@@ -50,7 +50,7 @@ summary's `diagnosis` block (`d` below; contract in
   diagnosed order is in mg, always shown next to its dB above floor (see
   `docs/metrics.md`).
 - **Frequency:** Hz, one decimal.
-- **Speed:** integers in the user's speed unit setting (km/h or m/s, as on
-  the History page): every speed, the test-drive tips and the
-  amplitude-vs-speed axis.
+- **Speed:** integers in the user's speed unit setting (km/h, written km/u in
+  Dutch, or m/s, as on the History page): every speed, the test-drive tips,
+  the data-quality advice and the amplitude-vs-speed axis.
 - **Format:** Dutch uses a decimal comma.

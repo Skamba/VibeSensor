@@ -33,7 +33,7 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
 | Module | Role |
 |---|---|
 | `report/view_model.py` | Pure translation of the stored analysis + `RunMetadata` into a `ReportView`: every localized string, number format (decimal comma in Dutch), and chart series the PDF draws. Never re-derives the verdict, level, order labels, amplitudes, or zones. |
-| `report/run_quality.py` | Wording of each suitability check (plain sentence plus its specifics) and which run warnings a failing check already states. The quality page and the History run detail's warning banners both use it, so they say the same thing. |
+| `report/run_quality.py` | Wording of each suitability check (plain sentence plus its specifics) and which run warnings a failing check already states. The quality page and the History run detail's warning banners both use it, so they say the same thing, with speeds in the user's speed unit setting (History reloads an open run when the unit changes). |
 | `report/pdf.py` | ReportLab canvas renderer with built-in Helvetica: one function per page (`_owner_page`, `_mechanic_page`, `_quality_page`), the car diagram, and the spectrum and amplitude-vs-speed charts. Layout only. |
 | `report/service.py` | `HistoryReportService`: loads the run, picks the language, reads the user's time zone and speed unit settings, caches PDFs per language, zone and unit, and calls the injected renderer (composition imports ReportLab lazily on first use). |
 | `report/cache.py` | LRU PDF cache with per-key build coordination. |
@@ -49,7 +49,7 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
      shows in the user's time zone (reported by the browser), else in the
      offset recorded with the run. Every speed in the report, including the
      test-drive tips ("brake firmly from about 100 km/h"), shows in the
-     user's speed unit setting (km/h or m/s).
+     user's speed unit setting (km/h, km/u in Dutch, or m/s).
    - Verdict box with exactly one confidence expression: the level word plus
      its action meaning (Strong: go fix it; Moderate: do the cheap confirming
      check first; Weak: don't buy parts, record the test again). No

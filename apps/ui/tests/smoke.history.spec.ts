@@ -323,8 +323,24 @@ test("journey: history deletes one run and reports a partial delete-all", async 
 test("journey: history speeds follow the speed unit setting in English and Dutch", async ({
   page,
 }) => {
-  await bootWithHistory(page, createServer());
+  const server = createServer();
   let unit: SpeedUnitPayload["speed_unit"] = "kmh";
+  // The server words its warnings in the saved speed unit.
+  server.insights = (runId, lang) => ({
+    ...insights(runId, lang),
+    warnings: [
+      {
+        code: "suitability_speed_variation",
+        severity: "warn",
+        applies_to: "run_suitability",
+        title: "Speed variation",
+        detail: `Record with GPS speed above ${
+          unit === "mps" ? "6 m/s" : lang === "nl" ? "20 km/u" : "20 km/h"
+        }.`,
+      },
+    ],
+  });
+  await bootWithHistory(page, server);
   // Routes added later win over the common settings route.
   await page.route("**/api/settings/speed-unit", async (route) => {
     if (route.request().method() !== "GET") {
@@ -338,8 +354,11 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   await expect(details).toContainText("T1 · 12.1 Hz @ 85 km/h");
   await expect(details).toContainText("63–105 km/h");
   await expect(details).toContainText("60–80 km/h");
+  await expect(details).toContainText("speed above 20 km/h.");
 
   await page.locator("#speedUnitSelect").selectOption("mps");
+  // The open diagnosis reloads, so the server's warnings follow the unit too.
+  await expect(details).toContainText("speed above 6 m/s.");
   await expect(details).toContainText("T1 · 12.1 Hz @ 24 m/s");
   await expect(details).toContainText("18–29 m/s");
   await expect(details).toContainText("17–22 m/s");

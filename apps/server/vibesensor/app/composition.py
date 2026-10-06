@@ -274,6 +274,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
         run_service=ProjectedHistoryRunService(
             HistoryRunService(history),
             current_car_reader=settings.settings_reader,
+            speed_unit=lambda: settings.ui_preferences.speed_unit,
         ),
         report_service=HistoryReportService(
             history,

@@ -15,6 +15,8 @@ import {
   deviceActionLabel,
   deviceBadges,
   gpsDiagnostics,
+  manualSpeedFieldValue,
+  maxManualSpeed,
   obdDiagnostics,
 } from "../src/pages/speed_source/speed_source_model";
 import {
@@ -128,6 +130,7 @@ describe("speed source save validation", () => {
   const draft = {
     source: "gps" as const,
     manualSpeed: "",
+    speedUnit: "kmh" as const,
     staleTimeout: "10",
     obdDeviceMac: null,
   };
@@ -159,6 +162,26 @@ describe("speed source save validation", () => {
       problem: "manual_speed",
     });
     expect(checkSave({ ...draft, manualSpeed: "500" }).ok).toBe(true);
+  });
+
+  test("takes the manual speed in m/s and saves it in km/h to 0.1 km/h", () => {
+    const mps = { ...draft, speedUnit: "mps" as const };
+    expect(checkSave({ ...mps, manualSpeed: "25" })).toMatchObject({
+      request: { manual_speed_kph: 90 },
+    });
+    expect(maxManualSpeed("mps")).toBe(138.8);
+    expect(checkSave({ ...mps, manualSpeed: "138.8" }).ok).toBe(true);
+    expect(checkSave({ ...mps, manualSpeed: "139" }).ok).toBe(false);
+    // The field's two decimals read back as the saved km/h.
+    for (const kph of [80, 100, 72.5, 0.1, 500]) {
+      const shown = manualSpeedFieldValue(kph, "mps");
+      expect(checkSave({ ...mps, manualSpeed: shown })).toMatchObject({
+        request: { manual_speed_kph: kph },
+      });
+    }
+    expect(manualSpeedFieldValue(80, "mps")).toBe("22.22");
+    expect(manualSpeedFieldValue(80, "kmh")).toBe("80");
+    expect(manualSpeedFieldValue(null, "mps")).toBe("");
   });
 
   test("requires a 3-120 s stale timeout unless manual is selected", () => {

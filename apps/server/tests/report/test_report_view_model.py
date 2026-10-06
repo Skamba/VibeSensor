@@ -508,7 +508,7 @@ def test_braking_and_coasting_are_covered_separately() -> None:
             " remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de"
             " begeleide test met regeneratie op het laagste niveau, of rem een paar keer"
             " stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer"
-            " 100\u00a0km/h.",
+            " 100\u00a0km/u.",
             "Remmen: geen trilling van één of twee keer per wielomwenteling tijdens het"
             " remmen, maar een elektrische auto of plug-in hybride kan op regeneratief"
             " remmen vertraagd hebben zonder de remschijven; niet doorslaggevend",
@@ -810,8 +810,19 @@ def test_quality_warning_states_each_check_once_and_keeps_measured_counts() -> N
     )
     assert details["en"]["Speed variation"] == (
         "The speed could not tell the wheel and drivetrain orders apart. "
-        "Too little of the run had a known speed; record with GPS or OBD-II speed above 20 km/h."
+        "Too little of the run had a known speed; record with GPS or OBD-II speed above"
+        " 20\u00a0km/h."
     )
+    assert details["nl"]["Snelheidsvariatie"].endswith("boven 20\u00a0km/u.")
+    in_mps = {
+        lang: {
+            c.label: c.detail
+            for c in report_view_for(summary, lang=lang, speed_unit="mps").quality.checks
+        }
+        for lang in ("en", "nl")
+    }
+    assert in_mps["en"]["Speed variation"].endswith("speed above 6\u00a0m/s.")
+    assert in_mps["nl"]["Snelheidsvariatie"].endswith("boven 6\u00a0m/s.")
 
 
 def test_a_steady_speed_reads_as_one_speed_not_a_range() -> None:
@@ -848,8 +859,8 @@ def test_a_steady_speed_reads_as_one_speed_not_a_range() -> None:
         (
             "nl",
             "kmh",
-            "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 100\u00a0km/h.",
-            "Rem vanaf ongeveer 100\u00a0km/h een paar keer stevig af tot 40\u00a0km/h,",
+            "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 100\u00a0km/u.",
+            "Rem vanaf ongeveer 100\u00a0km/u een paar keer stevig af tot 40\u00a0km/u,",
         ),
         (
             "nl",
@@ -884,9 +895,17 @@ def test_a_report_in_metres_per_second_shows_every_speed_in_metres_per_second() 
             {"speed_kmh": 90.0, "location": "front-left", "amplitude_mg": 90.0},
         ]
     )
-    for variant in (summary, _weak_summary(), _healthy_summary()):
-        texts = report_view_texts(report_view_for(variant, speed_unit="mps"))
-        assert not [text for text in texts if "km/h" in text]
+    too_little_speed = _weak_summary()
+    for check in too_little_speed["run_suitability"]:
+        if check["check_key"] == "SUITABILITY_CHECK_SPEED_VARIATION":
+            check["state"] = "warn"
+            check["explanation"] = {"_i18n_key": "SUITABILITY_SPEED_VARIATION_WARN"}
+    for variant in (summary, _weak_summary(), _healthy_summary(), too_little_speed):
+        for lang in ("en", "nl"):
+            texts = report_view_texts(report_view_for(variant, lang=lang, speed_unit="mps"))
+            assert not [text for text in texts if "km/" in text]
+    warned = report_view_texts(report_view_for(too_little_speed, speed_unit="mps"))
+    assert [text for text in warned if text.endswith("speed above 6\u00a0m/s.")]
     chart = report_view_for(summary, speed_unit="mps").mechanic.speed_chart
     assert chart is not None
     assert chart.speed_unit == "m/s"

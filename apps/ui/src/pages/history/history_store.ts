@@ -12,6 +12,7 @@ import {
   onViewEnter,
   requestConfirmation,
   showError,
+  speedUnit,
 } from "../../app_store";
 import { lang, t } from "../../i18n";
 import { runsChanged } from "../../live_store";
@@ -141,15 +142,16 @@ export function reloadInsights(runId: string): Promise<void> {
   return loadDiagnosis(runId, "insights", true);
 }
 
-// A language switch reloads the open diagnosis in the new language.
-let lastLang = lang.peek();
+// A language or speed-unit switch reloads the open diagnosis: the server words
+// its warnings in both.
+let lastWording = `${lang.peek()}|${speedUnit.peek()}`;
 effect(() => {
-  const next = lang.value;
+  const next = `${lang.value}|${speedUnit.value}`;
   const runId = expandedRunId.peek();
-  if (next === lastLang) {
+  if (next === lastWording) {
     return;
   }
-  lastLang = next;
+  lastWording = next;
   if (!runId) {
     return;
   }

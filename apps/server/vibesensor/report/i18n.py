@@ -10,7 +10,14 @@ from vibesensor.common.data_files import resolve_static_data_file
 from vibesensor.common.json_types import JsonValue
 from vibesensor.summary.phases import PHASE_I18N_KEYS
 
-__all__ = ["is_i18n_ref", "normalize_lang", "resolve_i18n", "tr"]
+__all__ = [
+    "format_speed",
+    "is_i18n_ref",
+    "normalize_lang",
+    "resolve_i18n",
+    "speed_unit_label",
+    "tr",
+]
 
 _DATA_FILE = resolve_static_data_file("report_i18n.json")
 
@@ -45,6 +52,19 @@ def tr(lang: object, key: str, **kwargs: JsonValue) -> str:
         return template.format(**kwargs)
     except (KeyError, IndexError):
         return template
+
+
+def speed_unit_label(speed_unit: str, lang: object) -> str:
+    """The label of the user's speed unit (``kmh`` or ``mps``), as the UI writes it."""
+    if speed_unit == "mps":
+        return "m/s"
+    return "km/u" if normalize_lang(lang) == "nl" else "km/h"
+
+
+def format_speed(kmh: float, speed_unit: str, lang: object) -> str:
+    """A speed given in km/h, as a whole number in the user's unit ("85 km/h", "24 m/s")."""
+    value = kmh / 3.6 if speed_unit == "mps" else kmh
+    return f"{value:.0f}\u00a0{speed_unit_label(speed_unit, lang)}"
 
 
 def is_i18n_ref(value: object) -> bool:

@@ -174,6 +174,30 @@ export function deviceActionLabel(
   );
 }
 
+/** The highest manual speed the server takes, in km/h. */
+const MAX_MANUAL_SPEED_KMH = 500;
+
+/** A saved manual speed (km/h) as the field shows it, in the display unit. */
+export function manualSpeedFieldValue(
+  speedKph: number | null,
+  unit: SpeedUnit,
+): string {
+  if (speedKph == null) {
+    return "";
+  }
+  // Two decimals in m/s read back as the same 0.1 km/h when saved again.
+  return String(
+    unit === "mps" ? Math.round((speedKph / 3.6) * 100) / 100 : speedKph,
+  );
+}
+
+/** The highest manual speed the field accepts, in the display unit. */
+export function maxManualSpeed(unit: SpeedUnit): number {
+  return unit === "mps"
+    ? Math.floor((MAX_MANUAL_SPEED_KMH / 3.6) * 10) / 10
+    : MAX_MANUAL_SPEED_KMH;
+}
+
 export type SaveCheck =
   | { ok: true; request: SpeedSourceRequest }
   | { ok: false; problem: "manual_speed" | "stale_timeout" | "obd_device" };
@@ -181,18 +205,26 @@ export type SaveCheck =
 /**
  * Validates the draft before saving. The radio draft wins; otherwise the
  * configured source is kept (a manual fallback does not switch to manual).
+ * The manual speed is typed in the display unit and saved in km/h.
  */
 export function checkSave(draft: {
   source: SpeedSourceKind;
   manualSpeed: string;
+  speedUnit: SpeedUnit;
   staleTimeout: string;
   obdDeviceMac: string | null;
 }): SaveCheck {
   const manualRaw = draft.manualSpeed.trim();
   const manualValue = Number(manualRaw);
+  const manualKph =
+    draft.speedUnit === "mps"
+      ? Math.round(manualValue * 3.6 * 10) / 10
+      : manualValue;
   const manualSpeedKph =
-    Number.isFinite(manualValue) && manualValue > 0 && manualValue <= 500
-      ? manualValue
+    Number.isFinite(manualKph) &&
+    manualKph > 0 &&
+    manualKph <= MAX_MANUAL_SPEED_KMH
+      ? manualKph
       : null;
   if (
     manualSpeedKph === null &&

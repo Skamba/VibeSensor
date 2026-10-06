@@ -8,6 +8,7 @@ import type {
   SpeedSourcePayload,
   SpeedSourceRequest,
   SpeedSourceStatusPayload,
+  SpeedUnitPayload,
 } from "../src/api/types";
 import {
   bootLiveDashboard,
@@ -234,7 +235,7 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
   await page.locator("#manualSpeedInput").fill("0");
   await page.locator("#saveSpeedSourceBtn").click();
   await expect(page.locator("#manualSpeedFeedback")).toContainText(
-    "Enter a manual speed between 0.1 and 500 km/h.",
+    "Enter a manual speed above 0 and up to 500 km/h.",
   );
   await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
     "GPS remains active right now. No changes were saved.",
@@ -264,6 +265,25 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
   await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
     "Manual override",
   );
+
+  // In m/s the field shows and takes the speed in m/s; it is saved in km/h.
+  await page.route("**/api/settings/speed-unit", async (route) => {
+    await fulfillJson<SpeedUnitPayload>(route, { speed_unit: "mps" });
+  });
+  await page.locator("#speedUnitSelect").selectOption("mps");
+  await expect(page.locator('label[for="manualSpeedInput"]')).toHaveText(
+    "Manual Speed (m/s)",
+  );
+  await expect(page.locator("#manualSpeedInput")).toHaveValue("22.22");
+  await page.locator("#manualSpeedInput").fill("140");
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect(page.locator("#manualSpeedFeedback")).toContainText(
+    "Enter a manual speed above 0 and up to 138.8 m/s.",
+  );
+  await page.locator("#manualSpeedInput").fill("25");
+  await page.locator("#saveSpeedSourceBtn").click();
+  await expect.poll(() => server.puts.length).toBe(3);
+  expect(server.puts[2]).toMatchObject({ manual_speed_kph: 90 });
 });
 
 test("journey: GPS without a receiver says to plug one in or switch to OBD-II", async ({

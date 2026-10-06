@@ -1512,8 +1512,8 @@
     "nl": "De snelheid bleef vrijwel gelijk; varieer hem, bijvoorbeeld door langzaam door het snelheidsbereik op te trekken, zodat de orden te scheiden zijn."
   },
   "SUITABILITY_SPEED_VARIATION_WARN": {
-    "en": "Too little of the run had a known speed; record with GPS or OBD-II speed above 20 km/h.",
-    "nl": "Te weinig van de meting had een bekende snelheid; meet met GPS- of OBD-II-snelheid boven 20 km/u."
+    "en": "Too little of the run had a known speed; record with GPS or OBD-II speed above {speed}.",
+    "nl": "Te weinig van de meting had een bekende snelheid; meet met GPS- of OBD-II-snelheid boven {speed}."
   },
   "SUITABILITY_SUMMARY_ROW_COUNT_WARNING": {
     "en": "Only {summary_rows} summary row(s) were available; at least {required_summary_rows} are needed to judge run duration confidently.",

@@ -51,15 +51,19 @@ __all__ = ["ProjectedHistoryExportService", "ProjectedHistoryRunService"]
 class ProjectedHistoryRunService:
     """Adapter that projects persisted history analysis before HTTP delivery."""
 
-    __slots__ = ("_current_car_reader", "_service")
+    __slots__ = ("_current_car_reader", "_service", "_speed_unit")
 
     def __init__(
         self,
         service: HistoryRunService,
         current_car_reader: SettingsDerivationService | None = None,
+        *,
+        speed_unit: Callable[[], str] = lambda: "kmh",
     ) -> None:
         self._service = service
         self._current_car_reader = current_car_reader
+        # The user's speed unit setting; speeds in the server's texts render in it.
+        self._speed_unit = speed_unit
 
     async def list_runs(self) -> list[HistoryListEntryResponse]:
         return [
@@ -101,6 +105,7 @@ class ProjectedHistoryRunService:
                 projected.get("run_suitability"),
                 lang=lang,
                 electric=_is_electric_run(projected),
+                speed_unit=self._speed_unit(),
             ),
         )
         validated = _HISTORY_INSIGHTS_ADAPTER.validate_python(projected)
@@ -121,7 +126,12 @@ def _is_electric_run(insights: JsonObject) -> bool:
 
 
 def _with_suitability_warnings(
-    warnings: list[JsonObject], run_suitability: JsonValue, *, lang: str, electric: bool
+    warnings: list[JsonObject],
+    run_suitability: JsonValue,
+    *,
+    lang: str,
+    electric: bool,
+    speed_unit: str,
 ) -> list[JsonObject]:
     """Lead with the failing run-suitability checks, worded as on the PDF quality page.
 
@@ -131,7 +141,10 @@ def _with_suitability_warnings(
     checks = [check for check in rows if is_json_object(check)]
     stated = warning_codes_stated_by_checks(checks)
     return [
-        *cast(list[JsonObject], failing_suitability_warnings(lang, checks, electric=electric)),
+        *cast(
+            list[JsonObject],
+            failing_suitability_warnings(lang, checks, electric=electric, speed_unit=speed_unit),
+        ),
         *(warning for warning in warnings if warning.get("code") not in stated),
     ]
 

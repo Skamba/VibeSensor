@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import pytest
-from _history_endpoint_helpers import make_app_and_state, make_metadata, make_status_app, sample
+from _history_endpoint_helpers import (
+    make_app_and_state,
+    make_app_from_state,
+    make_metadata,
+    make_status_app,
+    sample,
+)
 from fastapi.testclient import TestClient
 from test_support.analysis import summarize_mappings
 
 from vibesensor.domain.car import CarSnapshot
+from vibesensor.history.runs import HistoryRunService
+from vibesensor.web.history_services import ProjectedHistoryRunService
 
 
 @pytest.mark.parametrize(
@@ -238,3 +246,39 @@ def test_history_insights_word_an_evs_speed_check_for_its_motor() -> None:
     assert speed["detail"].startswith(
         "The speed could not tell the wheel and electric-motor orders apart."
     )
+
+
+@pytest.mark.parametrize(
+    ("lang", "speed_unit", "ending"),
+    [
+        ("en", "kmh", "speed above 20\u00a0km/h."),
+        ("en", "mps", "speed above 6\u00a0m/s."),
+        ("nl", "kmh", "boven 20\u00a0km/u."),
+        ("nl", "mps", "boven 6\u00a0m/s."),
+    ],
+)
+def test_history_insights_name_the_speed_to_record_above_in_the_users_unit(
+    lang: str, speed_unit: str, ending: str
+) -> None:
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis["run_suitability"] = [
+        {
+            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
+            "state": "warn",
+            "explanation": {"_i18n_key": "SUITABILITY_SPEED_VARIATION_WARN"},
+        }
+    ]
+    _, state = make_app_and_state(metadata=metadata, samples=samples, analysis=analysis)
+    state.run_service = ProjectedHistoryRunService(
+        HistoryRunService(state.history_db), speed_unit=lambda: speed_unit
+    )
+
+    with TestClient(make_app_from_state(state)) as client:
+        insights = client.get("/api/history/run-1/insights", params={"lang": lang}).json()
+
+    speed = next(w for w in insights["warnings"] if w["code"] == "suitability_speed_variation")
+    assert speed["detail"].endswith(ending)
+    if speed_unit == "mps":
+        assert "km/" not in str(insights["warnings"])

@@ -15,7 +15,13 @@ from vibesensor._version import __version__
 from vibesensor.common.time_utils import format_run_timestamp
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import RunMetadata
-from vibesensor.report.i18n import normalize_lang, resolve_i18n, tr
+from vibesensor.report.i18n import (
+    format_speed,
+    normalize_lang,
+    resolve_i18n,
+    speed_unit_label,
+    tr,
+)
 from vibesensor.report.run_quality import (
     suitability_check_detail,
     warning_codes_stated_by_checks,
@@ -452,7 +458,7 @@ class _Ctx:
 
     @property
     def speed_unit_label(self) -> str:
-        return "m/s" if self.speed_unit == "mps" else "km/h"
+        return speed_unit_label(self.speed_unit, self.lang)
 
     def in_unit(self, kmh: float) -> float:
         """A speed given in km/h, in the user's unit."""
@@ -464,7 +470,7 @@ class _Ctx:
 
     def speed(self, kmh: float) -> str:
         """A speed given in km/h, in the user's unit ("85 km/h", "24 m/s")."""
-        return f"{self.speed_number(kmh)}{_NBSP}{self.speed_unit_label}"
+        return format_speed(kmh, self.speed_unit, self.lang)
 
     def test_speeds(self) -> dict[str, str]:
         """The speeds the test-drive tips name, in the user's unit."""
@@ -1278,7 +1284,9 @@ def _quality(ctx: _Ctx, analysis: AnalysisSummary, metadata: RunMetadata) -> Qua
             label=ctx.t(check["check_key"]),
             state=ctx.t("QUALITY_PASS" if check["state"] == "pass" else "QUALITY_WARN"),
             passed=check["state"] == "pass",
-            detail=suitability_check_detail(ctx.lang, check, electric=ctx.electric),
+            detail=suitability_check_detail(
+                ctx.lang, check, electric=ctx.electric, speed_unit=ctx.speed_unit
+            ),
         )
         for check in analysis["run_suitability"]
     )
