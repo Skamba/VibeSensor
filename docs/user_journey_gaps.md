@@ -33,6 +33,9 @@ Owner decisions that bound the fixes (settled):
 
 - Estimated engine RPM keeps assuming top gear for the whole drive. No
   gear-shift analysis; the limitation is stated clearly in the UI and report.
+  (A lower-gear comparison to split an engine order from the road order it
+  sits on is designed but not built, pending an owner decision:
+  `docs/order_tracking.md` "Lower-gear comparison".)
 - Final drive and top gear are optional; the tire size is the minimum.
 - A missing reference gives "couldn't test", never a silent default.
 

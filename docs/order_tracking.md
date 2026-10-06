@@ -117,6 +117,51 @@ names the road-speed order (an engine candidate is relabelled to it). Measured
 RPM through gear changes decides it too (see "Engine tone through a
 near-1:1 gear").
 
+#### Lower-gear comparison (design note, not built)
+
+Status: **not built; pending an owner decision.** No guided lower-gear step
+exists in the code. Building it would change the settled "assume top gear"
+decision below, so it waits for the owner to decide.
+
+A third way to split the pair needs no adapter and no neutral: drive a stretch
+of the same speeds one gear lower. A road-speed order keeps its
+frequency-to-speed ratio in every gear; an engine order's ratio grows by the
+gear step. On an 8-speed whose 7th is 0.84 and 8th 0.67, the six's E3 moves
+from 1.005 × P2 to 1.26 × P2 (×1.25), far outside the 8 % order tolerance;
+an 8-speed's top two gears are typically 1.2–1.3 apart. So the tone either
+stays on P2 (propshaft) or jumps by the gear step (engine).
+
+Not built, because it does not fit cleanly today:
+
+- The owner decision in `docs/user_journey_gaps.md` keeps estimated RPM in top
+  gear for the whole drive, with no gear-shift analysis. The comparison is
+  gear-shift analysis: the analysis must know which window was driven in which
+  gear.
+- That needs a new guided step (`GuidedPhaseName` gains, say, `lower_gear`,
+  with its wizard text, contracts and EN/NL report wording) and the gear's
+  ratio. A saved car carries the final drive and top gear only; the library
+  rows' `gear_ratios` are not copied to the car or the run snapshot. Without
+  the ratio the analysis could still look for the candidate's tone moving by a
+  plausible step (1.1–1.6 ×), but a tone that merely fades in the lower gear
+  (load changes the level) would read as "engine".
+- The neutral coast-down already decides the same pair, with no ratio and no
+  new step, and the guided drive already asks for it.
+
+**The direct-drive trap.** Many automatics have a gear of exactly 1.000 (6th
+on an 8-speed). In it the crank turns at propshaft speed, so E1 is P1 and E2
+is P2 exactly, for every engine; a six's E3 is 1.5 × P2. A lower-gear step
+must therefore never land in a direct-drive gear: there the engine's E1 (and
+a four's E2) is the propshaft order again, and the step would "confirm" the
+road order it was meant to rule out. With measured RPM the same gear is what
+`_rides_on_another_order()` handles (see "Engine tone through a near-1:1
+gear").
+
+If the owner decides to build it: one guided step "hold 70–100 km/h one gear
+below top (not a 1:1 gear)", phase-tagged like the coast-down; the analysis
+compares the candidate's ratio in that window with the top-gear windows and
+relabels as the coast-down does; the library's `gear_ratios` go into the car
+snapshot so the step can name the gear and skip a 1.000 one.
+
 Sources: J. B. Heywood, *Internal Combustion Engine Fundamentals*, 2nd ed.
 (McGraw-Hill, 2018), ch. 2 (four-stroke cycle: one power stroke per cylinder
 per two crank turns); C. F. Taylor, *The Internal-Combustion Engine in Theory
