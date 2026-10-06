@@ -36,6 +36,7 @@ from test_support.sim_pipeline import (
 )
 
 from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
+from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.report.pdf import render_report_pdf
@@ -2180,6 +2181,44 @@ def test_clean_drive_report_passes_every_data_check(tmp_path: Path) -> None:
         quality = result.report.quality
         assert all(check.passed for check in quality.checks)
         assert quality.all_passed, quality.warnings
+    finally:
+        result.history_db.close()
+
+
+def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
+    """The firm-stops step at its gentlest, 0.2 g from 100 to 40 km/h (8.5 s), on a 1 Hz GPS.
+
+    The fixes come 0.8 s late, and the recorder flushes every 0.268 s, as
+    measured on the Pi, so each new speed lands on an irregular tick. The Live
+    count has each stop, and the analysis brakes in each.
+    """
+    stop_s = 60.0 / (0.2 * 9.80665 * 3.6)
+    phases = [_phase("brake-speed-up", 6.0, 70.0, 100.0, guided="brake")]
+    for stop in range(3):
+        phases += [
+            _phase(f"brake-steady-{stop}", 4.0, 100.0, 100.0, guided="brake"),
+            _phase(f"brake-{stop}", stop_s, 100.0, 40.0, guided="brake"),
+            _phase(f"brake-speed-up-{stop}", 8.0, 40.0, 100.0, guided="brake"),
+        ]
+    result = run_sim_pipeline(
+        tmp_path,
+        car=DEFAULT_CAR,
+        sensors=SENSORS,
+        scenario_name="gentle-firm-stops",
+        phases=tuple(phases),
+        client_seed=CI_SEED,
+        speed_lag_s=0.8,
+        speed_report_period_s=1.0,
+        flush_period_s=0.268,
+    )
+    try:
+        assert result.guided_brake_stops == 3
+        samples = [
+            frame for batch in result.history_db.iter_run_samples(result.run_id) for frame in batch
+        ]
+        segments = segment_run_phases(samples)[1]
+        braking = [seg for seg in segments if seg.phase is DrivingPhase.BRAKING]
+        assert len(braking) == 3, [(seg.start_t_s, seg.end_t_s) for seg in braking]
     finally:
         result.history_db.close()
 

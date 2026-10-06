@@ -10,15 +10,14 @@ counted here is one the analysis finds braking in.
 
 from __future__ import annotations
 
-from vibesensor.analysis.phase_segmentation import braking_intervals, speed_slopes_kmh_s
+from vibesensor.analysis.phase_segmentation import (
+    BRAKING_SETTLED_AFTER_S,
+    braking_intervals,
+    speed_slopes_kmh_s,
+)
 
 __all__ = ["GuidedBrakeStops"]
 
-# A reading's speed slope is final once the readings 1.5 s (the slope's
-# half-window) after it are in. A stop counts once the reading after its end has
-# a final slope, so it can no longer grow or merge with the next one; 3 s also
-# covers one late GPS reading.
-_SETTLED_AFTER_S = 3.0
 # No braking spell lasts this long (0.2 g for 60 s sheds over 400 km/h), so
 # older readings never decide a stop still to be counted.
 _KEEP_S = 60.0
@@ -44,13 +43,13 @@ class GuidedBrakeStops:
         settled = [
             (start_s, end_s)
             for start_s, end_s in braking_intervals(self._series, speed_slopes_kmh_s(self._series))
-            if start_s > self._counted_until_s and end_s + _SETTLED_AFTER_S <= t_s
+            if start_s > self._counted_until_s and end_s + BRAKING_SETTLED_AFTER_S <= t_s
         ]
         if settled:
             self._counted += len(settled)
             self._counted_until_s = settled[-1][1]
         # Readings this old cannot change the slope of any reading after the
         # last counted stop, so the series stays short however long the step is.
-        keep_from_s = max(self._counted_until_s - _SETTLED_AFTER_S, t_s - _KEEP_S)
+        keep_from_s = max(self._counted_until_s - BRAKING_SETTLED_AFTER_S, t_s - _KEEP_S)
         while self._series[0][0] < keep_from_s:
             self._series.pop(0)

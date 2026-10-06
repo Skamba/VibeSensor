@@ -458,7 +458,7 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   100 to 40 km/h at a brisk 0.25–0.4 g lasts 4–7 s; three give the brake
   check ample braking spectra. The step counts a stop by the analysis's own
   rule (`guided_brake_stops` in the recording status, from
-  `recording/guided_brake_stops.py`), about 3 s after it ends, so a counted
+  `recording/guided_brake_stops.py`), about 4 s after it ends, so a counted
   stop is one the analysis brakes in; a gentle slow-down or a short dab on the
   brakes does not count. The report lists the step as "firm stops" under the
   guided test.

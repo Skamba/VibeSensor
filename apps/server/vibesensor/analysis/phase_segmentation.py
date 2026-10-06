@@ -37,8 +37,10 @@ _COAST_DOWN_MAX_KMH = 15.0  # deceleration below this speed → coast-down
 # The speed slope is a least-squares fit over the speed readings within this
 # many seconds of each reading, on the time axis rather than row by row: rows
 # from several sensors share or interleave timestamps, and GPS/OBD speed
-# arrives as a staircase that holds each reading for up to a second.
-_SLOPE_HALF_WINDOW_S = 1.5
+# arrives as a staircase that holds each reading for up to a second. On a 1 Hz
+# GPS whose fixes land on irregular rows, the slope over +-1.5 s wobbled by up
+# to about 20 %; over +-2.5 s it wobbles by about 9 %.
+_SLOPE_HALF_WINDOW_S = 2.5
 _SLOPE_MIN_POINTS = 3
 
 # Braking (see "Braking" in docs/analysis_pipeline.md). Neither GPS nor OBD-II
@@ -59,8 +61,15 @@ BRAKING_MIN_DURATION_S = 2.5
 # Real braking lowers the speed reading again and again (a 1 Hz GPS fix at
 # least twice in 2.5 s); a jump lowers it once.
 _BRAKING_MIN_SPEED_DROPS = 2
-# Readings of one braking spell lie this close together in time.
+# The braking readings of one spell lie this close together in time; a gap in
+# the readings or a reading whose slope wobbles above the threshold for up to
+# this long does not split a stop in two.
 _BRAKING_MAX_GAP_S = 1.0
+# A braking spell found in the readings up to some time can no longer grow, or
+# merge with the next one, once that time is this far past its end: the
+# readings within the gap after it then have final slopes (half a window after
+# them), with half a second to spare.
+BRAKING_SETTLED_AFTER_S = _BRAKING_MAX_GAP_S + _SLOPE_HALF_WINDOW_S + 0.5
 
 
 @dataclass(slots=True)
@@ -161,7 +170,8 @@ def braking_intervals(
 
     The speed falls at ``BRAKING_MIN_DECEL_G`` or more, above coast-down speed,
     for ``BRAKING_MIN_DURATION_S`` or more, the speed reading dropping again and
-    again.
+    again. Braking readings at most ``_BRAKING_MAX_GAP_S`` apart belong to one
+    spell, whatever lies between them.
     """
     intervals: list[tuple[float, float]] = []
     run: list[tuple[float, float]] = []
@@ -183,14 +193,11 @@ def braking_intervals(
         braking = (
             slope is not None and slope <= _BRAKING_THRESHOLD_KMH_S and speed >= _COAST_DOWN_MAX_KMH
         )
-        if braking and run and t_s - run[-1][0] > _BRAKING_MAX_GAP_S:
+        if run and t_s - run[-1][0] > _BRAKING_MAX_GAP_S:
             close_run()
             run = []
         if braking:
             run.append((t_s, speed))
-        elif run:
-            close_run()
-            run = []
     close_run()
     return intervals
 

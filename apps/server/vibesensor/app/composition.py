@@ -279,6 +279,7 @@ def build_runtime(config: AppConfig) -> AppRuntime:
             history,
             pdf_renderer=_render_report_pdf,
             time_zone=lambda: settings.ui_preferences.time_zone,
+            speed_unit=lambda: settings.ui_preferences.speed_unit,
         ),
         export_service=ProjectedHistoryExportService(
             HistoryExportService(history),

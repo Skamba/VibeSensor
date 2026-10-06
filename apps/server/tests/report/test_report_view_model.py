@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from test_support.analysis import run_analysis
 from test_support.core import ALL_WHEEL_SENSORS, standard_metadata
-from test_support.report_rendering import report_view_for
+from test_support.report_rendering import report_view_for, report_view_texts
 from test_support.synthetic_samples import (
     make_engine_order_samples,
     make_fault_samples,
@@ -493,7 +493,7 @@ def test_braking_and_coasting_are_covered_separately() -> None:
             " regenerative braking, often without its brake discs, so a drive without"
             " brake judder is not conclusive — do the guided test's firm stops with"
             " regeneration at its lowest, or brake firmly with the brake pedal, harder"
-            " than regeneration alone, from about 100 km/h a few times.",
+            " than regeneration alone, from about 100\u00a0km/h a few times.",
             "Brakes: no once- or twice-per-wheel-turn vibration while braking, but an"
             " electric or plug-in hybrid car may have slowed on regenerative braking"
             " without its brake discs; not conclusive",
@@ -508,7 +508,7 @@ def test_braking_and_coasting_are_covered_separately() -> None:
             " remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de"
             " begeleide test met regeneratie op het laagste niveau, of rem een paar keer"
             " stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer"
-            " 100 km/h.",
+            " 100\u00a0km/h.",
             "Remmen: geen trilling van één of twee keer per wielomwenteling tijdens het"
             " remmen, maar een elektrische auto of plug-in hybride kan op regeneratief"
             " remmen vertraagd hebben zonder de remschijven; niet doorslaggevend",
@@ -693,7 +693,7 @@ def test_weak_evidence_hedges_candidate_with_reasons_and_recapture_recipe() -> N
     assert owner.reasons[1].startswith("The speed hardly changed")
     assert owner.recapture == (
         "Use a smooth, straight road.",
-        "Accelerate slowly from 50 to 120 km/h.",
+        "Accelerate slowly from 50 to 120\u00a0km/h.",
         "Hold steady for 20 seconds at the speed where you feel it most.",
         "From that speed, shift to neutral and coast down.",
     )
@@ -828,6 +828,69 @@ def test_a_steady_speed_reads_as_one_speed_not_a_range() -> None:
     assert view.mechanic.spectrum.title.endswith(", 50\u00a0km/h")
     healthy = report_view_for(_healthy_summary())
     assert healthy.owner.covered is not None and "–" not in healthy.owner.covered.split("(")[0]
+
+
+@pytest.mark.parametrize(
+    ("lang", "speed_unit", "confirm", "recapture"),
+    [
+        (
+            "en",
+            "kmh",
+            "On a quiet road, brake firmly from about 100\u00a0km/h a few times.",
+            "From about 100\u00a0km/h, brake firmly down to 40\u00a0km/h a few times,",
+        ),
+        (
+            "en",
+            "mps",
+            "On a quiet road, brake firmly from about 28\u00a0m/s a few times.",
+            "From about 28\u00a0m/s, brake firmly down to 11\u00a0m/s a few times,",
+        ),
+        (
+            "nl",
+            "kmh",
+            "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 100\u00a0km/h.",
+            "Rem vanaf ongeveer 100\u00a0km/h een paar keer stevig af tot 40\u00a0km/h,",
+        ),
+        (
+            "nl",
+            "mps",
+            "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 28\u00a0m/s.",
+            "Rem vanaf ongeveer 28\u00a0m/s een paar keer stevig af tot 11\u00a0m/s,",
+        ),
+    ],
+)
+def test_brake_tips_name_the_speeds_in_the_users_unit(
+    lang: str, speed_unit: str, confirm: str, recapture: str
+) -> None:
+    brakes = {"source": "brakes", "zone": "front_axle", "dominant_phase": "braking"}
+    moderate = report_view_for(
+        _variant(**brakes, confidence_level="moderate"), lang=lang, speed_unit=speed_unit
+    )
+    weak = report_view_for(
+        _variant(**brakes, verdict="weak_evidence", confidence_level="weak"),
+        lang=lang,
+        speed_unit=speed_unit,
+    )
+
+    assert moderate.owner.confirm is not None
+    assert moderate.owner.confirm.startswith(confirm)
+    assert weak.owner.recapture[1].startswith(recapture)
+
+
+def test_a_report_in_metres_per_second_shows_every_speed_in_metres_per_second() -> None:
+    summary = _variant(
+        amplitude_vs_speed=[
+            {"speed_kmh": 54.0, "location": "front-left", "amplitude_mg": 40.0},
+            {"speed_kmh": 90.0, "location": "front-left", "amplitude_mg": 90.0},
+        ]
+    )
+    for variant in (summary, _weak_summary(), _healthy_summary()):
+        texts = report_view_texts(report_view_for(variant, speed_unit="mps"))
+        assert not [text for text in texts if "km/h" in text]
+    chart = report_view_for(summary, speed_unit="mps").mechanic.speed_chart
+    assert chart is not None
+    assert chart.speed_unit == "m/s"
+    assert chart.series[0].points == ((15.0, 40.0), (25.0, 90.0))
 
 
 def test_speed_chart_only_when_the_speed_range_was_swept() -> None:

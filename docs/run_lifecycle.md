@@ -125,8 +125,9 @@ During recording:
   `GuidedBrakeStops` (`recording/guided_brake_stops.py`), which counts firm
   stops with the analysis's own `braking_intervals` (see "Braking" in
   [analysis_pipeline.md](analysis_pipeline.md)); status reports the count as
-  `guided_brake_stops`. A stop counts about 3 s after it ends, once its last
-  speed slopes are final.
+  `guided_brake_stops`. A stop counts about 4 s after it ends
+  (`BRAKING_SETTLED_AFTER_S`), once the readings that could still extend it
+  have final speed slopes.
 - the Live page posts the browser clock (`POST /api/system/browser-clock`)
   before `POST /api/recording/start`, so an unset Pi clock is stepped first,
   and again after a successful `POST /api/recording/stop`, so a run the browser

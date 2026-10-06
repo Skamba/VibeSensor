@@ -99,6 +99,11 @@ _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAP
 # An EV cannot coast in neutral: its motor stays coupled to the wheels.
 _RECAPTURE_KEYS_EV = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD")
 _RECAPTURE_KEYS_BRAKES = ("RECAPTURE_ROAD", "RECAPTURE_BRAKE")
+# The speeds the test-drive tips name (the guided test's sweep and firm stops).
+_BRAKE_TEST_FROM_KMH = 100.0
+_BRAKE_TEST_TO_KMH = 40.0
+_SWEEP_FROM_KMH = 50.0
+_SWEEP_TO_KMH = 120.0
 # An EV's motor turns at the driveshaft order (wheel speed x reduction ratio), so
 # the driveline family reads as the motor and P1/P2 as motor revolutions.
 _EV_ORDER_CODES = frozenset({"P1", "P2"})
@@ -308,6 +313,7 @@ class SpectrumChart:
 @dataclass(frozen=True, slots=True)
 class SpeedSeries:
     label: str
+    # (speed in the chart's unit, amplitude in mg)
     points: tuple[tuple[float, float], ...]
     strongest: bool
 
@@ -316,6 +322,7 @@ class SpeedSeries:
 class SpeedChart:
     title: str
     series: tuple[SpeedSeries, ...]
+    speed_unit: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -383,11 +390,13 @@ def build_report_view(
     *,
     lang: str | None = None,
     time_zone: str | None = None,
+    speed_unit: str = "kmh",
 ) -> ReportView:
     """Build the full report view for one stored run in ``lang`` (default: the run's).
 
     Times show in IANA ``time_zone`` (the user's) when given, else in the offset
-    recorded with the run.
+    recorded with the run. Speeds show in the user's ``speed_unit`` (``kmh`` or
+    ``mps``), as on the History page.
     """
     diagnosis = analysis["diagnosis"]
     conditions = diagnosis["conditions"]
@@ -397,6 +406,7 @@ def build_report_view(
         electric=electric,
         no_propshaft=not electric and conditions.get("propshaft") is False,
         layout_unknown=not electric and conditions.get("drive_layout") is None,
+        speed_unit=speed_unit,
     )
     return ReportView(
         lang=ctx.lang,
@@ -420,6 +430,8 @@ class _Ctx:
     no_propshaft: bool = False
     # An engined car whose drive layout was not given: the propshaft wording, hedged.
     layout_unknown: bool = False
+    # The user's speed unit: "kmh" or "mps".
+    speed_unit: str = "kmh"
 
     def t(self, key: str, **kwargs: object) -> str:
         return tr(self.lang, key, **{k: _text(v) for k, v in kwargs.items()})
@@ -438,8 +450,30 @@ class _Ctx:
     def mg(self, value: float) -> str:
         return f"{self.num(value, 1 if value < 10 else 0)}{_NBSP}mg"
 
-    def kmh(self, value: float) -> str:
-        return f"{self.num(value)}{_NBSP}km/h"
+    @property
+    def speed_unit_label(self) -> str:
+        return "m/s" if self.speed_unit == "mps" else "km/h"
+
+    def in_unit(self, kmh: float) -> float:
+        """A speed given in km/h, in the user's unit."""
+        return kmh / 3.6 if self.speed_unit == "mps" else kmh
+
+    def speed_number(self, kmh: float) -> str:
+        """A speed given in km/h, as a whole number in the user's unit."""
+        return self.num(self.in_unit(kmh))
+
+    def speed(self, kmh: float) -> str:
+        """A speed given in km/h, in the user's unit ("85 km/h", "24 m/s")."""
+        return f"{self.speed_number(kmh)}{_NBSP}{self.speed_unit_label}"
+
+    def test_speeds(self) -> dict[str, str]:
+        """The speeds the test-drive tips name, in the user's unit."""
+        return {
+            "brake_from": self.speed(_BRAKE_TEST_FROM_KMH),
+            "brake_to": self.speed(_BRAKE_TEST_TO_KMH),
+            "sweep_from": self.speed_number(_SWEEP_FROM_KMH),
+            "sweep_to": self.speed(_SWEEP_TO_KMH),
+        }
 
     def share(self, ratio: float) -> str:
         return f"{self.num(100.0 * ratio)}{_NBSP}%"
@@ -503,10 +537,10 @@ class _Ctx:
     def speed_range(self, low: float | None, high: float | None) -> str:
         if low is None or high is None:
             return self.t("VALUE_UNKNOWN")
-        low_text, high_text = self.num(low), self.num(high)
+        low_text, high_text = self.speed_number(low), self.speed_number(high)
         # A steady run reads "50 km/h", not "50–50 km/h".
         value = low_text if low_text == high_text else f"{low_text}–{high_text}"
-        return f"{value}{_NBSP}km/h"
+        return f"{value}{_NBSP}{self.speed_unit_label}"
 
 
 def _text(value: object) -> str:
@@ -598,7 +632,9 @@ def _owner_page(
         candidate = ctx.t("VERDICT_WEAK_CANDIDATE", cause=_cause(ctx, diagnosis))
         reasons = tuple(_weak_reason(ctx, reason) for reason in diagnosis["weak_reasons"])
         reasons_title = ctx.t("WEAK_REASONS_TITLE") if reasons else None
-        recapture = tuple(ctx.t(key) for key in _recapture_keys(ctx, diagnosis))
+        recapture = tuple(
+            ctx.t(key, **ctx.test_speeds()) for key in _recapture_keys(ctx, diagnosis)
+        )
         if _unlocated_wheel(diagnosis):
             recapture = (ctx.t("STEP_WHEEL_UNLOCATED"), *recapture)
         next_step = ctx.t("RECAPTURE_TITLE")
@@ -708,7 +744,7 @@ def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     """The cheap check for a Moderate fault; ``None`` when the guided coast-down already did it."""
     if diagnosis["source"] == "brakes":
-        return ctx.t("CONFIRM_BRAKES")
+        return ctx.t("CONFIRM_BRAKES", **ctx.test_speeds())
     if diagnosis["source"] == "wheel/tire":
         if diagnosis["zone"] in _WHEEL_CORNERS:
             return ctx.t("CONFIRM_WHEEL", zone=ctx.zone(diagnosis))
@@ -736,7 +772,7 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
         order = ctx.t(ctx.order_key(code))
         if code == "E2":
             order = f"{order} ({ctx.t('ORDER_E2_NOTE')})"
-        parts = [ctx.t("DESC_ORDER", order=order, hz=ctx.hz(hz), speed=ctx.kmh(speed))]
+        parts = [ctx.t("DESC_ORDER", order=order, hz=ctx.hz(hz), speed=ctx.speed(speed))]
     elif hz is not None:
         parts = [ctx.t("DESC_FREQUENCY", hz=ctx.hz(hz))]
     else:
@@ -756,7 +792,9 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     low, high = diagnosis["speed_min_kmh"], diagnosis["speed_max_kmh"]
     if low is not None and high is not None:
         if high - low >= 10.0:
-            parts.append(ctx.t("DESC_PRESENT_RANGE", low=ctx.num(low), high=ctx.num(high)))
+            parts.append(
+                ctx.t("DESC_PRESENT_RANGE", low=ctx.speed_number(low), high=ctx.speed(high))
+            )
         else:
             parts.append(ctx.t("DESC_PRESENT_AT", speeds=ctx.speed_range(low, high)))
     if diagnosis["dominant_phase"] == "braking" and diagnosis["source"] == "brakes":
@@ -792,7 +830,8 @@ def _verify(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 def _check_text(ctx: _Ctx, table: Mapping[str, str], source_key: str, reason: str) -> str:
     key = table[reason]
     key = _SOURCE_CHECK_KEYS.get(source_key, {}).get(key, key)
-    return ctx.t(key)
+    # The brakes' texts name the speed to brake from.
+    return ctx.t(key, **ctx.test_speeds())
 
 
 def _coverage(
@@ -865,9 +904,9 @@ def _coverage(
     )
     low, high = speeds["min_kmh"], speeds["max_kmh"]
     if low is not None and low > 30.0:
-        gaps.append(ctx.t("NOT_COVERED_BELOW", speed=ctx.num(low)))
+        gaps.append(ctx.t("NOT_COVERED_BELOW", speed=ctx.speed(low)))
     if high is not None and high < 120.0:
-        gaps.append(ctx.t("NOT_COVERED_ABOVE", speed=ctx.num(high)))
+        gaps.append(ctx.t("NOT_COVERED_ABOVE", speed=ctx.speed(high)))
     if "cruise" not in driven:
         gaps.append(ctx.t("NOT_COVERED_CRUISE"))
     # Braking is not coasting, nor the other way round: the brakes check above
@@ -1090,7 +1129,7 @@ def _worksheet_row(ctx: _Ctx, row: OrderFindingRow, *, diagnosed: bool) -> Works
     return WorksheetRow(
         order=f"{code} - {ctx.t(ctx.order_key(code))}",
         frequency=(
-            f"{ctx.hz(hz)} @ {ctx.kmh(speed)}"
+            f"{ctx.hz(hz)} @ {ctx.speed(speed)}"
             if hz is not None and speed is not None
             else ctx.t("VALUE_UNKNOWN")
         ),
@@ -1160,7 +1199,7 @@ def _speed_chart(ctx: _Ctx, diagnosis: DiagnosisPayload) -> SpeedChart | None:
     by_location: dict[str, list[tuple[float, float]]] = {}
     for point in points:
         by_location.setdefault(point["location"], []).append(
-            (point["speed_kmh"], point["amplitude_mg"])
+            (ctx.in_unit(point["speed_kmh"]), point["amplitude_mg"])
         )
     ranked = sorted(by_location, key=lambda loc: order.index(loc) if loc in order else len(order))
     return SpeedChart(
@@ -1173,6 +1212,7 @@ def _speed_chart(ctx: _Ctx, diagnosis: DiagnosisPayload) -> SpeedChart | None:
             )
             for index, location in enumerate(ranked[:_MAX_SPEED_SERIES])
         ),
+        speed_unit=ctx.speed_unit_label,
     )
 
 

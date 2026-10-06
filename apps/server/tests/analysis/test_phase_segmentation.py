@@ -116,11 +116,12 @@ class TestBraking:
     def test_a_stop_at_exactly_the_documented_deceleration_is_braking(
         self, gps_hz: float | None, whole_kmh: bool
     ) -> None:
-        # 0.2 g sustained for 6 s: "from 0.2 g" includes 0.2 g itself, also on a
-        # GPS staircase or an OBD-II speed in whole km/h.
-        drop = 0.2 * 9.80665 * 3.6 * 6.0
+        # A stop from 100 to 40 km/h at 0.2 g (8.5 s), the guided step's gentlest:
+        # "from 0.2 g" includes 0.2 g itself, also on a GPS staircase or an
+        # OBD-II speed in whole km/h.
+        stop_s = 60.0 / (0.2 * 9.80665 * 3.6)
         samples = _drive(
-            [(10.0, 110.0, 110.0), (6.0, 110.0, 110.0 - drop), (10.0, 110.0 - drop, 110.0 - drop)],
+            [(10.0, 100.0, 100.0), (stop_s, 100.0, 40.0), (10.0, 40.0, 40.0)],
             sensors=4,
             gps_hz=gps_hz,
         )

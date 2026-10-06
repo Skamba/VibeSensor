@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import random
+
 import pytest
 
 from vibesensor.analysis.phase_segmentation import braking_intervals, speed_slopes_kmh_s
+from vibesensor.recording.guided_brake_stops import GuidedBrakeStops
 from vibesensor.recording.raw_capture import RawCaptureLossStats
 from vibesensor.recording.run_schema import RunGuidedPhase
 
@@ -179,3 +182,68 @@ def test_guided_brake_step_counts_the_stops_the_analysis_sees_as_braking(make_lo
     recorder.stop_recording()
     recorder.start_recording()
     assert recorder.status().guided_brake_stops == 0
+
+
+_G_KMH_S = 9.80665 * 3.6
+
+
+def _gps_ticks(legs: list[tuple[float, float, float]], *, fix_offset_s: float, seed: int):
+    """*legs* as the recorder stores them from a 1 Hz GPS: 4 rows a second.
+
+    Each fix reports the speed 0.8 s earlier and reaches the Pi 0-0.1 s after
+    its second (*fix_offset_s* sets where the seconds fall between rows), so the
+    staircase steps land on irregular rows, as on a Pi whose flush ticks are not
+    locked to the GPS.
+    """
+
+    def speed_at(t_s: float) -> float:
+        for duration_s, start, end in legs:
+            if t_s <= duration_s:
+                return start + (end - start) * t_s / duration_s
+            t_s -= duration_s
+        return legs[-1][2]
+
+    rng = random.Random(seed)
+    total_s = sum(duration_s for duration_s, _start, _end in legs)
+    fixes = [
+        (fix_offset_s + second + rng.uniform(0.0, 0.1), speed_at(max(0.0, second - 0.8)))
+        for second in range(int(total_s) + 1)
+    ]
+    rows: list[tuple[float, float]] = []
+    for tick in range(int(total_s * 4)):
+        arrived = [speed for fix_s, speed in fixes if fix_s <= tick / 4.0]
+        if arrived:
+            rows.append((tick / 4.0, arrived[-1]))
+    return rows
+
+
+@pytest.mark.parametrize("firm_g", [0.2, 0.3])
+@pytest.mark.parametrize("fix_offset_s", [i / 20 for i in range(20)])
+def test_firm_stops_count_once_each_on_a_one_hz_gps(fix_offset_s: float, firm_g: float) -> None:
+    """Stops from 100 to 40 km/h count once each on a 1 Hz GPS, from the step's gentlest 0.2 g.
+
+    A slowdown at 0.1 g first does not count. The live count and the analysis
+    find the same three stops.
+    """
+    firm_kmh_s = firm_g * _G_KMH_S
+    # The brakes take half a second to bite and to let go (half the deceleration).
+    bite_kmh = firm_kmh_s * 0.25
+    slowdown_s = 60.0 / (0.1 * _G_KMH_S)
+    legs = [(4.0, 100.0, 100.0), (slowdown_s, 100.0, 40.0), (8.0, 40.0, 100.0)]
+    for _stop in range(3):
+        legs += [
+            (4.0, 100.0, 100.0),
+            (0.5, 100.0, 100.0 - bite_kmh),
+            ((60.0 - 2 * bite_kmh) / firm_kmh_s, 100.0 - bite_kmh, 40.0 + bite_kmh),
+            (0.5, 40.0 + bite_kmh, 40.0),
+            (8.0, 40.0, 100.0),
+        ]
+    legs.append((6.0, 100.0, 100.0))
+    drive = _gps_ticks(legs, fix_offset_s=fix_offset_s, seed=round(fix_offset_s * 20))
+
+    stops = GuidedBrakeStops()
+    for t_s, speed in drive:
+        stops.observe(t_s, speed)
+
+    assert stops.count == 3
+    assert len(braking_intervals(drive, speed_slopes_kmh_s(drive))) == 3

@@ -35,29 +35,38 @@ def _stored_db(tmp_path: Path) -> Path:
 
 
 @pytest.mark.asyncio
-async def test_service_renders_requested_language_and_caches_per_language(tmp_path: Path) -> None:
+async def test_service_renders_requested_language_in_the_users_speed_unit_cached_per_both(
+    tmp_path: Path,
+) -> None:
     db = build_history_db(_stored_db(tmp_path).parent)
     rendered: list[str] = []
+    speed_unit = ["kmh"]
 
     def renderer(view: ReportView) -> bytes:
         rendered.append(view.lang)
         return render_report_pdf(view)
 
-    service = HistoryReportService(db, pdf_renderer=renderer)
+    service = HistoryReportService(db, pdf_renderer=renderer, speed_unit=lambda: speed_unit[0])
     try:
         nl = await service.build_pdf("run-1", "nl")
         again = await service.build_pdf("run-1", "nl")
         en = await service.build_pdf("run-1", "en")
+        speed_unit[0] = "mps"
+        en_mps = await service.build_pdf("run-1", "en")
         with pytest.raises(AnalysisNotReadyError):
             await service.build_pdf("run-busy", "en")
     finally:
         db.close()
 
-    assert rendered == ["nl", "en"]
+    assert rendered == ["nl", "en", "en"]
     assert nl.content == again.content
     assert nl.filename == "run-1_report.pdf"
     assert "Waarschijnlijke oorzaak" in extract_pdf_text(nl.content)
     assert "Likely cause" in extract_pdf_text(en.content)
+    assert "km/h" in extract_pdf_text(en.content)
+    # Switching the unit setting re-renders the report with every speed in m/s.
+    assert "m/s" in extract_pdf_text(en_mps.content)
+    assert "km/h" not in extract_pdf_text(en_mps.content)
 
 
 def test_cli_renders_a_stored_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

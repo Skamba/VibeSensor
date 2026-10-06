@@ -88,7 +88,7 @@ class RecordingStatusResponse(BaseModel):
         default=0,
         description=(
             "Firm stops counted so far in the current recording's guided brake step, by "
-            "the analysis's own braking rule; a stop counts about 3 s after it ends."
+            "the analysis's own braking rule; a stop counts about 4 s after it ends."
         ),
     )
     last_stop_reason: RecordingStopReason | None = Field(

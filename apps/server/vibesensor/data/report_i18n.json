@@ -132,8 +132,8 @@
     "nl": "alleen gecontroleerd met een schatting van de reductieverhouding uit de autobibliotheek, dus niet doorslaggevend — vul de exacte waarde in als je die weet."
   },
   "CHECKED_LIMITED_REGEN_BRAKING": {
-    "en": "an electric or plug-in hybrid car slows at up to about 0.3 g on regenerative braking, often without its brake discs, so a drive without brake judder is not conclusive — do the guided test's firm stops with regeneration at its lowest, or brake firmly with the brake pedal, harder than regeneration alone, from about 100 km/h a few times.",
-    "nl": "een elektrische auto of plug-in hybride remt met regeneratief remmen tot ongeveer 0,3 g af, vaak zonder de remschijven, dus een rit zonder remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de begeleide test met regeneratie op het laagste niveau, of rem een paar keer stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer 100 km/h."
+    "en": "an electric or plug-in hybrid car slows at up to about 0.3 g on regenerative braking, often without its brake discs, so a drive without brake judder is not conclusive — do the guided test's firm stops with regeneration at its lowest, or brake firmly with the brake pedal, harder than regeneration alone, from about {brake_from} a few times.",
+    "nl": "een elektrische auto of plug-in hybride remt met regeneratief remmen tot ongeveer 0,3 g af, vaak zonder de remschijven, dus een rit zonder remtrillingen is niet doorslaggevend — doe de stap stevig afremmen van de begeleide test met regeneratie op het laagste niveau, of rem een paar keer stevig met het rempedaal, harder dan regeneratie alleen, vanaf ongeveer {brake_from}."
   },
   "CHECKED_LIMITED_TOP_GEAR": {
     "en": "checked only against a car-library estimate of the top-gear ratio, in top gear, so not conclusive — enter the exact ratio if you know it.",
@@ -208,8 +208,8 @@
     "nl": "Wissel de voor- en achterwielen en meet opnieuw. Verhuist de trilling naar de andere as, dan zit hij in die wielen of banden."
   },
   "CONFIRM_BRAKES": {
-    "en": "On a quiet road, brake firmly from about 100 km/h a few times. If the steering wheel (front discs) or the seat and brake pedal (rear discs) shake only while braking, it is the brakes.",
-    "nl": "Rem op een rustige weg een paar keer stevig af vanaf ongeveer 100 km/h. Trillen het stuur (schijven voor) of de stoel en het rempedaal (schijven achter) alleen tijdens het remmen, dan zijn het de remmen."
+    "en": "On a quiet road, brake firmly from about {brake_from} a few times. If the steering wheel (front discs) or the seat and brake pedal (rear discs) shake only while braking, it is the brakes.",
+    "nl": "Rem op een rustige weg een paar keer stevig af vanaf ongeveer {brake_from}. Trillen het stuur (schijven voor) of de stoel en het rempedaal (schijven achter) alleen tijdens het remmen, dan zijn het de remmen."
   },
   "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED": {
     "en": "A concrete mechanical issue is identified.",
@@ -260,8 +260,8 @@
     "nl": "geen reductieverhouding — voeg hem toe aan de auto in Instellingen als je hem weet (optioneel)."
   },
   "COULDNT_TEST_NO_BRAKING": {
-    "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — do the guided test's firm stops, or brake firmly from about 100 km/h a few times during the drive.",
-    "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — doe de stap stevig afremmen van de begeleide test, of rem tijdens de rit een paar keer stevig af vanaf ongeveer 100 km/h."
+    "en": "brake judder shows only while braking, and this drive did not brake firmly (coasting does not count) — do the guided test's firm stops, or brake firmly from about {brake_from} a few times during the drive.",
+    "nl": "remtrillingen ontstaan alleen tijdens het remmen, en deze rit remde niet stevig af (uitrollen telt niet) — doe de stap stevig afremmen van de begeleide test, of rem tijdens de rit een paar keer stevig af vanaf ongeveer {brake_from}."
   },
   "COULDNT_TEST_TIRE": {
     "en": "no tire size — add it to the car in Settings.",
@@ -296,8 +296,8 @@
     "nl": "aanwezig bij {speeds}"
   },
   "DESC_PRESENT_RANGE": {
-    "en": "present across {low}–{high} km/h",
-    "nl": "aanwezig van {low} tot {high} km/h"
+    "en": "present across {low}–{high}",
+    "nl": "aanwezig van {low} tot {high}"
   },
   "DESC_SIMILAR": {
     "en": "about as strong at the {location} as at the {other}",
@@ -572,12 +572,12 @@
     "nl": "Niet gedekt"
   },
   "NOT_COVERED_ABOVE": {
-    "en": "speeds above {speed} km/h",
-    "nl": "snelheden boven {speed} km/h"
+    "en": "speeds above {speed}",
+    "nl": "snelheden boven {speed}"
   },
   "NOT_COVERED_BELOW": {
-    "en": "speeds below {speed} km/h",
-    "nl": "snelheden onder {speed} km/h"
+    "en": "speeds below {speed}",
+    "nl": "snelheden onder {speed}"
   },
   "NOT_COVERED_COAST": {
     "en": "coasting",
@@ -884,8 +884,8 @@
     "nl": "Snelheid of toerental kon niet aan alle meetvensters worden gekoppeld."
   },
   "RECAPTURE_BRAKE": {
-    "en": "From about 100 km/h, brake firmly down to 40 km/h a few times, with steady driving in between.",
-    "nl": "Rem vanaf ongeveer 100 km/h een paar keer stevig af tot 40 km/h, met constant rijden daartussen."
+    "en": "From about {brake_from}, brake firmly down to {brake_to} a few times, with steady driving in between.",
+    "nl": "Rem vanaf ongeveer {brake_from} een paar keer stevig af tot {brake_to}, met constant rijden daartussen."
   },
   "RECAPTURE_COAST": {
     "en": "From that speed, shift to neutral and coast down.",
@@ -900,8 +900,8 @@
     "nl": "Gebruik een gladde, rechte weg."
   },
   "RECAPTURE_SWEEP": {
-    "en": "Accelerate slowly from 50 to 120 km/h.",
-    "nl": "Versnel rustig van 50 naar 120 km/h."
+    "en": "Accelerate slowly from {sweep_from} to {sweep_to}.",
+    "nl": "Versnel rustig van {sweep_from} naar {sweep_to}."
   },
   "RECAPTURE_TITLE": {
     "en": "Record the test again like this",

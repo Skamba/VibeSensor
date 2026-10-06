@@ -767,7 +767,7 @@ def _speed_chart(
         height,
         (x0, x1),
         y_max,
-        "km/h",
+        chart.speed_unit,
         "mg",
         top_pad=legend_h,
     )

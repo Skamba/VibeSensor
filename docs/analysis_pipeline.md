@@ -180,7 +180,7 @@ still be expressed in g.
 ### Braking
 
 `segment_run_phases()` reads the speed trend as a least-squares slope over the
-speed readings within ±1.5 s of each sample on the time axis (one reading per
+speed readings within ±2.5 s of each sample on the time axis (one reading per
 timestamp, so several sensors reporting the same moment do not count as a
 flat stretch). A spell is **braking** when all of these hold:
 
@@ -191,16 +191,25 @@ flat stretch). A spell is **braking** when all of these hold:
   an ordinary stop on the brakes is 0.2–0.4 g. Below 0.2 g the run cannot
   tell light braking from coasting, so it counts as `DECEL`. The detector
   itself accepts from 0.19 g, so a stop at exactly 0.2 g is not lost to the
-  slope fit over a GPS staircase or a speed rounded to whole km/h. A 1 Hz GPS
-  staircase read by sensors on staggered timestamps still makes the fitted
-  slope wobble by up to about 12 %, so there a stop needs about 0.22 g to
-  count;
+  slope fit over a GPS staircase or a speed rounded to whole km/h. On a 1 Hz
+  GPS each new fix lands on an irregular row (the Pi's flush ticks come about
+  every 0.27 s and drift against the fixes), which makes the slope wobble: by
+  up to about 20 % over ±1.5 s, about 9 % over ±2.5 s;
 - it lasts at least 2.5 s (`BRAKING_MIN_DURATION_S`, about one spectrum
-  window), with gaps of at most 1 s;
+  window). Its braking readings lie at most 1 s apart, so neither a gap in
+  the readings nor a reading whose slope wobbles above the threshold for up
+  to 1 s splits a stop in two;
 - the speed reading drops at least twice inside it, so one GPS jump or glitch
   is not braking;
 - the speed is at least 15 km/h; below that the sample is `COAST_DOWN` or
   `IDLE` as before.
+
+The wide slope window smears a stop's start and end, so a gentle stop must
+last a little longer to count: on a 1 Hz GPS, about 7.5 s at 0.2 g (100 to 47
+km/h), 5.5 s at 0.25 g, 4.5 s at 0.3 g and 3 s at 0.4 g. A 0.2 g stop from
+100 to 40 km/h (8.5 s), the guided step's gentlest, counts with a 1 Hz GPS
+0.8 s late; over ±1.5 s, without bridging the wobble, most such stops were
+lost. A slowdown at 0.18 g or less never counts.
 
 The same rule applies to OBD speed: OBD-II has no standard brake-pedal PID,
 so braking is inferred from the speed trend whatever the speed source. A

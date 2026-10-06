@@ -12,8 +12,8 @@ __all__ = ["HistoryReportPdfCache", "ReportPdfCacheKey"]
 REPORT_PDF_CACHE_MAX_ENTRIES = 16
 REPORT_PDF_CACHE_MAX_BYTES = 16 * 1024 * 1024
 
-# (run id, language, analysis completed at, display time zone)
-type ReportPdfCacheKey = tuple[str, str, str | None, str | None]
+# (run id, language, analysis completed at, display time zone, speed unit)
+type ReportPdfCacheKey = tuple[str, str, str | None, str | None, str]
 """``(run_id, language, analysis_completed_at)``: a re-analysis invalidates the PDF."""
 
 

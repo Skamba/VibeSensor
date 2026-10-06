@@ -1077,7 +1077,7 @@ export interface components {
             /** Seconds the current run has been recording, on the Pi's monotonic clock; right even when the Pi wall clock (and so `start_time_utc`) is wrong. `null` when not recording. */
             elapsed_s?: number | null;
             enabled: boolean;
-            /** Firm stops counted so far in the current recording's guided brake step, by the analysis's own braking rule; a stop counts about 3 s after it ends. */
+            /** Firm stops counted so far in the current recording's guided brake step, by the analysis's own braking rule; a stop counts about 4 s after it ends. */
             guided_brake_stops: number;
             /** The guided test-drive step in progress (sweep, hold, coast_down, brake), if any. */
             guided_phase?: components["schemas"]["GuidedPhaseName"] | null;

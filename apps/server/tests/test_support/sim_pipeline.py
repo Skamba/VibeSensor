@@ -347,6 +347,7 @@ def run_sim_pipeline(
     max_recording_duration_s: float | None = None,
     speed_lag_s: float = 0.0,
     speed_report_period_s: float = _SPEED_UPDATE_PERIOD_S,
+    flush_period_s: float | None = None,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
@@ -361,7 +362,10 @@ def run_sim_pipeline(
     *max_recording_duration_s* sets the server's ``recording.max_duration_s`` cap.
     The speed source reports every *speed_report_period_s* (a GPS receiver: once
     a second) the speed it measured *speed_lag_s* earlier, while the simulated
-    tones follow the true speed.
+    tones follow the true speed. The recorder flushes a tick every
+    *flush_period_s* (default: ``1 / metrics_log_hz``); the Pi's flush loop
+    sleeps a whole interval after each tick's work, so there it ticks about
+    every 0.27 s, drifting against a GPS receiver's fixes.
     """
     runtime = build_runtime(load_config(_runtime_config(tmp_path, max_recording_duration_s)))
     try:
@@ -379,6 +383,7 @@ def run_sim_pipeline(
             obd_rpm=obd_rpm,
             speed_lag_s=speed_lag_s,
             speed_report_period_s=speed_report_period_s,
+            flush_period_s=flush_period_s,
         )
     finally:
         runtime.lifecycle.run_recorder.raw_capture.shutdown()
@@ -399,6 +404,7 @@ def _record(
     obd_rpm: bool,
     speed_lag_s: float,
     speed_report_period_s: float,
+    flush_period_s: float | None,
 ) -> SimPipelineResult:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -496,7 +502,7 @@ def _record(
             first_s=start_s + 0.1,
         )
         loop.every(
-            1.0 / recorder.metrics_log_hz,
+            flush_period_s or 1.0 / recorder.metrics_log_hz,
             lambda: _flush_tick(recorder),
             first_s=start_s + 0.12,
         )

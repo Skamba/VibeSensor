@@ -12,7 +12,9 @@ from vibesensor.report.view_model import ReportView, build_report_view
 from vibesensor.summary.contracts import AnalysisSummary
 
 
-def report_view_for(summary: Mapping[str, object], *, lang: str = "en") -> ReportView:
+def report_view_for(
+    summary: Mapping[str, object], *, lang: str = "en", speed_unit: str = "kmh"
+) -> ReportView:
     """Report view of *summary*, with run metadata taken from the summary's own metadata."""
     metadata = summary.get("metadata")
     metadata_map = dict(metadata) if isinstance(metadata, Mapping) else {}
@@ -21,6 +23,7 @@ def report_view_for(summary: Mapping[str, object], *, lang: str = "en") -> Repor
         cast(AnalysisSummary, summary),
         run_metadata_from_mapping(metadata_map),
         lang=lang,
+        speed_unit=speed_unit,
     )
 
 

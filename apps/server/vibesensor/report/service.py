@@ -37,7 +37,7 @@ class HistoryReportPdf:
 class HistoryReportService:
     """Build (and cache) the PDF report of one stored run."""
 
-    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer", "_time_zone")
+    __slots__ = ("_history_db", "_pdf_cache", "_pdf_renderer", "_speed_unit", "_time_zone")
 
     def __init__(
         self,
@@ -45,12 +45,15 @@ class HistoryReportService:
         *,
         pdf_renderer: PdfRendererFn,
         time_zone: Callable[[], str | None] = lambda: None,
+        speed_unit: Callable[[], str] = lambda: "kmh",
     ) -> None:
         self._history_db = history_db
         self._pdf_cache = HistoryReportPdfCache()
         self._pdf_renderer = pdf_renderer
         # The user's IANA zone (reported by the browser); run times render in it.
         self._time_zone = time_zone
+        # The user's speed unit setting; speeds render in it, as on the History page.
+        self._speed_unit = speed_unit
 
     async def build_pdf(self, run_id: str, requested_lang: str | None) -> HistoryReportPdf:
         """Render the run's report in the requested language (default: the run's)."""
@@ -62,10 +65,17 @@ class HistoryReportService:
             )
         lang = normalize_lang(requested_lang or analysis.language or run.metadata.language)
         time_zone = self._time_zone()
+        speed_unit = self._speed_unit()
         pdf = await self._pdf_cache.get_or_build(
-            (run_id, lang, run.analysis_completed_at, time_zone),
+            (run_id, lang, run.analysis_completed_at, time_zone, speed_unit),
             lambda: self._pdf_renderer(
-                build_report_view(analysis.payload, run.metadata, lang=lang, time_zone=time_zone)
+                build_report_view(
+                    analysis.payload,
+                    run.metadata,
+                    lang=lang,
+                    time_zone=time_zone,
+                    speed_unit=speed_unit,
+                )
             ),
         )
         return HistoryReportPdf(content=pdf, filename=f"{safe_filename(run_id)}_report.pdf")
