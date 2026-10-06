@@ -61,10 +61,12 @@ Use `subsystems` for machine-readable triage. Each subsystem reports
 `status: ready | degraded | unhealthy` and stable `reason_codes`; keep using the
 top-level `status` and `degradation_reasons` for compatibility with older tools.
 
-Run-history retention is enforced during startup maintenance: `complete` and
-`error` runs older than 7 days (`RUN_RETENTION_DAYS` in
-`apps/server/vibesensor/app/composition.py`) are pruned together with
-their raw-capture sidecars.
+Runs are kept however old. Only when the data disk has less than 1 GiB free
+(`RUN_HISTORY_MIN_FREE_BYTES` in `apps/server/vibesensor/app/composition.py`)
+does startup delete the oldest `complete` / `error` runs, with their raw-capture
+sidecars, until it has; the journal then logs `Disk below 1024 MiB free: deleted
+the N oldest finished run(s): <run ids>`. Runs still recording or analysing are
+never deleted automatically.
 
 Mutating local HTTP calls (`POST`, `PUT`, `PATCH`, `DELETE`) are protected by a
 same-origin guard. Browser requests with an `Origin` or `Referer` for a different
@@ -286,7 +288,7 @@ synchronising the kernel clock with no browser open), runs from the same boot
 get their true times: start = now - (monotonic now - monotonic start), with end,
 the row's `created_at` (History's sort key) and the stored analysis's times
 moved by the same amount, `analysis_started_at`/`analysis_completed_at` too when
-they predate the true start (else the 7-day retention would prune the run early),
+they predate the true start,
 the flag cleared, the fallback UTC offset recomputed for the true start and the
 shift kept as `start_time_corrected_by_s`. The journal logs `Corrected the start
 and end times of N run(s)`. Runs still analysing are corrected once their

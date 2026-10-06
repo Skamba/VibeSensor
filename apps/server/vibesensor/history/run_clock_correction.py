@@ -10,7 +10,7 @@ metadata and analysis move by the same delta; the duration does not change.
 The row's ``created_at`` was stamped on the same wrong clock as the start, so it
 moves too (History lists runs by it). Its analysis times move only when they lie
 before the true start: they were stamped before the clock was set, and left
-there, retention would prune the run as if it were that old. The delta is kept
+there, the run would read as finished before it started. The delta is kept
 as ``start_time_corrected_by_s``; exports re-time the sample rows from it. The
 fallback UTC offset is recomputed for the true start in the browser's zone.
 """

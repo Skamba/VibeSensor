@@ -579,29 +579,44 @@ class HistoryDB:
             recovered.append(run_id)
         return recovered
 
-    def prune_terminal_runs_older_than_days(self, retention_days: int) -> int:
-        run_ids = self._terminal_run_ids_older_than(_retention_cutoff_utc(retention_days))
-        if not run_ids:
-            return 0
-        LOGGER.warning(
-            "Pruning %d terminal run(s) older than %d day(s) during startup retention maintenance",
-            len(run_ids),
-            retention_days,
-        )
-        with self._write(immediate=True) as cur:
-            cur.executemany("DELETE FROM runs WHERE run_id = ?", [(run_id,) for run_id in run_ids])
-        for run_id in run_ids:
-            self._raw_capture_store.delete_run_artifacts(run_id)
-        return len(run_ids)
+    def prune_oldest_runs_for_free_space(
+        self,
+        min_free_bytes: int,
+        *,
+        disk_free_bytes: Callable[[], int],
+    ) -> list[str]:
+        """Delete the oldest finished runs while less than *min_free_bytes* is free.
 
-    def _terminal_run_ids_older_than(self, cutoff_utc: str) -> list[str]:
+        Runs are kept for as long as the disk has room, however old. Free space
+        is the disk's free bytes plus the database's free pages: a deleted run's
+        rows leave pages the next runs reuse, though the file does not shrink.
+        Only ``complete`` and ``error`` runs go, with their raw capture, oldest
+        recorded first (the order rows were inserted, which a wrong clock cannot
+        reorder). Returns the deleted run ids.
+        """
+        deleted: list[str] = []
+        while self._free_bytes(disk_free_bytes) < min_free_bytes:
+            with self._write(immediate=True) as cur:
+                cur.execute(
+                    "SELECT run_id FROM runs WHERE status IN ('complete', 'error') "
+                    "ORDER BY rowid LIMIT 1"
+                )
+                row = cur.fetchone()
+                if row is None:
+                    break
+                run_id = str(row[0])
+                cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
+            self._raw_capture_store.delete_run_artifacts(run_id)
+            deleted.append(run_id)
+        return deleted
+
+    def _free_bytes(self, disk_free_bytes: Callable[[], int]) -> int:
         with self._read() as cur:
-            cur.execute(
-                "SELECT run_id FROM runs WHERE status IN ('complete', 'error') "
-                "AND COALESCE(analysis_completed_at, end_time_utc, created_at) < ?",
-                (cutoff_utc,),
-            )
-            return [str(row[0]) for row in cur.fetchall()]
+            cur.execute("PRAGMA freelist_count")
+            free_pages = int(cur.fetchone()[0])
+            cur.execute("PRAGMA page_size")
+            page_size = int(cur.fetchone()[0])
+        return disk_free_bytes() + free_pages * page_size
 
     # -- run queries ----------------------------------------------------------
 
@@ -971,12 +986,6 @@ def _rollback_open_transaction(conn: sqlite3.Connection, *, context: str) -> Non
         conn.rollback()
     except sqlite3.Error:
         LOGGER.critical("History DB rollback failed during %s", context, exc_info=True)
-
-
-def _retention_cutoff_utc(retention_days: int) -> str:
-    if retention_days < 1:
-        raise ValueError("retention_days must be at least 1")
-    return (datetime.now(UTC) - timedelta(days=retention_days)).isoformat()
 
 
 def _has_recommended_metadata_value(key: str, value: object) -> bool:

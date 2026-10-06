@@ -20,7 +20,7 @@ application settings and client names in a single SQLite file located at
   `query_only` reader connection (WAL lets reads proceed during writes), each guarded by a
   `threading.Lock`, then enforces the schema and runs `PRAGMA quick_check`. It owns run
   creation/finalization, sample appends and keyset-paginated reads, analysis writes, delete
-  and retention flows, stale-recording recovery, settings snapshots, and client names.
+  and free-space pruning, stale-recording recovery, settings snapshots, and client names.
   Async callers (route handlers, history use cases) offload calls with `asyncio.to_thread`.
 - `db_schema.py`: schema DDL, `SCHEMA_VERSION`, open-time schema enforcement, quick check, and
   incompatible-schema backup/run-summary export.
@@ -215,14 +215,21 @@ not to the Pi's RAM-backed `/tmp`.
 
 On startup, the container opens `HistoryDB`, first recovers runs left
 `recording` by a power cut (see "Cut off before Stop" in
-`docs/run_lifecycle.md`), then deletes `complete` and `error` runs older than
-`RUN_RETENTION_DAYS` (7 days, in `apps/server/vibesensor/app/composition.py`).
+`docs/run_lifecycle.md`), then keeps every run, however old, while the disk
+holding the database has at least `RUN_HISTORY_MIN_FREE_BYTES` (1 GiB, in
+`apps/server/vibesensor/app/composition.py`) free. Below that,
+`HistoryDB.prune_oldest_runs_for_free_space` deletes the oldest `complete` or
+`error` run (in recording order, `rowid`, so a run stamped on a wrong clock is
+not mistaken for old or new) with its raw capture, one at a time, until enough
+is free. The database's free pages (`PRAGMA freelist_count`) count as free: the
+file does not shrink, but the next runs reuse them. `recording` and `analyzing`
+runs are never deleted automatically. The journal logs `Disk below 1024 MiB
+free: deleted the N oldest finished run(s): …`.
 
-The cutoff uses the run's terminal timestamp (`analysis_completed_at`, then
-`end_time_utc`, then `created_at`) so active `recording` / `analyzing` runs are
-never deleted by the automatic policy. Full run deletion still removes sample
-rows through the existing `ON DELETE CASCADE` foreign key on `samples_v2`, plus
-raw-capture sidecar directories.
+The 1 GiB floor leaves room for an update's 600 MB download and many drives (a
+10-minute single-sensor run is about 3 MB of raw capture plus its sample rows).
+Run deletion removes sample rows through the `ON DELETE CASCADE` foreign key on
+`samples_v2`, plus the raw-capture sidecar directory.
 
 ## Retired whole-run data
 

@@ -4,7 +4,6 @@ import io
 import json
 import shutil
 import zipfile
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +12,6 @@ from test_support.history_db_lifecycle import (
     create_completed_run,
     create_recording_run,
 )
-from test_support.history_db_sql import execute_statements as _execute_statements
 
 from vibesensor.history.exports import HistoryExportService
 from vibesensor.history.history_db import HistoryDB
@@ -252,7 +250,7 @@ def test_raw_capture_finalization_persists_corrected_observed_sample_rate(
     assert sensor_manifest.sample_rate_proof_state == "observed_consistent"
 
 
-def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path, db: HistoryDB) -> None:
+def test_pruning_a_run_for_space_removes_its_raw_capture(tmp_path: Path, db: HistoryDB) -> None:
     create_completed_run(db, "run-prune")
     samples = np.asarray([[21, 22, 23]], dtype=np.int16)
 
@@ -263,16 +261,7 @@ def test_prune_terminal_runs_removes_raw_capture_artifacts(tmp_path: Path, db: H
     raw_dir = tmp_path / "raw-runs" / "run-prune"
     assert raw_dir.exists()
 
-    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-    _execute_statements(
-        db,
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-prune"),
-        ),
-    )
-
-    db.prune_terminal_runs_older_than_days(1)
+    assert db.prune_oldest_runs_for_free_space(1, disk_free_bytes=lambda: 0) == ["run-prune"]
 
     assert not raw_dir.exists()
 

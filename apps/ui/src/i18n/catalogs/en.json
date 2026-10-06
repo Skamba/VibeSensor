@@ -209,7 +209,7 @@
   "history.preview_unavailable": "Preview is unavailable for this run.",
   "history.details_title": "Diagnostic panel",
   "history.raw_capture_missing_title": "Raw capture was removed",
-  "history.raw_capture_missing_detail": "This run summary is still available, but the raw waveform capture was pruned by retention maintenance and cannot be replayed.",
+  "history.raw_capture_missing_detail": "This run summary is still available, but the raw waveform capture is missing (it was not saved or has been removed) and cannot be replayed.",
   "history.raw_capture_degraded_title": "Raw capture finalization degraded",
   "history.raw_capture_degraded_enqueue_timeout_detail": "Raw capture finalization could not be queued before stop completed. Queue depth at failure: {queueDepth}. Error: {errorSummary}.",
   "history.raw_capture_degraded_timeout_detail": "Raw capture finalization did not finish before the bounded stop timeout. Queue depth at failure: {queueDepth}. Error: {errorSummary}.",

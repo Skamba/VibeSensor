@@ -5,14 +5,11 @@ from __future__ import annotations
 import logging
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from test_support.history_db_lifecycle import (
     create_analyzing_run,
-    create_completed_run,
-    create_error_run,
     create_recording_run,
     run_samples,
 )
@@ -131,79 +128,6 @@ def test_list_runs_uses_incremental_sample_count(db: HistoryDB) -> None:
     )
     run = db.list_runs()[0]
     assert run.sample_count == 3
-
-
-def test_prune_terminal_runs_older_than_days_deletes_only_old_terminal_runs(
-    db: HistoryDB,
-) -> None:
-    create_completed_run(db, "run-old-complete", analysis_overrides={"score": 10})
-    create_error_run(db, "run-old-error", error_message="failed")
-    create_completed_run(db, "run-recent-complete", analysis_overrides={"score": 20})
-    create_recording_run(db, "run-recording")
-    create_analyzing_run(db, "run-analyzing")
-
-    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-    recent_timestamp = (datetime.now(UTC) - timedelta(days=2)).isoformat()
-    _execute_statements(
-        db,
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-old-complete"),
-        ),
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-old-error"),
-        ),
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (recent_timestamp, recent_timestamp, "run-recent-complete"),
-        ),
-        (
-            "UPDATE runs SET created_at = ? WHERE run_id = ?",
-            (old_timestamp, "run-recording"),
-        ),
-        (
-            "UPDATE runs SET created_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-analyzing"),
-        ),
-    )
-
-    pruned = db.prune_terminal_runs_older_than_days(7)
-
-    assert pruned == 2
-    assert db.get_run("run-old-complete") is None
-    assert db.get_run("run-old-error") is None
-    assert db.get_run("run-recent-complete") is not None
-    assert db.get_run("run-recording") is not None
-    assert db.get_run("run-analyzing") is not None
-
-
-def test_prune_terminal_runs_older_than_days_cascades_samples(
-    db: HistoryDB,
-) -> None:
-    create_recording_run(db, "run-prune")
-    db.append_samples("run-prune", [sensor_frame_from_mapping({"i": i}) for i in range(3)])
-    db.store_analysis("run-prune", make_persisted_analysis(_analysis("run-prune", score=9)))
-
-    old_timestamp = (datetime.now(UTC) - timedelta(days=30)).isoformat()
-    _execute_statements(
-        db,
-        (
-            "UPDATE runs SET analysis_completed_at = ?, end_time_utc = ? WHERE run_id = ?",
-            (old_timestamp, old_timestamp, "run-prune"),
-        ),
-    )
-
-    pruned = db.prune_terminal_runs_older_than_days(7)
-
-    assert pruned == 1
-    assert db.get_run("run-prune") is None
-    row = _fetch_one(
-        db,
-        "SELECT COUNT(*) FROM samples_v2 WHERE run_id = ?",
-        ("run-prune",),
-    )
-    assert row is not None and row[0] == 0
 
 
 def test_create_run_does_not_auto_recover_recording(db: HistoryDB) -> None:

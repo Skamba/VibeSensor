@@ -23,11 +23,14 @@ class _RecordingHistoryDB:
         self.calls.append(("recover", None))
         return []
 
-    def prune_terminal_runs_older_than_days(self, days: int) -> int:
-        self.calls.append(("summary", days))
+    def prune_oldest_runs_for_free_space(
+        self, min_free_bytes: int, *, disk_free_bytes: object
+    ) -> list[str]:
+        assert callable(disk_free_bytes)
+        self.calls.append(("prune", min_free_bytes))
         if self._prune_error is not None:
             raise self._prune_error
-        return 2
+        return ["oldest", "next-oldest"]
 
 
 def _create_history_db(
@@ -71,7 +74,10 @@ def test_create_history_db_recovers_then_prunes_on_startup(
     result, fake_history = _create_history_db(tmp_path, monkeypatch)
 
     assert result is fake_history
-    assert fake_history.calls == [("recover", None), ("summary", 7)]
+    assert fake_history.calls == [
+        ("recover", None),
+        ("prune", history_composition.RUN_HISTORY_MIN_FREE_BYTES),
+    ]
 
 
 def test_create_history_db_continues_when_retention_prune_fails(
@@ -87,4 +93,4 @@ def test_create_history_db_continues_when_retention_prune_fails(
         )
 
     assert result is fake_history
-    assert "Failed to prune terminal runs older than 7 day(s)" in caplog.text
+    assert "Failed to free disk space for the run history at startup" in caplog.text

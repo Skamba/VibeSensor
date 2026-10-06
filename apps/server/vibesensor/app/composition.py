@@ -8,6 +8,7 @@ the HTTP/WebSocket routes use; both share the same instances.
 from __future__ import annotations
 
 import logging
+import shutil
 import sqlite3
 import time
 from collections.abc import Callable
@@ -60,8 +61,12 @@ from vibesensor.web.router import WebServices
 
 LOGGER = logging.getLogger(__name__)
 
-RUN_RETENTION_DAYS = 7
-"""Terminal runs (and their raw-capture sidecars) older than this are pruned at startup."""
+RUN_HISTORY_MIN_FREE_BYTES = 1024 * 1024 * 1024
+"""Free space the history keeps on its disk: below it, startup deletes the oldest finished runs.
+
+Runs are kept however old until then. 1 GiB leaves room for the 600 MB an
+update needs (``updates/validation.py``) plus many drives of raw capture.
+"""
 
 
 @dataclass(slots=True)
@@ -84,15 +89,15 @@ def create_history_db(
     *,
     corruption_reporter: Callable[[str], None] | None = None,
 ) -> HistoryDB:
-    """Open the history DB and run startup recovery plus retention pruning."""
+    """Open the history DB, recover cut-off runs and free disk space if it runs low."""
     history = HistoryDB(
         config.logging.history_db_path,
         corruption_reporter=corruption_reporter,
     )
     if history.corruption_detected:
         LOGGER.error(
-            "History DB corruption detected at startup; skipping stale-run recovery, "
-            "retention pruning, and "
+            "History DB corruption detected at startup; skipping cut-off-run recovery, "
+            "free-space pruning, and "
             "continuing with writes disabled until the DB is repaired.",
         )
         return history
@@ -109,22 +114,21 @@ def create_history_db(
             len(recovered_runs),
             ", ".join(recovered_runs),
         )
+    data_dir = Path(config.logging.history_db_path).parent
     try:
-        pruned_runs = history.prune_terminal_runs_older_than_days(
-            RUN_RETENTION_DAYS,
+        pruned_runs = history.prune_oldest_runs_for_free_space(
+            RUN_HISTORY_MIN_FREE_BYTES,
+            disk_free_bytes=lambda: shutil.disk_usage(data_dir).free,
         )
     except (sqlite3.Error, OSError):
-        LOGGER.warning(
-            "Failed to prune terminal runs older than %d day(s) during startup maintenance",
-            RUN_RETENTION_DAYS,
-            exc_info=True,
-        )
+        LOGGER.warning("Failed to free disk space for the run history at startup", exc_info=True)
     else:
         if pruned_runs:
-            LOGGER.info(
-                "Pruned %d terminal run(s) older than %d day(s) during startup maintenance",
-                pruned_runs,
-                RUN_RETENTION_DAYS,
+            LOGGER.warning(
+                "Disk below %d MiB free: deleted the %d oldest finished run(s): %s",
+                RUN_HISTORY_MIN_FREE_BYTES // (1024 * 1024),
+                len(pruned_runs),
+                ", ".join(pruned_runs),
             )
     return history
 

@@ -207,8 +207,8 @@ def test_this_boots_unverified_runs_are_redated_once_the_clock_is_trusted(
             corrected_by_s=delta.total_seconds(),
             utc_offset_s=_SUMMER_OFFSET_S,
         )
-    # History sorts by created_at and retention prunes by analysis_completed_at:
-    # both move off the wrong clock, so the run is not listed or pruned as months old.
+    # History sorts by created_at and shows analysis_completed_at: both move off
+    # the wrong clock, so the run is not listed as months old.
     assert _row_times(db, "analysed-before-the-clock-was-set") == (
         _TRUE_START + timedelta(seconds=1),
         _TRUE_START + timedelta(seconds=_RUN_S + 1),

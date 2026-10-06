@@ -33,7 +33,7 @@ runtimes) or that the operator owns (hotspot SSID/PSK) are configurable. Fixed
 tuning values live as Python constants next to the code that uses them (for
 example the live sample rate in `vibesensor/dsp/constants.py`, hotspot
 address/channel/interface in `vibesensor/hotspot/constants.py`, and
-run retention in `vibesensor/app/composition.py`).
+the run-history free-space floor in `vibesensor/app/composition.py`).
 
 Keys that are not listed below are ignored with an
 `Ignoring unsupported config key <key>` warning, so device configs written by
@@ -100,8 +100,8 @@ still set `ap.psk` and restrict who can join the local appliance network.
 | `logging.history_db_path` | `data/history.db` | Persisted history/settings database path. Pi deployments override this to `/var/lib/vibesensor/history.db`. |
 | `logging.app_log_path` | `app.log` | Structured JSON application-log output path. A relative path resolves against the data directory (the folder of `logging.history_db_path`), so the Pi writes `/var/lib/vibesensor/app.log`, never into the read-only `/etc/vibesensor`. Set to `null` if file logging is not wanted. |
 
-Terminal runs older than 7 days are pruned at startup (see
-`docs/history_db_schema.md`).
+Runs are kept however old; only when the data disk has less than 1 GiB free
+does startup delete the oldest finished runs (see `docs/history_db_schema.md`).
 
 ## `gps`
 

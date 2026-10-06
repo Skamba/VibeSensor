@@ -46,7 +46,7 @@ Several issue reports have described the backend as one pool of global mutable
 state. Current `main` is intentionally split more narrowly:
 
 - `AppConfig` in `vibesensor.app.config_schema` owns YAML-backed deployment
-  configuration loaded at startup, such as network bindings, retention windows,
+  configuration loaded at startup, such as network bindings,
   processing budgets, and update paths.
 - `BootstrapEnvSettings` and `UpdateEnvSettings` in
   `vibesensor.common.process_settings` own process-level env overrides and
@@ -201,8 +201,9 @@ For live sensor presence, `ClientRegistry` keeps reporting `connected: true` on
 and their metadata for 120 s before evicting them (see
 `vibesensor/ingest/registry.py`).
 
-Startup maintenance prunes terminal (`complete` / `error`) runs older than 7 days
-(`RUN_RETENTION_DAYS` in `vibesensor/app/composition.py`).
+Runs are kept however old. Startup deletes the oldest finished (`complete` /
+`error`) runs only while the data disk has less than 1 GiB free
+(`RUN_HISTORY_MIN_FREE_BYTES` in `vibesensor/app/composition.py`).
 
 ## Environment variables
 

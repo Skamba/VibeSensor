@@ -209,7 +209,7 @@
   "history.preview_unavailable": "Voorbeeld is niet beschikbaar voor deze meetrun.",
   "history.details_title": "Diagnostisch paneel",
   "history.raw_capture_missing_title": "Ruwe opname is verwijderd",
-  "history.raw_capture_missing_detail": "De samenvatting van deze meetrun is nog beschikbaar, maar de ruwe golfvormopname is door retentie-opruiming verwijderd en kan niet meer worden herladen.",
+  "history.raw_capture_missing_detail": "De samenvatting van deze meetrun is nog beschikbaar, maar de ruwe golfvormopname ontbreekt (niet opgeslagen of verwijderd) en kan niet meer worden herladen.",
   "history.raw_capture_degraded_title": "De ruwe opname is niet volledig afgerond",
   "history.raw_capture_degraded_enqueue_timeout_detail": "De ruwe-opnamefinalisatie kon niet meer in de wachtrij worden gezet voordat stoppen was voltooid. Wachtrijdiepte bij falen: {queueDepth}. Fout: {errorSummary}.",
   "history.raw_capture_degraded_timeout_detail": "De ruwe-opnamefinalisatie werd niet voltooid voordat de begrensde stop-time-out afliep. Wachtrijdiepte bij falen: {queueDepth}. Fout: {errorSummary}.",
