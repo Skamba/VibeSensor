@@ -254,12 +254,6 @@ class GPSTransportState:
     def _zero_speed_streak(self, value: int) -> None:
         self._replace_transport(zero_speed_streak=max(0, int(value)))
 
-    def _accept_speed_sample(self, speed_mps: float) -> bool:
-        return _transport_updates.accept_speed_sample(self, speed_mps)
-
-    def _reset_fix_metadata(self) -> None:
-        _transport_updates.reset_fix_metadata(self)
-
     def ingest_message(
         self,
         payload: JsonObject,
@@ -286,21 +280,6 @@ class GPSTransportState:
             self,
             tpv,
             monotonic=time.monotonic,
-        )
-
-    def ingest_tpv(
-        self,
-        payload: JsonObject,
-        *,
-        tpv_mode: TpvModeReader | None = None,
-        read_metric: MetricReader | None = None,
-    ) -> None:
-        self._apply_tpv(
-            _transport_updates.normalize_tpv_payload(
-                payload,
-                tpv_mode=tpv_mode,
-                read_metric=read_metric,
-            )
         )
 
     async def run(

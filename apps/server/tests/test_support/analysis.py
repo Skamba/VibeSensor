@@ -6,10 +6,32 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from test_support.core import standard_metadata
-from vibesensor.analysis.summarize import summarize_sensor_frames
+from vibesensor.analysis._run_input import build_diagnostics_run_input
+from vibesensor.analysis.run_analysis import RunAnalysis
+from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.contracts import AnalysisSummary
+
+
+def summarize_sensor_frames(
+    metadata: RunMetadata,
+    samples: Sequence[SensorFrame],
+    lang: str | None = None,
+    file_name: str = "run",
+    include_samples: bool = True,
+) -> AnalysisSummary:
+    """Analyze typed run data and serialize the summary payload the way the app does."""
+    run = build_diagnostics_run_input(metadata, samples, file_name=file_name)
+    result = RunAnalysis(
+        run,
+        file_name=file_name,
+        lang=lang,
+        include_samples=include_samples,
+    ).summarize()
+    return analysis_result_to_summary(result)
 
 
 def summarize_mappings(

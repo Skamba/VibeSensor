@@ -31,16 +31,6 @@ class Symptom:
     def is_unspecified(self) -> bool:
         return self.description.strip().lower() == "unspecified complaint"
 
-    @property
-    def is_speed_dependent(self) -> bool:
-        text = f"{self.description} {self.context}".lower()
-        return any(token in text for token in ("speed", "km/h", "cruise", "driving"))
-
-    @property
-    def is_transient(self) -> bool:
-        text = f"{self.description} {self.context} {self.onset}".lower()
-        return any(token in text for token in ("intermittent", "transient", "sometimes"))
-
 
 # ── DiagnosticCase ────────────────────────────────────────────────────────────
 
@@ -77,7 +67,3 @@ class DiagnosticCase:
             self,
             test_runs=(*self.test_runs, test_run),
         )
-
-    @property
-    def primary_run(self) -> TestRun | None:
-        return self.test_runs[-1] if self.test_runs else None

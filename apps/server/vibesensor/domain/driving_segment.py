@@ -34,8 +34,6 @@ class DrivingPhase(StrEnum):
 # DrivingSegment
 # ---------------------------------------------------------------------------
 
-_MIN_USABLE_SAMPLES = 10
-
 
 @dataclass(frozen=True, slots=True)
 class DrivingSegment:
@@ -56,15 +54,6 @@ class DrivingSegment:
         if self.start_t_s is not None and self.end_t_s is not None:
             return self.end_t_s - self.start_t_s
         return None
-
-    @property
-    def is_cruise(self) -> bool:
-        return self.phase is DrivingPhase.CRUISE
-
-    @property
-    def is_diagnostically_usable(self) -> bool:
-        """Whether this segment can contribute to diagnostic conclusions."""
-        return self.sample_count >= _MIN_USABLE_SAMPLES and self.phase is not DrivingPhase.IDLE
 
 
 # ---------------------------------------------------------------------------

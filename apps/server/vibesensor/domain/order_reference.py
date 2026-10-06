@@ -159,15 +159,6 @@ class OrderReferenceSpec:
             return None
         return self.engine_hz_from_wheel_hz(wheel_hz)
 
-    def engine_rpm_from_wheel_hz(self, wheel_hz: float) -> float | None:
-        if wheel_hz == 0.0 and self.supports_engine_reference:
-            return 0.0
-        engine_hz = self.engine_hz_from_wheel_hz(wheel_hz)
-        if engine_hz is None:
-            return None
-        engine_rpm = engine_hz * 60.0
-        return engine_rpm if math.isfinite(engine_rpm) else None
-
     def engine_rpm_from_speed_kmh(self, speed_kmh: float) -> float | None:
         engine_hz = self.engine_hz_from_speed_kmh(speed_kmh)
         if engine_hz is None:

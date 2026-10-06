@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import msgspec
 import pytest
 from test_support.firmware_bundles import write_firmware_bundle
 
 from vibesensor.updates.firmware.firmware_bundle import (
     flash_manifest_record_from_json,
-    flash_manifest_record_to_json,
     parse_manifest,
     read_meta,
     validate_bundle,
@@ -39,7 +39,7 @@ def test_flash_manifest_record_round_trips_and_parses_domain() -> None:
         ],
     )
 
-    decoded = flash_manifest_record_from_json(flash_manifest_record_to_json(record))
+    decoded = flash_manifest_record_from_json(msgspec.json.encode(record))
     manifest = parse_manifest(decoded)
 
     assert decoded == record

@@ -34,7 +34,3 @@ class RunContextSnapshot:
     @property
     def car_type(self) -> str | None:
         return self.car.car_type if self.car is not None else None
-
-    @property
-    def car_variant(self) -> str | None:
-        return self.car.variant if self.car is not None else None

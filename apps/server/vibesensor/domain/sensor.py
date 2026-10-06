@@ -80,11 +80,6 @@ class Sensor:
         """Shortcut to the placement code, or empty string if unplaced."""
         return self.placement.code if self.placement else ""
 
-    @property
-    def is_placed(self) -> bool:
-        """Whether this sensor has an assigned placement."""
-        return self.placement is not None and bool(self.placement.code)
-
     # -- factory methods ---------------------------------------------------
 
     @classmethod

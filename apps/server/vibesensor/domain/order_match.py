@@ -11,7 +11,6 @@ from statistics import median
 
 __all__ = ["OrderMatchObservation", "frequency_tracking_slope", "trend_moves"]
 
-_CLOSE_MATCH_THRESHOLD = 0.05  # 5% relative error
 # The order-match tolerance is several percent wide, so a speed that moves less
 # than this cannot tell an order from a fixed tone it passes.
 _MIN_TRACKING_SPAN = 0.1
@@ -48,16 +47,6 @@ class OrderMatchObservation:
             raise ValueError("predicted_hz must be > 0")
         if self.rel_error < 0:
             raise ValueError("rel_error must be >= 0")
-
-    @property
-    def is_close_match(self) -> bool:
-        """Whether this observation is a close frequency match."""
-        return self.rel_error <= _CLOSE_MATCH_THRESHOLD
-
-    @property
-    def frequency_error_hz(self) -> float:
-        """Absolute frequency error in Hz."""
-        return abs(self.predicted_hz - self.matched_hz)
 
 
 def frequency_tracking_slope(points: Sequence[OrderMatchObservation]) -> float | None:

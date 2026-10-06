@@ -231,9 +231,10 @@ brand, type, model generation, and variant:
   each.
 - **Gearbox:** every exact row is one gearbox option, and a picker variant
   never lists a gearbox name twice, so (model, variant, gearbox) names
-  exactly one row. `get_exact_configurations_for_variant` returns a
-  variant's rows. `apps/server/tests/settings/test_car_library.py` checks
-  that every bundled row is reachable this way.
+  exactly one row. The picker build keeps each variant's rows
+  (`_ROWS_BY_VARIANT` in `vibesensor/settings/car_library.py`), and
+  `apps/server/tests/settings/test_car_library.py` checks that every bundled
+  row is reachable this way.
 
 Saved cars keep a copy of the chosen values and the variant name; they are
 never re-resolved against the library, so regrouping the picker does not

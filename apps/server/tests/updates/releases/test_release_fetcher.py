@@ -11,7 +11,6 @@ from vibesensor.updates.releases.github_api import (
     GitHubApiAssetRecord,
     GitHubApiClient,
     GitHubApiReleaseRecord,
-    validate_https_url,
 )
 from vibesensor.updates.releases.models import (
     GitHubRelease,
@@ -51,9 +50,6 @@ def _release_record(
 
 
 class TestValidateUrl:
-    def test_https_accepted(self) -> None:
-        validate_https_url("https://api.github.com/repos/owner/repo")
-
     @pytest.mark.parametrize(
         "url",
         [
@@ -64,7 +60,7 @@ class TestValidateUrl:
     )
     def test_non_https_rejected(self, url: str) -> None:
         with pytest.raises(ValueError, match="non-HTTPS"):
-            validate_https_url(url)
+            GitHubApiClient().get_typed_json(url, response_type=object)
 
 
 class TestReleaseFetcherConfig:

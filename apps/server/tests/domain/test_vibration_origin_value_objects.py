@@ -26,7 +26,6 @@ def test_from_analysis_inputs_preserves_typed_contract() -> None:
         reason="ranked from wheel order evidence",
     )
 
-    assert origin.is_ambiguous is True
     assert origin.summary_location == "front_left / front_right"
     assert origin.alternative_locations == ("front_right",)
     assert origin.weak_spatial_separation is True

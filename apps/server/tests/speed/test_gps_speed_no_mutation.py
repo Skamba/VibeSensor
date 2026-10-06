@@ -1,8 +1,7 @@
-"""Tests for issue #284: effective_speed_mps and status snapshots must not mutate state.
+"""Tests for issue #284: speed reads and status snapshots must not mutate state.
 
 Verifies that:
 - resolve_speed() is pure (no side effects)
-- effective_speed_mps property does not mutate any instance state
 - status_snapshot() does not mutate connection_state
 - fallback_active is true only while a manual fallback speed is in use
 - Multiple reads per tick yield consistent results
@@ -89,17 +88,14 @@ _ALL_MONITOR_STATES = [
 
 @pytest.mark.parametrize("factory", _ALL_MONITOR_STATES)
 def test_speed_reads_are_pure_and_repeatable(factory) -> None:
-    """resolve_speed()/effective_speed_mps never mutate and always agree."""
+    """resolve_speed() never mutates and always agrees."""
     m = factory()
     before = _snapshot(m)
 
     results = [m.resolve_speed() for _ in range(5)]
-    speed_first = m.effective_speed_mps
-    speed_second = m.effective_speed_mps
 
     assert _snapshot(m) == before
     assert all(r == results[0] for r in results)
-    assert speed_first == speed_second == results[0].speed_mps
 
 
 class TestStatusSnapshotNoMutation:
@@ -142,7 +138,6 @@ def test_fallback_active_consistent_with_resolved_speed(
     assert r.speed_mps == speed_mps
     assert r.fallback_active is fallback_active
     assert r.source == source
-    assert m.effective_speed_mps == speed_mps
 
 
 # ---------------------------------------------------------------------------

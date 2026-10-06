@@ -194,7 +194,7 @@ def test_stale_timeout_controls_public_speed_resolution(
     monitor.speed_mps = 10.0
     set_gps_snapshot_age(monitor, age_s=gps_age_s)
 
-    assert monitor.effective_speed_mps == expected_speed_mps
+    assert monitor.resolve_speed().speed_mps == expected_speed_mps
     assert monitor.resolve_speed().source == expected_source
 
 

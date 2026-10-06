@@ -12,10 +12,9 @@ Scope: architecture and data flow for the post-stop diagnostics pipeline in
    The shared vehicle-order frequency math used by both diagnostics and live
    telemetry lives in `apps/server/vibesensor/dsp/order_bands.py`.
 3. **Single diagnostics entrypoint** — `RunAnalysis(...).summarize()` is the
-   diagnostics pipeline entrypoint. The boundary helper
-   `summarize_sensor_frames()` lives in
-   `apps/server/vibesensor/analysis/summarize.py` and calls the
-   diagnostics entrypoint explicitly.
+   diagnostics pipeline entrypoint. Post-stop analysis
+   (`apps/server/vibesensor/analysis/post_analysis_summary.py`) calls it and
+   serializes the result with `analysis_result_to_summary()`.
 4. **Public API** — external app/domain code imports from
    `vibesensor.analysis`: `RunAnalysis`, `AnalysisResult`,
    `build_order_bands()`, `vehicle_orders_hz()`.
@@ -117,7 +116,7 @@ run's persisted analysis.
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
 | 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
-| 13 | Boundary serialization | `analysis_result_to_summary`, `summarize_sensor_frames` | `analysis/summary_payload.py`, `analysis/summarize.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
+| 13 | Boundary serialization | `analysis_result_to_summary` | `analysis/summary_payload.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
 ## Data Flow
 

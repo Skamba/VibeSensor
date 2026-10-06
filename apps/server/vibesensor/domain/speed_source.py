@@ -56,14 +56,6 @@ class SpeedSource:
         return self.kind is SpeedSourceKind.MANUAL
 
     @property
-    def is_gps(self) -> bool:
-        return self.kind is SpeedSourceKind.GPS
-
-    @property
-    def is_obd2(self) -> bool:
-        return self.kind is SpeedSourceKind.OBD2
-
-    @property
     def is_live(self) -> bool:
         """Whether speed data comes from a live source (GPS or OBD-II)."""
         return self.kind in (SpeedSourceKind.GPS, SpeedSourceKind.OBD2)

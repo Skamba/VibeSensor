@@ -22,10 +22,6 @@ size_t sample_handoff_capacity(const SampleHandoffState& state) {
   return state.capacity;
 }
 
-size_t sample_handoff_free_slots(const SampleHandoffState& state) {
-  return state.capacity > state.size ? (state.capacity - state.size) : 0;
-}
-
 bool enqueue_pending_sample(SampleHandoffState& state, const PendingSample& sample) {
   if (state.queue == nullptr || state.capacity == 0) {
     state.overflow_drops++;

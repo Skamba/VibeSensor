@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from test_support.analysis import summarize_sensor_frames
 from test_support.core import canonicalize_run_context_metadata
 from vibesensor.analysis._run_input import normalize_run_metadata
-from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
     run_metadata_to_json_object,

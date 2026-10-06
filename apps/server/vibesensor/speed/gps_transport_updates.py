@@ -58,29 +58,6 @@ def evaluate_snapshot_speed_sample(
     return verdict.accepted, verdict.zero_speed_streak
 
 
-def accept_speed_sample(
-    state: GPSTransportState,
-    speed_mps: float,
-) -> bool:
-    """Update the zero-speed streak on *state* and return whether the sample is accepted."""
-    accepted, zero_speed_streak = evaluate_snapshot_speed_sample(state.snapshot(), speed_mps)
-    state._replace_transport(zero_speed_streak=zero_speed_streak)
-    return accepted
-
-
-def reset_fix_metadata(state: GPSTransportState) -> None:
-    """Clear all fix metadata fields on the transport snapshot."""
-    state._replace_transport(
-        last_fix_mode=None,
-        last_epx_m=None,
-        last_epy_m=None,
-        last_epv_m=None,
-        zero_speed_streak=0,
-        speed_snapshot=(None, None),
-        device_info=None,
-    )
-
-
 def classify_transport_message(
     payload: JsonObject,
     *,

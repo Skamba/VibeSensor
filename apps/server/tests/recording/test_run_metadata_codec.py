@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import msgspec
 
+from vibesensor.common.json_utils import safe_json_dumps
 from vibesensor.recording.run_metadata import (
     run_metadata_from_json,
     run_metadata_from_mapping,
-    run_metadata_to_json_bytes,
     run_metadata_to_json_object,
 )
 from vibesensor.recording.run_schema import RunGuidedPhase
@@ -60,7 +60,7 @@ def test_run_metadata_msgspec_codec_roundtrip_preserves_nested_fields() -> None:
         }
     )
 
-    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+    decoded = run_metadata_from_json(safe_json_dumps(run_metadata_to_json_object(metadata)))
 
     assert decoded.run_id == "run-msgspec"
     assert decoded.symptom is not None
@@ -111,7 +111,7 @@ def test_run_metadata_codec_roundtrip_preserves_sensor_snapshots() -> None:
     )
 
     payload = run_metadata_to_json_object(metadata)
-    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+    decoded = run_metadata_from_json(safe_json_dumps(run_metadata_to_json_object(metadata)))
 
     assert payload["sensor_snapshots"] == [
         {
@@ -188,7 +188,7 @@ def test_run_metadata_codec_roundtrip_preserves_finalization_stages() -> None:
     )
 
     payload = run_metadata_to_json_object(metadata)
-    decoded = run_metadata_from_json(run_metadata_to_json_bytes(metadata))
+    decoded = run_metadata_from_json(safe_json_dumps(run_metadata_to_json_object(metadata)))
 
     assert payload["finalization_stages"] == [
         {
@@ -241,7 +241,9 @@ def test_run_metadata_codec_roundtrip_preserves_guided_phases() -> None:
         {"phase": "sweep", "start_t_s": 2.0, "end_t_s": 30.5},
         {"phase": "coast_down", "start_t_s": 30.5},
     ]
-    assert run_metadata_from_json(run_metadata_to_json_bytes(metadata)) == metadata
+    assert (
+        run_metadata_from_json(safe_json_dumps(run_metadata_to_json_object(metadata))) == metadata
+    )
 
 
 def test_run_metadata_without_guided_phases_omits_the_field() -> None:

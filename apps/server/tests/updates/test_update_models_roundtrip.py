@@ -15,7 +15,7 @@ from vibesensor.updates.models import (
     UpdateTransport,
 )
 from vibesensor.updates.status.payload_codec import (
-    update_status_from_builtins,
+    update_status_from_json,
     update_status_to_builtins,
 )
 
@@ -38,7 +38,7 @@ class TestUpdateJobStatusRoundTrip:
             terminal_state=UpdateTerminalState.success,
             runtime=UpdateRuntimeDetails(version="1.2.3"),
         )
-        restored = update_status_from_builtins(update_status_to_builtins(original))
+        restored = update_status_from_json(msgspec.json.encode(update_status_to_builtins(original)))
 
         assert restored.state == original.state
         assert restored.phase == original.phase
@@ -56,7 +56,7 @@ class TestUpdateJobStatusRoundTrip:
 
     def test_from_payload_empty_yields_idle_defaults(self) -> None:
         """Decoding an empty payload must produce a blank idle status."""
-        status = update_status_from_builtins({})
+        status = update_status_from_json(msgspec.json.encode({}))
 
         assert status.state == UpdateState.idle
         assert status.phase == UpdatePhase.idle
@@ -79,7 +79,7 @@ class TestUpdateJobStatusRoundTrip:
             "phase": "installing",
             "log_tail": long_tail,
         }
-        status = update_status_from_builtins(data)
+        status = update_status_from_json(msgspec.json.encode(data))
 
         # Only the last 50 lines should be kept.
         assert len(status.log_tail) == 50
@@ -112,7 +112,7 @@ class TestUpdateJobStatusRoundTrip:
         expected_message: str,
     ) -> None:
         with pytest.raises(msgspec.ValidationError, match=expected_message):
-            update_status_from_builtins(payload)
+            update_status_from_json(msgspec.json.encode(payload))
 
     def test_finished_at_must_not_precede_started_at(self) -> None:
         with pytest.raises(
@@ -128,53 +128,59 @@ class TestUpdateJobStatusRoundTrip:
 
     def test_from_payload_rejects_legacy_nested_shapes(self) -> None:
         with pytest.raises(msgspec.ValidationError):
-            update_status_from_builtins(
-                {
-                    "state": "failed",
-                    "phase": "installing",
-                    "transport": "usb_internet",
-                    "started_at": "10.5",
-                    "finished_at": "20.5",
-                    "last_success_at": "7",
-                    "phase_started_at": "12.25",
-                    "updated_at": "18",
-                    "ssid": 123,
-                    "uplink_interface": ["usb0"],
-                    "issues": [
-                        "bad",
-                        {"phase": "downloading", "message": "warn", "detail": 99},
-                        {"phase": "installing", "message": "retry"},
-                    ],
-                    "log_tail": ["ok", 7, None],
-                    "exit_code": "5",
-                    "runtime": {
-                        "version": 9,
-                        "commit": None,
-                        "assets_verified": 1,
-                        "has_packaged_static": "true",
+            update_status_from_json(
+                msgspec.json.encode(
+                    {
+                        "state": "failed",
+                        "phase": "installing",
+                        "transport": "usb_internet",
+                        "started_at": "10.5",
+                        "finished_at": "20.5",
+                        "last_success_at": "7",
+                        "phase_started_at": "12.25",
+                        "updated_at": "18",
+                        "ssid": 123,
+                        "uplink_interface": ["usb0"],
+                        "issues": [
+                            "bad",
+                            {"phase": "downloading", "message": "warn", "detail": 99},
+                            {"phase": "installing", "message": "retry"},
+                        ],
+                        "log_tail": ["ok", 7, None],
+                        "exit_code": "5",
+                        "runtime": {
+                            "version": 9,
+                            "commit": None,
+                            "assets_verified": 1,
+                            "has_packaged_static": "true",
+                        },
                     },
-                },
+                )
             )
 
     def test_from_payload_rejects_legacy_boolish_runtime_flags(self) -> None:
         with pytest.raises(msgspec.ValidationError):
-            update_status_from_builtins(
-                {
-                    "runtime": {
-                        "assets_verified": 1,
-                        "has_packaged_static": "true",
+            update_status_from_json(
+                msgspec.json.encode(
+                    {
+                        "runtime": {
+                            "assets_verified": 1,
+                            "has_packaged_static": "true",
+                        },
                     },
-                },
+                )
             )
 
     def test_from_payload_accepts_canonical_runtime_flags(self) -> None:
-        status = update_status_from_builtins(
-            {
-                "runtime": {
-                    "assets_verified": True,
-                    "has_packaged_static": True,
+        status = update_status_from_json(
+            msgspec.json.encode(
+                {
+                    "runtime": {
+                        "assets_verified": True,
+                        "has_packaged_static": True,
+                    },
                 },
-            },
+            )
         )
 
         assert status.runtime == UpdateRuntimeDetails(

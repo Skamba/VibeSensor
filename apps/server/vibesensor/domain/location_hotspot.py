@@ -14,7 +14,6 @@ from typing import ClassVar
 
 __all__ = [
     "LocationHotspot",
-    "LocationHotspotRow",
     "LocationIntensitySummary",
     "PhaseIntensitySummary",
     "StrengthBucketDistribution",
@@ -68,15 +67,6 @@ class LocationHotspot:
     def has_clear_separation(self) -> bool:
         """Evidence is not spatially weak or ambiguous."""
         return not self.weak_spatial_separation and not self.ambiguous
-
-    @property
-    def is_well_localized(self) -> bool:
-        """Evidence is clearly concentrated at one location."""
-        if self.strongest_location.strip().lower() in self._UNKNOWN_LOCATIONS:
-            return False
-        return self.has_clear_separation and (
-            self.dominance_ratio is None or self.dominance_ratio >= 0.5
-        )
 
     @property
     def is_actionable(self) -> bool:
@@ -222,17 +212,6 @@ class PhaseIntensitySummary:
 
 
 @dataclass(frozen=True, slots=True)
-class LocationHotspotRow:
-    """Precomputed location hotspot row for report/PDF mapping."""
-
-    location: str = ""
-    count: int = 0
-    unit: str = "db"
-    peak_value: float = 0.0
-    mean_value: float = 0.0
-
-
-@dataclass(frozen=True, slots=True)
 class LocationIntensitySummary:
     """Typed internal per-location intensity summary for diagnostics."""
 
@@ -266,20 +245,6 @@ class LocationIntensitySummary:
             0.0 <= self.usable_sample_coverage_ratio <= 1.0
         ):
             raise ValueError("usable_sample_coverage_ratio must be in [0.0, 1.0]")
-
-    @property
-    def diagnostic_sample_count(self) -> int:
-        return (
-            self.usable_sample_count if self.usable_sample_count is not None else self.sample_count
-        )
-
-    @property
-    def diagnostic_sample_coverage_ratio(self) -> float:
-        return (
-            self.usable_sample_coverage_ratio
-            if self.usable_sample_coverage_ratio is not None
-            else self.sample_coverage_ratio
-        )
 
     @property
     def diagnostic_sample_coverage_warning(self) -> bool:

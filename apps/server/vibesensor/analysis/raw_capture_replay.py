@@ -12,7 +12,7 @@ from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
+from vibesensor.recording.raw_capture import RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
     assess_raw_capture_loss_policy,
@@ -378,7 +378,7 @@ def _rebuild_sample(
                 reason=coverage_reason,
             ),
         )
-    window_i16 = _assemble_window_samples(sensor_data=sensor_data, segments=window.segments)
+    window_i16 = assemble_raw_window_samples(sensor_data=sensor_data, segments=window.segments)
     if window_i16.shape[0] != fft_n:
         return (
             sample,
@@ -515,7 +515,7 @@ def _build_replay_context(
     fft_n: int,
 ) -> _ReplayBuildContext:
     timelines = {
-        sensor.manifest.client_id: _build_sensor_timeline(
+        sensor.manifest.client_id: build_raw_sensor_timeline(
             raw_capture, sensor_id=sensor.manifest.client_id
         )
         for sensor in raw_capture.sensors
@@ -601,7 +601,7 @@ def _summarize_raw_timelines(
             1 for timeline in timelines.values() if raw_timeline_is_legacy(timeline)
         ),
         sync_unverified_sensor_count=sum(
-            1 for timeline in timelines.values() if _timeline_has_unverified_sync(timeline)
+            1 for timeline in timelines.values() if raw_timeline_has_unverified_sync(timeline)
         ),
         stale_sync_sensor_count=sum(
             1
@@ -718,10 +718,6 @@ def _build_fft_unavailable_replay_result(
     )
 
 
-def _build_sensor_timeline(raw_capture: RawRunCapture, *, sensor_id: str) -> RawSensorTimeline:
-    return build_raw_sensor_timeline(raw_capture, sensor_id=sensor_id)
-
-
 def _resolve_window(
     *,
     timeline: RawSensorTimeline,
@@ -757,17 +753,6 @@ def _requested_end_us(
     if sample.t_s is None or not isfinite(sample.t_s) or sample.t_s <= 0:
         return None, "legacy_t_s"
     return run_start_monotonic_us + (float(sample.t_s) * 1_000_000.0), "legacy_t_s"
-
-
-def _assemble_window_samples(
-    *,
-    sensor_data: RawCaptureSensorData,
-    segments: tuple[RawWindowSegment, ...],
-) -> np.ndarray:
-    return assemble_raw_window_samples(
-        sensor_data=sensor_data,
-        segments=segments,
-    )
 
 
 def _replay_confidence(
@@ -970,10 +955,6 @@ def _build_replay_warnings(
         )
     )
     return tuple(warnings)
-
-
-def _timeline_has_unverified_sync(timeline: RawSensorTimeline) -> bool:
-    return raw_timeline_has_unverified_sync(timeline)
 
 
 def _compute_strength_metrics(

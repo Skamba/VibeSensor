@@ -30,10 +30,6 @@ from vibesensor.common.json_types import JsonObject
 __all__ = [
     "AsJsonObject",
     "JsonContract",
-    "require_non_empty_text",
-    "require_non_negative",
-    "require_positive",
-    "require_ratio",
 ]
 
 
@@ -100,34 +96,3 @@ def _serialize_as_json_object(  # type: ignore[no-untyped-def]
 AsJsonObject = WrapSerializer(_serialize_as_json_object)
 """Annotate a ``JsonContract`` field inside a pydantic/HTTP model with this so the
 response carries exactly the persisted JSON (``None`` fields omitted)."""
-
-
-def require_non_empty_text(contract: object, *field_names: str) -> None:
-    """Raise ``ValueError`` unless each named field is a non-blank string."""
-    for name in field_names:
-        value = getattr(contract, name)
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError(f"{name} must be a non-empty string")
-
-
-def require_non_negative(contract: object, *field_names: str) -> None:
-    """Raise ``ValueError`` when a named numeric field is negative (``None`` passes)."""
-    for name in field_names:
-        value = getattr(contract, name)
-        if value is not None and value < 0:
-            raise ValueError(f"{name} must be >= 0")
-
-
-def require_positive(contract: object, *field_names: str) -> None:
-    """Raise ``ValueError`` unless each named numeric field is > 0."""
-    for name in field_names:
-        if getattr(contract, name) <= 0:
-            raise ValueError(f"{name} must be > 0")
-
-
-def require_ratio(contract: object, *field_names: str) -> None:
-    """Raise ``ValueError`` when a named field is outside [0, 1] (``None`` passes)."""
-    for name in field_names:
-        value = getattr(contract, name)
-        if value is not None and not 0.0 <= value <= 1.0:
-            raise ValueError(f"{name} must be in [0, 1]")

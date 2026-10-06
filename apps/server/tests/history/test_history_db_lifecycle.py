@@ -250,8 +250,6 @@ def test_startup_quick_check_logs_corruption(
     try:
         assert "quick_check reported corruption" in caplog.text
         assert db.corruption_detected is True
-        assert db.corruption_details is not None
-        assert db.corruption_details in caplog.text
     finally:
         db.close()
 
@@ -267,8 +265,8 @@ def test_startup_quick_check_reports_corruption_via_callback(
     )
     try:
         assert db.corruption_detected is True
-        assert db.corruption_details is not None
-        assert reported == [db.corruption_details]
+        assert len(reported) == 1
+        assert reported[0]
     finally:
         db.close()
 

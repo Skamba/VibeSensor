@@ -11,10 +11,9 @@ from typing import Any, cast
 from unittest.mock import MagicMock, create_autospec
 
 from fastapi import FastAPI
-from test_support.analysis import summarize_mappings
+from test_support.analysis import summarize_mappings, summarize_sensor_frames
 from test_support.persisted_analysis import make_persisted_analysis
 
-from vibesensor.analysis.summarize import summarize_sensor_frames
 from vibesensor.clock.browser_clock import BrowserClockCorrector
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.exports import HistoryExportService

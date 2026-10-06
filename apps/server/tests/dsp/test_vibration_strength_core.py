@@ -15,7 +15,6 @@ from vibesensor.dsp.vibration_strength import (
     median,
     noise_floor_amp_p20_g,
     percentile,
-    relative_level_db_scalar,
 )
 
 # -- median -------------------------------------------------------------------
@@ -161,20 +160,3 @@ class TestNoiseFloorAmpP20G:
         assert result["top_peaks"]
         assert result["top_peaks"][0]["hz"] == pytest.approx(10.0)
         assert result["noise_floor_amp_g"] == pytest.approx(0.02)
-
-
-# -- relative_level_db_scalar --------------------------------------------------
-
-
-class TestRelativeLevelDbScalar:
-    def test_strongest_sensor_stays_at_zero_db(self) -> None:
-        assert relative_level_db_scalar(
-            level_amp_g=0.12,
-            reference_amp_g=0.12,
-        ) == pytest.approx(0.0)
-
-    def test_weaker_sensor_returns_negative_relative_db(self) -> None:
-        assert relative_level_db_scalar(level_amp_g=0.06, reference_amp_g=0.12) == pytest.approx(
-            -5.6,
-            abs=0.3,
-        )

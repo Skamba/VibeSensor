@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import pytest
 
 from vibesensor.analysis._run_input import build_diagnostics_run_input
 from vibesensor.analysis.run_analysis import RunAnalysis
-from vibesensor.analysis.summarize import analysis_result_to_summary
+from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseInterval, DrivingSegment
 from vibesensor.domain.finding import Finding
-from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.run_capture import RunCapture, RunSetup
 from vibesensor.domain.sensor import Sensor
 from vibesensor.domain.test_run import TestRun
@@ -66,16 +63,7 @@ class TestTestRunQueries:
         assert result.primary_finding == diag
         assert result.diagnostic_findings == (first, diag)
         assert result.non_reference_findings == (first, diag, info)
-        assert result.primary_source == VibrationSource.WHEEL_TIRE
-        assert result.primary_location == "Left Front"
         assert result.sensor_count == 0
-        assert result.total_usable_samples == 0
-
-    def test_empty_run_has_no_primary(self) -> None:
-        empty = _make_test_run(findings=(), top_causes=())
-
-        assert empty.primary_source is None
-        assert empty.primary_location is None
 
     def test_effective_top_causes_prefer_actionable_top_causes(self) -> None:
         actionable = _make_test_run_finding("F001")
@@ -88,63 +76,6 @@ class TestTestRunQueries:
         assert _make_test_run(
             findings=(reference_only,), top_causes=(reference_only,)
         ).effective_top_causes() == (reference_only,)
-
-    @pytest.mark.parametrize(
-        ("reference_id", "gaps", "no_gaps"),
-        [
-            pytest.param(
-                "REF_SPEED",
-                (VibrationSource.WHEEL_TIRE, VibrationSource.ENGINE),
-                (),
-                id="speed",
-            ),
-            pytest.param(
-                "REF_WHEEL",
-                (VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE),
-                (VibrationSource.ENGINE,),
-                id="wheel",
-            ),
-            pytest.param(
-                "REF_ENGINE",
-                (VibrationSource.ENGINE,),
-                (VibrationSource.WHEEL_TIRE,),
-                id="engine",
-            ),
-        ],
-    )
-    def test_reference_gap_is_source_relevant(
-        self,
-        reference_id: str,
-        gaps: tuple[VibrationSource, ...],
-        no_gaps: tuple[VibrationSource, ...],
-    ) -> None:
-        diag = _make_test_run_finding("F001", confidence=0.80)
-        reference = _make_test_run_finding(reference_id, suspected_source="unknown")
-        assert reference.is_reference and not diag.is_reference
-
-        result = _make_test_run(findings=(reference, diag), top_causes=(diag,))
-
-        assert all(result.has_relevant_reference_gap(source) for source in gaps)
-        assert not any(result.has_relevant_reference_gap(source) for source in no_gaps)
-
-    def test_top_strength_db(self) -> None:
-        strong = dataclasses.replace(
-            _make_test_run_finding("F001", confidence=0.80), vibration_strength_db=12.5
-        )
-        weaker = dataclasses.replace(
-            _make_test_run_finding("F002", suspected_source="engine", confidence=0.60),
-            vibration_strength_db=8.0,
-        )
-        assert (
-            _make_test_run(findings=(strong, weaker), top_causes=(strong,)).top_strength_db()
-            == 12.5
-        )
-
-        unmeasured = _make_test_run_finding("F003", suspected_source="engine", confidence=0.50)
-        assert (
-            _make_test_run(findings=(unmeasured,), top_causes=(unmeasured,)).top_strength_db()
-            is None
-        )
 
     def test_run_analysis_builds_test_run_and_diagnostic_case(self) -> None:
         metadata = {
@@ -176,8 +107,7 @@ class TestTestRunQueries:
         assert result.test_run.run_id == summary["run_id"] == "domain-case-guard"
         assert len(result.test_run.findings) == len(summary["findings"])
         assert isinstance(result.diagnostic_case, DiagnosticCase)
-        assert result.diagnostic_case.primary_run is not None
-        assert result.diagnostic_case.primary_run.run_id == result.test_run.run_id
+        assert result.diagnostic_case.test_runs == (result.test_run,)
         assert result.diagnostic_case.car is not None
         assert result.diagnostic_case.car.name == "Guard Car"
 
@@ -219,8 +149,7 @@ class TestTestRunWithValueObjects:
         }
         result = reconstruct_test_run_from_summary(summary)
         assert result.suitability is not None
-        assert result.suitability.overall == "caution"
-        assert len(result.suitability.checks) == 2
+        assert [check.state for check in result.suitability.checks] == ["pass", "warn"]
 
     def test_from_summary_no_speed_stats(self) -> None:
         summary = {"run_id": "test-123", "findings": [], "top_causes": []}
@@ -260,45 +189,7 @@ class TestTestRunSensors:
 
 
 class TestDrivingSegment:
-    """Tests for DrivingSegment diagnostic-usability semantics."""
-
-    @pytest.mark.parametrize(
-        ("segment", "expected"),
-        [
-            pytest.param(
-                DrivingSegment(
-                    phase=DrivingPhase.CRUISE,
-                    start_idx=0,
-                    end_idx=99,
-                    sample_count=100,
-                ),
-                True,
-                id="cruise-usable",
-            ),
-            pytest.param(
-                DrivingSegment(
-                    phase=DrivingPhase.IDLE,
-                    start_idx=0,
-                    end_idx=99,
-                    sample_count=100,
-                ),
-                False,
-                id="idle-not-usable",
-            ),
-            pytest.param(
-                DrivingSegment(
-                    phase=DrivingPhase.CRUISE,
-                    start_idx=0,
-                    end_idx=4,
-                    sample_count=5,
-                ),
-                False,
-                id="too-few-samples",
-            ),
-        ],
-    )
-    def test_diagnostic_usability_cases(self, segment: DrivingSegment, expected: bool) -> None:
-        assert segment.is_diagnostically_usable is expected
+    """Tests for DrivingSegment value semantics."""
 
     @pytest.mark.parametrize(
         ("segment", "expected"),
@@ -328,18 +219,6 @@ class TestDrivingSegment:
     ) -> None:
         assert segment.duration_s == expected
 
-    @pytest.mark.parametrize(
-        ("phase", "expected"),
-        [
-            pytest.param(DrivingPhase.CRUISE, True, id="cruise"),
-            pytest.param(DrivingPhase.ACCELERATION, False, id="acceleration"),
-            pytest.param(DrivingPhase.IDLE, False, id="idle"),
-        ],
-    )
-    def test_is_cruise_property_cases(self, phase: DrivingPhase, expected: bool) -> None:
-        segment = DrivingSegment(phase=phase, start_idx=0, end_idx=10)
-        assert segment.is_cruise is expected
-
 
 class TestDrivingPhaseInterval:
     @pytest.mark.parametrize(
@@ -362,35 +241,3 @@ class TestDrivingPhaseInterval:
     def test_temporal_ordering_invariant(self) -> None:
         with pytest.raises(ValueError, match="start_t_s"):
             DrivingPhaseInterval(phase=DrivingPhase.CRUISE, start_t_s=20.0, end_t_s=10.0)
-
-
-class TestTestRunSegments:
-    """Tests for TestRun segment aggregate queries."""
-
-    def test_usable_segments_filters_idle(self) -> None:
-        segments = (
-            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50),
-            DrivingSegment(phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50),
-            DrivingSegment(
-                phase=DrivingPhase.ACCELERATION, start_idx=100, end_idx=119, sample_count=20
-            ),
-        )
-        tr = TestRun(
-            capture=RunCapture(run_id="r1"),
-            driving_segments=segments,
-        )
-        usable = tr.usable_segments
-        assert len(usable) == 2
-        assert all(s.phase is not DrivingPhase.IDLE for s in usable)
-
-    def test_total_usable_samples(self) -> None:
-        segments = (
-            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=0, end_idx=49, sample_count=50),
-            DrivingSegment(phase=DrivingPhase.IDLE, start_idx=50, end_idx=99, sample_count=50),
-            DrivingSegment(phase=DrivingPhase.CRUISE, start_idx=100, end_idx=129, sample_count=30),
-        )
-        tr = TestRun(
-            capture=RunCapture(run_id="r1"),
-            driving_segments=segments,
-        )
-        assert tr.total_usable_samples == 80

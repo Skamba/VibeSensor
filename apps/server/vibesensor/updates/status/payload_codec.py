@@ -16,7 +16,6 @@ from vibesensor.common.json_types import (
     is_json_object,
 )
 from vibesensor.common.process_settings import (
-    DEFAULT_UPDATE_STATE_PATH,
     load_update_env_settings,
 )
 from vibesensor.updates.models import (
@@ -29,12 +28,10 @@ from vibesensor.updates.models import (
 )
 
 __all__ = [
-    "DEFAULT_STATE_PATH",
     "UpdateIssuePayload",
     "UpdateJobStatusPayload",
     "UpdateRuntimeDetailsPayload",
     "UpdateStateStore",
-    "update_status_from_builtins",
     "update_status_from_json",
     "update_status_to_builtins",
     "update_status_to_json",
@@ -42,8 +39,6 @@ __all__ = [
 ]
 
 LOGGER = logging.getLogger(__name__)
-
-DEFAULT_STATE_PATH = str(DEFAULT_UPDATE_STATE_PATH)
 
 
 class UpdateIssuePayload(msgspec.Struct, kw_only=True, frozen=True):
@@ -131,12 +126,6 @@ def update_status_to_json(
     return msgspec.json.encode(update_status_to_payload(status, now_s=now_s)) + b"\n"
 
 
-def update_status_from_builtins(data: object) -> UpdateJobStatus:
-    """Decode a JSON-like updater status object into the domain status model."""
-
-    return _status_from_payload(_convert_status_payload_object(data))
-
-
 def update_status_from_json(raw: bytes | str) -> UpdateJobStatus:
     """Decode persisted updater status JSON into the domain status model."""
 
@@ -152,10 +141,6 @@ def _status_from_payload(payload: UpdateJobStatusPayload) -> UpdateJobStatus:
         from_attributes=True,
         strict=False,
     )
-
-
-def _convert_status_payload_object(data: object) -> UpdateJobStatusPayload:
-    return msgspec.convert(data, type=UpdateJobStatusPayload, strict=True)
 
 
 def _phase_elapsed_s(status: UpdateJobStatus, *, now_s: float | None) -> float | None:

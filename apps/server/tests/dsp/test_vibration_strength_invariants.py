@@ -12,7 +12,6 @@ from hypothesis import strategies as st
 from vibesensor.dsp.vibration_strength import (
     compute_db,
     compute_db_or_none,
-    relative_level_db_scalar,
     vibration_strength_db_scalar,
 )
 
@@ -168,9 +167,6 @@ def test_public_db_wrappers_match_scalar_contract(peak: float, floor: float) -> 
         floor_amp_g=floor,
     )
     assert compute_db(peak, floor) == pytest.approx(expected)
-    assert relative_level_db_scalar(level_amp_g=peak, reference_amp_g=floor) == pytest.approx(
-        expected
-    )
     assert compute_db_or_none(peak, floor) == pytest.approx(expected)
 
 

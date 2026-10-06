@@ -6,7 +6,6 @@ import pytest
 
 from vibesensor.domain.location_hotspot import (
     LocationHotspot,
-    LocationHotspotRow,
     LocationIntensitySummary,
     StrengthBucketDistribution,
 )
@@ -63,38 +62,6 @@ class TestComputeConfidence:
 
 
 class TestLocationHotspotValueObject:
-    @pytest.mark.parametrize(
-        ("hotspot", "expected"),
-        [
-            pytest.param(
-                LocationHotspot(
-                    strongest_location="front_left",
-                    dominance_ratio=0.8,
-                    weak_spatial_separation=False,
-                    ambiguous=False,
-                ),
-                True,
-                id="clear-location",
-            ),
-            pytest.param(
-                LocationHotspot(strongest_location="unknown"),
-                False,
-                id="unknown-location",
-            ),
-            pytest.param(LocationHotspot(strongest_location=""), False, id="blank-location"),
-            pytest.param(
-                LocationHotspot(
-                    strongest_location="front_left",
-                    weak_spatial_separation=True,
-                ),
-                False,
-                id="weak-spatial-separation",
-            ),
-        ],
-    )
-    def test_is_well_localized_cases(self, hotspot: LocationHotspot, expected: bool) -> None:
-        assert hotspot.is_well_localized is expected
-
     @pytest.mark.parametrize(
         ("hotspot", "expected"),
         [
@@ -268,7 +235,6 @@ class TestLocationHotspotValueObject:
         assert hotspot.ambiguous is True
         assert hotspot.alternative_locations == ("Front Left", "Front Right")
         assert not hotspot.is_actionable
-        assert not hotspot.is_well_localized
 
     @pytest.mark.parametrize(
         ("location_count", "expected"),
@@ -364,7 +330,6 @@ class TestLocationHotspotValueObject:
         assert hotspot.ambiguous is True
         assert hotspot.alternative_locations == ("front_right",)
         assert not hotspot.is_actionable
-        assert not hotspot.is_well_localized
 
     def test_from_analysis_inputs_actionable_when_clear_and_known(self) -> None:
         hotspot = LocationHotspot.from_analysis_inputs(
@@ -375,7 +340,6 @@ class TestLocationHotspotValueObject:
             ambiguous=False,
         )
         assert hotspot.is_actionable
-        assert hotspot.is_well_localized
 
     def test_promote_near_tie_marks_hotspot_ambiguous(self) -> None:
         hotspot = LocationHotspot.from_analysis_inputs(strongest_location="front_left")
@@ -444,7 +408,7 @@ class TestLocationHotspotValueObject:
 
 
 class TestLocationIntensitySummaryRows:
-    def test_diagnostic_fields_prefer_usable_sample_metrics(self) -> None:
+    def test_coverage_warning_prefers_usable_sample_metrics(self) -> None:
         summary = LocationIntensitySummary(
             location="front_left",
             sample_count=100,
@@ -454,19 +418,15 @@ class TestLocationIntensitySummaryRows:
             usable_sample_coverage_ratio=0.75,
             usable_sample_coverage_warning=True,
         )
-        assert summary.diagnostic_sample_count == 80
-        assert summary.diagnostic_sample_coverage_ratio == 0.75
         assert summary.diagnostic_sample_coverage_warning is True
 
-    def test_diagnostic_fields_fall_back_to_raw_sample_metrics(self) -> None:
+    def test_coverage_warning_falls_back_to_raw_sample_metrics(self) -> None:
         summary = LocationIntensitySummary(
             location="front_left",
             sample_count=100,
             sample_coverage_ratio=0.9,
             sample_coverage_warning=True,
         )
-        assert summary.diagnostic_sample_count == 100
-        assert summary.diagnostic_sample_coverage_ratio == 0.9
         assert summary.diagnostic_sample_coverage_warning is True
 
     @pytest.mark.parametrize(
@@ -496,8 +456,3 @@ class TestLocationIntensitySummaryRows:
         assert summary.strength_bucket_distribution == StrengthBucketDistribution()
         assert summary.strength_bucket_distribution.total == 0
         assert summary.phase_intensity is None
-
-    def test_location_hotspot_row_defaults_to_db_unit(self) -> None:
-        row = LocationHotspotRow(location="front-left", count=2, peak_value=18.0, mean_value=12.0)
-
-        assert row.unit == "db"

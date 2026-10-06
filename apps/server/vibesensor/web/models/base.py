@@ -20,9 +20,3 @@ class _StrictBase(BaseModel):
     """Base for response models that must reject undocumented extra fields."""
 
     model_config = ConfigDict(extra="forbid")
-
-
-class _ExtraAllowBase(BaseModel):
-    """Base for models that accept arbitrary extra fields."""
-
-    model_config = ConfigDict(extra="allow")

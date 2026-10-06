@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.dsp.fft_analysis import noise_floor
 from vibesensor.live.buffers import MAX_CLIENT_SAMPLE_RATE_HZ
 from vibesensor.live.processor import SignalProcessor
 
@@ -302,21 +301,6 @@ def test_compute_metrics_with_data() -> None:
     assert "z" in metrics
     assert "combined" in metrics
     assert metrics["x"]["rms"] > 0
-
-
-# -- _noise_floor edge cases ---------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("arr", "expected"),
-    [
-        pytest.param(np.array([], dtype=np.float32), 0.0, id="empty"),
-        pytest.param(np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"),
-        pytest.param(np.array([5.0], dtype=np.float32), 5.0, id="single_element"),
-    ],
-)
-def test_noise_floor_edge_cases(arr: np.ndarray, expected: float) -> None:
-    assert noise_floor(arr) == expected
 
 
 # -- evict_clients -------------------------------------------------------------

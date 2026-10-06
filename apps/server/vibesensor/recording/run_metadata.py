@@ -60,7 +60,6 @@ from vibesensor.settings.car_config import (
 __all__ = [
     "run_metadata_from_json",
     "run_metadata_from_mapping",
-    "run_metadata_to_json_bytes",
     "run_metadata_to_json_object",
 ]
 
@@ -362,17 +361,6 @@ def _run_start_clock_from_payload(payload: object) -> RunStartClock | None:
     ):
         return None
     return RunStartClock(boot_id=boot_id, monotonic_s=float(monotonic_s))
-
-
-def run_metadata_to_json_bytes(metadata: RunMetadata) -> bytes:
-    """Encode typed run metadata through the canonical msgspec boundary."""
-
-    record = msgspec.convert(
-        run_metadata_to_json_object(metadata),
-        type=_RunMetadataRecord,
-        strict=False,
-    )
-    return msgspec.json.encode(record)
 
 
 def run_car_metadata_from_mapping(payload: object) -> RunCarMetadata | None:

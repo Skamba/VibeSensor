@@ -23,7 +23,6 @@ def test_on_connected_returns_connected_state_and_keeps_backoff() -> None:
         "current_reconnect_delay": 2.0,
     }
     assert transition.sleep_before_retry is None
-    assert lifecycle.reconnect_delay == 2.0
 
 
 def test_on_stream_disconnected_resets_backoff_and_waits_initial_delay() -> None:
@@ -34,7 +33,7 @@ def test_on_stream_disconnected_resets_backoff_and_waits_initial_delay() -> None
 
     assert transition.changes == _expected_disconnected_fields()
     assert transition.sleep_before_retry == 0.5
-    assert lifecycle.reconnect_delay == 0.5
+    assert lifecycle.on_connection_error(RuntimeError("y")).sleep_before_retry == 0.5
 
 
 @pytest.mark.parametrize(
@@ -102,17 +101,15 @@ def test_refused_connection_retries_at_initial_delay_without_advancing_backoff()
 def test_reset_delay_restores_initial_delay_after_backoff() -> None:
     lifecycle = TransportLifecycle(initial_delay=0.1)
     lifecycle.on_connection_error(RuntimeError("x"))
-    lifecycle.on_connection_error(RuntimeError("y"))
-    assert lifecycle.reconnect_delay > 0.1
+    assert lifecycle.on_connection_error(RuntimeError("y")).sleep_before_retry > 0.1
 
     lifecycle.reset_delay()
 
-    assert lifecycle.reconnect_delay == pytest.approx(0.1)
+    assert lifecycle.on_connection_error(RuntimeError("z")).sleep_before_retry == pytest.approx(0.1)
 
 
 def test_default_policy_uses_module_reconnect_delay() -> None:
     lifecycle = TransportLifecycle()
-    assert lifecycle.reconnect_delay == GPS_RECONNECT_DELAY_S
     transition = lifecycle.on_connected()
     assert transition.changes["current_reconnect_delay"] == GPS_RECONNECT_DELAY_S
 

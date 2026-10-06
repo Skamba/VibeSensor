@@ -6,7 +6,9 @@ from vibesensor.domain.run_capture import ConfigurationSnapshot
 from vibesensor.recording.run_schema import RunMetadata
 
 
-def _configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> ConfigurationSnapshot:
+def configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> ConfigurationSnapshot:
+    """Project typed run metadata into the domain configuration snapshot."""
+
     order_reference_spec = metadata.order_reference_spec
     return ConfigurationSnapshot(
         sensor_model=_non_empty_text(metadata.sensor_model),
@@ -22,25 +24,6 @@ def _configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> Configur
         final_drive_ratio=metadata.final_drive_ratio,
         tire_spec=order_reference_spec.tire_spec if order_reference_spec is not None else None,
     )
-
-
-def configuration_snapshot_from_metadata(
-    metadata: RunMetadata,
-) -> ConfigurationSnapshot:
-    """Project typed run metadata into the domain configuration snapshot."""
-
-    if not isinstance(metadata, RunMetadata):
-        raise TypeError(
-            "configuration_snapshot_from_metadata expects RunMetadata, "
-            f"got {type(metadata).__name__}"
-        )
-    return _configuration_snapshot_from_run_metadata(metadata)
-
-
-def configuration_snapshot_from_run_metadata(metadata: RunMetadata) -> ConfigurationSnapshot:
-    """Project typed run metadata into the domain configuration snapshot."""
-
-    return _configuration_snapshot_from_run_metadata(metadata)
 
 
 def _non_empty_text(value: str | None) -> str | None:

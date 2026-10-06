@@ -87,8 +87,8 @@ setup through `SignalMetricsComputer`, which extends the shared
   `scipy.signal.windows.hann(config.fft_n)`.
 - `fft_scale = 2.0 / max(1.0, sum(window))` keeps amplitudes normalized after
   windowing.
-- `fft_params(sample_rate_hz)` caches the frequency slice and valid FFT indices
-  per sample rate so repeated ticks do not rebuild them.
+- `SpectralAnalysisComputer` caches the frequency slice, valid FFT indices and
+  strength-range mask per sample rate so repeated ticks do not rebuild them.
 
 `apps/server/vibesensor/live/compute.py` coordinates live snapshot
 handling and metric commits, while the pure DSP steps stay in shared helpers:

@@ -97,11 +97,7 @@ class TestCaseLifecycle:
         assert case.test_runs[0].capture.setup.configuration_snapshot == snap_a
         assert case.test_runs[1].capture.setup.configuration_snapshot == snap_b
 
-    def test_case_with_no_runs_has_no_primary(self) -> None:
-        case = DiagnosticCase.start()
-        assert case.primary_run is None
-
-    def test_primary_run_advances_without_mutating_previous_case(self) -> None:
+    def test_add_run_appends_without_mutating_previous_case(self) -> None:
         first = _run(
             "run-1",
             findings=(_finding("F001"),),
@@ -121,15 +117,15 @@ class TestCaseLifecycle:
 
         assert initial_case.test_runs == ()
         assert first_case.test_runs == (first,)
-        assert first_case.primary_run == first
         assert latest_case.test_runs == (first, second)
-        assert latest_case.primary_run == second
-        assert latest_case.primary_run.primary_source is VibrationSource.DRIVELINE
-        assert latest_case.primary_run.primary_location == "center"
-        assert latest_case.primary_run.recommended_actions == (
+        latest_run = latest_case.test_runs[-1]
+        assert latest_run.primary_finding is not None
+        assert latest_run.primary_finding.suspected_source is VibrationSource.DRIVELINE
+        assert latest_run.primary_finding.strongest_location == "center"
+        assert latest_run.recommended_actions == (
             _action("inspect-driveline", "Inspect driveline joints"),
         )
-        assert latest_case.primary_run.suitability == _failing_suitability()
+        assert latest_run.suitability == _failing_suitability()
 
 
 # ── Impossible aggregate state tests ────────────────────────────────────────
@@ -279,34 +275,6 @@ class TestImpossibleSuitabilityStates:
         assert c.state == "banana"
         assert not c.passed
         assert not c.failed
-        assert not c.is_warning
         assert c.details_dict == {"stride": 4}
         assert c.explanation_i18n_ref() == ""
-        assert suitability.overall == "pass"
-        assert suitability.is_usable
-        assert suitability.failed_checks == ()
-        assert suitability.warning_checks == ()
-
-    @pytest.mark.parametrize(
-        ("states", "expected_overall", "expected_usable"),
-        [
-            pytest.param((), "pass", True, id="empty"),
-            pytest.param(("pass", "pass"), "pass", True, id="all-pass"),
-            pytest.param(("pass", "warn"), "caution", True, id="warning-present"),
-            pytest.param(("pass", "fail"), "fail", False, id="failure-present"),
-        ],
-    )
-    def test_overall_state_aggregation(
-        self,
-        states: tuple[str, ...],
-        expected_overall: str,
-        expected_usable: bool,
-    ) -> None:
-        s = RunSuitability(
-            checks=tuple(
-                SuitabilityCheck(check_key=f"check-{index}", state=state)
-                for index, state in enumerate(states)
-            )
-        )
-        assert s.overall == expected_overall
-        assert s.is_usable is expected_usable
+        assert suitability.checks == (c,)

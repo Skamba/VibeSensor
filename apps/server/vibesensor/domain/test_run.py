@@ -81,16 +81,6 @@ class TestRun:
         diagnostics = self.diagnostic_findings
         return diagnostics[0] if diagnostics else None
 
-    @property
-    def primary_source(self) -> VibrationSource | None:
-        finding = self.primary_finding
-        return finding.suspected_source if finding is not None else None
-
-    @property
-    def primary_location(self) -> str | None:
-        finding = self.primary_finding
-        return finding.strongest_location if finding is not None else None
-
     _NON_FAULT_SOURCES = frozenset(
         {VibrationSource.BASELINE_NOISE, VibrationSource.TRANSIENT_IMPACT}
     )
@@ -169,43 +159,6 @@ class TestRun:
         if non_ref_tc:
             return non_ref_tc
         return self.top_causes
-
-    def has_relevant_reference_gap(self, primary_source: VibrationSource | str) -> bool:
-        source_str = str(primary_source).strip().lower()
-        for finding in self.findings:
-            if not finding.is_reference:
-                continue
-            fid = finding.finding_id.strip().upper()
-            if fid in {"REF_SPEED", "REF_SAMPLE_RATE"}:
-                return True
-            if fid == "REF_WHEEL" and source_str in {
-                str(VibrationSource.WHEEL_TIRE),
-                str(VibrationSource.DRIVELINE),
-                str(VibrationSource.BRAKES),
-            }:
-                return True
-            if fid == "REF_ENGINE" and source_str == str(VibrationSource.ENGINE):
-                return True
-        return False
-
-    def top_strength_db(self) -> float | None:
-        for finding in self.effective_top_causes():
-            if finding.vibration_strength_db is not None:
-                return finding.vibration_strength_db
-        for finding in self.findings:
-            if finding.vibration_strength_db is not None:
-                return finding.vibration_strength_db
-        return None
-
-    @property
-    def usable_segments(self) -> tuple[DrivingSegment, ...]:
-        """Segments that can contribute to diagnostic conclusions."""
-        return tuple(s for s in self.driving_segments if s.is_diagnostically_usable)
-
-    @property
-    def total_usable_samples(self) -> int:
-        """Total sample count across diagnostically usable segments."""
-        return sum(s.sample_count for s in self.usable_segments)
 
     @property
     def recommended_actions(self) -> tuple[RecommendedAction, ...]:

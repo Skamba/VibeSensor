@@ -7,7 +7,7 @@ from vibesensor.domain.finding import Finding
 from vibesensor.domain.run_capture import ConfigurationSnapshot, RunCapture
 from vibesensor.domain.sensor import Sensor, SensorPlacement
 from vibesensor.domain.test_run import TestRun
-from vibesensor.recording.run_capture_codec import configuration_snapshot_from_metadata
+from vibesensor.recording.run_capture_codec import configuration_snapshot_from_run_metadata
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 
 
@@ -40,7 +40,7 @@ class TestConfigurationSnapshot:
                 "rim_in": 16,
             },
         )
-        snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(md))
+        snap = configuration_snapshot_from_run_metadata(run_metadata_from_mapping(md))
         assert snap.sensor_model == "MPU6050"
         assert snap.firmware_version == "1.2.3"
         assert snap.strength_algorithm_version == "strength-db-scalar-v1"
@@ -53,7 +53,7 @@ class TestConfigurationSnapshot:
         assert snap.tire_spec is not None
 
     def test_from_metadata_with_empty_dict(self) -> None:
-        snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(_metadata()))
+        snap = configuration_snapshot_from_run_metadata(run_metadata_from_mapping(_metadata()))
         assert snap.sensor_model is None
         assert snap.firmware_version is None
         assert snap.strength_algorithm_version is None
@@ -70,7 +70,7 @@ class TestConfigurationSnapshot:
             feature_interval_s="0.5",
             analysis_settings_snapshot={"final_drive_ratio": "3.73"},
         )
-        snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(md))
+        snap = configuration_snapshot_from_run_metadata(run_metadata_from_mapping(md))
         assert snap.raw_sample_rate_hz == 100.0
         assert snap.feature_interval_s == 0.5
         assert snap.final_drive_ratio == 3.73
@@ -80,14 +80,14 @@ class TestConfigurationSnapshot:
 
     def test_from_metadata_ignores_non_configuration_fields(self) -> None:
         md = _metadata(sensor_model="MPU6050", custom_key="custom_value")
-        snap = configuration_snapshot_from_metadata(run_metadata_from_mapping(md))
+        snap = configuration_snapshot_from_run_metadata(run_metadata_from_mapping(md))
         assert snap.sensor_model == "MPU6050"
 
     def test_case_snapshot_accessible_via_capture(self) -> None:
-        snap_a = configuration_snapshot_from_metadata(
+        snap_a = configuration_snapshot_from_run_metadata(
             run_metadata_from_mapping(_metadata(sensor_model="MPU6050"))
         )
-        snap_b = configuration_snapshot_from_metadata(
+        snap_b = configuration_snapshot_from_run_metadata(
             run_metadata_from_mapping(_metadata(sensor_model="BMI270"))
         )
 

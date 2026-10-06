@@ -55,28 +55,28 @@ def test_build_request_keeps_method_and_body_for_json_puts() -> None:
     assert request.content == b'{"speed_source":"manual"}'
 
 
-def test_github_api_client_get_json_decodes_payload(httpx_mock: HTTPXMock) -> None:
+def test_github_api_client_get_typed_json_sends_github_headers(httpx_mock: HTTPXMock) -> None:
     url = "https://api.github.com/repos/owner/repo/releases"
     add_json_response(httpx_mock, url=url, payload={"ok": True})
     client = GitHubApiClient()
 
-    assert client.get_json(url) == {"ok": True}
+    assert client.get_typed_json(url, response_type=dict[str, bool]) == {"ok": True}
     requests = httpx_mock.get_requests()
     assert len(requests) == 1
     assert requests[0].headers["Accept"] == "application/vnd.github+json"
     assert requests[0].headers["User-Agent"] == "VibeSensor-Updater"
 
 
-def test_github_api_client_get_json_maps_non_200_to_oserror(httpx_mock: HTTPXMock) -> None:
+def test_github_api_client_get_typed_json_maps_non_200_to_oserror(httpx_mock: HTTPXMock) -> None:
     url = "https://api.github.com/repos/owner/repo/releases"
     add_text_response(httpx_mock, url=url, text="busy", status_code=503)
     client = GitHubApiClient()
 
     with pytest.raises(OSError, match="HTTP 503"):
-        client.get_json(url)
+        client.get_typed_json(url, response_type=object)
 
 
-def test_github_api_client_get_json_includes_status_diagnostics(
+def test_github_api_client_get_typed_json_includes_status_diagnostics(
     httpx_mock: HTTPXMock,
 ) -> None:
     url = "https://api.github.com/repos/owner/repo/releases"
@@ -99,7 +99,7 @@ def test_github_api_client_get_json_includes_status_diagnostics(
     client = GitHubApiClient()
 
     with pytest.raises(OSError) as exc_info:
-        client.get_json(url)
+        client.get_typed_json(url, response_type=object)
 
     message = str(exc_info.value)
     assert "HTTP 403" in message
@@ -110,13 +110,13 @@ def test_github_api_client_get_json_includes_status_diagnostics(
     assert "'0'" in message
 
 
-def test_github_api_client_get_json_rejects_invalid_json(httpx_mock: HTTPXMock) -> None:
+def test_github_api_client_get_typed_json_rejects_invalid_json(httpx_mock: HTTPXMock) -> None:
     url = "https://api.github.com/repos/owner/repo/releases"
     add_text_response(httpx_mock, url=url, text="{not-json")
     client = GitHubApiClient()
 
     with pytest.raises(ValueError, match="invalid JSON"):
-        client.get_json(url)
+        client.get_typed_json(url, response_type=object)
 
 
 def test_github_api_client_get_typed_json_decodes_release_records(httpx_mock: HTTPXMock) -> None:

@@ -251,10 +251,6 @@ class Finding:
         cf = self.cruise_fraction
         return self.effective_confidence * (0.85 + 0.15 * cf)
 
-    def is_stronger_than(self, other: Finding) -> bool:
-        """Whether this finding ranks higher than *other*."""
-        return self.phase_adjusted_score > other.phase_adjusted_score
-
     _MIN_SHARED_WINDOWS: ClassVar[int] = 4
 
     def level_over_db(self, other: Finding, *, location: str | None = None) -> float | None:

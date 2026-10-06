@@ -177,10 +177,6 @@ class GPSSpeedMonitor:
         self._transport._zero_speed_streak = value
 
     @property
-    def effective_speed_mps(self) -> float | None:
-        return self.resolve_speed().speed_mps
-
-    @property
     def gps_speed_mps(self) -> float | None:
         return self.speed_mps
 

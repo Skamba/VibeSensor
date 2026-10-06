@@ -61,11 +61,6 @@ class TransportLifecycle:
         self._backoff_factor = backoff_factor
         self._current_delay = initial_delay
 
-    @property
-    def reconnect_delay(self) -> float:
-        """Current reconnect delay (before next backoff step)."""
-        return self._current_delay
-
     def on_connected(self) -> LifecycleTransition:
         """Connection established.
 

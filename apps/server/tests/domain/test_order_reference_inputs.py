@@ -45,11 +45,11 @@ def _default_spec() -> OrderReferenceSpec:
     return spec
 
 
-def test_engine_rpm_from_wheel_hz_non_finite_inputs_return_none() -> None:
+def test_engine_rpm_from_speed_kmh_non_finite_inputs_return_none() -> None:
     """Non-finite inputs must return None to avoid propagating nan/inf."""
     spec = _default_spec()
-    assert spec.engine_rpm_from_wheel_hz(float("nan")) is None
-    assert spec.engine_rpm_from_wheel_hz(float("inf")) is None
+    assert spec.engine_rpm_from_speed_kmh(float("nan")) is None
+    assert spec.engine_rpm_from_speed_kmh(float("inf")) is None
 
 
 def test_engine_hz_returns_none_without_gear() -> None:
@@ -65,10 +65,3 @@ def test_engine_hz_returns_none_without_gear() -> None:
         gear_uncertainty_pct=0.2,
     )
     assert spec.engine_hz(10.0) is None
-
-
-def test_engine_rpm_from_wheel_hz_zero_wheel_hz_returns_zero() -> None:
-    """Zero wheel Hz (stopped vehicle) must return 0.0, not None."""
-    spec = _default_spec()
-    result = spec.engine_rpm_from_wheel_hz(0.0)
-    assert result == 0.0

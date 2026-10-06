@@ -279,10 +279,6 @@ class RunMetadata:
         return self.car.car_type if self.car is not None else None
 
     @property
-    def car_variant(self) -> str | None:
-        return self.car.variant if self.car is not None else None
-
-    @property
     def active_car_id(self) -> str | None:
         return self.car.car_id if self.car is not None else None
 

@@ -11,8 +11,8 @@ from vibesensor.domain.vehicle_configuration import (
 )
 from vibesensor.settings import car_library
 from vibesensor.settings.car_library import (
+    _ROWS_BY_VARIANT,
     get_brands,
-    get_exact_configurations_for_variant,
     get_models_for_brand_type,
     get_types_for_brand,
     load_car_library,
@@ -157,8 +157,8 @@ def test_bundled_picker_offers_every_exact_row_tire_size() -> None:
                                 rear["rim_in"],
                             )
                         )
-                    configs = get_exact_configurations_for_variant(
-                        brand, car_type, entry["model"], variant["name"]
+                    configs = _ROWS_BY_VARIANT.get(
+                        (brand, car_type, entry["model"], variant["name"]), ()
                     )
                     assert configs, (entry["model"], variant["name"])
                     for config in configs:
@@ -259,8 +259,8 @@ def test_bundled_picker_reaches_every_exact_row_once_per_gearbox_choice() -> Non
         family = entry["model"].split(",")[0]
         families.setdefault((entry["brand"], entry["type"], family), []).append(entry["model"])
         for variant in entry["variants"]:
-            configs = get_exact_configurations_for_variant(
-                entry["brand"], entry["type"], entry["model"], variant["name"]
+            configs = _ROWS_BY_VARIANT.get(
+                (entry["brand"], entry["type"], entry["model"], variant["name"]), ()
             )
             names = [gearbox["name"] for gearbox in variant["gearboxes"]]
             assert len(set(names)) == len(names), (entry["model"], variant["name"])
@@ -288,8 +288,8 @@ def test_each_gearbox_names_the_axle_its_final_drive_belongs_to() -> None:
     axles: dict[tuple[str, str | None], set[str]] = {}
     for entry in load_car_library():
         for variant in entry["variants"]:
-            configs = get_exact_configurations_for_variant(
-                entry["brand"], entry["type"], entry["model"], variant["name"]
+            configs = _ROWS_BY_VARIANT.get(
+                (entry["brand"], entry["type"], entry["model"], variant["name"]), ()
             )
             for gearbox, config in zip(variant["gearboxes"], configs, strict=True):
                 both = config.final_drive_front is not None and config.final_drive_rear is not None

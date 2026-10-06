@@ -35,10 +35,6 @@ class SuitabilityCheck:
         return self.state == "fail"
 
     @property
-    def is_warning(self) -> bool:
-        return self.state == "warn"
-
-    @property
     def details_dict(self) -> dict[str, int]:
         return dict(self.details)
 
@@ -122,40 +118,6 @@ class RunSuitability:
     _MIN_SENSOR_COUNT: ClassVar[int] = 3
 
     # -- domain queries ----------------------------------------------------
-
-    @property
-    def overall(self) -> str:
-        """Aggregate assessment: ``'pass'``, ``'caution'``, or ``'fail'``."""
-        if any(c.failed for c in self.checks):
-            return "fail"
-        if any(c.is_warning for c in self.checks):
-            return "caution"
-        return "pass"
-
-    @property
-    def is_usable(self) -> bool:
-        """Whether the run is trustworthy enough to draw conclusions from."""
-        return self.overall != "fail"
-
-    @property
-    def has_warnings(self) -> bool:
-        return any(c.is_warning for c in self.checks)
-
-    @property
-    def failed_checks(self) -> tuple[SuitabilityCheck, ...]:
-        return tuple(c for c in self.checks if c.failed)
-
-    @property
-    def warning_checks(self) -> tuple[SuitabilityCheck, ...]:
-        return tuple(c for c in self.checks if c.is_warning)
-
-    @property
-    def has_reference_gaps(self) -> bool:
-        """Whether reference data is incomplete for this run."""
-        return any(
-            c.check_key == "SUITABILITY_CHECK_REFERENCE_COMPLETENESS" and not c.passed
-            for c in self.checks
-        )
 
     _REPLAY_COVERAGE_KEYS: ClassVar[tuple[str, ...]] = (
         "replay_partial",

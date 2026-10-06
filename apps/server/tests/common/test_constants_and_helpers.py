@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 from test_support.core import TEST_CAR_ASPECTS
 
-from vibesensor.analysis.constants import SILENCE_DB
 from vibesensor.common.units import KMH_TO_MPS, MPS_TO_KMH
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
@@ -25,7 +24,6 @@ def test_kmh_to_mps_value() -> None:
 
 
 def test_core_analysis_constants_have_expected_ranges() -> None:
-    assert SILENCE_DB < 0
     assert PEAK_BANDWIDTH_HZ > 0
     assert PEAK_SEPARATION_HZ > 0
 
@@ -99,8 +97,8 @@ def test_wheel_hz_mps_kmh_consistency() -> None:
 
 def test_engine_rpm_basic() -> None:
     spec = _make_spec()
-    wh = spec.wheel_hz(10.0 * spec.tire_circumference_m)
+    wh = spec.wheel_hz_from_speed_kmh(36.0)
     assert wh is not None
-    rpm = spec.engine_rpm_from_wheel_hz(wh)
+    rpm = spec.engine_rpm_from_speed_kmh(36.0)
     assert rpm is not None
     assert rpm == pytest.approx(wh * spec.final_drive_ratio * spec.current_gear_ratio * 60.0)

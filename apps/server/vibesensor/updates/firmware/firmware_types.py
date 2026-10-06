@@ -7,7 +7,6 @@ from typing import TypedDict
 import msgspec
 
 from vibesensor.common.process_settings import (
-    DEFAULT_FIRMWARE_CACHE_DIR,
     DEFAULT_FIRMWARE_CHANNEL,
     GITHUB_REPO,
     load_update_env_settings,
@@ -21,27 +20,10 @@ __all__ = [
     "FlashManifest",
     "FlashManifestRecord",
     "ManifestEnvironment",
-    "ManifestEnvironmentPayload",
     "ManifestEnvironmentRecord",
     "ManifestSegment",
-    "ManifestSegmentPayload",
     "ManifestSegmentRecord",
 ]
-
-_DEFAULT_CACHE_DIR = str(DEFAULT_FIRMWARE_CACHE_DIR)
-
-
-class ManifestSegmentPayload(TypedDict, total=False):
-    file: str
-    offset: str
-    sha256: str
-
-
-class ManifestEnvironmentPayload(TypedDict, total=False):
-    name: str
-    chip: str
-    firmware_version: str
-    segments: list[ManifestSegmentPayload]
 
 
 class FirmwareCacheInfoPayload(TypedDict, total=False):

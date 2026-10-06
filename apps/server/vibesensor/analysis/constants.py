@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Final
 
-SILENCE_DB: Final[float] = -120.0
-"""dB value representing silence / no meaningful vibration signal."""
-
 MEMS_NOISE_FLOOR_G: Final[float] = 0.001
 """Minimum realistic MEMS accelerometer noise floor (~0.001 g).
 

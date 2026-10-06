@@ -157,8 +157,7 @@ settings snapshots now follow the same pattern in
 - Use `Update*Payload` `msgspec.Struct` types only at the persistence/HTTP
   boundary, then route both JSON file I/O and FastAPI response shaping through
   `update_status_to_payload()`, `update_status_to_builtins()`,
-  `update_status_to_json()`, `update_status_from_builtins()`, and
-  `update_status_from_json()`.
+  `update_status_to_json()`, and `update_status_from_json()`.
 - Keep compatibility code narrow: legacy persisted status oddities normalize in
   one decode fallback path instead of leaking loose coercion into domain models
   or route handlers.

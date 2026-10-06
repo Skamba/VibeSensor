@@ -15,7 +15,6 @@ from vibesensor.settings.vehicle_configurations import load_vehicle_configuratio
 __all__ = [
     "CarLibraryEntry",
     "get_brands",
-    "get_exact_configurations_for_variant",
     "get_models_for_brand_type",
     "get_types_for_brand",
     "load_car_library",
@@ -399,21 +398,6 @@ def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry
         for entry in _CAR_LIBRARY
         if entry["brand"] == brand and entry["type"] == car_type
     ]
-
-
-def get_exact_configurations_for_variant(
-    brand: str,
-    car_type: str,
-    model: str,
-    variant_name: str,
-) -> tuple[VehicleConfiguration, ...]:
-    """Return the canonical configuration rows behind one picker variant.
-
-    Within the result every gearbox name is unique, so a picker selection
-    (model, variant, gearbox) names exactly one configuration row.
-    """
-
-    return _ROWS_BY_VARIANT.get((brand, car_type, model, variant_name), ())
 
 
 _VARIANT_YEARS = re.compile(r" \(\d{4}(?:\u2013\d{4})?\)$")

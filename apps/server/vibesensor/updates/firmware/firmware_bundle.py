@@ -30,7 +30,6 @@ __all__ = [
     "dir_sha256",
     "extract_bundle_archive",
     "flash_manifest_record_from_json",
-    "flash_manifest_record_to_json",
     "parse_manifest",
     "read_manifest",
     "read_meta",
@@ -52,10 +51,6 @@ def flash_manifest_record_from_json(raw: bytes | str) -> FlashManifestRecord:
         if not is_json_object(decoded):
             raise ValueError("Firmware manifest root must be a JSON object") from exc
         return _flash_manifest_record_from_object(decoded)
-
-
-def flash_manifest_record_to_json(record: FlashManifestRecord) -> bytes:
-    return msgspec.json.encode(record) + b"\n"
 
 
 def bundle_meta_record_from_json(raw: bytes | str) -> BundleMetaRecord:

@@ -88,14 +88,6 @@ class CaptureReadiness:
     capabilities: CaptureCapabilities | None = None
     """``None`` without an active car."""
 
-    @property
-    def failed_checks(self) -> tuple[CaptureReadinessCheck, ...]:
-        return tuple(check for check in self.checks if check.failed)
-
-    @property
-    def warning_checks(self) -> tuple[CaptureReadinessCheck, ...]:
-        return tuple(check for check in self.checks if check.warning)
-
 
 @dataclass(frozen=True, slots=True)
 class CaptureReadinessPolicy:

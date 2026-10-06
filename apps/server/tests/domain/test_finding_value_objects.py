@@ -143,7 +143,6 @@ class TestFindingComposition:
         )
 
         assert finding.location is not None
-        assert finding.location.is_well_localized
         assert finding.location.display_location == "Fl Wheel"
 
     def test_finding_from_payload_extracts_evidence(self) -> None:
@@ -326,12 +325,6 @@ class TestFindingEnrichments:
     )
     def test_phase_adjusted_score_cases(self, finding: Finding, expected: float) -> None:
         assert finding.phase_adjusted_score == expected
-
-    def test_is_stronger_than(self) -> None:
-        f1 = Finding(confidence=0.8, ranking_score=1.0)
-        f2 = Finding(confidence=0.5, ranking_score=1.0)
-        assert f1.is_stronger_than(f2)
-        assert not f2.is_stronger_than(f1)
 
     def test_with_id(self) -> None:
         finding = Finding(finding_id="F001", suspected_source="engine", confidence=0.7)

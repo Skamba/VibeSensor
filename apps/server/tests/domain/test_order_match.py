@@ -10,50 +10,6 @@ from vibesensor.summary.finding_fields import order_match_observation_from_mappi
 
 class TestOrderMatchObservation:
     @pytest.mark.parametrize(
-        ("rel_error", "expected"),
-        [
-            pytest.param(0.0, True, id="exact"),
-            pytest.param(0.05, True, id="threshold-inclusive"),
-            pytest.param(0.0501, False, id="above-threshold"),
-        ],
-    )
-    def test_is_close_match_uses_inclusive_five_percent_threshold(
-        self,
-        rel_error: float,
-        expected: bool,
-    ) -> None:
-        obs = OrderMatchObservation(
-            predicted_hz=100.0,
-            matched_hz=100.0 * (1.0 + rel_error),
-            rel_error=rel_error,
-            amp=1.0,
-            location="front_left",
-        )
-
-        assert obs.is_close_match is expected
-
-    @pytest.mark.parametrize(
-        ("matched_hz", "expected_error"),
-        [
-            pytest.param(105.0, 5.0, id="above-predicted"),
-            pytest.param(95.0, 5.0, id="below-predicted"),
-        ],
-    )
-    def test_frequency_error_hz_is_absolute(
-        self,
-        matched_hz: float,
-        expected_error: float,
-    ) -> None:
-        obs = OrderMatchObservation(
-            predicted_hz=100.0,
-            matched_hz=matched_hz,
-            rel_error=0.05,
-            amp=1.0,
-            location="front_left",
-        )
-        assert obs.frequency_error_hz == expected_error
-
-    @pytest.mark.parametrize(
         ("overrides", "message"),
         [
             pytest.param({"predicted_hz": 0.0}, "predicted_hz", id="zero-predicted"),

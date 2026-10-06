@@ -17,60 +17,6 @@ class TestSpeedProfile:
         sp = SpeedProfile(min_kmh=40.0, max_kmh=80.0)
         assert sp.speed_range_kmh == 40.0
 
-    def test_is_adequate_for_diagnosis(self) -> None:
-        assert SpeedProfile(sample_count=100, max_kmh=60.0).is_adequate_for_diagnosis
-        assert SpeedProfile(sample_count=10, max_kmh=60.0).is_adequate_for_diagnosis
-        assert not SpeedProfile(sample_count=9, max_kmh=60.0).is_adequate_for_diagnosis
-        assert not SpeedProfile(sample_count=100, max_kmh=3.0).is_adequate_for_diagnosis
-
-    def test_has_steady_cruise(self) -> None:
-        assert SpeedProfile(has_cruise=True, cruise_fraction=0.5).has_steady_cruise
-        assert not SpeedProfile(has_cruise=True, cruise_fraction=0.1).has_steady_cruise
-        assert not SpeedProfile(has_cruise=False, cruise_fraction=0.5).has_steady_cruise
-
-    def test_known_speed_fraction(self) -> None:
-        assert SpeedProfile(speed_unknown_fraction=0.25).known_speed_fraction == pytest.approx(0.75)
-
-    def test_driving_fraction(self) -> None:
-        assert SpeedProfile(idle_fraction=0.2).driving_fraction == pytest.approx(0.8)
-
-    def test_has_speed_variation_uses_acceleration_or_nonsteady_range(self) -> None:
-        assert SpeedProfile(has_acceleration=True, steady_speed=True).has_speed_variation
-        assert SpeedProfile(min_kmh=40.0, max_kmh=80.0, steady_speed=False).has_speed_variation
-        assert not SpeedProfile(min_kmh=40.0, max_kmh=80.0, steady_speed=True).has_speed_variation
-
-    def test_supports_variable_speed_diagnosis_requires_adequate_data(self) -> None:
-        assert SpeedProfile(
-            sample_count=100,
-            max_kmh=80.0,
-            has_acceleration=True,
-        ).supports_variable_speed_diagnosis
-        assert not SpeedProfile(
-            sample_count=5,
-            max_kmh=80.0,
-            has_acceleration=True,
-        ).supports_variable_speed_diagnosis
-
-    def test_supports_steady_state_diagnosis_uses_cruise_or_steady_motion(self) -> None:
-        assert SpeedProfile(
-            sample_count=100,
-            max_kmh=80.0,
-            has_cruise=True,
-            cruise_fraction=0.4,
-        ).supports_steady_state_diagnosis
-        assert SpeedProfile(
-            sample_count=100,
-            max_kmh=80.0,
-            steady_speed=True,
-            idle_fraction=0.1,
-        ).supports_steady_state_diagnosis
-        assert not SpeedProfile(
-            sample_count=5,
-            max_kmh=80.0,
-            steady_speed=True,
-            idle_fraction=0.1,
-        ).supports_steady_state_diagnosis
-
     def test_from_stats_full(self) -> None:
         speed_stats = SpeedProfileSummary(
             min_kmh=30.0,
@@ -97,10 +43,6 @@ class TestSpeedProfile:
         assert sp.cruise_fraction == pytest.approx(0.65)
         assert sp.idle_fraction == pytest.approx(0.10)
         assert sp.speed_unknown_fraction == pytest.approx(0.05)
-        assert sp.known_speed_fraction == pytest.approx(0.95)
-        assert sp.driving_fraction == pytest.approx(0.90)
-        assert sp.supports_variable_speed_diagnosis
-        assert sp.supports_steady_state_diagnosis
         assert sp.sample_count == 500
 
     def test_from_stats_empty(self) -> None:
@@ -109,8 +51,8 @@ class TestSpeedProfile:
         assert sp.max_kmh == 0.0
         assert not sp.steady_speed
         assert not sp.has_acceleration
-        assert sp.known_speed_fraction == 1.0
-        assert sp.driving_fraction == 1.0
+        assert sp.idle_fraction == 0.0
+        assert sp.speed_unknown_fraction == 0.0
 
     def test_from_stats_no_phase(self) -> None:
         sp = SpeedProfile.from_stats(SpeedProfileSummary(min_kmh=10, max_kmh=50))
@@ -143,7 +85,7 @@ class TestSuitabilityCheck:
         assert SuitabilityCheck(check_key="a", state="pass").passed
         assert not SuitabilityCheck(check_key="a", state="pass").failed
         assert SuitabilityCheck(check_key="a", state="fail").failed
-        assert SuitabilityCheck(check_key="a", state="warn").is_warning
+        assert not SuitabilityCheck(check_key="a", state="warn").passed
 
     @pytest.mark.parametrize(
         "check_key,state,details,expected_key",
@@ -246,38 +188,6 @@ class TestSuitabilityCheck:
 
 
 class TestRunSuitability:
-    @pytest.mark.parametrize(
-        ("second_state", "overall", "is_usable", "has_warnings", "failed_keys"),
-        [
-            pytest.param("pass", "pass", True, False, [], id="all-pass"),
-            pytest.param("warn", "caution", True, True, [], id="warn-is-caution"),
-            pytest.param("fail", "fail", False, False, ["b"], id="fail-is-unusable"),
-        ],
-    )
-    def test_overall(
-        self,
-        second_state: str,
-        overall: str,
-        is_usable: bool,
-        has_warnings: bool,
-        failed_keys: list[str],
-    ) -> None:
-        rs = RunSuitability(
-            checks=(
-                SuitabilityCheck(check_key="a", state="pass"),
-                SuitabilityCheck(check_key="b", state=second_state),
-            )
-        )
-        assert rs.overall == overall
-        assert rs.is_usable is is_usable
-        assert rs.has_warnings is has_warnings
-        assert [check.check_key for check in rs.failed_checks] == failed_keys
-
-    def test_empty_checks(self) -> None:
-        rs = RunSuitability()
-        assert rs.overall == "pass"
-        assert rs.is_usable
-
     def test_from_checks(self) -> None:
         checks = [
             {"check_key": "speed_variation", "state": "pass", "explanation": "OK"},
@@ -286,7 +196,6 @@ class TestRunSuitability:
         ]
         rs = run_suitability_from_payload(checks)
         assert len(rs.checks) == 3
-        assert rs.overall == "fail"
         assert rs.checks[0].check_key == "speed_variation"
         assert rs.checks[1].state == "warn"
         assert rs.checks[2].failed
@@ -341,7 +250,7 @@ class TestRunSuitability:
         (frame,) = (c for c in rs.checks if c.check_key == "SUITABILITY_CHECK_FRAME_INTEGRITY")
         ref = frame.explanation_i18n_ref()
 
-        assert frame.is_warning
+        assert frame.state == "warn"
         assert isinstance(ref, dict)
         assert ref["_i18n_key"] == expected_key
         assert ref["total_dropped"] == total_dropped
@@ -349,20 +258,8 @@ class TestRunSuitability:
 
     def test_from_checks_empty(self) -> None:
         rs = run_suitability_from_payload([])
-        assert rs.overall == "pass"
+        assert rs.checks == ()
 
     def test_from_checks_canonical_key(self) -> None:
         rs = run_suitability_from_payload([{"check_key": "speed_profile", "state": "pass"}])
         assert rs.checks[0].check_key == "speed_profile"
-
-    @pytest.mark.parametrize(
-        ("check_key", "state", "expected"),
-        [
-            pytest.param("SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "warn", True, id="warn"),
-            pytest.param("SUITABILITY_CHECK_REFERENCE_COMPLETENESS", "pass", False, id="pass"),
-            pytest.param("other", "pass", False, id="absent"),
-        ],
-    )
-    def test_has_reference_gaps(self, check_key: str, state: str, expected: bool) -> None:
-        rs = RunSuitability(checks=(SuitabilityCheck(check_key=check_key, state=state),))
-        assert rs.has_reference_gaps is expected

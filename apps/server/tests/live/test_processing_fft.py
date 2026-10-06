@@ -18,7 +18,6 @@ from vibesensor.dsp.fft_analysis import (
     compute_fft_spectrum,
     float_list,
     medfilt3,
-    noise_floor,
 )
 
 
@@ -33,7 +32,7 @@ def _make_fft_params(
         spectrum_min_hz=0.0,
         spectrum_max_hz=max_hz,
     )
-    freq_slice, valid_idx = computer.fft_params(sr)
+    freq_slice, valid_idx, _ = computer._fft_cache_entry(sr)
     return {
         "fft_window": computer.fft_window,
         "fft_scale": computer.fft_scale,
@@ -114,20 +113,6 @@ class TestMedfilt3:
             np.nan_to_num(block, nan=-999.0, posinf=999.0, neginf=-999.0),
             np.nan_to_num(original, nan=-999.0, posinf=999.0, neginf=-999.0),
         )
-
-
-class TestNoiseFloor:
-    """Tests for the P20 noise floor function."""
-
-    def test_empty_array(self) -> None:
-        assert noise_floor(np.array([], dtype=np.float32)) == 0.0
-
-    def test_all_nan(self) -> None:
-        assert noise_floor(np.array([float("nan"), float("nan")], dtype=np.float32)) == 0.0
-
-    def test_positive_values(self) -> None:
-        amps = np.array([0.01, 0.02, 0.03, 0.04, 0.05], dtype=np.float32)
-        assert noise_floor(amps) == pytest.approx(0.018, abs=1e-6)
 
 
 class TestFloatList:
@@ -248,7 +233,7 @@ class TestComputeFftSpectrum:
             spectrum_min_hz=6.0,
             spectrum_max_hz=100.0,
         )
-        freq_slice, valid_idx = computer.fft_params(sr)
+        freq_slice, valid_idx, _ = computer._fft_cache_entry(sr)
 
         result = compute_fft_spectrum(
             block,
@@ -282,7 +267,7 @@ class TestComputeFftSpectrum:
             spectrum_min_hz=6.0,
             spectrum_max_hz=100.0,
         )
-        freq_slice, valid_idx = computer.fft_params(sr)
+        freq_slice, valid_idx, _ = computer._fft_cache_entry(sr)
 
         result = compute_fft_spectrum(
             block,

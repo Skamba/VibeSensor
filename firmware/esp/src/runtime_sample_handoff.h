@@ -29,7 +29,6 @@ void initialize_sample_handoff(SampleHandoffState& state,
                                size_t capacity);
 size_t sample_handoff_size(const SampleHandoffState& state);
 size_t sample_handoff_capacity(const SampleHandoffState& state);
-size_t sample_handoff_free_slots(const SampleHandoffState& state);
 bool enqueue_pending_sample(SampleHandoffState& state, const PendingSample& sample);
 bool dequeue_pending_sample(SampleHandoffState& state, PendingSample* sample);
 

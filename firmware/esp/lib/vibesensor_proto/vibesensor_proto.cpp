@@ -1,11 +1,9 @@
 #include "vibesensor_proto.h"
 
-#include <cstdio>
 #include <cstring>
 
 namespace vibesensor {
 namespace {
-constexpr size_t kClientIdHexChars = kClientIdBytes * 2;
 constexpr size_t kHelloNameMaxBytes = 32;
 constexpr size_t kFirmwareVersionMaxBytes = 32;
 constexpr size_t kXyzSampleBytes = 6;
@@ -59,14 +57,6 @@ bool packet_client_id_matches(const uint8_t* data,
 }
 
 }  // namespace
-
-String client_id_hex(const uint8_t client_id[6]) {
-  char buf[kClientIdHexChars + 1];
-  snprintf(buf, sizeof(buf), "%02x%02x%02x%02x%02x%02x",
-           client_id[0], client_id[1], client_id[2],
-           client_id[3], client_id[4], client_id[5]);
-  return String(buf);
-}
 
 size_t pack_hello(uint8_t* out,
                   size_t out_len,

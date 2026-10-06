@@ -53,7 +53,8 @@ def test_run_metadata_is_the_diagnostics_context() -> None:
     assert metadata.raw_sample_rate_hz == 200.0
     assert metadata.sensor_model == "ADXL345"
     assert metadata.car_name == "Primary"
-    assert metadata.car_variant == "sport"
+    assert metadata.car is not None
+    assert metadata.car.variant == "sport"
     assert metadata.order_reference_spec is not None
     assert metadata.tire_circumference_m is not None
     assert metadata.reference_complete is True
@@ -69,4 +70,5 @@ def test_run_metadata_is_the_diagnostics_context() -> None:
     assert spec.current_gear_ratio == 0.81
     assert metadata.car_name == "Primary"
     assert metadata.car_type == "sedan"
-    assert metadata.car_variant == "sport"
+    assert metadata.car is not None
+    assert metadata.car.variant == "sport"

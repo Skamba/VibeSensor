@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import patch
 
+import msgspec
 import pytest
 from _update_manager_test_helpers import patch_validation_environment
 
@@ -26,7 +27,7 @@ from vibesensor.updates.runner import CommandRunner
 from vibesensor.updates.runtime import build_update_manager
 from vibesensor.updates.status.payload_codec import (
     UpdateStateStore,
-    update_status_from_builtins,
+    update_status_from_json,
     update_status_to_builtins,
 )
 from vibesensor.updates.status.tracker import (
@@ -119,7 +120,7 @@ def update_env(
 class TestUpdateJobStatusRoundTrip:
     def test_idle_round_trip(self) -> None:
         status = UpdateJobStatus()
-        restored = update_status_from_builtins(update_status_to_builtins(status))
+        restored = update_status_from_json(msgspec.json.encode(update_status_to_builtins(status)))
         assert restored.state == UpdateState.idle
         assert restored.phase == UpdatePhase.idle
         assert restored.issues == []
@@ -150,7 +151,7 @@ class TestUpdateJobStatusRoundTrip:
             exit_code=1,
             runtime=UpdateRuntimeDetails(version="1.0.0"),
         )
-        restored = update_status_from_builtins(update_status_to_builtins(status))
+        restored = update_status_from_json(msgspec.json.encode(update_status_to_builtins(status)))
         assert restored.state == UpdateState.failed
         assert restored.phase == UpdatePhase.installing
         assert restored.started_at == 1700000000.0

@@ -40,7 +40,6 @@ __all__ = [
     "float_list",
     "high_frequency_energy_ratio",
     "medfilt3",
-    "noise_floor",
 ]
 
 type FloatArray = npt.NDArray[np.float32]
@@ -254,17 +253,6 @@ def medfilt3(block: FloatArray) -> FloatArray:
     all_invalid = ~left_valid & ~mid_valid & ~right_valid
     center[all_invalid] = np.nan
     return _sanitize_float_array(filtered)
-
-
-def noise_floor(amps: FloatArray) -> float:
-    """Compute the P20 noise floor from the provided analysis-band amplitudes."""
-    if amps.size == 0:
-        return 0.0
-    finite = amps[np.isfinite(amps)]
-    if finite.size == 0:
-        return 0.0
-    non_neg = finite[finite >= 0.0]
-    return float(np.quantile(non_neg, 0.20)) if non_neg.size else 0.0
 
 
 def float_list(values: FloatArray | list[float]) -> list[float]:
@@ -520,10 +508,6 @@ class SpectralAnalysisComputer:
             if len(self.fft_cache) > _FFT_CACHE_MAXSIZE:
                 self.fft_cache.popitem(last=False)
             return freq_slice, valid_idx, strength_range_mask
-
-    def fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
-        freq_slice, valid_idx, _ = self._fft_cache_entry(sample_rate_hz)
-        return freq_slice, valid_idx
 
     def strength_range_mask(self, sample_rate_hz: int) -> BoolArray:
         _, _, strength_range_mask = self._fft_cache_entry(sample_rate_hz)

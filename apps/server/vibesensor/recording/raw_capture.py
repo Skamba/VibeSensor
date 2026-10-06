@@ -166,16 +166,6 @@ class RawCaptureSensorManifest(JsonContract):
     def sample_rate_unverified(self) -> bool:
         return self.sample_rate_proof_state != "observed_consistent"
 
-    @property
-    def sample_rate_corrected(self) -> bool:
-        declared = self.declared_sample_rate_hz
-        return (
-            declared is not None
-            and declared > 0
-            and self.sample_rate_hz > 0
-            and self.sample_rate_hz != declared
-        )
-
     @model_validator(mode="before")
     @classmethod
     def _default_declared_sample_rate(cls, data: object) -> object:

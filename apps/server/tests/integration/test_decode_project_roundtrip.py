@@ -16,7 +16,7 @@ from test_support.synthetic_samples import make_fault_samples, make_noise_sample
 
 from vibesensor.analysis._run_input import build_diagnostics_run_input
 from vibesensor.analysis.run_analysis import AnalysisResult, RunAnalysis
-from vibesensor.analysis.summarize import analysis_result_to_summary
+from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.history.projection import project_analysis_summary
 from vibesensor.history.records import StoredHistoryRun

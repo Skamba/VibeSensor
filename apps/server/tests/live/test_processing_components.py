@@ -69,13 +69,13 @@ def test_metrics_computer_exposes_clipping_quality_in_live_payload() -> None:
     assert "mounting_high_frequency_ratio" in quality
 
 
-def test_fft_params_uses_lru_eviction(monkeypatch) -> None:
+def test_fft_cache_uses_lru_eviction(monkeypatch) -> None:
     monkeypatch.setattr("vibesensor.dsp.fft_analysis._FFT_CACHE_MAXSIZE", 2)
     computer = SignalMetricsComputer(_config(fft_n=8, sample_rate_hz=200, spectrum_max_hz=90.0))
 
-    computer.fft_params(200)
-    computer.fft_params(300)
-    computer.fft_params(200)
-    computer.fft_params(400)
+    computer.strength_range_mask(200)
+    computer.strength_range_mask(300)
+    computer.strength_range_mask(200)
+    computer.strength_range_mask(400)
 
     assert list(computer.fft_cache) == [200, 400]

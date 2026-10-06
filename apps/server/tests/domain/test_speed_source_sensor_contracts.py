@@ -27,8 +27,6 @@ def test_speed_source_supported_kinds_follow_public_contract(
     assert source.kind is kind
     assert source.label == expected_label
     assert source.is_live is expected_live
-    assert source.is_gps is (kind is SpeedSourceKind.GPS)
-    assert source.is_obd2 is (kind is SpeedSourceKind.OBD2)
     assert source.is_manual is (kind is SpeedSourceKind.MANUAL)
     if kind is SpeedSourceKind.MANUAL:
         assert source.effective_speed_kmh == pytest.approx(88.0)
@@ -96,10 +94,8 @@ def test_sensor_contract_tracks_unplaced_and_placed_state() -> None:
     )
 
     assert unplaced.display_name == "Cabin"
-    assert not unplaced.is_placed
     assert unplaced.location_code == ""
     assert placed.display_name == "112233445566"
-    assert placed.is_placed
     assert placed.location_code == "rear_subframe"
     assert placed.placement is not None
     assert placed.placement.display_name == "Rear Subframe"

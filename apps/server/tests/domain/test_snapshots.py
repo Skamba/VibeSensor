@@ -48,7 +48,6 @@ from vibesensor.summary.speed_phase_codecs import (
                 "active_car_id": ctx.active_car_id,
                 "car_name": ctx.car_name,
                 "car_type": ctx.car_type,
-                "car_variant": ctx.car_variant,
                 "has_order_reference": order_reference_spec_from_snapshot(ctx.analysis_settings)
                 is not None,
             },
@@ -58,7 +57,6 @@ from vibesensor.summary.speed_phase_codecs import (
                 "active_car_id": None,
                 "car_name": None,
                 "car_type": None,
-                "car_variant": None,
                 "has_order_reference": False,
             },
             id="run-context-empty",
@@ -231,7 +229,8 @@ class TestRunContextSnapshot:
         assert ctx.active_car_id == "car-1"
         assert ctx.car_name == "Primary"
         assert ctx.car_type == "sedan"
-        assert ctx.car_variant == "track"
+        assert ctx.car is not None
+        assert ctx.car.variant == "track"
 
     def test_partial_car_context_stays_usable_without_fake_analysis_defaults(self) -> None:
         ctx = RunContextSnapshot(
@@ -247,7 +246,8 @@ class TestRunContextSnapshot:
         assert ctx.active_car_id is None
         assert ctx.car_name == "Project Car"
         assert ctx.car_type is None
-        assert ctx.car_variant == "prototype"
+        assert ctx.car is not None
+        assert ctx.car.variant == "prototype"
         assert order_reference_spec_from_snapshot(ctx.analysis_settings) is None
 
 

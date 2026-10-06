@@ -8,10 +8,8 @@ from typing import Any
 import httpx
 import msgspec
 
-from vibesensor.common.json_types import JsonValue
 from vibesensor.updates.http_client import (
     build_get_request,
-    read_json_response,
     read_typed_json_response,
 )
 
@@ -24,14 +22,7 @@ __all__ = [
     "GitHubApiClient",
     "GitHubApiReleaseRecord",
     "github_api_headers",
-    "validate_https_url",
 ]
-
-
-def validate_https_url(url: str, *, context: str = "operation") -> None:
-    """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
-
-    build_get_request(url, context=context, require_https=True)
 
 
 def github_api_headers(
@@ -86,18 +77,6 @@ class GitHubApiClient:
             headers=self.api_headers(accept=accept),
             context=self.context,
             require_https=True,
-        )
-
-    def get_json(self, url: str) -> JsonValue:
-        """GET *url* and return the parsed JSON response."""
-
-        return read_json_response(
-            url,
-            headers=self.api_headers(),
-            timeout_s=30,
-            context=self.context,
-            require_https=True,
-            transport=self.transport,
         )
 
     def get_typed_json(self, url: str, *, response_type: Any) -> Any:

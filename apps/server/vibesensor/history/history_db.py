@@ -194,10 +194,6 @@ class HistoryDB:
     def corruption_detected(self) -> bool:
         return self._corruption_details is not None
 
-    @property
-    def corruption_details(self) -> str | None:
-        return self._corruption_details
-
     def _assert_write_allowed(self) -> None:
         if self._corruption_details is None:
             return
