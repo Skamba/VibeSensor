@@ -21,6 +21,7 @@ class GPSSpeedStatusState:
     gps_enabled: bool
     connection_state: str
     device_info: str | None
+    fix_wait_since_mono_s: float | None
     last_fix_mode: int | None
     last_epx_m: float | None
     last_epy_m: float | None
@@ -39,6 +40,9 @@ class SpeedSourceStatusSnapshot:
     gps_enabled: bool
     connection_state: str
     device: str | None
+    """The receiver gpsd reads (its device path); ``None`` while gpsd has none."""
+    fix_wait_s: float | None
+    """How long the receiver has been waiting for a fix; ``None`` with a fix or no receiver."""
     fix_mode: int | None
     fix_dimension: Literal["3d", "2d", "none"]
     speed_confidence: Literal["low", "medium", "high"]
@@ -98,6 +102,11 @@ def build_status_snapshot(
         gps_enabled=state.gps_enabled,
         connection_state=effective_connection_state,
         device=state.device_info,
+        fix_wait_s=(
+            None
+            if state.fix_wait_since_mono_s is None
+            else round(max(0.0, now - state.fix_wait_since_mono_s), 1)
+        ),
         fix_mode=state.last_fix_mode,
         fix_dimension=(
             "3d"

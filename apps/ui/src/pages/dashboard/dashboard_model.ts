@@ -68,6 +68,8 @@ export interface RecordingModel {
   elapsedText: string;
   samplesText: string;
   checklist: ChecklistItem[] | null;
+  /** Why Start is greyed out when the summary panel shows something else. */
+  blockedReason: string | null;
   showStop: boolean;
   startDisabled: boolean;
   stopDisabled: boolean;
@@ -391,17 +393,42 @@ function setupAction(
   return null;
 }
 
-/** Names the likely cause when the live speed is missing because GPS has no receiver. */
+/**
+ * Names the likely cause when the live speed is missing: GPS has no receiver,
+ * or its receiver is still waiting for a fix.
+ */
 function speedSourceHint(
   check: { check_key: string; reason_key?: string | null },
-  gpsReceiverMissing: boolean,
+  input: Pick<RecordingInputs, "gpsReceiverMissing" | "gpsFixWaitS">,
   t: Translate,
+  formatInt: FormatInt,
 ): string | null {
-  return gpsReceiverMissing &&
-    check.check_key === "reference_ready" &&
-    check.reason_key !== "active_car_missing"
-    ? `${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`
-    : null;
+  if (
+    check.check_key !== "reference_ready" ||
+    check.reason_key === "active_car_missing"
+  ) {
+    return null;
+  }
+  if (input.gpsReceiverMissing) {
+    return `${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`;
+  }
+  return input.gpsFixWaitS === null
+    ? null
+    : t("speed.gps_waiting_fix", {
+        seconds: formatInt(Math.floor(input.gpsFixWaitS)),
+      });
+}
+
+/** The failing check that keeps Start greyed out, if any. */
+function blockingCheck(readiness: Readiness | null) {
+  if (!readiness || readiness.is_ready) {
+    return null;
+  }
+  return (
+    readiness.checks.find(
+      (check) => check.state === "fail" && check.check_key !== "capture_ready",
+    ) ?? findCheck(readiness, "capture_ready")
+  );
 }
 
 function panel(
@@ -426,6 +453,8 @@ export interface RecordingInputs {
   speedUnit: SpeedUnit;
   /** GPS is the speed source but no USB receiver is plugged in. */
   gpsReceiverMissing: boolean;
+  /** Seconds the GPS receiver has been waiting for a fix, if it is. */
+  gpsFixWaitS: number | null;
   connectedText: string;
   assignedText: string;
   elapsedText: string;
@@ -443,6 +472,17 @@ export function recordingModel(
   const readiness = status.capture_readiness ?? null;
   const notReady = !readiness?.is_ready;
   const phase = (key: string) => t(`dashboard.recording_phase.${key}`);
+  const blocked = blockingCheck(readiness);
+  const blockedReason = () => {
+    if (!blocked) {
+      return null;
+    }
+    const hint = speedSourceHint(blocked, input, t, formatInt);
+    const reason = checkDetail(blocked, t, formatInt, input.speedUnit);
+    return t("dashboard.logging.start_blocked", {
+      reason: hint ? `${reason} ${hint}` : reason,
+    });
+  };
   const base = {
     showPill: false,
     summaryText: "",
@@ -451,6 +491,7 @@ export function recordingModel(
     elapsedText: "--",
     samplesText: formatInt(status.samples_written ?? 0),
     checklist: null,
+    blockedReason: null,
     showStop: false,
     startDisabled: true,
     stopDisabled: true,
@@ -523,6 +564,7 @@ export function recordingModel(
             }
           : summary,
       elapsedText: input.lastRunElapsedText,
+      blockedReason: blockedReason(),
       startDisabled: notReady,
     };
   }
@@ -544,12 +586,7 @@ export function recordingModel(
     };
   }
   const waiting = readiness !== null && !readiness.is_ready;
-  const primary = waiting
-    ? (readiness.checks.find(
-        (check) =>
-          check.state === "fail" && check.check_key !== "capture_ready",
-      ) ?? findCheck(readiness, "capture_ready"))
-    : null;
+  const primary = blocked;
   const items = checklist(readiness, waiting, t, formatInt, input.speedUnit);
   return {
     ...base,
@@ -564,7 +601,7 @@ export function recordingModel(
       ? {
           title: t("dashboard.logging.blocked.setup.title"),
           body: checkDetail(primary, t, formatInt, input.speedUnit),
-          detail: speedSourceHint(primary, input.gpsReceiverMissing, t),
+          detail: speedSourceHint(primary, input, t, formatInt),
           action: setupAction(primary, t),
         }
       : null,
@@ -593,6 +630,7 @@ export function withLoggingError(
       elapsedText: "--",
       samplesText: "--",
       checklist: null,
+      blockedReason: null,
       showStop: false,
       startDisabled: true,
       stopDisabled: true,

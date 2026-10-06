@@ -37,6 +37,7 @@ async def start_gps_feed(
     async def report(_reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         try:
             writer.write(_line(_VERSION))
+            writer.write(_line({"class": "DEVICES", "devices": [{"path": "sim"}]}))
             while not stop_event.is_set():
                 speed_mps = clients[0].current_speed_kmh / 3.6
                 writer.write(

@@ -9,7 +9,7 @@ import {
   capabilityNoteKey,
   type FuelType,
 } from "../../capabilities";
-import { formatSpeed, type SpeedUnit } from "../../format";
+import { fmt, formatSpeed, type SpeedUnit } from "../../format";
 
 /** Text for the server's capture-readiness checks. */
 
@@ -38,7 +38,8 @@ const KNOWN_REASONS: Record<string, readonly string[]> = {
   sensors_ready: [
     "no_live_sensors",
     "sensor_locations_missing",
-    "recent_integrity_events",
+    "frame_loss_high",
+    "recent_frame_loss",
     "sensor_timing_unreliable",
     "limited_sensor_coverage",
   ],
@@ -80,6 +81,11 @@ function detailCount(check: ReadinessCheck, key: string, fallback = 0): number {
   );
 }
 
+function detailNumber(check: ReadinessCheck, key: string): number {
+  const value = check.details?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 export function checkDetail(
   check: ReadinessCheck,
   t: Translate,
@@ -101,10 +107,8 @@ export function checkDetail(
       vars = {
         count: formatInt(detailCount(check, "timing_unreliable_sensor_count")),
       };
-    } else if (reason === "recent_integrity_events") {
-      vars = {
-        seconds: formatInt(detailCount(check, "quiet_period_remaining_s")),
-      };
+    } else if (reason === "frame_loss_high" || reason === "recent_frame_loss") {
+      vars = { percent: fmt(detailNumber(check, "frame_loss_pct"), 1) };
     } else if (reason !== "no_live_sensors") {
       vars = { count: formatInt(detailCount(check, "live_sensor_count")) };
     }

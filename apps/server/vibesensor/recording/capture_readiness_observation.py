@@ -35,6 +35,7 @@ class CaptureReadinessSensorObservation:
     server_queue_drops: int
     parse_errors: int
     timing_degraded: bool = False
+    frames_received: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +118,7 @@ def _sensor_observation(
         server_queue_drops=int(getattr(client, "server_queue_drops", 0)),
         parse_errors=int(getattr(client, "parse_errors", 0)),
         timing_degraded=client.timing_guard.degraded,
+        frames_received=client.frames_total,
     )
 
 

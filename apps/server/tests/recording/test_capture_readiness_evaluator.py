@@ -85,14 +85,7 @@ def test_capture_readiness_evaluator_accepts_manual_speed_source_for_start_gate(
         policy=CaptureReadinessPolicy(low_sensor_count_warn_threshold=1),
         observation=_observation(speed_status=_SpeedStatus(source="manual", speed_kmh=82.0)),
         state=CaptureReadinessStateSnapshot(
-            integrity=IntegrityState(
-                active=False,
-                frames_dropped=0,
-                queue_overflow_drops=0,
-                server_queue_drops=0,
-                parse_errors=0,
-                quiet_period_remaining_s=None,
-            ),
+            integrity=IntegrityState(),
             speed_history=(),
         ),
     )
@@ -117,14 +110,7 @@ def test_capture_readiness_evaluator_reports_non_live_speed_sources_explicitly()
             )
         ),
         state=CaptureReadinessStateSnapshot(
-            integrity=IntegrityState(
-                active=False,
-                frames_dropped=0,
-                queue_overflow_drops=0,
-                server_queue_drops=0,
-                parse_errors=0,
-                quiet_period_remaining_s=None,
-            ),
+            integrity=IntegrityState(),
             speed_history=(),
         ),
     )
@@ -147,14 +133,7 @@ def test_capture_readiness_evaluator_blocks_manual_fallback_reference_explicitly
             )
         ),
         state=CaptureReadinessStateSnapshot(
-            integrity=IntegrityState(
-                active=False,
-                frames_dropped=0,
-                queue_overflow_drops=0,
-                server_queue_drops=0,
-                parse_errors=0,
-                quiet_period_remaining_s=None,
-            ),
+            integrity=IntegrityState(),
             speed_history=(),
         ),
     )
@@ -173,14 +152,7 @@ def test_capture_readiness_evaluator_accepts_ready_observation_from_state_snapsh
         policy=policy,
         observation=observation,
         state=CaptureReadinessStateSnapshot(
-            integrity=IntegrityState(
-                active=False,
-                frames_dropped=0,
-                queue_overflow_drops=0,
-                server_queue_drops=0,
-                parse_errors=0,
-                quiet_period_remaining_s=None,
-            ),
+            integrity=IntegrityState(),
             speed_history=(
                 SpeedObservation(observed_at_mono_s=100.0, speed_kmh=81.5),
                 SpeedObservation(observed_at_mono_s=104.0, speed_kmh=82.0),
@@ -208,14 +180,7 @@ def _speed_check_for(
             now_mono=speed_history[-1].observed_at_mono_s,
         ),
         state=CaptureReadinessStateSnapshot(
-            integrity=IntegrityState(
-                active=False,
-                frames_dropped=0,
-                queue_overflow_drops=0,
-                server_queue_drops=0,
-                parse_errors=0,
-                quiet_period_remaining_s=None,
-            ),
+            integrity=IntegrityState(),
             speed_history=speed_history,
         ),
     )
@@ -273,14 +238,7 @@ def test_speed_older_than_two_seconds_is_stale() -> None:
 
 
 _QUIET_STATE = CaptureReadinessStateSnapshot(
-    integrity=IntegrityState(
-        active=False,
-        frames_dropped=0,
-        queue_overflow_drops=0,
-        server_queue_drops=0,
-        parse_errors=0,
-        quiet_period_remaining_s=None,
-    ),
+    integrity=IntegrityState(),
     speed_history=(),
 )
 

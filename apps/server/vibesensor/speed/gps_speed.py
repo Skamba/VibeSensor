@@ -326,6 +326,7 @@ class GPSSpeedMonitor:
             gps_enabled=transport_snapshot.gps_enabled,
             connection_state=transport_snapshot.connection_state,
             device_info=transport_snapshot.device_info,
+            fix_wait_since_mono_s=transport_snapshot.fix_wait_since_mono_s,
             last_fix_mode=transport_snapshot.last_fix_mode,
             last_epx_m=transport_snapshot.last_epx_m,
             last_epy_m=transport_snapshot.last_epy_m,

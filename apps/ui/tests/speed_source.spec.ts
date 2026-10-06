@@ -22,6 +22,7 @@ import {
 import {
   deriveSpeedReadoutLabelKey,
   fallbackReasonKey,
+  gpsFixWaitS,
   gpsReceiverMissing,
   isManualEffectiveSpeedSource,
   resolveEffectiveSpeedSource,
@@ -329,6 +330,7 @@ describe("diagnostics", () => {
       {
         connection_state: "connected",
         device: "/dev/ttyACM0",
+        fix_wait_s: null,
         effective_speed_kmh: 50,
         epv_m: null,
         epx_m: null,
@@ -406,6 +408,7 @@ test("GPS without a receiver: gpsd on, but never a device or a reading", () => {
   const gpsd: SpeedSourceStatusPayload = {
     connection_state: "connected",
     device: null,
+    fix_wait_s: null,
     effective_speed_kmh: null,
     epv_m: null,
     epx_m: null,
@@ -431,6 +434,13 @@ test("GPS without a receiver: gpsd on, but never a device or a reading", () => {
   );
   expect(gpsReceiverMissing("obd2", gpsd)).toBe(false);
   expect(gpsReceiverMissing("gps", null)).toBe(false);
+
+  // A plugged-in receiver without a fix reports how long it has waited.
+  const waiting = { ...gpsd, device: "/dev/ttyACM0", fix_wait_s: 31.5 };
+  expect(gpsFixWaitS("gps", waiting)).toBe(31.5);
+  expect(gpsFixWaitS("gps", gpsd)).toBeNull();
+  expect(gpsFixWaitS("obd2", waiting)).toBeNull();
+  expect(gpsFixWaitS("gps", { ...waiting, gps_enabled: false })).toBeNull();
 
   // The fallback speed stands in for the chosen source, and the UI says why.
   const gps: SpeedSourceSnapshot = {

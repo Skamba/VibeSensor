@@ -4,10 +4,15 @@ import pytest
 
 from vibesensor.speed.gps_transport import GPSTransportState
 from vibesensor.speed.gps_transport_updates import (
+    apply_receivers,
     apply_tpv,
     normalize_tpv_payload,
 )
-from vibesensor.speed.gpsd_message_handler import NormalizedTpvData
+from vibesensor.speed.gpsd_message_handler import (
+    GpsdReceivers,
+    NormalizedTpvData,
+    classify_gpsd_message,
+)
 
 
 def test_normalize_tpv_payload_uses_custom_readers() -> None:
@@ -100,3 +105,32 @@ def test_an_implausible_speed_keeps_the_last_good_one(bad_speed: float | None) -
     apply_tpv(transport, tpv(bad_speed), monotonic=lambda: 2.0)
 
     assert transport.speed_mps == 10.0
+
+
+def test_receivers_follow_hot_plug_and_unplug_and_time_the_wait_for_a_fix() -> None:
+    transport = GPSTransportState(gps_enabled=True)
+    clock = iter((10.0, 11.0, 12.0, 13.0, 14.0, 15.0))
+
+    def ingest(payload: dict[str, object]) -> None:
+        message = classify_gpsd_message(payload)
+        if isinstance(message, GpsdReceivers):
+            apply_receivers(transport, message, monotonic=lambda: next(clock))
+        elif isinstance(message, NormalizedTpvData):
+            apply_tpv(transport, message, monotonic=lambda: next(clock))
+
+    ingest({"class": "DEVICES", "devices": []})
+    assert (transport.device_info, transport.snapshot().fix_wait_since_mono_s) == (None, None)
+
+    ingest({"class": "DEVICE", "path": "/dev/ttyACM0", "activated": "2026-10-06T10:00Z"})
+    ingest({"class": "TPV", "device": "/dev/ttyACM0", "mode": 1})
+    # The wait starts when the receiver appears and lasts while it has no fix.
+    assert transport.device_info == "/dev/ttyACM0"
+    assert transport.snapshot().fix_wait_since_mono_s == 11.0
+
+    ingest({"class": "TPV", "device": "/dev/ttyACM0", "mode": 3, "speed": 5.0})
+    assert transport.snapshot().fix_wait_since_mono_s is None
+
+    ingest({"class": "DEVICE", "path": "/dev/ttyACM0", "activated": 0})
+    snapshot = transport.snapshot()
+    assert (snapshot.device_info, snapshot.receivers, snapshot.last_fix_mode) == (None, (), None)
+    assert snapshot.fix_wait_since_mono_s is None

@@ -78,8 +78,9 @@ export function fallbackReasonKey(
 }
 
 /**
- * GPS is the chosen source but gpsd has never reported a receiver: no device
- * and no reading. The Pi has no built-in GPS, so a USB receiver is required.
+ * GPS is the chosen source but gpsd reports no receiver: no device and no
+ * reading. The Pi has no built-in GPS, so a USB receiver is required. The
+ * server takes the device from gpsd's device list, never from its greeting.
  */
 export function gpsReceiverMissing(
   source: SpeedSourceKind,
@@ -92,4 +93,23 @@ export function gpsReceiverMissing(
     status.device === null &&
     status.last_update_age_s === null
   );
+}
+
+/**
+ * Seconds a plugged-in GPS receiver has been waiting for its first fix; null
+ * when GPS is not the source, there is no receiver, or it has a fix.
+ */
+export function gpsFixWaitS(
+  source: SpeedSourceKind,
+  status: SpeedSourceStatusPayload | null,
+): number | null {
+  if (
+    source !== "gps" ||
+    status === null ||
+    !status.gps_enabled ||
+    status.device === null
+  ) {
+    return null;
+  }
+  return status.fix_wait_s;
 }

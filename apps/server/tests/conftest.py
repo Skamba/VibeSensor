@@ -161,6 +161,7 @@ def _gps_monitor_mock() -> GPSSpeedMonitor:
         gps_enabled=False,
         connection_state="disconnected",
         device=None,
+        fix_wait_s=None,
         fix_mode=0,
         fix_dimension="none",
         speed_confidence="none",

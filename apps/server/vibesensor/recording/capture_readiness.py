@@ -21,7 +21,7 @@ class CaptureReadinessTracker:
         self._policy = policy or CaptureReadinessPolicy()
         self._state = CaptureReadinessState(
             config=CaptureReadinessStateConfig(
-                integrity_quiet_period_s=self._policy.integrity_quiet_period_s,
+                integrity_window_s=self._policy.integrity_window_s,
                 stable_speed_dwell_s=self._policy.stable_speed_dwell_s,
             ),
         )

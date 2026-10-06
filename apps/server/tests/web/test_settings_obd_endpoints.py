@@ -39,6 +39,7 @@ def _build_client(*, recording: bool = False, db: HistoryDB | None = None) -> _H
         gps_enabled=True,
         connection_state="connected",
         device="/dev/ttyUSB0",
+        fix_wait_s=None,
         fix_mode=3,
         fix_dimension="3d",
         speed_confidence="high",

@@ -20,10 +20,12 @@ def _sensor(
     *,
     location_code: str = "front_left_wheel",
     frames_dropped: int = 0,
+    frames_received: int = 0,
 ) -> CaptureReadinessSensorObservation:
     return CaptureReadinessSensorObservation(
         client_id="client-1",
         location_code=location_code,
+        frames_received=frames_received,
         frames_dropped=frames_dropped,
         queue_overflow_drops=0,
         server_queue_drops=0,
@@ -31,51 +33,41 @@ def _sensor(
     )
 
 
-def test_capture_readiness_state_tracks_integrity_quiet_window() -> None:
+def test_capture_readiness_state_sums_frame_counts_over_the_integrity_window() -> None:
     state = CaptureReadinessState(
         config=CaptureReadinessStateConfig(
-            integrity_quiet_period_s=10.0,
+            integrity_window_s=10.0,
             stable_speed_dwell_s=8.0,
         ),
     )
-    client = _sensor()
 
-    initial = state.observe(
-        CaptureReadinessStateInput(
-            observed_at_mono_s=100.0,
-            active_sensors=(client,),
-            speed_sample_kmh=None,
-        )
-    )
-    assert not initial.integrity.active
-    assert initial.integrity.quiet_period_remaining_s is None
+    def observe(at: float, *, received: int, dropped: int):
+        return state.observe(
+            CaptureReadinessStateInput(
+                observed_at_mono_s=at,
+                active_sensors=(_sensor(frames_received=received, frames_dropped=dropped),),
+                speed_sample_kmh=None,
+            )
+        ).integrity
 
-    issue = state.observe(
-        CaptureReadinessStateInput(
-            observed_at_mono_s=104.0,
-            active_sensors=(_sensor(frames_dropped=2),),
-            speed_sample_kmh=None,
-        )
+    assert not observe(100.0, received=1000, dropped=5).any_events
+    loss = observe(104.0, received=1038, dropped=7)
+    assert (loss.frames_received, loss.frames_dropped) == (38, 2)
+    assert loss.loss_ratio == 0.05
+    later = observe(110.0, received=1098, dropped=7)
+    assert (later.frames_received, later.frames_dropped) == (98, 2)
+    expired = observe(114.5, received=1143, dropped=7)
+    assert (expired.frames_received, expired.frames_dropped, expired.any_events) == (
+        105,
+        0,
+        False,
     )
-    assert issue.integrity.active
-    assert issue.integrity.frames_dropped == 2
-    assert issue.integrity.quiet_period_remaining_s == 10.0
-
-    expired = state.observe(
-        CaptureReadinessStateInput(
-            observed_at_mono_s=115.0,
-            active_sensors=(client,),
-            speed_sample_kmh=None,
-        )
-    )
-    assert not expired.integrity.active
-    assert expired.integrity.quiet_period_remaining_s is None
 
 
 def test_capture_readiness_state_clears_speed_history_when_sample_is_invalid() -> None:
     state = CaptureReadinessState(
         config=CaptureReadinessStateConfig(
-            integrity_quiet_period_s=10.0,
+            integrity_window_s=10.0,
             stable_speed_dwell_s=8.0,
         ),
     )

@@ -28,6 +28,7 @@ def speed_source_status_response(
         gps_enabled=snapshot.gps_enabled,
         connection_state=snapshot.connection_state,
         device=snapshot.device,
+        fix_wait_s=snapshot.fix_wait_s,
         fix_mode=snapshot.fix_mode,
         fix_dimension=snapshot.fix_dimension,
         speed_confidence=snapshot.speed_confidence,

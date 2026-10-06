@@ -108,6 +108,7 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
         ("/usr/local/lib/vibesensor", str(helper_dir)),
         ("UNIT_DIR=/etc/systemd/system", f"UNIT_DIR={unit_dir}"),
         ("/etc/systemd/journald.conf.d/90-vibesensor.conf", str(journald_dropin)),
+        ("UDEV_RULES_DIR=/etc/udev/rules.d", f"UDEV_RULES_DIR={tmp_path / 'udev'}"),
         ("/etc/sudoers.d/vibesensor-update", str(tmp_path / "sudoers-vibesensor-update")),
     ):
         assert real in installer, f"install_systemd_units.sh no longer uses {real}"
@@ -149,6 +150,9 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
     assert "__SERVICE_USER__" not in (unit_dir / "vibesensor.service").read_text()
     # The journal outlives a power cut.
     assert "\nStorage=persistent\n" in journald_dropin.read_text()
+    assert (tmp_path / "udev/61-vibesensor-gps.rules").read_bytes() == (
+        SERVER_ROOT / "systemd/61-vibesensor-gps.rules"
+    ).read_bytes()
     # The stamp is the manifest of the tree the installer ran from (its own
     # sandboxed copy included), so on a device its digest is ROOT_SIDE_DIGEST.
     stamp = helper_dir / "root-side.sha256"

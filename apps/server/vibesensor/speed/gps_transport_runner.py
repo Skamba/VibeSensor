@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _WATCH_ENABLE_PAYLOAD = b'?WATCH={"enable":true,"json":true};\n'
+_DEVICES_QUERY_PAYLOAD = b"?DEVICES;\n"
 _OUTAGE_SUMMARY_INTERVAL_S = 600.0
 """While GPS stays unavailable, repeat failures log one info summary per interval."""
 
@@ -120,6 +121,7 @@ class GPSTransportRunner:
                 retry_delay = await self._read_session(
                     state,
                     reader,
+                    writer,
                     lifecycle,
                     outage,
                     tpv_mode=tpv_mode,
@@ -158,6 +160,7 @@ class GPSTransportRunner:
         self,
         state: GPSTransportState,
         reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
         lifecycle: TransportLifecycle,
         outage: _OutageLog,
         *,
@@ -166,14 +169,28 @@ class GPSTransportRunner:
     ) -> float | None:
         """Read until disabled or the peer closes; return the delay before reconnecting.
 
-        The reconnect backoff resets only once a TPV report arrives: gpsd without
-        a receiver accepts connections but never sends one.
+        The reconnect backoff resets only once a TPV report arrives. gpsd without
+        a receiver sends nothing after its greeting until one is plugged in, so
+        while it has none a quiet read is no failure: the session stays open
+        (gpsd announces a hot-plugged receiver on it), and a ``?DEVICES`` query
+        checks that gpsd still answers. Reconnecting instead made the receiver
+        state flicker between "no receiver" and "no fix" on every retry.
         """
+        probe_pending = False
         while True:
             if not state.gps_enabled:
                 state.set_enabled(False)
                 return None
-            line = await asyncio.wait_for(reader.readline(), timeout=self._read_timeout_s)
+            try:
+                line = await asyncio.wait_for(reader.readline(), timeout=self._read_timeout_s)
+            except TimeoutError:
+                if state.device_info is not None or probe_pending:
+                    raise
+                writer.write(_DEVICES_QUERY_PAYLOAD)
+                await writer.drain()
+                probe_pending = True
+                continue
+            probe_pending = False
             if not line:
                 transition = lifecycle.on_stream_disconnected()
                 state._apply_transition_changes(transition.changes)

@@ -77,7 +77,14 @@ class SpeedSourceStatusResponse(BaseModel):
 
     gps_enabled: bool
     connection_state: str
-    device: str | None
+    device: str | None = Field(
+        description="The receiver gpsd reads (its device path); `null` while gpsd has none."
+    )
+    fix_wait_s: float | None = Field(
+        description=(
+            "Seconds the receiver has been waiting for a fix; `null` with a fix or no receiver."
+        )
+    )
     fix_mode: int | None
     fix_dimension: Literal["3d", "2d", "none"]
     speed_confidence: Literal["low", "medium", "high"]

@@ -30,6 +30,8 @@ _DISCONNECTED_FIELDS: dict[str, Any] = {
     "last_epv_m": None,
     "zero_speed_streak": 0,
     "device_info": None,
+    "receivers": (),
+    "fix_wait_since_mono_s": None,
 }
 
 

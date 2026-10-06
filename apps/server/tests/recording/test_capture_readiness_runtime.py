@@ -143,51 +143,56 @@ def test_capture_readiness_uses_persisted_sensor_location_metadata_when_runtime_
     assert snapshots[-1].is_ready
 
 
-def test_capture_readiness_fails_when_recent_integrity_issues_are_detected(
+def _sensors_check(readiness):
+    return next(check for check in readiness.checks if check.check_key == "sensors_ready")
+
+
+def test_frame_loss_blocks_start_only_above_two_percent_over_ten_seconds(
     fake_registry,
     speed_rig,
     mutable_fake_settings,
 ) -> None:
+    # A sensor sends 10 frames a second. One lost frame warns; Start waits only
+    # while more than 2 % of the last 10 s of frames went missing.
     tracker = CaptureReadinessTracker()
     mutable_fake_settings.active_car = _active_car_snapshot()
     speed_rig.obd_reading(speed_kmh=86.4, rpm=2600.0)
-
-    tracker.evaluate(
-        _observation(
-            fake_registry=fake_registry,
-            speed_rig=speed_rig,
-            mutable_fake_settings=mutable_fake_settings,
-            now_mono=200.0,
-        )
-    )
-
+    observe = {
+        "fake_registry": fake_registry,
+        "speed_rig": speed_rig,
+        "mutable_fake_settings": mutable_fake_settings,
+    }
     active_client = fake_registry.get("active")
     assert active_client is not None
-    active_client.frames_dropped = 2
+    tracker.evaluate(_observation(**observe, now_mono=200.0))
 
-    blocked = tracker.evaluate(
-        _observation(
-            fake_registry=fake_registry,
-            speed_rig=speed_rig,
-            mutable_fake_settings=mutable_fake_settings,
-            now_mono=204.0,
-        )
-    )
-    sensors_check = next(check for check in blocked.checks if check.check_key == "sensors_ready")
-    assert sensors_check.state == "fail"
-    assert sensors_check.reason_key == "recent_integrity_events"
+    active_client.frames_total = 99
+    active_client.frames_dropped = 1
+    one_lost = tracker.evaluate(_observation(**observe, now_mono=210.0))
+    assert one_lost.is_ready
+    check = _sensors_check(one_lost)
+    assert (check.state, check.reason_key) == ("warn", "recent_frame_loss")
+    assert ("frame_loss_pct", 1.0) in check.details
 
-    recovered = tracker.evaluate(
-        _observation(
-            fake_registry=fake_registry,
-            speed_rig=speed_rig,
-            mutable_fake_settings=mutable_fake_settings,
-            now_mono=215.0,
-        )
-    )
-    sensors_check = next(check for check in recovered.checks if check.check_key == "sensors_ready")
-    assert sensors_check.state == "warn"
-    assert sensors_check.reason_key == "limited_sensor_coverage"
+    active_client.frames_total = 197
+    active_client.frames_dropped = 3
+    two_percent = tracker.evaluate(_observation(**observe, now_mono=219.0))
+    assert two_percent.is_ready
+    assert _sensors_check(two_percent).reason_key == "recent_frame_loss"
+
+    active_client.frames_total = 217
+    active_client.frames_dropped = 6
+    burst = tracker.evaluate(_observation(**observe, now_mono=221.0))
+    assert not burst.is_ready
+    check = _sensors_check(burst)
+    assert (check.state, check.reason_key) == ("fail", "frame_loss_high")
+    assert ("frames_dropped", 5) in check.details
+
+    # The burst leaves the 10 s window: Start is available again.
+    active_client.frames_total = 337
+    recovered = tracker.evaluate(_observation(**observe, now_mono=233.0))
+    assert recovered.is_ready
+    assert _sensors_check(recovered).reason_key == "limited_sensor_coverage"
 
 
 def test_capture_readiness_ignores_frames_lost_to_an_expected_interruption(
@@ -208,23 +213,21 @@ def test_capture_readiness_ignores_frames_lost_to_an_expected_interruption(
     tracker.evaluate(_observation(**observe, now_mono=200.0))
     active_client = fake_registry.get("active")
     assert active_client is not None
+    active_client.frames_total = 20
     active_client.frames_dropped = 14
     active_client.expected_frames_dropped = 13
 
     one_real_loss = tracker.evaluate(_observation(**observe, now_mono=204.0))
-    sensors_check = next(
-        check for check in one_real_loss.checks if check.check_key == "sensors_ready"
-    )
-    assert sensors_check.reason_key == "recent_integrity_events"
+    assert one_real_loss.is_ready is False
+    sensors_check = _sensors_check(one_real_loss)
+    assert sensors_check.reason_key == "frame_loss_high"
     assert ("frames_dropped", 1) in sensors_check.details
 
+    active_client.frames_total = 140
     active_client.frames_dropped = 40
     active_client.expected_frames_dropped = 39
-    after_quiet = tracker.evaluate(_observation(**observe, now_mono=216.0))
-    sensors_check = next(
-        check for check in after_quiet.checks if check.check_key == "sensors_ready"
-    )
-    assert sensors_check.reason_key == "limited_sensor_coverage"
+    after_window = tracker.evaluate(_observation(**observe, now_mono=216.0))
+    assert _sensors_check(after_window).reason_key == "limited_sensor_coverage"
 
 
 def test_capture_readiness_blocks_while_a_sensor_timing_is_unreliable(

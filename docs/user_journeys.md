@@ -196,7 +196,10 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
   - A sensor has no location: readiness fails `sensor_locations_missing`
     (`_sensors_check` in
     `apps/server/vibesensor/recording/capture_readiness_evaluator.py`).
-  - Frame loss: readiness waits out a 10 s quiet period (same function).
+  - Frame loss: readiness blocks Start only while the live sensors lost more
+    than 2 % of their frames over the last 10 s (`frame_loss_high`); a smaller
+    loss is a warning (`recent_frame_loss`) and Start stays available (same
+    function).
   - A late sensor: chunks sent before its clock syncs are dropped, and the
     sensor is aligned from its first synced chunk
     ([run_lifecycle.md](run_lifecycle.md), "Recording active").

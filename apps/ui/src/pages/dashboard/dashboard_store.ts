@@ -34,6 +34,7 @@ import {
 import {
   deriveSpeedReadoutLabelKey,
   fallbackReasonKey,
+  gpsFixWaitS,
   gpsReceiverMissing,
 } from "../../speed_source";
 import {
@@ -281,6 +282,7 @@ const baseRecording = computed(() => {
         speedSettings.source.value,
         speedStatus.value,
       ),
+      gpsFixWaitS: gpsFixWaitS(speedSettings.source.value, speedStatus.value),
       connectedText: formatInt(
         clients.value.filter((client) => client.connected).length,
       ),

@@ -95,6 +95,7 @@ function recording(overrides: Partial<RecordingInputs> = {}) {
       health: OK_HEALTH,
       speedUnit: "kmh",
       gpsReceiverMissing: false,
+      gpsFixWaitS: null,
       connectedText: "1",
       assignedText: "1",
       elapsedText: "0:30",
@@ -163,6 +164,45 @@ describe("recording card", () => {
       "speed.gps_no_receiver.title: speed.gps_no_receiver.body",
     );
     expect(detail(false)).toBeNull();
+  });
+
+  test("a receiver still waiting for a fix says how long and where to put it", () => {
+    const model = recording({
+      status: status({ capture_readiness: NOT_READY }),
+      gpsFixWaitS: 47.6,
+    });
+    expect(model.summaryPanel?.detail).toBe(
+      'speed.gps_waiting_fix:{"seconds":"47"}',
+    );
+  });
+
+  test("after a finished run a greyed-out Start still says why", () => {
+    const saved = recording({
+      status: status({
+        last_completed_run_id: "run-1",
+        capture_readiness: NOT_READY,
+      }),
+      gpsFixWaitS: 12,
+    });
+    expect(saved.summaryPanel?.title).toBe("dashboard.logging.saved.title");
+    expect(saved.startDisabled).toBe(true);
+    expect(saved.blockedReason).toBe(
+      `dashboard.logging.start_blocked:${JSON.stringify({
+        reason:
+          "dashboard.capture_readiness.reference_ready.speed_source_missing " +
+          'speed.gps_waiting_fix:{"seconds":"12"}',
+      })}`,
+    );
+    const ready = recording({
+      status: status({
+        last_completed_run_id: "run-1",
+        capture_readiness: readiness(true, [
+          ["sensors_ready", "pass", "ready"],
+        ]),
+      }),
+    });
+    expect(ready.blockedReason).toBeNull();
+    expect(ready.startDisabled).toBe(false);
   });
 
   test("a parked car can start: unsteady speed is only advice", () => {
@@ -477,6 +517,19 @@ describe("readiness text", () => {
     );
     expect(checkDetail(other, t, formatInt, "kmh")).toBe(
       "dashboard.capture_readiness.capture_ready.capture_blocked",
+    );
+  });
+
+  test("frame loss names the lost share: a block above 2 %, a warning below", () => {
+    const [high, low] = readiness(false, [
+      ["sensors_ready", "fail", "frame_loss_high", { frame_loss_pct: 4.2 }],
+      ["sensors_ready", "warn", "recent_frame_loss", { frame_loss_pct: 1 }],
+    ]).checks;
+    expect(checkDetail(high, t, formatInt, "kmh")).toBe(
+      'dashboard.capture_readiness.sensors_ready.frame_loss_high:{"percent":"4.2"}',
+    );
+    expect(checkDetail(low, t, formatInt, "kmh")).toBe(
+      'dashboard.capture_readiness.sensors_ready.recent_frame_loss:{"percent":"1.0"}',
     );
   });
 

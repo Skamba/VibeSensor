@@ -36,6 +36,7 @@ function statusPayload(server: SpeedSourceServer): SpeedSourceStatusPayload {
     return {
       ...statusPayload({ ...server, noGpsReceiver: false }),
       device: null,
+      fix_wait_s: null,
       effective_speed_kmh: null,
       fix_dimension: "none",
       fix_mode: null,
@@ -48,6 +49,7 @@ function statusPayload(server: SpeedSourceServer): SpeedSourceStatusPayload {
   return {
     connection_state: "connected",
     device: "/dev/ttyACM0",
+    fix_wait_s: null,
     effective_speed_kmh:
       source === "manual" ? server.saved.manual_speed_kph : 52.3,
     epv_m: null,

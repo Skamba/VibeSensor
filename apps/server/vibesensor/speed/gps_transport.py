@@ -10,7 +10,7 @@ from vibesensor.common.json_types import JsonObject
 from vibesensor.speed import gps_transport_lifecycle as _transport_lifecycle
 from vibesensor.speed import gps_transport_updates as _transport_updates
 from vibesensor.speed.gps_transport_runner import GPSTransportRunner
-from vibesensor.speed.gpsd_message_handler import GpsdVersionInfo, NormalizedTpvData
+from vibesensor.speed.gpsd_message_handler import GpsdReceivers, NormalizedTpvData
 from vibesensor.speed.timed_observation import TimedScalarObservation, append_timed_observation
 
 TpvModeReader = _transport_updates.TpvModeReader
@@ -26,6 +26,10 @@ class GPSTransportSnapshot:
     speed_snapshot: tuple[float | None, float | None] = (None, None)
     speed_history: tuple[TimedScalarObservation, ...] = ()
     device_info: str | None = None
+    """The receiver gpsd reads (its device path); ``None`` while gpsd has none."""
+    receivers: tuple[str, ...] = ()
+    fix_wait_since_mono_s: float | None = None
+    """Since when a receiver is present without a fix; ``None`` with a fix or no receiver."""
     last_fix_mode: int | None = None
     last_epx_m: float | None = None
     last_epy_m: float | None = None
@@ -269,8 +273,8 @@ class GPSTransportState:
         )
         if message is None:
             return False
-        if isinstance(message, GpsdVersionInfo):
-            self._replace_transport(device_info=f"gpsd {message.revision}")
+        if isinstance(message, GpsdReceivers):
+            _transport_updates.apply_receivers(self, message, monotonic=time.monotonic)
             return False
         self._apply_tpv(message)
         return True

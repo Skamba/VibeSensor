@@ -127,6 +127,7 @@ class SpeedSourceObservationService:
             gps_enabled=self._gps_monitor.gps_enabled,
             connection_state=obd_status.connection_state,
             device=self._format_device(obd_status),
+            fix_wait_s=None,
             fix_mode=None,
             fix_dimension="none",
             speed_confidence="high" if obd_status.last_speed_kmh is not None else "low",

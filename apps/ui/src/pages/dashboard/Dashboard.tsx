@@ -391,6 +391,11 @@ function Recording(props: { onAddCar: () => void }) {
           {t("dashboard.stop_recording")}
         </button>
       </div>
+      {model.blockedReason ? (
+        <p id="startBlockedReason" class="card__subtle logging-start-hint">
+          {model.blockedReason}
+        </p>
+      ) : null}
       {model.showStop || model.startDisabled ? null : (
         <p id="startHint" class="card__subtle logging-start-hint">
           {t("dashboard.logging.start_hint")}

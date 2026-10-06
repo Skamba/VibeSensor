@@ -152,25 +152,14 @@ def _sensors_check(
             ),
         )
 
-    if integrity.active:
-        details: list[tuple[str, int | float | str]] = [
-            ("live_sensor_count", live_sensor_count),
-        ]
-        for key, value in (
-            ("frames_dropped", integrity.frames_dropped),
-            ("queue_overflow_drops", integrity.queue_overflow_drops),
-            ("server_queue_drops", integrity.server_queue_drops),
-            ("parse_errors", integrity.parse_errors),
-        ):
-            if value > 0:
-                details.append((key, value))
-        if integrity.quiet_period_remaining_s is not None:
-            details.append(("quiet_period_remaining_s", integrity.quiet_period_remaining_s))
+    loss_blocks = integrity.loss_ratio > policy.max_frame_loss_ratio
+    loss_details = _integrity_details(live_sensor_count, integrity)
+    if loss_blocks:
         return CaptureReadinessCheck(
             check_key="sensors_ready",
             state="fail",
-            reason_key="recent_integrity_events",
-            details=tuple(details),
+            reason_key="frame_loss_high",
+            details=loss_details,
         )
 
     timing_degraded_count = sum(1 for sensor in active_sensors if sensor.timing_degraded)
@@ -187,6 +176,14 @@ def _sensors_check(
             ),
         )
 
+    if integrity.any_events:
+        return CaptureReadinessCheck(
+            check_key="sensors_ready",
+            state="warn",
+            reason_key="recent_frame_loss",
+            details=loss_details,
+        )
+
     if live_sensor_count < policy.low_sensor_count_warn_threshold:
         return CaptureReadinessCheck(
             check_key="sensors_ready",
@@ -201,6 +198,25 @@ def _sensors_check(
         reason_key="sensors_ready",
         details=(("live_sensor_count", live_sensor_count),),
     )
+
+
+def _integrity_details(
+    live_sensor_count: int,
+    integrity: IntegrityState,
+) -> tuple[tuple[str, int | float | str], ...]:
+    details: list[tuple[str, int | float | str]] = [
+        ("live_sensor_count", live_sensor_count),
+        ("frame_loss_pct", round(integrity.loss_ratio * 100.0, 1)),
+    ]
+    for key, value in (
+        ("frames_dropped", integrity.frames_dropped),
+        ("queue_overflow_drops", integrity.queue_overflow_drops),
+        ("server_queue_drops", integrity.server_queue_drops),
+        ("parse_errors", integrity.parse_errors),
+    ):
+        if value > 0:
+            details.append((key, value))
+    return tuple(details)
 
 
 def _reference_check(

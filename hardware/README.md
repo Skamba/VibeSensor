@@ -21,7 +21,7 @@ engine orders. The Pi has no built-in GPS. Choose one:
 | Part | Gives | Notes |
 |------|-------|-------|
 | Bluetooth ELM327 OBD-II adapter (recommended) | Live speed and measured engine RPM | **Bluetooth only.** Wi-Fi OBD dongles cannot connect: the Pi's Wi-Fi runs the sensor hotspot. Pair it on the Speed source tab. |
-| USB GPS receiver (u-blox based, gpsd-compatible) | Live speed; engine RPM is estimated assuming top gear (or D) | The Pi 3 A+ has a single USB port, which the USB internet uplink also uses. |
+| USB GPS receiver (gpsd-compatible: u-blox, or a GPS mouse on a Prolific PL2303 or Silicon Labs CP210x chip) | Live speed; engine RPM is estimated assuming top gear (or D) | The Pi 3 A+ has a single USB port, which the USB internet uplink also uses. Plug-in is picked up without a reboot. Place it where it sees the sky (against the windscreen); a first fix can take a minute or more. |
 
 Without either, a speed can be typed in, but then the run only holds at
 exactly that speed and the results are hedged. The Speed source tab in the web

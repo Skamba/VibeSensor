@@ -5,6 +5,8 @@ import type {
   CarsPayload,
   HistoryEntry,
   LoggingStatusPayload,
+  SpeedSourcePayload,
+  SpeedSourceStatusPayload,
 } from "../src/api/types";
 import {
   bootLiveDashboard,
@@ -618,4 +620,96 @@ test("journey: guided step speeds follow the speed unit setting", async ({
   await expect(panel).toContainText(
     "In top gear (or D), accelerate smoothly from about 14 to 33 m/s",
   );
+});
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("journey: after a run, a greyed-out Start says GPS is still waiting for a fix", async ({
+    page,
+  }) => {
+    const waitingForGps = {
+      ...buildCaptureReadiness({
+        isReady: false,
+        sensors: {
+          state: "warn",
+          reasonKey: "limited_sensor_coverage",
+          details: { live_sensor_count: 1 },
+        },
+        reference: {
+          state: "fail",
+          reasonKey: "speed_source_fallback_active",
+        },
+        speed: { state: "warn", reasonKey: "speed_sample_missing" },
+      }),
+      capabilities: {
+        wheel: "manual_speed",
+        driveline: "manual_speed",
+        engine: "manual_speed",
+      },
+    } satisfies LoggingStatusPayload["capture_readiness"];
+    await installCommonRoutes(page, {
+      settingsHandler: async (route) => {
+        const path = requestPath(route);
+        if (path === "/api/settings/speed-source/status") {
+          await fulfillJson<SpeedSourceStatusPayload>(route, {
+            connection_state: "connected",
+            device: "/dev/ttyACM0",
+            fix_wait_s: 42.4,
+            effective_speed_kmh: 50,
+            epv_m: null,
+            epx_m: null,
+            epy_m: null,
+            fallback_active: true,
+            fix_dimension: "none",
+            fix_mode: 1,
+            gps_enabled: true,
+            last_error: null,
+            last_update_age_s: null,
+            raw_speed_kmh: null,
+            reconnect_delay_s: null,
+            speed_confidence: "low",
+            speed_source: "fallback_manual",
+            stale_timeout_s: 10,
+          });
+          return;
+        }
+        if (path === "/api/settings/speed-source") {
+          await fulfillJson<SpeedSourcePayload>(route, {
+            speed_source: "gps",
+            manual_speed_kph: 50,
+            stale_timeout_s: 10,
+          });
+          return;
+        }
+        await activeCar(route);
+      },
+    });
+    await page.route("**/api/recording/status", (route) =>
+      fulfillJson(
+        route,
+        idleStatus({
+          last_completed_run_id: "run-1",
+          capture_readiness: waitingForGps,
+        }),
+      ),
+    );
+    await bootLiveDashboard(page, {
+      installRoutes: false,
+      liveSensorPayload: { clients: [sensor("front_left_wheel")] },
+    });
+
+    await expect(page.locator("#loggingSummary")).toContainText(
+      "Your run is ready in History.",
+    );
+    await expect(page.locator("#startLoggingBtn")).toBeDisabled();
+    const reason = page.locator("#startBlockedReason");
+    await expect(reason).toContainText("Start is not available yet.");
+    await expect(reason).toContainText(
+      "GPS receiver found, waiting for a fix (42 s).",
+    );
+    await expect(page.locator("#captureManualSpeedNote")).toContainText(
+      "Start waits for live speed",
+    );
+  });
 });

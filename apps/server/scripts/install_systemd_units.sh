@@ -20,6 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 VENV_DIR="${PI_DIR}/.venv"
 UNIT_DIR=/etc/systemd/system
+UDEV_RULES_DIR=/etc/udev/rules.d
 SKIP_SERVICE_START="${VIBESENSOR_SKIP_SERVICE_START:-0}"
 SERVICE_USER="${1:-}"
 if [ -z "${SERVICE_USER}" ]; then
@@ -92,6 +93,10 @@ JOURNALD_DROPIN=/etc/systemd/journald.conf.d/90-vibesensor.conf
 install -d -o root -g root -m 0755 "$(dirname "${JOURNALD_DROPIN}")"
 install -o root -g root -m 0644 "${PI_DIR}/systemd/vibesensor-journald.conf" "${JOURNALD_DROPIN}"
 
+# USB GPS receivers on chips Debian's gpsd rules leave out (see the rule file).
+install -d -m 0755 "${UDEV_RULES_DIR}"
+install -m 0644 "${PI_DIR}/systemd/61-vibesensor-gps.rules" "${UDEV_RULES_DIR}/61-vibesensor-gps.rules"
+
 # Record what is now installed: the manifest of the root side this ran from
 # (sha256sum lines for the regular files in root-helpers/, scripts/ and
 # systemd/, sorted bytewise). The server compares its digest with the one its
@@ -126,6 +131,7 @@ else
   if ! { systemctl restart systemd-journald && journalctl --flush; }; then
     echo "WARNING: could not restart journald; the journal becomes persistent at the next boot." >&2
   fi
+  udevadm control --reload-rules || true
   systemctl enable --now vibesensor-privileged.socket
   # Restart (not just start) so a re-run applies the updated unit to a running server.
   systemctl enable vibesensor.service

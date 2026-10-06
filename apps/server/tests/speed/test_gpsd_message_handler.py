@@ -7,7 +7,7 @@ import math
 import pytest
 
 from vibesensor.speed.gpsd_message_handler import (
-    GpsdVersionInfo,
+    GpsdReceivers,
     NormalizedTpvData,
     classify_gpsd_message,
     read_non_negative_metric,
@@ -18,13 +18,37 @@ from vibesensor.speed.gpsd_message_handler import (
 @pytest.mark.parametrize(
     ("payload", "expected"),
     [
+        # gpsd greets every client with its VERSION, receiver or not.
+        pytest.param({"class": "VERSION", "rev": "3.25"}, None, id="version_is_no_receiver"),
         pytest.param(
-            {"class": "VERSION", "rev": "3.25"},
-            GpsdVersionInfo(revision="3.25"),
-            id="version",
+            {"class": "DEVICES", "devices": []},
+            GpsdReceivers(added=(), replaces_all=True),
+            id="devices_empty",
         ),
-        pytest.param({"class": "VERSION"}, None, id="version_missing_rev"),
-        pytest.param({"class": "VERSION", "rev": 42}, None, id="version_invalid_rev"),
+        pytest.param(
+            {
+                "class": "DEVICES",
+                "devices": [
+                    {"class": "DEVICE", "path": "/dev/ttyACM0", "activated": "2026-10-06T10:00Z"},
+                    {"class": "DEVICE"},
+                    "junk",
+                ],
+            },
+            GpsdReceivers(added=("/dev/ttyACM0",), replaces_all=True),
+            id="devices_listed",
+        ),
+        pytest.param({"class": "DEVICES"}, None, id="devices_missing_list"),
+        pytest.param(
+            {"class": "DEVICE", "path": "/dev/ttyUSB0", "activated": "2026-10-06T10:00Z"},
+            GpsdReceivers(added=("/dev/ttyUSB0",)),
+            id="device_hot_added",
+        ),
+        pytest.param(
+            {"class": "DEVICE", "path": "/dev/ttyUSB0", "activated": 0},
+            GpsdReceivers(added=(), removed=("/dev/ttyUSB0",)),
+            id="device_unplugged",
+        ),
+        pytest.param({"class": "DEVICE", "activated": 0}, None, id="device_without_path"),
         pytest.param(
             {
                 "class": "TPV",

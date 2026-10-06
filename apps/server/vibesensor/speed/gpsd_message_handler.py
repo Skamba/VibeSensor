@@ -15,10 +15,19 @@ from vibesensor.common.type_checks import NUMERIC_TYPES
 
 
 @dataclass(frozen=True, slots=True)
-class GpsdVersionInfo:
-    """Normalized VERSION message payload."""
+class GpsdReceivers:
+    """The receivers gpsd reports: a DEVICES list, or one DEVICE change.
 
-    revision: str
+    gpsd greets every client with its VERSION and, once watching, a DEVICES
+    list, even when no receiver is plugged in; only a listed device means a
+    receiver is there. A hot-plugged receiver arrives as a DEVICE message and
+    one unplugged as a DEVICE message with ``"activated": 0``.
+    """
+
+    added: tuple[str, ...]
+    removed: tuple[str, ...] = ()
+    replaces_all: bool = False
+    """A DEVICES list names every receiver: anything not in it is gone."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,8 +42,8 @@ class NormalizedTpvData:
     device: str | None
 
 
-GpsdMessage = GpsdVersionInfo | NormalizedTpvData | None
-"""Classified result: VERSION info, normalized TPV data, or None for
+GpsdMessage = GpsdReceivers | NormalizedTpvData | None
+"""Classified result: receiver presence, normalized TPV data, or None for
 unsupported message classes."""
 
 
@@ -76,20 +85,40 @@ def _read_device(
     return None
 
 
+def _device_path(payload: object) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    path = payload.get("path")
+    return path if isinstance(path, str) and path else None
+
+
+def _receivers(payload: JsonObject) -> GpsdReceivers | None:
+    if payload.get("class") == "DEVICES":
+        devices = payload.get("devices")
+        if not isinstance(devices, list):
+            return None
+        paths = tuple(path for path in map(_device_path, devices) if path is not None)
+        return GpsdReceivers(added=paths, replaces_all=True)
+    path = _device_path(payload)
+    if path is None:
+        return None
+    activated = payload.get("activated")
+    if activated == 0 and not isinstance(activated, bool):
+        return GpsdReceivers(added=(), removed=(path,))
+    return GpsdReceivers(added=(path,))
+
+
 def classify_gpsd_message(payload: JsonObject) -> GpsdMessage:
     """Classify a raw GPSD JSON message and extract typed fields.
 
-    Returns a ``GpsdVersionInfo`` for VERSION messages, a
+    Returns ``GpsdReceivers`` for DEVICES/DEVICE messages, a
     ``NormalizedTpvData`` for TPV messages, or ``None`` for
-    unsupported message classes.
+    unsupported message classes (VERSION, WATCH, SKY, ...).
     """
     payload_class = payload.get("class")
 
-    if payload_class == "VERSION":
-        revision = payload.get("rev")
-        if isinstance(revision, str):
-            return GpsdVersionInfo(revision=revision)
-        return None
+    if payload_class in ("DEVICES", "DEVICE"):
+        return _receivers(payload)
 
     if payload_class == "TPV":
         return NormalizedTpvData(

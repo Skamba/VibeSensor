@@ -110,6 +110,18 @@ Terminal runs older than 7 days are pruned at startup (see
 | `gps.gps_enabled` | `true` | Enable gpsd-backed GPS reads (gpsd on `127.0.0.1`). Disable this on dev benches or deployments without GPS hardware. |
 | `gps.gpsd_port` | `2947` | gpsd's TCP port. Only isolated test runtimes change it, to read the simulator's GPS feed (`vibesensor-sim --gps-port`). |
 
+A receiver counts as present only when gpsd lists it (its `DEVICES`/`DEVICE`
+reports, or a `TPV` naming a device), never from gpsd's own version banner, so
+a running gpsd without a receiver shows "no receiver" instead of flickering.
+While gpsd lists no receiver the server keeps its session and asks `?DEVICES;`
+every few seconds, so a hot-plugged receiver shows up within about 3 s. Debian's
+`60-gpsd.rules` leaves the PL2303 and CP210x USB-serial chips commented out;
+`apps/server/systemd/61-vibesensor-gps.rules` (installed into
+`/etc/udev/rules.d` by `install_systemd_units.sh`) enables them. The ATOM
+Lite's FTDI chip stays excluded so gpsd never grabs a sensor being flashed; a
+CP210x-based ESP32 board plugged into the Pi would be grabbed, so flash those
+from another machine.
+
 ## `recording`
 
 | Key | Default | Notes |

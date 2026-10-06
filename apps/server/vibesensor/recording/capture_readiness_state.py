@@ -32,18 +32,41 @@ class SpeedObservation:
 
 @dataclass(frozen=True, slots=True)
 class CaptureReadinessStateConfig:
-    integrity_quiet_period_s: float
+    integrity_window_s: float
     stable_speed_dwell_s: float
 
 
 @dataclass(frozen=True, slots=True)
 class IntegrityState:
-    active: bool
-    frames_dropped: int
-    queue_overflow_drops: int
-    server_queue_drops: int
-    parse_errors: int
-    quiet_period_remaining_s: float | None
+    """The live sensors' frame counts over the last integrity window."""
+
+    frames_received: int = 0
+    frames_dropped: int = 0
+    queue_overflow_drops: int = 0
+    server_queue_drops: int = 0
+    parse_errors: int = 0
+
+    @property
+    def any_events(self) -> bool:
+        return any(
+            (
+                self.frames_dropped,
+                self.queue_overflow_drops,
+                self.server_queue_drops,
+                self.parse_errors,
+            )
+        )
+
+    @property
+    def loss_ratio(self) -> float:
+        """Share of the window's frames lost.
+
+        Sequence gaps count every frame that never arrived, whatever dropped it
+        (the sensor's full send queue, the server's ingest queue, a datagram
+        that did not parse), so they alone measure the loss.
+        """
+        expected = self.frames_received + self.frames_dropped
+        return self.frames_dropped / expected if expected > 0 else 0.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,15 +124,7 @@ class CaptureReadinessState:
         self._config = config
         self._speed_history: deque[SpeedObservation] = deque()
         self._last_client_counters: dict[str, CaptureReadinessSensorObservation] = {}
-        self._last_integrity_issue_mono_s: float | None = None
-        self._last_integrity_totals = CaptureReadinessSensorObservation(
-            client_id="",
-            location_code="",
-            frames_dropped=0,
-            queue_overflow_drops=0,
-            server_queue_drops=0,
-            parse_errors=0,
-        )
+        self._integrity_events: deque[tuple[float, IntegrityState]] = deque()
 
     def observe(self, state_input: CaptureReadinessStateInput) -> CaptureReadinessStateSnapshot:
         return CaptureReadinessStateSnapshot(
@@ -126,65 +141,40 @@ class CaptureReadinessState:
         active_sensors: tuple[CaptureReadinessSensorObservation, ...],
         now_mono: float,
     ) -> IntegrityState:
+        """Sum the live sensors' counter increments over the last integrity window."""
         active_ids = {sensor.client_id for sensor in active_sensors}
         for client_id in tuple(self._last_client_counters):
             if client_id not in active_ids:
                 self._last_client_counters.pop(client_id, None)
 
-        deltas = CaptureReadinessSensorObservation(
-            client_id="",
-            location_code="",
-            frames_dropped=0,
-            queue_overflow_drops=0,
-            server_queue_drops=0,
-            parse_errors=0,
-        )
+        delta = IntegrityState()
         for sensor in active_sensors:
             previous = self._last_client_counters.get(sensor.client_id)
             if previous is not None:
-                deltas = CaptureReadinessSensorObservation(
-                    client_id="",
-                    location_code="",
-                    frames_dropped=deltas.frames_dropped
+                delta = IntegrityState(
+                    frames_received=delta.frames_received
+                    + max(0, sensor.frames_received - previous.frames_received),
+                    frames_dropped=delta.frames_dropped
                     + max(0, sensor.frames_dropped - previous.frames_dropped),
-                    queue_overflow_drops=deltas.queue_overflow_drops
+                    queue_overflow_drops=delta.queue_overflow_drops
                     + max(0, sensor.queue_overflow_drops - previous.queue_overflow_drops),
-                    server_queue_drops=deltas.server_queue_drops
+                    server_queue_drops=delta.server_queue_drops
                     + max(0, sensor.server_queue_drops - previous.server_queue_drops),
-                    parse_errors=deltas.parse_errors
+                    parse_errors=delta.parse_errors
                     + max(0, sensor.parse_errors - previous.parse_errors),
                 )
             self._last_client_counters[sensor.client_id] = sensor
 
-        if any(
-            (
-                deltas.frames_dropped,
-                deltas.queue_overflow_drops,
-                deltas.server_queue_drops,
-                deltas.parse_errors,
-            )
-        ):
-            self._last_integrity_issue_mono_s = now_mono
-            self._last_integrity_totals = deltas
-
-        quiet_period_remaining_s: float | None = None
-        integrity_active = False
-        if self._last_integrity_issue_mono_s is not None:
-            quiet_elapsed_s = now_mono - self._last_integrity_issue_mono_s
-            if quiet_elapsed_s < self._config.integrity_quiet_period_s:
-                integrity_active = True
-                quiet_period_remaining_s = round(
-                    max(0.0, self._config.integrity_quiet_period_s - quiet_elapsed_s),
-                    1,
-                )
-
+        events = self._integrity_events
+        events.append((now_mono, delta))
+        while events and now_mono - events[0][0] >= self._config.integrity_window_s:
+            events.popleft()
         return IntegrityState(
-            active=integrity_active,
-            frames_dropped=self._last_integrity_totals.frames_dropped,
-            queue_overflow_drops=self._last_integrity_totals.queue_overflow_drops,
-            server_queue_drops=self._last_integrity_totals.server_queue_drops,
-            parse_errors=self._last_integrity_totals.parse_errors,
-            quiet_period_remaining_s=quiet_period_remaining_s,
+            frames_received=sum(event.frames_received for _, event in events),
+            frames_dropped=sum(event.frames_dropped for _, event in events),
+            queue_overflow_drops=sum(event.queue_overflow_drops for _, event in events),
+            server_queue_drops=sum(event.server_queue_drops for _, event in events),
+            parse_errors=sum(event.parse_errors for _, event in events),
         )
 
     def _refresh_speed_history(

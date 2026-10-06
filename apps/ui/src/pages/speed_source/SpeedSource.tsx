@@ -3,8 +3,8 @@ import { useEffect, useRef } from "preact/hooks";
 import type { SpeedSourceKind } from "../../api/types";
 import { speedUnit } from "../../app_store";
 import { FeedbackBlock, FeedbackSlot } from "../../components/feedback";
-import { formatSpeed, speedUnitKey } from "../../format";
-import { t } from "../../i18n";
+import { formatIntLocale, formatSpeed, speedUnitKey } from "../../format";
+import { lang, t } from "../../i18n";
 import {
   obdStatus,
   speedSettings,
@@ -12,6 +12,7 @@ import {
   speedStatus,
 } from "../../settings_store";
 import {
+  gpsFixWaitS,
   gpsReceiverMissing,
   resolveEffectiveSpeedSource,
 } from "../../speed_source";
@@ -216,12 +217,26 @@ function Consequences() {
   );
 }
 
-/** GPS is chosen, but no USB receiver is plugged in. */
+/** GPS is chosen, but no USB receiver is plugged in, or it has no fix yet. */
 function GpsReceiverHint() {
-  if (
-    selectedMode.value !== "gps" ||
-    !gpsReceiverMissing("gps", speedStatus.value)
-  ) {
+  if (selectedMode.value !== "gps") {
+    return null;
+  }
+  const waitS = gpsFixWaitS("gps", speedStatus.value);
+  if (waitS !== null) {
+    return (
+      <div id="gpsWaitingForFix">
+        <FeedbackBlock
+          message={{
+            body: t("speed.gps_waiting_fix", {
+              seconds: formatIntLocale(Math.floor(waitS), lang.value),
+            }),
+          }}
+        />
+      </div>
+    );
+  }
+  if (!gpsReceiverMissing("gps", speedStatus.value)) {
     return null;
   }
   return (

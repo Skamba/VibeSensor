@@ -1178,6 +1178,7 @@ export interface components {
         /** Response body for the live GPS/speed-source connection status. */
         SpeedSourceStatusResponse: {
             connection_state: string;
+            /** The receiver gpsd reads (its device path); `null` while gpsd has none. */
             device: string | null;
             effective_speed_kmh: number | null;
             epv_m: number | null;
@@ -1186,6 +1187,8 @@ export interface components {
             fallback_active: boolean;
             fix_dimension: "3d" | "2d" | "none";
             fix_mode: number | null;
+            /** Seconds the receiver has been waiting for a fix; `null` with a fix or no receiver. */
+            fix_wait_s: number | null;
             gps_enabled: boolean;
             last_error: string | null;
             last_update_age_s: number | null;

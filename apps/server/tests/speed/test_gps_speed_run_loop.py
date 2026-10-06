@@ -53,12 +53,15 @@ async def _await_condition(
     )
 
 
-_END_OF_SCRIPT_REV = "end-of-test-script"
+_END_OF_SCRIPT_PATH = "end-of-test-script"
 
 
 def _end_of_script_line() -> bytes:
-    """VERSION sentinel: once ``device_info`` reflects it, every prior line was ingested."""
-    return json.dumps({"class": "VERSION", "rev": _END_OF_SCRIPT_REV}).encode() + b"\n"
+    """DEVICES sentinel: once ``device_info`` reflects it, every prior line was ingested."""
+    return (
+        json.dumps({"class": "DEVICES", "devices": [{"path": _END_OF_SCRIPT_PATH}]}).encode()
+        + b"\n"
+    )
 
 
 @asynccontextmanager
@@ -102,7 +105,7 @@ async def _gps_server_scenario(*lines: bytes) -> AsyncIterator[GPSSpeedMonitor]:
     try:
         await _await_condition(
             "GPS run loop to ingest every scripted gpsd line",
-            lambda: monitor.device_info == f"gpsd {_END_OF_SCRIPT_REV}",
+            lambda: monitor.device_info == _END_OF_SCRIPT_PATH,
             timeout_s=5.0,
         )
         assert connection_count == 1

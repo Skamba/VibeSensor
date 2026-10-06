@@ -1,0 +1,13 @@
+# Hot-add USB GPS receivers on the two serial-over-USB chips most consumer GPS
+# mice use, which Debian's 60-gpsd.rules leaves commented out ("matches too
+# many other devices"). On a VibeSensor Pi the only other USB-serial device is
+# a sensor plugged in for flashing: the ATOM Lite's FTDI chip stays excluded,
+# so gpsd never grabs it. install_systemd_units.sh installs this file into
+# /etc/udev/rules.d.
+SUBSYSTEM!="tty", GOTO="vibesensor_gps_end"
+# Prolific PL2303 (GlobalSat BU-353S4 and many GPS mice)
+ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", SYMLINK+="gps%n", TAG+="systemd", ENV{SYSTEMD_WANTS}="gpsdctl@%k.service"
+# Silicon Labs CP210x
+ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="gps%n", TAG+="systemd", ENV{SYSTEMD_WANTS}="gpsdctl@%k.service"
+ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea71", SYMLINK+="gps%n", TAG+="systemd", ENV{SYSTEMD_WANTS}="gpsdctl@%k.service"
+LABEL="vibesensor_gps_end"

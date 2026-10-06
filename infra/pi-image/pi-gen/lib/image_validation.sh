@@ -468,6 +468,11 @@ validate_image_artifact() {
     exit 1
   fi
 
+  if ! grep -q 'gpsdctl@%k.service' "${ROOT_MNT}/etc/udev/rules.d/61-vibesensor-gps.rules" 2>/dev/null; then
+    echo "Validation failed: missing USB GPS hot-add rule ${ROOT_MNT}/etc/udev/rules.d/61-vibesensor-gps.rules"
+    exit 1
+  fi
+
   if [ "$(unit_value "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service" ExecStart)" != \
     "/usr/bin/python3 -I ${ROOT_HELPER_DIR}/vibesensor_hotspot.py watchdog" ]; then
     echo "Validation failed: hotspot watchdog service must run ${ROOT_HELPER_DIR}/vibesensor_hotspot.py watchdog"

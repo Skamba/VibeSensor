@@ -124,4 +124,6 @@ def _expected_disconnected_fields() -> dict[str, object]:
         "last_epv_m": None,
         "zero_speed_streak": 0,
         "device_info": None,
+        "receivers": (),
+        "fix_wait_since_mono_s": None,
     }

@@ -31,7 +31,7 @@ one big state-machine class:
 | `RunRawCaptureWriter` | `recording/raw_capture_writer.py` | Buffer raw UDP chunks for the active run and finalize the raw artifact manifest into history. |
 | `RunRecordingSessionService` | `recording/recording_session.py` | Active run context/sensor snapshots, start-run side effects, and ingest-drop baseline accounting. |
 | `RawCaptureFinalizeRegistry` | `recording/raw_capture_finalize_registry.py` | Raw-capture finalize result/manifest bookkeeping and late timeout replacement. |
-| `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed advice, and recent integrity quiet windows for the idle recording gate. |
+| `CaptureReadinessTracker` | `recording/capture_readiness.py` | Evaluate live-sensor readiness, reference freshness, steady-speed advice, and the live sensors' frame loss over the last 10 s (blocks above 2 %, warns below) for the idle recording gate. |
 | `RunRecorder` | `recording/recorder.py` | Start/stop entrypoint and coordinator for lifecycle, persistence, and post-analysis. |
 | `PostAnalysisWorker` | `analysis/post_analysis.py` | Non-evicting queue and single daemon thread for completed runs. |
 | `execute_post_analysis()` | `analysis/post_analysis_executor.py` | Load metadata/samples/raw capture, run the summary analysis, and store success or failure. |

@@ -97,6 +97,13 @@ class CaptureReadinessPolicy:
     max_speed_age_s: float = 2.0
     max_obd_rpm_age_s: float = 1.0
     stable_speed_dwell_s: float = 8.0
-    integrity_quiet_period_s: float = 10.0
+    integrity_window_s: float = 10.0
+    max_frame_loss_ratio: float = 0.02
+    """Above this share of frames lost over the integrity window, Start waits.
+
+    Below it a loss is a warning only: Wi-Fi drops an occasional datagram, and
+    one lost frame used to block Start for 10 s (on the bench about 15 % of the
+    time; a sensor in a wheel arch drops more).
+    """
     low_sensor_count_warn_threshold: int = 3
     live_speed_sources: tuple[str, ...] = field(default_factory=lambda: ("gps", "obd2"))

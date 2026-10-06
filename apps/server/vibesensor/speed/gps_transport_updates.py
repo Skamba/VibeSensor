@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from vibesensor.common.json_types import JsonObject
 from vibesensor.common.type_checks import NUMERIC_TYPES
 from vibesensor.speed.gpsd_message_handler import (
-    GpsdVersionInfo,
+    GpsdReceivers,
     NormalizedTpvData,
     classify_gpsd_message,
     read_non_negative_metric,
@@ -63,7 +63,7 @@ def classify_transport_message(
     *,
     tpv_mode: TpvModeReader | None = None,
     read_metric: MetricReader | None = None,
-) -> GpsdVersionInfo | NormalizedTpvData | None:
+) -> GpsdReceivers | NormalizedTpvData | None:
     """Classify one GPSD payload for transport-side handling."""
     if payload.get("class") == "TPV" and (tpv_mode is not None or read_metric is not None):
         return normalize_tpv_payload(
@@ -108,7 +108,17 @@ def apply_tpv(
         speed_history = snapshot.speed_history
 
     device_info = tpv.device if tpv.device else snapshot.device_info
+    receivers = snapshot.receivers
+    if tpv.device and tpv.device not in receivers:
+        receivers = (*receivers, tpv.device)
     state._replace_transport(
+        receivers=receivers,
+        fix_wait_since_mono_s=_fix_wait_since(
+            snapshot.fix_wait_since_mono_s,
+            receiver_present=device_info is not None,
+            fix_mode=tpv.mode,
+            now_s=monotonic(),
+        ),
         last_fix_mode=tpv.mode,
         last_epx_m=tpv.epx,
         last_epy_m=tpv.epy,
@@ -118,6 +128,49 @@ def apply_tpv(
         zero_speed_streak=zero_speed_streak,
         device_info=device_info,
     )
+
+
+def _fix_wait_since(
+    since_s: float | None,
+    *,
+    receiver_present: bool,
+    fix_mode: int | None,
+    now_s: float,
+) -> float | None:
+    """When the receiver started waiting for a fix: kept while it waits, cleared by a fix."""
+    if not receiver_present or (isinstance(fix_mode, int) and fix_mode >= 2):
+        return None
+    return now_s if since_s is None else since_s
+
+
+def apply_receivers(
+    state: GPSTransportState,
+    message: GpsdReceivers,
+    *,
+    monotonic: MonotonicReader,
+) -> None:
+    """Track which receivers gpsd has, from its DEVICES list or a DEVICE change."""
+    snapshot = state.snapshot()
+    kept = () if message.replaces_all else snapshot.receivers
+    receivers = tuple(path for path in kept if path not in message.removed)
+    receivers += tuple(path for path in message.added if path not in receivers)
+    device_info: str | None = snapshot.device_info
+    if device_info not in receivers:
+        device_info = receivers[0] if receivers else None
+    changes: dict[str, object] = {
+        "receivers": receivers,
+        "device_info": device_info,
+        "fix_wait_since_mono_s": _fix_wait_since(
+            snapshot.fix_wait_since_mono_s,
+            receiver_present=device_info is not None,
+            fix_mode=snapshot.last_fix_mode,
+            now_s=monotonic(),
+        ),
+    }
+    if device_info is None:
+        # The receiver was unplugged: its last fix no longer describes anything.
+        changes.update(last_fix_mode=None, last_epx_m=None, last_epy_m=None, last_epv_m=None)
+    state._replace_transport(**changes)
 
 
 def normalize_tpv_payload(
