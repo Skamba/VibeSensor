@@ -146,6 +146,7 @@ export interface components {
         BrowserClockResponse: {
             action: "stepped" | "within_threshold" | "ntp_synchronized" | "sync_state_unknown" | "recording" | "already_stepped" | "not_permitted";
             offset_s: number;
+            runs_corrected: number;
             time_zone: string | null;
         };
         /** One car profile as persisted in the settings snapshot and served over HTTP. */

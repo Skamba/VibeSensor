@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi import FastAPI
@@ -15,6 +16,11 @@ from vibesensor.clock.browser_clock import (
     ClockAction,
     kernel_clock_synchronized,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from vibesensor.settings.ui_preferences import UiPreferencesService
 
 _SERVER_NOW_S = 1_700_000_000.0
 _HOUR_AHEAD_MS = int((_SERVER_NOW_S + 3600.0) * 1000)
@@ -39,11 +45,16 @@ class _Clock:
         self.steps.append(epoch_s)
 
     def corrector(
-        self, *, state_path: Path | None = None, boot_id: str = "boot-a"
+        self,
+        *,
+        state_path: Path | None = None,
+        boot_id: str = "boot-a",
+        after_report: Callable[[], list[str]] = list,
     ) -> BrowserClockCorrector:
         return BrowserClockCorrector(
             recording=lambda: self.recording,
             state_path=state_path,
+            after_report=after_report,
             synchronized=lambda: self.synchronized,
             step=self.step,
             now=lambda: _SERVER_NOW_S,
@@ -171,6 +182,23 @@ def test_a_service_restart_keeps_this_boots_verdict_and_a_reboot_drops_it(
     assert rebooted.report(_HOUR_AHEAD_MS).action is ClockAction.STEPPED
 
 
+def test_a_step_after_an_agreeing_report_is_saved_for_a_restart(tmp_path: Path) -> None:
+    """The step is kept even when the trust verdict it leaves is the one already saved."""
+    state_path = tmp_path / "clock_state.json"
+    clock = _Clock()
+    corrector = clock.corrector(state_path=state_path)
+    # A browser close to the clock: trusted, nothing stepped.
+    assert corrector.report(_WITHIN_MS).action is ClockAction.WITHIN_THRESHOLD
+    # A second device far off steps the clock (still trusted).
+    assert corrector.report(_HOUR_AHEAD_MS).action is ClockAction.STEPPED
+
+    restarted = clock.corrector(state_path=state_path)
+
+    # Still one step per boot after the restart.
+    assert restarted.report(_HOUR_AHEAD_MS).action is ClockAction.ALREADY_STEPPED
+    assert clock.steps == [_SERVER_NOW_S + 3600.0]
+
+
 def test_a_restart_keeps_a_browser_verdict_against_the_clock(tmp_path: Path) -> None:
     """Unknown sync state is trusted by default, but not after a browser found it far off."""
     state_path = tmp_path / "clock_state.json"
@@ -187,19 +215,35 @@ def test_kernel_sync_state_is_read_without_privileges() -> None:
 # -- route ----------------------------------------------------------------------
 
 
+class _RunTimes:
+    """Stands in for ``RunTimeCorrector.correct``: notes the zone it would use."""
+
+    def __init__(self, preferences: UiPreferencesService) -> None:
+        self.preferences = preferences
+        self.corrected: list[str] = []
+        self.zones_seen: list[str | None] = []
+
+    def correct(self) -> list[str]:
+        self.zones_seen.append(self.preferences.time_zone)
+        return self.corrected
+
+
 @pytest.fixture
 def _clock_client(fake_state):
     from vibesensor.web.browser_clock import create_browser_clock_routes
 
     clock = _Clock()
+    run_times = _RunTimes(fake_state.ui_preferences)
     app = FastAPI()
-    app.include_router(create_browser_clock_routes(clock.corrector(), fake_state.ui_preferences))
+    corrector = clock.corrector(after_report=run_times.correct)
+    app.include_router(create_browser_clock_routes(corrector, fake_state.ui_preferences))
     with TestClient(app) as client:
-        yield client, clock, fake_state.ui_preferences
+        yield client, clock, fake_state.ui_preferences, run_times
 
 
 def test_route_steps_the_clock_and_stores_the_browser_time_zone(_clock_client) -> None:
-    client, clock, preferences = _clock_client
+    client, clock, preferences, run_times = _clock_client
+    run_times.corrected = ["run-1", "run-2"]
 
     response = client.post(
         "/api/system/browser-clock",
@@ -211,15 +255,19 @@ def test_route_steps_the_clock_and_stores_the_browser_time_zone(_clock_client) -
         "action": "stepped",
         "offset_s": 3600.0,
         "time_zone": "Europe/Amsterdam",
+        # The UI reloads History when runs were re-dated.
+        "runs_corrected": 2,
     }
     assert clock.steps == [_SERVER_NOW_S + 3600.0]
     assert preferences.time_zone == "Europe/Amsterdam"
+    # The runs are re-dated in the zone this report brought, not the old one.
+    assert run_times.zones_seen == ["Europe/Amsterdam"]
 
 
 def test_route_keeps_the_stored_zone_when_the_browser_reports_an_unknown_one(
     _clock_client,
 ) -> None:
-    client, _clock, preferences = _clock_client
+    client, _clock, preferences, _run_times = _clock_client
     preferences.set_time_zone("Europe/Amsterdam")
 
     response = client.post(
@@ -230,3 +278,4 @@ def test_route_keeps_the_stored_zone_when_the_browser_reports_an_unknown_one(
     assert response.status_code == 200
     assert response.json()["action"] == "within_threshold"
     assert response.json()["time_zone"] == "Europe/Amsterdam"
+    assert response.json()["runs_corrected"] == 0

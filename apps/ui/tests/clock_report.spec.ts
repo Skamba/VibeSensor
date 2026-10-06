@@ -5,6 +5,9 @@ import {
   createClockReporter,
   reportClock,
 } from "../src/clock_report";
+import { runsChanged } from "../src/live_store";
+
+const NOTHING_CORRECTED = { runs_corrected: 0 };
 
 describe("createClockReporter", () => {
   afterEach(() => {
@@ -13,7 +16,7 @@ describe("createClockReporter", () => {
 
   test("reports the browser clock and zone once per (re)connect", () => {
     vi.useFakeTimers({ now: 1_700_000_000_000 });
-    const report = vi.fn(() => Promise.resolve());
+    const report = vi.fn(() => Promise.resolve(NOTHING_CORRECTED));
     const onConnection = createClockReporter(report);
 
     onConnection(false);
@@ -56,8 +59,8 @@ test("reportClock waits for the report and swallows its failure", async () => {
   let resolveReport: () => void = () => undefined;
   const report = vi.fn(
     () =>
-      new Promise<void>((resolve) => {
-        resolveReport = resolve;
+      new Promise<typeof NOTHING_CORRECTED>((resolve) => {
+        resolveReport = () => resolve(NOTHING_CORRECTED);
       }),
   );
   let done = false;
@@ -80,6 +83,16 @@ test("reportClock waits for the report and swallows its failure", async () => {
     expect.any(Error),
   );
   warn.mockRestore();
+});
+
+test("a report that re-dated runs reloads History", async () => {
+  const before = runsChanged.peek();
+  await reportClock(() => Promise.resolve(NOTHING_CORRECTED));
+  expect(runsChanged.peek()).toBe(before);
+
+  // The Pi clock was set: runs recorded on the unset clock got their true times.
+  await reportClock(() => Promise.resolve({ runs_corrected: 2 }));
+  expect(runsChanged.peek()).toBe(before + 1);
 });
 
 test("browserTimeZone names an IANA zone", () => {

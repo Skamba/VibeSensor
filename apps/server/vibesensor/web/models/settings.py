@@ -212,3 +212,5 @@ class BrowserClockResponse(BaseModel):
     ]
     offset_s: float
     time_zone: str | None
+    runs_corrected: int = Field(ge=0)
+    """Runs recorded on the unset clock that this report re-dated; the UI reloads History."""

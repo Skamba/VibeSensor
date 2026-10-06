@@ -193,8 +193,17 @@ export function startRecording(): Promise<void> {
   });
 }
 
+/**
+ * Stops the run, then reports the browser clock: the server never steps the
+ * clock under a recording, so a run the browser first saw mid-recording gets
+ * its true time once it has stopped.
+ */
 export function stopRecording(): Promise<void> {
-  return runAction("stopping", stopLoggingRun);
+  return runAction("stopping", async () => {
+    const stopped = await stopLoggingRun();
+    void reportClock();
+    return stopped;
+  });
 }
 
 /** Starts the next guided test-drive step, or ends the guided test with `null`. */

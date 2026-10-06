@@ -215,23 +215,27 @@ cgps -s
 
 The Pi has no RTC. Without internet, systemd-timesyncd restores the clock from
 the last saved time, so it can be days or months behind. Every time the UI
-connects it posts the browser clock and IANA time zone to
-`POST /api/system/browser-clock`. The server steps the system clock to the
+connects, before it starts a recording and after it stops one, it posts the
+browser clock and IANA time zone to `POST /api/system/browser-clock`. The
+server stores the zone first, so runs the report re-dates get local times in
+it. The server steps the system clock to the
 browser clock once per boot, and only when all of these hold:
 
 - the kernel reports the clock as unsynchronised (no NTP sync; `adjtimex`
   returns `TIME_ERROR`);
 - it is more than 10 s off;
-- no run is recording.
+- no run is recording (the report after Stop then sets it, so a run the
+  browser first saw mid-recording is re-dated once it stops).
 
 The step needs `CAP_SYS_TIME`, which `vibesensor.service` grants. Look for
 `Stepped the unsynchronised system clock` (warning) or `no CAP_SYS_TIME` (info)
-in the journal. The response's `action` says what happened. Sensor timing runs
+in the journal. The response's `action` says what happened, and
+`runs_corrected` how many runs it re-dated (the UI then reloads History). Sensor timing runs
 on the monotonic clock, so a step does not disturb sync. Stepping does not mark
 the kernel clock synchronised, so the server keeps the browser verdict (and
 whether it stepped) in `clock_state.json` next to the history DB, keyed by
 `/proc/sys/kernel/random/boot_id`: a service restart, as after every update,
-keeps the clock trusted, and a reboot without internet drops the verdict until
+keeps the clock trusted and the one step per boot used, and a reboot without internet drops the verdict until
 the next UI connection corrects the clock again.
 
 Starting a recording from the Live page posts the browser clock first, so a

@@ -27,19 +27,24 @@ def create_browser_clock_routes(
 
     @router.post("/api/system/browser-clock", response_model=BrowserClockResponse)
     async def report_browser_clock(req: BrowserClockRequest) -> BrowserClockResponse:
-        """Step an unsynchronised system clock to the browser's and store its time zone."""
+        """Store the browser's time zone, then step an unsynchronised system clock to its clock.
 
-        result = await asyncio.to_thread(clock.report, req.epoch_ms)
+        The zone goes first: the report re-dates runs recorded on the unset
+        clock, and their local times use the stored zone.
+        """
+
         if req.time_zone is not None:
             try:
                 await asyncio.to_thread(ui_preferences.set_time_zone, req.time_zone)
             except ValueError:
                 # A zone this Pi's tzdata lacks; keep the clock result, keep the old zone.
                 LOGGER.info("Ignoring unknown browser time zone %r", req.time_zone)
+        result = await asyncio.to_thread(clock.report, req.epoch_ms)
         return BrowserClockResponse(
             action=result.action.value,
             offset_s=result.offset_s,
             time_zone=ui_preferences.time_zone,
+            runs_corrected=result.runs_corrected,
         )
 
     return router

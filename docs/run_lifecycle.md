@@ -122,7 +122,11 @@ During recording:
   reloaded mid-run restores the guided panel (including a finished test). The
   step texts name their speeds in the UI's speed unit.
 - the Live page posts the browser clock (`POST /api/system/browser-clock`)
-  before `POST /api/recording/start`, so an unset Pi clock is stepped first. A
+  before `POST /api/recording/start`, so an unset Pi clock is stepped first,
+  and again after a successful `POST /api/recording/stop`, so a run the browser
+  first saw mid-recording (the clock is never stepped under a recording) is
+  re-dated once it stops; a report whose `runs_corrected` is above zero
+  reloads History. A
   run that starts while the clock is not trusted (see
   `BrowserClockCorrector.clock_trusted`) still records, with
   `start_time_unverified: true` and its monotonic `start_clock` (boot id plus

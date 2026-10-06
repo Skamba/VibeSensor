@@ -3,7 +3,8 @@
 The Pi has no RTC. Without internet, systemd-timesyncd restores the clock from
 the last saved time, so runs get stamped days or months in the past. The phone
 or laptop showing the UI usually has network time, so the UI reports its clock
-on connect and this module steps the system clock when:
+on connect, before a recording starts and after it stops, and this module steps
+the system clock when:
 
 * the kernel says the clock is unsynchronised (``adjtimex`` reports
   ``TIME_ERROR``), so an NTP-synced clock is never overridden;
@@ -32,7 +33,7 @@ import logging
 import os
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -76,6 +77,8 @@ class ClockReportResult:
     action: ClockAction
     offset_s: float
     """Browser clock minus server clock when the report arrived."""
+    runs_corrected: int = 0
+    """How many runs ``after_report`` re-dated (the UI then reloads History)."""
 
 
 _CLOCK_MATCHES_BROWSER = frozenset({ClockAction.STEPPED, ClockAction.WITHIN_THRESHOLD})
@@ -130,7 +133,7 @@ class BrowserClockCorrector:
         *,
         recording: Callable[[], bool],
         state_path: Path | None = None,
-        after_report: Callable[[], object] = lambda: None,
+        after_report: Callable[[], Sequence[str]] = tuple,
         synchronized: Callable[[], bool | None] = kernel_clock_synchronized,
         step: Callable[[float], None] = _step_realtime_clock,
         now: Callable[[], float] = time.time,
@@ -156,20 +159,23 @@ class BrowserClockCorrector:
     def report(self, browser_epoch_ms: int) -> ClockReportResult:
         """Handle the browser's clock reading taken just before it sent the report."""
         with self._lock:
+            # Before any step: a step must be saved even when the verdict stays.
+            before = (self._browser_agrees, self._stepped)
             browser_s = browser_epoch_ms / 1000.0
             offset_s = browser_s - self._now()
             action = self._decide(offset_s)
             if action is ClockAction.STEPPED:
                 action = self._try_step(browser_s, offset_s)
-            before = (self._browser_agrees, self._stepped)
             if action in _CLOCK_MATCHES_BROWSER:
                 self._browser_agrees = True
             elif action in _CLOCK_LEFT_WRONG:
                 self._browser_agrees = False
             if (self._browser_agrees, self._stepped) != before:
                 self._save_state()
-        self._after_report()
-        return ClockReportResult(action=action, offset_s=round(offset_s, 3))
+        corrected = self._after_report()
+        return ClockReportResult(
+            action=action, offset_s=round(offset_s, 3), runs_corrected=len(corrected)
+        )
 
     def clock_trusted(self) -> bool:
         """Whether the wall clock is right: NTP-synchronised or confirmed by a browser.

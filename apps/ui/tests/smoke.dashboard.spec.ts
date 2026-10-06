@@ -1,6 +1,7 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 
 import type {
+  BrowserClockPayload,
   CarsPayload,
   HistoryEntry,
   LoggingStatusPayload,
@@ -294,6 +295,87 @@ test("journey: a failed start shows the server's reason and a retry records", as
     "/api/recording/start",
   ]);
   expect(startCalls).toBe(2);
+});
+
+test("journey: a run recorded before the Pi clock was set gets its time once it stops", async ({
+  page,
+}) => {
+  // The browser connected mid-run: the server would not step the clock under a
+  // recording, so the run is stored with an unverified start.
+  let status = idleStatus({
+    enabled: true,
+    run_id: "run-9",
+    start_time_utc: "2025-01-01T00:00:00Z",
+    elapsed_s: 65,
+  });
+  let runs: HistoryEntry[] = [
+    {
+      run_id: "run-9",
+      status: "complete",
+      start_time_utc: "2025-01-01T00:00:00Z",
+      start_time_unverified: true,
+      created_at: "2025-01-01T00:00:00Z",
+      raw_sample_count: 12080,
+    },
+  ];
+  const posts: string[] = [];
+  let historyAfterStop: Promise<unknown> = Promise.resolve();
+  await bootWithStatus(page, (route) => fulfillJson(route, status), {
+    runs: () => runs,
+  });
+  await page.route("**/api/system/browser-clock", async (route) => {
+    posts.push("browser-clock");
+    if (status.enabled) {
+      await fulfillJson<BrowserClockPayload>(route, {
+        action: "recording",
+        offset_s: 3.2e7,
+        time_zone: null,
+        runs_corrected: 0,
+      });
+      return;
+    }
+    // Idle now: the clock is stepped and this boot's unverified run re-dated,
+    // after the History reload that Stop itself triggers, so only the
+    // report's runs_corrected can bring the new time in.
+    await historyAfterStop;
+    runs = [
+      {
+        ...runs[0],
+        start_time_utc: "2026-01-01T09:30:00Z",
+        start_time_unverified: false,
+      },
+    ];
+    await fulfillJson<BrowserClockPayload>(route, {
+      action: "stepped",
+      offset_s: 3.2e7,
+      time_zone: null,
+      runs_corrected: 1,
+    });
+  });
+  await page.route("**/api/recording/stop", async (route) => {
+    posts.push("stop");
+    historyAfterStop = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/api/history",
+    );
+    status = idleStatus({ last_completed_run_id: "run-9" });
+    await fulfillJson(route, status);
+  });
+
+  await openHistoryTab(page);
+  await expect(page.locator("#historyTableBody")).toContainText(
+    "Not verified (Pi clock was not set)",
+  );
+  await page.locator("#tab-dashboard").click();
+  await page.locator("#stopLoggingBtn").click();
+  await expect(page.locator("#startLoggingBtn")).toBeVisible();
+
+  // The clock is reported again once the run has stopped.
+  await expect.poll(() => posts.slice(-2)).toEqual(["stop", "browser-clock"]);
+  await openHistoryTab(page);
+  await expect(page.locator("#historyTableBody")).not.toContainText(
+    "Not verified",
+  );
+  await expect(page.locator("#historyTableBody")).toContainText("2026");
 });
 
 test("journey: History reloads when analysis finishes, and an auto-stopped run says so", async ({

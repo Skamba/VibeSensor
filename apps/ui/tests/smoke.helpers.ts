@@ -342,6 +342,7 @@ export async function installCommonRoutes(
       action: "within_threshold",
       offset_s: 0,
       time_zone: null,
+      runs_corrected: 0,
     });
   });
   await page.route("**/api/settings/**", async (route) => {
