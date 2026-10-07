@@ -27,7 +27,6 @@ from typing import Final, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
-from scipy.signal import find_peaks
 
 from vibesensor.dsp.strength_bands import _buckets_for_strength_db_aligned, bucket_for_strength
 
@@ -447,9 +446,28 @@ def _peak_band_rms_amp_g_from_ranges(
     return result
 
 
+def _local_maxima(values: npt.NDArray[np.float64]) -> npt.NDArray[np.intp]:
+    """Indexes of interior local maxima, ascending (``scipy.signal.find_peaks`` rules).
+
+    A peak rises strictly from its left neighbour and falls strictly to its
+    right one; a flat top counts once, at its middle (rounded down). The first
+    and last samples are never peaks. Implemented in numpy because importing
+    ``scipy.signal`` costs seconds on the Pi at server start.
+    """
+
+    if values.size < 3:
+        return np.empty(0, dtype=np.intp)
+    # Collapse runs of equal values; a peak is a run higher than both neighbours.
+    run_starts = np.flatnonzero(np.concatenate(([True], values[1:] != values[:-1])))
+    run_ends = np.append(run_starts[1:] - 1, values.size - 1)
+    run_values = values[run_starts]
+    is_peak = (run_values[1:-1] > run_values[:-2]) & (run_values[1:-1] > run_values[2:])
+    return np.asarray((run_starts[1:-1][is_peak] + run_ends[1:-1][is_peak]) // 2, dtype=np.intp)
+
+
 def _candidate_peak_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
-    peak_indexes_raw, _properties = find_peaks(values, height=threshold)
-    peak_indexes = np.asarray(peak_indexes_raw, dtype=np.intp)
+    peak_indexes = _local_maxima(values)
+    peak_indexes = peak_indexes[values[peak_indexes] >= threshold]
     if values.size > 1:
         last_idx = values.size - 1
         last_val = float(values[last_idx])

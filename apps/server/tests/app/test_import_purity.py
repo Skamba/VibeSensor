@@ -66,3 +66,49 @@ _ = (package, bootstrap, create_app, create_app_from_env, main)
         """
     )
     assert result.stdout.strip() == "ok"
+
+
+_SLOW_IMPORTS = (
+    "scipy.signal",
+    "scipy.fft",
+    "pyfftw",
+    "httpx",
+    "reportlab",
+    "vibesensor.settings.car_library",
+)
+"""Modules that cost seconds to import on the Pi and are only needed later.
+
+FFT (pyfftw pulls in scipy.fft) waits for the first sensor data, httpx for an
+update or firmware download, reportlab for a PDF, the car library for the car
+picker. The server must not load them before it answers ``/api/health``.
+"""
+
+
+def test_server_start_leaves_slow_imports_for_first_use(tmp_path: Path) -> None:
+    config = tmp_path / "config.yaml"
+    config.write_text(
+        "logging:\n"
+        f"  history_db_path: {tmp_path / 'history.db'}\n"
+        f"  app_log_path: {tmp_path / 'app.log'}\n",
+        encoding="utf-8",
+    )
+    script = textwrap.dedent(
+        f"""
+        import sys
+        from pathlib import Path
+        from vibesensor.app.bootstrap import create_app
+
+        create_app(Path({str(config)!r}))
+        print(sorted(m for m in {_SLOW_IMPORTS!r} if m in sys.modules))
+        """
+    )
+    env = {**os.environ, "VIBESENSOR_SERVE_STATIC": "0"}
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=SERVER_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip().splitlines()[-1] == "[]"

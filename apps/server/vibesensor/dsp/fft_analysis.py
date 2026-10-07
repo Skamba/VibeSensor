@@ -4,13 +4,10 @@ import math
 import threading
 from collections import OrderedDict
 from threading import RLock
-from typing import Literal, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 import numpy as np
 import numpy.typing as npt
-import pyfftw
-from scipy import fft as scipy_fft
-from scipy.signal import windows as signal_windows
 
 from vibesensor.dsp.constants import (
     FFT_MIN_WINDOW_COVERAGE,
@@ -24,6 +21,9 @@ from vibesensor.dsp.vibration_strength import (
     empty_vibration_strength_metrics,
 )
 from vibesensor.live.payload_types import AxisPeak
+
+if TYPE_CHECKING:
+    import pyfftw
 
 __all__ = [
     "AXES",
@@ -100,6 +100,10 @@ def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
             _PLAN_CACHE[key] = tls
     plan = getattr(tls, "plan", None)
     if plan is None:
+        # Imported on the first FFT, not at server start: pyfftw pulls in
+        # scipy.fft, which takes over a second to import on the Pi.
+        import pyfftw
+
         input_array = pyfftw.empty_aligned((axes_count, fft_n), dtype=np.float32)
         output_array = pyfftw.empty_aligned(
             (axes_count, fft_n // 2 + 1),
@@ -135,7 +139,13 @@ def fft_window_values(
     """Return FFT window coefficients for supported shared analysis windows."""
 
     if window_function == "hann":
-        return np.asarray(signal_windows.hann(fft_n, sym=True), dtype=np.float32)
+        # Symmetric Hann, computed like scipy.signal.windows.hann(fft_n, sym=True)
+        # without importing scipy.signal (seconds of start-up time on the Pi).
+        if fft_n <= 1:
+            return np.ones(max(fft_n, 0), dtype=np.float32)
+        window = np.full(fft_n, 0.5)
+        window += 0.5 * np.cos(np.linspace(-np.pi, np.pi, fft_n))
+        return window.astype(np.float32)
     if window_function == "boxcar":
         return np.ones(fft_n, dtype=np.float32)
     raise ValueError(f"unsupported FFT window_function={window_function!r}")
@@ -152,7 +162,7 @@ def fft_frequency_slice(
 
     if sample_rate_hz <= 0 or fft_n <= 0:
         return _EMPTY_F32, np.empty(0, dtype=np.intp), _EMPTY_BOOL
-    freqs = scipy_fft.rfftfreq(fft_n, d=1.0 / float(sample_rate_hz))
+    freqs = np.fft.rfftfreq(fft_n, d=1.0 / float(sample_rate_hz))
     valid = (freqs >= spectrum_min_hz) & (freqs <= spectrum_max_hz)
     freq_slice = freqs[valid].astype(np.float32)
     valid_idx = np.flatnonzero(valid)
@@ -328,6 +338,8 @@ def broadband_energy_ratio(
         return None
     sanitized = _sanitize_float_array(fft_block)
     centered = sanitized - np.mean(sanitized, axis=1, keepdims=True)
+    from scipy import fft as scipy_fft  # lazy: see _get_rfft_plan
+
     spectrum = scipy_fft.rfft(centered, axis=1)
     magnitude = np.abs(spectrum).astype(np.float64, copy=False)
     power_by_bin = np.sum(magnitude * magnitude, axis=0)
@@ -360,12 +372,14 @@ def high_frequency_energy_ratio(
     ):
         return None
     sanitized = _sanitize_float_array(fft_block)
+    from scipy import fft as scipy_fft  # lazy: see _get_rfft_plan
+
     spectrum = scipy_fft.rfft(sanitized, axis=1)
     magnitude = np.abs(spectrum).astype(np.float64, copy=False)
     power_by_bin = np.sum(magnitude * magnitude, axis=0)
     if power_by_bin.size <= 1:
         return None
-    freqs = scipy_fft.rfftfreq(fft_block.shape[1], d=1.0 / float(sample_rate_hz))
+    freqs = np.fft.rfftfreq(fft_block.shape[1], d=1.0 / float(sample_rate_hz))
     analysis_mask = freqs > 0.0
     total_power = float(np.sum(power_by_bin[analysis_mask]))
     if not math.isfinite(total_power) or total_power <= 1e-18:

@@ -81,3 +81,26 @@ def test_no_combined_strength_without_analysis_bins() -> None:
 
     assert not computer.compute_fft_spectrum(block, _FS)["has_valid_analysis_bins"]
     assert computer.compute_combined_strength_metrics(block, _FS) is None
+
+
+def test_peak_picking_and_hann_window_match_scipy_signal() -> None:
+    # The live path uses numpy versions so the server need not import
+    # scipy.signal at start; they must stay identical to scipy's.
+    from scipy.signal import find_peaks, windows
+
+    from vibesensor.dsp.fft_analysis import fft_window_values
+    from vibesensor.dsp.vibration_strength import _local_maxima
+
+    rng = np.random.default_rng(7)
+    for trial in range(2000):
+        n = int(rng.integers(0, 40))
+        # Few distinct levels give plateaus at the edges and in the middle.
+        values = rng.integers(0, 4, size=n).astype(np.float64)
+        if trial % 2:
+            values = rng.normal(size=n)
+        if trial % 5 == 0 and n:
+            values[rng.integers(0, n)] = np.nan
+        np.testing.assert_array_equal(_local_maxima(values), find_peaks(values)[0])
+    for fft_n in (1, 2, 3, 512, 2048):
+        expected = np.asarray(windows.hann(fft_n, sym=True), dtype=np.float32)
+        np.testing.assert_array_equal(fft_window_values(fft_n=fft_n), expected)

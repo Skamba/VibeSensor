@@ -36,11 +36,10 @@ def car_library_router(fake_state):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_brands_are_sorted(car_library_router) -> None:
+def test_brands_are_sorted(car_library_router) -> None:
     """Brands list must be sorted alphabetically."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/brands")
-    result = response_payload(await endpoint())
+    result = response_payload(endpoint())
     brands = result["brands"]
     assert brands == sorted(brands)
 
@@ -50,13 +49,12 @@ async def test_brands_are_sorted(car_library_router) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("brand", ["TeslaNonExistent", "Unknown Brand XYZ"])
-async def test_types_unknown_brand_raises_404(car_library_router, brand: str) -> None:
+def test_types_unknown_brand_raises_404(car_library_router, brand: str) -> None:
     """GET /api/car-library/types?brand=<unknown> must raise HTTP 404."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/types")
     with pytest.raises(HTTPException) as exc_info:
-        await endpoint(brand=brand)
+        endpoint(brand=brand)
     assert exc_info.value.status_code == 404
     assert brand in exc_info.value.detail
 
@@ -66,21 +64,19 @@ async def test_types_unknown_brand_raises_404(car_library_router, brand: str) ->
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.asyncio
-async def test_models_unknown_brand_raises_404(car_library_router) -> None:
+def test_models_unknown_brand_raises_404(car_library_router) -> None:
     """GET /api/car-library/models with unknown brand raises HTTP 404."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/models")
     with pytest.raises(HTTPException) as exc_info:
-        await endpoint(brand="TeslaNotInLibrary", car_type="Sedan")
+        endpoint(brand="TeslaNotInLibrary", car_type="Sedan")
     assert exc_info.value.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_models_unknown_type_for_known_brand_raises_404(car_library_router) -> None:
+def test_models_unknown_type_for_known_brand_raises_404(car_library_router) -> None:
     """GET /api/car-library/models with valid brand but unknown type raises HTTP 404."""
     endpoint = _get_endpoint(car_library_router, "/api/car-library/models")
     with pytest.raises(HTTPException) as exc_info:
-        await endpoint(brand="BMW", car_type="Spaceship")
+        endpoint(brand="BMW", car_type="Spaceship")
     assert exc_info.value.status_code == 404
     assert "Spaceship" in exc_info.value.detail
     assert "BMW" in exc_info.value.detail
