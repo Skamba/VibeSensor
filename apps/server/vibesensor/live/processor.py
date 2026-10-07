@@ -183,25 +183,13 @@ class SignalProcessor:
         sample_rate_hz: int,
     ) -> MetricsSnapshot:
         fft_n = self._config.fft_n
-        desired_samples = int(max(1.0, float(sample_rate_hz) * self._config.waveform_seconds))
-        n_time = min(buf.count, buf.capacity, desired_samples)
-        fft_block: FloatArray | None = None
-        if buf.count >= fft_n and n_time < fft_n:
-            # The time window is shorter than one FFT block: copy the FFT block
-            # once and view the time window from its tail.
-            fft_block = buf.copy_latest(fft_n)
-            time_window = fft_block[:, -n_time:]
-        else:
-            time_window = buf.copy_latest(n_time)
-            if buf.count >= fft_n:
-                fft_block = time_window[:, -fft_n:]
+        fft_block = buf.copy_latest(fft_n) if buf.count >= fft_n else None
         return MetricsSnapshot(
             client_id=client_id,
             sample_rate_hz=sample_rate_hz,
             ingest_generation=buf.ingest_generation,
             buffer_epoch=buf.buffer_epoch,
             reset_generation=buf.reset_generation,
-            time_window=time_window,
             fft_block=fft_block,
             analysis_time_range=buf.analysis_time_range(
                 default_sample_rate_hz=sample_rate_hz,

@@ -18,7 +18,6 @@ from vibesensor.dsp.fft_analysis import (
     SpectralAnalysisComputer,
     compute_fft_spectrum,
     float_list,
-    medfilt3,
 )
 
 
@@ -40,80 +39,6 @@ def _make_fft_params(
         "freq_slice": freq_slice,
         "valid_idx": valid_idx,
     }
-
-
-class TestMedfilt3:
-    """Tests for the 3-point median spike filter."""
-
-    @pytest.mark.parametrize(
-        ("build_block", "expected"),
-        [
-            pytest.param(
-                lambda: np.array([[0.0, 0.0, 10.0, 0.0, 0.0]], dtype=np.float32),
-                np.array([[0.0, 0.0, 0.0, 0.0, 0.0]], dtype=np.float32),
-                id="single-spike",
-            ),
-            pytest.param(
-                lambda: np.array([[5.0, 0.0, 0.0, 0.0, 7.0]], dtype=np.float32),
-                np.array([[5.0, 0.0, 0.0, 0.0, 7.0]], dtype=np.float32),
-                id="edges-unchanged",
-            ),
-            pytest.param(
-                lambda: np.array([[1.0, 2.0]], dtype=np.float32),
-                np.array([[1.0, 2.0]], dtype=np.float32),
-                id="short-block",
-            ),
-            pytest.param(
-                lambda: np.array(
-                    [
-                        [0.0, 0.0, 100.0, 0.0, 0.0],
-                        [0.0, 0.0, 0.0, 200.0, 0.0],
-                        [0.0, 0.0, 0.0, 0.0, 0.0],
-                    ],
-                    dtype=np.float32,
-                ),
-                np.zeros((3, 5), dtype=np.float32),
-                id="multi-axis",
-            ),
-        ],
-    )
-    def test_medfilt3_behavior_cases(self, build_block, expected: np.ndarray) -> None:
-        block = build_block()
-
-        result = medfilt3(block)
-
-        np.testing.assert_allclose(result, expected)
-
-    @pytest.mark.parametrize(
-        ("block", "expected"),
-        [
-            pytest.param(
-                np.array([[1.0, np.nan, 1.0, 9.0, 1.0]], dtype=np.float32),
-                np.array([[1.0, 1.0, 5.0, 1.0, 1.0]], dtype=np.float32),
-                id="mixed-nan-and-spike",
-            ),
-            pytest.param(
-                np.full((3, 5), float("nan"), dtype=np.float32),
-                np.zeros((3, 5), dtype=np.float32),
-                id="all-nan",
-            ),
-        ],
-    )
-    def test_medfilt3_nan_sanitization_cases(
-        self,
-        block: np.ndarray,
-        expected: np.ndarray,
-    ) -> None:
-        original = block.copy()
-
-        result = medfilt3(block)
-
-        np.testing.assert_allclose(result, expected)
-        assert np.all(np.isfinite(result))
-        np.testing.assert_array_equal(
-            np.nan_to_num(block, nan=-999.0, posinf=999.0, neginf=-999.0),
-            np.nan_to_num(original, nan=-999.0, posinf=999.0, neginf=-999.0),
-        )
 
 
 class TestFloatList:
@@ -196,32 +121,6 @@ class TestComputeFftSpectrum:
             )
             assert float(result["axis_peaks"][axis][0]["hz"]) == pytest.approx(50.0, abs=1.0)
             assert float(result["axis_peaks"][axis][0]["amp"]) > 0.0
-
-    def test_spike_filter_toggle(self) -> None:
-        """Verify spike filter can be disabled."""
-        sr = 256
-        fft_n = 256
-        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
-        block[0, 128] = 100.0  # spike
-
-        params = _make_fft_params(sr=sr, fft_n=fft_n)
-        with_filter = compute_fft_spectrum(
-            block,
-            sr,
-            **params,
-            spike_filter_enabled=True,
-        )
-        without_filter = compute_fft_spectrum(
-            block,
-            sr,
-            **params,
-            spike_filter_enabled=False,
-        )
-
-        # Without the filter, the spike should show larger combined amplitude
-        max_with = float(np.max(with_filter["combined_amp"]))
-        max_without = float(np.max(without_filter["combined_amp"]))
-        assert max_without > max_with
 
     def test_preserves_first_analysis_bin_when_slice_starts_above_zero(self) -> None:
         sr = 512

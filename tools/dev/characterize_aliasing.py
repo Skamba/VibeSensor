@@ -178,11 +178,7 @@ def analyze_tone(
     )
     block = np.zeros((3, fft_n), dtype=np.float32)
     block[0, :] = tone
-    result = computer.compute_fft_spectrum(
-        block,
-        sample_rate_hz,
-        spike_filter_enabled=False,
-    )
+    result = computer.compute_fft_spectrum(block, sample_rate_hz)
     freqs = result["freq_slice"]
     amps = result["combined_amp"]
     peak_hz: float | None = None

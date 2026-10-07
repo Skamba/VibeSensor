@@ -9,7 +9,6 @@ import numpy as np
 from vibesensor.dsp.fft_analysis import (
     SpectralAnalysisComputer,
     fill_lost_samples,
-    medfilt3,
     present_centre,
 )
 from vibesensor.dsp.vibration_strength import empty_vibration_strength_metrics
@@ -26,29 +25,17 @@ if TYPE_CHECKING:
     from vibesensor.live.analysis_time_range import AnalysisTimeRange
 
 
-def _filtered_fft_input(snapshot: MetricsSnapshot, fft_window: FloatArray) -> FloatArray | None:
-    """Fill the FFT block's lost samples, then median-filter it.
+def _fft_input(snapshot: MetricsSnapshot, fft_window: FloatArray) -> FloatArray | None:
+    """The FFT block with its lost samples filled; ``None`` when too much was lost.
 
-    A filtered sample depends only on itself and its two neighbours, so only the
-    sample just before the block is read from the time window's history:
-    filtering that tail gives the same block as filtering the whole time window,
-    for a fraction of the work on every live tick. ``None`` when too much of the
-    block was lost (``fill_lost_samples``).
+    The block is not filtered, as the post-stop raw replay does not filter it:
+    the strength and noise floor a summary row stores are the ones the replay
+    would compute, whichever of the two a run's rows come from.
     """
     fft_block = snapshot.fft_block
     if fft_block is None:
         return None
-
-    fft_n = fft_block.shape[1]
-    signal = (
-        snapshot.time_window[:, -(fft_n + 1) :]
-        if snapshot.time_window.shape[1] >= fft_n
-        else fft_block
-    )
-    filled = fill_lost_samples(signal, fft_window)
-    if filled is None:
-        return None
-    return medfilt3(filled)[:, -fft_n:]
+    return fill_lost_samples(fft_block, fft_window)
 
 
 def _spectrum_time_range(
@@ -79,18 +66,14 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
 
     def compute(self, snapshot: MetricsSnapshot) -> MetricsComputationResult:
         t0 = time.monotonic()
-        fft_input = _filtered_fft_input(snapshot, self.fft_window)
+        fft_input = _fft_input(snapshot, self.fft_window)
 
         metrics: ClientMetrics = {"combined": {"peaks": []}}
         spectrum_by_axis: SpectrumByAxis = {}
         strength_metrics_dict = empty_vibration_strength_metrics()
         has_fft_data = fft_input is not None
         if fft_input is not None:
-            fft_result = self.compute_fft_spectrum(
-                fft_input,
-                snapshot.sample_rate_hz,
-                spike_filter_enabled=False,
-            )
+            fft_result = self.compute_fft_spectrum(fft_input, snapshot.sample_rate_hz)
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
 

@@ -964,11 +964,7 @@ def _compute_strength_metrics(
     fft_computer: SpectralAnalysisComputer,
 ) -> _ComputedStrengthMetrics:
     strength_metrics = (
-        fft_computer.compute_combined_strength_metrics(
-            window_f32.T,
-            sample_rate_hz,
-            spike_filter_enabled=False,
-        )
+        fft_computer.compute_combined_strength_metrics(window_f32.T, sample_rate_hz)
         if window_f32.size > 0
         else None
     )

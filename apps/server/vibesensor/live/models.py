@@ -55,7 +55,6 @@ class MetricsSnapshot:
     client_id: str
     sample_rate_hz: int
     ingest_generation: int
-    time_window: FloatArray
     fft_block: FloatArray | None
     analysis_time_range: AnalysisTimeRange | None = None
     buffer_epoch: int = 0

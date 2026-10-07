@@ -68,16 +68,9 @@ snapshot -> compute -> store shape:
    lock unless the buffer was flushed, evicted/recreated, or already holds newer
    metrics, and invalidates cached payload views.
 
-The snapshot contains two overlapping views from the same immutable capture:
-
-- `time_window` keeps the wider waveform slice; its sample just before the FFT
-  block gives the median filter real history at the block's leading edge. The
-  live tick filters only the block plus that one sample, never the whole window.
-- `fft_block` keeps the most recent `fft_n` samples used for spectral analysis.
-
-The FFT block is a suffix of the time window. VibeSensor does not run a dense
-overlap-add FFT bank; each compute tick snapshots the current rolling tail once,
-then analyzes that one block.
+The snapshot holds `fft_block`, a copy of the most recent `fft_n` samples.
+VibeSensor does not run a dense overlap-add FFT bank; each compute tick
+snapshots the current rolling tail once, then analyzes that one block.
 
 ### FFT pipeline
 
@@ -103,15 +96,14 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
    its frequency and phase across the gap and the spectrum its power. A block
    whose samples present carry under 30 % of the window energy
    (`FFT_MIN_WINDOW_COVERAGE`) has no spectrum.
-2. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
-   removes isolated transport/I2C spikes without blurring normal vibration
-   content.
-3. The FFT step detrends the filtered block by removing the per-axis mean.
-4. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
+2. The FFT step detrends the block by removing the per-axis mean. The block is
+   not filtered, as the post-stop raw replay does not filter it, so a stored
+   live row's strength and noise floor match the replay's (`docs/metrics.md`).
+3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
    Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
    the configured frequency range via SciPy FFT frequency bins, and produces
    both per-axis spectra and a combined amplitude curve.
-5. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
+4. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
    select dominant candidate bins, estimates a P20/median noise floor, and
    converts the dominant peak band into the
    shared dB metric used by both live telemetry and post-stop analysis:

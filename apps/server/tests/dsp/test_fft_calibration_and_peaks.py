@@ -18,7 +18,7 @@ def _x_axis_spectrum(bin_index: float, amplitude_g: float) -> tuple[np.ndarray, 
     block = np.zeros((3, _N), dtype=np.float32)
     block[0] = amplitude_g * np.sin(2 * np.pi * freq_hz * t)
     computer = SpectralAnalysisComputer(fft_n=_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
-    result = computer.compute_fft_spectrum(block, _FS, spike_filter_enabled=False)
+    result = computer.compute_fft_spectrum(block, _FS)
     axis = result["spectrum_by_axis"]["x"]
     return np.asarray(axis["freq"]), np.asarray(axis["amp"])
 
@@ -51,10 +51,7 @@ def test_peaks_must_clear_the_floor_threshold_and_be_separated() -> None:
     assert [peak["hz"] for peak in metrics["top_peaks"]] == [60.0]
 
 
-@pytest.mark.parametrize("spike_filter_enabled", [False, True])
-def test_the_combined_strength_alone_matches_the_full_spectrum(
-    spike_filter_enabled: bool,
-) -> None:
+def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
     # Post-stop replay needs only the combined strength; it must be the full
     # (live) spectrum's, value for value.
     rng = np.random.default_rng(11)
@@ -63,12 +60,9 @@ def test_the_combined_strength_alone_matches_the_full_spectrum(
     for _ in range(5):
         block = rng.normal(0.0, 0.01, size=(3, _N)).astype(np.float32)
         block[rng.integers(3)] += np.float32(0.2) * np.sin(2 * np.pi * rng.uniform(5, 150) * t)
-        block[0, rng.integers(_N)] += np.float32(3.0)  # a spike for the filter
 
-        full = computer.compute_fft_spectrum(block, _FS, spike_filter_enabled=spike_filter_enabled)
-        combined = computer.compute_combined_strength_metrics(
-            block, _FS, spike_filter_enabled=spike_filter_enabled
-        )
+        full = computer.compute_fft_spectrum(block, _FS)
+        combined = computer.compute_combined_strength_metrics(block, _FS)
 
         assert full["has_valid_analysis_bins"]
         assert combined == full["strength_metrics"]

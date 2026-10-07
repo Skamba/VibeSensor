@@ -212,26 +212,16 @@ the wheel when its RPM is estimated, or whether an engine tone spread over the
 car outweighs a wheel order at a dominant corner; their amplitudes do (step 8 in
 `docs/order_tracking.md`).
 
-## Processing profiles
+## One spectrum definition
 
-Filtering choices are explicit because live display smoothing must not silently
-change report or forensic diagnostics.
-
-| Profile | Owner | Filter chain | Use |
-|---------|-------|--------------|-----|
-| `live_display` | `apps/server/vibesensor/live/compute.py` | `median_3_sample_time_domain` | Operator-facing live metrics and spectra. |
-| `diagnostic_raw` | post-run raw replay and dense raw-window stages | none | Report/post-run truth when raw capture is available. |
-| `diagnostic_filtered` | persisted-summary fallback or optional comparisons | `median_3_sample_time_domain` | Clearly labeled fallback/comparison data, not raw truth. |
-
-The shared identifiers live in
-`apps/server/vibesensor/live/processing_profile.py`. Persisted analysis metadata records the active diagnostic `processing_profile`,
-available profile rows, the live filter chain, the diagnostic filter chain, and
-whether raw diagnostic evidence was preserved.
-
-Raw replay uses unfiltered raw windows for diagnostic
-strength/spectrum computation. If no raw-backed replay is available, report
-metadata marks the active profile as `diagnostic_filtered` so downstream report
-code can treat summary-derived evidence as a fallback instead of raw evidence.
+The live tick (`apps/server/vibesensor/live/compute.py`) and the post-stop raw
+replay compute a block's spectrum the same way: no time-domain filter, the
+per-axis mean removed, a Hann window, then the shared strength and noise-floor
+metrics. A run's rows mix the two (a sensor that lost frames keeps its stored
+live rows where the replay has no complete window), so a filter on one path
+only would put that sensor's floor apart from the others'. A 3-sample median
+filter on the live path once did: it lowered a lossy sensor's floor by about
+2 dB and raised its strength above floor as much.
 
 ## Severity Bands (l1–l5)
 
