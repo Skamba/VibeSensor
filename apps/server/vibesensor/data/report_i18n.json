@@ -572,7 +572,7 @@
     "nl": "bestuurdersstoel"
   },
   "LOC_DRIVESHAFT_TUNNEL": {
-    "en": "centre tunnel",
+    "en": "driveshaft tunnel",
     "nl": "middentunnel"
   },
   "LOC_ENGINE_BAY": {
@@ -596,7 +596,7 @@
     "nl": "voorste subframe"
   },
   "LOC_REAR_CENTER_SEAT": {
-    "en": "rear centre seat",
+    "en": "rear center seat",
     "nl": "achterbank midden"
   },
   "LOC_REAR_LEFT_SEAT": {
@@ -620,11 +620,11 @@
     "nl": "achterste subframe"
   },
   "LOC_TRANSMISSION": {
-    "en": "gearbox",
+    "en": "transmission",
     "nl": "versnellingsbak"
   },
   "LOC_TRUNK": {
-    "en": "boot",
+    "en": "trunk",
     "nl": "kofferbak"
   },
   "METRIC_VIBRATION_STRENGTH_DB": {
@@ -680,7 +680,7 @@
     "nl": "constant rijden"
   },
   "NOT_COVERED_NEVER": {
-    "en": "never analysed: {items}",
+    "en": "never analyzed: {items}",
     "nl": "nooit geanalyseerd: {items}"
   },
   "NOT_COVERED_SOURCE": {
@@ -816,7 +816,7 @@
     "nl": "{phase} {share}"
   },
   "POWERTRAIN_EV": {
-    "en": "electric (EV): the motor is checked at once and twice its speed (wheel speed × reduction ratio); its electrical and gear-mesh orders are not analysed",
+    "en": "electric (EV): the motor is checked at once and twice its speed (wheel speed × reduction ratio); its electrical and gear-mesh orders are not analyzed",
     "nl": "elektrisch (EV): de motor wordt gecontroleerd op één en twee keer zijn toerental (wielsnelheid × reductieverhouding); zijn elektrische en tandwielordes worden niet geanalyseerd"
   },
   "POWERTRAIN_ICE": {
@@ -832,7 +832,7 @@
     "nl": "plug-in hybride (PHEV): de motor kan uit staan bij elektrisch rijden, dus motorordes zijn alleen gecontroleerd terwijl het OBD-II-toerental liet zien dat hij draaide"
   },
   "POWERTRAIN_UNKNOWN": {
-    "en": "not provided; analysed as a car with a combustion engine",
+    "en": "not provided; analyzed as a car with a combustion engine",
     "nl": "niet opgegeven; geanalyseerd als auto met verbrandingsmotor"
   },
   "PROVENANCE_FAMILY_DEFAULT": {
@@ -868,7 +868,7 @@
     "nl": "Alle datacontroles geslaagd"
   },
   "QUALITY_ANALYSIS_SAMPLING_PASS": {
-    "en": "Every sample was analysed.",
+    "en": "Every sample was analyzed.",
     "nl": "Elke meting is geanalyseerd."
   },
   "QUALITY_ANALYSIS_SAMPLING_WARN": {
@@ -968,7 +968,7 @@
     "nl": "Er ging te veel ruwe sensordata verloren; de uitkomst leunt meer op opgeslagen samenvattingen."
   },
   "QUALITY_WARNING_RAW_REPLAY_COVERAGE_INCOMPLETE": {
-    "en": "Part of the raw sensor data was missing; those moments were analysed from the stored summaries.",
+    "en": "Part of the raw sensor data was missing; those moments were analyzed from the stored summaries.",
     "nl": "Een deel van de ruwe sensordata ontbrak; die momenten zijn uit de opgeslagen samenvattingen geanalyseerd."
   },
   "QUALITY_WARNING_RAW_REPLAY_DROPPED_CHUNKS": {
@@ -976,7 +976,7 @@
     "nl": "Tijdens het meten gingen enkele sensordatapakketten verloren."
   },
   "QUALITY_WARNING_RAW_REPLAY_FFT_UNUSABLE": {
-    "en": "A few measurement windows could not be analysed.",
+    "en": "A few measurement windows could not be analyzed.",
     "nl": "Enkele meetvensters konden niet worden geanalyseerd."
   },
   "QUALITY_WARNING_RAW_REPLAY_LEGACY_FALLBACK": {
@@ -1208,7 +1208,7 @@
     "nl": "Heranalyse van ruwe meetdata gebruikte opgeslagen sampletiming voor sommige vensters"
   },
   "RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_DETAIL": {
-    "en": "Power was lost (or the server stopped) before Stop was pressed. The run was recovered at the next start and analysed from the data saved until then; the last few seconds may be missing.",
+    "en": "Power was lost (or the server stopped) before Stop was pressed. The run was recovered at the next start and analyzed from the data saved until then; the last few seconds may be missing.",
     "nl": "De stroom viel weg (of de server stopte) voordat op Stop werd gedrukt. De meting is bij de volgende start hersteld en geanalyseerd met de gegevens die tot dan waren opgeslagen; de laatste seconden kunnen ontbreken."
   },
   "RUN_CONTEXT_WARNING_RECORDING_INTERRUPTED_TITLE": {
@@ -1280,7 +1280,7 @@
     "nl": "Controleer de pignonflens van het achterdifferentieel op slingering, en de lagers en steunen op speling."
   },
   "SHOP_DRIVELINE_RUNOUT": {
-    "en": "Measure propshaft runout and balance; check U-joints or flex discs and the centre bearing for play.",
+    "en": "Measure propshaft runout and balance; check U-joints or flex discs and the center bearing for play.",
     "nl": "Meet slingering en balans van de cardanas; controleer kruiskoppelingen of hardyschijven en het middenlager op speling."
   },
   "SHOP_ENGINE_MISFIRE": {
@@ -1312,7 +1312,7 @@
     "nl": "Controleer de steunen van de aandrijfeenheid (elektromotor) en hun rubbers."
   },
   "SHOP_MOTOR_ORDERS": {
-    "en": "P1 and P2 are once and twice per motor revolution (wheel speed × reduction ratio); the motor's electrical and gear-mesh orders were not analysed.",
+    "en": "P1 and P2 are once and twice per motor revolution (wheel speed × reduction ratio); the motor's electrical and gear-mesh orders were not analyzed.",
     "nl": "P1 en P2 zijn één en twee keer per omwenteling van de elektromotor (wielsnelheid × reductieverhouding); elektrische en tandwielordes van de motor zijn niet geanalyseerd."
   },
   "SHOP_NO_FAULT": {
@@ -1532,7 +1532,7 @@
     "nl": "laat de lagers van de reductiekast controleren."
   },
   "STEP_P1_FALLBACK": {
-    "en": "have the driveline working angles and the centre bearing checked.",
+    "en": "have the driveline working angles and the center bearing checked.",
     "nl": "laat de werkhoeken van de aandrijflijn en het middenlager controleren."
   },
   "STEP_P1_FRONT": {
@@ -1548,7 +1548,7 @@
     "nl": "Laat eerst de voorste cardanas (indien aanwezig) en het pignon van het voordifferentieel controleren op slingering, balans en speling; daarna de cardanas naar de achteras op slingering en balans, en de koppelingen op speling."
   },
   "STEP_P1_FRONT_REAR_FALLBACK": {
-    "en": "have the transfer case, the front differential and the centre bearing checked.",
+    "en": "have the transfer case, the front differential and the center bearing checked.",
     "nl": "laat de verdeelbak, het voordifferentieel en het middenlager controleren."
   },
   "STEP_P1_REAR_FRONT": {
@@ -1556,7 +1556,7 @@
     "nl": "Laat de cardanas naar de achteras controleren op slingering en balans, en de koppelingen (kruiskoppelingen of hardyschijven) op speling; daarna de voorste cardanas (indien aanwezig) en het pignon van het voordifferentieel."
   },
   "STEP_P1_REAR_FRONT_FALLBACK": {
-    "en": "have the centre bearing, the rear differential and the transfer case checked.",
+    "en": "have the center bearing, the rear differential and the transfer case checked.",
     "nl": "laat het middenlager, het achterdifferentieel en de verdeelbak controleren."
   },
   "STEP_P2": {
@@ -1680,7 +1680,7 @@
     "nl": "Geen verloren frames of wachtrijoverlopen gedetecteerd."
   },
   "SUITABILITY_FRAME_INTEGRITY_REPLAY_WARN": {
-    "en": "The raw capture did not cover the whole run ({replay_partial} partial and {replay_missing} missing windows, {replay_gaps} timing gaps, {replay_overlaps} overlaps); those moments were analysed from the stored summaries.",
+    "en": "The raw capture did not cover the whole run ({replay_partial} partial and {replay_missing} missing windows, {replay_gaps} timing gaps, {replay_overlaps} overlaps); those moments were analyzed from the stored summaries.",
     "nl": "De ruwe opname dekte niet de hele meting ({replay_partial} gedeeltelijke en {replay_missing} ontbrekende vensters, {replay_gaps} timinggaten, {replay_overlaps} overlappingen); die momenten zijn uit de opgeslagen samenvattingen geanalyseerd."
   },
   "SUITABILITY_FRAME_INTEGRITY_WARN": {
@@ -1940,7 +1940,7 @@
     "nl": "alle vier de wielen"
   },
   "ZONE_DRIVESHAFT_TUNNEL": {
-    "en": "the centre tunnel",
+    "en": "the center tunnel",
     "nl": "de middentunnel"
   },
   "ZONE_DRIVE_UNIT_EV": {
@@ -1976,7 +1976,7 @@
     "nl": "het wiel rechtsachter"
   },
   "ZONE_TRANSMISSION": {
-    "en": "the gearbox",
+    "en": "the transmission",
     "nl": "de versnellingsbak"
   }
 }

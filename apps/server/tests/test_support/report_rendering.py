@@ -34,7 +34,7 @@ def report_pdf_for(summary: Mapping[str, object], *, lang: str = "en") -> bytes:
 # Parts a front-wheel-drive car does not have, in English and Dutch.
 PROPSHAFT_WORDS = (
     "propshaft",
-    "centre bearing",
+    "center bearing",
     "u-joint",
     "rear differential",
     "cardanas",

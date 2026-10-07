@@ -172,7 +172,7 @@ _SPREAD_WHEEL_ZONES = frozenset({"front_axle", "rear_axle", "all_wheels"})
 _WHEEL_AXLE_TEXT_EN = {"front_axle": "front wheels", "rear_axle": "rear wheels"}
 _CABIN_TEXT = {
     "driver_seat": ("driver seat", "bestuurdersstoel"),
-    "trunk": ("boot", "kofferbak"),
+    "trunk": ("trunk", "kofferbak"),
     "front_passenger_seat": ("front passenger seat", "bijrijdersstoel"),
 }
 # A wheel fault felt only in the cabin, or at the only wheel with a sensor: no
