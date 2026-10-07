@@ -1,46 +1,41 @@
 import { expect, test } from "vitest";
 
 import {
-  locationCodeForClient,
+  assignedLocation,
   locationLabel,
-  locationOptions,
+  sensorLabel,
 } from "../src/sensor_locations";
 import { layoutConsequence, sensorLayout } from "../src/sensor_layout";
 import type { AdaptedClient } from "../src/transport/live_models";
 
 const codes = ["front_left_wheel", "rear_right_wheel", "driver_seat", "trunk"];
-const t = (key: string) => ({ "location.trunk": "Trunk" })[key] ?? key;
-const options = locationOptions(codes, t);
-const labels = (code: string) =>
-  code === "driver_seat" ? ["Driver Seat", "Bestuurdersstoel"] : [];
+const t = (key: string, vars?: Record<string, unknown>) =>
+  ({ "location.trunk": "Trunk" })[key] ??
+  (vars ? `${key}:${JSON.stringify(vars)}` : key);
+const client = (fields: Partial<AdaptedClient>) =>
+  ({ id: "025a00000001", ...fields }) as AdaptedClient;
 
-function locate(fields: Partial<AdaptedClient>): string {
-  return locationCodeForClient(
-    { id: "x", ...fields } as AdaptedClient,
-    codes,
-    options,
-    labels,
-  );
-}
-
-test("an assigned known location wins", () => {
+test("only an assigned, known location places a sensor; a name never does", () => {
   expect(
-    locate({ location_code: " rear_right_wheel ", name: "front left" }),
+    assignedLocation(
+      client({ location_code: " rear_right_wheel ", name: "front left" }),
+      codes,
+    ),
   ).toBe("rear_right_wheel");
+  expect(assignedLocation(client({ location_code: "roof" }), codes)).toBe("");
+  for (const name of ["front-left", "Front Left Wheel", "driver", "Trunk"]) {
+    expect(assignedLocation(client({ name }), codes)).toBe("");
+  }
 });
 
-test("an unknown assigned code falls back to the name", () => {
-  expect(locate({ location_code: "roof", name: "Front-Left hub" })).toBe(
-    "front_left_wheel",
+test("Live names a placed sensor by location, an unplaced one by its own name", () => {
+  expect(sensorLabel(client({ name: "front-left" }), "trunk", t)).toBe("Trunk");
+  expect(sensorLabel(client({ name: " front-left " }), "", t)).toBe(
+    'sensors.unplaced_name:{"name":"front-left"}',
   );
-});
-
-test("names match shorthand, any language's label, or the option label", () => {
-  expect(locate({ name: "driver" })).toBe("driver_seat");
-  expect(locate({ name: "Bestuurdersstoel" })).toBe("driver_seat");
-  expect(locate({ name: "Trunk" })).toBe("trunk");
-  expect(locate({ name: "Mystery" })).toBe("");
-  expect(locate({})).toBe("");
+  expect(sensorLabel(client({ name: "" }), "", t)).toBe(
+    'sensors.unplaced_name:{"name":"025a00000001"}',
+  );
 });
 
 test("the sensor layout says what it can localise", () => {

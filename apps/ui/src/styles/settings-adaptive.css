@@ -45,8 +45,7 @@
     border-bottom: none;
   }
 
-  .car-list-actions,
-  .settings-sensor-row__actions {
+  .car-list-actions {
     justify-content: flex-start;
   }
 }

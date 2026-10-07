@@ -2,9 +2,8 @@ import { computed, signal } from "@preact/signals";
 
 import { getClientLocations } from "./api/clients";
 import { defaultLocationCodes } from "./constants";
-import { t, translationsOf } from "./i18n";
 import { sensorLayout } from "./sensor_layout";
-import { locationCodeForClient, locationOptions } from "./sensor_locations";
+import { assignedLocation } from "./sensor_locations";
 import type {
   AdaptedClient,
   RotationalSpeeds,
@@ -28,21 +27,13 @@ export const hasReceivedPayload = signal(false);
 
 /** Location codes a sensor can be assigned to. */
 const locationCodes = signal<string[]>(defaultLocationCodes.slice());
-export const locationChoices = computed(() =>
-  locationOptions(locationCodes.value, t),
-);
 
 /** Bumped when a recording starts, stops, or finishes, so History reloads. */
 export const runsChanged = signal(0);
 
-/** The sensor's location code, inferred from its name when unassigned. */
+/** The sensor's assigned location code, or "" while it is unplaced. */
 export function locationOf(client: AdaptedClient): string {
-  return locationCodeForClient(
-    client,
-    locationCodes.value,
-    locationChoices.value,
-    (code) => translationsOf(`location.${code}`),
-  );
+  return assignedLocation(client, locationCodes.value);
 }
 
 /** The layout of the connected sensors that have a location. */

@@ -13,19 +13,14 @@ test.describe.configure({ timeout: 20_000 });
 const CONNECTED_ID = "001122334455";
 const OFFLINE_ID = "aabbccddeeff";
 
-test("journey: Sensors tab assigns a location, identifies, and removes a sensor", async ({
+test("journey: Sensors tab places sensors on the car, identifies, unplaces and removes one", async ({
   page,
 }) => {
   const locationPosts: Array<{ id: string; body: unknown }> = [];
   const identifyPosts: string[] = [];
   const deletes: string[] = [];
 
-  await installCommonRoutes(page, {
-    locations: [
-      { code: "front_left_wheel", label: "Front Left Wheel" },
-      { code: "rear_right_wheel", label: "Rear Right Wheel" },
-    ],
-  });
+  await installCommonRoutes(page);
   await page.route("**/api/clients/**", async (route) => {
     const path = requestPath(route);
     const method = route.request().method();
@@ -44,14 +39,14 @@ test("journey: Sensors tab assigns a location, identifies, and removes a sensor"
       clients: [
         {
           id: CONNECTED_ID,
-          name: "Front Left",
+          name: "Front Left Wheel",
           connected: true,
           sample_rate_hz: 1000,
           last_seen_age_ms: 10,
           dropped_frames: 0,
           frames_total: 100,
           location_code: "front_left_wheel",
-          mac_address: CONNECTED_ID,
+          mac_address: "00:11:22:33:44:55",
           firmware_version: "fw-1.0.0",
         },
         {
@@ -73,49 +68,81 @@ test("journey: Sensors tab assigns a location, identifies, and removes a sensor"
   await page.goto("/");
   await openSensorsTab(page);
 
-  const rows = page.locator("#sensorsSettingsBody tr[data-client-id]");
-  await expect(rows).toHaveCount(2);
-  const connectedRow = page.locator(
-    `#sensorsSettingsBody tr[data-client-id="${CONNECTED_ID}"]`,
-  );
-  const offlineRow = page.locator(
-    `#sensorsSettingsBody tr[data-client-id="${OFFLINE_ID}"]`,
-  );
-  await expect(connectedRow).toContainText("Front Left");
-  await expect(connectedRow).toContainText("Online");
-  await expect(connectedRow).toContainText(CONNECTED_ID);
-  await expect(connectedRow.locator("select")).toHaveValue("front_left_wheel");
-  // A sensor without a name falls back to its id.
-  await expect(offlineRow).toContainText(OFFLINE_ID);
-  await expect(offlineRow).toContainText("Offline");
-  await expect(offlineRow.locator(".row-identify")).toBeDisabled();
+  // The unplaced sensor is a chip (named by its id) and is selected to place.
+  await expect(page.locator("#sensorsToPlace")).toHaveText("1 sensor to place");
+  const chip = page.locator(`.sensor-chip[data-client-id="${OFFLINE_ID}"]`);
+  await expect(chip).toHaveText(OFFLINE_ID);
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+  const selection = page.locator("#sensorSelection");
+  await expect(selection).toContainText("Offline");
+  await expect(selection.locator(".sensor-identify")).toBeDisabled();
+  // The placed sensor sits on its spot, shown by its short id.
+  const frontLeft = page.locator('.car-spot[data-code="front_left_wheel"]');
+  await expect(frontLeft).toHaveAttribute("data-client-id", CONNECTED_ID);
+  await expect(frontLeft).toContainText("44:55");
 
-  await connectedRow.locator("select").selectOption("rear_right_wheel");
+  // Tapping a free spot places the selected sensor; nothing is left to place.
+  await page
+    .getByRole("button", { name: `Place ${OFFLINE_ID} at Trunk` })
+    .click();
+  await expect
+    .poll(() => locationPosts)
+    .toEqual([{ id: OFFLINE_ID, body: { location_code: "trunk" } }]);
+  await expect(page.locator("#sensorsToPlace")).toHaveText(
+    "Every sensor has a place on the car.",
+  );
+  await expect(selection).toHaveText(
+    "Tap a sensor on the car to identify, move or unplace it.",
+  );
+
+  // Tapping a placed sensor selects it: Identify blinks it.
+  await frontLeft.click();
+  await expect(frontLeft).toHaveAttribute("aria-pressed", "true");
+  await expect(selection).toContainText("Front Left Wheel · 44:55");
+  await expect(selection).toContainText("00:11:22:33:44:55");
+  await selection.locator(".sensor-identify").click();
+  await expect.poll(() => identifyPosts).toEqual([CONNECTED_ID]);
+
+  // Moving it onto an occupied spot unplaces the sensor that was there first.
+  locationPosts.length = 0;
+  await page.locator('.car-spot[data-code="trunk"]').click();
   await expect
     .poll(() => locationPosts)
     .toEqual([
-      { id: CONNECTED_ID, body: { location_code: "rear_right_wheel" } },
+      { id: OFFLINE_ID, body: { location_code: "" } },
+      { id: CONNECTED_ID, body: { location_code: "trunk" } },
     ]);
+  await expect(chip).toBeVisible();
 
-  await connectedRow.locator(".row-identify").click();
-  await expect.poll(() => identifyPosts).toEqual([CONNECTED_ID]);
+  // Unplace keeps the sensor selected, back among the sensors to place.
+  locationPosts.length = 0;
+  await page.locator('.car-spot[data-code="trunk"]').click();
+  await page.locator("#sensorSelection .sensor-unplace").click();
+  await expect
+    .poll(() => locationPosts)
+    .toEqual([{ id: CONNECTED_ID, body: { location_code: "" } }]);
+  await expect(page.locator("#sensorsToPlace")).toHaveText(
+    "2 sensors to place",
+  );
 
-  // Cancelling the confirmation keeps the sensor.
-  await offlineRow.locator(".row-remove").click();
+  // Remove sits behind "More", away from Identify, and still asks first.
+  await chip.click();
+  await expect(selection.locator(".sensor-remove")).toBeHidden();
+  await selection.locator(".sensor-more__summary").click();
+  await selection.locator(".sensor-remove").click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog).toContainText(OFFLINE_ID);
   await dialog.getByRole("button", { name: "Cancel" }).click();
   await expect(dialog).toBeHidden();
-  await expect(rows).toHaveCount(2);
   expect(deletes).toEqual([]);
 
-  await offlineRow.locator(".row-remove").click();
+  await selection.locator(".sensor-remove").click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Confirm" })
     .click();
   await expect.poll(() => deletes).toEqual([OFFLINE_ID]);
-  await expect(rows).toHaveCount(1);
+  await expect(page.locator(".sensor-chip")).toHaveCount(1);
 });
 
 test("journey: Sensors tab shows the empty state without live sensors", async ({
@@ -127,10 +154,13 @@ test("journey: Sensors tab shows the empty state without live sensors", async ({
   });
   await page.goto("/");
   await openSensorsTab(page);
-  await expect(page.locator("#sensorsSettingsBody")).toContainText(
+  await expect(page.locator("#sensorsEmpty")).toHaveText(
     "No sensors detected yet.",
   );
-  // The mounting guide is open until all four wheels have a sensor.
+  // The car still shows where sensors go; with none to place, spots are inert.
+  await expect(page.locator(".car-spot")).toHaveCount(15);
+  await expect(page.locator(".car-spot:enabled")).toHaveCount(0);
+  // The mounting guide is open until a sensor is placed.
   const guide = page.locator("#sensorMountingGuide");
   await expect(guide).toHaveAttribute("open", "");
   await expect(page.locator("#sensorLayoutConsequence")).toHaveText(
@@ -139,13 +169,11 @@ test("journey: Sensors tab shows the empty state without live sensors", async ({
   await expect(guide).toContainText("Never on the wheel or tire");
 });
 
-test("journey: Settings fits a phone and the sensor row stays usable", async ({
+test("journey: Settings fits a phone and every spot on the car is a full-size tap target", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await installCommonRoutes(page, {
-    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
-  });
+  await installCommonRoutes(page);
   await installFakeWebSocket(page, {
     payload: {
       clients: [
@@ -185,17 +213,16 @@ test("journey: Settings fits a phone and the sensor row stays usable", async ({
   }
 
   await openSensorsTab(page);
-  const row = page.locator(
-    `#sensorsSettingsBody tr[data-client-id="${CONNECTED_ID}"]`,
+  const controls = page.locator(
+    ".car-spot, .sensor-chip, #sensorSelection .btn, .sensor-more__summary",
   );
-  for (const control of [
-    row.getByRole("combobox", { name: "Location" }),
-    row.locator(".row-identify"),
-    row.locator(".row-remove"),
-  ]) {
-    // Fully inside the phone's width, not in a sideways-scrolled table.
+  await expect(page.locator(".car-spot")).toHaveCount(15);
+  for (const control of await controls.all()) {
+    // At least 44 px each way, fully inside the phone's width.
     const box = await control.boundingBox();
     expect(box).not.toBeNull();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
     expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
   }
@@ -240,12 +267,13 @@ test("journey: an outdated sensor shows its firmware and the USB update path", a
   await page.goto("/");
   await openSensorsTab(page);
 
-  await expect(
-    page.locator(`tr[data-client-id="${CONNECTED_ID}"] [data-firmware-status]`),
-  ).toHaveText(/Firmware esp32-atom-0\.1\s*outdated/);
-  await expect(
-    page.locator(`tr[data-client-id="${OFFLINE_ID}"] [data-firmware-status]`),
-  ).toHaveText(/Firmware fw-20261005\.1200\+0123456789ab\s*up to date/);
+  // The selected sensor's card shows its firmware.
+  const firmware = page.locator("#sensorSelection [data-firmware-status]");
+  await expect(firmware).toHaveText(/Firmware esp32-atom-0\.1\s*outdated/);
+  await page.locator(`.sensor-chip[data-client-id="${OFFLINE_ID}"]`).click();
+  await expect(firmware).toHaveText(
+    /Firmware fw-20261005\.1200\+0123456789ab\s*up to date/,
+  );
   const notice = page.locator("#sensorFirmwareNotice");
   await expect(notice).toContainText(
     "1 sensor runs older firmware than this Pi provides.",

@@ -355,7 +355,9 @@ test("journey: a bad live payload is reported, a good one recovers, and the sele
   // Removing the selected sensor moves the selection, and the server hears about it.
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="sensorsTab"]').click();
-  await page.locator(`tr[data-client-id="${sensorA.id}"] .row-remove`).click();
+  await page.locator('.car-spot[data-code="front_left_wheel"]').click();
+  await page.locator("#sensorSelection .sensor-more__summary").click();
+  await page.locator("#sensorSelection .sensor-remove").click();
   await page
     .getByRole("alertdialog")
     .getByRole("button", { name: "Confirm" })

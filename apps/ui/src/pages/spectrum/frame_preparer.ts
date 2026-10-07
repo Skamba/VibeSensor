@@ -12,7 +12,8 @@ const EMPTY_FREQ_AXIS: number[] = [];
 
 export interface SpectrumFramePreparationClient {
   id: string;
-  name: string;
+  /** The trace's legend text (see `sensorLabel`). */
+  label: string;
   connected: boolean;
 }
 
@@ -91,7 +92,7 @@ export function createSpectrumFramePreparer(): SpectrumFramePreparer {
 
       entries.push({
         id: client.id,
-        label: client.name || client.id,
+        label: client.label,
         color: colorForClient(index),
         values: preparedValues,
       });

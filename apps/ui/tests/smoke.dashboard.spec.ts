@@ -465,13 +465,13 @@ test("journey: assigning a sensor location re-checks readiness right away", asyn
     })
     .toBe(true);
 
-  await page
-    .locator(`select[data-client-id="${SENSOR_ID}"]`)
-    .selectOption("rear_right_wheel");
+  // Select the placed sensor on the car, then move it to another spot.
+  await page.locator('.car-spot[data-code="front_left_wheel"]').click();
+  await page.locator('.car-spot[data-code="rear_right_wheel"]').click();
   await expect.poll(() => statusCalls).toBe(before + 1);
 });
 
-test("journey: sensor cards show location labels and the strongest signal", async ({
+test("journey: sensor cards show the location, or the name of an unplaced sensor", async ({
   page,
 }) => {
   await installCommonRoutes(page, {
@@ -511,11 +511,11 @@ test("journey: sensor cards show location labels and the strongest signal", asyn
   const cards = page.locator("#liveSensorRoster .live-sensor-card");
   await expect(cards).toHaveCount(2);
   await expect(cards.nth(0)).toContainText("Front Left Wheel");
-  // "Rear Right" in the name maps to the rear-right location.
-  await expect(cards.nth(1)).toContainText("Rear Right Wheel");
+  // A name that looks like a location is not one until the sensor is placed.
+  await expect(cards.nth(1)).toContainText("Rear Right · unplaced");
   await expect(cards.nth(1)).toHaveAttribute("data-strongest", "true");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toHaveText(
-    "Rear Right Wheel · 18 dB",
+    "Rear Right · unplaced · 18 dB",
   );
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText(
     "2 / 2",

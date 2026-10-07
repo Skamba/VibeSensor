@@ -80,10 +80,3 @@ export function translate(
 export function t(key: string, vars?: Record<string, unknown>): string {
   return translate(lang.value, key, vars);
 }
-
-/** The key's text in every loaded language (used to match free-text labels). */
-export function translationsOf(key: string): string[] {
-  return (Object.keys(catalogs) as Lang[]).map((language) =>
-    translate(language, key),
-  );
-}

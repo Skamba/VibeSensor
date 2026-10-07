@@ -1,21 +1,30 @@
-import { memo } from "preact/compat";
-
 import { Note, Pill, type Variant } from "../../components/maintenance";
 import { t } from "../../i18n";
-import { clients, liveSensorLayout, locationChoices } from "../../live_store";
+import { liveSensorLayout } from "../../live_store";
 import { layoutConsequence } from "../../sensor_layout";
-import type { LocationOption } from "../../sensor_locations";
 import { activeCar } from "../../settings_store";
-import type { AdaptedClient } from "../../transport/live_models";
+import {
+  type Placement,
+  type PlacementSensor,
+  placesOnTap,
+  SPOTS,
+  type Spot,
+  sensorTitle,
+  spotLabel,
+} from "./placement_model";
 import {
   identify,
   openFirmwareUpdate,
   outdatedFirmwareCount,
+  placement,
+  placing,
   remove,
-  setLocation,
+  select,
+  tapSpot,
+  unplace,
 } from "./sensors_store";
 
-type FirmwareStatus = AdaptedClient["firmware_status"];
+type FirmwareStatus = PlacementSensor["firmwareStatus"];
 
 const FIRMWARE_STATUS_VARIANT: Record<FirmwareStatus, Variant> = {
   current: "ok",
@@ -25,10 +34,7 @@ const FIRMWARE_STATUS_VARIANT: Record<FirmwareStatus, Variant> = {
 
 function FirmwareInfo(props: { version: string; status: FirmwareStatus }) {
   return (
-    <span
-      class="settings-sensor-row__firmware"
-      data-firmware-status={props.status}
-    >
+    <span class="sensor-firmware" data-firmware-status={props.status}>
       <span>
         {props.version
           ? t("settings.sensors.firmware.version", { version: props.version })
@@ -71,83 +77,222 @@ function FirmwareUpdateNotice() {
   );
 }
 
-/**
- * Memoized so live updates (several per second) leave unchanged rows alone;
- * re-rendering would reset a location the user just picked before it saves.
- */
-const SensorRow = memo(function SensorRow(props: {
-  id: string;
-  name: string;
-  mac: string;
-  connected: boolean;
-  locationCode: string;
-  firmwareVersion: string;
-  firmwareStatus: FirmwareStatus;
-  options: readonly LocationOption[];
-}) {
-  const { id, connected } = props;
+function StatusDot(props: { connected: boolean }) {
   return (
-    <tr data-client-id={id}>
-      <td>
-        <div class="settings-sensor-row__identity">
-          <div class="settings-sensor-row__heading">
-            <strong>{props.name}</strong>
-            <span
-              class="status-pill settings-entity-status"
-              data-status={connected ? "online" : "offline"}
-            >
-              {t(connected ? "status.online" : "status.offline")}
-            </span>
-          </div>
-          <div class="settings-sensor-row__meta">
-            <code>{props.mac}</code>
-            <FirmwareInfo
-              version={props.firmwareVersion}
-              status={props.firmwareStatus}
-            />
-          </div>
-        </div>
-      </td>
-      <td class="settings-sensor-row__location">
-        <select
-          class="row-location-select"
-          aria-label={t("settings.sensors.location")}
-          data-client-id={id}
-          value={props.locationCode}
-          onChange={(event) => void setLocation(id, event.currentTarget.value)}
-        >
-          <option value="">{t("settings.select_location")}</option>
-          {props.options.map((location) => (
-            <option key={location.code} value={location.code}>
-              {location.label}
-            </option>
-          ))}
-        </select>
-      </td>
-      <td>
-        <div class="settings-sensor-row__actions">
-          <button
-            class="btn row-identify"
-            data-client-id={id}
-            type="button"
-            disabled={!connected}
-            onClick={() => void identify(id)}
-          >
-            {t("actions.identify")}
-          </button>
-          <button
-            class="btn btn--danger-quiet row-remove"
-            data-client-id={id}
-            type="button"
-            onClick={() => void remove(id)}
-          >
-            {t("actions.remove")}
-          </button>
-        </div>
-      </td>
-    </tr>
+    <span
+      class="sensor-status-dot"
+      data-status={props.connected ? "online" : "offline"}
+      aria-hidden="true"
+    />
   );
-});
+}
+
+/** "3 sensors to place": one chip per unplaced sensor. */
+function UnplacedSensors(props: { model: Placement }) {
+  const { unplaced, selected } = props.model;
+  return (
+    <div class="sensor-to-place">
+      <div id="sensorsToPlace" class="sensor-to-place__title">
+        {unplaced.length === 0
+          ? t("settings.sensors.all_placed")
+          : t("settings.sensors.to_place", { count: unplaced.length })}
+      </div>
+      {unplaced.length > 0 ? (
+        <ul class="sensor-chips" aria-labelledby="sensorsToPlace">
+          {unplaced.map((sensor) => {
+            const status = t(
+              sensor.connected ? "status.online" : "status.offline",
+            );
+            return (
+              <li key={sensor.id}>
+                <button
+                  type="button"
+                  class="sensor-chip"
+                  data-client-id={sensor.id}
+                  aria-pressed={selected?.id === sensor.id}
+                  aria-label={`${sensorTitle(sensor)}, ${status}`}
+                  onClick={() => select(sensor.id)}
+                >
+                  <StatusDot connected={sensor.connected} />
+                  <span>{sensorTitle(sensor)}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/** The selected sensor: where it goes, Identify, and the rarer actions. */
+function SelectedSensor(props: { model: Placement }) {
+  const sensor = props.model.selected;
+  if (!sensor) {
+    return (
+      <p id="sensorSelection" class="sensor-selection__hint">
+        {t("settings.sensors.select_hint")}
+      </p>
+    );
+  }
+  const location = sensor.code ? t(`location.${sensor.code}`) : "";
+  return (
+    <section
+      id="sensorSelection"
+      class="sensor-selection"
+      data-client-id={sensor.id}
+      aria-labelledby="sensorSelectionTitle"
+    >
+      <div class="sensor-selection__head">
+        <strong id="sensorSelectionTitle">
+          {location ? `${location} · ${sensor.shortId}` : sensorTitle(sensor)}
+        </strong>
+        <span
+          class="status-pill settings-entity-status"
+          data-status={sensor.connected ? "online" : "offline"}
+        >
+          {t(sensor.connected ? "status.online" : "status.offline")}
+        </span>
+      </div>
+      <div class="sensor-selection__meta">
+        <code>{sensor.mac}</code>
+        <FirmwareInfo
+          version={sensor.firmwareVersion}
+          status={sensor.firmwareStatus}
+        />
+      </div>
+      <p class="sensor-selection__hint">
+        {location
+          ? t("settings.sensors.move_hint")
+          : t("settings.sensors.place_hint")}
+      </p>
+      <div class="sensor-selection__actions">
+        <button
+          type="button"
+          class="btn btn--primary sensor-identify"
+          disabled={!sensor.connected}
+          onClick={() => void identify(sensor.id)}
+        >
+          {t("actions.identify")}
+        </button>
+        {location ? (
+          <button
+            type="button"
+            class="btn sensor-unplace"
+            disabled={placing.value}
+            onClick={() => void unplace(sensor.id)}
+          >
+            {t("settings.sensors.unplace")}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          class="btn sensor-done"
+          onClick={() => select(null)}
+        >
+          {t("settings.sensors.done")}
+        </button>
+      </div>
+      <details class="sensor-more">
+        <summary class="sensor-more__summary">
+          {t("settings.sensors.more")}
+        </summary>
+        <button
+          type="button"
+          class="btn btn--danger-quiet sensor-remove"
+          onClick={() => void remove(sensor.id)}
+        >
+          {t("settings.sensors.remove")}
+        </button>
+      </details>
+    </section>
+  );
+}
+
+function spotName(
+  spot: Spot,
+  occupant: PlacementSensor | undefined,
+  model: Placement,
+): string {
+  const location = t(`location.${spot.code}`);
+  const { selected } = model;
+  if (selected && placesOnTap(model, occupant)) {
+    const sensor = sensorTitle(selected);
+    return occupant
+      ? t("settings.sensors.spot_aria.replace", {
+          location,
+          sensor,
+          occupant: occupant.shortId,
+        })
+      : t("settings.sensors.spot_aria.place", { location, sensor });
+  }
+  if (!occupant) {
+    return t("settings.sensors.spot_aria.empty", { location });
+  }
+  return occupant.id === selected?.id
+    ? t("settings.sensors.spot_aria.selected", {
+        location,
+        sensor: occupant.shortId,
+      })
+    : t("settings.sensors.spot_aria.occupied", {
+        location,
+        sensor: occupant.shortId,
+        status: t(occupant.connected ? "status.online" : "status.offline"),
+      });
+}
+
+function SpotButton(props: { spot: Spot; model: Placement }) {
+  const { spot, model } = props;
+  const occupant = model.byCode.get(spot.code);
+  const places = placesOnTap(model, occupant);
+  return (
+    <button
+      type="button"
+      class="car-spot"
+      data-code={spot.code}
+      data-kind={spot.wheel ? "wheel" : "zone"}
+      data-client-id={occupant?.id}
+      data-target={places ? "true" : undefined}
+      aria-pressed={occupant ? occupant.id === model.selected?.id : undefined}
+      aria-label={spotName(spot, occupant, model)}
+      disabled={(!places && !occupant) || placing.value}
+      style={{
+        gridRow: String(spot.row),
+        gridColumn: `${spot.col} / span ${spot.span}`,
+      }}
+      onClick={() => void tapSpot(spot.code)}
+    >
+      <span class="car-spot__label">{spotLabel(spot.code, t)}</span>
+      {occupant ? (
+        <span class="car-spot__sensor">
+          <StatusDot connected={occupant.connected} />
+          {occupant.shortId}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+/** A top-down car with every mounting spot as a button, front at the top. */
+function CarDiagram(props: { model: Placement }) {
+  return (
+    <fieldset
+      id="sensorCarDiagram"
+      class="car-diagram"
+      aria-label={t("settings.sensors.diagram_label")}
+    >
+      <div class="car-diagram__front" aria-hidden="true">
+        {t("settings.sensors.front")}
+      </div>
+      <div class="car-diagram__grid">
+        <div class="car-diagram__body" aria-hidden="true" />
+        {SPOTS.map((spot) => (
+          <SpotButton key={spot.code} spot={spot} model={props.model} />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 const RECOMMENDED_LAYOUTS = [
   "four_wheels_cabin",
@@ -158,14 +303,14 @@ const RECOMMENDED_LAYOUTS = [
 const MOUNTING_RULES = ["rigid", "firm", "clear", "identify"] as const;
 
 /** Where to mount the sensors, and what the current layout can localise. */
-function MountingGuide() {
+function MountingGuide(props: { placed: boolean }) {
   const layout = liveSensorLayout.value;
   const fuelType = activeCar.value?.fuel_type ?? null;
   return (
     <details
       id="sensorMountingGuide"
       class="settings-help-disclosure sensor-mounting-guide"
-      open={layout === null || layout.kind !== "four_wheels"}
+      open={!props.placed}
     >
       <summary class="settings-help-disclosure__summary">
         <span class="settings-help-disclosure__heading">
@@ -210,49 +355,32 @@ function MountingGuide() {
   );
 }
 
-/** Settings > Sensors: name, firmware, location, identify, and remove per sensor. */
+/** Settings > Sensors: place each sensor on the car, identify or remove it. */
 export function Sensors() {
-  const list = clients.value;
+  const model = placement.value;
   return (
     <>
       <div class="panel card">
         <strong>{t("settings.sensors.title")}</strong>
         <div class="subtle">{t("settings.sensors.hint")}</div>
         <FirmwareUpdateNotice />
-        <div class="settings-table-wrap">
-          <table class="clients-table settings-entity-table settings-entity-table--sensors">
-            <thead>
-              <tr>
-                <th>{t("settings.sensors.name")}</th>
-                <th>{t("settings.sensors.location")}</th>
-                <th>{t("settings.sensors.actions")}</th>
-              </tr>
-            </thead>
-            <tbody id="sensorsSettingsBody">
-              {list.length === 0 ? (
-                <tr>
-                  <td colSpan={3}>{t("settings.sensors.no_sensors")}</td>
-                </tr>
-              ) : (
-                list.map((client) => (
-                  <SensorRow
-                    key={client.id}
-                    id={client.id}
-                    name={String(client.name || client.id)}
-                    mac={String(client.mac_address || client.id)}
-                    connected={Boolean(client.connected)}
-                    locationCode={String(client.location_code || "").trim()}
-                    firmwareVersion={client.firmware_version}
-                    firmwareStatus={client.firmware_status}
-                    options={locationChoices.value}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
+        <div class="sensor-placement">
+          <div class="sensor-placement__side">
+            {model.sensors.length === 0 ? (
+              <p id="sensorsEmpty" class="sensor-placement__empty">
+                {t("settings.sensors.no_sensors")}
+              </p>
+            ) : (
+              <>
+                <UnplacedSensors model={model} />
+                <SelectedSensor model={model} />
+              </>
+            )}
+          </div>
+          <CarDiagram model={model} />
         </div>
       </div>
-      <MountingGuide />
+      <MountingGuide placed={model.byCode.size > 0} />
     </>
   );
 }

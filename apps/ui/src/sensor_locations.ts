@@ -5,19 +5,6 @@ import type { AdaptedClient } from "./transport/live_models";
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 
-const SHORTHAND_LOCATIONS: Record<string, string> = {
-  "front left": "front_left_wheel",
-  "front right": "front_right_wheel",
-  "rear left": "rear_left_wheel",
-  "rear right": "rear_right_wheel",
-  driver: "driver_seat",
-};
-
-export interface LocationOption {
-  code: string;
-  label: string;
-}
-
 const KNOWN_CODES: ReadonlySet<string> = new Set(defaultLocationCodes);
 
 /**
@@ -32,48 +19,32 @@ export function locationLabel(location: string, t: Translate): string {
   return KNOWN_CODES.has(code) ? t(`location.${code}`) : location;
 }
 
-export function locationOptions(
+/**
+ * The location the sensor is assigned to, or "" while it is unplaced. Only the
+ * assignment counts: a sensor named "front-left" is not at a wheel until the
+ * owner places it there, which is also how the server's readiness counts it.
+ */
+export function assignedLocation(
+  client: AdaptedClient,
   codes: readonly string[],
-  t: Translate,
-): LocationOption[] {
-  return codes.map((code) => ({
-    code,
-    label: t(`location.${code}`, { code }),
-  }));
+): string {
+  const code = String(client.location_code || "").trim();
+  return codes.includes(code) ? code : "";
 }
 
 /**
- * The sensor's location: its assigned code, else one inferred from its name
- * (shorthand like "front left", or a location label in any loaded language).
+ * How Live names a sensor: its location once placed, else its own name with
+ * an "unplaced" marker, so a name like "front-left" never reads as a location.
  */
-export function locationCodeForClient(
+export function sensorLabel(
   client: AdaptedClient,
-  codes: readonly string[],
-  options: readonly LocationOption[],
-  labelsInAllLanguages: (code: string) => string[],
+  code: string,
+  t: Translate,
 ): string {
-  const explicit = String(client.location_code || "").trim();
-  if (explicit && codes.includes(explicit)) {
-    return explicit;
+  if (code) {
+    return t(`location.${code}`);
   }
-  const name = String(client.name || "").trim();
-  if (!name) {
-    return "";
-  }
-  const normalized = name
-    .toLowerCase()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  for (const [token, code] of Object.entries(SHORTHAND_LOCATIONS)) {
-    if (normalized.includes(token) && codes.includes(code)) {
-      return code;
-    }
-  }
-  for (const code of codes) {
-    if (labelsInAllLanguages(code).includes(name)) {
-      return code;
-    }
-  }
-  return options.find((option) => option.label === name)?.code ?? "";
+  return t("sensors.unplaced_name", {
+    name: String(client.name || client.id).trim(),
+  });
 }

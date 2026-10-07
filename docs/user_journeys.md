@@ -165,13 +165,23 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
   - Sensors (ATOM Lite + ADXL345) ship flashed. Re-flash over USB from
     *Settings → ESP Flash* (`apps/ui/src/pages/esp_flash/EspFlash.tsx`).
   - Power the sensors and mount them.
-  - In *Settings → Sensors* (`apps/ui/src/pages/sensors/Sensors.tsx`), pick a
-    location per sensor. Use *Identify* to blink the LED and find which
-    physical sensor is which (`firmware/esp/README.md`).
+  - In *Settings → Sensors* (`apps/ui/src/pages/sensors/Sensors.tsx`), place
+    each sensor on a top-down car diagram: unplaced sensors are chips at the
+    top ("3 sensors to place"), the next one is selected, *Identify* blinks
+    its LED (`firmware/esp/README.md`), and a tap on a spot assigns it
+    (`apps/ui/src/pages/sensors/placement_model.ts`). Every location the
+    server accepts is a spot. Tapping a placed sensor selects it to move,
+    unplace or (behind *More*, with a confirmation) remove it; a sensor the
+    owner picked takes over an occupied spot and the one there becomes
+    unplaced.
 - **Prefill:**
-  - A sensor's name defaults to its MAC (`settings.sensors.hint`).
-  - A location is inferred from names such as "front left" or "driver"
-    (`locationCodeForClient` in `apps/ui/src/sensor_locations.ts`).
+  - A sensor's name is what it reports in its hello (else its MAC); placing
+    it renames it after the location.
+  - Only an assigned location places a sensor. A name such as "front-left"
+    does not: until it is placed, Live's sensor coverage, the strongest
+    signal and the spectrum legend show "front-left · unplaced"
+    (`sensorLabel` in `apps/ui/src/sensor_locations.ts`), matching the
+    server's `sensor_locations_missing` readiness count.
 - **Tell (target):**
   - Recommended layouts and what each can do:
     - four wheel-area sensors plus one cabin sensor gives corner localisation;
@@ -183,11 +193,13 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
   - The readiness line repeats this. **Today:** the Sensors tab has a "Where to
     mount the sensors" panel (`MountingGuide` in
     `apps/ui/src/pages/sensors/Sensors.tsx`) with the layouts, the mounting
-    rules and the current layout's consequence (`apps/ui/src/sensor_layout.ts`);
-    the Live capability line repeats the consequence.
+    rules and the current layout's consequence (`apps/ui/src/sensor_layout.ts`),
+    open until a sensor is placed; the Live capability line repeats the
+    consequence.
 - **Branches:**
-  - A sensor runs older firmware than the Pi's bundle: each Sensors row shows
-    the firmware version the sensor reports and its `firmware_status` (up to
+  - A sensor runs older firmware than the Pi's bundle: the selected sensor's
+    card shows the firmware version the sensor reports and its
+    `firmware_status` (up to
     date / outdated / status unknown, from
     `apps/server/vibesensor/domain/sensor_firmware.py`). While any sensor is
     outdated, a notice says the update needs a USB cable into the Pi and its
