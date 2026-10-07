@@ -85,8 +85,9 @@ then analyzes that one block.
 setup through `SignalMetricsComputer`, which extends the shared
 `apps/server/vibesensor/dsp/fft_analysis.py` spectral-analysis primitive:
 
-- `SignalMetricsComputer` precomputes a Hann window with
-  `scipy.signal.windows.hann(config.fft_n)`.
+- `SignalMetricsComputer` precomputes a symmetric Hann window
+  (`fft_window_values`, computed in numpy like
+  `scipy.signal.windows.hann(fft_n, sym=True)`).
 - `fft_scale = 2.0 / max(1.0, sum(window))` keeps amplitudes normalized after
   windowing.
 - `SpectralAnalysisComputer` caches the frequency slice, valid FFT indices and

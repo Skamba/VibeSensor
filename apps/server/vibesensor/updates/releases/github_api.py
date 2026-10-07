@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import httpx
 import msgspec
 
 from vibesensor.updates.http_client import read_typed_json_response
+
+if TYPE_CHECKING:
+    import httpx
 
 DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
 GITHUB_USER_AGENT = "VibeSensor-Updater"

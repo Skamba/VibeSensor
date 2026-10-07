@@ -10,6 +10,7 @@ precise, deterministic inputs.
 from __future__ import annotations
 
 import numpy as np
+import pyfftw
 import pytest
 
 import vibesensor.dsp.fft_analysis as fft_module
@@ -360,8 +361,8 @@ class TestComputeFftSpectrum:
             return FakePlan(input_array, output_array)
 
         fft_module._PLAN_CACHE.clear()
-        monkeypatch.setattr(fft_module.pyfftw, "empty_aligned", _fake_empty_aligned)
-        monkeypatch.setattr(fft_module.pyfftw, "FFTW", _fake_fftw)
+        monkeypatch.setattr(pyfftw, "empty_aligned", _fake_empty_aligned)
+        monkeypatch.setattr(pyfftw, "FFTW", _fake_fftw)
         try:
             plan = fft_module._get_rfft_plan(3, 256)
         finally:

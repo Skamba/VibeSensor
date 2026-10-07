@@ -3,6 +3,9 @@
 Keep updater-owned HTTP call sites on these helpers so timeout, redirect,
 status, and error mapping stay consistent instead of re-creating low-level
 client plumbing at each boundary.
+
+``httpx`` is imported inside the functions: the server imports this module at
+start, and importing httpx takes about a second on the Pi.
 """
 
 from __future__ import annotations
@@ -10,12 +13,14 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import httpx
 import msgspec
 
 from vibesensor.common.json_types import JsonValue
+
+if TYPE_CHECKING:
+    import httpx
 
 __all__ = [
     "build_request",
@@ -37,12 +42,16 @@ def build_request(
 ) -> httpx.Request:
     """Build a request after applying the shared runtime safety checks."""
 
+    import httpx
+
     if require_https and not url.startswith("https://"):
         raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
     return httpx.Request(method.upper(), url, headers=dict(headers or {}), content=content)
 
 
 def _http_error_as_oserror(exc: httpx.HTTPError, *, context: str, url: str) -> OSError:
+    import httpx
+
     if isinstance(exc, httpx.HTTPStatusError):
         diagnostic = _status_error_diagnostic(exc.response)
         return OSError(
@@ -65,6 +74,8 @@ def _status_error_diagnostic(response: httpx.Response) -> str:
 
 
 def _response_body_excerpt(response: httpx.Response, *, limit: int = 500) -> str:
+    import httpx
+
     try:
         text = response.text
     except httpx.ResponseNotRead:
@@ -92,6 +103,8 @@ def _client(
     timeout_s: float,
     transport: httpx.BaseTransport | None,
 ) -> httpx.Client:
+    import httpx
+
     return httpx.Client(
         follow_redirects=True,
         timeout=timeout_s,
@@ -111,6 +124,8 @@ def read_json_response(
     transport: httpx.BaseTransport | None = None,
 ) -> JsonValue:
     """Send a request and decode the response body as JSON."""
+
+    import httpx
 
     request = build_request(
         method,
@@ -148,6 +163,8 @@ def read_typed_json_response(
 ) -> Any:
     """Send a request and decode the response body as typed JSON via msgspec."""
 
+    import httpx
+
     request = build_request(
         method,
         url,
@@ -183,6 +200,8 @@ def read_text_response(
 ) -> tuple[int, str, str]:
     """Send a request and return status, content type, and decoded body text."""
 
+    import httpx
+
     request = build_request(
         method,
         url,
@@ -212,6 +231,8 @@ def stream_http_response(
     transport: httpx.BaseTransport | None = None,
 ) -> Iterator[httpx.Response]:
     """Stream a successful response body for updater-owned callers."""
+
+    import httpx
 
     request = build_request(
         method,
