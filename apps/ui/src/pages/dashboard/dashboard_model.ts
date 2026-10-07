@@ -85,6 +85,7 @@ export const IDLE_STATUS: LoggingStatusPayload = {
   start_time_utc: null,
   samples_written: 0,
   samples_dropped: 0,
+  raw_samples_written: 0,
   last_completed_run_id: null,
   last_completed_run_error: null,
   guided_brake_stops: 0,
@@ -477,7 +478,7 @@ export function recordingModel(
     summaryPanel: null,
     runIdText: runIdText(status, t),
     elapsedText: "--",
-    samplesText: formatInt(status.samples_written ?? 0),
+    samplesText: formatInt(status.raw_samples_written ?? 0),
     checklist: null,
     blockedReason: null,
     showStop: false,
@@ -539,7 +540,7 @@ export function recordingModel(
       ...base,
       // The counters describe the run stopped since the server started, if any.
       samplesText: status.last_run_id
-        ? formatInt(status.samples_written ?? 0)
+        ? formatInt(status.raw_samples_written ?? 0)
         : "--",
       pillVariant: status.analysis_in_progress ? "warn" : "ok",
       pillText: phase(key),

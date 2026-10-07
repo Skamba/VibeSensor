@@ -1174,7 +1174,7 @@ export interface components {
             guided_phases_completed?: components["schemas"]["GuidedPhaseName"][];
             last_completed_run_error?: string | null;
             last_completed_run_id?: string | null;
-            /** The run most recently stopped since the server started; cleared when a new run starts. Until then `samples_written` and `samples_dropped` describe it. */
+            /** The run most recently stopped since the server started; cleared when a new run starts. Until then `samples_written`, `samples_dropped` and `raw_samples_written` describe it. */
             last_run_id?: string | null;
             /** Why the most recent run stopped; cleared when a new run starts. `max_duration` means it hit the 30-minute recording limit; `no_data_timeout` means no sensor data arrived for `no_data_timeout_s`. */
             last_stop_reason?: components["schemas"]["RecordingStopReason"] | null;
@@ -1182,6 +1182,8 @@ export interface components {
             no_data_s?: number | null;
             /** Sensor silence, in seconds, after which a run stops by itself. */
             no_data_timeout_s: number;
+            /** Raw accelerometer samples stored so far for the run, all sensors together; the same count History shows as the run's raw samples. `samples_written` counts the analysis windows instead. */
+            raw_samples_written: number;
             run_id: string | null;
             samples_dropped: number;
             samples_written: number;

@@ -30,6 +30,7 @@ def test_stop_recording_continues_when_raw_capture_finalize_degrades(
             queue_depth=3,
         ),
         shutdown=lambda timeout_s=5.0: True,
+        written_sample_count=0,
     )
     monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
@@ -145,6 +146,7 @@ def test_stop_recording_persists_finalization_stages_in_history_metadata(
             queue_depth=(3 if raw_capture_status == "timeout" else None),
         ),
         shutdown=lambda timeout_s=5.0: True,
+        written_sample_count=0,
     )
     monkeypatch.setattr(logger.post_analysis, "schedule", lambda run_id: None)
 
@@ -184,6 +186,7 @@ def test_late_raw_capture_finalize_schedules_post_analysis_after_metadata_update
             error="raw capture finalize timed out",
         ),
         shutdown=lambda timeout_s=5.0: True,
+        written_sample_count=0,
     )
     monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 
@@ -219,6 +222,7 @@ def test_permanent_raw_capture_finalize_failure_schedules_with_degraded_metadata
             queue_depth=0,
         ),
         shutdown=lambda timeout_s=5.0: True,
+        written_sample_count=0,
     )
     monkeypatch.setattr(logger.post_analysis, "schedule", scheduled.append)
 

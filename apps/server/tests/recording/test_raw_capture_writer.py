@@ -242,6 +242,12 @@ def test_raw_capture_writer_finalize_returns_manifest_with_persisted_loss_counts
     sensor_d_loss = manifest.sensor_loss("sensor-d")
     assert sensor_d_loss is not None
     assert sensor_d_loss.losses.udp_ingest_queue_drop_count == 2
+    # Live counts only the samples stored, so it ends at History's raw-sample
+    # total: the failed write and the invalid chunk are not in either. It
+    # describes the stopped run until the next one starts.
+    assert writer.written_sample_count == manifest.total_samples
+    writer.start_run("run-next")
+    assert writer.written_sample_count == 0
 
     assert writer.shutdown()
 

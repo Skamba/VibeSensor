@@ -299,6 +299,7 @@ def test_stop_recording_logs_finalize_stage_results(
             queue_depth=4,
         ),
         shutdown=lambda timeout_s=5.0: True,
+        written_sample_count=0,
     )
     monkeypatch.setattr(recorder.post_analysis, "schedule", lambda run_id: None)
 

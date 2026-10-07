@@ -1,5 +1,6 @@
 import type { FuelType } from "../../capabilities";
 import { fmt } from "../../format";
+import { spectrumDbToMg } from "../../spectrum";
 import { orderBandFills } from "../../theme";
 import type { RotationalSpeeds } from "../../transport/live_models";
 import type { WsUiState } from "../../ws";
@@ -70,7 +71,13 @@ export function freqGridsMatch(
 }
 
 export const formatHz = (value: number) => fmt(value, value >= 100 ? 0 : 1);
-const formatDb = (value: number) => fmt(value, 1);
+/** A sensor's strength, dB above its noise floor, as the overview and report show it. */
+const formatDbAboveFloor = (value: number) => fmt(value, 0);
+/** A chart bin's amplitude (dB re 0.1 mg) in mg, with two significant digits under 10 mg. */
+const formatBinMg = (db: number) => {
+  const mg = spectrumDbToMg(db);
+  return fmt(mg, mg < 1 ? 2 : mg < 10 ? 1 : 0);
+};
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
@@ -352,7 +359,7 @@ export function inspectorText(
         t("spectrum.inspector_hover", {
           sensor: entry.label,
           freq: formatHz(freq),
-          value: isFiniteNumber(value) ? formatDb(value) : "--",
+          value: isFiniteNumber(value) ? formatBinMg(value) : "--",
         }),
         freq,
       ),
@@ -362,6 +369,9 @@ export function inspectorText(
   if (!peak) {
     return idle;
   }
+  // The sensor's strength above its floor, the number the overview, the legend
+  // and the report give, not the peak bin's level on the chart.
+  const strength = input.levels.strengthDb(entry.id);
   return {
     mode: "focus",
     text: withBands(
@@ -372,7 +382,7 @@ export function inspectorText(
         {
           sensor: entry.label,
           freq: formatHz(peak.freq),
-          value: formatDb(peak.value),
+          value: isFiniteNumber(strength) ? formatDbAboveFloor(strength) : "--",
         },
       ),
       peak.freq,
@@ -427,7 +437,7 @@ export function legendModel(
       );
       const db = levels.strengthDb(entry.id);
       const level = isFiniteNumber(db)
-        ? t("spectrum.legend.sensor_level", { value: formatDb(db) })
+        ? t("spectrum.legend.sensor_level", { value: formatDbAboveFloor(db) })
         : null;
       return {
         id: entry.id,

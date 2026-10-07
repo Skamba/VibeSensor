@@ -1,4 +1,8 @@
-import { spectrumDbDisplayRangeFromDataBounds } from "./spectrum";
+import {
+  spectrumDbDisplayRangeFromDataBounds,
+  spectrumDbToMg,
+  spectrumMgToDb,
+} from "./spectrum";
 
 export interface SpectrumChartRange {
   max: number;
@@ -99,19 +103,68 @@ export function projectSpectrumChartValue(
   return start + ((value - range.min) / denominator) * span;
 }
 
+/** The round 1-2-5 step that splits `span` into about `count` intervals. */
+function niceStep(span: number, count: number): number {
+  const raw = span / Math.max(1, count);
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].find((m) => m * magnitude >= raw) ?? 10;
+  return step * magnitude;
+}
+
+/** Round frequency ticks (multiples of a 1-2-5 step) inside the range. */
 export function buildSpectrumChartTickValues(
   range: SpectrumChartRange,
   count: number,
 ): number[] {
-  if (count <= 1) {
+  const span = range.max - range.min;
+  if (count <= 1 || !(span > 0)) {
     return [range.min];
   }
-  const step = (range.max - range.min) / (count - 1 || 1);
+  const step = niceStep(span, count - 1);
   const ticks: number[] = [];
-  for (let index = 0; index < count; index += 1) {
-    ticks.push(range.min + step * index);
+  const first = Math.ceil(range.min / step - 1e-9);
+  for (let n = first; n * step <= range.max + step * 1e-9; n += 1) {
+    // Rounded so 0.1 steps do not print as 0.30000000000000004.
+    ticks.push(Number((n * step).toPrecision(12)));
   }
   return ticks;
+}
+
+export interface AmplitudeTick {
+  /** Position on the chart's dB scale. */
+  db: number;
+  /** The amplitude the tick stands for, in mg. */
+  mg: number;
+}
+
+/**
+ * Amplitude ticks for the dB-scaled axis, labelled in mg: decades (0.1, 1,
+ * 10, 100 mg ...), with 2 and 5 in between when the range spans few decades.
+ */
+export function buildSpectrumAmplitudeTicks(
+  range: SpectrumChartRange,
+  maxCount: number,
+): AmplitudeTick[] {
+  const low = spectrumDbToMg(range.min);
+  const high = spectrumDbToMg(range.max);
+  const ticks = (mantissas: readonly number[]) => {
+    const out: AmplitudeTick[] = [];
+    for (
+      let exponent = Math.floor(Math.log10(low));
+      10 ** exponent <= high * (1 + 1e-9);
+      exponent += 1
+    ) {
+      for (const mantissa of mantissas) {
+        const mg = Number((mantissa * 10 ** exponent).toPrecision(6));
+        if (mg >= low * (1 - 1e-9) && mg <= high * (1 + 1e-9)) {
+          out.push({ db: spectrumMgToDb(mg), mg });
+        }
+      }
+    }
+    return out;
+  };
+  const detailed = ticks([1, 2, 5]);
+  return detailed.length <= maxCount ? detailed : ticks([1]);
 }
 
 export function findClosestSpectrumChartIndex(

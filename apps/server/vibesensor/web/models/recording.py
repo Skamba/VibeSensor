@@ -68,6 +68,14 @@ class RecordingStatusResponse(BaseModel):
     )
     samples_written: int = 0
     samples_dropped: int = 0
+    raw_samples_written: int = Field(
+        default=0,
+        description=(
+            "Raw accelerometer samples stored so far for the run, all sensors together; "
+            "the same count History shows as the run's raw samples. `samples_written` "
+            "counts the analysis windows instead."
+        ),
+    )
     last_completed_run_id: str | None = None
     last_completed_run_error: str | None = None
     capture_readiness: RecordingCaptureReadinessResponse | None = None
@@ -114,6 +122,7 @@ class RecordingStatusResponse(BaseModel):
         default=None,
         description=(
             "The run most recently stopped since the server started; cleared when a new "
-            "run starts. Until then `samples_written` and `samples_dropped` describe it."
+            "run starts. Until then `samples_written`, `samples_dropped` and "
+            "`raw_samples_written` describe it."
         ),
     )

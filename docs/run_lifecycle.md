@@ -174,7 +174,11 @@ During recording:
    stopped run's ID stays in status as `last_run_id` until the next run starts
 6. end the persistence helper's run (`end_run()`): write state is cleared but
    `samples_written`/`samples_dropped` stay in status until the next run, so
-   the Live page names the run and its sample count while it is analysed
+   the Live page names the run and its sample count while it is analysed.
+   That count is `raw_samples_written`: the raw accelerometer samples
+   `RunRawCaptureWriter` stored for the run, all sensors together, which is the
+   number History shows as "Raw samples" (`raw_capture_manifest.total_samples`).
+   `samples_written` counts the analysis rows instead
 7. schedule post-analysis only when `ready_for_analysis()` returned the run ID
 
 A run that collected no samples is still analysed: post-analysis stores it in
