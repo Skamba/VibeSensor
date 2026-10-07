@@ -91,8 +91,8 @@ source-of-truth export commands remain the only writers for those files.
 and calls `startApp()`, which loads shared settings and connects the live feed.
 The build is one JS bundle plus the lazily loaded Dutch catalog.
 
-- **Shell** — `src/app.tsx` is the header, navigation, unit and language
-  selects, status pills, error banner, confirmation dialog, the
+- **Shell** — `src/app.tsx` is the header, navigation, status pills, error
+  banner, confirmation dialog, the
   Live/History/Settings views, and the settings tab strip. `src/app_store.ts`
   owns the shell state as module-level signals: active view and settings tab,
   `navigate()` (with per-view loaders registered through `onViewEnter()`),
@@ -100,9 +100,10 @@ The build is one JS bundle plus the lazily loaded Dutch catalog.
 - **Pages** — `src/pages/<page>/`: a `<Page>.tsx` component that reads its
   store's signals and calls its commands, a `<page>_store.ts` that owns signals,
   polling, and `api/*` calls, and pure helper modules with unit tests. Pages:
-  `dashboard` (overview + recording), `spectrum`, `history`, `cars` (list +
-  add-car wizard), `analysis`, `speed_source`, `sensors`, `update` (Internet +
-  Update tabs), `esp_flash`. `tests/page_boundaries.spec.ts` keeps pages from
+  `dashboard` (setup checklist, overview, recording and the action bar),
+  `spectrum`, `history`, `cars` (list + add-car wizard), `analysis`,
+  `speed_source`, `sensors`, `update` (Internet + Update tabs), `esp_flash`,
+  `preferences` (the General tab: unit and language). `tests/page_boundaries.spec.ts` keeps pages from
   importing each other; the shell composes them (for example it passes
   `<Spectrum/>` into the dashboard and opens the wizard for its add-car prompt).
 - **Shared stores** outside `src/pages/`: `app_store.ts` (shell),

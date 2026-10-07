@@ -45,6 +45,7 @@ import {
   gpsReceiverMissing,
 } from "../../speed_source";
 import {
+  actionBarModel,
   activeCarText,
   driveAlerts,
   formatElapsed,
@@ -53,11 +54,13 @@ import {
   IDLE_STATUS,
   isIdle,
   liveHealth,
+  liveSpeedHint,
   type LoggingError,
   type PendingAction,
   recordingModel,
   runsAffected,
   sensorLabel,
+  setupModel,
   speedText,
   stopConfirmation,
   strongestSensor,
@@ -299,6 +302,52 @@ export const health = computed(() =>
   ),
 );
 
+const gpsHints = computed(() => ({
+  gpsReceiverMissing: gpsReceiverMissing(
+    speedSettings.source.value,
+    speedStatus.value,
+  ),
+  gpsFixWaitS: gpsFixWaitS(speedSettings.source.value, speedStatus.value),
+}));
+
+const connectedCount = computed(
+  () => clients.value.filter((client) => client.connected).length,
+);
+
+/** The speed source when it gives a speed: "GPS", "OBD-II" or the typed-in speed. */
+const speedDoneText = computed(() => {
+  const source = speedSettings.source.value;
+  return t(`dashboard.setup.speed.${source}`, {
+    speed: formatSpeed(
+      speedSettings.manualSpeedKph.value,
+      speedUnit.value,
+      t,
+      0,
+    ),
+  });
+});
+
+/** Car, speed source and sensors still to set up; not shown while a run records. */
+export const setup = computed(() => {
+  const current = status.value;
+  if (current.enabled || pending.value !== null) {
+    return null;
+  }
+  const model = setupModel(
+    {
+      carSelection: carSelection.value,
+      readiness: current.capture_readiness ?? null,
+      connected: connectedCount.value,
+      speedDoneText: speedDoneText.value,
+      speedHint: liveSpeedHint(gpsHints.value, t, formatInt),
+      speedUnit: speedUnit.value,
+    },
+    t,
+    formatInt,
+  );
+  return model?.next ? model : null;
+});
+
 const baseRecording = computed(() => {
   const current = status.value;
   const selection = carSelection.value.kind;
@@ -312,16 +361,11 @@ const baseRecording = computed(() => {
           : selection === "no_cars"
             ? "no_cars"
             : "no_active",
+      setupIncomplete: setup.value !== null,
       health: health.value,
       speedUnit: speedUnit.value,
-      gpsReceiverMissing: gpsReceiverMissing(
-        speedSettings.source.value,
-        speedStatus.value,
-      ),
-      gpsFixWaitS: gpsFixWaitS(speedSettings.source.value, speedStatus.value),
-      connectedText: formatInt(
-        clients.value.filter((client) => client.connected).length,
-      ),
+      ...gpsHints.value,
+      connectedText: formatInt(connectedCount.value),
       assignedText: formatInt(
         clients.value.filter((client) => locationOf(client)).length,
       ),
@@ -343,6 +387,25 @@ export const recording = computed(() =>
   loggingError.value
     ? withLoggingError(baseRecording.value, loggingError.value, t)
     : baseRecording.value,
+);
+
+/** The one next action on Live: a setup step, Start, Stop, or the run just recorded. */
+export const actionBar = computed(() =>
+  actionBarModel(
+    {
+      status: status.value,
+      pending: pending.value,
+      recording: recording.value,
+      setup: setup.value,
+      error: loggingError.value,
+    },
+    t,
+  ),
+);
+
+/** Live data to show: a sensor is connected, or a run records. */
+export const hasLiveSignal = computed(
+  () => connectedCount.value > 0 || status.value.enabled,
 );
 
 /** What the next run can test, and what the sensor layout can localise; idle only. */

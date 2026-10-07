@@ -25,44 +25,13 @@
   min-width: 0;
 }
 
-/* Grid items default to min-width: auto; let each header row shrink to the screen. */
-.site-header__main,
-.site-header__status {
-  min-width: 0;
-}
-
+/* Grid items default to min-width: auto; let the header row shrink to the screen. */
 .site-header__main {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.site-header__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   flex-wrap: wrap;
   min-width: 0;
-}
-
-.site-header__preferences {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-left: auto;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--radius-md);
-  background: var(--md-sys-color-surface-container);
-}
-
-.header-select {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .settings-feedback-slot[hidden] {
@@ -116,24 +85,37 @@
   font-size: 0.78rem;
 }
 
+/* Compact connection and run-health pills, at the end of the header row. */
 .site-header__status {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  padding: 0;
-}
-
-.site-header__status[hidden] {
-  display: none;
-}
-
-.site-header__status-pills {
-  display: flex;
-  align-items: center;
   gap: var(--space-1);
   flex-wrap: wrap;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.site-header__status .pill {
+  height: 26px;
+  padding: 0 var(--space-2);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.pill--recording {
+  gap: 6px;
+  background: var(--md-sys-color-error);
+  color: var(--on-fill);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: action-bar-pulse 1.4s ease-in-out infinite;
 }
 
 .title {

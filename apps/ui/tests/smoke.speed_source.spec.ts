@@ -15,6 +15,7 @@ import {
   fulfillJson,
   openSpeedSourceTab,
   requestPath,
+  selectPreference,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
@@ -272,7 +273,7 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
   await page.route("**/api/settings/speed-unit", async (route) => {
     await fulfillJson<SpeedUnitPayload>(route, { speed_unit: "mps" });
   });
-  await page.locator("#speedUnitSelect").selectOption("mps");
+  await selectPreference(page, "#speedUnitSelect", "mps");
   await expect(page.locator('label[for="manualSpeedInput"]')).toHaveText(
     "Manual Speed (m/s)",
   );

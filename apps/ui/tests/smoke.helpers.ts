@@ -447,3 +447,27 @@ export async function openEspFlashTab(page: Page): Promise<void> {
 export async function openHistoryTab(page: Page): Promise<void> {
   await page.locator("#tab-history").click();
 }
+
+/**
+ * Changes the speed unit or language in Settings > General, then returns to the
+ * view (and settings tab) that was open, as a user would.
+ */
+export async function selectPreference(
+  page: Page,
+  select: "#speedUnitSelect" | "#languageSelect",
+  value: string,
+): Promise<void> {
+  const view = await page
+    .locator('.menu [role="tab"][aria-selected="true"]')
+    .getAttribute("data-view");
+  const settingsTab = await page
+    .locator('[data-settings-tab][aria-selected="true"]')
+    .getAttribute("data-settings-tab");
+  await openSettingsTab(page, "generalTab");
+  await page.locator(select).selectOption(value);
+  if (view !== "settingsView") {
+    await page.locator(`.menu [data-view="${view}"]`).click();
+  } else if (settingsTab !== "generalTab") {
+    await page.locator(`[data-settings-tab="${settingsTab}"]`).click();
+  }
+}

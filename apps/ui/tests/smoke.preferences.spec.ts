@@ -10,6 +10,7 @@ import {
   installCommonRoutes,
   installFakeWebSocket,
   requestPath,
+  selectPreference,
 } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
@@ -89,11 +90,11 @@ test("journey: speed unit and language switch persist and re-render the UI", asy
   const speed = page.locator("#speed");
   await expect(speed).toContainText("36.0 km/h");
 
-  await page.locator("#speedUnitSelect").selectOption("mps");
+  await selectPreference(page, "#speedUnitSelect", "mps");
   await expect(speed).toContainText("10.0 m/s");
   await expect.poll(() => server.speedUnit).toBe("mps");
 
-  await page.locator("#languageSelect").selectOption("nl");
+  await selectPreference(page, "#languageSelect", "nl");
   await expect(page.locator("#tab-history")).toHaveText("Geschiedenis");
   await expect(page.locator("html")).toHaveAttribute("lang", "nl");
   await expect.poll(() => server.language).toBe("nl");
@@ -105,7 +106,7 @@ test("journey: speed unit and language switch persist and re-render the UI", asy
   await expect(page.locator("#speedUnitSelect")).toHaveValue("mps");
   await expect(speed).toContainText("10,0 m/s");
 
-  await page.locator("#languageSelect").selectOption("en");
+  await selectPreference(page, "#languageSelect", "en");
   await expect(page.locator("#tab-history")).toHaveText("History");
   expect(server.puts.map((put) => put.path)).toEqual([
     "/api/settings/speed-unit",
@@ -127,6 +128,8 @@ test("journey: a failed speed unit save keeps the active unit and explains why",
   await page.goto("/");
   await expect(page.locator("#speed")).toContainText("36.0 km/h");
 
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="generalTab"]').click();
   await page.locator("#speedUnitSelect").selectOption("mps");
   const feedback = page.locator("#speedUnitFeedback");
   await expect(feedback).toBeVisible();

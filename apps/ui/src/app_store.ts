@@ -28,6 +28,7 @@ export const SETTINGS_TAB_IDS = [
   "internetTab",
   "updateTab",
   "espFlashTab",
+  "generalTab",
 ] as const;
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
 
