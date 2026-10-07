@@ -12,7 +12,6 @@ export type CarLibraryModel = Schema<"CarLibraryModelEntry">;
 export type CarLibraryModelsPayload = Schema<"CarLibraryModelsResponse">;
 export type CarOrderReferenceStatus = Schema<"CarOrderReferenceStatusPayload">;
 export type CarLibraryTireOption = Schema<"CarLibraryTireOptionEntry">;
-export type CarLibraryTypesPayload = Schema<"CarLibraryTypesResponse">;
 export type CarLibraryVariant = Schema<"CarLibraryVariantEntry">;
 export type CarUpsertRequest = Schema<"CarConfigUpdatePayload">;
 export type CarRecord = Schema<"CarConfigPayload">;

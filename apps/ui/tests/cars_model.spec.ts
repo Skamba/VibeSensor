@@ -33,6 +33,7 @@ import {
   INITIAL_WIZARD_STATE,
   parseTireSize,
   progressText,
+  SPECS_STEP,
   ratioInputsFromGearbox,
   selectionTrail,
   specProvenance,
@@ -377,7 +378,7 @@ const MODEL: CarLibraryModel = {
 function specs(overrides: Partial<WizardState> = {}): WizardState {
   return {
     ...INITIAL_WIZARD_STATE,
-    step: 4,
+    step: SPECS_STEP,
     brand: "VW",
     carType: "Hatchback",
     model: "Golf",
@@ -440,11 +441,16 @@ test("the specs step needs a tire size; the ratios are optional but must be read
   expect(firstInvalidField(TYPED)).toBeNull();
   expect(firstInvalidField({ ...TYPED, topGear: "abc" })).toBe("topGear");
   expect(canFinish(specs(), TYPED)).toBe(true);
-  expect(canFinish(specs({ step: 3 }), TYPED)).toBe(false);
+  expect(canFinish(specs({ step: SPECS_STEP - 1 }), TYPED)).toBe(false);
 
   const hint = (state: WizardState, inputs: typeof TYPED) =>
     actionHint(state, inputs, 1, t);
+  // Library wheels are never preselected: the hint points at them.
   expect(hint(specs(), EMPTY_MANUAL_INPUTS)).toBe(
+    "settings.car.finish_needs_tire_pick",
+  );
+  const byHand = specs({ libraryMiss: "brand", selectedModel: null });
+  expect(hint(byHand, EMPTY_MANUAL_INPUTS)).toBe(
     "settings.car.finish_needs_tire",
   );
   expect(hint(specs(), { ...TYPED, finalDrive: "-1" })).toBe(
@@ -628,7 +634,11 @@ test("editing a car sends only what changed, and clearing a ratio unsets it", ()
     topGear: "0.64",
   });
   expect(target.staggeredTire).toBeNull();
-  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  const editing = {
+    ...INITIAL_WIZARD_STATE,
+    step: SPECS_STEP,
+    editing: target,
+  };
   // Unchanged values keep their saved source.
   expect(specProvenance(editing, inputs)).toEqual({
     tire: "official_exact",
@@ -718,14 +728,14 @@ test("the summary fills in as the wizard advances", () => {
   expect(done.profileName).toBe("VW Golf");
   expect(done.rows.map((row) => row.value)).toEqual([
     "VW",
-    "Hatchback",
     "Golf",
+    "Hatchback",
     "settings.car.wizard_summary_not_needed",
     "Sport · Front 225/40R18 · Rear 255/35R18",
     '6-speed manual · settings.car.wizard_summary_manual_gearbox:{"finalDrive":"3.94","topGear":"settings.car.ratio_unknown"}',
   ]);
-  expect(progressText(4, t)).toBe(
-    'settings.car.wizard_progress:{"current":5,"step":"settings.car.step_specs_short","total":5}',
+  expect(progressText(SPECS_STEP, t)).toBe(
+    'settings.car.wizard_progress:{"current":4,"step":"settings.car.step_specs_short","total":4}',
   );
   // The header trail shows the picks before the current step, so a model
   // left over after Back is not shown on the model step.
@@ -736,11 +746,10 @@ test("the summary fills in as the wizard advances", () => {
   } as const;
   expect(selectionTrail(specs({ selectedVariant: variant }))).toEqual([
     "VW",
-    "Hatchback",
     "Golf",
     "GTD",
   ]);
-  expect(selectionTrail(specs({ step: 2 }))).toEqual(["VW", "Hatchback"]);
+  expect(selectionTrail(specs({ step: 1 }))).toEqual(["VW"]);
   expect(selectionTrail(INITIAL_WIZARD_STATE)).toEqual([]);
 });
 
@@ -845,7 +854,11 @@ test("the editor sets or changes a saved car's drive layout", () => {
     fmt,
   );
   expect(target.driveLayout).toBe("FWD");
-  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  const editing = {
+    ...INITIAL_WIZARD_STATE,
+    step: SPECS_STEP,
+    editing: target,
+  };
   expect(asksDriveLayout(editing)).toBe(true);
   expect(wizardDriveLayout(editing)).toBe("FWD");
   expect(editRequest(editing, inputs)).toMatchObject({ driveLayout: null });
@@ -932,7 +945,11 @@ test("the editor sets or changes a saved car's engine", () => {
     cylinders: 6,
     bank_angle_deg: 90,
   });
-  const editing = { ...INITIAL_WIZARD_STATE, step: 4, editing: target };
+  const editing = {
+    ...INITIAL_WIZARD_STATE,
+    step: SPECS_STEP,
+    editing: target,
+  };
   expect(asksEngine(editing)).toBe(true);
   expect(wizardEngine(editing)).toBe("v-6");
   // The same pick keeps the saved profile (and its bank angle) as it is.

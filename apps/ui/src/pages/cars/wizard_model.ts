@@ -74,12 +74,11 @@ function engineProfileFromChoice(choice: EngineChoice): EngineProfile {
 
 export const STEP_LABEL_KEYS = [
   "settings.car.step_brand_short",
-  "settings.car.step_type_short",
   "settings.car.step_model_short",
   "settings.car.step_variant_short",
   "settings.car.step_specs_short",
 ] as const;
-export const SPECS_STEP = 4;
+export const SPECS_STEP = 3;
 
 /** A saved car being edited: the specs it started with and where they came from. */
 export interface EditTarget {
@@ -100,10 +99,11 @@ export interface EditTarget {
 export interface WizardState {
   step: number;
   brand: string;
+  /** The picked library model's body type; empty for a custom car. */
   carType: string;
   model: string;
-  /** Which typed entry is not in the car library, so its lists are skipped. */
-  libraryMiss: "brand" | "type" | null;
+  /** A typed brand is not in the car library, so its lists are skipped. */
+  libraryMiss: "brand" | null;
   selectedModel: CarLibraryModel | null;
   selectedVariant: CarLibraryVariant | null;
   selectedGearbox: CarLibraryGearbox | null;
@@ -452,7 +452,12 @@ export function actionHint(
     return t("settings.car.finish_ratio_invalid");
   }
   if (invalid) {
-    return t("settings.car.finish_needs_tire");
+    // Nothing is preselected: the library's wheels are a pick, never a default.
+    return t(
+      resolveTireOptions(state.selectedModel, state.selectedVariant).length
+        ? "settings.car.finish_needs_tire_pick"
+        : "settings.car.finish_needs_tire",
+    );
   }
   const refs = specProvenance(state, inputs);
   const estimate = estimateNoteKey(refs, wizardFuelType(state));
@@ -480,17 +485,14 @@ export function actionHint(
 }
 
 /**
- * What was picked on the steps before this one (brand, type, model, variant),
+ * What was picked on the steps before this one (brand, model, variant),
  * for the header trail; a pick left over from a later step after Back is not
  * shown.
  */
 export function selectionTrail(state: WizardState): string[] {
-  return [
-    state.brand,
-    state.carType,
-    state.model,
-    state.selectedVariant?.name ?? "",
-  ].filter((value, stepIndex) => value && stepIndex < state.step);
+  return [state.brand, state.model, state.selectedVariant?.name ?? ""].filter(
+    (value, stepIndex) => value && stepIndex < state.step,
+  );
 }
 
 export function progressText(step: number, t: Translate): string {
@@ -567,11 +569,15 @@ export function summary(
 ): { profileName: string; rows: Array<{ label: string; value: string }> } {
   const pending = t("settings.car.wizard_summary_pending");
   const specRows: Array<[string, string | null, number]> = [
-    ["settings.car.wizard_summary_tire", tireSummary(state, inputs, fmt, t), 4],
+    [
+      "settings.car.wizard_summary_tire",
+      tireSummary(state, inputs, fmt, t),
+      SPECS_STEP,
+    ],
     [
       "settings.car.wizard_summary_gearbox",
       gearboxSummary(state, inputs, fmt, t),
-      4,
+      SPECS_STEP,
     ],
   ];
   if (state.editing) {
@@ -590,13 +596,18 @@ export function summary(
       (state.selectedModel !== null && !state.selectedModel.variants?.length));
   const rows: Array<[string, string | null, number]> = [
     ["settings.car.wizard_summary_brand", state.brand || null, 1],
-    ["settings.car.wizard_summary_type", state.carType || null, 2],
-    ["settings.car.wizard_summary_model", state.model || null, 3],
+    ["settings.car.wizard_summary_model", state.model || null, 2],
+    // The body type comes with the library model; a custom car has none.
+    [
+      "settings.car.wizard_summary_type",
+      state.carType || null,
+      Number.POSITIVE_INFINITY,
+    ],
     [
       "settings.car.wizard_summary_variant",
       state.selectedVariant?.name ||
         (variantImplicit ? t("settings.car.wizard_summary_not_needed") : null),
-      4,
+      SPECS_STEP,
     ],
     ...specRows,
   ];

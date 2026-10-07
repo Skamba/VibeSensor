@@ -280,8 +280,6 @@ test("critical journey: car wizard creates and activates a manual car", async ({
   await page.getByRole("button", { name: "+ Add Car" }).click();
   await page.locator("#wizardCustomBrand").fill("Track");
   await page.locator("#wizardCustomBrandBtn").click();
-  await page.locator("#wizardCustomType").fill("Coupe");
-  await page.locator("#wizardCustomTypeBtn").click();
   await page.locator("#wizardCustomModel").fill("Demo");
   await page.locator("#wizardCustomModelBtn").click();
   await page.locator("#wizTireWidth").fill("225");

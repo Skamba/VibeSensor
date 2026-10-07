@@ -15,12 +15,6 @@ class CarLibraryBrandsResponse(BaseModel):
     brands: list[str]
 
 
-class CarLibraryTypesResponse(BaseModel):
-    """Response body listing available car body types."""
-
-    types: list[str]
-
-
 class CarLibraryGearboxEntry(_StrictBase):
     """A gearbox option from the car library (gear ratios)."""
 

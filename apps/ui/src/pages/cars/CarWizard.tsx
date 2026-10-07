@@ -58,14 +58,12 @@ import {
   selectModel,
   selectPowertrain,
   selectTire,
-  selectType,
   selectVariant,
   step,
   submitCustom,
   tireOptions,
   tireSizeText,
   tireSizeUnreadable,
-  typeOptions,
   variantOptions,
   wizard,
 } from "./wizard_store";
@@ -76,7 +74,6 @@ const FOCUS_SELECTORS: Record<FocusTarget, string[]> = {
   close: ["#wizardCloseBtn"],
   "custom-brand": ["#wizardCustomBrand"],
   "custom-model": ["#wizardCustomModel"],
-  "custom-type": ["#wizardCustomType"],
   finish: ["#wizardManualAddBtn"],
   "gearbox-option": ["#wizardGearboxList .wiz-opt", "#wizardManualAddBtn"],
   "model-option": ["#wizardModelList .wiz-opt", "#wizardCustomModel"],
@@ -86,7 +83,6 @@ const FOCUS_SELECTORS: Record<FocusTarget, string[]> = {
     "#wizTireSize",
   ],
   "tire-size": ["#wizTireSize"],
-  "type-option": ["#wizardTypeList .wiz-opt", "#wizardCustomType"],
   "variant-option": ["#wizardVariantList .wiz-opt"],
   tireWidth: ["#wizTireWidth"],
   tireAspect: ["#wizTireAspect"],
@@ -348,7 +344,7 @@ function libraryItems<T>(
 }
 
 function CustomEntry(props: {
-  kind: "brand" | "type" | "model";
+  kind: "brand" | "model";
   labelKey: string;
   maxLength: number;
   placeholder: string;
@@ -386,12 +382,10 @@ function CustomEntry(props: {
 }
 
 function LibraryMissNote() {
-  const { brand, carType, libraryMiss } = wizard.value;
+  const { brand, libraryMiss } = wizard.value;
   return libraryMiss ? (
     <div class="wizard-info-line" role="status">
-      {t("settings.wizard.no_library_data", {
-        name: libraryMiss === "brand" ? brand : `${brand} ${carType}`,
-      })}
+      {t("settings.wizard.no_library_data", { name: brand })}
     </div>
   ) : null;
 }
@@ -531,15 +525,10 @@ function Steps() {
     attrs: { "data-value": brand },
     onSelect: () => void selectBrand(brand),
   }));
-  const types = libraryItems(typeOptions.value, (carType) => ({
-    label: carType,
-    detail: null,
-    attrs: { "data-value": carType },
-    onSelect: () => void selectType(carType),
-  }));
+  // Body type first: the model list spans every body type of the brand.
   const models = libraryItems(modelOptions.value, (model, index) => ({
     label: model.model,
-    detail: `${model.tire_width_mm}/${model.tire_aspect_pct}R${model.rim_in}`,
+    detail: `${model.type} · ${model.tire_width_mm}/${model.tire_aspect_pct}R${model.rim_in}`,
     attrs: { "data-idx": String(index) },
     onSelect: () => void selectModel(index),
   }));
@@ -558,21 +547,6 @@ function Steps() {
         />
       </div>
       <div id="wizardStep1" class="wizard-step" hidden={current !== 1}>
-        <h3>{t("settings.car.step_type")}</h3>
-        <LibraryMissNote />
-        <Options id="wizardTypeList" {...types} />
-        <CustomEntry
-          kind="type"
-          labelKey={
-            state.libraryMiss
-              ? "settings.car.custom_type"
-              : "settings.car.or_custom_type"
-          }
-          maxLength={32}
-          placeholder="e.g. Van"
-        />
-      </div>
-      <div id="wizardStep2" class="wizard-step" hidden={current !== 2}>
         <h3>{t("settings.car.step_model")}</h3>
         <LibraryMissNote />
         <Options id="wizardModelList" list {...models} />
@@ -599,7 +573,7 @@ function Steps() {
           }
         />
       </div>
-      <div id="wizardStep3" class="wizard-step" hidden={current !== 3}>
+      <div id="wizardStep2" class="wizard-step" hidden={current !== 2}>
         <h3>{t("settings.car.step_variant")}</h3>
         <div class="subtle wizard-branch-note">
           {t("settings.car.variant_years_note")}
@@ -615,7 +589,7 @@ function Steps() {
           }))}
         />
       </div>
-      <div id="wizardStep4" class="wizard-step" hidden={current !== SPECS_STEP}>
+      <div id="wizardStep3" class="wizard-step" hidden={current !== SPECS_STEP}>
         {tires.length ? (
           <div class="wizard-library-picks">
             <h3>{t("settings.car.step_wheels")}</h3>
@@ -888,6 +862,7 @@ export function CarWizard() {
               class="btn btn--success"
               hidden={current !== SPECS_STEP}
               disabled={!(current === SPECS_STEP && canFinish(state, inputs))}
+              aria-describedby="wizardActionHint"
               onClick={() => void finishWizard()}
             >
               {t(

@@ -218,19 +218,20 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
 
 ### 3.3 Adding a car
 
-Entry point: *Settings → Car → + Add Car*. This opens the five-step wizard
-(Brand → Type → Model → Variant → Specs) in
+Entry point: *Settings → Car → + Add Car*. This opens the four-step wizard
+(Brand → Model → Variant → Specs) in
 `apps/ui/src/pages/cars/CarWizard.tsx`, with its rules in `wizard_model.ts` and
 its state in `wizard_store.ts`. The header shows the step and the picks so far
-on one line, e.g. "BMW · SUV · X1 (F48, 2015–2022)" (`selectionTrail`); only
+on one line, e.g. "BMW · X1 (F48, 2015–2022)" (`selectionTrail`); only
 the step content scrolls, and each step starts at its top. On a phone the
 "This car can test" and "Your car" card shows only on the specs step, below
 the form.
 
 #### 3.3a Library path (Audi or BMW, the brands included today)
 
-- **Know/do:** Pick brand, body type, model (one entry per generation, with
-  its code and model years, e.g. "X1 (F48, 2015–2022)"), variant
+- **Know/do:** Pick brand, model (one entry per generation, with its body
+  type, code and model years, e.g. "X1 (F48, 2015–2022)"; the brand's list
+  spans every body type, from `GET /api/car-library/models?brand=`), variant
   (engine/drivetrain, with its model years), then a tire option and a
   gearbox. Where an engine's gearbox data changed over the years, the
   variant is listed once per model-year period ("xDrive25d (2021–2022)"), so the
@@ -247,8 +248,11 @@ the form.
     (`_gearbox_row_from_configuration` in `car_library.py`). A ratio the
     library row leaves unresolved is served as `null` without a confidence;
     the wizard leaves that field empty ("unknown"), never a default.
-  - The first tire option, and the gearbox when there is only one, are
-    preselected (`loadSpecs` in `wizard_store.ts`). Choosing a tire or a
+  - No tire option is preselected: the wheels are the user's pick, and Add
+    Car stays disabled with "Pick your wheels above or type the tire size to
+    add the car" until a tire size is set (`actionHint` in `wizard_model.ts`).
+    The gearbox is preselected only when there is exactly one (`loadSpecs` in
+    `wizard_store.ts`). Choosing a tire or a
     gearbox fills the specs form, so the user can change any value, for
     example for winter tires (`tireInputsFromOption` /
     `ratioInputsFromGearbox` in `wizard_model.ts`). The highlighted tire
@@ -286,10 +290,10 @@ the form.
 
 #### 3.3b Manual path (any other brand, or a model the library lacks)
 
-- **Know/do:** Type a brand, type and model, then enter the tire width, aspect
+- **Know/do:** Type a brand and model, then enter the tire width, aspect
   and rim. Final drive and top gear are entered **if known**.
 - **Prefill:**
-  - A brand or type that is not in the library skips the library lists (no
+  - A brand that is not in the library skips the library lists (no
     fetch) and says "No library data for {brand}: you'll enter the tire size
     yourself; final drive and top gear are optional" (`submitCustom` /
     `loadCurrentStep` in `wizard_store.ts`). A typed name that matches a
@@ -374,6 +378,13 @@ the form.
   their library rows on the next start, like the drive layout; unknown keeps
   the engine checked at E1 and E2 only.
   See §5.3 for what the layout changes in the advice.
+
+#### 3.3d After adding
+
+The "Car added" banner on the Car tab offers the next setup step: "Next:
+speed source" opens *Settings → Speed Source* and "Back to setup" returns to
+Live (`afterAddActions` in `apps/ui/src/pages/cars/Cars.tsx`). A deep link to
+a Settings tab opens it at its top (`navigate` in `app_store.ts`).
 
 ### 3.4 Choosing a speed source
 

@@ -1,4 +1,4 @@
-"""Car library lookup endpoints – brands, types, models."""
+"""Car library lookup endpoints – brands and their models."""
 
 from __future__ import annotations
 
@@ -9,11 +9,10 @@ from vibesensor.web.models.car_library import (
     CarLibraryBrandsResponse,
     CarLibraryModelEntry,
     CarLibraryModelsResponse,
-    CarLibraryTypesResponse,
 )
 
 _CAR_LIBRARY_NOT_FOUND_RESPONSES: OpenAPIResponses = {
-    404: {"description": "The requested brand or brand/type combination does not exist."},
+    404: {"description": "The requested brand does not exist."},
 }
 
 
@@ -35,52 +34,21 @@ def create_car_library_routes() -> APIRouter:
         return CarLibraryBrandsResponse(brands=get_brands())
 
     @router.get(
-        "/api/car-library/types",
-        response_model=CarLibraryTypesResponse,
-        responses=_CAR_LIBRARY_NOT_FOUND_RESPONSES,
-    )
-    def get_car_library_types(
-        brand: str = Query(..., min_length=1, description="Manufacturer brand to look up."),
-    ) -> CarLibraryTypesResponse:
-        """Return body types available for *brand*; 404 if the brand is unknown."""
-        from vibesensor.settings.car_library import get_brands, get_types_for_brand
-
-        if brand not in get_brands():
-            raise HTTPException(status_code=404, detail=f"Unknown brand: {brand!r}")
-        return CarLibraryTypesResponse(types=get_types_for_brand(brand))
-
-    @router.get(
         "/api/car-library/models",
         response_model=CarLibraryModelsResponse,
         responses=_CAR_LIBRARY_NOT_FOUND_RESPONSES,
     )
     def get_car_library_models(
         brand: str = Query(..., min_length=1, description="Manufacturer brand to look up."),
-        car_type: str = Query(
-            ...,
-            min_length=1,
-            alias="type",
-            description="Vehicle body type to look up for the selected brand.",
-        ),
     ) -> CarLibraryModelsResponse:
-        """Return library entries for *brand* + *type*; 404 if the combination is unknown."""
-        from vibesensor.settings.car_library import (
-            get_brands,
-            get_models_for_brand_type,
-            get_types_for_brand,
-        )
+        """Return every library model of *brand*, each with its body type; 404 if unknown."""
+        from vibesensor.settings.car_library import get_brands, get_models_for_brand
 
         if brand not in get_brands():
             raise HTTPException(status_code=404, detail=f"Unknown brand: {brand!r}")
-        if car_type not in get_types_for_brand(brand):
-            raise HTTPException(
-                status_code=404,
-                detail=f"Unknown type {car_type!r} for brand {brand!r}",
-            )
         return CarLibraryModelsResponse(
             models=[
-                CarLibraryModelEntry.model_validate(model)
-                for model in get_models_for_brand_type(brand, car_type)
+                CarLibraryModelEntry.model_validate(model) for model in get_models_for_brand(brand)
             ]
         )
 

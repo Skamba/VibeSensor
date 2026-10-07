@@ -18,8 +18,7 @@ from vibesensor.settings.vehicle_configurations import load_vehicle_configuratio
 __all__ = [
     "CarLibraryEntry",
     "get_brands",
-    "get_models_for_brand_type",
-    "get_types_for_brand",
+    "get_models_for_brand",
     "load_car_library",
     "with_library_fields",
 ]
@@ -354,8 +353,8 @@ def _build_grouped_library(
 ) -> tuple[list[CarLibraryEntry], dict[_VariantKey, tuple[VehicleConfiguration, ...]]]:
     """Group exact rows into picker models (one per generation) and variants.
 
-    Returns the picker entries, ordered by brand, type, model and then
-    generation start year, plus the exact rows behind every picker variant
+    Returns the picker entries, ordered by brand, model and then generation
+    start year, plus the exact rows behind every picker variant
     keyed by ``(brand, type, model, variant)``.
     """
 
@@ -383,7 +382,7 @@ def _build_grouped_library(
             "variants": [variant for variant, _ in variants],
         }
         start = _year_span(grouped_configs)[0]
-        ordered.append(((brand, car_type, base, start or 0, code or ""), entry))
+        ordered.append(((brand, base.casefold(), base, start or 0, code or "", car_type), entry))
     ordered.sort(key=lambda item: item[0])
     return [entry for _, entry in ordered], rows_by_variant
 
@@ -403,20 +402,10 @@ def get_brands() -> list[str]:
     return sorted({entry["brand"] for entry in _CAR_LIBRARY})
 
 
-def get_types_for_brand(brand: str) -> list[str]:
-    """Return sorted body types available for *brand*."""
+def get_models_for_brand(brand: str) -> list[CarLibraryEntry]:
+    """Return every grouped picker entry of *brand*, by model and then generation."""
 
-    return sorted({entry["type"] for entry in _CAR_LIBRARY if entry["brand"] == brand})
-
-
-def get_models_for_brand_type(brand: str, car_type: str) -> list[CarLibraryEntry]:
-    """Return all grouped picker entries matching *brand* and *car_type*."""
-
-    return [
-        copy.deepcopy(entry)
-        for entry in _CAR_LIBRARY
-        if entry["brand"] == brand and entry["type"] == car_type
-    ]
+    return [copy.deepcopy(entry) for entry in _CAR_LIBRARY if entry["brand"] == brand]
 
 
 _VARIANT_YEARS = re.compile(r" \(\d{4}(?:\u2013\d{4})?\)$")

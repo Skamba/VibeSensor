@@ -228,10 +228,6 @@ export interface components {
             tire_aspect_pct: number;
             tire_width_mm: number;
         };
-        /** Response body listing available car body types. */
-        CarLibraryTypesResponse: {
-            types: string[];
-        };
         /**
          * A specific variant/trim of a car library model entry.
          *

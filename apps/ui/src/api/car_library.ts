@@ -8,19 +8,11 @@ export async function getCarLibraryBrands(): Promise<Local.CarLibraryBrandsPaylo
   );
 }
 
-export async function getCarLibraryTypes(
-  brand: string,
-): Promise<Local.CarLibraryTypesPayload> {
-  return await apiJson<Transport.CarLibraryTypesPayload>(
-    `/api/car-library/types?brand=${encodeURIComponent(brand)}`,
-  );
-}
-
+/** Every library model of the brand, each naming its body type. */
 export async function getCarLibraryModels(
   brand: string,
-  type: string,
 ): Promise<Local.CarLibraryModelsPayload> {
   return await apiJson<Transport.CarLibraryModelsPayload>(
-    `/api/car-library/models?brand=${encodeURIComponent(brand)}&type=${encodeURIComponent(type)}`,
+    `/api/car-library/models?brand=${encodeURIComponent(brand)}`,
   );
 }

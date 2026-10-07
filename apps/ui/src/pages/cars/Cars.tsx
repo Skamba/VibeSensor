@@ -1,3 +1,4 @@
+import { navigate } from "../../app_store";
 import { fmt } from "../../format";
 import { t } from "../../i18n";
 import { carSelection, carSettings } from "../../settings_store";
@@ -7,11 +8,18 @@ import { carRows, guidance, type InlineState } from "./car_list_model";
 import { activateCar, deleteCar, highlighted } from "./cars_store";
 import { openEditor, openWizard } from "./wizard_store";
 
+interface PanelAction {
+  key: string;
+  label: string;
+  primary?: boolean;
+  onClick(): void;
+}
+
 function InlineStatePanel(props: {
   state: InlineState;
-  action?: { label: string; onClick(): void };
+  actions?: PanelAction[];
 }) {
-  const { state, action } = props;
+  const { state, actions } = props;
   const success = state.tone === "success";
   return (
     <div
@@ -27,16 +35,19 @@ function InlineStatePanel(props: {
       {state.detail ? (
         <span class="empty-state__detail">{state.detail}</span>
       ) : null}
-      {action ? (
+      {actions?.length ? (
         <div class="empty-state__actions">
-          <button
-            type="button"
-            class="btn btn--success"
-            data-inline-state-action="add-car"
-            onClick={action.onClick}
-          >
-            {action.label}
-          </button>
+          {actions.map((action) => (
+            <button
+              key={action.key}
+              type="button"
+              class={action.primary ? "btn btn--success" : "btn"}
+              data-inline-state-action={action.key}
+              onClick={action.onClick}
+            >
+              {action.label}
+            </button>
+          ))}
         </div>
       ) : null}
     </div>
@@ -65,10 +76,14 @@ function CarTableBody() {
                 detail: t("settings.car.empty.detail"),
                 tone: "default",
               }}
-              action={{
-                label: t("settings.car.empty.action"),
-                onClick: () => void openWizard(),
-              }}
+              actions={[
+                {
+                  key: "add-car",
+                  label: t("settings.car.empty.action"),
+                  primary: true,
+                  onClick: () => void openWizard(),
+                },
+              ]}
             />
           </div>
         </td>
@@ -199,6 +214,23 @@ function CarTableBody() {
   );
 }
 
+/** After the wizard adds a car: on to the speed source, or back to Live's setup list. */
+function afterAddActions(): PanelAction[] {
+  return [
+    {
+      key: "speed-source",
+      label: t("settings.car.created_next_speed"),
+      primary: true,
+      onClick: () => navigate("settingsView", "speedSourceTab"),
+    },
+    {
+      key: "back-to-setup",
+      label: t("settings.car.created_back_to_setup"),
+      onClick: () => navigate("dashboardView"),
+    },
+  ];
+}
+
 export function Cars() {
   const banner = guidance(carSelection.value, highlighted.value, t);
   return (
@@ -217,7 +249,14 @@ export function Cars() {
         </div>
         <div class="subtle">{t("settings.car.hint")}</div>
         <div id="carSelectionGuidance" hidden={banner === null}>
-          {banner ? <InlineStatePanel state={banner} /> : null}
+          {banner ? (
+            <InlineStatePanel
+              state={banner}
+              actions={
+                banner.tone === "success" ? afterAddActions() : undefined
+              }
+            />
+          ) : null}
         </div>
         <div class="settings-table-wrap">
           <table class="car-list-table settings-entity-table settings-entity-table--cars">
