@@ -119,6 +119,24 @@ button.warn {
   border-color: var(--danger-700);
   color: var(--on-fill);
 }
+/* Filled buttons keep their fill on hover; the generic .btn:hover surface would
+   leave their on-fill text unreadable. */
+@media (hover: hover) {
+  .btn--success:hover,
+  button.success:hover {
+    background: var(--success-700);
+    border-color: var(--success-700);
+    color: var(--on-fill);
+    filter: none;
+  }
+  .btn--danger:hover,
+  button.warn:hover {
+    background: var(--danger-700);
+    border-color: var(--danger-700);
+    color: var(--on-fill);
+    filter: none;
+  }
+}
 .btn--danger-quiet {
   background: var(--button-danger-quiet-surface);
   border-color: var(--button-danger-quiet-border);

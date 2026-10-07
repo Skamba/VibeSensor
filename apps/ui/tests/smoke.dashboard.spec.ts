@@ -362,8 +362,22 @@ test("journey: a failed start shows the server's reason and a retry records", as
   await expect(page.locator("#loggingElapsed [data-value]")).toHaveText(
     /^1:0\d$/,
   );
-  await expect(page.locator("#stopLoggingBtn")).toBeEnabled();
+  const stop = page.locator("#stopLoggingBtn");
+  await expect(stop).toBeEnabled();
   await expect(start).toBeHidden();
+  // Hovering Stop keeps a danger fill instead of the pale generic hover.
+  const dangerFill = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.background = "var(--danger-700)";
+    document.body.append(probe);
+    const fill = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return fill;
+  });
+  await stop.hover();
+  await expect
+    .poll(() => stop.evaluate((el) => getComputedStyle(el).backgroundColor))
+    .toBe(dangerFill);
   // Each start sets an unset Pi clock from the browser first.
   expect(posts.slice(-4)).toEqual([
     "/api/system/browser-clock",
