@@ -238,48 +238,33 @@ def test_compute_clamps_excessive_sample_rate_override(monkeypatch: pytest.Monke
 
 
 @pytest.mark.parametrize(
-    ("ingested", "compute_rate_hz", "expected_time", "expected_fft"),
+    ("ingested", "compute_rate_hz", "expected_fft"),
     [
-        pytest.param(400, None, 400, 256, id="time-window-covers-fft"),
-        pytest.param(50, None, 50, None, id="too-few-samples-for-fft"),
-        pytest.param(400, 100, 200, 256, id="fft-longer-than-time-window"),
+        pytest.param(400, None, 256, id="fft-block"),
+        pytest.param(50, None, None, id="too-few-samples-for-fft"),
+        pytest.param(400, 100, 256, id="fft-longer-than-waveform-at-compute-rate"),
     ],
 )
-def test_compute_snapshot_window_sizes(
+def test_compute_snapshot_copies_the_fft_block(
     monkeypatch: pytest.MonkeyPatch,
     ingested: int,
     compute_rate_hz: int | None,
-    expected_time: int,
     expected_fft: int | None,
 ) -> None:
     proc = _processor(sample_rate_hz=200, waveform_seconds=2, fft_n=256)
     snapshots = _intercept_compute(proc, monkeypatch)
-    proc.ingest("c", _noise(ingested), sample_rate_hz=200)
+    samples = _noise(ingested)
+    proc.ingest("c", samples, sample_rate_hz=200)
 
     proc.compute_metrics("c", sample_rate_hz=compute_rate_hz)
 
     snapshot = snapshots[0]
-    assert snapshot.time_window.shape == (3, expected_time)
     if expected_fft is None:
         assert snapshot.fft_block is None
     else:
         assert snapshot.fft_block is not None
-        assert snapshot.fft_block.shape == (3, expected_fft)
-        assert np.shares_memory(snapshot.time_window, snapshot.fft_block)
-
-
-def test_short_time_window_is_a_view_of_the_fft_block(monkeypatch: pytest.MonkeyPatch) -> None:
-    proc = _processor(sample_rate_hz=8, waveform_seconds=1, fft_n=4)
-    snapshots = _intercept_compute(proc, monkeypatch)
-    proc.ingest("c", np.arange(12, dtype=np.float32).reshape(4, 3), sample_rate_hz=8)
-
-    proc.compute_metrics("c", sample_rate_hz=2)
-
-    snapshot = snapshots[0]
-    assert snapshot.fft_block is not None
-    assert snapshot.time_window.shape == (3, 2)
-    assert snapshot.fft_block.shape == (3, 4)
-    np.testing.assert_array_equal(snapshot.time_window, snapshot.fft_block[:, -2:])
+        np.testing.assert_array_equal(snapshot.fft_block, samples[-expected_fft:].T)
+        assert not np.shares_memory(snapshot.fft_block, proc._buffers["c"].data)
 
 
 def test_result_computed_before_flush_is_discarded(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -311,7 +296,7 @@ def test_result_computed_before_evict_and_reconnect_is_discarded(
     fresh = proc.compute_metrics("c")
     assert proc.latest_metrics("c") is fresh
     # The reconnected client's 10x louder signal, not the evicted one's.
-    assert fresh["combined"]["strength_metrics"]["peak_amp_g"] > 2.0
+    assert fresh["combined"]["strength_metrics"]["noise_floor_amp_g"] > 1.0
 
 
 def test_older_result_does_not_overwrite_newer_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -329,7 +314,7 @@ def test_older_result_does_not_overwrite_newer_metrics(monkeypatch: pytest.Monke
     latest = proc.latest_metrics("c")
     assert latest is not stale
     # The newer, 10x louder signal's metrics survive.
-    assert latest["combined"]["strength_metrics"]["peak_amp_g"] > 2.0
+    assert latest["combined"]["strength_metrics"]["noise_floor_amp_g"] > 1.0
 
 
 def test_compute_all_skips_failing_client(

@@ -25,6 +25,12 @@ def _random_samples(n: int, *, seed: int = 42, scale: float = 0.01) -> np.ndarra
     return (np.random.default_rng(seed).standard_normal((n, 3)) * scale).astype(np.float32)
 
 
+def _tone_samples(n: int, *, sample_rate_hz: int = 200) -> np.ndarray:
+    """A 25 Hz tone on every axis over ``_random_samples`` noise."""
+    tone = 0.05 * np.sin(2 * np.pi * 25.0 * np.arange(n) / sample_rate_hz)
+    return (_random_samples(n) + tone[:, None]).astype(np.float32)
+
+
 # -- ingest: empty samples -----------------------------------------------------
 
 
@@ -291,7 +297,7 @@ def test_compute_metrics_missing_client() -> None:
 def test_compute_metrics_with_data() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
     # Push enough samples for FFT
-    samples = _random_samples(100)
+    samples = _tone_samples(100)
     proc.ingest("client1", samples)
     metrics = proc.compute_metrics("client1")
     assert "x" in metrics
@@ -319,7 +325,7 @@ def test_evict_clients() -> None:
 
 def test_compute_all() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
-    samples = _random_samples(100)
+    samples = _tone_samples(100)
     proc.ingest("c1", samples)
     proc.ingest("c2", samples)
     result = proc.compute_all(["c1", "c2"])

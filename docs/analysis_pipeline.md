@@ -40,13 +40,10 @@ Mathematical primitives (e.g. `compute_vibration_strength_db`,
 `apps/server/vibesensor/dsp/vibration_strength.py`; canonical windowing,
 frequency-bin, and peak-detection steps live in
 `apps/server/vibesensor/dsp/fft_analysis.py`; and live snapshot/metric
-coordination stays under `apps/server/vibesensor/live/`. Live
-metrics use the `live_display` processing profile and a three-sample median
-filter for operator-friendly display. Post-stop raw replay uses
-`diagnostic_raw` when raw capture is available; summary-only
-fallbacks are marked `diagnostic_filtered`. Persisted analysis metadata records
-the active profile, filter chains, and whether raw diagnostic evidence was
-preserved.
+coordination stays under `apps/server/vibesensor/live/`. Live ticks and the
+post-stop raw replay compute a block's spectrum the same way, without a
+time-domain filter, so stored live rows and replayed rows share one noise floor
+(`docs/metrics.md`).
 
 When raw capture is available, `analysis/raw_capture_replay.py` recomputes each
 summary row's FFT peaks and strength metrics from the raw window the row was

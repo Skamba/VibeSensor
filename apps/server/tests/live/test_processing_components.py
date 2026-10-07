@@ -32,7 +32,6 @@ def test_metrics_computer_operates_on_snapshot_without_shared_state() -> None:
         client_id="client-2",
         sample_rate_hz=config.sample_rate_hz,
         ingest_generation=7,
-        time_window=block.copy(),
         fft_block=block.copy(),
     )
 

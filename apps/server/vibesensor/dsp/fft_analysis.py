@@ -44,7 +44,6 @@ __all__ = [
     "fill_lost_samples",
     "float_list",
     "high_frequency_energy_ratio",
-    "medfilt3",
     "present_centre",
 ]
 
@@ -224,75 +223,27 @@ def _axis_peaks_from_spectrum(
     return peaks
 
 
-def medfilt3(block: FloatArray) -> FloatArray:
-    """Apply a 3-point median filter per-row (per-axis)."""
-    if block.ndim != 2:
-        raise ValueError(f"medfilt3 expects a 2-D (axes, samples) array, got ndim={block.ndim}")
-    if block.shape[-1] < 3:
-        return block
-    filtered = block.copy()
-    center = filtered[:, 1:-1]
-    left = block[:, :-2]
-    mid = block[:, 1:-1]
-    right = block[:, 2:]
+def fill_lost_samples(fft_block: FloatArray, fft_window: FloatArray) -> FloatArray | None:
+    """Fill the lost samples (NaN) of a ``(3, N)`` FFT block.
 
-    scratch = np.empty_like(center)
-    np.minimum(left, mid, out=scratch)
-    np.maximum(left, mid, out=center)
-    np.minimum(center, right, out=center)
-    np.maximum(scratch, center, out=center)
-    if not np.any(np.isnan(block)):
-        return filtered
-
-    left_valid = ~np.isnan(left)
-    mid_valid = ~np.isnan(mid)
-    right_valid = ~np.isnan(right)
-
-    missing_left = ~left_valid & mid_valid & right_valid
-    center[missing_left] = (mid[missing_left] + right[missing_left]) * np.float32(0.5)
-
-    missing_mid = left_valid & ~mid_valid & right_valid
-    center[missing_mid] = (left[missing_mid] + right[missing_mid]) * np.float32(0.5)
-
-    missing_right = left_valid & mid_valid & ~right_valid
-    center[missing_right] = (left[missing_right] + mid[missing_right]) * np.float32(0.5)
-
-    only_left = left_valid & ~mid_valid & ~right_valid
-    center[only_left] = left[only_left]
-
-    only_mid = ~left_valid & mid_valid & ~right_valid
-    center[only_mid] = mid[only_mid]
-
-    only_right = ~left_valid & ~mid_valid & right_valid
-    center[only_right] = right[only_right]
-
-    all_invalid = ~left_valid & ~mid_valid & ~right_valid
-    center[all_invalid] = np.nan
-    return _sanitize_float_array(filtered)
-
-
-def fill_lost_samples(signal: FloatArray, fft_window: FloatArray) -> FloatArray | None:
-    """Fill the lost samples (NaN) of a ``(3, N)`` signal ending in an FFT block.
-
-    A frame lost on the way leaves its time in the signal, so the block spans
+    A frame lost on the way leaves its time in the block, so the block spans
     exactly its stated time and a tone keeps its phase across the gap: its peak
     stays on its frequency at the block's time. Lost samples take each axis's
-    mean over the block's samples present, which the FFT removes. The rest is
-    scaled by the window energy lost, so the spectrum keeps the signal's power
-    (its noise floor exactly; a tone's level to within a few percent). ``None``
-    when the samples present carry under ``FFT_MIN_WINDOW_COVERAGE`` of the
-    window's energy (over the last ``len(fft_window)`` samples).
+    mean over the samples present, which the FFT removes. The rest is scaled by
+    the window energy lost, so the spectrum keeps the signal's power (its noise
+    floor exactly; a tone's level to within a few percent). ``None`` when the
+    samples present carry under ``FFT_MIN_WINDOW_COVERAGE`` of the window's
+    energy.
     """
-    lost = np.isnan(signal).any(axis=0)
+    lost = np.isnan(fft_block).any(axis=0)
     if not lost.any():
-        return signal
-    fft_n = fft_window.shape[0]
+        return fft_block
     energy = np.square(fft_window, dtype=np.float64)
-    coverage = float(np.sum(energy[~lost[-fft_n:]])) / max(float(np.sum(energy)), 1e-12)
+    coverage = float(np.sum(energy[~lost])) / max(float(np.sum(energy)), 1e-12)
     if coverage < FFT_MIN_WINDOW_COVERAGE:
         return None
-    mean = np.nanmean(signal[:, -fft_n:], axis=1, keepdims=True)
-    present = signal if coverage >= 1.0 else mean + (signal - mean) / np.float32(np.sqrt(coverage))
+    mean = np.nanmean(fft_block, axis=1, keepdims=True)
+    present = mean + (fft_block - mean) / np.float32(np.sqrt(coverage))
     return np.where(lost, mean, present).astype(np.float32, copy=False)
 
 
@@ -399,14 +350,12 @@ def compute_fft_spectrum(
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
     strength_range_mask: BoolArray | None = None,
-    spike_filter_enabled: bool = True,
 ) -> FftSpectrumResult:
     """Compute per-axis and combined FFT spectra from a sample block."""
     specs_all = _amplitude_spectra(
         fft_block,
         fft_window=fft_window,
         fft_scale=fft_scale,
-        spike_filter_enabled=spike_filter_enabled,
     )
     if specs_all is None:
         return _empty_fft_spectrum_result(freq_slice)
@@ -451,7 +400,6 @@ def compute_combined_strength_metrics(
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
     strength_range_mask: BoolArray | None = None,
-    spike_filter_enabled: bool = True,
 ) -> VibrationStrengthMetrics | None:
     """Strength metrics of the combined spectrum only, as ``compute_fft_spectrum`` reports them.
 
@@ -462,7 +410,6 @@ def compute_combined_strength_metrics(
         fft_block,
         fft_window=fft_window,
         fft_scale=fft_scale,
-        spike_filter_enabled=spike_filter_enabled,
     )
     if specs_all is None or freq_slice.size == 0:
         return None
@@ -479,7 +426,6 @@ def _amplitude_spectra(
     *,
     fft_window: FloatArray,
     fft_scale: float,
-    spike_filter_enabled: bool,
 ) -> FloatArray | None:
     """Single-sided per-axis amplitude spectra (g) of a ``(3, N)`` block; ``None`` when N is 0."""
     if fft_block.ndim != 2 or fft_block.shape[0] != 3:
@@ -491,8 +437,6 @@ def _amplitude_spectra(
         )
     if fft_n == 0:
         return None
-    if spike_filter_enabled:
-        fft_block = medfilt3(fft_block)
     fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
 
     plan = _get_rfft_plan(fft_block.shape[0], fft_n)
@@ -576,8 +520,6 @@ class SpectralAnalysisComputer:
         self,
         fft_block: FloatArray,
         sample_rate_hz: int,
-        *,
-        spike_filter_enabled: bool = True,
     ) -> VibrationStrengthMetrics | None:
         freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return compute_combined_strength_metrics(
@@ -587,15 +529,12 @@ class SpectralAnalysisComputer:
             freq_slice=freq_slice,
             valid_idx=valid_idx,
             strength_range_mask=strength_range_mask,
-            spike_filter_enabled=spike_filter_enabled,
         )
 
     def compute_fft_spectrum(
         self,
         fft_block: FloatArray,
         sample_rate_hz: int,
-        *,
-        spike_filter_enabled: bool = True,
     ) -> FftSpectrumResult:
         freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return compute_fft_spectrum(
@@ -606,5 +545,4 @@ class SpectralAnalysisComputer:
             freq_slice=freq_slice,
             valid_idx=valid_idx,
             strength_range_mask=strength_range_mask,
-            spike_filter_enabled=spike_filter_enabled,
         )

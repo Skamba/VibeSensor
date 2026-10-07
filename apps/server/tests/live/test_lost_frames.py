@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.live.processor import SignalProcessor
 
 _CLIENT_ID = "aabbccddeeff"
@@ -24,8 +25,16 @@ _BIN_HZ = SAMPLE_RATE_HZ / FFT_N
 type Signal = Callable[[np.ndarray], np.ndarray]
 
 
+def _samples(signal: Signal, *, frames: int) -> np.ndarray:
+    """*frames* frames of ``signal(t_s)`` plus a little noise (g, z on top of gravity)."""
+    t_s = np.arange(frames * _FRAME_SAMPLES) / SAMPLE_RATE_HZ
+    vibration = signal(t_s) + 0.002 * np.random.default_rng(0).standard_normal(t_s.size)
+    samples = np.column_stack([0.3 * vibration, 0.3 * vibration, 1.0 + vibration])
+    return samples.astype(np.float32)
+
+
 def _stream(signal: Signal, *, frames: int, lost: Collection[int] = ()) -> SignalProcessor:
-    """Send *frames* stamped frames of ``signal(t_s)`` (g, z on top of gravity), losing *lost*."""
+    """Send *frames* stamped frames of ``_samples(signal)``, losing *lost*."""
     processor = SignalProcessor(
         sample_rate_hz=SAMPLE_RATE_HZ,
         waveform_seconds=8,
@@ -34,16 +43,13 @@ def _stream(signal: Signal, *, frames: int, lost: Collection[int] = ()) -> Signa
         spectrum_min_hz=5.0,
         spectrum_max_hz=200.0,
     )
-    noise = np.random.default_rng(0)
+    samples = _samples(signal, frames=frames)
     for index in range(frames):
-        t_s = (index * _FRAME_SAMPLES + np.arange(_FRAME_SAMPLES)) / SAMPLE_RATE_HZ
-        vibration = signal(t_s) + 0.002 * noise.standard_normal(t_s.size)
         if index in lost:
             continue
-        samples = np.column_stack([0.3 * vibration, 0.3 * vibration, 1.0 + vibration])
         processor.ingest(
             _CLIENT_ID,
-            samples.astype(np.float32),
+            samples[index * _FRAME_SAMPLES : (index + 1) * _FRAME_SAMPLES],
             sample_rate_hz=SAMPLE_RATE_HZ,
             t0_us=_T0_US + index * _FRAME_US,
         )
@@ -96,6 +102,28 @@ def test_tone_keeps_frequency_and_level_across_lost_frames() -> None:
     assert clean is not None and lossy is not None
     assert lossy[0] == pytest.approx(clean[0], abs=_BIN_HZ / 2)
     assert lossy[1] == pytest.approx(clean[1], rel=0.15)
+
+
+def test_lossy_spectrum_reads_the_noise_floor_the_raw_replay_reads() -> None:
+    # A sensor that lost frames keeps its live rows where the post-stop raw
+    # replay has no complete window, so its floor must be the replay's: a floor
+    # read lower raises everything above it, ordinary road noise included.
+    def hum(t_s: np.ndarray) -> np.ndarray:
+        return 0.005 * np.sin(2 * np.pi * 15.0 * t_s)
+
+    replay = SpectralAnalysisComputer(fft_n=FFT_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
+    replayed = replay.compute_combined_strength_metrics(
+        _samples(hum, frames=30)[-FFT_N:].T, SAMPLE_RATE_HZ
+    )
+    assert replayed is not None
+
+    def live_floor(lost: set[int]) -> float:
+        combined = _stream(hum, frames=30, lost=lost).latest_metrics(_CLIENT_ID)["combined"]
+        return combined["strength_metrics"]["noise_floor_amp_g"]
+
+    assert live_floor(set()) == pytest.approx(replayed["noise_floor_amp_g"], rel=1e-4)
+    lossy_db = 20 * np.log10(live_floor({22, 23}) / replayed["noise_floor_amp_g"])
+    assert abs(lossy_db) < 0.5
 
 
 def test_mostly_lost_block_has_no_spectrum() -> None:
