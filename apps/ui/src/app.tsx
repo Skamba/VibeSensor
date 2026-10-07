@@ -318,29 +318,11 @@ function SettingsTabs() {
   const selected: SettingsStripId = isAdvancedSettingsTab(current)
     ? ADVANCED_TAB
     : current;
-  const visible = activeView.value === "settingsView";
-  const strip = useRef<HTMLDivElement>(null);
   const activate = (id: SettingsStripId) => {
     settingsTab.value = id === ADVANCED_TAB ? lastAdvancedTab : id;
   };
-  // On a phone the strip scrolls; keep the selected tab (e.g. a deep link to
-  // Sensors) in view without scrolling the page.
-  useEffect(() => {
-    const box = strip.current;
-    const tab = box?.querySelector('[aria-selected="true"]');
-    if (!box || !visible || !(tab instanceof HTMLElement)) {
-      return;
-    }
-    const outer = box.getBoundingClientRect();
-    const inner = tab.getBoundingClientRect();
-    if (inner.left < outer.left) {
-      box.scrollLeft += inner.left - outer.left;
-    } else if (inner.right > outer.right) {
-      box.scrollLeft += inner.right - outer.right;
-    }
-  }, [selected, visible]);
   return (
-    <div class="settings-tabs" role="tablist" ref={strip}>
+    <div class="settings-tabs" role="tablist">
       {SETTINGS_STRIP_IDS.map((id, index) => (
         <button
           key={id}

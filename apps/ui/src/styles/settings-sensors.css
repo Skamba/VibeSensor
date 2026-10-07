@@ -13,10 +13,24 @@
   }
 }
 @media (min-width: 760px) {
+  /* The firmware notice sits under the sensor list, beside the car. */
   .sensor-placement {
     --car-wheel: 64px;
     grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "side car"
+      "notice car";
     align-items: start;
+  }
+  .sensor-placement__side {
+    grid-area: side;
+  }
+  .sensor-placement .car-diagram {
+    grid-area: car;
+  }
+  #sensorFirmwareNotice {
+    grid-area: notice;
   }
 }
 .sensor-placement__side {
@@ -27,9 +41,6 @@
 .sensor-placement__empty {
   margin: 0;
   font-weight: 600;
-}
-#sensorFirmwareNotice {
-  margin-top: var(--space-2);
 }
 
 .sensor-to-place {

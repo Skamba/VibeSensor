@@ -204,7 +204,10 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     `apps/server/vibesensor/domain/sensor_firmware.py`). While any sensor is
     outdated, a notice says the update needs a USB cable into the Pi and its
     *Update sensor firmware* button opens *Settings → Advanced → ESP Flash*. Sensors
-    cannot be updated over Wi-Fi.
+    cannot be updated over Wi-Fi. The notice sits below the car diagram (beside
+    it, under the sensor list, on a wide screen), so it never pushes the car
+    off a phone screen; picking a sensor chip also scrolls the whole car into
+    view.
   - A sensor has no location: readiness fails `sensor_locations_missing`
     (`_sensors_check` in
     `apps/server/vibesensor/recording/capture_readiness_evaluator.py`).
@@ -241,6 +244,11 @@ the form.
   name already carries them).
 - **Prefill:**
   - The model list shows the default tire size (`CarWizard.tsx`).
+  - A brand or model list of 8 or more entries gets a type-to-filter field
+    (`FilteredOptions` in `CarWizard.tsx`, `matchesFilter` in
+    `wizard_model.ts`): every typed word must appear in the name or detail,
+    ignoring case and accents; Enter picks the only match left, and an empty
+    result points to the custom entry below.
   - The tire options come from the variant (`resolveTireOptions` in
     `wizard_model.ts`): the union of its rows' options, one per size
     (`_union_tire_options` in `apps/server/vibesensor/settings/car_library.py`).
@@ -506,9 +514,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - While recording, the Start tap also keeps the screen on
     (`apps/ui/src/keep_awake.ts`): a Screen Wake Lock on secure pages, else a
     muted inline looping video (the NoSleep.js technique, since the Pi serves
-    plain http). Neither is guaranteed, so the action bar also shows
-    `dashboard.logging.keep_awake_hint` (set auto-lock to Never) unless a wake
-    lock holds the screen.
+    plain http). Neither is guaranteed, so the action bar also shows the
+    one-line `dashboard.logging.keep_awake_hint` unless a wake lock holds the
+    screen; its *How?* disclosure (`dashboard.logging.keep_awake_detail`) says
+    to set auto-lock to Never.
 - **Guided drive (optional):** four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
   1. Sweep from 50 to 120 km/h (`GUIDED_SWEEP_FROM_KMH` /

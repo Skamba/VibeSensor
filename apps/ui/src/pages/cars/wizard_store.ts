@@ -73,6 +73,8 @@ export const variantOptions = signal<readonly CarLibraryVariant[]>([]);
 export const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
 export const gearboxOptions = signal<readonly CarLibraryGearbox[]>([]);
 export const noGearboxesMessage = signal<string | null>(null);
+/** What the user typed to narrow the brand or model list; empty for each new list. */
+export const listFilter = signal("");
 /**
  * The sidewall-style size the user typed, with the size the three tire fields
  * held right after. The field shows that text while the fields still hold that
@@ -142,11 +144,14 @@ async function loadLibrary<T>(
   readyFocus: FocusTarget,
   failedFocus: FocusTarget,
 ): Promise<void> {
-  options.value = {
-    status: "loading",
-    message: t("settings.wizard.loading"),
-    options: [],
-  };
+  batch(() => {
+    listFilter.value = "";
+    options.value = {
+      status: "loading",
+      message: t("settings.wizard.loading"),
+      options: [],
+    };
+  });
   try {
     const loaded = await load();
     if (stillCurrent(generation, matches)) {

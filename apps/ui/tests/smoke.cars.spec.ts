@@ -694,6 +694,58 @@ test("journey: on a phone the header carries the picks and no option is covered"
   expect(detail.x + detail.width).toBeLessThanOrEqual(row.x + row.width);
 });
 
+test("journey: on a phone a long model list narrows as the user types", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await bootWithCars(page, createServer());
+  // A brand with many models gets a filter field; a short list does not.
+  const generations = ["Mk5", "Mk6", "Mk7", "Mk8"].map((code) => ({
+    ...GOLF,
+    model: `Golf (${code})`,
+  }));
+  await page.route("**/api/car-library/models?*", (route) =>
+    fulfillJson<CarLibraryModelsPayload>(route, {
+      models: [
+        ...generations,
+        { ...GOLF, type: "Estate", model: "Golf Variant" },
+        { ...GOLF, model: "Up!" },
+        { ...GOLF, model: "T-Roc" },
+        POLO,
+      ],
+    }),
+  );
+  await openCarsTab(page);
+  await page.locator("#addCarBtn").click();
+  const wizard = page.locator("#addCarWizard");
+  await expect(wizard.locator("#wizardBrandFilter")).toHaveCount(0);
+  await wizard.locator('#wizardBrandList [data-value="VW"]').click();
+
+  const filter = wizard.locator("#wizardModelFilter");
+  const options = wizard.locator("#wizardModelList .wiz-opt");
+  await expect(options).toHaveCount(8);
+  await expect(filter).toBeInViewport({ ratio: 1 });
+  // Every typed word must match, in the name or the body type.
+  await filter.fill("golf estate");
+  await expect(options).toHaveText([/Golf Variant/]);
+  await filter.fill("GOLF mk");
+  await expect(options).toHaveCount(4);
+  await filter.fill("zz");
+  await expect(options).toHaveCount(0);
+  await expect(wizard.getByText("No models match.")).toBeVisible();
+  // Enter picks the one model left.
+  await filter.fill("polo");
+  await expect(options).toHaveCount(1);
+  await filter.press("Enter");
+  await expect(page.locator("#wizardTrail")).toHaveText(
+    "VW · Polo (AW, 2018–2024)",
+  );
+  // Back to the models: the whole list again.
+  await page.locator("#wizardBackBtn").click();
+  await expect(filter).toHaveValue("");
+  await expect(options).toHaveCount(8);
+});
+
 test("journey: a slow older model list never replaces the newer one", async ({
   page,
 }) => {

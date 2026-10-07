@@ -237,6 +237,15 @@
   padding-top: var(--space-2);
   border-top: 1px solid var(--md-sys-color-outline-variant);
 }
+/* Type-to-filter above a long brand or model list. */
+.wizard-filter {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-2);
+}
+.wizard-filter-empty {
+  margin: var(--space-2) 0 0;
+}
 .wizard-options {
   display: flex;
   flex-wrap: wrap;

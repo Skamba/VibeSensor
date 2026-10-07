@@ -187,5 +187,11 @@ test.describe("on a phone in Dutch", () => {
       await expect(page.locator(tab)).toHaveAttribute("aria-selected", "true");
       expect(await overflow()).toEqual({ page: 0, header: false });
     }
+    // The Dutch Settings tabs are too long for one row: they wrap, all on screen.
+    const settingsTabs = page.locator(".settings-tabs [role='tab']");
+    await expect(settingsTabs.last()).toHaveText("Geavanceerd");
+    for (const tab of await settingsTabs.all()) {
+      await expect(tab).toBeInViewport({ ratio: 1 });
+    }
   });
 });

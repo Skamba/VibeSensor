@@ -43,6 +43,22 @@
   line-height: 1.25;
 }
 
+/* Phones: two short stats per row; a long value takes the whole row. Dense
+   packing pairs the short ones (sensors + run state, freshness + speed). */
+@media (max-width: 720px) {
+  .live-overview__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row dense;
+    gap: var(--space-3);
+  }
+  .live-overview__stats .stat {
+    min-height: 0;
+  }
+  .live-overview__stats .stat--wide {
+    grid-column: 1 / -1;
+  }
+}
+
 .stat[data-variant] {
   border: 1px solid var(--variant-border);
   border-radius: var(--radius-sm);

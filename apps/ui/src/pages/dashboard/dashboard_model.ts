@@ -595,8 +595,8 @@ export interface DriveAlerts {
   sensorSilent: Feedback | null;
   /** Why the last run stopped by itself; kept until the next run starts. */
   stopNotice: Feedback | null;
-  /** While recording: set the phone's auto-lock to Never. */
-  keepAwakeHint: Feedback | null;
+  /** While recording: keep the screen on; `detail` says how (auto-lock to Never). */
+  keepAwakeHint: { body: string; detail: string } | null;
 }
 
 /** A few seconds without data is normal Wi-Fi jitter; longer is worth a look. */
@@ -643,8 +643,7 @@ export function driveAlerts(
       status.enabled && input.keepAwake !== "wake-lock"
         ? {
             body: t("dashboard.logging.keep_awake_hint"),
-            tone: "info",
-            compact: true,
+            detail: t("dashboard.logging.keep_awake_detail"),
           }
         : null,
   };

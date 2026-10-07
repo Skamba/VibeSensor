@@ -29,10 +29,12 @@ import {
 function Stat(props: {
   id?: string;
   labelKey: string;
+  /** A long value (a car name, a location and level): the full row on a phone. */
+  wide?: boolean;
   children: ComponentChildren;
 }) {
   return (
-    <div id={props.id} class="stat">
+    <div id={props.id} class={props.wide ? "stat stat--wide" : "stat"}>
       <div class="stat__label">{t(props.labelKey)}</div>
       <div class="stat__value" data-value>
         {props.children}
@@ -55,7 +57,7 @@ function Overview() {
         <Stat id="liveConnectedSensors" labelKey="dashboard.connected_sensors">
           {model.connectedText}
         </Stat>
-        <Stat id="liveActiveCar" labelKey="dashboard.active_car">
+        <Stat id="liveActiveCar" labelKey="dashboard.active_car" wide>
           {model.activeCarText}
         </Stat>
         <Stat id="liveRecordingState" labelKey="dashboard.recording_state">
@@ -64,7 +66,11 @@ function Overview() {
         <Stat id="liveDataFreshness" labelKey="dashboard.data_freshness">
           {model.freshnessText}
         </Stat>
-        <Stat id="liveStrongestSignal" labelKey="dashboard.strongest_signal">
+        <Stat
+          id="liveStrongestSignal"
+          labelKey="dashboard.strongest_signal"
+          wide
+        >
           {model.strongestText}
         </Stat>
         <div class="stat">
@@ -553,9 +559,15 @@ function ActionBar(props: { onAction: (action: SummaryAction) => void }) {
       ref={ref}
     >
       {keepAwakeHint ? (
-        <div id="keepAwakeHint" class="action-bar__hint">
-          <FeedbackBlock message={keepAwakeHint} />
-        </div>
+        <details id="keepAwakeHint" class="action-bar__hint">
+          <summary class="action-bar__hint-summary">
+            {keepAwakeHint.body}{" "}
+            <span class="action-bar__hint-more">
+              {t("dashboard.logging.keep_awake_how")}
+            </span>
+          </summary>
+          <p class="action-bar__hint-detail">{keepAwakeHint.detail}</p>
+        </details>
       ) : null}
       <div class="action-bar__row">
         <div class="action-bar__status" aria-live="polite">

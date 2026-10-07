@@ -31,6 +31,7 @@ import {
   firstInvalidField,
   gearboxParts,
   INITIAL_WIZARD_STATE,
+  matchesFilter,
   parseTireSize,
   progressText,
   SPECS_STEP,
@@ -994,4 +995,14 @@ test("car rows show the engine, or that it was not given; an EV has none", () =>
     value: "settings.car.engine.unknown",
   });
   expect(engine(2)).toBeUndefined();
+});
+
+test("the model filter matches every typed word, ignoring case and accents", () => {
+  const option = "A4 Avant (B9, 2019\u20132024) Wagon \u00b7 205/60R16";
+  expect(matchesFilter("", option)).toBe(true);
+  expect(matchesFilter("  a4   AVANT ", option)).toBe(true);
+  expect(matchesFilter("wagon a4", option)).toBe(true);
+  expect(matchesFilter("a4 sedan", option)).toBe(false);
+  expect(matchesFilter("skoda", "\u0160koda")).toBe(true);
+  expect(matchesFilter("citroen", "Citro\u00ebn")).toBe(true);
 });
