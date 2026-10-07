@@ -375,6 +375,30 @@ test("a run without a fault says so and covers what was driven", () => {
   });
 });
 
+test("a run without live speed says so where the speeds driven go", () => {
+  const insights = populatedInsights("run-012");
+  insights.diagnosis = makeDiagnosis({
+    source_checks: [
+      { source: "wheel/tire", status: "not_testable", reason: "speed_missing" },
+    ],
+  });
+  insights.speed_stats = {
+    ...insights.speed_stats,
+    min_kmh: null,
+    max_kmh: null,
+  };
+  const run = historyListRun("run-012");
+  const details = buildDetails(run, defaultDetail({ preview: insights }), f);
+  expect(details.insights).toMatchObject({
+    primary: {
+      chips: [
+        { label: "history.covered_speeds", value: "history.no_live_speed" },
+        { label: "history.summary_sensor_count", value: "2" },
+      ],
+    },
+  });
+});
+
 type SourceChecks = HistoryInsightsPayload["diagnosis"]["source_checks"];
 
 /** The expanded diagnosis in real catalog text, so History reads like the PDF. */

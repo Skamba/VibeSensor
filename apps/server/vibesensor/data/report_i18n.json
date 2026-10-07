@@ -287,6 +287,10 @@
     "en": "{speeds} ({phases}) with sensors at {locations}.",
     "nl": "{speeds} ({phases}) met sensoren bij {locations}."
   },
+  "COVERED_BODY_NO_PHASES": {
+    "en": "{speeds} with sensors at {locations}.",
+    "nl": "{speeds} met sensoren bij {locations}."
+  },
   "COVERED_BODY_NO_SPEED": {
     "en": "No live speed was recorded, so the speeds and driving phases are not known; sensors at {locations}.",
     "nl": "Er is geen live snelheid vastgelegd, dus de snelheden en rijfasen zijn onbekend; sensoren bij {locations}."
@@ -1314,6 +1318,10 @@
   "SPECTRUM_TITLE": {
     "en": "Recurring peaks at {location}, {speeds}",
     "nl": "Terugkerende pieken bij {location}, {speeds}"
+  },
+  "SPEEDS_NO_LIVE_SPEED": {
+    "en": "no live speed recorded",
+    "nl": "geen live snelheid vastgelegd"
   },
   "SPEED_CHART_TITLE": {
     "en": "{order} amplitude vs speed",

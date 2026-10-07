@@ -589,13 +589,21 @@ def _car_name(ctx: _Ctx, metadata: RunMetadata) -> str:
     return name or car_type or ctx.t("VALUE_UNKNOWN")
 
 
+def _run_speeds(ctx: _Ctx, analysis: AnalysisSummary) -> str:
+    """The run's speed range, or that it had no live speed at all."""
+    speeds = analysis["speed_stats"]
+    low, high = speeds["min_kmh"], speeds["max_kmh"]
+    if low is None or high is None:
+        return ctx.t("SPEEDS_NO_LIVE_SPEED")
+    return ctx.speed_range(low, high)
+
+
 def _header(
     ctx: _Ctx,
     analysis: AnalysisSummary,
     metadata: RunMetadata,
     time_zone: str | None,
 ) -> tuple[Fact, ...]:
-    speeds = analysis["speed_stats"]
     unknown = ctx.t("VALUE_UNKNOWN")
     return (
         Fact(ctx.t("HEADER_CAR"), _car_name(ctx, metadata)),
@@ -611,7 +619,7 @@ def _header(
             )
             or unknown,
         ),
-        Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
+        Fact(ctx.t("HEADER_SPEEDS"), _run_speeds(ctx, analysis)),
         Fact(ctx.t("HEADER_DURATION"), _duration(analysis["duration_s"])),
         Fact(ctx.t("HEADER_SENSORS"), str(analysis["sensor_count_used"])),
     )
@@ -950,12 +958,17 @@ def _coverage(
     if low is None or high is None:
         # No live speed at all: no speed range or driving phase to name.
         covered = ctx.t("COVERED_BODY_NO_SPEED", locations=sensors)
-    else:
+    elif driven:
         covered = ctx.t(
             "COVERED_BODY",
             speeds=ctx.speed_range(low, high),
-            phases=", ".join(ctx.phase(phase) for phase in driven) or ctx.t("VALUE_UNKNOWN"),
+            phases=", ".join(ctx.phase(phase) for phase in driven),
             locations=sensors,
+        )
+    else:
+        # Live speed for only a moment: a speed range but no driving phase to name.
+        covered = ctx.t(
+            "COVERED_BODY_NO_PHASES", speeds=ctx.speed_range(low, high), locations=sensors
         )
     if low is not None and low > 30.0:
         gaps.append(ctx.t("NOT_COVERED_BELOW", speed=ctx.speed(low)))
@@ -1127,6 +1140,7 @@ def _conditions(
     )
     sensors = ", ".join(ctx.location(location) for location in analysis["sensor_locations"])
     speeds = analysis["speed_stats"]
+    no_speed = speeds["min_kmh"] is None or speeds["max_kmh"] is None
     references = [Fact(ctx.t("COND_POWERTRAIN"), ctx.t(_powertrain_key(conditions)))]
     layout_key = _drive_layout_key(conditions)
     if layout_key is not None:
@@ -1161,10 +1175,12 @@ def _conditions(
     references.append(Fact(ctx.t("COND_SPEED_SOURCE"), speed_source))
     if not ctx.electric:
         references.append(Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])))
+    # Without live speed every second is "unknown speed": the speeds row says why.
+    driving = () if no_speed else (Fact(ctx.t("COND_PHASES"), phases or unknown),)
     return (
         *references,
-        Fact(ctx.t("HEADER_SPEEDS"), ctx.speed_range(speeds["min_kmh"], speeds["max_kmh"])),
-        Fact(ctx.t("COND_PHASES"), phases or unknown),
+        Fact(ctx.t("HEADER_SPEEDS"), _run_speeds(ctx, analysis)),
+        *driving,
         Fact(ctx.t("COND_GUIDED"), _guided_steps(ctx, diagnosis)),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
     )
