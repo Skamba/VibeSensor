@@ -3,6 +3,7 @@ import type {
   HistoryInsightWarningPayload,
   HistoryInsightsPayload,
 } from "../../api/types";
+import { engineLabel } from "../../car_references";
 import {
   GUIDED_SWEEP_FROM_KMH,
   GUIDED_SWEEP_TO_KMH,
@@ -724,6 +725,21 @@ function driveLayoutKey(conditions: Diagnosis["conditions"]): string | null {
     : `history.references.drive_layout_${layout}`;
 }
 
+/** The engine line, as on PDF page 2: the engine and the firing order the run
+ * tested, or that only E1/E2 were. */
+function engineText(conditions: Diagnosis["conditions"], t: Translate): string {
+  const profile = conditions.engine_profile ?? null;
+  const firing = conditions.engine_orders?.find((row) =>
+    row.roles.includes("firing"),
+  )?.code;
+  return profile && firing
+    ? t("history.references.engine_profile", {
+        engine: engineLabel(profile, t),
+        firing,
+      })
+    : t("history.references.engine_unknown");
+}
+
 function referenceLines(
   conditions: Diagnosis["conditions"],
   f: Pick<Formatters, "fmt" | "t">,
@@ -782,6 +798,10 @@ function referenceLines(
         conditions.gear_ratio_provenance,
         t,
       ),
+    },
+    {
+      label: t("history.references.engine"),
+      detail: engineText(conditions, t),
     },
     {
       label: t("history.references.rpm"),

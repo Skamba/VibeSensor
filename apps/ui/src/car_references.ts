@@ -17,6 +17,16 @@ export type ProvenanceTier =
   | "user"
   | "missing";
 
+/** "Inline-6", "V8", "Flat-4": the engine as the car pages and the History references name it. */
+export function engineLabel(
+  profile: { layout: string; cylinders: number },
+  t: (key: string, vars?: Record<string, unknown>) => string,
+): string {
+  return t(`settings.car.engine.${profile.layout}`, {
+    count: profile.cylinders,
+  });
+}
+
 export interface CarReferences {
   tire: ReferenceProvenance;
   finalDrive: ReferenceProvenance;

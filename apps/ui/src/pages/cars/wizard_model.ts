@@ -72,16 +72,6 @@ function engineProfileFromChoice(choice: EngineChoice): EngineProfile {
   };
 }
 
-/** "Inline-6", "V8", "Flat-4": the engine as the car list and the wizard name it. */
-export function engineLabel(
-  profile: NonNullable<EngineProfile> | { layout: string; cylinders: number },
-  t: Translate,
-): string {
-  return t(`settings.car.engine.${profile.layout}`, {
-    count: profile.cylinders,
-  });
-}
-
 export const STEP_LABEL_KEYS = [
   "settings.car.step_brand_short",
   "settings.car.step_type_short",

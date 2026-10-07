@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef } from "preact/hooks";
 
 import { activeView } from "../../app_store";
 import { carCapabilities, type FuelType } from "../../capabilities";
-import { provenanceTier } from "../../car_references";
+import { engineLabel, provenanceTier } from "../../car_references";
 import { fmt } from "../../format";
 import { t } from "../../i18n";
 import { CapabilityList, ProvenanceChip } from "./CapabilityList";
@@ -18,7 +18,6 @@ import {
   type DriveLayout,
   ENGINE_CHOICES,
   type EngineChoice,
-  engineLabel,
   gearboxParts,
   type ManualField,
   progressText,
