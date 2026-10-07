@@ -61,7 +61,7 @@ Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do no
 - Expectations come from what each scenario injects, never from analysis code: verdict, source, corner/zone, order label, confidence band, the order frequency and spectrum markers from the test's own tire/ratio math, MAC/name/location joins, the report's owner-page text, and the amplitude-vs-speed chart for swept faults. A few drives per report variant are also rendered to PDF in English and Dutch.
 - Sensor layouts are part of the cases: one sensor, sensors in the cabin only, and a sensor on every mounting point (`Case.layout`).
 - A drive that carries two real faults accepts either one as the diagnosis (`Case.second_fault`); whichever is named is checked against its own full expectation.
-- The backend job runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes; CI runs it as the `diagnosis-matrix` job when diagnosis-related paths change (it kills mutants the single seed misses).
+- The backend job runs one sensor-id seed per case. `make test-diagnostic-matrix` repeats each case over five more seeds and requires 4/5 passes; CI runs it as the `diagnosis-matrix` jobs when diagnosis-related paths change (it kills mutants the single seed misses). The 4/5 rule holds per case inside one test, so splitting cases across jobs keeps it.
 - Network and clock conditions are part of the cases: a sensor losing frames, busy Wi-Fi delaying clock-sync replies, and a car start where recording begins before the sensor clocks sync (device timers within ~2 s of server time), optionally on congested Wi-Fi where the simulated firmware retransmits frames stop-and-wait (`Case.car_start`, `Case.wifi_retry_loss`). Each sensor's raw capture must stay on one continuous clock.
 - Speed comes in measured: as gpsd TPV reports (3D fix) through the production GPS ingestion, or from a connected OBD adapter (`Case.speed_source`); the adapter can also report the engine RPM of the gear each phase drives in (`Case.obd_rpm`, `ScenarioPhase.gear_ratio`; idle at a standstill). A standstill drive must leave 0 km/h out of the per-speed breakdown.
 - Cars are part of the cases (`Case.cars`): the default car, a hatchback, and an EV with and without its reduction ratio entered. A phase driven in a lower gear (`ScenarioPhase.gear_ratio`) moves only the simulated engine orders; without measured RPM the benchmark checks with its own gear math that a wheel or propshaft order the engine can match in some gear is never Strong and that the report says so. `run_sim_pipeline(max_recording_duration_s=...)` sets the server's recording cap, and the flush loop auto-stops at it as production does.
@@ -122,7 +122,8 @@ so every sensor feels it.
 - Import-direction rules are import-linter contracts in `apps/server/pyproject.toml`; `make lint` runs them. Tests must not parse or inspect production source (Ruff `TID251` bans `ast.parse` / `inspect.getsource` in tests).
 - Temporary migration/absence tests must name the stable boundary they protect and be removed once positive current-behavior coverage exists.
 - Use the `smoke`, `long_sim`, and `e2e` markers sparingly.
-- `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them; the `diagnosis-matrix` CI job runs them.
+- `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them; the `diagnosis-matrix` CI jobs run them.
+- `--shard=INDEX/COUNT` (defined in `apps/server/tests/conftest.py`) keeps every COUNT-th selected test in node-id order; CI passes it through `PYTEST_ADDOPTS` to split `make test` and `make test-diagnostic-matrix` across parallel jobs, e.g. `PYTEST_ADDOPTS=--shard=2/6 make test-diagnostic-matrix`.
 - For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
 ## Frontend validation
@@ -180,10 +181,11 @@ Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make tar
 | Job | Runs when | Local equivalent |
 |---|---|---|
 | `secret-scan` | always | gitleaks |
-| `backend` | backend paths | `pip check`, `make lint` (Ruff, ShellCheck, deptry, import layers, config preflight), `make typecheck-backend`, `make test` |
+| `backend` | backend paths | `pip check`, `make lint` (Ruff, ShellCheck, deptry, import layers, config preflight), `make typecheck-backend` |
+| `backend-tests` (2 shards) | backend paths | `make test` |
 | `frontend` | frontend paths | `make ui-typecheck`, `make ui-test` |
 | `ui-smoke` | frontend paths | `cd apps/ui && npm run test:smoke` |
-| `diagnosis-matrix` | analysis, dsp, domain, ingest, recording, report, simulator, summary or benchmark paths | `make test-diagnostic-matrix` |
+| `diagnosis-matrix` (6 shards) | analysis, dsp, domain, ingest, recording, report, simulator, summary or benchmark paths | `make test-diagnostic-matrix` |
 | `integration` | backend or frontend paths | `make sync-contracts && git diff --exit-code`, `make test-e2e`, `python tools/tests/run_release_smoke.py` |
 | `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native`, `pio run -e m5stack_atom -e esp32-c3-devkitm-1` |
 
