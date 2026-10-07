@@ -8,7 +8,7 @@ import type {
 import { fmt, formatSpeed, type SpeedUnit } from "../../format";
 import {
   fallbackReasonKey,
-  isManualLikeSpeedSource,
+  gpsReceiverMissing,
   resolveEffectiveSpeedSource,
   type SpeedSourceSnapshot,
 } from "../../speed_source";
@@ -36,39 +36,75 @@ const CONNECTION_STATE_KEYS: Record<string, string> = {
 };
 const MAC_RE = /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i;
 
-export function activeSourceLabel(
-  settings: SpeedSourceSnapshot,
-  status: SpeedSourceStatusPayload | null,
+const SOURCE_TITLE_KEYS: Record<SpeedSourceKind, string> = {
+  gps: "settings.speed.gps",
+  obd2: "settings.speed.obd",
+  manual: "settings.speed.manual",
+};
+
+/** The saved choice, named as its card is. */
+export function selectedSourceLabel(
+  source: SpeedSourceKind,
   t: Translate,
 ): string {
-  const effective = resolveEffectiveSpeedSource(settings);
-  const fallbackReason = fallbackReasonKey(settings, status);
-  if (fallbackReason) {
-    return t("settings.speed.current_source_fallback_manual", {
-      reason: t(fallbackReason),
-    });
-  }
-  switch (effective) {
-    case "manual":
-      return t("settings.speed.current_source_manual_override");
-    case "gps":
-    case null:
-      return t("settings.speed.gps");
-    case "obd2":
-      return t("dashboard.rotational.source.obd2");
-    default:
-      return effective;
-  }
+  return t(SOURCE_TITLE_KEYS[source]);
 }
 
-/** Manual speed while a manual source is in effect, else the live speed. */
-export function activeSpeedKph(
+/** Why the chosen live source gives no speed at all (and no fallback is set). */
+function noSpeedReasonKey(
   settings: SpeedSourceSnapshot,
-  gpsEffectiveSpeedKph: number | null,
-): number | null {
-  return isManualLikeSpeedSource(resolveEffectiveSpeedSource(settings))
-    ? settings.manualSpeedKph
-    : gpsEffectiveSpeedKph;
+  status: SpeedSourceStatusPayload | null,
+): string {
+  if (settings.speedSource === "obd2") {
+    return "speed.fallback_reason.obd2";
+  }
+  return gpsReceiverMissing(settings.speedSource, status)
+    ? "speed.gps_no_receiver.title"
+    : "speed.fallback_reason.gps_no_fix";
+}
+
+/**
+ * Where the app's speed comes from right now, with that speed: the saved live
+ * source, the typed-in speed, the typed-in fallback standing in for a live
+ * source that gives none (and why), or no speed at all.
+ */
+export function liveSourceText(
+  input: {
+    settings: SpeedSourceSnapshot;
+    status: SpeedSourceStatusPayload | null;
+    /** The live source's current speed, km/h. */
+    liveSpeedKph: number | null;
+    unit: SpeedUnit;
+  },
+  t: Translate,
+): string {
+  const { settings, status, unit } = input;
+  const speed = (kph: number | null) => formatSpeed(kph, unit, t, 1);
+  const reason = fallbackReasonKey(settings, status);
+  if (reason) {
+    return t("settings.speed.live_fallback", {
+      reason: t(reason),
+      speed: speed(settings.manualSpeedKph),
+    });
+  }
+  const effective = resolveEffectiveSpeedSource(settings);
+  if (effective === "manual") {
+    return t("settings.speed.live_manual", {
+      speed: speed(settings.manualSpeedKph),
+    });
+  }
+  if (effective === "gps" || effective === "obd2") {
+    const source = selectedSourceLabel(effective, t);
+    return input.liveSpeedKph === null
+      ? t("settings.speed.live_waiting", { source })
+      : t("settings.speed.live_source", {
+          source,
+          speed: speed(input.liveSpeedKph),
+        });
+  }
+  return t("settings.speed.live_none", {
+    reason: t(noSpeedReasonKey(settings, status)),
+  });
 }
 
 export function choiceState(options: {

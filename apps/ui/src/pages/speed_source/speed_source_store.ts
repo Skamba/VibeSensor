@@ -20,15 +20,13 @@ import {
   loadSpeedSource,
   refreshSpeedStatus,
   speedSettings,
-  speedSourceSnapshot,
-  speedStatus,
 } from "../../settings_store";
 import {
-  activeSourceLabel,
   checkSave,
   compareDevices,
   manualSpeedFieldValue,
   maxManualSpeed,
+  selectedSourceLabel,
 } from "./speed_source_model";
 
 /** Unsaved edits; `null` means "show the saved value". */
@@ -74,7 +72,8 @@ export const manualSpeedFeedback = signal<Feedback | null>(null);
 export const staleTimeoutFeedback = signal<Feedback | null>(null);
 export const saveFeedback = signal<Feedback | null>(null);
 export const obdSelectionError = signal(false);
-export const diagnosticsOpen = signal(false);
+/** The Advanced disclosure (fallback timeout and live diagnostics) is open. */
+export const advancedOpen = signal(false);
 /** Bumped to move focus: which field and a counter so repeats re-focus. */
 export const focusRequest = signal<{
   field: "manual" | "stale" | "scan";
@@ -107,7 +106,6 @@ function showSaveProblem(body: string, detail: string): void {
       detail,
       tone: "error",
     };
-    diagnosticsOpen.value = true;
   });
 }
 
@@ -160,11 +158,7 @@ export async function saveSpeedSource(): Promise<void> {
     return;
   }
   clearFeedback();
-  const activeSource = activeSourceLabel(
-    speedSourceSnapshot.value,
-    speedStatus.value,
-    t,
-  );
+  const activeSource = selectedSourceLabel(savedMode.value, t);
   const check = checkSave({
     source: modeDraft.value ?? speedSettings.source.value,
     manualSpeed: manualSpeedInput.value,
@@ -214,6 +208,13 @@ export async function saveSpeedSource(): Promise<void> {
       manualSpeedDraft.value = null;
       staleTimeoutDraft.value = null;
       clearFeedback();
+      saveFeedback.value = {
+        title: t("settings.speed.saved"),
+        body: t("settings.speed.saved_body", {
+          source: selectedSourceLabel(saved.speed_source, t),
+        }),
+        tone: "success",
+      };
     });
     await refreshSpeedStatus();
   } catch (error) {

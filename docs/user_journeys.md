@@ -384,6 +384,13 @@ before the choice was recorded count GPS as not chosen.
   speed. Results will be hedged." **Today** the captions say this, and a "What
   each source can do" table (`settings.speed.compare.*`) repeats the table
   above.
+- **Show:** the summary names the saved choice ("Selected", the same badge as
+  its card) apart from where the speed comes from right now ("Live speed now":
+  the live source and its speed, "Waiting for GPS", the typed-in speed, the
+  fallback and why, or "None" and why; `liveSourceText` in
+  `speed_source_model.ts`). A save says "Saved" with the new choice. The stale
+  timeout and the live source diagnostics sit under a closed "Advanced"
+  disclosure, which opens by itself when the stale timeout needs fixing.
 - **Branches:**
   - GPS selected with no receiver or no fix: readiness waits for a live reading
     (`_reference_check` in `capture_readiness_evaluator.py`). When gpsd has

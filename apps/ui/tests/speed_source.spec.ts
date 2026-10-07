@@ -6,8 +6,6 @@ import type {
   SpeedSourceStatusPayload,
 } from "../src/api/types";
 import {
-  activeSourceLabel,
-  activeSpeedKph,
   checkSave,
   choiceState,
   compareDevices,
@@ -15,9 +13,11 @@ import {
   deviceActionLabel,
   deviceBadges,
   gpsDiagnostics,
+  liveSourceText,
   manualSpeedFieldValue,
   maxManualSpeed,
   obdDiagnostics,
+  selectedSourceLabel,
 } from "../src/pages/speed_source/speed_source_model";
 import {
   deriveSpeedReadoutLabelKey,
@@ -220,28 +220,43 @@ describe("speed source save validation", () => {
 });
 
 describe("speed source summary", () => {
-  test("labels the source in effect and shows the manual speed for a fallback", () => {
+  test("names the saved choice apart from where the speed comes from right now", () => {
     const gps: SpeedSourceSnapshot = {
       speedSource: "gps",
       manualSpeedKph: 80,
       resolvedSpeedSource: null,
     };
-    const fallback = {
-      ...gps,
-      resolvedSpeedSource: "fallback_manual" as const,
-    };
-    expect(activeSourceLabel(fallback, null, t)).toBe(
-      'settings.speed.current_source_fallback_manual:{"reason":"speed.fallback_reason.gps_no_fix"}',
+    const live = (settings: SpeedSourceSnapshot, liveSpeedKph: number | null) =>
+      liveSourceText({ settings, status: null, liveSpeedKph, unit: "kmh" }, t);
+    expect(selectedSourceLabel("gps", t)).toBe("settings.speed.gps");
+    expect(selectedSourceLabel("obd2", t)).toBe("settings.speed.obd");
+    expect(selectedSourceLabel("manual", t)).toBe("settings.speed.manual");
+
+    // The live source with its speed, or waiting for its first reading.
+    expect(live({ ...gps, resolvedSpeedSource: "gps" }, 52)).toBe(
+      'settings.speed.live_source:{"source":"settings.speed.gps","speed":"52.0 speed.unit.kmh"}',
     );
-    expect(activeSourceLabel(gps, null, t)).toBe("settings.speed.gps");
-    expect(activeSourceLabel({ ...gps, speedSource: "manual" }, null, t)).toBe(
-      "settings.speed.current_source_manual_override",
+    expect(live(gps, null)).toBe(
+      'settings.speed.live_waiting:{"source":"settings.speed.gps"}',
     );
+    // The typed-in speed, chosen or standing in for a live source (and why).
+    expect(live({ ...gps, speedSource: "manual" }, 52)).toBe(
+      'settings.speed.live_manual:{"speed":"80.0 speed.unit.kmh"}',
+    );
+    expect(live({ ...gps, resolvedSpeedSource: "fallback_manual" }, 52)).toBe(
+      'settings.speed.live_fallback:{"reason":"speed.fallback_reason.gps_no_fix","speed":"80.0 speed.unit.kmh"}',
+    );
+    // A live source that gives no speed and has no typed-in fallback.
     expect(
-      activeSourceLabel({ ...gps, resolvedSpeedSource: "obd2" }, null, t),
-    ).toBe("dashboard.rotational.source.obd2");
-    expect(activeSpeedKph(fallback, 52)).toBe(80);
-    expect(activeSpeedKph(gps, 52)).toBe(52);
+      live(
+        {
+          speedSource: "obd2",
+          manualSpeedKph: null,
+          resolvedSpeedSource: "none",
+        },
+        null,
+      ),
+    ).toBe('settings.speed.live_none:{"reason":"speed.fallback_reason.obd2"}');
   });
 
   test("marks the saved card active and a different draft as pending", () => {
@@ -459,10 +474,22 @@ test("GPS without a receiver: gpsd on, but never a device or a reading", () => {
     null,
   );
   expect(
-    activeSourceLabel(gps, gpsd, (key, vars) =>
-      vars ? `${key}:${JSON.stringify(vars)}` : key,
+    liveSourceText(
+      { settings: gps, status: gpsd, liveSpeedKph: null, unit: "kmh" },
+      t,
     ),
   ).toBe(
-    'settings.speed.current_source_fallback_manual:{"reason":"speed.gps_no_receiver.title"}',
+    'settings.speed.live_fallback:{"reason":"speed.gps_no_receiver.title","speed":"50.0 speed.unit.kmh"}',
   );
+  expect(
+    liveSourceText(
+      {
+        settings: { ...gps, resolvedSpeedSource: "none" },
+        status: gpsd,
+        liveSpeedKph: null,
+        unit: "kmh",
+      },
+      t,
+    ),
+  ).toBe('settings.speed.live_none:{"reason":"speed.gps_no_receiver.title"}');
 });
