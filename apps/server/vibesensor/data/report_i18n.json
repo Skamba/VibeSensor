@@ -499,6 +499,10 @@
     "en": "not used",
     "nl": "niet gebruikt"
   },
+  "GUIDED_NOT_CHECKABLE_MANUAL": {
+    "en": "not checkable with a speed entered by hand: {steps}",
+    "nl": "niet te controleren met een handmatig ingevoerde snelheid: {steps}"
+  },
   "GUIDED_SWEEP": {
     "en": "speed sweep",
     "nl": "snelheidsopbouw"

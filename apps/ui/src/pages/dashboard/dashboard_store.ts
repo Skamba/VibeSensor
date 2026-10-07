@@ -448,6 +448,7 @@ export const guidedTest = computed(() =>
     guidedBusy.value || pending.value !== null,
     activeCar.value?.fuel_type ?? null,
     t,
+    speedSourceSnapshot.value.speedSource === "manual",
   ),
 );
 

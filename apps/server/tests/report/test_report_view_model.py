@@ -797,6 +797,36 @@ def test_a_run_on_a_hand_typed_speed_is_no_result_and_asks_for_live_speed() -> N
     assert nl.headline == "Geen uitslag: deze rit kon niet op een oorzaak controleren"
 
 
+def test_guided_steps_on_a_hand_typed_speed_are_named_not_checkable() -> None:
+    """A typed-in speed never changes, so no tapped step shows: none was driven wrong."""
+    guided = [
+        {"phase": "sweep", "start_t_s": 0.0, "end_t_s": 10.0},
+        {"phase": "hold", "start_t_s": 10.0, "end_t_s": 20.0},
+        {"phase": "brake", "start_t_s": 20.0, "end_t_s": None},
+    ]
+    samples = make_engine_order_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=50.0, n_samples=30)
+    for sample in samples:
+        sample["speed_source"] = "manual"
+    summary = run_analysis(samples, standard_metadata(guided_phases=guided))
+
+    assert summary["diagnosis"]["guided_phases"] == []
+    for lang, label, text in (
+        (
+            "en",
+            "Guided test",
+            "Not checkable with a speed entered by hand: speed sweep, steady hold, firm stops",
+        ),
+        (
+            "nl",
+            "Begeleide test",
+            "Niet te controleren met een handmatig ingevoerde snelheid:"
+            " snelheidsopbouw, constante snelheid, stevig afremmen",
+        ),
+    ):
+        conditions = report_view_for(summary, lang=lang).mechanic.conditions
+        assert {fact.label: fact.value for fact in conditions}[label] == text
+
+
 def test_guided_steps_tapped_while_holding_one_speed_are_not_listed_as_done() -> None:
     """Tapping through the guided test at a steady 50 km/h did only the hold."""
     guided = [

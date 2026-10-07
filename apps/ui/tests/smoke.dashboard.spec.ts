@@ -216,6 +216,75 @@ test("journey: a parked car can start, and the capability line says what the run
   await expect(page.locator("#carTab")).toBeVisible();
 });
 
+test("journey: with a typed-in speed, each family is hedged and the guided steps say they can't be checked", async ({
+  page,
+}) => {
+  const readiness = buildCaptureReadiness({
+    isReady: true,
+    sensors: {
+      state: "pass",
+      reasonKey: "sensors_ready",
+      details: { live_sensor_count: 1 },
+    },
+    reference: { state: "pass", reasonKey: "reference_ready" },
+    speed: { state: "pass", reasonKey: "speed_stable" },
+    overall: { state: "pass", reasonKey: "ready_with_warnings" },
+  });
+  readiness.capabilities = {
+    wheel: "manual_speed",
+    driveline: "manual_speed",
+    engine: "manual_speed",
+  };
+  let status = idleStatus({ capture_readiness: readiness });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      if (requestPath(route) === "/api/settings/speed-source") {
+        await fulfillJson<SpeedSourcePayload>(route, {
+          speed_source: "manual",
+          manual_speed_kph: 80,
+          stale_timeout_s: 10,
+        });
+        return;
+      }
+      await activeCar(route);
+    },
+  });
+  await page.route("**/api/recording/status", (route) =>
+    fulfillJson(route, status),
+  );
+  await bootLiveDashboard(page, {
+    installRoutes: false,
+    liveSensorPayload: { clients: [sensor("front_left_wheel")] },
+  });
+
+  // Found only at exactly the typed-in speed, never ruled out: "~", not "✕".
+  const capabilities = page.locator("#captureCapabilities");
+  for (const family of ["wheel", "driveline", "engine"]) {
+    await expect(
+      capabilities.locator(`[data-capability="${family}"]`),
+    ).toHaveAttribute("data-capability-mark", "caveat");
+  }
+  await expect(capabilities.locator('[data-capability="wheel"]')).toContainText(
+    "Only at exactly the typed-in speed; it can't be ruled out.",
+  );
+
+  const preview = page.locator("#guidedPreview");
+  await preview.locator("summary").click();
+  await expect(page.locator("#guidedTypedInNote")).toContainText(
+    "none of these steps can be checked",
+  );
+
+  // Recording: the guided test is not offered on a typed-in speed.
+  status = idleStatus({ enabled: true, run_id: "run-3" });
+  await expect(page.locator("#guidedTest #guidedTypedInNote")).toBeVisible();
+  await expect(page.locator("#guidedTestBtn")).toHaveCount(0);
+  await page
+    .locator("#guidedTypedInNote")
+    .getByRole("button", { name: "Change speed source" })
+    .click();
+  await expect(page.locator("#speedSourceTab")).toBeVisible();
+});
+
 test("journey: an unreadable recording status disables recording until it recovers", async ({
   page,
 }) => {

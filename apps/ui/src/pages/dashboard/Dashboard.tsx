@@ -306,6 +306,22 @@ function GuidedSteps(props: { steps: GuidedStep[]; preview: boolean }) {
   );
 }
 
+/** No guided step can be checked on a typed-in speed: say so, with the way out. */
+function GuidedTypedInNote(props: { note: string }) {
+  return (
+    <p id="guidedTypedInNote" class="guided-test__typed-in">
+      {props.note}{" "}
+      <button
+        type="button"
+        class="btn capture-capabilities__fix"
+        onClick={() => openSummaryTarget("open-speed-source")}
+      >
+        {t("dashboard.capabilities.fix.manual_speed")}
+      </button>
+    </p>
+  );
+}
+
 /**
  * The guided test drive in the recording card: a preview of its steps while
  * parked, and the full instructions while a run records. The step in progress
@@ -321,9 +337,13 @@ function GuidedTest() {
           {t("dashboard.guided.preview.summary")}
         </summary>
         <div class="guided-test__hint">{model.hint}</div>
-        <div class="guided-test__hint">
-          {t("dashboard.guided.preview.note")}
-        </div>
+        {model.typedInNote ? (
+          <GuidedTypedInNote note={model.typedInNote} />
+        ) : (
+          <div class="guided-test__hint">
+            {t("dashboard.guided.preview.note")}
+          </div>
+        )}
         <GuidedSteps steps={model.steps} preview />
       </details>
     );
@@ -336,6 +356,9 @@ function GuidedTest() {
     <section id="guidedTest" class="guided-test" aria-live="polite">
       <div class="guided-test__title">{t("dashboard.guided.title")}</div>
       <div class="guided-test__hint">{model.hint}</div>
+      {model.typedInNote ? (
+        <GuidedTypedInNote note={model.typedInNote} />
+      ) : null}
       <GuidedSteps steps={model.steps} preview={false} />
       {model.finished ? (
         <div class="guided-test__done">{t("dashboard.guided.done")}</div>

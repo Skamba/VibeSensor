@@ -31,6 +31,9 @@ const MARKS: Record<string, CapabilityMark> = {
   estimated_top_gear: "caveat",
   estimated_ratios: "caveat",
   hybrid_estimated: "caveat",
+  // A typed-in speed places every order at that one speed: a match counts
+  // (hedged), but no match rules nothing out.
+  manual_speed: "caveat",
   not_applicable: "na",
 };
 
