@@ -88,7 +88,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v7
@@ -107,17 +107,41 @@ jobs:
       - name: Type check
         run: make typecheck-backend
 
+  backend-tests:
+    # `make test` split across parallel jobs; together the shards run every test once.
+    name: Backend tests (${{ matrix.shard }}/2)
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-backend
+
       - name: Tests
+        env:
+          PYTEST_ADDOPTS: --shard=${{ matrix.shard }}/2
         run: make test
 
   diagnosis-matrix:
-    # The accuracy benchmark over five more sensor-id seeds (4/5 must pass). It
-    # catches diagnosis regressions that pass on the CI seed but not on others.
-    name: Diagnosis seed matrix
+    # The accuracy benchmark over five more sensor-id seeds (4/5 must pass per
+    # case, inside each test). It catches diagnosis regressions that pass on the
+    # CI seed but not on others. Split by case across parallel jobs.
+    name: Diagnosis seed matrix (${{ matrix.shard }}/8)
     needs: changes
     if: ${{ needs.changes.outputs.diagnosis == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
       - uses: actions/checkout@v7
@@ -125,6 +149,8 @@ jobs:
       - uses: ./.github/actions/setup-backend
 
       - name: Benchmark seed matrix
+        env:
+          PYTEST_ADDOPTS: --shard=${{ matrix.shard }}/8
         run: make test-diagnostic-matrix
 
   frontend:

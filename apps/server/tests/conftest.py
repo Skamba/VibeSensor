@@ -44,6 +44,37 @@ from vibesensor.web.history_services import (
 )
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--shard",
+        metavar="INDEX/COUNT",
+        help="Run only shard INDEX (1-based) of COUNT: every COUNT-th selected test in "
+        "node-id order. CI splits a suite across parallel jobs with it.",
+    )
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Keep this shard's tests; together the shards run every selected test once.
+
+    Node-id order (not collection order, which pytest-randomly shuffles) makes
+    every job and every xdist worker agree on the split.
+    """
+    shard = config.getoption("shard")
+    if shard is None:
+        return
+    index_text, _, count_text = shard.partition("/")
+    if not (index_text.isdigit() and count_text.isdigit()) or not (
+        1 <= int(index_text) <= int(count_text)
+    ):
+        raise pytest.UsageError(f"--shard={shard}: expected INDEX/COUNT with 1 <= INDEX <= COUNT")
+    index, count = int(index_text), int(count_text)
+    by_node_id = sorted(items, key=lambda item: item.nodeid)
+    kept = {id(item) for item in by_node_id[index - 1 :: count]}
+    config.hook.pytest_deselected(items=[item for item in items if id(item) not in kept])
+    items[:] = [item for item in items if id(item) in kept]
+
+
 @pytest.fixture(autouse=True, scope="session")
 def _isolate_git_environment() -> Iterator[None]:
     """Drop inherited ``GIT_*`` variables so tests that run git use their own repos.
