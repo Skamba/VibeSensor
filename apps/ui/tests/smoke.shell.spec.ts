@@ -5,7 +5,7 @@ import { bootLiveDashboard, fulfillJson, requestPath } from "./smoke.helpers";
 
 test.describe.configure({ timeout: 20_000 });
 
-test("journey: tabs follow the keyboard and the status pills leave the dashboard", async ({
+test("journey: tabs follow the keyboard and the status pills stay in the header", async ({
   page,
 }) => {
   await bootLiveDashboard(page, {
@@ -13,7 +13,8 @@ test("journey: tabs follow the keyboard and the status pills leave the dashboard
   });
   const liveTab = page.locator("#tab-dashboard");
   await expect(liveTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.locator(".site-header__status")).toBeHidden();
+  await expect(page.locator("#linkState")).toHaveText("Connected");
+  await expect(page.locator("#shellLiveStatus")).toBeVisible();
 
   await liveTab.focus();
   await page.keyboard.press("ArrowRight");
@@ -21,7 +22,7 @@ test("journey: tabs follow the keyboard and the status pills leave the dashboard
   await expect(historyTab).toBeFocused();
   await expect(historyTab).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#historyView")).toBeVisible();
-  await expect(page.locator("#linkState")).toHaveText("Connected");
+  await expect(page.locator("#linkState")).toBeVisible();
 
   await page.keyboard.press("End");
   await expect(page.locator("#tab-settings")).toBeFocused();
@@ -34,9 +35,9 @@ test("journey: tabs follow the keyboard and the status pills leave the dashboard
   const carTab = page.locator('[data-settings-tab="carTab"]');
   await carTab.focus();
   await page.keyboard.press("ArrowLeft");
-  const espTab = page.locator('[data-settings-tab="espFlashTab"]');
-  await expect(espTab).toBeFocused();
-  await expect(page.locator("#espFlashTab")).toBeVisible();
+  const generalTab = page.locator('[data-settings-tab="generalTab"]');
+  await expect(generalTab).toBeFocused();
+  await expect(page.locator("#generalTab")).toBeVisible();
   await expect(page.locator("#carTab")).toBeHidden();
 });
 

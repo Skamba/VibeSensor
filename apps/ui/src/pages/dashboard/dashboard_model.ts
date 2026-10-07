@@ -21,6 +21,7 @@ import {
   checkDetail,
   type ChecklistItem,
   checklist,
+  detailCount,
   findCheck,
   type Readiness,
   readinessSummary,
@@ -45,7 +46,6 @@ export interface LiveHealth {
   variant: Variant;
   text: string;
   summary: string;
-  showOverviewPill: boolean;
 }
 
 export interface SummaryPanel {
@@ -158,14 +158,12 @@ export function liveHealth(
     variant: "warn",
     text: t("dashboard.health.attention"),
     summary,
-    showOverviewPill: true,
   });
   if (status.write_error) {
     return {
       variant: "bad",
       text: t("dashboard.health.write_error"),
       summary: status.write_error,
-      showOverviewPill: true,
     };
   }
   const connected = clients.filter((client) => client.connected);
@@ -174,7 +172,6 @@ export function liveHealth(
       variant: "muted",
       text: t("dashboard.health.no_signal"),
       summary: t("dashboard.logging.waiting"),
-      showOverviewPill: true,
     };
   }
   if (!input.carActive) {
@@ -206,7 +203,6 @@ export function liveHealth(
           clients.filter((client) => locationOf(client)).length,
         ),
       }),
-      showOverviewPill: false,
     };
   }
   const readiness = status.capture_readiness ?? null;
@@ -219,7 +215,6 @@ export function liveHealth(
     variant: "ok",
     text: t("dashboard.health.ready"),
     summary: "",
-    showOverviewPill: false,
   };
 }
 
@@ -391,9 +386,24 @@ function setupAction(
 }
 
 /**
- * Names the likely cause when the live speed is missing: GPS has no receiver,
- * or its receiver is still waiting for a fix.
+ * The likely cause when the live speed is missing: GPS has no receiver, or
+ * its receiver is still waiting for a fix.
  */
+export function liveSpeedHint(
+  input: Pick<RecordingInputs, "gpsReceiverMissing" | "gpsFixWaitS">,
+  t: Translate,
+  formatInt: FormatInt,
+): string | null {
+  if (input.gpsReceiverMissing) {
+    return `${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`;
+  }
+  return input.gpsFixWaitS === null
+    ? null
+    : t("speed.gps_waiting_fix", {
+        seconds: formatInt(Math.floor(input.gpsFixWaitS)),
+      });
+}
+
 function speedSourceHint(
   check: { check_key: string; reason_key?: string | null },
   input: Pick<RecordingInputs, "gpsReceiverMissing" | "gpsFixWaitS">,
@@ -406,14 +416,7 @@ function speedSourceHint(
   ) {
     return null;
   }
-  if (input.gpsReceiverMissing) {
-    return `${t("speed.gps_no_receiver.title")}: ${t("speed.gps_no_receiver.body")}`;
-  }
-  return input.gpsFixWaitS === null
-    ? null
-    : t("speed.gps_waiting_fix", {
-        seconds: formatInt(Math.floor(input.gpsFixWaitS)),
-      });
+  return liveSpeedHint(input, t, formatInt);
 }
 
 /** The failing check that keeps Start greyed out, if any. */
@@ -446,6 +449,8 @@ export interface RecordingInputs {
   pending: PendingAction;
   /** Set while no car is active (including while cars are loading). */
   carBlock: "no_cars" | "no_active" | null;
+  /** The setup card on Live lists the missing car, speed source or sensors. */
+  setupIncomplete: boolean;
   health: LiveHealth;
   speedUnit: SpeedUnit;
   /** GPS is the speed source but no USB receiver is plugged in. */
@@ -559,26 +564,21 @@ export function recordingModel(
       startDisabled: notReady,
     };
   }
+  // The setup card names the missing car, speed source or sensors, with its fix.
   if (input.carBlock) {
-    const noCars = input.carBlock === "no_cars";
-    const prefix = `dashboard.logging.blocked.${input.carBlock}`;
     return {
       ...base,
       pillVariant: "warn",
       pillText: phase("blocked"),
       phaseText: phase("blocked"),
-      summaryText: readinessSummary(readiness, t, formatInt, input.speedUnit),
-      summaryPanel: panel(prefix, t, {
-        action: noCars ? "open-add-car" : "open-cars",
-        label: t(`${prefix}.action`),
-        variant: noCars ? "success" : "primary",
-      }),
       setupMode: true,
     };
   }
   const waiting = readiness !== null && !readiness.is_ready;
-  const primary = blocked;
-  const items = checklist(readiness, waiting, t, formatInt, input.speedUnit);
+  const primary = input.setupIncomplete ? null : blocked;
+  const items = input.setupIncomplete
+    ? []
+    : checklist(readiness, waiting, t, formatInt, input.speedUnit);
   return {
     ...base,
     pillVariant: waiting ? "muted" : "ok",
@@ -698,6 +698,262 @@ export function withLoggingError(
     summaryText: message,
     summaryPanel: null,
   };
+}
+
+// --- First-run setup and the action bar -----------------------------------------
+
+export type SetupStepKey = "car" | "speed" | "sensors";
+
+export interface SetupStep {
+  key: SetupStepKey;
+  /** `current` is the first step still to do; later ones are `todo`. */
+  state: "done" | "current" | "todo";
+  title: string;
+  status: string;
+  action: { action: SummaryAction; label: string } | null;
+}
+
+export interface SetupModel {
+  steps: SetupStep[];
+  /** The first step still to do; `null` once the car, speed and sensors are set. */
+  next: SetupStep | null;
+}
+
+export interface SetupInputs {
+  carSelection: CarSelectionState;
+  readiness: Readiness | null;
+  /** Live sensors connected right now. */
+  connected: number;
+  /** The chosen source when it gives a speed, e.g. "GPS" or "Typed in: 80 km/h". */
+  speedDoneText: string;
+  /** Why the speed is missing (no GPS receiver, waiting for a fix), if known. */
+  speedHint: string | null;
+  speedUnit: SpeedUnit;
+}
+
+/** Reasons the speed-source tab fixes (everything but a missing car). */
+const SPEED_SETUP_REASONS = new Set([
+  "speed_source_missing",
+  "speed_source_not_live",
+  "speed_source_fallback_active",
+  "speed_sample_stale",
+  "speed_sample_missing",
+  "obd_rpm_missing",
+  "obd_rpm_stale",
+]);
+
+/**
+ * The three things a first recording needs, in the order to set them up:
+ * an active car, a speed source that gives a speed, and live sensors that all
+ * have a location. Frame loss or drifting clocks are not setup steps; the
+ * readiness list explains those. `null` until the cars and the readiness are
+ * known.
+ */
+export function setupModel(
+  input: SetupInputs,
+  t: Translate,
+  formatInt: FormatInt,
+): SetupModel | null {
+  const { carSelection, readiness } = input;
+  if (carSelection.kind === "loading" || readiness === null) {
+    return null;
+  }
+  const action = (
+    target: SummaryAction,
+    key: string,
+    vars?: Record<string, unknown>,
+  ) => ({ action: target, label: t(`dashboard.setup.action.${key}`, vars) });
+  const carDone = carSelection.kind === "active";
+  const car = {
+    key: "car" as const,
+    done: carDone,
+    status:
+      carSelection.kind === "active"
+        ? carSelection.car.name
+        : t(`dashboard.setup.car.${carSelection.kind}`),
+    action:
+      carSelection.kind === "no_cars"
+        ? action("open-add-car", "add_car")
+        : action("open-cars", "choose_car"),
+  };
+  const reference = findCheck(readiness, "reference_ready");
+  const speedProblem =
+    reference !== null &&
+    reference.state === "fail" &&
+    SPEED_SETUP_REASONS.has(reference.reason_key ?? "");
+  const speedUnknown = reference?.reason_key === "active_car_missing";
+  const speedDetail = speedProblem
+    ? [checkDetail(reference, t, formatInt, input.speedUnit), input.speedHint]
+        .filter(Boolean)
+        .join(" ")
+    : "";
+  const speed = {
+    key: "speed" as const,
+    done: !speedProblem && !speedUnknown,
+    status: speedProblem
+      ? speedDetail
+      : speedUnknown
+        ? t("dashboard.setup.speed.after_car")
+        : input.speedDoneText,
+    action: action("open-speed-source", "speed_source"),
+  };
+  const sensorsCheck = findCheck(readiness, "sensors_ready");
+  const sensorsReason =
+    sensorsCheck?.state === "fail" ? (sensorsCheck.reason_key ?? "") : "";
+  const unplaced =
+    sensorsCheck && sensorsReason === "sensor_locations_missing"
+      ? Math.max(1, detailCount(sensorsCheck, "unassigned_sensor_count"))
+      : 0;
+  const sensorsDone =
+    sensorsReason !== "no_live_sensors" &&
+    sensorsReason !== "sensor_locations_missing";
+  const sensors = {
+    key: "sensors" as const,
+    done: sensorsDone,
+    status:
+      sensorsDone || !sensorsCheck
+        ? t("dashboard.setup.sensors.done", {
+            count: input.connected,
+          })
+        : checkDetail(sensorsCheck, t, formatInt, input.speedUnit),
+    action: unplaced
+      ? action("open-sensors", "place_sensors", { count: unplaced })
+      : action("open-sensors", "sensors"),
+  };
+  const firstOpen = [car, speed, sensors].findIndex((step) => !step.done);
+  const steps = [car, speed, sensors].map(
+    (step, index): SetupStep => ({
+      key: step.key,
+      state: step.done ? "done" : index === firstOpen ? "current" : "todo",
+      title: t(`dashboard.setup.${step.key}.title`),
+      status: step.status,
+      action: step.done ? null : step.action,
+    }),
+  );
+  return { steps, next: firstOpen < 0 ? null : steps[firstOpen] };
+}
+
+export type ActionBarButton =
+  | { kind: "start"; label: string; disabled: boolean }
+  | { kind: "stop"; label: string; disabled: boolean }
+  | { kind: "history"; label: string }
+  | { kind: "setup"; label: string; action: SummaryAction };
+
+export interface ActionBarModel {
+  state:
+    | "checking"
+    | "setup"
+    | "blocked"
+    | "ready"
+    | "starting"
+    | "recording"
+    | "stopping"
+    | "after"
+    | "unavailable";
+  title: string;
+  /** "m:ss" recorded so far, while recording. */
+  elapsed: string | null;
+  detail: string | null;
+  /** The detail is an error (a failed start or stop, a write error). */
+  error: boolean;
+  primary: ActionBarButton;
+  secondary: ActionBarButton | null;
+}
+
+/**
+ * The one next thing to do on Live, for the bar at the bottom of a phone
+ * screen (inside the recording card on a wide screen): finish a setup step,
+ * start, stop with the elapsed time, or open the run just recorded.
+ */
+export function actionBarModel(
+  input: {
+    status: LoggingStatusPayload;
+    pending: PendingAction;
+    recording: RecordingModel;
+    setup: SetupModel | null;
+    error: LoggingError | null;
+  },
+  t: Translate,
+): ActionBarModel {
+  const { status, pending, recording, setup, error } = input;
+  const start = (disabled: boolean): ActionBarButton => ({
+    kind: "start",
+    label: t("dashboard.start_recording"),
+    disabled,
+  });
+  const failure =
+    error?.kind === "error" ? recording.pillText : status.write_error || null;
+  const bar = (
+    state: ActionBarModel["state"],
+    title: string,
+    primary: ActionBarButton,
+    rest: Partial<ActionBarModel> = {},
+  ): ActionBarModel => ({
+    state,
+    title,
+    elapsed: null,
+    detail: failure,
+    error: failure !== null,
+    primary,
+    secondary: null,
+    ...rest,
+  });
+  if (error?.kind === "unavailable") {
+    return bar("unavailable", t("status.unavailable"), start(true));
+  }
+  if (pending === "starting") {
+    return bar("starting", t("dashboard.bar.starting"), start(true));
+  }
+  if (recording.showStop) {
+    const stopping = pending === "stopping";
+    return bar(
+      stopping ? "stopping" : "recording",
+      t(stopping ? "dashboard.bar.stopping" : "dashboard.bar.recording"),
+      {
+        kind: "stop",
+        label: t("dashboard.stop_recording"),
+        disabled: recording.stopDisabled,
+      },
+      { elapsed: recording.elapsedText },
+    );
+  }
+  if (status.analysis_in_progress || status.last_completed_run_id) {
+    return bar(
+      "after",
+      t(
+        status.analysis_in_progress
+          ? "dashboard.bar.analyzing"
+          : "dashboard.bar.saved",
+      ),
+      { kind: "history", label: t("dashboard.logging.saved.action") },
+      { secondary: start(recording.startDisabled) },
+    );
+  }
+  const next = setup?.next;
+  if (setup && next?.action) {
+    return bar(
+      "setup",
+      t("dashboard.bar.setup_step", {
+        n: setup.steps.indexOf(next) + 1,
+        total: setup.steps.length,
+        step: next.title,
+      }),
+      { kind: "setup", label: next.action.label, action: next.action.action },
+    );
+  }
+  if (status.capture_readiness == null) {
+    return bar("checking", t("dashboard.bar.checking"), start(true));
+  }
+  if (recording.startDisabled) {
+    return bar("blocked", t("dashboard.bar.not_ready"), start(true), {
+      detail:
+        failure ??
+        recording.blockedReason ??
+        recording.summaryPanel?.body ??
+        null,
+    });
+  }
+  return bar("ready", t("dashboard.bar.ready"), start(false));
 }
 
 // --- Guided test drive ---------------------------------------------------------

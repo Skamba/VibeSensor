@@ -1022,12 +1022,12 @@ test("journey: a custom car asks its engine; not sure leaves it unset", async ({
   await expect(page.locator("#wizEngine")).toHaveCount(0);
 });
 
-test("journey: the dashboard's add-car prompt opens the wizard", async ({
+test("journey: the Live setup checklist's add-car step opens the wizard", async ({
   page,
 }) => {
   await bootWithCars(page, createServer());
   await page
-    .locator("#loggingSummary")
+    .locator("#liveSetup")
     .getByRole("button", { name: "Add a car" })
     .click();
   await expect(page.locator("#carTab")).toBeVisible();

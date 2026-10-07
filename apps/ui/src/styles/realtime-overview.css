@@ -6,6 +6,11 @@
     "overview overview"
     "main controls";
 }
+/* Without a live sensor only the recording card shows: give it the full width. */
+.dashboard-grid:has(> .dashboard-grid__main[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "controls";
+}
 .dashboard-grid__overview {
   grid-area: overview;
   min-width: 0;

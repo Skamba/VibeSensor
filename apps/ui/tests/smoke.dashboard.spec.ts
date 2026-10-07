@@ -120,7 +120,7 @@ async function bootWithStatus(
   });
 }
 
-test("journey: the readiness checklist explains what is missing and links to the fix", async ({
+test("journey: the setup checklist names the open step and links to the fix", async ({
   page,
 }) => {
   const readiness = buildCaptureReadiness({
@@ -143,21 +143,26 @@ test("journey: the readiness checklist explains what is missing and links to the
     { locationCode: "" },
   );
 
-  const summary = page.locator("#loggingSummary");
-  await expect(summary).toContainText("Finish setup before recording.");
-  await expect(summary).toContainText("1 live sensor still needs a location.");
-  await expect(page.locator(".realtime-logging-shell")).toHaveAttribute(
-    "data-layout",
-    "setup",
+  const setup = page.locator("#liveSetup");
+  const steps = setup.locator("[data-setup-step]");
+  await expect(steps).toHaveCount(3);
+  await expect(steps.nth(0)).toHaveAttribute("data-step-state", "done");
+  await expect(steps.nth(1)).toHaveAttribute("data-step-state", "done");
+  const sensorsStep = setup.locator('[data-setup-step="sensors"]');
+  await expect(sensorsStep).toHaveAttribute("data-step-state", "current");
+  await expect(sensorsStep).toContainText(
+    "1 live sensor still needs a location.",
   );
   // The live spectrum stays visible while setting up.
   await expect(page.locator("#specChart")).toBeVisible();
-  const items = page.locator("#loggingChecklist .capture-readiness__item");
-  await expect(items).toHaveCount(2);
-  await expect(items.nth(1)).toContainText("30");
-  await expect(page.locator("#liveRunHealth")).toHaveText("Needs attention");
+  // The card leaves the next step to the setup list; Start stays greyed out.
+  await expect(page.locator("#loggingChecklist")).toBeHidden();
+  const bar = page.locator("#liveActionBar");
+  await expect(bar).toHaveAttribute("data-state", "setup");
+  await expect(bar).toContainText("Setup 3 of 3: Sensors");
+  await expect(page.locator("#shellLiveStatus")).toHaveText("Needs attention");
 
-  await summary.getByRole("button", { name: "Open Sensors" }).click();
+  await sensorsStep.getByRole("button", { name: "Place 1 sensor" }).click();
   await expect(page.locator("#sensorsTab")).toBeVisible();
   await expect(page.locator("#shellLiveStatus")).toHaveText("Needs attention");
 });
@@ -642,6 +647,55 @@ test("journey: guided step speeds follow the speed unit setting", async ({
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
+  test("journey: a blank first open shows only the setup steps and a pinned next step", async ({
+    page,
+  }) => {
+    const blank = buildCaptureReadiness({
+      isReady: false,
+      sensors: { state: "fail", reasonKey: "no_live_sensors" },
+      reference: { state: "fail", reasonKey: "active_car_missing" },
+      speed: { state: "warn", reasonKey: "speed_sample_missing" },
+    });
+    await installCommonRoutes(page, {
+      settingsHandler: async (route) => {
+        if (requestPath(route).startsWith("/api/settings/cars")) {
+          await fulfillJson<CarsPayload>(route, {
+            cars: [],
+            active_car_id: null,
+          });
+          return;
+        }
+        await fulfillJson(route, {});
+      },
+    });
+    await page.route("**/api/recording/status", (route) =>
+      fulfillJson(route, idleStatus({ capture_readiness: blank })),
+    );
+    await bootLiveDashboard(page, {
+      installRoutes: false,
+      fakeWebSocket: { payload: { clients: [], spectra: { clients: {} } } },
+    });
+
+    const steps = page.locator("#liveSetup [data-setup-step]");
+    await expect(steps).toHaveCount(3);
+    await expect(steps.nth(0)).toHaveAttribute("data-step-state", "current");
+    await expect(steps.nth(1)).toContainText("Checked once a car is selected.");
+    // No signal yet: no empty overview tiles or spectrum placeholder.
+    await expect(page.locator(".dashboard-grid__overview")).toBeHidden();
+    await expect(page.locator(".dashboard-grid__main")).toBeHidden();
+    // The next step is pinned to the bottom of the screen; the header keeps the pills.
+    const bar = page.locator("#liveActionBar");
+    await expect(bar).toContainText("Setup 1 of 3: Car");
+    await expect(bar).toBeInViewport();
+    const box = await bar.boundingBox();
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBeCloseTo(844, 0);
+    await expect(page.locator("#shellLiveStatus")).toBeVisible();
+    await expect(page.locator("#speedUnitSelect")).toBeHidden();
+
+    await bar.getByRole("button", { name: "Add a car" }).tap();
+    await expect(page.locator("#addCarWizard")).toBeVisible();
+  });
+
   test("journey: after a run, a greyed-out Start says GPS is still waiting for a fix", async ({
     page,
   }) => {
@@ -745,7 +799,15 @@ test.describe("on a phone", () => {
 
     await expect(page.locator("#keepAwakeHint")).toBeHidden();
     await page.locator("#startLoggingBtn").tap();
-    await expect(page.locator("#stopLoggingBtn")).toBeVisible();
+    await expect(page.locator("#stopLoggingBtn")).toBeInViewport();
+    await expect(page.locator("#liveActionBar")).toHaveAttribute(
+      "data-state",
+      "recording",
+    );
+    // Recording is plain at the top too, in the header pill.
+    await expect(page.locator("#shellRecordingPill")).toContainText(
+      "Recording",
+    );
     // The Start tap starts the muted keep-awake video, and Live says to set auto-lock to Never.
     await expect.poll(isPlaying).toBe(true);
     await expect(keepAwakeVideo).toHaveJSProperty("muted", true);

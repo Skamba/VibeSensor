@@ -5,6 +5,7 @@ import {
   fulfillJson,
   openHistoryTab,
   requestPath,
+  selectPreference,
 } from "./smoke.helpers";
 import type {
   DeleteHistoryRunPayload,
@@ -247,7 +248,7 @@ test("journey: history previews runs, opens a diagnosis, and reloads it in Dutch
   await details.locator('[data-run-action="load-insights"]').click();
   await expect.poll(() => server.insightRequests.length).toBeGreaterThan(2);
 
-  await page.locator("#languageSelect").selectOption("nl");
+  await selectPreference(page, "#languageSelect", "nl");
   await expect(details).toContainText("Weak motor-orde.");
   await expect(engineBay).toContainText("geen sensor");
   await expect(checks).toContainText(
@@ -353,7 +354,7 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   await expect(details).toContainText("60–80 km/h");
   await expect(details).toContainText("speed above 20 km/h.");
 
-  await page.locator("#speedUnitSelect").selectOption("mps");
+  await selectPreference(page, "#speedUnitSelect", "mps");
   // The open diagnosis reloads, so the server's warnings follow the unit too.
   await expect(details).toContainText("speed above 6 m/s.");
   await expect(details).toContainText("T1 · 12.1 Hz @ 24 m/s");
@@ -362,11 +363,11 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   await expect(details).not.toContainText("km/h");
   expect(unit).toBe("mps");
 
-  await page.locator("#languageSelect").selectOption("nl");
+  await selectPreference(page, "#languageSelect", "nl");
   await expect(details).toContainText("Weak motor-orde.");
   await expect(details).toContainText("@ 24 m/s");
 
-  await page.locator("#speedUnitSelect").selectOption("kmh");
+  await selectPreference(page, "#speedUnitSelect", "kmh");
   // Dutch decimals and translated heatmap locations.
   await expect(details).toContainText("T1 · 12,1 Hz @ 85 km/u");
   await expect(details).toContainText("63–105 km/u");

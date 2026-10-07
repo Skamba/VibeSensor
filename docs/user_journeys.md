@@ -445,6 +445,21 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   estimated (weak library ratios, top-gear RPM) or not tested, with a fix
   button. With a typed-in speed it shows nothing as tested and says the
   matching only holds at exactly that speed.
+- **First run:** until the car, speed source and sensor steps all pass, Live
+  opens with a setup checklist (`setupModel` in `dashboard_model.ts`,
+  `#liveSetup`): Car → Speed source → Sensors, each with its status and a
+  button to the fix ("Place 3 sensors" counts the unplaced ones). Other
+  readiness problems (frame loss, a stale feed) never reopen it. Until a
+  sensor or a run is live, the overview tiles and the spectrum stay hidden.
+- **Action bar:** one next action from the same readiness
+  (`actionBarModel`, `#liveActionBar`): the next setup step, then Start
+  (greyed out with the reason while blocked), red with the elapsed time and
+  Stop while recording, then Open History (with Start as the second button)
+  after Stop. On a phone it is pinned to the bottom of the screen above the
+  safe-area inset; on a laptop it closes the recording card. The header keeps
+  only the Connected and readiness pills; while recording the readiness pill
+  turns red with the elapsed time. Unit and language live in
+  *Settings → General*.
 
 ### 3.6 Recording: free drive and guided drive
 
@@ -461,7 +476,7 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - While recording, the Start tap also keeps the screen on
     (`apps/ui/src/keep_awake.ts`): a Screen Wake Lock on secure pages, else a
     muted inline looping video (the NoSleep.js technique, since the Pi serves
-    plain http). Neither is guaranteed, so the recording card also shows
+    plain http). Neither is guaranteed, so the action bar also shows
     `dashboard.logging.keep_awake_hint` (set auto-lock to Never) unless a wake
     lock holds the screen.
 - **Guided drive (optional):** four steps posted to

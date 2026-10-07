@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { LoggingStatusPayload } from "../src/api/types";
+import type { CarRecord, LoggingStatusPayload } from "../src/api/types";
 import {
   classifyFreshness,
   driveAlerts,
@@ -9,11 +9,14 @@ import {
   guidedTestModel,
   IDLE_STATUS,
   isIdle,
+  actionBarModel,
   type LiveHealth,
   liveHealth,
   type RecordingInputs,
   recordingModel,
   runsAffected,
+  type SetupInputs,
+  setupModel,
   speedText,
   stopConfirmation,
   strongestSensor,
@@ -81,12 +84,7 @@ const NOT_READY = readiness(false, [
   ["capture_ready", "fail", "capture_blocked"],
 ]);
 
-const OK_HEALTH: LiveHealth = {
-  variant: "ok",
-  text: "ok",
-  summary: "",
-  showOverviewPill: false,
-};
+const OK_HEALTH: LiveHealth = { variant: "ok", text: "ok", summary: "" };
 
 function recording(overrides: Partial<RecordingInputs> = {}) {
   return recordingModel(
@@ -94,6 +92,7 @@ function recording(overrides: Partial<RecordingInputs> = {}) {
       status: status(),
       pending: null,
       carBlock: null,
+      setupIncomplete: false,
       health: OK_HEALTH,
       speedUnit: "kmh",
       gpsReceiverMissing: false,
@@ -110,25 +109,28 @@ function recording(overrides: Partial<RecordingInputs> = {}) {
 }
 
 describe("recording card", () => {
-  test("without cars the setup layout offers to add one", () => {
+  test("without an active car Start is blocked and the setup card leads instead", () => {
     const model = recording({
       carBlock: "no_cars",
+      setupIncomplete: true,
       status: status({ capture_readiness: NOT_READY }),
     });
-    expect(model.setupMode).toBe(true);
-    expect(model.phaseText).toBe("dashboard.recording_phase.blocked");
-    expect(model.summaryPanel?.action).toEqual({
-      action: "open-add-car",
-      label: "dashboard.logging.blocked.no_cars.action",
-      variant: "success",
+    expect(model).toMatchObject({
+      setupMode: true,
+      phaseText: "dashboard.recording_phase.blocked",
+      summaryPanel: null,
+      startDisabled: true,
     });
-    expect(model.startDisabled).toBe(true);
   });
 
-  test("an inactive car points at the car list", () => {
-    expect(
-      recording({ carBlock: "no_active" }).summaryPanel?.action?.action,
-    ).toBe("open-cars");
+  test("while setup is incomplete the card leaves the next step to the setup checklist", () => {
+    const model = recording({
+      setupIncomplete: true,
+      status: status({ capture_readiness: NOT_READY }),
+    });
+    expect(model.summaryPanel).toBeNull();
+    expect(model.checklist).toBeNull();
+    expect(model.startDisabled).toBe(true);
   });
 
   test("failing readiness shows the first failing check with its fix and a checklist of open items", () => {
@@ -428,6 +430,262 @@ describe("recording card", () => {
   });
 });
 
+describe("first-run setup", () => {
+  const ACTIVE = {
+    kind: "active",
+    car: { name: "Test Sedan" } as CarRecord,
+  } as const;
+  const setup = (overrides: Partial<SetupInputs> = {}) =>
+    setupModel(
+      {
+        carSelection: ACTIVE,
+        readiness: readiness(true, [
+          ["sensors_ready", "pass", "ready"],
+          ["reference_ready", "pass", "ready"],
+        ]),
+        connected: 4,
+        speedDoneText: "GPS gives a live speed.",
+        speedHint: null,
+        speedUnit: "kmh",
+        ...overrides,
+      },
+      t,
+      formatInt,
+    );
+  const states = (model: ReturnType<typeof setup>) =>
+    model?.steps.map((step) => `${step.key}:${step.state}`);
+
+  test("waits for the car list and the first readiness report", () => {
+    expect(setup({ carSelection: { kind: "loading" } })).toBeNull();
+    expect(setup({ readiness: null })).toBeNull();
+  });
+
+  test("a blank box starts at the car; speed waits for it and sensors are open", () => {
+    const model = setup({
+      carSelection: { kind: "no_cars" },
+      connected: 0,
+      readiness: readiness(false, [
+        ["sensors_ready", "fail", "no_live_sensors"],
+        ["reference_ready", "fail", "active_car_missing"],
+      ]),
+    });
+    expect(states(model)).toEqual([
+      "car:current",
+      "speed:todo",
+      "sensors:todo",
+    ]);
+    expect(model?.next?.key).toBe("car");
+    expect(model?.steps[0]).toMatchObject({
+      status: "dashboard.setup.car.no_cars",
+      action: {
+        action: "open-add-car",
+        label: "dashboard.setup.action.add_car",
+      },
+    });
+    expect(model?.steps[1]?.status).toBe("dashboard.setup.speed.after_car");
+    expect(model?.steps[2]?.action?.label).toBe(
+      "dashboard.setup.action.sensors",
+    );
+  });
+
+  test("saved cars without an active one point at the car list", () => {
+    const model = setup({ carSelection: { kind: "no_active_car" } });
+    expect(model?.steps[0]?.action?.action).toBe("open-cars");
+  });
+
+  test("a missing speed names the reason and the receiver hint", () => {
+    const model = setup({
+      readiness: readiness(false, [
+        ["sensors_ready", "pass", "ready"],
+        ["reference_ready", "fail", "speed_sample_missing"],
+      ]),
+      speedHint: "Plug in the receiver.",
+    });
+    expect(states(model)).toEqual([
+      "car:done",
+      "speed:current",
+      "sensors:done",
+    ]);
+    expect(model?.steps[0]).toMatchObject({
+      status: "Test Sedan",
+      action: null,
+    });
+    expect(model?.next).toMatchObject({
+      key: "speed",
+      status:
+        "dashboard.capture_readiness.reference_ready.speed_sample_missing Plug in the receiver.",
+      action: { action: "open-speed-source" },
+    });
+  });
+
+  test("unplaced sensors are counted on the button", () => {
+    const model = setup({
+      readiness: readiness(false, [
+        [
+          "sensors_ready",
+          "fail",
+          "sensor_locations_missing",
+          { unassigned_sensor_count: 3 },
+        ],
+        ["reference_ready", "pass", "ready"],
+      ]),
+    });
+    expect(model?.next).toMatchObject({
+      key: "sensors",
+      action: {
+        action: "open-sensors",
+        label: 'dashboard.setup.action.place_sensors:{"count":3}',
+      },
+    });
+  });
+
+  test("other readiness problems do not reopen setup", () => {
+    const model = setup({
+      readiness: readiness(false, [
+        ["sensors_ready", "fail", "frame_loss_high"],
+        ["reference_ready", "pass", "ready"],
+        ["speed_stable", "warn", "speed_unstable"],
+      ]),
+    });
+    expect(model?.next).toBeNull();
+    expect(model?.steps[2]?.status).toBe(
+      'dashboard.setup.sensors.done:{"count":4}',
+    );
+  });
+});
+
+describe("action bar", () => {
+  const READY = readiness(true, [
+    ["sensors_ready", "pass", "ready"],
+    ["reference_ready", "pass", "ready"],
+    ["capture_ready", "pass", "ready"],
+  ]);
+  const bar = (
+    input: {
+      status?: Partial<LoggingStatusPayload>;
+      pending?: "starting" | "stopping" | null;
+      setup?: ReturnType<typeof setupModel>;
+      error?: { kind: "error" | "unavailable"; message: string } | null;
+    } = {},
+  ) => {
+    const st = status(input.status ?? { capture_readiness: READY });
+    const pending = input.pending ?? null;
+    const base = recording({
+      status: st,
+      pending,
+      setupIncomplete: Boolean(input.setup),
+    });
+    return actionBarModel(
+      {
+        status: st,
+        pending,
+        recording: input.error ? withLoggingError(base, input.error, t) : base,
+        setup: input.setup ?? null,
+        error: input.error ?? null,
+      },
+      t,
+    );
+  };
+
+  test("ready offers an enabled Start", () => {
+    expect(bar()).toMatchObject({
+      state: "ready",
+      title: "dashboard.bar.ready",
+      primary: { kind: "start", disabled: false },
+      secondary: null,
+    });
+  });
+
+  test("an unfinished setup offers its next step", () => {
+    const setup = setupModel(
+      {
+        carSelection: { kind: "no_cars" },
+        readiness: NOT_READY,
+        connected: 0,
+        speedDoneText: "",
+        speedHint: null,
+        speedUnit: "kmh",
+      },
+      t,
+      formatInt,
+    );
+    expect(
+      bar({ status: { capture_readiness: NOT_READY }, setup }),
+    ).toMatchObject({
+      state: "setup",
+      title:
+        'dashboard.bar.setup_step:{"n":1,"total":3,"step":"dashboard.setup.car.title"}',
+      primary: { kind: "setup", action: "open-add-car" },
+    });
+  });
+
+  test("before the first readiness report Start waits", () => {
+    expect(bar({ status: {} })).toMatchObject({
+      state: "checking",
+      primary: { kind: "start", disabled: true },
+    });
+  });
+
+  test("a blocked Start says why", () => {
+    expect(bar({ status: { capture_readiness: NOT_READY } })).toMatchObject({
+      state: "blocked",
+      detail:
+        "dashboard.capture_readiness.reference_ready.speed_source_missing",
+      error: false,
+      primary: { kind: "start", disabled: true },
+    });
+  });
+
+  test("recording turns the bar into Stop with the elapsed time", () => {
+    expect(bar({ status: { enabled: true, run_id: "r" } })).toMatchObject({
+      state: "recording",
+      elapsed: "0:30",
+      primary: { kind: "stop", disabled: false },
+    });
+    expect(
+      bar({ status: { enabled: true, run_id: "r" }, pending: "stopping" }),
+    ).toMatchObject({
+      state: "stopping",
+      primary: { kind: "stop", disabled: true },
+    });
+    expect(
+      bar({ status: { enabled: true, write_error: "disk full" } }),
+    ).toMatchObject({
+      detail: "disk full",
+      error: true,
+    });
+  });
+
+  test("after Stop it opens History and still offers a new run", () => {
+    expect(
+      bar({
+        status: { analysis_in_progress: true, capture_readiness: READY },
+      }),
+    ).toMatchObject({
+      state: "after",
+      title: "dashboard.bar.analyzing",
+      primary: { kind: "history" },
+      secondary: { kind: "start", disabled: false },
+    });
+    expect(
+      bar({ status: { last_completed_run_id: "r", capture_readiness: READY } })
+        .title,
+    ).toBe("dashboard.bar.saved");
+  });
+
+  test("starting, a failed request and a lost status", () => {
+    expect(bar({ pending: "starting" }).state).toBe("starting");
+    expect(bar({ error: { kind: "error", message: "boom" } })).toMatchObject({
+      detail: "boom",
+      error: true,
+    });
+    expect(bar({ error: { kind: "unavailable", message: "" } })).toMatchObject({
+      state: "unavailable",
+      primary: { kind: "start", disabled: true },
+    });
+  });
+});
+
 describe("run health", () => {
   const locationOf = (c: AdaptedClient) => c.location_code ?? "";
   const health = (
@@ -468,14 +726,14 @@ describe("run health", () => {
     ).toBe('dashboard.logging.offline:{"count":1}');
   });
 
-  test("is ok while recording or ready, and hides the overview pill then", () => {
+  test("is ok while recording or ready", () => {
     expect(health([client()], { enabled: true })).toMatchObject({
+      variant: "ok",
       text: "dashboard.health.recording",
-      showOverviewPill: false,
     });
     expect(health([client()])).toMatchObject({
+      variant: "ok",
       text: "dashboard.health.ready",
-      showOverviewPill: false,
     });
     expect(health([client()], { capture_readiness: NOT_READY }).summary).toBe(
       "dashboard.capture_readiness.reference_ready.speed_source_missing",

@@ -71,7 +71,11 @@ export function findCheck(
   );
 }
 
-function detailCount(check: ReadinessCheck, key: string, fallback = 0): number {
+export function detailCount(
+  check: ReadinessCheck,
+  key: string,
+  fallback = 0,
+): number {
   const value = check.details?.[key];
   return Math.max(
     0,

@@ -9,23 +9,16 @@ import {
   hotspotHintVisible,
   errorMessage,
   isDemoMode,
-  languageFeedback,
   loadPreferences,
   navigate,
-  saveLanguage,
-  saveSpeedUnit,
-  selectedLanguage,
-  selectedSpeedUnit,
   SETTINGS_TAB_IDS,
   settleConfirmation,
   settingsTab,
   showError,
-  speedUnitFeedback,
   VIEW_IDS,
   type SettingsTabId,
   type ViewId,
 } from "./app_store";
-import { FeedbackSlot } from "./components/feedback";
 import { t } from "./i18n";
 import { loadLocationCodes, payloadError, wsState } from "./live_store";
 import { startLive } from "./live_transport";
@@ -33,12 +26,13 @@ import { Analysis } from "./pages/analysis/Analysis";
 import { Cars } from "./pages/cars/Cars";
 import { openWizard } from "./pages/cars/wizard_store";
 import { Dashboard, DriveAlerts } from "./pages/dashboard/Dashboard";
-import { health } from "./pages/dashboard/dashboard_store";
+import { actionBar, health } from "./pages/dashboard/dashboard_store";
 import { EspFlash } from "./pages/esp_flash/EspFlash";
 import { History } from "./pages/history/History";
 import { Sensors } from "./pages/sensors/Sensors";
 import { Spectrum } from "./pages/spectrum/Spectrum";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
+import { Preferences } from "./pages/preferences/Preferences";
 import { Internet, Update } from "./pages/update/Update";
 import { loadCars, loadSpeedSource } from "./settings_store";
 import { uiLogger } from "./ui_logger";
@@ -57,6 +51,7 @@ const SETTINGS_TAB_LABEL_KEYS: Record<SettingsTabId, string> = {
   internetTab: "settings.tab.internet",
   updateTab: "settings.tab.update",
   espFlashTab: "settings.tab.esp_flash",
+  generalTab: "settings.tab.general",
 };
 
 const WS_STATUS: Record<string, { key: string; variant: string }> = {
@@ -102,105 +97,50 @@ function Header() {
   const view = activeView.value;
   return (
     <div class="site-header__main">
-      <div class="site-header__nav">
-        <h1 class="title" aria-label="VibeSensor">
-          <picture class="brandmark">
-            <source
-              srcSet="/branding/vibesensor-logo-header-dark.svg"
-              media="(prefers-color-scheme: dark)"
-            />
-            <img
-              src="/branding/vibesensor-logo-header-light.svg"
-              alt="VibeSensor"
-              width="222"
-              height="46"
-            />
-          </picture>
-        </h1>
-        <div class="menu" aria-label="Primary" role="tablist">
-          {VIEW_IDS.map((id, index) => (
-            <button
-              key={id}
-              type="button"
-              class="menu-btn"
-              data-view={id}
-              id={NAV[id].tabId}
-              role="tab"
-              aria-controls={id}
-              aria-selected={view === id ? "true" : "false"}
-              tabIndex={view === id ? 0 : -1}
-              onClick={() => navigate(id)}
-              onKeyDown={(event) =>
-                onTabKeyDown(event, VIEW_IDS, index, navigate)
-              }
-            >
-              <span>{t(NAV[id].labelKey)}</span>
-            </button>
-          ))}
-        </div>
+      <h1 class="title" aria-label="VibeSensor">
+        <picture class="brandmark">
+          <source
+            srcSet="/branding/vibesensor-logo-header-dark.svg"
+            media="(prefers-color-scheme: dark)"
+          />
+          <img
+            src="/branding/vibesensor-logo-header-light.svg"
+            alt="VibeSensor"
+            width="222"
+            height="46"
+          />
+        </picture>
+      </h1>
+      <div class="menu" aria-label="Primary" role="tablist">
+        {VIEW_IDS.map((id, index) => (
+          <button
+            key={id}
+            type="button"
+            class="menu-btn"
+            data-view={id}
+            id={NAV[id].tabId}
+            role="tab"
+            aria-controls={id}
+            aria-selected={view === id ? "true" : "false"}
+            tabIndex={view === id ? 0 : -1}
+            onClick={() => navigate(id)}
+            onKeyDown={(event) =>
+              onTabKeyDown(event, VIEW_IDS, index, navigate)
+            }
+          >
+            <span>{t(NAV[id].labelKey)}</span>
+          </button>
+        ))}
       </div>
-      <Preferences />
+      <StatusPills />
     </div>
   );
 }
 
-function Preferences() {
-  const unitLabel = t("speed.unit");
-  const languageLabel = t("settings.language");
-  return (
-    <div class="site-header__preferences">
-      <label class="header-select" htmlFor="speedUnitSelect">
-        <span class="mini-label">{unitLabel}</span>
-        <select
-          id="speedUnitSelect"
-          class="unit-picker"
-          aria-label={unitLabel}
-          aria-describedby={
-            speedUnitFeedback.value ? "speedUnitFeedback" : undefined
-          }
-          aria-invalid={
-            speedUnitFeedback.value?.tone === "error" ? "true" : undefined
-          }
-          value={selectedSpeedUnit.value}
-          onChange={(event) => void saveSpeedUnit(event.currentTarget.value)}
-        >
-          <option value="kmh">{t("speed.unit.kmh")}</option>
-          <option value="mps">{t("speed.unit.mps")}</option>
-        </select>
-        <FeedbackSlot
-          id="speedUnitFeedback"
-          message={speedUnitFeedback.value}
-          compact
-        />
-      </label>
-      <label class="header-select" htmlFor="languageSelect">
-        <span class="mini-label">{languageLabel}</span>
-        <select
-          id="languageSelect"
-          class="lang-picker"
-          aria-label={languageLabel}
-          aria-describedby={
-            languageFeedback.value ? "languageFeedback" : undefined
-          }
-          aria-invalid={
-            languageFeedback.value?.tone === "error" ? "true" : undefined
-          }
-          value={selectedLanguage.value}
-          onChange={(event) => void saveLanguage(event.currentTarget.value)}
-        >
-          <option value="en">🇺🇸 English</option>
-          <option value="nl">🇳🇱 Nederlands</option>
-        </select>
-        <FeedbackSlot
-          id="languageFeedback"
-          message={languageFeedback.value}
-          compact
-        />
-      </label>
-    </div>
-  );
-}
-
+/**
+ * Connection and run health on every view; while a run records, a red pill
+ * with its elapsed time, so the recording shows wherever the page is.
+ */
 function StatusPills() {
   const link = payloadError.value
     ? { text: t("ws.payload_error_pill"), variant: "bad" }
@@ -209,20 +149,24 @@ function StatusPills() {
         variant: WS_STATUS[wsState.value]?.variant ?? "muted",
       };
   const live = health.value;
+  const bar = actionBar.value;
+  const recordingNow = bar.state === "recording" || bar.state === "stopping";
   return (
-    <div
-      class="site-header__status"
-      hidden={activeView.value === "dashboardView"}
-    >
-      <div class="site-header__status-pills">
-        <div
-          id="linkState"
-          class="pill"
-          data-variant={link.variant}
-          aria-live="polite"
-        >
-          {link.text}
+    <div class="site-header__status">
+      <div
+        id="linkState"
+        class="pill"
+        data-variant={link.variant}
+        aria-live="polite"
+      >
+        {link.text}
+      </div>
+      {recordingNow ? (
+        <div id="shellRecordingPill" class="pill pill--recording">
+          <span class="pill__dot" aria-hidden="true" />
+          {t("dashboard.bar.recording")} {bar.elapsed}
         </div>
+      ) : (
         <div
           id="shellLiveStatus"
           class="pill"
@@ -231,7 +175,7 @@ function StatusPills() {
         >
           {live.text}
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -426,7 +370,6 @@ export function App() {
     <div class="wrap" data-connection-state={degraded ? "degraded" : "live"}>
       <header class="site-header">
         <Header />
-        <StatusPills />
         <DriveAlerts onLive={activeView.value === "dashboardView"} />
       </header>
       <HotspotHint />
@@ -461,6 +404,9 @@ export function App() {
         </SettingsTab>
         <SettingsTab id="espFlashTab">
           <EspFlash />
+        </SettingsTab>
+        <SettingsTab id="generalTab">
+          <Preferences />
         </SettingsTab>
       </View>
       <ConfirmationDialog />
