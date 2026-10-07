@@ -992,6 +992,11 @@ export interface GuidedTestModel {
   action: { label: string; phase: GuidedPhase } | null;
   current: GuidedCurrentStep | null;
   disabled: boolean;
+  /**
+   * With a typed-in speed no step can show in the run (each needs live speed),
+   * so this says so in place of offering the guided test; `null` otherwise.
+   */
+  typedInNote: string | null;
 }
 
 function guidedText(
@@ -1041,6 +1046,7 @@ export function guidedTestModel(
   busy: boolean,
   fuelType: FuelType,
   t: Translate,
+  typedInSpeed = false,
 ): GuidedTestModel {
   const electric = fuelType === "EV";
   const order = electric ? GUIDED_STEPS_EV : GUIDED_STEPS;
@@ -1091,11 +1097,12 @@ export function guidedTestModel(
     finished,
     steps,
     action:
-      recording && index < 0
+      recording && index < 0 && !typedInSpeed
         ? { label: t("dashboard.guided.start"), phase: order[0] }
         : null,
     current: currentStep,
     disabled: busy,
+    typedInNote: typedInSpeed ? t("dashboard.guided.typed_in_note") : null,
   };
 }
 

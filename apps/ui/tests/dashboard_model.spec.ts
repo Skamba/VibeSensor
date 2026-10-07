@@ -959,7 +959,7 @@ describe("capability line", () => {
     });
   });
 
-  test("a typed-in speed tests nothing for sure and says so once", () => {
+  test("a typed-in speed tests each family only at that speed and says so once", () => {
     const model = capabilityModel(
       {
         wheel: "manual_speed",
@@ -971,10 +971,12 @@ describe("capability line", () => {
       null,
       t,
     );
-    expect(model?.items.map((item) => [item.mark, item.fix])).toEqual([
-      ["no", null],
-      ["no", null],
-      ["no", null],
+    expect(
+      model?.items.map((item) => [item.mark, item.note, item.fix]),
+    ).toEqual([
+      ["caveat", "capabilities.wheel.manual_speed", null],
+      ["caveat", "capabilities.driveline.manual_speed", null],
+      ["caveat", "capabilities.engine.manual_speed", null],
     ]);
     expect(model?.manualNote).toBe(
       'dashboard.capabilities.manual_note:{"speed":"80 km/h"}',
@@ -1029,6 +1031,17 @@ describe("guidedTestModel", () => {
     expect(guidedTestModel(recordingRun, "kmh", false, null, t).mode).toBe(
       "active",
     );
+  });
+
+  test("with a typed-in speed, says no step can be checked instead of offering the test", () => {
+    for (const status of [IDLE_STATUS, recordingRun]) {
+      const model = guidedTestModel(status, "kmh", false, null, t, true);
+      expect(model.typedInNote).toBe("dashboard.guided.typed_in_note");
+      expect(model.action).toBeNull();
+    }
+    expect(
+      guidedTestModel(recordingRun, "kmh", false, null, t).typedInNote,
+    ).toBeNull();
   });
 
   test("offers to start with the sweep before any step", () => {

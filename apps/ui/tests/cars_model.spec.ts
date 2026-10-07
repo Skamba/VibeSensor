@@ -226,7 +226,7 @@ test("a car's capabilities follow its references like the server's readiness", (
       "missing_tire",
       "manual_speed",
     ].map(capabilityMark),
-  ).toEqual(["ok", "ok", "caveat", "caveat", "no", "no"]);
+  ).toEqual(["ok", "ok", "caveat", "caveat", "no", "caveat"]);
   expect(capabilityNoteKey("wheel", "ok")).toBeNull();
   expect(capabilityNoteKey("engine", "missing_top_gear")).toBe(
     "capabilities.engine.missing_top_gear",

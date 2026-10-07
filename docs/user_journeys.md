@@ -523,6 +523,13 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - Stop during a guided step asks first (`dashboard.guided.confirm_stop`),
     so a tap meant for Next does not end the run; without a step in progress,
     Stop stops straight away.
+  - With Manual as the speed source, no step can show in the run: each needs
+    a changing live speed, and the firm stops need the speed to drop. The
+    panel says so (`dashboard.guided.typed_in_note`) with a "Change speed
+    source" button, and Start guided test is not offered. A run whose steps
+    were tapped on a typed-in speed lists them in the report as "not
+    checkable with a speed entered by hand" (`GUIDED_NOT_CHECKABLE_MANUAL`)
+    rather than "tapped but not detected".
 
   The coast-down classifies the vibration as following road speed or engine
   speed (`_speed_dependence` in `diagnosis.py`), and a contradicting coast-down

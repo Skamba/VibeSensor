@@ -111,6 +111,8 @@ _SPEED_SOURCE_KEYS = {
     "gps_unaligned": "SPEED_SOURCE_GPS_NO_SPEED",
     "obd2_unaligned": "SPEED_SOURCE_OBD_NO_SPEED",
 }
+# Speeds entered by hand (the analysis's ``speed_typed_in``); reports never import analysis.
+_TYPED_IN_SPEED_SOURCES = frozenset({"manual", "fallback_manual"})
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
 # An EV cannot coast in neutral: its motor stays coupled to the wheels.
 _RECAPTURE_KEYS_EV = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD")
@@ -1312,7 +1314,11 @@ def _guided_steps(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     done = names(diagnosis["guided_phases"])
     undetected = diagnosis.get("guided_phases_undetected", [])
     if undetected:
-        missing = ctx.t("GUIDED_UNDETECTED", steps=names(undetected))
+        # A typed-in speed never changes, so no step can show in it: say so
+        # rather than suggest the steps were driven wrong.
+        typed_in = diagnosis["conditions"]["speed_source"] in _TYPED_IN_SPEED_SOURCES
+        key = "GUIDED_NOT_CHECKABLE_MANUAL" if typed_in else "GUIDED_UNDETECTED"
+        missing = ctx.t(key, steps=names(undetected))
         return f"{done}; {missing}" if done else f"{missing[:1].upper()}{missing[1:]}"
     return done or ctx.t("GUIDED_NONE")
 
