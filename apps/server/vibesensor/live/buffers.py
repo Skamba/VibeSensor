@@ -1,6 +1,7 @@
 """Per-client ring buffer for live accelerometer data.
 
-``ClientBuffer`` holds one sensor's circular sample buffer, its latest computed
+``ClientBuffer`` holds one sensor's circular sample buffer (a sample lost on the
+way is NaN, so every sample keeps its place in time), its latest computed
 metrics/spectrum, and the generation counters used to discard stale compute
 results and reuse cached payloads. All methods assume the caller holds the
 owning :class:`~vibesensor.live.processor.SignalProcessor` lock.
@@ -144,7 +145,36 @@ class ClientBuffer:
             self.resize(rate * resize_to_seconds)
 
     def append(self, chunk: FloatArray, *, t0_us: int | None) -> None:
-        """Write an ``(N, 3)`` chunk (``N <= capacity``) and advance the sensor-clock anchor."""
+        """Write an ``(N, 3)`` chunk (``N <= capacity``) and advance the sensor-clock anchor.
+
+        A chunk stamped later than the previous one ends leaves the samples of
+        the frames lost in between as NaN: each sample keeps its place in time.
+        """
+        lost = self._lost_samples_before(t0_us)
+        if lost:
+            self._write(np.full((lost, 3), np.nan, dtype=np.float32))
+        self._write(chunk)
+        sample_count = int(chunk.shape[0])
+        if t0_us is not None and t0_us > 0 and int(t0_us) > self.last_t0_us:
+            self.last_t0_us = int(t0_us)
+            self.samples_since_t0 = sample_count
+        else:
+            self.samples_since_t0 = min(
+                self.samples_since_t0 + sample_count,
+                _MAX_SAMPLES_SINCE_T0,
+            )
+        self.ingest_generation += 1
+        self.invalidate_caches()
+
+    def _lost_samples_before(self, t0_us: int | None) -> int:
+        """Samples lost between the newest sample and a chunk stamped *t0_us* (at most capacity)."""
+        if t0_us is None or self.last_t0_us <= 0 or self.sample_rate_hz <= 0:
+            return 0
+        expected_us = self.last_t0_us + self.samples_since_t0 * 1_000_000 / self.sample_rate_hz
+        lost = round((int(t0_us) - expected_us) * self.sample_rate_hz / 1_000_000)
+        return max(0, min(lost, self.capacity))
+
+    def _write(self, chunk: FloatArray) -> None:
         sample_count = int(chunk.shape[0])
         capacity = self.capacity
         end = self.write_idx + sample_count
@@ -156,16 +186,6 @@ class ClientBuffer:
             self.data[:, : end % capacity] = chunk[first:].T
         self.write_idx = end % capacity
         self.count = min(capacity, self.count + sample_count)
-        if t0_us is not None and t0_us > 0 and int(t0_us) > self.last_t0_us:
-            self.last_t0_us = int(t0_us)
-            self.samples_since_t0 = sample_count
-        else:
-            self.samples_since_t0 = min(
-                self.samples_since_t0 + sample_count,
-                _MAX_SAMPLES_SINCE_T0,
-            )
-        self.ingest_generation += 1
-        self.invalidate_caches()
 
     def commit_metrics(self, result: MetricsComputationResult) -> bool:
         """Store *result* unless the buffer was reset, replaced, or already has newer metrics."""
@@ -207,4 +227,6 @@ class ClientBuffer:
         if time_range is None:
             return None
         start_s, end_s, synced = time_range
-        return AnalysisTimeRange(start_s=start_s, end_s=end_s, synced=synced)
+        return AnalysisTimeRange(
+            start_s=start_s, end_s=end_s, synced=synced, centre_s=(start_s + end_s) / 2.0
+        )

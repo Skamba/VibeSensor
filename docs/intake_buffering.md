@@ -95,15 +95,22 @@ setup through `SignalMetricsComputer`, which extends the shared
 `apps/server/vibesensor/live/compute.py` coordinates live snapshot
 handling and metric commits, while the pure DSP steps stay in shared helpers:
 
-1. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
+1. `fill_lost_samples()` fills the samples of frames lost on the way (NaN in
+   the ring buffer, which keeps every synced sample at its time; see
+   `docs/time_alignment.md`) with the axis mean of the samples present, which
+   the FFT removes, and scales the rest by the window energy lost: a tone keeps
+   its frequency and phase across the gap and the spectrum its power. A block
+   whose samples present carry under 30 % of the window energy
+   (`FFT_MIN_WINDOW_COVERAGE`) has no spectrum.
+2. `medfilt3()` applies a 3-point median filter per axis before FFT work. This
    removes isolated transport/I2C spikes without blurring normal vibration
    content.
-2. The FFT step detrends the filtered block by removing the per-axis mean.
-3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
+3. The FFT step detrends the filtered block by removing the per-axis mean.
+4. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
    Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
    the configured frequency range via SciPy FFT frequency bins, and produces
    both per-axis spectra and a combined amplitude curve.
-4. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
+5. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
    select dominant candidate bins, estimates a P20/median noise floor, and
    converts the dominant peak band into the
    shared dB metric used by both live telemetry and post-stop analysis:

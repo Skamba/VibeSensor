@@ -1179,6 +1179,32 @@ BENCH_CASES = (
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         frame_loss={"rear_right_wheel": 0.15},
     ),
+    # Lost frames keep their time in the spectrum while the car speeds up: the
+    # lossy corner's line stays on the speed it was heard at, so that wheel,
+    # even with almost a third of its frames gone.
+    Case(
+        "bench-rear-right-wheel-sweep-very-lossy-sensor",
+        _sweep(
+            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+        ),
+        _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
+        frame_loss={"rear_right_wheel": 0.3},
+    ),
+    # Every sensor loses a fifth of its frames: a mild imbalance on the wheel
+    # hop is still found, and a healthy car's seat mode is still no fault.
+    Case(
+        "bench-mild-front-left-under-wheel-hop-sweep-lossy-sensors",
+        _sweep(*_MILD_FL_WHEEL_HOP),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE_OR_STRONG),
+        frame_loss={sensor.location_code: 0.2 for sensor in SENSORS},
+    ),
+    Case(
+        "bench-healthy-seat-mode-long-sweep-lossy-sensors",
+        _long_sweep(_HEALTHY_SEAT_MODE),
+        NO_FAULT,
+        frame_loss={sensor.location_code: 0.2 for sensor in SENSORS},
+    ),
     # Busy Wi-Fi: slow, one-sided clock-sync replies must not throw the sensor
     # clocks off, so the run stays (mostly) raw-backed.
     Case(
@@ -2119,8 +2145,10 @@ def _assert_raw_backed(result: SimPipelineResult, case: Case) -> None:
         assert raw_backed == total, metadata
     assert metadata["raw_capture_mode"] in {"raw_backed", "partial_raw_backed"}, metadata
     if case.frame_loss:
-        # The lossy sensor's frame gaps leave its rows to the stored summaries.
-        assert raw_backed >= 0.6 * total, metadata
+        # A lossy sensor's frame gaps leave most of its rows to the stored
+        # summaries; the other sensors' rows replay from raw samples.
+        intact = sum(1 for sensor in case.sensors() if not sensor.frame_loss) / len(case.layout)
+        assert raw_backed >= 0.75 * intact * total, metadata
         return
     if case.car_start:
         # Chunks stamped on bare device time before the sync are not captured, so
