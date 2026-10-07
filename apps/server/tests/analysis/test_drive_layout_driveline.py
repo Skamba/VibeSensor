@@ -127,8 +127,8 @@ def test_a_fwd_driveline_shake_no_axle_dominates_points_at_the_driven_axle() -> 
 @pytest.mark.parametrize(
     ("layout", "zone", "where"),
     [
-        pytest.param("RWD", "driveshaft_tunnel", "near the centre tunnel", id="rwd"),
-        pytest.param("AWD", "driveshaft_tunnel", "near the centre tunnel", id="awd"),
+        pytest.param("RWD", "driveshaft_tunnel", "near the center tunnel", id="rwd"),
+        pytest.param("AWD", "driveshaft_tunnel", "near the center tunnel", id="awd"),
         pytest.param("FWD", "front_axle", "near the front axle", id="fwd"),
     ],
 )

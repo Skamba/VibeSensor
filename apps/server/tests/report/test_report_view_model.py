@@ -524,7 +524,7 @@ def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None
             "en",
             None,
             "estimated_top_gear",
-            "Never analysed: a misfiring or unevenly running engine (a shake at half the"
+            "Never analyzed: a misfiring or unevenly running engine (a shake at half the"
             " engine speed), the firing rhythm of a six-cylinder engine (three times per"
             " engine revolution), wheel-bearing hum and shaking at a standstill with the"
             " engine idling",
@@ -543,7 +543,7 @@ def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None
             "en",
             None,
             "measured",
-            "Never analysed: a misfiring or unevenly running engine (a shake at half the"
+            "Never analyzed: a misfiring or unevenly running engine (a shake at half the"
             " engine speed), the firing rhythm of a six-cylinder engine (three times per"
             " engine revolution) and wheel-bearing hum",
         ),
@@ -551,7 +551,7 @@ def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None
             "en",
             "EV",
             "none",
-            "Never analysed: the electric motor's electrical and gear-mesh rhythms and"
+            "Never analyzed: the electric motor's electrical and gear-mesh rhythms and"
             " wheel-bearing hum",
         ),
     ],

@@ -253,7 +253,7 @@ def test_incomplete_raw_replay_fails_frame_integrity_instead_of_claiming_nothing
         False,
         "Some sensor data was lost or incomplete. The raw capture did not cover the whole run"
         " (0 partial and 1 missing windows, 0 timing gaps, 0 overlaps); those moments were"
-        " analysed from the stored summaries.",
+        " analyzed from the stored summaries.",
     )
     assert "1 ontbrekende vensters" in _frame_integrity_line(summary, "nl")[1]
     persisted = [_check(summary, "SUITABILITY_CHECK_FRAME_INTEGRITY")]

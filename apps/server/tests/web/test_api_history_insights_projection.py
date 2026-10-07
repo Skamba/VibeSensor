@@ -189,7 +189,7 @@ _PI_RUN_SUITABILITY = [
         (
             "en",
             "Frame integrity",
-            "those moments were analysed from the stored summaries",
+            "those moments were analyzed from the stored summaries",
         ),
         (
             "nl",

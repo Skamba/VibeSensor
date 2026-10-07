@@ -483,7 +483,7 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
     references: [
       {
         label: "Powertrain",
-        detail: "not provided; analysed as a car with a combustion engine",
+        detail: "not provided; analyzed as a car with a combustion engine",
       },
       {
         label: "Drive layout",
@@ -700,7 +700,7 @@ test("an EV run names its motor, calls the engine not applicable and skips gearb
     "Reduction ratio (final drive)",
   ]);
   expect(insights.checks.references[0].detail).toContain(
-    "electrical and gear-mesh orders are not analysed",
+    "electrical and gear-mesh orders are not analyzed",
   );
   // A run that checked nothing still never says "engine".
   const nothing = checkedInsights(
@@ -862,16 +862,16 @@ test("a front-wheel-drive car's driveline fault names its gearbox output shaft, 
     detail:
       "front-wheel drive: the gearbox output shaft turns at the driveline order",
   });
-  expect(JSON.stringify(fault)).not.toMatch(/propshaft\)|centre bearing/i);
+  expect(JSON.stringify(fault)).not.toMatch(/propshaft\)|center bearing/i);
   expect(JSON.stringify(fault)).not.toMatch(WHEEL_SPEED_PARTS);
 
-  // No axle standing out: a centre-tunnel location is not a propshaft.
+  // No axle standing out: a center-tunnel location is not a propshaft.
   const tunnel = drivelineInsights(
     "fault",
     { zone: "driveshaft_tunnel", driveline_parts: ["front_drive"] },
     FWD,
   );
-  expect(tunnel.primary?.chips[0].value).toBe("Centre tunnel");
+  expect(tunnel.primary?.chips[0].value).toBe("Center tunnel");
 
   const healthy = drivelineInsights("no_fault", {}, FWD);
   expect(healthy.checks.checked).toEqual([
@@ -903,7 +903,7 @@ test("an all-wheel-drive car checks the axle the sensors point to first, then th
     { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
   );
   expect(rear.primary?.nextStep).toBe(
-    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked; then the front propshaft (if fitted) and the front differential pinion",
+    "Rear axle: have the propshaft, its joints and center bearing, and the rear differential checked; then the front propshaft (if fitted) and the front differential pinion",
   );
   expect(JSON.stringify(rear)).not.toMatch(WHEEL_SPEED_PARTS);
   const front = drivelineInsights(
@@ -912,7 +912,7 @@ test("an all-wheel-drive car checks the axle the sensors point to first, then th
     { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
   );
   expect(front.primary?.nextStep).toBe(
-    "Front axle: have the front propshaft (if fitted) and the front differential pinion checked; then the propshaft, its joints and centre bearing, and the rear differential",
+    "Front axle: have the front propshaft (if fitted) and the front differential pinion checked; then the propshaft, its joints and center bearing, and the rear differential",
   );
   expect(front.checks.references[1].detail).toBe(
     "all-wheel drive: a propshaft to the rear axle and a drive to the front differential",
@@ -923,7 +923,7 @@ test("an all-wheel-drive car checks the axle the sensors point to first, then th
     { drive_layout: "RWD", final_drive_axle: "rear", propshaft: true },
   );
   expect(rwd.primary?.nextStep).toBe(
-    "Rear axle: have the propshaft, its joints and centre bearing, and the rear differential checked",
+    "Rear axle: have the propshaft, its joints and center bearing, and the rear differential checked",
   );
   expect(rwd.checks.references[1].detail).toBe(
     "rear-wheel drive: propshaft to the rear axle",
@@ -962,7 +962,7 @@ test("a run without a drive layout keeps the propshaft wording and says the layo
     { zone: "driveshaft_tunnel" },
     {},
   );
-  expect(insights.primary?.nextStep).toBe("Centre tunnel (propshaft)");
+  expect(insights.primary?.nextStep).toBe("Center tunnel (propshaft)");
   expect(insights.checks.references[1]).toEqual({
     label: "Drive layout",
     detail:

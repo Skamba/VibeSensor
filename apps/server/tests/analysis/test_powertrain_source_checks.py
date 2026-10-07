@@ -69,7 +69,7 @@ def test_an_ev_has_no_engine_check_and_its_motor_is_the_driveline_order() -> Non
     assert conditions["Powertrain"].startswith("electric (EV): the motor is checked at once")
     assert "(wheel speed × reduction ratio)" in conditions["Powertrain"]
     assert _checks(summary)["driveline"] == ("ruled_out", "no_matching_order")
-    assert "electrical and gear-mesh orders are not analysed" in conditions["Powertrain"]
+    assert "electrical and gear-mesh orders are not analyzed" in conditions["Powertrain"]
     assert f"{FINAL_DRIVE:.2f}" in conditions["Reduction ratio (final drive)"]
     assert "Top gear ratio" not in conditions
     assert "Engine RPM" not in conditions
@@ -175,7 +175,7 @@ def test_the_report_says_when_the_powertrain_is_not_known() -> None:
         fact.label: fact.value for fact in report_view_for(summary, lang="nl").mechanic.conditions
     }
 
-    assert conditions["Powertrain"] == "not provided; analysed as a car with a combustion engine"
+    assert conditions["Powertrain"] == "not provided; analyzed as a car with a combustion engine"
     assert conditions_nl["Aandrijving"].startswith("niet opgegeven")
 
 

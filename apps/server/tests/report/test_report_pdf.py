@@ -128,7 +128,7 @@ def test_a_quality_warning_adds_the_data_quality_page() -> None:
         (
             "en",
             "The raw capture did not cover the whole run",
-            "those moments were analysed from the stored summaries",
+            "those moments were analyzed from the stored summaries",
         ),
         (
             "nl",
