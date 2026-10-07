@@ -285,7 +285,7 @@ is on the device, this README owns the backend-side service and config path.
   `install_pi.sh` runs it, and it doubles as the offline migration path. It
   also writes a manifest of the installed root side to
   `/usr/local/lib/vibesensor/root-side.sha256`. In-app updates replace only the
-  venv, so `/api/health` (`root_side`) and the Update tab report when the
+  venv, so `/api/health` (`root_side`) and the System Update page (Settings → Advanced) report when the
   installed root side differs from the release's. Prebuilt-image devices take a
   new root side with `scripts/push_root_side.sh pi@10.4.0.1`, run from a release
   checkout; see

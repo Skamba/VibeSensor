@@ -52,8 +52,7 @@ export const updateView = computed<UpdateView>(() => ({
 
 const tabVisible = computed(
   () =>
-    activeView.value === "settingsView" &&
-    (settingsTab.value === "internetTab" || settingsTab.value === "updateTab"),
+    activeView.value === "settingsView" && settingsTab.value === "updateTab",
 );
 
 let ssidHydrated = false;
@@ -113,7 +112,7 @@ export async function startUpdate(): Promise<void> {
   const transport = activeTransport(view);
   const wifiSsid = view.ssid.trim();
   if (transport === "wifi" && !wifiSsid) {
-    settingsTab.value = "internetTab";
+    settingsTab.value = "updateTab";
     ssidFocusRequest.value += 1;
     return;
   }

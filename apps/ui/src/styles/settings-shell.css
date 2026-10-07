@@ -41,3 +41,33 @@
 .settings-tab-panel[hidden] {
   display: none !important;
 }
+/* Settings > Advanced: a short intro, then one maintenance page at a time. */
+.settings-advanced__intro {
+  margin: 0 0 var(--space-2);
+}
+.settings-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.settings-subtab {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+.settings-subtab[aria-selected="true"] {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+.settings-subtab:focus-visible {
+  outline: 2px solid var(--md-sys-color-focus);
+  outline-offset: 2px;
+}

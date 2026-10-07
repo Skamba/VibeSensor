@@ -97,7 +97,8 @@ function TransportChoice(props: {
   );
 }
 
-export function Internet() {
+/** How the Pi reaches the internet for the update, and the start/cancel actions. */
+function UpdateConnection() {
   const view = updateView.value;
   const locked = isRunning(view);
   const usingUsb = activeTransport(view) === "usb_internet";
@@ -109,7 +110,6 @@ export function Internet() {
       ssidInput.current?.focus();
     }
   }, [focusRequest]);
-  const badge = internetBadge(view.internet, t);
   const passwordInputProps = {
     id: "updatePasswordInput",
     autoComplete: "off",
@@ -122,147 +122,163 @@ export function Internet() {
     },
   };
   return (
-    <div class="maintenance-stack">
-      <div class="panel card">
-        <strong>{t("settings.internet.title")}</strong>
-        <div class="subtle">{t("settings.internet.hint")}</div>
+    <Card
+      title={t("settings.update.controls_title")}
+      subtitle={t("settings.update.controls_intro")}
+    >
+      <div class="update-form">
         <div
-          id="internetStatusPanel"
-          class="maintenance-stack internet-panel__status"
-          aria-live="polite"
+          id="updateTransportOptions"
+          class="maintenance-stack maintenance-stack--tight"
         >
-          {view.status && view.health ? (
-            <Card
-              title={t("settings.internet.card_title")}
-              subtitle={internetSummary(view.internet, t)}
-              badge={<Pill variant={badge.variant}>{badge.text}</Pill>}
-            >
-              <div class="maintenance-card__body">
-                <StatusGrid rows={internetRows(view.internet, t)} />
-              </div>
-            </Card>
-          ) : null}
+          <div class="subtle">{t("settings.update.transport_label")}</div>
+          <div class="speed-source-choice-grid">
+            <TransportChoice
+              transport="wifi"
+              title={t("settings.update.transport.wifi_title")}
+              summary={t("settings.update.transport.wifi_summary")}
+              selected={!usingUsb}
+              unavailable={false}
+              inputDisabled={locked}
+            />
+            <TransportChoice
+              transport="usb_internet"
+              title={t("settings.update.transport.usb_title")}
+              summary={usbSummary(view.internet, t)}
+              selected={usingUsb}
+              unavailable={!usable && !locked}
+              inputDisabled={locked || !usable}
+            />
+          </div>
         </div>
-      </div>
-
-      <Card
-        title={t("settings.update.controls_title")}
-        subtitle={t("settings.update.controls_intro")}
-      >
-        <div class="update-form">
-          <div
-            id="updateTransportOptions"
-            class="maintenance-stack maintenance-stack--tight"
-          >
-            <div class="subtle">{t("settings.update.transport_label")}</div>
-            <div class="speed-source-choice-grid">
-              <TransportChoice
-                transport="wifi"
-                title={t("settings.update.transport.wifi_title")}
-                summary={t("settings.update.transport.wifi_summary")}
-                selected={!usingUsb}
-                unavailable={false}
-                inputDisabled={locked}
-              />
-              <TransportChoice
-                transport="usb_internet"
-                title={t("settings.update.transport.usb_title")}
-                summary={usbSummary(view.internet, t)}
-                selected={usingUsb}
-                unavailable={!usable && !locked}
-                inputDisabled={locked || !usable}
-              />
-            </div>
+        <div id="updateWifiFields" hidden={usingUsb}>
+          <div class="form-group">
+            <label htmlFor="updateSsidInput">{t("settings.update.ssid")}</label>
+            <input
+              type="text"
+              id="updateSsidInput"
+              ref={ssidInput}
+              autoComplete="off"
+              maxLength={64}
+              class="internet-panel__input"
+              value={ssid.value}
+              disabled={locked}
+              onInput={(event) => {
+                ssid.value = event.currentTarget.value;
+              }}
+            />
           </div>
-          <div id="updateWifiFields" hidden={usingUsb}>
-            <div class="form-group">
-              <label htmlFor="updateSsidInput">
-                {t("settings.update.ssid")}
-              </label>
-              <input
-                type="text"
-                id="updateSsidInput"
-                ref={ssidInput}
-                autoComplete="off"
-                maxLength={64}
-                class="internet-panel__input"
-                value={ssid.value}
-                disabled={locked}
-                onInput={(event) => {
-                  ssid.value = event.currentTarget.value;
-                }}
-              />
-            </div>
-            <div class="form-group">
-              <label htmlFor="updatePasswordInput">
-                {t("settings.update.password")}
-              </label>
-              <div class="internet-panel__input-row">
-                {/* Same position and no key, so Preact keeps one <input> and only
+          <div class="form-group">
+            <label htmlFor="updatePasswordInput">
+              {t("settings.update.password")}
+            </label>
+            <div class="internet-panel__input-row">
+              {/* Same position and no key, so Preact keeps one <input> and only
                     flips its type; Preact's per-type input typings need literal types. */}
-                {passwordVisible.value ? (
-                  <input type="text" {...passwordInputProps} />
-                ) : (
-                  <input type="password" {...passwordInputProps} />
-                )}
-                <button
-                  type="button"
-                  id="updateTogglePasswordBtn"
-                  class="btn btn--small"
-                  disabled={locked}
-                  onClick={() => {
-                    passwordVisible.value = !passwordVisible.value;
-                  }}
-                >
-                  <span>
-                    {t(
-                      passwordVisible.value
-                        ? "settings.update.hide_password"
-                        : "settings.update.show_password",
-                    )}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div
-            id="updateReadinessSummary"
-            class="maintenance-stack maintenance-stack--tight"
-            aria-live="polite"
-          >
-            <ReadinessPanel model={startReadiness(view, t)} />
-          </div>
-          <details class="settings-help-disclosure settings-help-disclosure--inline">
-            <summary class="settings-help-disclosure__summary">
-              <span class="settings-help-disclosure__heading">
-                <span class="settings-help-disclosure__title">
-                  {t("settings.update.details_title")}
-                </span>
-                <span
-                  id="updateDetailsCaption"
-                  class="settings-help-disclosure__caption"
-                >
+              {passwordVisible.value ? (
+                <input type="text" {...passwordInputProps} />
+              ) : (
+                <input type="password" {...passwordInputProps} />
+              )}
+              <button
+                type="button"
+                id="updateTogglePasswordBtn"
+                class="btn btn--small"
+                disabled={locked}
+                onClick={() => {
+                  passwordVisible.value = !passwordVisible.value;
+                }}
+              >
+                <span>
                   {t(
-                    usingUsb
-                      ? "settings.update.details_caption_usb"
-                      : "settings.update.details_caption_wifi",
+                    passwordVisible.value
+                      ? "settings.update.hide_password"
+                      : "settings.update.show_password",
                   )}
                 </span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          id="updateReadinessSummary"
+          class="maintenance-stack maintenance-stack--tight"
+          aria-live="polite"
+        >
+          <ReadinessPanel model={startReadiness(view, t)} />
+        </div>
+        <div class="maintenance-action-row">
+          <button
+            type="button"
+            id="updateStartBtn"
+            class="btn btn--success"
+            hidden={locked}
+            disabled={!canStart(view, t)}
+            onClick={() => void startUpdate()}
+          >
+            {startLabel(view, t)}
+          </button>
+          <button
+            type="button"
+            id="updateCancelBtn"
+            class="btn btn--danger"
+            hidden={!locked}
+            disabled={!locked}
+            onClick={() => void cancelUpdate()}
+          >
+            {t("settings.update.cancel")}
+          </button>
+        </div>
+        <details class="settings-help-disclosure settings-help-disclosure--inline">
+          <summary class="settings-help-disclosure__summary">
+            <span class="settings-help-disclosure__heading">
+              <span class="settings-help-disclosure__title">
+                {t("settings.update.details_title")}
               </span>
-            </summary>
-            <div class="settings-help-disclosure__body">
-              <div id="updateTransportNote" class="maintenance-note">
+              <span
+                id="updateDetailsCaption"
+                class="settings-help-disclosure__caption"
+              >
                 {t(
                   usingUsb
-                    ? "settings.update.preflight_note_usb"
-                    : "settings.update.preflight_note_wifi",
+                    ? "settings.update.details_caption_usb"
+                    : "settings.update.details_caption_wifi",
                 )}
-              </div>
+              </span>
+            </span>
+          </summary>
+          <div class="settings-help-disclosure__body">
+            <div id="updateTransportNote" class="maintenance-note">
+              {t(
+                usingUsb
+                  ? "settings.update.preflight_note_usb"
+                  : "settings.update.preflight_note_wifi",
+              )}
             </div>
-          </details>
-        </div>
-      </Card>
-    </div>
+          </div>
+        </details>
+      </div>
+    </Card>
+  );
+}
+
+/** The USB uplink in detail; the transport choice above already summarizes it. */
+function InternetStatus() {
+  const view = updateView.value;
+  if (!view.status || !view.health) {
+    return null;
+  }
+  const badge = internetBadge(view.internet, t);
+  return (
+    <Card
+      title={t("settings.internet.card_title")}
+      subtitle={internetSummary(view.internet, t)}
+      badge={<Pill variant={badge.variant}>{badge.text}</Pill>}
+    >
+      <div class="maintenance-card__body">
+        <StatusGrid rows={internetRows(view.internet, t)} />
+      </div>
+    </Card>
   );
 }
 
@@ -308,7 +324,10 @@ function UpdateStatusCards() {
                   </Note>
                 </div>
               ) : null}
-              <StageList stages={journeyStages(status, view, t)} />
+              <StageList
+                stages={journeyStages(status, view, t)}
+                idleSummary={t("maintenance.stages_idle_summary")}
+              />
             </div>
           </div>
         </Card>
@@ -445,9 +464,8 @@ function UpdateOverview() {
   );
 }
 
-export function Update() {
-  const view = updateView.value;
-  const running = isRunning(view);
+/** Settings > Advanced > System update: connection, start, progress and log. */
+export function SystemUpdate() {
   return (
     <div class="panel card">
       <div class="maintenance-layout maintenance-layout--compact">
@@ -465,36 +483,22 @@ export function Update() {
             >
               <UpdateOverview />
             </div>
-            <div class="maintenance-action-row">
-              <button
-                type="button"
-                id="updateStartBtn"
-                class="btn btn--success"
-                hidden={running}
-                disabled={!canStart(view, t)}
-                onClick={() => void startUpdate()}
-              >
-                {startLabel(view, t)}
-              </button>
-              <button
-                type="button"
-                id="updateCancelBtn"
-                class="btn btn--danger"
-                hidden={!running}
-                disabled={!running}
-                onClick={() => void cancelUpdate()}
-              >
-                {t("settings.update.cancel")}
-              </button>
-            </div>
           </div>
         </Card>
+        <UpdateConnection />
         <div
           id="updateStatusPanel"
           class="maintenance-stack maintenance-stack--tight"
           aria-live="polite"
         >
           <UpdateStatusCards />
+        </div>
+        <div
+          id="internetStatusPanel"
+          class="maintenance-stack maintenance-stack--tight"
+          aria-live="polite"
+        >
+          <InternetStatus />
         </div>
       </div>
     </div>

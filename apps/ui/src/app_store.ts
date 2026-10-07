@@ -20,17 +20,31 @@ export const VIEW_IDS = [
 ] as const;
 export type ViewId = (typeof VIEW_IDS)[number];
 
-export const SETTINGS_TAB_IDS = [
+/** Settings used day to day, in the order they are needed. */
+export const DAILY_SETTINGS_TAB_IDS = [
   "carTab",
-  "analysisTab",
   "speedSourceTab",
   "sensorsTab",
-  "internetTab",
-  "updateTab",
-  "espFlashTab",
   "generalTab",
 ] as const;
+/** Rarely needed maintenance and tuning, grouped under one Advanced tab. */
+export const ADVANCED_SETTINGS_TAB_IDS = [
+  "updateTab",
+  "analysisTab",
+  "espFlashTab",
+] as const;
+const SETTINGS_TAB_IDS = [
+  ...DAILY_SETTINGS_TAB_IDS,
+  ...ADVANCED_SETTINGS_TAB_IDS,
+] as const;
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number];
+export type AdvancedSettingsTabId = (typeof ADVANCED_SETTINGS_TAB_IDS)[number];
+
+export function isAdvancedSettingsTab(
+  id: SettingsTabId,
+): id is AdvancedSettingsTabId {
+  return (ADVANCED_SETTINGS_TAB_IDS as readonly string[]).includes(id);
+}
 
 export function isDemoMode(): boolean {
   return new URLSearchParams(globalThis.location?.search).has("demo");

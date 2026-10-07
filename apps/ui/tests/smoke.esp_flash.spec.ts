@@ -148,6 +148,12 @@ test("journey: ESP flash detects a board, flashes it, and records the attempt", 
     "Connect the ESP board over USB and refresh the port list.",
   );
   await expect(startButton).toBeDisabled();
+  // Idle, the expected stages are reference only and stay folded.
+  const journey = page.locator("#espFlashJourneyPanel");
+  await expect(journey.locator(".maintenance-stage-explainer")).toContainText(
+    "What happens, step by step",
+  );
+  await expect(journey.locator(".maintenance-stage").first()).toBeHidden();
 
   server.ports = [{ port: "/dev/ttyUSB0", description: "CP2102 USB to UART" }];
   await page.locator("#espFlashRefreshPortsBtn").click();
@@ -167,6 +173,8 @@ test("journey: ESP flash detects a board, flashes it, and records the attempt", 
   );
   await expect(page.locator("#espFlashCancelBtn")).toBeVisible();
   await expect(portSelect).toBeDisabled();
+  await expect(journey.locator(".maintenance-stage-explainer")).toHaveCount(0);
+  await expect(journey.locator(".maintenance-stage").first()).toBeVisible();
 
   // The job finishes; polling picks up the final state and history.
   server.logs = [...server.logs, "Hard resetting via RTS pin..."];

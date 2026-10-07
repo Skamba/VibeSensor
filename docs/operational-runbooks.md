@@ -462,7 +462,7 @@ installed from to `/usr/local/lib/vibesensor/root-side.sha256`: one
 release carries the digest of its own manifest (`ROOT_SIDE_DIGEST` in
 `vibesensor/common/root_side.py`). When the two differ, or the stamp is
 missing, `/api/health` reports `root_side.state: "outdated"` and marks the
-`root_side` subsystem degraded (`root_side_outdated`). The Update tab shows the
+`root_side` subsystem degraded (`root_side_outdated`). The System Update page shows the
 fix with the release tag. The overall `status` stays out of it, so it neither
 blocks in-app updates nor makes the post-update boot check revert them. Until
 the root side matches, hotspot repair (`vibesensor-hotspot.service`, the
@@ -474,7 +474,7 @@ as outdated until its root side is reinstalled once. Compare by hand with
 To install it:
 
 - **Git install (`install_pi.sh`):** in the clone, `git fetch --tags && git
-  checkout server-v<version>` (the version the Update tab shows), then
+  checkout server-v<version>` (the version the System Update page shows), then
   `sudo ./apps/server/scripts/install_systemd_units.sh`. Before you run `sudo`
   from a clone the service user can write, check it with `git status` and
   `git log` (or use a fresh clone): that run is the point where root trusts

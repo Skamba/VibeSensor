@@ -142,8 +142,16 @@ export function ReadinessPanel(props: { model: Readiness }) {
   );
 }
 
-export function StageList(props: { stages: readonly Stage[] }) {
-  return (
+/**
+ * The stages of a maintenance job. Before a job starts every stage is upcoming
+ * and the list only explains what will happen, so it folds away behind
+ * `idleSummary`; once a job runs it shows as live progress.
+ */
+export function StageList(props: {
+  stages: readonly Stage[];
+  idleSummary: string;
+}) {
+  const list = (
     <ol class="maintenance-stage-list">
       {props.stages.map((stage, index) => (
         <li
@@ -164,5 +172,20 @@ export function StageList(props: { stages: readonly Stage[] }) {
         </li>
       ))}
     </ol>
+  );
+  if (!props.stages.every((stage) => stage.state === "upcoming")) {
+    return list;
+  }
+  return (
+    <details class="settings-help-disclosure settings-help-disclosure--inline maintenance-stage-explainer">
+      <summary class="settings-help-disclosure__summary">
+        <span class="settings-help-disclosure__heading">
+          <span class="settings-help-disclosure__title">
+            {props.idleSummary}
+          </span>
+        </span>
+      </summary>
+      <div class="settings-help-disclosure__body">{list}</div>
+    </details>
   );
 }

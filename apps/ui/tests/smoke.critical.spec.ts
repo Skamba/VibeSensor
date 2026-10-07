@@ -25,7 +25,6 @@ import {
   openAnalysisTab,
   openCarsTab,
   openHistoryTab,
-  openInternetTab,
   openUpdateTab,
   requestPath,
 } from "./smoke.helpers";
@@ -462,11 +461,9 @@ test("critical journey: updater becomes startable after Wi-Fi setup", async ({
   await bootLiveDashboard(page, { installRoutes: false });
   await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeDisabled();
-  await openInternetTab(page);
   await page.locator("#updateSsidInput").fill("Workshop Wi-Fi");
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "All visible prerequisites are ready to start the update.",
   );
-  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });
