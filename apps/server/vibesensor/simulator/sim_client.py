@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import random
 import time
 from dataclasses import dataclass, field
@@ -31,6 +32,7 @@ _COUNTS_PER_MG = 1.0 / (1000.0 * ADXL345_SCALE_G_PER_LSB)
 _RESONANCE_SEED_SALT = 0x5E50
 
 
+@functools.cache
 def _resonator(resonance: RoadResonance, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
     """Band-pass biquad (unit peak gain) ringing at the mode, scaled so unit
     white noise comes out at unit RMS."""
@@ -209,13 +211,7 @@ class SimClient:
         self.tone_phases = next_tone_phases
 
         local_signal *= modulation[:, None]
-
-        for i in range(self.frame_samples):
-            if self.rng.random() < profile.bump_probability:
-                jitter = self.rng.uniform(0.85, 1.15, size=3).astype(np.float32)
-                self.bump_state += np.asarray(profile.bump_strength, dtype=np.float32) * jitter
-            local_signal[i] += self.bump_state
-            self.bump_state *= profile.bump_decay
+        local_signal += self._bumps(profile)
 
         noise = self.rng.normal(
             0.0,
@@ -239,6 +235,48 @@ class SimClient:
         self.phase_s = float(t[-1] + dt)
         result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
         return result
+
+    def _bumps(self, profile: Profile) -> np.ndarray:
+        """Each sample's decaying bump state, in counts.
+
+        Every sample draws one uniform for whether a bump starts there and, when
+        one does, three more for its jitter; the state then decays by
+        ``bump_decay`` per sample. Draws run in blocks up to the next bump, so
+        the random stream and the float32 values match a per-sample loop.
+        """
+        assert self.rng is not None  # guaranteed by __post_init__
+        rng = self.rng
+        bit_generator = rng.bit_generator
+        samples = self.frame_samples
+        out = np.empty((samples, 3), dtype=np.float32)
+        strength = np.asarray(profile.bump_strength, dtype=np.float32)
+        decay = np.float32(profile.bump_decay)
+        state = self.bump_state
+        start = 0
+        while start < samples:
+            saved = bit_generator.state
+            hits = np.flatnonzero(rng.random(samples - start) < profile.bump_probability)
+            bump = samples if hits.size == 0 else start + int(hits[0])
+            if bump < samples:
+                # Rewind to draw exactly the uniforms up to and including the bump's.
+                bit_generator.state = saved
+                rng.random(bump - start + 1)
+            # Decay through the samples before the bump (the accumulate multiplies
+            # sequentially in float32, as repeated ``*=`` would).
+            if bump > start:
+                factors = np.full((bump - start, 3), decay, dtype=np.float32)
+                factors[0] = state
+                out[start:bump] = np.multiply.accumulate(factors, axis=0)
+                state = out[bump - 1] * decay
+            if bump == samples:
+                break
+            jitter = rng.uniform(0.85, 1.15, size=3).astype(np.float32)
+            state = state + strength * jitter
+            out[bump] = state
+            state = state * decay
+            start = bump + 1
+        self.bump_state = state
+        return out
 
     def _road_resonances(self, profile: Profile) -> np.ndarray:
         """The road-excited modes, in counts: band-passed noise that grows with speed.
