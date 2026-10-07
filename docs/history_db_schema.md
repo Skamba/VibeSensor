@@ -72,7 +72,7 @@ are rehydrated back into typed `SensorFrame.top_peaks` data on read.
 | `sample_rate_hz` | INTEGER | Raw ADC sample rate |
 | `speed_kmh` | REAL | Effective vehicle speed |
 | `gps_speed_kmh` | REAL | GPS-derived speed |
-| `speed_source` | TEXT | `gps`, `obd2`, or `manual` |
+| `speed_source` | TEXT | `gps`, `obd2`, `manual`, `fallback_manual`, `none`, or `gps_unaligned` / `obd2_unaligned` (live source chosen, no speed for this row) |
 | `engine_rpm` | REAL | Engine RPM |
 | `engine_rpm_source` | TEXT | Source of RPM data |
 | `gear` | REAL | Current gear |

@@ -108,6 +108,9 @@ readings around it. Without one the row stores no speed and the source
 `gps_unaligned` / `obd2_unaligned`, never the typed-in fallback speed, which
 only stands in on the live view; the analysis leaves such rows out of order
 matching and warns (`speed_missing`) when they are at least 5 % of the run.
+A run where no row moved on a speed still names its source from these rows:
+the report's test conditions read "GPS (no fix during the run)" or
+"OBD (no speed received)" (`run_speed_source`).
 A no-fault report lists those seconds under "Not covered"; with live speed for
 under 35 % of the run no road-speed source can be checked (`speed_missing`
 source checks), so the run reads "No result", never "ruled out".
