@@ -6,9 +6,11 @@ import {
   buildHeatmap,
   buildRow,
   EMPTY_RUN_DETAIL,
+  type Formatters,
   heatColor,
   heatmapLocationKey,
   normalizeUnit,
+  ownerDiagram,
   type RunDetail,
   sourceLabel,
   speedBandLabel,
@@ -18,6 +20,7 @@ import {
   makeHistoryFinding,
   makeHistoryInsightsPayload,
   makeLocationIntensityRow,
+  makeOwnerPage,
 } from "./history_payload_test_support";
 
 const UNIT_LABELS: Record<string, string> = {
@@ -57,7 +60,7 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
     run_id: runId,
     start_time_utc: "2026-01-01T00:00:00Z",
     end_time_utc: "2026-01-01T00:00:12Z",
-    duration_s: 12.3,
+    duration_s: 72.3,
     sensor_count_used: 2,
     diagnosis: makeDiagnosis({
       verdict: "fault",
@@ -127,13 +130,6 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
         title: "history.warning.speed_gap",
         detail: "Gap",
       },
-      {
-        applies_to: "run",
-        code: "speed-gap",
-        severity: "warn",
-        title: "history.warning.speed_gap",
-        detail: "Gap",
-      },
     ],
     sensor_intensity_by_location: [
       makeLocationIntensityRow({
@@ -152,56 +148,51 @@ function populatedInsights(runId: string): HistoryInsightsPayload {
   });
 }
 
-function defaultDetail(detail: Partial<RunDetail>): RunDetail {
-  return { ...EMPTY_RUN_DETAIL, ...detail };
+function loaded(summary: HistoryInsightsPayload): RunDetail {
+  return { ...EMPTY_RUN_DETAIL, summary };
 }
 
-const f = {
+const f: Formatters = {
   t: testTranslation,
   fmt: (value: number, digits = 0) => Number(value).toFixed(digits),
   fmtTs: (iso: string) => iso,
+  fmtShortTs: (iso: string) => `short(${iso})`,
   formatInt: (value: number) => String(value),
-  speedUnit: "kmh" as const,
+  speedUnit: "kmh",
 };
 
-test("builds the row summary and the expanded diagnosis from raw insights", () => {
-  const run = historyListRun("run-001", "missing");
-  const detail = defaultDetail({
-    preview: populatedInsights("run-001"),
-    insights: populatedInsights("run-001"),
-  });
-  const row = buildRow(run, detail, true, f);
-  expect(row.chips.map((chip) => chip.text)).toEqual([
-    "history.row_status.complete",
-  ]);
-  expect(row.headline).toBe("history.source.wheel_tire");
-  expect(row.meta).toBe(
-    'history.confidence:{"level":"history.confidence_level.strong"} · history.summary_size: 12.3 s · history.summary_sensor_count: 2',
-  );
-  expect(row.reportPendingHint).toBeNull();
-  expect(row.rawSampleCount).toBe("9600");
-  expect(
-    buildRow({ ...run, raw_sample_count: null }, detail, true, f)
-      .rawSampleCount,
-  ).toBe("--");
-
-  const details = buildDetails(run, detail, f);
-  if (details.insights.kind !== "findings") {
-    throw new Error("expected findings");
+/** The workshop findings behind "More details". */
+function moreFindings(
+  run: HistoryEntry,
+  detail: RunDetail,
+  formatters: Formatters = f,
+) {
+  const more = buildDetails(run, detail, formatters).more;
+  if (!more) {
+    throw new Error("expected a diagnosis");
   }
-  expect(details.insights.primary).toMatchObject({
-    headline: "history.source.wheel_tire",
-    confidence:
-      'history.confidence:{"level":"history.confidence_level.strong"} — history.confidence_meaning.strong',
-    signature: "T1 · 12.1 Hz @ 85 km/h",
-    explanation: "Front-right wheel imbalance",
-    nextStepLabel: "history.findings_next_step_label",
-    nextStep:
-      'history.findings_next_step:{"location":"history.zone.front_right_wheel"}',
-  });
-  expect(details.insights.visibleSecondary).toHaveLength(2);
-  expect(details.insights.hiddenSecondary).toHaveLength(1);
-  // Raw-capture warning first, then insight warnings without duplicates.
+  return more.findings;
+}
+
+test("titles a run by its date and the server's result, and opens with the PDF's page 1", () => {
+  const run = historyListRun("run-001", "missing");
+  const summary = populatedInsights("run-001");
+  const row = buildRow(run, loaded(summary), true, f);
+  expect(row.title).toBe(
+    "short(2026-01-01T00:00:00Z) · Front-left wheel · Moderate",
+  );
+  // The car is secondary; the run ID is never in the row.
+  expect(row.subtitle).toBe("Track Car · 1:12");
+  expect(`${row.title} ${row.subtitle} ${row.toggleTitle}`).not.toContain(
+    "run-001",
+  );
+  expect(row.chips).toEqual([]);
+  expect(row.reportPendingHint).toBeNull();
+
+  const details = buildDetails(run, loaded(summary), f);
+  expect(details.owner).toBe(summary.owner);
+  expect(details.stateMessage).toBeNull();
+  // Raw-capture warning first, then the diagnosis' own.
   expect(details.warnings).toEqual([
     {
       severity: "warn",
@@ -210,111 +201,179 @@ test("builds the row summary and the expanded diagnosis from raw insights", () =
     },
     { severity: "warn", title: "history.warning.speed_gap", detail: "Gap" },
   ]);
-  if (details.heatmap.kind !== "zones") {
-    throw new Error("expected heatmap zones");
-  }
+  // The run ID, times and size once, in the footer.
+  expect(details.facts).toEqual([
+    { label: "report.run_id", value: "run-001" },
+    { label: "history.started", value: "2026-01-01T00:00:00Z" },
+    { label: "history.ended", value: "2026-01-01T00:00:12Z" },
+    { label: "history.summary_size", value: "72.3 s" },
+    { label: "history.summary_sensor_count", value: "2" },
+    { label: "history.raw_samples", value: "9600" },
+  ]);
+  expect(details.reloadLabel).toBe("history.reload_insights");
+
+  const findings = moreFindings(run, loaded(summary));
+  expect(findings.primary).toEqual({
+    source: "history.source.wheel_tire",
+    signature: "T1 · 12.1 Hz @ 85 km/h",
+    confidence:
+      'history.confidence:{"level":"history.confidence_level.strong"}',
+    tone: "success",
+    location: "location.front_right_wheel",
+    speedBand: "63–105 km/h",
+    alsoAt: null,
+    evidence: "Front-right wheel imbalance",
+  });
+  expect(findings.visibleSecondary).toHaveLength(2);
+  expect(findings.hiddenSecondary).toHaveLength(1);
+  const heatmap = buildDetails(run, loaded(summary), f).more?.heatmap;
   expect(
-    details.heatmap.zones.find((zone) => zone.key === "front_right_wheel"),
+    heatmap?.zones.find((zone) => zone.key === "front_right_wheel"),
   ).toMatchObject({
     // Translated from the location code, not the server's English label.
     label: "location.front_right_wheel",
     valueLabel: "32.0 dB",
     strongest: true,
   });
-  expect(details.heatmap.extras).toEqual(["custom bracket · 21.1 dB"]);
+  expect(heatmap?.extras).toEqual(["custom bracket · 21.1 dB"]);
+});
+
+test("a run without a fault, or without enough evidence, is titled by its result alone", () => {
+  const run = historyListRun("run-005");
+  const title = (owner: Partial<HistoryInsightsPayload["owner"]>) => {
+    const summary = populatedInsights("run-005");
+    summary.owner = makeOwnerPage(owner);
+    return buildRow(run, loaded(summary), false, f).title;
+  };
+  const noFault = {
+    verdict: "no_fault",
+    level: null,
+    level_word: null,
+  } as const;
+  expect(title({ ...noFault, result: "No significant vibration" })).toBe(
+    "short(2026-01-01T00:00:00Z) · No significant vibration",
+  );
+  expect(title({ ...noFault, result: "No result" })).toBe(
+    "short(2026-01-01T00:00:00Z) · No result",
+  );
+  // The level is a fault's: a weak candidate is just not conclusive.
+  expect(
+    title({
+      verdict: "weak_evidence",
+      result: "Not conclusive",
+      level: "weak",
+      level_word: "Weak",
+    }),
+  ).toBe("short(2026-01-01T00:00:00Z) · Not conclusive");
+  expect(
+    title({ level: "strong", level_word: "Strong", result: "Rear wheels" }),
+  ).toBe("short(2026-01-01T00:00:00Z) · Rear wheels · Strong");
 });
 
 test("a run started before the Pi clock was set shows no wall times", () => {
-  const run = historyListRun("run-clock");
-  const detail = defaultDetail({ preview: populatedInsights("run-clock") });
-  expect(buildRow(run, detail, false, f).startedAt).toBe(
-    "2026-01-01T00:00:00Z",
+  const run = { ...historyListRun("run-clock"), start_time_unverified: true };
+  const detail = loaded(populatedInsights("run-clock"));
+  expect(buildRow(run, detail, false, f).title).toBe(
+    "history.date_unknown · Front-left wheel · Moderate",
   );
-
-  const unset = { ...run, start_time_unverified: true };
-  expect(buildRow(unset, detail, false, f).startedAt).toBe(
-    "history.time_unknown",
-  );
-  const summary = buildDetails(unset, detail, f).runSummary ?? "";
-  expect(summary).toContain("history.summary_created: history.time_unknown");
-  expect(summary).toContain("history.summary_updated: history.time_unknown");
-  expect(summary).toContain("history.summary_size: 12.3 s");
+  const facts = buildDetails(run, detail, f).facts;
+  expect(facts[1]).toEqual({
+    label: "history.started",
+    value: "history.time_unknown",
+  });
+  expect(facts[2]).toEqual({
+    label: "history.ended",
+    value: "history.time_unknown",
+  });
 });
 
 test("a run cut off before Stop says so in its row", () => {
   const run = historyListRun("run-cut");
-  const detail = defaultDetail({ preview: populatedInsights("run-cut") });
-  expect(buildRow(run, detail, false, f).chips.map((chip) => chip.key)).toEqual(
-    ["status"],
+  const detail = loaded(populatedInsights("run-cut"));
+  expect(buildRow(run, detail, false, f).chips).toEqual([]);
+  expect(
+    buildRow({ ...run, interrupted: true }, detail, false, f).chips,
+  ).toEqual([
+    { key: "interrupted", text: "history.interrupted", tone: "warn" },
+  ]);
+});
+
+test("a closed run keeps its loaded title; only a first load or a failure says so", () => {
+  const run = historyListRun("run-002");
+  const summary = populatedInsights("run-002");
+  // Reloading (a language switch) keeps the title until the new one arrives.
+  const reloading = { ...loaded(summary), loading: true };
+  expect(buildRow(run, reloading, false, f).title).toBe(
+    "short(2026-01-01T00:00:00Z) · Front-left wheel · Moderate",
   );
 
-  const chips = buildRow({ ...run, interrupted: true }, detail, false, f).chips;
-  expect(chips[1]).toEqual({
-    key: "interrupted",
-    text: "history.interrupted",
-    tone: "warn",
-  });
-});
-
-test("keeps loading and error state in the models", () => {
-  const run = historyListRun("run-002");
-  const detail = defaultDetail({
-    previewLoading: true,
-    insightsError: "history.error.insights",
-    pdfLoading: true,
-  });
-  const row = buildRow(run, detail, true, f);
-  expect(row.headline).toBe("history.row_summary_loading");
-  expect(row.meta).toBe("history.summary_size: 12.0 s");
+  const first = { ...EMPTY_RUN_DETAIL, loading: true, pdfLoading: true };
+  const row = buildRow(run, first, true, f);
+  expect(row.title).toBe(
+    "short(2026-01-01T00:00:00Z) · history.row_summary_loading",
+  );
+  expect(row.subtitle).toBe("Track Car · 0:12");
   expect(row.pdfLabel).toBe("history.generating_pdf");
   expect(row.pdfLoading).toBe(true);
-  const details = buildDetails(run, detail, f);
-  expect(details.insights).toEqual({
-    kind: "state",
-    message: "history.loading_insights",
-  });
-  expect(details.heatmap).toEqual({
-    kind: "state",
-    message: "history.loading_preview",
-    tone: "subtle",
-  });
-  expect(details.insightsError).toBe("history.error.insights");
-  expect(details.reloadLabel).toBe("history.load_insights");
+  const details = buildDetails(run, first, f);
+  expect(details.owner).toBeNull();
+  expect(details.more).toBeNull();
+  expect(details.stateMessage).toBe("history.loading_insights");
+  expect(details.reloadDisabled).toBe(true);
+
+  const failedLoad = { ...EMPTY_RUN_DETAIL, error: "history.error.insights" };
+  expect(buildRow(run, failedLoad, false, f).title).toBe(
+    "short(2026-01-01T00:00:00Z) · history.row_status.unavailable",
+  );
+  const failedDetails = buildDetails(run, failedLoad, f);
+  expect(failedDetails.error).toBe("history.error.insights");
+  expect(failedDetails.stateMessage).toBe("history.diagnosis_unavailable");
+  expect(failedDetails.reloadLabel).toBe("history.load_insights");
 });
 
-test("keeps the PDF pending until the report is ready", () => {
+test("a run still recording, analysing or failed says so in its title; the PDF waits", () => {
+  const lifecycle = (
+    stage: NonNullable<HistoryEntry["lifecycle"]>["stage"],
+    state: "pending" | "degraded",
+  ) => ({
+    stage,
+    raw_capture: "not_recorded" as const,
+    post_analysis: state,
+    report: state,
+  });
   const analyzing: HistoryEntry = {
     ...historyListRun("run-003"),
     status: "analyzing",
-    lifecycle: {
-      stage: "post_analysis_pending",
-      raw_capture: "not_recorded",
-      post_analysis: "pending",
-      report: "pending",
-    },
+    lifecycle: lifecycle("post_analysis_pending", "pending"),
   };
-  const row = buildRow(
-    analyzing,
-    defaultDetail({ preview: populatedInsights("run-003") }),
-    false,
-    f,
+  const row = buildRow(analyzing, EMPTY_RUN_DETAIL, false, f);
+  expect(row.title).toBe(
+    "short(2026-01-01T00:00:00Z) · history.row_status.analyzing",
   );
-  expect(row.chips[0].text).toBe("history.row_status.preview_ready");
   expect(row.reportPendingHint).toBe("history.quick_report_pending");
+  expect(buildDetails(analyzing, EMPTY_RUN_DETAIL, f).stateMessage).toBe(
+    "history.findings_pending",
+  );
+
+  const recording: HistoryEntry = {
+    ...analyzing,
+    status: "recording",
+    lifecycle: lifecycle("recording", "pending"),
+  };
+  expect(buildRow(recording, EMPTY_RUN_DETAIL, false, f).title).toBe(
+    "short(2026-01-01T00:00:00Z) · history.row_status.recording",
+  );
 
   const degraded: HistoryEntry = {
     ...historyListRun("run-003b"),
     error_message: "analysis crashed",
-    lifecycle: {
-      stage: "post_analysis_degraded",
-      raw_capture: "not_recorded",
-      post_analysis: "degraded",
-      report: "degraded",
-    },
+    lifecycle: lifecycle("post_analysis_degraded", "degraded"),
   };
   const degradedRow = buildRow(degraded, EMPTY_RUN_DETAIL, false, f);
+  expect(degradedRow.title).toBe(
+    "short(2026-01-01T00:00:00Z) · history.row_status.error",
+  );
   expect(degradedRow.chips).toEqual([
-    { key: "status", text: "history.row_status.error", tone: "bad" },
     { key: "error-message", text: "analysis crashed", tone: "muted" },
   ]);
   expect(degradedRow.reportPendingHint).toBe("history.quick_report_pending");
@@ -327,11 +386,7 @@ test("explains degraded raw capture", () => {
     queue_depth: 3,
     error_summary: "raw capture finalize timed out",
   };
-  const details = buildDetails(
-    run,
-    defaultDetail({ preview: populatedInsights("run-004") }),
-    f,
-  );
+  const details = buildDetails(run, loaded(populatedInsights("run-004")), f);
   expect(details.warnings[0]).toEqual({
     severity: "warn",
     title: "history.raw_capture_degraded_title",
@@ -340,68 +395,122 @@ test("explains degraded raw capture", () => {
   });
 });
 
-test("a run without a fault says so and covers what was driven", () => {
-  const insights = populatedInsights("run-005");
-  insights.diagnosis = makeDiagnosis({
-    source_checks: [
+test("the same wheel's twice-per-turn order is part of the diagnosed finding, not another candidate", () => {
+  const summary = populatedInsights("run-014");
+  summary.diagnosis = makeDiagnosis({
+    ...summary.diagnosis,
+    order_findings: [
       {
+        finding_id: "finding-1",
         source: "wheel/tire",
-        status: "ruled_out",
-        reason: "no_matching_order",
+        order_code: "T1",
+        location: "Front Right Wheel",
+        confidence_level: "strong",
+        frequency_hz: 12.1,
+        phases: [],
+        presence_ratio: 1,
+        reference_speed_kmh: 85,
+        speed_min_kmh: 63,
+        speed_max_kmh: 105,
+      },
+      {
+        finding_id: "finding-5",
+        source: "wheel/tire",
+        order_code: "T2",
+        location: "Front Right Wheel",
+        confidence_level: "moderate",
+        frequency_hz: 24.2,
+        phases: [],
+        presence_ratio: 1,
+        reference_speed_kmh: 85,
+        speed_min_kmh: 63,
+        speed_max_kmh: 105,
+      },
+      {
+        finding_id: "finding-2",
+        source: "driveline",
+        order_code: "P1",
+        location: "Driveshaft Tunnel",
+        confidence_level: "moderate",
+        frequency_hz: 18.5,
+        phases: [],
+        presence_ratio: 1,
+        reference_speed_kmh: 85,
+        speed_min_kmh: 63,
+        speed_max_kmh: 105,
       },
     ],
   });
-  insights.speed_stats = { ...insights.speed_stats, min_kmh: 50, max_kmh: 118 };
-  const run = historyListRun("run-005");
-  const detail = defaultDetail({ preview: insights });
-  const row = buildRow(run, detail, false, f);
-  expect(row.headline).toBe("history.verdict.no_fault");
-  expect(row.meta).toBe(
-    "history.summary_size: 12.3 s · history.summary_sensor_count: 2",
+  summary.findings = [
+    summary.findings[0],
+    makeHistoryFinding({
+      finding_id: "finding-5",
+      frequency_hz_or_order: "2x wheel",
+      evidence_summary: "The same wheel at twice per turn",
+    }),
+    ...summary.findings.slice(1),
+  ];
+  const findings = moreFindings(historyListRun("run-014"), loaded(summary));
+  expect(findings.primary?.alsoAt).toBe(
+    'history.also_at:{"orders":"T2 (24.2 Hz)"}',
   );
-  const details = buildDetails(run, detail, f);
-  expect(details.insights).toMatchObject({
-    kind: "findings",
-    primary: {
-      headline: "history.verdict.no_fault",
-      confidence: "",
-      chips: [
-        { label: "history.covered_speeds", value: "50–118 km/h" },
-        { label: "history.summary_sensor_count", value: "2" },
-      ],
-      nextStep: null,
-    },
-    visibleSecondary: [],
-  });
+  // The driveline order elsewhere stays a candidate of its own.
+  expect(
+    [...findings.visibleSecondary, ...findings.hiddenSecondary].map(
+      (finding) => finding.evidence,
+    ),
+  ).toEqual([
+    "Secondary driveline contribution",
+    "Engine harmonics remain visible",
+    "Cabin resonance remains possible",
+  ]);
 });
 
-test("a run without live speed says so where the speeds driven go", () => {
-  const insights = populatedInsights("run-012");
-  insights.diagnosis = makeDiagnosis({
-    source_checks: [
-      { source: "wheel/tire", status: "not_testable", reason: "speed_missing" },
+test("draws the PDF's car diagram: the zone, its wheels and a sized marker per sensor", () => {
+  const wheel = ownerDiagram(makeOwnerPage().diagram);
+  expect(wheel.frontLabel).toBe("FRONT");
+  expect(wheel.zone).toBeNull();
+  expect(
+    wheel.wheels.filter((item) => item.highlighted).map((item) => item.code),
+  ).toEqual(["front_left_wheel"]);
+  const [frontLeft, trunk] = wheel.markers;
+  // pdf.py: the body is 52% of a 62 mm box, the wheel at 10% across, 20% down.
+  expect(frontLeft.cx).toBeCloseTo(14.88 + 0.1 * 32.24);
+  expect(frontLeft.cy).toBeCloseTo(9 + 0.2 * 94);
+  expect(frontLeft.r).toBeCloseTo(4);
+  expect(frontLeft.text).toEqual({
+    x: frontLeft.cx - 4,
+    y: frontLeft.cy + 1,
+    anchor: "end",
+  });
+  expect(trunk.r).toBeCloseTo(1.6 + 2.4 * 0.02);
+  expect(trunk.text.anchor).toBe("middle");
+  expect(trunk.text.y).toBeCloseTo(trunk.cy + trunk.r + 3);
+
+  const axle = ownerDiagram({
+    zone: "rear_axle",
+    front_label: "VOOR",
+    markers: [
+      {
+        code: "roof_rack",
+        label: "roof",
+        value: "1 mg",
+        ratio: 1,
+        strongest: true,
+      },
     ],
   });
-  insights.speed_stats = {
-    ...insights.speed_stats,
-    min_kmh: null,
-    max_kmh: null,
-  };
-  const run = historyListRun("run-012");
-  const details = buildDetails(run, defaultDetail({ preview: insights }), f);
-  expect(details.insights).toMatchObject({
-    primary: {
-      chips: [
-        { label: "history.covered_speeds", value: "history.no_live_speed" },
-        { label: "history.summary_sensor_count", value: "2" },
-      ],
-    },
-  });
+  expect(axle.zone).not.toBeNull();
+  expect(
+    axle.wheels.filter((item) => item.highlighted).map((item) => item.code),
+  ).toEqual(["rear_left_wheel", "rear_right_wheel"]);
+  // A location the diagram has no place for is left out, as on the PDF.
+  expect(axle.markers).toEqual([]);
 });
 
 type SourceChecks = HistoryInsightsPayload["diagnosis"]["source_checks"];
 
-/** The expanded diagnosis in real catalog text, so History reads like the PDF. */
+/** The workshop findings in real catalog text, worded like the PDF's page 2. */
 function checkedInsights(
   verdict: "fault" | "no_fault",
   sourceChecks: SourceChecks,
@@ -426,18 +535,14 @@ function checkedInsights(
       : { source_checks: sourceChecks, ...extra },
   );
   insights.diagnosis.conditions = { ...base.conditions, ...conditions };
-  const details = buildDetails(
-    historyListRun("run-010"),
-    defaultDetail({ preview: insights }),
-    { ...f, t: (key, vars) => translate(language, key, vars), speedUnit },
-  );
-  if (details.insights.kind !== "findings") {
-    throw new Error("expected findings");
-  }
-  return details.insights;
+  return moreFindings(historyListRun("run-010"), loaded(insights), {
+    ...f,
+    t: (key, vars) => translate(language, key, vars),
+    speedUnit,
+  });
 }
 
-test("a no-fault run names only what it could check and lists what it couldn't, as the PDF does", async () => {
+test("lists what the run checked and couldn't, and the car references, as the PDF does", async () => {
   const sourceChecks: SourceChecks = [
     { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
     {
@@ -453,9 +558,9 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
     final_drive_ratio: 3.15,
     final_drive_provenance: "family_default",
   });
-  expect(insights.primary?.explanation).toBe(
-    "Nothing stood out in the checks this run could make: wheels/tires and driveline (against an estimated final drive). Not checked, so not shown to be fine: engine.",
-  );
+  // A run without a fault has no candidates: page 1 says what it means.
+  expect(insights.primary).toBeNull();
+  expect(insights.secondaryTitle).toBeNull();
   expect(insights.checks).toEqual({
     checkedTitle: "Checked",
     checked: [
@@ -510,9 +615,6 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
       final_drive_ratio: 3.15,
       final_drive_provenance: "family_default",
     });
-    expect(dutch.primary?.explanation).toBe(
-      "Niets viel op bij de controles die deze rit kon doen: wielen/banden en aandrijflijn (met een geschatte eindoverbrenging). Niet gecontroleerd, dus niet aangetoond dat het in orde is: motor.",
-    );
     expect(dutch.checks.notCheckedTitle).toBe("Niet te controleren");
     expect(dutch.checks.references[3]).toEqual({
       label: "Eindoverbrenging",
@@ -523,8 +625,8 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
   }
 });
 
-test("a no-fault run without a tire size does not suggest the car is fine", () => {
-  const insights = checkedInsights(
+test("a run without a tire size or live speed lists every source as couldn't check", () => {
+  const noTire = checkedInsights(
     "no_fault",
     ["wheel/tire", "driveline", "engine"].map((source) => ({
       source,
@@ -532,26 +634,14 @@ test("a no-fault run without a tire size does not suggest the car is fine", () =
       reason: "no_tire_reference" as const,
     })),
   );
-  // It checked nothing: no result, and what to fix, never a success.
-  expect(insights.primary).toMatchObject({
-    headline: "No result: this run could not check for a cause",
-    tone: "warn",
-    nextStep:
-      "Add the tire size to the car in Settings and record again: without it no wheel or drivetrain rhythm can be placed.",
-  });
-  expect(insights.primary?.explanation).toBe(
-    "No vibration stood out, but this run could not check the wheels, driveline or engine against their rhythms, so it does not show that they are fine.",
-  );
-  expect(insights.checks.checked).toEqual([]);
-  expect(insights.checks.notChecked.map((line) => line.detail)).toEqual([
+  expect(noTire.checks.checked).toEqual([]);
+  expect(noTire.checks.notChecked.map((line) => line.detail)).toEqual([
     "no tire size — add it to the car in Settings.",
     "no tire size — add it to the car in Settings.",
     "no tire size — connect an OBD-II adapter to measure RPM, or add the tire size to the car.",
   ]);
-});
 
-test("a run whose live speed was missing is no result, never ruled out", () => {
-  const insights = checkedInsights(
+  const noSpeed = checkedInsights(
     "no_fault",
     ["wheel/tire", "driveline", "brakes"].map((source) => ({
       source,
@@ -559,41 +649,10 @@ test("a run whose live speed was missing is no result, never ruled out", () => {
       reason: "speed_missing" as const,
     })),
   );
-  expect(insights.primary).toMatchObject({
-    headline: "No result: this run could not check for a cause",
-    tone: "warn",
-    nextStep:
-      "Record again once the GPS receiver has a fix (or the OBD-II adapter reads speed): the live speed was missing for most of this run, so no wheel or drivetrain rhythm could be compared.",
-  });
-  expect(insights.checks.checked).toEqual([]);
-  expect(insights.checks.notChecked[0]?.detail).toBe(
+  expect(noSpeed.checks.checked).toEqual([]);
+  expect(noSpeed.checks.notChecked[0]?.detail).toBe(
     "the live speed (GPS or OBD-II) was missing for most of the drive, so finding no match proves nothing — record again once the GPS receiver has a fix (or the OBD-II adapter reads speed).",
   );
-});
-
-test("a run on a hand-typed speed is no result in the list too, and asks for live speed", () => {
-  const insights = populatedInsights("run-011");
-  insights.diagnosis = makeDiagnosis({
-    source_checks: ["wheel/tire", "driveline", "engine", "brakes"].map(
-      (source) => ({
-        source,
-        status: "not_testable" as const,
-        reason: "manual_speed" as const,
-      }),
-    ),
-  });
-  const run = historyListRun("run-011");
-  const detail = defaultDetail({ preview: insights });
-  expect(buildRow(run, detail, false, f).headline).toBe(
-    "history.verdict.not_checked",
-  );
-  const details = buildDetails(run, detail, f);
-  expect(details.insights).toMatchObject({
-    primary: {
-      headline: "history.verdict.not_checked",
-      nextStep: "history.verdict.not_checked_step.manual_speed",
-    },
-  });
 });
 
 test("a fault run lists the matching source as checked and states the top-gear assumption", () => {
@@ -680,9 +739,6 @@ test("an EV run names its motor, calls the engine not applicable and skips gearb
   ];
   const ev = { fuel_type: "EV", final_drive_ratio: 9.05 } as const;
   const insights = checkedInsights("no_fault", sourceChecks, "en", ev);
-  expect(insights.primary?.explanation).toBe(
-    "Nothing stood out in the checks this run could make: wheels/tires and electric motor.",
-  );
   expect(insights.checks.checked[1]).toEqual({
     label: "Electric motor",
     detail: "no vibration found at once or twice per motor revolution",
@@ -702,23 +758,12 @@ test("an EV run names its motor, calls the engine not applicable and skips gearb
   expect(insights.checks.references[0].detail).toContain(
     "electrical and gear-mesh orders are not analyzed",
   );
-  // A run that checked nothing still never says "engine".
-  const nothing = checkedInsights(
-    "no_fault",
-    [
-      ...sourceChecks.slice(0, 2).map((check) => ({
-        ...check,
-        status: "not_testable" as const,
-        reason: "no_tire_reference" as const,
-      })),
-      sourceChecks[2],
-    ],
-    "en",
-    ev,
-  );
-  expect(nothing.primary?.explanation).toBe(
-    "No vibration stood out, but this run could not check the wheels or the electric motor against their rhythms, so it does not show that they are fine.",
-  );
+  // An EV motor fault is named for the motor, not the driveline.
+  const motor = checkedInsights("fault", sourceChecks, "en", ev, {
+    source: "driveline",
+    order_code: "P1",
+  });
+  expect(motor.primary?.source).toBe("Electric motor");
 
   await setLanguage("nl");
   try {
@@ -730,203 +775,60 @@ test("an EV run names its motor, calls the engine not applicable and skips gearb
   }
 });
 
-test("a strong vibration no checked order explains never reads as nothing found", () => {
-  const sourceChecks: SourceChecks = [
-    { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
-    {
-      source: "driveline",
-      status: "not_testable",
-      reason: "no_drive_reference",
-    },
-    { source: "engine", status: "not_applicable", reason: "electric_car" },
-  ];
-  const ev = { fuel_type: "EV", final_drive_ratio: null } as const;
-  for (const [language, headline, explanation] of [
-    [
-      "en",
-      "Vibration found, but no checked cause explains it",
-      "Strongest at Rear Right Wheel, this vibration did not follow the rhythm of anything this run could check. Checked and not the cause: wheels/tires. Not checked, so not shown to be fine: electric motor.",
-    ],
-    [
-      "nl",
-      "Trilling gevonden, maar geen gecontroleerde oorzaak verklaart hem",
-      "Het sterkst bij Achterwiel rechts; deze trilling volgde het ritme van niets wat deze rit kon controleren. Gecontroleerd en niet de oorzaak: wielen/banden. Niet gecontroleerd, dus niet aangetoond dat het in orde is: elektromotor.",
-    ],
-  ] as const) {
-    const insights = checkedInsights("no_fault", sourceChecks, language, ev, {
-      unexplained_vibration: true,
-      location_amplitudes: [
-        {
-          location: "Rear Right Wheel",
-          amplitude_mg: 228.5,
-          db_above_floor: 36.5,
-          ratio_to_strongest: 1,
-          presence_ratio: null,
-        },
-      ],
-    });
-    expect(insights.primary).toMatchObject({
-      headline,
-      explanation,
-      tone: "warn",
-    });
-  }
-});
-
-test("an EV motor fault names the motor and drive unit, and its recording advice skips neutral", () => {
-  const insights = populatedInsights("run-011");
-  insights.diagnosis = makeDiagnosis({
-    verdict: "weak_evidence",
-    confidence_level: "weak",
-    finding_id: "finding-1",
-    source: "driveline",
-    zone: "driveshaft_tunnel",
-  });
-  insights.diagnosis.conditions.fuel_type = "EV";
-  const run = historyListRun("run-011");
-  const details = buildDetails(run, defaultDetail({ preview: insights }), f);
-  expect(details.insights).toMatchObject({
-    primary: {
-      explanation:
-        'history.verdict.weak_body:{"source":"history.source.motor","location":"history.zone.drive_unit_ev"}',
-      nextStep:
-        'history.recapture_recipe_ev:{"from":"50","to":"120","unit":"km/h"}',
-    },
-  });
-});
-
 /** A driveline (P1) diagnosis in real catalog text, for a car with `conditions`. */
 function drivelineInsights(
   verdict: "fault" | "no_fault",
   diagnosis: Partial<HistoryInsightsPayload["diagnosis"]>,
   conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]>,
-  language: Lang = "en",
 ) {
-  const insights = populatedInsights("run-013");
-  const base = makeDiagnosis();
-  insights.diagnosis = makeDiagnosis({
-    ...(verdict === "fault"
-      ? {
-          verdict,
-          confidence_level: "strong",
-          finding_id: "finding-1",
-          source: "driveline",
-          order_code: "P1",
-        }
-      : {}),
-    source_checks: [
+  return checkedInsights(
+    verdict,
+    [
       {
         source: "driveline",
         status: verdict === "fault" ? "candidate" : "ruled_out",
         reason: verdict === "fault" ? null : "no_matching_order",
       },
     ],
-    ...diagnosis,
-  });
-  insights.diagnosis.conditions = {
-    ...base.conditions,
-    fuel_type: "ICE",
-    ...conditions,
-  };
-  const details = buildDetails(
-    historyListRun("run-013"),
-    defaultDetail({ preview: insights }),
-    { ...f, t: (key, vars) => translate(language, key, vars) },
+    "en",
+    { fuel_type: "ICE", ...conditions },
+    verdict === "fault"
+      ? { source: "driveline", order_code: "P1", ...diagnosis }
+      : diagnosis,
   );
-  if (details.insights.kind !== "findings") {
-    throw new Error("expected findings");
-  }
-  return details.insights;
 }
 
-const FWD = {
-  drive_layout: "FWD",
-  final_drive_axle: "front",
-  propshaft: false,
-} as const;
-
-// Drive shafts and CV joints turn at wheel speed, not at the driveline order.
-const WHEEL_SPEED_PARTS = /drive shaft|CV joint|aandrijfas|homokinet/i;
-
-test("a front-wheel-drive car's driveline fault names its gearbox output shaft, never a propshaft or drive shaft", async () => {
-  const fault = drivelineInsights(
-    "fault",
-    { zone: "front_axle", driveline_parts: ["front_drive"] },
-    FWD,
+test("the drive layout reference names what turns at the driveline order", () => {
+  const fwd = drivelineInsights(
+    "no_fault",
+    {},
+    {
+      drive_layout: "FWD",
+      final_drive_axle: "front",
+      propshaft: false,
+    },
   );
-  expect(fault.primary?.nextStep).toBe(
-    "Front axle: have the gearbox output shaft, final-drive pinion and differential bearings checked",
-  );
-  expect(fault.checks.references[1]).toEqual({
+  expect(fwd.checks.checked).toEqual([
+    { label: "Driveline", detail: "no driveline-order vibration found" },
+  ]);
+  expect(fwd.checks.references[1]).toEqual({
     label: "Drive layout",
     detail:
       "front-wheel drive: the gearbox output shaft turns at the driveline order",
   });
-  expect(JSON.stringify(fault)).not.toMatch(/propshaft\)|center bearing/i);
-  expect(JSON.stringify(fault)).not.toMatch(WHEEL_SPEED_PARTS);
-
-  // No axle standing out: a center-tunnel location is not a propshaft.
-  const tunnel = drivelineInsights(
-    "fault",
-    { zone: "driveshaft_tunnel", driveline_parts: ["front_drive"] },
-    FWD,
-  );
-  expect(tunnel.primary?.chips[0].value).toBe("Center tunnel");
-
-  const healthy = drivelineInsights("no_fault", {}, FWD);
-  expect(healthy.checks.checked).toEqual([
-    { label: "Driveline", detail: "no driveline-order vibration found" },
-  ]);
-
-  await setLanguage("nl");
-  try {
-    const dutch = drivelineInsights(
-      "fault",
-      { zone: "front_axle", driveline_parts: ["front_drive"] },
-      FWD,
-      "nl",
-    );
-    expect(dutch.primary?.nextStep).toBe(
-      "Vooras: laat de uitgaande as van de versnellingsbak, het pignon van de eindoverbrenging en de differentieellagers controleren",
-    );
-    expect(JSON.stringify(dutch)).not.toMatch(/cardanas|middenlager/i);
-    expect(JSON.stringify(dutch)).not.toMatch(WHEEL_SPEED_PARTS);
-  } finally {
-    await setLanguage("en");
-  }
-});
-
-test("an all-wheel-drive car checks the axle the sensors point to first, then the other", () => {
-  const rear = drivelineInsights(
-    "fault",
-    { zone: "rear_axle", driveline_parts: ["propshaft_rear", "front_drive"] },
-    { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
-  );
-  expect(rear.primary?.nextStep).toBe(
-    "Rear axle: have the propshaft, its joints and center bearing, and the rear differential checked; then the front propshaft (if fitted) and the front differential pinion",
-  );
-  expect(JSON.stringify(rear)).not.toMatch(WHEEL_SPEED_PARTS);
-  const front = drivelineInsights(
-    "fault",
-    { zone: "front_axle", driveline_parts: ["front_drive", "propshaft_rear"] },
-    { drive_layout: "AWD", final_drive_axle: "rear", propshaft: true },
-  );
-  expect(front.primary?.nextStep).toBe(
-    "Front axle: have the front propshaft (if fitted) and the front differential pinion checked; then the propshaft, its joints and center bearing, and the rear differential",
-  );
-  expect(front.checks.references[1].detail).toBe(
+  const layout = (
+    conditions: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]>,
+  ) => drivelineInsights("fault", {}, conditions).checks.references[1].detail;
+  expect(
+    layout({ drive_layout: "AWD", final_drive_axle: "rear", propshaft: true }),
+  ).toBe(
     "all-wheel drive: a propshaft to the rear axle and a drive to the front differential",
   );
-  const rwd = drivelineInsights(
-    "fault",
-    { zone: "rear_axle", driveline_parts: ["propshaft_rear"] },
-    { drive_layout: "RWD", final_drive_axle: "rear", propshaft: true },
-  );
-  expect(rwd.primary?.nextStep).toBe(
-    "Rear axle: have the propshaft, its joints and center bearing, and the rear differential checked",
-  );
-  expect(rwd.checks.references[1].detail).toBe(
-    "rear-wheel drive: propshaft to the rear axle",
+  expect(
+    layout({ drive_layout: "RWD", final_drive_axle: "rear", propshaft: true }),
+  ).toBe("rear-wheel drive: propshaft to the rear axle");
+  expect(layout({})).toBe(
+    "not provided; driveline advice assumes a propshaft to the rear axle",
   );
 });
 
@@ -949,25 +851,11 @@ test("an engine order on the propshaft's rhythm without measured RPM names both"
     },
     { drive_layout: "RWD", final_drive_axle: "rear", propshaft: true },
   );
-  expect(insights.primary?.headline).toBe("Engine or driveline");
-  expect(insights.primary?.chips[2].value.startsWith("E3 / P2")).toBe(true);
+  expect(insights.primary?.source).toBe("Engine or driveline");
+  expect(insights.primary?.signature.startsWith("E3 / P2")).toBe(true);
   expect(JSON.stringify(insights.checks)).toContain(
     "without measured RPM, the engine's order turns at this rhythm in top gear",
   );
-});
-
-test("a run without a drive layout keeps the propshaft wording and says the layout was not given", () => {
-  const insights = drivelineInsights(
-    "fault",
-    { zone: "driveshaft_tunnel" },
-    {},
-  );
-  expect(insights.primary?.nextStep).toBe("Center tunnel (propshaft)");
-  expect(insights.checks.references[1]).toEqual({
-    label: "Drive layout",
-    detail:
-      "not provided; driveline advice assumes a propshaft to the rear axle",
-  });
 });
 
 test("a plug-in hybrid's engine check is hedged without OBD and untested while it was off", () => {
@@ -987,9 +875,6 @@ test("a plug-in hybrid's engine check is hedged without OBD and untested while i
     ],
     "en",
     { fuel_type: "PHEV", rpm_source: "estimated_top_gear" },
-  );
-  expect(phev.primary?.explanation).toBe(
-    "Nothing stood out in the checks this run could make: wheels/tires and engine (may have been off).",
   );
   expect(phev.checks.checked[1].detail).toContain(
     "a plug-in hybrid's engine may have been off",
@@ -1017,65 +902,11 @@ test("a plug-in hybrid's engine check is hedged without OBD and untested while i
   );
 });
 
-test("weak evidence hedges the best candidate and asks for a new recording", () => {
-  const insights = populatedInsights("run-006");
-  insights.diagnosis = makeDiagnosis({
-    verdict: "weak_evidence",
-    confidence_level: "weak",
-    finding_id: "finding-1",
-    source: "wheel/tire",
-    zone: "front_axle",
-  });
-  const run = historyListRun("run-006");
-  const detail = defaultDetail({ preview: insights });
-  expect(buildRow(run, detail, false, f).headline).toBe(
-    "history.verdict.weak_evidence",
-  );
-  const details = buildDetails(run, detail, f);
-  expect(details.insights).toMatchObject({
-    kind: "findings",
-    primary: {
-      headline: "history.verdict.weak_evidence",
-      tone: "neutral",
-      explanation:
-        'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.front_axle"}',
-      nextStepLabel: "history.recapture_label",
-      nextStep:
-        'history.recapture_recipe:{"from":"50","to":"120","unit":"km/h"}',
-    },
-  });
-});
-
-test("brake judder names the axle's brake discs and asks for firm stops, not a sweep", () => {
-  const insights = populatedInsights("run-012");
-  insights.diagnosis = makeDiagnosis({
-    verdict: "weak_evidence",
-    confidence_level: "weak",
-    finding_id: "finding-1",
-    source: "brakes",
-    zone: "front_axle",
-  });
-  const details = buildDetails(
-    historyListRun("run-012"),
-    defaultDetail({ preview: insights }),
-    f,
-  );
-  expect(details.insights).toMatchObject({
-    primary: {
-      explanation:
-        'history.verdict.weak_body:{"source":"history.source.brakes","location":"history.zone.brake_discs_front_axle"}',
-      nextStep:
-        'history.recapture_recipe_brakes:{"from":"100","to":"40","unit":"km/h"}',
-    },
-  });
-
+test("brake checks say when the drive did not brake and what came only while braking", () => {
   const noBraking = checkedInsights("no_fault", [
     { source: "wheel/tire", status: "ruled_out", reason: "no_matching_order" },
     { source: "brakes", status: "not_testable", reason: "no_braking" },
   ]);
-  expect(noBraking.primary?.explanation).toBe(
-    "Nothing stood out in the checks this run could make: wheels/tires. Not checked, so not shown to be fine: brakes.",
-  );
   expect(noBraking.checks.notChecked).toEqual([
     {
       label: "Brakes",
@@ -1131,9 +962,6 @@ test("the brake tips name the speed to brake from in the display unit", () => {
     {},
     "mps",
   );
-  expect(ev.primary?.explanation).toBe(
-    "Niets viel op bij de controles die deze rit kon doen: wielen/banden en remmen (kan op regeneratie vertraagd hebben).",
-  );
   expect(ev.checks.checked[1].detail).toContain(
     "doe de stap stevig afremmen van de begeleide test met regeneratie op het laagste niveau",
   );
@@ -1142,72 +970,11 @@ test("the brake tips name the speed to brake from in the display unit", () => {
   );
 });
 
-test("a wheel fault felt only in the cabin names no wheel and asks for wheel sensors", () => {
-  const cabinOnly = (verdict: "fault" | "weak_evidence") => {
-    const insights = populatedInsights("run-008");
-    insights.diagnosis = makeDiagnosis({
-      verdict,
-      confidence_level: verdict === "fault" ? "moderate" : "weak",
-      finding_id: "finding-1",
-      source: "wheel/tire",
-      location: "Driver Seat",
-      zone: "driver_seat",
-    });
-    const details = buildDetails(
-      historyListRun("run-008"),
-      defaultDetail({ preview: insights }),
-      f,
-    );
-    if (details.insights.kind !== "findings") {
-      throw new Error("expected findings");
-    }
-    return details.insights.primary;
-  };
-  expect(cabinOnly("fault")).toMatchObject({
-    nextStepLabel: "history.findings_next_step_label",
-    nextStep: "history.findings_next_step_locate_wheel",
-  });
-  expect(cabinOnly("weak_evidence")).toMatchObject({
-    explanation:
-      'history.verdict.weak_body:{"source":"history.source.wheel_tire","location":"history.zone.unlocated_wheel:{\\"location\\":\\"location.driver_seat\\"}"}',
-    nextStep:
-      'history.findings_next_step_locate_wheel history.recapture_recipe:{"from":"50","to":"120","unit":"km/h"}',
-  });
-});
-
-test("one wheel sensor names no wheel, says why, and asks for wheel sensors", () => {
-  const insights = checkedInsights(
-    "fault",
-    [{ source: "wheel/tire", status: "candidate", reason: null }],
-    "en",
-    {},
-    {
-      confidence_level: "moderate",
-      location: "Front Left Wheel",
-      zone: null,
-      weak_reasons: ["single_sensor"],
-    },
-  );
-  expect(insights.primary?.chips[0]).toEqual({
-    label: "Strongest location",
-    value: "No single wheel; only one wheel sensor, at Front Left Wheel",
-  });
-  expect(insights.primary?.explanation).toContain(
-    "Only one sensor was used, so locations can't be compared.",
-  );
-  expect(insights.primary?.nextStep).toBe(
-    "Mount a sensor at each wheel and record again to find which wheel or tire it is.",
-  );
-});
-
 test("a no-fault run with only a faint residual rules it out as faint, not as a candidate", () => {
   const insights = checkedInsights("no_fault", [
     { source: "wheel/tire", status: "ruled_out", reason: "faint_only" },
     { source: "driveline", status: "ruled_out", reason: "no_matching_order" },
   ]);
-  expect(insights.primary?.explanation).toBe(
-    "Nothing stood out in the checks this run could make: wheels/tires (found only faintly, at a level a healthy car also has) and driveline.",
-  );
   expect(insights.checks.checked[0]).toEqual({
     label: "Wheel / Tire",
     detail: "ruled out: found only faintly, at a level a healthy car also has",
@@ -1216,51 +983,20 @@ test("a no-fault run with only a faint residual rules it out as faint, not as a 
 
 test("shows every History speed in the m/s setting", () => {
   const mps = { ...f, speedUnit: "mps" as const };
-  const run = historyListRun("run-007");
-  const details = buildDetails(
-    run,
-    defaultDetail({ preview: populatedInsights("run-007") }),
+  const findings = moreFindings(
+    historyListRun("run-007"),
+    loaded(populatedInsights("run-007")),
     mps,
   );
-  if (details.insights.kind !== "findings") {
-    throw new Error("expected findings");
-  }
-  expect(details.insights.primary).toMatchObject({
+  expect(findings.primary).toMatchObject({
     signature: "T1 · 12.1 Hz @ 24 m/s",
-    chips: [
-      { label: "history.findings_location" },
-      { label: "history.findings_speed_band", value: "18–29 m/s" },
-      { label: "history.findings_signature", value: "T1 · 12.1 Hz @ 24 m/s" },
-    ],
+    speedBand: "18–29 m/s",
   });
   expect(
-    [
-      ...details.insights.visibleSecondary,
-      ...details.insights.hiddenSecondary,
-    ].map((finding) => finding.speedBand),
+    [...findings.visibleSecondary, ...findings.hiddenSecondary].map(
+      (finding) => finding.speedBand,
+    ),
   ).toEqual(["17–22 m/s", "idle", "28–33 m/s"]);
-
-  const noFault = populatedInsights("run-008");
-  noFault.diagnosis = makeDiagnosis();
-  noFault.speed_stats = { ...noFault.speed_stats, min_kmh: 36, max_kmh: 108 };
-  expect(
-    buildDetails(run, defaultDetail({ preview: noFault }), mps).insights,
-  ).toMatchObject({
-    primary: { chips: [{ value: "10–30 m/s" }, {}] },
-  });
-
-  const weak = populatedInsights("run-009");
-  weak.diagnosis = makeDiagnosis({
-    verdict: "weak_evidence",
-    confidence_level: "weak",
-  });
-  expect(
-    buildDetails(run, defaultDetail({ preview: weak }), mps).insights,
-  ).toMatchObject({
-    primary: {
-      nextStep: 'history.recapture_recipe:{"from":"14","to":"33","unit":"m/s"}',
-    },
-  });
 });
 
 test("relabels the analysis speed bands in the display unit", () => {
@@ -1305,9 +1041,6 @@ test("maps location names onto heatmap positions and scales the colour", () => {
     }),
     f,
   );
-  if (single.kind !== "zones") {
-    throw new Error("expected zones");
-  }
   expect(single.zones.find((zone) => zone.key === "trunk")).toMatchObject({
     label: "location.trunk",
     strongest: true,
@@ -1333,9 +1066,6 @@ test("heatmap says 'no sensor' where none was assigned, 'missing' where one sent
     }),
     f,
   );
-  if (heatmap.kind !== "zones") {
-    throw new Error("expected zones");
-  }
   const value = (key: string) =>
     heatmap.zones.find((zone) => zone.key === key)?.valueLabel;
   expect(value("front_left_wheel")).toBe("7.5 dB");

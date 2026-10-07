@@ -37,6 +37,24 @@ export function fmtTs(iso: string): string {
   return formatDateTime(new Date(iso), "--");
 }
 
+/** A short local date and time for a title: "7 Oct 17:53" ("7 okt 17:53"),
+ * with the year only when it is not this year. */
+export function fmtShortTs(
+  iso: string,
+  language: string,
+  now = new Date(),
+): string {
+  const date = new Date(iso);
+  if (!iso || !Number.isFinite(date.getTime())) return "--";
+  const month = new Intl.DateTimeFormat(language, { month: "short" })
+    .format(date)
+    .replace(/\.$/, "");
+  const year =
+    date.getFullYear() === now.getFullYear() ? "" : ` ${date.getFullYear()}`;
+  const time = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+  return `${date.getDate()} ${month}${year} ${time}`;
+}
+
 export function formatEpochTimestamp(epoch: number | null | undefined): string {
   if (
     epoch === null ||

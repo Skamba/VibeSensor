@@ -8,7 +8,7 @@ defines endpoint-specific wrappers.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Required, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field, with_config
 
@@ -146,11 +146,68 @@ class HistoryInsightsAnalyzingResponse(BaseModel):
 
 
 @with_config(ConfigDict(extra="forbid"))
+class HistoryOwnerDiagramMarkerResponse(TypedDict):
+    """One sensor on the car diagram; ``ratio`` 1.0 is the strongest location."""
+
+    code: str
+    label: str
+    value: str
+    ratio: float | None
+    strongest: bool
+
+
+@with_config(ConfigDict(extra="forbid"))
+class HistoryOwnerDiagramResponse(TypedDict):
+    """The report's top-view car diagram: the highlighted zone and a level per sensor."""
+
+    zone: str | None
+    markers: list[HistoryOwnerDiagramMarkerResponse]
+    front_label: str
+
+
+@with_config(ConfigDict(extra="forbid"))
+class HistoryOwnerPageResponse(TypedDict):
+    """Page 1 of the PDF report, localized: the owner's verdict and what to do next.
+
+    Built by ``vibesensor.report.view_model.build_owner_page``, the same
+    function the PDF draws page 1 from; History renders it as is.
+    """
+
+    verdict: Literal["fault", "weak_evidence", "no_fault"]
+    result: str
+    tone: Literal["good", "strong", "moderate", "muted"]
+    headline: str
+    level: Literal["strong", "moderate", "weak"] | None
+    confidence_label: str
+    level_word: str | None
+    level_meaning: str | None
+    description: str
+    candidate: str | None
+    reasons_title: str | None
+    reasons: list[str]
+    covered_title: str | None
+    covered: str | None
+    not_covered_title: str | None
+    not_covered: list[str]
+    next_step_title: str
+    confirm_title: str | None
+    confirm: str | None
+    next_step: str
+    fallback_step: str | None
+    recapture_title: str | None
+    recapture: list[str]
+    verify_title: str | None
+    verify: str | None
+    diagram: HistoryOwnerDiagramResponse
+
+
+@with_config(ConfigDict(extra="forbid"))
 class HistoryInsightsResponse(AnalysisSummaryCoreResponse, total=False):
     """Response body for the localized history insights endpoint payload."""
 
     status: Annotated[Literal["complete"], Field(default="complete")]
     warnings: list[HistoryInsightWarningResponse]
+    owner: Required[HistoryOwnerPageResponse]
 
 
 class DeleteHistoryRunResponse(BaseModel):

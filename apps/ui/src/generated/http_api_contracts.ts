@@ -745,6 +745,7 @@ export interface components {
             lang: string;
             metadata: components["schemas"]["PayloadObject"];
             most_likely_origin: components["schemas"]["SuspectedVibrationOriginPayload"];
+            owner: components["schemas"]["HistoryOwnerPageResponse"];
             peak_picker_method?: string | null;
             phase_info: components["schemas"]["PhaseInfoResponse"];
             phase_segments: components["schemas"]["PhaseSegmentSummaryResponse"][];
@@ -798,6 +799,54 @@ export interface components {
         /** Response body listing recorded run summaries. */
         HistoryListResponse: {
             runs: components["schemas"]["HistoryListEntryResponse"][];
+        };
+        /** One sensor on the car diagram; ``ratio`` 1.0 is the strongest location. */
+        HistoryOwnerDiagramMarkerResponse: {
+            code: string;
+            label: string;
+            ratio: number | null;
+            strongest: boolean;
+            value: string;
+        };
+        /** The report's top-view car diagram: the highlighted zone and a level per sensor. */
+        HistoryOwnerDiagramResponse: {
+            front_label: string;
+            markers: components["schemas"]["HistoryOwnerDiagramMarkerResponse"][];
+            zone: string | null;
+        };
+        /**
+         * Page 1 of the PDF report, localized: the owner's verdict and what to do next.
+         *
+         * Built by ``vibesensor.report.view_model.build_owner_page``, the same
+         * function the PDF draws page 1 from; History renders it as is.
+         */
+        HistoryOwnerPageResponse: {
+            candidate: string | null;
+            confidence_label: string;
+            confirm: string | null;
+            confirm_title: string | null;
+            covered: string | null;
+            covered_title: string | null;
+            description: string;
+            diagram: components["schemas"]["HistoryOwnerDiagramResponse"];
+            fallback_step: string | null;
+            headline: string;
+            level: ("strong" | "moderate" | "weak") | null;
+            level_meaning: string | null;
+            level_word: string | null;
+            next_step: string;
+            next_step_title: string;
+            not_covered: string[];
+            not_covered_title: string | null;
+            reasons: string[];
+            reasons_title: string | null;
+            recapture: string[];
+            recapture_title: string | null;
+            result: string;
+            tone: "good" | "strong" | "moderate" | "muted";
+            verdict: "fault" | "weak_evidence" | "no_fault";
+            verify: string | null;
+            verify_title: string | null;
         };
         /** Response body describing the persisted raw-capture finalization outcome. */
         HistoryRawCaptureFinalizeResponse: {

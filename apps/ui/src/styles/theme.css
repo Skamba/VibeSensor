@@ -52,10 +52,6 @@
     --capture-readiness-warn-border: rgba(251, 191, 36, 0.34);
     --capture-readiness-fail-surface: rgba(248, 113, 113, 0.14);
     --capture-readiness-fail-border: rgba(248, 113, 113, 0.3);
-    --history-diagnosis-success-surface: rgba(74, 222, 128, 0.14);
-    --history-diagnosis-success-border: rgba(74, 222, 128, 0.3);
-    --history-diagnosis-warn-surface: rgba(251, 191, 36, 0.14);
-    --history-diagnosis-warn-border: rgba(251, 191, 36, 0.34);
     --row-even: #161923;
     --row-hover: rgba(139, 92, 246, 0.08);
     --chart-grid: #2a2d38;
@@ -86,10 +82,6 @@
   .live-sensor-card__status-dot {
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-  }
-
-  .history-row[data-expanded="true"] td {
-    background: var(--md-sys-color-surface-container-high) !important;
   }
 }
 
@@ -132,11 +124,6 @@
 
   .card__title {
     font-size: 1.1rem;
-  }
-
-  .history-table th,
-  .history-table td {
-    padding: 0.75rem;
   }
 
   .speed {

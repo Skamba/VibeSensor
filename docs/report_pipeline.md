@@ -24,6 +24,14 @@ GET /api/history/{run_id}/report.pdf?lang=nl   [vibesensor.web.history]
      -> render_report_pdf(view)                           [vibesensor.report.pdf]
 ```
 
+History opens a run's diagnosis with the same page 1. The insights response
+(`GET /api/history/{run_id}/insights?lang=nl`) carries it as `owner`, built by
+`build_owner_page(analysis, lang=..., speed_unit=...)`, the function the PDF's
+page 1 comes from, so the app never words a verdict itself. `owner.result` is
+the run's result in a few words ("Front-left wheel", "No result"), which the
+History list titles each run with, and `owner.tone` is the verdict box color
+both draw: green only when the run checked something and found nothing.
+
 The report language is the requested `lang`, falling back to the run's
 language. `vibesensor-report <history.db> <run_id> [--lang en|nl] [--output
 file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
@@ -84,8 +92,10 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        rhythm, wheel-bearing hum and, without measured RPM, an idle shake at
        a standstill; for an EV, the motor's electrical and gear-mesh rhythms
        and wheel-bearing hum); and what to do if the
-       vibration is still felt. History shows the same sentence and a
-       "Checked / Couldn't check" block in the same words.
+       vibration is still felt. A run that checked nothing is "No result",
+       with a grey verdict box. History shows this same page, and a
+       "Checked / Couldn't check" block in the same words under "More
+       details".
      - No fault with `unexplained_vibration` (a sensor felt a vibration in
        the elevated strength band, 26 dB and up, that no checked order explains,
        such as a body resonance or an EV run with no motor ratio): the
@@ -94,8 +104,8 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        location and its level and lists what was checked and ruled out; the
        next step is to record again holding that speed, then have a workshop
        look for a loose or resonating part there (also the shop-request text).
-       The verdict box is grey, as for weak evidence, not green. History
-       shows the same headline and sentence with a warning tone.
+       The verdict box is grey, as for weak evidence, not green, in History
+       too.
 2. **Workshop page** (always included):
    - Test conditions: tire size and circumference, final drive and top gear
      ratio, each with its provenance ("entered by you", "car library,
