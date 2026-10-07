@@ -1,3 +1,6 @@
+import type { RefObject } from "preact";
+import { useRef } from "preact/hooks";
+
 import { Note, Pill, type Variant } from "../../components/maintenance";
 import { t } from "../../i18n";
 import { liveSensorLayout } from "../../live_store";
@@ -88,7 +91,7 @@ function StatusDot(props: { connected: boolean }) {
 }
 
 /** "3 sensors to place": one chip per unplaced sensor. */
-function UnplacedSensors(props: { model: Placement }) {
+function UnplacedSensors(props: { model: Placement; onPick: () => void }) {
   const { unplaced, selected } = props.model;
   return (
     <div class="sensor-to-place">
@@ -111,7 +114,10 @@ function UnplacedSensors(props: { model: Placement }) {
                   data-client-id={sensor.id}
                   aria-pressed={selected?.id === sensor.id}
                   aria-label={`${sensorTitle(sensor)}, ${status}`}
-                  onClick={() => select(sensor.id)}
+                  onClick={() => {
+                    select(sensor.id);
+                    props.onPick();
+                  }}
                 >
                   <StatusDot connected={sensor.connected} />
                   <span>{sensorTitle(sensor)}</span>
@@ -274,9 +280,13 @@ function SpotButton(props: { spot: Spot; model: Placement }) {
 }
 
 /** A top-down car with every mounting spot as a button, front at the top. */
-function CarDiagram(props: { model: Placement }) {
+function CarDiagram(props: {
+  model: Placement;
+  diagram: RefObject<HTMLFieldSetElement | null>;
+}) {
   return (
     <fieldset
+      ref={props.diagram}
       id="sensorCarDiagram"
       class="car-diagram"
       aria-label={t("settings.sensors.diagram_label")}
@@ -358,12 +368,23 @@ function MountingGuide(props: { placed: boolean }) {
 /** Settings > Sensors: place each sensor on the car, identify or remove it. */
 export function Sensors() {
   const model = placement.value;
+  const diagram = useRef<HTMLFieldSetElement>(null);
+  // On a phone the car sits below the chips: after picking one, bring the
+  // whole car into view so the next tap is on it.
+  const revealDiagram = () =>
+    requestAnimationFrame(() =>
+      diagram.current?.scrollIntoView({
+        block: "nearest",
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      }),
+    );
   return (
     <>
       <div class="panel card">
         <strong>{t("settings.sensors.title")}</strong>
         <div class="subtle">{t("settings.sensors.hint")}</div>
-        <FirmwareUpdateNotice />
         <div class="sensor-placement">
           <div class="sensor-placement__side">
             {model.sensors.length === 0 ? (
@@ -372,12 +393,14 @@ export function Sensors() {
               </p>
             ) : (
               <>
-                <UnplacedSensors model={model} />
+                <UnplacedSensors model={model} onPick={revealDiagram} />
                 <SelectedSensor model={model} />
               </>
             )}
           </div>
-          <CarDiagram model={model} />
+          <CarDiagram model={model} diagram={diagram} />
+          {/* After the car, so it never pushes the car off a phone screen. */}
+          <FirmwareUpdateNotice />
         </div>
       </div>
       <MountingGuide placed={model.byCode.size > 0} />

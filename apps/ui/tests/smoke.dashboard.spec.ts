@@ -896,12 +896,41 @@ test.describe("on a phone", () => {
     await expect(page.locator("#shellRecordingPill")).toContainText(
       "Recording",
     );
-    // The Start tap starts the muted keep-awake video, and Live says to set auto-lock to Never.
+    // The Start tap starts the muted keep-awake video, and Live says to keep
+    // the screen on in one line; "How?" says to set auto-lock to Never.
     await expect.poll(isPlaying).toBe(true);
     await expect(keepAwakeVideo).toHaveJSProperty("muted", true);
     const hint = page.locator("#keepAwakeHint");
-    await expect(hint).toContainText("Auto-Lock");
+    const summary = hint.locator("summary");
+    await expect(summary).toHaveText(
+      "Keep the screen on while you drive. How?",
+    );
     await expect(hint).toBeInViewport();
+    const line = await summary.evaluate(
+      (element) =>
+        Number.parseFloat(getComputedStyle(element).lineHeight) * 1.5,
+    );
+    expect((await summary.boundingBox())?.height ?? 0).toBeLessThan(line);
+    await expect(hint.getByText("Auto-Lock")).toBeHidden();
+    await summary.tap();
+    await expect(hint.getByText("Auto-Lock")).toBeVisible();
+    await expect(page.locator("#stopLoggingBtn")).toBeInViewport();
+
+    // The overview pairs its short stats on a phone; the car takes a full row.
+    const box = async (selector: string) =>
+      (await page.locator(selector).boundingBox()) ?? {
+        x: 0,
+        y: -1,
+        width: 0,
+        height: 0,
+      };
+    const sensors = await box("#liveConnectedSensors");
+    const runState = await box("#liveRecordingState");
+    const car = await box("#liveActiveCar");
+    expect(runState.y).toBe(sensors.y);
+    expect(runState.x).toBeGreaterThan(sensors.x + sensors.width);
+    expect(car.y).toBeGreaterThan(sensors.y);
+    expect(car.width).toBeGreaterThan(sensors.width * 1.8);
 
     // The sensor goes quiet: a warning at the top, with the time left before the stop.
     status = idleStatus({

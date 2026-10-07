@@ -18,8 +18,10 @@ import {
   type DriveLayout,
   ENGINE_CHOICES,
   type EngineChoice,
+  FILTER_MIN_OPTIONS,
   gearboxParts,
   type ManualField,
+  matchesFilter,
   progressText,
   type RatioField,
   type RatioPart,
@@ -47,6 +49,7 @@ import {
   goBack,
   isOpen,
   type LibraryOptions,
+  listFilter,
   loadCurrentStep,
   manualInputs,
   modelOptions,
@@ -343,6 +346,58 @@ function libraryItems<T>(
   };
 }
 
+/**
+ * A long brand or model list: the items the filter keeps, and the field that
+ * narrows it (Enter picks the only match left).
+ */
+function FilteredOptions(props: {
+  id: string;
+  list?: boolean;
+  filterId: string;
+  placeholderKey: string;
+  noMatchKey: string;
+  library: ReturnType<typeof libraryItems>;
+}) {
+  const { library } = props;
+  if (library.items.length < FILTER_MIN_OPTIONS) {
+    return <Options id={props.id} list={props.list} {...library} />;
+  }
+  const query = listFilter.value;
+  const items = library.items.filter((item) =>
+    matchesFilter(query, `${item.label} ${item.detail ?? ""}`),
+  );
+  return (
+    <>
+      <input
+        id={props.filterId}
+        class="wizard-filter"
+        type="search"
+        autoComplete="off"
+        enterKeyHint="search"
+        aria-label={t(props.placeholderKey)}
+        aria-controls={props.id}
+        placeholder={t(props.placeholderKey)}
+        value={query}
+        onInput={(event) => {
+          listFilter.value = event.currentTarget.value;
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && items.length === 1) {
+            event.preventDefault();
+            items[0].onSelect();
+          }
+        }}
+      />
+      <Options id={props.id} list={props.list} {...library} items={items} />
+      {items.length === 0 ? (
+        <p class="subtle wizard-filter-empty" role="status">
+          {t(props.noMatchKey)}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
 function CustomEntry(props: {
   kind: "brand" | "model";
   labelKey: string;
@@ -538,7 +593,13 @@ function Steps() {
     <>
       <div id="wizardStep0" class="wizard-step" hidden={current !== 0}>
         <h3>{t("settings.car.step_brand")}</h3>
-        <Options id="wizardBrandList" {...brands} />
+        <FilteredOptions
+          id="wizardBrandList"
+          filterId="wizardBrandFilter"
+          placeholderKey="settings.car.filter_brands"
+          noMatchKey="settings.car.no_brands_match"
+          library={brands}
+        />
         <CustomEntry
           kind="brand"
           labelKey="settings.car.or_custom_brand"
@@ -549,7 +610,14 @@ function Steps() {
       <div id="wizardStep1" class="wizard-step" hidden={current !== 1}>
         <h3>{t("settings.car.step_model")}</h3>
         <LibraryMissNote />
-        <Options id="wizardModelList" list {...models} />
+        <FilteredOptions
+          id="wizardModelList"
+          list
+          filterId="wizardModelFilter"
+          placeholderKey="settings.car.filter_models"
+          noMatchKey="settings.car.no_models_match"
+          library={models}
+        />
         <CustomEntry
           kind="model"
           labelKey={

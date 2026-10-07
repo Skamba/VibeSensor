@@ -254,6 +254,20 @@ test("journey: history titles runs by date and result, opens on the report's pag
       '.history-car__wheel--highlighted[data-wheel="front_left_wheel"]',
     ),
   ).toHaveCount(1);
+  // The level labels stay readable (at least 12 px) on a laptop and a phone.
+  const labelPx = () =>
+    owner
+      .locator(".history-car__marker text")
+      .first()
+      .evaluate((text) => {
+        const svg = (text as SVGTextElement).ownerSVGElement;
+        const scale = svg?.getScreenCTM()?.a ?? 0;
+        return Number.parseFloat(getComputedStyle(text).fontSize) * scale;
+      });
+  expect(await labelPx()).toBeGreaterThanOrEqual(12);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(labelPx).toBeGreaterThanOrEqual(12);
+  await page.setViewportSize({ width: 1280, height: 800 });
   // The workshop detail waits behind "More details".
   const more = details.locator(".history-more");
   await expect(more).not.toHaveAttribute("open", "");

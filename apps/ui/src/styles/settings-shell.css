@@ -1,27 +1,38 @@
+/* Every tab stays on screen: a narrow screen wraps the strip onto a second row
+   instead of scrolling it sideways. Each tab draws its own baseline (the
+   selected one in the accent) and ::after carries it to the end of the row. */
 .settings-tabs {
   display: flex;
-  gap: var(--space-1);
+  flex-wrap: wrap;
   margin-bottom: var(--space-3);
-  /* A narrow screen scrolls the strip, never the page. The baseline is an inset
-     shadow so the selected tab's underline can cover it inside the scroller. */
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  box-shadow: inset 0 -2px 0 var(--md-sys-color-outline-variant);
+}
+.settings-tabs::after {
+  content: "";
+  flex: 1 1 0;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
 }
 .settings-tab {
   flex: 0 0 auto;
   white-space: nowrap;
   padding: var(--space-2) var(--space-3);
   border: none;
+  border-radius: 0;
   background: none;
   cursor: pointer;
   font: inherit;
   color: var(--md-sys-color-on-surface-variant);
-  border-bottom: 2px solid transparent;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
   transition:
     color 0.15s,
     border-color 0.15s;
+}
+/* Phones: tighter tabs share each row, so all five fit on one where they can. */
+@media (max-width: 720px) {
+  .settings-tab {
+    flex: 1 1 auto;
+    padding: var(--space-2) 5px;
+    font-size: 0.9rem;
+  }
 }
 @media (hover: hover) {
   .settings-tab:hover {

@@ -202,6 +202,12 @@ test("journey: Settings fits a phone and every spot on the car is a full-size ta
         document.documentElement.scrollWidth -
         document.documentElement.clientWidth,
     );
+  // All five tabs are on screen at once: nothing hides off the edge.
+  const strip = page.locator(".settings-tabs [role='tab']");
+  await expect(strip).toHaveCount(5);
+  for (const tab of await strip.all()) {
+    await expect(tab).toBeInViewport({ ratio: 1 });
+  }
   const tabs = page.locator("#settingsView [role='tab']");
   const count = await tabs.count();
   expect(count).toBeGreaterThan(5);
@@ -232,6 +238,7 @@ test("journey: Settings fits a phone and every spot on the car is a full-size ta
 test("journey: an outdated sensor shows its firmware and the USB update path", async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await installCommonRoutes(page);
   const sensor = {
     connected: true,
@@ -270,11 +277,22 @@ test("journey: an outdated sensor shows its firmware and the USB update path", a
   // The selected sensor's card shows its firmware.
   const firmware = page.locator("#sensorSelection [data-firmware-status]");
   await expect(firmware).toHaveText(/Firmware esp32-atom-0\.1\s*outdated/);
+  // On a phone the car sits below the chips; picking one brings it into view.
+  const diagram = page.locator("#sensorCarDiagram");
+  await expect(diagram).not.toBeInViewport({ ratio: 1 });
   await page.locator(`.sensor-chip[data-client-id="${OFFLINE_ID}"]`).click();
   await expect(firmware).toHaveText(
     /Firmware fw-20261005\.1200\+0123456789ab\s*up to date/,
   );
+  await expect(diagram).toBeInViewport({ ratio: 1 });
   const notice = page.locator("#sensorFirmwareNotice");
+  // The notice follows the car, so it never pushes the car down.
+  const below = async () => {
+    const car = await diagram.boundingBox();
+    const box = await notice.boundingBox();
+    return (box?.y ?? 0) >= (car?.y ?? 0) + (car?.height ?? 0);
+  };
+  expect(await below()).toBe(true);
   await expect(notice).toContainText(
     "1 sensor runs older firmware than this Pi provides.",
   );

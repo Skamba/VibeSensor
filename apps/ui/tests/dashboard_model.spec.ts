@@ -390,8 +390,7 @@ describe("recording card", () => {
       ).keepAwakeHint;
     expect(hint("video")).toEqual({
       body: "dashboard.logging.keep_awake_hint",
-      tone: "info",
-      compact: true,
+      detail: "dashboard.logging.keep_awake_detail",
     });
     expect(hint("off")).not.toBeNull();
     expect(hint("wake-lock")).toBeNull();

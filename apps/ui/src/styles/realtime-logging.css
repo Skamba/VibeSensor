@@ -338,11 +338,30 @@
   background: var(--md-sys-color-surface-container-high);
 }
 
-/* The auto-lock hint: small, so Stop stays the biggest thing in the bar. */
-.action-bar__hint .settings-feedback__body {
+/* The keep-screen-on hint: one small line, so Stop stays the biggest thing in
+   the bar; "How?" opens the phone settings to change. */
+.action-bar__hint {
   color: var(--md-sys-color-on-surface-variant);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+.action-bar__hint-summary {
+  cursor: pointer;
+  list-style: none;
+}
+.action-bar__hint-summary::-webkit-details-marker {
+  display: none;
+}
+.action-bar__hint-more {
+  color: var(--md-sys-color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.action-bar__hint[open] .action-bar__hint-more {
+  display: none;
+}
+.action-bar__hint-detail {
+  margin: var(--space-1) 0 0;
 }
 
 .action-bar__row {

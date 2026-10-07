@@ -80,6 +80,28 @@ export const STEP_LABEL_KEYS = [
 ] as const;
 export const SPECS_STEP = 3;
 
+/** A brand or model list at least this long gets a type-to-filter field. */
+export const FILTER_MIN_OPTIONS = 8;
+
+function foldForFilter(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+/**
+ * Whether a list option matches what the user typed: every word appears
+ * somewhere in it, ignoring case and accents ("a4 avant" finds
+ * "A4 Avant (B9, 2019–2024)"; "wagon" finds every wagon).
+ */
+export function matchesFilter(query: string, text: string): boolean {
+  const haystack = foldForFilter(text);
+  return foldForFilter(query)
+    .split(/\s+/)
+    .every((word) => haystack.includes(word));
+}
+
 /** A saved car being edited: the specs it started with and where they came from. */
 export interface EditTarget {
   carId: string;

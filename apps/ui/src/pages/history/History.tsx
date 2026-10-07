@@ -136,13 +136,16 @@ function RunRow(props: { row: RowModel }) {
   );
 }
 
+/** Room beside the PDF's box for the wheel labels, drawn larger on screen. */
+const DIAGRAM_SIDE_ROOM = 5;
+
 /** The PDF's top-view car diagram: the suspected zone and each sensor's level. */
 function CarDiagram(props: { diagram: DiagramModel }) {
   const { diagram } = props;
   return (
     <svg
       class="history-car"
-      viewBox={`0 0 ${diagram.width} ${diagram.height}`}
+      viewBox={`${-DIAGRAM_SIDE_ROOM} 0 ${diagram.width + 2 * DIAGRAM_SIDE_ROOM} ${diagram.height}`}
       role="img"
       aria-label={diagram.markers
         .map((marker) => `${marker.label}: ${marker.value}`)
