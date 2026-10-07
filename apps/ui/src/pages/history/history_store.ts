@@ -29,6 +29,8 @@ export const runs = signal<HistoryEntry[]>([]);
 export const expandedRunId = signal<string | null>(null);
 export const details = signal<Record<string, RunDetail>>({});
 export const deleteAllInFlight = signal(false);
+/** The latest diagnosis request per run: an older response is dropped. */
+const requestSeq = new Map<string, number>();
 
 function updateDetail(runId: string, patch: Partial<RunDetail>): void {
   details.value = {
@@ -38,55 +40,47 @@ function updateDetail(runId: string, patch: Partial<RunDetail>): void {
 }
 
 function dropDetail(runId: string): void {
+  requestSeq.delete(runId);
   const { [runId]: _dropped, ...rest } = details.value;
   details.value = rest;
 }
 
-function collapse(): void {
-  const previous = expandedRunId.value;
-  batch(() => {
-    expandedRunId.value = null;
-    if (previous) {
-      dropDetail(previous);
-    }
-  });
-}
-
-/** Loads the run's diagnosis into `preview` (row summary) or `insights`. */
-async function loadDiagnosis(
-  runId: string,
-  target: "preview" | "insights",
-  force = false,
-): Promise<void> {
+/** Loads the run's diagnosis: the row's title and the opened page. A reload
+ * keeps the one already shown until the new one arrives, and supersedes any
+ * load still running (worded in the previous language). */
+async function loadDiagnosis(runId: string, force = false): Promise<void> {
   const detail = details.value[runId] ?? EMPTY_RUN_DETAIL;
-  const loadingKey =
-    target === "preview" ? "previewLoading" : "insightsLoading";
-  const errorKey = target === "preview" ? "previewError" : "insightsError";
-  if (
-    !force &&
-    (detail[loadingKey] || (target === "preview" && detail.preview))
-  ) {
+  if (!force && (detail.loading || detail.summary)) {
     return;
   }
-  updateDetail(runId, { [loadingKey]: true, [errorKey]: "" });
+  const seq = (requestSeq.get(runId) ?? 0) + 1;
+  requestSeq.set(runId, seq);
+  const current = () => requestSeq.get(runId) === seq;
+  updateDetail(runId, { loading: true, error: "" });
   try {
     const response = await getHistoryInsights(runId, lang.value);
-    updateDetail(runId, {
-      [target]: response.status === "complete" ? response : null,
-    });
+    if (current()) {
+      updateDetail(runId, {
+        summary: response.status === "complete" ? response : null,
+      });
+    }
   } catch (error) {
-    updateDetail(runId, {
-      [errorKey]: errorMessage(error, t("report.unable_load_insights")),
-    });
+    if (current()) {
+      updateDetail(runId, {
+        error: errorMessage(error, t("report.unable_load_insights")),
+      });
+    }
   } finally {
-    updateDetail(runId, { [loadingKey]: false });
+    if (current()) {
+      updateDetail(runId, { loading: false });
+    }
   }
 }
 
 let prefetchToken = 0;
 
-/** Loads row summaries for analysed runs, a few at a time. */
-async function prefetchPreviews(): Promise<void> {
+/** Loads the diagnosis of every analysed run, a few at a time. */
+async function prefetchDiagnoses(force = false): Promise<void> {
   const token = ++prefetchToken;
   const ready = runs.value.filter(postAnalysisReady);
   for (let index = 0; index < ready.length; index += PREFETCH_CONCURRENCY) {
@@ -96,7 +90,7 @@ async function prefetchPreviews(): Promise<void> {
     await Promise.all(
       ready
         .slice(index, index + PREFETCH_CONCURRENCY)
-        .map((run) => loadDiagnosis(run.run_id, "preview")),
+        .map((run) => loadDiagnosis(run.run_id, force)),
     );
   }
 }
@@ -108,7 +102,7 @@ export async function refreshHistory(): Promise<void> {
   } catch {
     return;
   }
-  void prefetchPreviews();
+  void prefetchDiagnoses();
 }
 
 let loaded = false;
@@ -129,43 +123,35 @@ effect(() => {
   }
 });
 
+/** Opens or closes a run's diagnosis; a closed run keeps its loaded title. */
 export function toggleRun(runId: string): void {
-  const wasExpanded = expandedRunId.value === runId;
-  collapse();
-  if (!wasExpanded) {
-    expandedRunId.value = runId;
-    void loadDiagnosis(runId, "preview");
+  if (expandedRunId.value === runId) {
+    expandedRunId.value = null;
+    return;
   }
+  expandedRunId.value = runId;
+  void loadDiagnosis(runId);
 }
 
-export function reloadInsights(runId: string): Promise<void> {
-  return loadDiagnosis(runId, "insights", true);
+export function reloadDiagnosis(runId: string): Promise<void> {
+  return loadDiagnosis(runId, true);
 }
 
-// A language or speed-unit switch reloads the open diagnosis: the server words
-// its warnings in both.
+// A language or speed-unit switch reloads every diagnosis: the server words
+// them in both.
 let lastWording = `${lang.peek()}|${speedUnit.peek()}`;
 effect(() => {
   const next = `${lang.value}|${speedUnit.value}`;
-  const runId = expandedRunId.peek();
   if (next === lastWording) {
     return;
   }
   lastWording = next;
-  if (!runId) {
-    return;
-  }
-  const hadInsights = Boolean(details.peek()[runId]?.insights);
-  dropDetail(runId);
-  void loadDiagnosis(runId, "preview", true).then(() =>
-    hadInsights ? loadDiagnosis(runId, "insights", true) : undefined,
-  );
+  void prefetchDiagnoses(true);
 });
 
-export async function deleteRun(runId: string): Promise<void> {
-  if (
-    !(await requestConfirmation(t("history.delete_confirm", { name: runId })))
-  ) {
+/** Deletes one run after confirmation; `name` is its title in the list. */
+export async function deleteRun(runId: string, name: string): Promise<void> {
+  if (!(await requestConfirmation(t("history.delete_confirm", { name })))) {
     return;
   }
   try {
@@ -174,9 +160,12 @@ export async function deleteRun(runId: string): Promise<void> {
     showError(errorMessage(error, t("history.delete_failed")));
     return;
   }
-  if (expandedRunId.value === runId) {
-    collapse();
-  }
+  batch(() => {
+    if (expandedRunId.value === runId) {
+      expandedRunId.value = null;
+    }
+    dropDetail(runId);
+  });
   await refreshHistory();
 }
 
@@ -196,10 +185,12 @@ export async function deleteAllRuns(): Promise<void> {
   for (const runId of ids) {
     try {
       await deleteHistoryRun(runId);
-      if (expandedRunId.value === runId) {
-        collapse();
-      }
-      dropDetail(runId);
+      batch(() => {
+        if (expandedRunId.value === runId) {
+          expandedRunId.value = null;
+        }
+        dropDetail(runId);
+      });
     } catch (error) {
       failed += 1;
       firstError ||= errorMessage(error, t("history.delete_failed"));

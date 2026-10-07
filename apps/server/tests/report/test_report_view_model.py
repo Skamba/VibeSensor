@@ -18,7 +18,7 @@ from test_support.synthetic_samples import (
 )
 
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
-from vibesensor.report.view_model import ReportView, build_report_view
+from vibesensor.report.view_model import ReportView, build_owner_page, build_report_view
 from vibesensor.summary.warning_fields import localize_warning_list
 
 _UNRESOLVED_KEY = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
@@ -1085,6 +1085,101 @@ def test_weak_evidence_hedges_candidate_with_reasons_and_recapture_recipe() -> N
     assert view.mechanic.shop == (
         "Don't replace parts based on this report alone; record the test again first.",
     )
+
+
+def _not_checked_summary() -> dict[str, Any]:
+    return run_analysis(
+        make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30),
+        standard_metadata(tire_circumference_m=None),
+    )
+
+
+def _unexplained_summary() -> dict[str, Any]:
+    summary = deepcopy(_healthy_summary())
+    summary["diagnosis"].update(
+        unexplained_vibration=True,
+        location_amplitudes=[
+            {
+                "location": "Rear Right Wheel",
+                "amplitude_mg": 228.5,
+                "db_above_floor": 36.5,
+                "ratio_to_strongest": 1.0,
+                "presence_ratio": None,
+            }
+        ],
+    )
+    return summary
+
+
+@pytest.mark.parametrize(
+    ("summary", "en", "nl", "tone"),
+    [
+        pytest.param(
+            _healthy_summary,
+            "No significant vibration",
+            "Geen noemenswaardige trilling",
+            "good",
+            id="no-fault",
+        ),
+        pytest.param(_not_checked_summary, "No result", "Geen uitslag", "muted", id="not-checked"),
+        pytest.param(
+            _unexplained_summary,
+            "Unexplained vibration",
+            "Onverklaarde trilling",
+            "muted",
+            id="unexplained",
+        ),
+        pytest.param(_weak_summary, "Not conclusive", "Niet doorslaggevend", "muted", id="weak"),
+        pytest.param(_engine_summary, "Engine", "Motor", "strong", id="engine"),
+        pytest.param(
+            lambda: _variant(zone="front_axle", confidence_level="moderate"),
+            "Front wheels",
+            "Voorwielen",
+            "moderate",
+            id="wheel-axle",
+        ),
+        pytest.param(
+            lambda: _variant(source="brakes", zone="rear_axle", confidence_level="strong"),
+            "Rear brake discs",
+            "Remschijven achter",
+            "strong",
+            id="brake-axle",
+        ),
+        pytest.param(
+            lambda: _variant(
+                source="engine",
+                order_code="E3",
+                zone="engine_bay",
+                confidence_level="moderate",
+                alternative={"source": "driveline", "order_code": "P2"},
+            ),
+            "Engine or driveline",
+            "Motor of aandrijflijn",
+            "moderate",
+            id="engine-or-driveline",
+        ),
+    ],
+)
+def test_owner_page_names_the_result_for_history_and_the_verdict_color(
+    summary: Any, en: str, nl: str, tone: str
+) -> None:
+    """History titles a run with the result, and both draw the verdict box in one tone."""
+    analysis = summary()
+    owner = report_view_for(analysis).owner
+
+    assert (owner.result, owner.tone) == (en, tone)
+    assert report_view_for(analysis, lang="nl").owner.result == nl
+    # History's page 1 is the PDF's page 1.
+    assert build_owner_page(analysis, lang="en") == owner
+
+
+def test_a_clear_wheel_fault_names_its_corner_and_level() -> None:
+    summary = _wheel_summary()
+    owner = report_view_for(summary).owner
+
+    assert owner.result == "Front-left wheel"
+    assert owner.tone == summary["diagnosis"]["confidence_level"]
+    assert report_view_for(summary, lang="nl").owner.result == "Wiel linksvoor"
 
 
 def test_dutch_view_translates_and_uses_decimal_commas() -> None:

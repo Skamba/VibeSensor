@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import dataclasses
+import json
+from typing import cast
+
 import pytest
 from _history_endpoint_helpers import (
     make_app_and_state,
@@ -13,6 +17,8 @@ from test_support.analysis import summarize_mappings
 
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.history.runs import HistoryRunService
+from vibesensor.report.view_model import build_owner_page
+from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.web.history_services import ProjectedHistoryRunService
 
 
@@ -282,3 +288,22 @@ def test_history_insights_name_the_speed_to_record_above_in_the_users_unit(
     assert speed["detail"].endswith(ending)
     if speed_unit == "mps":
         assert "km/" not in str(insights["warnings"])
+
+
+@pytest.mark.parametrize(("lang", "speed_unit"), [("en", "kmh"), ("nl", "mps")])
+def test_history_insights_open_with_the_pdfs_page_one(lang: str, speed_unit: str) -> None:
+    """History shows the PDF's owner page as the server words it, never its own."""
+    metadata = make_metadata()
+    samples = [sample(i) for i in range(5)]
+    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    _, state = make_app_and_state(metadata=metadata, samples=samples, analysis=analysis)
+    state.run_service = ProjectedHistoryRunService(
+        HistoryRunService(state.history_db), speed_unit=lambda: speed_unit
+    )
+
+    with TestClient(make_app_from_state(state)) as client:
+        owner = client.get("/api/history/run-1/insights", params={"lang": lang}).json()["owner"]
+
+    expected = build_owner_page(cast(AnalysisSummary, analysis), lang=lang, speed_unit=speed_unit)
+    assert owner == json.loads(json.dumps(dataclasses.asdict(expected)))
+    assert owner["headline"] and owner["result"]

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "vitest";
 import {
   fmt,
+  fmtShortTs,
   fmtTs,
   formatEpochTimestamp,
   formatSpeed,
@@ -49,6 +50,17 @@ describe("timestamp formatting helpers", () => {
     expect(formatEpochTimestamp(-1)).toBe("—");
     expect(formatEpochTimestamp(Number.MAX_VALUE)).toBe("—");
   });
+});
+
+test("a run title's short date names the month in the language, and the year only when it differs", () => {
+  const now = new Date(2026, 9, 7, 18, 0, 0);
+  const iso = new Date(2026, 9, 7, 17, 53, 12).toISOString();
+  expect(fmtShortTs(iso, "en", now)).toBe("7 Oct 17:53");
+  expect(fmtShortTs(iso, "nl", now)).toBe("7 okt 17:53");
+  const lastYear = new Date(2025, 2, 30, 8, 5).toISOString();
+  expect(fmtShortTs(lastYear, "nl", now)).toBe("30 mrt 2025 08:05");
+  expect(fmtShortTs("", "en", now)).toBe("--");
+  expect(fmtShortTs("not-a-date", "en", now)).toBe("--");
 });
 
 describe("speed formatting helpers", () => {

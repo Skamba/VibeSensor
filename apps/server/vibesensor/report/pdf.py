@@ -21,6 +21,7 @@ from vibesensor.report.view_model import (
     Fact,
     MechanicPage,
     OwnerPage,
+    OwnerTone,
     QualitySection,
     ReportView,
     SpectrumChart,
@@ -56,11 +57,6 @@ GREY_SOFT = colors.HexColor("#eceef2")
 SERIES = (BRAND, colors.HexColor("#8a8f9c"), colors.HexColor("#b4b8c2"), colors.HexColor("#d4d7de"))
 
 _HEADER_COLUMNS = 3
-_LEVEL_COLORS = {
-    "strong": (BAD, BAD_SOFT),
-    "moderate": (WARN, WARN_SOFT),
-    "weak": (MUTED, GREY_SOFT),
-}
 
 
 def render_report_pdf(view: ReportView) -> bytes:
@@ -310,16 +306,16 @@ def _header_band(canvas: Canvas, view: ReportView) -> float:
     return top - height - GAP
 
 
-def _verdict_colors(owner: OwnerPage) -> tuple[colors.Color, colors.Color]:
-    if owner.verdict == "no_fault" and not owner.unexplained:
-        return GOOD, GOOD_SOFT
-    if owner.verdict in ("weak_evidence", "no_fault"):
-        return MUTED, GREY_SOFT
-    return _LEVEL_COLORS.get(owner.level or "", (INK, SURFACE))
+_TONE_COLORS: dict[OwnerTone, tuple[colors.Color, colors.Color]] = {
+    "good": (GOOD, GOOD_SOFT),
+    "strong": (BAD, BAD_SOFT),
+    "moderate": (WARN, WARN_SOFT),
+    "muted": (MUTED, GREY_SOFT),
+}
 
 
 def _verdict_box(canvas: Canvas, owner: OwnerPage, y: float) -> float:
-    accent, soft = _verdict_colors(owner)
+    accent, soft = _TONE_COLORS[owner.tone]
     inner_w = CONTENT_W - 10 * MM
     texts = [(owner.headline, BOLD, 15), (owner.description, FONT, 10.5)]
     if owner.candidate:

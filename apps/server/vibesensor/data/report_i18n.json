@@ -1035,6 +1035,42 @@
     "en": "VibeSensor vibration report",
     "nl": "VibeSensor-trillingsrapport"
   },
+  "RESULT_BRAKES_FRONT_AXLE": {
+    "en": "Front brake discs",
+    "nl": "Remschijven voor"
+  },
+  "RESULT_BRAKES_REAR_AXLE": {
+    "en": "Rear brake discs",
+    "nl": "Remschijven achter"
+  },
+  "RESULT_NO_FAULT": {
+    "en": "No significant vibration",
+    "nl": "Geen noemenswaardige trilling"
+  },
+  "RESULT_NOT_CHECKED": {
+    "en": "No result",
+    "nl": "Geen uitslag"
+  },
+  "RESULT_OR": {
+    "en": "{result} or {other}",
+    "nl": "{result} of {other}"
+  },
+  "RESULT_UNEXPLAINED": {
+    "en": "Unexplained vibration",
+    "nl": "Onverklaarde trilling"
+  },
+  "RESULT_WEAK": {
+    "en": "Not conclusive",
+    "nl": "Niet doorslaggevend"
+  },
+  "RESULT_WHEEL_FRONT_AXLE": {
+    "en": "Front wheels",
+    "nl": "Voorwielen"
+  },
+  "RESULT_WHEEL_REAR_AXLE": {
+    "en": "Rear wheels",
+    "nl": "Achterwielen"
+  },
   "RPM_ESTIMATED_TOP_GEAR": {
     "en": "not measured; estimated from speed assuming top gear",
     "nl": "niet gemeten; geschat uit de snelheid, uitgaande van de hoogste versnelling"

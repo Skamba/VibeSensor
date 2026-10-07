@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import Literal
 
 from vibesensor._version import __version__
 from vibesensor.common.time_utils import format_run_timestamp
@@ -54,6 +55,7 @@ __all__ = [
     "SpeedChart",
     "SpeedSeries",
     "WorksheetRow",
+    "build_owner_page",
     "build_report_view",
 ]
 
@@ -288,13 +290,25 @@ class CarDiagram:
     front_label: str
 
 
+OwnerTone = Literal["good", "strong", "moderate", "muted"]
+
+
 @dataclass(frozen=True, slots=True)
 class OwnerPage:
-    """Page 1: verdict, one confidence level, plain description, what to do."""
+    """Page 1: verdict, one confidence level, plain description, what to do.
+
+    History opens a run's diagnosis with this same page (``owner`` in the
+    insights response), so the app and the PDF say the same thing.
+    """
 
     verdict: str
-    # No cause found, yet a significant vibration was felt (never shown as all clear).
-    unexplained: bool
+    # The run's result in a few words ("Front-left wheel", "No significant
+    # vibration"); History titles the run with it. The PDF does not draw it.
+    result: str
+    # The verdict box's color: "good" only when the run checked something and
+    # found nothing; a run that checked nothing, or felt a vibration nothing
+    # checked explains, is never shown as all clear.
+    tone: OwnerTone
     headline: str
     level: str | None
     confidence_label: str
@@ -448,11 +462,28 @@ def build_report_view(
     recorded with the run. Speeds show in the user's ``speed_unit`` (``kmh`` or
     ``mps``), as on the History page.
     """
+    ctx = _context(analysis, lang or analysis.get("lang") or metadata.language, speed_unit)
     diagnosis = analysis["diagnosis"]
-    conditions = diagnosis["conditions"]
+    return ReportView(
+        lang=ctx.lang,
+        title=ctx.t("REPORT_TITLE"),
+        header=_header(ctx, analysis, metadata, time_zone),
+        owner=_owner_page(ctx, analysis, diagnosis),
+        mechanic=_mechanic_page(ctx, analysis, metadata, diagnosis),
+        quality=_quality(ctx, analysis, metadata),
+    )
+
+
+def build_owner_page(analysis: AnalysisSummary, *, lang: str, speed_unit: str = "kmh") -> OwnerPage:
+    """Page 1 of the report alone: what History opens a run's diagnosis with."""
+    return _owner_page(_context(analysis, lang, speed_unit), analysis, analysis["diagnosis"])
+
+
+def _context(analysis: AnalysisSummary, lang: str | None, speed_unit: str) -> _Ctx:
+    conditions = analysis["diagnosis"]["conditions"]
     electric = conditions["fuel_type"] == "EV"
-    ctx = _Ctx(
-        normalize_lang(lang or analysis.get("lang") or metadata.language),
+    return _Ctx(
+        normalize_lang(lang),
         electric=electric,
         no_propshaft=not electric and conditions.get("propshaft") is False,
         layout_unknown=not electric and conditions.get("drive_layout") is None,
@@ -461,14 +492,6 @@ def build_report_view(
         engine_roles={
             row["code"]: tuple(row["roles"]) for row in conditions.get("engine_orders", [])
         },
-    )
-    return ReportView(
-        lang=ctx.lang,
-        title=ctx.t("REPORT_TITLE"),
-        header=_header(ctx, analysis, metadata, time_zone),
-        owner=_owner_page(ctx, analysis, diagnosis),
-        mechanic=_mechanic_page(ctx, analysis, metadata, diagnosis),
-        quality=_quality(ctx, analysis, metadata),
     )
 
 
@@ -714,22 +737,26 @@ def _owner_page(
     recapture: tuple[str, ...] = ()
     not_covered: tuple[str, ...] = ()
     next_step = ctx.t("STEP_NO_FAULT")
+    result = ctx.t("RESULT_NO_FAULT")
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
         strongest = _unexplained_row(diagnosis)
         if not _checked_anything(diagnosis):
             # Nothing was compared with any rhythm: no result, and what fixes that.
             headline = ctx.t("VERDICT_NOT_CHECKED")
+            result = ctx.t("RESULT_NOT_CHECKED")
             next_step = ctx.t(
                 _NOT_CHECKED_STEP_KEYS.get(_not_checked_reason(diagnosis), "STEP_NOT_CHECKED")
             )
         elif strongest is not None:
             # A vibration was there; it just followed nothing the run could check.
             headline = ctx.t("VERDICT_UNEXPLAINED")
+            result = ctx.t("RESULT_UNEXPLAINED")
             where = ctx.location(strongest["location"])
             next_step = ctx.t("STEP_UNEXPLAINED", location=where)
     elif verdict == "weak_evidence":
         headline = ctx.t("VERDICT_WEAK")
+        result = ctx.t("RESULT_WEAK")
         description = _description(ctx, diagnosis)
         candidate = ctx.t("VERDICT_WEAK_CANDIDATE", cause=_cause(ctx, diagnosis))
         reasons = tuple(_weak_reason(ctx, reason) for reason in diagnosis["weak_reasons"])
@@ -743,6 +770,7 @@ def _owner_page(
     else:
         step_key = _step_key(ctx, diagnosis)
         headline = ctx.t("VERDICT_LIKELY_CAUSE", cause=_cause(ctx, diagnosis))
+        result = _fault_result(ctx, diagnosis)
         description = _description(ctx, diagnosis)
         for reason in _SENSOR_REASONS:
             if reason in diagnosis["weak_reasons"]:
@@ -765,7 +793,8 @@ def _owner_page(
         verify = _verify(ctx, diagnosis)
     return OwnerPage(
         verdict=verdict,
-        unexplained=_unexplained_row(diagnosis) is not None,
+        result=result,
+        tone=_owner_tone(diagnosis),
         headline=headline,
         confidence_label=ctx.t("CONFIDENCE"),
         level=level,
@@ -828,6 +857,38 @@ def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     if alternative is None:
         return cause
     return ctx.t("CAUSE_OR", cause=cause, other=_alternative_text(ctx, alternative))
+
+
+def _owner_tone(diagnosis: DiagnosisPayload) -> OwnerTone:
+    """The verdict's color: green only for a clean run that checked something."""
+    if diagnosis["verdict"] == "no_fault":
+        clear = _checked_anything(diagnosis) and _unexplained_row(diagnosis) is None
+        return "good" if clear else "muted"
+    if diagnosis["verdict"] == "weak_evidence":
+        return "muted"
+    level = diagnosis["confidence_level"]
+    if level == "strong" or level == "moderate":
+        return level
+    return "muted"
+
+
+def _fault_result(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
+    """The cause in a few words: the wheel, axle, or part to look at."""
+    source, zone = diagnosis["source"], diagnosis["zone"] or ""
+    key = ctx.source_key(source)
+    if source == "wheel/tire" and zone in _WHEEL_CORNERS:
+        text = ctx.t(f"LOC_{zone.upper()}")
+    elif source in {"wheel/tire", "brakes"} and zone in {"front_axle", "rear_axle"}:
+        text = ctx.t(f"RESULT_{key}_{zone.upper()}")
+    elif key is not None:
+        text = ctx.t(f"SOURCE_{key}")
+    else:
+        # An order no source family owns: where it was strongest.
+        text = ctx.location(diagnosis["location"])
+    alternative = diagnosis.get("alternative")
+    if alternative is not None and (other := ctx.source_key(alternative["source"])) is not None:
+        text = ctx.t("RESULT_OR", result=text, other=ctx.t(f"SOURCE_{other}_NOUN"))
+    return f"{text[:1].upper()}{text[1:]}"
 
 
 def _alternative_text(ctx: _Ctx, alternative: DiagnosisAlternative) -> str:

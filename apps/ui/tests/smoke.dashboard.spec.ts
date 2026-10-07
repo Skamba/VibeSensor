@@ -439,9 +439,7 @@ test("journey: a run recorded before the Pi clock was set gets its time once it 
   });
 
   await openHistoryTab(page);
-  await expect(page.locator("#historyTableBody")).toContainText(
-    "Not verified (Pi clock was not set)",
-  );
+  await expect(page.locator("#historyTableBody")).toContainText("Date unknown");
   await page.locator("#tab-dashboard").click();
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#startLoggingBtn")).toBeVisible();
@@ -450,9 +448,9 @@ test("journey: a run recorded before the Pi clock was set gets its time once it 
   await expect.poll(() => posts.slice(-2)).toEqual(["stop", "browser-clock"]);
   await openHistoryTab(page);
   await expect(page.locator("#historyTableBody")).not.toContainText(
-    "Not verified",
+    "Date unknown",
   );
-  await expect(page.locator("#historyTableBody")).toContainText("2026");
+  await expect(page.locator("#historyTableBody")).toContainText("1 Jan");
 });
 
 test("journey: History reloads when analysis finishes, and an auto-stopped run says so", async ({
@@ -481,8 +479,12 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
     "Processing",
   );
   await openHistoryTab(page);
-  await expect(page.locator("#historyTableBody")).toContainText("run-001");
-  await expect(page.locator("#historyTableBody")).not.toContainText("run-002");
+  await expect(
+    page.locator('#historyTableBody [data-run-row="1"][data-run="run-001"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('#historyTableBody [data-run-row="1"][data-run="run-002"]'),
+  ).toHaveCount(0);
 
   status = idleStatus({
     last_completed_run_id: "run-002",
@@ -500,7 +502,9 @@ test("journey: History reloads when analysis finishes, and an auto-stopped run s
       raw_sample_count: 12080,
     },
   ];
-  await expect(page.locator("#historyTableBody")).toContainText("run-002");
+  await expect(
+    page.locator('#historyTableBody [data-run-row="1"][data-run="run-002"]'),
+  ).not.toHaveCount(0);
 
   // The run hit the 30-minute cap, and Live says so.
   await page.locator("#tab-dashboard").click();

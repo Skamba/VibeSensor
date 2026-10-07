@@ -4,21 +4,14 @@ import type {
   HistoryInsightsPayload,
 } from "../../api/types";
 import { engineLabel } from "../../car_references";
-import {
-  GUIDED_SWEEP_FROM_KMH,
-  GUIDED_SWEEP_TO_KMH,
-  HISTORY_HEATMAP_POSITIONS,
-} from "../../config";
-import {
-  formatSpeed,
-  formatSpeedRange,
-  kmhInUnit,
-  type SpeedUnit,
-  speedUnitKey,
-} from "../../format";
+import { HISTORY_HEATMAP_POSITIONS } from "../../config";
+import { formatSpeed, formatSpeedRange, type SpeedUnit } from "../../format";
 import { locationLabel } from "../../sensor_locations";
 
-/** Pure view models for the History page: run rows and the expanded diagnosis. */
+/** Pure view models for the History page: run rows and the opened diagnosis.
+ *
+ * The diagnosis opens with the PDF's page 1, which the server words in full
+ * (`owner` in the insights payload); this module only adds layout around it. */
 
 export type Translate = (key: string, vars?: Record<string, unknown>) => string;
 
@@ -26,49 +19,43 @@ export interface Formatters {
   t: Translate;
   fmt: (value: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
+  /** A short date and time for a run's title ("7 Oct 17:53"). */
+  fmtShortTs: (iso: string) => string;
   formatInt: (value: number) => string;
   speedUnit: SpeedUnit;
 }
 
-/** Per-run loading state for the diagnosis preview, full insights, and PDF. */
+/** Per-run state: the diagnosis (kept while a reload runs) and the PDF download. */
 export interface RunDetail {
-  preview: HistoryInsightsPayload | null;
-  previewLoading: boolean;
-  previewError: string;
-  insights: HistoryInsightsPayload | null;
-  insightsLoading: boolean;
-  insightsError: string;
+  summary: HistoryInsightsPayload | null;
+  loading: boolean;
+  error: string;
   pdfLoading: boolean;
   pdfError: string;
 }
 
 export const EMPTY_RUN_DETAIL: RunDetail = {
-  preview: null,
-  previewLoading: false,
-  previewError: "",
-  insights: null,
-  insightsLoading: false,
-  insightsError: "",
+  summary: null,
+  loading: false,
+  error: "",
   pdfLoading: false,
   pdfError: "",
 };
 
 type Finding = HistoryInsightsPayload["findings"][number];
+export type OwnerPage = HistoryInsightsPayload["owner"];
 export type Tone = "success" | "warn" | "neutral";
-type ChipTone = "ok" | "warn" | "bad" | "muted";
+type ChipTone = "warn" | "muted";
 
 export interface RowModel {
   runId: string;
   isExpanded: boolean;
-  carName: string;
+  /** Date and result: "7 Oct 17:53 · Front-left wheel · Moderate". */
+  title: string;
+  /** Car name and duration. */
+  subtitle: string;
   chips: Array<{ key: string; text: string; tone: ChipTone }>;
-  headline: string | null;
-  meta: string | null;
-  toggleLabel: string;
   toggleTitle: string;
-  startedAt: string;
-  /** Accelerometer samples in the raw capture; "--" when none was kept. */
-  rawSampleCount: string;
   /** Shown instead of the PDF button while the report is not ready. */
   reportPendingHint: string | null;
   pdfLabel: string;
@@ -86,16 +73,18 @@ export interface SecondaryFinding {
   evidence: string;
 }
 
+/** The diagnosed finding for the workshop: its signature, and the same
+ * source's other orders at the same place (T2 next to T1), which are part of
+ * it rather than other candidates. */
 export interface PrimaryFinding {
-  eyebrow: string;
-  headline: string;
+  source: string;
   signature: string;
   confidence: string;
   tone: Tone;
-  explanation: string;
-  chips: Array<{ label: string; value: string }>;
-  nextStepLabel: string | null;
-  nextStep: string | null;
+  location: string;
+  speedBand: string;
+  alsoAt: string | null;
+  evidence: string;
 }
 
 export interface CheckLine {
@@ -117,17 +106,14 @@ export interface ChecksModel {
   references: CheckLine[];
 }
 
-export type InsightsModel =
-  | { kind: "state"; message: string }
-  | {
-      kind: "findings";
-      primary: PrimaryFinding | null;
-      checks: ChecksModel;
-      secondaryTitle: string | null;
-      visibleSecondary: SecondaryFinding[];
-      hiddenSecondary: SecondaryFinding[];
-      showMoreLabel: string | null;
-    };
+export interface FindingsModel {
+  primary: PrimaryFinding | null;
+  secondaryTitle: string | null;
+  visibleSecondary: SecondaryFinding[];
+  hiddenSecondary: SecondaryFinding[];
+  showMoreLabel: string | null;
+  checks: ChecksModel;
+}
 
 export interface HeatmapZone {
   key: string;
@@ -139,20 +125,23 @@ export interface HeatmapZone {
   accent: { color: string; fillPercent: number } | null;
 }
 
-export type HeatmapModel =
-  | { kind: "state"; message: string; tone: "subtle" | "error" }
-  | { kind: "zones"; zones: HeatmapZone[]; extras: string[] };
+export interface HeatmapModel {
+  zones: HeatmapZone[];
+  extras: string[];
+}
 
 export interface DetailsModel {
-  title: string;
-  runSummary: string | null;
-  reloadLabel: string | null;
-  reloadDisabled: boolean;
-  loadingStatus: string | null;
-  insightsError: string | null;
+  owner: OwnerPage | null;
+  /** Shown while there is no diagnosis yet. */
+  stateMessage: string | null;
+  error: string | null;
   warnings: Array<{ severity: string; title: string; detail: string | null }>;
-  insights: InsightsModel;
-  heatmap: HeatmapModel;
+  /** The workshop detail behind "More details", once there is a diagnosis. */
+  more: { findings: FindingsModel; heatmap: HeatmapModel } | null;
+  /** Run metadata for the details footer: id, times, duration, sensors, samples. */
+  facts: Array<{ label: string; value: string }>;
+  reloadLabel: string;
+  reloadDisabled: boolean;
 }
 
 const VISIBLE_FINDING_LIMIT = 5;
@@ -170,31 +159,9 @@ const SOURCE_LABEL_KEYS = new Set([
 type Diagnosis = HistoryInsightsPayload["diagnosis"];
 type ConfidenceLevel = NonNullable<Diagnosis["confidence_level"]>;
 
-const ZONE_KEYS = new Set([
-  "front_left_wheel",
-  "front_right_wheel",
-  "rear_left_wheel",
-  "rear_right_wheel",
-  "front_axle",
-  "rear_axle",
-  "all_wheels",
-  "engine_bay",
-  "driveshaft_tunnel",
-  "transmission",
-]);
-const WHEEL_ZONE_KEYS = new Set([
-  "front_left_wheel",
-  "front_right_wheel",
-  "rear_left_wheel",
-  "rear_right_wheel",
-  "front_axle",
-  "rear_axle",
-  "all_wheels",
-]);
 const NON_FAULT_SOURCES = new Set(["baseline_noise", "transient_impact"]);
 // Brake judder shows when braking firmly from speed (the report's recapture step).
 const BRAKE_TEST_FROM_KMH = 100;
-const BRAKE_TEST_TO_KMH = 40;
 
 function findings(summary: HistoryInsightsPayload | null): Finding[] {
   return summary?.findings?.slice(0, VISIBLE_FINDING_LIMIT) ?? [];
@@ -274,45 +241,6 @@ function diagnosisSignature(
   return parts.join(" · ") || "--";
 }
 
-/** Weak reasons saying too few sensors were used: shown with every verdict. */
-const SENSOR_REASONS = ["single_sensor", "single_wheel_sensor"];
-
-/** A wheel/tire fault felt strongest away from the wheels, or measured at only
- * one wheel: no wheel can be named. */
-function unlocatedWheel(diagnosis: Diagnosis): boolean {
-  return (
-    diagnosis.source === "wheel/tire" &&
-    !WHEEL_ZONE_KEYS.has(diagnosis.zone ?? "")
-  );
-}
-
-/** Where an unlocated wheel/tire fault was felt; the only wheel sensor is not
- * where it is strongest, it is just the only one. */
-function unlocatedWheelText(
-  diagnosis: Diagnosis,
-  zone: string,
-  t: Translate,
-): string {
-  // No zone with too few sensors: the location is the only wheel sensor.
-  const onlyWheel =
-    diagnosis.zone == null &&
-    SENSOR_REASONS.some((reason) => diagnosis.weak_reasons.includes(reason));
-  return t(
-    onlyWheel
-      ? "history.zone.one_wheel_sensor"
-      : "history.zone.unlocated_wheel",
-    { location: zone },
-  );
-}
-
-function sensorNote(diagnosis: Diagnosis, t: Translate): string {
-  return SENSOR_REASONS.filter((reason) =>
-    diagnosis.weak_reasons.includes(reason),
-  )
-    .map((reason) => t(`history.sensor_note.${reason}`))
-    .join(" ");
-}
-
 function electric(diagnosis: Diagnosis): boolean {
   return diagnosis.conditions.fuel_type === "EV";
 }
@@ -320,30 +248,6 @@ function electric(diagnosis: Diagnosis): boolean {
 /** An engined car without a propshaft (front-wheel drive, e-AWD hybrid). */
 function noPropshaft(diagnosis: Diagnosis): boolean {
   return !electric(diagnosis) && diagnosis.conditions.propshaft === false;
-}
-
-function zoneText(diagnosis: Diagnosis, t: Translate): string {
-  if (
-    diagnosis.source === "brakes" &&
-    (diagnosis.zone === "front_axle" || diagnosis.zone === "rear_axle")
-  ) {
-    // Brake judder: the discs on that axle, not its wheels.
-    return t(`history.zone.brake_discs_${diagnosis.zone}`);
-  }
-  if (diagnosis.zone === "driveshaft_tunnel" && electric(diagnosis)) {
-    // An EV has no propshaft: a motor order no axle dominates is the drive unit.
-    return t("history.zone.drive_unit_ev");
-  }
-  if (diagnosis.zone === "driveshaft_tunnel" && noPropshaft(diagnosis)) {
-    // No propshaft runs through the tunnel of a front-wheel-drive car.
-    return t("history.zone.centre_tunnel");
-  }
-  if (diagnosis.zone && ZONE_KEYS.has(diagnosis.zone)) {
-    return t(`history.zone.${diagnosis.zone}`);
-  }
-  return diagnosis.location
-    ? locationLabel(diagnosis.location, t)
-    : t("report.missing");
 }
 
 function speedRangeText(
@@ -406,46 +310,8 @@ function reportReady(run: HistoryEntry): boolean {
   );
 }
 
-function rowSummary(detail: RunDetail): HistoryInsightsPayload | null {
-  return detail.insights ?? detail.preview;
-}
-
-function statusBadge(
-  run: HistoryEntry,
-  detail: RunDetail,
-  t: Translate,
-): { text: string; tone: ChipTone } {
-  const analyzing = () =>
-    rowSummary(detail) !== null
-      ? { text: t("history.row_status.preview_ready"), tone: "ok" as const }
-      : { text: t("history.row_status.analyzing"), tone: "warn" as const };
-  switch (run.lifecycle?.stage) {
-    case "recording":
-      return { text: t("history.row_status.recording"), tone: "warn" };
-    case "post_analysis_pending":
-    case "post_analysis_running":
-      return analyzing();
-    case "post_analysis_ready":
-      return { text: t("history.row_status.complete"), tone: "ok" };
-    case "post_analysis_degraded":
-      return { text: t("history.row_status.error"), tone: "bad" };
-  }
-  switch (run.status) {
-    case "complete":
-      return { text: t("history.row_status.complete"), tone: "ok" };
-    case "analyzing":
-      return analyzing();
-    case "recording":
-      return { text: t("history.row_status.recording"), tone: "warn" };
-    case "error":
-      return { text: t("history.row_status.error"), tone: "bad" };
-    default:
-      return { text: run.status || t("report.missing"), tone: "muted" };
-  }
-}
-
 function durationSeconds(run: HistoryEntry, detail: RunDetail): number | null {
-  const summary = rowSummary(detail);
+  const summary = detail.summary;
   const fromSummary = Number(summary?.duration_s);
   if (Number.isFinite(fromSummary) && fromSummary >= 0) {
     return fromSummary;
@@ -474,85 +340,6 @@ function failed(run: HistoryEntry): boolean {
   );
 }
 
-export function buildRow(
-  run: HistoryEntry,
-  detail: RunDetail,
-  isExpanded: boolean,
-  f: Formatters,
-): RowModel {
-  const { t, fmt, formatInt } = f;
-  const summary = rowSummary(detail);
-  const diagnosis = summary?.diagnosis ?? null;
-  const badge = statusBadge(run, detail, t);
-  const chips: RowModel["chips"] = [{ key: "status", ...badge }];
-  if (run.interrupted) {
-    chips.push({
-      key: "interrupted",
-      text: t("history.interrupted"),
-      tone: "warn",
-    });
-  }
-  if (failed(run) && run.error_message) {
-    chips.push({
-      key: "error-message",
-      text: run.error_message,
-      tone: "muted",
-    });
-  }
-
-  const label = diagnosis ? verdictHeadline(diagnosis, t) : "";
-  const ready = postAnalysisReady(run);
-  const headline =
-    label ||
-    (ready && (detail.previewLoading || detail.insightsLoading || !summary)
-      ? t("history.row_summary_loading")
-      : badge.text);
-  const meta: string[] = [];
-  if (diagnosis?.confidence_level) {
-    meta.push(confidenceText(diagnosis.confidence_level, t));
-  }
-  const duration = durationSeconds(run, detail);
-  if (duration !== null) {
-    meta.push(`${t("history.summary_size")}: ${fmt(duration, 1)} s`);
-  }
-  const sensors = Number(summary?.sensor_count_used);
-  if (Number.isFinite(sensors) && sensors > 0) {
-    meta.push(`${t("history.summary_sensor_count")}: ${formatInt(sensors)}`);
-  }
-  if (meta.length === 0 && run.status === "error" && run.error_message) {
-    meta.push(run.error_message);
-  }
-
-  return {
-    runId: run.run_id,
-    isExpanded,
-    carName: carName(run, t),
-    chips,
-    headline,
-    meta: meta.length ? meta.join(" · ") : null,
-    toggleLabel: t(
-      isExpanded ? "history.close_diagnosis" : "history.open_diagnosis",
-    ),
-    toggleTitle: t(
-      isExpanded
-        ? "history.close_diagnosis_for_run"
-        : "history.open_diagnosis_for_run",
-      { runId: run.run_id },
-    ),
-    startedAt: runTime(run, run.start_time_utc, f),
-    rawSampleCount:
-      run.raw_sample_count == null ? "--" : formatInt(run.raw_sample_count),
-    reportPendingHint: reportReady(run)
-      ? null
-      : t("history.quick_report_pending"),
-    pdfLabel: t(
-      detail.pdfLoading ? "history.generating_pdf" : "history.generate_pdf",
-    ),
-    pdfLoading: detail.pdfLoading,
-    pdfError: detail.pdfError || null,
-  };
-}
-
 /** An EV's motor turns at the driveline order, so that source is its motor. */
 function carSourceLabel(
   source: unknown,
@@ -576,16 +363,6 @@ function diagnosedSource(diagnosis: Diagnosis, t: Translate): string {
     source,
     other: carSourceLabel(other, diagnosis, t).toLowerCase(),
   });
-}
-
-function verdictHeadline(diagnosis: Diagnosis, t: Translate): string {
-  if (diagnosis.verdict === "no_fault") {
-    return noFaultHeadline(diagnosis, t);
-  }
-  if (diagnosis.verdict === "weak_evidence") {
-    return t("history.verdict.weak_evidence");
-  }
-  return diagnosedSource(diagnosis, t);
 }
 
 function secondaryFinding(
@@ -860,326 +637,6 @@ function checksModel(
   };
 }
 
-function joinList(items: string[], t: Translate): string {
-  return items.length < 2
-    ? items.join("")
-    : t("history.list_and", {
-        items: items.slice(0, -1).join(", "),
-        last: items[items.length - 1],
-      });
-}
-
-/** The no-fault sentence: only what was checked (hedged when estimated) and
- * what was not, never "your car is fine". Same wording as the PDF. */
-function noFaultExplanation(diagnosis: Diagnosis, t: Translate): string {
-  const checked: string[] = [];
-  const notChecked: string[] = [];
-  for (const check of diagnosis.source_checks) {
-    if (!CHECK_SOURCE_KEYS[check.source] || check.status === "not_applicable") {
-      continue;
-    }
-    const source = checkSourceKey(check, diagnosis);
-    const noun = t(`history.checks.noun.${source}`);
-    if (check.status === "not_testable") {
-      notChecked.push(noun);
-    } else if (
-      (check.status === "ruled_out_estimated" ||
-        check.reason === "faint_only") &&
-      check.reason
-    ) {
-      checked.push(
-        t("history.checks.hedged", {
-          source: noun,
-          hedge: t(
-            `history.checks.hedge.${checkReasonKey(source, check.reason)}`,
-          ),
-        }),
-      );
-    } else {
-      checked.push(noun);
-    }
-  }
-  const strongest = unexplainedLocation(diagnosis);
-  let body: string;
-  if (strongest !== null) {
-    // A vibration was there; it just followed nothing the run could check.
-    body = t("history.verdict.unexplained_body", {
-      location: locationLabel(strongest, t),
-    });
-    if (checked.length) {
-      body = `${body} ${t("history.verdict.unexplained_checked", { checked: joinList(checked, t) })}`;
-    }
-  } else if (checked.length === 0) {
-    return t(
-      electric(diagnosis)
-        ? "history.verdict.no_fault_nothing_checked_ev"
-        : "history.verdict.no_fault_nothing_checked",
-    );
-  } else {
-    body = t("history.verdict.no_fault_body", {
-      checked: joinList(checked, t),
-    });
-  }
-  return notChecked.length
-    ? `${body} ${t("history.verdict.no_fault_not_checked", { sources: joinList(notChecked, t) })}`
-    : body;
-}
-
-/** Where a no-fault run still felt a significant vibration, strongest first. */
-function unexplainedLocation(diagnosis: Diagnosis): string | null {
-  if (diagnosis.verdict !== "no_fault" || !diagnosis.unexplained_vibration) {
-    return null;
-  }
-  const row = diagnosis.location_amplitudes.find(
-    (item) => item.amplitude_mg !== null,
-  );
-  return row ? row.location : null;
-}
-
-/** Check statuses that compared a source's rhythm with what the run measured. */
-const CHECKED_STATUSES = new Set<SourceCheck["status"]>([
-  "candidate",
-  "ruled_out",
-  "ruled_out_estimated",
-]);
-
-/** A run that compared no rhythm at all is no result, whatever it measured. */
-function checkedAnything(diagnosis: Diagnosis): boolean {
-  return diagnosis.source_checks.some((check) =>
-    CHECKED_STATUSES.has(check.status),
-  );
-}
-
-/** What fixes a run that checked nothing: why the wheels could not be checked. */
-const NOT_CHECKED_STEP_REASONS = new Set<CheckReason>([
-  "manual_speed",
-  "speed_missing",
-  "no_tire_reference",
-]);
-
-function notCheckedStep(diagnosis: Diagnosis, t: Translate): string {
-  const reason = diagnosis.source_checks.find(
-    (check) => check.status === "not_testable",
-  )?.reason;
-  return t(
-    reason && NOT_CHECKED_STEP_REASONS.has(reason)
-      ? `history.verdict.not_checked_step.${reason}`
-      : "history.verdict.not_checked_step.other",
-  );
-}
-
-function noFaultHeadline(diagnosis: Diagnosis, t: Translate): string {
-  if (!checkedAnything(diagnosis)) {
-    return t("history.verdict.not_checked");
-  }
-  return t(
-    diagnosis.unexplained_vibration
-      ? "history.verdict.unexplained"
-      : "history.verdict.no_fault",
-  );
-}
-
-function noFaultCard(
-  summary: HistoryInsightsPayload,
-  f: Formatters,
-): PrimaryFinding {
-  const { t } = f;
-  const speeds = summary.speed_stats;
-  const checked = checkedAnything(summary.diagnosis);
-  return {
-    eyebrow: t("history.verdict.eyebrow"),
-    headline: noFaultHeadline(summary.diagnosis, t),
-    signature: "",
-    confidence: "",
-    tone:
-      summary.diagnosis.unexplained_vibration || !checked ? "warn" : "success",
-    explanation: noFaultExplanation(summary.diagnosis, t),
-    chips: [
-      {
-        label: t("history.covered_speeds"),
-        value:
-          formatSpeedRange(speeds.min_kmh, speeds.max_kmh, f.speedUnit, t) ??
-          t("history.no_live_speed"),
-      },
-      {
-        label: t("history.summary_sensor_count"),
-        value: f.formatInt(summary.sensor_count_used),
-      },
-    ],
-    nextStepLabel: checked ? null : t("history.findings_next_step_label"),
-    nextStep: checked ? null : notCheckedStep(summary.diagnosis, t),
-  };
-}
-
-function diagnosisCard(
-  summary: HistoryInsightsPayload,
-  diagnosis: Diagnosis,
-  f: Formatters,
-): PrimaryFinding {
-  const { t } = f;
-  const weak = diagnosis.verdict === "weak_evidence";
-  const level = diagnosis.confidence_level;
-  const zone = zoneText(diagnosis, t);
-  const source = diagnosedSource(diagnosis, t);
-  const ev = electric(diagnosis);
-  const unlocated = unlocatedWheel(diagnosis);
-  const where = unlocated ? unlocatedWheelText(diagnosis, zone, t) : zone;
-  const locateWheel = t("history.findings_next_step_locate_wheel");
-  return {
-    eyebrow: t(weak ? "history.verdict.eyebrow" : "history.primary_diagnosis"),
-    headline: weak ? t("history.verdict.weak_evidence") : source,
-    signature: diagnosisSignature(diagnosis, f),
-    confidence: [
-      confidenceText(level, t),
-      level ? t(`history.confidence_meaning.${level}`) : "",
-    ]
-      .filter(Boolean)
-      .join(" — "),
-    tone: levelTone(level),
-    explanation: [
-      weak
-        ? t("history.verdict.weak_body", { source, location: where })
-        : String(
-            summary.findings.find(
-              (item) => item.finding_id === diagnosis.finding_id,
-            )?.evidence_summary ?? "",
-          ),
-      sensorNote(diagnosis, t),
-    ]
-      .filter(Boolean)
-      .join(" "),
-    chips: [
-      { label: t("history.findings_location"), value: where },
-      {
-        label: t("history.findings_speed_band"),
-        value: speedRangeText(
-          diagnosis.speed_min_kmh,
-          diagnosis.speed_max_kmh,
-          f,
-        ),
-      },
-      {
-        label: t("history.findings_signature"),
-        value: diagnosisSignature(diagnosis, f),
-      },
-    ],
-    nextStepLabel: t(
-      weak ? "history.recapture_label" : "history.findings_next_step_label",
-    ),
-    nextStep: unlocated
-      ? weak
-        ? `${locateWheel} ${recaptureRecipe(f, ev, diagnosis)}`
-        : locateWheel
-      : weak
-        ? recaptureRecipe(f, ev, diagnosis)
-        : drivelineNextStep(diagnosis, zone, t),
-  };
-}
-
-/** Where to look; a driveline fault on a car with a known layout also names
- * the parts to have checked, the axle the sensors point to first. Next to the
- * rear propshaft, the front drive is an all-wheel-drive car's front propshaft
- * and differential; alone it is a car without a propshaft, whose gearbox
- * output shaft turns at the order (its drive shafts turn at wheel speed). */
-function drivelineNextStep(
-  diagnosis: Diagnosis,
-  zone: string,
-  t: Translate,
-): string {
-  const named =
-    diagnosis.source === "driveline" ? (diagnosis.driveline_parts ?? []) : [];
-  const awd = named.includes("propshaft_rear");
-  const parts = named.map((part) =>
-    t(
-      awd && part === "front_drive"
-        ? "history.driveline_parts.front_drive_awd"
-        : `history.driveline_parts.${part}`,
-    ),
-  );
-  if (parts.length === 0) {
-    return t("history.findings_next_step", { location: zone });
-  }
-  return parts.length === 1
-    ? t("history.findings_next_step_driveline", {
-        location: zone,
-        parts: parts[0],
-      })
-    : t("history.findings_next_step_driveline_then", {
-        location: zone,
-        first: parts[0],
-        second: parts[1],
-      });
-}
-
-/** How to record again; an EV cannot coast in neutral, so it skips that step,
- * and brake judder needs firm braking from speed instead. */
-function recaptureRecipe(
-  f: Pick<Formatters, "fmt" | "t" | "speedUnit">,
-  ev: boolean,
-  diagnosis: Diagnosis,
-): string {
-  const speed = (kmh: number) => f.fmt(kmhInUnit(kmh, f.speedUnit), 0);
-  if (diagnosis.source === "brakes") {
-    return f.t("history.recapture_recipe_brakes", {
-      from: speed(BRAKE_TEST_FROM_KMH),
-      to: speed(BRAKE_TEST_TO_KMH),
-      unit: f.t(speedUnitKey(f.speedUnit)),
-    });
-  }
-  return f.t(ev ? "history.recapture_recipe_ev" : "history.recapture_recipe", {
-    from: speed(GUIDED_SWEEP_FROM_KMH),
-    to: speed(GUIDED_SWEEP_TO_KMH),
-    unit: f.t(speedUnitKey(f.speedUnit)),
-  });
-}
-
-function insightsModel(detail: RunDetail, f: Formatters): InsightsModel {
-  const { t } = f;
-  const summary = rowSummary(detail);
-  if (summary === null) {
-    const loading = detail.insightsLoading || detail.previewLoading;
-    return {
-      kind: "state",
-      message: t(
-        loading ? "history.loading_insights" : "history.findings_pending",
-      ),
-    };
-  }
-  const diagnosis = summary.diagnosis;
-  if (diagnosis.verdict === "no_fault") {
-    return {
-      kind: "findings",
-      primary: noFaultCard(summary, f),
-      checks: checksModel(diagnosis, f),
-      secondaryTitle: null,
-      visibleSecondary: [],
-      hiddenSecondary: [],
-      showMoreLabel: null,
-    };
-  }
-  const secondary = findings(summary)
-    .filter(
-      (finding) =>
-        finding.finding_id !== diagnosis.finding_id &&
-        !NON_FAULT_SOURCES.has(sourceKey(finding.suspected_source)),
-    )
-    .map((finding) => secondaryFinding(finding, summary, f));
-  const hidden = secondary.slice(2);
-  return {
-    kind: "findings",
-    primary: diagnosisCard(summary, diagnosis, f),
-    checks: checksModel(diagnosis, f),
-    secondaryTitle: secondary.length
-      ? t("history.secondary_candidates_title")
-      : null,
-    visibleSecondary: secondary.slice(0, 2),
-    hiddenSecondary: hidden,
-    showMoreLabel: hidden.length
-      ? t("history.show_more_findings", { count: hidden.length })
-      : null,
-  };
-}
-
 function rawCaptureWarnings(
   run: HistoryEntry,
   t: Translate,
@@ -1218,23 +675,6 @@ function rawCaptureWarnings(
       }),
     },
   ];
-}
-
-function insightWarnings(detail: RunDetail): DetailsModel["warnings"] {
-  const all: HistoryInsightWarningPayload[] = [
-    ...(detail.preview?.warnings ?? []),
-    ...(detail.insights?.warnings ?? []),
-  ];
-  return all
-    .filter(
-      (warning, index) =>
-        all.findIndex((candidate) => candidate.code === warning.code) === index,
-    )
-    .map((warning) => ({
-      severity: String(warning.severity),
-      title: String(warning.title),
-      detail: warning.detail ? String(warning.detail) : null,
-    }));
 }
 
 /** Folds free-text location names onto location codes (the car-diagram positions use codes). */
@@ -1350,7 +790,375 @@ export function buildHeatmap(
       ([key, value]) =>
         `${labels.get(key) ?? locationLabel(key, f.t)} · ${f.fmt(value, 1)} dB`,
     );
-  return { kind: "zones", zones, extras };
+  return { zones, extras };
+}
+
+/** The row's title after the date: the result, or where the run is. */
+function rowResult(run: HistoryEntry, detail: RunDetail, t: Translate): string {
+  const owner = detail.summary?.owner;
+  if (owner) {
+    return owner.verdict === "fault" && owner.level_word
+      ? `${owner.result} · ${owner.level_word}`
+      : owner.result;
+  }
+  if (failed(run)) {
+    return t("history.row_status.error");
+  }
+  if (run.lifecycle?.stage === "recording" || run.status === "recording") {
+    return t("history.row_status.recording");
+  }
+  if (!postAnalysisReady(run)) {
+    return t("history.row_status.analyzing");
+  }
+  return detail.error && !detail.loading
+    ? t("history.row_status.unavailable")
+    : t("history.row_summary_loading");
+}
+
+/** Run length as m:ss. */
+function durationText(seconds: number): string {
+  const whole = Math.round(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+function shortRunTime(run: HistoryEntry, f: Formatters): string {
+  return run.start_time_unverified
+    ? f.t("history.date_unknown")
+    : f.fmtShortTs(run.start_time_utc);
+}
+
+export function buildRow(
+  run: HistoryEntry,
+  detail: RunDetail,
+  isExpanded: boolean,
+  f: Formatters,
+): RowModel {
+  const { t } = f;
+  const chips: RowModel["chips"] = [];
+  if (run.interrupted) {
+    chips.push({
+      key: "interrupted",
+      text: t("history.interrupted"),
+      tone: "warn",
+    });
+  }
+  if (failed(run) && run.error_message) {
+    chips.push({
+      key: "error-message",
+      text: run.error_message,
+      tone: "muted",
+    });
+  }
+  const duration = durationSeconds(run, detail);
+  const title = `${shortRunTime(run, f)} · ${rowResult(run, detail, t)}`;
+  return {
+    runId: run.run_id,
+    isExpanded,
+    title,
+    subtitle: [
+      carName(run, t),
+      ...(duration === null ? [] : [durationText(duration)]),
+    ].join(" · "),
+    chips,
+    toggleTitle: t(
+      isExpanded
+        ? "history.close_diagnosis_for_run"
+        : "history.open_diagnosis_for_run",
+      { run: title },
+    ),
+    reportPendingHint: reportReady(run)
+      ? null
+      : t("history.quick_report_pending"),
+    pdfLabel: t(
+      detail.pdfLoading ? "history.generating_pdf" : "history.generate_pdf",
+    ),
+    pdfLoading: detail.pdfLoading,
+    pdfError: detail.pdfError || null,
+  };
+}
+
+// The PDF's top-view car diagram (report/pdf.py `_car_diagram`), in its
+// millimetres: a 62 x 112 box, the body 52% of its width, positions normalized
+// from the front of the car (`_POSITIONS`, `_ZONE_RECTS`).
+const DIAGRAM_POSITIONS: Record<string, [number, number]> = {
+  front_left_wheel: [0.1, 0.2],
+  front_right_wheel: [0.9, 0.2],
+  rear_left_wheel: [0.1, 0.8],
+  rear_right_wheel: [0.9, 0.8],
+  engine_bay: [0.5, 0.13],
+  front_subframe: [0.5, 0.25],
+  transmission: [0.5, 0.34],
+  driveshaft_tunnel: [0.5, 0.52],
+  driver_seat: [0.32, 0.45],
+  front_passenger_seat: [0.68, 0.45],
+  rear_left_seat: [0.3, 0.64],
+  rear_center_seat: [0.5, 0.66],
+  rear_right_seat: [0.7, 0.64],
+  rear_subframe: [0.5, 0.76],
+  trunk: [0.5, 0.9],
+};
+const DIAGRAM_WHEELS = [
+  "front_left_wheel",
+  "front_right_wheel",
+  "rear_left_wheel",
+  "rear_right_wheel",
+];
+const DIAGRAM_ZONES: Record<string, [number, number, number, number]> = {
+  engine_bay: [0.14, 0.04, 0.86, 0.27],
+  driveshaft_tunnel: [0.42, 0.28, 0.58, 0.8],
+  transmission: [0.36, 0.27, 0.64, 0.4],
+  front_axle: [0.14, 0.16, 0.86, 0.24],
+  rear_axle: [0.14, 0.76, 0.86, 0.84],
+};
+const ZONE_WHEELS: Record<string, string[]> = {
+  front_axle: ["front_left_wheel", "front_right_wheel"],
+  rear_axle: ["rear_left_wheel", "rear_right_wheel"],
+  all_wheels: DIAGRAM_WHEELS,
+};
+const DIAGRAM_W = 62;
+const DIAGRAM_H = 112;
+const BODY_W = DIAGRAM_W * 0.52;
+const BODY_H = DIAGRAM_H - 18;
+const BODY_X = (DIAGRAM_W - BODY_W) / 2;
+const BODY_Y = 9;
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The car diagram in the PDF's millimetres (y down), ready to draw as SVG. */
+export interface DiagramModel {
+  width: number;
+  height: number;
+  frontLabel: string;
+  body: Box & { radius: number };
+  windows: Box[];
+  /** The highlighted area, when the zone is one. */
+  zone: Box | null;
+  wheels: Array<Box & { code: string; highlighted: boolean }>;
+  /** One circle per sensor: its size follows the level, as on the PDF. */
+  markers: Array<{
+    code: string;
+    label: string;
+    value: string;
+    cx: number;
+    cy: number;
+    r: number;
+    strongest: boolean;
+    /** Wheel values sit outboard of the wheel; others below the circle. */
+    text: { x: number; y: number; anchor: "start" | "middle" | "end" };
+  }>;
+}
+
+function diagramPoint(nx: number, ny: number): [number, number] {
+  return [BODY_X + nx * BODY_W, BODY_Y + ny * BODY_H];
+}
+
+function diagramBox(x0: number, y0: number, x1: number, y1: number): Box {
+  const [px0, py0] = diagramPoint(x0, y0);
+  const [px1, py1] = diagramPoint(x1, y1);
+  return { x: px0, y: py0, width: px1 - px0, height: py1 - py0 };
+}
+
+export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
+  const zone = diagram.zone ?? "";
+  const highlighted = new Set(ZONE_WHEELS[zone] ?? [zone]);
+  const zoneRect = DIAGRAM_ZONES[zone];
+  return {
+    width: DIAGRAM_W,
+    height: DIAGRAM_H,
+    frontLabel: diagram.front_label,
+    body: {
+      x: BODY_X,
+      y: BODY_Y,
+      width: BODY_W,
+      height: BODY_H,
+      radius: BODY_W * 0.28,
+    },
+    windows: [
+      diagramBox(0.18, 0.3, 0.82, 0.37),
+      diagramBox(0.2, 0.74, 0.8, 0.79),
+    ],
+    zone: zoneRect ? diagramBox(...zoneRect) : null,
+    wheels: DIAGRAM_WHEELS.map((code) => {
+      const [cx, cy] = diagramPoint(...DIAGRAM_POSITIONS[code]);
+      return {
+        code,
+        x: cx - 2.2,
+        y: cy - 5,
+        width: 4.4,
+        height: 10,
+        highlighted: highlighted.has(code),
+      };
+    }),
+    markers: diagram.markers.flatMap((marker) => {
+      const position = DIAGRAM_POSITIONS[marker.code];
+      if (!position) {
+        return [];
+      }
+      const [cx, cy] = diagramPoint(...position);
+      const r = 1.6 + 2.4 * Math.max(0, Math.min(1, marker.ratio ?? 0));
+      const wheel = marker.code.endsWith("_wheel");
+      const left = marker.code.includes("_left_");
+      const anchor = !wheel ? "middle" : left ? "end" : "start";
+      const text = {
+        x: !wheel ? cx : left ? cx - 4 : cx + 4,
+        y: wheel ? cy + 1 : cy + r + 3,
+        anchor,
+      } as const;
+      return [
+        {
+          code: marker.code,
+          label: marker.label,
+          value: marker.value,
+          cx,
+          cy,
+          r,
+          strongest: marker.strongest,
+          text,
+        },
+      ];
+    }),
+  };
+}
+
+/** The diagnosis' other orders from the same source at the same place (the
+ * wheel's T2 next to its T1): harmonics of the one fault, not other causes. */
+function harmonics(diagnosis: Diagnosis): Diagnosis["order_findings"] {
+  if (!diagnosis.source || !diagnosis.location) {
+    return [];
+  }
+  return diagnosis.order_findings.filter(
+    (row) =>
+      row.finding_id !== diagnosis.finding_id &&
+      row.source === diagnosis.source &&
+      row.location === diagnosis.location,
+  );
+}
+
+function primaryFinding(
+  summary: HistoryInsightsPayload,
+  f: Formatters,
+): PrimaryFinding | null {
+  const { diagnosis } = summary;
+  if (diagnosis.verdict === "no_fault" || !diagnosis.source) {
+    return null;
+  }
+  const { t } = f;
+  const also = harmonics(diagnosis).map((row) =>
+    row.frequency_hz == null
+      ? row.order_code
+      : `${row.order_code} (${f.fmt(row.frequency_hz, 1)} Hz)`,
+  );
+  const finding = summary.findings.find(
+    (item) => item.finding_id === diagnosis.finding_id,
+  );
+  return {
+    source: diagnosedSource(diagnosis, t),
+    signature: diagnosisSignature(diagnosis, f),
+    confidence: confidenceText(diagnosis.confidence_level, t),
+    tone: levelTone(diagnosis.confidence_level),
+    location: diagnosis.location
+      ? locationLabel(diagnosis.location, t)
+      : t("report.missing"),
+    speedBand: speedRangeText(
+      diagnosis.speed_min_kmh,
+      diagnosis.speed_max_kmh,
+      f,
+    ),
+    alsoAt: also.length
+      ? t("history.also_at", { orders: also.join(", ") })
+      : null,
+    evidence: String(finding?.evidence_summary ?? ""),
+  };
+}
+
+function findingsModel(
+  summary: HistoryInsightsPayload,
+  f: Formatters,
+): FindingsModel {
+  const { t } = f;
+  const { diagnosis } = summary;
+  const skip = new Set([
+    diagnosis.finding_id,
+    ...harmonics(diagnosis).map((row) => row.finding_id),
+  ]);
+  const secondary =
+    diagnosis.verdict === "no_fault"
+      ? []
+      : findings(summary)
+          .filter(
+            (finding) =>
+              !skip.has(finding.finding_id) &&
+              !NON_FAULT_SOURCES.has(sourceKey(finding.suspected_source)),
+          )
+          .map((finding) => secondaryFinding(finding, summary, f));
+  const hidden = secondary.slice(2);
+  return {
+    primary: primaryFinding(summary, f),
+    secondaryTitle: secondary.length
+      ? t("history.secondary_candidates_title")
+      : null,
+    visibleSecondary: secondary.slice(0, 2),
+    hiddenSecondary: hidden,
+    showMoreLabel: hidden.length
+      ? t("history.show_more_findings", { count: hidden.length })
+      : null,
+    checks: checksModel(diagnosis, f),
+  };
+}
+
+function insightWarnings(
+  summary: HistoryInsightsPayload | null,
+): DetailsModel["warnings"] {
+  const all: HistoryInsightWarningPayload[] = summary?.warnings ?? [];
+  return all.map((warning) => ({
+    severity: String(warning.severity),
+    title: String(warning.title),
+    detail: warning.detail ? String(warning.detail) : null,
+  }));
+}
+
+/** The details footer: the run's identity and size, said once. */
+function runFacts(
+  run: HistoryEntry,
+  detail: RunDetail,
+  f: Formatters,
+): DetailsModel["facts"] {
+  const { t } = f;
+  const summary = detail.summary;
+  const duration = durationSeconds(run, detail);
+  const facts = [
+    { label: t("report.run_id"), value: run.run_id },
+    { label: t("history.started"), value: runTime(run, run.start_time_utc, f) },
+  ];
+  if (run.end_time_utc) {
+    facts.push({
+      label: t("history.ended"),
+      value: runTime(run, run.end_time_utc, f),
+    });
+  }
+  if (duration !== null) {
+    facts.push({
+      label: t("history.summary_size"),
+      value: `${f.fmt(duration, 1)} s`,
+    });
+  }
+  if (summary) {
+    facts.push({
+      label: t("history.summary_sensor_count"),
+      value: f.formatInt(summary.sensor_count_used),
+    });
+  }
+  facts.push({
+    label: t("history.raw_samples"),
+    value:
+      run.raw_sample_count == null ? "--" : f.formatInt(run.raw_sample_count),
+  });
+  return facts;
 }
 
 export function buildDetails(
@@ -1358,48 +1166,35 @@ export function buildDetails(
   detail: RunDetail,
   f: Formatters,
 ): DetailsModel {
-  const { t, fmt, formatInt } = f;
-  const summary = rowSummary(detail);
-  const showReload = summary !== null || Boolean(detail.insightsError);
-  const name = carName(run, t);
+  const { t } = f;
+  const summary = detail.summary;
   return {
-    title: name === t("history.car_missing") ? run.run_id : name,
-    runSummary: summary
-      ? [
-          `${t("report.run_id")}: ${run.run_id}`,
-          `${t("history.summary_created")}: ${runTime(run, summary.start_time_utc ?? "", f)}`,
-          `${t("history.summary_updated")}: ${runTime(run, run.end_time_utc ?? "", f)}`,
-          `${t("history.summary_size")}: ${fmt(summary.duration_s, 1)} s`,
-          `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
-        ].join(" · ")
-      : null,
-    reloadLabel: showReload
-      ? t(
-          detail.insightsLoading
+    owner: summary?.owner ?? null,
+    stateMessage: summary
+      ? null
+      : t(
+          detail.loading
             ? "history.loading_insights"
-            : summary
-              ? "history.reload_insights"
-              : "history.load_insights",
-        )
+            : postAnalysisReady(run)
+              ? "history.diagnosis_unavailable"
+              : "history.findings_pending",
+        ),
+    error: detail.error || null,
+    warnings: [...rawCaptureWarnings(run, t), ...insightWarnings(summary)],
+    more: summary
+      ? {
+          findings: findingsModel(summary, f),
+          heatmap: buildHeatmap(summary, f),
+        }
       : null,
-    reloadDisabled: detail.insightsLoading,
-    loadingStatus:
-      !showReload && (detail.insightsLoading || detail.previewLoading)
-        ? t("history.loading_insights")
-        : null,
-    insightsError: detail.insightsError || null,
-    warnings: [...rawCaptureWarnings(run, t), ...insightWarnings(detail)],
-    insights: insightsModel(detail, f),
-    heatmap: detail.previewLoading
-      ? { kind: "state", message: t("history.loading_preview"), tone: "subtle" }
-      : detail.previewError
-        ? { kind: "state", message: detail.previewError, tone: "error" }
+    facts: runFacts(run, detail, f),
+    reloadLabel: t(
+      detail.loading
+        ? "history.loading_insights"
         : summary
-          ? buildHeatmap(summary, f)
-          : {
-              kind: "state",
-              message: t("history.preview_unavailable"),
-              tone: "subtle",
-            },
+          ? "history.reload_insights"
+          : "history.load_insights",
+    ),
+    reloadDisabled: detail.loading,
   };
 }

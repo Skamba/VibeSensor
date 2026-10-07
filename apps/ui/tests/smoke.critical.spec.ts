@@ -13,6 +13,7 @@ import {
   makeDiagnosis,
   makeHistoryInsightsPayload,
   makeLocationIntensityRow,
+  makeOwnerPage,
 } from "./history_payload_test_support";
 import { createHealthyUpdateStatus } from "./maintenance_payload_test_support";
 import {
@@ -188,7 +189,9 @@ test("critical journey: live dashboard records and opens History", async ({
     .getByRole("button", { name: "Open History" })
     .click();
   await expect(page.locator("#historyView")).toHaveJSProperty("hidden", false);
-  await expect(page.locator("#historyTableBody")).toContainText("run-001");
+  await expect(
+    page.locator('#historyTableBody [data-run-row="1"][data-run="run-001"]'),
+  ).toHaveCount(1);
   await expect.poll(() => startCalls).toBe(1);
   await expect.poll(() => stopCalls).toBe(1);
 });
@@ -359,6 +362,14 @@ test("critical journey: History run expands into dB diagnosis", async ({
         run_id: "run-001",
         duration_s: 12.3,
         sensor_count_used: 1,
+        owner: makeOwnerPage({
+          verdict: "no_fault",
+          result: "No significant vibration",
+          headline: "No significant vibration found",
+          level: null,
+          level_word: null,
+          level_meaning: null,
+        }),
         diagnosis: makeDiagnosis({
           verdict: "no_fault",
           confidence_level: null,
@@ -390,21 +401,17 @@ test("critical journey: History run expands into dB diagnosis", async ({
     '[data-run-toggle="details"][data-run="run-001"]',
   );
   await expect(
-    page.locator(
-      '[data-run-row="1"][data-run="run-001"] .history-row__diagnosis',
-    ),
-  ).toContainText("Duration: 12.3 s");
+    page.locator('[data-run-row="1"][data-run="run-001"] .history-row__title'),
+  ).toContainText(" · No significant vibration");
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator(".history-details-header")).toContainText(
-    "Diagnostic panel",
-  );
+  await page.locator(".history-more summary").click();
   const frontLeftZone = page.locator(
     '.history-heatmap__zone[data-location-key="front_left_wheel"]',
   );
   await expect(frontLeftZone).toContainText("Front Left Wheel");
   await expect(frontLeftZone).toContainText("20.0 dB");
-  await expect(page.locator(".history-details-card")).toContainText(
+  await expect(page.locator(".history-owner__headline")).toHaveText(
     "No significant vibration found",
   );
 });

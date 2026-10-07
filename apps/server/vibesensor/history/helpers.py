@@ -24,16 +24,6 @@ if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
 
 
-def resolve_run_language(run: StoredHistoryRun, requested: str | None) -> str:
-    """Resolve the effective language for a history run.
-
-    Priority: explicit *requested* lang > run metadata ``language`` > ``"en"``.
-    """
-    if isinstance(requested, str) and requested.strip():
-        return requested.strip().lower()
-    return run.metadata.language or "en"
-
-
 async def async_require_run(history_db: HistoryDB, run_id: str) -> StoredHistoryRun:
     """Fetch a history run or raise a domain exception."""
     run = await asyncio.to_thread(history_db.get_run, run_id)

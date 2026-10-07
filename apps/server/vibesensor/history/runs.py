@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Never, cast
+from typing import TYPE_CHECKING, Never
 
 from vibesensor.common.exceptions import AnalysisNotReadyError, RunNotFoundError
-from vibesensor.common.json_types import JsonObject, JsonValue, is_json_array
+from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.helpers import (
     async_require_run,
     require_analysis_ready,
-    resolve_run_language,
     strip_internal_fields,
 )
 from vibesensor.history.records import HistoryRunListEntry, StoredHistoryRun
-from vibesensor.summary.warning_fields import localize_warning_list
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
@@ -35,12 +33,12 @@ class HistoryRunService:
     async def get_run(self, run_id: str) -> StoredHistoryRun:
         return await async_require_run(self._history_db, run_id)
 
-    async def get_insights(
-        self,
-        run_id: str,
-        requested_lang: str | None = None,
-    ) -> JsonObject | None:
-        """Return analysis insights for a run, or ``None`` if still analyzing."""
+    async def get_insights(self, run_id: str) -> JsonObject | None:
+        """Return a run's stored analysis for the insights response, or ``None`` if still analyzing.
+
+        Its warnings stay unlocalized: the HTTP projection words them in the
+        requested language, after building the report's owner page from them.
+        """
         run = await async_require_run(self._history_db, run_id)
         if (
             run.lifecycle is not None
@@ -53,15 +51,6 @@ class HistoryRunService:
 
         raw_analysis = require_analysis_ready(run)
         analysis = strip_internal_fields(raw_analysis.payload)
-        response_lang = resolve_run_language(run, requested_lang)
-        raw_warnings = analysis.get("warnings")
-        analysis["warnings"] = cast(
-            JsonValue,
-            localize_warning_list(
-                raw_warnings if is_json_array(raw_warnings) else None,
-                lang=response_lang,
-            ),
-        )
         analysis["run_id"] = run.run_id or run_id
         analysis["status"] = RunStatus.COMPLETE.value
         return analysis

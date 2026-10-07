@@ -108,6 +108,60 @@ export function makeDiagnosis(
   };
 }
 
+/** A fault owner page as the server words it (vibesensor.report.view_model). */
+export function makeOwnerPage(
+  overrides: Partial<HistoryInsightsPayload["owner"]> = {},
+): HistoryInsightsPayload["owner"] {
+  return {
+    verdict: "fault",
+    result: "Front-left wheel",
+    tone: "moderate",
+    headline: "Likely cause: a wheel or tire problem at the front-left wheel",
+    level: "moderate",
+    confidence_label: "Confidence",
+    level_word: "Moderate",
+    level_meaning: "do the cheap confirming check first.",
+    description: "A shake that repeats once per wheel turn.",
+    candidate: null,
+    reasons_title: null,
+    reasons: [],
+    covered_title: null,
+    covered: null,
+    not_covered_title: null,
+    not_covered: [],
+    next_step_title: "Next step",
+    confirm_title: "Cheap check first",
+    confirm: "Swap the front-left wheel to the other side and record again.",
+    next_step: "Have the front-left wheel balanced.",
+    fallback_step: "If that doesn't fix it: road-force all four wheels.",
+    recapture_title: null,
+    recapture: [],
+    verify_title: "Check the fix",
+    verify: "After the repair, record the same test again.",
+    diagram: {
+      zone: "front_left_wheel",
+      front_label: "FRONT",
+      markers: [
+        {
+          code: "front_left_wheel",
+          label: "front-left wheel",
+          value: "118 mg",
+          ratio: 1,
+          strongest: true,
+        },
+        {
+          code: "trunk",
+          label: "boot",
+          value: "2.3 mg",
+          ratio: 0.02,
+          strongest: false,
+        },
+      ],
+    },
+    ...overrides,
+  };
+}
+
 export function makeHistoryInsightsPayload(
   overrides: Partial<HistoryInsightsPayload> = {},
 ): HistoryInsightsPayload {
@@ -165,6 +219,7 @@ export function makeHistoryInsightsPayload(
     lang: "en",
     metadata: {},
     most_likely_origin: {},
+    owner: makeOwnerPage(),
     phase_info: {
       cruise_pct: 0,
       has_acceleration: false,

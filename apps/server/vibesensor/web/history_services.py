@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import shutil
 import tempfile
 import zipfile
@@ -31,6 +32,8 @@ from vibesensor.report.run_quality import (
     failing_suitability_warnings,
     warning_codes_stated_by_checks,
 )
+from vibesensor.report.view_model import build_owner_page
+from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.run_context_warning import RunContextWarningsInput
 from vibesensor.summary.warning_fields import localize_warning_list
 from vibesensor.web.models.history import (
@@ -81,11 +84,16 @@ class ProjectedHistoryRunService:
         run_id: str,
         requested_lang: str | None = None,
     ) -> HistoryInsightsResponse | None:
-        result = await self._service.get_insights(run_id, requested_lang=requested_lang)
+        result = await self._service.get_insights(run_id)
         if result is None:
             return None
         lang = str(requested_lang or result.get("lang") or "en")
+        # The PDF's page 1, built from the stored analysis by the same code.
+        owner = build_owner_page(
+            cast(AnalysisSummary, result), lang=lang, speed_unit=self._speed_unit()
+        )
         projected = project_history_insights(result)
+        projected["owner"] = cast(JsonValue, dataclasses.asdict(owner))
         raw_warnings = projected.get("warnings")
         warnings: RunContextWarningsInput = raw_warnings if is_json_array(raw_warnings) else None
         if self._current_car_reader is not None:

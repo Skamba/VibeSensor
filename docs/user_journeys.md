@@ -590,37 +590,41 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - After Stop, the run is queued for post-analysis
   ([run_lifecycle.md](run_lifecycle.md) §3). The Live page shows "Run … is
   being analyzed" and then "ready in History" (`dashboard.logging.*`).
-- Run times in History (and the update and flash pages) read
+- Run times in the History details (and the update and flash pages) read
   `YYYY-MM-DD HH:MM:SS` in the phone's local time in both languages, as the
   PDF writes its date (`formatDateTime` in `apps/ui/src/format.ts`). Counted
   texts read singular for one ("1 live sensor is active") through a key's
   `_one` variant (`translate` in `apps/ui/src/i18n.ts`).
-- History shows the following (`history.*` strings):
-  - the verdict: no significant vibration / not enough evidence / fault;
-  - the confidence level with its action meaning (Strong: go fix it;
-    Moderate: do the cheap confirming check first; Weak: don't buy parts;
-    record again);
-  - the zone and the speeds driven;
-  - a recapture recipe for weak runs.
-- History also shows, for every run, a "Checked / Couldn't check" block built
-  from the diagnosis `source_checks` in the PDF's words (`history.checks.*`):
-  each source that was matched, ruled out, or checked only against an estimate
-  (with the estimate named), and each source that could not be tested with
-  what is missing and how to add it. Under it, "Car references" lists the
-  powertrain, drive layout, tire circumference, final drive, top gear ratio,
-  engine (layout and firing order, e.g. "Inline-6, fires at E3", or "not
-  known: E1 and E2 tested") and engine RPM source with their provenance, as on
-  PDF page 2 (`history.references.*`).
-- A no-fault run says only what it could check and what it could not
-  (`history.verdict.no_fault_body`, `history.verdict.no_fault_not_checked`):
-  "Nothing stood out in the checks this run could make: wheels/tires. Not
-  checked, so not shown to be fine: driveline, engine and brakes." It never
-  implies the car is fine for a source that was not testable. Brakes are
-  checked only when the drive braked firmly from speed; coasting does not
-  count. A run that could check no source at all (a hand-typed speed, no tire
-  size, or a GPS/OBD-II speed missing for most of the drive) reads "No result: this run could not check for a cause" in the list,
-  the detail and the PDF, with the step that makes the next run count
-  (`history.verdict.not_checked*`); never "hold the speed" or "no repair".
+- Each History card is titled with the short start time, the result and, for
+  a fault, its level ("7 Oct 17:53 · Front-left wheel · Moderate"), with the
+  car name and duration under it (`fmtShortTs`, `rowResult` in
+  `history_model.ts`). The run ID appears only in the opened run's footer.
+  Before the diagnosis loads the title says the run is being analyzed,
+  recorded, or that the diagnosis is unavailable.
+- An opened run starts with the PDF's page 1, built by the server
+  (`build_owner_page` in `report/view_model.py`, the `owner` field of
+  `GET /api/history/{run_id}/insights`), so its wording, color (`tone`) and
+  language are the PDF's: the likely-cause headline, the confidence level and
+  its hint, the explanation, the car diagram with mg per location, the cheap
+  check first, next step, "If that doesn't fix it" and "Check the fix"; for a
+  no-fault run "What this test covered / Not covered"; for a run that could
+  not check a cause, the steps that make the next run count. A run that could
+  check no source at all (a hand-typed speed, no tire size, or a GPS/OBD-II
+  speed missing for most of the drive) reads "No result" in the list, the
+  detail and the PDF, in grey; never "hold the speed" or "no repair". A
+  no-fault run never implies the car is fine for a source that was not
+  testable. Brakes are checked only when the drive braked firmly from speed;
+  coasting does not count.
+- Under it, "More details" (collapsed) holds the findings (a T2 harmonic at
+  the primary finding's location is folded into it as "Also at T2 …", not
+  listed as a second cause), a "Checked / Couldn't check" block in the PDF's
+  words (`history.checks.*`) with each matched, ruled-out, estimate-only and
+  not-testable source, "Car references" (powertrain, drive layout, tire
+  circumference, final drive, top gear ratio, engine layout and firing order,
+  engine RPM source, as on PDF page 2, `history.references.*`) and the
+  heatmap. Run facts, reload, export and delete sit in a small footer; delete
+  all runs is a quiet action at the end of the list and asks for
+  confirmation.
 - Each failing run-suitability check (speed variation, sensor coverage, frame
   integrity, …) is a warning banner at the top of the run detail, titled with
   the check and worded as its row on the PDF's data-quality page
@@ -689,8 +693,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     most. The description says why, the fallback step is the other cause's,
     page 2 asks the workshop to confirm with a neutral coast-down or OBD-II
     RPM first and lists the other source as "not told apart". Felt strongest
-    at the rear, the propshaft is named first. History shows "Engine or
-    driveline" and the chip "E3 / P2". A guided coast-down or OBD-II RPM
+    at the rear, the propshaft is named first. The History card reads "Engine
+    or driveline". A guided coast-down or OBD-II RPM
     through the gears names one.
   - Without measured RPM a propshaft order (and, on a car whose top gear is
     about 2 / final drive, a T2 wheel order) is also an engine order in some
@@ -826,7 +830,7 @@ Legend:
 | Layout | Source type | Location |
 |---|---|---|
 | One sensor (anywhere) | ~ source type (wheel/driveline/engine), with `single_sensor` as the weak reason, always shown (`_weak_reasons` in `diagnosis.py`); a wheel or brake fault is Moderate at most | ✗ wheel/tire: "could not be pinned to one wheel (only the front-left wheel had a sensor)"; driveline: the zone the drive layout gives (tunnel, or a FWD car's front axle) |
-| Cabin only (seat/trunk) | ✓ | wheel/tire: `history.zone.unlocated_wheel` "No single wheel; strongest at {location}" |
+| Cabin only (seat/trunk) | ✓ | wheel/tire: "could not be pinned to one wheel (felt strongest at the {zone})" |
 | One wheel + cabin | ✓ (`single_wheel_sensor`, Moderate at most) | ✗ no corner or axle: the one wheel sensor feels every wheel (`_zone` in `diagnosis.py`) |
 | Four wheels (± cabin) | ✓ | ✓ corner / axle / all four; all four gets the neutral coast check, not an axle swap (`_confirm_check` in `view_model.py`) |
 | Engine bay / tunnel / transmission sensors | ✓ | ✓ driveline/engine zone (`_zone`) |
@@ -896,5 +900,5 @@ capability line state the current layout's consequence.
   was not provided. An EV keeps its motor wording whatever its layout; a
   dual-motor EV is AWD and only the motor whose reduction ratio is entered
   (the library's rear one) is analysed. History shows the same layout line,
-  parts and wording (`drivelineNextStep`, `driveLayoutKey` in
-  `history_model.ts`).
+  parts and wording (page 1 from the server; the layout in "Car references",
+  `driveLayoutKey` in `history_model.ts`).
