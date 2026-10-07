@@ -13,8 +13,7 @@ from vibesensor.settings import car_library
 from vibesensor.settings.car_library import (
     _ROWS_BY_VARIANT,
     get_brands,
-    get_models_for_brand_type,
-    get_types_for_brand,
+    get_models_for_brand,
     load_car_library,
 )
 from vibesensor.settings.vehicle_configurations import load_vehicle_configurations
@@ -140,34 +139,31 @@ def test_bundled_picker_offers_every_exact_row_tire_size() -> None:
     """No bundled row's tire size is hidden behind another row of the same variant."""
     missing: list[str] = []
     for brand in get_brands():
-        for car_type in get_types_for_brand(brand):
-            for entry in get_models_for_brand_type(brand, car_type):
-                for variant in entry["variants"]:
-                    offered = set()
-                    for option in variant["tire_options"]:
-                        front = option["front"]
-                        rear = option.get("rear", front)
-                        offered.add(
-                            (
-                                front["width_mm"],
-                                front["aspect_pct"],
-                                front["rim_in"],
-                                rear["width_mm"],
-                                rear["aspect_pct"],
-                                rear["rim_in"],
-                            )
+        for entry in get_models_for_brand(brand):
+            for variant in entry["variants"]:
+                offered = set()
+                for option in variant["tire_options"]:
+                    front = option["front"]
+                    rear = option.get("rear", front)
+                    offered.add(
+                        (
+                            front["width_mm"],
+                            front["aspect_pct"],
+                            front["rim_in"],
+                            rear["width_mm"],
+                            rear["aspect_pct"],
+                            rear["rim_in"],
                         )
-                    configs = _ROWS_BY_VARIANT.get(
-                        (brand, car_type, entry["model"], variant["name"]), ()
                     )
-                    assert configs, (entry["model"], variant["name"])
-                    for config in configs:
-                        sizes = [_size(option.tire_setup) for option in config.tire_options]
-                        if not sizes:
-                            sizes = [_size(AxleTireSetup.square(config.default_tire))]
-                        missing.extend(
-                            f"{config.id}: {size}" for size in sizes if size not in offered
-                        )
+                configs = _ROWS_BY_VARIANT.get(
+                    (brand, entry["type"], entry["model"], variant["name"]), ()
+                )
+                assert configs, (entry["model"], variant["name"])
+                for config in configs:
+                    sizes = [_size(option.tire_setup) for option in config.tire_options]
+                    if not sizes:
+                        sizes = [_size(AxleTireSetup.square(config.default_tire))]
+                    missing.extend(f"{config.id}: {size}" for size in sizes if size not in offered)
     assert not missing, "\n".join(missing)
 
 
@@ -308,7 +304,7 @@ def test_each_gearbox_names_the_axle_its_final_drive_belongs_to() -> None:
         ("AWD", "front"): {"front"},
         ("AWD", None): {"rear", "none"},
     }
-    picked = get_models_for_brand_type("BMW", "Hatchback")
+    picked = get_models_for_brand("BMW")
     e_awd = next(
         variant
         for entry in picked
@@ -351,7 +347,7 @@ def test_each_variant_serves_the_engine_profile_its_rows_agree_on() -> None:
     }
     g30 = next(
         variant
-        for entry in get_models_for_brand_type("BMW", "Sedan")
+        for entry in get_models_for_brand("BMW")
         if entry["model"].startswith("5 Series (G30")
         for variant in entry["variants"]
         if variant["name"] == "540i"

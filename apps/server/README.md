@@ -360,7 +360,7 @@ Current route groups:
 - `history.py` — saved runs, insights, reports, and exports.
 - `websocket.py` — `/ws` live update stream and selected-client updates.
 - `updates.py` — software updater and ESP flash workflows.
-- `car_library.py` — bundled car library brands/types/variants.
+- `car_library.py` — bundled car library: brands and their models (each with its body type and variants).
 
 ### HTTP API schema export and versioning stance
 

@@ -12,7 +12,6 @@ import type {
   CarLibraryModel,
   CarLibraryModelsPayload,
   CarLibraryTireOption,
-  CarLibraryTypesPayload,
   CarRecord,
   CarsPayload,
   CarUpsertRequest,
@@ -278,16 +277,16 @@ async function bootWithCars(page: Page, server: CarsServer) {
       await fulfillJson<CarLibraryBrandsPayload>(route, {
         brands: ["VW", "Volvo"],
       });
-    } else if (url.pathname.endsWith("/types")) {
-      await fulfillJson<CarLibraryTypesPayload>(route, {
-        types: ["Hatchback", "Estate"],
-      });
     } else {
-      const type = url.searchParams.get("type");
+      // One list per brand, every body type in it.
+      const brand = url.searchParams.get("brand");
       await fulfillJson<CarLibraryModelsPayload>(route, {
         models:
-          type === "Estate"
-            ? [
+          brand === "Volvo"
+            ? [{ ...GOLF, brand: "Volvo", type: "Estate", model: "V60" }]
+            : [
+                GOLF,
+                POLO,
                 {
                   ...GOLF,
                   type: "Estate",
@@ -316,8 +315,7 @@ async function bootWithCars(page: Page, server: CarsServer) {
                     },
                   ],
                 },
-              ]
-            : [GOLF, POLO],
+              ],
       });
     }
   });
@@ -338,19 +336,29 @@ test("journey: the library path prefills the car and shows what it can test", as
   await expect(page.locator("#wizardBrandList .wiz-opt").first()).toBeFocused();
 
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
-  await wizard.locator('#wizardModelList [data-idx="0"]').click();
+  // Brand, then model: the list spans every body type and names each one.
+  const golf = wizard.locator('#wizardModelList [data-idx="0"]');
+  await expect(golf).toContainText("Hatchback");
+  await expect(wizard.locator('#wizardModelList [data-idx="2"]')).toContainText(
+    "Estate",
+  );
+  await golf.click();
   await expect(wizard.locator("#wizardVariantList")).toContainText(
     "2.0 diesel",
   );
   await wizard.locator('#wizardVariantList [data-idx="1"]').click();
 
-  await expect(page.locator("#wizardProgressText")).toContainText("5");
-  // The first tire and the only gearbox are preselected and fill the specs.
-  await expect(wizard.locator('[data-tire-idx="0"]')).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  await expect(page.locator("#wizardProgressText")).toContainText("4 of 4");
+  // The wheels are the user's pick: none is preselected, and Add Car says so.
+  const firstTire = wizard.locator('[data-tire-idx="0"]');
+  await expect(firstTire).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator("#wizardManualAddBtn")).toBeDisabled();
+  await expect(page.locator("#wizardActionHint")).toContainText(
+    "Pick your wheels above or type the tire size",
   );
+  await firstTire.click();
+  await expect(firstTire).toHaveAttribute("aria-pressed", "true");
+  // The only gearbox is preselected and fills the ratios.
   const gearbox = wizard.locator('#wizardGearboxList [data-idx="0"]');
   await expect(gearbox).toHaveAttribute("aria-pressed", "true");
   await expect(gearbox.locator(".ref-chip")).toHaveText(["exact", "checked"]);
@@ -407,9 +415,24 @@ test("journey: the library path prefills the car and shows what it can test", as
     "ok",
   );
   await expect(row.locator(".car-created-pill")).toHaveText("New");
-  await expect(page.locator("#carSelectionGuidance")).toContainText(
-    "VW Golf GTD",
+  const guidanceBanner = page.locator("#carSelectionGuidance");
+  await expect(guidanceBanner).toContainText("VW Golf GTD");
+  await expect(
+    guidanceBanner.getByRole("button", { name: "Back to setup" }),
+  ).toBeVisible();
+  // The next step is one tap away, and opens at the top of its tab.
+  await page.setViewportSize({ width: 390, height: 500 });
+  await guidanceBanner.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight }),
   );
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0);
+  await guidanceBanner
+    .getByRole("button", { name: "Next: speed source" })
+    .click();
+  await expect(page.locator("#speedSourceTab")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   // Leaving the tab dismisses the creation feedback.
   await openAnalysisTab(page);
   await openCarsTab(page);
@@ -425,9 +448,9 @@ test("journey: a library gearbox without a top gear is saved without one", async
   await page.locator("#addCarBtn").click();
   const wizard = page.locator("#addCarWizard");
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-  await wizard.locator('#wizardTypeList [data-value="Estate"]').click();
-  await wizard.locator('#wizardModelList [data-idx="0"]').click();
+  await wizard.locator('#wizardModelList [data-idx="2"]').click();
   await wizard.locator('#wizardVariantList [data-idx="0"]').click();
+  await wizard.locator('[data-tire-idx="0"]').click();
 
   // The gearbox says its top gear is unknown; the field stays empty, not a default.
   const gearbox = wizard.locator('#wizardGearboxList [data-idx="0"]');
@@ -479,9 +502,9 @@ test("journey: a library EV with an official reduction ratio needs no confirmati
   await page.locator("#addCarBtn").click();
   const wizard = page.locator("#addCarWizard");
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-  await wizard.locator('#wizardTypeList [data-value="Estate"]').click();
-  await wizard.locator('#wizardModelList [data-idx="1"]').click();
+  await wizard.locator('#wizardModelList [data-idx="3"]').click();
   await wizard.locator('#wizardVariantList [data-idx="0"]').click();
+  await wizard.locator('[data-tire-idx="0"]').click();
 
   // One reduction ratio and no top gear: no gearbox estimate to confirm.
   const gearbox = wizard.locator('#wizardGearboxList [data-idx="0"]');
@@ -532,7 +555,7 @@ test("journey: a failed library load recovers through manual specs and back", as
   await expect(page.locator("#wizardStep0")).toBeVisible();
 
   await wizard.locator('[data-wizard-recovery="manual"]').click();
-  await expect(page.locator("#wizardStep4")).toBeVisible();
+  await expect(page.locator("#wizardStep3")).toBeVisible();
   await expect(page.locator("#wizardSpecsForm")).toBeVisible();
   await expect(page.locator("#wizardTireList")).toHaveCount(0);
   // Back skips the steps that were never chosen.
@@ -555,8 +578,7 @@ test("journey: one model per generation; the variant step picks the model year",
   await page.locator("#addCarBtn").click();
   const wizard = page.locator("#addCarWizard");
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
-  await expect(wizard.locator("#wizardModelList .wiz-opt")).toHaveCount(2);
+  await expect(wizard.locator("#wizardModelList .wiz-opt")).toHaveCount(4);
   await wizard.locator('#wizardModelList [data-idx="1"]').click();
 
   const variants = wizard.locator("#wizardVariantList .wiz-opt");
@@ -569,10 +591,11 @@ test("journey: one model per generation; the variant step picks the model year",
   await expect(variants.nth(2).locator(".wiz-opt-detail")).toHaveText(
     "FWD · 2.0 TSI EA888 evo4 turbo petrol",
   );
-  await expect(wizard.locator("#wizardStep3")).toContainText(
+  await expect(wizard.locator("#wizardStep2")).toContainText(
     "Pick the one that matches your car's year",
   );
   await variants.nth(2).click();
+  await wizard.locator('[data-tire-idx="0"]').click();
 
   await expect(page.locator("#wizFinalDrive")).toHaveValue("3.24");
   await page.locator("#wizardManualAddBtn").click();
@@ -614,9 +637,8 @@ test("journey: on a phone the header carries the picks and no option is covered"
   const trail = page.locator("#wizardTrail");
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
   await expect(trail).toHaveText("VW");
-  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
   await wizard.locator('#wizardModelList [data-idx="1"]').click();
-  await expect(trail).toHaveText("VW · Hatchback · Polo (AW, 2018\u20132024)");
+  await expect(trail).toHaveText("VW · Polo (AW, 2018\u20132024)");
   // The picks live in the header; the side card waits for the specs step.
   await expect(wizard.locator(".wizard-summary-card")).toBeHidden();
   await expect(wizard.locator(".wizard-step-indicators")).toBeHidden();
@@ -624,7 +646,7 @@ test("journey: on a phone the header carries the picks and no option is covered"
   const variants = wizard.locator("#wizardVariantList .wiz-opt");
   await variants.nth(2).click();
   await expect(trail).toHaveText(
-    "VW · Hatchback · Polo (AW, 2018\u20132024) · GTI (2021\u20132024)",
+    "VW · Polo (AW, 2018\u20132024) · GTI (2021\u20132024)",
   );
   // On the specs step the card follows the form, inside the scroll area,
   // while the buttons stay on screen.
@@ -640,7 +662,7 @@ test("journey: on a phone the header carries the picks and no option is covered"
   // Back starts the variant step at its top and drops the variant from the
   // trail.
   await page.locator("#wizardBackBtn").click();
-  await expect(trail).toHaveText("VW · Hatchback · Polo (AW, 2018\u20132024)");
+  await expect(trail).toHaveText("VW · Polo (AW, 2018\u20132024)");
   await expect(
     wizard.getByText("Pick the one that matches your car's year"),
   ).toBeInViewport({ ratio: 1 });
@@ -676,22 +698,17 @@ test("journey: a slow older model list never replaces the newer one", async ({
   page,
 }) => {
   const server = createServer();
-  server.delays["/api/car-library/models?brand=VW&type=Hatchback"] = 800;
+  server.delays["/api/car-library/models?brand=VW"] = 800;
   await bootWithCars(page, server);
   await openCarsTab(page);
   await page.locator("#addCarBtn").click();
   const wizard = page.locator("#addCarWizard");
   await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-  await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
   await page.locator("#wizardBackBtn").click();
-  await wizard.locator('#wizardTypeList [data-value="Estate"]').click();
-  await expect(wizard.locator("#wizardModelList")).toContainText(
-    "Golf Variant",
-  );
+  await wizard.locator('#wizardBrandList [data-value="Volvo"]').click();
+  await expect(wizard.locator("#wizardModelList")).toContainText("V60");
   await page.waitForTimeout(1000);
-  await expect(wizard.locator("#wizardModelList")).toContainText(
-    "Golf Variant",
-  );
+  await expect(wizard.locator("#wizardModelList")).toContainText("V60");
   await expect(wizard.locator("#wizardModelList")).not.toContainText("Polo");
 });
 
@@ -705,9 +722,9 @@ test("journey: typed values become the user's; a pasted size and an unknown rati
   const openGolf = async () => {
     await page.locator("#addCarBtn").click();
     await wizard.locator('#wizardBrandList [data-value="VW"]').click();
-    await wizard.locator('#wizardTypeList [data-value="Hatchback"]').click();
     await wizard.locator('#wizardModelList [data-idx="0"]').click();
     await wizard.locator('#wizardVariantList [data-idx="0"]').click();
+    await wizard.locator('[data-tire-idx="0"]').click();
     await expect(page.locator("#wizTireWidth")).toHaveValue("205");
   };
 
@@ -875,15 +892,12 @@ test("journey: a custom brand skips the library; ratios stay optional", async ({
   ).toBeVisible();
   await page.locator("#wizardCustomBrand").fill("Track");
   await page.locator("#wizardCustomBrandBtn").click();
-  await expect(page.locator("#wizardCustomType")).toBeFocused();
+  await expect(page.locator("#wizardCustomModel")).toBeFocused();
   await expect(page.locator("#addCarWizard")).toContainText(
     "No library data for Track",
   );
-  await page.locator("#wizardCustomType").fill("Coupe");
-  await page.locator("#wizardCustomTypeBtn").click();
   await page.locator("#wizardCustomModel").fill("Demo");
   await page.locator("#wizardCustomModelBtn").click();
-  expect(server.libraryPaths).not.toContain("/api/car-library/types");
   expect(server.libraryPaths).not.toContain("/api/car-library/models");
   await page.locator("#wizTireSize").fill("225/45 R18");
   // The library does not know this car, so the wizard asks its powertrain.
@@ -911,7 +925,7 @@ test("journey: a custom brand skips the library; ratios stay optional", async ({
   expect(server.posts).toHaveLength(1);
   expect(server.posts[0]).toMatchObject({
     name: "Track Demo",
-    type: "Coupe",
+    type: "Custom",
     fuel_type: "EV",
     aspects: {
       tire_width_mm: 225,
@@ -936,8 +950,6 @@ test("journey: a custom car asks its drive layout; not sure leaves it unset", as
     await page.locator("#addCarBtn").click();
     await page.locator("#wizardCustomBrand").fill("Track");
     await page.locator("#wizardCustomBrandBtn").click();
-    await page.locator("#wizardCustomType").fill("Coupe");
-    await page.locator("#wizardCustomTypeBtn").click();
     await page.locator("#wizardCustomModel").fill(model);
     await page.locator("#wizardCustomModelBtn").click();
     await page.locator("#wizTireSize").fill("225/45 R18");
@@ -983,8 +995,6 @@ test("journey: a custom car asks its engine; not sure leaves it unset", async ({
     await page.locator("#addCarBtn").click();
     await page.locator("#wizardCustomBrand").fill("Track");
     await page.locator("#wizardCustomBrandBtn").click();
-    await page.locator("#wizardCustomType").fill("Coupe");
-    await page.locator("#wizardCustomTypeBtn").click();
     await page.locator("#wizardCustomModel").fill(model);
     await page.locator("#wizardCustomModelBtn").click();
     await page.locator("#wizTireSize").fill("225/45 R18");
@@ -1022,10 +1032,11 @@ test("journey: a custom car asks its engine; not sure leaves it unset", async ({
   await expect(page.locator("#wizEngine")).toHaveCount(0);
 });
 
-test("journey: the Live setup checklist's add-car step opens the wizard", async ({
+test("journey: the Live setup checklist's add-car step opens the wizard and leads back", async ({
   page,
 }) => {
-  await bootWithCars(page, createServer());
+  const server = createServer();
+  await bootWithCars(page, server);
   await page
     .locator("#liveSetup")
     .getByRole("button", { name: "Add a car" })
@@ -1033,4 +1044,18 @@ test("journey: the Live setup checklist's add-car step opens the wizard", async 
   await expect(page.locator("#carTab")).toBeVisible();
   await expect(page.locator("#addCarWizard")).toBeVisible();
   await expect(page.locator("#wizardBrandList .wiz-opt").first()).toBeFocused();
+
+  await page.locator("#wizardCustomBrand").fill("Track");
+  await page.locator("#wizardCustomBrandBtn").click();
+  await page.locator("#wizardCustomModel").fill("Demo");
+  await page.locator("#wizardCustomModelBtn").click();
+  await page.locator("#wizTireSize").fill("225/45 R18");
+  await page.locator("#wizardManualAddBtn").click();
+  await expect.poll(() => server.posts.length).toBe(1);
+  await page
+    .locator("#carSelectionGuidance")
+    .getByRole("button", { name: "Back to setup" })
+    .click();
+  await expect(page.locator("#dashboardView")).toBeVisible();
+  await expect(page.locator("#liveSetup")).toBeVisible();
 });

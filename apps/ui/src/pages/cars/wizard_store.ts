@@ -3,7 +3,6 @@ import { batch, computed, type Signal, signal } from "@preact/signals";
 import {
   getCarLibraryBrands,
   getCarLibraryModels,
-  getCarLibraryTypes,
 } from "../../api/car_library";
 import type {
   CarLibraryGearbox,
@@ -44,13 +43,11 @@ export type FocusTarget =
   | "close"
   | "custom-brand"
   | "custom-model"
-  | "custom-type"
   | "finish"
   | "gearbox-option"
   | "model-option"
   | "spec-selection"
   | "tire-size"
-  | "type-option"
   | "variant-option"
   | ManualField;
 
@@ -71,7 +68,6 @@ export const isOpen = signal(false);
 export const wizard = signal<WizardState>(INITIAL_WIZARD_STATE);
 export const manualInputs = signal<ManualInputs>(EMPTY_MANUAL_INPUTS);
 export const brandOptions = signal(idle<string>());
-export const typeOptions = signal(idle<string>());
 export const modelOptions = signal(idle<CarLibraryModel>());
 export const variantOptions = signal<readonly CarLibraryVariant[]>([]);
 export const tireOptions = signal<readonly CarLibraryTireOption[]>([]);
@@ -114,12 +110,9 @@ function resetSpecsForm(inputs: ManualInputs): void {
  * Clears every option list after `step`, so stale choices never show, and the
  * specs: values prefilled for another car must not be saved as the user's.
  */
-function resetOptionsAfter(step: "brand" | "type" | "model" | "variant"): void {
+function resetOptionsAfter(step: "brand" | "model" | "variant"): void {
   resetSpecsForm(EMPTY_MANUAL_INPUTS);
   if (step === "brand") {
-    typeOptions.value = idle();
-  }
-  if (step === "brand" || step === "type") {
     modelOptions.value = idle();
   }
   if (step !== "variant") {
@@ -175,12 +168,12 @@ function loadSpecs(generation: number): void {
     state.selectedModel,
     state.selectedVariant,
   );
+  // The wheels stay the user's pick (Add Car waits for a tire size); the
+  // gearbox is prefilled only when the variant has just one.
   const selectedTire =
     state.selectedTire && tires.includes(state.selectedTire)
       ? state.selectedTire
-      : (tires[0] ?? null);
-  // Prefill as much as the library knows: the first tire, and the gearbox
-  // when the variant has only one.
+      : null;
   const selectedGearbox =
     state.selectedGearbox && gearboxes.includes(state.selectedGearbox)
       ? state.selectedGearbox
@@ -215,7 +208,7 @@ function loadSpecs(generation: number): void {
   }
 }
 
-/** A typed brand or type with no library data: skip its lists, say so once. */
+/** A typed brand with no library data: skip its lists, say so once. */
 function skipLibrary<T>(
   options: Signal<LibraryOptions<T>>,
   target: FocusTarget,
@@ -227,10 +220,8 @@ function skipLibrary<T>(
 /** Loads whatever the current step needs from the car library. */
 export async function loadCurrentStep(): Promise<void> {
   const generation = ++loadGeneration;
-  const { step, brand, carType, selectedModel, libraryMiss } = wizard.value;
-  if (step === 1 && libraryMiss === "brand") {
-    skipLibrary(typeOptions, "custom-type");
-  } else if (step === 2 && libraryMiss !== null) {
+  const { step, brand, selectedModel, libraryMiss } = wizard.value;
+  if (step === 1 && libraryMiss !== null) {
     skipLibrary(modelOptions, "custom-model");
   } else if (step === 0) {
     await loadLibrary(
@@ -246,23 +237,13 @@ export async function loadCurrentStep(): Promise<void> {
     await loadLibrary(
       generation,
       (s) => s.step === 1 && s.brand === brand,
-      typeOptions,
-      async () => (await getCarLibraryTypes(brand)).types ?? [],
-      "settings.wizard.load_failed_types",
-      "type-option",
-      "custom-type",
-    );
-  } else if (step === 2) {
-    await loadLibrary(
-      generation,
-      (s) => s.step === 2 && s.brand === brand && s.carType === carType,
       modelOptions,
-      async () => (await getCarLibraryModels(brand, carType)).models ?? [],
+      async () => (await getCarLibraryModels(brand)).models ?? [],
       "settings.wizard.load_failed_models",
       "model-option",
       "custom-model",
     );
-  } else if (step === 3) {
+  } else if (step === 2) {
     const variants = selectedModel?.variants ?? [];
     variantOptions.value = variants;
     if (variants.length) {
@@ -319,16 +300,11 @@ export async function goBack(): Promise<void> {
     return;
   }
   // Skip steps whose prerequisites were never chosen (no variants, or the
-  // manual fallback skipped the library before a brand/type was picked).
+  // manual fallback skipped the library before a brand was picked).
   let previous = state.step - 1;
-  if (previous === 3 && !state.selectedModel?.variants?.length) previous = 2;
-  if (previous === 2 && !state.carType) previous = 1;
+  if (previous === 2 && !state.selectedModel?.variants?.length) previous = 1;
   if (previous === 1 && !state.brand) previous = 0;
-  // Back on the type step, a library brand offers its types again.
-  const libraryMiss =
-    previous === 0 || (previous === 1 && state.libraryMiss === "type")
-      ? null
-      : state.libraryMiss;
+  const libraryMiss = previous === 0 ? null : state.libraryMiss;
   update({ step: previous, libraryMiss });
   await loadCurrentStep();
 }
@@ -349,24 +325,6 @@ export async function selectBrand(
   await loadCurrentStep();
 }
 
-export async function selectType(
-  carType: string,
-  inLibrary = true,
-): Promise<void> {
-  const { brand, libraryMiss } = wizard.value;
-  batch(() => {
-    update({
-      ...INITIAL_WIZARD_STATE,
-      brand,
-      carType,
-      libraryMiss: libraryMiss ?? (inLibrary ? null : "type"),
-      step: 2,
-    });
-    resetOptionsAfter("type");
-  });
-  await loadCurrentStep();
-}
-
 export async function selectModel(index: number): Promise<void> {
   const model = modelOptions.value.options[index];
   if (!model) {
@@ -376,7 +334,8 @@ export async function selectModel(index: number): Promise<void> {
     update({
       selectedModel: model,
       model: model.model,
-      step: 3,
+      carType: model.type,
+      step: 2,
       selectedVariant: null,
       selectedGearbox: null,
       selectedTire: null,
@@ -431,7 +390,7 @@ function libraryMatch(options: readonly string[], text: string): string | null {
 
 /** Custom text entries must be non-blank; blank entries refocus the input. */
 export async function submitCustom(
-  kind: "brand" | "type" | "model",
+  kind: "brand" | "model",
   value: string,
 ): Promise<void> {
   const trimmed = value.trim();
@@ -444,10 +403,6 @@ export async function submitCustom(
     const known = libraryMatch(options, trimmed);
     // Only a loaded brand list proves the library has no data for this brand.
     await selectBrand(known ?? trimmed, known !== null || status !== "ready");
-  } else if (kind === "type") {
-    const { status, options } = typeOptions.value;
-    const known = libraryMatch(options, trimmed);
-    await selectType(known ?? trimmed, known !== null || status !== "ready");
   } else {
     await continueWithManualSpecs(trimmed);
   }
@@ -460,6 +415,7 @@ export async function continueWithManualSpecs(
   batch(() => {
     update({
       model,
+      carType: "",
       selectedModel: null,
       selectedVariant: null,
       selectedGearbox: null,

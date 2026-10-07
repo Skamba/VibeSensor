@@ -59,16 +59,24 @@ export function navigate(view: ViewId, tab?: SettingsTabId): void {
   if (tab) {
     settingsTab.value = tab;
   }
+  const show = () => {
+    activeView.value = view;
+    // A deep link (e.g. Live's "Place 3 sensors") opens its tab at the top,
+    // not at the scroll offset the page it came from had.
+    if (tab) {
+      globalThis.scrollTo?.({ top: 0 });
+    }
+  };
   const token = ++navigationToken;
   const loaders = viewLoaders.get(view);
   if (!loaders) {
-    activeView.value = view;
+    show();
     return;
   }
   Promise.all(loaders.map((load) => load())).then(
     () => {
       if (token === navigationToken) {
-        activeView.value = view;
+        show();
       }
     },
     (error: unknown) => {
