@@ -179,25 +179,56 @@ def test_healthy_run_says_no_significant_vibration_and_what_was_covered() -> Non
 
 
 @pytest.mark.parametrize(
-    ("lang", "covered"),
+    ("lang", "covered", "speeds", "driving"),
     [
         (
             "en",
             "No live speed was recorded, so the speeds and driving phases are not known;"
             " sensors at front-left wheel",
+            "no live speed recorded",
+            "Driving covered",
         ),
         (
             "nl",
             "Er is geen live snelheid vastgelegd, dus de snelheden en rijfasen zijn onbekend;"
             " sensoren bij wiel linksvoor",
+            "geen live snelheid vastgelegd",
+            "Gereden",
         ),
     ],
 )
-def test_covered_says_no_live_speed_was_recorded_when_no_speed_is_known(
+def test_a_run_without_live_speed_says_so_instead_of_unknown(
+    lang: str, covered: str, speeds: str, driving: str
+) -> None:
+    # GPS chosen but never a fix: no sample has a speed, every second is "speed unknown".
+    summary = run_analysis(
+        make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=None)
+    )
+    assert summary["phase_info"]["phase_pcts"] == {"speed_unknown": 100.0}
+    view = report_view_for(summary, lang=lang)
+    header = {fact.label: fact.value for fact in view.header}
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    speeds_label = view.header[3].label
+
+    assert view.owner.covered is not None and view.owner.covered.startswith(covered)
+    assert header[speeds_label] == conditions[speeds_label] == speeds
+    # Every second would read "unknown speed 100 %": the speeds row already says why.
+    assert driving not in conditions, conditions
+
+
+@pytest.mark.parametrize(
+    ("lang", "covered"),
+    [
+        ("en", "50–52\xa0km/h with sensors at front-left wheel"),
+        ("nl", "50–52\xa0km/u met sensoren bij wiel linksvoor"),
+    ],
+)
+def test_covered_leaves_out_the_phases_when_no_driving_phase_was_known(
     lang: str, covered: str
 ) -> None:
     summary = deepcopy(_healthy_summary())
-    summary["speed_stats"].update(min_kmh=None, max_kmh=None)
+    summary["speed_stats"].update(min_kmh=50.0, max_kmh=52.0)
+    summary["phase_info"]["phase_pcts"] = {"speed_unknown": 99.5, "cruise": 0.5}
     owner = report_view_for(summary, lang=lang).owner
 
     assert owner.covered is not None and owner.covered.startswith(covered), owner.covered

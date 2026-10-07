@@ -364,6 +364,7 @@
   "history.provenance.unverified": "car library, unverified estimate",
   "history.provenance.missing": "not provided",
   "history.covered_speeds": "Speeds driven",
+  "history.no_live_speed": "No live speed recorded",
   "history.recapture_label": "Record again",
   "history.recapture_recipe": "Sweep slowly from {from} to {to} {unit}, hold the speed where you feel it most, then coast down in neutral.",
   "history.recapture_recipe_ev": "Sweep slowly from {from} to {to} {unit} and hold the speed where you feel it most.",

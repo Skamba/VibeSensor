@@ -364,6 +364,7 @@
   "history.provenance.unverified": "autobibliotheek, onbevestigde schatting",
   "history.provenance.missing": "niet opgegeven",
   "history.covered_speeds": "Gereden snelheden",
+  "history.no_live_speed": "Geen live snelheid vastgelegd",
   "history.recapture_label": "Meet opnieuw",
   "history.recapture_recipe": "Versnel rustig van {from} naar {to} {unit}, houd de snelheid vast waar je het het meest voelt en rol daarna uit in neutraal.",
   "history.recapture_recipe_ev": "Versnel rustig van {from} naar {to} {unit} en houd de snelheid vast waar je het het meest voelt.",

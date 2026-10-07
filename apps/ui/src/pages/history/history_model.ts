@@ -955,7 +955,9 @@ function noFaultCard(
     chips: [
       {
         label: t("history.covered_speeds"),
-        value: speedRangeText(speeds.min_kmh, speeds.max_kmh, f),
+        value:
+          formatSpeedRange(speeds.min_kmh, speeds.max_kmh, f.speedUnit, t) ??
+          t("history.no_live_speed"),
       },
       {
         label: t("history.summary_sensor_count"),
