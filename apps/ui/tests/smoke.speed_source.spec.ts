@@ -210,19 +210,23 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
   await installSpeedSourceRoutes(page, server);
   await openSpeedSourceTab(page);
 
-  await expect(page.locator("#speedSourceCurrentSource")).toHaveText("GPS");
-  await expect(page.locator("#speedSourceEffectiveSpeed")).toContainText(
-    "52.3",
-  );
-  await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  // The saved choice and the live speed are named apart.
+  await expect(page.locator("#speedSourceSelected")).toHaveText("GPS");
+  await expect(page.locator("#speedSourceLive")).toHaveText("GPS · 52.3 km/h");
   await expect(page.locator("#gpsReceiverMissing")).toHaveCount(0);
   const consequences = page.locator("#speedSourceConsequences");
   await expect(consequences.locator(".speed-source-consequence")).toHaveCount(
     3,
   );
   await expect(consequences).toContainText("assuming top gear (or D)");
-  await expect(page.locator("#staleTimeoutInput")).toHaveValue("10");
   await expect(page.locator("#manualSpeedConfig")).toBeHidden();
+
+  // The stale timeout and diagnostics wait behind Advanced.
+  await expect(page.locator("#staleTimeoutInput")).toBeHidden();
+  await page.locator("#speedSourceAdvanced summary").click();
+  await expect(page.locator("#gpsFallbackPanel")).toBeVisible();
+  await expect(page.locator("#gpsStatusPanel")).toBeVisible();
+  await expect(page.locator("#staleTimeoutInput")).toHaveValue("10");
 
   // An out-of-range stale timeout is rejected before anything is sent.
   await page.locator("#staleTimeoutInput").fill("500");
@@ -241,7 +245,7 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
     "Enter a manual speed above 0 and up to 500 km/h.",
   );
   await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
-    "GPS remains active right now. No changes were saved.",
+    "GPS stays selected. No changes were saved.",
   );
   expect(server.puts).toEqual([]);
 
@@ -264,9 +268,15 @@ test("journey: Speed source validates, saves a manual override, and recovers fro
     speed_source: "manual",
     stale_timeout_s: 15,
   });
-  await expect(page.locator("#speedSourceSaveFeedback")).toBeHidden();
-  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
-    "Manual override",
+  await expect(
+    page.locator("#speedSourceSaveFeedback .settings-feedback"),
+  ).toHaveAttribute("data-tone", "success");
+  await expect(page.locator("#speedSourceSaveFeedback")).toContainText(
+    "Manual is now the selected speed source.",
+  );
+  await expect(page.locator("#speedSourceSelected")).toHaveText("Manual");
+  await expect(page.locator("#speedSourceLive")).toHaveText(
+    "Typed-in speed · 80.0 km/h",
   );
 
   // In m/s the field shows and takes the speed in m/s; it is saved in km/h.
@@ -303,6 +313,9 @@ test("journey: GPS without a receiver says to plug one in or switch to OBD-II", 
   await openSpeedSourceTab(page);
   await expect(page.locator("#gpsReceiverMissing")).toContainText(
     "No GPS receiver found",
+  );
+  await expect(page.locator("#speedSourceLive")).toHaveText(
+    "None — No GPS receiver found",
   );
 });
 
@@ -359,7 +372,7 @@ test("journey: Speed source scans, pairs, and saves an OBD-II adapter", async ({
   await page.locator("#saveSpeedSourceBtn").click();
   await expect.poll(() => server.puts.length).toBe(1);
   expect(server.puts[0]).toMatchObject({ speed_source: "obd2" });
-  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(/OBD/);
+  await expect(page.locator("#speedSourceSelected")).toHaveText(/OBD/);
   // Each scan interrupts sensor data, so the page never rescans on its own.
   expect(server.scans).toBe(1);
 });
@@ -380,8 +393,6 @@ test("journey: a double-clicked save sends one speed source update", async ({
   await page.locator("#speedSourceChoiceManual").click();
   await page.locator("#manualSpeedInput").fill("65");
   await page.locator("#saveSpeedSourceBtn").dblclick();
-  await expect(page.locator("#speedSourceCurrentSource")).toHaveText(
-    "Manual override",
-  );
+  await expect(page.locator("#speedSourceSelected")).toHaveText("Manual");
   expect(server.puts).toHaveLength(1);
 });

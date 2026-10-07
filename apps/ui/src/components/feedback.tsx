@@ -3,7 +3,7 @@ export interface Feedback {
   body: string;
   detail?: string;
   title?: string;
-  tone?: "info" | "error";
+  tone?: "info" | "success" | "error";
   compact?: boolean;
 }
 

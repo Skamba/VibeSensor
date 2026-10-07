@@ -3,7 +3,7 @@ import { useEffect, useRef } from "preact/hooks";
 import type { SpeedSourceKind } from "../../api/types";
 import { speedUnit } from "../../app_store";
 import { FeedbackBlock, FeedbackSlot } from "../../components/feedback";
-import { formatIntLocale, formatSpeed, speedUnitKey } from "../../format";
+import { formatIntLocale, speedUnitKey } from "../../format";
 import { lang, t } from "../../i18n";
 import {
   obdStatus,
@@ -11,14 +11,8 @@ import {
   speedSourceSnapshot,
   speedStatus,
 } from "../../settings_store";
+import { gpsFixWaitS, gpsReceiverMissing } from "../../speed_source";
 import {
-  gpsFixWaitS,
-  gpsReceiverMissing,
-  resolveEffectiveSpeedSource,
-} from "../../speed_source";
-import {
-  activeSourceLabel,
-  activeSpeedKph,
   choiceState,
   configuredDeviceText,
   deviceActionLabel,
@@ -26,11 +20,13 @@ import {
   type DiagnosticRow,
   gpsDiagnostics,
   hasReadableName,
+  liveSourceText,
   obdDiagnostics,
+  selectedSourceLabel,
 } from "./speed_source_model";
 import {
+  advancedOpen,
   chooseMode,
-  diagnosticsOpen,
   draftPending,
   editManualSpeed,
   editStaleTimeout,
@@ -78,39 +74,30 @@ const CHOICES: ReadonlyArray<{
   },
 ];
 
+/** The saved choice next to what gives the app its speed right now. */
 function Summary() {
-  const snapshot = speedSourceSnapshot.value;
   const stats: Array<[string, string, string]> = [
     [
-      "speedSourceCurrentSource",
-      "settings.speed.current_source",
-      activeSourceLabel(snapshot, speedStatus.value, t),
+      "speedSourceSelected",
+      "settings.speed.selected",
+      selectedSourceLabel(savedMode.value, t),
     ],
     [
-      "speedSourceEffectiveSpeed",
-      "settings.speed.effective_speed",
-      formatSpeed(
-        activeSpeedKph(snapshot, speedSettings.gpsEffectiveSpeedKph.value),
-        speedUnit.value,
+      "speedSourceLive",
+      "settings.speed.live",
+      liveSourceText(
+        {
+          settings: speedSourceSnapshot.value,
+          status: speedStatus.value,
+          liveSpeedKph: speedSettings.gpsEffectiveSpeedKph.value,
+          unit: speedUnit.value,
+        },
         t,
-        1,
-      ),
-    ],
-    [
-      "speedSourceFallbackActive",
-      "settings.speed.fallback_active",
-      t(
-        speedSettings.gpsFallbackActive.value
-          ? "settings.speed.fallback_yes"
-          : "settings.speed.fallback_no",
       ),
     ],
   ];
   return (
     <div class="speed-source-summary">
-      <div class="speed-source-summary__eyebrow">
-        {t("settings.speed.summary_title")}
-      </div>
       <div class="subtle speed-source-summary__caption">
         {t("settings.speed.summary_caption")}
       </div>
@@ -391,30 +378,56 @@ function DiagnosticsTable(props: {
   );
 }
 
-function Diagnostics() {
-  const snapshot = speedSourceSnapshot.value;
-  const fallbackInUse =
-    resolveEffectiveSpeedSource(snapshot) !== snapshot.speedSource;
+/**
+ * Engineer-facing settings and diagnostics, closed by default: the stale
+ * timeout before the typed-in fallback takes over, and the live source status.
+ * It opens by itself when the stale timeout needs fixing.
+ */
+function Advanced(props: {
+  staleRef: (element: HTMLInputElement | null) => void;
+}) {
   return (
     <details
-      id="speedSourceDiagnostics"
+      id="speedSourceAdvanced"
       class="settings-help-disclosure speed-source-diagnostics"
-      open={diagnosticsOpen.value || fallbackInUse}
+      open={advancedOpen.value || staleTimeoutFeedback.value !== null}
       onToggle={(event) => {
-        diagnosticsOpen.value = event.currentTarget.open;
+        advancedOpen.value = event.currentTarget.open;
       }}
     >
       <summary class="settings-help-disclosure__summary">
         <span class="settings-help-disclosure__heading">
           <span class="settings-help-disclosure__title">
-            {t("settings.speed.status_title")}
+            {t("settings.speed.advanced_title")}
           </span>
           <span class="settings-help-disclosure__caption">
-            {t("settings.speed.status_caption")}
+            {t("settings.speed.advanced_caption")}
           </span>
         </span>
       </summary>
       <div class="settings-help-disclosure__body">
+        <div
+          id="gpsFallbackPanel"
+          class="speed-source-config"
+          hidden={selectedMode.value === "manual"}
+        >
+          <div class="subtle">{t("settings.speed.gps_intro")}</div>
+          <NumberField
+            id="staleTimeoutInput"
+            label={t("settings.speed.stale_timeout_label")}
+            value={staleTimeoutInput.value}
+            step="1"
+            min="3"
+            max="120"
+            feedbackId="staleTimeoutFeedback"
+            feedback={staleTimeoutFeedback.value}
+            inputRef={props.staleRef}
+            onInput={editStaleTimeout}
+          />
+        </div>
+        <strong class="speed-source-diagnostics__title">
+          {t("settings.speed.status_title")}
+        </strong>
         <DiagnosticsTable
           id="gpsStatusPanel"
           rows={gpsDiagnostics(speedStatus.value, speedUnit.value, t)}
@@ -476,27 +489,11 @@ export function SpeedSource() {
             refs.current.scan = element;
           }}
         />
-        <div
-          id="gpsFallbackPanel"
-          class="speed-source-config"
-          hidden={mode === "manual"}
-        >
-          <div class="subtle">{t("settings.speed.gps_intro")}</div>
-          <NumberField
-            id="staleTimeoutInput"
-            label={t("settings.speed.stale_timeout_label")}
-            value={staleTimeoutInput.value}
-            step="1"
-            min="3"
-            max="120"
-            feedbackId="staleTimeoutFeedback"
-            feedback={staleTimeoutFeedback.value}
-            inputRef={(element) => {
-              refs.current.stale = element;
-            }}
-            onInput={editStaleTimeout}
-          />
-        </div>
+        <Advanced
+          staleRef={(element) => {
+            refs.current.stale = element;
+          }}
+        />
         <FeedbackSlot
           id="speedSourceSaveFeedback"
           message={saveFeedback.value}
@@ -513,7 +510,6 @@ export function SpeedSource() {
         </div>
       </div>
       <Consequences />
-      <Diagnostics />
     </>
   );
 }

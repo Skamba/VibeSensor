@@ -52,6 +52,15 @@
   background: rgba(197, 34, 31, 0.06);
 }
 
+.settings-feedback[data-tone="success"] {
+  border-color: color-mix(in srgb, var(--success-700) 30%, transparent);
+  background: color-mix(in srgb, var(--success-400) 10%, transparent);
+}
+
+.settings-feedback[data-tone="success"] .settings-feedback__title {
+  color: var(--success-700);
+}
+
 .settings-feedback[data-compact="true"] {
   padding: 0;
   border: none;

@@ -14,9 +14,7 @@ export type SpeedReadoutLabelKey =
   | "speed.obd2"
   | "speed.fallback";
 
-export function isManualLikeSpeedSource(
-  source: string | null | undefined,
-): boolean {
+function isManualLikeSpeedSource(source: string | null | undefined): boolean {
   return source === "manual" || source === "fallback_manual";
 }
 

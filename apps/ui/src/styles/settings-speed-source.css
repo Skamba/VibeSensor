@@ -11,13 +11,6 @@
     rgba(124, 58, 237, 0.03)
   );
 }
-.speed-source-summary__eyebrow {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--brand-700);
-  font-weight: 700;
-}
 .speed-source-summary__caption {
   margin: 0;
   line-height: 1.45;
@@ -56,6 +49,10 @@
 }
 .speed-source-diagnostics .kv-table {
   width: 100%;
+}
+.speed-source-diagnostics__title {
+  display: block;
+  margin-top: var(--space-3);
 }
 .speed-source-obd-toolbar {
   display: flex;
