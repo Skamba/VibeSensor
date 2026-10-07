@@ -5,6 +5,7 @@ import {
   type FuelType,
 } from "../../capabilities";
 import {
+  engineLabel,
   type ProvenanceTier,
   provenanceTier,
   savedCarReferences,
@@ -14,7 +15,7 @@ import {
   getCarCompleteness,
 } from "../../car_selection";
 import { formatSavedCarTireSummary } from "./tires";
-import { engineLabel, estimateNoteKey } from "./wizard_model";
+import { estimateNoteKey } from "./wizard_model";
 
 /** Pure view models for the saved-car list and its guidance banner. */
 

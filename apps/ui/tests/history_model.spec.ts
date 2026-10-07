@@ -499,6 +499,7 @@ test("a no-fault run names only what it could check and lists what it couldn't, 
         detail: "3.15 (car library, model-family estimate)",
       },
       { label: "Top gear ratio", detail: "not provided" },
+      { label: "Engine", detail: "not known: E1 and E2 tested" },
       { label: "Engine RPM", detail: "not available" },
     ],
   });
@@ -622,7 +623,7 @@ test("a fault run lists the matching source as checked and states the top-gear a
         "checked in top gear only: engine RPM was estimated from speed assuming top gear, so lower gears were not checked — an OBD-II adapter measures RPM in every gear.",
     },
   ]);
-  expect(insights.checks.references[5]).toEqual({
+  expect(insights.checks.references[6]).toEqual({
     label: "Engine RPM",
     detail: "not measured; estimated from speed assuming top gear",
   });
@@ -633,6 +634,42 @@ test("a fault run lists the matching source as checked and states the top-gear a
         "no final-drive ratio — add it to the car in Settings if you know it (optional).",
     },
   ]);
+});
+
+test("the car references name the engine and its firing order, as the PDF does", async () => {
+  const sourceChecks: SourceChecks = [
+    { source: "engine", status: "ruled_out", reason: "no_matching_order" },
+  ];
+  const engine: Partial<HistoryInsightsPayload["diagnosis"]["conditions"]> = {
+    fuel_type: "ICE",
+    engine_profile: { layout: "inline", cylinders: 6 },
+    engine_orders: [
+      { code: "E1", roles: ["rotating"] },
+      { code: "E3", roles: ["firing"] },
+    ],
+  };
+  const engineLine = (lang: Lang) =>
+    checkedInsights(
+      "no_fault",
+      sourceChecks,
+      lang,
+      engine,
+    ).checks.references.find(
+      (line) => line.label === (lang === "en" ? "Engine" : "Motor"),
+    );
+  expect(engineLine("en")).toEqual({
+    label: "Engine",
+    detail: "Inline-6, fires at E3",
+  });
+  await setLanguage("nl");
+  try {
+    expect(engineLine("nl")).toEqual({
+      label: "Motor",
+      detail: "6-in-lijn, ontsteking op E3",
+    });
+  } finally {
+    await setLanguage("en");
+  }
 });
 
 test("an EV run names its motor, calls the engine not applicable and skips gearbox rows", async () => {

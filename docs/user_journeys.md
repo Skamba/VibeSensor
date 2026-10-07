@@ -555,8 +555,10 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   each source that was matched, ruled out, or checked only against an estimate
   (with the estimate named), and each source that could not be tested with
   what is missing and how to add it. Under it, "Car references" lists the
-  tire circumference, final drive, top gear ratio and engine RPM source with
-  their provenance, as on PDF page 2 (`history.references.*`).
+  powertrain, drive layout, tire circumference, final drive, top gear ratio,
+  engine (layout and firing order, e.g. "Inline-6, fires at E3", or "not
+  known: E1 and E2 tested") and engine RPM source with their provenance, as on
+  PDF page 2 (`history.references.*`).
 - A no-fault run says only what it could check and what it could not
   (`history.verdict.no_fault_body`, `history.verdict.no_fault_not_checked`):
   "Nothing stood out in the checks this run could make: wheels/tires. Not
