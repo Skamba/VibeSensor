@@ -41,6 +41,9 @@ __all__ = [
 
 def as_float_or_none(value: object) -> float | None:
     """Return *value* as a finite float, or ``None`` for non-numeric / non-finite input."""
+    if type(value) is float:
+        # The common case (decoded JSON, typed rows), checked first: it runs per field per row.
+        return value if math.isfinite(value) else None
     if value in (None, "") or isinstance(value, bool):
         return None
     try:

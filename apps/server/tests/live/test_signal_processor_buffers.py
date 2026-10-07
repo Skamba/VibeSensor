@@ -7,6 +7,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
+from vibesensor.dsp.fft_analysis import axis_peaks_from_spectrum
 from vibesensor.live.buffers import MAX_CLIENT_SAMPLE_RATE_HZ, ClientBuffer
 from vibesensor.live.models import MetricsComputationResult, MetricsSnapshot
 from vibesensor.live.processor import SignalProcessor
@@ -352,5 +353,6 @@ def test_spectrum_is_computed_from_the_newest_fft_block() -> None:
     # Older samples carry 31.25 Hz; the newest 128-sample FFT block carries 9.375 Hz.
     proc.ingest("c", np.vstack([tone(272, 31.25), tone(128, 9.375)]), sample_rate_hz=200)
 
-    peaks = proc.compute_metrics("c")["x"]["peaks"]
+    x_spectrum = proc.compute_metrics("c")["x"]
+    peaks = axis_peaks_from_spectrum(freq_slice=x_spectrum["freq"], amp_slice=x_spectrum["amp"])
     assert peaks[0]["hz"] == pytest.approx(9.375)

@@ -10,6 +10,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from vibesensor.dsp.fft_analysis import axis_peaks_from_spectrum
 from vibesensor.live.processor import SignalProcessor
 
 
@@ -43,8 +44,16 @@ def test_processing_scales_to_g_detrends_dc_and_tracks_peak() -> None:
 
     metrics = scaled.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     reference_metrics = reference.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    x_peak = max(metrics["x"]["peaks"], key=lambda peak: peak["amp"])
-    reference_peak = max(reference_metrics["x"]["peaks"], key=lambda peak: peak["amp"])
+    x_peak = max(
+        axis_peaks_from_spectrum(freq_slice=metrics["x"]["freq"], amp_slice=metrics["x"]["amp"]),
+        key=lambda peak: peak["amp"],
+    )
+    reference_peak = max(
+        axis_peaks_from_spectrum(
+            freq_slice=reference_metrics["x"]["freq"], amp_slice=reference_metrics["x"]["amp"]
+        ),
+        key=lambda peak: peak["amp"],
+    )
     assert abs(x_peak["hz"] - 20.0) < 1.0
     # Scaled to g and with the offset removed, the LSB input matches the g input
     # (up to int16 quantization).

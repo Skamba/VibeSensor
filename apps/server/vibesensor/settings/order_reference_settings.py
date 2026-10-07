@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from vibesensor.domain._order_reference_helpers import (
     ORDER_REFERENCE_KEYS,
     normalize_order_reference_mapping,
@@ -20,10 +22,15 @@ __all__ = [
 ]
 
 
+@lru_cache(maxsize=8)
 def order_reference_spec_from_snapshot(
     snapshot: AnalysisSettingsSnapshot,
 ) -> OrderReferenceSpec | None:
-    """Build an order-reference spec from a typed analysis-settings snapshot."""
+    """Build an order-reference spec from a typed analysis-settings snapshot.
+
+    Cached: both are frozen, and the live tick and the post-stop analysis ask
+    for the same car's spec for every sample.
+    """
 
     return order_reference_spec_from_mapping(
         {key: getattr(snapshot, key) for key in ORDER_REFERENCE_KEYS},

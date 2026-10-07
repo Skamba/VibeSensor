@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 from test_support.obd_runtime import build_connected_obd_runtime_parts
+from test_support.synthetic_samples import axis_spectrum
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
@@ -86,9 +87,9 @@ class _FakeRegistry:
                             ],
                         },
                     },
-                    "x": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
-                    "y": {"peaks": [{"hz": 16.0, "amp": 0.08}]},
-                    "z": {"peaks": [{"hz": 14.0, "amp": 0.07}]},
+                    "x": axis_spectrum((15.0, 0.12)),
+                    "y": axis_spectrum((16.0, 0.08)),
+                    "z": axis_spectrum((14.0, 0.07)),
                 },
             ),
             "stale": _FakeRecord(
@@ -114,9 +115,9 @@ class _FakeRegistry:
                             ],
                         },
                     },
-                    "x": {"peaks": [{"hz": 28.0, "amp": 0.26}]},
-                    "y": {"peaks": [{"hz": 29.0, "amp": 0.20}]},
-                    "z": {"peaks": [{"hz": 27.0, "amp": 0.19}]},
+                    "x": axis_spectrum((28.0, 0.26)),
+                    "y": axis_spectrum((29.0, 0.20)),
+                    "z": axis_spectrum((27.0, 0.19)),
                 },
             ),
         }

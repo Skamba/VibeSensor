@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, create_autospec
 
+from test_support.synthetic_samples import axis_spectrum
+
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.ingest.registry import ClientRecord, ClientRegistry
 from vibesensor.live.analysis_time_range import AnalysisTimeRange
@@ -128,9 +130,9 @@ class TestBuildSampleRecords:
         proc = create_autospec(SignalProcessor, instance=True)
         proc.clients_with_recent_data.return_value = ["client-1"]
         proc.latest_metrics.return_value = {
-            "x": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "y": {"peaks": [{"hz": 15.0, "amp": 0.05}]},
-            "z": {"peaks": []},
+            "x": axis_spectrum((15.0, 0.12)),
+            "y": axis_spectrum((15.0, 0.05)),
+            "z": axis_spectrum(),
             "combined": {
                 "strength_metrics": {
                     "vibration_strength_db": 22.0,
@@ -182,9 +184,9 @@ class TestBuildSampleRecords:
         proc = create_autospec(SignalProcessor, instance=True)
         proc.clients_with_recent_data.return_value = ["client-1"]
         proc.latest_metrics.return_value = {
-            "x": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "y": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
-            "z": {"peaks": []},
+            "x": axis_spectrum((15.0, 0.12)),
+            "y": axis_spectrum((15.0, 0.12)),
+            "z": axis_spectrum(),
             "combined": {
                 "strength_metrics": {
                     "vibration_strength_db": 22.0,

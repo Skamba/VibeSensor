@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Literal, NotRequired, TypedDict
 
+import numpy as np
+import numpy.typing as npt
+
 from vibesensor.domain.sensor_firmware import FirmwareStatus
 from vibesensor.dsp.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 
@@ -24,7 +27,10 @@ class AxisPeak(TypedDict, total=False):
 
 
 class AxisMetrics(TypedDict):
-    peaks: list[AxisPeak]
+    """One axis's amplitude spectrum (g) on its frequency bins (Hz)."""
+
+    freq: npt.NDArray[np.float32]
+    amp: npt.NDArray[np.float32]
 
 
 class CombinedMetrics(TypedDict, total=False):

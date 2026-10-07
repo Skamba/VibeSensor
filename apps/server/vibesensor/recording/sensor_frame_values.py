@@ -22,6 +22,9 @@ class SensorFrameDecodeError(ValueError):
 
 
 def strict_optional_float(value: object, *, field: str, source: str) -> float | None:
+    if type(value) is float:
+        # The common case, checked first: it runs per float column per stored row.
+        return value if math.isfinite(value) else None
     if value in (None, ""):
         return None
     if isinstance(value, bool):

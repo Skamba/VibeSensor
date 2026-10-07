@@ -10,8 +10,14 @@ import hashlib
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+import numpy as np
+
 from test_support.core import _fault_transfer_fraction, _stable_hash, engine_hz, wheel_hz
 from vibesensor.dsp.strength_bands import bucket_for_strength
+from vibesensor.live.payload_types import AxisMetrics
+
+# The live spectrum's bins: 2048-point FFT at 800 Hz, 5 to 200 Hz.
+_AXIS_SPECTRUM_FREQ_HZ = np.fft.rfftfreq(2048, d=1.0 / 800.0)[13:513].astype(np.float32)
 
 
 def sensor_mac_id(client_name: str) -> str:
@@ -21,6 +27,14 @@ def sensor_mac_id(client_name: str) -> str:
     synthetic samples keep the three distinct and joins on any of them are exercised.
     """
     return "02" + hashlib.sha1(client_name.encode("utf-8")).hexdigest()[:10]
+
+
+def axis_spectrum(*tones: tuple[float, float]) -> AxisMetrics:
+    """One axis's live spectrum: a faint flat floor with each ``(hz, amp_g)`` tone on its bin."""
+    amp = np.full(_AXIS_SPECTRUM_FREQ_HZ.shape, 1e-4, dtype=np.float32)
+    for hz, amp_g in tones:
+        amp[int(np.argmin(np.abs(_AXIS_SPECTRUM_FREQ_HZ - hz)))] = amp_g
+    return {"freq": _AXIS_SPECTRUM_FREQ_HZ, "amp": amp}
 
 
 def make_sample(
