@@ -161,7 +161,9 @@ inherited from family-level data, encode that through `confidence` and
   profile: `VehicleConfiguration.engine_profile` reads `I6` as an inline-6
   and `V8` as a V8 (`domain/engine_profile.py`), and each picker variant
   serves it as `engine_profile` when its rows agree; EVs have none. The bank
-  angle is not on the sheets, so library profiles leave it unknown.
+  angle is not on the sheets, so library profiles leave it unknown. The
+  analysis, report and live bands use the profile's engine orders (an
+  inline-6's E1 and E3); see docs/order_tracking.md "Engine orders".
   `engine_code` repeats the family code, or reads
   `<litres>L` (`Electric` for EVs) when there is none. The validator
   enforces the format, the code and the fuel type (`PHEV` text ⇔ fuel type

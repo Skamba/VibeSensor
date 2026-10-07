@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from test_support.core import TEST_CAR_ASPECTS
 
+from vibesensor.domain.engine_profile import EngineProfile, engine_orders
 from vibesensor.dsp.order_bands import build_order_bands, vehicle_orders_hz
 from vibesensor.settings.analysis_settings_codec import analysis_settings_snapshot_from_mapping
 
@@ -59,3 +60,21 @@ def test_measured_rpm_overrides_the_top_gear_estimate() -> None:
 
     assert measured["engine_hz"] == pytest.approx(50.0)
     assert measured["engine_hz"] != pytest.approx(estimated["engine_hz"])
+
+
+def test_the_engine_bands_are_the_engines_orders_with_the_firing_order_marked() -> None:
+    orders = vehicle_orders_hz(
+        speed_mps=25.0, settings=_settings(_TIRE_ONLY), measured_engine_rpm=2400.0
+    )
+
+    bands = {
+        band["key"]: band
+        for band in build_order_bands(orders, engine_orders(EngineProfile("inline", 6)))
+    }
+
+    assert "engine_2x" not in bands
+    assert bands["engine_3x"]["center_hz"] == pytest.approx(120.0)
+    assert bands["engine_3x"].get("firing") is True
+    assert "firing" not in bands["engine_1x"]
+    half = {band["key"] for band in build_order_bands(orders, EngineProfile("inline", 3).orders)}
+    assert {"engine_1x", "engine_1_5x"} <= half

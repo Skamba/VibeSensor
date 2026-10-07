@@ -89,12 +89,25 @@ const BAND_STYLE: Record<string, { color: string; name: string }> = {
   },
 };
 
+/** An engine order's band: `engine_3x` is E3, `engine_1_5x` E1.5. */
+const ENGINE_ORDER_KEY = /^engine_(\d+)(?:_(\d))?x$/;
+
 /** Bands that follow engine RPM, labelled with how the RPM was obtained. */
-const ENGINE_BANDS = new Set([
-  "engine_1x",
-  "engine_2x",
-  "driveshaft_engine_1x",
-]);
+function isEngineBand(key: string): boolean {
+  return key === "driveshaft_engine_1x" || ENGINE_ORDER_KEY.test(key);
+}
+
+/** The name of a band the style table does not know: one of the engine's own orders. */
+function engineOrderName(key: string, t: Translate): string | null {
+  const match = ENGINE_ORDER_KEY.exec(key);
+  if (!match) {
+    return null;
+  }
+  const order = Number(match[1]) + Number(match[2] ?? 0) / 10;
+  return t("bands.engine_order", {
+    order: `${fmt(order, Number.isInteger(order) ? 0 : 1)}x`,
+  });
+}
 
 /** "measured" with fresh OBD-II RPM, else "est., top gear" (estimated from speed). */
 function engineBasis(speeds: RotationalSpeeds, t: Translate): string {
@@ -137,8 +150,9 @@ export function orderBands(
       continue;
     }
     const style = BAND_STYLE[band.key];
+    const engine = isEngineBand(band.key);
     if (electric) {
-      if (ENGINE_BANDS.has(band.key) && !EV_BAND_NAME[band.key]) {
+      if (engine && !EV_BAND_NAME[band.key]) {
         continue;
       }
       output.push({
@@ -149,14 +163,19 @@ export function orderBands(
       });
       continue;
     }
-    const name = t(style?.name ?? band.key);
+    const plain = style
+      ? t(style.name)
+      : (engineOrderName(band.key, t) ?? t(band.key));
+    const name = band.firing ? t("bands.firing", { band: plain }) : plain;
     output.push({
-      label: ENGINE_BANDS.has(band.key)
+      label: engine
         ? t("bands.with_basis", { band: name, basis: engineBasis(speeds, t) })
         : name,
       min_hz: Math.max(0, center * (1 - tolerance)),
       max_hz: center * (1 + tolerance),
-      color: style?.color ?? orderBandFills.wheel1,
+      color:
+        style?.color ??
+        (engine ? orderBandFills.engine2 : orderBandFills.wheel1),
     });
   }
   return output;

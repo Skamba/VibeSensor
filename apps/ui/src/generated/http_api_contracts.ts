@@ -343,8 +343,20 @@ export interface components {
             run_id: string;
             status: string;
         };
+        /**
+         * The other source the diagnosed order may equally be.
+         *
+         * Without measured RPM an engine order that turns at a wheel or propshaft
+         * order's rhythm in top gear (where the RPM estimate puts it) cannot be told
+         * from it; the neutral coast-down or an OBD-II adapter can.
+         */
+        DiagnosisAlternative: {
+            order_code: components["schemas"]["OrderCodeValue"];
+            source: string;
+        };
         /** The run verdict, its single confidence level, and the evidence behind it. */
         DiagnosisPayload: {
+            alternative?: components["schemas"]["DiagnosisAlternative"];
             amplitude_basis: components["schemas"]["AmplitudeBasis"];
             amplitude_vs_speed: components["schemas"]["SpeedAmplitudePoint"][];
             conditions: components["schemas"]["TestConditions"];
@@ -388,6 +400,11 @@ export interface components {
         DrivelineCapability: "ok" | "estimated_final_drive" | "missing_final_drive" | "missing_tire" | "manual_speed";
         DrivelinePart: "front_drive" | "propshaft_rear";
         EngineCapability: "measured" | "estimated_top_gear" | "hybrid_estimated" | "estimated_ratios" | "missing_tire" | "missing_final_drive" | "missing_top_gear" | "missing_ratios" | "manual_speed" | "not_applicable";
+        /** One engine order the run tested, and why the engine excites it. */
+        EngineOrderRow: {
+            code: components["schemas"]["OrderCodeValue"];
+            roles: ("rotating" | "firing" | "imbalance")[];
+        };
         /** The engine's layout and cylinder count (rotors for a rotary). */
         EngineProfilePayload: {
             bank_angle_deg?: number | null;
@@ -963,7 +980,7 @@ export interface components {
             timeout_count: number;
             trusted: boolean;
         };
-        OrderCodeValue: "T1" | "T2" | "P1" | "P2" | "E1" | "E2";
+        OrderCodeValue: "T1" | "T2" | "P1" | "P2" | "E0.5" | "E1" | "E1.5" | "E2" | "E2.5" | "E3" | "E3.5" | "E4" | "E4.5" | "E5" | "E5.5" | "E6" | "E6.5" | "E7" | "E7.5" | "E8";
         /** One order-tracked finding as a workshop worksheet row. */
         OrderFindingRow: {
             confidence_level: components["schemas"]["ConfidenceLevelValue"];
@@ -1274,6 +1291,8 @@ export interface components {
         /** Reference data the order analysis used, with where each reference came from. */
         TestConditions: {
             drive_layout?: components["schemas"]["DriveLayoutValue"] | null;
+            engine_orders?: components["schemas"]["EngineOrderRow"][];
+            engine_profile?: components["schemas"]["EngineProfilePayload"] | null;
             final_drive_axle?: components["schemas"]["FinalDriveAxleValue"] | null;
             final_drive_provenance: components["schemas"]["ReferenceProvenanceValue"];
             final_drive_ratio: number | null;

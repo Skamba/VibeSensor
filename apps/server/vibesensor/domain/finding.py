@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from dataclasses import dataclass, replace
 from statistics import median
 from typing import TYPE_CHECKING, ClassVar
@@ -27,6 +28,8 @@ __all__ = [
 ]
 
 _LOGGER = logging.getLogger(__name__)
+# An engine order's finding key (``EngineOrder.key``): ``engine_3x``, ``engine_1_5x``.
+_ENGINE_ORDER_KEY = re.compile(r"engine_(?P<whole>\d+)(?:_(?P<fraction>\d))?x")
 
 
 @dataclass(frozen=True, slots=True)
@@ -231,19 +234,28 @@ class Finding:
         """Action-defined confidence level shown to users (never a percentage)."""
         return self.classify_confidence(self.effective_confidence)
 
-    _ORDER_CODES: ClassVar[dict[str, str]] = {
+    _ROAD_ORDER_CODES: ClassVar[dict[str, str]] = {
         "wheel_1x": "T1",
         "wheel_2x": "T2",
         "driveshaft_1x": "P1",
         "driveshaft_2x": "P2",
-        "engine_1x": "E1",
-        "engine_2x": "E2",
     }
 
     @property
     def order_code(self) -> str | None:
-        """Workshop order label (T1/T2 tire, P1/P2 propshaft, E1/E2 engine), if order-tracked."""
-        return self._ORDER_CODES.get(self.finding_key.strip().lower())
+        """Workshop order label (T1/T2 tire, P1/P2 propshaft, E<m> engine), if order-tracked.
+
+        An engine order's key names its multiple: ``engine_3x`` is E3,
+        ``engine_1_5x`` E1.5.
+        """
+        key = self.finding_key.strip().lower()
+        if (code := self._ROAD_ORDER_CODES.get(key)) is not None:
+            return code
+        engine = _ENGINE_ORDER_KEY.fullmatch(key)
+        if engine is None:
+            return None
+        fraction = engine["fraction"]
+        return f"E{engine['whole']}" + (f".{fraction}" if fraction else "")
 
     @property
     def phase_adjusted_score(self) -> float:

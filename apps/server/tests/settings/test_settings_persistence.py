@@ -449,10 +449,10 @@ def test_saved_cars_get_the_engine_profile_of_their_library_row_on_load(tmp_path
     """Cars saved before the engine profile existed take it from their library row."""
     cars = [
         _saved_car(
-            "640i",
-            "BMW 6 Series Gran Turismo (G32, 2018–2024) 640i (2018–2019)",
+            "540i",
+            "BMW 5 Series (G30, 2017–2023) 540i",
             "Sedan",
-            "640i (2018–2019)",
+            "540i",
             drive_layout="RWD",
             fuel_type="ICE",
         ),
@@ -468,7 +468,7 @@ def test_saved_cars_get_the_engine_profile_of_their_library_row_on_load(tmp_path
         ),
     ]
     db = HistoryDB(tmp_path / "history.db")
-    write_raw_settings_snapshot(db, '{"cars": [' + ", ".join(cars) + '], "activeCarId": "640i"}')
+    write_raw_settings_snapshot(db, '{"cars": [' + ", ".join(cars) + '], "activeCarId": "540i"}')
 
     services = build_settings_services(db=db)
 
@@ -476,7 +476,7 @@ def test_saved_cars_get_the_engine_profile_of_their_library_row_on_load(tmp_path
         car["id"]: car.get("engine_profile") for car in services.coordinator.snapshot()["cars"]
     }
     assert loaded == {
-        "640i": {"layout": "inline", "cylinders": 6},
+        "540i": {"layout": "inline", "cylinders": 6},
         "i3": {"layout": "inline", "cylinders": 3},
         "custom": None,
         "kept": {"layout": "inline", "cylinders": 6},

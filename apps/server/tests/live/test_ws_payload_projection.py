@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
+from vibesensor.domain.car import CarSnapshot
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.ingest.registry import ClientSnapshot
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
@@ -51,8 +55,14 @@ class _FakeGpsMonitor:
 
 
 class _FakeSettingsReader:
+    def __init__(self, car: CarSnapshot | None = None) -> None:
+        self._car = car
+
     def analysis_settings_snapshot(self) -> AnalysisSettingsSnapshot:
         return _analysis_settings()
+
+    def active_car_snapshot(self) -> CarSnapshot | None:
+        return self._car
 
 
 class _FakeSpeedSourceReader:
@@ -74,6 +84,7 @@ def _build_projector(
     *,
     speed_mps: float | None = 12.5,
     speed_source: str = "gps",
+    car: CarSnapshot | None = None,
 ) -> tuple[LiveWsPayloadProjector, _FakeProcessor, _FakeGpsMonitor]:
     registry = _FakeRegistry(
         [
@@ -101,7 +112,7 @@ def _build_projector(
         processor=processor,
         gps_monitor=gps_monitor,
         gps_enabled=True,
-        settings_reader=_FakeSettingsReader(),
+        settings_reader=_FakeSettingsReader(car),
         speed_source_reader=_FakeSpeedSourceReader(),
         bundled_firmware_version=lambda: "",
     )
@@ -124,6 +135,28 @@ def test_build_shared_payload_projects_live_rows_without_broadcaster() -> None:
     assert payload["rotational_speeds"]["basis_speed_source"] == "gps"
     assert "spectra" in payload
     assert payload["spectra"]["frame_fingerprint"] == "aaaaaaaaaaaa:0:0:0"
+
+
+@pytest.mark.parametrize(
+    ("profile", "engine_bands"),
+    [
+        (None, ["engine_1x", "engine_2x"]),
+        (EngineProfile("inline", 6), ["engine_1x", "engine_3x"]),
+    ],
+    ids=["engine-not-known", "inline-6"],
+)
+def test_the_live_engine_bands_follow_the_active_cars_engine(
+    profile: EngineProfile | None, engine_bands: list[str]
+) -> None:
+    car = CarSnapshot(
+        car_id="car-1", name="Six-cylinder saloon", car_type="sedan", engine_profile=profile
+    )
+    projector, _processor, _gps_monitor = _build_projector(car=car)
+
+    bands = projector.build_shared_payload(include_heavy=False)["rotational_speeds"]["order_bands"]
+
+    assert bands is not None
+    assert [band["key"] for band in bands if band["key"].startswith("engine_")] == engine_bands
 
 
 def test_build_shared_payload_light_tick_omits_spectra() -> None:

@@ -813,7 +813,7 @@ def test_measured_rpm_places_the_engine_markers_without_gear_ratios() -> None:
     spectrum = report_view_for(summary).mechanic.spectrum
 
     assert spectrum is not None
-    markers = dict(spectrum.markers)
+    markers = {marker.code: marker.hz for marker in spectrum.markers}
     assert markers["E1"] == pytest.approx(50.0)
     assert markers["E2"] == pytest.approx(100.0)
     assert "P1" not in markers
@@ -867,6 +867,145 @@ def test_engine_fault_points_to_the_engine_bay_and_explains_e2() -> None:
     assert owner.next_step == "Have the engine and gearbox mounts checked."
     assert owner.diagram.zone == "engine_bay"
     assert view.mechanic.shop[0] == "Inspect the engine and gearbox mounts."
+
+
+_INLINE_SIX = {
+    "engine_profile": {"layout": "inline", "cylinders": 6},
+    "engine_orders": [
+        {"code": "E1", "roles": ["rotating"]},
+        {"code": "E3", "roles": ["firing"]},
+    ],
+}
+_INLINE_THREE = {
+    "engine_profile": {"layout": "inline", "cylinders": 3},
+    "engine_orders": [
+        {"code": "E1", "roles": ["rotating", "imbalance"]},
+        {"code": "E1.5", "roles": ["firing"]},
+    ],
+}
+
+
+def _with_engine(summary: dict[str, Any], engine: dict[str, Any]) -> dict[str, Any]:
+    summary["diagnosis"]["conditions"].update(deepcopy(engine))
+    return summary
+
+
+def test_a_known_engine_takes_its_firing_rhythm_out_of_never_analysed() -> None:
+    summary = _with_engine(deepcopy(_healthy_summary()), _INLINE_SIX)
+
+    never = report_view_for(summary).owner.not_covered[-1]
+
+    assert "six-cylinder" not in never
+    assert "misfiring" in never
+
+
+def test_an_engine_fault_names_the_engines_firing_order_and_its_checks() -> None:
+    summary = _with_engine(
+        _variant(**{**_engine_summary()["diagnosis"], "order_code": "E3"}), _INLINE_SIX
+    )
+
+    view = report_view_for(summary)
+    nl = report_view_for(summary, lang="nl")
+
+    assert "3 times per engine revolution (the inline-6's firing rhythm)" in view.owner.description
+    assert "3 keer per motoromwenteling (het ontstekingsritme van de 6-in-lijn)" in (
+        nl.owner.description
+    )
+    assert view.owner.next_step.startswith("Have the engine and gearbox mounts checked")
+    assert "misfire" in view.owner.next_step
+    assert any("Compare E1 and E3 under load" in line for line in view.mechanic.shop)
+    assert ("Engine", "Inline-6, fires at E3") in [
+        (fact.label, fact.value) for fact in view.mechanic.conditions
+    ]
+
+
+def test_an_inline_threes_half_order_and_built_in_imbalance_read_in_plain_words() -> None:
+    firing = _with_engine(
+        _variant(**{**_engine_summary()["diagnosis"], "order_code": "E1.5"}), _INLINE_THREE
+    )
+    imbalance = _with_engine(
+        _variant(**{**_engine_summary()["diagnosis"], "order_code": "E1"}), _INLINE_THREE
+    )
+
+    assert "1.5 times per engine revolution (the inline-3's firing rhythm)" in (
+        report_view_for(firing).owner.description
+    )
+    assert "1,5 keer per motoromwenteling" in report_view_for(firing, lang="nl").owner.description
+    imbalance_view = report_view_for(imbalance)
+    assert "(the inline-3's built-in imbalance)" in imbalance_view.owner.description
+    assert imbalance_view.owner.next_step.startswith("Have the engine and gearbox mounts checked")
+    assert "balance shaft" in (imbalance_view.owner.fallback_step or "")
+
+
+def test_an_engine_order_on_the_propshafts_rhythm_names_both_and_how_to_tell_them_apart() -> None:
+    summary = _with_engine(
+        _variant(
+            **{
+                **_engine_summary()["diagnosis"],
+                "order_code": "E3",
+                "confidence_level": "moderate",
+                "alternative": {"source": "driveline", "order_code": "P2"},
+            }
+        ),
+        _INLINE_SIX,
+    )
+    for check in summary["diagnosis"]["source_checks"]:
+        if check["source"] == "driveline":
+            check.update(status="not_testable", reason="same_rhythm_as_candidate")
+
+    view = report_view_for(summary)
+
+    assert view.owner.headline == (
+        "Likely cause: the engine or its mounts (the engine bay), or the propshaft (P2)"
+    )
+    assert "cannot be told apart from the propshaft (P2)" in view.owner.description
+    assert view.owner.confirm is not None and "shift to neutral and coast" in view.owner.confirm
+    assert (view.owner.fallback_step or "").startswith(
+        "If the neutral coast-down points to the other cause: Have the propshaft joints"
+    )
+    assert view.mechanic.shop[0].startswith("E3 and P2 sit at the same frequency in top gear")
+    assert any(
+        line.startswith("Driveline: not told apart: without measured RPM the engine")
+        for line in view.mechanic.ruled_out
+    )
+    nl = report_view_for(summary, lang="nl")
+    assert nl.owner.headline.endswith(", of de cardanas (P2)")
+
+
+def test_a_propshaft_order_on_the_engines_firing_rhythm_names_the_firing_rhythm() -> None:
+    summary = _with_engine(
+        _variant(
+            **{
+                **_driveline_summary()["diagnosis"],
+                "order_code": "P2",
+                "alternative": {"source": "engine", "order_code": "E3"},
+            }
+        ),
+        _INLINE_SIX,
+    )
+
+    view = report_view_for(summary)
+
+    assert view.owner.headline.endswith(", or the inline-6's firing rhythm (E3)")
+    assert "Without measured engine RPM" in view.owner.description
+    assert "in some gear it turns at this same rhythm" not in view.owner.description
+
+
+def test_the_spectrum_labels_the_firing_order() -> None:
+    summary = _with_engine(deepcopy(_wheel_summary()), _INLINE_SIX)
+    spectrum = summary["diagnosis"]["spectrum"]
+    engine = spectrum["order_markers"]["E1"]
+    spectrum["order_markers"] = {
+        code: hz for code, hz in spectrum["order_markers"].items() if code != "E2"
+    } | {"E3": 3 * engine}
+
+    chart = report_view_for(summary).mechanic.spectrum
+
+    assert chart is not None
+    labels = {marker.code: marker.label for marker in chart.markers}
+    assert labels["E3"] == "E3 firing"
+    assert labels["E1"] == "E1"
+    assert chart.x_max_hz >= 3 * engine
 
 
 def test_weak_evidence_hedges_candidate_with_reasons_and_recapture_recipe() -> None:

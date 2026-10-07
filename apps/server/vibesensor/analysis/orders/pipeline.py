@@ -72,49 +72,57 @@ def _measured_rpm(match: OrderMatchAccumulator) -> bool:
     return bool(sources) and ESTIMATED_RPM_SOURCE not in sources
 
 
-def _rides_on_measured_engine(
-    hypothesis: OrderHypothesis,
-    match: OrderMatchAccumulator,
-    measured_engines: Sequence[OrderMatchAccumulator],
-) -> bool:
-    """A road-speed order heard mostly where a measured engine order already was.
+def _rides_on(match: OrderMatchAccumulator, others: Sequence[OrderMatchAccumulator]) -> bool:
+    """An order heard mostly where other orders' peaks already were, which went on without it.
 
-    In a gear near 1:1 (or any gear that puts an engine order near a wheel or
-    propshaft order) the road-speed order's window holds the engine's tone. With
-    measured RPM the engine order is known to be there through every gear: when
-    most of the road-speed order's matches have a measured engine order's peak
-    inside its own window, and the engine orders went on through gears where
-    the road-speed order did not follow, the road-speed order is the engine's
-    tone passing by, not a fault of its own.
+    In a gear that puts an engine order near a wheel or propshaft order (a
+    direct 1:1 gear, a six's E3 on P2 in a long top gear) the one order's window
+    holds the other's tone. With measured RPM the two are told apart through
+    the gear changes: when most of this order's matches have one of *others*'
+    peaks inside its own window, and *others* went on through gears where this
+    order did not follow, this order is their tone passing by, not a fault of
+    its own.
     """
-    if hypothesis.suspected_source not in (VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE):
+    if not others or not match.matched_points:
         return False
-    if not measured_engines or not match.matched_points:
-        return False
-    on_engine: set[int] = set()
-    engine_on_road = engine_points = 0
-    for engine in measured_engines:
-        engine_hz = dict(
+    on_others: set[int] = set()
+    others_on_match = others_points = 0
+    for other in others:
+        other_hz = dict(
             zip(
-                engine.matched_sample_indices,
-                (point.matched_hz for point in engine.matched_points),
+                other.matched_sample_indices,
+                (point.matched_hz for point in other.matched_points),
                 strict=True,
             )
         )
         shared = {
             index
             for index, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
-            if (hz := engine_hz.get(index)) is not None
+            if (hz := other_hz.get(index)) is not None
             and abs(hz - point.predicted_hz) <= point.predicted_hz * ORDER_TOLERANCE_REL
         }
-        on_engine |= shared
-        engine_on_road += len(shared)
-        engine_points += len(engine.matched_points)
+        on_others |= shared
+        others_on_match += len(shared)
+        others_points += len(other.matched_points)
     fraction = ORDER_CONFIDENCE_SETTINGS.wheel_alias_shared_peak_fraction
     return (
-        len(on_engine) / len(match.matched_points) >= fraction
-        and engine_on_road / engine_points < fraction
+        len(on_others) / len(match.matched_points) >= fraction
+        and others_on_match / others_points < fraction
     )
+
+
+def _rides_on_another_order(
+    hypothesis: OrderHypothesis,
+    match: OrderMatchAccumulator,
+    measured_engines: Sequence[OrderMatchAccumulator],
+    road_orders: Sequence[OrderMatchAccumulator],
+) -> bool:
+    """With measured RPM, a road-speed order riding on an engine order, or the other way round."""
+    if hypothesis.suspected_source in (VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE):
+        return _rides_on(match, measured_engines)
+    if hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match):
+        return _rides_on(match, road_orders)
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -244,7 +252,7 @@ class OrderAnalysisSession:
 
         matches = [
             (hypothesis, self._match_hypothesis(hypothesis))
-            for hypothesis in _order_hypotheses()
+            for hypothesis in _order_hypotheses(self._context.engine_profile)
             if self._should_test(hypothesis)
         ]
         wheel_peaks = frozenset().union(
@@ -282,11 +290,21 @@ class OrderAnalysisSession:
             for hypothesis, match, _result in evaluated
             if hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match)
         ]
+        road_orders = (
+            [
+                match
+                for hypothesis, match, _result in evaluated
+                if hypothesis.suspected_source
+                in (VibrationSource.WHEEL_TIRE, VibrationSource.DRIVELINE)
+            ]
+            if measured_engines
+            else []
+        )
         findings = _split_multi_location_findings(
             [
                 result
                 for hypothesis, match, result in evaluated
-                if not _rides_on_measured_engine(hypothesis, match, measured_engines)
+                if not _rides_on_another_order(hypothesis, match, measured_engines, road_orders)
             ]
         )
         return suppress_engine_aliases(

@@ -11,7 +11,12 @@ from pydantic import AfterValidator, StringConstraints
 
 from vibesensor.domain.car import CarOrderReferenceSourceStatus, CarOrderReferenceStatus
 from vibesensor.domain.drive_layout import Axle
-from vibesensor.domain.engine_profile import EngineLayout, EngineProfile
+from vibesensor.domain.engine_profile import (
+    EngineLayout,
+    EngineProfile,
+    EngineProfilePayload,
+    engine_profile_payload,
+)
 from vibesensor.domain.vehicle_configuration import (
     VehicleDrivetrain,
     VehicleFieldConfidence,
@@ -40,7 +45,6 @@ __all__ = [
     "car_to_persistence_dict",
     "drive_layout_or_none",
     "engine_profile_or_none",
-    "engine_profile_payload",
     "final_drive_axle_or_none",
     "fuel_type_or_none",
     "needs_library_fields",
@@ -65,15 +69,6 @@ class CarOrderReferenceStatusPayload(TypedDict):
     current_gear_ratio_confidence: NotRequired[str | None]
     transmission_name: NotRequired[str | None]
     transmission_confidence: NotRequired[str | None]
-
-
-class EngineProfilePayload(TypedDict):
-    """The engine's layout and cylinder count (rotors for a rotary)."""
-
-    layout: EngineLayout
-    cylinders: int
-    bank_angle_deg: NotRequired[int | None]
-    """The angle between a V or W engine's banks; absent when not known."""
 
 
 def _possible_engine_profile(payload: EngineProfilePayload) -> EngineProfilePayload:
@@ -216,13 +211,6 @@ def engine_profile_or_none(value: object) -> EngineProfile | None:
         )
     except ValueError:
         return None
-
-
-def engine_profile_payload(profile: EngineProfile) -> EngineProfilePayload:
-    payload: EngineProfilePayload = {"layout": profile.layout, "cylinders": profile.cylinders}
-    if profile.bank_angle_deg is not None:
-        payload["bank_angle_deg"] = profile.bank_angle_deg
-    return payload
 
 
 def car_to_persistence_dict(car: Car) -> CarConfigPayload:

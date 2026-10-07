@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from io import BytesIO
-from math import ceil, floor, log10
+from math import ceil, floor, inf, log10
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -707,8 +707,19 @@ def _spectrum_chart(
     y_max = max(peak_max, chart.floor_mg or 0.0) * 1.18
     ystep = _nice_step(y_max, 4)
     y_max = ceil(y_max / ystep) * ystep
+    # Room above the plot for a second row of marker labels.
     left, bottom, plot_w, plot_h = _axes(
-        canvas, chart.title, x, y_top, width, height, (0.0, chart.x_max_hz), y_max, "Hz", "mg"
+        canvas,
+        chart.title,
+        x,
+        y_top,
+        width,
+        height,
+        (0.0, chart.x_max_hz),
+        y_max,
+        "Hz",
+        "mg",
+        top_pad=2.4 * MM,
     )
 
     def px(hz: float) -> float:
@@ -717,18 +728,27 @@ def _spectrum_chart(
     def py(amplitude: float) -> float:
         return bottom + min(amplitude, y_max) / y_max * plot_h
 
-    for code, hz in chart.markers:
-        if hz > chart.x_max_hz:
+    # Orders a few hertz apart (a six's E3 next to P2) would print their labels
+    # over each other: a label that would touch the one before goes a line up.
+    row_ends = [-inf, -inf]
+    for marker in chart.markers:
+        if marker.hz > chart.x_max_hz:
             continue
-        diagnosed = code == chart.highlight
+        diagnosed = marker.code == chart.highlight
         canvas.setStrokeColor(BRAND if diagnosed else MUTED)
         canvas.setLineWidth(0.8 if diagnosed else 0.4)
         canvas.setDash(2, 2)
-        canvas.line(px(hz), bottom, px(hz), bottom + plot_h)
+        canvas.line(px(marker.hz), bottom, px(marker.hz), bottom + plot_h)
         canvas.setDash()
-        canvas.setFont(BOLD if diagnosed else FONT, 6.5)
+        font = BOLD if diagnosed else FONT
+        half = canvas.stringWidth(marker.label, font, 6.5) / 2
+        row = next((row for row, end in enumerate(row_ends) if px(marker.hz) - half > end), 0)
+        row_ends[row] = px(marker.hz) + half + 0.8 * MM
+        canvas.setFont(font, 6.5)
         canvas.setFillColor(BRAND if diagnosed else MUTED)
-        canvas.drawCentredString(px(hz), bottom + plot_h + 1.2 * MM, code)
+        canvas.drawCentredString(
+            px(marker.hz), bottom + plot_h + (1.2 + 2.4 * row) * MM, marker.label
+        )
     if chart.floor_mg is not None:
         canvas.setStrokeColor(GOOD)
         canvas.setLineWidth(0.6)

@@ -9,10 +9,11 @@ zones; the renderer in ``report/pdf.py`` only lays this out.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from vibesensor._version import __version__
 from vibesensor.common.time_utils import format_run_timestamp
+from vibesensor.domain.engine_profile import EngineProfilePayload
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.i18n import (
@@ -28,6 +29,7 @@ from vibesensor.report.run_quality import (
 )
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.diagnosis_contracts import (
+    DiagnosisAlternative,
     DiagnosisPayload,
     LocationAmplitudeRow,
     OrderFindingRow,
@@ -48,6 +50,7 @@ __all__ = [
     "QualitySection",
     "ReportView",
     "SpectrumChart",
+    "SpectrumMarker",
     "SpeedChart",
     "SpeedSeries",
     "WorksheetRow",
@@ -127,6 +130,7 @@ _RPM_KEYS = {
 # final drive); its drive shafts turn at wheel speed.
 _NO_PROPSHAFT_KEYS = frozenset(
     {
+        "ALT_DRIVELINE",
         "ORDER_P1",
         "ORDER_P2",
         "RULED_OUT_DRIVELINE",
@@ -236,7 +240,20 @@ _MOTOR_CHECK_KEYS = {
     "CHECKED_HEDGE_FINAL_DRIVE": "CHECKED_HEDGE_MOTOR_FINAL_DRIVE",
     "CHECKED_LIMITED_FINAL_DRIVE": "CHECKED_LIMITED_MOTOR_FINAL_DRIVE",
 }
-_SOURCE_CHECK_KEYS = {"ENGINE": _ENGINE_CHECK_KEYS, "MOTOR": _MOTOR_CHECK_KEYS}
+# A wheel or propshaft order not told apart from the diagnosed engine order: the
+# engine order turns at its rhythm in top gear.
+_ROAD_CHECK_KEYS = {"NOT_TESTABLE_SAME_RHYTHM": "NOT_TESTABLE_SAME_RHYTHM_ROAD"}
+_SOURCE_CHECK_KEYS = {
+    "ENGINE": _ENGINE_CHECK_KEYS,
+    "MOTOR": _MOTOR_CHECK_KEYS,
+    "WHEEL": _ROAD_CHECK_KEYS,
+    "DRIVELINE": _ROAD_CHECK_KEYS,
+}
+# The other cause a hedged diagnosis names, per source family.
+_ALTERNATIVE_KEYS = {"WHEEL": "ALT_WHEEL", "DRIVELINE": "ALT_DRIVELINE", "ENGINE": "ALT_ENGINE"}
+# An engine order's own wording and next step, by why the engine excites it
+# (domain/engine_profile.py); the firing rhythm comes first.
+_ENGINE_ROLE_ORDER = ("firing", "imbalance")
 
 
 # -- view types ----------------------------------------------------------------
@@ -319,12 +336,21 @@ class AmplitudeRow:
 
 
 @dataclass(frozen=True, slots=True)
+class SpectrumMarker:
+    """One order's frequency on the spectrum; the firing order is labelled as such."""
+
+    code: str
+    hz: float
+    label: str
+
+
+@dataclass(frozen=True, slots=True)
 class SpectrumChart:
     title: str
     floor_label: str
     floor_mg: float | None
     peaks: tuple[tuple[float, float], ...]
-    markers: tuple[tuple[str, float], ...]
+    markers: tuple[SpectrumMarker, ...]
     highlight: str | None
     x_max_hz: float
 
@@ -426,6 +452,10 @@ def build_report_view(
         no_propshaft=not electric and conditions.get("propshaft") is False,
         layout_unknown=not electric and conditions.get("drive_layout") is None,
         speed_unit=speed_unit,
+        engine=None if electric else conditions.get("engine_profile"),
+        engine_roles={
+            row["code"]: tuple(row["roles"]) for row in conditions.get("engine_orders", [])
+        },
     )
     return ReportView(
         lang=ctx.lang,
@@ -451,6 +481,10 @@ class _Ctx:
     layout_unknown: bool = False
     # The user's speed unit: "kmh" or "mps".
     speed_unit: str = "kmh"
+    # The engine's layout and cylinders, when known, and why it excites each
+    # engine order the run tested (by order code).
+    engine: EngineProfilePayload | None = None
+    engine_roles: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
     def t(self, key: str, **kwargs: object) -> str:
         return tr(self.lang, key, **{k: _text(v) for k, v in kwargs.items()})
@@ -538,6 +572,36 @@ class _Ctx:
         if self.electric and code in _EV_ORDER_CODES:
             return f"ORDER_{code}_EV"
         return self.driveline_key(f"ORDER_{code}")
+
+    def order_text(self, code: str) -> str:
+        """An order code's plain wording; an engine order without its own: m times per turn."""
+        key = self.order_key(code)
+        text = self.t(key)
+        if text == key and code.startswith("E"):
+            times = float(code[1:])
+            return self.t("ORDER_E_TIMES", times=self.num(times, 0 if times.is_integer() else 1))
+        return text
+
+    def engine_name(self) -> str | None:
+        """The engine as a workshop names it (inline-6, V8); ``None`` when not known."""
+        if self.engine is None:
+            return None
+        return self.t(f"ENGINE_{self.engine['layout'].upper()}", count=self.engine["cylinders"])
+
+    def engine_role(self, code: str | None) -> str | None:
+        """Why the known engine excites engine order *code*: firing, then imbalance."""
+        if self.engine is None or code is None:
+            return None
+        roles = self.engine_roles.get(code, ())
+        return next((role for role in _ENGINE_ROLE_ORDER if role in roles), None)
+
+    def firing_code(self) -> str | None:
+        """The known engine's firing order code (E3 for a six)."""
+        if self.engine is None:
+            return None
+        return next(
+            (code for code in self.engine_roles if self.engine_role(code) == "firing"), None
+        )
 
     def driveline_key(self, key: str) -> str:
         """``key``, or its own wording for a car without a propshaft."""
@@ -690,7 +754,9 @@ def _owner_page(
             next_step = ctx.t(step_key, zone=zone)
             if _propshaft_assumed(ctx, diagnosis):
                 next_step = f"{next_step} {ctx.t('STEP_LAYOUT_UNKNOWN')}"
-            fallback_step = ctx.t("FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone))
+            fallback_step = _alternative_step(ctx, diagnosis) or ctx.t(
+                "FALLBACK_PREFIX", step=ctx.t(f"{step_key}_FALLBACK", zone=zone)
+            )
         verify = _verify(ctx, diagnosis)
     return OwnerPage(
         verdict=verdict,
@@ -752,7 +818,20 @@ def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     key = ctx.source_key(diagnosis["source"]) or "OTHER"
     if key == "DRIVELINE":
         key += _driveline_suffix(diagnosis)
-    return ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
+    cause = ctx.t(f"CAUSE_{key}", zone=ctx.zone(diagnosis))
+    alternative = diagnosis.get("alternative")
+    if alternative is None:
+        return cause
+    return ctx.t("CAUSE_OR", cause=cause, other=_alternative_text(ctx, alternative))
+
+
+def _alternative_text(ctx: _Ctx, alternative: DiagnosisAlternative) -> str:
+    """The other cause of a hedged diagnosis, with its order code."""
+    code = alternative["order_code"]
+    key = ctx.source_key(alternative["source"]) or "OTHER"
+    if key == "ENGINE" and (role := ctx.engine_role(code)) is not None:
+        return ctx.t(f"ALT_ENGINE_{role.upper()}", engine=ctx.engine_name(), code=code)
+    return ctx.t(ctx.driveline_key(_ALTERNATIVE_KEYS.get(key, "ALT_ENGINE")), code=code)
 
 
 def _driveline_suffix(diagnosis: DiagnosisPayload) -> str:
@@ -781,7 +860,23 @@ def _step_key(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             return f"STEP_{code}_EV"
         if diagnosis["source"] == "driveline":
             return f"STEP_{code}{_driveline_suffix(diagnosis)}"
+    if diagnosis["source"] == "engine" and (role := ctx.engine_role(code)) is not None:
+        return f"STEP_ENGINE_{role.upper()}"
     return f"STEP_{code}"
+
+
+def _alternative_step(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
+    """A hedged diagnosis's step for the other cause, should the coast-down point to it."""
+    alternative = diagnosis.get("alternative")
+    if alternative is None:
+        return None
+    other: DiagnosisPayload = {
+        **diagnosis,
+        "source": alternative["source"],
+        "order_code": alternative["order_code"],
+        "driveline_parts": [],
+    }
+    return ctx.t("STEP_HEDGE_OTHER", step=ctx.t(_step_key(ctx, other), zone=ctx.zone(other)))
 
 
 def _confirm_check(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
@@ -813,8 +908,12 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     hz = diagnosis["frequency_hz"]
     speed = diagnosis["reference_speed_kmh"]
     if code and hz is not None and speed is not None:
-        order = ctx.t(ctx.order_key(code))
-        if code == "E2":
+        order = ctx.order_text(code)
+        role = ctx.engine_role(code) if diagnosis["source"] == "engine" else None
+        if role is not None:
+            note = ctx.t(f"ORDER_NOTE_{role.upper()}", engine=ctx.engine_name())
+            order = f"{order} ({note})"
+        elif code == "E2" and ctx.engine is None:
             order = f"{order} ({ctx.t('ORDER_E2_NOTE')})"
         parts = [ctx.t("DESC_ORDER", order=order, hz=ctx.hz(hz), speed=ctx.speed(speed))]
     elif hz is not None:
@@ -851,7 +950,11 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     dependence = diagnosis["speed_dependence"]
     if dependence is not None:
         text = f"{text} {ctx.t(_SPEED_DEPENDENCE_KEYS[dependence])}".strip()
-    if any(check["reason"] == "same_rhythm_as_candidate" for check in diagnosis["source_checks"]):
+    alternative = diagnosis.get("alternative")
+    if alternative is not None:
+        hedge = ctx.t("DESC_HEDGE", other=_alternative_text(ctx, alternative))
+        text = f"{text} {hedge}".strip()
+    elif any(check["reason"] == "same_rhythm_as_candidate" for check in diagnosis["source_checks"]):
         text = f"{text} {ctx.t('DESC_ENGINE_SAME_RHYTHM')}".strip()
     return text
 
@@ -1025,16 +1128,17 @@ def _unexplained_row(diagnosis: DiagnosisPayload) -> LocationAmplitudeRow | None
 def _never_analysed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> list[str]:
     """Vibrations no run checks: no order covers them, whatever was driven.
 
-    The analysis tracks the first and second wheel, propshaft and engine orders
-    only, while moving; measured RPM also places the engine orders at idle.
+    The analysis tracks the first and second wheel and propshaft orders, and the
+    engine orders of the car's engine (E1 and E2 when it is not known), only
+    while moving; measured RPM also places the engine orders at idle. A known
+    engine's firing rhythm is analysed; without one a six's (E3) is not.
     """
     if ctx.electric:
         return [ctx.t("NEVER_MOTOR_ORDERS"), ctx.t("NEVER_WHEEL_BEARING")]
-    items = [
-        ctx.t("NEVER_ENGINE_MISFIRE"),
-        ctx.t("NEVER_SIX_CYLINDER"),
-        ctx.t("NEVER_WHEEL_BEARING"),
-    ]
+    items = [ctx.t("NEVER_ENGINE_MISFIRE")]
+    if ctx.engine is None:
+        items.append(ctx.t("NEVER_SIX_CYLINDER"))
+    items.append(ctx.t("NEVER_WHEEL_BEARING"))
     if diagnosis["conditions"]["rpm_source"] != "measured":
         items.append(ctx.t("NEVER_IDLE_SHAKE"))
     return items
@@ -1172,6 +1276,8 @@ def _conditions(
                 ),
             )
         )
+    if not ctx.electric:
+        references.append(Fact(ctx.t("COND_ENGINE"), _engine_fact(ctx)))
     references.append(Fact(ctx.t("COND_SPEED_SOURCE"), speed_source))
     if not ctx.electric:
         references.append(Fact(ctx.t("COND_RPM"), ctx.t(_RPM_KEYS[conditions["rpm_source"]])))
@@ -1184,6 +1290,14 @@ def _conditions(
         Fact(ctx.t("COND_GUIDED"), _guided_steps(ctx, diagnosis)),
         Fact(ctx.t("COND_SENSORS"), sensors or unknown),
     )
+
+
+def _engine_fact(ctx: _Ctx) -> str:
+    """The engine and the firing order the run tested, or that only E1/E2 were."""
+    name, firing = ctx.engine_name(), ctx.firing_code()
+    if name is None or firing is None:
+        return ctx.t("COND_ENGINE_UNKNOWN")
+    return ctx.t("COND_ENGINE_PROFILE", engine=f"{name[:1].upper()}{name[1:]}", firing=firing)
 
 
 def _guided_steps(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
@@ -1237,7 +1351,7 @@ def _worksheet_row(ctx: _Ctx, row: OrderFindingRow, *, diagnosed: bool) -> Works
     hz, speed = row["frequency_hz"], row["reference_speed_kmh"]
     presence = row["presence_ratio"]
     return WorksheetRow(
-        order=f"{code} - {ctx.t(ctx.order_key(code))}",
+        order=f"{code} - {ctx.order_text(code)}",
         frequency=(
             f"{ctx.hz(hz)} @ {ctx.speed(speed)}"
             if hz is not None and speed is not None
@@ -1282,10 +1396,24 @@ def _spectrum(ctx: _Ctx, diagnosis: DiagnosisPayload) -> SpectrumChart | None:
     spectrum = diagnosis["spectrum"]
     if spectrum is None or not spectrum["peaks"]:
         return None
-    markers = tuple(sorted(spectrum["order_markers"].items(), key=lambda item: item[1]))
+    firing = ctx.firing_code()
+    markers = tuple(
+        SpectrumMarker(
+            code=code,
+            hz=hz,
+            label=f"{code} {ctx.t('SPECTRUM_FIRING')}" if code == firing else code,
+        )
+        for code, hz in sorted(spectrum["order_markers"].items(), key=lambda item: item[1])
+    )
+    # The chart reaches the first orders and every engine order the run tested;
+    # P2 shows when it falls inside.
     top_hz = max(
         [peak["hz"] for peak in spectrum["peaks"]]
-        + [hz for code, hz in markers if code in {"T1", "T2", "P1", "E1", "E2"}]
+        + [
+            marker.hz
+            for marker in markers
+            if marker.code in {"T1", "T2", "P1", "E1", "E2"} or marker.code in ctx.engine_roles
+        ]
     )
     return SpectrumChart(
         title=ctx.t(
@@ -1369,10 +1497,24 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     key = ctx.source_key(diagnosis["source"])
     if key is None:
         return (ctx.t("SHOP_OTHER", zone=ctx.zone(diagnosis)),)
-    lines = [ctx.t(line) for line in _shop_keys(key, diagnosis)]
+    lines = [_shop_line(ctx, line) for line in _shop_keys(key, diagnosis)]
     if diagnosis["order_code"] == "T2":
         lines.append(ctx.t("SHOP_TIRE_T2"))
+    alternative = diagnosis.get("alternative")
+    if alternative is not None:
+        lines.insert(
+            0,
+            ctx.t("SHOP_HEDGE", code=diagnosis["order_code"], other=alternative["order_code"]),
+        )
     return tuple(lines)
+
+
+def _shop_line(ctx: _Ctx, key: str) -> str:
+    """One shop line; the engine-order comparison names a known engine's firing order."""
+    firing = ctx.firing_code()
+    if key == "SHOP_ENGINE_ORDERS" and firing is not None:
+        return ctx.t("SHOP_ENGINE_ORDERS_PROFILE", firing=firing, engine=ctx.engine_name())
+    return ctx.t(key)
 
 
 def _shop_keys(key: str, diagnosis: DiagnosisPayload) -> tuple[str, ...]:

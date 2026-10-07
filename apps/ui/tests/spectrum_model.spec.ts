@@ -118,6 +118,38 @@ describe("order bands", () => {
     ]);
   });
 
+  test("an engine's own orders are engine bands and its firing order says so", () => {
+    const six = orderBands(
+      {
+        basis_speed_source: null,
+        wheel: { rpm: 600, mode: null, reason: null },
+        driveshaft: { rpm: 1800, mode: null, reason: null },
+        engine: { rpm: 2400, mode: "measured", reason: null },
+        order_bands: [
+          { key: "engine_1x", center_hz: 40, tolerance: 0.1 },
+          { key: "engine_3x", center_hz: 120, tolerance: 0.1, firing: true },
+          { key: "engine_1_5x", center_hz: 60, tolerance: 0.1 },
+        ],
+      },
+      "ICE",
+      t,
+    );
+    const basis = "bands.basis.measured";
+    expect(six.map((band) => band.label)).toEqual([
+      t("bands.with_basis", { band: "bands.engine_1x", basis }),
+      t("bands.with_basis", {
+        band: t("bands.firing", {
+          band: t("bands.engine_order", { order: "3x" }),
+        }),
+        basis,
+      }),
+      t("bands.with_basis", {
+        band: t("bands.engine_order", { order: "1.5x" }),
+        basis,
+      }),
+    ]);
+  });
+
   test("the band legend lists the bands at the inspected frequency", () => {
     expect(activeFrequency(input())).toBe(20);
     expect(bandsAt(bands, 20).map((band) => band.label)).toEqual([

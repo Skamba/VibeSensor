@@ -9,6 +9,7 @@ import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarOrderReferenceStatus, CarSnapshot
+from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.ingest.registry import ClientRecord, ClientRegistry
 from vibesensor.recording.run_metadata import (
     run_metadata_from_mapping,
@@ -72,6 +73,7 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
             fuel_type="PHEV",
             drive_layout="AWD",
             final_drive_axle="front",
+            engine_profile=EngineProfile("inline", 3),
         ),
     )
 
@@ -90,11 +92,13 @@ def test_build_run_metadata_carries_active_car_override_provenance() -> None:
         fuel_type="PHEV",
         drive_layout="AWD",
         final_drive_axle="front",
+        engine_profile=EngineProfile("inline", 3),
     )
     assert metadata.car == expected_car
+    assert metadata.engine_profile == EngineProfile("inline", 3)
     # An e-AWD hybrid: the engine drives the front axle, so there is no propshaft.
     assert (metadata.drive_layout, metadata.propshaft) == ("AWD", False)
-    # The provenance, powertrain and drive layout survive the persisted run record.
+    # The provenance, powertrain, drive layout and engine survive the persisted run record.
     assert run_metadata_from_mapping(run_metadata_to_json_object(metadata)).car == expected_car
 
 

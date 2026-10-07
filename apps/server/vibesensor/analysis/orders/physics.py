@@ -1,12 +1,14 @@
 """Rotational-frequency calculators and order-hypothesis catalog.
 
 Pure physics: wheel / driveshaft / engine Hz from speed and vehicle
-parameters, plus the static table of hypotheses tested during order analysis.
+parameters, plus the hypotheses tested during order analysis: the wheel and
+driveshaft orders, and the engine orders the car's engine profile excites.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cache
 
 from vibesensor.analysis._reference_resolution import (
     _effective_engine_rpm,
@@ -14,6 +16,7 @@ from vibesensor.analysis._reference_resolution import (
 )
 from vibesensor.analysis._types import Sample
 from vibesensor.common.units import SECONDS_PER_MINUTE
+from vibesensor.domain.engine_profile import EngineProfile, engine_orders
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
 from vibesensor.dsp.order_bands import (
@@ -94,9 +97,9 @@ def _engine_hz(
     return float(rpm / SECONDS_PER_MINUTE), src
 
 
-def _order_label(order: int, base: str) -> str:
-    """Return a language-neutral order label like ``'1x wheel'``."""
-    return f"{order}x {base}"
+def _order_label(order: float, base: str) -> str:
+    """Return a language-neutral order label like ``'1x wheel'`` or ``'1.5x engine'``."""
+    return f"{order:g}x {base}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -109,7 +112,7 @@ class OrderHypothesis:
     key: str
     suspected_source: VibrationSource
     order_label_base: str
-    order: int
+    order: float
     # Path compliance factor: models how much the mechanical transmission
     # path between the vibration source and the sensor dampens/broadens
     # the frequency peak.  1.0 = stiff direct coupling (driveshaft), higher
@@ -137,13 +140,12 @@ class OrderHypothesis:
         return None, "missing"
 
 
-# Pre-built hypothesis objects – avoids re-creating 6 frozen dataclass
-# instances on every call.  The thin wrapper function below is kept so that
-# test monkeypatches (which replace the callable) keep working.
-_ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
-    # Wheel orders travel through tire sidewall → hub → knuckle → control
-    # arms → bushings → subframe → body → sensor.  Each rubber component
-    # broadens the peak and reduces tracking precision.
+# The road-speed orders, the same for every car. Wheel orders travel through
+# tire sidewall -> hub -> knuckle -> control arms -> bushings -> subframe ->
+# body -> sensor; each rubber component broadens the peak and reduces tracking
+# precision. The driveshaft has a shorter, stiffer path: shaft -> diff ->
+# subframe -> body.
+_ROAD_HYPOTHESES: tuple[OrderHypothesis, ...] = (
     OrderHypothesis(
         "wheel_1x",
         VibrationSource.WHEEL_TIRE,
@@ -158,7 +160,6 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
         2,
         path_compliance=WHEEL_ORDER_PATH_COMPLIANCE,
     ),
-    # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
     OrderHypothesis(
         "driveshaft_1x",
         VibrationSource.DRIVELINE,
@@ -173,24 +174,23 @@ _ORDER_HYPOTHESES: tuple[OrderHypothesis, ...] = (
         2,
         path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
     ),
-    # Engine is stiffly mounted on most vehicles.
-    OrderHypothesis(
-        "engine_1x",
-        VibrationSource.ENGINE,
-        "engine",
-        1,
-        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
-    ),
-    OrderHypothesis(
-        "engine_2x",
-        VibrationSource.ENGINE,
-        "engine",
-        2,
-        path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
-    ),
 )
 
 
-def _order_hypotheses() -> tuple[OrderHypothesis, ...]:
-    """Return the static hypothesis catalog used by order-analysis sessions."""
-    return _ORDER_HYPOTHESES
+@cache
+def _order_hypotheses(engine_profile: EngineProfile | None = None) -> tuple[OrderHypothesis, ...]:
+    """The hypotheses an order analysis tests: the road-speed orders and the engine's.
+
+    The engine orders are the ones *engine_profile* excites (``engine_orders``);
+    without a profile E1 and E2. The engine is stiffly mounted on most vehicles.
+    """
+    return _ROAD_HYPOTHESES + tuple(
+        OrderHypothesis(
+            order.key,
+            VibrationSource.ENGINE,
+            "engine",
+            order.multiple,
+            path_compliance=RIGID_ORDER_PATH_COMPLIANCE,
+        )
+        for order in engine_orders(engine_profile)
+    )

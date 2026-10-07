@@ -36,6 +36,7 @@ import yaml
 from vibesensor.app.composition import AppRuntime, build_runtime
 from vibesensor.app.config_loader import load_config
 from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.domain.engine_profile import EngineProfile, engine_profile_payload
 from vibesensor.dsp.constants import FFT_N, FFT_UPDATE_HZ
 from vibesensor.history.history_db import HistoryDB
 from vibesensor.ingest.protocol_packing import pack_data, pack_hello
@@ -116,6 +117,9 @@ class BenchCar:
     # Whether the owner entered the final drive (an EV's reduction ratio); the
     # simulated car still turns its driveshaft (motor) at that ratio.
     final_drive_entered: bool = True
+    # The engine's layout and cylinders as the car library gives them; ``None``
+    # for a car entered by hand (and an EV).
+    engine_profile: EngineProfile | None = None
 
     @property
     def tire_circumference_m(self) -> float:
@@ -479,6 +483,11 @@ def _record(
             "aspects": car.aspects(),
             "fuel_type": car.fuel_type,
             "drive_layout": car.drive_layout,
+            "engine_profile": (
+                engine_profile_payload(car.engine_profile)
+                if car.engine_profile is not None
+                else None
+            ),
         }
     )
     web.car_settings.set_active_car(snapshot.cars[-1]["id"])
