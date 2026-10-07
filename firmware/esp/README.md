@@ -145,7 +145,7 @@ and reports `firmware_status`:
 - `unknown`: a newer date or an uncommitted local build, a bundle without an
   identity, or no HELLO yet.
 
-Sensors can only be updated over USB from *Settings → ESP Flash*.
+Sensors can only be updated over USB from *Settings → Advanced → ESP Flash*.
 
 ## Configure
 
@@ -160,7 +160,7 @@ At boot the firmware loads the hotspot SSID/PSK from NVS (Preferences
 namespace `vs_wifi`, keys `ssid` and `psk`; a stored SSID without `psk` means an
 open hotspot) and falls back to the compile-time values below when NVS holds
 none (`load_wifi_credentials` in `src/runtime_wifi.cpp`). The Pi flasher
-(*Settings → ESP Flash*) erases the chip and writes an NVS image built from the
+(*Settings → Advanced → ESP Flash*) erases the chip and writes an NVS image built from the
 Pi's current `ap.ssid` / `ap.psk`
 (`apps/server/vibesensor/updates/firmware/sensor_wifi_nvs.py`), so a sensor
 flashed from the Pi always joins that Pi's hotspot. `pio run -t upload` does not
@@ -225,7 +225,7 @@ merged; not shipped). The release workflow ships the first three plus
   (`pio project metadata`), the same offsets `pio run -t upload` uses;
 - the app offset comes from the built partition table (factory app, else `ota_0`).
 
-Environments are listed alphabetically. The Pi flasher (*Settings → ESP Flash*)
+Environments are listed alphabetically. The Pi flasher (*Settings → Advanced → ESP Flash*)
 always flashes the `m5stack_atom` environment by name (`SENSOR_FIRMWARE_ENV` in
 `apps/server/vibesensor/updates/firmware/esp_flash_types.py`) and passes its
 `chip` to esptool, so other envs in the bundle (such as the ESP32-C3 build) are

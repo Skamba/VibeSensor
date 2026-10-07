@@ -154,7 +154,7 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
 - **Branches:**
   - Port 80 is unavailable: use port 8000 (pi-gen README).
   - The operator sets `ap.psk` as the docs advise: sensors must be re-flashed
-    from *Settings → ESP Flash*, which writes the Pi's current `ap.ssid` /
+    from *Settings → Advanced → ESP Flash*, which writes the Pi's current `ap.ssid` /
     `ap.psk` into the sensor's NVS
     (`apps/server/vibesensor/updates/firmware/sensor_wifi_nvs.py`). Sensors
     flashed elsewhere only know the open `VibeSensor` network.
@@ -163,7 +163,7 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
 
 - **Know/do:**
   - Sensors (ATOM Lite + ADXL345) ship flashed. Re-flash over USB from
-    *Settings → ESP Flash* (`apps/ui/src/pages/esp_flash/EspFlash.tsx`).
+    *Settings → Advanced → ESP Flash* (`apps/ui/src/pages/esp_flash/EspFlash.tsx`).
   - Power the sensors and mount them.
   - In *Settings → Sensors* (`apps/ui/src/pages/sensors/Sensors.tsx`), place
     each sensor on a top-down car diagram: unplaced sensors are chips at the
@@ -203,7 +203,7 @@ report strings by their key in `apps/server/vibesensor/data/report_i18n.json`.
     date / outdated / status unknown, from
     `apps/server/vibesensor/domain/sensor_firmware.py`). While any sensor is
     outdated, a notice says the update needs a USB cable into the Pi and its
-    *Update sensor firmware* button opens *Settings → ESP Flash*. Sensors
+    *Update sensor firmware* button opens *Settings → Advanced → ESP Flash*. Sensors
     cannot be updated over Wi-Fi.
   - A sensor has no location: readiness fails `sensor_locations_missing`
     (`_sensors_check` in
@@ -717,9 +717,11 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 
 ### 3.10 Updates
 
-- *Settings → System Update* updates from GitHub, either over temporary Wi-Fi
+- *Settings → Advanced → System Update* updates from GitHub, either over temporary Wi-Fi
   credentials (the hotspot pauses) or over a USB internet uplink
-  (`settings.update.hint`, `settings.internet.hint`).
+  (`settings.update.hint`). One page holds the connection choice, the start
+  button, the progress and the USB uplink details; the stage list stays folded
+  until an update runs.
 - The updater installs into an A/B venv, smoke-tests it, and reverts
   automatically if the service is unhealthy after a restart.
 - **Branch:** on the Pi 3 A+, the USB uplink and a USB GPS receiver compete for

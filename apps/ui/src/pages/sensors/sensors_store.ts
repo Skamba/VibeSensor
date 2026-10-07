@@ -22,7 +22,7 @@ export const outdatedFirmwareCount = computed(
       .length,
 );
 
-/** Sensor firmware is updated over USB with the ESP Flash tab. */
+/** Sensor firmware is updated over USB on Settings > Advanced > ESP Flash. */
 export function openFirmwareUpdate(): void {
   navigate("settingsView", "espFlashTab");
 }

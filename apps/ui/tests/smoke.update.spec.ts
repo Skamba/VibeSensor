@@ -16,7 +16,6 @@ import {
   bootLiveDashboard,
   fulfillJson,
   installCommonRoutes,
-  openInternetTab,
   openUpdateTab,
 } from "./smoke.helpers";
 
@@ -92,7 +91,7 @@ async function bootWithUpdateServer(
   await bootLiveDashboard(page, { installRoutes: false });
 }
 
-test("journey: Internet tab shows a usable USB uplink and the update runs over it", async ({
+test("journey: System update shows a usable USB uplink and the update runs over it", async ({
   page,
 }) => {
   const server: UpdateServer = {
@@ -101,20 +100,25 @@ test("journey: Internet tab shows a usable USB uplink and the update runs over i
     cancels: 0,
   };
   await bootWithUpdateServer(page, server);
-  await openInternetTab(page);
+  await openUpdateTab(page);
 
   const internetStatus = page.locator("#internetStatusPanel");
   await expect(internetStatus).toContainText("Usable");
   await expect(internetStatus).toContainText("usb0");
   await expect(internetStatus).toContainText("192.168.42.17/24");
 
+  // Before any update the stages only explain what will happen: folded away.
+  const explainer = page.locator(
+    "#updateStatusPanel .maintenance-stage-explainer",
+  );
+  await expect(explainer).toContainText("What happens, step by step");
+  await expect(explainer.locator(".maintenance-stage").first()).toBeHidden();
+
   await page.locator("#updateTransportChoiceUsb").click();
   await expect(page.locator("#updateWifiFields")).toBeHidden();
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "USB internet is ready on usb0.",
   );
-
-  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
   await page.locator("#updateStartBtn").click();
   await expect
@@ -124,6 +128,11 @@ test("journey: Internet tab shows a usable USB uplink and the update runs over i
     "Downloading update...",
   );
   await expect(page.locator("#updateCancelBtn")).toBeVisible();
+  // A running update shows the stages as live progress.
+  await expect(explainer).toHaveCount(0);
+  await expect(
+    page.locator('#updateStatusPanel .maintenance-stage[aria-current="step"]'),
+  ).toBeVisible();
 
   await page.locator("#updateCancelBtn").click();
   await expect.poll(() => server.cancels).toBe(1);
@@ -139,7 +148,7 @@ test("journey: a Wi-Fi update sends the credentials and clears the password", as
     cancels: 0,
   };
   await bootWithUpdateServer(page, server);
-  await openInternetTab(page);
+  await openUpdateTab(page);
 
   await expect(page.locator("#updateReadinessSummary")).toContainText(
     "Enter a Wi-Fi SSID to enable Start Update.",
@@ -156,14 +165,12 @@ test("journey: a Wi-Fi update sends the credentials and clears the password", as
     "text",
   );
 
-  await openUpdateTab(page);
   await page.locator("#updateStartBtn").click();
   await expect
     .poll(() => server.starts)
     .toEqual([
       { transport: "wifi", ssid: "Workshop Wi-Fi", password: "hunter22" },
     ]);
-  await openInternetTab(page);
   await expect(page.locator("#updatePasswordInput")).toHaveValue("");
   // Credentials are locked while the update runs.
   await expect(page.locator("#updateSsidInput")).toBeDisabled();
@@ -184,10 +191,9 @@ test("journey: the last Wi-Fi network is prefilled and a double-clicked start se
     startDelayMs: 400,
   };
   await bootWithUpdateServer(page, server);
-  await openInternetTab(page);
+  await openUpdateTab(page);
   await expect(page.locator("#updateSsidInput")).toHaveValue("Shop Wi-Fi");
 
-  await openUpdateTab(page);
   await page.locator("#updateStartBtn").dblclick();
   await expect(page.locator("#updateCancelBtn")).toBeVisible();
   expect(server.starts).toEqual([
@@ -229,7 +235,7 @@ test("journey: retrying a failed Wi-Fi update without an SSID leads back to the 
   await expect(retry).toHaveText("Retry Update");
   await retry.click();
   await expect(page.locator("#updateSsidInput")).toBeFocused();
-  await expect(page.locator("#internetTab")).toBeVisible();
+  await expect(page.locator("#updateTab")).toBeVisible();
   expect(server.starts).toEqual([]);
 });
 
@@ -287,8 +293,6 @@ test("journey: an outdated root side explains the reinstall without blocking the
   await expect(page.locator("#updateOverviewPanel")).toContainText(
     "root side: degraded (root_side_outdated)",
   );
-  await openInternetTab(page);
   await page.locator("#updateSsidInput").fill("Workshop");
-  await openUpdateTab(page);
   await expect(page.locator("#updateStartBtn")).toBeEnabled();
 });

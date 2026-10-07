@@ -15,7 +15,7 @@ import type {
 } from "../../components/maintenance";
 import { formatEpochTimestamp } from "../../format";
 
-/** Pure text and state derivations for the Internet and Update tabs. */
+/** Pure text and state derivations for the System update page. */
 
 type Translate = (key: string, vars?: Record<string, unknown>) => string;
 export type Transport = UpdateStartRequestPayload["transport"];

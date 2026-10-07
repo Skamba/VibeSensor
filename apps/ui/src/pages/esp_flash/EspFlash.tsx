@@ -216,7 +216,10 @@ export function EspFlash() {
               >
                 <div class="maintenance-journey">
                   {note ? <Note bad>{note}</Note> : null}
-                  <StageList stages={journeyStages(view, t)} />
+                  <StageList
+                    stages={journeyStages(view, t)}
+                    idleSummary={t("maintenance.stages_idle_summary")}
+                  />
                 </div>
               </div>
             </Card>

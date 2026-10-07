@@ -407,14 +407,23 @@ export async function bootLiveDashboard(
   await page.goto("/");
 }
 
+/** Maintenance pages sit under Settings > Advanced, one sub-tab each. */
+const ADVANCED_SETTINGS_TABS = ["updateTab", "analysisTab", "espFlashTab"];
+
 async function openSettingsTab(
   page: Page,
   settingsTabId?: string,
 ): Promise<void> {
   await page.locator("#tab-settings").click();
-  if (settingsTabId) {
-    await page.locator(`[data-settings-tab="${settingsTabId}"]`).click();
+  if (!settingsTabId) {
+    return;
   }
+  if (ADVANCED_SETTINGS_TABS.includes(settingsTabId)) {
+    await page.locator('[data-settings-tab="advancedTab"]').click();
+    await page.locator(`[data-settings-subtab="${settingsTabId}"]`).click();
+    return;
+  }
+  await page.locator(`[data-settings-tab="${settingsTabId}"]`).click();
 }
 
 export async function openCarsTab(page: Page): Promise<void> {
@@ -423,10 +432,6 @@ export async function openCarsTab(page: Page): Promise<void> {
 
 export async function openAnalysisTab(page: Page): Promise<void> {
   await openSettingsTab(page, "analysisTab");
-}
-
-export async function openInternetTab(page: Page): Promise<void> {
-  await openSettingsTab(page, "internetTab");
 }
 
 export async function openUpdateTab(page: Page): Promise<void> {

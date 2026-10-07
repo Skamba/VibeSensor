@@ -2,20 +2,23 @@ import type { ComponentChildren, TargetedKeyboardEvent } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 
 import {
+  ADVANCED_SETTINGS_TAB_IDS,
   activeView,
   confirmation,
+  DAILY_SETTINGS_TAB_IDS,
   dismissHotspotHint,
   errorBanner,
   hotspotHintVisible,
   errorMessage,
+  isAdvancedSettingsTab,
   isDemoMode,
   loadPreferences,
   navigate,
-  SETTINGS_TAB_IDS,
   settleConfirmation,
   settingsTab,
   showError,
   VIEW_IDS,
+  type AdvancedSettingsTabId,
   type SettingsTabId,
   type ViewId,
 } from "./app_store";
@@ -33,7 +36,7 @@ import { Sensors } from "./pages/sensors/Sensors";
 import { Spectrum } from "./pages/spectrum/Spectrum";
 import { SpeedSource } from "./pages/speed_source/SpeedSource";
 import { Preferences } from "./pages/preferences/Preferences";
-import { Internet, Update } from "./pages/update/Update";
+import { SystemUpdate } from "./pages/update/Update";
 import { loadCars, loadSpeedSource } from "./settings_store";
 import { uiLogger } from "./ui_logger";
 
@@ -43,16 +46,30 @@ const NAV: Record<ViewId, { tabId: string; labelKey: string }> = {
   settingsView: { tabId: "tab-settings", labelKey: "nav.settings" },
 };
 
-const SETTINGS_TAB_LABEL_KEYS: Record<SettingsTabId, string> = {
-  carTab: "settings.tab.car",
-  analysisTab: "settings.tab.analysis",
-  speedSourceTab: "settings.tab.speed_source",
-  sensorsTab: "settings.tab.sensors",
-  internetTab: "settings.tab.internet",
-  updateTab: "settings.tab.update",
-  espFlashTab: "settings.tab.esp_flash",
-  generalTab: "settings.tab.general",
-};
+/** The top strip: the daily tabs, then one tab holding the advanced ones. */
+const ADVANCED_TAB = "advancedTab";
+type SettingsStripId =
+  | (typeof DAILY_SETTINGS_TAB_IDS)[number]
+  | typeof ADVANCED_TAB;
+const SETTINGS_STRIP_IDS: readonly SettingsStripId[] = [
+  ...DAILY_SETTINGS_TAB_IDS,
+  ADVANCED_TAB,
+];
+
+const SETTINGS_TAB_LABEL_KEYS: Record<SettingsTabId | SettingsStripId, string> =
+  {
+    carTab: "settings.tab.car",
+    speedSourceTab: "settings.tab.speed_source",
+    sensorsTab: "settings.tab.sensors",
+    generalTab: "settings.tab.general",
+    advancedTab: "settings.tab.advanced",
+    updateTab: "settings.tab.update",
+    analysisTab: "settings.tab.analysis",
+    espFlashTab: "settings.tab.esp_flash",
+  };
+
+/** The Advanced tab reopens on the advanced page that was open last. */
+let lastAdvancedTab: AdvancedSettingsTabId = ADVANCED_SETTINGS_TAB_IDS[0];
 
 const WS_STATUS: Record<string, { key: string; variant: string }> = {
   connecting: { key: "ws.connecting", variant: "muted" },
@@ -295,10 +312,16 @@ function View(props: { id: ViewId; children: ComponentChildren }) {
 
 function SettingsTabs() {
   const current = settingsTab.value;
+  if (isAdvancedSettingsTab(current)) {
+    lastAdvancedTab = current;
+  }
+  const selected: SettingsStripId = isAdvancedSettingsTab(current)
+    ? ADVANCED_TAB
+    : current;
   const visible = activeView.value === "settingsView";
   const strip = useRef<HTMLDivElement>(null);
-  const activate = (id: SettingsTabId) => {
-    settingsTab.value = id;
+  const activate = (id: SettingsStripId) => {
+    settingsTab.value = id === ADVANCED_TAB ? lastAdvancedTab : id;
   };
   // On a phone the strip scrolls; keep the selected tab (e.g. a deep link to
   // Sensors) in view without scrolling the page.
@@ -315,10 +338,10 @@ function SettingsTabs() {
     } else if (inner.right > outer.right) {
       box.scrollLeft += inner.right - outer.right;
     }
-  }, [current, visible]);
+  }, [selected, visible]);
   return (
     <div class="settings-tabs" role="tablist" ref={strip}>
-      {SETTINGS_TAB_IDS.map((id, index) => (
+      {SETTINGS_STRIP_IDS.map((id, index) => (
         <button
           key={id}
           type="button"
@@ -326,16 +349,69 @@ function SettingsTabs() {
           data-settings-tab={id}
           role="tab"
           aria-controls={id}
-          aria-selected={current === id ? "true" : "false"}
-          tabIndex={current === id ? 0 : -1}
+          aria-selected={selected === id ? "true" : "false"}
+          tabIndex={selected === id ? 0 : -1}
           onClick={() => activate(id)}
           onKeyDown={(event) =>
-            onTabKeyDown(event, SETTINGS_TAB_IDS, index, activate)
+            onTabKeyDown(event, SETTINGS_STRIP_IDS, index, activate)
           }
         >
           <span>{t(SETTINGS_TAB_LABEL_KEYS[id])}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Maintenance and tuning pages, one at a time under a second tab row. */
+function AdvancedSettings() {
+  const current = settingsTab.value;
+  const activate = (id: AdvancedSettingsTabId) => {
+    settingsTab.value = id;
+  };
+  return (
+    <div
+      id={ADVANCED_TAB}
+      class="settings-tab-panel settings-advanced"
+      role="tabpanel"
+      hidden={!isAdvancedSettingsTab(current)}
+    >
+      <p class="subtle settings-advanced__intro">
+        {t("settings.advanced.intro")}
+      </p>
+      <div
+        class="settings-subtabs"
+        role="tablist"
+        aria-label={t("settings.tab.advanced")}
+      >
+        {ADVANCED_SETTINGS_TAB_IDS.map((id, index) => (
+          <button
+            key={id}
+            type="button"
+            class="settings-subtab"
+            data-settings-subtab={id}
+            role="tab"
+            aria-controls={id}
+            aria-selected={current === id ? "true" : "false"}
+            tabIndex={current === id ? 0 : -1}
+            onClick={() => activate(id)}
+            onKeyDown={(event) =>
+              onTabKeyDown(event, ADVANCED_SETTINGS_TAB_IDS, index, activate)
+            }
+          >
+            {t(SETTINGS_TAB_LABEL_KEYS[id])}
+          </button>
+        ))}
+      </div>
+      <SettingsTab id="updateTab">
+        <SystemUpdate />
+      </SettingsTab>
+      <SettingsTab id="analysisTab">
+        <Analysis />
+      </SettingsTab>
+      <SettingsTab id="espFlashTab">
+        <EspFlash />
+      </SettingsTab>
     </div>
   );
 }
@@ -387,27 +463,16 @@ export function App() {
         <SettingsTab id="carTab">
           <Cars />
         </SettingsTab>
-        <SettingsTab id="analysisTab">
-          <Analysis />
-        </SettingsTab>
         <SettingsTab id="speedSourceTab">
           <SpeedSource />
         </SettingsTab>
         <SettingsTab id="sensorsTab">
           <Sensors />
         </SettingsTab>
-        <SettingsTab id="internetTab">
-          <Internet />
-        </SettingsTab>
-        <SettingsTab id="updateTab">
-          <Update />
-        </SettingsTab>
-        <SettingsTab id="espFlashTab">
-          <EspFlash />
-        </SettingsTab>
         <SettingsTab id="generalTab">
           <Preferences />
         </SettingsTab>
+        <AdvancedSettings />
       </View>
       <ConfirmationDialog />
     </div>

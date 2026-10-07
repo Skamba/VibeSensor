@@ -31,14 +31,39 @@ test("journey: tabs follow the keyboard and the status pills stay in the header"
   await expect(liveTab).toBeFocused();
   await expect(page.locator("#dashboardView")).toBeVisible();
 
+  // Settings lists the daily tabs first; maintenance sits under Advanced.
   await page.locator("#tab-settings").click();
+  await expect(page.locator("[data-settings-tab]")).toHaveText([
+    "Car",
+    "Speed Source",
+    "Sensors",
+    "General",
+    "Advanced",
+  ]);
   const carTab = page.locator('[data-settings-tab="carTab"]');
   await carTab.focus();
   await page.keyboard.press("ArrowLeft");
-  const generalTab = page.locator('[data-settings-tab="generalTab"]');
-  await expect(generalTab).toBeFocused();
-  await expect(page.locator("#generalTab")).toBeVisible();
+  const advancedTab = page.locator('[data-settings-tab="advancedTab"]');
+  await expect(advancedTab).toBeFocused();
   await expect(page.locator("#carTab")).toBeHidden();
+  await expect(page.locator("[data-settings-subtab]")).toHaveText([
+    "System Update",
+    "Analysis",
+    "ESP Flash",
+  ]);
+  await expect(page.locator("#updateTab")).toBeVisible();
+  // Advanced reopens on the maintenance page that was open last.
+  await page.locator('[data-settings-subtab="espFlashTab"]').click();
+  await expect(page.locator("#espFlashTab")).toBeVisible();
+  await page.keyboard.press("ArrowLeft");
+  await expect(
+    page.locator('[data-settings-subtab="analysisTab"]'),
+  ).toBeFocused();
+  await expect(page.locator("#analysisTab")).toBeVisible();
+  await carTab.click();
+  await advancedTab.click();
+  await expect(page.locator("#analysisTab")).toBeVisible();
+  await expect(page.locator("#updateTab")).toBeHidden();
 });
 
 test("journey: a view that fails to load keeps the current view and shows the error", async ({
