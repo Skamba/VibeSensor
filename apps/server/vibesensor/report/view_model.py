@@ -107,6 +107,9 @@ _SPEED_SOURCE_KEYS = {
     "obd2": "SPEED_SOURCE_OBD",
     "manual": "SPEED_SOURCE_MANUAL",
     "fallback_manual": "SPEED_SOURCE_FALLBACK_MANUAL",
+    # The live source the user chose never gave a speed during the run.
+    "gps_unaligned": "SPEED_SOURCE_GPS_NO_SPEED",
+    "obd2_unaligned": "SPEED_SOURCE_OBD_NO_SPEED",
 }
 _RECAPTURE_KEYS = ("RECAPTURE_ROAD", "RECAPTURE_SWEEP", "RECAPTURE_HOLD", "RECAPTURE_COAST")
 # An EV cannot coast in neutral: its motor stays coupled to the wheels.

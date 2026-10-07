@@ -1439,6 +1439,10 @@
     "en": "GPS",
     "nl": "GPS"
   },
+  "SPEED_SOURCE_GPS_NO_SPEED": {
+    "en": "GPS (no fix during the run)",
+    "nl": "GPS (geen fix tijdens de rit)"
+  },
   "SPEED_SOURCE_MANUAL": {
     "en": "entered by hand",
     "nl": "handmatig ingevoerd"
@@ -1446,6 +1450,10 @@
   "SPEED_SOURCE_OBD": {
     "en": "OBD",
     "nl": "OBD"
+  },
+  "SPEED_SOURCE_OBD_NO_SPEED": {
+    "en": "OBD (no speed received)",
+    "nl": "OBD (geen snelheid ontvangen)"
   },
   "STEP_BRAKES": {
     "en": "Have {zone} checked for runout and thickness variation, and skimmed or replaced together with the pads if they are out of limits.",

@@ -217,6 +217,32 @@ def test_a_run_without_live_speed_says_so_instead_of_unknown(
 
 
 @pytest.mark.parametrize(
+    ("source", "speed_kmh", "lang", "shown"),
+    [
+        ("gps_unaligned", None, "en", "GPS (no fix during the run)"),
+        ("gps_unaligned", None, "nl", "GPS (geen fix tijdens de rit)"),
+        ("obd2_unaligned", None, "en", "OBD (no speed received)"),
+        ("obd2_unaligned", None, "nl", "OBD (geen snelheid ontvangen)"),
+        ("manual", 60.0, "en", "entered by hand"),
+        ("manual", 60.0, "nl", "handmatig ingevoerd"),
+    ],
+)
+def test_speed_source_names_the_chosen_source_even_when_it_gave_no_speed(
+    source: str, speed_kmh: float | None, lang: str, shown: str
+) -> None:
+    # A live source that never gave a speed (GPS without a fix, OBD-II without a
+    # reading) marks every recorded row "<source>_unaligned", as on the Pi.
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, n_samples=30, speed_kmh=speed_kmh)
+    for sample in samples:
+        sample["speed_source"] = source
+    view = report_view_for(run_analysis(samples), lang=lang)
+    speed_source_label = {"en": "Speed source", "nl": "Snelheidsbron"}[lang]
+
+    conditions = {fact.label: fact.value for fact in view.mechanic.conditions}
+    assert conditions[speed_source_label] == shown
+
+
+@pytest.mark.parametrize(
     ("lang", "covered"),
     [
         ("en", "50–52\xa0km/h with sensors at front-left wheel"),

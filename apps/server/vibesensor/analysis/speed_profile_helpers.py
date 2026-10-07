@@ -64,13 +64,21 @@ def speed_constancy(stddev_kmh: float | None) -> float:
 
 
 def run_speed_source(samples: Sequence[Sample]) -> str | None:
-    """The most common speed source among the moving samples."""
-    counts = Counter(
-        sample.speed_source.strip().lower()
+    """The most common speed source among the moving samples.
+
+    A run that never moved on a speed names the source it had anyway: a live
+    source that never gave a speed (no GPS fix) marks its rows
+    ``gps_unaligned`` / ``obd2_unaligned``, and the run keeps that marker.
+    """
+    sources = [
+        (sample.speed_source.strip().lower(), sample.speed_kmh is not None and sample.speed_kmh > 0)
         for sample in samples
-        if sample.speed_kmh is not None and sample.speed_kmh > 0 and sample.speed_source.strip()
-    )
-    return counts.most_common(1)[0][0] if counts else None
+    ]
+    moving = Counter(source for source, moved in sources if moved and source)
+    if moving:
+        return moving.most_common(1)[0][0]
+    standing = Counter(source for source, _ in sources if source and source != "none")
+    return standing.most_common(1)[0][0] if standing else None
 
 
 def speed_typed_in(speed_source: str | None) -> bool:
