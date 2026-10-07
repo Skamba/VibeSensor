@@ -133,7 +133,7 @@ jobs:
     # The accuracy benchmark over five more sensor-id seeds (4/5 must pass per
     # case, inside each test). It catches diagnosis regressions that pass on the
     # CI seed but not on others. Split by case across parallel jobs.
-    name: Diagnosis seed matrix (${{ matrix.shard }}/6)
+    name: Diagnosis seed matrix (${{ matrix.shard }}/8)
     needs: changes
     if: ${{ needs.changes.outputs.diagnosis == 'true' }}
     runs-on: ubuntu-latest
@@ -141,7 +141,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
       - uses: actions/checkout@v7
@@ -150,7 +150,7 @@ jobs:
 
       - name: Benchmark seed matrix
         env:
-          PYTEST_ADDOPTS: --shard=${{ matrix.shard }}/6
+          PYTEST_ADDOPTS: --shard=${{ matrix.shard }}/8
         run: make test-diagnostic-matrix
 
   frontend:

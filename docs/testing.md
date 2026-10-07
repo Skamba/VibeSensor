@@ -123,7 +123,7 @@ so every sensor feels it.
 - Temporary migration/absence tests must name the stable boundary they protect and be removed once positive current-behavior coverage exists.
 - Use the `smoke`, `long_sim`, and `e2e` markers sparingly.
 - `diagnostic_matrix` marks the accuracy benchmark's extra-seed repetitions; run them with `make test-diagnostic-matrix`. `make test` excludes them; the `diagnosis-matrix` CI jobs run them.
-- `--shard=INDEX/COUNT` (defined in `apps/server/tests/conftest.py`) keeps every COUNT-th selected test in node-id order; CI passes it through `PYTEST_ADDOPTS` to split `make test` and `make test-diagnostic-matrix` across parallel jobs, e.g. `PYTEST_ADDOPTS=--shard=2/6 make test-diagnostic-matrix`.
+- `--shard=INDEX/COUNT` (defined in `apps/server/tests/conftest.py`) keeps every COUNT-th selected test in node-id order; CI passes it through `PYTEST_ADDOPTS` to split `make test` and `make test-diagnostic-matrix` across parallel jobs, e.g. `PYTEST_ADDOPTS=--shard=2/8 make test-diagnostic-matrix`.
 - For cached helpers, clear caches in tests that monkeypatch underlying files, paths, or cached state.
 
 ## Frontend validation
@@ -185,7 +185,7 @@ Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make tar
 | `backend-tests` (2 shards) | backend paths | `make test` |
 | `frontend` | frontend paths | `make ui-typecheck`, `make ui-test` |
 | `ui-smoke` | frontend paths | `cd apps/ui && npm run test:smoke` |
-| `diagnosis-matrix` (6 shards) | analysis, dsp, domain, ingest, recording, report, simulator, summary or benchmark paths | `make test-diagnostic-matrix` |
+| `diagnosis-matrix` (8 shards) | analysis, dsp, domain, ingest, recording, report, simulator, summary or benchmark paths | `make test-diagnostic-matrix` |
 | `integration` | backend or frontend paths | `make sync-contracts && git diff --exit-code`, `make test-e2e`, `python tools/tests/run_release_smoke.py` |
 | `firmware` | firmware paths | `python tools/firmware/generate_protocol_contract_fixtures.py --check`, `cd firmware/esp && pio test -e native`, `pio run -e m5stack_atom -e esp32-c3-devkitm-1` |
 
