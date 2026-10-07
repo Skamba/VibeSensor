@@ -12,7 +12,6 @@ import {
 } from "../../config";
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { KeepAwakeMode } from "../../keep_awake";
-import type { LocationOption } from "../../sensor_locations";
 import type {
   AdaptedClient,
   SpectrumFrameData,
@@ -299,19 +298,6 @@ export function strongestSensor(
     }
   }
   return best;
-}
-
-/** Location label when the sensor has one, else its name (or id). */
-export function sensorLabel(
-  client: AdaptedClient,
-  code: string,
-  options: readonly LocationOption[],
-  fallback: string,
-): string {
-  if (code) {
-    return options.find((option) => option.code === code)?.label ?? code;
-  }
-  return String(client.name || client.id || fallback).trim();
 }
 
 export function activeCarText(

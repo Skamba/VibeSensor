@@ -135,9 +135,7 @@
   }
 
   .history-table th,
-  .history-table td,
-  .clients-table th,
-  .clients-table td {
+  .history-table td {
     padding: 0.75rem;
   }
 

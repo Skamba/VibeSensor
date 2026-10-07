@@ -1,13 +1,6 @@
 import { afterEach, expect, test } from "vitest";
 
-import {
-  lang,
-  normalizeLang,
-  setLanguage,
-  t,
-  translate,
-  translationsOf,
-} from "../src/i18n";
+import { lang, normalizeLang, setLanguage, t, translate } from "../src/i18n";
 
 afterEach(async () => {
   await setLanguage("en");
@@ -41,11 +34,6 @@ test("fills placeholders and formats numbers per language", () => {
   ).toContain("1.234,5");
   expect(translate("en", "speed.none", { unit: Number.NaN })).toBe("-- --");
   expect(translate("en", "speed.none", {})).toBe("-- {unit}");
-});
-
-test("lists a key's text in every loaded language", async () => {
-  await setLanguage("nl");
-  expect(translationsOf("nav.history")).toEqual(["History", "Geschiedenis"]);
 });
 
 test("a count of one reads singular, others plural, in both languages", async () => {

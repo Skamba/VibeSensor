@@ -5,12 +5,14 @@ import { t } from "../../i18n";
 import {
   clients,
   hasReceivedPayload,
+  locationOf,
   payloadError,
   rotationalSpeeds,
   spectra,
   speedMps,
   wsState,
 } from "../../live_store";
+import { sensorLabel } from "../../sensor_locations";
 import {
   activeCar,
   carSelection,
@@ -187,7 +189,11 @@ export function mountSpectrum(dom: {
     let next: SpectrumPreparedFrameData;
     try {
       next = preparer.prepare({
-        clients: clients.peek(),
+        clients: clients.peek().map((client) => ({
+          id: client.id,
+          label: sensorLabel(client, locationOf(client), t),
+          connected: Boolean(client.connected),
+        })),
         spectraByClient: spectra.peek().clients,
       });
     } catch (error) {

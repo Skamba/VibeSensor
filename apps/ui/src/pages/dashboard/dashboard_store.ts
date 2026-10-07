@@ -21,7 +21,6 @@ import { keepAwakeMode, startKeepAwake, stopKeepAwake } from "../../keep_awake";
 import {
   clients,
   liveSensorLayout,
-  locationChoices,
   locationOf,
   rotationalSpeeds,
   runsChanged,
@@ -30,6 +29,7 @@ import {
 } from "../../live_store";
 import { poll } from "../../poll";
 import { layoutConsequence } from "../../sensor_layout";
+import { sensorLabel } from "../../sensor_locations";
 import {
   activeCar,
   carSelection,
@@ -59,7 +59,6 @@ import {
   type PendingAction,
   recordingModel,
   runsAffected,
-  sensorLabel,
   setupModel,
   speedText,
   stopConfirmation,
@@ -456,12 +455,7 @@ export const overview = computed(() => {
   const list = clients.value;
   const strongest = strongestSensor(list, spectra.value);
   const label = (client: (typeof list)[number]) =>
-    sensorLabel(
-      client,
-      locationOf(client),
-      locationChoices.value,
-      t("dashboard.sensor_unassigned"),
-    );
+    sensorLabel(client, locationOf(client), t);
   return {
     connectedText: `${formatInt(list.filter((client) => client.connected).length)} / ${formatInt(list.length)}`,
     activeCarText: activeCarText(carSelection.value, t),

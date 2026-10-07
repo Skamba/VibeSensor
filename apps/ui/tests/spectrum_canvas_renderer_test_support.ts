@@ -164,7 +164,11 @@ export async function withSpectrumRendererHarness(
     });
     const prepareFrame = () =>
       framePreparer.prepare({
-        clients: state.clients.value,
+        clients: state.clients.value.map((client) => ({
+          id: client.id,
+          label: client.name,
+          connected: client.connected,
+        })),
         spectraByClient: state.spectra.value.clients,
       });
 
