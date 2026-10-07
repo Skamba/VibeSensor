@@ -162,6 +162,7 @@ class RunRawCaptureWriter:
 
     __slots__ = (
         "_active_run_id",
+        "_counted_run_id",
         "_history_db",
         "_ingest_diagnostics",
         "_last_checkpoint_mono_s",
@@ -171,6 +172,7 @@ class RunRawCaptureWriter:
         "_queue",
         "_run_stats",
         "_sensor_sync_snapshotter",
+        "_written_sample_count",
         "_thread",
         "_run_start_monotonic_us",
     )
@@ -200,6 +202,10 @@ class RunRawCaptureWriter:
         self._active_run_id: str | None = None
         self._run_start_monotonic_us: int | None = None
         self._run_stats: _RunCaptureStats | None = None
+        # The run whose stored raw samples are counted: the active one, else the
+        # last one until the next starts (as the recorder's status describes it).
+        self._counted_run_id: str | None = None
+        self._written_sample_count = 0
         self._last_checkpoint_mono_s: float | None = None
         self._thread: threading.Thread | None = None
         if self._history_db is not None:
@@ -215,6 +221,18 @@ class RunRawCaptureWriter:
             self._active_run_id = run_id
             self._run_start_monotonic_us = run_start_monotonic_us
             self._run_stats = _RunCaptureStats()
+            self._counted_run_id = run_id
+            self._written_sample_count = 0
+
+    @property
+    def written_sample_count(self) -> int:
+        """Raw samples stored so far for the current (else the last) run, all sensors.
+
+        The same count History shows as the run's raw samples once the run is
+        finalized (``RawCaptureManifest.total_samples``).
+        """
+        with self._lock:
+            return self._written_sample_count
 
     def capture_raw_samples(
         self,
@@ -499,6 +517,9 @@ class RunRawCaptureWriter:
                         exc_info=True,
                     )
                     continue
+                with self._lock:
+                    if run_id == self._counted_run_id:
+                        self._written_sample_count += chunk.sample_count
                 self._checkpoint_when_due(history_db, run_id, run_stats)
             finally:
                 self._queue.task_done()

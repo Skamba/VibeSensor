@@ -256,12 +256,18 @@ describe("recording card", () => {
 
   test("recording shows elapsed time, the run id and an enabled Stop", () => {
     const model = recording({
-      status: status({ enabled: true, run_id: "run-1", samples_written: 24 }),
+      // Live counts the raw samples stored, as History does, not the analysis rows.
+      status: status({
+        enabled: true,
+        run_id: "run-1",
+        samples_written: 24,
+        raw_samples_written: 9600,
+      }),
     });
     expect(model).toMatchObject({
       phaseText: "dashboard.recording_phase.recording",
       elapsedText: "0:30",
-      samplesText: "24",
+      samplesText: "9600",
       runIdText: 'dashboard.logging.run_id:{"runId":"run-1"}',
       showStop: true,
       stopDisabled: false,
@@ -303,7 +309,7 @@ describe("recording card", () => {
       status: status({
         analysis_in_progress: true,
         last_run_id: "run-7",
-        samples_written: 4800,
+        raw_samples_written: 4800,
       }),
     });
     expect(stopped.summaryPanel?.title).toBe(
@@ -315,7 +321,7 @@ describe("recording card", () => {
     expect(stopped.samplesText).toBe("4800");
     // An analysis the server resumed after a restart: no counts describe that run.
     const resumed = recording({
-      status: status({ analysis_in_progress: true, samples_written: 0 }),
+      status: status({ analysis_in_progress: true, raw_samples_written: 0 }),
     });
     expect(resumed.samplesText).toBe("--");
     expect(resumed.runIdText).toBe("");

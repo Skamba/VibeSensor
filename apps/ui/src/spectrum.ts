@@ -10,6 +10,16 @@ const SPECTRUM_DISPLAY_HEADROOM_DB = 6;
 const SPECTRUM_DISPLAY_MIN_SPAN_DB = 20;
 const SPECTRUM_DISPLAY_STEP_DB = 10;
 
+/** A chart value (dB re 0.1 mg) back as the amplitude in mg it was drawn from. */
+export function spectrumDbToMg(db: number): number {
+  return SPECTRUM_DB_REFERENCE_AMP_G * 1000 * 10 ** (db / 20);
+}
+
+/** An amplitude in mg as the chart's dB value (the inverse of `spectrumDbToMg`). */
+export function spectrumMgToDb(mg: number): number {
+  return 20 * (Math.log10(mg / 1000) - SPECTRUM_LOG10_REF);
+}
+
 export function convertSpectrumAmplitudesToDbInPlace(values: number[]): void {
   for (let i = 0; i < values.length; i += 1) {
     const amplitude = values[i];

@@ -300,6 +300,7 @@ export async function installCommonRoutes(
       analysis_in_progress: false,
       start_time_utc: null,
       samples_written: 0,
+      raw_samples_written: 0,
       samples_dropped: 0,
       last_completed_run_id: null,
       last_completed_run_error: null,

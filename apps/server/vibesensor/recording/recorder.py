@@ -241,6 +241,7 @@ class RunRecorder:
             elapsed_s=elapsed_s,
             persistence=self._persistence,
             post_analysis=self.post_analysis,
+            raw_samples_written=self.raw_capture.written_sample_count,
             capture_readiness=capture_readiness,
             last_stop_reason=last_stop_reason,
             last_run_id=last_run_id,

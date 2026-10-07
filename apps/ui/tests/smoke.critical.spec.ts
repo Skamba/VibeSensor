@@ -74,6 +74,7 @@ test("critical journey: live dashboard records and opens History", async ({
     analysis_in_progress: false,
     start_time_utc: null,
     samples_written: 0,
+    raw_samples_written: 0,
     samples_dropped: 0,
     last_completed_run_id: null,
     last_completed_run_error: null,
@@ -118,6 +119,7 @@ test("critical journey: live dashboard records and opens History", async ({
       run_id: "run-001",
       start_time_utc: new Date(Date.now() - 30_000).toISOString(),
       samples_written: 24,
+      raw_samples_written: 9600,
       last_completed_run_id: null,
     };
     await fulfillJson(route, recordingStatus);
@@ -179,6 +181,11 @@ test("critical journey: live dashboard records and opens History", async ({
   await page.locator("#startLoggingBtn").click();
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(
     "Recording",
+  );
+  // The raw samples stored, under History's label for the same count.
+  await expect(page.locator("#loggingSamples")).toContainText("Raw samples");
+  await expect(page.locator("#loggingSamples [data-value]")).toHaveText(
+    "9,600",
   );
   await page.locator("#stopLoggingBtn").click();
   await expect(page.locator("#liveRecordingState [data-value]")).toHaveText(

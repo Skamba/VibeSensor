@@ -1,6 +1,7 @@
 import { fmt } from "./format";
 import { getSpectrumCssVars } from "./spectrum_css_vars";
 import {
+  buildSpectrumAmplitudeTicks,
   buildSpectrumChartTickValues,
   calculateSpectrumChartRanges,
   createSpectrumChartBox,
@@ -74,7 +75,8 @@ export interface CreateSpectrumChartDeps {
 const DEFAULT_HEIGHT = 360;
 const HOVER_POINT_RADIUS = 4;
 const X_TICK_COUNT = 6;
-const Y_TICK_COUNT = 6;
+// Up to 7 amplitude ticks keeps 1-2-5 steps for a range of two decades.
+const Y_TICK_COUNT = 7;
 
 type ChartState = {
   plugins: readonly SpectrumChartPlugin[];
@@ -244,16 +246,16 @@ export function createSpectrumChart(
 
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    for (const value of buildSpectrumChartTickValues(
+    for (const tick of buildSpectrumAmplitudeTicks(
       currentYRange,
       Y_TICK_COUNT,
     )) {
-      const y = plotContext.valToPos(value, "y");
+      const y = plotContext.valToPos(tick.db, "y");
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(left + plotWidth, y);
       ctx.stroke();
-      ctx.fillText(formatDbTick(value), left - 8, y);
+      ctx.fillText(formatMgTick(tick.mg), left - 8, y);
     }
 
     ctx.fillStyle = cssVars.muted;
@@ -491,10 +493,12 @@ function requireCanvasContext(
   return context;
 }
 
+/** A round Hz tick: decimals only when the step itself has them. */
 function formatHzTick(value: number): string {
-  return fmt(value, value >= 100 ? 0 : 1);
+  return fmt(value, Number.isInteger(value) ? 0 : 1);
 }
 
-function formatDbTick(value: number): string {
-  return fmt(value, 0);
+/** A round mg tick: decimals only below 1 mg (0.1, 0.2, 0.5). */
+function formatMgTick(value: number): string {
+  return fmt(value, value < 1 ? 1 : 0);
 }

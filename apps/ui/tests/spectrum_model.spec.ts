@@ -24,8 +24,9 @@ const entries: SeriesEntry[] = [
   { id: "b", label: "Rear", color: "blue", values: [2, 4, 8, 6] },
 ];
 const freqAxis = [10, 20, 30, 40];
+// A sensor's strength (dB above its floor) is not its peak bin's chart level.
 const levels: SensorLevels = {
-  strengthDb: (id) => ({ a: 12, b: 8 })[id] ?? null,
+  strengthDb: (id) => ({ a: 6, b: 3 })[id] ?? null,
   topPeakHz: (id) => ({ a: 19, b: 31 })[id] ?? null,
 };
 const bands = orderBands(
@@ -289,8 +290,8 @@ describe("trace focus", () => {
     const all = legendModel(entries, null, levels, t);
     expect(all?.allActive).toBe(true);
     expect(all?.items.map((item) => [item.detail, item.state])).toEqual([
-      ['spectrum.legend.sensor_level:{"value":"12.0"}', undefined],
-      ['spectrum.legend.sensor_level:{"value":"8.0"}', undefined],
+      ['spectrum.legend.sensor_level:{"value":"6"}', undefined],
+      ['spectrum.legend.sensor_level:{"value":"3"}', undefined],
     ]);
     const pinned = legendModel(entries, "a", levels, t);
     expect(pinned?.allActive).toBe(false);
@@ -300,7 +301,7 @@ describe("trace focus", () => {
     ]);
     expect(pinned?.items[0]?.title).toBe("spectrum.legend.clear_focus");
     expect(pinned?.items[1]?.ariaLabel).toBe(
-      'Rear. spectrum.legend.state_inactive. spectrum.legend.sensor_level:{"value":"8.0"}',
+      'Rear. spectrum.legend.state_inactive. spectrum.legend.sensor_level:{"value":"3"}',
     );
     const noLevels = legendModel(
       entries,
@@ -314,21 +315,21 @@ describe("trace focus", () => {
 });
 
 describe("inspector", () => {
-  test("describes the hovered bin, else the focused peak, else a hint", () => {
+  test("describes the hovered bin in mg, else the focused sensor's strength above floor, else a hint", () => {
     expect(inspectorText(input({ cursorIdx: 2 }), t)).toEqual({
       mode: "hover",
-      text: `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "30.0", value: "3.0" })} · ${engineLabel}`,
+      text: `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "30.0", value: "0.14" })} · ${engineLabel}`,
     });
     // A frequency outside every order band gets no band suffix at all.
     expect(inspectorText(input({ cursorIdx: 3 }), t).text).toBe(
-      `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "40.0", value: "1.0" })}`,
+      `spectrum.inspector_hover:${JSON.stringify({ sensor: "Front", freq: "40.0", value: "0.11" })}`,
     );
     expect(inspectorText(input(), t)).toEqual({
       mode: "focus",
-      text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"12.0"} · bands.wheel_1x',
+      text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"6"} · bands.wheel_1x',
     });
     expect(inspectorText(input({ pinnedId: "b" }), t).text).toBe(
-      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "8.0" })} · ${engineLabel}`,
+      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "3" })} · ${engineLabel}`,
     );
     expect(inspectorText(input({ entries: [] }), t)).toEqual({
       mode: "idle",

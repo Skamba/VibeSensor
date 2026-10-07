@@ -54,6 +54,7 @@ class RunRecorderStatusSnapshot:
     elapsed_s: float | None = None
     samples_written: int = 0
     samples_dropped: int = 0
+    raw_samples_written: int = 0
     last_completed_run_id: str | None = None
     last_completed_run_error: str | None = None
     capture_readiness: CaptureReadiness | None = None
@@ -74,6 +75,7 @@ def build_run_recorder_status(
     elapsed_s: float | None,
     persistence: RunPersistenceWriter,
     post_analysis: PostAnalysisWorker,
+    raw_samples_written: int = 0,
     capture_readiness: CaptureReadiness | None = None,
     last_stop_reason: RecordingStopReason | None = None,
     last_run_id: str | None = None,
@@ -95,6 +97,7 @@ def build_run_recorder_status(
         elapsed_s=elapsed_s,
         samples_written=persist.written_sample_count,
         samples_dropped=persist.dropped_sample_count,
+        raw_samples_written=raw_samples_written,
         last_completed_run_id=post_snapshot.last_completed_run_id,
         last_completed_run_error=post_snapshot.last_completed_error,
         capture_readiness=capture_readiness,

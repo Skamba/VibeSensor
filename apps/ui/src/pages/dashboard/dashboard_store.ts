@@ -468,7 +468,10 @@ export const overview = computed(() => {
       formatInt,
     ),
     strongestText: strongest
-      ? `${label(strongest.client)} · ${formatInt(strongest.db)} dB`
+      ? t("dashboard.strongest_signal_value", {
+          sensor: label(strongest.client),
+          value: formatInt(strongest.db),
+        })
       : t("dashboard.strongest_signal_none"),
     sensors: list.map((client) => ({
       id: client.id,

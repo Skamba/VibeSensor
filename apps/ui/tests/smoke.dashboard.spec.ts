@@ -45,6 +45,7 @@ function idleStatus(
     analysis_in_progress: false,
     start_time_utc: null,
     samples_written: 0,
+    raw_samples_written: 0,
     samples_dropped: 0,
     last_completed_run_id: null,
     last_completed_run_error: null,
@@ -588,7 +589,7 @@ test("journey: sensor cards show the location, or the name of an unplaced sensor
   await expect(cards.nth(1)).toContainText("Rear Right · unplaced");
   await expect(cards.nth(1)).toHaveAttribute("data-strongest", "true");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toHaveText(
-    "Rear Right · unplaced · 18 dB",
+    "Rear Right · unplaced · 18 dB above floor",
   );
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText(
     "2 / 2",
