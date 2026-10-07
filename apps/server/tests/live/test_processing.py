@@ -144,12 +144,15 @@ def test_ingest_not_blocked_during_compute() -> None:
     worker.start()
     compute_started.wait(timeout=2.0)
 
-    # Repeatedly ingest while compute runs and measure latency
+    # Repeatedly ingest while compute runs and measure latency. Measure at least
+    # once: on a fast host the worker can finish before this loop first checks.
     chunk = np.zeros((50, 3), dtype=np.float32)
-    while not compute_done.is_set():
+    while True:
         t0 = time.monotonic()
         processor.ingest("c2", chunk, sample_rate_hz=sample_rate_hz)
         ingest_latencies.append(time.monotonic() - t0)
+        if compute_done.is_set():
+            break
 
     worker.join(timeout=5.0)
     assert compute_done.is_set()

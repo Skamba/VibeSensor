@@ -335,6 +335,7 @@ def test_append_records_clears_write_error_after_successful_retry(
 def test_append_records_reports_timeout_when_no_data_for_threshold(
     make_logger,
     no_active_registry,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     logger = make_logger(registry=no_active_registry)
 
@@ -342,7 +343,11 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(
     run_id = snapshot.run_id
     start_time_utc = snapshot.start_time_utc
     start_mono = snapshot.start_mono_s
-    logger._lifecycle.last_data_progress_mono_s = 0.0
+    # A fixed clock, not 0.0 against the host's: a fresh CI runner can have under
+    # a minute of monotonic uptime, which made this test flaky.
+    now = start_mono + logger._lifecycle.no_data_timeout_s + 1.0
+    monkeypatch.setattr("vibesensor.recording.recorder.time.monotonic", lambda: now)
+    logger._lifecycle.last_data_progress_mono_s = start_mono
 
     auto_stop_reason = logger._sample_flush.append_records(
         run_id,
