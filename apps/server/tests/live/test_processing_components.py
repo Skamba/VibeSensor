@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from vibesensor.dsp.fft_analysis import axis_peaks_from_spectrum
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import MetricsSnapshot, ProcessorConfig
 
@@ -39,7 +40,12 @@ def test_metrics_computer_operates_on_snapshot_without_shared_state() -> None:
 
     assert result.client_id == "client-2"
     assert result.ingest_generation == 7
-    assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in result.metrics["x"]["peaks"])
+    assert any(
+        abs(float(peak["hz"]) - 20.0) < 1.0
+        for peak in axis_peaks_from_spectrum(
+            freq_slice=result.metrics["x"]["freq"], amp_slice=result.metrics["x"]["amp"]
+        )
+    )
     assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in result.metrics["combined"]["peaks"])
 
 

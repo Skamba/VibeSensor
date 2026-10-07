@@ -112,6 +112,10 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
    strength_db = 20 * log10((peak_rms + eps) / (floor + eps))
    eps = max(1e-9, floor * 0.05)
    ```
+5. A tick computes the strength of the combined spectrum only. Each axis's
+   peaks are found when the recorder builds a summary row, to pick its
+   `dominant_axis` (`recording/sample_strength_metrics.py`): the live view
+   without a recording does a quarter of the strength work per sensor.
 
 ### Key invariants
 

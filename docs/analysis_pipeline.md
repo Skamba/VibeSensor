@@ -48,7 +48,9 @@ time-domain filter, so stored live rows and replayed rows share one noise floor
 When raw capture is available, `analysis/raw_capture_replay.py` recomputes each
 summary row's FFT peaks and strength metrics from the raw window the row was
 analysed over, so the summary analysis reasons over unfiltered diagnostic
-evidence.
+evidence. Each window is laid out as the live tick's FFT block (three axes,
+each contiguous), so the FFT's per-axis passes read contiguous memory and the
+replay computes a block as the live tick does.
 
 The summary analysis is the single diagnosis: the UI insights endpoint and the
 PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.

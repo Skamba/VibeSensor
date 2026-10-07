@@ -457,15 +457,23 @@ def _local_maxima(values: npt.NDArray[np.float64]) -> npt.NDArray[np.intp]:
 
     if values.size < 3:
         return np.empty(0, dtype=np.intp)
+    left = values[:-1]
+    right = values[1:]
+    if not np.any(left == right):
+        # No flat tops (the usual spectrum): a peak is above both neighbours.
+        return np.flatnonzero((right[:-1] > left[:-1]) & (left[1:] > right[1:])) + 1
     # Collapse runs of equal values; a peak is a run higher than both neighbours.
-    run_starts = np.flatnonzero(np.concatenate(([True], values[1:] != values[:-1])))
+    run_starts = np.flatnonzero(np.concatenate(([True], right != left)))
     run_ends = np.append(run_starts[1:] - 1, values.size - 1)
     run_values = values[run_starts]
     is_peak = (run_values[1:-1] > run_values[:-2]) & (run_values[1:-1] > run_values[2:])
     return np.asarray((run_starts[1:-1][is_peak] + run_ends[1:-1][is_peak]) // 2, dtype=np.intp)
 
 
-def _candidate_peak_indexes(values: npt.NDArray[np.float64], threshold: float) -> list[int]:
+def _candidate_peak_indexes(
+    values: npt.NDArray[np.float64], threshold: float, limit: int
+) -> list[int]:
+    """The *limit* highest local maxima at or above *threshold*, highest first."""
     peak_indexes = _local_maxima(values)
     peak_indexes = peak_indexes[values[peak_indexes] >= threshold]
     if values.size > 1:
@@ -475,10 +483,8 @@ def _candidate_peak_indexes(values: npt.NDArray[np.float64], threshold: float) -
             peak_indexes = np.append(peak_indexes, last_idx)
     if peak_indexes.size == 0:
         return []
-    heights = np.asarray(values[peak_indexes], dtype=np.float64)
-    order = np.argsort(heights)[::-1]
-    ordered_indexes = np.asarray(peak_indexes[order], dtype=np.intp)
-    return [int(idx) for idx in ordered_indexes.tolist()]
+    order = np.argsort(values[peak_indexes])[::-1]
+    return cast(list[int], peak_indexes[order[:limit]].tolist())
 
 
 def vibration_strength_db_scalar(
@@ -561,15 +567,9 @@ def compute_vibration_strength_db(
         floor_p20 + STRENGTH_EPSILON_MIN_G,
     )
 
-    local_maxima = _candidate_peak_indexes(combined, threshold)
-    invalid_idx = next((idx for idx in local_maxima if not (0 <= idx < freq.size)), None)
-    if invalid_idx is not None:
-        raise ValueError(
-            f"peak index {invalid_idx} out of range for aligned spectrum size {freq.size}"
-        )
     floor_peak_limit = max(1, top_n)
     scored_candidate_limit = max(1, top_n * 2)
-    scored_candidate_indexes = [int(idx) for idx in local_maxima[:scored_candidate_limit]]
+    scored_candidate_indexes = _candidate_peak_indexes(combined, threshold, scored_candidate_limit)
     floor_peak_indexes = scored_candidate_indexes[:floor_peak_limit]
 
     floor_strength = _strength_floor_amp_g_aligned(
@@ -585,18 +585,20 @@ def compute_vibration_strength_db(
         bandwidth_hz=peak_bandwidth_hz,
     )
 
-    candidate_hz: list[float] = []
-    candidate_band_rms: list[float] = []
+    candidate_hz: list[float] = freq[scored_candidate_indexes].tolist()
     if peak_band_ranges is None:
-        for idx in scored_candidate_indexes:
-            band_rms = _peak_band_rms_amp_g_aligned(
-                freq_hz=freq,
-                combined_spectrum_amp_g=combined,
-                center_idx=idx,
-                bandwidth_hz=peak_bandwidth_hz,
-            )
-            candidate_hz.append(float(freq[idx]))
-            candidate_band_rms.append(float(band_rms))
+        band_rms_values = np.array(
+            [
+                _peak_band_rms_amp_g_aligned(
+                    freq_hz=freq,
+                    combined_spectrum_amp_g=combined,
+                    center_idx=idx,
+                    bandwidth_hz=peak_bandwidth_hz,
+                )
+                for idx in scored_candidate_indexes
+            ],
+            dtype=np.float64,
+        )
     else:
         left_bounds, right_bounds = peak_band_ranges
         band_rms_values = _peak_band_rms_amp_g_from_ranges(
@@ -604,46 +606,44 @@ def compute_vibration_strength_db(
             left_bounds=left_bounds,
             right_bounds=right_bounds,
         )
-        for candidate_idx, idx in enumerate(scored_candidate_indexes):
-            candidate_hz.append(float(freq[idx]))
-            candidate_band_rms.append(float(band_rms_values[candidate_idx]))
     candidate_db = _batch_vibration_strength_db_aligned(
-        peak_band_rms_amp_g_values=np.asarray(candidate_band_rms, dtype=np.float64),
+        peak_band_rms_amp_g_values=band_rms_values,
         floor_amp_g=floor_strength,
     )
     candidate_buckets = _buckets_for_strength_db_aligned(candidate_db)
-    candidates: list[StrengthPeak] = []
-    for hz, band_rms, db, strength_bucket in zip(
-        candidate_hz,
-        candidate_band_rms,
-        candidate_db,
-        candidate_buckets,
-        strict=True,
-    ):
-        db_value = float(db)
-        if not isfinite(db_value):
-            continue
-        candidates.append(
-            {
-                "hz": hz,
-                "amp": band_rms,
-                "vibration_strength_db": db_value,
-                "strength_bucket": strength_bucket,
-            }
+    candidates: list[StrengthPeak] = [
+        {
+            "hz": hz,
+            "amp": band_rms,
+            "vibration_strength_db": db,
+            "strength_bucket": strength_bucket,
+        }
+        for hz, band_rms, db, strength_bucket in zip(
+            candidate_hz,
+            band_rms_values.tolist(),
+            candidate_db.tolist(),
+            candidate_buckets,
+            strict=True,
         )
+        if isfinite(db)
+    ]
     candidates.sort(
         key=lambda item: item["vibration_strength_db"],
         reverse=True,
     )
 
     chosen: list[StrengthPeak] = []
+    chosen_hz: list[float] = []
     for candidate in candidates:
         if len(chosen) >= top_n:
             break
-        hz = float(candidate["hz"] or 0.0)
-        if any(abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz for existing in chosen):
-            continue
-        chosen.append(candidate)
+        hz = candidate["hz"]
+        for existing_hz in chosen_hz:
+            if abs(existing_hz - hz) < peak_separation_hz:
+                break
+        else:
+            chosen.append(candidate)
+            chosen_hz.append(hz)
 
     top_peak = chosen[0] if chosen else None
     if top_peak is not None:

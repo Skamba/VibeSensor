@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from vibesensor.dsp.fft_analysis import (
+    AXES,
     SpectralAnalysisComputer,
     fill_lost_samples,
     present_centre,
@@ -77,8 +78,10 @@ class SignalMetricsComputer(SpectralAnalysisComputer):
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
 
-            for ax_key, axis_peaks in fft_result["axis_peaks"].items():
-                metrics[ax_key] = {"peaks": axis_peaks}
+            # The per-axis spectra, for a summary row's dominant axis: their
+            # peaks are found only when a row is built, not on every tick.
+            for axis in AXES:
+                metrics[axis] = spectrum_by_axis[axis]
 
             if fft_result["spectrum_by_axis"]:
                 combined_amp = fft_result["combined_amp"]

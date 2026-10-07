@@ -16,6 +16,7 @@ import pytest
 import vibesensor.dsp.fft_analysis as fft_module
 from vibesensor.dsp.fft_analysis import (
     SpectralAnalysisComputer,
+    axis_peaks_from_spectrum,
     compute_fft_spectrum,
     float_list,
 )
@@ -119,8 +120,11 @@ class TestComputeFftSpectrum:
             assert float(result["spectrum_by_axis"][axis]["amp"][dominant_idx]) == pytest.approx(
                 float(result["combined_amp"][dominant_idx]),
             )
-            assert float(result["axis_peaks"][axis][0]["hz"]) == pytest.approx(50.0, abs=1.0)
-            assert float(result["axis_peaks"][axis][0]["amp"]) > 0.0
+            axis_peaks = axis_peaks_from_spectrum(
+                freq_slice=result["freq_slice"], amp_slice=result["spectrum_by_axis"][axis]["amp"]
+            )
+            assert float(axis_peaks[0]["hz"]) == pytest.approx(50.0, abs=1.0)
+            assert float(axis_peaks[0]["amp"]) > 0.0
 
     def test_preserves_first_analysis_bin_when_slice_starts_above_zero(self) -> None:
         sr = 512
@@ -317,7 +321,6 @@ class TestComputeFftSpectrum:
             "has_valid_analysis_bins",
             "strength_metrics",
             "strength_metrics_analytically_valid",
-            "axis_peaks",
         }
         assert freq_slice.dtype == np.float32
         assert result["combined_amp"].dtype == np.float32
@@ -326,7 +329,6 @@ class TestComputeFftSpectrum:
             assert axis_spectrum["freq"].dtype == np.float32
             np.testing.assert_array_equal(axis_spectrum["freq"], freq_slice)
             assert axis_spectrum["amp"].dtype == np.float32
-            assert isinstance(result["axis_peaks"][axis], list)
 
         if expect_empty:
             assert freq_slice.size == 0
@@ -337,7 +339,6 @@ class TestComputeFftSpectrum:
             assert result["strength_metrics"]["top_peaks"] == []
             for axis in ("x", "y", "z"):
                 assert result["spectrum_by_axis"][axis]["amp"].size == 0
-                assert result["axis_peaks"][axis] == []
             return
 
         assert np.all(np.diff(freq_slice) >= 0.0)
@@ -394,8 +395,16 @@ class TestComputeFftSpectrum:
             **_make_fft_params(sr=sr, fft_n=fft_n, max_hz=200.0),
         )
         peak_freqs = [float(peak["hz"]) for peak in result["strength_metrics"]["top_peaks"][:2]]
-        x_axis_peak_freqs = [float(peak["hz"]) for peak in result["axis_peaks"]["x"][:1]]
-        y_axis_peak_freqs = [float(peak["hz"]) for peak in result["axis_peaks"]["y"][:1]]
+        x_axis_peak_freqs, y_axis_peak_freqs = (
+            [
+                float(peak["hz"])
+                for peak in axis_peaks_from_spectrum(
+                    freq_slice=result["freq_slice"],
+                    amp_slice=result["spectrum_by_axis"][axis]["amp"],
+                )[:1]
+            ]
+            for axis in ("x", "y")
+        )
         idx_50 = int(np.argmin(np.abs(result["freq_slice"] - 50.0)))
         idx_80 = int(np.argmin(np.abs(result["freq_slice"] - 80.0)))
 

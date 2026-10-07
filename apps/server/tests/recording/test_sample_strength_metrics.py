@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.synthetic_samples import axis_spectrum
 
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.live.payload_types import ClientMetrics
@@ -77,24 +78,24 @@ class TestDominantAxisFromMetrics:
 
     def test_returns_axis_when_peak_match_is_clear(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"peaks": [{"hz": 42.0, "amp": 0.3}]},
-            "y": {"peaks": [{"hz": 42.0, "amp": 0.1}]},
-            "z": {"peaks": []},
+            "x": axis_spectrum((42.0, 0.3)),
+            "y": axis_spectrum((42.0, 0.1)),
+            "z": axis_spectrum(),
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == "x"
 
     def test_returns_combined_when_multiple_axes_match_without_clear_winner(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"peaks": [{"hz": 42.0, "amp": 0.2}]},
-            "y": {"peaks": [{"hz": 42.0, "amp": 0.2}]},
-            "z": {"peaks": []},
+            "x": axis_spectrum((42.0, 0.2)),
+            "y": axis_spectrum((42.0, 0.2)),
+            "z": axis_spectrum(),
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == "combined"
 
     def test_returns_empty_when_dominant_peak_has_no_axis_evidence(self) -> None:
         metrics: ClientMetrics = {
-            "x": {"peaks": [{"hz": 20.0, "amp": 0.1}]},
-            "y": {"peaks": []},
-            "z": {"peaks": []},
+            "x": axis_spectrum((20.0, 0.1)),
+            "y": axis_spectrum(),
+            "z": axis_spectrum(),
         }
         assert dominant_axis_from_metrics(metrics, dominant_hz=42.0) == ""

@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping
 
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.dsp.constants import PEAK_SEPARATION_HZ
-from vibesensor.live.payload_types import ClientMetrics
+from vibesensor.dsp.fft_analysis import AXES, axis_peaks_from_spectrum
+from vibesensor.live.payload_types import AxisPeak, ClientMetrics
 from vibesensor.recording.strength_metrics_codec import strength_metrics_from_mapping
 
 __all__ = ["dominant_axis_from_metrics", "dominant_hz_from_strength", "extract_strength_data"]
 
-_AXES: tuple[str, str, str] = ("x", "y", "z")
 _AXIS_DOMINANCE_REL_TOL = 0.05
 
 
@@ -47,11 +46,12 @@ def dominant_axis_from_metrics(
     if dominant_hz is None or not math.isfinite(dominant_hz):
         return ""
     matches: list[tuple[float, float, str]] = []
-    for axis in _AXES:
-        axis_metrics = metrics.get(axis)
-        if not isinstance(axis_metrics, Mapping):
+    for axis in AXES:
+        spectrum = metrics.get(axis)
+        if spectrum is None:
             continue
-        best_match = _best_axis_peak_match(axis_metrics.get("peaks"), dominant_hz)
+        peaks = axis_peaks_from_spectrum(freq_slice=spectrum["freq"], amp_slice=spectrum["amp"])
+        best_match = _best_axis_peak_match(peaks, dominant_hz)
         if best_match is None:
             continue
         matches.append((best_match[0], best_match[1], axis))
@@ -69,22 +69,13 @@ def dominant_axis_from_metrics(
     return best_axis
 
 
-def _best_axis_peak_match(peaks: object, dominant_hz: float) -> tuple[float, float] | None:
-    if not isinstance(peaks, list):
-        return None
+def _best_axis_peak_match(peaks: list[AxisPeak], dominant_hz: float) -> tuple[float, float] | None:
     best: tuple[float, float] | None = None
     for peak in peaks:
-        if not isinstance(peak, Mapping):
+        amp = peak["amp"]
+        if not math.isfinite(amp):
             continue
-        raw_hz = peak.get("hz")
-        raw_amp = peak.get("amp")
-        if not isinstance(raw_hz, int | float) or not isinstance(raw_amp, int | float):
-            continue
-        hz = float(raw_hz)
-        amp = float(raw_amp)
-        if not math.isfinite(hz) or not math.isfinite(amp) or amp <= 0.0:
-            continue
-        delta_hz = abs(hz - dominant_hz)
+        delta_hz = abs(peak["hz"] - dominant_hz)
         if delta_hz > PEAK_SEPARATION_HZ:
             continue
         candidate = (amp, delta_hz)

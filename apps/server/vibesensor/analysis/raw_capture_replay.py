@@ -390,15 +390,17 @@ def _rebuild_sample(
                 reason="window_truncated",
             ),
         )
-    window_f32 = window_i16.astype(np.float32, copy=True)
+    # (3, N) with each axis contiguous, as the live tick's FFT block: the FFT's
+    # per-axis passes then read the same layout, at a fraction of the strided cost.
+    fft_block = np.array(window_i16.T, dtype=np.float32, order="C")
     if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
-        window_f32 *= np.float32(accel_scale_g_per_lsb)
+        fft_block *= np.float32(accel_scale_g_per_lsb)
     computed_strength = _compute_strength_metrics(
-        window_f32,
+        fft_block,
         sample_rate_hz,
         fft_computer=fft_computer,
     )
-    last_xyz = window_f32[-1]
+    last_xyz = fft_block[:, -1]
     if not computed_strength.analytically_valid:
         return (
             replace(
@@ -958,14 +960,14 @@ def _build_replay_warnings(
 
 
 def _compute_strength_metrics(
-    window_f32: np.ndarray,
+    fft_block: np.ndarray,
     sample_rate_hz: int,
     *,
     fft_computer: SpectralAnalysisComputer,
 ) -> _ComputedStrengthMetrics:
     strength_metrics = (
-        fft_computer.compute_combined_strength_metrics(window_f32.T, sample_rate_hz)
-        if window_f32.size > 0
+        fft_computer.compute_combined_strength_metrics(fft_block, sample_rate_hz)
+        if fft_block.size > 0
         else None
     )
     if strength_metrics is None:

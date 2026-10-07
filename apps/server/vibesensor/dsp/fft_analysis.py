@@ -35,6 +35,7 @@ __all__ = [
     "IntIndexArray",
     "SpectralAnalysisComputer",
     "SpectrumAxisData",
+    "axis_peaks_from_spectrum",
     "SpectrumByAxis",
     "broadband_energy_ratio",
     "compute_combined_strength_metrics",
@@ -70,7 +71,6 @@ class FftSpectrumResult(TypedDict):
     has_valid_analysis_bins: bool
     strength_metrics: VibrationStrengthMetrics
     strength_metrics_analytically_valid: bool
-    axis_peaks: dict[Axis, list[AxisPeak]]
 
 
 AXES: tuple[Axis, Axis, Axis] = ("x", "y", "z")
@@ -172,13 +172,11 @@ def fft_frequency_slice(
 def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
     empty_amp = np.empty(0, dtype=np.float32)
     spectrum_by_axis: SpectrumByAxis = {}
-    axis_peaks: dict[Axis, list[AxisPeak]] = {}
     for axis in AXES:
         spectrum_by_axis[axis] = {
             "freq": freq_slice,
             "amp": empty_amp.copy(),
         }
-        axis_peaks[axis] = []
     return {
         "freq_slice": freq_slice,
         "spectrum_by_axis": spectrum_by_axis,
@@ -186,16 +184,16 @@ def _empty_fft_spectrum_result(freq_slice: FloatArray) -> FftSpectrumResult:
         "has_valid_analysis_bins": False,
         "strength_metrics": empty_vibration_strength_metrics(),
         "strength_metrics_analytically_valid": False,
-        "axis_peaks": axis_peaks,
     }
 
 
-def _axis_peaks_from_spectrum(
-    *,
-    freq_slice: FloatArray,
-    amp_slice: FloatArray,
-    strength_range_mask: BoolArray | None,
-) -> list[AxisPeak]:
+def axis_peaks_from_spectrum(*, freq_slice: FloatArray, amp_slice: FloatArray) -> list[AxisPeak]:
+    """The strength peaks of one axis's spectrum, with their ratio to its noise floor.
+
+    Computed only when a summary row asks which axis carries the dominant peak
+    (``dominant_axis``), not on every live tick: it costs as much as the
+    combined spectrum's strength.
+    """
     if freq_slice.size == 0 or amp_slice.size == 0:
         return []
     strength_metrics = compute_vibration_strength_db(
@@ -204,7 +202,6 @@ def _axis_peaks_from_spectrum(
         peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
         peak_separation_hz=PEAK_SEPARATION_HZ,
         top_n=8,
-        strength_range_mask=strength_range_mask,
     )
     floor_amp_g = float(strength_metrics["noise_floor_amp_g"])
     peaks: list[AxisPeak] = []
@@ -361,19 +358,11 @@ def compute_fft_spectrum(
         return _empty_fft_spectrum_result(freq_slice)
 
     spectrum_by_axis: SpectrumByAxis = {}
-    axis_peaks: dict[Axis, list[AxisPeak]] = {}
-
     for axis_idx, axis in enumerate(AXES):
-        amp_slice = specs_all[axis_idx, valid_idx]
         spectrum_by_axis[axis] = {
             "freq": freq_slice,
-            "amp": amp_slice,
+            "amp": specs_all[axis_idx, valid_idx],
         }
-        axis_peaks[axis] = _axis_peaks_from_spectrum(
-            freq_slice=freq_slice,
-            amp_slice=amp_slice,
-            strength_range_mask=strength_range_mask,
-        )
 
     combined_amp, strength_metrics = _combined_strength_metrics(
         freq_slice=freq_slice,
@@ -388,7 +377,6 @@ def compute_fft_spectrum(
         "has_valid_analysis_bins": has_valid_analysis_bins,
         "strength_metrics": strength_metrics,
         "strength_metrics_analytically_valid": has_valid_analysis_bins,
-        "axis_peaks": axis_peaks,
     }
 
 

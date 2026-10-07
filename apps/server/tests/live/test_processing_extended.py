@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from vibesensor.dsp.fft_analysis import axis_peaks_from_spectrum
 from vibesensor.live.buffers import MAX_CLIENT_SAMPLE_RATE_HZ
 from vibesensor.live.processor import SignalProcessor
 
@@ -304,7 +305,7 @@ def test_compute_metrics_with_data() -> None:
     assert "y" in metrics
     assert "z" in metrics
     assert "combined" in metrics
-    assert metrics["x"]["peaks"]
+    assert axis_peaks_from_spectrum(freq_slice=metrics["x"]["freq"], amp_slice=metrics["x"]["amp"])
 
 
 # -- evict_clients -------------------------------------------------------------
@@ -331,4 +332,6 @@ def test_compute_all() -> None:
     result = proc.compute_all(["c1", "c2"])
     assert "c1" in result
     assert "c2" in result
-    assert result["c1"]["x"]["peaks"]
+    assert axis_peaks_from_spectrum(
+        freq_slice=result["c1"]["x"]["freq"], amp_slice=result["c1"]["x"]["amp"]
+    )

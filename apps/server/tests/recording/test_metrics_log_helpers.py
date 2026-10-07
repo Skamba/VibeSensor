@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import ANY
 
 import pytest
+from test_support.synthetic_samples import axis_spectrum
 
 from vibesensor.domain.run_status import RunStatus
 from vibesensor.history.history_db import HistoryDB
@@ -63,7 +64,7 @@ def test_build_sample_records_caps_combined_top_peak_list(make_logger, fake_regi
         {"hz": float(i + 1), "amp": 0.2, "vibration_strength_db": 22.0, "strength_bucket": "l2"}
         for i in range(12)
     ]
-    active.latest_metrics["x"]["peaks"] = [{"hz": float(i + 1), "amp": 0.1} for i in range(6)]
+    active.latest_metrics["x"] = axis_spectrum(*((float(i + 10), 0.1) for i in range(6)))
 
     logger = make_logger(registry=fake_registry)
 
