@@ -27,6 +27,13 @@ The tool reports:
   band
 - representative pure-tone examples run through the current FFT path
 
+The ADXL345 itself filters only digitally, to a bandwidth of half its output
+data rate (datasheet Table 7; the firmware sets ODR = sample rate), with no
+analog anti-alias filter, so vibration above 400 Hz (gear whine, high engine
+orders, tyre/road content) folds into the band attenuated only by that filter's
+roll-off. The simulator's ADXL345 front end models this (see
+`docs/simulator_realism.md`).
+
 Important limitation: this is **not** a full hardware anti-alias certification.
 It assumes the current sampled data reaches the server as-is. Real anti-alias
 performance still depends on the sensor and any analog / sensor-side bandwidth
