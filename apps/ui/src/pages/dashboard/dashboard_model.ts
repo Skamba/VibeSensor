@@ -9,6 +9,9 @@ import {
   GUIDED_COAST_DROP_KMH,
   GUIDED_SWEEP_FROM_KMH,
   GUIDED_SWEEP_TO_KMH,
+  GUIDED_WARM_UP_ABOVE_KMH,
+  GUIDED_WARM_UP_KM,
+  GUIDED_WARM_UP_MINUTES,
 } from "../../config";
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { KeepAwakeMode } from "../../keep_awake";
@@ -1003,7 +1006,17 @@ export interface GuidedTestModel {
   hint: string;
   finished: boolean;
   steps: GuidedStep[];
-  /** Starts the guided test, before any step; `current.action` moves on from there. */
+  /**
+   * The tire warm-up before step 1: how to do it while parked, then, once
+   * recording and before Start, the check that it was done before the run
+   * began (the whole run is analyzed, so a warm-up inside it would count).
+   * `null` once the steps begin, or while recording on a typed-in speed.
+   */
+  warmUp: string | null;
+  /**
+   * Starts the guided test, before any step, and confirms the tires are warm;
+   * `current.action` moves on from there.
+   */
   action: { label: string; phase: GuidedPhase } | null;
   current: GuidedCurrentStep | null;
   disabled: boolean;
@@ -1012,6 +1025,19 @@ export interface GuidedTestModel {
    * so this says so in place of offering the guided test; `null` otherwise.
    */
   typedInNote: string | null;
+}
+
+function warmUpText(
+  kind: "instruction" | "check",
+  unit: SpeedUnit,
+  t: Translate,
+): string {
+  return t(`dashboard.guided.warm_up.${kind}`, {
+    km: GUIDED_WARM_UP_KM,
+    minutes: GUIDED_WARM_UP_MINUTES,
+    speed: fmt(kmhInUnit(GUIDED_WARM_UP_ABOVE_KMH, unit), 0),
+    unit: t(speedUnitKey(unit)),
+  });
 }
 
 function guidedText(
@@ -1052,8 +1078,10 @@ function brakeProgress(stops: number, t: Translate): string {
  * reports the step in progress, the steps completed so far and the brake
  * step's firm stops, so the guided test survives a page reload mid-run; the
  * step in progress also gets a short card with the Next button at the top of
- * Live. An EV drives without top gear or neutral: its steps are the sweep, the
- * hold and the firm stops (docs/user_journeys.md §5.3).
+ * Live. Before step 1 it asks for a tire warm-up off the recording, since
+ * parking flat spots fade only over the first ~20 km. An EV drives without
+ * top gear or neutral: its steps are the sweep, the hold and the firm stops
+ * (docs/user_journeys.md §5.3).
  */
 export function guidedTestModel(
   status: LoggingStatusPayload,
@@ -1106,15 +1134,21 @@ export function guidedTestModel(
         : { label: t("dashboard.guided.finish"), phase: null },
     };
   }
+  const action =
+    recording && index < 0 && !typedInSpeed
+      ? { label: t("dashboard.guided.start"), phase: order[0] }
+      : null;
   return {
     mode: recording ? "active" : status.enabled ? "hidden" : "preview",
     hint: t(electric ? "dashboard.guided.hint_ev" : "dashboard.guided.hint"),
     finished,
     steps,
-    action:
-      recording && index < 0 && !typedInSpeed
-        ? { label: t("dashboard.guided.start"), phase: order[0] }
+    warmUp: !recording
+      ? warmUpText("instruction", unit, t)
+      : action
+        ? warmUpText("check", unit, t)
         : null,
+    action,
     current: currentStep,
     disabled: busy,
     typedInNote: typedInSpeed ? t("dashboard.guided.typed_in_note") : null,

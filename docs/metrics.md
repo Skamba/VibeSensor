@@ -182,7 +182,9 @@ the source:
     the lowest frequency analysed (5 Hz), the comb is not recognised: a
     town-only first drive on flat-spotted tyres can still read as a
     propshaft or engine fault on such a car (an open limit; the benchmark
-    runs that drive only on a car whose orders miss the comb),
+    runs that drive only on a car whose orders miss the comb; the guided
+    drive asks for a tire warm-up before recording for this reason,
+    [user_journeys.md](user_journeys.md) §3.6),
   - its strength: none at 13 dB, full at 19 dB, across the moderate band's
     edge (16 dB). Together with the light ramp this replaces a step at
     16 dB that more than doubled a faint engine tone's score (0.40 at

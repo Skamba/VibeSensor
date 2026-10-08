@@ -322,6 +322,16 @@ function GuidedSteps(props: { steps: GuidedStep[]; preview: boolean }) {
   );
 }
 
+/** The tire warm-up before step 1: not a recorded step, so it has no number. */
+function GuidedWarmUp(props: { text: string | null }) {
+  return props.text ? (
+    <div id="guidedWarmUp" class="guided-test__step">
+      <strong>{t("dashboard.guided.warm_up.title")}</strong>
+      <div class="guided-test__instruction">{props.text}</div>
+    </div>
+  ) : null;
+}
+
 /** No guided step can be checked on a typed-in speed: say so, with the way out. */
 function GuidedTypedInNote(props: { note: string }) {
   return (
@@ -360,6 +370,7 @@ function GuidedTest() {
             {t("dashboard.guided.preview.note")}
           </div>
         )}
+        <GuidedWarmUp text={model.warmUp} />
         <GuidedSteps steps={model.steps} preview />
       </details>
     );
@@ -375,6 +386,7 @@ function GuidedTest() {
       {model.typedInNote ? (
         <GuidedTypedInNote note={model.typedInNote} />
       ) : null}
+      <GuidedWarmUp text={model.warmUp} />
       <GuidedSteps steps={model.steps} preview={false} />
       {model.finished ? (
         <div class="guided-test__done">{t("dashboard.guided.done")}</div>
