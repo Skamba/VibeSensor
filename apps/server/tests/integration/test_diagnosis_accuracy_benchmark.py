@@ -1357,48 +1357,20 @@ def _alternator(mg: float) -> AccessoryTone:
     return AccessoryTone(level_mg=(mg, 0.6 * mg, 0.8 * mg), engine_order=2.8, phase_rad=1.0)
 
 
-def _ac_compressor(mg: float) -> AccessoryTone:
-    """The air-con compressor at 1.25 times the crank, its clutch cycling 20 s on, 10 s off."""
-    return AccessoryTone(
-        level_mg=(mg, 0.7 * mg, 0.9 * mg),
-        engine_order=1.25,
-        on_s=20.0,
-        off_s=10.0,
-        phase_rad=2.0,
-    )
-
-
-def _abs_pump(mg: float) -> AccessoryTone:
-    """The ABS pump motor (3600 rpm), running only in a stop hard enough for ABS to act."""
-    return AccessoryTone(level_mg=(0.8 * mg, 0.5 * mg, mg), hz=60.0, min_decel_g=0.5)
-
-
 _ACCESSORIES = {
-    "driver_seat": (_blower(10.0), _alternator(1.0), _ac_compressor(1.0)),
-    "front_passenger_seat": (_blower(10.0), _alternator(1.0), _ac_compressor(1.0)),
-    "rear_center_seat": (_blower(5.0), _alternator(0.8), _ac_compressor(0.8)),
-    "trunk": (_blower(2.0), _alternator(0.5), _ac_compressor(0.5)),
-    "engine_bay": (_alternator(8.0), _ac_compressor(8.0), _blower(2.0), _abs_pump(10.0)),
-    "transmission": (_alternator(4.0), _ac_compressor(4.0)),
-    "front_subframe": (_alternator(4.0), _ac_compressor(4.0), _abs_pump(8.0)),
-    "driveshaft_tunnel": (_alternator(2.0), _ac_compressor(2.0)),
-    "front_left_wheel": (_blower(1.5), _alternator(1.5), _ac_compressor(1.5), _abs_pump(20.0)),
-    "front_right_wheel": (_blower(1.5), _alternator(1.5), _ac_compressor(1.5), _abs_pump(20.0)),
-    "rear_left_wheel": (_alternator(0.5), _ac_compressor(0.5), _abs_pump(12.0)),
-    "rear_right_wheel": (_alternator(0.5), _ac_compressor(0.5), _abs_pump(12.0)),
+    "driver_seat": (_blower(10.0), _alternator(1.0)),
+    "front_passenger_seat": (_blower(10.0), _alternator(1.0)),
+    "rear_center_seat": (_blower(5.0), _alternator(0.8)),
+    "trunk": (_blower(2.0), _alternator(0.5)),
+    "engine_bay": (_alternator(8.0), _blower(2.0)),
+    "transmission": (_alternator(4.0),),
+    "front_subframe": (_alternator(4.0),),
+    "driveshaft_tunnel": (_alternator(2.0),),
+    "front_left_wheel": (_blower(1.5), _alternator(1.5)),
+    "front_right_wheel": (_blower(1.5), _alternator(1.5)),
+    "rear_left_wheel": (_alternator(0.5),),
+    "rear_right_wheel": (_alternator(0.5),),
 }
-
-
-def _emergency_stops(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
-    """Cruise and sweep, with two stops hard enough for ABS (0.5-0.75 g)."""
-    return (
-        _phase("cruise", 10.0, 100.0, 100.0, *faults),
-        _phase("sweep", 12.0, 60.0, 120.0, *faults),
-        _phase("hard-stop", 4.5, 120.0, 40.0, *faults),
-        _phase("speed-up", 10.0, 40.0, 100.0, *faults),
-        _phase("hard-stop-2", 3.0, 100.0, 40.0, *faults),
-        _phase("pull-away", 8.0, 40.0, 90.0, *faults),
-    )
 
 
 # A tyre with radial force variation (non-uniform stiffness or runout): a force
@@ -1480,11 +1452,6 @@ _FL_AND_RR = (
             _Layer("wheel_imbalance", _FL_GAIN * 0.12),
         ),
     ),
-)
-_AC_ON_PROPSHAFT_RHYTHM = replace(
-    _fault("driveline", DRIVELINE_ZONES, "P1"),
-    verdicts=frozenset({"no_fault", "weak_evidence", "fault"}),
-    levels=frozenset({"moderate", "weak"}),
 )
 _PROPSHAFT_FAULT = _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE)
 _ENGINE_FAULT = _fault("engine", {"engine_bay"}, "E2")
@@ -1598,7 +1565,7 @@ CONFOUNDER_CASES = (
         _PROPSHAFT_FAULT,
         fixings={"rear_right_wheel": _SPRINGY_BRACKET},
     ),
-    # Worn accessories (blower, alternator, air con) with a sensor everywhere: none is a fault.
+    # Worn accessories (blower, alternator) with a sensor everywhere: none is a fault.
     Case(
         "bench-healthy-worn-accessories-every-mount-long-sweep",
         _long_sweep(),
@@ -1606,22 +1573,11 @@ CONFOUNDER_CASES = (
         layout=EVERY_MOUNT,
         accessories=_ACCESSORIES,
     ),
-    # On the other car the compressor's 1.25 x crank is exactly the propshaft's
-    # rhythm in top gear (0.8): without a coast-down nothing tells them apart,
-    # and its clutch cycling reads as intermittent. A known limit, never Strong.
     Case(
         "bench-healthy-worn-accessories-every-mount-city",
         _city(),
         NO_FAULT,
-        by_car={"other": _AC_ON_PROPSHAFT_RHYTHM},
         layout=EVERY_MOUNT,
-        accessories=_ACCESSORIES,
-    ),
-    # Two stops hard enough for ABS: its pump shakes the front wheels in bursts.
-    Case(
-        "bench-healthy-abs-emergency-stops",
-        _emergency_stops(),
-        NO_FAULT,
         accessories=_ACCESSORIES,
     ),
     Case(

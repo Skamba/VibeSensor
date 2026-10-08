@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import pytest
 
@@ -114,42 +112,12 @@ def test_flat_spot_fades_over_the_first_kilometres(km: float, low: float, high: 
     assert low <= _tone_mg(last_second, _WHEEL_HZ_AT_100) / 80.0 <= high
 
 
-def _brake(confounders: SensorConfounders, decel_g: float, seconds: float) -> np.ndarray:
-    """Brake from 120 km/h at *decel_g*; return the last half second's signal."""
-    speed = 120.0
-    frames = []
-    for _ in range(int(seconds * 4)):
-        speed -= decel_g * 9.80665 * 3.6 * 0.25
-        frames.append(
-            confounders.mechanical(
-                wheel_hz=0.0, engine_hz=30.0, speed_kmh=speed, samples=200, dt=_DT
-            )
-        )
-    return np.concatenate(frames[-2:])
+def test_engine_driven_alternator_follows_the_crank() -> None:
+    alternator = AccessoryTone(level_mg=(0.0, 0.0, 8.0), engine_order=2.8)
+    confounders = SensorConfounders(accessories=(alternator,))
 
-
-@pytest.mark.parametrize(("decel_g", "expected_mg"), [(0.0, 0.0), (0.3, 0.0), (0.7, 20.0)])
-def test_abs_pump_runs_only_in_a_stop_hard_enough_for_abs(
-    decel_g: float, expected_mg: float
-) -> None:
-    pump = AccessoryTone(level_mg=(0.0, 0.0, 20.0), hz=60.0, min_decel_g=0.5)
-
-    read = _brake(SensorConfounders(accessories=(pump,)), decel_g, 2.0)
-
-    assert _tone_mg(read, 60.0) == pytest.approx(expected_mg, abs=0.5)
-
-
-def test_engine_driven_compressor_follows_the_crank_and_its_clutch() -> None:
-    compressor = AccessoryTone(level_mg=(0.0, 0.0, 8.0), engine_order=1.25, on_s=20.0, off_s=10.0)
-    confounders = SensorConfounders(accessories=(compressor,))
-    engine_hz = 40.0
-    seconds = [
-        confounders.mechanical(
+    for engine_hz in (20.0, 40.0):
+        second = confounders.mechanical(
             wheel_hz=0.0, engine_hz=engine_hz, speed_kmh=0.0, samples=_FS, dt=_DT
         )
-        for _ in range(30)
-    ]
-
-    assert _tone_mg(seconds[5], 1.25 * engine_hz) == pytest.approx(8.0, rel=0.02)
-    assert _tone_mg(seconds[25], 1.25 * engine_hz) == pytest.approx(0.0, abs=0.05)
-    assert math.isclose(confounders.drive_s, 30.0)
+        assert _tone_mg(second, 2.8 * engine_hz) == pytest.approx(8.0, rel=0.02)

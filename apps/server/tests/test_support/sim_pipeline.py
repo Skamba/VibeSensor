@@ -207,7 +207,7 @@ class BenchSensor:
     fixing: SensorFixing | None = None
     # The parking flat spot of the tyre(s) this sensor feels at the start of the drive.
     flat_spot: FlatSpot | None = None
-    # Accessories this sensor feels running (a blower, the alternator, an ABS pump).
+    # Accessories this sensor feels running (a blower, the alternator).
     accessories: tuple[AccessoryTone, ...] = ()
 
 
