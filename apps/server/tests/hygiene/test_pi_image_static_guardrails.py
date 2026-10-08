@@ -127,6 +127,7 @@ def test_image_validation_accepts_wheel_static_data_and_rejects_source_tree(
 _SYSTEMD_DIR = REPO_ROOT / "apps/server/systemd"
 _PRIVILEGED_SOCKET = _SYSTEMD_DIR / "vibesensor-privileged.socket"
 _PRIVILEGED_SERVICE = _SYSTEMD_DIR / "vibesensor-privileged@.service"
+_CLOUD_INIT_OFF = "vibesensor-cloud-init-off.service"
 _ROOT_HELPER_DIR = "/usr/local/lib/vibesensor"
 _SYSTEM_BIN_DIRS = ("/usr/bin/", "/bin/", "/usr/sbin/", "/sbin/")
 _IMAGE_PLACEHOLDERS = {
@@ -214,6 +215,7 @@ def _render_image_rootfs(rootfs: Path) -> None:
 
     unit_dir = rootfs / "etc/systemd/system"
     (unit_dir / "sockets.target.wants").mkdir(parents=True)
+    (unit_dir / "cloud-init.target.wants").mkdir()
     for unit in _SYSTEMD_DIR.iterdir():
         text = unit.read_text(encoding="utf-8")
         for placeholder, value in _IMAGE_PLACEHOLDERS.items():
@@ -221,6 +223,9 @@ def _render_image_rootfs(rootfs: Path) -> None:
         (unit_dir / unit.name).write_text(text, encoding="utf-8")
     (unit_dir / "sockets.target.wants" / _PRIVILEGED_SOCKET.name).symlink_to(
         f"/etc/systemd/system/{_PRIVILEGED_SOCKET.name}"
+    )
+    (unit_dir / "cloud-init.target.wants" / _CLOUD_INIT_OFF).symlink_to(
+        f"/etc/systemd/system/{_CLOUD_INIT_OFF}"
     )
     release_helpers = rootfs / "opt/VibeSensor/apps/server/root-helpers"
     installed_helpers = rootfs / _ROOT_HELPER_DIR.lstrip("/")
@@ -232,7 +237,7 @@ def _render_image_rootfs(rootfs: Path) -> None:
     (rootfs / "opt/VibeSensor/apps/server/.venv/bin").mkdir(parents=True)
     (rootfs / "usr/bin").mkdir(parents=True)
     (rootfs / "bin").symlink_to("usr/bin")
-    for tool in ("python3.13", "dash", "test", "chown"):
+    for tool in ("python3.13", "dash", "test", "chown", "touch"):
         (rootfs / "usr/bin" / tool).write_text("#!/bin/true\n", encoding="utf-8")
     (rootfs / "usr/bin/python3").symlink_to("python3.13")
     (rootfs / "usr/bin/sh").symlink_to("dash")
@@ -282,6 +287,46 @@ def test_image_validation_checks_the_privileged_helper_contract(
     result = _run_image_validation_script(
         f'assert_privileged_helper_contract "{rootfs}"', check=False
     )
+
+    assert result.returncode == (0 if breakage is None else 1), result.stdout
+    assert message in result.stdout
+
+
+def _server_waits_for_network_online(rootfs: Path) -> None:
+    unit = rootfs / "etc/systemd/system/vibesensor.service"
+    unit.write_text(unit.read_text().replace("[Unit]\n", "[Unit]\nAfter=network-online.target\n"))
+
+
+def _cloud_init_disabled_in_image(rootfs: Path) -> None:
+    (rootfs / "etc/cloud").mkdir(parents=True)
+    (rootfs / "etc/cloud/cloud-init.disabled").touch()
+
+
+def _cloud_init_off_not_enabled(rootfs: Path) -> None:
+    (rootfs / "etc/systemd/system/cloud-init.target.wants" / _CLOUD_INIT_OFF).unlink()
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    ("breakage", "message"),
+    [
+        (None, ""),
+        (_server_waits_for_network_online, "must not wait for network-online.target"),
+        (_cloud_init_disabled_in_image, "cloud-init must provision the first boot"),
+        (_cloud_init_off_not_enabled, "not enabled in cloud-init.target"),
+    ],
+)
+def test_image_validation_checks_the_fast_boot_contract(
+    tmp_path: Path, breakage: Callable[[Path], None] | None, message: str
+) -> None:
+    """Cold boot: the server starts beside the hotspot, cloud-init runs on first boot only."""
+
+    rootfs = tmp_path / "rootfs"
+    _render_image_rootfs(rootfs)
+    if breakage is not None:
+        breakage(rootfs)
+
+    result = _run_image_validation_script(f'assert_fast_boot_contract "{rootfs}"', check=False)
 
     assert result.returncode == (0 if breakage is None else 1), result.stdout
     assert message in result.stdout

@@ -153,9 +153,10 @@ The image contains:
 - Built web UI (served from `apps/server/vibesensor/static/`)
 - Preloaded offline ESP build toolchain/packages for `m5stack_atom`
 - systemd services enabled at boot:
-  - `vibesensor.service` — FastAPI server
+  - `vibesensor.service` — FastAPI server. It does not wait for `network-online.target` (the car has no upstream network), so it starts beside NetworkManager and the hotspot rather than after them
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
   - `vibesensor-hotspot-self-heal.timer` — hotspot watchdog (every 2 min): reactivates `VibeSensor-AP`, then re-provisions via `vibesensor-hotspot.service`
+  - `vibesensor-cloud-init-off.service` — cloud-init still provisions the first boot (Raspberry Pi Imager customisation); at the end of that boot this unit creates `/etc/cloud/cloud-init.disabled`, so later boots skip cloud-init's stages, which held up NetworkManager and the hotspot by several seconds. Image validation fails if the server waits for `network-online.target`, if the flag is baked into the image, or if the unit is not enabled
   - `vibesensor-privileged.socket` — root commands for the updater and Bluetooth OBD admin. `vibesensor.service` runs with `NoNewPrivileges=true`, so it cannot use sudo. Each connection runs `vibesensor-privileged@.service` as root, through the allowlist wrapper it names (`vibesensor_update_allowlist.sh`, `vibesensor_obd_admin.py`). There is no sudoers entry.
   - root units run only the root-owned helper copies in `/usr/local/lib/vibesensor` (installed from `apps/server/root-helpers/` by `install_systemd_units.sh`) under `/usr/bin/python3 -I`, never code from the service user's venv; image validation fails otherwise
   - `/usr/local/lib/vibesensor/root-side.sha256`, the root-side manifest `install_systemd_units.sh` writes last; image validation fails unless its digest equals the installed app's `ROOT_SIDE_DIGEST`

@@ -81,12 +81,23 @@ def _write_executable(path: Path, text: str) -> None:
     path.chmod(0o755)
 
 
-def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("skip_service_start", "first_boot_done"),
+    [
+        pytest.param("1", False, id="image-build"),
+        pytest.param("0", True, id="device-past-first-boot"),
+        pytest.param("0", False, id="device-cloud-init-unfinished"),
+    ],
+)
+def test_installer_stamps_the_manifest_the_server_checks(
+    tmp_path: Path, skip_service_start: str, first_boot_done: bool
+) -> None:
     """Run install_systemd_units.sh against a sandbox and check what it installs and stamps.
 
     The copy only points /usr/local/lib/vibesensor, /etc/systemd/system, the
-    journald drop-in, and the sudoers entry at the sandbox; id, systemctl, and
-    install's root ownership are stubbed.
+    journald drop-in, the sudoers entry, and cloud-init's boot-finished marker
+    at the sandbox; id, systemctl (which logs its calls), journalctl, udevadm,
+    and install's root ownership are stubbed.
     """
 
     helper_dir = tmp_path / "usr-local-lib-vibesensor"
@@ -110,6 +121,7 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
         ("/etc/systemd/journald.conf.d/90-vibesensor.conf", str(journald_dropin)),
         ("UDEV_RULES_DIR=/etc/udev/rules.d", f"UDEV_RULES_DIR={tmp_path / 'udev'}"),
         ("/etc/sudoers.d/vibesensor-update", str(tmp_path / "sudoers-vibesensor-update")),
+        ("/var/lib/cloud/instance/boot-finished", str(tmp_path / "cloud-boot-finished")),
     ):
         assert real in installer, f"install_systemd_units.sh no longer uses {real}"
         installer = installer.replace(real, sandboxed)
@@ -121,7 +133,12 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
     stubs = tmp_path / "bin"
     stubs.mkdir()
     _write_executable(stubs / "id", "#!/bin/sh\necho 0\n")
-    _write_executable(stubs / "systemctl", "#!/bin/sh\nexit 0\n")
+    systemctl_log = tmp_path / "systemctl.log"
+    _write_executable(stubs / "systemctl", f'#!/bin/sh\necho "$*" >>"{systemctl_log}"\n')
+    for tool in ("journalctl", "udevadm"):
+        _write_executable(stubs / tool, "#!/bin/sh\nexit 0\n")
+    if first_boot_done:
+        (tmp_path / "cloud-boot-finished").touch()
     _write_executable(
         stubs / "install",
         '#!/usr/bin/env bash\nargs=()\nwhile [ $# -gt 0 ]; do\n  case "$1" in\n'
@@ -133,7 +150,7 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
         ["bash", str(server / "scripts" / _INSTALLER.name), "pi"],
         env={
             "PATH": f"{stubs}{os.pathsep}/usr/bin{os.pathsep}/bin",
-            "VIBESENSOR_SKIP_SERVICE_START": "1",
+            "VIBESENSOR_SKIP_SERVICE_START": skip_service_start,
         },
         capture_output=True,
         text=True,
@@ -159,6 +176,11 @@ def test_installer_stamps_the_manifest_the_server_checks(tmp_path: Path) -> None
     assert stamp.read_text() == root_side_manifest(server)
     assert "root-helpers/linked.py" not in stamp.read_text()
     assert stamp.stat().st_mode & 0o777 == 0o644
+    # cloud-init provisions the first boot only: the image enables the unit that
+    # turns it off afterwards, and a device past its first boot turns it off now.
+    calls = systemctl_log.read_text().splitlines()
+    assert "enable vibesensor-cloud-init-off.service" in calls
+    assert ("start vibesensor-cloud-init-off.service" in calls) == first_boot_done
 
 
 @pytest.mark.parametrize(

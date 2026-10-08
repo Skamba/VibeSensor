@@ -1,0 +1,16 @@
+[Unit]
+Description=Turn cloud-init off once it has provisioned the first boot
+# cloud-init applies first-boot settings from the boot partition (Raspberry
+# Pi Imager customisation: user, hostname, SSH keys, Wi-Fi country). After
+# that it has nothing to do, yet its stages cost several seconds on every boot
+# and NetworkManager, and so the hotspot, waits for them. The flag file makes
+# the cloud-init generator skip all of them from the next boot on.
+After=cloud-final.service
+ConditionPathExists=!/etc/cloud/cloud-init.disabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/touch /etc/cloud/cloud-init.disabled
+
+[Install]
+WantedBy=cloud-init.target

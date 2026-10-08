@@ -496,6 +496,14 @@ be written by anyone but root. Neither path protects a device whose `pi`
 account is already compromised, because that account sees your `sudo`
 password. Reflash such a device.
 
+`install_systemd_units.sh` also carries the one-time changes for devices
+flashed from older images. On a device past its first boot it creates
+`/etc/cloud/cloud-init.disabled` (through `vibesensor-cloud-init-off.service`),
+and the re-rendered `vibesensor.service` no longer waits for
+`network-online.target`. Both take effect at the next boot. Check with
+`systemd-analyze critical-chain vibesensor.service`: the chain no longer
+contains `network-online.target` or any `cloud-init` unit.
+
 This step is deliberately manual. Letting the updater install root-side files
 would mean root trusting a download that the service user fetched and staged,
 which reopens the same hole. Signing releases could close it, but that adds key

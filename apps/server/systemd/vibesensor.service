@@ -1,7 +1,12 @@
 [Unit]
 Description=VibeSensor FastAPI Server
-After=network-online.target
-Wants=network-online.target
+# No network-online.target (nor NetworkManager.service): the server binds
+# 0.0.0.0 and the car has no upstream network, so it starts in parallel with
+# NetworkManager and vibesensor-hotspot.service instead of after the hotspot
+# is up; its ~10 s Python startup was the tail of the cold boot. Restoring the
+# hotspot after an interrupted Wi-Fi update retries `nmcli connection up`
+# (updates/wifi/wifi_hotspot_recovery.py), so NetworkManager may still be
+# starting then.
 # Root commands (updater, Bluetooth OBD) go through this socket; see
 # vibesensor-privileged.socket. NoNewPrivileges below rules out sudo.
 Wants=vibesensor-privileged.socket
