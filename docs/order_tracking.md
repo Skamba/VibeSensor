@@ -240,7 +240,9 @@ coordinates the evidence flow:
    the sensors that hear the order (see "Heard matches" below). Below the
    minimum match rate (`order_min_match_rate()`: 0.25, rising to 0.55 as the
    speed stddev falls from 1.0 to 0.5 km/h) the hypothesis produces no
-   finding.
+   finding. A rescued rate scores the evidence, but the presence cap reads
+   the run-wide heard rate, so an order that exists only through the rescue
+   is at most Weak (see "Confidence levels" in `docs/metrics.md`).
 4. Reject matches that do not follow the prediction. As speed changes, an
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays
@@ -434,7 +436,7 @@ diagnosis.
 |----------|-------|
 | Match rate the effective rate starts from (`pipeline.py`) | matches / possible windows at the heard sensors (`heard_match_rate`) |
 | Score strength, frequency error, tracking correlation, sample count (`scoring.py`, `compute_amplitude_and_error_stats()`) | heard matches only (`evidence`) |
-| Corroborating sensors (`scoring.py`) | the heard sensors |
+| Corroboration count for the zone credit and bonus (`OrderMatchAccumulator.corroboration`) | the heard sensors, each but the clearest counted in full only from 0.1 over the heard bar (a share of 0.6) |
 | Zone evidence rate (`_zone_credit()`) | effective match rate × the share of matches at the heard sensors that are heard (`heard_share`) |
 | Tracking slope (step 4) | heard matches |
 | `presence_ratio`, per-location `presence` (`analysis/diagnosis.py`) | heard matches over the moving samples |

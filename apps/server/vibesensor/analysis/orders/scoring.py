@@ -90,7 +90,7 @@ def score_order_finding(
     context: OrderFindingBuildContext,
 ) -> OrderFindingScore:
     """Compute confidence, localization, and ranking inputs for one matched hypothesis."""
-    per_phase_confidence, phases_with_evidence = compute_phase_stats(
+    per_phase_confidence, phases_with_evidence, phase_evidence = compute_phase_stats(
         match.has_phases,
         match.possible_by_phase,
         match.matched_by_phase,
@@ -141,12 +141,9 @@ def score_order_finding(
             weak_spatial_separation=weak_spatial_separation,
         )
 
-    corroborating_locations = len(match.heard_locations)
     error_denominator = 0.25 * match.compliance
     error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
     snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / SNR_LOG_DIVISOR)
-    if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
-        snr_score = min(snr_score, 0.40)
     absolute_strength_db = vibration_strength_db_scalar(
         peak_band_rms_amp_g=mean_amp,
         floor_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
@@ -177,8 +174,8 @@ def score_order_finding(
         constancy=context.constancy,
         steadiness=context.steadiness,
         matched=len(evidence),
-        corroborating_locations=corroborating_locations,
-        phases_with_evidence=phases_with_evidence,
+        corroboration=match.corroboration,
+        phase_evidence=phase_evidence,
         diffuse_penalty=effective_diffuse_penalty,
         n_connected_locations=len(context.connected_locations),
         no_wheel_sensors=no_wheel_override,
@@ -186,6 +183,7 @@ def score_order_finding(
         zone_source=zone_source and not context.per_location_dominant,
         zone_match_rate=context.effective_match_rate * match.heard_share,
         wheel_shared_fraction=context.wheel_shared_fraction,
+        run_match_rate=match.heard_match_rate,
     )
 
     ranking_score = (

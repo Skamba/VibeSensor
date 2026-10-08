@@ -51,8 +51,8 @@ class TestComputeOrderConfidence:
         "constancy": 0.0,
         "steadiness": 0.0,
         "matched": 30,
-        "corroborating_locations": 2,
-        "phases_with_evidence": 2,
+        "corroboration": 2.0,
+        "phase_evidence": 2.0,
         "diffuse_penalty": 1.0,
         "n_connected_locations": 3,
         "no_wheel_sensors": False,
@@ -72,8 +72,8 @@ class TestComputeOrderConfidence:
             error_score=0.9,
             corr_val=0.95,
             localization_confidence=1.0,
-            corroborating_locations=4,
-            phases_with_evidence=3,
+            corroboration=4.0,
+            phase_evidence=3.0,
             n_connected_locations=4,
         )
         assert noise == pytest.approx(cap)
@@ -123,7 +123,7 @@ class TestComputeOrderConfidence:
         "zone_source": True,
         "zone_match_rate": 0.9,
         "error_score": 0.9,
-        "corroborating_locations": 3,
+        "corroboration": 3.0,
     }
 
     @pytest.mark.parametrize(
@@ -160,7 +160,7 @@ class TestComputeOrderConfidence:
             pytest.param({"absolute_strength_db": 13.0}, id="faint"),
             pytest.param({"zone_match_rate": 0.4}, id="patchy"),
             pytest.param({"error_score": 0.5}, id="off-frequency"),
-            pytest.param({"corroborating_locations": 1}, id="one-sensor"),
+            pytest.param({"corroboration": 1.0}, id="one-sensor"),
             pytest.param({"wheel_shared_fraction": 0.5}, id="wheel-alias"),
         ],
     )
@@ -188,6 +188,7 @@ class TestComputeOrderConfidence:
                 id="two-sensor-localisation",
             ),
             pytest.param({}, "effective_match_rate", _grid(0.25, 0.60, 0.01), 1, id="presence"),
+            pytest.param(_ZONE, "corroboration", _grid(1.0, 3.0, 0.05), 1, id="corroboration"),
         ],
     )
     def test_a_graded_input_moves_confidence_a_little_per_step(
@@ -198,6 +199,31 @@ class TestComputeOrderConfidence:
         assert min(steps) >= -1e-12
         assert max(steps) <= _MAX_STEP
         assert direction * (scores[-1] - scores[0]) > 0.05
+
+    def test_a_rescued_order_is_at_most_weak_and_meets_the_unrescued_one_at_the_minimum(
+        self,
+    ) -> None:
+        # Heard in under a quarter of the run's windows, the order exists only
+        # through its best speed band or location (rescued to 0.80 here): at
+        # most Weak, as an order heard just often enough. At the minimum the
+        # two agree, so a hair more of the run no longer turns Strong into Weak.
+        cap = ORDER_CONFIDENCE_SETTINGS.weak_confidence_cap
+        clean = {"error_score": 1.0, "corr_val": 1.0}
+        assert self._call(**clean, effective_match_rate=0.80) >= 0.70
+        rescued = [
+            self._call(**clean, effective_match_rate=0.80, run_match_rate=rate)
+            for rate in _grid(0.10, 0.24, 0.01)
+        ]
+        assert max(rescued) <= cap
+        at_minimum = self._call(**clean, effective_match_rate=0.25)
+        assert at_minimum <= cap
+        assert abs(at_minimum - rescued[-1]) <= _MAX_STEP
+
+    def test_the_phase_bonus_grows_a_little_per_step(self) -> None:
+        scores = [self._call(phase_evidence=count) for count in _grid(0.0, 3.0, 0.05)]
+        assert min(_steps(scores)) >= -1e-12
+        assert max(_steps(scores)) <= 0.002
+        assert scores[-1] / scores[0] == pytest.approx(ORDER_CONFIDENCE_SETTINGS.phases_three_bonus)
 
     def test_an_order_heard_just_often_enough_is_at_most_weak(self) -> None:
         cap = ORDER_CONFIDENCE_SETTINGS.weak_confidence_cap
@@ -374,13 +400,33 @@ def _points(phase: str, speed_kmh: float, amp: float, count: int) -> list[OrderM
 def test_braking_is_slowing_down_not_one_more_phase_for_the_bonus() -> None:
     # Before braking had its own label, these spectra were all "deceleration":
     # splitting them may not turn two phases into three.
-    _per_phase, phases = compute_phase_stats(
+    _per_phase, phases, graded = compute_phase_stats(
         True,
         {"cruise": 20, "deceleration": 10, "braking": 10},
         {"cruise": 10, "deceleration": 5, "braking": 5},
         min_match_rate=0.25,
     )
     assert phases == 2
+    assert graded == pytest.approx(2.0)
+
+
+def test_a_phase_just_over_the_minimum_rate_counts_a_little_for_the_bonus() -> None:
+    # The cruise rate swept from 0.20 to 0.40 (of 100 windows) next to a
+    # well-matched deceleration: it counts from the minimum (0.25), in full
+    # from 0.35, and a little per step in between.
+    counts = []
+    for matched in range(20, 41):
+        _per_phase, phases, graded = compute_phase_stats(
+            True,
+            {"cruise": 100, "deceleration": 100},
+            {"cruise": matched, "deceleration": 80},
+            min_match_rate=0.25,
+        )
+        assert phases == (2 if matched >= 25 else 1)
+        counts.append(graded)
+    assert counts[0] == counts[5] == pytest.approx(1.0)
+    assert counts[15] == counts[-1] == pytest.approx(2.0)
+    assert max(_steps(counts)) <= 0.1 + 1e-9
 
 
 def test_braking_matches_weigh_on_the_speed_like_other_slowing_down() -> None:

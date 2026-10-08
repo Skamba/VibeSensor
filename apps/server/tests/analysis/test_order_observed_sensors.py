@@ -17,7 +17,12 @@ from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
-from vibesensor.analysis.orders.matching import OrderMatchAccumulator, _sensors_that_hear
+from vibesensor.analysis.orders.matching import (
+    OrderMatchAccumulator,
+    _clear_shares,
+    _corroboration,
+    _sensors_that_hear,
+)
 from vibesensor.analysis.orders.physics import _order_hypotheses
 from vibesensor.analysis.orders.scoring import (
     OrderFindingBuildContext,
@@ -342,10 +347,28 @@ def test_a_sensor_hears_an_order_when_clear_half_as_often_as_the_best(
     clear: list[int], heard_at: tuple[str, ...]
 ) -> None:
     sensors = _sensors_that_hear(
-        dict.fromkeys(_LOCATIONS, _WINDOWS), dict(zip(_LOCATIONS, clear, strict=True))
+        _clear_shares(
+            dict.fromkeys(_LOCATIONS, _WINDOWS), dict(zip(_LOCATIONS, clear, strict=True))
+        )
     )
 
     assert sensors == frozenset(heard_at)
+
+
+def test_a_sensor_just_over_the_heard_bar_corroborates_a_little() -> None:
+    # The second sensor's clear rate swept from 40 % to 70 % of the clearest's:
+    # under half it does not hear the order, from 60 % it counts in full, and
+    # in between each step moves the count a little.
+    counts = [
+        _corroboration(_clear_shares({"a": 100, "b": 100}, {"a": 100, "b": share}))
+        for share in range(40, 71)
+    ]
+    assert counts[0] == counts[10] == 1.0
+    assert counts[20] == counts[-1] == 2.0
+    steps = [after - before for before, after in zip(counts, counts[1:], strict=False)]
+    assert min(steps) >= 0.0
+    assert max(steps) <= 0.1 + 1e-9
+    assert _corroboration({}) == 0.0
 
 
 def _accumulator(
@@ -373,6 +396,11 @@ def _accumulator(
         for location in _LOCATIONS
         for window in range(matched[location])
     ]
+    heard_at = (
+        frozenset(location for location, count in heard.items() if count)
+        if heard_locations is None
+        else heard_locations
+    )
     return OrderMatchAccumulator(
         possible=_WINDOWS * len(_LOCATIONS),
         matched_points=points,
@@ -386,11 +414,8 @@ def _accumulator(
         matched_by_location=matched,
         has_phases=False,
         compliance=1.0,
-        heard_locations=(
-            frozenset(location for location, count in heard.items() if count)
-            if heard_locations is None
-            else heard_locations
-        ),
+        heard_locations=heard_at,
+        corroboration=float(len(heard_at)),
     )
 
 
@@ -479,6 +504,7 @@ def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
         has_phases=False,
         compliance=1.0,
         heard_locations=frozenset({_LOCATIONS[0]}),
+        corroboration=1.0,
     )
 
 

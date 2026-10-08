@@ -43,7 +43,7 @@ class OrderConfidenceSettings:
     heard_location_min_share: float
     zone_min_error_score: float
     zone_error_score_ramp: float
-    zone_min_corroborating_locations: int
+    corroboration_ramp: float
     wheel_alias_shared_peak_fraction: float
     zone_wheel_alias_ramp: float
     presence_ramp: float
@@ -56,6 +56,7 @@ class OrderConfidenceSettings:
     corroborating_two_bonus: float
     phases_three_bonus: float
     phases_two_bonus: float
+    phase_rate_ramp: float
     few_sensor_scale_from_localization: float
     few_sensor_scale_full_localization: float
 
@@ -112,7 +113,10 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     heard_location_min_share=0.5,
     zone_min_error_score=0.50,
     zone_error_score_ramp=0.10,
-    zone_min_corroborating_locations=2,
+    # A sensor counts towards corroboration (the zone credit's second sensor,
+    # the corroboration bonus) in full only from 0.10 over the heard bar
+    # (half the clearest sensor's clear rate), and a little just over it.
+    corroboration_ramp=0.10,
     # An engine/driveline order is an alias of a wheel order when at least this
     # share of its matched peaks are peaks a wheel order matched too; the zone
     # credit fades out over the 0.10 below it.
@@ -130,6 +134,9 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     corroborating_two_bonus=1.04,
     phases_three_bonus=1.06,
     phases_two_bonus=1.03,
+    # A phase counts for the phase bonus in full from 0.10 over the minimum
+    # match rate, and a little just over it.
+    phase_rate_ramp=0.10,
     # With one or two sensors a localisation claim is discounted, fully from
     # localisation 0.30 and easing in from the 0.05 floor.
     few_sensor_scale_from_localization=0.05,

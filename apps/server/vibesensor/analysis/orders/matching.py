@@ -32,7 +32,7 @@ from vibesensor.analysis.constants import (
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
     SPEED_BIN_WIDTH_KMH,
 )
-from vibesensor.analysis.math_utils import _corr_abs_clamped
+from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
 from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
@@ -71,6 +71,8 @@ class OrderMatchAccumulator:
     has_phases: bool
     compliance: float
     heard_locations: frozenset[str] = frozenset()
+    # How many sensors hear the order, graded (``_corroboration``).
+    corroboration: float = 0.0
     matched_sample_indices: tuple[int, ...] = ()
     # The samples the order could be looked for in, with their sensor location.
     possible_samples: tuple[tuple[int, str], ...] = ()
@@ -209,14 +211,10 @@ def best_order_peak_match(
     )
 
 
-def _sensors_that_hear(
+def _clear_shares(
     possible_by_location: dict[str, int], clear_by_location: dict[str, int]
-) -> frozenset[str]:
-    """The sensors where the order is clear at least half as often as where it is clearest.
-
-    A vibration fades with distance from its source, so the far sensors see it
-    rarely or never.
-    """
+) -> dict[str, float]:
+    """Each sensor's clear rate as a share of the clearest sensor's (empty when none is clear)."""
     rates = {
         location: clear_by_location.get(location, 0) / possible
         for location, possible in possible_by_location.items()
@@ -224,9 +222,31 @@ def _sensors_that_hear(
     }
     best = max(rates.values(), default=0.0)
     if best <= 0:
-        return frozenset()
-    min_rate = ORDER_CONFIDENCE_SETTINGS.heard_location_min_share * best
-    return frozenset(location for location, rate in rates.items() if rate >= min_rate)
+        return {}
+    return {location: rate / best for location, rate in rates.items()}
+
+
+def _sensors_that_hear(shares: dict[str, float]) -> frozenset[str]:
+    """The sensors where the order is clear at least half as often as where it is clearest.
+
+    A vibration fades with distance from its source, so the far sensors see it
+    rarely or never.
+    """
+    min_share = ORDER_CONFIDENCE_SETTINGS.heard_location_min_share
+    return frozenset(location for location, share in shares.items() if share >= min_share)
+
+
+def _corroboration(shares: dict[str, float]) -> float:
+    """How many sensors hear the order, graded by how clearly (0 when none does).
+
+    The clearest sensor counts 1. Another counts in full from
+    ``corroboration_ramp`` over the heard bar (``_sensors_that_hear``) and a
+    little just over it, so a share a hair either side of the bar moves the
+    count, and the scores built on it, only a little.
+    """
+    settings = ORDER_CONFIDENCE_SETTINGS
+    low = settings.heard_location_min_share
+    return sum(_ramp(share, low, low + settings.corroboration_ramp) for share in shares.values())
 
 
 def _line_half_width_hz(frequency_hz: float, bin_hz: float) -> float:
@@ -434,7 +454,8 @@ def match_samples_for_hypothesis(
             possible_by_phase[window.phase_key] += 1
             matched_by_phase[window.phase_key] += matched
 
-    heard_locations = _sensors_that_hear(possible_by_location, clear_by_location)
+    shares = _clear_shares(possible_by_location, clear_by_location)
+    heard_locations = _sensors_that_hear(shares)
     matched_windows = [window for window in windows if window.match is not None]
     return OrderMatchAccumulator(
         possible=len(windows),
@@ -456,6 +477,7 @@ def match_samples_for_hypothesis(
         has_phases=has_phases,
         compliance=compliance,
         heard_locations=heard_locations,
+        corroboration=_corroboration(shares),
         matched_sample_indices=tuple(window.sample_idx for window in matched_windows),
         possible_samples=tuple((window.sample_idx, window.location) for window in windows),
     )

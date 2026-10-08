@@ -67,7 +67,9 @@ class PeakConfidenceSettings:
     spatial_penalty_range: float
     low_spatial_concentration_threshold: float
     low_spatial_concentration_cap: float
+    low_spatial_concentration_ramp: float
     negligible_strength_cap: float
+    negligible_strength_ramp_db: float
 
 
 PEAK_CONFIDENCE_SETTINGS = PeakConfidenceSettings(
@@ -91,5 +93,10 @@ PEAK_CONFIDENCE_SETTINGS = PeakConfidenceSettings(
     spatial_penalty_range=0.65,
     low_spatial_concentration_threshold=0.35,
     low_spatial_concentration_cap=0.35,
+    # The caps lift over a ramp past their edge, as the order caps do
+    # (docs/metrics.md, "Confidence levels"): spatial concentration 0.35-0.45,
+    # strength 8-12 dB.
+    low_spatial_concentration_ramp=0.10,
     negligible_strength_cap=0.40,
+    negligible_strength_ramp_db=4.0,
 )

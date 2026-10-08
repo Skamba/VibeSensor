@@ -10,6 +10,7 @@ from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g
 from vibesensor.analysis._view_types import PeakTableRowData
 from vibesensor.analysis.findings import _build_persistent_peak_findings
 from vibesensor.analysis.peaks.classification import classify_peak_type
+from vibesensor.analysis.peaks.scoring import _compute_peak_confidence
 from vibesensor.analysis.peaks.table import (
     annotate_peak_rows_with_order_labels,
     top_peaks_table_rows,
@@ -49,6 +50,33 @@ def _findings_at(samples: list[dict], frequency: str) -> list:
 )
 def test_peak_classification(presence_ratio: float, burstiness: float, expected: str) -> None:
     assert classify_peak_type(presence_ratio=presence_ratio, burstiness=burstiness) == expected
+
+
+@pytest.mark.parametrize(
+    ("knob", "values"),
+    [
+        pytest.param("spatial_concentration", [c / 100 for c in range(25, 56)], id="concentration"),
+        pytest.param("peak_strength_db", [d / 10 for d in range(60, 141, 2)], id="strength"),
+    ],
+)
+def test_a_peak_cap_lifts_a_little_per_step_past_its_edge(knob: str, values: list[float]) -> None:
+    # A clear persistent peak seen at one sensor, loud: each cap swept across
+    # its edge (spatial concentration 0.35, 8 dB) moves the score up by a
+    # little per step instead of jumping where the cap used to stop.
+    base = {
+        "peak_type": "persistent",
+        "presence_ratio": 0.9,
+        "raw_snr": 20.0,
+        "burstiness": 1.0,
+        "spatial_concentration": 1.0,
+        "has_location_counts": True,
+        "peak_strength_db": 25.0,
+    }
+    scores = [_compute_peak_confidence(**{**base, knob: value}) for value in values]
+    steps = [after - before for before, after in zip(scores, scores[1:], strict=False)]
+    assert min(steps) >= -1e-12
+    assert max(steps) <= 0.05
+    assert scores[-1] - scores[0] > 0.1
 
 
 def test_a_persistent_peak_ranks_above_a_single_loud_spike() -> None:
