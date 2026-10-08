@@ -31,6 +31,8 @@ function Stat(props: {
   labelKey: string;
   /** A long value (a car name, a location and level): the full row on a phone. */
   wide?: boolean;
+  /** A smaller line under a short value (its age, its source). */
+  detail?: string | null;
   children: ComponentChildren;
 }) {
   return (
@@ -39,6 +41,7 @@ function Stat(props: {
       <div class="stat__value" data-value>
         {props.children}
       </div>
+      {props.detail ? <div class="stat__detail">{props.detail}</div> : null}
     </div>
   );
 }
@@ -63,8 +66,12 @@ function Overview() {
         <Stat id="liveRecordingState" labelKey="dashboard.recording_state">
           {model.recordingStateText}
         </Stat>
-        <Stat id="liveDataFreshness" labelKey="dashboard.data_freshness">
-          {model.freshnessText}
+        <Stat
+          id="liveDataFreshness"
+          labelKey="dashboard.data_freshness"
+          detail={model.freshness.detail}
+        >
+          {model.freshness.value}
         </Stat>
         <Stat
           id="liveStrongestSignal"
@@ -75,8 +82,11 @@ function Overview() {
         </Stat>
         <div class="stat">
           <div class="stat__label">{t("dashboard.current_speed")}</div>
-          <div id="speed" class="stat__value speed" aria-live="polite">
-            {speedReadout.value}
+          <div id="speed" aria-live="polite">
+            <div class="stat__value speed">{speedReadout.value.value}</div>
+            {speedReadout.value.detail ? (
+              <div class="stat__detail">{speedReadout.value.detail}</div>
+            ) : null}
           </div>
         </div>
       </div>

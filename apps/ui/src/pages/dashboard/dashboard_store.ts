@@ -49,7 +49,7 @@ import {
   activeCarText,
   driveAlerts,
   formatElapsed,
-  freshnessText,
+  freshness,
   guidedTestModel,
   IDLE_STATUS,
   isIdle,
@@ -461,7 +461,7 @@ export const overview = computed(() => {
     connectedText: `${formatInt(list.filter((client) => client.connected).length)} / ${formatInt(list.length)}`,
     activeCarText: activeCarText(carSelection.value, t),
     recordingStateText: baseRecording.value.phaseText,
-    freshnessText: freshnessText(
+    freshness: freshness(
       list,
       status.value.capture_readiness ?? null,
       t,

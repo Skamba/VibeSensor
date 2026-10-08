@@ -41,6 +41,16 @@
 
 .live-overview__stats .stat__value {
   line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The short value's age or source, so the value fits half a phone row. */
+.live-overview__stats .stat__detail {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--md-sys-color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Phones: two short stats per row; a long value takes the whole row. Dense
