@@ -250,12 +250,18 @@ const SPEED_REFERENCE_PROBLEMS = new Set([
   "speed_sample_stale",
 ]);
 
-export function freshnessText(
+/** A live stat for half a phone row: a short value, and a smaller detail under it. */
+export interface StatText {
+  value: string;
+  detail: string | null;
+}
+
+export function freshness(
   clients: readonly AdaptedClient[],
   readiness: Readiness | null,
   t: Translate,
   formatInt: FormatInt,
-): string {
+): StatText {
   const connected = clients.filter((client) => client.connected);
   const ages = connected
     .map((client) => client.last_seen_age_ms)
@@ -263,7 +269,7 @@ export function freshnessText(
       (age): age is number => typeof age === "number" && Number.isFinite(age),
     );
   if (!ages.length) {
-    return t("dashboard.data_freshness_none");
+    return { value: t("dashboard.data_freshness_none"), detail: null };
   }
   const reference = findCheck(readiness, "reference_ready");
   if (
@@ -271,13 +277,16 @@ export function freshnessText(
     reference.state !== "pass" &&
     SPEED_REFERENCE_PROBLEMS.has(reference.reason_key ?? "")
   ) {
-    return t("dashboard.data_freshness_sensors_only");
+    return {
+      value: t("dashboard.data_freshness_sensors_only"),
+      detail: t("dashboard.data_freshness_sensors_only_detail"),
+    };
   }
   const ageMs = Math.max(...ages.map((age) => Math.max(0, age)));
-  const age = t("status.age_ms_ago", { value: formatInt(ageMs) });
-  return t(`dashboard.data_freshness_${classifyFreshness(ageMs, connected)}`, {
-    age,
-  });
+  return {
+    value: t(`dashboard.data_freshness_${classifyFreshness(ageMs, connected)}`),
+    detail: t("status.age_ms_ago", { value: formatInt(ageMs) }),
+  };
 }
 
 /** The connected sensor with the highest vibration level right now. */
@@ -317,6 +326,7 @@ export function activeCarText(
   }
 }
 
+/** The speed in the chosen unit, with its source (GPS, OBD2, typed-in) as the detail. */
 export function speedText(
   speedMps: number | null,
   unit: SpeedUnit,
@@ -324,16 +334,21 @@ export function speedText(
   t: Translate,
   fmt: (value: number, digits: number) => string,
   fallbackReason: string | null = null,
-): string {
+): StatText {
   const unitText = t(speedUnitKey(unit));
   if (typeof speedMps !== "number" || !Number.isFinite(speedMps)) {
-    return t("speed.none", { unit: unitText });
+    return { value: t("speed.none", { unit: unitText }), detail: null };
   }
-  return t(labelKey, {
-    unit: unitText,
-    value: fmt(kmhInUnit(speedMps * 3.6, unit), 1),
-    ...(fallbackReason ? { reason: fallbackReason } : {}),
-  });
+  return {
+    value: t("speed.value", {
+      unit: unitText,
+      value: fmt(kmhInUnit(speedMps * 3.6, unit), 1),
+    }),
+    detail: t(
+      labelKey,
+      fallbackReason ? { reason: fallbackReason } : undefined,
+    ),
+  };
 }
 
 function runIdText(status: LoggingStatusPayload, t: Translate): string {

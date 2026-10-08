@@ -784,6 +784,57 @@ test.describe("on a phone", () => {
     await expect(page.locator("#addCarWizard")).toBeVisible();
   });
 
+  test("journey: freshness and speed each fit one line of half a 360 px row, in Dutch", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await installCommonRoutes(page, {
+      settingsHandler: async (route) => {
+        if (requestPath(route) === "/api/settings/language") {
+          await fulfillJson(route, { language: "nl" });
+          return;
+        }
+        await activeCar(route);
+      },
+    });
+    await page.route("**/api/recording/status", (route) =>
+      fulfillJson(route, idleStatus()),
+    );
+    await bootLiveDashboard(page, {
+      installRoutes: false,
+      liveSensorPayload: {
+        // The longest Dutch state, a four-digit age, a three-digit speed.
+        clients: [{ ...sensor("front_left_wheel"), last_seen_age_ms: 1250 }],
+        speedMps: 52.3,
+      },
+    });
+
+    const freshness = page.locator("#liveDataFreshness");
+    await expect(freshness.locator(".stat__value")).toHaveText("Verouderd");
+    await expect(freshness.locator(".stat__detail")).toHaveText(
+      "1.250 ms geleden",
+    );
+    const speed = page.locator("#speed");
+    await expect(speed.locator(".stat__value")).toHaveText("188,3 km/u");
+    await expect(speed.locator(".stat__detail")).toHaveText("GPS");
+    for (const value of [
+      freshness.locator(".stat__value"),
+      speed.locator(".stat__value"),
+    ]) {
+      const lines = await value.evaluate(
+        (element) =>
+          element.getBoundingClientRect().height /
+          Number.parseFloat(getComputedStyle(element).lineHeight),
+      );
+      expect(lines).toBeCloseTo(1, 0);
+    }
+    // Both labels fit one line too, so the two values sit side by side.
+    const freshnessTop = (await freshness.locator(".stat__value").boundingBox())
+      ?.y;
+    const speedTop = (await speed.locator(".stat__value").boundingBox())?.y;
+    expect(Math.abs((freshnessTop ?? 0) - (speedTop ?? 99))).toBeLessThan(4);
+  });
+
   test("journey: after a run, a greyed-out Start says GPS is still waiting for a fix", async ({
     page,
   }) => {

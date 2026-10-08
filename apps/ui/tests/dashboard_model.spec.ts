@@ -5,7 +5,7 @@ import {
   classifyFreshness,
   driveAlerts,
   formatElapsed,
-  freshnessText,
+  freshness,
   guidedTestModel,
   IDLE_STATUS,
   isIdle,
@@ -756,17 +756,21 @@ describe("live overview helpers", () => {
   });
 
   test("freshness says when only sensors stream without a speed reference", () => {
-    expect(freshnessText([], null, t, formatInt)).toBe(
-      "dashboard.data_freshness_none",
-    );
-    expect(freshnessText([client()], NOT_READY, t, formatInt)).toBe(
-      "dashboard.data_freshness_sensors_only",
-    );
+    expect(freshness([], null, t, formatInt)).toEqual({
+      value: "dashboard.data_freshness_none",
+      detail: null,
+    });
+    expect(freshness([client()], NOT_READY, t, formatInt)).toEqual({
+      value: "dashboard.data_freshness_sensors_only",
+      detail: "dashboard.data_freshness_sensors_only_detail",
+    });
+    // The state word is the value; its age goes on the smaller line under it.
     expect(
-      freshnessText([client({ last_seen_age_ms: 20 })], null, t, formatInt),
-    ).toBe(
-      'dashboard.data_freshness_fresh:{"age":"status.age_ms_ago:{\\"value\\":\\"20\\"}"}',
-    );
+      freshness([client({ last_seen_age_ms: 20 })], null, t, formatInt),
+    ).toEqual({
+      value: "dashboard.data_freshness_fresh",
+      detail: 'status.age_ms_ago:{"value":"20"}',
+    });
   });
 
   test("the strongest sensor is the loudest connected one", () => {
@@ -797,20 +801,24 @@ describe("live overview helpers", () => {
 
   test("speed shows in the chosen unit, or a placeholder without a reading", () => {
     const fmt = (value: number, digits: number) => value.toFixed(digits);
-    expect(speedText(10, "kmh", "speed.label", t, fmt)).toBe(
-      'speed.label:{"unit":"speed.unit.kmh","value":"36.0"}',
-    );
+    // The number is the value; its source goes on the smaller line under it.
+    expect(speedText(10, "kmh", "speed.gps", t, fmt)).toEqual({
+      value: 'speed.value:{"unit":"speed.unit.kmh","value":"36.0"}',
+      detail: "speed.gps",
+    });
     expect(
       speedText(10, "kmh", "speed.fallback", t, fmt, "No GPS receiver found"),
-    ).toBe(
-      'speed.fallback:{"unit":"speed.unit.kmh","value":"36.0","reason":"No GPS receiver found"}',
+    ).toEqual({
+      value: 'speed.value:{"unit":"speed.unit.kmh","value":"36.0"}',
+      detail: 'speed.fallback:{"reason":"No GPS receiver found"}',
+    });
+    expect(speedText(10, "mps", "speed.gps", t, fmt).value).toBe(
+      'speed.value:{"unit":"speed.unit.mps","value":"10.0"}',
     );
-    expect(speedText(10, "mps", "speed.label", t, fmt)).toBe(
-      'speed.label:{"unit":"speed.unit.mps","value":"10.0"}',
-    );
-    expect(speedText(null, "kmh", "speed.label", t, fmt)).toBe(
-      'speed.none:{"unit":"speed.unit.kmh"}',
-    );
+    expect(speedText(null, "kmh", "speed.gps", t, fmt)).toEqual({
+      value: 'speed.none:{"unit":"speed.unit.kmh"}',
+      detail: null,
+    });
   });
 
   test("History reloads only when a run starts, stops, or finishes", () => {
