@@ -2093,6 +2093,27 @@
       "title": "BMW PressClub G02 X4 M40i/M40d 08/2025 Germany price list PDF",
       "note": "Official BMW Germany X4 M price list of August 2025 (T0445406DE): X4 M40i and M40d still on sale with the eight-speed Steptronic Sport. Wheels for both: 245/45 R20 front with 275/40 R20 rear (8J / 9.5J x 20), optional 245/40 R21 front with 275/35 R21 rear (8.5J / 9.5J x 21).",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f44-2019-10-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/netherlands/article/attachment/T0301689NL/440069",
+      "title": "BMW PressClub F44 2 Series Gran Coupe 10/2019 specifications PDF",
+      "note": "Official BMW 10/2019 specifications of the first-ever 2 Series Gran Coupe (T0301689NL, English). 218i: six-speed manual 3.615 / 1.952 / 1.179 / 0.853 / 0.711 / 0.585, final drive 4.118; seven-speed Steptronic dual-clutch 4.154 / 2.450 / 1.393 / 0.975 / 0.755 / 0.675 / 0.547, final drive 3.944; 205/55 R16. M235i xDrive: eight-speed Steptronic Sport 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 3.075; 225/40 R18. 220d: eight-speed Steptronic, same ratios, final drive 2.666; 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f44-2019-10-short-version",
+      "url": "https://www.press.bmwgroup.com/netherlands/article/attachment/T0301689NL/440067",
+      "title": "BMW PressClub F44 2 Series Gran Coupe 10/2019 short version PDF",
+      "note": "Official BMW 10/2019 short press release on the first-ever 2 Series Gran Coupe: market launch in March 2020 with the 218i, M235i xDrive and 220d.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f44-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327029EN/473054",
+      "title": "BMW PressClub F44 2 Series Gran Coupe 03/2021 specifications PDF",
+      "note": "Official BMW specifications of the 2 Series Gran Coupe valid from 03/2021 (T0327029EN). 218i: manual as 10/2019, final drive 4.118; dual-clutch overall ratios 16.385 ... 2.158, final drive 3.944; 205/55 R16. 220i: dual-clutch overall 15.304 ... 2.016, final drive 3.684; 225/45 R17. 220i xDrive: eight-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 3.075; 225/45 R17. M235i xDrive: Steptronic Sport, same ratios, final drive 3.075; 225/40 R18. 216d: dual-clutch overall 16.385 ... 2.158, final drive 3.944; 205/55 R16. 218d: manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605, final drive 3.389, or eight-speed Steptronic, final drive 2.666; 205/55 R16. 220d: Steptronic, final drive 2.666; 225/45 R17. 220d xDrive: Steptronic, final drive 2.666; 225/40 R18.",
+      "confidence": "high"
     }
   ]
 }
