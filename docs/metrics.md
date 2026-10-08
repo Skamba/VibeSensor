@@ -72,23 +72,28 @@ persisted field.
 ## Diagnosed order
 
 The diagnosis names a source (wheel/tire, driveline, engine) and one of its
-orders (T1/T2, P1/P2, E1/E2). Workshop advice depends on the order (balancing
-fixes T1, not T2), so the label is the order that physically dominates, not the
-one that ranked best: a harmonic often tracks a little more consistently than
-its louder fundamental and outranks it.
+orders (T1/T2, P1/P2, E1 and the engine profile's firing order, e.g. E1.5,
+E2, E3). Workshop advice depends on the order (balancing fixes T1, not T2), so
+the label is the order that physically dominates, not the one that ranked
+best: a harmonic often tracks a little more consistently than its louder
+fundamental and outranks it, and two orders whose confidence both saturate
+rank on a coin toss.
 
-`TestRun.diagnosis_order_finding` compares the source's 1st and 2nd order by
-`Finding.level_over_db`: the median of `20·log10(amp_2 / amp_1)` over the
-windows both orders matched (same sensor, same time), so both peaks come from
-one spectrum and road-noise matches either order picked up elsewhere do not
-count. Only the candidate's location counts when the two share at least 4
-windows there; otherwise every location does.
+`TestRun.diagnosis_order_finding` compares the candidate with the source's
+best other order (a lower and a higher order) by `Finding.level_over_db`: the
+median of `20·log10(amp_higher / amp_lower)` over the
+windows both orders matched (same sensor, same time) and at least one of them
+is heard (see "Heard matches" in `docs/order_tracking.md`), so both peaks come
+from one spectrum, road-noise matches either order picked up elsewhere do not
+count, and neither do windows that pair two floor-level noise peaks. Only the
+candidate's location counts when the two share at least 4 such windows there;
+otherwise every location does.
 
-- The 1st order is the label unless the 2nd is at least **3 dB** louder (1.4×
-  the amplitude). A near-equal pair stays on the fundamental. On the
-  simulator, a 4-cylinder engine's E2 sits about 9 dB above E1 and the 2nd
-  order of a wheel or shaft imbalance 8–11 dB below its 1st, so both clear
-  the margin by a wide gap.
+- The lower order is the label unless the higher is at least **3 dB** louder
+  (1.4× the amplitude). A near-equal pair stays on the lower order. On the
+  simulator, a 4-cylinder engine's E2 sits about 9 dB above E1, an inline-3's
+  E1.5 about 8 dB above E1, and the 2nd order of a wheel or shaft imbalance
+  8–11 dB below its 1st, so all clear the margin by a wide gap.
 - With fewer than 4 shared windows, or with no surfaced finding for the other
   order, the best-ranked order stays the label.
 - The source and its confidence level stay those of the best-ranked order

@@ -293,8 +293,9 @@ does not produce a finding.
 
 Ranking decides the diagnosed source; it does not decide which of that
 source's orders the diagnosis names. `TestRun.diagnosis_order_finding` labels
-the source's louder order, comparing 1x and 2x amplitudes in the windows both
-matched (see "Diagnosed order" in `docs/metrics.md`).
+the source's louder order, comparing its lower and higher order (1x and 2x,
+or E1 and the firing order) by amplitude in the windows both matched (see
+"Diagnosed order" in `docs/metrics.md`).
 
 ## Fixed tones
 
@@ -440,6 +441,7 @@ diagnosis.
 | Coast-down `speed_dependence`: the order's main location and the matches counted during and outside the coast-down | heard matches |
 | Matched speed range (`speed_min_kmh` / `speed_max_kmh`) | heard matches (all, when none is heard) |
 | Enough matches and matched time for a finding (`OrderMatchAccumulator.is_eligible()`) | the evidence: heard matches (all, when none is heard) |
+| Level of one order over another (`Finding.level_over_db`: diagnosed order, engine alias suppression) | windows both matched where at least one of the two is heard |
 
 Why 6 dB over the window's floor: on the full benchmark matrix (40 cases, both
 cars, seeds 1–6, and the healthy cases on seeds 7–26) this one rule gives the

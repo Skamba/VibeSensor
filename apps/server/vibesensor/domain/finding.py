@@ -270,21 +270,25 @@ class Finding:
 
         Matched points are paired by sensor location and time, so both amplitudes
         come from the same spectrum: road-noise matches either order picked up
-        elsewhere in the run do not dilute the comparison. With *location*, only
+        elsewhere in the run do not dilute the comparison. A window where neither
+        order is heard pairs two floor-level noise peaks and says nothing about
+        which order dominates, so it does not count either. With *location*, only
         that sensor's windows count. ``None`` when fewer than
         ``_MIN_SHARED_WINDOWS`` windows are shared.
         """
-        own: dict[tuple[str, float | None], float] = {
-            (point.location, point.t_s): point.amp
+        own: dict[tuple[str, float | None], OrderMatchObservation] = {
+            (point.location, point.t_s): point
             for point in self.matched_points
             if point.t_s is not None
             and point.amp > 0
             and (location is None or point.location == location)
         }
         levels = [
-            20.0 * math.log10(amp / point.amp)
+            20.0 * math.log10(mine.amp / point.amp)
             for point in other.matched_points
-            if point.amp > 0 and (amp := own.get((point.location, point.t_s))) is not None
+            if point.amp > 0
+            and (mine := own.get((point.location, point.t_s))) is not None
+            and (mine.heard or point.heard)
         ]
         return median(levels) if len(levels) >= self._MIN_SHARED_WINDOWS else None
 
