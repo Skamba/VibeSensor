@@ -51,6 +51,7 @@ from vibesensor.recording.lifecycle_state import RecordingStopReason
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.view_model import ReportView, build_report_view
+from vibesensor.simulator.road_surface import RoadSurface
 from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_speed_kmh
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.simulator.sim_client import SimClient, make_client_id
@@ -355,6 +356,7 @@ def run_sim_pipeline(
     fallback_speed_kmh: float | None = None,
     flush_period_s: float | None = None,
     cut_power: bool = False,
+    road: RoadSurface | None = None,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
@@ -402,6 +404,7 @@ def run_sim_pipeline(
             fallback_speed_kmh=fallback_speed_kmh,
             flush_period_s=flush_period_s,
             cut_power=cut_power,
+            road=road,
         )
         if not cut_power:
             return _analysed(runtime, recorded, lang=lang)
@@ -470,6 +473,7 @@ def _record(
     fallback_speed_kmh: float | None,
     flush_period_s: float | None,
     cut_power: bool,
+    road: RoadSurface | None,
 ) -> _RecordedDrive:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -537,6 +541,7 @@ def _record(
                 server_data_port=_SERVER_DATA_PORT,
                 server_control_port=_SERVER_CONTROL_PORT,
                 profile_name="rough_road",
+                road=road,
             )
             sim.order_hz = car.order_hz(100.0)
             if car_start:

@@ -99,6 +99,11 @@ so every sensor feels it.
 - Real-drive recordings are needed to calibrate the levels and Q per car; the
   numbers above are literature ranges, not measurements.
 
+`run_sim_pipeline(road=...)` gives the sensors a road (`SimClient.road`): the
+road's vibration through a quarter car at each sensor's mount and the ADXL345
+front end, instead of white noise; its physics and sources are in
+`docs/simulator_realism.md`.
+
 ## Backend test placement
 
 `apps/server/tests/` mirrors the backend package layout: a change to

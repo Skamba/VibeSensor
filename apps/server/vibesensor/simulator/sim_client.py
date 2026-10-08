@@ -12,6 +12,7 @@ from scipy.signal import lfilter
 
 from vibesensor.ingest.protocol_messages import client_id_mac
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
+from vibesensor.simulator.adxl345_front_end import Adxl345FrontEnd
 from vibesensor.simulator.profiles import (
     DEFAULT_ORDER_HZ,
     DEFAULT_SPEED_KMH,
@@ -19,6 +20,8 @@ from vibesensor.simulator.profiles import (
     Profile,
     RoadResonance,
 )
+from vibesensor.simulator.road_surface import ISO8608_GD_N0_M3, RoadSurface
+from vibesensor.simulator.road_vibration import RoadVibration, mount_for_name
 
 __all__ = ["SimClient", "make_client_id"]
 
@@ -30,6 +33,10 @@ _COUNTS_PER_MG = 1.0 / (1000.0 * ADXL345_SCALE_G_PER_LSB)
 # Road resonances draw their own noise, so adding or tuning one leaves the
 # rest of a sensor's simulated signal as it was.
 _RESONANCE_SEED_SALT = 0x5E50
+_ROAD_SEED_SALT = 0x8608
+_FRONT_END_SEED_SALT = 0xAD45
+# Road resonances are specified on a road between ISO 8608 classes A and B.
+_RESONANCE_REFERENCE_GD_N0_M3 = float(np.sqrt(ISO8608_GD_N0_M3["A"] * ISO8608_GD_N0_M3["B"]))
 
 
 @functools.cache
@@ -97,6 +104,15 @@ class SimClient:
     # Each road resonance's filter state per axis, so it rings on across frames.
     resonance_states: dict[RoadResonance, np.ndarray] = field(default_factory=dict)
     resonance_rng: np.random.Generator | None = None
+    # The road the drive runs on. When set, the sensor feels it through a
+    # quarter car at its mount and reads everything through the ADXL345 front
+    # end (see docs/simulator_realism.md); ``None`` keeps the idealised sensor:
+    # white noise, random bumps and an int16-wide output.
+    road: RoadSurface | None = None
+    # Distance the front axle has covered along ``road`` (m).
+    distance_m: float = 0.0
+    road_vibration: RoadVibration = field(init=False)
+    front_end: Adxl345FrontEnd = field(init=False)
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
@@ -111,6 +127,16 @@ class SimClient:
         # The device timer counts from its own boot, unrelated to the server
         # clock, so t0_us only becomes server-relative after clock sync.
         self.device_boot_mono_s = time.monotonic() - float(self.rng.uniform(1.0, 30.0))
+        mount, axle_share = mount_for_name(self.name)
+        self.road_vibration = RoadVibration(
+            mount=mount,
+            axle_share=axle_share,
+            sample_rate_hz=self.sample_rate_hz,
+            rng=np.random.default_rng((seed, _ROAD_SEED_SALT)),
+        )
+        self.front_end = Adxl345FrontEnd.for_sensor(
+            self.sample_rate_hz, np.random.default_rng((seed, _FRONT_END_SEED_SALT))
+        )
 
     @property
     def profile(self) -> Profile:
@@ -199,9 +225,15 @@ class SimClient:
         sample_offsets_s = np.arange(self.frame_samples, dtype=np.float64) * dt
         frame_s = self.frame_samples * dt
         next_tone_phases: dict[tuple[str, float], float] = {}
+        realistic = self.road is not None
         for tone_key, effective_hz, amps_xyz in local_tones:
             if effective_hz <= 0:
                 continue
+            if realistic:
+                # The sensor's own filter; a tone above ODR/2 folds back into
+                # the band because the samples are taken at the tone's instants.
+                gain = self.front_end.tone_gain(effective_hz)
+                amps_xyz = (amps_xyz[0] * gain, amps_xyz[1] * gain, amps_xyz[2] * gain)
             start_phase = self.tone_phases.get(tone_key, 0.0)
             omega_t = start_phase + _TWO_PI * effective_hz * sample_offsets_s
             next_tone_phases[tone_key] = (start_phase + _TWO_PI * effective_hz * frame_s) % _TWO_PI
@@ -211,7 +243,9 @@ class SimClient:
         self.tone_phases = next_tone_phases
 
         local_signal *= modulation[:, None]
-        local_signal += self._bumps(profile)
+        if self.road is not None:
+            return self._realistic_frame(profile, local_signal, t[-1] + dt)
+        local_signal += self._bumps(profile, profile.bump_probability)
 
         noise = self.rng.normal(
             0.0,
@@ -230,13 +264,36 @@ class SimClient:
             size=signal.shape,
         ).astype(np.float32)
         signal += floor_noise
-        signal += self._road_resonances(profile)
+        signal += self._road_resonances(profile, 1.0)
 
         self.phase_s = float(t[-1] + dt)
         result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
         return result
 
-    def _bumps(self, profile: Profile) -> np.ndarray:
+    def _realistic_frame(
+        self, profile: Profile, local_signal: np.ndarray, next_phase_s: float
+    ) -> np.ndarray:
+        """The frame as the real sensor reads it on ``road``.
+
+        The road's vibration at this mount replaces the profile's white noise
+        and random bumps (a scenario's explicit pulses stay), and the ADXL345
+        front end adds its noise, offset and gravity, rounds and clips.
+        """
+        assert self.road is not None and self.rng is not None
+        local_signal += self._bumps(profile, 0.0)
+        signal = local_signal.astype(np.float64) * (self.amp_scale * self.scene_gain)
+        road_mg = self.road_vibration.frame_mg(
+            self.road, self.distance_m, self.current_speed_kmh, self.frame_samples
+        )
+        signal += road_mg * _COUNTS_PER_MG
+        roughness = np.sqrt(self.road.gd_n0_m3(self.distance_m) / _RESONANCE_REFERENCE_GD_N0_M3)
+        signal += self._road_resonances(profile, float(roughness))
+        frame_s = self.frame_samples / self.sample_rate_hz
+        self.distance_m += max(0.0, self.current_speed_kmh) / 3.6 * frame_s
+        self.phase_s = float(next_phase_s)
+        return self.front_end.read(signal, self.rng)
+
+    def _bumps(self, profile: Profile, bump_probability: float) -> np.ndarray:
         """Each sample's decaying bump state, in counts.
 
         Every sample draws one uniform for whether a bump starts there and, when
@@ -255,7 +312,7 @@ class SimClient:
         start = 0
         while start < samples:
             saved = bit_generator.state
-            hits = np.flatnonzero(rng.random(samples - start) < profile.bump_probability)
+            hits = np.flatnonzero(rng.random(samples - start) < bump_probability)
             bump = samples if hits.size == 0 else start + int(hits[0])
             if bump < samples:
                 # Rewind to draw exactly the uniforms up to and including the bump's.
@@ -278,14 +335,15 @@ class SimClient:
         self.bump_state = state
         return out
 
-    def _road_resonances(self, profile: Profile) -> np.ndarray:
+    def _road_resonances(self, profile: Profile, roughness: float) -> np.ndarray:
         """The road-excited modes, in counts: band-passed noise that grows with speed.
 
-        They are what the sensor itself feels, whatever the scene's gains.
+        They are what the sensor itself feels, whatever the scene's gains;
+        *roughness* scales them with the road (1 on the profile's own road).
         """
         assert self.resonance_rng is not None  # guaranteed by __post_init__
         out = np.zeros((self.frame_samples, 3), dtype=np.float64)
-        gain = profile.resonance_gain(self.current_speed_kmh)
+        gain = profile.resonance_gain(self.current_speed_kmh) * roughness
         states: dict[RoadResonance, np.ndarray] = {}
         for resonance in profile.road_resonances:
             b, a = _resonator(resonance, self.sample_rate_hz)
