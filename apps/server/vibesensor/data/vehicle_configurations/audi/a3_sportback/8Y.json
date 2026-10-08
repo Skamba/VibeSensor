@@ -1,0 +1,1113 @@
+{
+  "definitions": {
+    "evidence_ref_sets": {
+      "e1": [
+        "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-manual-2025-01-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-manual-2026-06-tech-data-pdf"
+      ],
+      "e2": [
+        "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-s-tronic-2024-10-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-s-tronic-2026-06-tech-data-pdf"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-manual-2025-06-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-manual-2026-06-tech-data-pdf"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:8y-a3-sportback-30-tdi-2024-09-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-30-tdi-2026-06-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-quattro-2025-06-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-quattro-2026-02-tech-data-pdf"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2024-10-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2026-06-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2025-01-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2026-06-tech-data-pdf"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2023-07-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2024-03-tech-data-pdf"
+      ],
+      "e9": [
+        "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2023-07-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2024-03-tech-data-pdf"
+      ],
+      "e10": [
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2024-10-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2026-06-tech-data-pdf"
+      ],
+      "e11": [
+        "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2024-10-tech-data-pdf",
+        "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2026-06-tech-data-pdf"
+      ],
+      "e12": [
+        "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback"
+      ]
+    }
+  },
+  "defaults": {
+    "brand": "Audi",
+    "type": "Hatchback",
+    "market": "EU",
+    "model_code": "8Y",
+    "body_code": "8Y",
+    "model_name": "A3 Sportback (8Y, 2023-2026)"
+  },
+  "configurations": [
+    {
+      "id": "audi-8y-sportback-30-tfsi-eu-2025-mt6-fwd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "30 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list a 6-speed manual for the 30 TFSI.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.510 as the top gear for the 30 TFSI.",
+          "value": 0.51
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510 for the 30 TFSI.",
+          "value": [
+            3.75,
+            2.1,
+            1.276,
+            0.878,
+            0.674,
+            0.51
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 4.235 as the final drive for the 30 TFSI (both gearbox outputs print 4.235).",
+          "value": 4.235
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TFSI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TFSI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TFSI (in-line four TFSI, 1498 cc). The 01/2025 sheet is the earliest checked sheet for this variant, so the row starts in 2025. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. From 2025/2026 Audi drops the number from the name (the sheets read 'TFSI 85 kW').",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 30 TFSI (6-speed manual) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "A3 Sportback 30 TFSI manual in 2024",
+          "reason": "The upgraded car's petrol manuals followed from the second quarter of 2024, but no official 2024 sheet for the 30 TFSI manual was found, so 2024 is not covered.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-30-tfsi-eu-2024-dct7-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "30 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 30 TFSI.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.653 as the top gear for the 30 TFSI.",
+          "value": 0.653
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 for the 30 TFSI.",
+          "value": [
+            3.5,
+            2.087,
+            1.343,
+            0.94,
+            0.974,
+            0.78,
+            0.653
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TFSI. Audi prints two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 through the two outputs, only those with the top gear on 3.429 keep the overall ratios falling gear by gear, so 3.429 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.429
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TFSI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TFSI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TFSI (in-line four TFSI, 1498 cc). The 10/2024 sheet is the earliest checked sheet for this variant, so the row starts in 2024. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. From 2025/2026 Audi drops the number from the name (the sheets read 'TFSI S tronic 85 kW MHEV').",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 30 TFSI (7-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-35-tfsi-eu-2025-mt6-fwd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list a 6-speed manual for the 35 TFSI.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.510 as the top gear for the 35 TFSI.",
+          "value": 0.51
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510 for the 35 TFSI.",
+          "value": [
+            3.75,
+            2.1,
+            1.276,
+            0.878,
+            0.674,
+            0.51
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 4.235 as the final drive for the 35 TFSI (both gearbox outputs print 4.235).",
+          "value": 4.235
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TFSI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TFSI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 06/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TFSI (in-line four TFSI, 1498 cc). The 06/2025 sheet (German) is the earliest checked sheet for this variant, so the row starts in 2025. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. Audi names it 'TFSI 110 kW' on both sheets.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 35 TFSI (6-speed manual) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "A3 Sportback 35 TFSI manual in 2024",
+          "reason": "No official 2024 sheet for the 110 kW manual was found, so 2024 is not covered.",
+          "evidence_refs_ref": "e12"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-35-tfsi-eu-2024-dct7-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 35 TFSI.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.653 as the top gear for the 35 TFSI.",
+          "value": 0.653
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 for the 35 TFSI.",
+          "value": [
+            3.5,
+            2.087,
+            1.343,
+            0.94,
+            0.974,
+            0.78,
+            0.653
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TFSI. Audi prints two gearbox output final drives, 4.800 (1-2) and 3.429 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653 through the two outputs, only those with the top gear on 3.429 keep the overall ratios falling gear by gear, so 3.429 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.429
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TFSI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TFSI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TFSI (in-line four TFSI, 1498 cc). The official upgrade release offers the 35 TFSI S tronic from launch (orderable from March 2024), so the row starts in 2024. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. From 2025/2026 Audi drops the number from the name (the sheets read 'TFSI S tronic 110 kW MHEV').",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2024-10-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2026-06-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 35 TFSI (7-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-30-tdi-eu-2024-mt6-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "30 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TDI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list a 6-speed manual for the 30 TDI.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.604 as the top gear for the 30 TDI.",
+          "value": 0.604
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.750 / 1.952 / 1.200 / 0.878 / 0.711 / 0.604 for the 30 TDI.",
+          "value": [
+            3.75,
+            1.952,
+            1.2,
+            0.878,
+            0.711,
+            0.604
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 3.238 as the final drive for the 30 TDI (both gearbox outputs print 3.238).",
+          "value": 3.238
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TDI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 30 TDI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 09/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 30 TDI (in-line four TDI, 1968 cc). The 09/2024 sheet is the earliest checked sheet for this variant, so the row starts in 2024. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. From 2025/2026 Audi drops the number from the name (the sheets read 'TDI 85 kW').",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 30 TDI (6-speed manual) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-35-tdi-eu-2024-dct7-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2026,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TDI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 35 TDI.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.561 as the top gear for the 35 TDI.",
+          "value": 0.561
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 for the 35 TDI.",
+          "value": [
+            3.579,
+            2.75,
+            1.677,
+            0.889,
+            0.677,
+            0.722,
+            0.561
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TDI. Audi prints two gearbox output final drives, 4.167 (1-2) and 3.125 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 through the two outputs, only those with the top gear on 3.125 keep the overall ratios falling gear by gear, so 3.125 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.125
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TDI.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 35 TDI.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 01/2025 and 06/2026 A3 Sportback technical data (Program for Germany) list the 35 TDI (in-line four TDI, 1968 cc). The official upgrade release offers the 35 TDI S tronic from launch (orderable from March 2024), so the row starts in 2024. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. From 2025/2026 Audi drops the number from the name (the sheets read 'TDI S tronic 110 kW').",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2025-01-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2026-06-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 35 TDI (7-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "A3 Sportback 35 TDI S tronic ratios in 2024",
+          "reason": "The earliest checked sheet for the upgraded 35 TDI is dated 01/2025; the 2024 cars are taken to share its gearbox data because the release names the same 110 kW seven-speed S tronic drivetrain.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2025-01-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-40-tfsi-quattro-eu-2025-dct7-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI quattro with on-demand quattro all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 40 TFSI quattro.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list 0.635 as the top gear for the 40 TFSI quattro.",
+          "value": 0.635
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the 40 TFSI quattro.",
+          "value": [
+            3.4,
+            2.75,
+            1.767,
+            0.925,
+            0.705,
+            0.755,
+            0.635
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI quattro. Audi prints two gearbox output final drives, 4.167 (1-2) and 3.125 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.125 keep the overall ratios falling gear by gear, so 3.125 is the final drive behind the top gear and is the only one stored. It is stored as the rear axle ratio, the all-wheel-drive convention.",
+          "value": 3.125
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 40 TFSI quattro.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 40 TFSI quattro.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 06/2025 and 02/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI quattro (in-line four TFSI, 1984 cc). The 06/2025 sheet (German) is the earliest checked sheet for this variant, so the row starts in 2025; the 02/2026 sheet is the latest, and the 06/2026 model page no longer lists it, so the row ends in 2026. Audi names it 'TFSI quattro S tronic 150 kW'.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 40 TFSI quattro (7-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e5"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-40-tfsi-e-1-4-eu-2023-dct6-fwd",
+      "production_start_year": 2023,
+      "production_end_year": 2024,
+      "variant_name": "40 TFSI e",
+      "engine_code": "1.4L",
+      "engine_name": "1.4L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 40 TFSI e with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e8",
+        "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list a 6-speed S tronic for the 40 TFSI e.",
+        "code": "DCT6",
+        "name": "6-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 0.840 as the top gear for the 40 TFSI e.",
+          "value": 0.84
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the 40 TFSI e.",
+          "value": [
+            3.5,
+            2.773,
+            1.852,
+            1.02,
+            1.023,
+            0.84
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e8",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 40 TFSI e. Audi prints two gearbox output final drives, 3.750 (1-2) and 2.885 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 through the two outputs, only those with the top gear on 2.885 keep the overall ratios falling gear by gear, so 2.885 is the final drive behind the top gear and is the only one stored.",
+          "value": 2.885
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e8",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 40 TFSI e.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e8",
+            "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 205/55 R16 as the basic tire for the 40 TFSI e.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 40 TFSI e (plug-in hybrid with an in-line four TFSI, 1395 cc). This is the plug-in hybrid before the upgrade. The 07/2023 sheet is the earliest checked, so the row starts in 2023; the upgraded plug-in hybrid followed near the end of 2024, so the row ends in 2024.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2023-07-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2024-03-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 40 TFSI e (6-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e8"
+        },
+        {
+          "item": "A3 Sportback 40 TFSI e (1.4 TFSI) before 2023",
+          "reason": "No official sheet before 07/2023 was found, so the earlier years are not covered.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2023-07-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-45-tfsi-e-1-4-eu-2023-dct6-fwd",
+      "production_start_year": 2023,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI e (180 kW)",
+      "engine_code": "1.4L",
+      "engine_name": "1.4L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (180 kW) with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e9",
+        "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list a 6-speed S tronic for the 45 TFSI e (180 kW).",
+        "code": "DCT6",
+        "name": "6-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 0.840 as the top gear for the 45 TFSI e (180 kW).",
+          "value": 0.84
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the 45 TFSI e (180 kW).",
+          "value": [
+            3.5,
+            2.773,
+            1.852,
+            1.02,
+            1.023,
+            0.84
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (180 kW). Audi prints two gearbox output final drives, 3.750 (1-2) and 2.885 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 through the two outputs, only those with the top gear on 2.885 keep the overall ratios falling gear by gear, so 2.885 is the final drive behind the top gear and is the only one stored.",
+          "value": 2.885
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e9",
+          "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 45 TFSI e (180 kW).",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e9",
+            "notes": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 45 TFSI e (180 kW).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2023 and 03/2024 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (180 kW) (plug-in hybrid with an in-line four TFSI, 1395 cc). This is the 180 kW plug-in hybrid before the upgrade. The 07/2023 sheet is the earliest checked, so the row starts in 2023; the upgraded plug-in hybrid followed near the end of 2024, so the row ends in 2024.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2023-07-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2024-03-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 45 TFSI e (180 kW) (6-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e9"
+        },
+        {
+          "item": "A3 Sportback 45 TFSI e (180 kW) before 2023",
+          "reason": "No official sheet before 07/2023 was found, so the earlier years are not covered.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2023-07-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-40-tfsi-e-eu-2025-dct6-fwd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "40 TFSI e",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI e with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e10",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list a 6-speed S tronic for the 40 TFSI e.",
+        "code": "DCT6",
+        "name": "6-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.840 as the top gear for the 40 TFSI e.",
+          "value": 0.84
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the 40 TFSI e.",
+          "value": [
+            3.5,
+            2.773,
+            1.852,
+            1.02,
+            1.023,
+            0.84
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e10",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI e. Audi prints two gearbox output final drives, 3.750 (1-2) and 2.885 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 through the two outputs, only those with the top gear on 2.885 keep the overall ratios falling gear by gear, so 2.885 is the final drive behind the top gear and is the only one stored.",
+          "value": 2.885
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e10",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 40 TFSI e.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e10",
+            "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 40 TFSI e.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 40 TFSI e (plug-in hybrid with an in-line four TFSI, 1498 cc). This is the upgraded 1.5 TFSI plug-in hybrid (150 kW system output). The release places its launch near the end of 2024 (after July), so the row starts in 2025. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. The 2026 sheet names it 'A3 Sportback e-hybrid 150 kW'.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2024-10-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2026-06-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 40 TFSI e (6-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-8y-sportback-45-tfsi-e-eu-2025-dct6-fwd",
+      "production_start_year": 2025,
+      "production_end_year": 2026,
+      "variant_name": "45 TFSI e (200 kW)",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (200 kW) with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e11",
+        "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list a 6-speed S tronic for the 45 TFSI e (200 kW).",
+        "code": "DCT6",
+        "name": "6-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 0.840 as the top gear for the 45 TFSI e (200 kW).",
+          "value": 0.84
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the 45 TFSI e (200 kW).",
+          "value": [
+            3.5,
+            2.773,
+            1.852,
+            1.02,
+            1.023,
+            0.84
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e11",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (200 kW). Audi prints two gearbox output final drives, 3.750 (1-2) and 2.885 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 through the two outputs, only those with the top gear on 2.885 keep the overall ratios falling gear by gear, so 2.885 is the final drive behind the top gear and is the only one stored.",
+          "value": 2.885
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e11",
+          "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 45 TFSI e (200 kW).",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e11",
+            "notes": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list 225/45 R17 as the basic tire for the 45 TFSI e (200 kW).",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 10/2024 and 06/2026 A3 Sportback technical data (Program for Germany) list the 45 TFSI e (200 kW) (plug-in hybrid with an in-line four TFSI, 1498 cc). This is the upgraded 1.5 TFSI plug-in hybrid (200 kW system output). The release places its launch near the end of 2024 (after July), so the row starts in 2025. The 06/2026 sheet is the latest checked and the car is still on sale, so the row ends in 2026. The 2026 sheet names it 'A3 Sportback e-hybrid 200 kW'.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+            "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2024-10-tech-data-pdf",
+            "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2026-06-tech-data-pdf"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "A3 Sportback 45 TFSI e (200 kW) (6-speed S tronic) optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official A3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e11"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    }
+  ]
+}
