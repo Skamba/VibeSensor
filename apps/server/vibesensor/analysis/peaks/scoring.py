@@ -7,6 +7,7 @@ from math import log1p
 
 from vibesensor.analysis._sample_metrics import _effective_baseline_floor
 from vibesensor.analysis.constants import NEGLIGIBLE_STRENGTH_MAX_DB, SNR_LOG_DIVISOR
+from vibesensor.analysis.math_utils import _ramp
 from vibesensor.analysis.peaks.classification import classify_peak_type
 from vibesensor.analysis.peaks.settings import PEAK_CONFIDENCE_SETTINGS
 from vibesensor.analysis.peaks.statistics import (
@@ -88,14 +89,27 @@ def _compute_peak_confidence(
         ),
     )
     confidence = base_confidence * spatial_penalty
-    if (
-        has_location_counts
-        and spatial_concentration <= settings.low_spatial_concentration_threshold
-    ):
-        confidence = min(confidence, settings.low_spatial_concentration_cap)
-    if peak_strength_db < NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, settings.negligible_strength_cap)
-    return confidence
+    # Each cap lifts over a short ramp past its edge rather than vanishing there.
+    if has_location_counts:
+        low = settings.low_spatial_concentration_threshold
+        confidence = min(
+            confidence,
+            _lifting_cap(
+                settings.low_spatial_concentration_cap,
+                _ramp(spatial_concentration, low, low + settings.low_spatial_concentration_ramp),
+            ),
+        )
+    lifted = _ramp(
+        peak_strength_db,
+        NEGLIGIBLE_STRENGTH_MAX_DB,
+        NEGLIGIBLE_STRENGTH_MAX_DB + settings.negligible_strength_ramp_db,
+    )
+    return min(confidence, _lifting_cap(settings.negligible_strength_cap, lifted))
+
+
+def _lifting_cap(cap: float, lifted: float) -> float:
+    """*cap* at *lifted* 0, rising to the peak confidence maximum at 1."""
+    return cap + lifted * (PEAK_CONFIDENCE_SETTINGS.confidence_max - cap)
 
 
 class PeakBin:

@@ -150,7 +150,13 @@ the source:
   such an order shows no dominant corner and its own evidence is established,
   it scores like a wheel order at a clearly dominant corner, with no
   weak-separation penalty. The credit (`_zone_credit`) needs the order heard
-  on at least two sensors, and is then the product of four ramps:
+  on a second sensor, and is the product of five ramps:
+  - how clearly a second sensor hears it (the graded corroboration count,
+    `OrderMatchAccumulator.corroboration`): none while no other sensor is
+    clear of the floor at least half as often as the clearest one (the bar
+    for hearing it at all, see "Heard matches" in `docs/order_tracking.md`),
+    full from 60 %. One sensor is a point, not a zone, so this stays a gate:
+    the credit is 0 without a second hearing sensor,
   - how often it is heard (see "Heard matches" in `docs/order_tracking.md`):
     none at 40 % of the possible windows at the sensors that hear it, full
     at 50 %. Road noise that happens to sit on the order's frequency does
@@ -185,22 +191,40 @@ the penalty eases out beyond it.
 | Speed stddev past the constant limit (0.5 km/h) | ×0.75, tracking correlation not counted, minimum match rate 0.55 instead of 0.25 | 0.5–1.0 km/h (`speed_constancy`, `order_min_match_rate`) |
 | Diffuse excitation (wheel orders: similar match rates and amplitudes at every sensor) | ×0.85 − 0.04 per sensor, at least ×0.65 | amplitude ratio 2–3, match-rate range 0.15–0.30, mean match rate 0.15 down to 0.05 (`detect_diffuse_excitation`) |
 | Localisation claimed with one or two sensors | ×0.85 / ×0.92 from localisation 0.30 | eases in from the 0.05 floor (`_few_sensor_scale`) |
-| Effective match rate just over the minimum | the finding is at most Weak (0.39) | the next 0.15 of match rate (`_presence_cap`) |
+| Run-wide heard match rate just over the minimum | the finding is at most Weak (0.39) | the next 0.15 of match rate (`_presence_cap`) |
+| Second / third sensor's share of the clearest sensor's clear windows past 0.5 (the heard bar) | zone credit none → full; corroboration bonus ×1 → ×1.04 → ×1.08 | 0.5–0.6 per sensor (`_corroboration`) |
+| A phase's match rate past the minimum match rate (with at least 3 matches) | phase bonus ×1 → ×1.03 → ×1.06 | the next 0.10 of match rate (`compute_phase_stats`) |
+
+The presence cap reads the order's heard match rate over the whole run, not
+the rate rescued to its best speed band or location
+(`_compute_effective_match_rate`). An order under the minimum exists only
+through that rescue; it is heard less often than "just often enough", so it
+is at most Weak. Judged on the rescued rate, the score fell from Strong to
+Weak as the run-wide rate rose past the minimum: on the benchmark matrix an
+E3 order rescued to 0.80 from a run-wide 0.240 scored 0.86, and the same
+order at 0.25 run-wide would have been capped at 0.39. Every rescued finding
+the matrix scored Moderate or Strong was a secondary order that was not the
+diagnosis.
+
+The amplitude of an order under twice the MEMS noise floor (2 mg) no longer
+caps its SNR term at 0.40: the floor is clamped at 1 mg, so such an order
+reads at most 6 dB and the negligible cap above already holds it at Weak;
+the separate cap moved the SNR term by at most 0.04 (0.008 of the score).
 
 Some gates stay steps, because their input is a count or a categorical
 judgement, or because no score depends on where they sit:
 
 - Below the minimum match rate, or with a tracking slope under 0.5 (step 4
   in `docs/order_tracking.md`), there is no finding. The presence cap above
-  bounds what passing the minimum match rate adds (at most a Weak finding);
-  the slope needs no cap, because an order that barely tracks speed is
+  bounds what passing the minimum match rate adds, or what a rescue to the
+  best speed band or location adds below it (at most a Weak finding either
+  way); the slope needs no cap, because an order that barely tracks speed is
   already off frequency and scores low on the frequency error.
-- Sensor counts: the zone credit's two heard sensors, the corroboration
-  bonus (×1.04 at two sensors, ×1.08 at three) and the phase bonus (×1.03,
-  ×1.06; braking counts as one phase with deceleration). One heard sensor is a point, not a zone; on the benchmark matrix
-  no zone-source order heard at one sensor has evidence that would earn
-  credit, so the step never acts there. The bonuses move a score by at most
-  0.04 per count.
+- Counts: the number of connected sensors (`_few_sensor_scale`), at least 3
+  matches for a phase to count (braking counts as one phase with
+  deceleration), and which sensors hear an order at all (the heard bar
+  itself, a classification every metric shares). The graded inputs built on
+  them ramp (table above).
 - Alias suppression (×0.6 for an engine order ranking below the best wheel
   order, `suppress_engine_aliases`): a choice between two explanations of the
   same peaks, so their ranking scores often tie to within a few per cent and
@@ -210,6 +234,27 @@ judgement, or because no score depends on where they sit:
   engine). A ramp there would leave the alias half-suppressed.
 - The sample count saturates (×0.70 + 0.30 × matched/20) and is already
   continuous.
+- Categorical outcomes on top of the score: whether a hotspot is weakly
+  separated (the "spread across locations" reason, which keeps a wheel fault
+  at most Moderate, and the faint wheel residual that reads as no fault),
+  which zone or corner is named, a brake judder or fixed-tone verdict, a
+  non-order peak's type (baseline noise, transient, persistent), and the
+  weak reasons listed (intermittent under 50 % presence, a matched speed
+  range under 10 km/h). Each is a statement shown to the owner, so it has
+  one edge; the scores underneath them ramp, so on either side of such an
+  edge the score differs by only a little and only the label or level cap
+  changes.
+- Score thresholds: the levels themselves (0.40, 0.70), surfacing (0.25),
+  an order finding claiming its peaks from the non-order peak list (0.40),
+  and the per-location split of a wheel finding with a second corner within
+  2× dominance (the split-off corner scores the main finding ÷ dominance, at
+  most half of it at the edge, far under the 15-point drop-off for a second
+  top cause).
+
+A non-order peak finding's caps ramp the same way (`_compute_peak_confidence`
+in `analysis/peaks/scoring.py`): the cap for a peak spread over the sensors
+(0.35 up to a spatial concentration of 0.35) lifts over 0.35–0.45, and the
+negligible cap (0.40 under 8 dB) over 8–12 dB, as for orders.
 
 Because wheel and engine scores follow different location rules, a score
 comparison does not decide whether an engine order on a wheel harmonic belongs to

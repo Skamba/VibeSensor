@@ -40,8 +40,8 @@ def compute_order_confidence(
     constancy: float,
     steadiness: float,
     matched: int,
-    corroborating_locations: int,
-    phases_with_evidence: int,
+    corroboration: float,
+    phase_evidence: float,
     diffuse_penalty: float,
     n_connected_locations: int,
     weak_separation_edge: float | None = None,
@@ -50,6 +50,7 @@ def compute_order_confidence(
     zone_source: bool = False,
     zone_match_rate: float = 0.0,
     wheel_shared_fraction: float = 0.0,
+    run_match_rate: float | None = None,
 ) -> float:
     """Compute calibrated confidence for an order-tracking finding.
 
@@ -65,11 +66,16 @@ def compute_order_confidence(
     counting as weakly separated (``LocationAnalysisResult``); the spread
     penalty eases out past it instead of vanishing there. *constancy* and
     *steadiness* (0 to 1, ``speed_constancy`` / ``speed_steadiness``) grade how
-    close the drive came to one speed.
+    close the drive came to one speed. *corroboration* and *phase_evidence* are
+    graded counts (``OrderMatchAccumulator.corroboration``,
+    ``compute_phase_stats``): a sensor or phase just over its bar counts a
+    little, not fully. *run_match_rate* is the order's heard rate over the run,
+    before any rescue to its best speed band or location (default: the
+    effective rate); the presence cap reads it.
 
     Every term ramps rather than steps, so a small change of any input moves
-    the score a little ("Confidence levels" in docs/metrics.md). The integer
-    gates (sensor counts, corroboration, phases) stay steps.
+    the score a little ("Confidence levels" in docs/metrics.md). Only the
+    number of connected sensors stays a step.
     """
     settings = ORDER_CONFIDENCE_SETTINGS
     weakness = _spatial_weakness(weak_spatial_separation, dominance_ratio, weak_separation_edge)
@@ -79,7 +85,7 @@ def compute_order_confidence(
         error_score=error_score,
         wheel_shared_fraction=wheel_shared_fraction,
         absolute_strength_db=absolute_strength_db,
-        corroborating_locations=corroborating_locations,
+        corroboration=corroboration,
     )
     localization_confidence += (
         weakness
@@ -121,20 +127,29 @@ def compute_order_confidence(
     confidence = confidence * (
         settings.sample_weight_base + settings.sample_weight_range * sample_factor
     )
-    if corroborating_locations >= 3:
-        confidence *= settings.corroborating_three_bonus
-    elif corroborating_locations >= 2:
-        confidence *= settings.corroborating_two_bonus
-    if phases_with_evidence >= 3:
-        confidence *= settings.phases_three_bonus
-    elif phases_with_evidence >= 2:
-        confidence *= settings.phases_two_bonus
+    confidence *= _count_bonus(
+        corroboration, settings.corroborating_two_bonus, settings.corroborating_three_bonus
+    )
+    confidence *= _count_bonus(
+        phase_evidence, settings.phases_two_bonus, settings.phases_three_bonus
+    )
     confidence *= diffuse_penalty
     confidence *= _few_sensor_scale(n_connected_locations, localization_confidence)
     # Again after the bonuses, so corroboration/phase bonuses cannot lift a
     # noise-level order over the cap and past a louder order of another source.
-    confidence = min(confidence, strength_cap, _presence_cap(effective_match_rate, min_match_rate))
+    presence_rate = effective_match_rate if run_match_rate is None else run_match_rate
+    confidence = min(confidence, strength_cap, _presence_cap(presence_rate, min_match_rate))
     return max(settings.confidence_floor, min(settings.confidence_ceiling, confidence))
+
+
+def _count_bonus(count: float, two_bonus: float, three_bonus: float) -> float:
+    """The corroboration or phase bonus for a graded *count*: none at 1, *two_bonus* at 2,
+    *three_bonus* from 3, linear in between."""
+    return (
+        1.0
+        + (two_bonus - 1.0) * max(0.0, min(1.0, count - 1.0))
+        + (three_bonus - two_bonus) * max(0.0, min(1.0, count - 2.0))
+    )
 
 
 def _strength_cap(absolute_strength_db: float) -> float:
@@ -149,16 +164,20 @@ def _strength_cap(absolute_strength_db: float) -> float:
     return cap + lifted * (settings.confidence_ceiling - cap)
 
 
-def _presence_cap(effective_match_rate: float, min_match_rate: float) -> float:
-    """The most an order heard this often may score: at most Weak at the minimum rate.
+def _presence_cap(match_rate: float, min_match_rate: float) -> float:
+    """The most an order heard this often over the run may score: at most Weak up to the minimum.
 
-    Below *min_match_rate* there is no finding at all; the cap lifts over the
-    next ``presence_ramp`` of match rate, so passing the minimum adds a Weak
-    finding rather than a Strong one.
+    The cap lifts over the next ``presence_ramp`` of match rate, so passing the
+    minimum adds a Weak finding rather than a Strong one. An order under the
+    minimum exists only when rescued by its best speed band or location
+    (``_compute_effective_match_rate``); it is heard less often than "just
+    often enough", so it stays at most Weak. Judged on the rescued rate
+    instead, the score fell from Strong to Weak as the run-wide rate rose past
+    the minimum.
     """
     settings = ORDER_CONFIDENCE_SETTINGS
     cap = settings.weak_confidence_cap
-    lifted = _ramp(effective_match_rate, min_match_rate, min_match_rate + settings.presence_ramp)
+    lifted = _ramp(match_rate, min_match_rate, min_match_rate + settings.presence_ramp)
     return cap + lifted * (settings.confidence_ceiling - cap)
 
 
@@ -247,11 +266,12 @@ def _zone_credit(
     error_score: float,
     wheel_shared_fraction: float,
     absolute_strength_db: float,
-    corroborating_locations: int,
+    corroboration: float,
 ) -> float:
     """How far a zone-source order stands on its own evidence, 0 to 1.
 
-    Needs the order heard at more than one sensor. It then grows with how
+    Needs the order heard at more than one sensor: it grows with the second
+    sensor's share of the heard windows (*corroboration*, 1 to 2), with how
     often it is heard (*zone_match_rate*, 0.40-0.50), how closely it is on
     frequency (*error_score*, 0.50-0.60), how little of it is a wheel order's
     peaks (*wheel_shared_fraction*, full under 0.40, none from 0.50) and its
@@ -260,11 +280,12 @@ def _zone_credit(
     ("Confidence levels" in docs/metrics.md).
     """
     settings = ORDER_CONFIDENCE_SETTINGS
-    if not zone_source or corroborating_locations < settings.zone_min_corroborating_locations:
+    if not zone_source:
         return 0.0
     alias_fraction = settings.wheel_alias_shared_peak_fraction
     return (
-        _ramp(
+        max(0.0, min(1.0, corroboration - 1.0))
+        * _ramp(
             zone_match_rate,
             settings.zone_min_match_rate,
             settings.zone_min_match_rate + settings.zone_match_rate_ramp,
@@ -397,14 +418,18 @@ def compute_phase_stats(
     *,
     min_match_rate: float,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
-) -> tuple[dict[str, float] | None, int]:
-    """Compute per-phase confidence and count phases with sufficient evidence.
+) -> tuple[dict[str, float] | None, int, float]:
+    """Per-phase match rates, the phases with sufficient evidence, and that count graded.
 
-    Braking counts as one phase with deceleration: both are slowing down, and
-    splitting the spectra by how the car slowed may not add a phase bonus.
+    A phase has evidence with at least *min_match_points* matches at
+    *min_match_rate* or more. The graded count (for the phase bonus) counts a
+    phase in full only from ``phase_rate_ramp`` over the minimum rate, and a
+    little just over it. Braking counts as one phase with deceleration: both
+    are slowing down, and splitting the spectra by how the car slowed may not
+    add a phase bonus.
     """
     if not has_phases or not possible_by_phase:
-        return None, 0
+        return None, 0, 0.0
     per_phase_confidence: dict[str, float] = {}
     possible_by_group: Counter[str] = Counter()
     matched_by_group: Counter[str] = Counter()
@@ -418,13 +443,17 @@ def compute_phase_stats(
         )
         possible_by_group[group] += phase_possible
         matched_by_group[group] += phase_matched
-    phases_with_evidence = sum(
-        1
+    rates = [
+        matched_by_group[group] / max(1, possible)
         for group, possible in possible_by_group.items()
         if matched_by_group[group] >= min_match_points
-        and matched_by_group[group] / max(1, possible) >= min_match_rate
+    ]
+    ramp = ORDER_CONFIDENCE_SETTINGS.phase_rate_ramp
+    return (
+        per_phase_confidence,
+        sum(1 for rate in rates if rate >= min_match_rate),
+        sum(_ramp(rate, min_match_rate, min_match_rate + ramp) for rate in rates),
     )
-    return per_phase_confidence, phases_with_evidence
 
 
 def compute_amplitude_and_error_stats(
