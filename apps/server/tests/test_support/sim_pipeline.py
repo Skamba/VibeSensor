@@ -56,6 +56,7 @@ from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_s
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.sim_runtime import ClientProtocol
+from vibesensor.simulator.wheel_kinematics import DrivenAxle, DriveState, SimCar
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.obd.polling import ObdPidPollResult, ObdPollResult
 from vibesensor.speed.obd.service import ObdService
@@ -99,9 +100,18 @@ _IDLE_RPM = 800.0
 SpeedSource = Literal["gps", "obd2"]
 
 
+_DRIVEN_AXLES: dict[str, DrivenAxle] = {"FWD": "front", "RWD": "rear", "AWD": "all"}
+
+
 @dataclass(frozen=True, slots=True)
 class BenchCar:
-    """A car profile; its order frequencies are computed here, independent of the server."""
+    """A car as its owner enters it, and the physical car the simulator drives.
+
+    ``order_hz`` and ``wheel_hz`` are the entered specs' order math (what the
+    server places its order markers on), computed here independent of the
+    server. The simulated sensors feel the physical car (``sim_car``): the
+    simulator's own wheel kinematics on these tires, worn and inflated as given.
+    """
 
     name: str
     tire_width_mm: float
@@ -122,6 +132,17 @@ class BenchCar:
     # for a car entered by hand (and an EV).
     engine_profile: EngineProfile | None = None
 
+    def sim_car(self) -> SimCar:
+        """The physical car under the sensors: new tires, rear drive unless said."""
+        return SimCar.square(
+            self.tire_width_mm,
+            self.tire_aspect_pct,
+            self.rim_in,
+            final_drive_ratio=self.final_drive_ratio,
+            top_gear_ratio=self.current_gear_ratio,
+            driven_axle=_DRIVEN_AXLES.get(self.drive_layout or "", "rear"),
+        )
+
     @property
     def tire_circumference_m(self) -> float:
         diameter_mm = self.rim_in * 25.4 + 2.0 * self.tire_width_mm * self.tire_aspect_pct / 100.0
@@ -131,7 +152,7 @@ class BenchCar:
         return speed_kmh / 3.6 / self.tire_circumference_m
 
     def order_hz(self, speed_kmh: float) -> dict[str, float]:
-        """Order frequencies at *speed_kmh*, keyed like ``SimClient.order_hz``."""
+        """Order frequencies at *speed_kmh* from the entered specs, keyed like order tones."""
         wheel = self.wheel_hz(speed_kmh)
         shaft = wheel * self.final_drive_ratio
         engine = shaft * self.current_gear_ratio
@@ -143,12 +164,11 @@ class BenchCar:
             "engine_2x": 2.0 * engine,
         }
 
-    def engine_rpm(self, speed_kmh: float, gear_ratio: float | None) -> float:
-        """Engine RPM at *speed_kmh* in *gear_ratio* (the car's own gear when ``None``)."""
-        if speed_kmh <= 0:
+    def engine_rpm(self, state: DriveState, gear_ratio: float | None) -> float:
+        """The physical engine's RPM in *state* and *gear_ratio* (the top gear when ``None``)."""
+        if state.speed_kmh <= 0:
             return _IDLE_RPM
-        gear = self.current_gear_ratio if gear_ratio is None else gear_ratio
-        return self.order_hz(speed_kmh)["shaft_1x"] * gear * 60.0
+        return self.sim_car().engine_hz(state, gear_ratio) * 60.0
 
     def aspects(self) -> dict[str, float]:
         aspects = {
@@ -357,6 +377,7 @@ def run_sim_pipeline(
     flush_period_s: float | None = None,
     cut_power: bool = False,
     road: RoadSurface | None = None,
+    obd_speed_over_read: float = 0.0,
 ) -> SimPipelineResult:
     """Record one simulated drive through the production pipeline and return its analysis.
 
@@ -375,6 +396,8 @@ def run_sim_pipeline(
     start inclusive, end exclusive) it reports nothing, as a GPS receiver without a
     fix; one from 0 also skips the report before the drive (a cold start).
     *fallback_speed_kmh* is the typed-in fallback speed set with the live source.
+    An OBD adapter reads the speed the car's speedometer shows, *obd_speed_over_read*
+    (a share, 0.03 for 3 %) above the true speed.
     The recorder flushes a tick every
     *flush_period_s* (default: ``1 / metrics_log_hz``, as the Pi's flush loop
     keeps its deadlines whatever a tick's work takes).
@@ -405,6 +428,7 @@ def run_sim_pipeline(
             flush_period_s=flush_period_s,
             cut_power=cut_power,
             road=road,
+            obd_speed_over_read=obd_speed_over_read,
         )
         if not cut_power:
             return _analysed(runtime, recorded, lang=lang)
@@ -474,6 +498,7 @@ def _record(
     flush_period_s: float | None,
     cut_power: bool,
     road: RoadSurface | None,
+    obd_speed_over_read: float,
 ) -> _RecordedDrive:
     web = runtime.web
     lifecycle = runtime.lifecycle
@@ -543,7 +568,7 @@ def _record(
                 profile_name="rough_road",
                 road=road,
             )
-            sim.order_hz = car.order_hz(100.0)
+            sim.car = car.sim_car()
             if car_start:
                 boot_rng = random.Random(client_seed * 16 + index)
                 sim.device_boot_mono_s = boot_rng.uniform(
@@ -600,11 +625,15 @@ def _record(
             lifecycle.obd_runner,
             speed_source,
             car if obd_rpm else None,
+            obd_speed_over_read,
         )
         apply_phase(clients, scenario_name, phases[0])
         _set_true_speed(clients, phases[0].speed_start_kmh)
+        for client in clients:
+            # The car holds its starting speed until the drive starts.
+            client.current_accel_mps2 = 0.0
         if speed_dropout_s is None or speed_dropout_s[0] > 0.0:
-            report_speed(phases[0].speed_start_kmh, phases[0].gear_ratio)
+            report_speed(phases[0].speed_start_kmh, phases[0])
         loop.run_until(start_s + 1.0)
         client_ids: dict[str, str] = {}
         for sensor in sims.values():
@@ -634,7 +663,6 @@ def _record(
         _schedule_speed_reports(
             loop,
             report_speed,
-            clients,
             phases,
             drive_start,
             lag_s=speed_lag_s,
@@ -813,17 +841,24 @@ def _speed_reporter(
     obd: ObdService,
     speed_source: SpeedSource,
     rpm_car: BenchCar | None,
-) -> Callable[[float, float | None], None]:
-    """Feed a measured speed (and, with *rpm_car*, the engine RPM in that gear) to the server."""
+    obd_speed_over_read: float,
+) -> Callable[[float, ScenarioPhase], None]:
+    """Feed a measured speed (and, with *rpm_car*, the engine RPM) to the server.
 
-    def report_speed(speed_kmh: float, gear_ratio: float | None) -> None:
+    Each report is the speed (and RPM) of the car at *speed_kmh* in *phase*:
+    the engine turns in the phase's gear, and its tires slip as the phase
+    accelerates or brakes.
+    """
+
+    def report_speed(speed_kmh: float, phase: ScenarioPhase) -> None:
         if speed_source == "obd2":
+            state = DriveState(speed_kmh, phase.accel_mps2, phase.curvature_1pm)
             rpm = (
-                _pid_read(float(round(rpm_car.engine_rpm(speed_kmh, gear_ratio))))
+                _pid_read(float(round(rpm_car.engine_rpm(state, phase.gear_ratio))))
                 if rpm_car is not None
                 else ObdPidPollResult.skipped()
             )
-            speed = _pid_read(float(round(speed_kmh)))
+            speed = _pid_read(float(round(speed_kmh * (1.0 + obd_speed_over_read))))
             obd.apply_poll_cycle(ObdPollResult(rpm=rpm, speed=speed))
             return
         # One gpsd TPV report with a 3D fix, as ``GPSTransportRunner`` reads it.
@@ -877,8 +912,7 @@ def _schedule_phase(
 
 def _schedule_speed_reports(
     loop: _EventLoop,
-    report_speed: Callable[[float, float | None], None],
-    clients: Sequence[SimClient],
+    report_speed: Callable[[float, ScenarioPhase], None],
     phases: Sequence[ScenarioPhase],
     drive_start_s: float,
     *,
@@ -901,7 +935,7 @@ def _schedule_speed_reports(
                 if not _in_dropout(phase_start_s + elapsed - drive_start_s, dropout_s):
                     loop.at(
                         phase_start_s + elapsed + 1e-6,
-                        lambda speed=speed: report_speed(speed, clients[0].gear_ratio),
+                        lambda speed=speed, phase=phase: report_speed(speed, phase),
                     )
                 elapsed += _SPEED_UPDATE_PERIOD_S
             phase_start_s += phase.duration_s
@@ -914,7 +948,7 @@ def _schedule_speed_reports(
         if not _in_dropout(report_s, dropout_s):
             loop.at(
                 drive_start_s + report_s + 1e-6,
-                lambda speed=speed, gear=phase.gear_ratio: report_speed(speed, gear),
+                lambda speed=speed, phase=phase: report_speed(speed, phase),
             )
         report_s += period_s
 

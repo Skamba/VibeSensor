@@ -247,6 +247,8 @@ class Case:
     # measured ``speed_lag_s`` earlier (a GPS receiver: once a second, late).
     speed_lag_s: float = 0.0
     speed_report_period_s: float = 0.5
+    # How far the OBD speed (the speedometer's) reads over the true speed (0.03: 3 %).
+    obd_speed_over_read: float = 0.0
     # Guided steps the driver taps through without driving them: the report
     # lists them as tapped but not detected, never as done.
     guided_undetected: tuple[GuidedPhaseName, ...] = ()
@@ -376,6 +378,7 @@ def _phase(
     *ovs: PhaseOverride,
     guided: GuidedPhaseName | None = None,
     gear: float | None = None,
+    turn_radius_m: float | None = None,
 ) -> ScenarioPhase:
     return ScenarioPhase(
         name=name,
@@ -385,6 +388,7 @@ def _phase(
         overrides=(_ROAD, *ovs),
         guided_phase=guided,
         gear_ratio=gear,
+        turn_radius_m=turn_radius_m,
     )
 
 
@@ -768,6 +772,26 @@ def _sweep(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
     )
 
 
+def _winding_road(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """A country road at 60-85 km/h, bend after bend (radius 100-250 m, up to 0.3 g sideways)."""
+    return (
+        _phase("straight", 4.0, 70.0, 85.0, *faults),
+        _phase("left-bend", 6.0, 85.0, 85.0, *faults, turn_radius_m=200.0),
+        _phase("right-bend", 6.0, 85.0, 75.0, *faults, turn_radius_m=-150.0),
+        _phase("tight-left", 5.0, 75.0, 60.0, *faults, turn_radius_m=100.0),
+        _phase("right-exit", 5.0, 60.0, 80.0, *faults, turn_radius_m=-250.0),
+    )
+
+
+def _hard_pulls(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Two hard pulls (about 0.3 g, 40->125 and 90->130 km/h) with a lift-off between."""
+    return (
+        _phase("pull", 8.0, 40.0, 125.0, *faults),
+        _phase("lift", 8.0, 125.0, 90.0, *faults),
+        _phase("pull-again", 4.0, 90.0, 130.0, *faults),
+    )
+
+
 def _motorway_stops(
     *,
     braking: tuple[PhaseOverride, ...] = (),
@@ -889,6 +913,38 @@ GEAR_CASES = (
         speed_source="obd2",
         obd_rpm=True,
         cars=("other",),
+    ),
+    # Bend after bend the outer wheels run up to 0.7 % faster than the inner
+    # ones, and the faulty wheel's order moves with every bend: still that wheel.
+    Case(
+        "bench-winding-road-front-right-wheel",
+        _winding_road(_ov("front-right", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"front_right_wheel"}, "T1", dominant_corner=True),
+    ),
+    # Pulling hard the driven wheels slip about 3.5 % ahead of the road speed,
+    # the others not at all: a driven wheel's order runs that far off the line
+    # the speed sets while pulling, and back on it when the driver lifts off.
+    Case(
+        "bench-hard-pulls-driven-rear-left-wheel",
+        _hard_pulls(_ov("rear-left", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
+        cars=("rwd",),
+    ),
+    Case(
+        "bench-hard-pulls-driven-front-right-wheel",
+        _hard_pulls(_ov("front-right", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"front_right_wheel"}, "T1", dominant_corner=True),
+        cars=("fwd",),
+    ),
+    # The OBD speed reads 4 % over the true speed (a speedometer may read high,
+    # never low, under UN R39): every wheel order sits 4 % under where the
+    # reported speed places it, still that wheel.
+    Case(
+        "bench-obd-speed-over-read-front-left-wheel-sweep",
+        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
+        speed_source="obd2",
+        obd_speed_over_read=0.04,
     ),
 )
 
@@ -1545,10 +1601,16 @@ BENCH_CASES = (
             ),
         ),
         _fault("engine", {"engine_bay"}, "E1", speed_dependence="engine_speed"),
-        # On the default car E1 coincides with T2: right source, less certain.
+        # On the default car E1 coincides with T2: right source, less certain,
+        # unless drive slip moves the engine's tone far enough off T2 for the
+        # order evidence to point at E1 itself (see the engine-mount case below).
         {
             "default": _fault(
-                "engine", {"engine_bay"}, "E1", speed_dependence="engine_speed", levels=MODERATE
+                "engine",
+                {"engine_bay"},
+                "E1",
+                speed_dependence="engine_speed",
+                levels=MODERATE_OR_STRONG,
             )
         },
     ),
@@ -1565,10 +1627,18 @@ BENCH_CASES = (
         ),
         _fault("engine", {"engine_bay"}, "E1", speed_dependence="engine_speed"),
         # On the default car the coast-down shows the T2 the order evidence points
-        # at is the engine's E1: right source, less certain.
+        # at is the engine's E1: right source, less certain. E1 sits only 1.5 %
+        # below T2 there, and drive slip moves the engine's tone against the
+        # speed reading by about as much: the order evidence may then point at
+        # E1 itself, and with the coast-down agreeing it is as certain as on
+        # the other car.
         {
             "default": _fault(
-                "engine", {"engine_bay"}, "E1", speed_dependence="engine_speed", levels=MODERATE
+                "engine",
+                {"engine_bay"},
+                "E1",
+                speed_dependence="engine_speed",
+                levels=MODERATE_OR_STRONG,
             )
         },
     ),
@@ -1704,10 +1774,13 @@ SCRIPTED_CASES = (
     ),
     _scripted("launch-engine-flare", _fault("engine", {"engine_bay"}, "E2")),
     _scripted("pothole-recovery-loop", NO_FAULT),
-    # Left-side wheels, then right-side wheels: any one wheel, spread evidence.
+    # Left-side wheels, then right-side wheels: any one wheel, spread evidence,
+    # or all four (each side carried the imbalance in turn, and with real tire
+    # radii and slip the four wheels' lines no longer coincide exactly, so the
+    # spread can read as all four rather than one).
     _scripted(
         "lane-change-left-right",
-        _fault("wheel/tire", set(WHEEL_ZONES), "T1", levels=MODERATE),
+        _fault("wheel/tire", {*WHEEL_ZONES, "all_wheels"}, "T1", levels=MODERATE),
     ),
     _scripted(
         "rear-left-cruise-rumble",
@@ -1932,6 +2005,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         obd_rpm=case.obd_rpm,
         speed_lag_s=case.speed_lag_s,
         speed_report_period_s=case.speed_report_period_s,
+        obd_speed_over_read=case.obd_speed_over_read,
     )
     try:
         lossy = bool(case.frame_loss)

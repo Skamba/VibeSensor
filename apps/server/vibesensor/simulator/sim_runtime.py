@@ -19,9 +19,10 @@ from vibesensor.ingest.protocol_wire import (
 )
 from vibesensor.simulator.commands import apply_command
 from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, PROFILE_LIBRARY
-from vibesensor.simulator.server_http import fetch_active_car_order_hz
+from vibesensor.simulator.server_http import fetch_active_car
 from vibesensor.simulator.sim_client import SimClient
 from vibesensor.simulator.sim_scene import RoadSceneController
+from vibesensor.simulator.wheel_kinematics import DriveState, SimCar
 
 _HANDSHAKE_POLL_S = 0.05
 _ACTIVE_CAR_POLL_S = 2.0
@@ -247,25 +248,26 @@ async def active_car_order_loop(
     simulator would inject orders for the default car profile, several percent
     away from whatever car the server analyzes against.
     """
-    applied: dict[str, float] | None = None
+    applied: SimCar | None = None
     while not stop_event.is_set():
         try:
-            order_hz = await asyncio.to_thread(
-                fetch_active_car_order_hz,
+            car = await asyncio.to_thread(
+                fetch_active_car,
                 server_host,
                 server_http_port,
                 server_check_timeout,
             )
         except (URLError, OSError, TimeoutError, ValueError):
-            order_hz = None
-        if order_hz is not None and order_hz != applied:
+            car = None
+        if car is not None and car != applied:
             for client in clients:
-                client.order_hz = dict(order_hz)
-            applied = order_hz
+                client.car = car
+            applied = car
+            state = DriveState(DEFAULT_SPEED_KMH)
             print(
                 "[car] order tones follow the active car: "
-                f"wheel1={order_hz['wheel_1x']:.3f}Hz shaft1={order_hz['shaft_1x']:.3f}Hz "
-                f"engine1={order_hz['engine_1x']:.3f}Hz at {DEFAULT_SPEED_KMH:.0f} km/h"
+                f"wheel1={car.wheel_hz(None, state):.3f}Hz shaft1={car.shaft_hz(state):.3f}Hz "
+                f"engine1={car.engine_hz(state):.3f}Hz at {DEFAULT_SPEED_KMH:.0f} km/h"
             )
         with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(stop_event.wait(), timeout=poll_interval_s)

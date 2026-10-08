@@ -2,12 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.common.units import KMH_TO_MPS
-from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS, AnalysisSettingsSnapshot
-from vibesensor.dsp.order_bands import vehicle_orders_hz
-from vibesensor.settings.analysis_settings_codec import (
-    analysis_settings_snapshot_from_mapping,
-)
+from vibesensor.simulator.wheel_kinematics import SimCar
 
 DEFAULT_SPEED_KMH = 100.0
 
@@ -46,51 +41,8 @@ the 20-50 mg whole-body level ISO 2631 surveys find on normal roads (see
 "Simulated road resonances" in ``docs/testing.md``)."""
 
 
-SIMULATOR_CAR_ASPECTS: dict[str, float] = {
-    **ANALYSIS_SETTINGS_DEFAULTS,
-    "tire_width_mm": 285.0,
-    "tire_aspect_pct": 30.0,
-    "rim_in": 21.0,
-    "final_drive_ratio": 3.08,
-    "current_gear_ratio": 0.64,
-}
-"""The simulated car's specs, used until the server's active car provides all of its own."""
-
-
-def calc_order_hz(
-    settings: AnalysisSettingsSnapshot,
-    *,
-    speed_kmh: float = DEFAULT_SPEED_KMH,
-) -> dict[str, float] | None:
-    """Return wheel/shaft/engine order frequencies for a car at ``speed_kmh``.
-
-    Uses the same order-reference math as the analysis, so simulated order
-    tones land exactly on the orders the server tracks for that car. Returns
-    ``None`` unless the car has every reference (tire, final drive, gear).
-    """
-    orders = vehicle_orders_hz(speed_mps=speed_kmh * KMH_TO_MPS, settings=settings)
-    wheel_1x = orders.get("wheel_hz")
-    shaft_1x = orders.get("drive_hz")
-    engine_1x = orders.get("engine_hz")
-    if wheel_1x is None or shaft_1x is None or engine_1x is None:
-        return None
-    return {
-        "wheel_1x": wheel_1x,
-        "wheel_2x": wheel_1x * 2.0,
-        "shaft_1x": shaft_1x,
-        "engine_1x": engine_1x,
-        "engine_2x": engine_1x * 2.0,
-    }
-
-
-def calc_default_orders() -> dict[str, float]:
-    orders = calc_order_hz(analysis_settings_snapshot_from_mapping(SIMULATOR_CAR_ASPECTS))
-    if orders is None:
-        raise ValueError("Failed to compute order frequencies from the simulator car specs")
-    return orders
-
-
-DEFAULT_ORDER_HZ = calc_default_orders()
+SIMULATOR_CAR = SimCar.square(285.0, 30.0, 21.0, final_drive_ratio=3.08, top_gear_ratio=0.64)
+"""The simulated car, used until the server's active car gives its own tire size and ratios."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,13 +57,14 @@ class Profile:
     bump_strength: tuple[float, float, float]
     modulation_hz: float
     modulation_depth: float
-    # Order-locked tones as ``(order_key, multiple, amps_xyz)``; ``order_key``
-    # indexes the client's ``order_hz`` (orders at ``reference_speed_kmh`` for
-    # the simulated car), so they track both speed and the active car.
+    # Order-locked tones as ``(order_key, multiple, amps_xyz)``: ``order_key``
+    # names the order (``wheel_1x``, ``wheel_2x``, ``shaft_1x``, ``engine_1x``,
+    # ``engine_2x``; a wheel order may name its wheel, ``wheel_1x@front-left``)
+    # and the tone turns at the speed the car's wheel kinematics give it
+    # (``SimClient.order_tone_hz``).
     order_tones: tuple[tuple[str, float, tuple[float, float, float]], ...] = ()
-    # Speed at which ``order_hz`` is defined; ``make_frame()`` scales order
-    # tones by ``current_speed / reference_speed``. ``None`` means the
-    # profile has only absolute tones (e.g. engine_idle, rough_road).
+    # Speed at which the order tones' amplitudes are ``amps_xyz``; ``None``
+    # means the profile has only absolute tones (e.g. engine_idle, rough_road).
     reference_speed_kmh: float | None = None
     # Road noise grows with speed: the broadband noise is scaled by
     # ``(speed / DEFAULT_SPEED_KMH) ** noise_speed_exponent`` (0: flat).

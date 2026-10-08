@@ -16,7 +16,7 @@ from vibesensor.simulator.commands import (
     choose_default_profile,
 )
 from vibesensor.simulator.gps_feed import start_gps_feed
-from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
+from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, SIMULATOR_CAR
 from vibesensor.simulator.scripted_scenario_catalog import (
     SCRIPTED_SCENARIOS,
     is_scripted_scenario,
@@ -39,6 +39,7 @@ from vibesensor.simulator.sim_runtime import (
     road_scene_loop,
     run_client,
 )
+from vibesensor.simulator.wheel_kinematics import DriveState
 
 ROOT = Path(__file__).resolve().parents[2]
 _STATIC_SCENARIOS: tuple[str, ...] = ("road", "one-wheel-mild", "engine-order", "road-fixed")
@@ -130,13 +131,12 @@ async def async_main(args: argparse.Namespace) -> None:
         f"rate={args.sample_rate_hz}Hz frame={args.frame_samples} samples "
         f"({args.sample_rate_hz / max(1, args.frame_samples):.2f} fps)"
     )
+    cruise = DriveState(DEFAULT_SPEED_KMH)
     print(
         "Default order tones: "
-        f"wheel1={DEFAULT_ORDER_HZ['wheel_1x']:.3f}Hz "
-        f"wheel2={DEFAULT_ORDER_HZ['wheel_2x']:.3f}Hz "
-        f"shaft1={DEFAULT_ORDER_HZ['shaft_1x']:.3f}Hz "
-        f"engine1={DEFAULT_ORDER_HZ['engine_1x']:.3f}Hz "
-        f"engine2={DEFAULT_ORDER_HZ['engine_2x']:.3f}Hz"
+        f"wheel1={SIMULATOR_CAR.wheel_hz(None, cruise):.3f}Hz "
+        f"shaft1={SIMULATOR_CAR.shaft_hz(cruise):.3f}Hz "
+        f"engine1={SIMULATOR_CAR.engine_hz(cruise):.3f}Hz"
     )
     print("\n".join(c.summary() for c in clients))
 

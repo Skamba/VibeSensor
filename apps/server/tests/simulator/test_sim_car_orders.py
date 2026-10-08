@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -16,9 +17,10 @@ from vibesensor.settings.analysis_settings_codec import (
     analysis_settings_snapshot_from_mapping,
 )
 from vibesensor.simulator import sim_runtime
-from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ, DEFAULT_SPEED_KMH
-from vibesensor.simulator.server_http import fetch_active_car_order_hz
+from vibesensor.simulator.profiles import DEFAULT_SPEED_KMH, SIMULATOR_CAR
+from vibesensor.simulator.server_http import fetch_active_car
 from vibesensor.simulator.sim_client import SimClient, make_client_id
+from vibesensor.simulator.wheel_kinematics import DriveState, SimTire
 
 _BMW_F30_320I = {
     **ANALYSIS_SETTINGS_DEFAULTS,
@@ -39,42 +41,38 @@ def _bmw_orders_hz(speed_kmh: float) -> dict[str, float]:
     return orders
 
 
-def test_fetch_active_car_order_hz_matches_analysis_orders(httpx_mock: HTTPXMock) -> None:
+def test_fetch_active_car_drives_the_active_cars_tires_and_ratios(httpx_mock: HTTPXMock) -> None:
     add_json_response(
         httpx_mock,
         url="http://127.0.0.1:8000/api/settings/analysis",
         payload=_BMW_F30_320I,
     )
 
-    order_hz = fetch_active_car_order_hz("127.0.0.1", 8000, 1.0)
+    car = fetch_active_car("127.0.0.1", 8000, 1.0)
 
+    # New tires at their reference load roll as the analysis assumes for them,
+    # to within the analysis's own 1 % tire-diameter uncertainty.
     expected = _bmw_orders_hz(DEFAULT_SPEED_KMH)
-    assert order_hz is not None
-    assert order_hz["wheel_1x"] == pytest.approx(expected["wheel_hz"])
-    assert order_hz["wheel_2x"] == pytest.approx(2.0 * expected["wheel_hz"])
-    assert order_hz["shaft_1x"] == pytest.approx(expected["drive_hz"])
-    assert order_hz["engine_1x"] == pytest.approx(expected["engine_hz"])
+    cruise = DriveState(DEFAULT_SPEED_KMH)
+    assert car is not None
+    assert car.wheel_hz(None, cruise) == pytest.approx(expected["wheel_hz"], rel=0.01)
+    assert car.shaft_hz(cruise) == pytest.approx(expected["drive_hz"], rel=0.01)
+    assert car.engine_hz(cruise) == pytest.approx(expected["engine_hz"], rel=0.01)
     # The default car profile is several percent away from this car's wheel order.
-    assert abs(order_hz["wheel_1x"] / DEFAULT_ORDER_HZ["wheel_1x"] - 1.0) > 0.03
+    assert abs(car.wheel_hz(None, cruise) / SIMULATOR_CAR.wheel_hz(None, cruise) - 1.0) > 0.03
 
 
 @pytest.mark.asyncio
 async def test_active_car_order_loop_moves_wheel_tone_onto_active_car_wheel_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    reference = _bmw_orders_hz(DEFAULT_SPEED_KMH)
-    bmw_order_hz = {
-        "wheel_1x": reference["wheel_hz"],
-        "wheel_2x": 2.0 * reference["wheel_hz"],
-        "shaft_1x": reference["drive_hz"],
-        "engine_1x": reference["engine_hz"],
-        "engine_2x": 2.0 * reference["engine_hz"],
-    }
-    monkeypatch.setattr(
-        sim_runtime,
-        "fetch_active_car_order_hz",
-        lambda _host, _port, _timeout: bmw_order_hz,
+    bmw = replace(
+        SIMULATOR_CAR,
+        tires=(SimTire(225.0, 45.0, 18.0),) * 4,
+        final_drive_ratio=3.077,
+        top_gear_ratio=0.64,
     )
+    monkeypatch.setattr(sim_runtime, "fetch_active_car", lambda _host, _port, _timeout: bmw)
     client = SimClient(
         name="rear-left",
         client_id=make_client_id(3),
@@ -105,10 +103,10 @@ async def test_active_car_order_loop_moves_wheel_tone_onto_active_car_wheel_orde
     stop_event.set()
     await task
 
-    assert client.order_hz == bmw_order_hz
+    assert client.car == bmw
     signal = np.concatenate([client.make_frame()[:, 0] for _ in range(40)]).astype(np.float64)
     freqs = np.fft.rfftfreq(signal.size, d=1.0 / client.sample_rate_hz)
     spectrum = np.abs(np.fft.rfft(signal))
     peak_hz = float(freqs[int(np.argmax(spectrum[1:])) + 1])
     expected_wheel_hz = _bmw_orders_hz(90.0)["wheel_hz"]
-    assert peak_hz == pytest.approx(expected_wheel_hz, abs=0.15)
+    assert peak_hz == pytest.approx(expected_wheel_hz, rel=0.01)

@@ -96,3 +96,46 @@ nothing above 400 Hz (the contact patch removes it); texture-excited tyre belt
 vibration around 1 kHz is not modelled yet (no source gives its level at a
 knuckle), so real drives may show a higher in-band floor from folded
 broadband content than the simulator does.
+
+## Wheel kinematics
+
+`simulator/wheel_kinematics.py` gives the simulated car its own tires and
+driveline (`SimCar`, `SimTire`): every order tone turns at the speed this model
+gives for the car's state (`DriveState`: true speed, longitudinal
+acceleration, path curvature), never at the analysis's predicted frequency.
+The analysis predicts from the entered tire size, the reported speed and a
+fixed deflection; the simulator's wheels roll as real ones do, so the injected
+tones sit a little off that prediction, as on a real car.
+
+| Parameter | Value | Source / reason |
+|-----------|-------|-----------------|
+| Rolling circumference of a new tire | 3.05 × the new overall diameter, at its reference load and pressure | ETRTO's dynamic rolling circumference rule for radial passenger tires (ETRTO *Standards Manual*, general section), about 3 % under the free circumference |
+| Tire vertical stiffness | `0.00028 P √(W D) + 3.45` kgf/mm, `P` in kPa, footprint width `W` = 0.75 × section width, `D` the diameter (mm) | Rhyne, *Tire Science and Technology* 33(3), 2005 (about 290 kN/m for a 285/30 R21 at 240 kPa) |
+| Load and pressure on the radius | `r = r_ETRTO − (δ − δ_ref) / 3`, `δ = load / stiffness` | effective rolling radius of a radial tire sits a third of the deflection below the free radius (Pacejka, *Tire and Vehicle Dynamics*, 3rd ed., ch. 7; Jazar, *Vehicle Dynamics*, ch. 3) |
+| Reference pressure | 240 kPa | a typical door-placard pressure for a mid-size car |
+| Tread wear | shortens the radius one for one (`SimTire.tread_worn_mm`) | new tread is about 8 mm, the legal minimum 1.6 mm (EU Directive 89/459/EEC): up to 6.4 mm, about 2 % of a 0.34 m radius |
+| Car | 1600 kg, 55 % on the front axle, CG 0.55 m high, 2.85 m wheelbase, 1.6 m track, CdA 0.65 m², rolling-resistance coefficient 0.012, 70 % of braking on the front | a mid-size saloon (Gillespie, *Fundamentals of Vehicle Dynamics*, 1992, ch. 2 and 4) |
+| Load transfer | longitudinal `m a h / L` per axle, lateral `m a_y h / t` split by axle weight | Gillespie ch. 2 (rigid body, no suspension geometry) |
+| Longitudinal slip | `κ = F_x / (C F_z)`, `C` = 19, capped at 10 % | the slip stiffness `B C D` of the Magic Formula for a passenger tire on dry asphalt (B 10, C 1.9, D 1; Pacejka ch. 4; MathWorks *Tire (Magic Formula)* reference coefficients) |
+| Drive force | `m a` + aero drag `½ ρ CdA v²` + rolling resistance, on the driven wheels (`SimCar.driven_axle`) | a car pulls what its acceleration and its resistances need; slowing faster than the resistances alone slow it is braking, on every wheel |
+| Cornering | each wheel runs `v (1 ± k t / 2)` (`k` = 1 / turn radius, the outer wheel faster) | rigid-body kinematics of a car on a curve; `ScenarioPhase.turn_radius_m` sets a phase's curve (positive to the left) |
+| Driveshaft and engine | the driven wheels' mean × final drive (× gear) | an open differential turns its input at its outputs' mean |
+
+Resulting deviations from a no-slip car on new tires: at 100 km/h cruise the
+driven wheels slip about +0.4 %; on the bench sweep (1.5 m/s²) about +2 %;
+at 3 m/s² about +3.5 %; braking at 0.38 g the front wheels −2 % and the rear
+−1.5 %; on a 300 m curve at 100 km/h the inner and outer wheels −0.6 % and
++0.7 %.
+
+Not modelled: tire growth at speed (under 0.5 % below 130 km/h for a
+passenger radial), a locked or limited-slip differential, the tire's
+relaxation length (slip follows the force at once), and engine braking on the
+driven axle only (any slowing beyond the resistances is shared like
+braking).
+
+### Speed sources
+
+| Source | Model | Source / reason |
+|--------|-------|-----------------|
+| GPS | the true speed, reported once a second and late (`Case.speed_lag_s`, `Case.speed_report_period_s`), with dropouts (`Case.speed_dropout_s`) | a receiver's Doppler speed is accurate to about 0.05 m/s (u-blox M8 datasheet), well under one FFT bin of a wheel order, so no speed noise is added |
+| OBD-II | the true speed × (1 + `Case.obd_speed_over_read`), rounded to whole km/h | PID 0x0D comes from the wheel-speed sensors and the nominal tire circumference; a speedometer may read high but never low, up to 10 % + 4 km/h (UN ECE Regulation 39), and worn tires read high too. 3-5 % is typical |

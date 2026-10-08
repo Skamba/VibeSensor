@@ -14,14 +14,16 @@ from vibesensor.ingest.protocol_messages import client_id_mac
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.adxl345_front_end import Adxl345FrontEnd
 from vibesensor.simulator.profiles import (
-    DEFAULT_ORDER_HZ,
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
+    SIMULATOR_CAR,
     Profile,
     RoadResonance,
 )
 from vibesensor.simulator.road_surface import ISO8608_GD_N0_M3, RoadSurface
 from vibesensor.simulator.road_vibration import RoadVibration, mount_for_name
+from vibesensor.simulator.sim_scene import _normalize_wheel_slot
+from vibesensor.simulator.wheel_kinematics import DriveState, SimCar
 
 __all__ = ["SimClient", "make_client_id"]
 
@@ -30,6 +32,14 @@ _TWO_PI = 2.0 * np.pi
 # ESP32 crystals are specified around ±10-40 ppm; stay within that envelope.
 _MAX_CLOCK_DRIFT_PPM = 40.0
 _COUNTS_PER_MG = 1.0 / (1000.0 * ADXL345_SCALE_G_PER_LSB)
+# How many times per turn of its shaft each order key's tone comes.
+_ORDER_MULTIPLES = {
+    "wheel_1x": 1.0,
+    "wheel_2x": 2.0,
+    "shaft_1x": 1.0,
+    "engine_1x": 1.0,
+    "engine_2x": 2.0,
+}
 # Road resonances draw their own noise, so adding or tuning one leaves the
 # rest of a sensor's simulated signal as it was.
 _RESONANCE_SEED_SALT = 0x5E50
@@ -72,8 +82,12 @@ class SimClient:
     scene_noise_gain: float = 1.0
     scene_mode: str = "all"
     paused: bool = False
-    # Current simulated speed – used to scale order-based profile tones.
+    # What the car is doing now: its true speed, longitudinal acceleration and
+    # the curvature of its path (1 / turn radius, positive turning left). Order
+    # tones turn at the speeds the car's wheel kinematics give for them.
     current_speed_kmh: float = DEFAULT_SPEED_KMH
+    current_accel_mps2: float = 0.0
+    current_curvature_1pm: float = 0.0
     # Sensor-clock model mirroring the ESP firmware (see firmware/esp/src):
     # samples are scheduled on the device's own microsecond timer, which
     # drifts by a few tens of ppm against the server clock; ``t0_us`` is the
@@ -91,11 +105,11 @@ class SimClient:
     bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
     rng: np.random.Generator | None = None
-    # Order frequencies at DEFAULT_SPEED_KMH for the simulated car; the
-    # simulator refreshes them from the server's active car when reachable.
-    order_hz: dict[str, float] = field(default_factory=lambda: dict(DEFAULT_ORDER_HZ))
-    # Gearbox ratio the engine drives through, when not the car's own (top) gear
-    # that ``order_hz`` assumes: engine orders follow it, wheels and driveshaft do not.
+    # The simulated car (tires, driveline); the simulator follows the server's
+    # active car's tire size and ratios when reachable.
+    car: SimCar = SIMULATOR_CAR
+    # Gearbox ratio the engine drives through, when not the car's top gear:
+    # engine orders follow it, wheels and driveshaft do not.
     gear_ratio: float | None = None
     # Running phase (rad) of each tone at the start of the next frame, keyed by
     # tone identity, so a tone whose frequency follows the speed stays
@@ -160,12 +174,23 @@ class SimClient:
         return self.device_boot_mono_s + (device_us / (1_000_000.0 * self._device_clock_scale))
 
     def order_tone_hz(self, order_key: str) -> float:
-        """Frequency of one order at the reference speed, in the gear the engine is in."""
-        hz = self.order_hz[order_key]
-        if self.gear_ratio is not None and order_key.startswith("engine_"):
-            top_gear_ratio = self.order_hz["engine_1x"] / self.order_hz["shaft_1x"]
-            hz *= self.gear_ratio / top_gear_ratio
-        return hz
+        """Frequency of one order now, from the car's wheel kinematics, in the engine's gear.
+
+        A wheel order key may name its wheel (``wheel_1x@front-left``); without
+        one it is the wheel at this sensor's corner, or the four wheels' mean
+        for a sensor at no corner.
+        """
+        base, _, corner = order_key.partition("@")
+        state = DriveState(
+            self.current_speed_kmh, self.current_accel_mps2, self.current_curvature_1pm
+        )
+        if base.startswith("wheel_"):
+            hz = self.car.wheel_hz(corner or _normalize_wheel_slot(self.name), state)
+        elif base.startswith("shaft_"):
+            hz = self.car.shaft_hz(state)
+        else:
+            hz = self.car.engine_hz(state, self.gear_ratio)
+        return hz * _ORDER_MULTIPLES[base]
 
     def pulse(self, strength: float) -> None:
         vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
@@ -198,11 +223,8 @@ class SimClient:
         local_signal: np.ndarray[Any, np.dtype[Any]] = np.zeros(
             (self.frame_samples, 3), dtype=np.float32
         )
-        # Order tones are defined at the reference speed; their frequency
-        # follows the current speed, their amplitude the profile's speed law.
-        speed_ratio = 1.0
-        if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
-            speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
+        # Order tones turn with the car's wheels and driveline; their amplitude
+        # follows the profile's speed law.
         order_gain = profile.order_amplitude_gain(self.current_speed_kmh)
 
         _sin = np.sin
@@ -213,7 +235,7 @@ class SimClient:
         local_tones.extend(
             (
                 (order_key, multiple),
-                self.order_tone_hz(order_key) * multiple * speed_ratio,
+                self.order_tone_hz(order_key) * multiple,
                 (amps_xyz[0] * order_gain, amps_xyz[1] * order_gain, amps_xyz[2] * order_gain),
             )
             for order_key, multiple, amps_xyz in profile.order_tones
