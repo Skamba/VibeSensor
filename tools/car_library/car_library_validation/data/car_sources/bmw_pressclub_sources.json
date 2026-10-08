@@ -2044,6 +2044,55 @@
       "title": "BMW PressClub G01 X3 08/2022 Germany price list PDF",
       "note": "Official BMW Germany X3 price list of August 2022 (T0322780DE). Wheels for xDrive30e, xDrive20i, xDrive30i, xDrive20d and xDrive30d: standard 225/60 R18 (7J x 18); options 245/50 R19 (7.5J x 19), 245/45 R20 front with 275/40 R20 rear (8J / 9.5J x 20) and 245/40 R21 front with 275/35 R21 rear (8.5J / 9.5J x 21). The M40i and M40d use the eight-speed Steptronic Sport.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-2018-02-launch-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0278428EN/477263",
+      "title": "BMW PressClub G02 X4 02/2018 launch specifications PDF",
+      "note": "Official BMW 02/2018 specifications of the all-new X4 (T0278428EN). xDrive20i and xDrive30i: eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.385. xDrive20d and xDrive25d: same ratios, final drive 3.231. M40d: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.813. Standard tyres 225/60 R18; M40d 245/45 R20 front and 275/40 R20 rear. The same values appear in the separate per-variant sheets valid from 04/2018 (T0280350EN).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-2018-02-uk-release",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/detail/T0278545EN_GB/the-new-bmw-x4",
+      "title": "BMW UK G02 X4 02/2018 launch release",
+      "note": "Official BMW UK release on the new X4: on sale from 15 February 2018 with UK prices for the xDrive20d, xDrive30d, M40i and M40d.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-m40i-2018-06-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281798EN/410795",
+      "title": "BMW PressClub G02 X4 M40i 06/2018 specifications PDF",
+      "note": "Official BMW 06/2018 technical data of the X4 M40i, valid from 08/2018 (T0281798EN): eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.385, 245/45 R20 front and 275/40 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-30d-2018-06-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281798EN/410801",
+      "title": "BMW PressClub G02 X4 xDrive30d 06/2018 specifications PDF",
+      "note": "Official BMW 06/2018 technical data of the X4 xDrive30d, valid from 08/2018 (T0281798EN): eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.813, 225/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-m40i-2020-04-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0307290EN/449085",
+      "title": "BMW PressClub G02 X4 M40i 04/2020 specifications PDF",
+      "note": "Official BMW 04/2020 technical data of the X4 M40i (T0307290EN): eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, 245/45 R20 front and 275/40 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-2025-08-de-price-list",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0405030EN/632939",
+      "title": "BMW PressClub G02 X4 08/2025 Germany price list PDF",
+      "note": "Official BMW Germany X4 price list of August 2025 (T0405030EN): xDrive20i, xDrive30i, xDrive20d and xDrive30d still on sale. Wheels for all four: standard 225/60 R18 (7J x 18); options 245/50 R19 (7.5J x 19), 245/45 R20 front with 275/40 R20 rear (8J / 9.5J x 20) and 245/40 R21 front with 275/35 R21 rear (8.5J / 9.5J x 21).",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g02-m40-2025-08-de-price-list",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0445406DE/632941",
+      "title": "BMW PressClub G02 X4 M40i/M40d 08/2025 Germany price list PDF",
+      "note": "Official BMW Germany X4 M price list of August 2025 (T0445406DE): X4 M40i and M40d still on sale with the eight-speed Steptronic Sport. Wheels for both: 245/45 R20 front with 275/40 R20 rear (8J / 9.5J x 20), optional 245/40 R21 front with 275/35 R21 rear (8.5J / 9.5J x 21).",
+      "confidence": "high"
     }
   ]
 }

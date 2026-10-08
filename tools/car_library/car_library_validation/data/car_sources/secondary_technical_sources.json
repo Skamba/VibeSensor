@@ -924,6 +924,20 @@
       "title": "ADAC Autokatalog BMW X3 G01 facelift (2021-2024)",
       "note": "ADAC catalogue of the Germany-market facelifted G01 variants with their sales periods: xDrive20i, xDrive30i, xDrive30e, xDrive20d and xDrive30d from 08/21 until 10/24. Used for year ranges only.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g02-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/x4/g02-f98/",
+      "title": "ADAC Autokatalog BMW X4 G02 (2018-2021)",
+      "note": "ADAC catalogue of the Germany-market G02 variants before the facelift with their sales periods: xDrive20i, xDrive30i and xDrive20d 04/18-06/21; xDrive25d 04/18-06/19; xDrive30d 08/18-06/20 (195 kW) and 08/20-06/21 (210 kW). Used for year ranges only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g02-lci-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/x4/g02-f98-facelift/",
+      "title": "ADAC Autokatalog BMW X4 G02 facelift (2021-2025)",
+      "note": "ADAC catalogue of the Germany-market facelifted G02 variants with their sales periods: xDrive20i and xDrive30i 08/21-09/25; xDrive20d and xDrive30d 08/21-11/25. Used for year ranges only.",
+      "confidence": "medium"
     }
   ]
 }
