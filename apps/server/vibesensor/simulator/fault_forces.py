@@ -12,8 +12,9 @@ structure between them:
   the wheel's fore-aft mode near 17 Hz) and the body through the suspension;
 - a propshaft's or an engine's force reaches the body through rubber mounts;
   a sensor on the engine or gearbox rides on the shaking powertrain itself;
-- whatever reaches the body reaches a knuckle through the suspension and an
-  engine or gearbox sensor through the powertrain's mounts.
+- whatever reaches the body reaches a knuckle through its control arms
+  (fore-aft and sideways) and suspension (vertically), and an engine or
+  gearbox sensor through the powertrain's mounts.
 
 The basis of each number is in ``docs/simulator_realism.md`` ("Fault
 amplitudes").
@@ -174,15 +175,20 @@ def _on_powertrain(hz: float) -> float:
 def _from_body(
     body: tuple[float, float, float], hz: float, mount: SensorMount
 ) -> tuple[float, float, float]:
-    """What a sensor on *mount* reads of body motion *body*: a knuckle through
-    the suspension and tyre, the powertrain through its mounts."""
+    """What a sensor on *mount* reads of body motion *body*.
+
+    The powertrain follows it through its mounts. A knuckle hangs on control
+    arms whose bushings are stiff fore-aft and sideways, so it follows the
+    body (subframe) there; vertically it rides on the tyre and only the
+    suspension spring and damper drive it.
+    """
     if mount is SensorMount.BODY:
         return body
     if mount is SensorMount.POWERTRAIN:
         gain = _isolated(hz)
-    else:
-        car = _QUARTER_CAR
-        w = 2.0 * math.pi * hz
-        link = car.suspension_n_per_m + 1j * w * car.damper_ns_per_m
-        gain = abs(link / (car.tyre_n_per_m + link - car.unsprung_kg * w * w))
-    return (body[0] * gain, body[1] * gain, body[2] * gain)
+        return (body[0] * gain, body[1] * gain, body[2] * gain)
+    car = _QUARTER_CAR
+    w = 2.0 * math.pi * hz
+    link = car.suspension_n_per_m + 1j * w * car.damper_ns_per_m
+    vertical = abs(link / (car.tyre_n_per_m + link - car.unsprung_kg * w * w))
+    return (body[0], body[1], body[2] * vertical)
