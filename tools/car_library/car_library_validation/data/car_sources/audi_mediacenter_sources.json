@@ -1624,6 +1624,167 @@
       "title": "Audi MediaCenter Q3 Sportback (until 2025) model page",
       "note": "Official Audi MediaCenter page for the outgoing Q3 Sportback, titled 'Audi Q3 Sportback (until 2025)', with the 06/2025 technical-data sheets for 35 TFSI, 35 TFSI S tronic, 40 TFSI quattro, 45 TFSI quattro, 35 TDI and 40 TDI quattro.",
       "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tdi-2024-09-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250316030720/https://uploads.audi-mediacenter.com/system/production/car_motorizations/260/file_en/796e1a543187e8b116a9e6dc478e2bad707c2ea8/eTD-Audi-A3-Sportback-30-TDI-85kW_240924.pdf?1729261558&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TDI 85 kW, Program for Germany, status 09/24/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 30 TDI 85 kW (6-speed manual; from 2026 'TDI 85 kW'), Program for Germany, status 09/24/2024: Front-wheel drive, 6-speed manual gearbox, forward ratios 3.750 / 1.952 / 1.200 / 0.878 / 0.711 / 0.604, reverse 3.583, final drive ratio 1-2 / 2-3 3.238 / 3.238, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tdi-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/260/file_en/796e1a543187e8b116a9e6dc478e2bad707c2ea8/eTD-Audi-A3-Sportback-TDI-85kW_260630.pdf?1782910498&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TDI 85 kW, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 30 TDI 85 kW (6-speed manual; from 2026 'TDI 85 kW'), Program for Germany, status 06/30/2026: Front-wheel drive, 6-speed manual gearbox, forward ratios 3.750 / 1.952 / 1.200 / 0.878 / 0.711 / 0.604, reverse 3.583, final drive ratio 1-2 / 2-3 3.238 / 3.238, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-manual-2025-01-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250316025212/https://uploads.audi-mediacenter.com/system/production/car_motorizations/748/file_en/a6ec802e283d3f8ae46af934b3ea82a4e6262f03/eTD-Audi-A3-Sportback-30-TFSI-85kW_250108.pdf?1736432560&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TFSI 85 kW, Program for Germany, status 01/08/2025 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 30 TFSI 85 kW (6-speed manual; from 2026 'TFSI 85 kW'), Program for Germany, status 01/08/2025: Front-wheel drive, 6-speed manual gearbox, forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drive ratio 1-2 / 2-3 4.235 / 4.235, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-manual-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/748/file_en/a6ec802e283d3f8ae46af934b3ea82a4e6262f03/eTD-Audi-A3-Sportback-TFSI-85kW_260630.pdf?1782907441&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TFSI 85 kW, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 30 TFSI 85 kW (6-speed manual; from 2026 'TFSI 85 kW'), Program for Germany, status 06/30/2026: Front-wheel drive, 6-speed manual gearbox, forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drive ratio 1-2 / 2-3 4.235 / 4.235, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-s-tronic-2024-10-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250316040744/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1128/file_en/275183fe3c59ed5ce3ddda6dd2ea8154ad752f8b/eTD-Audi-A3-Sportback-30-TFSI-S_tronic-85kW-MHEV_241018.pdf?1729261555&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TFSI S tronic 85 kW MHEV, Program for Germany, status 10/18/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 30 TFSI S tronic 85 kW MHEV (from 2026 'TFSI S tronic 85 kW MHEV'), Program for Germany, status 10/18/2024: Front-wheel drive, 7-speed S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drive ratio 1-2 / 2-3 4.800 / 3.429, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-30-tfsi-s-tronic-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1128/file_en/275183fe3c59ed5ce3ddda6dd2ea8154ad752f8b/eTD-Audi-A3-Sportback-TFSI-85kW-S_tronic-MHEV_260630.pdf?1782910500&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 30 TFSI S tronic 85 kW MHEV, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 30 TFSI S tronic 85 kW MHEV (from 2026 'TFSI S tronic 85 kW MHEV'), Program for Germany, status 06/30/2026: Front-wheel drive, 7-speed S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drive ratio 1-2 / 2-3 4.800 / 3.429, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2024-10-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250316031149/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1193/file_en/542cc21d6dfd710f974532f8eb9ba7e11e896550/eTD-Audi-A3-Sportback-35-TFSI-S_tronic-110kW-MHEV_241018.pdf?1729261556&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 35 TFSI S tronic 110 kW MHEV, Program for Germany, status 10/18/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 35 TFSI S tronic 110 kW MHEV (from 2026 'TFSI S tronic 110 kW MHEV'), Program for Germany, status 10/18/2024: Front-wheel drive, 7-speed S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drive ratio 1-2 / 2-3 4.800 / 3.429, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-s-tronic-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1193/file_en/542cc21d6dfd710f974532f8eb9ba7e11e896550/eTD-Audi-A3-Sportback-TFSI-110kW-S_tronic-MHEV_260630.pdf?1782910688&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 35 TFSI S tronic 110 kW MHEV, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 35 TFSI S tronic 110 kW MHEV (from 2026 'TFSI S tronic 110 kW MHEV'), Program for Germany, status 06/30/2026: Front-wheel drive, 7-speed S tronic, forward ratios 3.500 / 2.087 / 1.343 / 0.940 / 0.974 / 0.780 / 0.653, reverse 3.722, final drive ratio 1-2 / 2-3 4.800 / 3.429, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-manual-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1176/file_en/3000505d34f50bbc9d409c309f9c8c5692e635f8/eTD-Audi-A3-Sportback-TFSI-110kW_260630.pdf?1782910689&disposition=attachment",
+      "title": "Audi technical data A3 Sportback TFSI 110 kW, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback TFSI 110 kW (6-speed manual), Program for Germany, status 06/30/2026: Front-wheel drive, 6-speed manual gearbox, forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, final drive ratio 1-2 / 2-3 4.235 / 4.235, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2025-01-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250316040630/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1018/file_en/187919015cf7213b596cdbb4389de26c49cb3d48/eTD-Audi-A3-Sportback-35-TDI-S_tronic-110kW_250108.pdf?1736432562&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 35 TDI S tronic 110 kW, Program for Germany, status 01/08/2025 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 35 TDI S tronic 110 kW (from 2026 'TDI S tronic 110 kW'), Program for Germany, status 01/08/2025: Front-wheel drive, 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive ratio 1-2 / 2-3 4.167 / 3.125, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tdi-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1018/file_en/187919015cf7213b596cdbb4389de26c49cb3d48/eTD-Audi-A3-Sportback-TDI-110kW-S_tronic_260630.pdf?1782910499&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 35 TDI S tronic 110 kW, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 35 TDI S tronic 110 kW (from 2026 'TDI S tronic 110 kW'), Program for Germany, status 06/30/2026: Front-wheel drive, 7-speed S tronic, forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561, reverse 2.900, final drive ratio 1-2 / 2-3 4.167 / 3.125, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-quattro-2026-02-tech-data-pdf",
+      "url": "https://web.archive.org/web/20260420090600/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1285/file_en/2390c9326d365919a3a1e8a7987c4037c8364f2b/eTD-Audi-A3-Sportback-TFSI-quattro-S_tronic-150kW_260203.pdf?1770638282&disposition=attachment",
+      "title": "Audi technical data A3 Sportback TFSI quattro S tronic 150 kW, Program for Germany, status 02/03/2026 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback TFSI quattro S tronic 150 kW, Program for Germany, status 02/03/2026: On-demand quattro permanent all-wheel drive with electronically controlled multi-plate clutch, 7-speed S tronic, forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, final drive ratio 1-2 / 2-3 4.167 / 3.125, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2023-07-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240331011255/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1125/file_en/745e988131fb9490711f426d4f1d74581b3c34b8/eTD-Audi-A3-Sportback-40-TFSI-e-S_tronic-150kW_230718.pdf?1698933899",
+      "title": "Audi technical data A3 Sportback 40 TFSI e S tronic 150 kW system output, Program for Germany, status 07/18/2023 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 40 TFSI e S tronic 150 kW system output (1.4 TFSI), Program for Germany, status 07/18/2023: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-1-4-2024-03-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250504162058/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1125/file_en/745e988131fb9490711f426d4f1d74581b3c34b8/eTD-Audi-A3-Sportback-40-TFSI-e-S_tronic-150kW_240314.pdf",
+      "title": "Audi technical data A3 Sportback 40 TFSI e S tronic 150 kW system output, Program for Germany, status 03/14/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 40 TFSI e S tronic 150 kW system output (1.4 TFSI), Program for Germany, status 03/14/2024: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2023-07-tech-data-pdf",
+      "url": "https://web.archive.org/web/20240331011419/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1183/file_en/9c8d39ef4ae84402a0683333ddabb044fa2f2d6b/eTD-Audi-A3-Sportback-45-TFSIe-S_tronic-180kW_230718.pdf",
+      "title": "Audi technical data A3 Sportback 45 TFSI e S tronic 180 kW system output, Program for Germany, status 07/18/2023 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 45 TFSI e S tronic 180 kW system output (1.4 TFSI), Program for Germany, status 07/18/2023: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-1-4-2024-03-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250504095107/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1183/file_en/9c8d39ef4ae84402a0683333ddabb044fa2f2d6b/eTD-Audi-A3-Sportback-45-TFSIe-S_tronic-180kW_240314.pdf?1714635913",
+      "title": "Audi technical data A3 Sportback 45 TFSI e S tronic 180 kW system output, Program for Germany, status 03/14/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 45 TFSI e S tronic 180 kW system output (1.4 TFSI), Program for Germany, status 03/14/2024: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2024-10-tech-data-pdf",
+      "url": "https://web.archive.org/web/20241109074641/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1125/file_en/745e988131fb9490711f426d4f1d74581b3c34b8/eTD-Audi-A3-Sportback-40-TFSIe-S_tronic-110kW_150kW_241014.pdf?1728918195&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 40 TFSI e S tronic 150 kW system output, Program for Germany, status 10/14/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 40 TFSI e S tronic 150 kW system output (1.5 TFSI; from 2026 'e-hybrid 150 kW'), Program for Germany, status 10/14/2024: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-e-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1125/file_en/745e988131fb9490711f426d4f1d74581b3c34b8/eTD-Audi-A3-Sportback-e-hybrid-150kW-S_tronic_260630.pdf?1782899216&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 40 TFSI e S tronic 150 kW system output, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 40 TFSI e S tronic 150 kW system output (1.5 TFSI; from 2026 'e-hybrid 150 kW'), Program for Germany, status 06/30/2026: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2024-10-tech-data-pdf",
+      "url": "https://web.archive.org/web/20241109073949/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1183/file_en/9c8d39ef4ae84402a0683333ddabb044fa2f2d6b/eTD-Audi-A3-Sportback-45-TFSIe-S_tronic-130kW_200kW_241014.pdf?1728919328&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 45 TFSI e S tronic 200 kW system output, Program for Germany, status 10/14/2024 (Wayback Machine copy)",
+      "note": "Official Audi technical data, A3 Sportback 45 TFSI e S tronic 200 kW system output (1.5 TFSI; from 2026 'e-hybrid 200 kW'), Program for Germany, status 10/14/2024: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-45-tfsi-e-2026-06-tech-data-pdf",
+      "url": "https://uploads.audi.com/system/production/car_motorizations/1183/file_en/9c8d39ef4ae84402a0683333ddabb044fa2f2d6b/eTD-Audi-A3-Sportback-e-hybrid-200kW-S_tronic_260630.pdf?1782899217&disposition=attachment",
+      "title": "Audi technical data A3 Sportback 45 TFSI e S tronic 200 kW system output, Program for Germany, status 06/30/2026",
+      "note": "Official Audi technical data, A3 Sportback 45 TFSI e S tronic 200 kW system output (1.5 TFSI; from 2026 'e-hybrid 200 kW'), Program for Germany, status 06/30/2026: Front-wheel drive, 6-speed S tronic, forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840, reverse 2.864, final drive ratio 1-2 / 2-3 3.750 / 2.885, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-35-tfsi-manual-2025-06-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250805013731/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1176/file_de/3000505d34f50bbc9d409c309f9c8c5692e635f8/TD-Audi-A3-Sportback-TFSI-110kW_250605.pdf?1749213193&disposition=attachment",
+      "title": "Audi Technische Daten A3 Sportback TFSI 110 kW (6-speed manual), Angebot in Deutschland, Stand 05.06.2025 (German, Wayback Machine copy)",
+      "note": "Official Audi technical data (German), A3 Sportback TFSI 110 kW (6-speed manual), Program for Germany, status 06/05/2025: Frontantrieb (front-wheel drive), 6-stufiges Schaltgetriebe (6-speed manual), forward ratios 3.750 / 2.100 / 1.276 / 0.878 / 0.674 / 0.510, reverse 3.583, Achsübersetzung (final drive) 1-2 / 2-3 4.235 / 4.235, basic tires 205/55 R16.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-40-tfsi-quattro-2025-06-tech-data-pdf",
+      "url": "https://web.archive.org/web/20250805013454/https://uploads.audi-mediacenter.com/system/production/car_motorizations/1285/file_de/2390c9326d365919a3a1e8a7987c4037c8364f2b/TD-Audi-A3-Sportback-TFSI-quattro-S_tronic-150kW_250605.pdf?1749213187&disposition=attachment",
+      "title": "Audi Technische Daten A3 Sportback TFSI quattro S tronic 150 kW, Angebot in Deutschland, Stand 05.06.2025 (German, Wayback Machine copy)",
+      "note": "Official Audi technical data (German), A3 Sportback TFSI quattro S tronic 150 kW, Program for Germany, status 06/05/2025: on-demand quattro all-wheel drive with electronically controlled multi-plate clutch, 7-stufige S tronic (7-speed S tronic), forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635, reverse 2.900, Achsübersetzung (final drive) 1-2 / 2-3 4.167 / 3.125, basic tires 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "audi_mediacenter_sources:8y-a3-sportback-2024-upgrade-release-wayback",
+      "url": "https://web.archive.org/web/2024/https://www.audi-mediacenter.com/en/press-releases/sharpened-favorite-upgrade-for-the-audi-a3-15916",
+      "title": "Audi MediaCenter A3 upgrade release, 03/12/2024 (Wayback Machine copy)",
+      "note": "Official Audi release of 03/12/2024 on the upgraded A3: the A3 Sportback and Sedan are available to order from March 2024, initially as 35 TFSI (1.5-liter, 110 kW, seven-speed S tronic, mild hybrid) and 35 TDI (110 kW, seven-speed S tronic); more petrol and diesel engines follow in the second quarter of 2024 and a plug-in hybrid near the end of the year.",
+      "confidence": "high"
     }
   ]
 }
