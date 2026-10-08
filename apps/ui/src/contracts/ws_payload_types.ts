@@ -61,6 +61,7 @@ export interface components {
         StrengthPeak: {
             amp: number;
             hz: number;
+            local_floor_amp_g?: number;
             strength_bucket: string | null;
             vibration_strength_db: number;
         };

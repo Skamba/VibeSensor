@@ -6,7 +6,8 @@ from collections.abc import Sequence
 
 from vibesensor.analysis._types import Sample
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
-from vibesensor.dsp.vibration_strength import percentile
+from vibesensor.domain.strength_metrics import StrengthPeak
+from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 
 
 def _sensor_limit_g(sensor_model: object) -> float | None:
@@ -22,17 +23,36 @@ def _primary_vibration_strength_db(sample: Sample) -> float | None:
     return float(value) if value is not None else None
 
 
+def _analysed_peaks(sample: Sample) -> list[StrengthPeak]:
+    return [
+        peak
+        for peak in sample.top_peaks[:8]
+        if peak.hz > 0 and peak.amp > 0 and peak.hz >= MIN_ANALYSIS_FREQ_HZ
+    ]
+
+
 def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
-    out: list[tuple[float, float]] = []
-    for peak in sample.top_peaks[:8]:
-        hz = peak.hz
-        amp = peak.amp
-        if hz <= 0 or amp <= 0:
-            continue
-        if hz < MIN_ANALYSIS_FREQ_HZ:
-            continue
-        out.append((hz, amp))
-    return out
+    return [(peak.hz, peak.amp) for peak in _analysed_peaks(sample)]
+
+
+def _sample_peak_prominence_db(sample: Sample) -> float | None:
+    """How far the sample's most prominent peak stands out of the spectrum around it (dB).
+
+    A peak recorded without its local floor stands on the sample's overall floor.
+    """
+    overall_floor = sample.strength_floor_amp_g or 0.0
+    return max(
+        (
+            vibration_strength_db_scalar(
+                peak_band_rms_amp_g=peak.amp,
+                floor_amp_g=(
+                    peak.local_floor_amp_g if peak.local_floor_amp_g is not None else overall_floor
+                ),
+            )
+            for peak in _analysed_peaks(sample)
+        ),
+        default=None,
+    )
 
 
 def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:

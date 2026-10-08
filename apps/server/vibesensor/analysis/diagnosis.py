@@ -21,7 +21,11 @@ from vibesensor.analysis._reference_resolution import (
     _effective_engine_rpm,
     _tire_reference_from_context,
 )
-from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g, _sample_top_peaks
+from vibesensor.analysis._sample_metrics import (
+    _estimate_strength_floor_amp_g,
+    _sample_peak_prominence_db,
+    _sample_top_peaks,
+)
 from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import (
     LIGHT_STRENGTH_MAX_DB,
@@ -106,11 +110,13 @@ _HEDGES = frozenset({"faint", "spread_across_locations"})
 _SENSOR_REASONS = frozenset({"single_sensor", "single_wheel_sensor"})
 _CORNER_SOURCES = frozenset({VibrationSource.WHEEL_TIRE, VibrationSource.BRAKES})
 _MAX_ORDER_ROWS = 6
-# With no cause found, the run still felt a vibration when a sensor's strongest
-# peaks (p95) reach the elevated strength band (L3, 26 dB over the floor). The
-# p95 of every window's strongest peak sits about 10 dB over the floor on a
-# smooth road and in the moderate band (16-26 dB) with a healthy car's residual
-# wheel imbalance; a body resonance or an unchecked motor order is well above.
+# With no cause found, the run still felt a vibration when a sensor's peaks
+# (p95) stand out of the spectrum around them by the elevated strength band
+# (L3, 26 dB). The p95 of every window's most prominent peak sits about 10 dB
+# over its local floor on a smooth road and in the moderate band (16-26 dB)
+# with a healthy car's residual wheel imbalance; a body resonance or an
+# unchecked motor order is well above. The road's broad wheel-hop hump at a
+# wheel sensor is its own background, however far above the band's overall floor.
 _UNEXPLAINED_MIN_DB = next(band["min_db"] for band in BANDS if band["key"] == "l3")
 _MIN_COAST_SAMPLES = 4
 # Engine revs take a moment to drop after the shift to neutral, and each
@@ -308,7 +314,7 @@ def build_diagnosis(
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "unexplained_vibration": (
-            verdict is DiagnosisVerdict.NO_FAULT and basis == "overall" and _elevated(rows)
+            verdict is DiagnosisVerdict.NO_FAULT and basis == "overall" and _elevated(located)
         ),
         "amplitude_vs_speed": _amplitude_vs_speed(candidate),
         "spectrum": _spectrum(
@@ -717,11 +723,19 @@ def _overall_location_amplitudes(
     return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations))
 
 
-def _elevated(rows: Sequence[LocationAmplitudeRow]) -> bool:
-    """A sensor's strongest peaks reached the elevated strength band (L3) or above."""
+def _elevated(located: Sequence[tuple[Sample, str]]) -> bool:
+    """A sensor's peaks (p95) stood out of the spectrum around them by the elevated band (L3).
+
+    Each spectrum counts its peak that stands out most from its local floor:
+    a tone, not the broad hump the road rings at a wheel sensor's wheel hop.
+    """
+    prominence: dict[str, list[float]] = defaultdict(list)
+    for sample, location in located:
+        sample_prominence = _sample_peak_prominence_db(sample)
+        if sample_prominence is not None:
+            prominence[location].append(sample_prominence)
     return any(
-        row["db_above_floor"] is not None and row["db_above_floor"] >= _UNEXPLAINED_MIN_DB
-        for row in rows
+        percentile(sorted(values), 0.95) >= _UNEXPLAINED_MIN_DB for values in prominence.values()
     )
 
 

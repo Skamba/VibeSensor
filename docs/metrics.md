@@ -22,6 +22,17 @@ This formula measures how far the dominant peak stands above the noise floor, ex
 A value of 0 dB means the peak is at the noise floor level; positive values indicate vibration
 above the floor.
 
+### Peak local floor
+
+Each peak in `top_peaks` also carries `local_floor_amp_g`: the median of the
+floor bins (the spectrum without the bins within `PEAK_SEPARATION_HZ` of the
+`top_n` strongest candidates) within `LOCAL_FLOOR_HALF_WIDTH_HZ` (5 Hz) of the
+peak; where peaks crowd that whole neighbourhood, the median of every bin
+there. It is what the peak stands out from where it sits, the reference an
+ordered-statistic CFAR detector uses (Rohling, *IEEE Trans. AES* 19(4), 1983).
+`vibration_strength_db` and the severity bands stay over the band's overall
+floor; only the unexplained-vibration judgment uses the local floor.
+
 ### Implementation
 
 The implementation lives in `apps/server/vibesensor/dsp/vibration_strength.py`:
@@ -53,14 +64,20 @@ location's own noise floor next to it:
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
 - With no diagnosed order (`amplitude_basis = "overall"`), each location reports
   the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).
-- `unexplained_vibration`: a no-fault run with no candidate where some
-  location's p95 `db_above_floor` reaches the elevated strength band (L3,
-  26 dB). No checked order explains that vibration, so the report and the UI
-  say a vibration was found but not tied to a cause, never "No significant
-  vibration found". The p95 of each window's strongest peak sits about 10 dB
-  over the floor on a smooth road and around 20 dB with a healthy car's
-  residual wheel imbalance (benchmark); a body resonance (37 dB) or an EV
-  motor order with no ratio entered (36 dB) is well above.
+- `unexplained_vibration`: a no-fault run with no candidate where, at some
+  location, the p95 over its windows of the window's most prominent peak
+  reaches the elevated strength band (L3, 26 dB). A peak's prominence is its
+  dB over its own `local_floor_amp_g` (see "Peak local floor"), not over the
+  band's overall floor: on a real road a wheel sensor rings the wheel hop
+  (about 12 Hz) as a hump 30-37 dB over the band's overall floor on every
+  healthy car, and a hump is the background of the peaks on it, not a shake to
+  explain. No checked order explains a flagged vibration, so the report and
+  the UI say a vibration was found but not tied to a cause, never "No
+  significant vibration found". Benchmark p95 prominences: about 10 dB on the
+  idealised smooth road, 16 dB with a healthy car's residual wheel imbalance or
+  a seat mode, 13-16 dB for a healthy car on a generated ISO 8608 road (33-37 dB
+  over the overall floor); a 13 Hz body resonance (29 dB), an EV motor order
+  with no ratio entered (37 dB) or fixed body resonances (38 dB) are above.
 - `amplitude_vs_speed`: median order amplitude (mg) per 5 km/h speed bin and
   location; `spectrum.peaks`: median amplitude (mg) of peaks recurring in at
   least 20% of the strongest location's windows within ±5 km/h of the reference
@@ -327,7 +344,7 @@ schema. This section lists only metric fields, not the full persistence schema.
 |-------|------|-------------|
 | `vibration_strength_db` | float | Vibration strength (dB above noise floor) |
 | `strength_bucket` | str \| null | Severity band key (`l1`–`l5`) or `null` |
-| `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket}]` |
+| `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket, local_floor_amp_g}]` (`local_floor_amp_g` absent in runs recorded before it existed) |
 | `dominant_freq_hz` | float | Frequency of dominant peak (Hz) |
 | `strength_peak_amp_g` | float | Peak amplitude used to compute dB strength |
 | `strength_floor_amp_g` | float | Noise-floor amplitude used to compute dB strength |

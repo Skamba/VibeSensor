@@ -97,6 +97,35 @@ vibration around 1 kHz is not modelled yet (no source gives its level at a
 knuckle), so real drives may show a higher in-band floor from folded
 broadband content than the simulator does.
 
+### Benchmark on the realistic road
+
+`Case(iso8608_road=True)` runs a benchmark drive on `generated_road(seed)`;
+the `*-iso8608-road` cases (healthy motorway, healthy sweep, engine sweep)
+pass on every matrix seed. The rest of the benchmark still runs on the
+idealised floor, because on the generated road (seeds 1-6, every case and
+car, 1278 runs) about half of it fails for reasons that need a product
+decision, not a simulator or test change:
+
+- Mild and barely-there wheel imbalances, brake judder and faint engine
+  tones are missed (`no_fault`, about 150 runs; no wheel-fault case passes on every seed): at 80-120 km/h a wheel order
+  runs at 11-17 Hz, right on the knuckle's wheel-hop hump (about 0.1 g in
+  each spectrum bin on a class A road at 100 km/h), and each window's eight
+  strongest peaks are the hump's.
+- Cases expecting "about N x stronger at the corner than at the next sensor"
+  read "strongest at the corner" (about 290 runs): the next sensor's share of
+  the fault is under its own hump, so it is not measured there.
+- Healthy cars driven in town are given a moderate wheel or brake fault
+  (24 runs) or a weak guess (23): hump peaks near the wheel order at city
+  speeds match it in about a quarter of the windows at every corner.
+- A 13 Hz body mode of fixed amplitude
+  (`bench-healthy-residual-under-body-resonance-motorway`) stands 23 dB over
+  the trunk's local floor on this road, under the 26 dB unexplained-vibration
+  bar it clears on the idealised floor.
+
+The unexplained-vibration check judges a peak against its local floor
+(`docs/metrics.md`), so a healthy car on this road is no longer reported as
+"Vibration found" (211 of those runs before).
+
 ## Wheel kinematics
 
 `simulator/wheel_kinematics.py` gives the simulated car its own tires and

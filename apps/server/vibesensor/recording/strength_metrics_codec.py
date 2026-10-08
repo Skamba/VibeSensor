@@ -19,6 +19,7 @@ def strength_peak_from_mapping(payload: object) -> StrengthPeak:
         amp=float_or(payload.get("amp")),
         vibration_strength_db=optional_float(payload.get("vibration_strength_db")),
         strength_bucket=text_or_none(payload.get("strength_bucket")),
+        local_floor_amp_g=optional_float(payload.get("local_floor_amp_g")),
     )
 
 
@@ -54,6 +55,8 @@ def strength_peak_to_payload(peak: StrengthPeak) -> JsonObject:
         payload["vibration_strength_db"] = peak.vibration_strength_db
     if peak.strength_bucket is not None:
         payload["strength_bucket"] = peak.strength_bucket
+    if peak.local_floor_amp_g is not None:
+        payload["local_floor_amp_g"] = peak.local_floor_amp_g
     return payload
 
 
