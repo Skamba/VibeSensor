@@ -1,97 +1,98 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Sonnet redo research (2026-04 v2): BMW PressClub DE xDrive20i ACEA 09/2018 tech sheet (legacy_research_sources:38a04165d331) and 06/2021 LCI tech sheet (legacy_research_sources:9cb10e268364) both confirm final drive 3.385 (one axle ratio for the all-wheel-drive car, stored as the rear final drive) and 8th gear 0.640. Pre-LCI 2018-2021 uses ZF GA8HP50Z (B48) with gear set [5.000, 3.200, 2.143, 1.720, 1.314, 1.000, 0.822, 0.640] and reverse 3.456. Post-LCI 2021-2024 uses ZF GA8HP51Z with gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640] and reverse 3.712. Encoded pre-LCI gear set as the row's primary value because the production_start_year is 2018; LCI ratio change is documented in the gear_ratios notes. Standard tire 225/60 R18 confirmed by 09/2018 ACEA sheet.",
-      "n2": "Sonnet redo research (2026-04 v2): BMW PressClub DE Germany price list 08/2022 (legacy_research_sources:9942185c701e) confirms G01 xDrive30i sale in Germany. xDrive30i shares the B48 + ZF 8HP50 (pre-LCI) / 8HP51 (post-LCI) drivetrain with xDrive20i, so gear ratios and final drive follow the same pattern. No xDrive30i-specific ACEA tech sheet was located, so gear_ratios and reverse are official_derived rather than official_exact; final drive 3.385 is strongly supported by both xDrive20i (S_XD20) and M40i (S_M40) confirmations. Top gear 0.640 confirmed across the family. Standard tire 225/60 R18 inherited from xDrive20i baseline.",
-      "n3": "Sonnet redo research (2026-04 v2): BMW PressClub DE M40i ACEA 04/2020 tech sheet (legacy_research_sources:8e51d741ecbd) confirms ZF GA8HP51Z (B58) with full gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, final drive 3.385 (one axle ratio for the all-wheel-drive car, stored as the rear final drive), and standard staggered tires 245/45 R20 front + 275/40 R20 rear. Prior repo placeholder values 0.667 / 3.077 / 245/45 R19 were legacy family_default inheritance from earlier 8HP70 generation and are superseded.",
-      "n6": "Wave 21 re-check shows the checked 09/2018 and 06/2021 BMW Germany technical-data PDFs are exact X3 xDrive20i states. Across both states they prove Allrad, 8-Gang Steptronic Getriebe, final drive 3.385, top gear 0.640, and a 225/60 R18 basic tire, which is sufficient to land those stable fields as an xDrive20i variant-scoped production override. The full xDrive20i gear-ratio array changed between the checked 2018 and 2021 official sheets (5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 vs 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so one shared exact gear-ratio array would still be unsafe. Official Germany price-list material continues to confirm the broader G01 wheel/tire matrix and xDrive30i market context, and wave 10 validation also adds exact M40i source-ledger evidence from the 04/2020 ACEA technical-data sheet: AWD, 8-Gang Steptronic Getriebe, forward ratios 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, reverse 3.712, final drive 3.385, and standard staggered 245/45 R20 front + 275/40 R20 rear tires. The broad row remains verification backlog because the xDrive20i full gear-ratio array changed between the checked official sheets, xDrive30i still lacks a directly checked exact ratio PDF in this row, and this pass did not recover year-spanning official evidence proving one unchanged M40i package across the full 2018-2024 row.",
-      "n8": "Sonnet redo research (2026-04 v2): G01 sDrive20i was introduced globally July 2018 (Wikipedia G01) and the F25 predecessor's sDrive20i was sold in Germany, supporting EU availability. However no BMW PressClub DE technical-data PDF specifically for sDrive20i G01 was located in this run, so EU-specific official confirmation of final drive and tires is missing. Drivetrain confidence held at official_exact per the row's existing 'BMW press release' legacy classification (RWD layout is unambiguous). Top gear ratio corrected from placeholder 0.667 to 0.640 by analogy with xDrive20i (same B48 + 8HP50 pre-LCI / 8HP51 post-LCI; 8th gear ratio is 0.640 in both variants). Final drive and tires marked no_confidence pending BMW DE sDrive20i tech sheet recovery.",
-      "n10": "Reverse gear ratio (research note): 3.456"
-    },
     "evidence_ref_sets": {
-      "e1": [
-        "legacy_research_sources:38a04165d331",
-        "legacy_research_sources:393d7682b19e",
-        "legacy_research_sources:8e51d741ecbd",
-        "legacy_research_sources:95b9bf2bf0cf",
-        "legacy_research_sources:9942185c701e",
-        "legacy_research_sources:9cb10e268364",
-        "legacy_research_sources:de6c75804abf"
+      "e_pl22": [
+        "bmw_pressclub_sources:g01-2022-08-de-price-list"
       ],
       "e2": [
-        "legacy_research_sources:9942185c701e"
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf"
       ],
       "e3": [
-        "legacy_research_sources:8e51d741ecbd"
+        "bmw_pressclub_sources:g01-2017-06-spec-pdf",
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf"
       ],
       "e4": [
-        "secondary_technical_sources:g01-x3-wikipedia"
+        "bmw_pressclub_sources:g01-30e-2019-12-spec-pdf",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf"
       ],
       "e5": [
-        "legacy_research_sources:8e51d741ecbd",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf"
       ],
       "e6": [
-        "legacy_research_sources:38a04165d331",
-        "legacy_research_sources:9cb10e268364"
+        "bmw_pressclub_sources:g01-2017-06-spec-pdf",
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+        "bmw_pressclub_sources:g01-m40i-2020-04-de-spec-pdf",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf"
       ],
       "e7": [
-        "legacy_research_sources:38a04165d331",
-        "legacy_research_sources:9cb10e268364",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
+        "secondary_technical_sources:g01-x3-wikipedia"
       ],
       "e8": [
-        "legacy_research_sources:38a04165d331"
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+        "bmw_pressclub_sources:g01-2022-08-de-price-list",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+        "bmw_pressclub_sources:g45-x3-global-launch-article",
+        "secondary_technical_sources:g01-adac-catalogue",
+        "secondary_technical_sources:g01-lci-adac-catalogue"
       ],
       "e9": [
-        "legacy_research_sources:9942185c701e",
-        "secondary_technical_sources:zf8hp-bmw-x3-table"
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+        "bmw_pressclub_sources:g01-2022-08-de-price-list"
       ],
       "e10": [
-        "legacy_research_sources:9942185c701e",
-        "legacy_research_sources:38a04165d331",
-        "legacy_research_sources:8e51d741ecbd"
+        "bmw_pressclub_sources:g01-2017-06-spec-pdf",
+        "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+        "bmw_pressclub_sources:g01-2022-08-de-price-list",
+        "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+        "bmw_pressclub_sources:g45-x3-global-launch-article",
+        "secondary_technical_sources:g01-adac-catalogue",
+        "secondary_technical_sources:g01-lci-adac-catalogue"
       ]
     },
     "tire_setups": {
-      "setup_265_21": {
-        "confidence": "family_default",
+      "setup_245_50r19": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e_pl22",
+        "notes": "The official 08/2022 Germany price list offers 245/50 R19 on 7.5J x 19 wheels for the xDrive30e, xDrive20i, xDrive30i, xDrive20d and xDrive30d.",
         "front": {
-          "aspect_pct": 35.0,
-          "rim_in": 21.0,
-          "width_mm": 265.0
+          "width_mm": 245.0,
+          "aspect_pct": 50.0,
+          "rim_in": 19.0
         }
       },
-      "setup_255_20": {
-        "confidence": "family_default",
+      "setup_245_45r20_275_40r20": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e_pl22",
+        "notes": "The official 08/2022 Germany price list offers 245/45 R20 front and 275/40 R20 rear on 8J / 9.5J x 20 wheels for the xDrive30e, xDrive20i, xDrive30i, xDrive20d and xDrive30d.",
         "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 20.0,
-          "width_mm": 255.0
-        }
-      },
-      "setup_245_19": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
+          "width_mm": 245.0,
           "aspect_pct": 45.0,
-          "rim_in": 19.0,
-          "width_mm": 245.0
+          "rim_in": 20.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 40.0,
+          "rim_in": 20.0
         }
       },
-      "setup_225_18": {
-        "confidence": "family_default",
+      "setup_245_40r21_275_35r21": {
+        "confidence": "official_exact",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e_pl22",
+        "notes": "The official 08/2022 Germany price list offers 245/40 R21 front and 275/35 R21 rear on 8.5J / 9.5J x 21 wheels for the xDrive30e, xDrive20i, xDrive30i, xDrive20d and xDrive30d.",
         "front": {
-          "aspect_pct": 60.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
+          "width_mm": 245.0,
+          "aspect_pct": 40.0,
+          "rim_in": 21.0
+        },
+        "rear": {
+          "width_mm": 275.0,
+          "aspect_pct": 35.0,
+          "rim_in": 21.0
         }
       }
     }
@@ -108,122 +109,93 @@
   },
   "configurations": [
     {
-      "id": "bmw-g01-m40i-eu-2018-zf8hp-awd",
-      "variant_name": "M40i",
-      "engine_code": "B58",
-      "engine_name": "B58 3.0L I6 Turbo",
+      "id": "bmw-g01-xdrive20i-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "variant_name": "xDrive20i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list the xDrive20i with xDrive all-wheel drive.",
         "value": "AWD"
       },
       "transmission": {
         "confidence": "official_exact",
-        "notes_ref": "n3",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list an 8-speed Steptronic for the xDrive20i.",
         "code": "ZF8HP",
-        "name": "8-speed Steptronic (ZF GA8HP51Z)",
-        "evidence_refs_ref": "e5"
+        "name": "8-speed Steptronic"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "official_exact",
-          "notes_ref": "n3",
-          "value": 0.64,
-          "evidence_refs_ref": "e5"
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 0.640 as top gear for the xDrive20i 8-speed Steptronic.",
+          "value": 0.64
         },
         "final_drive_rear": {
           "confidence": "official_exact",
-          "notes_ref": "n3",
-          "value": 3.385,
-          "evidence_refs_ref": "e3"
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.25,
-            3.36,
-            2.172,
-            1.72,
-            1.316,
-            1.0,
-            0.822,
-            0.64
-          ],
-          "evidence_refs_ref": "e5",
-          "notes_ref": "n3"
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 3.385 as the final drive for the xDrive20i 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.385
         }
       },
       "tires": {
         "default": {
           "confidence": "official_exact",
-          "evidence_refs_ref": "e3",
-          "notes": "Sonnet redo research (2026-04 v2): BMW PressClub DE M40i ACEA 04/2020 tech sheet (legacy_research_sources:8e51d741ecbd) confirms ZF GA8HP51Z (B58) with full gear set [5.250, 3.360, 2.172, 1.720, 1.316, 1.000, 0.822, 0.640], reverse 3.712, final drive 3.385 (one axle ratio for the all-wheel-drive car, stored as the rear final drive), and standard staggered tires 245/45 R20 front + 275/40 R20 rear. Prior repo placeholder values 0.667 / 3.077 / 245/45 R19 were legacy family_default inheritance from earlier 8HP70 generation and are superseded. M40i standard staggered fitment 245/45 R20 F / 275/40 R20 R per BMW DE ACEA 04/2020.",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive20i.",
           "front": {
-            "width_mm": 245.0,
-            "aspect_pct": 45.0,
-            "rim_in": 20.0
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
           },
-          "default_axle_for_speed": "rear",
-          "rear": {
-            "width_mm": 275.0,
-            "aspect_pct": 40.0,
-            "rim_in": 20.0
-          }
+          "default_axle_for_speed": "rear"
         },
         "options": [
           {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive20i.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
           },
           {
-            "setup_ref": "setup_255_20",
-            "name": "Sport Line 20\""
+            "setup_ref": "setup_245_50r19",
+            "name": "19\" option"
           },
           {
-            "setup_ref": "setup_265_21",
-            "name": "M Sport 21\""
+            "setup_ref": "setup_245_45r20_275_40r20",
+            "name": "20\" option"
+          },
+          {
+            "setup_ref": "setup_245_40r21_275_35r21",
+            "name": "21\" option"
           }
         ]
       },
       "verification_notes": [
         {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note": "Reverse gear ratio (research note): 3.712",
-          "evidence_refs_ref": "e3"
+          "note": "The official BMW 09/2018 and 06/2021 G01 technical data list the xDrive20i (in-line four, 1998 cc). The full gear set changed during production while top gear and final drive stayed the same (09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640; 06/2021: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so the row stores only top gear and final drive. ADAC lists the Germany-market xDrive20i from 12/17, so the row starts in 2018. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs_ref": "e8"
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
-          "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i exact official ratio mapping",
-          "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
-          "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
-          "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i and M40i transmission subtype code",
-          "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
-          "evidence_refs_ref": "e1"
+          "item": "G01 xDrive20i optional tyre sizes before August 2022",
+          "reason": "The 19\", 20\" and 21\" options come from the official 08/2022 Germany price list; no earlier official G01 wheel programme was checked, so earlier optional sizes may differ.",
+          "evidence_refs_ref": "e_pl22"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
       "id": "bmw-g01-sdrive20i-eu-2018-zf8hp-rwd",
@@ -232,42 +204,44 @@
       "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
+        "confidence": "reputable_secondary_crosschecked",
+        "evidence_refs_ref": "e7",
+        "notes": "The sDrive name denotes rear-wheel drive; Wikipedia lists the G01 sDrive20i.",
         "value": "RWD"
       },
       "transmission": {
         "confidence": "reputable_secondary_crosschecked",
-        "notes_ref": "n8",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (ZF GA8HP50Z / GA8HP51Z post-LCI)",
         "evidence_refs": [
           "secondary_technical_sources:g01-x3-wikipedia",
           "secondary_technical_sources:zf8hp-bmw-x3-table"
-        ]
+        ],
+        "notes": "Secondary sources list the ZF eight-speed automatic for the G01 sDrive20i.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic"
       },
       "ratios": {
         "top_gear_ratio": {
           "confidence": "reputable_secondary_crosschecked",
-          "notes_ref": "n8",
-          "value": 0.64,
           "evidence_refs": [
-            "secondary_technical_sources:zf8hp-bmw-x3-table",
-            "secondary_technical_sources:g01-x3-wikipedia"
-          ]
+            "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+            "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+            "secondary_technical_sources:zf8hp-bmw-x3-table"
+          ],
+          "notes": "Top gear 0.640 as printed on the official xDrive20i sheets for the same B48 engine and gearbox.",
+          "value": 0.64
         },
         "final_drive_rear": {
           "confidence": "unverified",
-          "notes_ref": "n8",
-          "value": 3.077,
-          "evidence_refs_ref": "e4"
+          "evidence_refs_ref": "e7",
+          "notes": "Unverified carry-over; no official sDrive20i sheet was found.",
+          "value": 3.077
         }
       },
       "tires": {
         "default": {
           "confidence": "unverified",
-          "evidence_refs_ref": "e4",
-          "notes_ref": "n8",
+          "evidence_refs_ref": "e7",
+          "notes": "Unverified carry-over; no official sDrive20i sheet was found.",
           "front": {
             "width_mm": 245.0,
             "aspect_pct": 45.0,
@@ -277,161 +251,44 @@
         },
         "options": [
           {
-            "setup_ref": "setup_245_19",
-            "name": "Standard 19\""
-          },
-          {
-            "setup_ref": "setup_255_20",
-            "name": "Sport Line 20\""
-          },
-          {
-            "setup_ref": "setup_265_21",
-            "name": "M Sport 21\""
+            "confidence": "unverified",
+            "evidence_refs_ref": "e7",
+            "notes": "Unverified carry-over; no official sDrive20i sheet was found.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 19.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "19\""
           }
         ]
       },
       "verification_notes": [
         {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
+          "note": "No official BMW technical-data sheet or Germany price list for a G01 sDrive20i was found; the 09/2018 and 06/2021 sheets and the 08/2022 Germany price list only list xDrive variants, and ADAC lists no Germany-market sDrive20i. The rear-wheel-drive layout follows from the sDrive name. Top gear 0.640 matches the official xDrive20i sheets for the same engine and gearbox; final drive 3.077 and the 245/45 R19 tyre are unverified carry-overs.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+            "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+            "bmw_pressclub_sources:g01-2022-08-de-price-list",
+            "secondary_technical_sources:g01-adac-catalogue",
+            "secondary_technical_sources:g01-lci-adac-catalogue"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
-          "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i exact official ratio mapping",
-          "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
-          "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
-          "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i and M40i transmission subtype code",
-          "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
-          "evidence_refs_ref": "e1"
-        }
-      ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-g01-xdrive20i-eu-2018-zf8hp-awd",
-      "variant_name": "xDrive20i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "official_exact",
-        "evidence_refs_ref": "e2",
-        "value": "AWD"
-      },
-      "transmission": {
-        "confidence": "official_exact",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic (ZF GA8HP50Z pre-LCI / GA8HP51Z post-LCI 06/2021)",
-        "evidence_refs_ref": "e7"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "official_exact",
-          "notes_ref": "n1",
-          "value": 0.64,
-          "evidence_refs_ref": "e6"
-        },
-        "final_drive_rear": {
-          "confidence": "official_exact",
-          "notes_ref": "n1",
-          "value": 3.385,
-          "evidence_refs_ref": "e6"
-        },
-        "gear_ratios": {
-          "confidence": "official_exact",
-          "value": [
-            5.0,
-            3.2,
-            2.143,
-            1.72,
-            1.314,
-            1.0,
-            0.822,
-            0.64
-          ],
-          "evidence_refs_ref": "e7",
-          "notes_ref": "n1"
-        }
-      },
-      "tires": {
-        "default": {
-          "confidence": "official_exact",
-          "evidence_refs_ref": "e8",
-          "notes_ref": "n1",
-          "front": {
-            "width_mm": 225.0,
-            "aspect_pct": 60.0,
-            "rim_in": 18.0
-          },
-          "default_axle_for_speed": "rear"
-        },
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          }
-        ]
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
-          "evidence_refs_ref": "e8"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
-          "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i exact official ratio mapping",
-          "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
-          "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
-          "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i and M40i transmission subtype code",
-          "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
-          "evidence_refs_ref": "e1"
+          "item": "G01 sDrive20i final drive and standard tyre",
+          "reason": "No official BMW sheet for the sDrive20i was found, so final drive 3.077 and the 245/45 R19 tyre are unverified.",
+          "evidence_refs_ref": "e7"
         }
       ],
       "configuration_confidence": "medium_confidence"
     },
     {
       "id": "bmw-g01-xdrive30i-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
       "variant_name": "xDrive30i",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
@@ -439,56 +296,35 @@
       "drivetrain": {
         "confidence": "official_exact",
         "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list the xDrive30i with xDrive all-wheel drive.",
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "official_derived",
-        "notes_ref": "n2",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list an 8-speed Steptronic for the xDrive30i.",
         "code": "ZF8HP",
-        "name": "8-speed Steptronic (ZF GA8HP50Z pre-LCI / GA8HP51Z post-LCI 06/2021)",
-        "evidence_refs_ref": "e9"
+        "name": "8-speed Steptronic"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 0.64,
-          "evidence_refs_ref": "e9"
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 0.640 as top gear for the xDrive30i 8-speed Steptronic.",
+          "value": 0.64
         },
         "final_drive_rear": {
-          "confidence": "official_derived",
-          "notes_ref": "n2",
-          "value": 3.385,
-          "evidence_refs_ref": "e10"
-        },
-        "gear_ratios": {
-          "confidence": "official_derived",
-          "value": [
-            5.0,
-            3.2,
-            2.143,
-            1.72,
-            1.314,
-            1.0,
-            0.822,
-            0.64
-          ],
-          "evidence_refs": [
-            "legacy_research_sources:38a04165d331",
-            "legacy_research_sources:9942185c701e",
-            "secondary_technical_sources:zf8hp-bmw-x3-table"
-          ],
-          "notes_ref": "n2"
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 3.385 as the final drive for the xDrive30i 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.385
         }
       },
       "tires": {
         "default": {
-          "confidence": "official_derived",
-          "evidence_refs": [
-            "legacy_research_sources:9942185c701e",
-            "legacy_research_sources:38a04165d331"
-          ],
-          "notes_ref": "n2",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30i.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 60.0,
@@ -498,23 +334,103 @@
         },
         "options": [
           {
-            "setup_ref": "setup_225_18",
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30i.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
             "name": "Standard 18\""
           },
           {
-            "confidence": "family_default",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 50.0,
-              "rim_in": 19.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Optional 19\""
+            "setup_ref": "setup_245_50r19",
+            "name": "19\" option"
           },
           {
+            "setup_ref": "setup_245_45r20_275_40r20",
+            "name": "20\" option"
+          },
+          {
+            "setup_ref": "setup_245_40r21_275_35r21",
+            "name": "21\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 09/2018 and 06/2021 G01 technical data list the xDrive30i (in-line four, 1998 cc). The full gear set changed during production while top gear and final drive stayed the same (09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640; 06/2021: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so the row stores only top gear and final drive. ADAC lists the Germany-market xDrive30i from 12/17, so the row starts in 2018. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "G01 xDrive30i optional tyre sizes before August 2022",
+          "reason": "The 19\", 20\" and 21\" options come from the official 08/2022 Germany price list; no earlier official G01 wheel programme was checked, so earlier optional sizes may differ.",
+          "evidence_refs_ref": "e_pl22"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-m40i-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "variant_name": "M40i",
+      "engine_code": "B58",
+      "engine_name": "B58 3.0L I6 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list the M40i with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list an 8-speed Steptronic Sport for the M40i.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic Sport"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list 0.640 as top gear for the M40i 8-speed Steptronic Sport.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list 3.385 as the final drive for the M40i 8-speed Steptronic Sport. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list 245/45 R20 front and 275/40 R20 rear as the standard tyre for the M40i.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
             "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
+            "evidence_refs_ref": "e6",
+            "notes": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list 245/45 R20 front and 275/40 R20 rear as the standard tyre for the M40i.",
             "front": {
               "width_mm": 245.0,
               "aspect_pct": 45.0,
@@ -526,67 +442,504 @@
               "rim_in": 20.0
             },
             "default_axle_for_speed": "rear",
-            "name": "Optional staggered 20\""
-          },
-          {
-            "confidence": "official_exact",
-            "evidence_refs_ref": "e1",
-            "front": {
-              "width_mm": 245.0,
-              "aspect_pct": 40.0,
-              "rim_in": 21.0
-            },
-            "rear": {
-              "width_mm": 275.0,
-              "aspect_pct": 35.0,
-              "rim_in": 21.0
-            },
-            "default_axle_for_speed": "rear",
-            "name": "Optional staggered 21\""
+            "name": "Standard 20\""
           }
         ]
       },
       "verification_notes": [
         {
-          "note_ref": "n6",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "note_ref": "n10",
+          "note": "The official BMW 06/2017, 09/2018, 04/2020 and 06/2021 G01 technical data list the M40i (in-line six, 2998 cc). The full gear set changed during production while top gear and final drive stayed the same (06/2017 and 09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640; 04/2020 and 06/2021: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so the row stores only top gear and final drive. The 06/2017 sheet gives availability from 12/17, so the row starts in 2018; the 08/2022 Germany price list names the gearbox 8-speed Steptronic Sport. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
           "evidence_refs": [
-            "legacy_research_sources:38a04165d331",
-            "legacy_research_sources:9942185c701e"
+            "bmw_pressclub_sources:g01-2017-06-spec-pdf",
+            "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+            "bmw_pressclub_sources:g01-2022-08-de-price-list",
+            "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+            "bmw_pressclub_sources:g01-m40i-2020-04-de-spec-pdf",
+            "bmw_pressclub_sources:g45-x3-global-launch-article",
+            "secondary_technical_sources:g01-lci-adac-catalogue"
           ]
         }
       ],
       "unresolved": [
         {
-          "item": "BMW X3 xDrive20i exact gear-ratio and reverse-ratio applicability across the full 2018-2024 row span",
-          "reason": "Official BMW DE xDrive20i sheets now prove final drive 3.385, top gear 0.640, and the 225/60 R18 basic tire, but the full forward gear ratios and reverse ratio differ between the checked 09/2018 and 06/2021 technical-data PDFs, so one shared gear-ratio array would be inaccurate without a year split.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i exact official ratio mapping",
-          "reason": "The checked 09/2018 and 06/2021 BMW Germany technical-data PDFs used in this row are exact xDrive20i sheets, while the currently retained xDrive30i notes are still supported mainly by Germany price-list context and not by one directly checked exact xDrive30i ratio PDF in this run.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 M40i production-data applicability across the full 2018-2024 row span",
-          "reason": "The checked official 04/2020 ACEA M40i sheet resolves final drive 3.385, top gear 0.640, the full forward ratio set, reverse ratio 3.712, and the standard staggered 245/45 R20 front + 275/40 R20 rear fitment, but this pass did not recover launch-year or later-year official sheets proving one unchanged M40i package across the full represented row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 (G01, 2018-2024) full EU variant matrix beyond the exact xDrive30i and M40i mappings",
-          "reason": "This pass resolves the exact xDrive30i final drive, top gear, and Germany-market tire fitments and adds exact M40i source-ledger evidence, but it does not establish the full official ratio and tire matrix for the other G01 variants represented by the broad row.",
-          "evidence_refs_ref": "e1"
-        },
-        {
-          "item": "BMW X3 xDrive30i and M40i transmission subtype code",
-          "reason": "Official BMW sources prove 8-Gang Steptronic wording for the checked xDrive30i and M40i mappings but do not publish a gearbox subtype code such as a ZF 8HP variant number.",
-          "evidence_refs_ref": "e1"
+          "item": "G01 M40i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard staggered 20\" tyres and the checked price list covers the M40i wheels in a separate document; no official optional size is stored.",
+          "evidence_refs_ref": "e9"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-xdrive30e-eu-2020-zf8hp-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "xDrive30e",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list the xDrive30e with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list an 8-speed Steptronic for the xDrive30e.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list 0.667 as top gear for the xDrive30e 8-speed Steptronic.",
+          "value": 0.667
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list the forward ratios 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667 for the xDrive30e 8-speed Steptronic.",
+          "value": [
+            4.714,
+            3.143,
+            2.106,
+            1.667,
+            1.285,
+            1.0,
+            0.839,
+            0.667
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list 3.385 as the final drive for the xDrive30e 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.385
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30e.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official BMW 12/2019 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30e.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "setup_ref": "setup_245_50r19",
+            "name": "19\" option"
+          },
+          {
+            "setup_ref": "setup_245_45r20_275_40r20",
+            "name": "20\" option"
+          },
+          {
+            "setup_ref": "setup_245_40r21_275_35r21",
+            "name": "21\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 12/2019 and 06/2021 G01 technical data list the xDrive30e (plug-in hybrid with an in-line four, 1998 cc). Both sheets print the same gear set. The press release gives a spring 2020 market launch, so the row starts in 2020. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g01-2022-08-de-price-list",
+            "bmw_pressclub_sources:g01-30e-2019-11-press-release",
+            "bmw_pressclub_sources:g01-30e-2019-12-spec-pdf",
+            "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+            "bmw_pressclub_sources:g45-x3-global-launch-article",
+            "secondary_technical_sources:g01-adac-catalogue",
+            "secondary_technical_sources:g01-lci-adac-catalogue"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "G01 xDrive30e optional tyre sizes before August 2022",
+          "reason": "The 19\", 20\" and 21\" options come from the official 08/2022 Germany price list; no earlier official G01 wheel programme was checked, so earlier optional sizes may differ.",
+          "evidence_refs_ref": "e_pl22"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-xdrive20d-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "variant_name": "xDrive20d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list the xDrive20d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list an 8-speed Steptronic for the xDrive20d.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 0.640 as top gear for the xDrive20d 8-speed Steptronic.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 3.231 as the final drive for the xDrive20d 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive20d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive20d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "setup_ref": "setup_245_50r19",
+            "name": "19\" option"
+          },
+          {
+            "setup_ref": "setup_245_45r20_275_40r20",
+            "name": "20\" option"
+          },
+          {
+            "setup_ref": "setup_245_40r21_275_35r21",
+            "name": "21\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list the xDrive20d (in-line four, 1995 cc). The full gear set changed during production while top gear and final drive stayed the same (06/2017 and 09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640; 06/2021: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640), so the row stores only top gear and final drive. ADAC lists the Germany-market xDrive20d from 10/17 (after July), so the row starts in 2018. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "G01 xDrive20d optional tyre sizes before August 2022",
+          "reason": "The 19\", 20\" and 21\" options come from the official 08/2022 Germany price list; no earlier official G01 wheel programme was checked, so earlier optional sizes may differ.",
+          "evidence_refs_ref": "e_pl22"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-xdrive25d-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2019,
+      "variant_name": "xDrive25d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official BMW 09/2018 G01 technical data list the xDrive25d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official BMW 09/2018 G01 technical data list an 8-speed Steptronic for the xDrive25d.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 09/2018 G01 technical data list 0.640 as top gear for the xDrive25d 8-speed Steptronic.",
+          "value": 0.64
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 09/2018 G01 technical data list the forward ratios 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640 for the xDrive25d 8-speed Steptronic.",
+          "value": [
+            5.0,
+            3.2,
+            2.143,
+            1.72,
+            1.314,
+            1.0,
+            0.822,
+            0.64
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 09/2018 G01 technical data list 3.231 as the final drive for the xDrive25d 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.231
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 09/2018 G01 technical data list 225/60 R18 as the standard tyre for the xDrive25d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes": "The official BMW 09/2018 G01 technical data list 225/60 R18 as the standard tyre for the xDrive25d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 09/2018 G01 technical data list the xDrive25d (in-line four, 1995 cc). ADAC lists the Germany-market xDrive25d from 04/18 to 06/19, so the row covers 2018-2019.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+            "secondary_technical_sources:g01-adac-catalogue"
+          ]
+        }
+      ],
+      "unresolved": [],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-xdrive30d-eu-2018-zf8hp-awd",
+      "production_start_year": 2018,
+      "production_end_year": 2024,
+      "variant_name": "xDrive30d",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list the xDrive30d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list an 8-speed Steptronic for the xDrive30d.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 0.640 as top gear for the xDrive30d 8-speed Steptronic.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 2.813 as the final drive for the xDrive30d 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 60.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list 225/60 R18 as the standard tyre for the xDrive30d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 60.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          },
+          {
+            "setup_ref": "setup_245_50r19",
+            "name": "19\" option"
+          },
+          {
+            "setup_ref": "setup_245_45r20_275_40r20",
+            "name": "20\" option"
+          },
+          {
+            "setup_ref": "setup_245_40r21_275_35r21",
+            "name": "21\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 06/2017, 09/2018 and 06/2021 G01 technical data list the xDrive30d (in-line six, 2993 cc). The full gear set changed during production while top gear and final drive stayed the same (06/2017 and 09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640; 06/2021: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640), so the row stores only top gear and final drive. ADAC lists the Germany-market xDrive30d from 10/17 (195 kW, 210 kW from 08/20); 10/17 is after July, so the row starts in 2018. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs_ref": "e10"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "G01 xDrive30d optional tyre sizes before August 2022",
+          "reason": "The 19\", 20\" and 21\" options come from the official 08/2022 Germany price list; no earlier official G01 wheel programme was checked, so earlier optional sizes may differ.",
+          "evidence_refs_ref": "e_pl22"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-g01-m40d-eu-2019-zf8hp-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "M40d",
+      "engine_code": "B57",
+      "engine_name": "B57 3.0L I6 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list the M40d with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list an 8-speed Steptronic Sport for the M40d.",
+        "code": "ZF8HP",
+        "name": "8-speed Steptronic Sport"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 0.640 as top gear for the M40d 8-speed Steptronic Sport.",
+          "value": 0.64
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 2.813 as the final drive for the M40d 8-speed Steptronic Sport. One axle ratio is published for the all-wheel-drive car.",
+          "value": 2.813
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 245/45 R20 front and 275/40 R20 rear as the standard tyre for the M40d.",
+          "front": {
+            "width_mm": 245.0,
+            "aspect_pct": 45.0,
+            "rim_in": 20.0
+          },
+          "rear": {
+            "width_mm": 275.0,
+            "aspect_pct": 40.0,
+            "rim_in": 20.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 09/2018 and 06/2021 G01 technical data list 245/45 R20 front and 275/40 R20 rear as the standard tyre for the M40d.",
+            "front": {
+              "width_mm": 245.0,
+              "aspect_pct": 45.0,
+              "rim_in": 20.0
+            },
+            "rear": {
+              "width_mm": 275.0,
+              "aspect_pct": 40.0,
+              "rim_in": 20.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 20\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 09/2018 and 06/2021 G01 technical data list the M40d (in-line six, 2993 cc). The full gear set changed during production while top gear and final drive stayed the same (09/2018: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640; 06/2021: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640), so the row stores only top gear and final drive. The M40d first appears in the 09/2018 sheet (valid after July), so the row starts in 2019; the 08/2022 Germany price list names the gearbox 8-speed Steptronic Sport. G01 production ended in 2024: ADAC lists the last facelifted variants until 10/24 and the official 06/2024 G45 launch article gives a Q4 2024 market launch for its successor.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+            "bmw_pressclub_sources:g01-2022-08-de-price-list",
+            "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+            "bmw_pressclub_sources:g45-x3-global-launch-article",
+            "secondary_technical_sources:g01-lci-adac-catalogue"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "G01 M40d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard staggered 20\" tyres and the checked price list covers the M40d wheels in a separate document; no official optional size is stored.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }

@@ -1995,6 +1995,55 @@
       "title": "BMW PressClub Germany: Der neue BMW 1er (06/2024)",
       "note": "Official BMW Germany launch article for the new BMW 1 Series (F70), built in Plant Leipzig like its predecessor; market launch from October 2024. Used for the end of the F40 rows.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-2017-06-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0272387EN/389785",
+      "title": "BMW PressClub G01 X3 06/2017 specifications PDF",
+      "note": "Official BMW 06/2017 technical data of the new X3 (T0272387EN). M40i: eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.385, 245/45 R20 front and 275/40 R20 rear, available from 12/17. xDrive20d: same ratios, final drive 3.231, 225/60 R18. xDrive30d: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.813, 225/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-2018-09-de-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0284378DE/413521",
+      "title": "BMW PressClub G01 X3 09/2018 Germany technical data PDF",
+      "note": "Official BMW 09/2018 German technical data for the X3 range (T0284378DE). xDrive20i, xDrive30i and M40i: eight-speed Steptronic 5.000 / 3.200 / 2.143 / 1.720 / 1.314 / 1.000 / 0.822 / 0.640, final drive 3.385. xDrive20d and xDrive25d: same ratios, final drive 3.231. xDrive30d and M40d: 5.000 / 3.200 / 2.143 / 1.720 / 1.313 / 1.000 / 0.823 / 0.640, final drive 2.813. Standard tyres 225/60 R18; M40i and M40d 245/45 R20 front and 275/40 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-30e-2019-11-press-release",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0302155EN/452969",
+      "title": "BMW PressClub G01 X3 xDrive30e 11/2019 press release PDF",
+      "note": "Official BMW press release of 4 November 2019 on the X3 xDrive30e (T0302155EN): production from December 2019, worldwide market launch in spring 2020.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-30e-2019-12-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0302155EN/452970",
+      "title": "BMW PressClub G01 X3 xDrive30e 12/2019 specifications PDF",
+      "note": "Official BMW 12/2019 technical data of the X3 xDrive30e (T0302155EN): eight-speed Steptronic 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.385, 225/60 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-m40i-2020-04-de-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0307289DE/449073",
+      "title": "BMW PressClub G01 X3 M40i 04/2020 Germany technical data PDF",
+      "note": "Official BMW 04/2020 German technical data of the X3 M40i (T0307289DE): eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, 245/45 R20 front and 275/40 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-g02-2021-06-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0334392EN/483095",
+      "title": "BMW PressClub G01 X3 and G02 X4 06/2021 specifications PDF",
+      "note": "Official BMW 06/2021 technical data of the facelifted X3 and X4 (T0334392EN; the UK release T0334826EN_GB carries the same file). X3 and X4 xDrive20i, xDrive30i and M40i: eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385. xDrive20d: same ratios, final drive 3.231. xDrive30d and M40d: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.813. X3 xDrive30e: 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.385. Standard tyres 225/60 R18; M40i and M40d 245/45 R20 front and 275/40 R20 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g01-2022-08-de-price-list",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0322780DE/634499",
+      "title": "BMW PressClub G01 X3 08/2022 Germany price list PDF",
+      "note": "Official BMW Germany X3 price list of August 2022 (T0322780DE). Wheels for xDrive30e, xDrive20i, xDrive30i, xDrive20d and xDrive30d: standard 225/60 R18 (7J x 18); options 245/50 R19 (7.5J x 19), 245/45 R20 front with 275/40 R20 rear (8J / 9.5J x 20) and 245/40 R21 front with 275/35 R21 rear (8.5J / 9.5J x 21). The M40i and M40d use the eight-speed Steptronic Sport.",
+      "confidence": "high"
     }
   ]
 }
