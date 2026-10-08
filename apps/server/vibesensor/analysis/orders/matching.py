@@ -271,9 +271,13 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
     window in most windows, scattered across it. A group with under
     ``ORDER_LINE_MIN_SHARE`` on one line has no line: every match is off it.
 
-    The line is judged on the matches where the tolerance window is wide
+    The line is placed on the matches where the tolerance window is wide
     enough to tell scatter from a line (``ORDER_LINE_MIN_TOLERANCE_WIDTHS``);
-    with too few of them the group is not judged.
+    with too few of them the group is not judged. Once placed, it holds every
+    match: a window too narrow to place it in (a wheel order under about 8 Hz)
+    still shows a peak off it, such as road noise that the overlapping spectra
+    hold at one frequency while the prediction sweeps past. An order's peak is
+    on its line in any window.
     """
     judged = [
         order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
@@ -285,12 +289,11 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
         return [False] * len(points)
     scale = median(point.matched_hz / point.predicted_hz for point in judged_points)
     off = [
-        is_judged
-        and abs(point.matched_hz - scale * point.predicted_hz)
+        abs(point.matched_hz - scale * point.predicted_hz)
         > _line_half_width_hz(point.predicted_hz, bin_hz)
-        for point, is_judged in zip(points, judged, strict=True)
+        for point in points
     ]
-    if len(judged_points) - sum(off) < ORDER_LINE_MIN_SHARE * len(judged_points):
+    if len(points) - sum(off) < ORDER_LINE_MIN_SHARE * len(points):
         return [True] * len(points)
     return off
 

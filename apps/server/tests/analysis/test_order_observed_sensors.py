@@ -21,6 +21,8 @@ from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
     _clear_shares,
     _corroboration,
+    _LinePoint,
+    _off_the_line,
     _sensors_that_hear,
 )
 from vibesensor.analysis.orders.physics import _order_hypotheses
@@ -30,6 +32,8 @@ from vibesensor.analysis.orders.scoring import (
     score_order_finding,
 )
 from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.order_bands import WHEEL_ORDER_PATH_COMPLIANCE
 
 # E1 at 2.72 x T1 in top gear (ratio 0.8): engine orders fall between wheel orders.
 _E1_PER_T1 = 2.72
@@ -577,3 +581,29 @@ def test_only_peaks_on_one_line_are_an_order(
         diagnosis["order_code"],
         diagnosis["confidence_level"],
     ) == expected
+
+
+def _off(points: list[_LinePoint]) -> list[bool]:
+    return _off_the_line(points, SAMPLE_RATE_HZ / FFT_N, WHEEL_ORDER_PATH_COMPLIANCE)
+
+
+# A wheel order's line from 12 Hz, in windows wide enough to place it in.
+_LINE = [_LinePoint(12.0 + step / 3.0, 12.0 + step / 3.0) for step in range(12)]
+# Road noise that overlapping spectra hold at 5.47 Hz while the prediction
+# sweeps 5.06-6.0 Hz, in windows too narrow to place a line in (under 8 Hz).
+_HELD = [_LinePoint(predicted_hz, 5.47) for predicted_hz in (5.06, 5.47, 5.8, 6.0)]
+
+
+def test_a_placed_line_holds_the_narrow_window_matches_too() -> None:
+    # Off the line except where the prediction crosses the held peak.
+    assert _off([*_LINE, *_HELD]) == [False] * len(_LINE) + [True, False, True, True]
+
+
+def test_narrow_window_matches_off_the_line_count_against_it() -> None:
+    # Seven of the twelve wide windows on a line by chance, and the narrow
+    # windows' held peaks off it: under half on the line, so no line at all.
+    chance = [
+        _LinePoint(point.predicted_hz, point.matched_hz * (1.0 if index < 7 else 1.05))
+        for index, point in enumerate(_LINE)
+    ]
+    assert _off([*chance, *_HELD, *_HELD]) == [True] * (len(chance) + 2 * len(_HELD))
