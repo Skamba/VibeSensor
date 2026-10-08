@@ -938,6 +938,20 @@
       "title": "ADAC Autokatalog BMW X4 G02 facelift (2021-2025)",
       "note": "ADAC catalogue of the Germany-market facelifted G02 variants with their sales periods: xDrive20i and xDrive30i 08/21-09/25; xDrive20d and xDrive30d 08/21-11/25. Used for year ranges only.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f44-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/2er-reihe-gran-coupe/f44/",
+      "title": "ADAC Autokatalog BMW 2 Series Gran Coupe F44 (2020-2024)",
+      "note": "ADAC catalogue of the Germany-market F44 variants with their sales periods: 218i Steptronic until 10/24; 220i Steptronic 11/20-10/24; 216d Steptronic 11/20-06/24; 218d manual and Steptronic 07/20-06/24; 220d Steptronic 03/20-06/24; 220d xDrive Steptronic 07/20-06/24. No manual 218i and no 220i xDrive are listed. Used for year ranges only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f44-218i-adac-2020",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/2er-reihe/f22-f23-f44-f87-facelift/305578/",
+      "title": "ADAC Autokatalog BMW 218i Gran Coupe Sport Line Steptronic (03/20-09/20)",
+      "note": "ADAC catalogue entry of the Germany-market 218i Gran Coupe Steptronic sold from 03/20. Used for year ranges only.",
+      "confidence": "medium"
     }
   ]
 }

@@ -1,0 +1,912 @@
+{
+  "defaults": {
+    "brand": "BMW",
+    "type": "Coupe",
+    "market": "EU",
+    "model_code": "F44",
+    "body_code": "F44",
+    "model_name": "2 Series Gran Coupe (F44, 2020-2024)",
+    "production_start_year": 2020,
+    "production_end_year": 2024
+  },
+  "configurations": [
+    {
+      "id": "bmw-f44-218i-eu-2020-mt6-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2021,
+      "variant_name": "218i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the 218i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list a 6-speed manual for the 218i.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 0.585 as top gear for the 218i 6-speed manual.",
+          "value": 0.585
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the forward ratios 3.615 / 1.952 / 1.179 / 0.853 / 0.711 / 0.585 for the 218i 6-speed manual.",
+          "value": [
+            3.615,
+            1.952,
+            1.179,
+            0.853,
+            0.711,
+            0.585
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 4.118 as the final drive for the 218i 6-speed manual.",
+          "value": 4.118
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218i.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218i.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2019 and 03/2021 F44 technical data list the 218i (in-line three, 1499 cc). The launch press material gives a March 2020 market launch, so the row starts in 2020. The 03/2021 sheet is the last official sheet that lists the manual and ADAC lists no Germany-market manual 218i, so the row ends in 2021.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 218i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-218i-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "218i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the 218i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list a 7-speed Steptronic dual-clutch for the 218i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.158 with final drive 3.944; the stored top gear is 2.158 / 3.944 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 3.944 as the final drive for the 218i 7-speed Steptronic dual-clutch.",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218i.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218i.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2019 and 03/2021 F44 technical data list the 218i (in-line three, 1499 cc). The 10/2019 sheet prints the individual seventh gear as 0.547, matching the derived value. The launch press material gives a March 2020 market launch, so the row starts in 2020. ADAC lists the Germany-market 218i Steptronic from 03/20. ADAC lists the last Germany-market F44 variants until 06/24-10/24, so the row ends in 2024.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f44-2019-10-short-version",
+            "bmw_pressclub_sources:f44-2019-10-spec-pdf",
+            "bmw_pressclub_sources:f44-2021-03-spec-pdf",
+            "secondary_technical_sources:f44-218i-adac-2020",
+            "secondary_technical_sources:f44-adac-catalogue"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 218i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-220i-eu-2021-dct7-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "220i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 220i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list a 7-speed Steptronic dual-clutch for the 220i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.016 with final drive 3.684; the stored top gear is 2.016 / 3.684 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 3.684 as the final drive for the 220i 7-speed Steptronic dual-clutch.",
+          "value": 3.684
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220i.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220i.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 220i (in-line four, 1998 cc). ADAC lists the Germany-market 220i from 11/20 (after July), so the row starts in 2021. ADAC lists the last Germany-market F44 variants until 06/24-10/24, so the row ends in 2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 220i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-220i-xdrive-eu-2021-at8-awd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "220i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 220i xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list an 8-speed Steptronic for the 220i xDrive.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 0.673 as top gear for the 220i xDrive 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 220i xDrive 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 3.075 as the final drive for the 220i xDrive 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.075
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220i xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220i xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 220i xDrive (in-line four, 1998 cc). The 220i xDrive first appears in the 03/2021 sheet, so the row starts in 2021; ADAC lists no Germany-market car, so the end year follows the end of F44 production. ADAC lists the last Germany-market F44 variants until 06/24-10/24, so the row ends in 2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 220i xDrive optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-m235i-xdrive-eu-2020-at8-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "M235i xDrive",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the M235i xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list an 8-speed Steptronic Sport for the M235i xDrive.",
+        "code": "AT8",
+        "name": "8-speed Steptronic Sport"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 0.673 as top gear for the M235i xDrive 8-speed Steptronic Sport.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the M235i xDrive 8-speed Steptronic Sport.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 3.075 as the final drive for the M235i xDrive 8-speed Steptronic Sport. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.075
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 225/40 R18 as the standard tyre for the M235i xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 225/40 R18 as the standard tyre for the M235i xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2019 and 03/2021 F44 technical data list the M235i xDrive (in-line four, 1998 cc). The launch press material gives a March 2020 market launch, so the row starts in 2020. ADAC lists the last Germany-market F44 variants until 06/24-10/24, so the row ends in 2024.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 M235i xDrive optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-216d-eu-2021-dct7-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "216d",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 216d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list a 7-speed Steptronic dual-clutch for the 216d.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.158 with final drive 3.944; the stored top gear is 2.158 / 3.944 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 3.944 as the final drive for the 216d 7-speed Steptronic dual-clutch.",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 216d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 216d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 216d (in-line three, 1496 cc). ADAC lists the Germany-market 216d from 11/20 (after July) to 06/24, so the row covers 2021-2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 216d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-218d-eu-2020-mt6-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "218d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 218d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list a 6-speed manual for the 218d.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 0.605 as top gear for the 218d 6-speed manual.",
+          "value": 0.605
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list the forward ratios 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 for the 218d 6-speed manual.",
+          "value": [
+            3.923,
+            2.136,
+            1.276,
+            0.919,
+            0.725,
+            0.605
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 3.389 as the final drive for the 218d 6-speed manual.",
+          "value": 3.389
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 218d (in-line four, 1995 cc). ADAC lists the Germany-market 218d manual from 07/20 to 06/24, so the row covers 2020-2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 218d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-218d-eu-2020-at8-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "218d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 218d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list an 8-speed Steptronic for the 218d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 0.673 as top gear for the 218d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 218d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 2.666 as the final drive for the 218d 8-speed Steptronic.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 205/55 R16 as the standard tyre for the 218d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 218d (in-line four, 1995 cc). ADAC lists the Germany-market 218d Steptronic from 07/20 to 06/24, so the row covers 2020-2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 218d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-220d-eu-2020-at8-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "220d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the 220d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list an 8-speed Steptronic for the 220d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 0.673 as top gear for the 220d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 220d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 2.666 as the final drive for the 220d 8-speed Steptronic.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official BMW 10/2019 and 03/2021 F44 technical data list 225/45 R17 as the standard tyre for the 220d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 10/2019 and 03/2021 F44 technical data list the 220d (in-line four, 1995 cc). The launch press material gives a March 2020 market launch, so the row starts in 2020. ADAC lists the Germany-market 220d from 03/20 to 06/24.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 220d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f44-220d-xdrive-eu-2020-at8-awd",
+      "production_start_year": 2020,
+      "production_end_year": 2024,
+      "variant_name": "220d xDrive",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list the 220d xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official BMW 03/2021 F44 technical data list an 8-speed Steptronic for the 220d xDrive.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 0.673 as top gear for the 220d xDrive 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 220d xDrive 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 2.666 as the final drive for the 220d xDrive 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official BMW 03/2021 F44 technical data list 225/40 R18 as the standard tyre for the 220d xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official BMW 03/2021 F44 technical data list 225/40 R18 as the standard tyre for the 220d xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 18\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F44 technical data list the 220d xDrive (in-line four, 1995 cc). ADAC lists the Germany-market 220d xDrive from 07/20 to 06/24, so the row covers 2020-2024.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F44 220d xDrive optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre and no machine-readable official F44 wheel programme was found, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    }
+  ],
+  "definitions": {
+    "evidence_ref_sets": {
+      "e1": [
+        "bmw_pressclub_sources:f44-2021-03-spec-pdf"
+      ],
+      "e2": [
+        "bmw_pressclub_sources:f44-2019-10-spec-pdf",
+        "bmw_pressclub_sources:f44-2021-03-spec-pdf"
+      ],
+      "e3": [
+        "bmw_pressclub_sources:f44-2021-03-spec-pdf",
+        "secondary_technical_sources:f44-adac-catalogue"
+      ],
+      "e4": [
+        "bmw_pressclub_sources:f44-2019-10-short-version",
+        "bmw_pressclub_sources:f44-2019-10-spec-pdf",
+        "bmw_pressclub_sources:f44-2021-03-spec-pdf",
+        "secondary_technical_sources:f44-adac-catalogue"
+      ]
+    }
+  }
+}
