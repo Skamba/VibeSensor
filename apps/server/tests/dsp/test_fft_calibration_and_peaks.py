@@ -39,6 +39,19 @@ def test_the_hann_window_keeps_off_bin_leakage_local() -> None:
     assert amp[peak + 10] < 0.01 * amp[peak]
 
 
+@pytest.mark.parametrize("bin_index", [33.0, 33.25, 33.5, 33.8])
+def test_a_peak_reads_its_tone_frequency_between_bins(bin_index: float) -> None:
+    # About 13 Hz, a wheel order at motorway speed, where one bin is 3 %.
+    computer = SpectralAnalysisComputer(fft_n=_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
+    t = np.arange(_N) / _FS
+    block = np.random.default_rng(3).normal(0.0, 0.002, size=(3, _N)).astype(np.float32)
+    block[2] += np.float32(0.05) * np.sin(2 * np.pi * bin_index * _FS / _N * t)
+
+    top = computer.compute_fft_spectrum(block, _FS)["strength_metrics"]["top_peaks"][0]
+
+    assert top["hz"] == pytest.approx(bin_index * _FS / _N, abs=0.05 * _FS / _N)
+
+
 def test_peaks_must_clear_the_floor_threshold_and_be_separated() -> None:
     freq = np.arange(0.0, 100.0, 0.25)
     amp = np.full(freq.size, 0.01)

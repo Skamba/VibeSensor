@@ -44,6 +44,7 @@ from vibesensor.dsp.order_bands import order_peak_tolerance_hz
 from vibesensor.recording.run_schema import RunMetadata
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
+ACCELERATION_PHASE = DrivingPhase.ACCELERATION.value
 
 
 @dataclass(frozen=True)
@@ -266,10 +267,11 @@ def is_harmonic_of(peak_hz: float, fundamental_hz: float, multiple: int, bin_hz:
 
 @dataclass(frozen=True, slots=True)
 class _LinePoint:
-    """A clear match: the order's predicted frequency and the peak it matched."""
+    """A clear match: the predicted frequency, the matched peak's, and whether under a pull."""
 
     predicted_hz: float
     matched_hz: float
+    pulling: bool = False
 
 
 def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float) -> list[bool]:
@@ -277,36 +279,47 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
 
     An order is a line: its peak sits on the prediction times one constant
     factor (a slightly-off tyre size or ratio) to within the speed reading's
-    error. Broadband content filling the tolerance window, such as a
-    road-excited resonance hump, puts a local-maximum peak somewhere in the
-    window in most windows, scattered across it. A group with under
-    ``ORDER_LINE_MIN_SHARE`` on one line has no line: every match is off it.
+    error. A hard pull moves it: the drive torque makes the driven wheels slip
+    a few percent faster than the road (and a lagging speed reading lags the
+    prediction the same way), so the matches under a pull have a line of
+    their own when there are enough of them to place it. Broadband content
+    filling the tolerance window, such as a road-excited resonance hump, puts a
+    local-maximum peak somewhere in the window in most windows, scattered
+    across it. A group with under ``ORDER_LINE_MIN_SHARE`` on its lines has no
+    line: every match is off it.
 
-    The line is placed on the matches where the tolerance window is wide
-    enough to tell scatter from a line (``ORDER_LINE_MIN_TOLERANCE_WIDTHS``);
-    with too few of them the group is not judged. Once placed, it holds every
-    match: a window too narrow to place it in (a wheel order under about 8 Hz)
-    still shows a peak off it, such as road noise that the overlapping spectra
-    hold at one frequency while the prediction sweeps past. An order's peak is
-    on its line in any window.
+    A line is placed on the matches where the tolerance window is wide enough
+    to tell scatter from a line (``ORDER_LINE_MIN_TOLERANCE_WIDTHS``); with too
+    few of them the group is not judged. Once placed, it holds every match: a
+    window too narrow to place it in (a wheel order under about 8 Hz) still
+    shows a peak off it, such as road noise that the overlapping spectra hold
+    at one frequency while the prediction sweeps past. An order's peak is on
+    its line in any window.
     """
     judged = [
-        order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
-        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
+        point
         for point in points
+        if order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
+        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
     ]
-    judged_points = [point for point, is_judged in zip(points, judged, strict=True) if is_judged]
-    if len(judged_points) < ORDER_LINE_MIN_POINTS:
+    if len(judged) < ORDER_LINE_MIN_POINTS:
         return [False] * len(points)
-    scale = median(point.matched_hz / point.predicted_hz for point in judged_points)
+    scale = {pulling: _line_scale(judged, pulling) for pulling in (False, True)}
     off = [
-        abs(point.matched_hz - scale * point.predicted_hz)
+        abs(point.matched_hz - scale[point.pulling] * point.predicted_hz)
         > _line_half_width_hz(point.predicted_hz, bin_hz)
         for point in points
     ]
     if len(points) - sum(off) < ORDER_LINE_MIN_SHARE * len(points):
         return [True] * len(points)
     return off
+
+
+def _line_scale(judged: Sequence[_LinePoint], pulling: bool) -> float:
+    """The line's factor over the prediction under a pull or not (the group's if too few)."""
+    own = [point for point in judged if point.pulling is pulling]
+    placed_on = own if len(own) >= ORDER_LINE_MIN_POINTS else judged
+    return median(point.matched_hz / point.predicted_hz for point in placed_on)
 
 
 def fft_bin_hz(context: RunMetadata) -> float:
@@ -327,7 +340,11 @@ def _masked(windows: Sequence[_Window], bin_hz: float, compliance: float) -> set
     for index, window in enumerate(windows):
         if window.match is not None and window.clear:
             braking = window.match.phase == BRAKING_PHASE
-            point = _LinePoint(window.predicted_hz, window.match.matched_hz)
+            point = _LinePoint(
+                window.predicted_hz,
+                window.match.matched_hz,
+                pulling=window.match.phase == ACCELERATION_PHASE,
+            )
             groups[(window.location, braking)].append((index, point))
     judged: list[list[tuple[int, _LinePoint]]] = []
     pooled: dict[bool, list[tuple[int, _LinePoint]]] = defaultdict(list)

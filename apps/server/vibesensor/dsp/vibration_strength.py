@@ -572,6 +572,32 @@ def _candidate_peak_indexes(
     return cast(list[int], peak_indexes[order[:limit]].tolist())
 
 
+def _interpolated_peak_hz(
+    freq_hz: npt.NDArray[np.float64], values: npt.NDArray[np.float64], indexes: list[int]
+) -> list[float]:
+    """Each peak's frequency between bins, from a parabola through its bins' log amplitudes.
+
+    The parabola runs through the peak bin and its two neighbours. A tone's
+    Hann-windowed peak is close to a Gaussian, whose log is that parabola, so
+    its vertex lands within a few hundredths of a bin of the tone, where the
+    peak bin alone is up to half a bin off. A peak on the spectrum's edge or
+    beside a zero keeps its bin's frequency.
+    """
+    idx = np.asarray(indexes, dtype=np.intp)
+    hz = freq_hz[idx]
+    inner = idx[(idx > 0) & (idx < values.size - 1)]
+    left, centre, right = values[inner - 1], values[inner], values[inner + 1]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        log_l, log_c, log_r = np.log(left), np.log(centre), np.log(right)
+        offset = 0.5 * (log_l - log_r) / (log_l - 2.0 * log_c + log_r)
+    bin_hz = freq_hz[inner + 1] - freq_hz[inner]
+    shifted = np.where(
+        np.isfinite(offset), freq_hz[inner] + np.clip(offset, -0.5, 0.5) * bin_hz, freq_hz[inner]
+    )
+    by_index = dict(zip(inner.tolist(), shifted.tolist(), strict=True))
+    return [by_index.get(int(i), float(f)) for i, f in zip(idx, hz, strict=True)]
+
+
 def vibration_strength_db_scalar(
     *,
     peak_band_rms_amp_g: float,
@@ -676,7 +702,7 @@ def compute_vibration_strength_db(
         bandwidth_hz=peak_bandwidth_hz,
     )
 
-    candidate_hz: list[float] = freq[scored_candidate_indexes].tolist()
+    candidate_hz = _interpolated_peak_hz(freq, combined, scored_candidate_indexes)
     if peak_band_ranges is None:
         band_rms_values = np.array(
             [

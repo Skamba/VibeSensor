@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from vibesensor.simulator.wheel_kinematics import SimCar
 
 DEFAULT_SPEED_KMH = 100.0
+# An unbalanced mass m at radius r turning at w pulls with F = m r w^2, and w
+# follows the road speed, so a wheel's or propshaft's unbalance shakes with the
+# square of the speed (ISO 21940-11 / ISO 1940-1).
+UNBALANCE_SPEED_EXPONENT = 2.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +167,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         modulation_hz=0.22,
         modulation_depth=0.12,
         reference_speed_kmh=DEFAULT_SPEED_KMH,
+        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "wheel_mild_imbalance": Profile(
         name="wheel_mild_imbalance",
@@ -178,6 +183,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         modulation_hz=0.18,
         modulation_depth=0.08,
         reference_speed_kmh=DEFAULT_SPEED_KMH,
+        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "driveshaft_imbalance": Profile(
         name="driveshaft_imbalance",
@@ -193,6 +199,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         modulation_hz=0.2,
         modulation_depth=0.10,
         reference_speed_kmh=DEFAULT_SPEED_KMH,
+        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "rear_body": Profile(
         name="rear_body",

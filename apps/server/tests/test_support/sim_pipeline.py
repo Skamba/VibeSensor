@@ -138,8 +138,12 @@ class BenchCar:
     # for a car entered by hand (and an EV).
     engine_profile: EngineProfile | None = None
 
-    def sim_car(self) -> SimCar:
-        """The physical car under the sensors: new tires, rear drive unless said."""
+    def sim_car(self, seed: int) -> SimCar:
+        """The physical car under the sensors: rear drive unless said, its tires in service.
+
+        *seed* draws how far each tire has worn and how far its pressure is off
+        the placard (``SimCar.in_service``): every drive's car is a little different.
+        """
         return SimCar.square(
             self.tire_width_mm,
             self.tire_aspect_pct,
@@ -147,7 +151,7 @@ class BenchCar:
             final_drive_ratio=self.final_drive_ratio,
             top_gear_ratio=self.current_gear_ratio,
             driven_axle=_DRIVEN_AXLES.get(self.drive_layout or "", "rear"),
-        )
+        ).in_service(random.Random(f"tires-{seed}"))
 
     @property
     def tire_circumference_m(self) -> float:
@@ -169,12 +173,6 @@ class BenchCar:
             "engine_1x": engine,
             "engine_2x": 2.0 * engine,
         }
-
-    def engine_rpm(self, state: DriveState, gear_ratio: float | None) -> float:
-        """The physical engine's RPM in *state* and *gear_ratio* (the top gear when ``None``)."""
-        if state.speed_kmh <= 0:
-            return _IDLE_RPM
-        return self.sim_car().engine_hz(state, gear_ratio) * 60.0
 
     def aspects(self) -> dict[str, float]:
         aspects = {
@@ -565,6 +563,7 @@ def _record(
         control_protocol.connection_made(to_sensors)  # type: ignore[arg-type]
         lifecycle.control_plane.transport = to_sensors  # type: ignore[assignment]
 
+        physical_car = car.sim_car(client_seed)
         clients: list[SimClient] = []
         for index, spec in enumerate(sensors):
             control_port = _SENSOR_CONTROL_BASE + index
@@ -580,7 +579,7 @@ def _record(
                 profile_name="rough_road",
                 road=road,
             )
-            sim.car = car.sim_car()
+            sim.car = physical_car
             if spec.fixing is not None or spec.flat_spot is not None or spec.accessories:
                 sim.confounders = SensorConfounders(
                     fixing=spec.fixing, flat_spot=spec.flat_spot, accessories=spec.accessories
@@ -640,7 +639,7 @@ def _record(
             lifecycle.gps_monitor,
             lifecycle.obd_runner,
             speed_source,
-            car if obd_rpm else None,
+            physical_car if obd_rpm else None,
             obd_speed_over_read,
         )
         apply_phase(clients, scenario_name, phases[0])
@@ -856,7 +855,7 @@ def _speed_reporter(
     gps: GPSSpeedMonitor,
     obd: ObdService,
     speed_source: SpeedSource,
-    rpm_car: BenchCar | None,
+    rpm_car: SimCar | None,
     obd_speed_over_read: float,
 ) -> Callable[[float, ScenarioPhase], None]:
     """Feed a measured speed (and, with *rpm_car*, the engine RPM) to the server.
@@ -870,7 +869,11 @@ def _speed_reporter(
         if speed_source == "obd2":
             state = DriveState(speed_kmh, phase.accel_mps2, phase.curvature_1pm)
             rpm = (
-                _pid_read(float(round(rpm_car.engine_rpm(state, phase.gear_ratio))))
+                _pid_read(
+                    _IDLE_RPM
+                    if speed_kmh <= 0
+                    else float(round(rpm_car.engine_hz(state, phase.gear_ratio) * 60.0))
+                )
                 if rpm_car is not None
                 else ObdPidPollResult.skipped()
             )

@@ -116,7 +116,11 @@ factor, for a slightly-off tyre size or ratio) to within the speed reading's
 error; see "Order lines" in docs/order_tracking.md."""
 
 ORDER_LINE_WIDTH_MIN_BINS: Final[float] = 0.5
-"""Minimum line half-width in FFT bins: peaks sit on bin centres."""
+"""Minimum line half-width in FFT bins. A peak's frequency is placed between
+bins, but a tone sweeping through the spectrum's 2.56 s, or noise beside it,
+moves that estimate by a fraction of a bin, a large share of a slow order's
+frequency: without this floor a mild imbalance under a seat mode is lost at
+town speeds."""
 
 ORDER_LINE_MIN_SHARE: Final[float] = 0.5
 """Share of a sensor's clear matches that must sit on one line for them to be

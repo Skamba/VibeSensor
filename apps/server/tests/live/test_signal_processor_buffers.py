@@ -355,4 +355,5 @@ def test_spectrum_is_computed_from_the_newest_fft_block() -> None:
 
     x_spectrum = proc.compute_metrics("c")["x"]
     peaks = axis_peaks_from_spectrum(freq_slice=x_spectrum["freq"], amp_slice=x_spectrum["amp"])
-    assert peaks[0]["hz"] == pytest.approx(9.375)
+    # The peak frequency is placed between bins, to well within a bin (1.56 Hz).
+    assert peaks[0]["hz"] == pytest.approx(9.375, abs=0.05)

@@ -143,6 +143,7 @@ tones sit a little off that prediction, as on a real car.
 | Load and pressure on the radius | `r = r_ETRTO − (δ − δ_ref) / 3`, `δ = load / stiffness` | effective rolling radius of a radial tire sits a third of the deflection below the free radius (Pacejka, *Tire and Vehicle Dynamics*, 3rd ed., ch. 7; Jazar, *Vehicle Dynamics*, ch. 3) |
 | Reference pressure | 240 kPa | a typical door-placard pressure for a mid-size car |
 | Tread wear | shortens the radius one for one (`SimTire.tread_worn_mm`) | new tread is about 8 mm, the legal minimum 1.6 mm (EU Directive 89/459/EEC): up to 6.4 mm, about 2 % of a 0.34 m radius |
+| Tires in service (`SimCar.in_service`, the bench default) | each axle's pair worn 0-5 mm (uniform), its two tires ±0.5 mm apart; each pressure placard −10 ± 10 kPa (normal, clipped to −60..+20) | most tires are replaced with about 3 mm left; surveys find most cars run under the placard, a quarter of them with one tire 25 % under (NHTSA *Tire Pressure Special Study*, DOT HS 809 317, 2001). The four wheels then roll on radii 0.2-1.5 % apart (5th-95th percentile), all a little smaller than new |
 | Car | 1600 kg, 55 % on the front axle, CG 0.55 m high, 2.85 m wheelbase, 1.6 m track, CdA 0.65 m², rolling-resistance coefficient 0.012, 70 % of braking on the front | a mid-size saloon (Gillespie, *Fundamentals of Vehicle Dynamics*, 1992, ch. 2 and 4) |
 | Load transfer | longitudinal `m a h / L` per axle, lateral `m a_y h / t` split by axle weight | Gillespie ch. 2 (rigid body, no suspension geometry) |
 | Longitudinal slip | `κ = F_x / (C F_z)`, `C` = 19, capped at 10 % | the slip stiffness `B C D` of the Magic Formula for a passenger tire on dry asphalt (B 10, C 1.9, D 1; Pacejka ch. 4; MathWorks *Tire (Magic Formula)* reference coefficients) |
@@ -217,3 +218,9 @@ The bench's `_wobbly_cruise` holds a cruise within ±2 km/h over about 10 s
 `_town_only` never passes 80 km/h. Two faults at once are layered on one
 road (`_road_with`); a non-uniform tyre carries T1-T4 falling as 1/n
 (Gent & Walter, *The Pneumatic Tire*, NHTSA 2006, ch. 9).
+
+## Fault amplitudes
+
+| Parameter | Value | Source / reason |
+|-----------|-------|-----------------|
+| Rotating unbalance (`wheel_imbalance`, `wheel_mild_imbalance`, `driveshaft_imbalance`) | the order tones grow with the square of the speed (`UNBALANCE_SPEED_EXPONENT` 2, `Profile.order_speed_exponent`), at their listed level at 100 km/h | a mass `m` at radius `r` turning at `ω` pulls with `F = m r ω²` (ISO 21940-11, the balance-quality standard that replaced ISO 1940-1), and `ω` follows the road speed. A healthy car's residual is then faint in town, as on a real car, instead of as strong as at motorway speed |

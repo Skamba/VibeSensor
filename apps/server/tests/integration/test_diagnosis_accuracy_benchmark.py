@@ -572,6 +572,9 @@ def _road_with(
         order_tones=order_tones,  # type: ignore[arg-type]
         reference_speed_kmh=DEFAULT_SPEED_KMH if order_tones else None,
         noise_speed_exponent=_ROAD_NOISE_SPEED_EXPONENT,
+        order_speed_exponent=max(
+            (PROFILE_LIBRARY[layer.profile].order_speed_exponent for layer in layers), default=0.0
+        ),
         **speed_laws,  # type: ignore[arg-type]
     )
     _LAYERED_PROFILES[profile.name] = profile
@@ -630,13 +633,12 @@ _FAINT_FL_UNDER_RESONANCE = (
         ),
     ),
 )
-# An imbalance shakes with the square of the speed and a suspension mode
-# amplifies it threefold between 95 and 115 km/h.
+# An imbalance (which shakes with the square of the speed) a suspension mode
+# amplifies threefold between 95 and 115 km/h.
 _RESONANT_BAND_KMH = (95.0, 115.0)
 _FL_SPEED_SQUARED_RESONANT = _road_with(
     "fl_speed_squared_resonant",
     _Layer("wheel_imbalance", 0.85),
-    order_speed_exponent=2.0,
     order_resonance_kmh=(*_RESONANT_BAND_KMH, 3.0),
 )
 # A front-left imbalance: the other corners feel some of it through the
