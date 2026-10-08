@@ -11,7 +11,8 @@ kinematics").
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+import random
+from dataclasses import dataclass, replace
 from typing import Literal
 
 from vibesensor.common.units import KMH_TO_MPS
@@ -55,6 +56,17 @@ Formula's B*C*D for a passenger tire on dry asphalt (B 10, C 1.9, D 1)."""
 
 _MAX_SLIP = 0.1
 """Beyond about 10 % slip a tire is past its friction peak; a drive never gets there."""
+
+IN_SERVICE_AXLE_WEAR_MM = (0.0, 5.0)
+"""Tread worn off an axle's pair in service: from new (8 mm) to 3 mm left, when
+most owners replace them (the legal minimum is 1.6 mm)."""
+IN_SERVICE_SIDE_WEAR_MM = 0.5
+"""How far the two tires of one axle wear apart (alignment, camber): +/- 0.5 mm."""
+IN_SERVICE_PRESSURE_KPA = (-10.0, 10.0)
+"""Each tire's pressure off the placard: mean and standard deviation. Surveys
+find most cars run their tires somewhat under the placard, a quarter of them
+one tire 25 % under (NHTSA Tire Pressure Special Study, DOT HS 809 317, 2001)."""
+_IN_SERVICE_PRESSURE_RANGE_KPA = (-60.0, 20.0)
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,6 +173,32 @@ class SimCar:
             top_gear_ratio=top_gear_ratio,
             **kwargs,  # type: ignore[arg-type]
         )
+
+    def in_service(self, rng: random.Random) -> SimCar:
+        """This car on tires as a car in service has them: worn per axle, pressures a little off.
+
+        Each axle's pair has worn somewhere between new and due for
+        replacement, its two tires within a millimetre of each other; each
+        tire's pressure sits a little off the placard, mostly under. The four
+        wheels then roll on radii up to about 1.5 % apart.
+        """
+        low, high = IN_SERVICE_AXLE_WEAR_MM
+        axle_wear = (rng.uniform(low, high), rng.uniform(low, high))
+        mean, spread = IN_SERVICE_PRESSURE_KPA
+        floor, ceiling = _IN_SERVICE_PRESSURE_RANGE_KPA
+        tires = [
+            replace(
+                tire,
+                tread_worn_mm=max(
+                    0.0,
+                    axle_wear[index // 2]
+                    + rng.uniform(-IN_SERVICE_SIDE_WEAR_MM, IN_SERVICE_SIDE_WEAR_MM),
+                ),
+                pressure_kpa=tire.pressure_kpa + min(ceiling, max(floor, rng.gauss(mean, spread))),
+            )
+            for index, tire in enumerate(self.tires)
+        ]
+        return replace(self, tires=(tires[0], tires[1], tires[2], tires[3]))
 
     def _static_loads_n(self) -> tuple[float, float, float, float]:
         front = self.mass_kg * _G_MPS2 * self.front_weight_share / 2.0

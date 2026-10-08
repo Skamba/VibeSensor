@@ -191,6 +191,11 @@ the source:
     wheel turn and propshaft at about 3 these used to read as a Strong engine
     or Moderate driveline fault on a healthy car. A driveline or engine fault
     beside a wheel imbalance stays clear unless it sits on an exact harmonic.
+    A driveline order with half or more of its peaks on the comb is dropped
+    (`OrderAnalysisSession`): it turns locked to the wheel's rhythm, so
+    nothing of it is its own. With the credit alone it stayed within 0.03 of
+    the wheel order on the default car's flat-spot drives, and tyres a little
+    apart in wear and pressure tipped it over.
     An engine order on measured RPM is not judged by the comb: it leaves it
     in any other gear, and a four-stroke's half order can turn once per
     wheel turn (E1 at twice the wheel's rhythm), so its own E0.5/E1/E2 would
@@ -344,7 +349,7 @@ schema. This section lists only metric fields, not the full persistence schema.
 |-------|------|-------------|
 | `vibration_strength_db` | float | Vibration strength (dB above noise floor) |
 | `strength_bucket` | str \| null | Severity band key (`l1`–`l5`) or `null` |
-| `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket, local_floor_amp_g}]` (`local_floor_amp_g` absent in runs recorded before it existed) |
+| `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket, local_floor_amp_g}]` (`local_floor_amp_g` absent in runs recorded before it existed); `hz` is the vertex of a parabola through the log amplitudes of the peak bin and its neighbours, within a few hundredths of a bin of a steady tone under the Hann window |
 | `dominant_freq_hz` | float | Frequency of dominant peak (Hz) |
 | `strength_peak_amp_g` | float | Peak amplitude used to compute dB strength |
 | `strength_floor_amp_g` | float | Noise-floor amplitude used to compute dB strength |

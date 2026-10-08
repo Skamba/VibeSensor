@@ -277,6 +277,7 @@ class OrderAnalysisSession:
         evaluated: list[tuple[OrderHypothesis, OrderMatchAccumulator, tuple[float, DomainFinding]]]
         evaluated = []
         wheel_locked_engine_keys: set[str] = set()
+        comb_driveline_keys: set[str] = set()
         for hypothesis, match in matches:
             measured_engine = (
                 hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match)
@@ -301,6 +302,14 @@ class OrderAnalysisSession:
                 and match.ref_sources == {ESTIMATED_RPM_SOURCE}
             ):
                 wheel_locked_engine_keys.add(hypothesis.key)
+            # A driveline order turns locked to the wheel's rhythm; with its
+            # peaks the wheel's own comb, nothing of it is its own.
+            if (
+                hypothesis.suspected_source is VibrationSource.DRIVELINE
+                and wheel_shared_fraction
+                >= ORDER_CONFIDENCE_SETTINGS.wheel_alias_shared_peak_fraction
+            ):
+                comb_driveline_keys.add(hypothesis.key)
 
         measured_engines = [
             match
@@ -322,6 +331,7 @@ class OrderAnalysisSession:
                 result
                 for hypothesis, match, result in evaluated
                 if not _rides_on_another_order(hypothesis, match, measured_engines, road_orders)
+                and hypothesis.key not in comb_driveline_keys
             ]
         )
         return suppress_engine_aliases(

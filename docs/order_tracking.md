@@ -348,8 +348,10 @@ stays at one speed.
 
 An order is a line: a rotating part shakes at its turning frequency, so its
 peak sits on the prediction times one constant factor (a slightly-off tyre
-size or ratio) to within the speed reading's error. Peaks borrowed from a hump
-scatter across the window. `match_samples_for_hypothesis()` therefore tests
+size or ratio) to within the speed reading's error. A hard pull moves it: the
+drive torque makes the driven wheels slip a few percent faster than the road
+(about 3 % at 3 m/s²), and a lagging speed reading lags the prediction the
+same way. Peaks borrowed from a hump scatter across the window. `match_samples_for_hypothesis()` therefore tests
 each sensor's clear matches (6 dB over their window's floor), split into
 braking and other windows (a brake order is a line only while braking, and
 firm braking smears every line; `_masked()`, `_off_the_line()`). Sensors with
@@ -365,8 +367,15 @@ braking side: the line is at the same frequency at every sensor.
   ([time_alignment.md](time_alignment.md)).
 - `k` is the median of matched / predicted over the judged matches; a
   match is on the line when it is within `ORDER_LINE_WIDTH_REL` (1.5 %) of
-  `k ×` its prediction, or half an FFT bin where that is wider (peaks sit on
-  bin centres).
+  `k ×` its prediction, or half an FFT bin where that is wider (a tone
+  sweeping through the spectrum, or noise beside it, moves its peak's
+  frequency by a fraction of a bin). The matches
+  under a pull (the acceleration phase) have their own `k` when 12 or more of
+  them are judged (`_line_scale()`); the share below still counts the whole
+  group. A peak's frequency is placed between bins (see `top_peaks` in
+  [metrics.md](metrics.md)): read on the bin centre it would be up to half a
+  bin off, 3.7 % of a wheel order at 10 Hz, and a tone between two bins would
+  jump between them, off a line placed on either.
 - The line, once placed, holds every clear match, judged or not: a window
   too narrow to place the line in still shows a peak off it, while an
   order's own peak is on its line in any window. Below about 8 Hz (a wheel

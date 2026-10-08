@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import replace
 
 import pytest
@@ -82,3 +83,16 @@ def test_a_staggered_car_turns_its_narrower_taller_axle_slower() -> None:
     front_hz, _, rear_hz, _ = car.wheel_hz_all(_NO_SLIP)
     diameters = rear.new_diameter_m / front.new_diameter_m
     assert front_hz / rear_hz == pytest.approx(diameters, rel=0.003)
+
+
+def test_cars_in_service_roll_their_four_wheels_up_to_about_one_and_a_half_percent_apart() -> None:
+    reference = _CAR.wheel_hz("front-left", _NO_SLIP)
+    spreads = []
+    for seed in range(200):
+        wheels = _CAR.in_service(random.Random(seed)).wheel_hz_all(_NO_SLIP)
+        # Worn tires are smaller: every wheel turns at least as fast as a new one.
+        assert min(wheels) > reference * 0.995
+        spreads.append(max(wheels) / min(wheels) - 1.0)
+    spreads.sort()
+    assert 0.001 < spreads[10] and spreads[-10] < 0.02
+    assert spreads[100] > 0.003
