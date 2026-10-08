@@ -11,8 +11,11 @@ from vibesensor.simulator.commands import (
     apply_one_wheel_mild_scenario,
     apply_road_fixed_scenario,
 )
-from vibesensor.simulator.profiles import DEFAULT_ORDER_HZ
+from vibesensor.simulator.profiles import SIMULATOR_CAR
 from vibesensor.simulator.sim_client import SimClient, make_client_id
+from vibesensor.simulator.wheel_kinematics import DriveState
+
+_ORDER_KEYS = ("wheel_1x", "wheel_2x", "shaft_1x", "engine_1x", "engine_2x")
 
 _TEST_PROCESSOR_CONFIG = ProcessorConfig(
     sample_rate_hz=800,
@@ -95,7 +98,7 @@ def test_speed_following_tone_stays_phase_continuous_across_frames() -> None:
     freqs = np.fft.rfftfreq(signal.size, d=1.0 / client.sample_rate_hz)
     spectrum = np.abs(np.fft.rfft(signal * np.hanning(signal.size)))
     frame_rate_hz = client.sample_rate_hz / client.frame_samples
-    shaft_hz = DEFAULT_ORDER_HZ["shaft_1x"] * (92.0 - 0.5 * 7.5) / 100.0
+    shaft_hz = SIMULATOR_CAR.shaft_hz(DriveState(92.0 - 0.5 * 7.5))
     offset_hz = np.abs(freqs - shaft_hz)
 
     main = spectrum[offset_hz <= 1.5].max()
@@ -120,8 +123,8 @@ def test_fault_free_road_carries_no_order_tones() -> None:
     apply_road_fixed_scenario(clients)
 
     for client in clients:
-        for order_key, order_hz in DEFAULT_ORDER_HZ.items():
-            prominence = _order_prominence(client, order_hz)
+        for order_key in _ORDER_KEYS:
+            prominence = _order_prominence(client, client.order_tone_hz(order_key))
             assert prominence < 4.0, (client.name, order_key, prominence)
 
 
@@ -130,11 +133,11 @@ def test_one_wheel_fault_injects_only_wheel_orders() -> None:
     apply_one_wheel_mild_scenario(clients, "front-right")
     fault = next(client for client in clients if client.name == "front-right")
 
-    assert _order_prominence(fault, DEFAULT_ORDER_HZ["wheel_1x"]) > 20.0
+    assert _order_prominence(fault, fault.order_tone_hz("wheel_1x")) > 20.0
     # engine_1x is left out: on the default car it sits within 0.4 Hz of wheel_2x.
     for client in clients:
         for order_key in ("shaft_1x", "engine_2x"):
-            prominence = _order_prominence(client, DEFAULT_ORDER_HZ[order_key])
+            prominence = _order_prominence(client, client.order_tone_hz(order_key))
             assert prominence < 4.0, (client.name, order_key, prominence)
 
 

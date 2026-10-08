@@ -74,6 +74,8 @@ def apply_phase(clients: list[SimClient], scenario_name: str, phase: ScenarioPha
     for client in clients:
         client.scene_mode = scene_label
         client.gear_ratio = phase.gear_ratio
+        client.current_accel_mps2 = phase.accel_mps2
+        client.current_curvature_1pm = phase.curvature_1pm
     for override in sorted(phase.overrides, key=lambda item: target_specificity(item.target)):
         for client in target_clients(clients, override.target):
             client.profile_name = override.profile_name

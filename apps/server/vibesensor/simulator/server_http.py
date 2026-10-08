@@ -5,13 +5,11 @@ import json
 import subprocess
 import sys
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 from vibesensor.recording.run_schema import GuidedPhaseName
-from vibesensor.settings.analysis_settings_codec import (
-    analysis_settings_snapshot_from_mapping,
-)
-from vibesensor.simulator.profiles import calc_order_hz
+from vibesensor.simulator.wheel_kinematics import SimCar, SimTire
 from vibesensor.updates.http_client import read_json_response, read_text_response
 
 LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
@@ -46,8 +44,29 @@ def _analysis_settings_url(host: str, port: int) -> str:
     return f"http://{_normalize_http_host(host)}:{port}/api/settings/analysis"
 
 
-def fetch_active_car_order_hz(host: str, port: int, timeout_s: float) -> dict[str, float] | None:
-    """Return order frequencies (at the profile reference speed) for the active car."""
+def _positive(payload: Mapping[str, object], key: str) -> float | None:
+    value = payload.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        return None
+    return float(value)
+
+
+def _axle_tire(payload: Mapping[str, object], axle: str, default: SimTire) -> SimTire:
+    width = _positive(payload, f"{axle}_tire_width_mm")
+    aspect = _positive(payload, f"{axle}_tire_aspect_pct")
+    rim = _positive(payload, f"{axle}_rim_in")
+    if width is None or aspect is None or rim is None:
+        return default
+    return SimTire(width, aspect, rim)
+
+
+def fetch_active_car(host: str, port: int, timeout_s: float) -> SimCar | None:
+    """The server's active car as the simulator drives it: its tire sizes and ratios.
+
+    Only the car's specifications are read; how its wheels turn is the
+    simulator's own wheel kinematics. ``None`` unless the car has a tire size,
+    final drive and gear.
+    """
     parsed = read_json_response(
         _analysis_settings_url(host, port),
         timeout_s=timeout_s,
@@ -55,7 +74,21 @@ def fetch_active_car_order_hz(host: str, port: int, timeout_s: float) -> dict[st
     )
     if not isinstance(parsed, dict):
         return None
-    return calc_order_hz(analysis_settings_snapshot_from_mapping(parsed))
+    width = _positive(parsed, "tire_width_mm")
+    aspect = _positive(parsed, "tire_aspect_pct")
+    rim = _positive(parsed, "rim_in")
+    final_drive = _positive(parsed, "final_drive_ratio")
+    gear = _positive(parsed, "current_gear_ratio")
+    if width is None or aspect is None or rim is None or final_drive is None or gear is None:
+        return None
+    tire = SimTire(width, aspect, rim)
+    front = _axle_tire(parsed, "front", tire)
+    rear = _axle_tire(parsed, "rear", tire)
+    return SimCar(
+        tires=(front, front, rear, rear),
+        final_drive_ratio=final_drive,
+        top_gear_ratio=gear,
+    )
 
 
 def set_server_speed_override_kmh(

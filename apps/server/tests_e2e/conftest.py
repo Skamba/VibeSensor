@@ -25,8 +25,7 @@ import pytest
 import yaml
 
 from tests_e2e.e2e_helpers import CAPPED_RECORDING_S, ROOT, api_json
-from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_REFERENCE_KEYS
-from vibesensor.simulator.profiles import SIMULATOR_CAR_ASPECTS
+from vibesensor.simulator.profiles import SIMULATOR_CAR
 from vibesensor.updates.boot_check import not_working_reason
 from vibesensor.updates.isolated_server_runtime import (
     IsolatedRuntimePaths,
@@ -125,7 +124,14 @@ def _activate_simulator_car(base_url: str) -> None:
     A server has no car (and so no order references) until one is added; the
     simulated faults are placed with these specs.
     """
-    aspects = {key: SIMULATOR_CAR_ASPECTS[key] for key in ANALYSIS_SETTINGS_REFERENCE_KEYS}
+    tire = SIMULATOR_CAR.tires[0]
+    aspects = {
+        "tire_width_mm": tire.width_mm,
+        "tire_aspect_pct": tire.aspect_pct,
+        "rim_in": tire.rim_in,
+        "final_drive_ratio": SIMULATOR_CAR.final_drive_ratio,
+        "current_gear_ratio": SIMULATOR_CAR.top_gear_ratio,
+    }
     created = api_json(
         base_url,
         "/api/settings/cars",

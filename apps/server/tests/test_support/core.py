@@ -10,12 +10,20 @@ from functools import cache
 from typing import Any
 
 from vibesensor.common.units import KMH_TO_MPS
+from vibesensor.domain.analysis_settings import ANALYSIS_SETTINGS_DEFAULTS
 from vibesensor.domain.tire_spec import TireSpec
 from vibesensor.settings.analysis_settings_schema import ANALYSIS_SETTINGS_NUMERIC_FIELDS
-from vibesensor.simulator.profiles import SIMULATOR_CAR_ASPECTS
 
-# Tests use the simulated car's specs as their reference car.
-TEST_CAR_ASPECTS = SIMULATOR_CAR_ASPECTS
+# Tests use the simulated car's specs (``simulator.profiles.SIMULATOR_CAR``) as
+# their reference car, entered with the default analysis settings.
+TEST_CAR_ASPECTS: dict[str, float] = {
+    **ANALYSIS_SETTINGS_DEFAULTS,
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 21.0,
+    "final_drive_ratio": 3.08,
+    "current_gear_ratio": 0.64,
+}
 _TEST_TIRE = TireSpec.from_aspects(
     TEST_CAR_ASPECTS, deflection_factor=TEST_CAR_ASPECTS["tire_deflection_factor"]
 )
