@@ -296,6 +296,34 @@ assert_root_side_stamp_matches_app() {
   fi
 }
 
+# Cold boot to a ready UI: the server must not wait for network-online.target
+# (nothing upstream in a car; it only queued the server behind the hotspot),
+# and cloud-init must run on the first boot only. The image ships it enabled
+# for first-boot provisioning, with vibesensor-cloud-init-off.service turning
+# it off afterwards.
+assert_fast_boot_contract() {
+  local root_mnt="$1"
+  local unit_dir="${root_mnt}/etc/systemd/system"
+  local off_unit="vibesensor-cloud-init-off.service"
+
+  if grep -Eq '^(After|Wants|Requires)=.*network-online\.target' "${unit_dir}/vibesensor.service"; then
+    echo "Validation failed: vibesensor.service must not wait for network-online.target"
+    exit 1
+  fi
+  if [ -e "${root_mnt}/etc/cloud/cloud-init.disabled" ]; then
+    echo "Validation failed: /etc/cloud/cloud-init.disabled is baked in; cloud-init must provision the first boot"
+    exit 1
+  fi
+  if [ "$(unit_value "${unit_dir}/${off_unit}" ExecStart 2>/dev/null)" != "/usr/bin/touch /etc/cloud/cloud-init.disabled" ]; then
+    echo "Validation failed: ${off_unit} must touch /etc/cloud/cloud-init.disabled"
+    exit 1
+  fi
+  if [ ! -L "${unit_dir}/cloud-init.target.wants/${off_unit}" ]; then
+    echo "Validation failed: ${off_unit} is not enabled in cloud-init.target"
+    exit 1
+  fi
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -440,6 +468,7 @@ validate_image_artifact() {
   assert_privileged_helper_contract "${ROOT_MNT}"
   assert_root_executes_only_root_owned_code "${ROOT_MNT}"
   assert_root_side_stamp_matches_app "${ROOT_MNT}"
+  assert_fast_boot_contract "${ROOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then

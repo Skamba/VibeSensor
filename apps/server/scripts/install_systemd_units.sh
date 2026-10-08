@@ -84,7 +84,8 @@ for unit in \
   vibesensor-privileged@.service \
   vibesensor-hotspot.service \
   vibesensor-hotspot-self-heal.service \
-  vibesensor-hotspot-self-heal.timer; do
+  vibesensor-hotspot-self-heal.timer \
+  vibesensor-cloud-init-off.service; do
   render_unit "${unit}"
 done
 
@@ -125,6 +126,8 @@ if [ "${SKIP_SERVICE_START}" = "1" ]; then
   enable_unit vibesensor.service multi-user.target
   enable_unit vibesensor-hotspot.service multi-user.target
   enable_unit vibesensor-hotspot-self-heal.timer timers.target
+  # cloud-init still provisions the image's first boot, then this turns it off.
+  enable_unit vibesensor-cloud-init-off.service cloud-init.target
 else
   systemctl daemon-reload
   # Move the journal from RAM to /var/log/journal now rather than at the next boot.
@@ -138,5 +141,11 @@ else
   systemctl restart vibesensor.service
   systemctl enable --now vibesensor-hotspot.service
   systemctl enable --now vibesensor-hotspot-self-heal.timer
+  systemctl enable vibesensor-cloud-init-off.service
+  # A device that is already past its first boot (cloud-init finished it) turns
+  # cloud-init off now; it takes effect from the next boot.
+  if [ -e /var/lib/cloud/instance/boot-finished ]; then
+    systemctl start vibesensor-cloud-init-off.service
+  fi
   systemctl status vibesensor.service --no-pager
 fi
