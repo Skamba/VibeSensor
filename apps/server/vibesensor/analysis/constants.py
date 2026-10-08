@@ -128,8 +128,9 @@ ORDER_LINE_MIN_POINTS: Final[int] = 12
 sensor with fewer clear matches is judged together with the others."""
 
 ORDER_LINE_MIN_TOLERANCE_WIDTHS: Final[float] = 4.0
-"""The line test judges only where the tolerance window is at least this many
-line widths wide; in a narrower window any peak sits on the line."""
+"""The line test places the line only on matches whose tolerance window is at
+least this many line widths wide; a narrower window holds too little scatter to
+tell a line from it, though a match there is still held against the line."""
 
 ORDER_MIN_CONFIDENCE: Final[float] = 0.25
 """Minimum confidence score for an order-tracking finding to be retained."""
