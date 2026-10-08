@@ -103,7 +103,11 @@ so every sensor feels it.
 `run_sim_pipeline(road=...)` gives the sensors a road (`SimClient.road`): the
 road's vibration through a quarter car at each sensor's mount and the ADXL345
 front end, instead of white noise; its physics and sources are in
-`docs/simulator_realism.md`.
+`docs/simulator_realism.md`. A benchmark `Case(iso8608_road=True)` drives on
+`generated_road(seed)`; the `*-iso8608-road` cases are the healthy motorway,
+the healthy sweep and the engine sweep on that road. The rest of the
+benchmark still runs on the idealised floor (see "Benchmark on the realistic
+road" in `docs/simulator_realism.md`).
 
 ## Backend test placement
 

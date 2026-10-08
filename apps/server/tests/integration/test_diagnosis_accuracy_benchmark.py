@@ -52,6 +52,7 @@ from vibesensor.simulator.profiles import (
     Profile,
     RoadResonance,
 )
+from vibesensor.simulator.road_surface import generated_road
 from vibesensor.simulator.scripted_scenario_catalog import SCRIPTED_SCENARIOS
 from vibesensor.simulator.scripted_scenario_models import PhaseOverride, PhasePulse, ScenarioPhase
 from vibesensor.simulator.scripted_targeting import apply_phase
@@ -260,6 +261,10 @@ class Case:
     flat_spots: dict[str, FlatSpot] = field(default_factory=dict)
     # Accessories each location's sensor feels running.
     accessories: dict[str, tuple[AccessoryTone, ...]] = field(default_factory=dict)
+    # The drive runs on a generated ISO 8608 road through a quarter car and
+    # the ADXL345 front end (``docs/simulator_realism.md``) instead of the
+    # idealised white-noise floor.
+    iso8608_road: bool = False
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -1239,6 +1244,11 @@ REALISM_CASES = (
     Case("bench-healthy-residual-imbalance-city", _city(*_RESIDUAL_IMBALANCE), HEALTHY_OR_SPREAD),
     Case("bench-front-left-wheel-city", _city(_FL_IMBALANCE), _FL_FAULT),
     Case("bench-healthy-motorway", _motorway(), NO_FAULT),
+    # The same drives on a real road: the wheel sensors ring the road's wheel
+    # hop as a broad hump near 12 Hz, tens of dB over the band's overall floor.
+    # A healthy car is still nothing found.
+    Case("bench-healthy-motorway-iso8608-road", _motorway(), NO_FAULT, iso8608_road=True),
+    Case("bench-healthy-sweep-iso8608-road", _sweep(), NO_FAULT, iso8608_road=True),
     Case(
         "bench-healthy-residual-imbalance-motorway",
         _motorway(*_RESIDUAL_IMBALANCE),
@@ -1883,6 +1893,16 @@ BENCH_CASES = (
         ),
         _fault("engine", {"engine_bay"}, "E2"),
     ),
+    # The same engine on a real road, over the wheel sensors' wheel-hop hump.
+    Case(
+        "bench-engine-sweep-iso8608-road",
+        _sweep(
+            _ov("front-axle", "engine_order", 0.74, 0.94),
+            _ov("rear-axle", "engine_order", 0.42, 0.94),
+        ),
+        _fault("engine", {"engine_bay"}, "E2"),
+        iso8608_road=True,
+    ),
     # A faint engine tone only the front sensors hear, just over the moderate
     # strength band there (16-17 dB). Floor-level road noise the other sensors
     # match near its frequency must not dilute its strength into "no fault".
@@ -2402,6 +2422,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         speed_lag_s=case.speed_lag_s,
         speed_report_period_s=case.speed_report_period_s,
         obd_speed_over_read=case.obd_speed_over_read,
+        road=generated_road(seed) if case.iso8608_road else None,
     )
     try:
         lossy = bool(case.frame_loss)

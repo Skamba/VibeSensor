@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from math import isfinite, log10
 from statistics import median as _stdlib_median
-from typing import Final, TypedDict, cast
+from typing import Final, NotRequired, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -38,6 +38,7 @@ __all__ = [
     "PEAK_BANDWIDTH_HZ",
     "PEAK_DETECTOR_VERSION",
     "PEAK_SEPARATION_HZ",
+    "LOCAL_FLOOR_HALF_WIDTH_HZ",
     "PEAK_THRESHOLD_FLOOR_RATIO",
     "StrengthPeak",
     "STRENGTH_ALGORITHM_VERSION",
@@ -59,6 +60,7 @@ PEAK_SEPARATION_HZ: Final[float] = 1.2
 STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
+LOCAL_FLOOR_HALF_WIDTH_HZ: Final[float] = 5.0
 STRENGTH_ALGORITHM_VERSION: Final[str] = "strength-db-scalar-v1"
 PEAK_DETECTOR_VERSION: Final[str] = "peak-band-rms-v1"
 CALIBRATION_PROFILE_ID: Final[str] = "noise-floor-p20-v1"
@@ -71,6 +73,9 @@ class StrengthPeak(TypedDict):
     amp: float
     vibration_strength_db: float
     strength_bucket: str | None
+    # What the peak stands out from where it sits (``_peak_local_floors``). The
+    # analysis reads it from recorded peaks; the live page does not need it.
+    local_floor_amp_g: NotRequired[float]
 
 
 class VibrationStrengthMetrics(TypedDict):
@@ -288,28 +293,28 @@ def _strength_floor_amp_g_aligned(
     exclusion_hz: float,
     in_range_mask: npt.NDArray[np.bool_] | None = None,
 ) -> float:
-    freq = freq_hz
-    amps = combined_spectrum_amp_g
-    if freq.size == 0:
+    if freq_hz.size == 0:
         return 0.0
-    base_mask = in_range_mask
-    if base_mask is None:
-        base_mask = np.ones(freq.shape, dtype=np.bool_)
-    elif base_mask.shape != freq.shape:
-        raise ValueError(
-            "strength floor range mask shape does not match aligned spectrum size "
-            f"{base_mask.shape} != {freq.shape}"
-        )
-    selected_mask = base_mask.copy()
-    peak_idx = [idx for idx in peak_indexes if 0 <= idx < freq.size]
-    if peak_idx:
-        _exclude_peak_regions_aligned(
-            selected_mask=selected_mask,
-            freq_hz=freq,
-            peak_indexes=peak_idx,
+    base_mask = _range_mask_aligned(freq_hz, in_range_mask)
+    return _floor_from_bins_aligned(
+        amps=combined_spectrum_amp_g,
+        base_mask=base_mask,
+        floor_bins=_floor_bins_mask_aligned(
+            freq_hz=freq_hz,
+            base_mask=base_mask,
+            peak_indexes=peak_indexes,
             exclusion_hz=exclusion_hz,
-        )
-    selected = amps[selected_mask]
+        ),
+    )
+
+
+def _floor_from_bins_aligned(
+    *,
+    amps: npt.NDArray[np.float64],
+    base_mask: npt.NDArray[np.bool_],
+    floor_bins: npt.NDArray[np.bool_],
+) -> float:
+    selected = amps[floor_bins]
     if selected.size == 0:
         # All bins were within peak exclusion zones.  Compute P20 of all
         # qualifying in-range bins instead of delegating to
@@ -318,6 +323,86 @@ def _strength_floor_amp_g_aligned(
         # the caller has already stripped the DC bin from the spectrum.
         return _quantile_or_zero(amps[base_mask], 0.20)
     return _median_or_zero(selected)
+
+
+def _range_mask_aligned(
+    freq_hz: npt.NDArray[np.float64], in_range_mask: npt.NDArray[np.bool_] | None
+) -> npt.NDArray[np.bool_]:
+    if in_range_mask is None:
+        return np.ones(freq_hz.shape, dtype=np.bool_)
+    if in_range_mask.shape != freq_hz.shape:
+        raise ValueError(
+            "strength floor range mask shape does not match aligned spectrum size "
+            f"{in_range_mask.shape} != {freq_hz.shape}"
+        )
+    return in_range_mask
+
+
+def _floor_bins_mask_aligned(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    base_mask: npt.NDArray[np.bool_],
+    peak_indexes: list[int],
+    exclusion_hz: float,
+) -> npt.NDArray[np.bool_]:
+    """The in-range bins outside *exclusion_hz* of every peak: the floor's bins."""
+    selected_mask = base_mask.copy()
+    peak_idx = [idx for idx in peak_indexes if 0 <= idx < freq_hz.size]
+    if peak_idx:
+        _exclude_peak_regions_aligned(
+            selected_mask=selected_mask,
+            freq_hz=freq_hz,
+            peak_indexes=peak_idx,
+            exclusion_hz=exclusion_hz,
+        )
+    return selected_mask
+
+
+def _window_medians(
+    values: npt.NDArray[np.float64],
+    index: npt.NDArray[np.intp],
+    counted: npt.NDArray[np.bool_],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.intp]]:
+    """Per row, the median of ``values[index]`` over the *counted* entries, and their count."""
+    ordered = np.sort(np.where(counted, values[index], np.inf), axis=1)
+    counts = counted.sum(axis=1)
+    rows = np.arange(index.shape[0])
+    lower = ordered[rows, np.maximum(counts - 1, 0) // 2]
+    upper = ordered[rows, np.minimum(counts // 2, index.shape[1] - 1)]
+    return 0.5 * (lower + upper), counts
+
+
+def _peak_local_floors(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    floor_bins: npt.NDArray[np.bool_],
+    center_indexes: list[int],
+) -> npt.NDArray[np.float64]:
+    """What each peak stands out from where it sits: its local floor.
+
+    The median of the floor bins within ``LOCAL_FLOOR_HALF_WIDTH_HZ`` of the
+    peak. Where peaks crowd that whole neighbourhood (no floor bin left), the
+    median of every bin there: a peak among many is as strong as its crowd.
+    """
+    if not center_indexes:
+        return np.empty(0, dtype=np.float64)
+    bin_hz = float(freq_hz[1] - freq_hz[0]) if freq_hz.size > 1 else 0.0
+    half_bins = int(round(LOCAL_FLOOR_HALF_WIDTH_HZ / bin_hz)) if bin_hz > 0 else 0
+    centres = np.asarray(center_indexes, dtype=np.intp)
+    index = centres[:, None] + np.arange(-half_bins, half_bins + 1, dtype=np.intp)[None, :]
+    inside = (index >= 0) & (index < freq_hz.size)
+    index = np.clip(index, 0, freq_hz.size - 1)
+    floors, floor_counts = _window_medians(
+        combined_spectrum_amp_g, index, inside & floor_bins[index]
+    )
+    crowded = floor_counts == 0
+    if crowded.any():
+        crowd_medians, _counts = _window_medians(
+            combined_spectrum_amp_g, index[crowded], inside[crowded]
+        )
+        floors[crowded] = crowd_medians
+    return floors
 
 
 def _exclude_peak_regions_aligned(
@@ -545,7 +630,10 @@ def compute_vibration_strength_db(
 
     Detects up to *top_n* local-maxima peaks, estimates the noise floor,
     and returns dB strength for the dominant peak together with the full
-    candidate list.
+    candidate list. Each peak also carries its ``local_floor_amp_g``, what it
+    stands out from where it sits (``_peak_local_floors``): a broad hump, such
+    as the road ringing a wheel sensor's wheel hop, is the background of the
+    peaks on it.
 
     Returns a dict with keys: ``vibration_strength_db``, ``peak_amp_g``,
     ``noise_floor_amp_g``, ``strength_bucket``, ``top_peaks``.
@@ -572,12 +660,15 @@ def compute_vibration_strength_db(
     scored_candidate_indexes = _candidate_peak_indexes(combined, threshold, scored_candidate_limit)
     floor_peak_indexes = scored_candidate_indexes[:floor_peak_limit]
 
-    floor_strength = _strength_floor_amp_g_aligned(
+    base_mask = _range_mask_aligned(freq, strength_range_mask)
+    floor_bins = _floor_bins_mask_aligned(
         freq_hz=freq,
-        combined_spectrum_amp_g=combined,
+        base_mask=base_mask,
         peak_indexes=floor_peak_indexes,
         exclusion_hz=peak_separation_hz,
-        in_range_mask=strength_range_mask,
+    )
+    floor_strength = _floor_from_bins_aligned(
+        amps=combined, base_mask=base_mask, floor_bins=floor_bins
     )
     peak_band_ranges = _peak_band_index_ranges_aligned(
         freq_hz=freq,
@@ -611,14 +702,18 @@ def compute_vibration_strength_db(
         floor_amp_g=floor_strength,
     )
     candidate_buckets = _buckets_for_strength_db_aligned(candidate_db)
-    candidates: list[StrengthPeak] = [
-        {
-            "hz": hz,
-            "amp": band_rms,
-            "vibration_strength_db": db,
-            "strength_bucket": strength_bucket,
-        }
-        for hz, band_rms, db, strength_bucket in zip(
+    candidates: list[tuple[int, StrengthPeak]] = [
+        (
+            idx,
+            {
+                "hz": hz,
+                "amp": band_rms,
+                "vibration_strength_db": db,
+                "strength_bucket": strength_bucket,
+            },
+        )
+        for idx, hz, band_rms, db, strength_bucket in zip(
+            scored_candidate_indexes,
             candidate_hz,
             band_rms_values.tolist(),
             candidate_db.tolist(),
@@ -628,13 +723,14 @@ def compute_vibration_strength_db(
         if isfinite(db)
     ]
     candidates.sort(
-        key=lambda item: item["vibration_strength_db"],
+        key=lambda item: item[1]["vibration_strength_db"],
         reverse=True,
     )
 
     chosen: list[StrengthPeak] = []
+    chosen_indexes: list[int] = []
     chosen_hz: list[float] = []
-    for candidate in candidates:
+    for idx, candidate in candidates:
         if len(chosen) >= top_n:
             break
         hz = candidate["hz"]
@@ -643,7 +739,16 @@ def compute_vibration_strength_db(
                 break
         else:
             chosen.append(candidate)
+            chosen_indexes.append(idx)
             chosen_hz.append(hz)
+    local_floors = _peak_local_floors(
+        freq_hz=freq,
+        combined_spectrum_amp_g=combined,
+        floor_bins=floor_bins,
+        center_indexes=chosen_indexes,
+    )
+    for peak, local_floor in zip(chosen, local_floors.tolist(), strict=True):
+        peak["local_floor_amp_g"] = local_floor
 
     top_peak = chosen[0] if chosen else None
     if top_peak is not None:

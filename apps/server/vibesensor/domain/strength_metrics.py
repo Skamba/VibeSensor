@@ -20,6 +20,8 @@ class StrengthPeak:
     amp: float = 0.0
     vibration_strength_db: float | None = None
     strength_bucket: str | None = None
+    # The floor of the spectrum around the peak, which it stands out from (g).
+    local_floor_amp_g: float | None = None
 
     @property
     def is_valid(self) -> bool:
