@@ -1,15 +1,10 @@
 {
   "definitions": {
-    "notes": {
-      "n1": "Sonnet redo research (2026-04 v2): F40 uses transverse-engine UKL2/FAAR FWD platform (BMW UK launch inform page A3 confirms 'new front-wheel drive system'). ZF 8HP is a longitudinal RWD-platform gearbox — physically incompatible with transverse F40. Marked no_confidence as a phantom configuration; row should be considered for removal.",
-      "n3": "Updated only officially confirmed EU-market F40 ratio-relevant values: M135i xDrive 8-speed Steptronic Sport final/top ratio and 120i 7-speed DCT final drive; later official M135i xDrive PDFs also confirm the full 8-speed ratio set and the standard 225/40 R18 tire, but the broad row still cannot encode exact variant-only gearbox and tire mapping without mixing other F40 variants."
-    },
     "evidence_ref_sets": {
-      "e1": [
-        "bmw_market_pages:f40-1series-uk-inform-2019",
+      "e_uk": [
         "bmw_market_pages:f40-1series-uk-tech-data-2020"
       ],
-      "e2": [
+      "e_legacy": [
         "legacy_research_sources:091077d8a451",
         "legacy_research_sources:16c091e6cfd6",
         "legacy_research_sources:18deedec2c15",
@@ -18,72 +13,62 @@
         "legacy_research_sources:eca9fb0d3e74"
       ],
       "e3": [
-        "bmw_market_pages:f40-1series-uk-tech-data-2020"
+        "bmw_pressclub_sources:f40-2019-05-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf"
+      ],
+      "e4": [
+        "bmw_pressclub_sources:f40-116i-120i-2020-11-de-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf"
+      ],
+      "e5": [
+        "bmw_pressclub_sources:f40-128ti-2020-10-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf"
+      ],
+      "e6": [
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf"
+      ],
+      "e7": [
+        "bmw_pressclub_sources:f40-2019-05-launch-press-kit",
+        "bmw_pressclub_sources:f40-2019-05-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+        "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+        "secondary_technical_sources:f40-adac-catalogue"
+      ],
+      "e8": [
+        "bmw_pressclub_sources:f40-116i-120i-2020-11-de-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+        "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+        "secondary_technical_sources:f40-adac-catalogue"
+      ],
+      "e9": [
+        "bmw_pressclub_sources:f40-2019-05-spec-pdf",
+        "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+        "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+        "secondary_technical_sources:f40-adac-catalogue"
       ]
     },
     "tire_setups": {
-      "setup_245_20": {
-        "confidence": "family_default",
+      "setup_225_40r18_uk": {
+        "confidence": "reputable_secondary_crosschecked",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
+        "evidence_refs_ref": "e_uk",
+        "notes": "BMW UK F40 technical data (January 2020) list 8J x 18 light-alloy wheels with 225/40 R18 92Y for the M Sport trim; the 128ti and M135i xDrive sheets print it as their standard tyre.",
         "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 20.0,
-          "width_mm": 245.0
-        }
-      },
-      "setup_235_19": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
-          "aspect_pct": 35.0,
-          "rim_in": 19.0,
-          "width_mm": 235.0
-        }
-      },
-      "setup_225_18_2": {
-        "confidence": "family_default",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e2",
-        "front": {
+          "width_mm": 225.0,
           "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
+          "rim_in": 18.0
         }
       },
-      "setup_245_20_2": {
-        "confidence": "unverified",
+      "setup_235_35r19": {
+        "confidence": "family_default",
         "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
+        "evidence_refs_ref": "e_legacy",
+        "notes": "Inherited family default for the optional 19-inch wheel; no official F40 sheet prints it.",
         "front": {
-          "aspect_pct": 30.0,
-          "rim_in": 20.0,
-          "width_mm": 245.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_235_19_2": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
+          "width_mm": 235.0,
           "aspect_pct": 35.0,
-          "rim_in": 19.0,
-          "width_mm": 235.0
-        },
-        "notes_ref": "n1"
-      },
-      "setup_225_18": {
-        "confidence": "unverified",
-        "default_axle_for_speed": "rear",
-        "evidence_refs_ref": "e1",
-        "front": {
-          "aspect_pct": 40.0,
-          "rim_in": 18.0,
-          "width_mm": 225.0
-        },
-        "notes_ref": "n1"
+          "rim_in": 19.0
+        }
       }
     }
   },
@@ -93,51 +78,62 @@
     "market": "EU",
     "model_code": "F40",
     "body_code": "F40",
-    "model_name": "1 Series (F40, 2019-2025)",
-    "production_start_year": 2019,
-    "production_end_year": 2025
+    "model_name": "1 Series (F40, 2019-2024)"
   },
   "configurations": [
     {
-      "id": "bmw-f40-118i-eu-2019-dct7-fwd",
-      "variant_name": "118i",
+      "id": "bmw-f40-116i-eu-2021-mt6-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "116i",
       "engine_code": "B38",
       "engine_name": "B38 1.5L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020",
-          "bmw_market_pages:f40-1series-uk-inform-2019"
-        ],
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list the 116i with front-wheel drive.",
         "value": "FWD"
       },
       "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed Steptronic dual-clutch transmission",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-tech-data-2020",
-          "bmw_market_pages:f40-1series-uk-inform-2019"
-        ]
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list a 6-speed manual for the 116i.",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.71
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 0.683 as top gear for the 116i 6-speed manual.",
+          "value": 0.683
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list the forward ratios 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683 for the 116i 6-speed manual.",
+          "value": [
+            3.615,
+            1.952,
+            1.241,
+            0.969,
+            0.806,
+            0.683
+          ]
         },
         "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.684
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 3.882 as the final drive for the 116i 6-speed manual.",
+          "value": 3.882
         }
       },
       "tires": {
         "default": {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs_ref": "e3",
-          "notes": "Sonnet redo research (2026-04 v2): BMW UK F40 Jan 2020 technical data publishes 118i SE wheel/tyre as 7Jx16 LM, 205/55 R16 91W. The previous 225/40 R18 default appeared to be the M Sport fitment, retained as an option below.",
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116i.",
           "front": {
             "width_mm": 205.0,
             "aspect_pct": 55.0,
@@ -147,322 +143,450 @@
         },
         "options": [
           {
-            "confidence": "reputable_secondary_crosschecked",
-            "evidence_refs_ref": "e3",
-            "notes": "BMW UK F40 Jan 2020 technical data lists 8Jx18 LM 225/40 R18 92Y for M Sport-trim 118i.",
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116i.",
             "front": {
-              "width_mm": 225.0,
-              "aspect_pct": 40.0,
-              "rim_in": 18.0
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
             },
             "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
             "name": "M Sport 18\""
           },
           {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
           }
         ]
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
+          "note": "The official BMW 11/2020 and 03/2021 F40 technical data list the 116i (in-line three, 1499 cc) 6-speed manual: 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, final drive 3.882, standard tyre 205/55 R16. The 116i first appears in the 11/2020 sheet (valid after July), so the row starts in 2021. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e8"
         }
       ],
       "unresolved": [
         {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
+          "item": "F40 116i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e4"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f40-118i-eu-2019-zf8hp-fwd",
+      "id": "bmw-f40-116i-eu-2021-dct7-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "116i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list the 116i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list a 7-speed Steptronic dual-clutch for the 116i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e4",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.747 with final drive 3.789; the stored top gear is 2.747 / 3.789 = 0.725. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.725
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 3.789 as the final drive for the 116i 7-speed Steptronic dual-clutch.",
+          "value": 3.789
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116i.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116i.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2020 and 03/2021 F40 technical data list the 116i (in-line three, 1499 cc) 7-speed Steptronic dual-clutch: overall seventh 2.747, final drive 3.789, standard tyre 205/55 R16. The 116i first appears in the 11/2020 sheet (valid after July), so the row starts in 2021. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 116i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-118i-eu-2019-mt6-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2021,
       "variant_name": "118i",
       "engine_code": "B38",
       "engine_name": "B38 1.5L I3 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic Sport transmission",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.673,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.075,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-f40-120i-eu-2019-dct7-fwd",
-      "variant_name": "120i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ],
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118i with front-wheel drive.",
         "value": "FWD"
       },
       "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed Steptronic dual-clutch transmission",
-        "evidence_refs_ref": "e3"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.71
-        },
-        "final_drive_front": {
-          "confidence": "family_default",
-          "value": 3.684
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18_2",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18_2"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-f40-120i-eu-2019-zf8hp-fwd",
-      "variant_name": "120i",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
-        "value": "FWD"
-      },
-      "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic Sport transmission",
-        "evidence_refs_ref": "e1"
-      },
-      "ratios": {
-        "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.673,
-          "evidence_refs_ref": "e1"
-        },
-        "final_drive_front": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.075,
-          "evidence_refs_ref": "e1"
-        }
-      },
-      "tires": {
-        "options": [
-          {
-            "setup_ref": "setup_225_18",
-            "name": "Standard 18\""
-          },
-          {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
-          }
-        ],
-        "default_ref": "setup_225_18"
-      },
-      "verification_notes": [
-        {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "unresolved": [
-        {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
-        }
-      ],
-      "configuration_confidence": "medium_confidence"
-    },
-    {
-      "id": "bmw-f40-m135i-xdrive-eu-2019-dct7-awd",
-      "variant_name": "M135i xDrive",
-      "engine_code": "B48",
-      "engine_name": "B48 2.0L I4 Turbo",
-      "fuel_type": "ICE",
-      "drivetrain": {
         "confidence": "official_exact",
-        "evidence_refs": [
-          "legacy_research_sources:091077d8a451",
-          "legacy_research_sources:16c091e6cfd6",
-          "bmw_market_pages:f40-1series-uk-m135i-2021",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
-        ],
-        "value": "AWD"
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list a 6-speed manual for the 118i.",
+        "code": "MT6",
+        "name": "6-speed manual"
       },
-      "transmission": {
-        "confidence": "family_default",
-        "code": "DCT7",
-        "name": "7-speed Steptronic dual-clutch transmission",
-        "evidence_refs": [
-          "bmw_market_pages:f40-1series-uk-m135i-2021",
-          "bmw_market_pages:f40-1series-uk-tech-data-2020"
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.585 as top gear for the 118i 6-speed manual.",
+          "value": 0.585
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 3.615 / 1.952 / 1.179 / 0.853 / 0.711 / 0.585 for the 118i 6-speed manual.",
+          "value": [
+            3.615,
+            1.952,
+            1.179,
+            0.853,
+            0.711,
+            0.585
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 4.118 as the final drive for the 118i 6-speed manual.",
+          "value": 4.118
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118i.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118i.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
         ]
       },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118i (in-line three, 1499 cc) 6-speed manual: 3.615 / 1.952 / 1.179 / 0.853 / 0.711 / 0.585, final drive 4.118, standard tyre 205/55 R16. The 03/2021 sheet still lists the manual; ADAC lists the German-market 118i manual until 02/2021, so the row ends in 2021.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 118i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-118i-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "118i",
+      "engine_code": "B38",
+      "engine_name": "B38 1.5L I3 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list a 7-speed Steptronic dual-clutch for the 118i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "family_default",
-          "value": 0.71
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.158 with final drive 3.944; the stored top gear is 2.158 / 3.944 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
         },
-        "final_drive_rear": {
-          "confidence": "family_default",
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 3.944 as the final drive for the 118i 7-speed Steptronic dual-clutch.",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118i.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118i.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118i (in-line three, 1499 cc) 7-speed Steptronic dual-clutch: overall seventh 2.158, final drive 3.944, standard tyre 205/55 R16. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 118i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-120i-eu-2021-dct7-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "120i",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list the 120i with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list a 7-speed Steptronic dual-clutch for the 120i.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e4",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.016 with final drive 3.684; the stored top gear is 2.016 / 3.684 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 3.684 as the final drive for the 120i 7-speed Steptronic dual-clutch.",
           "value": 3.684
         }
       },
       "tires": {
         "default": {
-          "confidence": "reputable_secondary_crosschecked",
-          "evidence_refs": [
-            "legacy_research_sources:091077d8a451",
-            "legacy_research_sources:16c091e6cfd6",
-            "legacy_research_sources:18deedec2c15",
-            "legacy_research_sources:82e045fca148",
-            "legacy_research_sources:95b9bf2bf0cf",
-            "legacy_research_sources:eca9fb0d3e74",
-            "bmw_market_pages:f40-1series-uk-m135i-2021"
-          ],
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120i.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official BMW 11/2020 and 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120i.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 11/2020 and 03/2021 F40 technical data list the 120i (in-line four, 1998 cc) 7-speed Steptronic dual-clutch: overall seventh 2.016, final drive 3.684, standard tyre 225/45 R17. The 120i first appears in the 11/2020 sheet (valid after July), so the row starts in 2021. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 120i optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e4"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-128ti-eu-2021-at8-fwd",
+      "production_start_year": 2021,
+      "production_end_year": 2024,
+      "variant_name": "128ti",
+      "engine_code": "B48",
+      "engine_name": "B48 2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list the 128ti with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list an 8-speed Steptronic Sport for the 128ti.",
+        "code": "AT8",
+        "name": "8-speed Steptronic Sport"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list 0.673 as top gear for the 128ti 8-speed Steptronic Sport.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 128ti 8-speed Steptronic Sport.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list 2.955 as the final drive for the 128ti 8-speed Steptronic Sport.",
+          "value": 2.955
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list 225/40 R18 as the standard tyre for the 128ti.",
           "front": {
             "width_mm": 225.0,
             "aspect_pct": 40.0,
@@ -472,118 +596,724 @@
         },
         "options": [
           {
-            "setup_ref": "setup_225_18_2",
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes": "The official BMW 10/2020 and 03/2021 F40 technical data list 225/40 R18 as the standard tyre for the 128ti.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
             "name": "Standard 18\""
           },
           {
-            "setup_ref": "setup_235_19",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20",
-            "name": "M Sport 20\""
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
           }
         ]
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
+          "note": "The official BMW 10/2020 and 03/2021 F40 technical data list the 128ti (in-line four, 1998 cc) 8-speed Steptronic Sport: 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 2.955, standard tyre 225/40 R18. BMW UK gives a November 2020 launch for the 128ti, so the row starts in 2021. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f40-128ti-2020-10-spec-pdf",
+            "bmw_pressclub_sources:f40-128ti-2020-10-uk-release",
+            "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+            "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+            "secondary_technical_sources:f40-adac-catalogue"
+          ]
         }
       ],
       "unresolved": [
         {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
+          "item": "F40 128ti optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e5"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
     },
     {
-      "id": "bmw-f40-m135i-xdrive-eu-2019-zf8hp-awd",
+      "id": "bmw-f40-m135i-xdrive-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
       "variant_name": "M135i xDrive",
       "engine_code": "B48",
       "engine_name": "B48 2.0L I4 Turbo",
       "fuel_type": "ICE",
       "drivetrain": {
-        "confidence": "unverified",
-        "evidence_refs_ref": "e1",
-        "notes_ref": "n1",
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the M135i xDrive with xDrive all-wheel drive.",
         "value": "AWD"
       },
       "transmission": {
-        "confidence": "unverified",
-        "notes_ref": "n1",
-        "code": "ZF8HP",
-        "name": "8-speed Steptronic Sport transmission",
-        "evidence_refs_ref": "e1"
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list an 8-speed Steptronic Sport for the M135i xDrive.",
+        "code": "AT8",
+        "name": "8-speed Steptronic Sport"
       },
       "ratios": {
         "top_gear_ratio": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 0.673,
-          "evidence_refs_ref": "e1"
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.673 as top gear for the M135i xDrive 8-speed Steptronic Sport.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the M135i xDrive 8-speed Steptronic Sport.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
         },
         "final_drive_rear": {
-          "confidence": "unverified",
-          "notes_ref": "n1",
-          "value": 3.075,
-          "evidence_refs_ref": "e1"
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 3.075 as the final drive for the M135i xDrive 8-speed Steptronic Sport. One axle ratio is published for the all-wheel-drive car.",
+          "value": 3.075
         }
       },
       "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 225/40 R18 as the standard tyre for the M135i xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 40.0,
+            "rim_in": 18.0
+          },
+          "default_axle_for_speed": "rear"
+        },
         "options": [
           {
-            "setup_ref": "setup_225_18",
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 225/40 R18 as the standard tyre for the M135i xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 40.0,
+              "rim_in": 18.0
+            },
+            "default_axle_for_speed": "rear",
             "name": "Standard 18\""
           },
           {
-            "setup_ref": "setup_235_19_2",
-            "name": "Sport Line 19\""
-          },
-          {
-            "setup_ref": "setup_245_20_2",
-            "name": "M Sport 20\""
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
           }
-        ],
-        "default_ref": "setup_225_18"
+        ]
       },
       "verification_notes": [
         {
-          "note_ref": "n3",
-          "evidence_refs_ref": "e2"
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the M135i xDrive (in-line four, 1998 cc) 8-speed Steptronic Sport: 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 3.075, standard tyre 225/40 R18. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
         }
       ],
       "unresolved": [
         {
-          "item": "7-speed DCT top_gear_ratio",
-          "reason": "Official PDF transmission table extraction exposes ratio formatting that is not unambiguous for direct top-gear mapping in this workflow; existing top_gear_ratio kept unchanged per no-guess rule.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Per-variant transmission mapping for 118i",
-          "reason": "Official specs show 118i can be manual or 7-speed DCT, but current schema in this entry does not model transmission per variant; no schema expansion applied.",
-          "evidence_refs_ref": "e2"
-        },
-        {
-          "item": "Exact M135i xDrive variant-only gearbox and tire mapping in the broad F40 row",
-          "reason": "Official BMW PressClub PDFs confirm the exact M135i xDrive 8-speed ratios and 225/40 R18 standard tire, but the current broad row still mixes other F40 gearbox and wheel/tire combinations.",
-          "evidence_refs_ref": "e2"
+          "item": "F40 M135i xDrive optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
         }
       ],
-      "configuration_confidence": "medium_confidence"
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-116d-eu-2019-mt6-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "116d",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 116d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list a 6-speed manual for the 116d.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.605 as top gear for the 116d 6-speed manual.",
+          "value": 0.605
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 for the 116d 6-speed manual.",
+          "value": [
+            3.923,
+            2.136,
+            1.276,
+            0.919,
+            0.725,
+            0.605
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 3.389 as the final drive for the 116d 6-speed manual.",
+          "value": 3.389
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 116d (in-line three, 1496 cc) 6-speed manual: 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605, final drive 3.389, standard tyre 205/55 R16. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 116d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-116d-eu-2019-dct7-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "116d",
+      "engine_code": "B37",
+      "engine_name": "B37 1.5L I3 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 116d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list a 7-speed Steptronic dual-clutch for the 116d.",
+        "code": "DCT7",
+        "name": "7-speed Steptronic dual-clutch"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e3",
+          "notes": "BMW publishes overall ratios (gear x final drive) for the 7-speed dual-clutch gearbox: seventh 2.158 with final drive 3.944; the stored top gear is 2.158 / 3.944 = 0.547. Individual gear ratios are not stored because the gearbox uses two output ratios.",
+          "value": 0.547
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 3.944 as the final drive for the 116d 7-speed Steptronic dual-clutch.",
+          "value": 3.944
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 116d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 116d (in-line three, 1496 cc) 7-speed Steptronic dual-clutch: overall seventh 2.158, final drive 3.944, standard tyre 205/55 R16. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 116d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-118d-eu-2019-mt6-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2021,
+      "variant_name": "118d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list a 6-speed manual for the 118d.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.605 as top gear for the 118d 6-speed manual.",
+          "value": 0.605
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605 for the 118d 6-speed manual.",
+          "value": [
+            3.923,
+            2.136,
+            1.276,
+            0.919,
+            0.725,
+            0.605
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 3.389 as the final drive for the 118d 6-speed manual.",
+          "value": 3.389
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118d (in-line four, 1995 cc) 6-speed manual: 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605, final drive 3.389, standard tyre 205/55 R16. The 03/2021 sheet still lists the manual; ADAC lists the German-market 118d manual until 02/2021, so the row ends in 2021.",
+          "evidence_refs_ref": "e9"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 118d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-118d-eu-2019-at8-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "118d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list an 8-speed Steptronic for the 118d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.673 as top gear for the 118d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 118d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 2.666 as the final drive for the 118d 8-speed Steptronic.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118d.",
+          "front": {
+            "width_mm": 205.0,
+            "aspect_pct": 55.0,
+            "rim_in": 16.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 205/55 R16 as the standard tyre for the 118d.",
+            "front": {
+              "width_mm": 205.0,
+              "aspect_pct": 55.0,
+              "rim_in": 16.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 16\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 118d (in-line four, 1995 cc) 8-speed Steptronic: 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 2.666, standard tyre 205/55 R16. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 118d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-120d-eu-2019-at8-fwd",
+      "production_start_year": 2019,
+      "production_end_year": 2021,
+      "variant_name": "120d",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 03/2021 F40 technical data list the 120d with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official BMW 03/2021 F40 technical data list an 8-speed Steptronic for the 120d.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 F40 technical data list 0.673 as top gear for the 120d 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 F40 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 120d 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 F40 technical data list 2.666 as the final drive for the 120d 8-speed Steptronic.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official BMW 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120d.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "The official BMW 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120d.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 03/2021 F40 technical data list the 120d (in-line four, 1995 cc) 8-speed Steptronic: 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 2.666, standard tyre 225/45 R17. The 05/2019 sheet lists only the 120d xDrive; ADAC lists the German-market front-wheel-drive 120d from 09/2019 to 05/2020 and the 03/2021 sheet is the last official sheet that lists it, so the row covers 2019-2021.",
+          "evidence_refs": [
+            "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+            "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+            "secondary_technical_sources:f40-adac-catalogue"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 120d optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e6"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "bmw-f40-120d-xdrive-eu-2019-at8-awd",
+      "production_start_year": 2019,
+      "production_end_year": 2024,
+      "variant_name": "120d xDrive",
+      "engine_code": "B47",
+      "engine_name": "B47 2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the 120d xDrive with xDrive all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list an 8-speed Steptronic for the 120d xDrive.",
+        "code": "AT8",
+        "name": "8-speed Steptronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 0.673 as top gear for the 120d xDrive 8-speed Steptronic.",
+          "value": 0.673
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list the forward ratios 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673 for the 120d xDrive 8-speed Steptronic.",
+          "value": [
+            5.519,
+            3.184,
+            2.05,
+            1.492,
+            1.235,
+            1.0,
+            0.801,
+            0.673
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 2.666 as the final drive for the 120d xDrive 8-speed Steptronic. One axle ratio is published for the all-wheel-drive car.",
+          "value": 2.666
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120d xDrive.",
+          "front": {
+            "width_mm": 225.0,
+            "aspect_pct": 45.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official BMW 05/2019 and 03/2021 F40 technical data list 225/45 R17 as the standard tyre for the 120d xDrive.",
+            "front": {
+              "width_mm": 225.0,
+              "aspect_pct": 45.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Standard 17\""
+          },
+          {
+            "setup_ref": "setup_225_40r18_uk",
+            "name": "M Sport 18\""
+          },
+          {
+            "setup_ref": "setup_235_35r19",
+            "name": "19\" option"
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official BMW 05/2019 and 03/2021 F40 technical data list the 120d xDrive (in-line four, 1995 cc) 8-speed Steptronic: 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 2.666, standard tyre 225/45 R17. The launch press kit gives a September 2019 market launch. F40 production ended in 2024: the official 06/2024 article on the new BMW 1 Series (F70) gives an October 2024 market launch, and ADAC lists the last F40 variants until 03/2024-06/2024.",
+          "evidence_refs_ref": "e7"
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "F40 120d xDrive optional tyre sizes",
+          "reason": "The technical-data sheets list only the standard tyre. The 18\" option is from the BMW UK technical-data page and the 19\" option is an inherited family default; no official F40 wheel programme with every optional size was found.",
+          "evidence_refs_ref": "e3"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
     }
   ]
 }
