@@ -253,6 +253,17 @@ def _line_half_width_hz(frequency_hz: float, bin_hz: float) -> float:
     return max(ORDER_LINE_WIDTH_REL * frequency_hz, ORDER_LINE_WIDTH_MIN_BINS * bin_hz)
 
 
+def is_harmonic_of(peak_hz: float, fundamental_hz: float, multiple: int, bin_hz: float) -> bool:
+    """Whether a peak is the *multiple*-th harmonic of a fundamental's peak in the same spectrum.
+
+    Read off one spectrum, the two differ from an exact harmonic only by where
+    each sits on its line: the fundamental's error *multiple* times over plus
+    the harmonic's own.
+    """
+    tolerance_hz = (multiple + 1) * _line_half_width_hz(fundamental_hz, bin_hz)
+    return abs(peak_hz - multiple * fundamental_hz) <= tolerance_hz
+
+
 @dataclass(frozen=True, slots=True)
 class _LinePoint:
     """A clear match: the order's predicted frequency and the peak it matched."""
@@ -298,7 +309,7 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
     return off
 
 
-def _fft_bin_hz(context: RunMetadata) -> float:
+def fft_bin_hz(context: RunMetadata) -> float:
     sample_rate_hz = context.raw_sample_rate_hz or SAMPLE_RATE_HZ
     fft_n = context.fft_window_size_samples or FFT_N
     return sample_rate_hz / fft_n
@@ -434,7 +445,7 @@ def match_samples_for_hypothesis(
             )
         )
 
-    masked = _masked(windows, _fft_bin_hz(context), compliance)
+    masked = _masked(windows, fft_bin_hz(context), compliance)
     windows = [window for index, window in enumerate(windows) if index not in masked]
 
     possible_by_speed_bin: dict[str, int] = defaultdict(int)

@@ -28,9 +28,15 @@ from vibesensor.analysis.orders.match_rate import (
 )
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
+    fft_bin_hz,
+    is_harmonic_of,
     match_samples_for_hypothesis,
 )
-from vibesensor.analysis.orders.physics import OrderHypothesis, _order_hypotheses
+from vibesensor.analysis.orders.physics import (
+    WHEEL_HARMONIC_HYPOTHESES,
+    OrderHypothesis,
+    _order_hypotheses,
+)
 from vibesensor.analysis.orders.scoring import (
     OrderFindingBuildContext,
     score_order_finding,
@@ -262,12 +268,23 @@ class OrderAnalysisSession:
                 if hypothesis.suspected_source is VibrationSource.WHEEL_TIRE
             )
         )
+        # A tyre's higher orders count against a driveline order and an engine
+        # order placed by top-gear RPM, both locked to the wheel's rhythm. An
+        # engine order on measured RPM leaves the comb in any other gear, and a
+        # four-stroke's half order can turn once per wheel turn, so a comb of
+        # its own orders is judged on that evidence and the neutral coast-down.
+        comb_peaks = wheel_peaks | self._wheel_harmonic_peaks(matches)
         evaluated: list[tuple[OrderHypothesis, OrderMatchAccumulator, tuple[float, DomainFinding]]]
         evaluated = []
         wheel_locked_engine_keys: set[str] = set()
         for hypothesis, match in matches:
+            measured_engine = (
+                hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match)
+            )
             wheel_shared_fraction = (
-                _shared_fraction(match.matched_peaks, wheel_peaks)
+                _shared_fraction(
+                    match.matched_peaks, wheel_peaks if measured_engine else comb_peaks
+                )
                 if hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
                 else 0.0
             )
@@ -311,6 +328,34 @@ class OrderAnalysisSession:
             findings,
             wheel_locked_engine_keys=frozenset(wheel_locked_engine_keys),
             min_confidence=ORDER_MIN_CONFIDENCE,
+        )
+
+    def _wheel_harmonic_peaks(
+        self, matches: Sequence[tuple[OrderHypothesis, OrderMatchAccumulator]]
+    ) -> frozenset[tuple[int, float]]:
+        """The peaks on harmonics of the wheel's first order where that is heard.
+
+        A tyre that shakes at its higher orders shakes at its first too, and
+        they sit at exact multiples of the first order's peak in the same
+        spectrum; a driveline fault near one of them does neither. (T2 cannot
+        stand in for T1: an engine's E1 can run at twice the wheel's rhythm.)
+        """
+        fundamental_hz = {
+            index: point.matched_hz
+            for hypothesis, match in matches
+            if hypothesis.key == "wheel_1x"
+            for index, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
+            if point.heard
+        }
+        if not fundamental_hz:
+            return frozenset()
+        bin_hz = fft_bin_hz(self._context)
+        return frozenset(
+            (index, peak_hz)
+            for hypothesis in WHEEL_HARMONIC_HYPOTHESES
+            for index, peak_hz in self._match_hypothesis(hypothesis).matched_peaks
+            if index in fundamental_hz
+            and is_harmonic_of(peak_hz, fundamental_hz[index], int(hypothesis.order), bin_hz)
         )
 
     def _should_test(self, hypothesis: OrderHypothesis) -> bool:

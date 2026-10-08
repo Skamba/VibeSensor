@@ -15,6 +15,7 @@ checked against this module's own tire/ratio math.
 from __future__ import annotations
 
 import io
+import itertools
 import math
 import re
 from dataclasses import dataclass, field, replace
@@ -43,6 +44,7 @@ from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
+from vibesensor.simulator.confounders import AccessoryTone, FlatSpot, SensorFixing
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
@@ -51,7 +53,7 @@ from vibesensor.simulator.profiles import (
     RoadResonance,
 )
 from vibesensor.simulator.scripted_scenario_catalog import SCRIPTED_SCENARIOS
-from vibesensor.simulator.scripted_scenario_models import PhaseOverride, ScenarioPhase
+from vibesensor.simulator.scripted_scenario_models import PhaseOverride, PhasePulse, ScenarioPhase
 from vibesensor.simulator.scripted_targeting import apply_phase
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 
@@ -252,6 +254,12 @@ class Case:
     # Guided steps the driver taps through without driving them: the report
     # lists them as tapped but not detected, never as done.
     guided_undetected: tuple[GuidedPhaseName, ...] = ()
+    # How each location's sensor is fixed, when not firmly (a loose one rattles).
+    fixings: dict[str, SensorFixing] = field(default_factory=dict)
+    # The parking flat spots each location's sensor feels at the start of the drive.
+    flat_spots: dict[str, FlatSpot] = field(default_factory=dict)
+    # Accessories each location's sensor feels running.
+    accessories: dict[str, tuple[AccessoryTone, ...]] = field(default_factory=dict)
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -260,6 +268,9 @@ class Case:
                 frame_loss=self.frame_loss.get(sensor.location_code, 0.0),
                 uplink_latency_spike_s=self.uplink_latency_spike_s,
                 wifi_retry_loss=self.wifi_retry_loss,
+                fixing=self.fixings.get(sensor.location_code),
+                flat_spot=self.flat_spots.get(sensor.location_code),
+                accessories=self.accessories.get(sensor.location_code, ()),
             )
             for sensor in self.layout
         )
@@ -728,7 +739,8 @@ _BENCH_PROFILES = {
 
 @pytest.fixture(autouse=True)
 def _bench_profiles(monkeypatch: pytest.MonkeyPatch) -> None:
-    for name, profile in _BENCH_PROFILES.items():
+    # Profiles layered further down the module register after this table is built.
+    for name, profile in {**_BENCH_PROFILES, **_LAYERED_PROFILES}.items():
         monkeypatch.setitem(PROFILE_LIBRARY, name, profile)
 
 
@@ -1273,6 +1285,384 @@ REALISM_CASES = (
     ),
 )
 
+# -- first-drive confounders ------------------------------------------------------
+# Things on a real first drive that can fool the diagnosis or hide a fault
+# (``simulator/confounders.py``; "Confounders" in docs/simulator_realism.md).
+
+
+def _flat_spot(scale: float, phase_rad: float) -> FlatSpot:
+    """An overnight flat spot: about 60 N of radial force variation over a 40 kg
+    wheel corner (US 7,377,155 B2 measures ~30 lbf), mostly vertical."""
+    return FlatSpot(t1_mg=(25.0 * scale, 15.0 * scale, 80.0 * scale), phase_rad=phase_rad)
+
+
+# All four tyres stood overnight, each a little differently (load, tyre age).
+_FOUR_FLAT_SPOTS = {
+    "front_left_wheel": _flat_spot(1.0, 0.3),
+    "front_right_wheel": _flat_spot(0.7, 1.9),
+    "rear_left_wheel": _flat_spot(1.3, 4.0),
+    "rear_right_wheel": _flat_spot(0.85, 5.1),
+}
+# One tyre far worse than the others (a nylon-capped performance tyre among
+# all-season ones, or one left soft overnight).
+_ONE_BAD_FLAT_SPOT = {
+    "front_left_wheel": _flat_spot(2.5, 0.3),
+    "front_right_wheel": _flat_spot(0.5, 1.9),
+    "rear_left_wheel": _flat_spot(0.6, 4.0),
+    "rear_right_wheel": _flat_spot(0.5, 5.1),
+}
+# Four flat-spotted tyres: a vibration at the wheel orders that the drive cannot
+# pin on one tyre. At most Moderate (never "go fix one wheel"), and no engine
+# or driveline cause.
+_WHEEL_ORDERS_AT_MOST_MODERATE = Expected(
+    verdicts=frozenset({"no_fault", "weak_evidence", "fault"}),
+    source="wheel/tire",
+    zones=frozenset(WHEEL_ZONES | _SPREAD_WHEEL_ZONES),
+    order_codes=frozenset({"T1", "T2"}),
+    levels=frozenset({"moderate", "weak"}),
+)
+# A sensor held by loosened cable ties: the housing rings on them at 35 Hz and
+# lifts off past 0.1 g (Rao ch. 3.6; Trapp & Chen 2012).
+_LOOSE_FIXING = SensorFixing(resonance_hz=35.0, damping_ratio=0.06, rattle_g=0.1)
+# A sensor on a springy bracket that does not rattle: its 60 Hz ring is where
+# the propshaft order runs at motorway speed.
+_SPRINGY_BRACKET = SensorFixing(resonance_hz=60.0, damping_ratio=0.05)
+
+
+def _potholes(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """_long_sweep on a broken road: a pothole or expansion joint at a wheel every second or two."""
+    hits = ((0.8, "front-left"), (2.1, "right-side"), (3.0, "rear-axle"), (4.6, "front-axle"))
+    return tuple(
+        replace(
+            phase,
+            pulses=tuple(
+                PhasePulse(at_s=at_s + offset, target=target, strength=20.0)
+                for offset in range(0, int(phase.duration_s) - 4, 5)
+                for at_s, target in hits
+            ),
+        )
+        for phase in _long_sweep(*faults)
+    )
+
+
+# Worn accessories, about five times their ISO 21940-11 balance grade, felt at
+# each mounting point as their source's mass and distance give it.
+def _blower(mg: float) -> AccessoryTone:
+    """The HVAC blower at a mid setting (2700 rpm), leaves in its wheel."""
+    return AccessoryTone(level_mg=(0.6 * mg, 0.5 * mg, mg), hz=45.0)
+
+
+def _alternator(mg: float) -> AccessoryTone:
+    """The alternator, belt-driven at 2.8 times the crank (2.2-3 x, Bosch Automotive Handbook)."""
+    return AccessoryTone(level_mg=(mg, 0.6 * mg, 0.8 * mg), engine_order=2.8, phase_rad=1.0)
+
+
+def _ac_compressor(mg: float) -> AccessoryTone:
+    """The air-con compressor at 1.25 times the crank, its clutch cycling 20 s on, 10 s off."""
+    return AccessoryTone(
+        level_mg=(mg, 0.7 * mg, 0.9 * mg),
+        engine_order=1.25,
+        on_s=20.0,
+        off_s=10.0,
+        phase_rad=2.0,
+    )
+
+
+def _abs_pump(mg: float) -> AccessoryTone:
+    """The ABS pump motor (3600 rpm), running only in a stop hard enough for ABS to act."""
+    return AccessoryTone(level_mg=(0.8 * mg, 0.5 * mg, mg), hz=60.0, min_decel_g=0.5)
+
+
+_ACCESSORIES = {
+    "driver_seat": (_blower(10.0), _alternator(1.0), _ac_compressor(1.0)),
+    "front_passenger_seat": (_blower(10.0), _alternator(1.0), _ac_compressor(1.0)),
+    "rear_center_seat": (_blower(5.0), _alternator(0.8), _ac_compressor(0.8)),
+    "trunk": (_blower(2.0), _alternator(0.5), _ac_compressor(0.5)),
+    "engine_bay": (_alternator(8.0), _ac_compressor(8.0), _blower(2.0), _abs_pump(10.0)),
+    "transmission": (_alternator(4.0), _ac_compressor(4.0)),
+    "front_subframe": (_alternator(4.0), _ac_compressor(4.0), _abs_pump(8.0)),
+    "driveshaft_tunnel": (_alternator(2.0), _ac_compressor(2.0)),
+    "front_left_wheel": (_blower(1.5), _alternator(1.5), _ac_compressor(1.5), _abs_pump(20.0)),
+    "front_right_wheel": (_blower(1.5), _alternator(1.5), _ac_compressor(1.5), _abs_pump(20.0)),
+    "rear_left_wheel": (_alternator(0.5), _ac_compressor(0.5), _abs_pump(12.0)),
+    "rear_right_wheel": (_alternator(0.5), _ac_compressor(0.5), _abs_pump(12.0)),
+}
+
+
+def _emergency_stops(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Cruise and sweep, with two stops hard enough for ABS (0.5-0.75 g)."""
+    return (
+        _phase("cruise", 10.0, 100.0, 100.0, *faults),
+        _phase("sweep", 12.0, 60.0, 120.0, *faults),
+        _phase("hard-stop", 4.5, 120.0, 40.0, *faults),
+        _phase("speed-up", 10.0, 40.0, 100.0, *faults),
+        _phase("hard-stop-2", 3.0, 100.0, 40.0, *faults),
+        _phase("pull-away", 8.0, 40.0, 90.0, *faults),
+    )
+
+
+# A tyre with radial force variation (non-uniform stiffness or runout): a force
+# fixed by its shape, so the same at every speed, at the first four wheel
+# orders falling off about as 1/n (Gent & Walter, *The Pneumatic Tire*, NHTSA
+# 2006, ch. 9). Its first order is as strong as the front-left imbalance's.
+_IMBALANCE_T1 = PROFILE_LIBRARY["wheel_imbalance"].order_tones[0][2]
+_NON_UNIFORM_TYRE = Profile(
+    name="bench_non_uniform_tyre",
+    tones=(),
+    order_tones=tuple(
+        ("wheel_1x", float(n), tuple(a / n for a in _IMBALANCE_T1)) for n in (1, 2, 3, 4)
+    ),
+    noise_std=24.0,
+    bump_probability=0.004,
+    bump_decay=0.94,
+    bump_strength=(30.0, 24.0, 45.0),
+    modulation_hz=0.22,
+    modulation_depth=0.12,
+    reference_speed_kmh=DEFAULT_SPEED_KMH,
+)
+_LAYERED_PROFILES[_NON_UNIFORM_TYRE.name] = _NON_UNIFORM_TYRE
+
+# Two real faults at once, each sensor hearing both as its distance gives them.
+_FL_GAIN = 0.85
+_SHAFT_REAR, _SHAFT_FRONT = 0.80 * 0.95, 0.35 * 0.60
+_FL_AND_PROPSHAFT = (
+    _on(
+        "rear-axle",
+        _road_with(
+            "propshaft_with_fl_at_rear",
+            _Layer("driveshaft_imbalance", _SHAFT_REAR),
+            _Layer("wheel_imbalance", _FL_GAIN * 0.12),
+        ),
+    ),
+    _on("trunk", _road_with("propshaft_at_trunk", _Layer("driveshaft_imbalance", 0.4))),
+    _on(
+        "front-left",
+        _road_with(
+            "fl_with_propshaft",
+            _Layer("wheel_imbalance", _FL_GAIN),
+            _Layer("driveshaft_imbalance", _SHAFT_FRONT),
+        ),
+    ),
+    _on(
+        "front-right",
+        _road_with(
+            "fl_and_propshaft_at_fr",
+            _Layer("wheel_imbalance", _FL_GAIN * 0.3),
+            _Layer("driveshaft_imbalance", _SHAFT_FRONT),
+        ),
+    ),
+)
+# Front-left and rear-right out of balance (0.85 and 0.5), each felt faintly
+# across the car; the rear-right tyre 0.4 % smaller, so it turns a little faster.
+_RR_TIRE = 1.004
+_FL_AND_RR = (
+    _on(
+        "all",
+        _road_with(
+            "fl_rr_felt_elsewhere",
+            _Layer("wheel_imbalance", _FL_GAIN * 0.12),
+            _Layer("wheel_imbalance", 0.5 * 0.12, _RR_TIRE),
+        ),
+    ),
+    _on(
+        "front-left",
+        _road_with(
+            "fl_with_rr",
+            _Layer("wheel_imbalance", _FL_GAIN),
+            _Layer("wheel_imbalance", 0.5 * 0.12, _RR_TIRE),
+        ),
+    ),
+    _on(
+        "rear-right",
+        _road_with(
+            "rr_with_fl",
+            _Layer("wheel_imbalance", 0.5, _RR_TIRE),
+            _Layer("wheel_imbalance", _FL_GAIN * 0.12),
+        ),
+    ),
+)
+_AC_ON_PROPSHAFT_RHYTHM = replace(
+    _fault("driveline", DRIVELINE_ZONES, "P1"),
+    verdicts=frozenset({"no_fault", "weak_evidence", "fault"}),
+    levels=frozenset({"moderate", "weak"}),
+)
+_PROPSHAFT_FAULT = _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE)
+_ENGINE_FAULT = _fault("engine", {"engine_bay"}, "E2")
+
+
+def _wobbly_cruise(kmh: float, duration_s: float, *faults: PhaseOverride) -> list[ScenarioPhase]:
+    """Cruise control or a steady foot: the speed wanders +/- 2 km/h over about 10 s."""
+    wander = (0.0, 1.5, 2.0, 0.5, -1.5, -2.0, -0.5, 1.0)
+    points = [kmh + wander[i % len(wander)] for i in range(int(duration_s / 2.5) + 1)]
+    return [
+        _phase(f"cruise-{kmh:g}-{i}", 2.5, start, end, *faults)
+        for i, (start, end) in enumerate(itertools.pairwise(points))
+    ]
+
+
+def _real_traffic(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """A suburban run: wandering cruises, a short stop, never truly steady."""
+    return (
+        _phase("pull-away", 8.0, 0.0, 70.0, *faults),
+        *_wobbly_cruise(70.0, 12.5, *faults),
+        _phase("slow", 5.0, 70.0, 20.0, *faults),
+        _phase("stop", 2.0, 0.0, 0.0, *faults),
+        _phase("pull-away-2", 9.0, 0.0, 95.0, *faults),
+        *_wobbly_cruise(95.0, 15.0, *faults),
+        _phase("lift-off", 6.0, 95.0, 80.0, *faults),
+        *_wobbly_cruise(80.0, 10.0, *faults),
+    )
+
+
+def _town_only(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """A drive that never reaches the speeds where the fault shakes hardest (tops at 80 km/h)."""
+    return (
+        _phase("pull-away", 8.0, 20.0, 60.0, *faults),
+        *_wobbly_cruise(60.0, 10.0, *faults),
+        _phase("speed-up", 8.0, 60.0, 80.0, *faults),
+        *_wobbly_cruise(80.0, 10.0, *faults),
+        _phase("slow", 6.0, 80.0, 50.0, *faults),
+    )
+
+
+CONFOUNDER_CASES = (
+    # Parking flat spots on the first kilometres: all four tyres alike, on the
+    # motorway, a sweep and in town.
+    Case(
+        "bench-healthy-flat-spots-first-km-long-sweep",
+        _long_sweep(),
+        _WHEEL_ORDERS_AT_MOST_MODERATE,
+        flat_spots=_FOUR_FLAT_SPOTS,
+    ),
+    Case(
+        "bench-healthy-flat-spots-first-km-motorway",
+        _motorway(),
+        _WHEEL_ORDERS_AT_MOST_MODERATE,
+        flat_spots=_FOUR_FLAT_SPOTS,
+    ),
+    # Only on the other car: on the default car, under about 38 km/h T1 is
+    # below the lowest frequency analysed, so nothing tells the tyres' T3/T4
+    # from its propshaft (3.08 per wheel turn) or E2 (3.94), and the town drive
+    # reads as a Moderate propshaft or even a Strong engine fault. An open
+    # product limit (see "not an alias of a wheel order" in docs/metrics.md).
+    Case(
+        "bench-healthy-flat-spots-first-km-city",
+        _city(),
+        _WHEEL_ORDERS_AT_MOST_MODERATE,
+        cars=("other",),
+        flat_spots=_FOUR_FLAT_SPOTS,
+    ),
+    # One tyre far worse: it is that tyre, at its first order.
+    Case(
+        "bench-one-flat-spotted-tyre-first-km-long-sweep",
+        _long_sweep(),
+        _fault(
+            "wheel/tire",
+            {"front_left_wheel"},
+            "T1",
+            levels=frozenset({"strong", "moderate", "weak"}),
+        ),
+        flat_spots=_ONE_BAD_FLAT_SPOT,
+    ),
+    # A loosely tied sensor rattling on a broken road: the rattle is no fault.
+    # A known limit: the corners are compared as if every sensor were fixed
+    # alike, and the tie's 35 Hz ring lifts that corner's residual T2 (28 Hz at
+    # 100 km/h) about 2.6x, so the healthy corner can read a Moderate wheel
+    # fault; never Strong, and never another source.
+    Case(
+        "bench-healthy-loose-front-right-mount-potholes",
+        _potholes(*_RESIDUAL_IMBALANCE),
+        _WHEEL_ORDERS_AT_MOST_MODERATE,
+        fixings={"front_right_wheel": _LOOSE_FIXING},
+    ),
+    # The loose sensor next to a real fault: still the front-left wheel.
+    Case(
+        "bench-front-left-wheel-loose-front-right-mount-sweep",
+        _sweep(*_FR_STIFF_MOUNT),
+        _fault("wheel/tire", {"front_left_wheel", "front_axle"}, "T1", levels=MODERATE_OR_STRONG),
+        fixings={"front_right_wheel": _LOOSE_FIXING},
+    ),
+    # The faulty wheel's own sensor is the loose one: lifting off its fixing past
+    # 0.1 g, it under-reads the shake and its landings raise the floor around it,
+    # so the corner may read only Moderate (and faint) where a firm one reads Strong.
+    Case(
+        "bench-front-left-wheel-on-a-loose-mount-potholes",
+        _potholes(_FL_IMBALANCE),
+        replace(_FL_FAULT, levels=MODERATE_OR_STRONG),
+        fixings={"front_left_wheel": _LOOSE_FIXING},
+    ),
+    # A propshaft imbalance whose order runs through a rear sensor's bracket ring.
+    Case(
+        "bench-driveline-springy-rear-right-bracket-sweep",
+        _sweep(*_DRIVELINE_UNDER_LOAD),
+        _PROPSHAFT_FAULT,
+        fixings={"rear_right_wheel": _SPRINGY_BRACKET},
+    ),
+    # Worn accessories (blower, alternator, air con) with a sensor everywhere: none is a fault.
+    Case(
+        "bench-healthy-worn-accessories-every-mount-long-sweep",
+        _long_sweep(),
+        NO_FAULT,
+        layout=EVERY_MOUNT,
+        accessories=_ACCESSORIES,
+    ),
+    # On the other car the compressor's 1.25 x crank is exactly the propshaft's
+    # rhythm in top gear (0.8): without a coast-down nothing tells them apart,
+    # and its clutch cycling reads as intermittent. A known limit, never Strong.
+    Case(
+        "bench-healthy-worn-accessories-every-mount-city",
+        _city(),
+        NO_FAULT,
+        by_car={"other": _AC_ON_PROPSHAFT_RHYTHM},
+        layout=EVERY_MOUNT,
+        accessories=_ACCESSORIES,
+    ),
+    # Two stops hard enough for ABS: its pump shakes the front wheels in bursts.
+    Case(
+        "bench-healthy-abs-emergency-stops",
+        _emergency_stops(),
+        NO_FAULT,
+        accessories=_ACCESSORIES,
+    ),
+    Case(
+        "bench-front-left-wheel-worn-accessories-every-mount-sweep",
+        _sweep(_FL_IMBALANCE),
+        _FL_FAULT,
+        layout=EVERY_MOUNT,
+        accessories=_ACCESSORIES,
+    ),
+    # Two faults at once: either is the right answer, and nothing else.
+    Case(
+        "bench-front-left-wheel-and-propshaft-sweep",
+        _sweep(*_FL_AND_PROPSHAFT),
+        _FL_FAULT,
+        second_fault=_PROPSHAFT_FAULT,
+    ),
+    # Two wheels out of balance: one finding per order names the stronger
+    # corner (front-left); rear-right shows once front-left is fixed and retested.
+    Case("bench-front-left-and-rear-right-wheels-sweep", _sweep(*_FL_AND_RR), _FL_FAULT),
+    # A non-uniform tyre (radial force variation at T1-T4): the tyre, not the
+    # engine or propshaft orders its harmonics land on.
+    Case(
+        "bench-front-left-non-uniform-tyre-long-sweep",
+        _long_sweep(_ov("front-left", _NON_UNIFORM_TYRE.name, 0.85, 1.0)),
+        _FL_FAULT,
+    ),
+    # Real driving: the speed is never truly steady, with a short stop.
+    Case("bench-front-left-wheel-real-traffic", _real_traffic(_FL_IMBALANCE), _FL_FAULT),
+    Case("bench-healthy-real-traffic", _real_traffic(), NO_FAULT),
+    # The imbalance that shakes hardest at 95-115 km/h, on a drive that never gets there.
+    Case(
+        "bench-front-left-resonant-band-never-reached-town",
+        _town_only(_on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+        replace(
+            _FL_FAULT,
+            verdicts=frozenset({"fault", "weak_evidence"}),
+            levels=frozenset({"strong", "moderate", "weak"}),
+        ),
+    ),
+)
+
 BENCH_CASES = (
     Case("bench-healthy-sweep", _sweep(), NO_FAULT, cars=(*BOTH_CARS, "fwd")),
     # Brake judder from warped front discs: felt in the steering wheel every time
@@ -1756,6 +2146,7 @@ BENCH_CASES = (
     *ENGINE_PROFILE_CASES,
     *EV_CASES,
     *REALISM_CASES,
+    *CONFOUNDER_CASES,
 )
 
 SCRIPTED_CASES = (
@@ -1915,10 +2306,13 @@ def injected_order_mg(
     layout: tuple[BenchSensor, ...] = SENSORS,
     car: BenchCar = DEFAULT_CAR,
 ) -> dict[str, float]:
-    """Peak order-tone amplitude (mg, 3-axis vector) each location receives in any phase.
+    """Peak order-tone amplitude (mg, 3-axis vector) each location's sensor reads in any phase.
 
     In a gear that puts an engine order on a wheel or propshaft order, the
-    engine's tone is that order's too, and the other way round.
+    engine's tone is that order's too, and the other way round. A sensor also
+    reads the flat spot of the tyre it feels at the start of the drive and an
+    engine-driven accessory turning at the order's rhythm, and its fixing's
+    resonance amplifies what it reads near it.
     """
     clients = [
         SimClient(
@@ -1948,8 +2342,54 @@ def injected_order_mg(
             )
             counts *= max(profile.order_amplitude_gain(speed) for speed in speeds)
             mg = counts * client.scene_gain * client.amp_scale * _SIM_MG_PER_COUNT
+            mg += _flat_spot_mg(sensor.flat_spot, car, order_code, phase.gear_ratio)
+            mg += _accessory_mg(sensor.accessories, car, order_code, phase.gear_ratio)
+            mg *= max(_fixing_gain(sensor.fixing, car, order_code, speed) for speed in speeds)
             injected[sensor.location_code] = max(injected[sensor.location_code], mg)
     return injected
+
+
+def _flat_spot_mg(
+    spot: FlatSpot | None, car: BenchCar, order_code: str, gear: float | None
+) -> float:
+    """A fresh flat spot's level (mg, 3-axis vector) at the order: the wheel
+    order it carries that turns at the order's rhythm, if any."""
+    if spot is None:
+        return 0.0
+    turns = _turns_per_wheel_turn(car, order_code, gear)
+    return sum(
+        math.hypot(*spot.t1_mg) * level
+        for n, level in enumerate(spot.harmonic_levels(), start=1)
+        if abs(n - turns) <= _ORDER_TOLERANCE_REL * turns
+    )
+
+
+def _accessory_mg(
+    accessories: tuple[AccessoryTone, ...], car: BenchCar, order_code: str, gear: float | None
+) -> float:
+    """Level (mg, 3-axis vector) of the engine-driven accessories at the order's rhythm."""
+    if car.fuel_type == "EV":
+        return 0.0
+    turns = _turns_per_wheel_turn(car, order_code, gear)
+    crank = _turns_per_wheel_turn(car, "E1", gear)
+    return sum(
+        math.hypot(*tone.level_mg)
+        for tone in accessories
+        if tone.engine_order is not None
+        and abs(tone.engine_order * crank - turns) <= _ORDER_TOLERANCE_REL * turns
+    )
+
+
+def _fixing_gain(
+    fixing: SensorFixing | None, car: BenchCar, order_code: str, speed_kmh: float
+) -> float:
+    """How strongly a sensor on *fixing* reads the order at *speed_kmh*: its housing's
+    base-excitation transmissibility (1 for a firm one)."""
+    if fixing is None or speed_kmh <= 0:
+        return 1.0
+    r = _order_hz(car, order_code, speed_kmh) / fixing.resonance_hz
+    damping = (2.0 * fixing.damping_ratio * r) ** 2
+    return math.sqrt((1.0 + damping) / ((1.0 - r * r) ** 2 + damping))
 
 
 def _is_tone(key: str, multiple: float, tones: set[tuple[str, float]]) -> bool:
@@ -2270,9 +2710,13 @@ def _assert_order_amplitude_mg(diagnosis: dict, case: Case, car: BenchCar) -> No
     assert diagnosis["amplitude_basis"] == "order"
     strongest = diagnosis["location_amplitudes"][0]
     code = location_code_for_label(strongest["location"])
-    injected = injected_order_mg(case.phases, diagnosis["order_code"], case.layout, car)[code]
+    injected = injected_order_mg(case.phases, diagnosis["order_code"], case.sensors(), car)[code]
     assert injected > 0, (strongest, diagnosis["order_code"])
-    assert injected / 40.0 <= strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
+    assert injected / 40.0 <= strongest["amplitude_mg"], (strongest, injected)
+    fixing = case.fixings.get(code)
+    if fixing is None or fixing.rattle_g is None:
+        # A rattling sensor's landings add broadband energy to every band.
+        assert strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
 
 
 def _phase_tones(phase: ScenarioPhase, order_code: str, car: BenchCar) -> set[tuple[str, float]]:
@@ -2298,11 +2742,14 @@ def injected_sweep_kmh(
     car: BenchCar,
     *,
     visible_from_kmh: float = 0.0,
+    flat_spot: FlatSpot | None = None,
 ) -> float:
     """Widest steady speed sweep (km/h, over 8 s or more) while the order's tone was injected.
 
     Only the part of a sweep above *visible_from_kmh* counts: below it the
-    order's tone is under the lowest frequency the analysis looks at.
+    order's tone is under the lowest frequency the analysis looks at. A
+    *flat_spot* shakes at its wheel orders, and at what turns at their rhythm,
+    through the whole drive.
     """
     return max(
         (
@@ -2310,10 +2757,13 @@ def injected_sweep_kmh(
             - max(min(phase.speed_end_kmh, phase.speed_start_kmh), visible_from_kmh)
             for phase in phases
             if phase.duration_s >= 8.0
-            and any(
-                _is_tone(key, multiple, _phase_tones(phase, order_code, car))
-                for override in phase.overrides
-                for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+            and (
+                _flat_spot_mg(flat_spot, car, order_code, phase.gear_ratio) > 0
+                or any(
+                    _is_tone(key, multiple, _phase_tones(phase, order_code, car))
+                    for override in phase.overrides
+                    for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+                )
             )
         ),
         default=0.0,
@@ -2328,7 +2778,13 @@ def _assert_speed_chart(
     order_code = diagnosis["order_code"]
     # A wheel order at walking pace is far below the analysed band (5 Hz and up).
     visible_from = MIN_ANALYSIS_FREQ_HZ / (_order_hz(car, order_code, 100.0) / 100.0)
-    span = injected_sweep_kmh(case.phases, order_code, car, visible_from_kmh=visible_from)
+    span = injected_sweep_kmh(
+        case.phases,
+        order_code,
+        car,
+        visible_from_kmh=visible_from,
+        flat_spot=next(iter(case.flat_spots.values()), None),
+    )
     if span >= 40.0:
         assert chart is not None, span
         assert [series.strongest for series in chart.series][:1] == [True]

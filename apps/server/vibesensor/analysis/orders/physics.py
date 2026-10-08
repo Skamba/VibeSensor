@@ -177,6 +177,22 @@ _ROAD_HYPOTHESES: tuple[OrderHypothesis, ...] = (
 )
 
 
+# A tyre's non-uniformity or parking flat spot shakes at the wheel's higher
+# orders along with its first (a short flat is a pulse per turn, rich in
+# harmonics). They are matched only to tell an engine or driveline order that
+# lands on one of them from a fault of its own, never diagnosed.
+WHEEL_HARMONIC_HYPOTHESES: tuple[OrderHypothesis, ...] = tuple(
+    OrderHypothesis(
+        f"wheel_{order}x",
+        VibrationSource.WHEEL_TIRE,
+        "wheel",
+        order,
+        path_compliance=WHEEL_ORDER_PATH_COMPLIANCE,
+    )
+    for order in (3, 4, 5, 6)
+)
+
+
 @cache
 def _order_hypotheses(engine_profile: EngineProfile | None = None) -> tuple[OrderHypothesis, ...]:
     """The hypotheses an order analysis tests: the road-speed orders and the engine's.

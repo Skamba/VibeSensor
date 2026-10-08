@@ -13,6 +13,7 @@ from scipy.signal import lfilter
 from vibesensor.ingest.protocol_messages import client_id_mac
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.adxl345_front_end import Adxl345FrontEnd
+from vibesensor.simulator.confounders import SensorConfounders
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
@@ -47,6 +48,8 @@ _ROAD_SEED_SALT = 0x8608
 _FRONT_END_SEED_SALT = 0xAD45
 # Road resonances are specified on a road between ISO 8608 classes A and B.
 _RESONANCE_REFERENCE_GD_N0_M3 = float(np.sqrt(ISO8608_GD_N0_M3["A"] * ISO8608_GD_N0_M3["B"]))
+# A warm engine idles at about 800 rpm.
+_IDLE_ENGINE_HZ = 800.0 / 60.0
 
 
 @functools.cache
@@ -127,6 +130,8 @@ class SimClient:
     distance_m: float = 0.0
     road_vibration: RoadVibration = field(init=False)
     front_end: Adxl345FrontEnd = field(init=False)
+    # A loose mount, parking flat spots and the like (``simulator/confounders.py``).
+    confounders: SensorConfounders | None = None
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
@@ -285,12 +290,28 @@ class SimClient:
             self.noise_floor_std,
             size=signal.shape,
         ).astype(np.float32)
-        signal += floor_noise
         signal += self._road_resonances(profile, 1.0)
+        if self.confounders is not None:
+            signal = self._confounded(signal)
+        signal += floor_noise
 
         self.phase_s = float(t[-1] + dt)
         result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
         return result
+
+    def _confounded(self, signal: np.ndarray) -> np.ndarray:
+        """The car's motion plus what the confounders add, as the mounted housing reads it."""
+        assert self.confounders is not None
+        signal = signal + self.confounders.mechanical(
+            # This sensor's own wheel: its tyre's flat spot.
+            wheel_hz=max(0.0, self.order_tone_hz("wheel_1x")),
+            # The engine idles at a standstill.
+            engine_hz=max(_IDLE_ENGINE_HZ, self.order_tone_hz("engine_1x")),
+            speed_kmh=self.current_speed_kmh,
+            samples=self.frame_samples,
+            dt=1.0 / self.sample_rate_hz,
+        )
+        return self.confounders.through_fixing(signal, self.sample_rate_hz)
 
     def _realistic_frame(
         self, profile: Profile, local_signal: np.ndarray, next_phase_s: float
@@ -310,6 +331,8 @@ class SimClient:
         signal += road_mg * _COUNTS_PER_MG
         roughness = np.sqrt(self.road.gd_n0_m3(self.distance_m) / _RESONANCE_REFERENCE_GD_N0_M3)
         signal += self._road_resonances(profile, float(roughness))
+        if self.confounders is not None:
+            signal = self._confounded(signal)
         frame_s = self.frame_samples / self.sample_rate_hz
         self.distance_m += max(0.0, self.current_speed_kmh) / 3.6 * frame_s
         self.phase_s = float(next_phase_s)
